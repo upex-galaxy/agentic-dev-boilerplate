@@ -1,6 +1,6 @@
 # 🎯 AI-DRIVEN SOFTWARE PROJECT BLUEPRINT
 
-**Versión**: 2.0 (Arquitectura Unificada)
+**Versión**: 3.0 (8 Fases: Sincrónicas + Asincrónicas)
 **Última actualización**: 2025-10-29
 **Autor**: UPEX Galaxy - DOJO AI-Powered Quality Engineer
 
@@ -33,11 +33,25 @@
 ### **Arquitectura Unificada**
 
 TODO se integra en `.context/PBI/` donde cada épica/story es una **carpeta** conteniendo:
-- Documentación (Fase 2)
-- Pruebas (Fase 3)
-- Planes (Fase 4)
+- Documentación (Fase 3)
+- Pruebas (Fase 4)
+- Planes (Fase 5)
 
 **Beneficio:** Para trabajar en una story, la IA lee UNA sola carpeta.
+
+### **8 Fases: Sincrónicas + Asincrónicas**
+
+**Fases Sincrónicas** (una sola vez, setup inicial):
+1. **Constitution** - Idea de negocio → `.context/idea/`
+2. **Architecture** - Product + Technical specs → `.context/PRD/` + `.context/SRS/`
+
+**Fases Asincrónicas** (iterativas, por sprint/épica):
+3. **Specification** - Product backlog → `.context/PBI/`
+4. **Shift-Left Testing** - Test plans + test cases
+5. **Planning** - Implementation plans
+6. **Implementation** - Código (guiado por `.context/guidelines/`)
+7. **Code Review** - Revisión de código
+8. **Test Automation** - Testing automation (KATA framework)
 
 ---
 
@@ -82,9 +96,10 @@ Decisión:
 |------|-----------|--------|
 | **0. Análisis** | ❌ No aplica | ✅ Explorar codebase/DB → `legacy-analysis.md` |
 | **1. Constitution** | Desde idea | Desde código existente |
-| **2. Specification** | PRD/SRS desde cero | Reverse engineering |
-| **3. Testing** | Tests para nuevas features | Tests de caracterización primero |
-| **4. Planning** | Diseño libre | Adaptarse a arquitectura existente |
+| **2. Architecture** | PRD/SRS desde cero | Reverse engineering |
+| **3. Specification** | PBI desde cero | Mapear épicas existentes |
+| **4. Testing** | Tests para nuevas features | Tests de caracterización primero |
+| **5. Planning** | Diseño libre | Adaptarse a arquitectura existente |
 
 ---
 
@@ -148,57 +163,75 @@ Decisión:
 │                       ├── api-details.md     (lógica API compleja)
 │                       └── database-changes.md (migrations complejas)
 │
-├── TAE/                               [FASE 7: Test Automation Engineering]  ⬅️ MAYÚSCULAS
-│   ├── README.md
-│   ├── test-strategy.md               (generado con prompt)
-│   ├── kata-architecture.md           (reference doc - KATA framework completo)
-│   ├── kata-implementation-plan.md    (generado con prompt)
-│   ├── component-catalog.md           (plantilla para llenar)
-│   ├── atc-registry.md                (plantilla para llenar)
-│   ├── automation-standards.md        (generado con prompt)
-│   ├── test-data-management.md        (reference doc)
-│   ├── tms-integration.md             (reference doc)
-│   └── ci-cd-integration.md           (reference doc)
-│
-└── guidelines/                        [FASES 5-6: Implementation]  ⬅️ minúsculas
+└── guidelines/                        [FASES 6-7-8: Reference Material]  ⬅️ minúsculas
     ├── README.md
     ├── implementation-workflow.md     Workflow paso a paso para implementar story
     ├── code-standards.md              DRY, naming, TypeScript, testing
     ├── error-handling.md              NO hardcodear, error classes, logging
     ├── context-loading.md             Qué archivos leer en cada fase
-    ├── automation-workflow.md         Testing automation con KATA
-    └── mcp-usage-tips.md              Cuándo usar Supabase/Atlassian/IDE MCP
+    ├── mcp-usage-tips.md              Cuándo usar Supabase/Atlassian/IDE MCP
+    │
+    └── tae/                           [FASE 8: Test Automation Engineering]
+        ├── README.md
+        ├── test-strategy.md           (generado con prompt)
+        ├── kata-architecture.md       (reference doc - KATA framework completo)
+        ├── kata-implementation-plan.md (generado con prompt)
+        ├── component-catalog.md       (plantilla para llenar)
+        ├── atc-registry.md            (plantilla para llenar)
+        ├── automation-standards.md    (generado con prompt)
+        ├── test-data-management.md    (reference doc)
+        ├── tms-integration.md         (reference doc)
+        └── ci-cd-integration.md       (reference doc)
 ```
 
 ### **Convenciones de Nomenclatura**
 
-- **Directorios principales en MAYÚSCULAS**: `PRD/`, `SRS/`, `PBI/`, `TAE/` (siglas)
-- **Directorios secundarios en minúsculas**: `idea/`, `guidelines/`, `epics/`, `stories/`
+- **Directorios principales en MAYÚSCULAS**: `PRD/`, `SRS/`, `PBI/` (siglas)
+- **Directorios secundarios en minúsculas**: `idea/`, `guidelines/`, `epics/`, `stories/`, `tae/`
 - **Archivos siempre en minúsculas con guiones**: `epic-tree.md`, `test-cases.md`
 
 ---
 
 ## 🔄 WORKFLOW POR FASE
 
+### **🔹 FASES SINCRÓNICAS** (una sola vez, setup inicial)
+
+---
+
 ### **FASE 1: Constitution**
-**Rol:** Founder/Client
+**Rol:** Founder/Client/PO
 **Output:** `/idea/` completo (2-3 archivos)
+**Prompts:** Ver `.prompts/fase-1-constitution/`
 
 ---
 
-### **FASE 2: Specification (PRD + SRS + PBI)**
-**Rol:** PO/PM/BA
+### **FASE 2: Architecture (PRD + SRS)**
+**Rol:** Solution Architect/PM/BA
 **Output:**
-- `/PRD/` completo (4 archivos)
-- `/SRS/` completo (4 archivos)
-- `/PBI/epic-tree.md` + todas las épicas y stories (estructura inicial)
+- `/PRD/` completo (4 archivos: executive-summary, user-personas, mvp-scope, user-journeys)
+- `/SRS/` completo (4 archivos: functional-specs, non-functional-specs, architecture-specs, api-contracts)
 
-**Prompts:** Ver `.prompts/fase-2-specification/`
+**Prompts:** Ver `.prompts/fase-2-architecture/`
 
 ---
 
-### **FASE 3: Shift-Left Testing**
-**Rol:** QA
+### **🔹 FASES ASINCRÓNICAS** (iterativas, por sprint/épica)
+
+---
+
+### **FASE 3: Specification (PBI)**
+**Rol:** PO/PM
+**Output:**
+- `/PBI/epic-tree.md`
+- `/PBI/epics/EPIC-XXX/epic.md`
+- `/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
+
+**Prompts:** Ver `.prompts/fase-3-specification/`
+
+---
+
+### **FASE 4: Shift-Left Testing**
+**Rol:** QA Engineer
 
 **Por cada épica:**
 1. Leer `epic.md`
@@ -211,12 +244,12 @@ Decisión:
 4. Crear `test-cases.md` (6+ test cases)
 5. Sincronizar con Jira/Xray
 
-**Prompts:** Ver `.prompts/fase-3-shift-left-testing/`
+**Prompts:** Ver `.prompts/fase-4-shift-left-testing/`
 
 ---
 
-### **FASE 4: Planning**
-**Rol:** Dev
+### **FASE 5: Planning**
+**Rol:** Tech Lead/Dev
 
 **Por cada épica (una vez):**
 1. Leer `epic.md` + SRS
@@ -228,25 +261,39 @@ Decisión:
 2. Crear `implementation-plan.md` detallado
 3. IA decide si necesita archivos auxiliares (components.md, api-details.md, etc.)
 
-**Prompts:** Ver `.prompts/fase-4-planning/`
+**Prompts:** Ver `.prompts/fase-5-planning/`
 
 ---
 
-### **FASE 5-6: Implementation**
+### **FASE 6: Implementation**
 **Rol:** Dev (con IA)
 
 1. Cargar contexto completo (leer `implementation-plan.md`)
-2. Leer `/guidelines/*.md` (TODOS)
+2. Leer `.context/guidelines/*.md` (TODOS los archivos)
 3. Ejecutar subtareas según plan
 4. Quality checks después de cada step
 5. Usar MCP tools (Supabase, Atlassian)
 
 **Guidelines:** Ver `.context/guidelines/`
+**Nota:** NO hay prompts para esta fase (usa guidelines como referencia)
 
 ---
 
-### **FASE 7: Test Automation Engineering (TAE)**
-**Rol:** QA / Test Engineer (con IA)
+### **FASE 7: Code Review**
+**Rol:** Tech Lead/Senior Dev
+
+1. Revisar Pull Request
+2. Verificar adherencia a `.context/guidelines/code-standards.md`
+3. Verificar tests
+4. Aprobar o solicitar cambios
+
+**Guidelines:** Ver `.context/guidelines/code-standards.md`
+**Nota:** NO hay prompts para esta fase (usa guidelines como referencia)
+
+---
+
+### **FASE 8: Test Automation Engineering**
+**Rol:** QA Automation Engineer / SDET (con IA)
 
 **Objetivo:** Establecer arquitectura de testing automatizada basada en KATA framework
 
@@ -257,13 +304,13 @@ Decisión:
 4. Completar Reference Docs (kata-architecture, TMS, CI/CD)
 5. Iniciar Implementación (estructura /tests, TestContext, primeros componentes)
 
-**Output:** Directorio `/TAE` completo (10 archivos) + estructura inicial de `/tests`
+**Output:** Directorio `.context/guidelines/tae/` completo (10 archivos) + estructura inicial de `/tests`
 
 **Diferencias Legacy vs Greenfield:**
 - **Greenfield**: Diseñar suite completa desde cero
 - **Legacy**: Evaluar suite existente → Migrar a KATA o crear desde cero con tests de caracterización primero
 
-**Prompts:** Ver `.prompts/fase-7-tae/` (3 prompts: test-strategy, kata-implementation-plan, automation-standards)
+**Prompts:** Ver `.prompts/fase-8-test-automation/` (3 prompts: test-strategy, kata-implementation-plan, automation-standards)
 
 ---
 
@@ -284,7 +331,7 @@ Decisión:
 
 ---
 
-### **FASE 2: SPECIFICATION**
+### **FASE 2: ARCHITECTURE**
 
 #### **Carpeta `/PRD`**
 
@@ -336,11 +383,27 @@ Archivos generados en fases posteriores:
 - `implementation-plan.md` (Fase 4)
 - Opcionales: `components.md`, `api-details.md`, `database-changes.md` (IA decide)
 
-**Prompts:** `.prompts/fase-2-specification/`
+**Prompts:** `.prompts/fase-2-architecture/`
 
 ---
 
-### **FASE 3: SHIFT-LEFT TESTING**
+### **FASE 3: SPECIFICATION**
+
+#### **Carpeta `/PBI`**
+
+**Nota:** La estructura PBI ya fue descrita en la sección anterior (Fase 2: Architecture). Aquí se detallan los archivos específicos que se generan en esta fase.
+
+##### **Nivel ÉPICA**
+- `epic.md`: Metadata, description, scope, acceptance criteria, dependencies, user stories
+
+##### **Nivel STORY**
+- `story.md`: Metadata, description, acceptance criteria (Gherkin), technical notes, DoD
+
+**Prompts:** `.prompts/fase-3-specification/`
+
+---
+
+### **FASE 4: SHIFT-LEFT TESTING**
 
 #### **Feature Test Plan (epic level)**
 
@@ -361,11 +424,11 @@ Archivo `test-cases.md`:
 - **Edge Cases Identified**: Listado de casos límite detectados
 - **Test Data Summary**: Tabla de tipos de datos
 
-**Prompts:** `.prompts/fase-3-shift-left-testing/`
+**Prompts:** `.prompts/fase-4-shift-left-testing/`
 
 ---
 
-### **FASE 4: PLANNING**
+### **FASE 5: PLANNING**
 
 #### **Feature Implementation Plan (epic level)**
 
@@ -391,7 +454,7 @@ Archivo `implementation-plan.md`:
 - **Estimated Effort**: Tabla de steps con tiempos (total debe match story points)
 - **Definition of Done Checklist**: Completo con tests específicos
 
-**Prompts:** `.prompts/fase-4-planning/`
+**Prompts:** `.prompts/fase-5-planning/`
 
 ---
 
@@ -402,9 +465,13 @@ Archivo `implementation-plan.md`:
 Todos los prompts están en `.prompts/` organizados por fase:
 
 - **Fase 1:** `fase-1-constitution/` (2 prompts)
-- **Fase 2:** `fase-2-specification/` (9 prompts)
-- **Fase 3:** `fase-3-shift-left-testing/` (2 prompts)
-- **Fase 4:** `fase-4-planning/` (2 prompts)
+- **Fase 2:** `fase-2-architecture/` (8 prompts: PRD + SRS)
+- **Fase 3:** `fase-3-specification/` (1 prompt: PBI)
+- **Fase 4:** `fase-4-shift-left-testing/` (2 prompts)
+- **Fase 5:** `fase-5-planning/` (2 prompts)
+- **Fase 6:** ❌ NO hay prompts (usa guidelines)
+- **Fase 7:** ❌ NO hay prompts (usa guidelines)
+- **Fase 8:** `fase-8-test-automation/` (3 prompts: TAE)
 
 **Instrucciones de uso:** Ver `.prompts/README.md`
 
@@ -416,20 +483,20 @@ Todos los prompts están en `.prompts/` organizados por fase:
 
 ---
 
-### **Guidelines (System Prompts para IA)**
+### **Guidelines (Reference Material para IA)**
 
-Todos los guidelines están en `.context/guidelines/` para fases 5-6:
+Todos los guidelines están en `.context/guidelines/` para fases 6-7-8:
 
-| Archivo | Propósito |
-|---------|-----------|
-| `implementation-workflow.md` | Workflow paso a paso para implementar story (leer contexto, verificar plan, breakdown, quality checks) |
-| `code-standards.md` | DRY, naming conventions, TypeScript strict, component structure, performance, a11y |
-| `error-handling.md` | NO hardcodear fallbacks, structured error responses, custom error classes, retry logic |
-| `context-loading.md` | Qué archivos leer en cada fase, Living Documentation (usar MCPs), Context loading checklist |
-| `automation-workflow.md` | Testing automation con KATA (POM, AAA pattern, test organization, CI/CD) |
-| `mcp-usage-tips.md` | Cuándo usar Supabase MCP, Atlassian MCP, IDE Diagnostics |
+| Archivo | Propósito | Fase |
+|---------|-----------|------|
+| `implementation-workflow.md` | Workflow paso a paso para implementar story | 6 |
+| `code-standards.md` | DRY, naming conventions, TypeScript strict, component structure | 6-7 |
+| `error-handling.md` | NO hardcodear fallbacks, custom error classes, retry logic | 6 |
+| `context-loading.md` | Qué archivos leer en cada fase, Living Documentation (MCPs) | 6 |
+| `mcp-usage-tips.md` | Cuándo usar Supabase MCP, Atlassian MCP, IDE Diagnostics | 6 |
+| `tae/*` | Test Automation Engineering (10 archivos KATA) | 8 |
 
-**Cuándo leer:** La IA debe leer TODOS los guidelines antes de implementar (Fases 5-6).
+**Cuándo leer:** La IA debe leer TODOS los guidelines antes de implementar (Fases 6-7-8).
 
 ---
 
@@ -469,12 +536,12 @@ Todos los guidelines están en `.context/guidelines/` para fases 5-6:
 
 ```
 .context/
-├── idea/           (2-3 archivos) - Fase 1
-├── PRD/            (4 archivos) - Fase 2
-├── SRS/            (4 archivos) - Fase 2
-├── PBI/            (estructura de carpetas con épicas y stories) - Fases 2-4
-├── TAE/            (10 archivos) - Fase 7
-└── guidelines/     (6 archivos) - System prompts para IA
+├── idea/           (2-3 archivos) - Fase 1: Constitution
+├── PRD/            (4 archivos) - Fase 2: Architecture (business)
+├── SRS/            (4 archivos) - Fase 2: Architecture (technical)
+├── PBI/            (estructura de carpetas) - Fases 3-5: Specification, Testing, Planning
+└── guidelines/     (6 archivos) - Fases 6-7-8: Reference material
+    └── tae/        (10 archivos) - Fase 8: Test Automation
 ```
 
 ### **Beneficios de la Arquitectura Unificada**
@@ -493,13 +560,17 @@ Todos los guidelines están en `.context/guidelines/` para fases 5-6:
 
 ### **Fases Totales del Blueprint**
 
-1. **Constitution** (idea de negocio)
-2. **Specification** (PRD + SRS + PBI)
-3. **Shift-Left Testing** (feature test plans + test cases)
-4. **Planning** (feature plans + implementation plans)
-5. **Tasking** (breakdown en subtareas atómicas - guiado por guidelines)
-6. **Implementation** (desarrollo guiado por guidelines + MCP)
-7. **Test Automation Engineering** (arquitectura KATA)
+**Fases Sincrónicas** (una sola vez):
+1. **Constitution** - Idea de negocio
+2. **Architecture** - PRD + SRS (product + technical specs)
+
+**Fases Asincrónicas** (iterativas, por sprint):
+3. **Specification** - PBI (épicas + stories)
+4. **Shift-Left Testing** - Feature test plans + test cases
+5. **Planning** - Feature plans + implementation plans
+6. **Implementation** - Desarrollo guiado por guidelines + MCP
+7. **Code Review** - Revisión de código
+8. **Test Automation** - Arquitectura KATA (testing automation)
 
 ---
 
