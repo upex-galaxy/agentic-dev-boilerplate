@@ -25,7 +25,7 @@ PBI/
 
 ### FASE 2: Product Backlog
 
-Usa `.prompts/fase-2-specification/pbi-product-backlog.md` para crear:
+Usa `.prompts/fase-3-specification/pbi-product-backlog.md` para crear:
 - `epic-tree.md` - Vista completa del backlog
 - `epics/EPIC-XXX/epic.md` - Por cada épica
 - `epics/EPIC-XXX/stories/STORY-XXX/story.md` - Por cada story

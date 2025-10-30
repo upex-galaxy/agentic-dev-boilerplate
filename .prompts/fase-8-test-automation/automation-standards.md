@@ -3,7 +3,7 @@ Actúa como Senior QA Engineer / Test Automation Standards Lead.
 **Input:**
 - KATA Architecture: [pegar docs/kata-test-architecture.md section 6: "Convenciones de Implementación"]
 - KATA Best Practices: [pegar docs/kata-test-architecture.md section 7: "Mejores Prácticas"]
-- Test Strategy: [pegar .context/TAE/test-strategy.md]
+- Test Strategy: [pegar .context/guidelines/tae/test-strategy.md]
 - Project Tech Stack: TypeScript + Playwright + Node.js (Next.js 15)
 
 **Genera archivo: automation-standards.md**
@@ -173,7 +173,7 @@ Incluye:
     - [ ] Test data is cleaned up (no pollution)
     - [ ] CI pipeline passes (linting, type checking, tests)
 
-**Formato:** Markdown estructurado, listo para copiar a .context/TAE/automation-standards.md
+**Formato:** Markdown estructurado, listo para copiar a .context/guidelines/tae/automation-standards.md
 
 **Restricciones:**
 - Be PRESCRIPTIVE: Clear rules, not suggestions

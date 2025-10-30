@@ -1,7 +1,7 @@
 Actúa como Senior QA Engineer / Test Automation Architect.
 
 **Input:**
-- Test Strategy: [pegar .context/TAE/test-strategy.md]
+- Test Strategy: [pegar .context/guidelines/tae/test-strategy.md]
 - KATA Architecture: [pegar docs/kata-test-architecture.md sections 3-6]
 - PBI complete: [pegar .context/PBI/epic-tree.md + at least 2-3 epic folders with their stories]
 - SRS Architecture: [pegar .context/SRS/architecture-specs.md]
@@ -126,7 +126,7 @@ Incluye:
    - [ ] Test execution time under N minutes
    - [ ] Flakiness rate under M%
 
-**Formato:** Markdown estructurado, listo para copiar a .context/TAE/kata-implementation-plan.md
+**Formato:** Markdown estructurado, listo para copiar a .context/guidelines/tae/kata-implementation-plan.md
 
 **Restricciones:**
 - Be EXHAUSTIVE: List ALL components and ATCs from test-strategy.md

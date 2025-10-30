@@ -4,19 +4,19 @@ Este directorio contiene los requerimientos técnicos del sistema.
 
 ## 📄 Archivos a generar
 
-Usa los prompts de `.prompts/fase-2-specification/` para crear:
+Usa los prompts de `.prompts/fase-2-architecture/` para crear:
 
 1. **`functional-specs.md`** - Requerimientos funcionales (FRs mapeados 1:1 con user stories)
-   - Usa: `.prompts/fase-2-specification/srs-functional-specs.md`
+   - Usa: `.prompts/fase-2-architecture/srs-functional-specs.md`
 
 2. **`non-functional-specs.md`** - Performance, security, scalability, accessibility
-   - Usa: `.prompts/fase-2-specification/srs-non-functional-specs.md`
+   - Usa: `.prompts/fase-2-architecture/srs-non-functional-specs.md`
 
 3. **`architecture-specs.md`** - C4 diagrams, ERD, tech stack, data flow
-   - Usa: `.prompts/fase-2-specification/srs-architecture-specs.md`
+   - Usa: `.prompts/fase-2-architecture/srs-architecture-specs.md`
 
 4. **`api-contracts.yaml`** - OpenAPI 3.0 spec de todos los endpoints
-   - Usa: `.prompts/fase-2-specification/srs-api-contracts.md`
+   - Usa: `.prompts/fase-2-architecture/srs-api-contracts.md`
 
 ## 🎯 Output esperado
 

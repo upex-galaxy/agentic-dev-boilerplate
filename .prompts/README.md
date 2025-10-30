@@ -6,39 +6,57 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 ## 📋 ÍNDICE DE PROMPTS
 
-### **Fase 1: Constitution** (Definición del modelo de negocio)
+### **🔹 FASES SINCRÓNICAS** (una sola vez, setup inicial)
+
+#### **Fase 1: Constitution** (Definición del modelo de negocio)
 - `fase-1-constitution/business-model.md` - Generar Business Model Canvas
 - `fase-1-constitution/market-context.md` - Generar análisis de mercado
 
-### **Fase 2: Specification** (Especificación del producto)
+#### **Fase 2: Architecture** (Product + Technical specs)
 
 **PRD (Product Requirements Document):**
-- `fase-2-specification/prd-executive-summary.md` - Problem statement, solution, KPIs
-- `fase-2-specification/prd-user-personas.md` - Perfiles de usuarios objetivo
-- `fase-2-specification/prd-mvp-scope.md` - Épicas y user stories del MVP
-- `fase-2-specification/prd-user-journeys.md` - Flujos de usuario (happy + edge cases)
+- `fase-2-architecture/prd-executive-summary.md` - Problem statement, solution, KPIs
+- `fase-2-architecture/prd-user-personas.md` - Perfiles de usuarios objetivo
+- `fase-2-architecture/prd-mvp-scope.md` - Épicas iniciales y user stories del MVP
+- `fase-2-architecture/prd-user-journeys.md` - Flujos de usuario (happy + edge cases)
 
 **SRS (Software Requirements Specification):**
-- `fase-2-specification/srs-functional-specs.md` - Requerimientos funcionales
-- `fase-2-specification/srs-non-functional-specs.md` - Performance, security, scalability
-- `fase-2-specification/srs-architecture-specs.md` - Arquitectura del sistema
-- `fase-2-specification/srs-api-contracts.md` - OpenAPI spec de endpoints
+- `fase-2-architecture/srs-functional-specs.md` - Requerimientos funcionales
+- `fase-2-architecture/srs-non-functional-specs.md` - Performance, security, scalability
+- `fase-2-architecture/srs-architecture-specs.md` - Arquitectura del sistema
+- `fase-2-architecture/srs-api-contracts.md` - OpenAPI spec de endpoints
 
-**PBI (Product Backlog Items):**
-- `fase-2-specification/pbi-product-backlog.md` - Crear epic-tree, épicas y stories
+---
 
-### **Fase 3: Shift-Left Testing** (QA temprano)
-- `fase-3-shift-left-testing/feature-test-plan.md` - Plan de pruebas a nivel épica
-- `fase-3-shift-left-testing/story-test-cases.md` - Test cases detallados por story
+### **🔹 FASES ASINCRÓNICAS** (iterativas, por sprint/épica)
 
-### **Fase 4: Planning** (Planificación técnica)
-- `fase-4-planning/feature-implementation-plan.md` - Plan técnico a nivel épica
-- `fase-4-planning/story-implementation-plan.md` - Plan detallado de implementación por story
+#### **Fase 3: Specification** (Product Backlog)
+- `fase-3-specification/pbi-product-backlog.md` - Crear epic-tree, épicas y stories
 
-### **Fase 7: Test Automation Engineering** (Arquitectura de testing)
-- `fase-7-tae/test-strategy.md` - Estrategia general de testing del proyecto
-- `fase-7-tae/kata-implementation-plan.md` - Plan de implementación de KATA framework
-- `fase-7-tae/automation-standards.md` - Estándares de código para tests
+#### **Fase 4: Shift-Left Testing** (QA temprano)
+- `fase-4-shift-left-testing/feature-test-plan.md` - Plan de pruebas a nivel épica
+- `fase-4-shift-left-testing/story-test-cases.md` - Test cases detallados por story
+
+#### **Fase 5: Planning** (Planificación técnica)
+- `fase-5-planning/feature-implementation-plan.md` - Plan técnico a nivel épica
+- `fase-5-planning/story-implementation-plan.md` - Plan detallado de implementación por story
+
+#### **Fase 6: Implementation** ❌ NO HAY PROMPTS
+**¿Por qué no hay prompts?**
+- Esta fase usa `.context/guidelines/` como referencia (no genera docs)
+- La IA implementa código siguiendo los implementation plans de Fase 5
+- Lee: `.context/guidelines/implementation-workflow.md`, `code-standards.md`, etc.
+
+#### **Fase 7: Code Review** ❌ NO HAY PROMPTS
+**¿Por qué no hay prompts?**
+- Esta fase usa `.context/guidelines/code-standards.md` como referencia
+- El reviewer verifica adherencia a estándares de código
+- NO genera documentación adicional
+
+#### **Fase 8: Test Automation Engineering** (Arquitectura de testing)
+- `fase-8-test-automation/test-strategy.md` - Estrategia general de testing del proyecto
+- `fase-8-test-automation/kata-implementation-plan.md` - Plan de implementación de KATA framework
+- `fase-8-test-automation/automation-standards.md` - Estándares de código para tests
 
 ---
 
@@ -60,63 +78,89 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 ### **Workflow Secuencial**
 
+#### **🔹 FASES SINCRÓNICAS** (una sola vez)
+
 #### **Paso 1: Fase 1 - Constitution**
 
 1. Usa `business-model.md` → Genera `.context/idea/business-model.md`
 2. Usa `market-context.md` (pega el business-model.md previo) → Genera `.context/idea/market-context.md`
 
-#### **Paso 2: Fase 2 - PRD**
+#### **Paso 2: Fase 2 - Architecture (PRD)**
 
 1. Usa `prd-executive-summary.md` → Genera `.context/PRD/executive-summary.md`
 2. Usa `prd-user-personas.md` → Genera `.context/PRD/user-personas.md`
 3. Usa `prd-mvp-scope.md` → Genera `.context/PRD/mvp-scope.md`
 4. Usa `prd-user-journeys.md` → Genera `.context/PRD/user-journeys.md`
 
-#### **Paso 3: Fase 2 - SRS**
+#### **Paso 3: Fase 2 - Architecture (SRS)**
 
 1. Usa `srs-functional-specs.md` → Genera `.context/SRS/functional-specs.md`
 2. Usa `srs-non-functional-specs.md` → Genera `.context/SRS/non-functional-specs.md`
 3. Usa `srs-architecture-specs.md` → Genera `.context/SRS/architecture-specs.md`
 4. Usa `srs-api-contracts.md` → Genera `.context/SRS/api-contracts.yaml`
 
-#### **Paso 4: Fase 2 - PBI**
+---
+
+#### **🔹 FASES ASINCRÓNICAS** (iterativas, por sprint/épica)
+
+#### **Paso 4: Fase 3 - Specification (PBI)**
 
 1. Usa `pbi-product-backlog.md` → Genera:
    - `.context/PBI/epic-tree.md`
    - `.context/PBI/epics/EPIC-XXX/epic.md` (por cada épica)
    - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md` (por cada story)
 
-#### **Paso 5: Fase 3 - Testing (por cada épica)**
+#### **Paso 5: Fase 4 - Shift-Left Testing (por cada épica)**
 
 1. Usa `feature-test-plan.md` → Genera `.context/PBI/epics/EPIC-XXX/feature-test-plan.md`
 
 **Por cada story de la épica:**
 2. Usa `story-test-cases.md` → Genera `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
 
-#### **Paso 6: Fase 4 - Planning (por cada épica)**
+#### **Paso 6: Fase 5 - Planning (por cada épica)**
 
 1. Usa `feature-implementation-plan.md` → Genera `.context/PBI/epics/EPIC-XXX/feature-implementation-plan.md`
 
 **Por cada story de la épica:**
 2. Usa `story-implementation-plan.md` → Genera `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
 
-#### **Paso 7: Fase 7 - Test Automation Engineering (TAE)**
+#### **Paso 7: Fase 6 - Implementation**
+
+❌ **NO hay prompts para esta fase**
+
+La IA implementa código siguiendo:
+- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md` (de Fase 5)
+- `.context/guidelines/implementation-workflow.md`
+- `.context/guidelines/code-standards.md`
+- `.context/guidelines/error-handling.md`
+- `.context/guidelines/mcp-usage-tips.md`
+
+#### **Paso 8: Fase 7 - Code Review**
+
+❌ **NO hay prompts para esta fase**
+
+El reviewer verifica:
+- Adherencia a `.context/guidelines/code-standards.md`
+- Tests completos
+- Documentation actualizada
+
+#### **Paso 9: Fase 8 - Test Automation Engineering (TAE)**
 
 **Una sola vez para todo el proyecto:**
 
-1. Usa `test-strategy.md` → Genera `.context/TAE/test-strategy.md`
+1. Usa `test-strategy.md` → Genera `.context/guidelines/tae/test-strategy.md`
    - Input: PRD completo, SRS completo, PBI epic-tree
    - Define estrategia de testing: scope, niveles, componentes KATA, execution strategy
 
-2. Usa `kata-implementation-plan.md` → Genera `.context/TAE/kata-implementation-plan.md`
+2. Usa `kata-implementation-plan.md` → Genera `.context/guidelines/tae/kata-implementation-plan.md`
    - Input: Test Strategy, PBI completo, SRS Architecture
    - Define roadmap de implementación: componentes API/UI, ATCs por componente, priorización
 
-3. Usa `automation-standards.md` → Genera `.context/TAE/automation-standards.md`
+3. Usa `automation-standards.md` → Genera `.context/guidelines/tae/automation-standards.md`
    - Input: Test Strategy, KATA Architecture docs
    - Define estándares: naming conventions, code structure, assertions guidelines, code review checklist
 
-**Archivos de referencia (ya completos en `.context/TAE/`):**
+**Archivos de referencia (ya completos en `.context/guidelines/tae/`):**
 - `kata-architecture.md` - Documentación completa de KATA adaptada al proyecto
 - `test-data-management.md` - Estrategias de gestión de datos de prueba
 - `tms-integration.md` - Integración con Xray Cloud o Jira Direct
@@ -178,42 +222,53 @@ Después de usar todos los prompts, tu directorio `.context/` debe verse así:
 
 ```
 .context/
-├── idea/
+├── idea/                          [Fase 1]
 │   ├── business-model.md
 │   └── market-context.md
-├── PRD/
+│
+├── PRD/                           [Fase 2]
 │   ├── executive-summary.md
 │   ├── user-personas.md
 │   ├── mvp-scope.md
 │   └── user-journeys.md
-├── SRS/
+│
+├── SRS/                           [Fase 2]
 │   ├── functional-specs.md
 │   ├── non-functional-specs.md
 │   ├── architecture-specs.md
 │   └── api-contracts.yaml
-├── PBI/
+│
+├── PBI/                           [Fases 3-5]
 │   ├── epic-tree.md
 │   └── epics/
 │       └── EPIC-XXX-nombre/
-│           ├── epic.md
-│           ├── feature-test-plan.md
-│           ├── feature-implementation-plan.md
+│           ├── epic.md                     [Fase 3]
+│           ├── feature-test-plan.md        [Fase 4]
+│           ├── feature-implementation-plan.md [Fase 5]
 │           └── stories/
 │               └── STORY-XXX-nombre/
-│                   ├── story.md
-│                   ├── test-cases.md
-│                   └── implementation-plan.md
-└── TAE/
-    ├── README.md
-    ├── test-strategy.md
-    ├── kata-architecture.md
-    ├── kata-implementation-plan.md
-    ├── component-catalog.md
-    ├── atc-registry.md
-    ├── automation-standards.md
-    ├── test-data-management.md
-    ├── tms-integration.md
-    └── ci-cd-integration.md
+│                   ├── story.md            [Fase 3]
+│                   ├── test-cases.md       [Fase 4]
+│                   └── implementation-plan.md [Fase 5]
+│
+└── guidelines/                    [Fases 6-7-8 - Reference material]
+    ├── implementation-workflow.md
+    ├── code-standards.md
+    ├── error-handling.md
+    ├── context-loading.md
+    ├── mcp-usage-tips.md
+    │
+    └── tae/                       [Fase 8]
+        ├── README.md
+        ├── test-strategy.md
+        ├── kata-architecture.md
+        ├── kata-implementation-plan.md
+        ├── component-catalog.md
+        ├── atc-registry.md
+        ├── automation-standards.md
+        ├── test-data-management.md
+        ├── tms-integration.md
+        └── ci-cd-integration.md
 ```
 
 ---
@@ -235,6 +290,6 @@ Si tienes dudas sobre cómo usar estos prompts:
 
 ---
 
-**Versión:** 2.0
+**Versión:** 3.0 (8 Fases: Sincrónicas + Asincrónicas)
 **Última actualización:** 2025-10-29
 **Autor:** UPEX Galaxy - DOJO AI-Powered Quality Engineer

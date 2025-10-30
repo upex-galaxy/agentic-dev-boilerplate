@@ -97,7 +97,7 @@ Incluye:
     - Risk 3: [e.g., Slow test execution blocking CI]
       - Mitigation: [e.g., Parallelize tests, optimize slow tests, run E2E nightly only]
 
-**Formato:** Markdown estructurado, listo para copiar a .context/TAE/test-strategy.md
+**Formato:** Markdown estructurado, listo para copiar a .context/guidelines/tae/test-strategy.md
 
 **Restricciones:**
 - Be SPECIFIC: Reference actual epics/features from the PBI
