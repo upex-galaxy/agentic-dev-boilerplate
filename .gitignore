@@ -30,12 +30,17 @@ next-env.d.ts
 # system
 .DS_Store
 
-# AI
+# AI CLI tools and configs
 .serena
 .gemini
 .claude
 .context/mcp/outputs
 .playwright-mcp
+
+# MCP catalog files (contain secrets - DO NOT COMMIT)
+*.catalog.json
+
+# MCP auto-generated config files (read by AI tools)
 .mcpservers.json
 .mcp.json
 # add more mcp assets
