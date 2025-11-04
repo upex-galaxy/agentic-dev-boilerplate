@@ -69,17 +69,120 @@ PBI/
 - No hay necesidad de sincronización posterior
 - Trazabilidad perfecta: carpeta local ↔ Jira issue (1:1)
 
-### FASE 4: Shift-Left Testing (QA)
+---
 
-**Por cada épica:**
+### FASE 3B: Agregar Features Post-MVP ⚡ **NUEVO**
+
+**IMPORTANTE:** Usa `.prompts/fase-3-specification/pbi-add-feature.md` para agregar features después del setup inicial.
+
+**¿Qué hace este prompt?**
+
+El prompt **analiza automáticamente la complejidad** de tu idea y:
+
+1. **Clasifica en 3 niveles:**
+   - **Nivel 1: Story Individual** → Agrega 1 story a épica existente
+   - **Nivel 2: Épica Completa** → Crea épica nueva + sus stories
+   - **Nivel 3: Múltiples Épicas** → ⚠️ Advierte + genera plan de división (no crea nada)
+
+2. **Ejecuta según nivel:**
+   - Nivel 1-2: Crea en Jira + local automáticamente (flujo Jira-First)
+   - Nivel 3: Solo genera plan, usuario debe dividir la idea primero
+
+**Input:**
+
+- Descripción de la nueva feature/idea
+- Epic tree existente (automáticamente lee este directorio)
+- Código del proyecto en Jira
+
+**Ejemplos de uso:**
+
+**Nivel 1 - Story Individual:**
+
+```
+Input: "Agregar filtro por precio en búsqueda de mentores"
+→ Detecta que pertenece a EPIC-MYM-13 (Mentor Discovery)
+→ Crea STORY-MYM-45 en Jira
+→ Crea carpeta local STORY-MYM-45-filter-by-price/
+→ Actualiza epic.md y epic-tree.md
+✅ Completado
+```
+
+**Nivel 2 - Épica Completa:**
+
+```
+Input: "Sistema de mensajería entre mentor y mentee"
+→ Detecta que requiere nueva épica
+→ Crea EPIC-MYM-50 en Jira
+→ Crea carpeta local EPIC-MYM-50-messaging-system/
+→ Crea stories en Jira (MYM-51, MYM-52, MYM-53...)
+→ Crea carpetas locales de stories
+→ Actualiza epic-tree.md
+✅ Completado
+```
+
+**Nivel 3 - Múltiples Épicas:**
+
+```
+Input: "Sistema completo de suscripciones mensuales con planes y billing"
+→ Detecta que requiere 3+ épicas
+→ ⚠️ ADVERTENCIA: Demasiado complejo
+→ Genera plan de división detallado
+→ NO crea nada en Jira/local
+→ Usuario debe dividir la idea y ejecutar de nuevo por cada épica
+⚠️ Plan generado - Requiere división
+```
+
+**Beneficios:**
+
+- ✅ Inteligente: Analiza antes de crear
+- ✅ Flexible: Maneja 1 story, 1 épica, o múltiples épicas
+- ✅ Seguro: Previene crear features complejas de una vez
+- ✅ Incremental: Mismo flujo Jira-First que setup inicial
+
+### FASE 4: Shift-Left Testing (QA) 🔍 **CRITICAL ANALYSIS + TEST DESIGN**
+
+**NUEVO ENFOQUE V2.0:** QA como analista crítico, no solo ejecutor de test cases.
+
+**Por cada épica (una vez):**
 
 - Usa `.prompts/fase-4-shift-left-testing/feature-test-plan.md`
 - Genera `epics/EPIC-XXX/feature-test-plan.md`
+- **Incluye:**
+  - Business context analysis (valor de negocio, KPIs, user personas afectadas)
+  - Technical architecture analysis (componentes, integration points)
+  - Risk analysis (técnicos, de negocio, de integración)
+  - **Critical Analysis & Questions for PO/Dev** ⚡ (feedback temprano)
+  - Test strategy (sin forzar número mínimo de test cases)
+  - NFRs validation plan
 
 **Por cada story:**
 
 - Usa `.prompts/fase-4-shift-left-testing/story-test-cases.md`
 - Genera `epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+- **Trabaja en 5 FASES:**
+  1. **Critical Analysis** - Business + technical context de la story
+  2. **Story Quality Analysis** - Identificar ambiguities, gaps, edge cases NO cubiertos
+  3. **Refined Acceptance Criteria** - Refinar con datos específicos + edge cases
+  4. **Test Design** - Test cases (flexible, con parametrización si aplica)
+  5. **QA Feedback Report** - Preguntas y mejoras para PO/Dev ANTES de implementar
+
+**Contexto completo requerido:**
+
+- `.context/idea/business-model.md`
+- `.context/PRD/` (TODOS los archivos)
+- `.context/SRS/` (TODOS los archivos)
+- `.context/PBI/epics/EPIC-XXX/epic.md`
+- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
+
+**Beneficios:**
+
+- ✅ QA entiende el "por qué" de la feature (business context)
+- ✅ Identifica ambigüedades ANTES de implementación
+- ✅ Feedback temprano para mejorar stories (valor real de Shift-Left)
+- ✅ Test cases basados en arquitectura real (integration/API tests correctos)
+- ✅ NO forzar número fijo de test cases (depende de complejidad)
+- ✅ Parametrización cuando aplique (reduce duplicación)
+- ✅ Edge cases identificados proactivamente
 
 ### FASE 5: Planning (Dev)
 
@@ -95,12 +198,37 @@ PBI/
 
 ## 🎯 Output esperado
 
+### Para MVP Inicial (usando pbi-product-backlog.md)
+
 Al completar todas las fases para una story tendrás:
 
 - Definición clara (story.md)
 - Test cases detallados (test-cases.md)
 - Plan de implementación (implementation-plan.md)
 - **TODO en una carpeta** → Context Engineering optimizado
+
+### Para Features Post-MVP (usando pbi-add-feature.md)
+
+**Nivel 1 (Story Individual):**
+
+- Story creada en Jira con ID real
+- Carpeta local STORY-XXX/ con story.md
+- Epic.md y epic-tree.md actualizados
+
+**Nivel 2 (Épica Completa):**
+
+- Épica creada en Jira con ID real
+- Carpeta local EPIC-XXX/ con epic.md
+- Todas las stories creadas en Jira con IDs reales
+- Carpetas locales STORY-XXX/ con story.md
+- Epic-tree.md actualizado
+
+**Nivel 3 (Múltiples Épicas):**
+
+- Plan de división detallado generado
+- Roadmap de implementación
+- Análisis de dependencias
+- ⚠️ NINGÚN archivo creado (requiere aprobación y división primero)
 
 ## 📝 Nomenclatura de Carpetas
 

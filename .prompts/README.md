@@ -35,7 +35,8 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 #### **Fase 3: Specification** (Product Backlog)
 
-- `fase-3-specification/pbi-product-backlog.md` - Crear epic-tree, épicas y stories
+- `fase-3-specification/pbi-product-backlog.md` - Setup inicial: Crear epic-tree, épicas y stories del MVP
+- `fase-3-specification/pbi-add-feature.md` - ⭐ Agregar features post-MVP (analiza complejidad + crea incremental)
 
 #### **Fase 4: Shift-Left Testing** (QA temprano)
 
@@ -138,12 +139,64 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 - ✅ Trabajo incremental (menos tokens)
 - ✅ Trazabilidad perfecta (carpeta → Jira issue)
 
-#### **Paso 5: Fase 4 - Shift-Left Testing (por cada épica)**
+---
 
-1. Usa `feature-test-plan.md` → Genera `.context/PBI/epics/EPIC-XXX/feature-test-plan.md`
+#### **Paso 4B: Agregar Features Post-MVP** ⚡ **ANALIZA + CREA**
 
-**Por cada story de la épica:**
-2. Usa `story-test-cases.md` → Genera `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+**NUEVO:** Usa `pbi-add-feature.md` para agregar features después del MVP inicial.
+
+**¿Qué hace?**
+
+1. **Analiza la complejidad** de tu idea automáticamente
+2. **Clasifica en 3 niveles:**
+   - **Nivel 1:** Story individual → Agrega a épica existente
+   - **Nivel 2:** Épica completa → Crea épica + stories
+   - **Nivel 3:** Múltiples épicas → ⚠️ Genera plan + advierte (no crea nada)
+3. **Ejecuta o advierte** según clasificación
+
+**Input:**
+
+- Descripción de la feature/idea
+- Epic tree existente (para revisar épicas)
+
+**Beneficios:**
+
+- ✅ Inteligente: Analiza complejidad antes de crear
+- ✅ Flexible: Maneja desde 1 story hasta épicas completas
+- ✅ Seguro: Advierte si la idea es muy compleja (Nivel 3)
+- ✅ Incremental: Flujo Jira-First igual que setup inicial
+
+#### **Paso 5: Fase 4 - Shift-Left Testing (por cada épica)** 🔍 **ANÁLISIS CRÍTICO PRIMERO**
+
+**NUEVO ENFOQUE:** QA como analista crítico, no solo ejecutor de test cases.
+
+**Por cada épica (una vez):**
+
+1. Usa `feature-test-plan.md` → Genera:
+   - `.context/PBI/epics/EPIC-XXX/feature-test-plan.md`
+   - Incluye: Business context + Risk analysis + Critical questions for PO/Dev
+   - Requiere: TODO el contexto (idea, PRD completo, SRS completo, epic, stories)
+
+**Por cada story:**
+2. Usa `story-test-cases.md` → Genera:
+
+- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+- **5 FASES:**
+     1. Critical Analysis (business + technical context)
+     2. Story Quality Analysis (ambiguities, gaps, edge cases)
+     3. Refined Acceptance Criteria (con edge cases identificados)
+     4. Test Design (sin número fijo, con parametrización si aplica)
+     5. QA Feedback Report (para PO/Dev ANTES de implementar)
+
+**Características clave:**
+
+- ✅ Contexto completo (business + PRD + SRS + arquitectura + API contracts)
+- ✅ Análisis crítico antes de test design
+- ✅ Identificar ambigüedades y gaps en stories
+- ✅ Feedback temprano para PO/Dev (valor real de Shift-Left)
+- ✅ NO forzar número mínimo de test cases (depende de complejidad)
+- ✅ Parametrización de pruebas cuando aplique
+- ✅ Integration/API tests basados en architecture specs
 
 #### **Paso 6: Fase 5 - Planning (por cada épica)**
 
