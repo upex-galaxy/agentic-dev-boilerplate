@@ -104,6 +104,9 @@ aicode-starter/
 │   │   ├── pbi-product-backlog.md         Para: Setup MVP - epic-tree + épicas/stories (Jira-First)
 │   │   └── pbi-add-feature.md             Para: Post-MVP - Analiza + crea features (3 niveles)
 │   │
+│   ├── 📁 fase-3.5-frontend-scaffolding/  Para: Crear estructura inicial del frontend 🎨 NUEVO
+│   │   └── setup-frontend-skeleton.md     Para: Setup proyecto + páginas estratégicas moqueadas
+│   │
 │   ├── 📁 fase-4-shift-left-testing/      Para: Generar docs de testing
 │   │   ├── feature-test-plan.md           Para: Prompt de plan de pruebas (épica)
 │   │   └── story-test-cases.md            Para: Prompt de test cases (story)
@@ -186,6 +189,36 @@ Beneficio: Nomenclatura correcta desde el inicio (IDs reales de Jira)
 Quién: Product Owner, Product Manager
 ```
 
+#### 3.5️⃣ FASE 3.5: Frontend Scaffolding (Dev/Architect) 🎨 **NUEVO**
+
+```
+Input: .context/PRD/ + .context/SRS/ + .context/PBI/
+Usar: .prompts/fase-3.5-frontend-scaffolding/setup-frontend-skeleton.md
+
+Qué hace:
+  1. Analiza épicas/stories para identificar páginas estratégicas
+  2. Consulta docs oficiales con Context7 MCP (Next.js, Supabase, etc.)
+  3. Instala dependencias fundamentales en directorio actual
+  4. Crea estructura de carpetas según framework
+  5. Implementa 3-5 páginas core moqueadas (auth + dashboard + domain pages)
+  6. Genera componentes base reutilizables
+
+Output:
+  - Estructura completa del frontend (app/, components/, lib/, types/)
+  - Páginas estratégicas con UI básica (NO lógica completa)
+  - Archivos de configuración (tsconfig, tailwind, etc.)
+  - .context/frontend-architecture.md
+  - SETUP.md
+
+Restricciones:
+  ❌ NO usar create-next-app (trabaja en directorio actual)
+  ❌ NO implementar todos los criterios de aceptación
+  ✅ Solo páginas core del MVP (base para Fase 6)
+
+Beneficio: Esqueleto visual funcional que acelera Fase 6
+Quién: Senior Frontend Developer, Solution Architect
+```
+
 #### 4️⃣ FASE 4: Shift-Left Testing (QA)
 
 ```
@@ -258,13 +291,14 @@ Quién: QA Automation Engineer, SDET
 | **SINCRÓNICAS**  |                    |                      |                                   |                                        |
 | 1                | Constitution       | Founder/Cliente/PO   | Idea de negocio                   | `.context/idea/`                       |
 | 2                | Architecture       | Architect/PM/BA      | `.context/idea/`                  | `.context/PRD/` + `.context/SRS/`      |
-| **ASINCRÓNICAS** |                    |                      |                                   |                                        |
-| 3                | Specification      | PO/PM                | PRD + SRS                         | `.context/PBI/` (épicas + stories)     |
-| 4                | Shift-Left Testing | QA Engineer          | PBI                               | Test plans + test cases en PBI         |
-| 5                | Planning           | Tech Lead/Dev        | SRS + PBI                         | Implementation plans en PBI            |
-| 6                | Implementation     | Dev + IA             | Implementation plans + guidelines | Código (src/)                          |
-| 7                | Code Review        | Tech Lead/Senior Dev | Pull Request                      | PR aprobado                            |
-| 8                | Test Automation    | QA Automation/SDET   | PRD + SRS + PBI                   | `.context/guidelines/tae/` + `/tests/` |
+| **ASINCRÓNICAS** |                      |                         |                                   |                                        |
+| 3                | Specification        | PO/PM                   | PRD + SRS                         | `.context/PBI/` (épicas + stories)     |
+| 3.5              | Frontend Scaffolding | Frontend Dev/Architect  | PRD + SRS + PBI                   | Frontend structure + `.context/frontend-architecture.md` |
+| 4                | Shift-Left Testing   | QA Engineer             | PBI                               | Test plans + test cases en PBI         |
+| 5                | Planning             | Tech Lead/Dev           | SRS + PBI                         | Implementation plans en PBI            |
+| 6                | Implementation       | Dev + IA                | Implementation plans + guidelines | Código (src/)                          |
+| 7                | Code Review          | Tech Lead/Senior Dev    | Pull Request                      | PR aprobado                            |
+| 8                | Test Automation      | QA Automation/SDET      | PRD + SRS + PBI                   | `.context/guidelines/tae/` + `/tests/` |
 
 ### 🏗️ Arquitectura Unificada (PBI)
 
@@ -299,7 +333,7 @@ Quién: QA Automation Engineer, SDET
 | `.context/PBI/`            | Variable            | Fases 3-5 (depende de # épicas/stories) |
 | `.context/guidelines/`     | 6                   | Fases 6-7: Reference material           |
 | `.context/guidelines/tae/` | 10                  | Fase 8: Test Automation                 |
-| `.prompts/`                | 19                  | Generadores de documentación            |
+| `.prompts/`                | 20                  | Generadores de documentación (+ Fase 3.5) |
 | `docs/`                    | 9                   | Blueprints + MCP configs                |
 | **TOTAL BASE**             | **~55-58 archivos** | Sistema completo                        |
 
@@ -326,6 +360,7 @@ Quién: QA Automation Engineer, SDET
 6. **Mantener arquitectura unificada** (todo en carpeta de story)
 7. **Seguir nomenclatura estándar** (EPIC-{PROYECTO}-{NUM}-{nombre})
 8. **Fases 1-2 son sincrónicas** (una sola vez), **Fases 3-8 son asincrónicas** (por sprint)
+8. **Fase 3.5 es opcional** pero recomendada para proyectos frontend (scaffolding inicial)
 
 ### ❌ DON'Ts (No hacer)
 
@@ -346,9 +381,10 @@ Quién: QA Automation Engineer, SDET
 2. **Para proyectos existentes**: Empezar con análisis legacy → `.context/idea/legacy-analysis.md`
 3. **Setup inicial**: Completar Fases 1-2 (Constitution + Architecture) antes de entrar a sprints
 4. **Setup MVP (Fase 3)**: Usar `pbi-product-backlog.md` con flujo Jira-First para crear backlog inicial
-5. **Agregar features post-MVP**: Usar `pbi-add-feature.md` que analiza complejidad y crea incremental
-6. **Para implementación**: Leer `.context/guidelines/` + implementation plans (Fase 6)
-7. **Para testing**: Usar `.prompts/fase-8-test-automation/` después de tener PRD/SRS/PBI
+5. **Frontend Scaffolding (Fase 3.5)** 🎨: Usar `setup-frontend-skeleton.md` para crear estructura inicial del proyecto
+6. **Agregar features post-MVP**: Usar `pbi-add-feature.md` que analiza complejidad y crea incremental
+7. **Para implementación**: Leer `.context/guidelines/` + implementation plans (Fase 6)
+8. **Para testing**: Usar `.prompts/fase-8-test-automation/` después de tener PRD/SRS/PBI
 
 ### 💡 Tips para Fase 3 (Specification)
 
@@ -364,6 +400,35 @@ Quién: QA Automation Engineer, SDET
 - Deja que analice la complejidad (3 niveles)
 - Si es Nivel 3 (múltiples épicas), primero revisa el plan generado
 - Trabaja incremental siempre
+
+### 💡 Tips para Fase 3.5 (Frontend Scaffolding) 🎨
+
+**Cuándo ejecutar:**
+
+- Después de completar Fase 3 (PBI creado)
+- ANTES de Fase 4 (Shift-Left Testing)
+- Una sola vez por proyecto
+
+**Preparación:**
+
+- Asegúrate de tener PRD, SRS y PBI completos
+- Define el framework y tech stack (Next.js, Supabase, etc.)
+- Ten listas las credenciales de servicios externos
+
+**Durante ejecución:**
+
+- Deja que la IA consulte docs oficiales (Context7 MCP)
+- Confía en su decisión de qué páginas crear (3-5 core)
+- NO pidas implementar todas las páginas del MVP
+- Solo páginas estratégicas: auth + dashboard + 1-3 core
+
+**Después de ejecutar:**
+
+- Configura `.env.local` con credenciales reales
+- Prueba el servidor (`npm run dev`)
+- Valida que las páginas cargan correctamente
+- Muestra el resultado al equipo
+- Procede a Fase 4 (testing) con el scaffolding listo
 
 ---
 

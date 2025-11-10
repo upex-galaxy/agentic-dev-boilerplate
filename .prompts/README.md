@@ -38,6 +38,10 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 - `fase-3-specification/pbi-product-backlog.md` - Setup inicial: Crear epic-tree, épicas y stories del MVP
 - `fase-3-specification/pbi-add-feature.md` - ⭐ Agregar features post-MVP (analiza complejidad + crea incremental)
 
+#### **Fase 3.5: Frontend Scaffolding** 🎨 **NUEVO** (Setup inicial del frontend)
+
+- `fase-3.5-frontend-scaffolding/setup-frontend-skeleton.md` - ⭐ Crear estructura inicial del proyecto frontend con páginas estratégicas moqueadas
+
 #### **Fase 4: Shift-Left Testing** (QA temprano)
 
 - `fase-4-shift-left-testing/feature-test-plan.md` - Plan de pruebas a nivel épica
@@ -165,6 +169,53 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 - ✅ Flexible: Maneja desde 1 story hasta épicas completas
 - ✅ Seguro: Advierte si la idea es muy compleja (Nivel 3)
 - ✅ Incremental: Flujo Jira-First igual que setup inicial
+
+---
+
+#### **Paso 4C: Fase 3.5 - Frontend Scaffolding** 🎨 **NUEVO**
+
+**UNA SOLA VEZ después de completar Fase 3 (antes de Fase 4)**
+
+1. Usa `setup-frontend-skeleton.md` → Genera estructura inicial del proyecto
+
+**¿Qué hace este prompt?**
+
+1. **Analiza contexto:** Lee PRD, SRS y PBI para entender el proyecto
+2. **Consulta docs oficiales:** Usa Context7 MCP (Next.js, Supabase, etc.)
+3. **Decide páginas estratégicas:** Selecciona 3-5 páginas core (auth + dashboard + domain)
+4. **Setup proyecto:** Instala dependencias en directorio actual (NO crea subdirectorios)
+5. **Crea estructura:** Carpetas según framework (app/, components/, lib/)
+6. **Implementa UI base:** Páginas moqueadas con navegación básica
+
+**Input:**
+- PRD completo
+- SRS completo
+- PBI (epic-tree + épicas)
+- Framework especificado (ej: Next.js)
+- Tech stack (ej: Supabase, TailwindCSS)
+
+**Output:**
+- Estructura completa del frontend
+- 3-5 páginas con UI básica (sin lógica completa)
+- Componentes base reutilizables
+- Archivos de configuración
+- `.context/frontend-architecture.md`
+- `SETUP.md`
+
+**Beneficios:**
+
+- ✅ Esqueleto visual funcional para mostrar al equipo
+- ✅ Base sólida para Fase 6 (implementación más rápida)
+- ✅ Decisiones técnicas documentadas
+- ✅ Consulta docs oficiales actualizadas
+
+**IMPORTANTE:**
+- ❌ NO implementa todos los criterios de aceptación
+- ❌ NO usa `create-next-app` (trabaja en directorio actual)
+- ✅ Solo páginas estratégicas del MVP
+- ✅ UI básica + navegación (lógica completa en Fase 6)
+
+---
 
 #### **Paso 5: Fase 4 - Shift-Left Testing (por cada épica)** 🔍 **ANÁLISIS CRÍTICO PRIMERO**
 
