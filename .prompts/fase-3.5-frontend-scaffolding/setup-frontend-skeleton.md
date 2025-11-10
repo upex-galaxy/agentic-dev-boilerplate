@@ -5,1255 +5,767 @@ Actúa como Senior Frontend Architect, DevOps Engineer, y Full-Stack Developer e
 - PRD completo: [usar .context/PRD/]
 - SRS completo: [usar .context/SRS/]
 - PBI (épicas y stories): [usar .context/PBI/epic-tree.md + revisar épicas en .context/PBI/epics/]
-- Framework principal: [especificar: Next.js, React+Vite, etc.]
-- Tech stack adicional: [especificar: Supabase, TailwindCSS, ShadCN, etc.]
 
 ---
 
 ## 🎯 OBJETIVO
 
-Crear la estructura inicial del proyecto frontend (scaffolding) en el **directorio actual**, instalando dependencias fundamentales y generando componentes moqueados de páginas estratégicas, basándose en la documentación oficial más reciente de las tecnologías utilizadas.
+Crear la estructura inicial del proyecto frontend (scaffolding) en el **directorio actual**, consultando documentación oficial y generando páginas estratégicas moqueadas basándote en el análisis del contexto del proyecto.
 
 ---
 
 ## 🚨 RESTRICCIONES CRÍTICAS
 
 ### ❌ NO HACER:
-- **NO usar comandos tipo `create-next-app`, `create-vite`, `create-react-app`** (crean subdirectorios)
-- **NO crear subcarpetas para el proyecto** (ya estamos en el directorio correcto)
-- **NO instalar dependencias innecesarias** (solo fundamentales)
-- **NO implementar todas las historias de usuario** (solo páginas estratégicas)
-- **NO implementar todos los criterios de aceptación** (solo lógica mínima)
-- **NO hardcodear** configuraciones de DB o API (usar MCP cuando aplique)
+- **NO usar comandos como `create-next-app`, `create-vite`, `create-react-app`** - Estos crean subdirectorios
+- **NO crear subcarpetas para el proyecto** - Ya estamos en el directorio correcto
+- **NO instalar dependencias innecesarias** - Solo fundamentales
+- **NO implementar todas las historias de usuario** - Solo páginas estratégicas (3-5)
+- **NO implementar todos los criterios de aceptación** - Solo UI básica
+- **NO hardcodear nombres genéricos** (ej: "Dashboard", "Settings") - Usa nombres del dominio del negocio
+- **NO ejecutar comandos interactivos** (ej: `npm run dev`) - Solo comandos que terminen
+- **NO hacer commits automáticos** - Solo recomendar al usuario
 
 ### ✅ SÍ HACER:
-- **Trabajar en el directorio actual** (usar package.json existente)
-- **Usar Context7 MCP** para consultar docs oficiales (Next.js, Supabase, etc.)
-- **Seguir estructura del framework** (app/, components/, lib/, etc.)
-- **Instalar solo dependencias básicas** (framework + UI + auth + DB client)
-- **Crear 3-5 páginas estratégicas** (auth + home + core domain)
-- **Generar componentes moqueados** (UI básica + navegación)
-- **Explicar cada paso** mientras trabajas (para que el humano comprenda)
+- **Trabajar en el directorio actual** - Usar package.json existente
+- **Usar Context7 MCP** - Consultar docs oficiales (Next.js, Supabase, etc.)
+- **Analizar contexto del proyecto** - PRD, SRS, PBI completos
+- **Decidir estratégicamente** - Qué páginas crear según el negocio
+- **Seguir estructura del framework** - Consultar docs oficiales
+- **Explicar cada decisión** - Para que el usuario comprenda
+- **Validar con build** - `npm run build` (no comandos interactivos)
+- **Recomendar acciones** - No forzar (especialmente git commits)
 
 ---
 
 ## 📊 FASE 1: ANÁLISIS DE CONTEXTO
 
-**Acción:** Lee toda la documentación del proyecto para comprender qué se va a construir.
+**Objetivo:** Comprender profundamente el proyecto antes de crear cualquier código.
 
-### Paso 1.1: Leer PRD Completo
-**Files a leer:**
-- `.context/PRD/executive-summary.md`
-- `.context/PRD/user-personas.md`
-- `.context/PRD/mvp-scope.md`
-- `.context/PRD/user-journeys.md`
+### Paso 1.1: Leer Documentación del Proyecto
 
-**Objetivo:** Entender el dominio del negocio, usuarios objetivo, y valor principal.
+**Archivos a leer (TODOS):**
 
-**Output interno (no mostrar al usuario):**
-- ¿Qué problema resuelve el producto?
-- ¿Quiénes son los usuarios principales?
-- ¿Cuáles son las funcionalidades core del MVP?
+**PRD (Product Requirements):**
+- `.context/PRD/executive-summary.md` → Problema, solución, usuarios
+- `.context/PRD/user-personas.md` → Quiénes usarán el sistema
+- `.context/PRD/mvp-scope.md` → Épicas y funcionalidades principales
+- `.context/PRD/user-journeys.md` → Flujos de usuario principales
+
+**SRS (Software Requirements):**
+- `.context/SRS/functional-specs.md` → Requerimientos funcionales detallados
+- `.context/SRS/non-functional-specs.md` → Performance, security, etc.
+- `.context/SRS/architecture-specs.md` → **MUY IMPORTANTE:** Stack técnico, framework, patrones
+- `.context/SRS/api-contracts.yaml` → Endpoints disponibles
+
+**PBI (Product Backlog):**
+- `.context/PBI/epic-tree.md` → Vista completa de épicas del MVP
+- `.context/PBI/epics/*/epic.md` → Revisar TODAS las épicas
+- `.context/PBI/epics/*/stories/*/story.md` → Escanear stories principales
+
+**Qué identificar:**
+
+1. **Dominio del negocio:**
+   - ¿Qué problema resuelve? (PRD)
+   - ¿Quiénes son los usuarios? (PRD)
+   - ¿Cuál es el vocabulario del dominio? (nombres, entidades)
+
+2. **Stack técnico:**
+   - Framework frontend (Next.js, React+Vite, SvelteKit, etc.)
+   - UI Library (TailwindCSS, Material UI, Chakra, etc.)
+   - Auth provider (Supabase, Auth0, Firebase, NextAuth, etc.)
+   - Backend/DB (Supabase, Firebase, custom API, etc.)
+   - State management (Zustand, Redux, Jotai, etc.)
+
+3. **Funcionalidades core:**
+   - Épicas con mayor prioridad
+   - Páginas que aparecen en múltiples user journeys
+   - Entidades principales del negocio
+
+**Output de este paso (NO mostrar al usuario, uso interno):**
+- Stack técnico identificado
+- Dominio del negocio comprendido
+- Lista de épicas prioritarias
+- Vocabulario del dominio (nombres correctos)
 
 ---
 
-### Paso 1.2: Leer SRS Completo
-**Files a leer:**
-- `.context/SRS/functional-specs.md`
-- `.context/SRS/non-functional-specs.md`
-- `.context/SRS/architecture-specs.md`
-- `.context/SRS/api-contracts.yaml`
+### Paso 1.2: Consultar Documentación Oficial (Context7 MCP)
 
-**Objetivo:** Entender la arquitectura técnica, stack, y endpoints disponibles.
+**Acción:** Usa el MCP de Context7 para consultar la documentación oficial de las tecnologías del stack identificado.
 
-**Output interno (no mostrar al usuario):**
-- ¿Qué stack técnico se usa? (Frontend framework, Backend, DB, Auth)
-- ¿Qué patrones arquitectónicos se siguen? (API REST, GraphQL, etc.)
-- ¿Qué servicios externos se integran? (Supabase, Firebase, etc.)
+**Queries recomendadas:**
 
----
+1. **Framework:**
+   - "[Framework] project structure best practices latest version"
+   - "[Framework] routing configuration"
+   - "[Framework] recommended folder structure"
 
-### Paso 1.3: Leer PBI (Épicas y Stories)
-**Files a leer:**
-- `.context/PBI/epic-tree.md`
-- `.context/PBI/epics/*/epic.md` (revisar todas las épicas)
-- `.context/PBI/epics/*/stories/*/story.md` (escanear stories principales)
+2. **Auth Provider:**
+   - "[Auth Provider] client setup [Framework]"
+   - "[Auth Provider] authentication flow [Framework]"
 
-**Objetivo:** Identificar qué funcionalidades están planificadas y cuáles son prioritarias.
+3. **UI Library:**
+   - "[UI Library] setup [Framework]"
+   - "[UI Library] configuration best practices"
 
-**Output interno (no mostrar al usuario):**
-- Lista de todas las épicas del MVP
-- Lista de user stories por épica
-- Funcionalidades que requieren páginas/componentes
-
----
-
-### Paso 1.4: Consultar Documentación Oficial (Context7 MCP)
-
-**Acción:** Usa el MCP de Context7 para consultar la documentación oficial de las tecnologías del stack.
-
-**Tecnologías a consultar (según el stack):**
-- Framework frontend (ej: Next.js 15, React 19)
-- UI Library (ej: TailwindCSS, ShadCN UI)
-- Backend/Auth (ej: Supabase Auth, NextAuth)
-- State Management (ej: Zustand, React Query)
-- Routing (si aplica - Next.js tiene routing built-in)
-
-**Queries recomendadas para Context7:**
-- "Next.js project structure best practices" (o framework correspondiente)
-- "Supabase client setup Next.js" (o auth provider correspondiente)
-- "TailwindCSS setup Next.js" (o UI framework correspondiente)
-- "Next.js app router authentication flow" (o routing correspondiente)
-
-**Objetivo:** Obtener la forma más actualizada y recomendada de estructurar el proyecto.
+**Objetivo:** Obtener información actualizada sobre:
+- Cómo estructurar el proyecto según el framework
+- Cómo configurar dependencias correctamente
+- Patrones recomendados por las docs oficiales
 
 **Output esperado (mostrar al usuario):**
+
 ```markdown
-## 📚 Documentación Consultada
+## 📚 Análisis Completado
 
-He consultado la documentación oficial de:
-- **[Framework]**: [Resumen de conceptos clave aplicables]
-- **[Auth Provider]**: [Resumen de setup recomendado]
-- **[UI Library]**: [Resumen de configuración]
-- **[Otros]**: [Resumen si aplica]
+### Stack Técnico Identificado:
+- **Framework:** [Nombre y versión del SRS]
+- **Auth Provider:** [Identificado del SRS]
+- **UI Library:** [Identificado del SRS]
+- **Backend/DB:** [Identificado del SRS]
+- [Otros componentes relevantes]
 
-**Decisiones técnicas basadas en docs oficiales:**
-- [Decisión 1]: [Razón basada en docs]
-- [Decisión 2]: [Razón basada en docs]
+### Dominio del Negocio:
+- **Problema que resuelve:** [Resumen 1 línea del PRD]
+- **Usuarios principales:** [Listar personas del PRD]
+- **Entidades core:** [Listar entidades principales identificadas]
+
+### Épicas Prioritarias (del PBI):
+1. [EPIC-XXX]: [Nombre] - [Razón de prioridad]
+2. [EPIC-YYY]: [Nombre] - [Razón de prioridad]
+3. [EPIC-ZZZ]: [Nombre] - [Razón de prioridad]
+
+### Documentación Consultada:
+He consultado las docs oficiales de:
+- **[Framework]**: [Conceptos clave aplicables]
+- **[Auth Provider]**: [Setup recomendado]
+- **[UI Library]**: [Configuración recomendada]
+
+**Próximo paso:** Decidir qué páginas crear basándome en este análisis.
 ```
 
 ---
 
 ## 🧠 FASE 2: DECISIÓN ESTRATÉGICA DE PÁGINAS
 
-**Acción:** Basándote en el análisis de Fase 1, decide qué páginas crear en este scaffolding.
+**Objetivo:** Decidir inteligentemente qué páginas crear (3-5 máximo) basándote en el análisis anterior.
 
 ### Criterios de Selección:
 
-#### ✅ Páginas Obligatorias (Core):
-1. **Autenticación** (pre-requisito técnico):
-   - Login page (moqueada básica)
-   - [Opcional: Signup si es crítico - sino dejar para después]
+**Páginas obligatorias (si aplican al proyecto):**
 
-2. **Página principal post-login** (arquitectura base):
-   - Dashboard / Home (con layout, navbar, sidebar básicos)
+1. **Autenticación** (solo si el proyecto requiere auth):
+   - Analiza PRD/SRS: ¿El sistema requiere usuarios con login?
+   - Si SÍ → Incluir página de login/auth
+   - Si NO → Omitir
 
-#### ✅ Páginas Core del Dominio (1-3 páginas):
-Selecciona las **1-3 páginas más representativas** del negocio basándote en:
-- **Criterio 1:** Páginas que aparecen en múltiples user journeys (PRD)
-- **Criterio 2:** Épicas con mayor prioridad en epic-tree.md
-- **Criterio 3:** Páginas que demuestran el valor core del producto
+2. **Página principal post-login o home** (casi siempre aplica):
+   - ¿Cómo se llama en el contexto del negocio?
+   - Ejemplos: "Home", "Proyectos", "Mi Espacio", etc.
+   - Usa vocabulario del dominio (NO genérico "Dashboard")
 
-**Ejemplos por tipo de proyecto:**
-- **Plataforma de mentores:** "Lista de mentores" + "Perfil de mentor"
-- **E-commerce:** "Catálogo de productos" + "Carrito"
-- **SaaS de proyectos:** "Lista de proyectos" + "Vista de proyecto"
+**Páginas del dominio (1-3 páginas):**
 
-#### ❌ Páginas que NO crear:
-- Páginas secundarias (configuraciones avanzadas, perfil detallado)
-- Flujos completos multi-paso (signup con 5 pasos)
-- Páginas de detalle complejas (a menos que sean MUY core)
-- Páginas administrativas (admin panels)
+Analiza épicas y user journeys para identificar:
+
+- **Páginas que aparecen en múltiples user journeys** (alta prioridad)
+- **Épicas marcadas como "MUST HAVE" o "HIGH"** en el PBI
+- **Funcionalidades core del MVP** (del PRD mvp-scope.md)
+
+**Criterios para descartar:**
+- ❌ Páginas secundarias (configuraciones avanzadas)
+- ❌ Páginas administrativas (admin panels)
+- ❌ Flujos multi-paso complejos (wizards)
+- ❌ Páginas de detalle complejas
+
+**Análisis de layout:**
+
+Basándote en las páginas identificadas, decide:
+- ¿Necesita sidebar? (si hay 4+ páginas)
+- ¿Necesita navbar? (casi siempre)
+- ¿Es SPA simple? (1-2 páginas)
+- ¿Tiene secciones diferenciadas? (auth vs app)
 
 ---
 
-### Paso 2.1: Generar Plan de Páginas
-
-**Output esperado (mostrar al usuario):**
+### Output Esperado (mostrar al usuario):
 
 ```markdown
-## 🗂️ Páginas Seleccionadas para Scaffolding
+## 🗂️ Plan de Páginas Estratégicas
 
-**Total de páginas a crear:** [número] (recomendado: 3-5)
-
-### 1️⃣ Autenticación
-**Página:** `/login`
-**Razón:** Pre-requisito técnico para demostrar flujo de autenticación.
-**Funcionalidad moqueada:**
-- Formulario login (email + password)
-- Botón "Sign in" (conecta con auth provider)
-- [NO implementar: recuperación password, validaciones complejas]
-**Épica relacionada:** [EPIC-XXX si aplica]
+**Total de páginas a crear:** [número] (3-5 recomendado)
 
 ---
 
-### 2️⃣ Dashboard/Home
-**Página:** `/dashboard` o `/home`
-**Razón:** Página principal post-login, demuestra layout base de la aplicación.
-**Funcionalidad moqueada:**
-- Layout con navbar + sidebar
-- Placeholder content (tarjetas moqueadas)
-- Navegación básica
-**Épica relacionada:** [EPIC-XXX si aplica]
+### Decisión de Layout:
+
+**Tipo de layout:** [Sidebar + Navbar | Navbar solo | Simple]
+**Razón:** [Explicar basándote en número de páginas y contexto del negocio]
 
 ---
 
-### 3️⃣ [Página Core 1]
-**Página:** `/[ruta]`
-**Razón:** [Explicar por qué esta página es estratégica para el MVP]
+### Páginas Seleccionadas:
+
+#### 1️⃣ [Nombre de Página] (Autenticación - si aplica)
+**Ruta:** `/[ruta]`
+**Razón:** [Por qué esta página es necesaria]
 **Funcionalidad moqueada:**
-- [Listar elementos clave a implementar]
+- [Listar elementos básicos a implementar]
 - [Qué NO se implementa todavía]
-**Épica relacionada:** [EPIC-XXX]
-**Stories relacionadas:** [STORY-XXX, STORY-YYY]
+
+**Épica relacionada:** [EPIC-XXX] (si aplica)
+**Stories relacionadas:** [STORY-XXX, STORY-YYY] (si aplica)
 
 ---
 
-### 4️⃣ [Página Core 2] (si aplica)
-**Página:** `/[ruta]`
-**Razón:** [Explicar]
+#### 2️⃣ [Nombre de Página] (Página Principal)
+**Ruta:** `/[ruta]`
+**Razón:** [Por qué esta página es estratégica según PRD/PBI]
 **Funcionalidad moqueada:**
 - [Elementos clave]
+
 **Épica relacionada:** [EPIC-XXX]
 
 ---
 
-### ❌ Páginas Diferidas (NO crear ahora)
-Las siguientes páginas se implementarán en Fase 6 (Implementation) al desarrollar las stories correspondientes:
-- `/[página-secundaria-1]` - Razón: [Explicar]
-- `/[página-secundaria-2]` - Razón: [Explicar]
+#### 3️⃣ [Nombre de Página Core 1]
+**Ruta:** `/[ruta]`
+**Razón:** [Justificar con user journeys o épicas prioritarias]
+**Funcionalidad moqueada:**
+- [Elementos clave]
+
+**Épica relacionada:** [EPIC-XXX]
+**Stories relacionadas:** [STORY-XXX]
+
+---
+
+[Repetir para página 4 y 5 si aplica]
+
+---
+
+### ❌ Páginas Diferidas (implementar en Fase 6)
+
+Las siguientes páginas se implementarán durante Fase 6 al desarrollar las stories correspondientes:
+
+- `/[página]` - Razón: [Por qué no es prioritaria ahora]
+- `/[página]` - Razón: [Por qué no es prioritaria ahora]
 - ...
 
-**Beneficio:** Nos enfocamos en lo esencial para tener un esqueleto visual funcional.
+**Beneficio:** Enfoque en lo esencial para tener esqueleto visual funcional.
+
+---
+
+**Próximo paso:** Setup del proyecto con instalación de dependencias.
 ```
 
 ---
 
 ## 🏗️ FASE 3: SETUP DEL PROYECTO
 
-**Acción:** Configurar el proyecto en el directorio actual siguiendo las mejores prácticas del framework.
+**Objetivo:** Configurar el proyecto en el directorio actual instalando dependencias y creando estructura.
 
 ### Paso 3.1: Verificar Entorno Actual
 
-**Acción:** Explica al usuario qué encontraste en el directorio actual.
+**Explica al usuario qué encontraste:**
 
-**Comandos a ejecutar:**
 ```bash
-# Ver qué archivos ya existen
+# Ver archivos existentes
 ls -la
 
-# Verificar package.json existente
+# Ver package.json actual
 cat package.json
 ```
 
-**Output esperado (mostrar al usuario):**
+**Output esperado:**
+
 ```markdown
 ## 🔍 Análisis del Directorio Actual
 
 **Directorio de trabajo:** [pwd]
 
 **Archivos encontrados:**
-- ✅ `package.json` encontrado (lo usaremos)
-- ✅ `.git/` encontrado (repositorio inicializado)
+- ✅ `package.json` encontrado → Lo usaremos como base
+- ✅ `.git/` encontrado → Repositorio Git inicializado
 - ✅ `.context/` con documentación del proyecto
-- [Listar otros archivos relevantes si existen]
+- [Listar otros archivos relevantes]
 
-**Próximo paso:** Instalar dependencias fundamentales en este mismo directorio.
+**Estado del package.json:**
+- Dependencias existentes: [listar si hay]
+- Scripts existentes: [listar si hay]
+
+**Próximo paso:** Instalar dependencias fundamentales sin romper lo existente.
 ```
 
 ---
 
 ### Paso 3.2: Instalar Dependencias Fundamentales
 
-**Acción:** Instala SOLO las dependencias necesarias para levantar el frontend básico.
+**IMPORTANTE:** Explica CADA dependencia ANTES de instalarla.
 
-**⚠️ IMPORTANTE:** Explica CADA dependencia antes de instalarla.
+**Proceso:**
 
-**Categorías de dependencias:**
+1. **Identifica categorías de dependencias necesarias:**
+   - Core framework
+   - UI library
+   - Auth provider
+   - Developer tools (TypeScript, ESLint)
 
-#### 📦 Core Framework
-```bash
-# Ejemplo Next.js (ajustar según framework especificado)
-npm install next@latest react@latest react-dom@latest
-```
+2. **Por cada categoría, explica al usuario:**
 
-**Explicar al usuario:**
 ```markdown
-### 📦 Instalando Framework Core
+### 📦 Instalando [Categoría]
 
 **Dependencias a instalar:**
-- `next@latest`: Framework de React para producción
-- `react@latest`: Biblioteca UI
-- `react-dom@latest`: React DOM renderer
+- `[paquete-1]`: [Para qué sirve]
+- `[paquete-2]`: [Para qué sirve]
 
-**Razón:** Estas son las dependencias mínimas para levantar una aplicación [Framework].
-```
+**Razón:** [Por qué son necesarias para este proyecto específico]
 
----
-
-#### 🎨 UI Framework
+**Comando:**
 ```bash
-# Ejemplo TailwindCSS + ShadCN
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-npm install class-variance-authority clsx tailwind-merge
-# ShadCN (si aplica) - se instalan componentes individualmente después
+npm install [paquetes...]
 ```
 
-**Explicar al usuario:**
-```markdown
-### 🎨 Instalando UI Framework
-
-**Dependencias a instalar:**
-- `tailwindcss`: Framework CSS utility-first
-- `postcss`, `autoprefixer`: Procesadores CSS
-- `class-variance-authority`, `clsx`, `tailwind-merge`: Utilidades para manejo de clases
-
-**Razón:** TailwindCSS es el framework CSS especificado en SRS. Estas utilidades facilitan el manejo de estilos dinámicos.
+**Instalando...**
 ```
 
----
+3. **Ejecuta instalaciones:**
 
-#### 🔐 Auth Provider
 ```bash
-# Ejemplo Supabase
-npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
+# Framework core (ajustar según identificado)
+npm install [framework-packages]
+
+# UI Library (ajustar según identificado)
+npm install [ui-packages]
+
+# Auth Provider (ajustar según identificado)
+npm install [auth-packages]
+
+# TypeScript + Dev Tools
+npm install -D typescript @types/react @types/node eslint prettier
 ```
 
-**Explicar al usuario:**
-```markdown
-### 🔐 Instalando Cliente de Autenticación
-
-**Dependencias a instalar:**
-- `@supabase/supabase-js`: Cliente oficial de Supabase
-- `@supabase/auth-helpers-nextjs`: Helpers de autenticación para Next.js
-
-**Razón:** Supabase es nuestro proveedor de autenticación y base de datos según SRS Architecture Specs.
-```
-
----
-
-#### 🗂️ State Management (opcional)
-```bash
-# Ejemplo Zustand (si el proyecto lo requiere)
-npm install zustand
-```
-
-**Explicar al usuario:**
-```markdown
-### 🗂️ Instalando State Management (Opcional)
-
-**Dependencia a instalar:**
-- `zustand`: State management ligero para React
-
-**Razón:** [Solo si SRS lo especifica o si las páginas seleccionadas requieren estado global compartido]
-
-**Nota:** Si no es necesario ahora, se puede agregar después en Fase 6.
-```
-
----
-
-#### 🛠️ Developer Tools
-```bash
-# TypeScript (si aplica)
-npm install -D typescript @types/react @types/node
-
-# ESLint (si no existe)
-npm install -D eslint eslint-config-next
-
-# Prettier (opcional pero recomendado)
-npm install -D prettier eslint-config-prettier
-```
-
-**Explicar al usuario:**
-```markdown
-### 🛠️ Instalando Developer Tools
-
-**Dependencias a instalar:**
-- `typescript`: Superset tipado de JavaScript
-- `@types/react`, `@types/node`: Tipos de TypeScript
-- `eslint`, `eslint-config-next`: Linter para calidad de código
-- `prettier`: Formateador de código
-
-**Razón:** TypeScript es especificado en SRS para type-safety. ESLint y Prettier aseguran calidad y consistencia del código.
-```
+**NO hardcodear paquetes específicos** - Usa los identificados del SRS.
 
 ---
 
 ### Paso 3.3: Crear Estructura de Carpetas
 
-**Acción:** Crea la estructura de carpetas según las mejores prácticas del framework.
+**Acción:** Consulta las docs oficiales del framework (vía Context7 si es necesario) y crea la estructura recomendada.
 
-**⚠️ IMPORTANTE:** Explica CADA carpeta antes de crearla.
+**IMPORTANTE:** La estructura varía según framework:
+- Next.js App Router → `app/`, `components/`, `lib/`
+- Next.js Pages Router → `pages/`, `components/`, `lib/`
+- React+Vite → `src/`, `components/`, `utils/`
+- SvelteKit → `src/routes/`, `src/lib/`
 
-**Estructura recomendada (Next.js App Router):**
-```
-/
-├── app/                    # Next.js App Router (páginas y layouts)
-│   ├── (auth)/            # Grupo de rutas de autenticación
-│   │   └── login/
-│   │       └── page.tsx
-│   ├── (dashboard)/       # Grupo de rutas protegidas
-│   │   ├── layout.tsx     # Layout con sidebar/navbar
-│   │   ├── page.tsx       # Dashboard home
-│   │   └── [otras-rutas]/ # Páginas core seleccionadas
-│   ├── layout.tsx         # Root layout
-│   └── globals.css        # Estilos globales
-│
-├── components/            # Componentes reutilizables
-│   ├── ui/               # Componentes UI básicos (ShadCN)
-│   ├── auth/             # Componentes de autenticación
-│   └── [domain]/         # Componentes específicos del dominio
-│
-├── lib/                  # Utilidades y configuraciones
-│   ├── supabase/        # Cliente Supabase
-│   │   ├── client.ts    # Cliente browser
-│   │   └── server.ts    # Cliente server
-│   └── utils.ts         # Utilidades generales
-│
-├── types/               # TypeScript types/interfaces
-│   └── index.ts
-│
-├── public/              # Assets estáticos
-│   └── images/
-│
-├── .env.local.example   # Template de variables de entorno
-├── .gitignore
-├── next.config.js       # Configuración Next.js
-├── tailwind.config.ts   # Configuración Tailwind
-├── tsconfig.json        # Configuración TypeScript
-└── package.json         # Ya existe
-```
+**NO asumir estructura específica** - Consulta docs y crea según framework real.
 
-**Comandos a ejecutar (explicar mientras creas):**
-```bash
-# Crear estructura base
-mkdir -p app/{(auth)/login,(dashboard)} components/{ui,auth} lib/supabase types public/images
+**Ejemplo de explicación al usuario:**
 
-# Explicar cada creación al usuario
-echo "✅ Creada carpeta app/ - Aquí van todas las páginas (Next.js App Router)"
-echo "✅ Creada carpeta app/(auth)/login - Grupo de rutas de autenticación"
-echo "✅ Creada carpeta app/(dashboard) - Grupo de rutas protegidas post-login"
-echo "✅ Creada carpeta components/ - Componentes reutilizables"
-echo "✅ Creada carpeta components/ui - Componentes UI básicos"
-echo "✅ Creada carpeta lib/supabase - Cliente de Supabase (browser + server)"
-echo "✅ Creada carpeta types/ - Definiciones de tipos TypeScript"
-```
-
-**Output esperado (mostrar al usuario):**
 ```markdown
-## 📁 Estructura de Carpetas Creada
+## 📁 Creando Estructura de Carpetas
 
-He creado la siguiente estructura siguiendo las mejores prácticas de [Framework]:
+Basándome en las mejores prácticas de **[Framework]** (consultadas de docs oficiales), voy a crear la siguiente estructura:
 
 ```
-[Mostrar árbol de carpetas creado]
+[Mostrar árbol de carpetas según framework identificado]
 ```
 
 **Explicación de carpetas clave:**
-- **`app/`**: Directorio principal de Next.js App Router. Cada subcarpeta es una ruta.
-- **`app/(auth)/`**: Grupo de rutas para autenticación (login, signup). Los paréntesis indican que el nombre no aparece en la URL.
-- **`app/(dashboard)/`**: Grupo de rutas protegidas post-login con layout compartido.
-- **`components/`**: Componentes reutilizables organizados por tipo/dominio.
-- **`lib/`**: Lógica de negocio, configuraciones, clientes de APIs.
-- **`types/`**: Definiciones de tipos TypeScript globales.
+- `[carpeta-1]/`: [Propósito según framework]
+- `[carpeta-2]/`: [Propósito según framework]
+- `[carpeta-3]/`: [Propósito según framework]
 
-**Nota:** Esta estructura es escalable y sigue el patrón recomendado por la documentación oficial de [Framework].
+**Creando estructura...**
 ```
+
+```bash
+# Crear carpetas (ajustar según framework)
+mkdir -p [carpetas según framework identificado]
+```
+
+**Ejemplo (NO hardcodear esto, es solo ilustrativo):**
+- Si es Next.js App Router: `app/`, `components/`, `lib/`, `types/`
+- Si es Vite: `src/`, `src/components/`, `src/utils/`, `src/types/`
 
 ---
 
 ### Paso 3.4: Crear Archivos de Configuración
 
-**Acción:** Crea archivos de configuración necesarios (si no existen).
+**Acción:** Crea configuraciones mínimas necesarias según el stack.
 
-#### **next.config.js** (o equivalente del framework)
-```typescript
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  images: {
-    domains: ['[dominio-si-aplica]'], // Ej: Supabase Storage
-  },
-  // Agregar otras configuraciones según SRS
-}
+**IMPORTANTE:** NO copies/pegues configs completas hardcodeadas.
 
-module.exports = nextConfig
-```
+**Proceso:**
 
-**Explicar al usuario:**
+1. **Identifica qué configs necesita el proyecto** (del SRS + framework)
+2. **Consulta Context7 si es necesario** para obtener configs recomendadas
+3. **Crea archivos básicos** explicando cada uno
+
+**Archivos comunes (ajustar según stack):**
+
+- Config del framework (ej: `next.config.js`, `vite.config.ts`)
+- TypeScript (`tsconfig.json`)
+- UI Library (ej: `tailwind.config.ts`)
+- ESLint (`.eslintrc.json`)
+- Environment vars (`.env.local.example`)
+
+**Formato de explicación:**
+
 ```markdown
-### ⚙️ Creando next.config.js
+### ⚙️ Creando [Nombre de Config]
 
-**Propósito:** Configuración principal de Next.js.
+**Archivo:** `[nombre-archivo]`
+**Propósito:** [Para qué sirve en este proyecto]
 
-**Configuraciones aplicadas:**
-- Dominios permitidos para imágenes (si se usa Next/Image)
-- [Otras configuraciones según SRS]
+**Configuraciones clave aplicadas:**
+- [Config 1]: [Razón]
+- [Config 2]: [Razón]
 
-**Nota:** Configuración mínima. Se extenderá en Fase 6 según necesidades.
+**Nota:** [Alguna nota relevante si aplica]
+
+**Creando archivo...**
 ```
 
----
+**Para `.env.local.example`:**
 
-#### **tailwind.config.ts**
-```typescript
-import type { Config } from 'tailwindcss'
-
-const config: Config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      // Extender tema según design system si aplica
-    },
-  },
-  plugins: [],
-}
-export default config
-```
-
-**Explicar al usuario:**
 ```markdown
-### 🎨 Creando tailwind.config.ts
+### 🔐 Creando Template de Variables de Entorno
 
-**Propósito:** Configuración de TailwindCSS.
+**Archivo:** `.env.local.example`
 
-**Content paths:** Especifica dónde buscar clases de Tailwind (app/, components/).
+**Variables definidas (basadas en SRS):**
+- `[VAR_1]`: [Descripción - ej: URL del backend]
+- `[VAR_2]`: [Descripción - ej: API Key de Supabase]
 
-**Theme:** Configuración base. Se extenderá con design system en Fase 6.
-```
+**⚠️ ACCIÓN REQUERIDA DEL USUARIO:**
 
----
+1. Copia este archivo a `.env.local`:
+   ```bash
+   cp .env.local.example .env.local
+   ```
 
-#### **tsconfig.json**
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-```
+2. Reemplaza los valores de ejemplo con tus credenciales reales
 
-**Explicar al usuario:**
-```markdown
-### 📘 Creando tsconfig.json
+3. `.env.local` ya está en `.gitignore` (no se commiteará)
 
-**Propósito:** Configuración de TypeScript.
-
-**Configuraciones clave:**
-- `strict: true`: Mode estricto habilitado (SRS requirement)
-- `paths: { "@/*": ["./*"] }`: Permite imports absolutos con `@/`
-- Next.js plugin habilitado
-
-**Ejemplo de uso:**
-```typescript
-// En lugar de: import { Button } from '../../components/ui/button'
-import { Button } from '@/components/ui/button'
-```
-```
-
----
-
-#### **.env.local.example**
-```bash
-# Supabase (o auth provider correspondiente)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Otras variables según SRS
-# [Agregar según necesidad]
-```
-
-**Explicar al usuario:**
-```markdown
-### 🔐 Creando .env.local.example
-
-**Propósito:** Template de variables de entorno necesarias.
-
-**Variables definidas:**
-- `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto Supabase
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: API Key pública de Supabase
-
-**⚠️ ACCIÓN REQUERIDA:**
-1. Copia este archivo a `.env.local`
-2. Reemplaza los valores con tus credenciales reales de Supabase
-3. `.env.local` está en `.gitignore` (no se commitea)
-
-**Nota:** Usa Supabase MCP para obtener las credenciales reales si las necesitas.
+**Tip:** Puedes usar herramientas MCP (ej: Supabase MCP) para obtener credenciales reales si las necesitas.
 ```
 
 ---
 
 ## 🎨 FASE 4: IMPLEMENTAR COMPONENTES BASE
 
-**Acción:** Crear componentes base reutilizables y configuraciones necesarias.
+**Objetivo:** Crear utilidades, clientes, y componentes base reutilizables.
 
-### Paso 4.1: Cliente de Supabase
+### Paso 4.1: Clientes de Auth/Backend
 
-**File:** `lib/supabase/client.ts`
+**Acción:** Crea clientes según el auth provider identificado.
 
-```typescript
-import { createBrowserClient } from '@supabase/ssr'
+**IMPORTANTE:** NO hardcodear código de Supabase si el proyecto usa otro provider.
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
-```
+**Proceso:**
 
-**Explicar al usuario:**
+1. **Identifica el provider** (del SRS)
+2. **Consulta Context7** para obtener setup recomendado
+3. **Crea archivos de cliente** explicando su propósito
+
+**Ejemplo de explicación:**
+
 ```markdown
-### 🔌 Creando Cliente de Supabase (Browser)
+### 🔌 Creando Cliente de [Auth Provider]
 
-**File:** `lib/supabase/client.ts`
+**Provider identificado:** [Nombre del SRS]
 
-**Propósito:** Cliente de Supabase para uso en componentes del lado del cliente.
+**Archivos a crear:**
+- `lib/[provider]/client.ts` - Cliente para uso en browser/cliente
+- `lib/[provider]/server.ts` - Cliente para uso en server (si aplica)
 
-**Uso:**
-```typescript
-import { createClient } from '@/lib/supabase/client'
+**Propósito:** Estos clientes permiten autenticación y acceso a [servicios del provider].
 
-const supabase = createClient()
-await supabase.auth.signIn(...)
+**Uso posterior:**
+- En Client Components: importar desde `client.ts`
+- En Server Components: importar desde `server.ts`
+
+**Creando archivos basados en docs oficiales de [Provider]...**
 ```
 
-**Nota:** Este cliente se usa en Client Components de React.
-```
-
----
-
-**File:** `lib/supabase/server.ts`
-
-```typescript
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-
-export async function createClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-}
-```
-
-**Explicar al usuario:**
-```markdown
-### 🔌 Creando Cliente de Supabase (Server)
-
-**File:** `lib/supabase/server.ts`
-
-**Propósito:** Cliente de Supabase para uso en Server Components y API Routes.
-
-**Uso:**
-```typescript
-import { createClient } from '@/lib/supabase/server'
-
-const supabase = await createClient()
-const { data: user } = await supabase.auth.getUser()
-```
-
-**Nota:** Este cliente se usa en Server Components y Route Handlers.
-```
+**Crea los archivos** consultando Context7 o siguiendo docs del provider (NO pegues snippets hardcodeados de 50+ líneas).
 
 ---
 
 ### Paso 4.2: Utilidades Comunes
 
-**File:** `lib/utils.ts`
+**Acción:** Crea utilidades básicas (ej: función `cn` para TailwindCSS si se usa).
 
-```typescript
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+**Mantén esto minimalista** - Solo utilidades que sabes que se usarán.
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-```
-
-**Explicar al usuario:**
 ```markdown
 ### 🛠️ Creando Utilidades Comunes
 
-**File:** `lib/utils.ts`
+**Archivo:** `lib/utils.ts` (o ubicación según framework)
 
-**Propósito:** Funciones auxiliares reutilizables.
+**Utilidades incluidas:**
+- [Utilidad 1]: [Para qué sirve]
+- [Utilidad 2]: [Para qué sirve]
 
-**Función `cn`:** Combina clases de TailwindCSS de forma inteligente (merge sin duplicados).
+**Ejemplo de uso:** [Mostrar brevemente]
 
-**Uso:**
-```typescript
-import { cn } from '@/lib/utils'
-
-<div className={cn("px-4 py-2", isActive && "bg-blue-500")} />
-```
+**Creando archivo...**
 ```
 
 ---
 
-### Paso 4.3: Tipos Comunes
+### Paso 4.3: Tipos TypeScript Base
 
-**File:** `types/index.ts`
+**Acción:** Crea tipos básicos según el dominio del negocio.
 
-```typescript
-// User types (basado en Supabase Auth)
-export interface User {
-  id: string
-  email: string
-  // Agregar otros campos según schema de Supabase
-}
+**IMPORTANTE:** Usa entidades del dominio (del PRD/SRS/PBI), NO tipos genéricos.
 
-// Agregar otros tipos según el dominio del negocio
-// Ejemplo para plataforma de mentores:
-export interface Mentor {
-  id: string
-  name: string
-  bio: string
-  skills: string[]
-  // Campos según DB schema
-}
-
-// Agregar más tipos según las páginas que vayas a crear
-```
-
-**Explicar al usuario:**
 ```markdown
 ### 📘 Creando Tipos TypeScript
 
-**File:** `types/index.ts`
+**Archivo:** `types/index.ts` (o ubicación según framework)
 
-**Propósito:** Definiciones de tipos globales del proyecto.
+**Tipos definidos (basados en entidades del negocio):**
 
-**Tipos base incluidos:**
-- `User`: Basado en schema de autenticación de Supabase
-- `[Otros]`: Según el dominio del negocio identificado en PRD/SRS
+- `[Entidad1]`: [Descripción de la entidad del negocio]
+  - Campos principales identificados del SRS/PBI
 
-**Nota:** Estos tipos se irán extendiendo en Fase 6 conforme se implementen stories.
+- `[Entidad2]`: [Descripción]
+  - Campos principales
 
-**⚠️ IMPORTANTE:** NO hardcodear schemas de DB aquí. Usar Supabase MCP para obtener tipos reales cuando sea necesario.
+**Nota:** Estos tipos base se extenderán en Fase 6 al implementar stories completas.
+
+**⚠️ IMPORTANTE:** NO hardcodear schemas de DB aquí. Si necesitas schemas reales, usa herramientas MCP (ej: Supabase MCP) durante Fase 6.
+
+**Creando archivo...**
 ```
 
 ---
 
-### Paso 4.4: Layout Raíz
+### Paso 4.4: Layouts Base
 
-**File:** `app/layout.tsx`
+**Acción:** Crea layout raíz según framework.
 
-```typescript
-import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: '[Nombre del Proyecto]', // Obtener de PRD
-  description: '[Descripción breve]', // Obtener de PRD
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
-  )
-}
-```
-
-**File:** `app/globals.css`
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Estilos globales adicionales si aplica */
-```
-
-**Explicar al usuario:**
 ```markdown
-### 🏗️ Creando Root Layout
+### 🏗️ Creando Layout Raíz
 
-**Files:**
-- `app/layout.tsx`: Layout raíz de la aplicación
-- `app/globals.css`: Estilos globales con Tailwind directives
+**Archivo:** [Ubicación según framework, ej: `app/layout.tsx` o `src/routes/+layout.svelte`]
 
-**Propósito:** Estructura HTML base que envuelve todas las páginas.
+**Propósito:** Estructura HTML base que envuelve toda la aplicación.
 
-**Configuraciones:**
-- Font: Inter (Google Fonts)
-- Metadata: Título y descripción del proyecto (obtenidos de PRD)
-- TailwindCSS: Directives cargadas globalmente
+**Configuraciones aplicadas:**
+- Font: [Especificar cuál y por qué]
+- Metadata: [Título y descripción del proyecto - obtener del PRD]
+- Estilos globales: [UI library setup]
 
-**Nota:** Este layout se renderiza una sola vez y envuelve todas las páginas.
+**Creando archivo...**
 ```
 
 ---
 
 ## 📄 FASE 5: IMPLEMENTAR PÁGINAS ESTRATÉGICAS
 
-**Acción:** Crear las páginas seleccionadas en Fase 2 con lógica mínima moqueada.
+**Objetivo:** Crear las páginas seleccionadas en Fase 2 con UI básica moqueada.
 
-### ⚠️ RECORDATORIO IMPORTANTE:
-- Implementar SOLO UI básica + navegación
-- NO implementar todos los criterios de aceptación
-- Componentes moqueados (datos hardcodeados si es necesario)
-- Explicar qué se deja para Fase 6
+### ⚠️ RECORDATORIO CRÍTICO:
 
----
-
-### Página 1: Login
-
-**File:** `app/(auth)/login/page.tsx`
-
-```typescript
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    // Basic auth flow - TO BE ENHANCED in Phase 6
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      alert(error.message) // TODO: Replace with proper error handling in Phase 6
-    } else {
-      router.push('/dashboard')
-    }
-
-    setLoading(false)
-  }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow">
-        <div>
-          <h2 className="text-center text-3xl font-bold">Sign in</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            [Nombre del Proyecto]
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-
-        {/* TODO Phase 6: Add forgot password, signup link, social auth */}
-      </div>
-    </div>
-  )
-}
-```
-
-**Explicar al usuario:**
-```markdown
-### 🔐 Página de Login Creada
-
-**File:** `app/(auth)/login/page.tsx`
-
-**Funcionalidad implementada:**
-- ✅ Formulario básico (email + password)
-- ✅ Integración con Supabase Auth
-- ✅ Redirección a dashboard post-login
-- ✅ Loading state básico
-
-**⏭️ Diferido para Fase 6 (cuando se implemente story de Login):**
-- ❌ Recuperación de contraseña
-- ❌ Link a signup
-- ❌ Social auth (Google, GitHub, etc.)
-- ❌ Validaciones complejas de frontend
-- ❌ Manejo avanzado de errores
-- ❌ Remember me functionality
-
-**Razón:** Esta es una implementación mínima para tener el flujo básico de autenticación. Los criterios de aceptación completos de la story de Login se implementarán en Fase 6.
-```
+- **Implementar SOLO UI básica** + navegación funcional
+- **NO implementar** todos los criterios de aceptación
+- **Usar mock data** apropiada al dominio del negocio
+- **Usar nombres del dominio** (NO "Dashboard", "Settings" genéricos)
+- **Explicar qué se deja** para Fase 6
 
 ---
 
-### Página 2: Dashboard/Home (con Layout)
+### Proceso por Página:
 
-**File:** `app/(dashboard)/layout.tsx`
+**Por cada página seleccionada en Fase 2:**
 
-```typescript
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import Navbar from '@/components/dashboard/Navbar'
-import Sidebar from '@/components/dashboard/Sidebar'
+1. **Anuncia qué vas a crear:**
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  // Server-side auth check
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Navbar user={user} />
-
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  )
-}
-```
-
-**File:** `components/dashboard/Sidebar.tsx`
-
-```typescript
-'use client'
-
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
-
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
-  // TODO Phase 6: Add more navigation items based on implemented features
-  { name: '[Core Feature 1]', href: '/[ruta]', icon: '📋' },
-  { name: '[Core Feature 2]', href: '/[ruta]', icon: '🔍' },
-]
-
-export default function Sidebar() {
-  const pathname = usePathname()
-
-  return (
-    <div className="hidden w-64 bg-gray-900 md:block">
-      <div className="flex h-full flex-col">
-        {/* Logo */}
-        <div className="flex h-16 items-center px-6">
-          <h1 className="text-xl font-bold text-white">[Logo/Nombre]</h1>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center rounded-md px-3 py-2 text-sm font-medium',
-                  isActive
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                )}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-    </div>
-  )
-}
-```
-
-**File:** `components/dashboard/Navbar.tsx`
-
-```typescript
-'use client'
-
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import type { User } from '@/types'
-
-interface NavbarProps {
-  user: User
-}
-
-export default function Navbar({ user }: NavbarProps) {
-  const router = useRouter()
-  const supabase = createClient()
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
-  return (
-    <header className="flex h-16 items-center justify-between border-b bg-white px-6">
-      <div>
-        {/* TODO Phase 6: Add search bar, breadcrumbs, etc. */}
-      </div>
-
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-700">{user.email}</span>
-        <button
-          onClick={handleLogout}
-          className="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300"
-        >
-          Logout
-        </button>
-      </div>
-    </header>
-  )
-}
-```
-
-**File:** `app/(dashboard)/page.tsx`
-
-```typescript
-export default function DashboardPage() {
-  return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
-
-      {/* Placeholder content */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-lg bg-white p-6 shadow">
-            <h3 className="mb-2 text-lg font-semibold">Card {i}</h3>
-            <p className="text-gray-600">
-              Placeholder content. Real data will be implemented in Phase 6.
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* TODO Phase 6: Add real dashboard widgets based on user stories */}
-    </div>
-  )
-}
-```
-
-**Explicar al usuario:**
 ```markdown
-### 🏠 Dashboard con Layout Creado
+### [📋/🔐/etc.] Creando Página: [Nombre del Dominio]
 
-**Files creados:**
-- `app/(dashboard)/layout.tsx`: Layout compartido para rutas protegidas
-- `app/(dashboard)/page.tsx`: Página principal del dashboard
-- `components/dashboard/Sidebar.tsx`: Navegación lateral
-- `components/dashboard/Navbar.tsx`: Barra superior con logout
+**Ruta:** `/[ruta]`
+**Archivo:** [Ubicación según framework]
+
+**Funcionalidad a implementar:**
+- ✅ [Elemento 1 - UI básica]
+- ✅ [Elemento 2 - navegación]
+- ✅ [Elemento 3 - mock data si aplica]
+
+**⏭️ Diferido para Fase 6 (Stories relacionadas: [STORY-XXX]):**
+- ❌ [Funcionalidad compleja 1]
+- ❌ [Funcionalidad compleja 2]
+- ❌ [Validaciones avanzadas]
+
+**Razón del diferimiento:** Esta página demuestra la estructura y UI esperada. La lógica completa (fetch real, validaciones, acciones) se implementará al desarrollar [STORY-XXX] en Fase 6.
+
+**Creando archivo...**
+```
+
+2. **Crea el archivo** con:
+   - Estructura básica del componente
+   - UI moqueada apropiada
+   - Mock data si es necesario (basada en el dominio)
+   - Navegación funcional
+   - Comentarios `// TODO Phase 6` donde aplique
+
+3. **NO pegues** bloques de código de 50+ líneas hardcodeados
+
+---
+
+### Layout Compartido (si aplica):
+
+Si decidiste en Fase 2 que necesita sidebar/navbar:
+
+```markdown
+### 🎨 Creando Layout de Aplicación
+
+**Archivos a crear:**
+- Layout compartido: [Ubicación según framework]
+- Componente de navegación: `components/[Nombre]Navigation.tsx` (o similar)
+- Componente de header: `components/[Nombre]Header.tsx` (si aplica)
+
+**Decisión de layout (de Fase 2):** [Sidebar + Navbar | Solo Navbar]
+
+**Elementos de navegación (basados en páginas de Fase 2):**
+- [Página 1]: `/[ruta]` - Icono: [apropiado al contexto]
+- [Página 2]: `/[ruta]` - Icono: [apropiado al contexto]
+- ...
+
+**IMPORTANTE:** Nombres y rutas basados en el dominio del negocio (NO genéricos).
 
 **Funcionalidad implementada:**
-- ✅ Auth check en server-side (redirect si no autenticado)
-- ✅ Layout con sidebar + navbar
-- ✅ Navegación básica entre páginas
-- ✅ Logout functionality
-- ✅ Placeholder content (cards moqueadas)
+- ✅ Navegación entre páginas
+- ✅ Indicador de página activa
+- ✅ Logout (si hay auth)
 
 **⏭️ Diferido para Fase 6:**
-- ❌ Dashboard widgets con datos reales
-- ❌ Gráficas / analytics
 - ❌ Notificaciones
+- ❌ User dropdown con perfil completo
 - ❌ Search bar
-- ❌ Breadcrumbs
-- ❌ Mobile responsive sidebar
+- ❌ Responsive mobile menu
 
-**Razón:** Este layout es la base arquitectónica. El contenido real se agregará al implementar las stories correspondientes.
-
-**Patrón arquitectónico:**
-- Layout en `(dashboard)/layout.tsx` se renderiza una vez
-- Páginas hijas se renderizan en `{children}`
-- Auth check se hace una sola vez en el layout (no en cada página)
+**Creando archivos...**
 ```
 
 ---
 
-### Página 3+: Páginas Core del Dominio
+## ✅ FASE 6: VALIDACIÓN
 
-**⚠️ INSTRUCCIONES:** Para cada página core seleccionada en Fase 2, crear estructura similar:
+**Objetivo:** Verificar que el proyecto compila correctamente.
 
-**Template de página core:**
+### Paso 6.1: Validar Compilación
 
-**File:** `app/(dashboard)/[ruta]/page.tsx`
+**IMPORTANTE:** NO ejecutar `npm run dev` (comando interactivo).
 
-```typescript
-// Ajustar según el dominio específico
-export default function [NombrePagina]Page() {
-  // TODO Phase 6: Fetch real data from Supabase
-  const mockData = [
-    { id: 1, name: 'Item 1', /* otros campos */ },
-    { id: 2, name: 'Item 2', /* otros campos */ },
-    // Mock data basado en el schema esperado
-  ]
+```markdown
+## 🔍 Validando Proyecto
 
-  return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">[Título de Página]</h1>
+**Acción:** Voy a ejecutar el build para verificar que todo compila correctamente.
 
-      {/* Lista/Grid de items */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {mockData.map((item) => (
-          <div key={item.id} className="rounded-lg bg-white p-6 shadow">
-            <h3 className="mb-2 text-lg font-semibold">{item.name}</h3>
-            {/* Mostrar otros campos relevantes */}
-          </div>
-        ))}
-      </div>
-
-      {/* TODO Phase 6: Add filters, search, pagination, actions */}
-    </div>
-  )
-}
+**Comando a ejecutar:**
+```bash
+npm run build
 ```
 
-**Explicar al usuario (por cada página core):**
+**¿Por qué build y no dev?**
+- `npm run build` es un comando que termina (no interactivo)
+- Si el build pasa → el proyecto está configurado correctamente
+- Detecta errores de TypeScript, imports incorrectos, etc.
+
+**Ejecutando build...**
+```
+
+```bash
+npm run build
+```
+
+**Analizar resultado:**
+
+**Si build exitoso:**
 ```markdown
-### [📋/🔍/etc.] Página [Nombre] Creada
+✅ **Build exitoso!**
 
-**File:** `app/(dashboard)/[ruta]/page.tsx`
+**Resultado:**
+- ✓ TypeScript compiló sin errores
+- ✓ Todas las dependencias se resolvieron correctamente
+- ✓ Archivos generados en [output directory]
 
-**Funcionalidad implementada:**
-- ✅ Estructura base de la página
-- ✅ Mock data hardcodeada (para visualización)
-- ✅ Grid/Lista de items con estilos básicos
-- ✅ Integrada en el layout del dashboard
+**Próximo paso:** Documentación y recomendaciones finales.
+```
 
-**⏭️ Diferido para Fase 6 (Story [STORY-XXX]):**
-- ❌ Fetch de datos reales desde Supabase
-- ❌ Filtros y búsqueda
-- ❌ Paginación
-- ❌ Acciones (crear, editar, eliminar)
-- ❌ Validaciones
-- ❌ Error handling
+**Si hay errores:**
+```markdown
+⚠️ **Build encontró errores**
 
-**Razón:** Esta página demuestra la UI y estructura esperada. La lógica completa y datos reales se implementarán al desarrollar [STORY-XXX] en Fase 6.
+**Errores detectados:**
+[Listar errores]
 
-**Épica relacionada:** [EPIC-XXX]
-**Stories relacionadas:** [STORY-XXX, STORY-YYY]
+**Análisis:** [Explicar qué causó los errores]
+
+**Corrigiendo...**
+
+[Corregir errores y re-ejecutar build]
 ```
 
 ---
 
-## ✅ FASE 6: VALIDACIÓN Y PRUEBA
+### Paso 6.2: Actualizar Scripts (si es necesario)
 
-**Acción:** Verificar que el scaffolding funciona correctamente.
-
-### Paso 6.1: Actualizar package.json Scripts
-
-**Acción:** Asegúrate de que existen scripts de desarrollo.
-
-```json
-{
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  }
-}
-```
-
-**Explicar al usuario:**
 ```markdown
-### 📦 Scripts de package.json
+### 📦 Verificando Scripts de package.json
 
 **Scripts disponibles:**
-- `npm run dev`: Inicia servidor de desarrollo (http://localhost:3000)
-- `npm run build`: Compila para producción
-- `npm run start`: Inicia servidor de producción
-- `npm run lint`: Ejecuta ESLint
+- `npm run dev` - Inicia servidor de desarrollo
+- `npm run build` - Compila para producción
+- `npm run start` - Inicia servidor de producción (después de build)
+- `npm run lint` - Ejecuta ESLint
+
+[Agregar si faltan]
+
+✅ Scripts configurados correctamente.
 ```
 
 ---
 
-### Paso 6.2: Crear README de Setup
+## 📚 FASE 7: DOCUMENTACIÓN Y RECOMENDACIONES
 
-**File:** `SETUP.md` (en la raíz)
+**Objetivo:** Documentar lo creado y dar recomendaciones al usuario (NO hacer acciones automáticas como commits).
+
+### Paso 7.1: Crear Documentación de Setup
+
+**Archivo:** `SETUP.md` (en la raíz del proyecto)
 
 ```markdown
-# Frontend Setup Guide
+### 📖 Creando SETUP.md
+
+**Propósito:** Guía para que cualquier desarrollador pueda levantar el proyecto.
+
+**Contenido incluido:**
+- Requisitos previos (Node.js, cuentas necesarias)
+- Pasos de instalación
+- Configuración de variables de entorno
+- Cómo iniciar el servidor de desarrollo
+- Estructura del proyecto
+- Próximos pasos (Fases 4-6)
+
+**Creando archivo...**
+```
+
+**Contenido del archivo (adaptado al proyecto real):**
+
+```markdown
+# [Nombre del Proyecto] - Setup Guide
 
 ## Requisitos Previos
-- Node.js 18+ instalado
-- Cuenta de Supabase (o auth provider correspondiente)
+- Node.js [versión] o superior
+- [Otros requisitos según stack]
 
 ## Instalación
 
@@ -1263,341 +775,98 @@ npm install
 ```
 
 ### 2. Configurar variables de entorno
-```bash
-# Copia el archivo de ejemplo
-cp .env.local.example .env.local
 
-# Edita .env.local con tus credenciales reales
+Copia el archivo de ejemplo:
+```bash
+cp .env.local.example .env.local
 ```
 
-**Obtener credenciales de Supabase:**
-1. Ve a [supabase.com](https://supabase.com)
-2. Crea un proyecto (si no existe)
-3. Ve a Settings > API
-4. Copia `URL` y `anon/public key`
+Edita `.env.local` con tus credenciales reales:
+- `[VAR_1]`: [Cómo obtenerla]
+- `[VAR_2]`: [Cómo obtenerla]
 
 ### 3. Iniciar servidor de desarrollo
+
+⚠️ **IMPORTANTE:** Abre una nueva terminal para no bloquear tu sesión actual.
+
 ```bash
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador (ajustar puerto según framework).
 
 ## Estructura del Proyecto
 
-[Pegar árbol de carpetas explicado en Fase 3.3]
+[Mostrar árbol de carpetas creado]
 
 ## Páginas Implementadas
 
-✅ **Login** (`/login`)
-- Autenticación básica con Supabase
-
-✅ **Dashboard** (`/dashboard`)
-- Layout con sidebar + navbar
-- Placeholder content
-
-✅ **[Otras páginas core]** (`/[ruta]`)
+✅ **[Página 1]** (`/[ruta]`)
 - [Descripción breve]
+- Stories relacionadas: [STORY-XXX]
+
+✅ **[Página 2]** (`/[ruta]`)
+- [Descripción breve]
+- Stories relacionadas: [STORY-XXX]
+
+[Listar todas las páginas creadas]
 
 ## Próximos Pasos
 
-Este es un **scaffolding inicial**. Para implementar funcionalidades completas:
+Este es un **scaffolding inicial** (Fase 3.5). Para implementar funcionalidades completas:
 
-1. Ve a `.context/PBI/` para ver las épicas y stories planificadas
-2. Lee el implementation plan de la story que quieres desarrollar
-3. Implementa según el plan en Fase 6 (Implementation)
+1. **Fase 4: Shift-Left Testing**
+   - Generar test plans para épicas
+   - Generar test cases detallados por story
+
+2. **Fase 5: Planning**
+   - Generar implementation plans por story
+
+3. **Fase 6: Implementation**
+   - Implementar stories siguiendo los planes
+   - Desarrollar encima del scaffolding existente
+   - Leer guidelines en `.context/guidelines/`
 
 ## Referencias
 
-- [Next.js Docs](https://nextjs.org/docs)
-- [Supabase Docs](https://supabase.com/docs)
-- [TailwindCSS Docs](https://tailwindcss.com/docs)
+- [Framework Docs](url)
+- [Auth Provider Docs](url)
+- [UI Library Docs](url)
 ```
 
-**Explicar al usuario:**
+---
+
+### Paso 7.2: Crear Documentación de Arquitectura
+
+**Archivo:** `.context/frontend-architecture.md`
+
 ```markdown
-### 📖 README de Setup Creado
+### 📄 Creando .context/frontend-architecture.md
 
-**File:** `SETUP.md`
+**Propósito:** Documentar las decisiones técnicas del scaffolding para el equipo.
 
-**Propósito:** Guía para que cualquier desarrollador pueda levantar el proyecto.
-
-**Incluye:**
-- Requisitos previos
-- Pasos de instalación
-- Configuración de env vars
-- Cómo iniciar el servidor
+**Contenido incluido:**
+- Stack técnico y versiones
 - Estructura del proyecto
-- Referencias útiles
+- Páginas implementadas (con status)
+- Decisiones técnicas justificadas
+- Workflow para Fase 6
+
+**Creando archivo...**
 ```
 
----
-
-### Paso 6.3: Probar el Servidor de Desarrollo
-
-**Acción:** Ejecuta el servidor y verifica que funciona.
-
-```bash
-npm run dev
-```
-
-**Explicar al usuario:**
-```markdown
-## 🚀 Probando el Servidor de Desarrollo
-
-**Comando ejecutado:** `npm run dev`
-
-**Resultado esperado:**
-```
-  ▲ Next.js 15.x.x
-  - Local:        http://localhost:3000
-  - Network:      http://192.168.x.x:3000
-
-✓ Ready in [X]ms
-```
-
-**Validaciones:**
-1. ✅ Servidor inicia sin errores
-2. ✅ Puedes acceder a http://localhost:3000/login
-3. ✅ La página de login se renderiza correctamente
-4. ✅ TailwindCSS está funcionando (estilos aplicados)
-
-**⚠️ NOTA:** El login NO funcionará hasta que configures `.env.local` con credenciales reales de Supabase.
-
-**Próximo paso:** Configura `.env.local` y prueba el flujo completo de login → dashboard.
-```
-
----
-
-## 📋 FASE 7: DOCUMENTAR Y ENTREGAR
-
-**Acción:** Generar documentación final del scaffolding para el equipo.
-
-### Paso 7.1: Crear Documento de Arquitectura del Frontend
-
-**File:** `.context/frontend-architecture.md`
+**Estructura del archivo:**
 
 ```markdown
 # Frontend Architecture - [Nombre del Proyecto]
 
-**Generado en:** Fase 3.5 - Frontend Scaffolding
-**Framework:** [Next.js 15 / etc.]
-**UI Library:** [TailwindCSS / etc.]
-**Auth Provider:** [Supabase / etc.]
+**Generado:** Fase 3.5 - Frontend Scaffolding
+**Fecha:** [Fecha]
+**Framework:** [Nombre y versión]
 
 ---
 
-## 🏗️ Estructura del Proyecto
-
-[Pegar árbol de carpetas]
-
----
-
-## 🎨 Páginas Implementadas
-
-### Login (`/login`)
-**Status:** ✅ Scaffolding completo
-**Funcionalidad:** Autenticación básica con Supabase
-**Story relacionada:** [STORY-XXX - Login] (a implementar en Fase 6)
-
-**Componentes:**
-- Formulario de login (email + password)
-- Integración con Supabase Auth
-
-**Pendiente para Fase 6:**
-- Recuperación de contraseña
-- Social auth
-- Validaciones avanzadas
-
----
-
-### Dashboard (`/dashboard`)
-**Status:** ✅ Scaffolding completo
-**Funcionalidad:** Página principal post-login con layout
-**Story relacionada:** [STORY-XXX - Dashboard] (a implementar en Fase 6)
-
-**Componentes:**
-- Layout con sidebar + navbar
-- Placeholder cards
-- Logout functionality
-
-**Pendiente para Fase 6:**
-- Widgets con datos reales
-- Analytics / gráficas
-
----
-
-### [Otras páginas core]
-[Repetir estructura para cada página]
-
----
-
-## 🔧 Decisiones Técnicas
-
-### Next.js App Router
-**Razón:** Recomendación oficial de Next.js 13+, permite Server Components.
-
-### Server Components por Default
-**Razón:** Mejor performance, SEO optimizado, menos JavaScript al cliente.
-
-### Supabase SSR
-**Razón:** Manejo correcto de sesiones en Server Components (cookies).
-
-### TailwindCSS
-**Razón:** Especificado en SRS, rápido para prototipado, utility-first.
-
-### TypeScript Strict Mode
-**Razón:** Requerimiento de SRS, type-safety completo.
-
----
-
-## 🚀 Cómo Desarrollar Nuevas Features
-
-### Workflow para Fase 6:
-
-1. **Lee la story:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
-2. **Lee el implementation plan:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
-3. **Identifica componentes a crear/modificar:**
-   - Si es nueva página: Crea en `app/(dashboard)/[ruta]/page.tsx`
-   - Si es nuevo componente: Crea en `components/[dominio]/[nombre].tsx`
-   - Si es nueva API: Crea en `app/api/[ruta]/route.ts`
-4. **Sigue las guidelines:** `.context/guidelines/`
-5. **Escribe tests:** Según `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
-
----
-
-## 📚 Referencias
-
-- **PRD completo:** `.context/PRD/`
-- **SRS completo:** `.context/SRS/`
-- **PBI (Backlog):** `.context/PBI/`
-- **Guidelines de implementación:** `.context/guidelines/`
-
----
-
-## 🤝 Contribuir
-
-Este scaffolding es la base. Todas las features se implementarán siguiendo:
-1. Fase 4: Shift-Left Testing (test cases)
-2. Fase 5: Planning (implementation plans)
-3. Fase 6: Implementation (desarrollo real)
-4. Fase 7: Code Review
-
-**NO modificar este documento.** Es un snapshot del scaffolding inicial.
-```
-
-**Explicar al usuario:**
-```markdown
-### 📄 Documentación de Arquitectura Creada
-
-**File:** `.context/frontend-architecture.md`
-
-**Propósito:** Documentar las decisiones técnicas y estructura del scaffolding para el equipo.
-
-**Contenido:**
-- Estructura completa del proyecto
-- Páginas implementadas (con status y pendientes)
-- Decisiones técnicas justificadas
-- Workflow para desarrollar nuevas features en Fase 6
-
-**Audiencia:** Desarrolladores que trabajarán en Fase 6.
-```
-
----
-
-### Paso 7.2: Crear Git Commit
-
-**Acción:** Commitear el scaffolding inicial.
-
-```bash
-# Staging
-git add .
-
-# Commit
-git commit -m "chore: Initial frontend scaffolding
-
-- Setup Next.js 15 with App Router
-- Configure TailwindCSS + TypeScript
-- Setup Supabase client (browser + server)
-- Implement auth pages (login)
-- Implement dashboard layout (sidebar + navbar)
-- Implement core pages: [listar páginas]
-- Add environment variables template
-- Add setup documentation
-
-Phase: 3.5 - Frontend Scaffolding
-Framework: [Next.js/etc.]
-Auth: [Supabase/etc.]
-
-Files created: [número]
-Pages implemented: [número]
-Components created: [número]
-
-TODO Phase 6: Implement full features per user stories"
-```
-
-**Explicar al usuario:**
-```markdown
-### 📦 Git Commit Creado
-
-**Commit message:** Ver arriba
-
-**Propósito:** Registrar el scaffolding inicial como un checkpoint en el historial de Git.
-
-**⚠️ NOTA:** Este commit incluye SOLO el scaffolding. Las funcionalidades completas se implementarán en commits separados durante Fase 6.
-
-**Próximo paso:** Push a la rama correspondiente si es necesario.
-```
-
----
-
-## ✅ RESUMEN FINAL
-
-**Acción:** Genera un resumen ejecutivo de lo realizado.
-
-**Output esperado (mostrar al usuario):**
-
-```markdown
-# 🎉 Frontend Scaffolding Completado
-
----
-
-## 📊 Estadísticas
-
-**Archivos creados:** [número total]
-**Páginas implementadas:** [número]
-**Componentes creados:** [número]
-**Dependencias instaladas:** [número]
-**Configuraciones creadas:** [número]
-
-**Tiempo estimado invertido:** [X horas]
-
----
-
-## 🗂️ Estructura Creada
-
-```
-[Pegar árbol completo del proyecto]
-```
-
----
-
-## ✅ Páginas Implementadas
-
-| Página | Ruta | Status | Épica | Story |
-|--------|------|--------|-------|-------|
-| Login | `/login` | ✅ Scaffolding | [EPIC-XXX] | [STORY-XXX] |
-| Dashboard | `/dashboard` | ✅ Scaffolding | [EPIC-YYY] | [STORY-YYY] |
-| [Página Core 1] | `/[ruta]` | ✅ Scaffolding | [EPIC-ZZZ] | [STORY-ZZZ] |
-| ... | ... | ... | ... | ... |
-
-**Leyenda:**
-- ✅ Scaffolding: Estructura y UI básica implementada, falta lógica completa
-- ⏳ Pending: Se implementará en Fase 6
-
----
-
-## 🔧 Tecnologías Configuradas
+## 🏗️ Stack Técnico
 
 | Tecnología | Versión | Propósito |
 |------------|---------|-----------|
@@ -1605,178 +874,304 @@ TODO Phase 6: Implement full features per user stories"
 | [UI Library] | [X.X.X] | Estilos y componentes |
 | [Auth Provider] | [X.X.X] | Autenticación |
 | TypeScript | [X.X.X] | Type-safety |
-| ESLint | [X.X.X] | Code quality |
-| ... | ... | ... |
+| [Otros] | [X.X.X] | [Propósito] |
 
 ---
 
-## 📚 Documentación Creada
+## 📂 Estructura del Proyecto
 
-- ✅ `SETUP.md` - Guía de instalación y configuración
-- ✅ `.context/frontend-architecture.md` - Arquitectura del frontend
+[Mostrar árbol de carpetas completo]
+
+---
+
+## 🎨 Páginas Implementadas
+
+[Por cada página creada:]
+
+### [Nombre Página] (`/[ruta]`)
+**Status:** ✅ Scaffolding completo
+**Funcionalidad:** [Descripción breve]
+**Story relacionada:** [STORY-XXX] (a completar en Fase 6)
+
+**Componentes creados:**
+- [Componente 1]
+- [Componente 2]
+
+**Pendiente para Fase 6:**
+- [Funcionalidad 1]
+- [Funcionalidad 2]
+
+---
+
+## 🔧 Decisiones Técnicas
+
+### [Decisión 1]
+**Razón:** [Justificación basada en docs oficiales o SRS]
+
+### [Decisión 2]
+**Razón:** [Justificación]
+
+[Documentar decisiones importantes tomadas]
+
+---
+
+## 🚀 Workflow para Fase 6 (Implementation)
+
+1. **Lee la story:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
+2. **Lee el test plan:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+3. **Lee el implementation plan:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
+4. **Identifica si existe base en scaffolding:**
+   - Si existe → EXTIENDE la funcionalidad
+   - Si no existe → CREA siguiendo patterns del scaffolding
+5. **Sigue guidelines:** `.context/guidelines/`
+
+---
+
+## 📚 Referencias
+
+- **PRD:** `.context/PRD/`
+- **SRS:** `.context/SRS/`
+- **PBI:** `.context/PBI/`
+- **Guidelines:** `.context/guidelines/`
+```
+
+---
+
+### Paso 7.3: Resumen Ejecutivo
+
+**Output final para el usuario:**
+
+```markdown
+# 🎉 Frontend Scaffolding Completado
+
+---
+
+## 📊 Resumen
+
+**Archivos creados:** [número total]
+**Páginas implementadas:** [número]
+**Componentes creados:** [número]
+**Configuraciones creadas:** [número]
+
+---
+
+## ✅ Lo que se Implementó
+
+### Stack Configurado:
+- ✅ [Framework] con estructura recomendada
+- ✅ [UI Library] configurado y listo
+- ✅ [Auth Provider] clientes creados
+- ✅ TypeScript + ESLint configurados
+
+### Páginas Creadas:
+1. ✅ [Página 1] (`/[ruta]`) - [Descripción breve]
+2. ✅ [Página 2] (`/[ruta]`) - [Descripción breve]
+3. ✅ [Página 3] (`/[ruta]`) - [Descripción breve]
+[Listar todas]
+
+### Documentación Generada:
+- ✅ `SETUP.md` - Guía de instalación
+- ✅ `.context/frontend-architecture.md` - Arquitectura y decisiones
 - ✅ `.env.local.example` - Template de variables de entorno
-- ✅ Commit de Git con mensaje descriptivo
 
 ---
 
-## 🚀 Próximos Pasos
+## ⚠️ Lo que NO está Implementado
 
-### 1️⃣ Configurar Entorno Local (AHORA)
+Este scaffolding es **solo la base visual**. Las siguientes funcionalidades se implementarán en **Fase 6** (Implementation):
+
+**[Página 1]:**
+- ❌ [Funcionalidad compleja 1]
+- ❌ [Funcionalidad compleja 2]
+
+**[Página 2]:**
+- ❌ [Funcionalidad compleja 1]
+- ❌ [Funcionalidad compleja 2]
+
+[Listar para cada página]
+
+**Razón:** El objetivo del scaffolding es estructura base + demostración visual. La lógica completa se implementa al desarrollar cada story en Fase 6.
+
+---
+
+## 🚀 Próximos Pasos Inmediatos
+
+### 1️⃣ Configurar Variables de Entorno (AHORA)
+
 ```bash
-# 1. Copiar template de env vars
+# Copiar template
 cp .env.local.example .env.local
 
-# 2. Editar .env.local con credenciales reales
-# (Usa Supabase MCP para obtenerlas si es necesario)
+# Editar con tus credenciales reales
+# (usa tu editor de código favorito)
+```
 
-# 3. Instalar dependencias (si no se hizo automáticamente)
-npm install
+**Credenciales necesarias:**
+- `[VAR_1]`: [Cómo obtenerla]
+- `[VAR_2]`: [Cómo obtenerla]
 
-# 4. Iniciar servidor de desarrollo
+---
+
+### 2️⃣ Probar el Proyecto (AHORA)
+
+**⚠️ IMPORTANTE:** Abre una **nueva terminal** (no uses la actual para evitar bloquearla).
+
+```bash
 npm run dev
 ```
 
-### 2️⃣ Validar el Scaffolding (AHORA)
-- [ ] Abre http://localhost:3000/login
-- [ ] Verifica que los estilos se aplican correctamente
-- [ ] Intenta hacer login con credenciales reales
-- [ ] Verifica que redirecciona a `/dashboard`
-- [ ] Navega entre las páginas usando el sidebar
+**Luego:**
+1. Abre [http://localhost:[puerto]]([http://localhost:[puerto]) en tu navegador
+2. Verifica que las páginas cargan correctamente
+3. Navega entre páginas usando la navegación
+4. Valida que los estilos se aplican correctamente
 
-### 3️⃣ Fase 4: Shift-Left Testing (SIGUIENTE)
-- [ ] Generar test plans para cada épica
-- [ ] Generar test cases detallados por story
-- [ ] Identificar edge cases y gaps en stories
-
-### 4️⃣ Fase 5: Planning (DESPUÉS)
-- [ ] Generar implementation plans por story
-- [ ] Decidir order de implementación
-
-### 5️⃣ Fase 6: Implementation (DESARROLLO REAL)
-- [ ] Implementar story por story siguiendo los planes
-- [ ] Desarrollar encima del scaffolding existente
-- [ ] Escribir tests según test-cases.md
-- [ ] Seguir guidelines de `.context/guidelines/`
+**Si encuentras errores:** Revisa la consola del navegador y terminal.
 
 ---
 
-## ⚠️ IMPORTANTE: Qué NO Está Implementado
+### 3️⃣ Considerar Crear un Checkpoint Git (RECOMENDADO)
 
-Este scaffolding es **SOLO la base visual**. Las siguientes funcionalidades se implementarán en Fase 6:
+**¿Por qué es buena idea?**
+- ✅ Tienes un punto de retorno si algo sale mal más adelante
+- ✅ Separación clara entre scaffolding (Fase 3.5) y desarrollo (Fase 6)
+- ✅ Facilita code reviews (se ve qué es base vs features)
 
-### Login Page
-- ❌ Recuperación de contraseña
-- ❌ Social auth (Google, GitHub)
-- ❌ Validaciones avanzadas
-- ❌ Error handling completo
-- ❌ Remember me
-- ❌ Email verification flow
+**Antes de commitear, revisa:**
+```bash
+git status
+```
 
-### Dashboard
-- ❌ Widgets con datos reales
-- ❌ Analytics / gráficas
-- ❌ Notificaciones
-- ❌ Search functionality
-- ❌ Mobile responsive sidebar
+**Verifica** que todos los archivos listados sean del scaffolding (no archivos personales sin guardar).
 
-### [Páginas Core]
-- ❌ Fetch de datos reales desde Supabase
-- ❌ Filtros y búsqueda
-- ❌ Paginación
-- ❌ CRUD operations
-- ❌ Validaciones
-- ❌ Error handling
+**Mensaje de commit sugerido:**
+```
+chore: Initial frontend scaffolding
 
-**Razón:** El objetivo del scaffolding es tener una estructura base y demostración visual. La lógica completa se implementa al desarrollar cada user story en Fase 6.
+- Setup [Framework] with [Auth Provider]
+- Configure [UI Library] + TypeScript
+- Implement [X] strategic pages with basic UI
+- Add setup documentation
+
+Phase: 3.5 - Frontend Scaffolding
+```
+
+**Comando para commitear (cuando estés listo):**
+```bash
+git add .
+git commit -m "tu mensaje aquí"
+```
+
+**Nota:** Esto es **opcional**. Si prefieres commitear después de probar, está bien. Si tienes archivos sin guardar que no quieres incluir, haz commits selectivos con `git add [archivos-específicos]`.
 
 ---
 
-## 💡 Tips para Fase 6
+### 4️⃣ Mostrar al Equipo (RECOMENDADO)
 
-### Al Implementar una Story:
+El scaffolding está listo para **demostración visual**:
 
-1. **Lee estos archivos primero:**
+1. Levanta el servidor (`npm run dev`)
+2. Navega por las páginas creadas
+3. Explica que es **solo la base** (no funcionalidad completa)
+4. Muestra el PBI para explicar qué viene en Fase 6
+
+**Valor:** El equipo visualiza hacia dónde va el proyecto.
+
+---
+
+### 5️⃣ Continuar con Fase 4: Shift-Left Testing (SIGUIENTE)
+
+Ahora que tienes la estructura base, procede con:
+
+**Fase 4: Shift-Left Testing**
+- Generar test plans para cada épica
+- Generar test cases detallados por story
+- Identificar edge cases y gaps
+
+**Ubicación de prompts:** `.prompts/fase-4-shift-left-testing/`
+
+---
+
+## 💡 Tips Finales
+
+### Al Implementar Stories en Fase 6:
+
+1. **Extiende, no reescribas:**
+   - Si una página ya existe en scaffolding → Agrégale funcionalidad
+   - Si no existe → Créala siguiendo los patterns del scaffolding
+
+2. **Mantén consistencia:**
+   - Usa las mismas utilidades (`lib/utils.ts`)
+   - Reutiliza componentes base
+   - Sigue la estructura de carpetas establecida
+
+3. **Lee los planes:**
    - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
    - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
    - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
 
-2. **Identifica si ya existe un componente base:**
-   - Si existe (scaffolding), EXTIENDE la funcionalidad
-   - Si no existe, CREA siguiendo los patterns del scaffolding
-
-3. **Sigue los guidelines:**
+4. **Sigue guidelines:**
    - `.context/guidelines/code-standards.md`
    - `.context/guidelines/error-handling.md`
    - `.context/guidelines/implementation-workflow.md`
 
-4. **No rompas el scaffolding:**
-   - ✅ Mantén la estructura de carpetas
-   - ✅ Sigue los patterns de naming
-   - ✅ Reutiliza componentes base (Sidebar, Navbar)
-   - ✅ Usa las utilidades existentes (`cn`, clients de Supabase)
-
 ---
 
-## 🎯 Valor del Scaffolding
+## 🎯 Valor Generado
 
-**¿Por qué hicimos esto?**
+**¿Qué logramos?**
 
-✅ **Visual:** El equipo puede ver la dirección del proyecto
-✅ **Base sólida:** Estructura correcta desde el inicio
-✅ **Acceleración:** Fase 6 será más rápida (ya hay base)
-✅ **Consistencia:** Todos los desarrolladores siguen los mismos patterns
-✅ **Documentación:** Decisiones técnicas justificadas y registradas
+✅ **Estructura sólida** siguiendo mejores prácticas de [Framework]
+✅ **Base visual** para demostración al equipo
+✅ **Configuración correcta** consultando docs oficiales
+✅ **Decisiones documentadas** para futuros desarrolladores
+✅ **Acelera Fase 6** (base lista para extender)
 
 **Próxima reunión con el equipo:**
-- Muestra http://localhost:3000
-- Navega por las páginas implementadas
-- Explica que es solo la base visual
-- Muestra el PBI y los próximos sprints
+- Muestra las páginas funcionando
+- Explica que es solo scaffolding
+- Presenta el PBI y roadmap de Fases 4-6
 
 ---
 
-## 📞 ¿Preguntas?
+**🎉 ¡Scaffolding completado exitosamente!**
 
-Si tienes dudas sobre:
-- **Estructura:** Lee `.context/frontend-architecture.md`
-- **Setup:** Lee `SETUP.md`
-- **Implementación:** Lee `.context/guidelines/`
-- **Stories:** Lee `.context/PBI/`
-
----
-
-**🎉 ¡Scaffolding listo para ser usado como base en Fase 6!**
+**¿Preguntas?** Consulta:
+- `SETUP.md` - Instrucciones de setup
+- `.context/frontend-architecture.md` - Arquitectura y decisiones
+- `.context/guidelines/` - Guidelines de implementación
 ```
 
 ---
 
-## 📝 VALIDACIONES FINALES
+## 📋 VALIDACIONES FINALES (CHECKLIST INTERNO)
 
-Antes de terminar, valida:
+Antes de terminar, valida mentalmente (NO mostrar al usuario):
 
-### Estructura
-- ✅ Todas las carpetas del framework existen
-- ✅ Archivos de configuración creados correctamente
-- ✅ `.env.local.example` presente
+### Estructura:
+- ✅ Carpetas del framework creadas correctamente
+- ✅ Archivos de configuración presentes
+- ✅ `.env.local.example` creado
 
-### Código
-- ✅ No hay errores de TypeScript (`npm run build`)
-- ✅ No hay errores de linting (`npm run lint`)
-- ✅ Servidor de desarrollo inicia correctamente
+### Código:
+- ✅ Build pasa sin errores (`npm run build`)
+- ✅ No hay imports rotos
+- ✅ TypeScript sin errores
 
-### Documentación
-- ✅ `SETUP.md` creado
-- ✅ `.context/frontend-architecture.md` creado
-- ✅ README del repositorio actualizado (si aplica)
+### Documentación:
+- ✅ `SETUP.md` creado con instrucciones claras
+- ✅ `.context/frontend-architecture.md` creado con decisiones
+- ✅ Explicaciones claras durante todo el proceso
 
-### Git
-- ✅ Commit creado con mensaje descriptivo
-- ✅ `.env.local` está en `.gitignore`
-- ✅ `node_modules/` está en `.gitignore`
+### Usuario:
+- ✅ Se explicó cada paso mientras trabajabas
+- ✅ Se dieron instrucciones claras de próximos pasos
+- ✅ Se recomendó (NO forzó) crear commit
+- ✅ Se explicó cómo levantar el servidor (nueva terminal)
 
 ---
 
-**Output:** Proyecto frontend funcional con estructura completa, dependencias instaladas, páginas estratégicas implementadas, y documentación para el equipo.
+**Output:** Proyecto frontend funcional con estructura completa, dependencias instaladas, páginas estratégicas implementadas, documentación clara, y recomendaciones para el usuario.
 
 **Fase completada:** 3.5 - Frontend Scaffolding ✅
 
