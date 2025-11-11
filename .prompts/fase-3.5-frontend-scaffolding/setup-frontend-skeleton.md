@@ -1,4 +1,4 @@
-Actúa como Senior Frontend Architect, DevOps Engineer, y Full-Stack Developer experto.
+Actúa como Senior Frontend Architect, UI/UX Designer, y Full-Stack Developer experto.
 
 **Input:**
 
@@ -10,7 +10,14 @@ Actúa como Senior Frontend Architect, DevOps Engineer, y Full-Stack Developer e
 
 ## 🎯 OBJETIVO
 
-Crear la estructura inicial del proyecto frontend (scaffolding) en el **directorio actual**, consultando documentación oficial y generando páginas estratégicas moqueadas basándote en el análisis del contexto del proyecto.
+Crear la estructura inicial del proyecto frontend (scaffolding) + **Design System completo** en el directorio actual, incluyendo:
+- Arquitectura del framework
+- **Componentes UI reutilizables y bonitos**
+- **Páginas estratégicas con diseño moderno**
+- **Paleta de colores y estilo visual coherente**
+- Todo adaptado al contexto y personalidad del negocio
+
+El resultado debe ser una aplicación **visualmente impresionante** lista para demo, con datos moqueados.
 
 ---
 
@@ -21,20 +28,105 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
 - **NO crear subcarpetas para el proyecto** - Ya estamos en el directorio correcto
 - **NO instalar dependencias innecesarias** - Solo fundamentales
 - **NO implementar todas las historias de usuario** - Solo páginas estratégicas (3-5)
-- **NO implementar todos los criterios de aceptación** - Solo UI básica
+- **NO implementar todos los criterios de aceptación** - Solo UI básica con diseño bonito
 - **NO hardcodear nombres genéricos** (ej: "Dashboard", "Settings") - Usa nombres del dominio del negocio
 - **NO ejecutar comandos interactivos** (ej: `npm run dev`) - Solo comandos que terminen
 - **NO hacer commits automáticos** - Solo recomendar al usuario
+- **NO crear diseños genéricos/aburridos** - Debe ser visualmente impresionante
 
 ### ✅ SÍ HACER:
-- **Trabajar en el directorio actual** - Usar package.json existente
-- **Usar Context7 MCP** - Consultar docs oficiales (Next.js, Supabase, etc.)
-- **Analizar contexto del proyecto** - PRD, SRS, PBI completos
-- **Decidir estratégicamente** - Qué páginas crear según el negocio
-- **Seguir estructura del framework** - Consultar docs oficiales
-- **Explicar cada decisión** - Para que el usuario comprenda
-- **Validar con build** - `npm run build` (no comandos interactivos)
-- **Recomendar acciones** - No forzar (especialmente git commits)
+- **Hacer preguntas al usuario** - Preferencias de diseño, package manager, etc.
+- **Usar Context7 MCP** - Consultar docs oficiales (Next.js, Supabase, TailwindCSS, etc.)
+- **Crear design system completo** - Botones, cards, inputs, etc. con estilo coherente
+- **Aplicar paleta de colores** - Elegida o generada según negocio
+- **Páginas visualmente atractivas** - Modernas, con personalidad
+- **Explicar cada decisión** - Educar al usuario
+- **Documentar diseño** - Crear `.context/design-system.md`
+- **Validar con build** - Comando según package manager elegido
+
+---
+
+## 📦 FASE 0: SETUP & PACKAGE MANAGER
+
+**Objetivo:** Educir al usuario sobre package managers y que elija cuál usar.
+
+### Paso 0.1: Educar sobre Package Managers
+
+**Explica al usuario:**
+
+```markdown
+## 📦 Selección de Package Manager
+
+Antes de comenzar, necesito saber qué **package manager** quieres usar para instalar dependencias.
+
+### ¿Qué es un Package Manager?
+
+Un **package manager** es una herramienta que instala, actualiza y gestiona las librerías (paquetes) que tu proyecto necesita.
+
+**npm (Node Package Manager):**
+- El package manager **por defecto** que viene con Node.js
+- Funciona bien, pero es el más lento de los tres
+- Usa `node_modules/` tradicional
+- Comando: `npm install`, `npm run dev`
+
+**Las alternativas modernas (más rápidas):**
+
+### 🚀 Opciones Recomendadas:
+
+Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
+```
+
+### Paso 0.2: Preguntar Package Manager
+
+**Usa `AskUserQuestion` tool:**
+
+```markdown
+**Pregunta al usuario** usando la herramienta `AskUserQuestion`:
+
+**Pregunta:** "¿Qué package manager quieres usar para este proyecto?"
+
+**Opciones:**
+
+1. **pnpm** (Fast and disk-efficient)
+   - **Descripción:** "Extremadamente rápido, ahorra espacio en disco usando hard links. Instalaciones hasta 2x más rápidas que npm. Muy popular en monorepos y proyectos grandes."
+   - **Ventajas:** Eficiente en espacio, rápido, compatible con npm
+   - **Comandos:** `pnpm install`, `pnpm run dev`
+
+2. **bun** (Blazingly fast, all-in-one toolkit) ⭐ **RECOMENDADO**
+   - **Descripción:** "El más rápido de todos (hasta 25x más rápido que npm). No solo instala paquetes, también ejecuta JavaScript y TypeScript directamente. Es la opción más moderna."
+   - **Ventajas:** Velocidad extrema, ejecuta código JS/TS sin transpilación, todo-en-uno
+   - **Comandos:** `bun install`, `bun run dev`
+
+3. **Elige por mí** (Recomendación automática)
+   - **Descripción:** "La IA seleccionará el package manager más apropiado basándose en tu proyecto y sistema operativo. Por defecto se recomienda **bun** por su velocidad y modernidad."
+
+**Header de la pregunta:** "Package Manager"
+**MultiSelect:** false
+```
+
+### Paso 0.3: Procesar Respuesta
+
+**Según la respuesta del usuario:**
+
+- Si elige **pnpm** → Usar pnpm en todos los comandos
+- Si elige **bun** → Usar bun en todos los comandos
+- Si elige **"Elige por mí"** → Seleccionar **bun** (recomendado) y explicar por qué
+
+**Output esperado:**
+
+```markdown
+## ✅ Package Manager Seleccionado: [pnpm/bun]
+
+**Razón:** [Si fue "Elige por mí", explicar: "He seleccionado **bun** porque es el más rápido y moderno, perfecto para desarrollo ágil. Instalaciones hasta 25x más rápidas que npm."]
+
+**Comandos que usaremos:**
+- Instalar dependencias: `[pnpm/bun] install`
+- Agregar paquetes: `[pnpm/bun] add [paquete]`
+- Ejecutar dev: `[pnpm/bun] run dev`
+- Build: `[pnpm/bun] run build`
+
+**Próximo paso:** Análisis del contexto del proyecto.
+```
 
 ---
 
@@ -69,6 +161,7 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
    - ¿Qué problema resuelve? (PRD)
    - ¿Quiénes son los usuarios? (PRD)
    - ¿Cuál es el vocabulario del dominio? (nombres, entidades)
+   - **¿Qué personalidad/tono debe tener?** (formal, creativo, corporativo, startup)
 
 2. **Stack técnico:**
    - Framework frontend (Next.js, React+Vite, SvelteKit, etc.)
@@ -82,11 +175,18 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
    - Páginas que aparecen en múltiples user journeys
    - Entidades principales del negocio
 
+4. **Pistas de diseño (si existen en docs):**
+   - ¿Menciona colores específicos?
+   - ¿Menciona estilo visual (minimalista, moderno, etc.)?
+   - ¿Menciona referencias de diseño?
+
 **Output de este paso (NO mostrar al usuario, uso interno):**
 - Stack técnico identificado
 - Dominio del negocio comprendido
+- Personalidad/tono de la aplicación
 - Lista de épicas prioritarias
-- Vocabulario del dominio (nombres correctos)
+- Vocabulario del dominio
+- Pistas de diseño (si existen)
 
 ---
 
@@ -99,20 +199,17 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
 1. **Framework:**
    - "[Framework] project structure best practices latest version"
    - "[Framework] routing configuration"
-   - "[Framework] recommended folder structure"
 
 2. **Auth Provider:**
    - "[Auth Provider] client setup [Framework]"
    - "[Auth Provider] authentication flow [Framework]"
 
-3. **UI Library:**
+3. **UI Library (MUY IMPORTANTE):**
    - "[UI Library] setup [Framework]"
-   - "[UI Library] configuration best practices"
+   - "[UI Library] theming and customization"
+   - "[UI Library] component patterns"
 
-**Objetivo:** Obtener información actualizada sobre:
-- Cómo estructurar el proyecto según el framework
-- Cómo configurar dependencias correctamente
-- Patrones recomendados por las docs oficiales
+**Objetivo:** Obtener información actualizada sobre cómo crear componentes bonitos y aplicar diseño.
 
 **Output esperado (mostrar al usuario):**
 
@@ -121,15 +218,15 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
 
 ### Stack Técnico Identificado:
 - **Framework:** [Nombre y versión del SRS]
-- **Auth Provider:** [Identificado del SRS]
 - **UI Library:** [Identificado del SRS]
+- **Auth Provider:** [Identificado del SRS]
 - **Backend/DB:** [Identificado del SRS]
-- [Otros componentes relevantes]
 
 ### Dominio del Negocio:
 - **Problema que resuelve:** [Resumen 1 línea del PRD]
 - **Usuarios principales:** [Listar personas del PRD]
-- **Entidades core:** [Listar entidades principales identificadas]
+- **Entidades core:** [Listar entidades principales]
+- **Personalidad/Tono:** [Formal/Creativo/Corporativo/Startup - inferir del PRD]
 
 ### Épicas Prioritarias (del PBI):
 1. [EPIC-XXX]: [Nombre] - [Razón de prioridad]
@@ -137,720 +234,978 @@ Crear la estructura inicial del proyecto frontend (scaffolding) en el **director
 3. [EPIC-ZZZ]: [Nombre] - [Razón de prioridad]
 
 ### Documentación Consultada:
-He consultado las docs oficiales de:
-- **[Framework]**: [Conceptos clave aplicables]
+- **[Framework]**: [Conceptos clave]
+- **[UI Library]**: [Patrones de diseño disponibles]
 - **[Auth Provider]**: [Setup recomendado]
-- **[UI Library]**: [Configuración recomendada]
 
-**Próximo paso:** Decidir qué páginas crear basándome en este análisis.
+**Próximo paso:** Preguntar preferencias de diseño al usuario.
 ```
 
 ---
 
-## 🧠 FASE 2: DECISIÓN ESTRATÉGICA DE PÁGINAS
+## 🎨 FASE 1.5: DISEÑO & PREFERENCIAS VISUALES (INTERACTIVA)
 
-**Objetivo:** Decidir inteligentemente qué páginas crear (3-5 máximo) basándote en el análisis anterior.
+**Objetivo:** Recopilar preferencias visuales del usuario para crear un diseño coherente y bonito.
 
-### Criterios de Selección:
+### Paso 1.5.1: Pregunta 1 - Paleta de Colores
 
-**Páginas obligatorias (si aplican al proyecto):**
+**Usa `AskUserQuestion` tool:**
 
-1. **Autenticación** (solo si el proyecto requiere auth):
-   - Analiza PRD/SRS: ¿El sistema requiere usuarios con login?
-   - Si SÍ → Incluir página de login/auth
-   - Si NO → Omitir
+**Pregunta:** "¿Qué paleta de colores prefieres para tu aplicación?"
 
-2. **Página principal post-login o home** (casi siempre aplica):
-   - ¿Cómo se llama en el contexto del negocio?
-   - Ejemplos: "Home", "Proyectos", "Mi Espacio", etc.
-   - Usa vocabulario del dominio (NO genérico "Dashboard")
+**Header:** "Paleta de Colores"
 
-**Páginas del dominio (1-3 páginas):**
+**Opciones:**
 
-Analiza épicas y user journeys para identificar:
+1. **Azul Profesional** (Confianza y corporativo)
+   - **Descripción:** "Tonos azules (ej: #3B82F6). Transmite confianza, profesionalismo. Ideal para: SaaS empresarial, fintech, herramientas B2B."
 
-- **Páginas que aparecen en múltiples user journeys** (alta prioridad)
-- **Épicas marcadas como "MUST HAVE" o "HIGH"** en el PBI
-- **Funcionalidades core del MVP** (del PRD mvp-scope.md)
+2. **Verde Moderno** (Crecimiento y tech)
+   - **Descripción:** "Tonos verdes (ej: #10B981). Transmite innovación, crecimiento. Ideal para: Startups tech, sostenibilidad, salud."
 
-**Criterios para descartar:**
-- ❌ Páginas secundarias (configuraciones avanzadas)
-- ❌ Páginas administrativas (admin panels)
-- ❌ Flujos multi-paso complejos (wizards)
-- ❌ Páginas de detalle complejas
+3. **Morado Creativo** (Creatividad y premium)
+   - **Descripción:** "Tonos morados (ej: #8B5CF6). Transmite creatividad, lujo. Ideal para: Apps creativas, comunidades, productos premium."
 
-**Análisis de layout:**
+4. **Naranja Energético** (Energía y acción)
+   - **Descripción:** "Tonos naranjas (ej: #F59E0B). Transmite energía, call-to-action. Ideal para: E-commerce, marketplaces, apps de acción."
 
-Basándote en las páginas identificadas, decide:
-- ¿Necesita sidebar? (si hay 4+ páginas)
-- ¿Necesita navbar? (casi siempre)
-- ¿Es SPA simple? (1-2 páginas)
-- ¿Tiene secciones diferenciadas? (auth vs app)
+5. **Elige por mí** (Basado en tu negocio)
+   - **Descripción:** "La IA analizará la personalidad de tu negocio (del PRD) y seleccionará la paleta más apropiada automáticamente."
+
+**MultiSelect:** false
 
 ---
 
-### Output Esperado (mostrar al usuario):
+### Paso 1.5.2: Pregunta 2 - Estilo Visual
+
+**Usa `AskUserQuestion` tool:**
+
+**Pregunta:** "¿Qué estilo visual prefieres para la interfaz?"
+
+**Header:** "Estilo Visual"
+
+**Opciones:**
+
+1. **Minimalista** (Clean y espacioso)
+   - **Descripción:** "Diseño limpio, mucho espacio en blanco, tipografía clara. Estilo Apple/Notion. Ideal para: Herramientas de productividad, dashboards, SaaS."
+
+2. **Moderno/Bold** (Vibrante y llamativo)
+   - **Descripción:** "Colores vibrantes, bordes redondeados, gradientes sutiles. Estilo Stripe/Vercel. Ideal para: Startups, productos innovadores, tech."
+
+3. **Corporativo** (Serio y profesional)
+   - **Descripción:** "Diseño formal, líneas rectas, colores sobrios. Estilo IBM/Microsoft. Ideal para: Enterprise, finanzas, gobierno."
+
+4. **Startup/Playful** (Amigable y accesible)
+   - **Descripción:** "Colores alegres, ilustraciones, bordes redondeados. Estilo Slack/Mailchimp. Ideal para: Comunidades, educación, consumer apps."
+
+5. **Elige por mí** (Basado en tu negocio)
+   - **Descripción:** "La IA seleccionará el estilo que mejor se ajuste a la personalidad de tu aplicación (inferida del PRD)."
+
+**MultiSelect:** false
+
+---
+
+### Paso 1.5.3: Pregunta 3 - Layout Principal
+
+**Usa `AskUserQuestion` tool:**
+
+**Pregunta:** "¿Qué tipo de layout prefieres para la aplicación?"
+
+**Header:** "Layout Principal"
+
+**Opciones:**
+
+1. **Sidebar + Top Navbar** (Dashboard clásico)
+   - **Descripción:** "Navegación lateral fija con barra superior. Ideal para: Aplicaciones con muchas secciones (5+), dashboards, herramientas complejas."
+
+2. **Solo Top Navbar** (Clean y simple)
+   - **Descripción:** "Solo barra de navegación superior. Ideal para: Aplicaciones simples (2-4 secciones), landing pages, apps enfocadas."
+
+3. **Sidebar Collapsible** (Flexible y moderno)
+   - **Descripción:** "Sidebar que se puede ocultar/expandir. Ideal para: Aplicaciones medianas, necesitas espacio flexible, UX moderna."
+
+4. **Elige por mí** (Según páginas del MVP)
+   - **Descripción:** "La IA analizará cuántas páginas tiene tu MVP y seleccionará el layout más apropiado (2-3 páginas → Top Nav, 4+ → Sidebar)."
+
+**MultiSelect:** false
+
+---
+
+### Paso 1.5.4: Pregunta 4 - Componentes UI Prioritarios
+
+**Usa `AskUserQuestion` tool:**
+
+**Pregunta:** "¿Qué componentes UI son prioritarios para tu aplicación? (puedes elegir varios)"
+
+**Header:** "Componentes UI"
+
+**Opciones:**
+
+1. **Botones & CTAs** (Siempre recomendado)
+   - **Descripción:** "Botones primary, secondary, outline, ghost. Esenciales para cualquier aplicación."
+
+2. **Cards & Containers** (Muy común)
+   - **Descripción:** "Tarjetas para mostrar información, contenedores con sombras/bordes. Útil para: Listas, dashboards, grids."
+
+3. **Forms & Inputs** (Si tienes formularios)
+   - **Descripción:** "Inputs, textareas, selects, checkboxes. Esencial para: Auth, formularios de creación/edición."
+
+4. **Modals & Dialogs** (Interacciones)
+   - **Descripción:** "Ventanas modales, confirmaciones, diálogos. Útil para: Confirmaciones, detalles, formularios rápidos."
+
+5. **Elige por mí** (Según épicas del MVP)
+   - **Descripción:** "La IA analizará las épicas de tu MVP y seleccionará los componentes que más necesitarás."
+
+**MultiSelect:** true (puede elegir varios)
+
+---
+
+### Paso 1.5.5: Procesar Respuestas y Generar Plan de Diseño
+
+**Después de recibir todas las respuestas, genera un plan:**
 
 ```markdown
-## 🗂️ Plan de Páginas Estratégicas
+## 🎨 Plan de Diseño Generado
 
-**Total de páginas a crear:** [número] (3-5 recomendado)
-
----
-
-### Decisión de Layout:
-
-**Tipo de layout:** [Sidebar + Navbar | Navbar solo | Simple]
-**Razón:** [Explicar basándote en número de páginas y contexto del negocio]
+Basándome en tus preferencias y el análisis del proyecto, aquí está el plan de diseño:
 
 ---
 
-### Páginas Seleccionadas:
+### Paleta de Colores: [Seleccionada]
 
-#### 1️⃣ [Nombre de Página] (Autenticación - si aplica)
-**Ruta:** `/[ruta]`
-**Razón:** [Por qué esta página es necesaria]
-**Funcionalidad moqueada:**
-- [Listar elementos básicos a implementar]
-- [Qué NO se implementa todavía]
+**Colores principales:**
+- **Primary:** [Color hex] - [Descripción]
+- **Secondary:** [Color hex] - [Descripción]
+- **Accent:** [Color hex] - [Descripción]
+- **Background:** [Color hex]
+- **Text:** [Color hex]
+- **Border:** [Color hex]
 
-**Épica relacionada:** [EPIC-XXX] (si aplica)
-**Stories relacionadas:** [STORY-XXX, STORY-YYY] (si aplica)
-
----
-
-#### 2️⃣ [Nombre de Página] (Página Principal)
-**Ruta:** `/[ruta]`
-**Razón:** [Por qué esta página es estratégica según PRD/PBI]
-**Funcionalidad moqueada:**
-- [Elementos clave]
-
-**Épica relacionada:** [EPIC-XXX]
+**Razón:** [Si fue "Elige por mí", explicar: "He seleccionado [Color] porque tu aplicación es sobre [dominio] que transmite [valor], y esta paleta comunica [mensaje]."]
 
 ---
 
-#### 3️⃣ [Nombre de Página Core 1]
-**Ruta:** `/[ruta]`
-**Razón:** [Justificar con user journeys o épicas prioritarias]
-**Funcionalidad moqueada:**
-- [Elementos clave]
+### Estilo Visual: [Seleccionado]
 
-**Épica relacionada:** [EPIC-XXX]
-**Stories relacionadas:** [STORY-XXX]
+**Características:**
+- Espaciado: [Generoso/Compacto]
+- Bordes: [Redondeados/Rectos/Muy redondeados]
+- Sombras: [Sutiles/Pronunciadas/Ninguna]
+- Tipografía: [Sans-serif moderna/Serif formal]
 
----
-
-[Repetir para página 4 y 5 si aplica]
+**Razón:** [Si fue "Elige por mí", explicar por qué se ajusta al negocio]
 
 ---
 
-### ❌ Páginas Diferidas (implementar en Fase 6)
+### Layout: [Seleccionado]
 
-Las siguientes páginas se implementarán durante Fase 6 al desarrollar las stories correspondientes:
+**Estructura:**
+- Navegación: [Sidebar/Top Nav/Sidebar Collapsible]
+- Header: [Presente/Ausente] - [Contenido]
+- Footer: [Presente/Ausente] - [Contenido si aplica]
 
-- `/[página]` - Razón: [Por qué no es prioritaria ahora]
-- `/[página]` - Razón: [Por qué no es prioritaria ahora]
-- ...
-
-**Beneficio:** Enfoque en lo esencial para tener esqueleto visual funcional.
+**Razón:** [Si fue "Elige por mí", explicar: "Tu MVP tiene [X] páginas, por lo que [layout] es ideal."]
 
 ---
 
-**Próximo paso:** Setup del proyecto con instalación de dependencias.
+### Componentes UI a Crear:
+
+**Nivel 1 (Esenciales - siempre se crean):**
+- ✅ Button (primary, secondary, outline, ghost, danger)
+- ✅ Card (default, hover, clickable)
+- ✅ Layout components (Navbar, Sidebar si aplica)
+
+**Nivel 2 (Según selección):**
+[Listar componentes seleccionados por el usuario]
+
+**Nivel 3 (Específicos del dominio):**
+[Basándote en épicas, listar componentes específicos que se necesitarán]
+
+---
+
+**Próximo paso:** Implementar este diseño en el proyecto.
 ```
+
+---
+
+## 🏗️ FASE 2: DECISIÓN ESTRATÉGICA DE PÁGINAS
+
+**Objetivo:** Decidir qué páginas crear (3-5 máximo) basándote en el análisis anterior + diseño definido.
+
+[MANTENER CONTENIDO ACTUAL DE FASE 2 - Ya está bien]
 
 ---
 
 ## 🏗️ FASE 3: SETUP DEL PROYECTO
 
-**Objetivo:** Configurar el proyecto en el directorio actual instalando dependencias y creando estructura.
+**Objetivo:** Configurar el proyecto con el package manager seleccionado.
 
 ### Paso 3.1: Verificar Entorno Actual
 
-**Explica al usuario qué encontraste:**
-
-```bash
-# Ver archivos existentes
-ls -la
-
-# Ver package.json actual
-cat package.json
-```
-
-**Output esperado:**
+[MANTENER - agregar mención del package manager]
 
 ```markdown
-## 🔍 Análisis del Directorio Actual
-
-**Directorio de trabajo:** [pwd]
-
-**Archivos encontrados:**
-- ✅ `package.json` encontrado → Lo usaremos como base
-- ✅ `.git/` encontrado → Repositorio Git inicializado
-- ✅ `.context/` con documentación del proyecto
-- [Listar otros archivos relevantes]
-
-**Estado del package.json:**
-- Dependencias existentes: [listar si hay]
-- Scripts existentes: [listar si hay]
-
-**Próximo paso:** Instalar dependencias fundamentales sin romper lo existente.
+**Package manager seleccionado:** [pnpm/bun]
+**Comandos a usar:** `[pm] install`, `[pm] run dev`, etc.
 ```
 
 ---
 
 ### Paso 3.2: Instalar Dependencias Fundamentales
 
-**IMPORTANTE:** Explica CADA dependencia ANTES de instalarla.
+**IMPORTANTE:** Usar el package manager seleccionado en Fase 0.
 
 **Proceso:**
 
-1. **Identifica categorías de dependencias necesarias:**
-   - Core framework
-   - UI library
-   - Auth provider
-   - Developer tools (TypeScript, ESLint)
-
-2. **Por cada categoría, explica al usuario:**
-
-```markdown
-### 📦 Instalando [Categoría]
-
-**Dependencias a instalar:**
-- `[paquete-1]`: [Para qué sirve]
-- `[paquete-2]`: [Para qué sirve]
-
-**Razón:** [Por qué son necesarias para este proyecto específico]
-
-**Comando:**
+1. **Core framework:**
 ```bash
-npm install [paquetes...]
+[pnpm/bun] add [framework-packages]
 ```
 
-**Instalando...**
-```
-
-3. **Ejecuta instalaciones:**
-
+2. **UI Library:**
 ```bash
-# Framework core (ajustar según identificado)
-npm install [framework-packages]
-
-# UI Library (ajustar según identificado)
-npm install [ui-packages]
-
-# Auth Provider (ajustar según identificado)
-npm install [auth-packages]
-
-# TypeScript + Dev Tools
-npm install -D typescript @types/react @types/node eslint prettier
+[pnpm/bun] add [ui-packages]
 ```
 
-**NO hardcodear paquetes específicos** - Usa los identificados del SRS.
+3. **Auth Provider:**
+```bash
+[pnpm/bun] add [auth-packages]
+```
+
+4. **TypeScript + Dev Tools:**
+```bash
+[pnpm/bun] add -D typescript @types/react @types/node eslint prettier
+```
+
+[Resto del paso 3.2 igual]
 
 ---
 
 ### Paso 3.3: Crear Estructura de Carpetas
 
-**Acción:** Consulta las docs oficiales del framework (vía Context7 si es necesario) y crea la estructura recomendada.
+[MANTENER - agregar mención de components/ui para design system]
 
-**IMPORTANTE:** La estructura varía según framework:
-- Next.js App Router → `app/`, `components/`, `lib/`
-- Next.js Pages Router → `pages/`, `components/`, `lib/`
-- React+Vite → `src/`, `components/`, `utils/`
-- SvelteKit → `src/routes/`, `src/lib/`
-
-**NO asumir estructura específica** - Consulta docs y crea según framework real.
-
-**Ejemplo de explicación al usuario:**
-
-```markdown
-## 📁 Creando Estructura de Carpetas
-
-Basándome en las mejores prácticas de **[Framework]** (consultadas de docs oficiales), voy a crear la siguiente estructura:
-
+**Estructura debe incluir:**
 ```
-[Mostrar árbol de carpetas según framework identificado]
+[framework-dir]/
+├── components/
+│   ├── ui/           ← Design system components (Button, Card, etc.)
+│   ├── layout/       ← Layout components (Navbar, Sidebar, etc.)
+│   └── [domain]/     ← Domain-specific components
 ```
-
-**Explicación de carpetas clave:**
-- `[carpeta-1]/`: [Propósito según framework]
-- `[carpeta-2]/`: [Propósito según framework]
-- `[carpeta-3]/`: [Propósito según framework]
-
-**Creando estructura...**
-```
-
-```bash
-# Crear carpetas (ajustar según framework)
-mkdir -p [carpetas según framework identificado]
-```
-
-**Ejemplo (NO hardcodear esto, es solo ilustrativo):**
-- Si es Next.js App Router: `app/`, `components/`, `lib/`, `types/`
-- Si es Vite: `src/`, `src/components/`, `src/utils/`, `src/types/`
 
 ---
 
-### Paso 3.4: Crear Archivos de Configuración
+### Paso 3.4: Configurar Tailwind con Paleta Personalizada
 
-**Acción:** Crea configuraciones mínimas necesarias según el stack.
+**NUEVO - MUY IMPORTANTE:**
 
-**IMPORTANTE:** NO copies/pegues configs completas hardcodeadas.
-
-**Proceso:**
-
-1. **Identifica qué configs necesita el proyecto** (del SRS + framework)
-2. **Consulta Context7 si es necesario** para obtener configs recomendadas
-3. **Crea archivos básicos** explicando cada uno
-
-**Archivos comunes (ajustar según stack):**
-
-- Config del framework (ej: `next.config.js`, `vite.config.ts`)
-- TypeScript (`tsconfig.json`)
-- UI Library (ej: `tailwind.config.ts`)
-- ESLint (`.eslintrc.json`)
-- Environment vars (`.env.local.example`)
-
-**Formato de explicación:**
+**Acción:** Crea `tailwind.config.ts` con la paleta de colores seleccionada.
 
 ```markdown
-### ⚙️ Creando [Nombre de Config]
+### 🎨 Creando Configuración de Tailwind con Paleta Personalizada
 
-**Archivo:** `[nombre-archivo]`
-**Propósito:** [Para qué sirve en este proyecto]
+**Archivo:** `tailwind.config.ts`
 
-**Configuraciones clave aplicadas:**
-- [Config 1]: [Razón]
-- [Config 2]: [Razón]
+**Propósito:** Aplicar la paleta de colores seleccionada en Fase 1.5 a todo el proyecto.
 
-**Nota:** [Alguna nota relevante si aplica]
+**Colores aplicados:**
+- Primary: [Color hex elegido]
+- Secondary: [Color hex]
+- Accent: [Color hex]
+- [etc.]
+
+**Ejemplo de uso posterior:**
+```tsx
+<button className="bg-primary text-white hover:bg-primary/90">
+  Botón Primary
+</button>
+```
 
 **Creando archivo...**
 ```
 
-**Para `.env.local.example`:**
+**Contenido del archivo (adaptado a la paleta elegida):**
 
+```typescript
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '[color-hex]',
+          50: '[lighter-shade]',
+          100: '[lighter-shade]',
+          // ... gradaciones
+          900: '[darker-shade]',
+        },
+        secondary: {
+          DEFAULT: '[color-hex]',
+          // ... gradaciones
+        },
+        accent: {
+          DEFAULT: '[color-hex]',
+          // ... gradaciones
+        },
+      },
+      borderRadius: {
+        // Ajustar según estilo visual elegido
+        'xl': '[value según estilo]', // Ej: '1rem' para moderno, '0.5rem' para corporativo
+      },
+      boxShadow: {
+        // Ajustar según estilo visual elegido
+        'card': '[value]', // Ej: '0 4px 6px rgba(0,0,0,0.1)' para moderno
+      },
+    },
+  },
+  plugins: [],
+}
+export default config
+```
+
+**Explicación al usuario:**
 ```markdown
-### 🔐 Creando Template de Variables de Entorno
+**Paleta aplicada:** He configurado Tailwind con la paleta [Nombre] que seleccionaste.
 
-**Archivo:** `.env.local.example`
+**Uso en componentes:**
+- `bg-primary` → Color principal
+- `text-primary` → Texto en color principal
+- `border-primary` → Borde en color principal
+- `bg-primary-50` → Tono más claro
+- `bg-primary-900` → Tono más oscuro
 
-**Variables definidas (basadas en SRS):**
-- `[VAR_1]`: [Descripción - ej: URL del backend]
-- `[VAR_2]`: [Descripción - ej: API Key de Supabase]
+**Estilo visual aplicado:**
+- Bordes redondeados: [Descripción según estilo]
+- Sombras: [Descripción según estilo]
 
-**⚠️ ACCIÓN REQUERIDA DEL USUARIO:**
-
-1. Copia este archivo a `.env.local`:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-2. Reemplaza los valores de ejemplo con tus credenciales reales
-
-3. `.env.local` ya está en `.gitignore` (no se commiteará)
-
-**Tip:** Puedes usar herramientas MCP (ej: Supabase MCP) para obtener credenciales reales si las necesitas.
+Estos valores se usarán en todos los componentes UI para mantener coherencia visual.
 ```
 
 ---
 
-## 🎨 FASE 4: IMPLEMENTAR COMPONENTES BASE
+### Paso 3.5: Configurar Archivo de Estilos Globales
 
-**Objetivo:** Crear utilidades, clientes, y componentes base reutilizables.
-
-### Paso 4.1: Clientes de Auth/Backend
-
-**Acción:** Crea clientes según el auth provider identificado.
-
-**IMPORTANTE:** NO hardcodear código de Supabase si el proyecto usa otro provider.
-
-**Proceso:**
-
-1. **Identifica el provider** (del SRS)
-2. **Consulta Context7** para obtener setup recomendado
-3. **Crea archivos de cliente** explicando su propósito
-
-**Ejemplo de explicación:**
+**NUEVO:**
 
 ```markdown
-### 🔌 Creando Cliente de [Auth Provider]
+### 🎨 Creando Estilos Globales
 
-**Provider identificado:** [Nombre del SRS]
+**Archivo:** `app/globals.css` (o ubicación según framework)
 
-**Archivos a crear:**
-- `lib/[provider]/client.ts` - Cliente para uso en browser/cliente
-- `lib/[provider]/server.ts` - Cliente para uso en server (si aplica)
-
-**Propósito:** Estos clientes permiten autenticación y acceso a [servicios del provider].
-
-**Uso posterior:**
-- En Client Components: importar desde `client.ts`
-- En Server Components: importar desde `server.ts`
-
-**Creando archivos basados en docs oficiales de [Provider]...**
-```
-
-**Crea los archivos** consultando Context7 o siguiendo docs del provider (NO pegues snippets hardcodeados de 50+ líneas).
-
----
-
-### Paso 4.2: Utilidades Comunes
-
-**Acción:** Crea utilidades básicas (ej: función `cn` para TailwindCSS si se usa).
-
-**Mantén esto minimalista** - Solo utilidades que sabes que se usarán.
-
-```markdown
-### 🛠️ Creando Utilidades Comunes
-
-**Archivo:** `lib/utils.ts` (o ubicación según framework)
-
-**Utilidades incluidas:**
-- [Utilidad 1]: [Para qué sirve]
-- [Utilidad 2]: [Para qué sirve]
-
-**Ejemplo de uso:** [Mostrar brevemente]
+**Propósito:** Aplicar estilos base y variables CSS personalizadas.
 
 **Creando archivo...**
 ```
 
----
+**Contenido (adaptado al estilo visual):**
 
-### Paso 4.3: Tipos TypeScript Base
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-**Acción:** Crea tipos básicos según el dominio del negocio.
+/* Variables CSS según paleta elegida */
+:root {
+  --color-primary: [hsl value];
+  --color-secondary: [hsl value];
+  --color-accent: [hsl value];
+  --radius: [value según estilo]; /* Ej: 0.5rem */
+}
 
-**IMPORTANTE:** Usa entidades del dominio (del PRD/SRS/PBI), NO tipos genéricos.
+/* Estilos base según estilo visual elegido */
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    /* Tipografía según estilo */
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
 
-```markdown
-### 📘 Creando Tipos TypeScript
-
-**Archivo:** `types/index.ts` (o ubicación según framework)
-
-**Tipos definidos (basados en entidades del negocio):**
-
-- `[Entidad1]`: [Descripción de la entidad del negocio]
-  - Campos principales identificados del SRS/PBI
-
-- `[Entidad2]`: [Descripción]
-  - Campos principales
-
-**Nota:** Estos tipos base se extenderán en Fase 6 al implementar stories completas.
-
-**⚠️ IMPORTANTE:** NO hardcodear schemas de DB aquí. Si necesitas schemas reales, usa herramientas MCP (ej: Supabase MCP) durante Fase 6.
-
-**Creando archivo...**
+/* Utilities personalizadas */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
 ```
 
 ---
 
-### Paso 4.4: Layouts Base
+## 🎨 FASE 4: CREAR DESIGN SYSTEM (COMPONENTES UI)
 
-**Acción:** Crea layout raíz según framework.
+**Objetivo:** Crear componentes UI reutilizables, bonitos y coherentes con el diseño elegido.
+
+**ESTA ES LA FASE MÁS IMPORTANTE PARA EL DISEÑO VISUAL**
+
+---
+
+### Paso 4.1: Crear Componente Button (Esencial)
 
 ```markdown
-### 🏗️ Creando Layout Raíz
+### 🔘 Creando Componente Button
 
-**Archivo:** [Ubicación según framework, ej: `app/layout.tsx` o `src/routes/+layout.svelte`]
+**Archivo:** `components/ui/button.tsx`
 
-**Propósito:** Estructura HTML base que envuelve toda la aplicación.
+**Propósito:** Botón reutilizable con variantes (primary, secondary, outline, ghost, danger).
 
-**Configuraciones aplicadas:**
-- Font: [Especificar cuál y por qué]
-- Metadata: [Título y descripción del proyecto - obtener del PRD]
-- Estilos globales: [UI library setup]
+**Variantes a implementar:**
+- **primary:** Color principal, para acciones principales
+- **secondary:** Color secundario, para acciones secundarias
+- **outline:** Solo borde, para acciones terciarias
+- **ghost:** Sin fondo, para acciones sutiles
+- **danger:** Rojo, para acciones destructivas
+
+**Tamaños:**
+- sm (pequeño)
+- md (mediano - default)
+- lg (grande)
+
+**Diseño aplicado:**
+- Paleta: [Usar colores de tailwind.config]
+- Bordes: [Según estilo visual elegido]
+- Hover/Active states: [Transiciones suaves]
+- Disabled state: [Opacidad reducida]
+
+**Creando componente...**
+```
+
+**Directiva para la IA (NO hardcodear código completo):**
+
+"Crea un componente Button usando TypeScript + TailwindCSS que implemente las variantes mencionadas. Usa `class-variance-authority` (cva) para gestionar variantes de forma limpia. Aplica la paleta de colores de `tailwind.config.ts` y el estilo de bordes/sombras según el estilo visual elegido. Incluye estados de hover, active, focus y disabled."
+
+---
+
+### Paso 4.2: Crear Componente Card (Esencial)
+
+```markdown
+### 🃏 Creando Componente Card
+
+**Archivo:** `components/ui/card.tsx`
+
+**Propósito:** Contenedor reutilizable para mostrar información agrupada.
+
+**Variantes a implementar:**
+- **default:** Card básica con borde/sombra
+- **hover:** Con efecto hover (sube ligeramente)
+- **clickable:** Con cursor pointer y hover effect
+
+**Partes del componente:**
+- CardHeader
+- CardContent
+- CardFooter
+
+**Diseño aplicado:**
+- Sombra: [Según estilo visual]
+- Bordes: [Según estilo visual]
+- Padding: [Generoso/Compacto según estilo]
+- Background: bg-card (definido en theme)
+
+**Creando componente...**
+```
+
+**Directiva para la IA:**
+
+"Crea un componente Card con sub-componentes (Header, Content, Footer) usando TailwindCSS. Aplica sombras y bordes según el estilo visual elegido. Si el estilo es 'Moderno/Bold', usa sombras más pronunciadas y hover effects. Si es 'Minimalista', usa sombras sutiles."
+
+---
+
+### Paso 4.3: Crear Componentes de Formulario (Si aplica)
+
+**Solo si el usuario seleccionó "Forms & Inputs" en Fase 1.5.4:**
+
+```markdown
+### 📝 Creando Componentes de Formulario
+
+**Archivos:**
+- `components/ui/input.tsx`
+- `components/ui/textarea.tsx`
+- `components/ui/select.tsx`
+- `components/ui/label.tsx`
+
+**Propósito:** Inputs estilizados con estados de validación visual.
+
+**Estados a implementar:**
+- Normal
+- Focus (borde primary)
+- Error (borde rojo + mensaje)
+- Disabled
+- Success (borde verde - opcional)
+
+**Diseño aplicado:**
+- Bordes: [Según estilo visual]
+- Focus ring: Color primary
+- Placeholder: text-muted-foreground
+- Height: Cómodo para tocar (min 40px)
+
+**Creando componentes...**
+```
+
+**Directiva para la IA:**
+
+"Crea componentes de formulario (Input, Textarea, Select, Label) con estados de validación visual. Usa Tailwind para estilos. Aplica bordes redondeados según estilo visual. Include focus states con ring-primary. Para errores, usa text-red-500 y border-red-500."
+
+---
+
+### Paso 4.4: Crear Modal/Dialog (Si aplica)
+
+**Solo si el usuario seleccionó "Modals & Dialogs":**
+
+```markdown
+### 🗨️ Creando Componente Modal
+
+**Archivo:** `components/ui/modal.tsx`
+
+**Propósito:** Modal reutilizable para confirmaciones, detalles, formularios.
+
+**Partes:**
+- Modal overlay (backdrop oscuro)
+- Modal content (centered)
+- Modal header
+- Modal body
+- Modal footer (botones)
+
+**Funcionalidad:**
+- Click fuera → cierra modal
+- ESC key → cierra modal
+- Animaciones suaves (fade in/out)
+
+**Diseño aplicado:**
+- Backdrop: bg-black/50
+- Content: bg-card con sombra grande
+- Bordes redondeados según estilo
+- Max width responsivo
+
+**Creando componente...**
+```
+
+**Directiva para la IA:**
+
+"Crea un componente Modal con overlay y animaciones. Usa Radix UI o Headless UI si está disponible, sino implementa con estado React. Aplica animaciones suaves (transition-all duration-200). Include lógica para cerrar con ESC o click fuera. Usa la paleta de colores del theme."
+
+---
+
+### Paso 4.5: Crear Utilidad cn() (Esencial)
+
+```markdown
+### 🛠️ Creando Utilidad cn()
+
+**Archivo:** `lib/utils.ts`
+
+**Propósito:** Función helper para combinar clases de Tailwind de forma inteligente.
 
 **Creando archivo...**
 ```
 
+**Contenido:**
+
+```typescript
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+```
+
+**Uso:**
+```tsx
+<button className={cn("px-4 py-2", isPrimary && "bg-primary", className)} />
+```
+
 ---
 
-## 📄 FASE 5: IMPLEMENTAR PÁGINAS ESTRATÉGICAS
-
-**Objetivo:** Crear las páginas seleccionadas en Fase 2 con UI básica moqueada.
-
-### ⚠️ RECORDATORIO CRÍTICO:
-
-- **Implementar SOLO UI básica** + navegación funcional
-- **NO implementar** todos los criterios de aceptación
-- **Usar mock data** apropiada al dominio del negocio
-- **Usar nombres del dominio** (NO "Dashboard", "Settings" genéricos)
-- **Explicar qué se deja** para Fase 6
-
----
-
-### Proceso por Página:
-
-**Por cada página seleccionada en Fase 2:**
-
-1. **Anuncia qué vas a crear:**
+### Paso 4.6: Resumen de Design System
 
 ```markdown
-### [📋/🔐/etc.] Creando Página: [Nombre del Dominio]
+## ✅ Design System Creado
+
+**Componentes UI implementados:**
+- ✅ Button (5 variantes + 3 tamaños)
+- ✅ Card (con Header, Content, Footer)
+[Listar otros componentes creados según selección]
+
+**Paleta aplicada:**
+- Primary: [Color] - Usado en botones primarios, links, focus states
+- Secondary: [Color] - Usado en botones secundarios, elementos secundarios
+- Accent: [Color] - Usado en highlights, badges
+
+**Estilo visual aplicado:**
+- Bordes: [Descripción]
+- Sombras: [Descripción]
+- Espaciado: [Descripción]
+- Tipografía: [Descripción]
+
+**Archivos creados:**
+- `components/ui/button.tsx`
+- `components/ui/card.tsx`
+[Listar otros]
+- `lib/utils.ts`
+
+**Próximo paso:** Crear componentes de layout (Navbar, Sidebar si aplica).
+```
+
+---
+
+## 🧱 FASE 4.5: CREAR COMPONENTES DE LAYOUT
+
+**Objetivo:** Crear Navbar, Sidebar (si aplica), y Layout principal según decisión de Fase 1.5.
+
+---
+
+### Paso 4.5.1: Crear Navbar/Header
+
+```markdown
+### 🔝 Creando Navbar/Header
+
+**Archivo:** `components/layout/navbar.tsx`
+
+**Propósito:** Barra de navegación superior.
+
+**Elementos a incluir:**
+- Logo/Nombre del proyecto (del PRD)
+- Links de navegación (según páginas de Fase 2)
+- User menu (avatar + dropdown si hay auth)
+- CTA button (si aplica según negocio)
+
+**Diseño aplicado:**
+- Height: [Cómoda - 60-70px]
+- Background: [bg-card o transparente según estilo]
+- Border bottom: [Sutil]
+- Sticky positioning
+- Sombra suave (si aplica según estilo)
+
+**Responsivo:**
+- Desktop: Links visibles
+- Mobile: Hamburger menu (si muchos links)
+
+**Creando componente...**
+```
+
+**Directiva para la IA:**
+
+"Crea un Navbar component responsive. En desktop muestra links inline, en mobile muestra hamburger menu. Usa el Button component del design system. Aplica bg-card/50 con backdrop-blur para efecto moderno si el estilo es 'Moderno/Bold'. Include user avatar si hay autenticación. Usa nombres de navegación del dominio del negocio (NO 'Dashboard' genérico)."
+
+---
+
+### Paso 4.5.2: Crear Sidebar (Solo si se eligió en Fase 1.5)
+
+**Solo si layout incluye Sidebar:**
+
+```markdown
+### 📂 Creando Sidebar
+
+**Archivo:** `components/layout/sidebar.tsx`
+
+**Propósito:** Navegación lateral (fija o collapsible).
+
+**Elementos a incluir:**
+- Logo/Nombre (top)
+- Navigation links (con iconos)
+- Active state (highlight)
+- Collapse button (si es collapsible)
+
+**Diseño aplicado:**
+- Width: 256px (expanded), 64px (collapsed)
+- Background: [bg-card o bg-muted según estilo]
+- Border right: [Sutil]
+- Iconos: [Biblioteca de iconos - lucide-react recomendado]
+
+**Estados:**
+- Active link: bg-primary/10 + text-primary
+- Hover: bg-accent/50
+- Focus: ring-primary
+
+**Creando componente...**
+```
+
+**Directiva para la IA:**
+
+"Crea un Sidebar component con estado de collapsed/expanded si es collapsible. Usa lucide-react para iconos. Aplica hover y active states usando la paleta primary. Si es collapsible, muestra solo iconos cuando está collapsed. Use nombres del dominio para navigation items (inferir del PBI)."
+
+---
+
+### Paso 4.5.3: Crear Layout Principal
+
+```markdown
+### 🏗️ Creando Layout Principal
+
+**Archivo:** `components/layout/main-layout.tsx` o directamente en `app/(app)/layout.tsx`
+
+**Propósito:** Layout que combina Navbar, Sidebar (si aplica), y área de contenido.
+
+**Estructura según decisión de Fase 1.5:**
+
+[Si es "Sidebar + Top Navbar":]
+- Navbar en top (full width)
+- Sidebar en left (fixed)
+- Main content (offset by sidebar width)
+
+[Si es "Solo Top Navbar":]
+- Navbar en top
+- Main content (full width debajo)
+
+[Si es "Sidebar Collapsible":]
+- Similar a "Sidebar + Top Navbar" pero sidebar puede collapsar
+- Estado guardado en localStorage
+
+**Diseño aplicado:**
+- Main content: padding adecuado
+- Smooth transitions cuando sidebar colapsa
+- Responsive: en mobile sidebar se convierte en drawer
+
+**Creando layout...**
+```
+
+**Directiva para la IA:**
+
+"Crea el Main Layout component que use Navbar y Sidebar (si aplica). Implementa el layout elegido en Fase 1.5. Si es Sidebar Collapsible, agrega lógica de toggle con estado en localStorage. En mobile (< 768px), sidebar se convierte en mobile drawer que se cierra automáticamente al navegar. Usa smooth transitions (transition-all duration-200)."
+
+---
+
+## 📄 FASE 5: IMPLEMENTAR PÁGINAS ESTRATÉGICAS CON DISEÑO
+
+**Objetivo:** Crear las páginas seleccionadas en Fase 2, pero ahora con DISEÑO REAL usando el design system.
+
+### ⚠️ CAMBIO CRÍTICO vs Versión Anterior:
+
+**❌ Antes:** Páginas genéricas, sin estilo, aburridas
+**✅ Ahora:** Páginas BONITAS usando componentes del design system
+
+---
+
+### Paso 5.1: Crear Página de Autenticación (si aplica)
+
+**Si el proyecto requiere auth:**
+
+```markdown
+### 🔐 Creando Página de Login
+
+**Ruta:** `/login` (o según framework)
+**Archivo:** [Ubicación según framework]
+
+**Diseño a implementar:**
+- Layout centrado (min-h-screen flex items-center justify-center)
+- Card component del design system
+- Logo/Nombre del proyecto (del PRD)
+- Form con Input components del design system
+- Button primary para "Sign in"
+- Link para "Forgot password?" (si aplica)
+- Background: [Gradiente sutil o color sólido según estilo]
+
+**Funcionalidad moqueada:**
+- ✅ UI completa y bonita
+- ✅ Validación visual (error states en inputs)
+- ✅ Loading state en botón
+- ⏭️ Integración real con auth provider (Fase 6)
+
+**Paleta aplicada:**
+- Card: bg-card con sombra
+- Inputs: border-border, focus:ring-primary
+- Button: variant="default" (primary)
+
+**Creando página...**
+```
+
+**Directiva para la IA:**
+
+"Crea página de login visualmente atractiva. Usa Card component para contener el formulario. Usa Input y Button del design system. Include Logo (usa nombre del proyecto del PRD). Background con gradiente sutil (ej: bg-gradient-to-br from-primary/5 to-secondary/5). Include estados de error con mensajes visuales (border-red-500 + text-red-500). Botón con loading spinner cuando se envía. NO implementes lógica real de auth, solo UI + validación visual básica."
+
+**Mock data para testing:**
+- Simular loading state (1-2 segundos)
+- Simular error si email no es válido
+- Redirect a home al "login exitoso"
+
+---
+
+### Paso 5.2: Crear Página Principal/Home
+
+```markdown
+### 🏠 Creando Página [Nombre según dominio]
+
+**Ruta:** `/[ruta]` (inferir del dominio - NO usar "/dashboard" genérico)
+**Archivo:** [Ubicación según framework]
+
+**Diseño a implementar:**
+
+**Header de página:**
+- Título (usando nombre del dominio)
+- Descripción breve
+- CTA button (si aplica según negocio)
+
+**Grid de Cards o Sección principal:**
+[Analizar épicas del PBI para decidir qué mostrar]
+
+Ejemplos:
+- Si es app de proyectos → Grid de project cards
+- Si es app de mentores → Grid de mentor cards
+- Si es fintech → Dashboard con stats cards
+- Si es e-commerce → Product grid
+
+**Componentes a usar:**
+- Card component del design system
+- Button components
+- [Otros según necesidad]
+
+**Diseño aplicado:**
+- Grid: gap-6, responsive (grid-cols-1 md:grid-cols-2 lg:grid-cols-3)
+- Cards con hover effect
+- Skeleton/Loading states (placeholder)
+- Empty state (si no hay datos)
+
+**Mock data:**
+[Crear 4-6 items de mock data apropiados al dominio]
+
+**Creando página...**
+```
+
+**Directiva para la IA:**
+
+"Crea página home/principal del dominio. Analiza las épicas del PBI para identificar qué entidades mostrar (proyectos, productos, mentores, etc.). Crea 4-6 items de mock data realistas. Usa Card component con hover effect. Include loading skeleton states. Si grid está vacío, muestra empty state bonito con ilustración/ícono + CTA. Usa paleta de colores del theme. Title con text-3xl font-bold, description con text-muted-foreground."
+
+---
+
+### Paso 5.3: Crear Páginas Core del Dominio (1-3 páginas)
+
+**Por cada página core seleccionada en Fase 2:**
+
+```markdown
+### [📋/🔍/etc.] Creando Página [Nombre del Dominio]
 
 **Ruta:** `/[ruta]`
 **Archivo:** [Ubicación según framework]
+**Épica relacionada:** [EPIC-XXX]
 
-**Funcionalidad a implementar:**
-- ✅ [Elemento 1 - UI básica]
-- ✅ [Elemento 2 - navegación]
-- ✅ [Elemento 3 - mock data si aplica]
+**Diseño a implementar:**
 
-**⏭️ Diferido para Fase 6 (Stories relacionadas: [STORY-XXX]):**
-- ❌ [Funcionalidad compleja 1]
-- ❌ [Funcionalidad compleja 2]
-- ❌ [Validaciones avanzadas]
+[Analizar la épica para decidir layout:]
 
-**Razón del diferimiento:** Esta página demuestra la estructura y UI esperada. La lógica completa (fetch real, validaciones, acciones) se implementará al desarrollar [STORY-XXX] en Fase 6.
+- Si es página de lista → Grid/Table de Cards
+- Si es página de detalle → Layout de 2 columnas (info + actions)
+- Si es página de creación → Form con steps (si es complejo)
 
-**Creando archivo...**
+**Componentes a usar:**
+- [Listar componentes del design system que se usarán]
+
+**Secciones principales:**
+1. [Sección 1]: [Descripción]
+2. [Sección 2]: [Descripción]
+
+**Mock data:**
+[Crear data apropiada al dominio]
+
+**Estados a implementar:**
+- Loading (skeleton)
+- Success (con datos)
+- Empty (sin datos)
+- Error (si aplica)
+
+**Paleta aplicada:**
+[Describir cómo se usa la paleta en esta página]
+
+**⏭️ Diferido para Fase 6:**
+- ❌ Fetch real de datos
+- ❌ Filtros/búsqueda funcionales
+- ❌ Paginación real
+- ❌ Acciones CRUD completas
+
+**Creando página...**
 ```
 
-2. **Crea el archivo** con:
-   - Estructura básica del componente
-   - UI moqueada apropiada
-   - Mock data si es necesario (basada en el dominio)
-   - Navegación funcional
-   - Comentarios `// TODO Phase 6` donde aplique
+**Directiva para la IA:**
 
-3. **NO pegues** bloques de código de 50+ líneas hardcodeados
+"Crea página visualmente atractiva usando componentes del design system. Analiza la épica [EPIC-XXX] para entender qué mostrar. Usa mock data realista (6-8 items). Include estados de loading (skeleton), empty state, y error state si aplica. Si es lista, usa grid responsive con Cards. Si tiene acciones, usa Buttons del design system con iconos (lucide-react). Aplica paleta de colores de forma coherente. NO implementes lógica real, solo UI bonita con mock data."
 
 ---
 
-### Layout Compartido (si aplica):
-
-Si decidiste en Fase 2 que necesita sidebar/navbar:
+### Paso 5.4: Aplicar Consistencia Visual
 
 ```markdown
-### 🎨 Creando Layout de Aplicación
+## 🎨 Validación de Consistencia Visual
 
-**Archivos a crear:**
-- Layout compartido: [Ubicación según framework]
-- Componente de navegación: `components/[Nombre]Navigation.tsx` (o similar)
-- Componente de header: `components/[Nombre]Header.tsx` (si aplica)
+**Revisión:** Verifico que todas las páginas usen:
+- ✅ Misma paleta de colores (primary, secondary, accent)
+- ✅ Mismos componentes del design system (Button, Card, etc.)
+- ✅ Mismo espaciado (padding, margin consistentes)
+- ✅ Misma tipografía (tamaños de text-)
+- ✅ Mismas sombras y bordes (según estilo elegido)
 
-**Decisión de layout (de Fase 2):** [Sidebar + Navbar | Solo Navbar]
-
-**Elementos de navegación (basados en páginas de Fase 2):**
-- [Página 1]: `/[ruta]` - Icono: [apropiado al contexto]
-- [Página 2]: `/[ruta]` - Icono: [apropiado al contexto]
-- ...
-
-**IMPORTANTE:** Nombres y rutas basados en el dominio del negocio (NO genéricos).
-
-**Funcionalidad implementada:**
-- ✅ Navegación entre páginas
-- ✅ Indicador de página activa
-- ✅ Logout (si hay auth)
-
-**⏭️ Diferido para Fase 6:**
-- ❌ Notificaciones
-- ❌ User dropdown con perfil completo
-- ❌ Search bar
-- ❌ Responsive mobile menu
-
-**Creando archivos...**
+**Resultado:** Aplicación con identidad visual coherente y profesional.
 ```
 
 ---
 
 ## ✅ FASE 6: VALIDACIÓN
 
-**Objetivo:** Verificar que el proyecto compila correctamente.
+**Objetivo:** Verificar que el proyecto compila y se ve bien.
 
 ### Paso 6.1: Validar Compilación
 
-**IMPORTANTE:** NO ejecutar `npm run dev` (comando interactivo).
+**Usar package manager seleccionado:**
 
 ```markdown
 ## 🔍 Validando Proyecto
 
-**Acción:** Voy a ejecutar el build para verificar que todo compila correctamente.
-
 **Comando a ejecutar:**
 ```bash
-npm run build
+[pnpm/bun] run build
 ```
 
-**¿Por qué build y no dev?**
-- `npm run build` es un comando que termina (no interactivo)
-- Si el build pasa → el proyecto está configurado correctamente
-- Detecta errores de TypeScript, imports incorrectos, etc.
+**¿Por qué build?**
+- Es un comando que termina (no interactivo)
+- Detecta errores de TypeScript, imports, etc.
 
 **Ejecutando build...**
 ```
 
 ```bash
-npm run build
+[pnpm/bun] run build
 ```
 
-**Analizar resultado:**
-
-**Si build exitoso:**
-```markdown
-✅ **Build exitoso!**
-
-**Resultado:**
-- ✓ TypeScript compiló sin errores
-- ✓ Todas las dependencias se resolvieron correctamente
-- ✓ Archivos generados en [output directory]
-
-**Próximo paso:** Documentación y recomendaciones finales.
-```
-
-**Si hay errores:**
-```markdown
-⚠️ **Build encontró errores**
-
-**Errores detectados:**
-[Listar errores]
-
-**Análisis:** [Explicar qué causó los errores]
-
-**Corrigiendo...**
-
-[Corregir errores y re-ejecutar build]
-```
-
----
-
-### Paso 6.2: Actualizar Scripts (si es necesario)
-
-```markdown
-### 📦 Verificando Scripts de package.json
-
-**Scripts disponibles:**
-- `npm run dev` - Inicia servidor de desarrollo
-- `npm run build` - Compila para producción
-- `npm run start` - Inicia servidor de producción (después de build)
-- `npm run lint` - Ejecuta ESLint
-
-[Agregar si faltan]
-
-✅ Scripts configurados correctamente.
-```
+[Resto de validación igual que antes]
 
 ---
 
 ## 📚 FASE 7: DOCUMENTACIÓN Y RECOMENDACIONES
 
-**Objetivo:** Documentar lo creado y dar recomendaciones al usuario (NO hacer acciones automáticas como commits).
+**Objetivo:** Documentar TODO (arquitectura + DISEÑO) y dar recomendaciones.
+
+---
 
 ### Paso 7.1: Crear Documentación de Setup
 
-**Archivo:** `SETUP.md` (en la raíz del proyecto)
-
-```markdown
-### 📖 Creando SETUP.md
-
-**Propósito:** Guía para que cualquier desarrollador pueda levantar el proyecto.
-
-**Contenido incluido:**
-- Requisitos previos (Node.js, cuentas necesarias)
-- Pasos de instalación
-- Configuración de variables de entorno
-- Cómo iniciar el servidor de desarrollo
-- Estructura del proyecto
-- Próximos pasos (Fases 4-6)
-
-**Creando archivo...**
-```
-
-**Contenido del archivo (adaptado al proyecto real):**
-
-```markdown
-# [Nombre del Proyecto] - Setup Guide
-
-## Requisitos Previos
-- Node.js [versión] o superior
-- [Otros requisitos según stack]
-
-## Instalación
-
-### 1. Instalar dependencias
-```bash
-npm install
-```
-
-### 2. Configurar variables de entorno
-
-Copia el archivo de ejemplo:
-```bash
-cp .env.local.example .env.local
-```
-
-Edita `.env.local` con tus credenciales reales:
-- `[VAR_1]`: [Cómo obtenerla]
-- `[VAR_2]`: [Cómo obtenerla]
-
-### 3. Iniciar servidor de desarrollo
-
-⚠️ **IMPORTANTE:** Abre una nueva terminal para no bloquear tu sesión actual.
-
-```bash
-npm run dev
-```
-
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador (ajustar puerto según framework).
-
-## Estructura del Proyecto
-
-[Mostrar árbol de carpetas creado]
-
-## Páginas Implementadas
-
-✅ **[Página 1]** (`/[ruta]`)
-- [Descripción breve]
-- Stories relacionadas: [STORY-XXX]
-
-✅ **[Página 2]** (`/[ruta]`)
-- [Descripción breve]
-- Stories relacionadas: [STORY-XXX]
-
-[Listar todas las páginas creadas]
-
-## Próximos Pasos
-
-Este es un **scaffolding inicial** (Fase 3.5). Para implementar funcionalidades completas:
-
-1. **Fase 4: Shift-Left Testing**
-   - Generar test plans para épicas
-   - Generar test cases detallados por story
-
-2. **Fase 5: Planning**
-   - Generar implementation plans por story
-
-3. **Fase 6: Implementation**
-   - Implementar stories siguiendo los planes
-   - Desarrollar encima del scaffolding existente
-   - Leer guidelines en `.context/guidelines/`
-
-## Referencias
-
-- [Framework Docs](url)
-- [Auth Provider Docs](url)
-- [UI Library Docs](url)
-```
+[MANTENER SETUP.md - igual que antes]
 
 ---
 
 ### Paso 7.2: Crear Documentación de Arquitectura
 
-**Archivo:** `.context/frontend-architecture.md`
+[MANTENER frontend-architecture.md - igual que antes, agregar sección de diseño]
+
+---
+
+### Paso 7.3: 🆕 Crear Documentación de Design System
+
+**NUEVO - MUY IMPORTANTE:**
+
+**Archivo:** `.context/design-system.md`
 
 ```markdown
-### 📄 Creando .context/frontend-architecture.md
+### 📄 Creando .context/design-system.md
 
-**Propósito:** Documentar las decisiones técnicas del scaffolding para el equipo.
+**Propósito:** Documentar todas las decisiones de diseño para el equipo.
 
 **Contenido incluido:**
-- Stack técnico y versiones
-- Estructura del proyecto
-- Páginas implementadas (con status)
-- Decisiones técnicas justificadas
-- Workflow para Fase 6
+- Paleta de colores completa
+- Componentes UI creados
+- Guidelines de uso
+- Ejemplos de código
 
 **Creando archivo...**
 ```
@@ -858,91 +1213,253 @@ Este es un **scaffolding inicial** (Fase 3.5). Para implementar funcionalidades 
 **Estructura del archivo:**
 
 ```markdown
-# Frontend Architecture - [Nombre del Proyecto]
+# Design System - [Nombre del Proyecto]
 
 **Generado:** Fase 3.5 - Frontend Scaffolding
 **Fecha:** [Fecha]
-**Framework:** [Nombre y versión]
+**Estilo Visual:** [Elegido en Fase 1.5]
 
 ---
 
-## 🏗️ Stack Técnico
+## 🎨 Paleta de Colores
 
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| [Framework] | [X.X.X] | Frontend framework |
-| [UI Library] | [X.X.X] | Estilos y componentes |
-| [Auth Provider] | [X.X.X] | Autenticación |
-| TypeScript | [X.X.X] | Type-safety |
-| [Otros] | [X.X.X] | [Propósito] |
+### Colores Principales
 
----
+| Color | Hex | Uso |
+|-------|-----|-----|
+| **Primary** | [#HEX] | Botones primarios, links, focus states, elementos principales |
+| **Secondary** | [#HEX] | Botones secundarios, elementos secundarios |
+| **Accent** | [#HEX] | Highlights, badges, call-to-actions secundarios |
 
-## 📂 Estructura del Proyecto
+### Colores de Sistema
 
-[Mostrar árbol de carpetas completo]
+| Color | Hex | Uso |
+|-------|-----|-----|
+| **Background** | [#HEX] | Fondo de la aplicación |
+| **Card** | [#HEX] | Fondo de cards, modals |
+| **Border** | [#HEX] | Bordes de inputs, cards |
+| **Text** | [#HEX] | Texto principal |
+| **Muted** | [#HEX] | Texto secundario, placeholders |
 
----
+### Colores Semánticos
 
-## 🎨 Páginas Implementadas
+| Color | Hex | Uso |
+|-------|-----|-----|
+| **Success** | [#HEX] | Mensajes de éxito, validaciones positivas |
+| **Warning** | [#HEX] | Advertencias |
+| **Error** | [#HEX] | Errores, validaciones fallidas |
+| **Info** | [#HEX] | Mensajes informativos |
 
-[Por cada página creada:]
+**Acceso en código:**
 
-### [Nombre Página] (`/[ruta]`)
-**Status:** ✅ Scaffolding completo
-**Funcionalidad:** [Descripción breve]
-**Story relacionada:** [STORY-XXX] (a completar en Fase 6)
+```tsx
+// Tailwind classes
+className="bg-primary text-white"
+className="border-border text-muted-foreground"
 
-**Componentes creados:**
-- [Componente 1]
-- [Componente 2]
-
-**Pendiente para Fase 6:**
-- [Funcionalidad 1]
-- [Funcionalidad 2]
-
----
-
-## 🔧 Decisiones Técnicas
-
-### [Decisión 1]
-**Razón:** [Justificación basada en docs oficiales o SRS]
-
-### [Decisión 2]
-**Razón:** [Justificación]
-
-[Documentar decisiones importantes tomadas]
+// CSS variables (si necesitas hex directo)
+color: var(--color-primary);
+```
 
 ---
 
-## 🚀 Workflow para Fase 6 (Implementation)
+## 🧱 Componentes UI
 
-1. **Lee la story:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
-2. **Lee el test plan:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
-3. **Lee el implementation plan:** `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
-4. **Identifica si existe base en scaffolding:**
-   - Si existe → EXTIENDE la funcionalidad
-   - Si no existe → CREA siguiendo patterns del scaffolding
-5. **Sigue guidelines:** `.context/guidelines/`
+### Button
+
+**Ubicación:** `components/ui/button.tsx`
+
+**Variantes disponibles:**
+
+| Variante | Uso | Ejemplo Visual |
+|----------|-----|----------------|
+| `default` (primary) | Acciones principales | Fondo primary, texto blanco |
+| `secondary` | Acciones secundarias | Fondo secondary, texto blanco |
+| `outline` | Acciones terciarias | Borde primary, fondo transparente |
+| `ghost` | Acciones sutiles | Sin fondo, texto primary |
+| `danger` | Acciones destructivas | Fondo rojo, texto blanco |
+
+**Tamaños:**
+- `sm` - Pequeño (height: 32px)
+- `md` - Mediano (height: 40px) - **Default**
+- `lg` - Grande (height: 48px)
+
+**Ejemplo de uso:**
+
+```tsx
+import { Button } from '@/components/ui/button'
+
+// Botón primary
+<Button>Guardar</Button>
+
+// Botón secondary
+<Button variant="secondary">Cancelar</Button>
+
+// Botón outline grande
+<Button variant="outline" size="lg">Ver más</Button>
+
+// Botón danger
+<Button variant="danger">Eliminar</Button>
+```
+
+---
+
+### Card
+
+**Ubicación:** `components/ui/card.tsx`
+
+**Sub-componentes:**
+- `Card` - Contenedor principal
+- `CardHeader` - Header con título
+- `CardContent` - Contenido principal
+- `CardFooter` - Footer con acciones
+
+**Variantes:**
+- `default` - Card básica
+- `hover` - Con efecto hover (sube)
+- `clickable` - Cursor pointer + hover
+
+**Ejemplo de uso:**
+
+```tsx
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
+
+<Card className="hover:shadow-lg transition-shadow">
+  <CardHeader>
+    <h3 className="text-xl font-semibold">[Título]</h3>
+  </CardHeader>
+  <CardContent>
+    <p className="text-muted-foreground">[Contenido]</p>
+  </CardContent>
+  <CardFooter>
+    <Button>Ver detalle</Button>
+  </CardFooter>
+</Card>
+```
+
+---
+
+[Documentar otros componentes creados...]
+
+---
+
+## 📐 Layout
+
+### Estructura Elegida: [Sidebar + Top Navbar / Solo Top Navbar / etc.]
+
+**Razón:** [Explicar por qué se eligió este layout]
+
+**Componentes:**
+- `components/layout/navbar.tsx` - Barra superior
+[Si aplica:] - `components/layout/sidebar.tsx` - Navegación lateral
+
+**Navegación disponible:**
+[Listar páginas con sus rutas]
+
+---
+
+## ✨ Estilo Visual
+
+### Características del Estilo [Elegido]
+
+**Espaciado:**
+- [Descripción: Generoso/Compacto]
+
+**Bordes:**
+- Border radius: [Value] - [Descripción: Muy redondeados/Redondeados/Rectos]
+- Border width: [Value]
+
+**Sombras:**
+- [Descripción: Pronunciadas/Sutiles/Ninguna]
+- Card shadow: [CSS value]
+
+**Tipografía:**
+- Font family: [Font name]
+- Headings: [Tamaños]
+- Body text: [Tamaño]
+
+---
+
+## 📖 Guidelines de Uso
+
+### ✅ DO (Hacer)
+
+1. **Usa componentes del design system:**
+   - ✅ `<Button>` en lugar de `<button>`
+   - ✅ `<Card>` para agrupar información
+   - ✅ Clases de Tailwind con la paleta (`bg-primary`, `text-primary`)
+
+2. **Mantén consistencia:**
+   - ✅ Mismo spacing (`gap-6`, `p-6`)
+   - ✅ Mismos border radius
+   - ✅ Mismas sombras
+
+3. **Usa variantes semánticas:**
+   - ✅ `variant="default"` para acciones principales
+   - ✅ `variant="danger"` para acciones destructivas
+   - ✅ `text-muted-foreground` para texto secundario
+
+### ❌ DON'T (No hacer)
+
+1. **No uses colores hardcodeados:**
+   - ❌ `bg-blue-500` → ✅ `bg-primary`
+   - ❌ `#3B82F6` → ✅ `var(--color-primary)`
+
+2. **No crees botones custom:**
+   - ❌ `<button className="bg-blue-500...">` → ✅ `<Button>`
+
+3. **No rompas la consistencia:**
+   - ❌ Border radius diferente en cada componente
+   - ❌ Spacing inconsistente
+
+---
+
+## 🚀 Extender el Design System (Fase 6)
+
+Cuando implementes nuevas features en Fase 6:
+
+### Agregar nuevo componente UI:
+
+1. Créalo en `components/ui/[nombre].tsx`
+2. Usa la paleta de colores del theme
+3. Aplica el estilo visual consistente (bordes, sombras)
+4. Documenta en este archivo
+
+### Modificar componente existente:
+
+1. Edita el archivo en `components/ui/`
+2. Mantén compatibilidad con uso existente
+3. Actualiza esta documentación
+
+### Agregar nueva página:
+
+1. Usa layout components existentes
+2. Usa componentes del design system
+3. Aplica paleta de colores
+4. Mantén spacing consistente
 
 ---
 
 ## 📚 Referencias
 
-- **PRD:** `.context/PRD/`
-- **SRS:** `.context/SRS/`
-- **PBI:** `.context/PBI/`
-- **Guidelines:** `.context/guidelines/`
+- **Tailwind Config:** `tailwind.config.ts` - Paleta completa
+- **Estilos Globales:** `app/globals.css` - Variables CSS
+- **Componentes UI:** `components/ui/` - Todos los componentes
+- **Layout Components:** `components/layout/` - Navbar, Sidebar
+
+---
+
+**Este design system es tu fuente única de verdad para el diseño visual del proyecto. Manténlo consistente durante todo el desarrollo.**
 ```
 
 ---
 
-### Paso 7.3: Resumen Ejecutivo
+### Paso 7.4: Resumen Ejecutivo Final
 
-**Output final para el usuario:**
+**Output final (mostrar al usuario):**
 
 ```markdown
-# 🎉 Frontend Scaffolding Completado
+# 🎉 Frontend Scaffolding + Design System Completado
 
 ---
 
@@ -950,47 +1467,64 @@ Este es un **scaffolding inicial** (Fase 3.5). Para implementar funcionalidades 
 
 **Archivos creados:** [número total]
 **Páginas implementadas:** [número]
-**Componentes creados:** [número]
-**Configuraciones creadas:** [número]
+**Componentes UI creados:** [número]
+**Package manager:** [pnpm/bun]
+
+---
+
+## 🎨 Diseño Implementado
+
+### Paleta de Colores: [Nombre]
+- **Primary:** [Color] - [Descripción de uso]
+- **Secondary:** [Color] - [Descripción de uso]
+- **Accent:** [Color] - [Descripción de uso]
+
+### Estilo Visual: [Elegido]
+- [Características principales]
+
+### Layout: [Elegido]
+- [Descripción de la estructura]
 
 ---
 
 ## ✅ Lo que se Implementó
 
-### Stack Configurado:
-- ✅ [Framework] con estructura recomendada
-- ✅ [UI Library] configurado y listo
-- ✅ [Auth Provider] clientes creados
+### 1. Arquitectura del Framework:
+- ✅ [Framework] configurado correctamente
+- ✅ [Package manager] como gestor de paquetes
 - ✅ TypeScript + ESLint configurados
+- ✅ Estructura de carpetas según mejores prácticas
 
-### Páginas Creadas:
-1. ✅ [Página 1] (`/[ruta]`) - [Descripción breve]
-2. ✅ [Página 2] (`/[ruta]`) - [Descripción breve]
-3. ✅ [Página 3] (`/[ruta]`) - [Descripción breve]
+### 2. Design System Completo:
+- ✅ Paleta de colores aplicada en Tailwind
+- ✅ [X] componentes UI reutilizables creados
+- ✅ Layout components (Navbar, [Sidebar si aplica])
+- ✅ Estilos globales y variables CSS
+- ✅ Utilidades (cn function)
+
+**Componentes UI creados:**
+- ✅ Button (5 variantes, 3 tamaños)
+- ✅ Card (con Header, Content, Footer)
+[Listar otros componentes creados]
+
+### 3. Páginas con Diseño Bonito:
+[Listar páginas con breve descripción visual]
+
+1. ✅ [Página 1] (`/[ruta]`)
+   - Diseño: [Breve descripción visual]
+   - Mock data: [X] items
+
+2. ✅ [Página 2] (`/[ruta]`)
+   - Diseño: [Breve descripción visual]
+   - Mock data: [X] items
+
 [Listar todas]
 
-### Documentación Generada:
+### 4. Documentación Generada:
 - ✅ `SETUP.md` - Guía de instalación
-- ✅ `.context/frontend-architecture.md` - Arquitectura y decisiones
-- ✅ `.env.local.example` - Template de variables de entorno
-
----
-
-## ⚠️ Lo que NO está Implementado
-
-Este scaffolding es **solo la base visual**. Las siguientes funcionalidades se implementarán en **Fase 6** (Implementation):
-
-**[Página 1]:**
-- ❌ [Funcionalidad compleja 1]
-- ❌ [Funcionalidad compleja 2]
-
-**[Página 2]:**
-- ❌ [Funcionalidad compleja 1]
-- ❌ [Funcionalidad compleja 2]
-
-[Listar para cada página]
-
-**Razón:** El objetivo del scaffolding es estructura base + demostración visual. La lógica completa se implementa al desarrollar cada story en Fase 6.
+- ✅ `.context/frontend-architecture.md` - Arquitectura técnica
+- ✅ `.context/design-system.md` - **NUEVO:** Design system completo
+- ✅ `.env.local.example` - Template de variables
 
 ---
 
@@ -999,180 +1533,137 @@ Este scaffolding es **solo la base visual**. Las siguientes funcionalidades se i
 ### 1️⃣ Configurar Variables de Entorno (AHORA)
 
 ```bash
-# Copiar template
 cp .env.local.example .env.local
-
-# Editar con tus credenciales reales
-# (usa tu editor de código favorito)
+# Edita .env.local con tus credenciales reales
 ```
-
-**Credenciales necesarias:**
-- `[VAR_1]`: [Cómo obtenerla]
-- `[VAR_2]`: [Cómo obtenerla]
 
 ---
 
 ### 2️⃣ Probar el Proyecto (AHORA)
 
-**⚠️ IMPORTANTE:** Abre una **nueva terminal** (no uses la actual para evitar bloquearla).
+**⚠️ IMPORTANTE:** Abre una **nueva terminal** separada.
 
 ```bash
-npm run dev
+[pnpm/bun] run dev
 ```
 
 **Luego:**
-1. Abre [http://localhost:[puerto]]([http://localhost:[puerto]) en tu navegador
-2. Verifica que las páginas cargan correctamente
-3. Navega entre páginas usando la navegación
-4. Valida que los estilos se aplican correctamente
+1. Abre http://localhost:[puerto] en tu navegador
+2. **DISFRUTA del diseño bonito** ✨
+3. Navega entre páginas
+4. Observa la consistencia visual (colores, componentes)
+5. Prueba estados hover en botones y cards
 
-**Si encuentras errores:** Revisa la consola del navegador y terminal.
-
----
-
-### 3️⃣ Considerar Crear un Checkpoint Git (RECOMENDADO)
-
-**¿Por qué es buena idea?**
-- ✅ Tienes un punto de retorno si algo sale mal más adelante
-- ✅ Separación clara entre scaffolding (Fase 3.5) y desarrollo (Fase 6)
-- ✅ Facilita code reviews (se ve qué es base vs features)
-
-**Antes de commitear, revisa:**
-```bash
-git status
-```
-
-**Verifica** que todos los archivos listados sean del scaffolding (no archivos personales sin guardar).
-
-**Mensaje de commit sugerido:**
-```
-chore: Initial frontend scaffolding
-
-- Setup [Framework] with [Auth Provider]
-- Configure [UI Library] + TypeScript
-- Implement [X] strategic pages with basic UI
-- Add setup documentation
-
-Phase: 3.5 - Frontend Scaffolding
-```
-
-**Comando para commitear (cuando estés listo):**
-```bash
-git add .
-git commit -m "tu mensaje aquí"
-```
-
-**Nota:** Esto es **opcional**. Si prefieres commitear después de probar, está bien. Si tienes archivos sin guardar que no quieres incluir, haz commits selectivos con `git add [archivos-específicos]`.
+**Lo que deberías ver:**
+- ✅ Aplicación **visualmente impresionante**
+- ✅ Paleta de colores coherente
+- ✅ Componentes estilizados y modernos
+- ✅ Layout profesional
+- ✅ Diseño alineado con la personalidad del negocio
 
 ---
 
-### 4️⃣ Mostrar al Equipo (RECOMENDADO)
+### 3️⃣ Revisar Design System (RECOMENDADO)
 
-El scaffolding está listo para **demostración visual**:
+Abre `.context/design-system.md` para ver:
+- Paleta de colores completa
+- Componentes disponibles y cómo usarlos
+- Guidelines de diseño
+- Ejemplos de código
 
-1. Levanta el servidor (`npm run dev`)
-2. Navega por las páginas creadas
-3. Explica que es **solo la base** (no funcionalidad completa)
-4. Muestra el PBI para explicar qué viene en Fase 6
+**Esto será tu guía de estilo** durante toda la Fase 6 (Implementation).
 
-**Valor:** El equipo visualiza hacia dónde va el proyecto.
+---
+
+### 4️⃣ Considerar Crear Checkpoint Git (RECOMENDADO)
+
+[Igual que antes - recomendación de commit]
 
 ---
 
 ### 5️⃣ Continuar con Fase 4: Shift-Left Testing (SIGUIENTE)
 
-Ahora que tienes la estructura base, procede con:
-
-**Fase 4: Shift-Left Testing**
-- Generar test plans para cada épica
-- Generar test cases detallados por story
-- Identificar edge cases y gaps
-
-**Ubicación de prompts:** `.prompts/fase-4-shift-left-testing/`
+[Igual que antes]
 
 ---
 
-## 💡 Tips Finales
-
-### Al Implementar Stories en Fase 6:
-
-1. **Extiende, no reescribas:**
-   - Si una página ya existe en scaffolding → Agrégale funcionalidad
-   - Si no existe → Créala siguiendo los patterns del scaffolding
-
-2. **Mantén consistencia:**
-   - Usa las mismas utilidades (`lib/utils.ts`)
-   - Reutiliza componentes base
-   - Sigue la estructura de carpetas establecida
-
-3. **Lee los planes:**
-   - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
-   - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
-   - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/implementation-plan.md`
-
-4. **Sigue guidelines:**
-   - `.context/guidelines/code-standards.md`
-   - `.context/guidelines/error-handling.md`
-   - `.context/guidelines/implementation-workflow.md`
-
----
-
-## 🎯 Valor Generado
+## 💎 Valor Generado
 
 **¿Qué logramos?**
 
-✅ **Estructura sólida** siguiendo mejores prácticas de [Framework]
-✅ **Base visual** para demostración al equipo
-✅ **Configuración correcta** consultando docs oficiales
-✅ **Decisiones documentadas** para futuros desarrolladores
-✅ **Acelera Fase 6** (base lista para extender)
+✅ **Arquitectura sólida** - Framework configurado profesionalmente
+✅ **Design System completo** - Componentes reutilizables y bonitos
+✅ **Paleta coherente** - Colores aplicados consistentemente
+✅ **Páginas impresionantes** - Visualmente atractivas con mock data
+✅ **Layout profesional** - Navegación intuitiva y moderna
+✅ **Documentación completa** - Arquitectura + Diseño documentados
+✅ **Lista para demo** - Puedes mostrarlo al equipo AHORA
 
-**Próxima reunión con el equipo:**
-- Muestra las páginas funcionando
-- Explica que es solo scaffolding
-- Presenta el PBI y roadmap de Fases 4-6
+**Diferencia vs versión anterior:**
+❌ Antes: Páginas grises, sin personalidad, aburridas
+✅ Ahora: **Aplicación hermosa, moderna, con identidad visual**
 
 ---
 
-**🎉 ¡Scaffolding completado exitosamente!**
+## 🎯 Para el Equipo
 
-**¿Preguntas?** Consulta:
-- `SETUP.md` - Instrucciones de setup
-- `.context/frontend-architecture.md` - Arquitectura y decisiones
-- `.context/guidelines/` - Guidelines de implementación
+**Próxima reunión:**
+1. Levanta el servidor (`[pm] run dev`)
+2. Muestra las páginas funcionando
+3. **Destaca el diseño visual** (paleta, componentes, layout)
+4. Explica que es scaffolding + design system (no funcionalidad completa)
+5. Muestra `.context/design-system.md`
+6. Presenta roadmap de Fases 4-6
+
+**Valor:** El equipo ve una aplicación **preciosa y profesional**, no solo estructura.
+
+---
+
+**🎉 ¡Scaffolding + Design System completado exitosamente!**
+
+**Documentación:**
+- `SETUP.md` - Cómo levantar el proyecto
+- `.context/frontend-architecture.md` - Arquitectura técnica
+- `.context/design-system.md` - **Guía de diseño completa** ⭐
+
+**Disfruta de tu aplicación bonita!** ✨
 ```
 
 ---
 
-## 📋 VALIDACIONES FINALES (CHECKLIST INTERNO)
+## 📋 VALIDACIONES FINALES
 
-Antes de terminar, valida mentalmente (NO mostrar al usuario):
+Checklist interno (NO mostrar al usuario):
 
-### Estructura:
-- ✅ Carpetas del framework creadas correctamente
-- ✅ Archivos de configuración presentes
-- ✅ `.env.local.example` creado
+### Diseño:
+- ✅ Paleta de colores aplicada en tailwind.config
+- ✅ Design system con componentes bonitos creado
+- ✅ Páginas usan componentes del design system
+- ✅ Consistencia visual en toda la aplicación
+- ✅ `.context/design-system.md` creado
 
-### Código:
-- ✅ Build pasa sin errores (`npm run build`)
-- ✅ No hay imports rotos
-- ✅ TypeScript sin errores
+### Arquitectura:
+- ✅ Framework configurado
+- ✅ Package manager elegido por usuario
+- ✅ Estructura de carpetas correcta
+- ✅ Build pasa sin errores
 
 ### Documentación:
-- ✅ `SETUP.md` creado con instrucciones claras
-- ✅ `.context/frontend-architecture.md` creado con decisiones
-- ✅ Explicaciones claras durante todo el proceso
+- ✅ SETUP.md con instrucciones
+- ✅ frontend-architecture.md con decisiones técnicas
+- ✅ design-system.md con guía de diseño ⭐
 
 ### Usuario:
-- ✅ Se explicó cada paso mientras trabajabas
-- ✅ Se dieron instrucciones claras de próximos pasos
+- ✅ Se hicieron preguntas interactivas (package manager, diseño)
+- ✅ Se explicó cada decisión
+- ✅ Se educó sobre opciones
+- ✅ Se dio opción "Elige por mí"
 - ✅ Se recomendó (NO forzó) crear commit
-- ✅ Se explicó cómo levantar el servidor (nueva terminal)
 
 ---
 
-**Output:** Proyecto frontend funcional con estructura completa, dependencias instaladas, páginas estratégicas implementadas, documentación clara, y recomendaciones para el usuario.
+**Output:** Proyecto frontend con arquitectura sólida + **Design System completo** + páginas visualmente impresionantes, todo documentado y listo para demo.
 
-**Fase completada:** 3.5 - Frontend Scaffolding ✅
+**Fase completada:** 3.5 - Frontend Scaffolding + Design System ✅
 
-**Próxima fase:** 4 - Shift-Left Testing (generar test plans y test cases)
+**Próxima fase:** 4 - Shift-Left Testing
