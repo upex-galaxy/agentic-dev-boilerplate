@@ -1,23 +1,34 @@
 Actúa como Senior Frontend Architect, UI/UX Designer, y Full-Stack Developer experto.
 
+**🔄 FASE 2.5: DESIGN SYSTEM (Sincrónica - UNA sola vez)**
+
 **Input:**
 
 - PRD completo: [usar .context/PRD/]
 - SRS completo: [usar .context/SRS/]
-- PBI (épicas y stories): [usar .context/PBI/epic-tree.md + revisar épicas en .context/PBI/epics/]
+- PBI inicial: [usar .context/PBI/epic-tree.md - solo para entender contexto]
 
 ---
 
-## 🎯 OBJETIVO
+## 🎯 OBJETIVO DE FASE 2.5
 
-Crear la estructura inicial del proyecto frontend (scaffolding) + **Design System completo** en el directorio actual, incluyendo:
-- Arquitectura del framework
-- **Componentes UI reutilizables y bonitos**
-- **Páginas estratégicas con diseño moderno**
-- **Paleta de colores y estilo visual coherente**
-- Todo adaptado al contexto y personalidad del negocio
+Crear el **Design System base** y **scaffolding del proyecto frontend** que será REUTILIZADO en todas las stories del MVP.
 
-El resultado debe ser una aplicación **visualmente impresionante** lista para demo, con datos moqueados.
+**Esta fase se ejecuta UNA SOLA VEZ** antes de comenzar los sprints (Fases 3-8).
+
+**Incluye:**
+- ✅ Setup del proyecto frontend (estructura de carpetas, configuración)
+- ✅ **Design System completo** (paleta, componentes UI reutilizables)
+- ✅ Layout system (Navbar, Sidebar si aplica)
+- ✅ **2-3 páginas demo** (SOLO para validar que el design system funciona)
+- ✅ Documentación (`.context/design-system.md`, `SETUP.md`)
+
+**NO incluye:**
+- ❌ Implementar TODAS las páginas del MVP
+- ❌ Implementar funcionalidad real de negocio
+- ❌ Diseños específicos de cada story (eso es Fase 5)
+
+**Resultado:** Base visual reutilizable + demo funcional para mostrar al equipo.
 
 ---
 
@@ -27,8 +38,9 @@ El resultado debe ser una aplicación **visualmente impresionante** lista para d
 - **NO usar comandos como `create-next-app`, `create-vite`, `create-react-app`** - Estos crean subdirectorios
 - **NO crear subcarpetas para el proyecto** - Ya estamos en el directorio correcto
 - **NO instalar dependencias innecesarias** - Solo fundamentales
-- **NO implementar todas las historias de usuario** - Solo páginas estratégicas (3-5)
-- **NO implementar todos los criterios de aceptación** - Solo UI básica con diseño bonito
+- **NO implementar todas las páginas del MVP** - Solo 2-3 páginas demo estratégicas
+- **NO implementar funcionalidad real** - Solo UI bonita con mock data para validar design system
+- **NO implementar criterios de aceptación completos** - Eso es para Fase 6 (Implementation)
 - **NO hardcodear nombres genéricos** (ej: "Dashboard", "Settings") - Usa nombres del dominio del negocio
 - **NO ejecutar comandos interactivos** (ej: `npm run dev`) - Solo comandos que terminen
 - **NO hacer commits automáticos** - Solo recomendar al usuario
@@ -428,11 +440,35 @@ Basándome en tus preferencias y el análisis del proyecto, aquí está el plan 
 
 ---
 
-## 🏗️ FASE 2: DECISIÓN ESTRATÉGICA DE PÁGINAS
+## 🏗️ FASE 2: DECISIÓN DE PÁGINAS DEMO
 
-**Objetivo:** Decidir qué páginas crear (3-5 máximo) basándote en el análisis anterior + diseño definido.
+**Objetivo:** Decidir qué 2-3 páginas demo crear SOLO para validar el design system.
 
-[MANTENER CONTENIDO ACTUAL DE FASE 2 - Ya está bien]
+**Criterio de selección:**
+- **NO** todas las páginas del MVP
+- **SOLO** páginas que demuestren componentes del design system
+- Típicamente: Auth + 1-2 páginas core del dominio
+
+**Ejemplos según tipo de app:**
+- **SaaS Dashboard**: Login + Home/Dashboard principal
+- **E-commerce**: Login + Product Grid
+- **Social**: Login + Feed principal
+- **Marketplace**: Login + Listings principal
+
+**Output de este paso:**
+```markdown
+## 📄 Páginas Demo Seleccionadas (2-3)
+
+1. **[Nombre de página 1]** (`/[ruta]`)
+   - **Propósito:** Validar [componentes que muestra]
+   - **Componentes UI que usa:** [Button, Card, Form, etc.]
+
+2. **[Nombre de página 2]** (`/[ruta]`)
+   - **Propósito:** Validar [componentes que muestra]
+   - **Componentes UI que usa:** [List, etc.]
+
+**Nota:** Las demás páginas del MVP se implementarán en Fase 6 (Implementation) según los planes de cada story.
+```
 
 ---
 
@@ -1459,16 +1495,17 @@ Cuando implementes nuevas features en Fase 6:
 **Output final (mostrar al usuario):**
 
 ```markdown
-# 🎉 Frontend Scaffolding + Design System Completado
+# 🎉 FASE 2.5: Design System Completado
 
 ---
 
 ## 📊 Resumen
 
 **Archivos creados:** [número total]
-**Páginas implementadas:** [número]
+**Páginas demo:** [2-3] (para validar design system)
 **Componentes UI creados:** [número]
 **Package manager:** [pnpm/bun]
+**Fase:** 2.5 - Design (Sincrónica - ejecutada UNA sola vez)
 
 ---
 
@@ -1507,18 +1544,20 @@ Cuando implementes nuevas features en Fase 6:
 - ✅ Card (con Header, Content, Footer)
 [Listar otros componentes creados]
 
-### 3. Páginas con Diseño Bonito:
-[Listar páginas con breve descripción visual]
+### 3. Páginas Demo (para validar design system):
+[Listar 2-3 páginas con breve descripción visual]
 
 1. ✅ [Página 1] (`/[ruta]`)
    - Diseño: [Breve descripción visual]
    - Mock data: [X] items
+   - **Propósito:** Validar [componentes]
 
 2. ✅ [Página 2] (`/[ruta]`)
    - Diseño: [Breve descripción visual]
    - Mock data: [X] items
+   - **Propósito:** Validar [componentes]
 
-[Listar todas]
+**Nota:** Las demás páginas del MVP se implementarán en Fase 6 según los implementation plans de cada story (Fase 5).
 
 ### 4. Documentación Generada:
 - ✅ `SETUP.md` - Guía de instalación
@@ -1581,9 +1620,13 @@ Abre `.context/design-system.md` para ver:
 
 ---
 
-### 5️⃣ Continuar con Fase 4: Shift-Left Testing (SIGUIENTE)
+### 5️⃣ Continuar con Fase 3: Specification (SIGUIENTE)
 
-[Igual que antes]
+**Ahora que tienes el Design System base:**
+- Procede a crear el Product Backlog (PBI) con flujo Jira-First
+- Usa `.prompts/fase-3-specification/pbi-product-backlog.md`
+- Cada story que implemente después usará los componentes del design system
+- Los diseños específicos de cada story se harán en Fase 5 (Planning)
 
 ---
 
@@ -1662,8 +1705,38 @@ Checklist interno (NO mostrar al usuario):
 
 ---
 
-**Output:** Proyecto frontend con arquitectura sólida + **Design System completo** + páginas visualmente impresionantes, todo documentado y listo para demo.
+**Output:** Proyecto frontend con arquitectura sólida + **Design System completo** + 2-3 páginas demo visualmente impresionantes, todo documentado y listo para mostrar al equipo.
 
-**Fase completada:** 3.5 - Frontend Scaffolding + Design System ✅
+**Fase completada:** 2.5 - Design System ✅ (Sincrónica)
 
-**Próxima fase:** 4 - Shift-Left Testing
+**Próxima fase:** 3 - Specification (Asincrónica)
+
+---
+
+## 🔄 DIVISIÓN DE DISEÑO: FASE 2.5 vs FASE 5
+
+**Entender esta diferencia es CRÍTICO:**
+
+### FASE 2.5 (Design System Base - UNA sola vez):
+- ✅ Paleta de colores
+- ✅ Componentes UI reutilizables (Button, Card, Form, Modal, etc.)
+- ✅ Layout system (Navbar, Sidebar)
+- ✅ 2-3 páginas demo (para validar que funciona)
+- ✅ 80% del diseño visual
+
+**Propósito:** Crear la base reutilizable para TODO el proyecto.
+
+### FASE 5 (Planning + UI Design - Por cada story):
+- ✅ Wireframes/mockups específicos de la story
+- ✅ Componentes custom del dominio (ej: MentorCard, ProjectTable)
+- ✅ Flujos de UX específicos
+- ✅ Validaciones y estados visuales
+- ✅ 20% del diseño específico
+
+**Propósito:** Diseñar la implementación específica de cada story usando el design system base.
+
+---
+
+**Analogía:**
+- **Fase 2.5** = Construir la caja de herramientas (martillo, destornillador, etc.)
+- **Fase 5** = Decidir cómo usar esas herramientas para construir cada mueble específico
