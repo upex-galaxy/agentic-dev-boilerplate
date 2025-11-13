@@ -45,6 +45,23 @@ Abre tu `package.json` y agrega esta línea en la sección `"scripts"`:
 }
 ```
 
+**5. Agregar `.backups` en tu `.gitignore` (recomendado):**
+
+Abre tu archivo `.gitignore` y agrega esta línea en cualquier parte:
+
+```
+.backups
+```
+
+**¿Por qué?** Cada vez que actualices los prompts, el script genera un backup automático con timestamp (ej: `.backups/prompts-2024-11-13-101845/`). Estos backups son útiles para revertir cambios si algo sale mal, pero **no necesitas versionar cada backup en Git** ya que son copias temporales de trabajo.
+
+Ignorar `.backups` ayuda a:
+- 🧹 Mantener tu repo limpio de archivos temporales
+- 🚀 Hacer commits más rápidos (menos archivos que revisar)
+- 📦 Reducir el tamaño del repositorio a largo plazo
+
+💡 **Nota:** Este paso no es crítico para el funcionamiento del script, es solo una buena práctica para mantener tu Git organizado.
+
 ---
 
 ### 🔄 Actualizar (cuando Ely anuncie cambios)
