@@ -1244,7 +1244,3 @@ Ahora implementa features con:
 - ❌ Separar en múltiples prompts
 - ❌ Preservar mock data (se reemplaza)
 - ❌ Dependencias extra (faker.js, etc.)
-
----
-
-**Resultado:** Prompt conciso, robusto, con pseudocódigo flexible, que evita errores comunes y genera setup completo en una ejecución.
