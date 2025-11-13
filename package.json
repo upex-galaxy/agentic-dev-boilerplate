@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "ai": "node scripts/mcp-builder.js"
+    "ai": "node scripts/mcp-builder.js",
+    "up:prompt": "node scripts/update-prompts.js"
   },
   "keywords": [],
   "author": "",
