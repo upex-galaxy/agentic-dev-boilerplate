@@ -33,12 +33,24 @@ gh repo view upex-galaxy/ai-driven-project-starter
 
 Si ves la info del repo → ✅ Todo listo!
 
+**4. Agregar script al package.json:**
+
+Abre tu `package.json` y agrega esta línea en la sección `"scripts"`:
+
+```json
+{
+  "scripts": {
+    "up:prompt": "node scripts/update-prompts.js"
+  }
+}
+```
+
 ---
 
 ### 🔄 Actualizar (cuando Ely anuncie cambios)
 ```bash
 # con Bun:
-bun update-prompts
+bun up:prompt
 ```
 ```bash
 # con pnpm:
@@ -52,18 +64,32 @@ pnpm run up:prompt
 ### 📋 ¿Qué se actualiza?
 
 ✅ **Se actualizan:**
-- `.prompts/` → Todos los prompts de las 13 fases
-- `README.md` → Documentación principal
-- `docs/` → Blueprints y arquitectura
-- `scripts/` → Scripts de utilidad
+- `.prompts/` → Todos los prompts de las 13 fases (completo)
+- `context-engineering.md` → Documentación de la arquitectura del template (nuevo o actualizado)
+- `docs/` → Solo archivos del template:
+  - `ai-driven-software-project-blueprint.md`
+  - `kata-test-architecture.md`
+  - `mcp-config-*.md` (todos los archivos de MCP)
+- `scripts/` → Solo los scripts de actualización:
+  - `update-prompts.js`
+  - `update-prompts.md`
 
 ❌ **NO se tocan (tu trabajo):**
 - `.context/` → Toda tu documentación del proyecto
 - `src/` → Tu código
-- `.env` / `.env.local` → Tus credenciales
+- `.env` → Tus credenciales
 - `node_modules/` → Tus dependencias
+- `README.md` → Tu documentación personalizada del proyecto
+- `docs/` → Cualquier archivo personalizado que hayas agregado
+- `scripts/` → Cualquier otro script personalizado
 
-Cada actualización crea un backup automático en `.backups/`.
+**📦 Sistema de backups:**
+
+Cada ejecución crea un **nuevo directorio** de backup con timestamp único:
+- Formato: `.backups/prompts-YYYY-MM-DD-HHMMSS/`
+- Ejemplo: `.backups/prompts-2024-11-13-101845/`
+- Los backups **NO se sobreescriben**, se acumulan
+- Útil para comparar versiones o revertir cambios
 
 ---
 
@@ -87,29 +113,23 @@ gh auth login
 → Verifica que Ely te dio acceso al repositorio privado de UPEX Galaxy
 → Contacta a Ely para que te agregue como colaborador
 
-**Error: "Cannot find module 'fs-extra'"**
-```bash
-# Instala las dependencias del proyecto con bun o pnpm
-bun install
-```
-
 **Algo salió mal y quiero revertir los cambios**
 
 Los backups están en `.backups/prompts-FECHA/`:
 ```bash
-# Ver backups disponibles
+# Ver backups disponibles (ordenados por fecha)
 ls -la .backups/
 
-# Restaurar el último backup
+# Restaurar el último backup (reemplaza la fecha con la del backup que quieres)
 cp -r .backups/prompts-2024-XX-XX-XXXXXX/.prompts .
-cp .backups/prompts-2024-XX-XX-XXXXXX/README.md .
+cp .backups/prompts-2024-XX-XX-XXXXXX/context-engineering.md .
 ```
 
 ---
 
 ### 💡 Tips
 
-- Ejecuta `npm run update-prompts` cada vez que Ely anuncie actualizaciones en Discord/Slack
+- Ejecuta `update-prompts.js` (ya sea directamente con node o con un script con bun) cada vez que Ely anuncie actualizaciones en Slack
 - El script **nunca toca** tu carpeta `.context/` donde está tu trabajo
 - Si tienes dudas, revisa el CHANGELOG.md para ver qué cambió
 - Los backups se guardan automáticamente, así que puedes probar sin miedo

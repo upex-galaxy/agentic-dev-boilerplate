@@ -46,10 +46,10 @@ Fase 7 (Code Review) ← ESTÁS AQUÍ
 
 ## 📚 Prompts disponibles
 
-| Prompt | Cuándo usarlo | Propósito |
-|--------|---------------|-----------|
-| **`review-pr.md`** ⭐ | Review completo de PR | Análisis estático completo |
-| **`setup-linting.md`** | Proyecto sin linter | Configurar ESLint + Prettier |
+| Prompt                 | Cuándo usarlo         | Propósito                    |
+| ---------------------- | --------------------- | ---------------------------- |
+| **`review-pr.md`** ⭐   | Review completo de PR | Análisis estático completo   |
+| **`setup-linting.md`** | Proyecto sin linter   | Configurar ESLint + Prettier |
 
 ---
 
@@ -200,7 +200,7 @@ Use: setup-linting.md
 ### 🚨 Critical (debe corregirse):
 1. **`app/mentors/page.tsx:45`** - API key hardcodeada
    - **Razón:** Security risk
-   - **Sugerencia:** Mover a `.env.local`
+   - **Sugerencia:** Mover a `.env`
 
 ### ⚠️ Medium (debería corregirse):
 2. **`lib/api.ts:12`** - Código duplicado

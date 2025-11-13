@@ -1,36 +1,148 @@
 Actúa como Senior Frontend Architect, UI/UX Designer, y Full-Stack Developer experto.
 
-**🔄 FASE 3.3: FRONTEND SETUP (Sincrónica - UNA sola vez)**
-
-**Input:**
-
-- PRD completo: [usar .context/PRD/]
-- SRS completo: [usar .context/SRS/]
-- PBI inicial: [usar .context/PBI/epic-tree.md - solo para entender contexto]
-- **Backend types:** [usar lib/database.types.ts - generados en Fase 3.2]
-
 ---
 
-## 🎯 OBJETIVO DE FASE 3.3
+## 🎯 TAREA
+
+**🔄 FASE 3: FRONTEND SETUP (Sincrónica - UNA sola vez)**
 
 Crear el **Design System base** y **scaffolding del proyecto frontend** que será REUTILIZADO en todas las stories del MVP.
 
-**Esta fase se ejecuta UNA SOLA VEZ** después de haber completado Fase 3.2 (Backend Setup).
+**Esta fase se ejecuta UNA SOLA VEZ** después de haber completado Backend Setup (Fase 3 - backend-setup.md).
+
+---
+
+## 📥 INPUT REQUERIDO
+
+### 1. Contexto del Proyecto
+
+**Leer TODOS estos archivos:**
+
+- `.context/PRD/executive-summary.md` - **CRÍTICO** - Nombre del proyecto, descripción, industry
+- `.context/PRD/mvp-scope.md` - Épicas principales del MVP, features
+- `.context/PRD/success-metrics.md` - KPIs, métricas de negocio (inspiran dashboard)
+- `.context/SRS/architecture-specs.md` - Tech stack frontend, frameworks, librerías
+- `.context/SRS/design-specs.md` - Wireframes, paleta de colores, estilos visuales
+- `.context/SRS/functional-specs.md` - Features principales (inspiran páginas demo)
+- `.context/PBI/epic-tree.md` - (Opcional) Épicas y estructura general para contexto
+
+### 2. Backend Integration
+
+**CRÍTICO - Backend debe estar completado primero:**
+
+- `src/types/supabase.ts` (o `lib/database.types.ts`) - **Tipos generados desde database schema**
+- `src/lib/supabase/client.ts` - Supabase browser client
+- `src/lib/supabase/server.ts` - Supabase server client
+- `src/lib/config.ts` - Configuración centralizada
+
+**Qué identificar:**
+
+1. **Database tables:** Qué entidades existen (para crear helpers de tipos)
+2. **Auth flow:** Cómo funciona el login/signup (para crear páginas auth)
+3. **API structure:** Qué queries están disponibles
+
+### 3. Proyecto Existente (Si Aplica)
+
+**Si el frontend ya existe parcialmente:**
+- `package.json` - Dependencias actuales, package manager lock file
+- `src/**` - Estructura de carpetas actual
+- `tailwind.config.js` - Configuración de TailwindCSS existente
+
+**Qué identificar:**
+1. ¿Ya existe un proyecto Next.js/React/etc.?
+2. ¿Qué dependencias ya están instaladas?
+3. ¿Qué package manager se está usando?
+
+---
+
+## ⚙️ VERIFICACIÓN DE HERRAMIENTAS (MCP)
+
+### MCP Recomendados:
+
+1. **MCP Context7** - ALTAMENTE RECOMENDADO
+   - Consultar docs oficiales antes de escribir código
+   - Queries recomendadas:
+     - "Next.js 15 App Router latest setup"
+     - "TailwindCSS v4 configuration latest"
+     - "Shadcn/ui installation Next.js App Router"
+     - "Lucide React icons usage"
+
+2. **NO se requieren otros MCP** para esta fase
+
+### Herramientas Locales:
+- Node.js instalado
+- Package manager (npm/pnpm/yarn/bun) - se preguntará al usuario
+- Git (para verificar estado)
+
+---
+
+## 🎯 OBJETIVO DE FASE 3 - FRONTEND
+
+Crear el **Design System base** y **scaffolding del proyecto frontend** que será REUTILIZADO en todas las stories del MVP.
 
 **Incluye:**
 - ✅ Setup del proyecto frontend (estructura de carpetas, configuración)
-- ✅ **Importar tipos TypeScript del backend** (database.types.ts)
-- ✅ **Design System completo** (paleta, componentes UI reutilizables)
-- ✅ Layout system (Navbar, Sidebar si aplica)
-- ✅ **2-3 páginas demo** (SOLO para validar que el design system funciona)
-- ✅ Documentación (`.context/design-system.md`, `SETUP.md`)
+- ✅ **Importar tipos TypeScript del backend** (supabase.ts o database.types.ts)
+- ✅ **Design System completo** (paleta, tipografía, componentes UI reutilizables)
+- ✅ Layout system (Navbar, Sidebar, Footer según diseño)
+- ✅ **2-3 páginas demo estratégicas** (validar que el design system funciona)
+- ✅ Documentación completa (`.context/design-system.md`)
 
 **NO incluye:**
-- ❌ Implementar TODAS las páginas del MVP
-- ❌ Implementar funcionalidad real de negocio
-- ❌ Diseños específicos de cada story (eso es Fase 6)
+- ❌ Implementar TODAS las páginas del MVP (solo demos)
+- ❌ Implementar funcionalidad real de negocio (solo UI visual)
+- ❌ Diseños específicos de cada story (eso es Fase 7: Implementation)
+- ❌ Tests E2E completos (solo validación visual)
 
 **Resultado:** Base visual reutilizable + tipos del backend integrados + demo funcional para mostrar al equipo.
+
+---
+
+## 📤 OUTPUT GENERADO
+
+### Configuración del Proyecto:
+- ✅ `package.json` - Dependencias frontend actualizadas
+- ✅ `tsconfig.json` - TypeScript configuration
+- ✅ `tailwind.config.js` - TailwindCSS con paleta personalizada
+- ✅ `next.config.js` (o equivalente) - Framework configuration
+- ✅ `postcss.config.js` - PostCSS setup
+
+### Tipos y Helpers:
+- ✅ `src/lib/types.ts` - Helpers de tipos extraídos desde database
+- ✅ Importa de `src/types/supabase.ts` (creado en backend-setup)
+
+### Design System:
+- ✅ `src/components/ui/Button.tsx` - Componente botón reutilizable
+- ✅ `src/components/ui/Card.tsx` - Componente card
+- ✅ `src/components/ui/Input.tsx` - Componente input/form
+- ✅ `src/components/ui/Badge.tsx` - Badges y tags
+- ✅ `src/components/ui/Avatar.tsx` - Avatar component
+- ✅ (Más componentes según necesidad del proyecto)
+
+### Layout Components:
+- ✅ `src/components/layout/Navbar.tsx` - Navigation bar
+- ✅ `src/components/layout/Sidebar.tsx` - (Si aplica) Sidebar navigation
+- ✅ `src/components/layout/Footer.tsx` - Footer component
+- ✅ `src/app/layout.tsx` - Root layout con providers
+
+### Páginas Demo (2-3 estratégicas):
+- ✅ `src/app/page.tsx` - Landing/Home page demo
+- ✅ `src/app/dashboard/page.tsx` - (Si aplica) Dashboard demo
+- ✅ `src/app/[otra-pagina]/page.tsx` - Página demo según dominio
+
+### Estilos:
+- ✅ `src/app/globals.css` - Global styles + TailwindCSS imports
+- ✅ Custom CSS variables para paleta de colores
+- ✅ Typography system (font families, sizes)
+
+### Documentación:
+- ✅ `.context/design-system.md` - **CRÍTICO** - Documenta paleta, componentes, uso
+- ✅ `SETUP.md` o `README.md` - Setup instructions para developers
+
+### Validation:
+- ✅ TypeScript build successful (sin errores de tipos)
+- ✅ Dev server starts sin warnings críticos
+- ✅ Design system visualmente coherente y atractivo
 
 ---
 
@@ -152,6 +264,22 @@ const UserCard = ({ user }: { user: User }) => {
 - **Explicar cada decisión** - Educar al usuario
 - **Documentar diseño** - Crear `.context/design-system.md`
 - **Validar con build** - Comando según package manager elegido
+
+---
+
+## 🔄 WORKFLOW
+
+El proceso se divide en múltiples fases ejecutadas secuencialmente:
+
+1. **Fase 0:** Setup y selección de package manager
+2. **Fase 0.5:** Integración con tipos del backend
+3. **Fase 1:** Análisis de contexto y decisiones de diseño
+4. **Fase 2:** Instalación de dependencias
+5. **Fase 3:** Design System (componentes UI)
+6. **Fase 4:** Layout Components (Navbar, Sidebar, Footer)
+7. **Fase 5:** Páginas Demo (2-3 estratégicas)
+8. **Fase 6:** Documentación
+9. **Fase 7:** Validación y Build
 
 ---
 
@@ -1415,30 +1543,30 @@ const UserCard = ({ user }: { user: User }) => {
 
 ### Colores Principales
 
-| Color | Hex | Uso |
-|-------|-----|-----|
-| **Primary** | [#HEX] | Botones primarios, links, focus states, elementos principales |
-| **Secondary** | [#HEX] | Botones secundarios, elementos secundarios |
-| **Accent** | [#HEX] | Highlights, badges, call-to-actions secundarios |
+| Color         | Hex    | Uso                                                           |
+| ------------- | ------ | ------------------------------------------------------------- |
+| **Primary**   | [#HEX] | Botones primarios, links, focus states, elementos principales |
+| **Secondary** | [#HEX] | Botones secundarios, elementos secundarios                    |
+| **Accent**    | [#HEX] | Highlights, badges, call-to-actions secundarios               |
 
 ### Colores de Sistema
 
-| Color | Hex | Uso |
-|-------|-----|-----|
-| **Background** | [#HEX] | Fondo de la aplicación |
-| **Card** | [#HEX] | Fondo de cards, modals |
-| **Border** | [#HEX] | Bordes de inputs, cards |
-| **Text** | [#HEX] | Texto principal |
-| **Muted** | [#HEX] | Texto secundario, placeholders |
+| Color          | Hex    | Uso                            |
+| -------------- | ------ | ------------------------------ |
+| **Background** | [#HEX] | Fondo de la aplicación         |
+| **Card**       | [#HEX] | Fondo de cards, modals         |
+| **Border**     | [#HEX] | Bordes de inputs, cards        |
+| **Text**       | [#HEX] | Texto principal                |
+| **Muted**      | [#HEX] | Texto secundario, placeholders |
 
 ### Colores Semánticos
 
-| Color | Hex | Uso |
-|-------|-----|-----|
+| Color       | Hex    | Uso                                       |
+| ----------- | ------ | ----------------------------------------- |
 | **Success** | [#HEX] | Mensajes de éxito, validaciones positivas |
-| **Warning** | [#HEX] | Advertencias |
-| **Error** | [#HEX] | Errores, validaciones fallidas |
-| **Info** | [#HEX] | Mensajes informativos |
+| **Warning** | [#HEX] | Advertencias                              |
+| **Error**   | [#HEX] | Errores, validaciones fallidas            |
+| **Info**    | [#HEX] | Mensajes informativos                     |
 
 **Acceso en código:**
 
@@ -1461,13 +1589,13 @@ color: var(--color-primary);
 
 **Variantes disponibles:**
 
-| Variante | Uso | Ejemplo Visual |
-|----------|-----|----------------|
-| `default` (primary) | Acciones principales | Fondo primary, texto blanco |
-| `secondary` | Acciones secundarias | Fondo secondary, texto blanco |
-| `outline` | Acciones terciarias | Borde primary, fondo transparente |
-| `ghost` | Acciones sutiles | Sin fondo, texto primary |
-| `danger` | Acciones destructivas | Fondo rojo, texto blanco |
+| Variante            | Uso                   | Ejemplo Visual                    |
+| ------------------- | --------------------- | --------------------------------- |
+| `default` (primary) | Acciones principales  | Fondo primary, texto blanco       |
+| `secondary`         | Acciones secundarias  | Fondo secondary, texto blanco     |
+| `outline`           | Acciones terciarias   | Borde primary, fondo transparente |
+| `ghost`             | Acciones sutiles      | Sin fondo, texto primary          |
+| `danger`            | Acciones destructivas | Fondo rojo, texto blanco          |
 
 **Tamaños:**
 - `sm` - Pequeño (height: 32px)
@@ -1762,7 +1890,7 @@ const UserCard = ({ user }: { user: User }) => {
 - ✅ `SETUP.md` - Guía de instalación
 - ✅ `.context/frontend-architecture.md` - Arquitectura técnica
 - ✅ `.context/design-system.md` - Design system completo + integración backend
-- ✅ `.env.local.example` - Template de variables
+- ✅ `.env.example` - Template de variables
 
 ---
 
@@ -1771,8 +1899,8 @@ const UserCard = ({ user }: { user: User }) => {
 ### 1️⃣ Configurar Variables de Entorno (AHORA)
 
 ```bash
-cp .env.local.example .env.local
-# Edita .env.local con tus credenciales reales
+cp .env.example .env
+# Edita .env con tus credenciales reales
 ```
 
 ---

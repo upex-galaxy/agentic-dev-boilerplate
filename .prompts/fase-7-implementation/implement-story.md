@@ -162,7 +162,7 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 
 **Verifica que existen:**
 - [ ] Dependencias necesarias instaladas
-- [ ] Variables de entorno configuradas (`.env.local`)
+- [ ] Variables de entorno configuradas (`.env`)
 - [ ] Base de datos accesible (si aplica)
 
 **Si falta algo:**

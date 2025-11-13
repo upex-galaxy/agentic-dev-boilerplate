@@ -412,23 +412,23 @@ Quién: SRE, DevOps
 
 ### 🎭 Roles por Fase
 
-| Fase             | Nombre               | Tipo       | Rol                      | Input                               | Output                                                          |
-| ---------------- | -------------------- | ---------- | ------------------------ | ----------------------------------- | --------------------------------------------------------------- |
-| **SINCRÓNICAS**  |                      |            |                          |                                     |                                                                 |
-| 1                | Constitution         | Setup      | Founder/Cliente/PO       | Idea de negocio                     | `.context/idea/`                                                |
-| 2                | Architecture         | Setup      | Architect/PM/BA          | `.context/idea/`                    | `.context/PRD/` + `.context/SRS/`                               |
-| 3                | Infrastructure       | Setup      | DevOps/Backend/Frontend  | PRD + SRS                           | Cloud + Backend + Frontend base                                 |
-| **ASINCRÓNICAS** |                      |            |                          |                                     |                                                                 |
-| 4                | Specification        | Iterativa  | PO/PM                    | PRD + SRS                           | `.context/PBI/` (épicas + stories)                              |
-| 5                | Shift-Left Testing   | Iterativa  | QA Engineer              | PBI                                 | Test plans + test cases en PBI                                  |
-| 6                | Planning             | Iterativa  | Tech Lead/Dev            | SRS + PBI                           | Implementation plans                                            |
-| 7                | Implementation       | Iterativa  | Dev + IA                 | Implementation plans + guidelines   | Código (src/) + unit tests                                      |
-| 8                | Code Review          | Iterativa  | Tech Lead/Senior Dev     | Pull Request                        | PR aprobado                                                     |
-| 9                | Deployment Staging   | Iterativa  | DevOps                   | Código aprobado                     | Deploy a staging                                                |
-| 10               | Exploratory Testing  | Iterativa  | QA Engineer              | Staging                             | Feedback manual + bugs                                          |
-| 11               | Test Automation      | Iterativa  | QA Automation/SDET       | Exploratory findings                | Integration + E2E tests                                         |
-| 12               | Production Deploy    | Iterativa  | DevOps                   | Tests pasando                       | Deploy a producción                                             |
-| 13               | Shift-Right Testing  | Iterativa  | SRE/DevOps               | Producción activa                   | Monitoring + observabilidad                                     |
+| Fase             | Nombre              | Tipo      | Rol                     | Input                             | Output                             |
+| ---------------- | ------------------- | --------- | ----------------------- | --------------------------------- | ---------------------------------- |
+| **SINCRÓNICAS**  |                     |           |                         |                                   |                                    |
+| 1                | Constitution        | Setup     | Founder/Cliente/PO      | Idea de negocio                   | `.context/idea/`                   |
+| 2                | Architecture        | Setup     | Architect/PM/BA         | `.context/idea/`                  | `.context/PRD/` + `.context/SRS/`  |
+| 3                | Infrastructure      | Setup     | DevOps/Backend/Frontend | PRD + SRS                         | Cloud + Backend + Frontend base    |
+| **ASINCRÓNICAS** |                     |           |                         |                                   |                                    |
+| 4                | Specification       | Iterativa | PO/PM                   | PRD + SRS                         | `.context/PBI/` (épicas + stories) |
+| 5                | Shift-Left Testing  | Iterativa | QA Engineer             | PBI                               | Test plans + test cases en PBI     |
+| 6                | Planning            | Iterativa | Tech Lead/Dev           | SRS + PBI                         | Implementation plans               |
+| 7                | Implementation      | Iterativa | Dev + IA                | Implementation plans + guidelines | Código (src/) + unit tests         |
+| 8                | Code Review         | Iterativa | Tech Lead/Senior Dev    | Pull Request                      | PR aprobado                        |
+| 9                | Deployment Staging  | Iterativa | DevOps                  | Código aprobado                   | Deploy a staging                   |
+| 10               | Exploratory Testing | Iterativa | QA Engineer             | Staging                           | Feedback manual + bugs             |
+| 11               | Test Automation     | Iterativa | QA Automation/SDET      | Exploratory findings              | Integration + E2E tests            |
+| 12               | Production Deploy   | Iterativa | DevOps                  | Tests pasando                     | Deploy a producción                |
+| 13               | Shift-Right Testing | Iterativa | SRE/DevOps              | Producción activa                 | Monitoring + observabilidad        |
 
 ### 🏗️ Arquitectura Unificada (PBI)
 
@@ -500,12 +500,12 @@ const UserCard = ({ user }: { user: User }) => {
 
 **Exploratory (Fase 10) antes que Automation (Fase 11):**
 
-| Aspecto       | Exploratory          | Automation                |
-| ------------- | -------------------- | ------------------------- |
-| Velocidad     | 5-30 minutos         | Horas/días                |
-| Cobertura     | Bugs de UX + lógica  | Solo lógica               |
-| Inversión     | Baja                 | Alta                      |
-| Flexibilidad  | Total                | Rígida                    |
+| Aspecto      | Exploratory         | Automation  |
+| ------------ | ------------------- | ----------- |
+| Velocidad    | 5-30 minutos        | Horas/días  |
+| Cobertura    | Bugs de UX + lógica | Solo lógica |
+| Inversión    | Baja                | Alta        |
+| Flexibilidad | Total               | Rígida      |
 
 **Principio:** Solo automatiza lo ya validado manualmente.
 
@@ -541,26 +541,26 @@ Todos los tests automation siguen KATA.
 
 ### Archivos Totales Creados
 
-| Directorio                     | Archivos            | Propósito                                |
-| ------------------------------ | ------------------- | ---------------------------------------- |
-| `.context/idea/`               | 3-4                 | Fase 1: Constitution                     |
-| `.context/PRD/`                | 4                   | Fase 2: Architecture (business)          |
-| `.context/SRS/`                | 4                   | Fase 2: Architecture (technical)         |
-| `.context/PBI/`                | Variable            | Fases 4-6 (depende de # épicas/stories)  |
-| `.context/guidelines/`         | 10                  | Fases 7-13: Reference material           |
-| `.context/guidelines/tae/`     | 10                  | Fase 11: Test Automation                 |
-| `.prompts/`                    | ~78-85              | Guías de prompts (todas las fases)       |
-| `docs/`                        | 9                   | Blueprints + MCP configs                 |
-| **TOTAL BASE**                 | **~118-125 archivos** | Sistema completo (13 fases)            |
+| Directorio                 | Archivos              | Propósito                               |
+| -------------------------- | --------------------- | --------------------------------------- |
+| `.context/idea/`           | 3-4                   | Fase 1: Constitution                    |
+| `.context/PRD/`            | 4                     | Fase 2: Architecture (business)         |
+| `.context/SRS/`            | 4                     | Fase 2: Architecture (technical)        |
+| `.context/PBI/`            | Variable              | Fases 4-6 (depende de # épicas/stories) |
+| `.context/guidelines/`     | 10                    | Fases 7-13: Reference material          |
+| `.context/guidelines/tae/` | 10                    | Fase 11: Test Automation                |
+| `.prompts/`                | ~78-85                | Guías de prompts (todas las fases)      |
+| `docs/`                    | 9                     | Blueprints + MCP configs                |
+| **TOTAL BASE**             | **~118-125 archivos** | Sistema completo (13 fases)             |
 
 ### Tamaños de Documentación
 
-| Archivo                                   | Líneas | Descripción                              |
-| ----------------------------------------- | ------ | ---------------------------------------- |
-| `ai-driven-software-project-blueprint.md` | ~800   | Metodología de 13 fases                  |
-| `kata-test-architecture.md`               | 1,874  | Documentación completa KATA              |
-| `.context/guidelines/tae/*`               | ~2,500 | Docs de testing automation               |
-| `.prompts/*`                              | ~4,500 | Prompts optimizados (todas las fases)    |
+| Archivo                                   | Líneas | Descripción                           |
+| ----------------------------------------- | ------ | ------------------------------------- |
+| `ai-driven-software-project-blueprint.md` | ~800   | Metodología de 13 fases               |
+| `kata-test-architecture.md`               | 1,874  | Documentación completa KATA           |
+| `.context/guidelines/tae/*`               | ~2,500 | Docs de testing automation            |
+| `.prompts/*`                              | ~4,500 | Prompts optimizados (todas las fases) |
 
 ---
 
@@ -630,7 +630,7 @@ Todos los tests automation siguen KATA.
 - Ejemplo: `schemas → types → componentes`
 
 **Después de ejecutar:**
-- Configura `.env.local` con credenciales reales
+- Configura `.env` con credenciales reales
 - Prueba el servidor (`npm run dev` o `bun run dev`)
 - Revisa `.context/design-system.md` (tu guía de estilo)
 - Muestra el design system al equipo
