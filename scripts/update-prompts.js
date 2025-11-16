@@ -120,6 +120,7 @@ async function main() {
       "ai-driven-software-project-blueprint.md",
       "kata-test-architecture.md",
       "GITFLOW.md",
+      "AMBIENTES.md",
     ];
 
     docsFiles.forEach((file) => {
