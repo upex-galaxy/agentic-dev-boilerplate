@@ -86,6 +86,8 @@ pnpm run up:prompt
 - `docs/` → Solo archivos del template:
   - `ai-driven-software-project-blueprint.md`
   - `kata-test-architecture.md`
+  - `GITFLOW.md`
+  - `AMBIENTES.md`
   - `mcp-config-*.md` (todos los archivos de MCP)
 - `scripts/` → Solo los scripts de actualización:
   - `update-prompts.js`
