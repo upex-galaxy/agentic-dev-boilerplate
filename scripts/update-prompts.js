@@ -119,6 +119,7 @@ async function main() {
     const docsFiles = [
       "ai-driven-software-project-blueprint.md",
       "kata-test-architecture.md",
+      "GITFLOW.md",
     ];
 
     docsFiles.forEach((file) => {
