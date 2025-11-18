@@ -23,13 +23,13 @@ Validar que el deployment en staging es funcional ANTES de comenzar exploratory 
 
 **Información necesaria del usuario:**
 - Staging URL: `https://[project]-develop.vercel.app`
-- Feature/Story recién desplegada: `STORY-XXX`
+- Feature/Story recién desplegada: `STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}`
 
 ### 2. Story Actual
 
 **Leer:**
-- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md` - **CRÍTICO** - Acceptance criteria
-- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md` - Test cases definidos (Fase 5)
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md` - **CRÍTICO** - Acceptance criteria
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md` - Test cases definidos (Fase 5)
 
 **Qué identificar:**
 1. ¿Cuál es el happy path de la story?
@@ -80,11 +80,11 @@ Crear smoke test checklist para validar deployment funcional:
 ## 📤 OUTPUT GENERADO
 
 ### Smoke Test Checklist:
-- ✅ `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/smoke-test.md` - Checklist ejecutable
+- ✅ `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md` - Checklist ejecutable
 
 **Estructura del checklist:**
 ```markdown
-# Smoke Test: [STORY-XXX - Nombre]
+# Smoke Test: [STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} - Nombre]
 
 **Staging URL:** https://[project]-develop.vercel.app
 **Fecha:** [Fecha]
@@ -154,7 +154,7 @@ Crear smoke test checklist para validar deployment funcional:
 
 ### Paso 1.1: Leer Story
 
-**Acción:** Leer `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
+**Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md`
 
 **Identificar:**
 1. **Acceptance Criteria (AC):**
@@ -170,7 +170,7 @@ Crear smoke test checklist para validar deployment funcional:
 
 ### Paso 1.2: Leer Test Cases
 
-**Acción:** Leer `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+**Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md`
 
 **Identificar:**
 - Test case #1 (happy path) → Smoke test debe cubrir esto
@@ -291,17 +291,20 @@ Crear smoke test checklist para validar deployment funcional:
 
 **Acción:** Ejecutar el flujo principal definido en acceptance criteria.
 
-**Ejemplo (si story es "Como user, quiero ver lista de mentors"):**
+**Ejemplo adaptado a TU story:**
 
 ```markdown
-### Happy Path: Ver lista de mentors
+### Happy Path: [Nombre del flujo según AC]
 
-1. [ ] Login como user
-2. [ ] Navegar a /mentors
-3. [ ] Lista de mentors aparece
-4. [ ] Cada mentor card muestra: nombre, avatar, skills
-5. [ ] Click en mentor abre detalle
-6. [ ] Detalle muestra información completa
+1. [ ] [Primer paso según acceptance criteria]
+2. [ ] [Segundo paso]
+3. [ ] [Lista de entidades aparece]
+4. [ ] [Cada card muestra: campos relevantes]
+5. [ ] [Click en entidad abre detalle]
+6. [ ] [Detalle muestra información completa]
+
+(Donde [entidades/campos] se determinan del AC de tu story.
+Ejemplos: mentors/skills en MYM, products/price en SHOP, posts/author en BLOG)
 ```
 
 **Para TU story específica, adapta el happy path:**
@@ -364,11 +367,14 @@ Crear smoke test checklist para validar deployment funcional:
 
 **Ejemplo de validación:**
 ```
-GET /api/mentors → 200 OK
-Response: { "data": [...mentors] }  ✅
+GET /api/[entities] → 200 OK
+Response: { "data": [...entities] }  ✅
 
-POST /api/sessions → 201 Created
+POST /api/[resources] → 201 Created
 Response: { "id": "xxx", "status": "created" }  ✅
+
+(Donde [entities/resources] dependen del dominio de tu proyecto.
+Ejemplos: mentors/sessions en MYM, products/orders en SHOP, posts/comments en BLOG)
 ```
 
 ---
@@ -376,7 +382,7 @@ Response: { "id": "xxx", "status": "created" }  ✅
 ### Paso 5.2: Validar Persistencia de Datos
 
 **Acción (si story modifica datos):**
-1. Crear/modificar data via UI (ej: crear mentor, editar perfil, etc.)
+1. Crear/modificar data via UI (ej: crear entidad, editar perfil, etc.)
 2. Refrescar página (F5)
 3. Validar que cambios persisten
 
@@ -393,12 +399,12 @@ Response: { "id": "xxx", "status": "created" }  ✅
 
 ### Paso 6.1: Crear Archivo
 
-**Acción:** Crear `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/smoke-test.md`
+**Acción:** Crear `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md`
 
 **Contenido:**
 
 ```markdown
-# Smoke Test: [STORY-XXX - Nombre]
+# Smoke Test: [STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} - Nombre]
 
 **Staging URL:** https://[project]-develop.vercel.app
 **Fecha:** [Fecha actual]
@@ -528,7 +534,7 @@ Response: { "id": "xxx", "status": "created" }  ✅
 
 ## Archivo Creado:
 
-`.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/smoke-test.md`
+`.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md`
 
 ---
 

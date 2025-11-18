@@ -19,9 +19,9 @@ Crear charter de exploración estructurado para sesión de testing manual que cu
 ### 1. Story Actual
 
 **Leer TODOS estos archivos:**
-- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md` - **CRÍTICO** - Acceptance criteria completos
-- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md` - **CRÍTICO** - Test cases de Fase 5
-- `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/smoke-test.md` - Resultado de smoke test
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md` - **CRÍTICO** - Acceptance criteria completos
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md` - **CRÍTICO** - Test cases de Fase 5
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md` - Resultado de smoke test
 
 **Qué identificar:**
 1. **Acceptance Criteria completos** - Qué debe funcionar
@@ -70,11 +70,11 @@ Crear test charter que guía sesión exploratoria de 60-90 minutos:
 ## 📤 OUTPUT GENERADO
 
 ### Test Charter:
-- ✅ `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-charter.md` - Charter ejecutable
+- ✅ `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-charter.md` - Charter ejecutable
 
 **Estructura del charter:**
 ```markdown
-# Test Charter: [STORY-XXX - Nombre]
+# Test Charter: [STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} - Nombre]
 
 **Fecha:** [Fecha]
 **QA:** [Nombre]
@@ -164,7 +164,7 @@ Crear test charter que guía sesión exploratoria de 60-90 minutos:
 
 ### Paso 1.1: Leer Acceptance Criteria
 
-**Acción:** Leer `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
+**Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md`
 
 **Identificar:**
 1. **ACs principales:**
@@ -185,7 +185,7 @@ Crear test charter que guía sesión exploratoria de 60-90 minutos:
 
 ### Paso 1.2: Leer Test Cases de Fase 5
 
-**Acción:** Leer `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
+**Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md`
 
 **Identificar:**
 1. **Happy Path Test Cases:**
@@ -402,13 +402,18 @@ Buffer para bugs encontrados:  10 min
 ```markdown
 ### Data Seeds:
 
-**Mentors:**
-- Mentor 1: "John Doe" (tiene 5 sessions activas)
-- Mentor 2: "Jane Smith" (sin sessions)
+**[Entidades principales]:**
+- [Entity 1]: "[Nombre]" (tiene [X] relaciones activas)
+- [Entity 2]: "[Nombre]" (sin relaciones)
 
-**Sessions:**
-- Session 1: ID `xxx` (status: pending)
-- Session 2: ID `yyy` (status: completed)
+(Donde [Entity] se determina del dominio del proyecto.
+Ejemplos: Mentors en MYM, Products en SHOP, Posts en BLOG)
+
+**[Relaciones/Transacciones]:**
+- [Relation 1]: ID `xxx` (status: pending)
+- [Relation 2]: ID `yyy` (status: completed)
+
+(Ejemplos: Sessions en MYM, Orders en SHOP, Comments en BLOG)
 
 ### Cómo crear data de prueba:
 [Instrucciones para crear data via UI o seeds]
@@ -444,12 +449,12 @@ Buffer para bugs encontrados:  10 min
 
 ### Paso 6.1: Crear Archivo
 
-**Acción:** Crear `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-charter.md`
+**Acción:** Crear `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-charter.md`
 
 **Contenido completo:**
 
 ```markdown
-# Test Charter: [STORY-XXX - Nombre de la Story]
+# Test Charter: [STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} - Nombre de la Story]
 
 **Fecha:** [Fecha actual]
 **QA:** [Nombre del QA ejecutor]
@@ -685,8 +690,12 @@ Validar que performance es aceptable:
 [Describir data pre-existente necesaria o cómo crearla]
 
 **Ejemplo:**
-- Mentor 1: "John Doe" (tiene 5 sessions activas)
-- Session 1: ID `xxx` (status: pending)
+(Analizar la story para identificar qué entidades de negocio usar)
+
+- [Entity 1]: "[Nombre]" (tiene [X] relaciones activas)
+- [Relation 1]: ID `xxx` (status: [estado])
+
+(Donde [Entity/Relation] depende del dominio. Ejemplos: Mentor/Session en MYM, Product/Order en SHOP, Post/Comment en BLOG)
 
 ---
 
@@ -743,9 +752,9 @@ Validar que performance es aceptable:
 ## 🔗 Referencias
 
 **Documentos relacionados:**
-- Story: `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
-- Test Cases: `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-cases.md`
-- Smoke Test: `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/smoke-test.md`
+- Story: `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md`
+- Test Cases: `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md`
+- Smoke Test: `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md`
 
 **Próximos pasos:**
 - Ejecutar sesión → Documentar en session-notes.md
@@ -767,7 +776,7 @@ Validar que performance es aceptable:
 
 ## Archivo Creado:
 
-`.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/test-charter.md`
+`.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-charter.md`
 
 ---
 
