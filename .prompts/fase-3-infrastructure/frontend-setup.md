@@ -471,9 +471,9 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 - **Personalidad/Tono:** [Formal/Creativo/Corporativo/Startup - inferir del PRD]
 
 ### Épicas Prioritarias (del PBI):
-1. [EPIC-XXX]: [Nombre] - [Razón de prioridad]
-2. [EPIC-YYY]: [Nombre] - [Razón de prioridad]
-3. [EPIC-ZZZ]: [Nombre] - [Razón de prioridad]
+1. EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}: [Descripción] - [Razón de prioridad]
+2. EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}: [Descripción] - [Razón de prioridad]
+3. EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}: [Descripción] - [Razón de prioridad]
 
 ### Tipos Backend Disponibles:
 [Listar entidades identificadas en database.types.ts]
@@ -1373,7 +1373,7 @@ const mockData: [Entity][] = [...]
 
 **Ruta:** `/[ruta]`
 **Archivo:** [Ubicación según framework]
-**Épica relacionada:** [EPIC-XXX]
+**Épica relacionada:** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
 
 **Diseño a implementar:**
 
@@ -1419,7 +1419,7 @@ const mockData: [Entity][] = [
 
 **Directiva para la IA:**
 
-"Crea página visualmente atractiva usando componentes del design system. Analiza la épica [EPIC-XXX] para entender qué mostrar. **USA tipos del backend de @/lib/types** para crear mock data type-safe. Crea 6-8 items de mock data realista que cumplan con la estructura del tipo. Include estados de loading (skeleton), empty state, y error state si aplica. Si es lista, usa grid responsive con Cards. Si tiene acciones, usa Buttons del design system con iconos (lucide-react). Aplica paleta de colores de forma coherente. NO implementes lógica real, solo UI bonita con mock data."
+"Crea página visualmente atractiva usando componentes del design system. Analiza la épica EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} para entender qué mostrar. **USA tipos del backend de @/lib/types** para crear mock data type-safe. Crea 6-8 items de mock data realista que cumplan con la estructura del tipo. Include estados de loading (skeleton), empty state, y error state si aplica. Si es lista, usa grid responsive con Cards. Si tiene acciones, usa Buttons del design system con iconos (lucide-react). Aplica paleta de colores de forma coherente. NO implementes lógica real, solo UI bonita con mock data."
 
 ---
 

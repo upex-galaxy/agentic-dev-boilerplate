@@ -294,8 +294,8 @@ Crear carpeta:
 
 ## User Stories
 
-1. **[PROYECTO]-TBD** - As a [user], I want to [action] so that [benefit]
-2. **[PROYECTO]-TBD** - As a [user], I want to [action] so that [benefit]
+1. **{PROJECT_KEY}-TBD** - As a [user], I want to [action] so that [benefit]
+2. **{PROJECT_KEY}-TBD** - As a [user], I want to [action] so that [benefit]
 ...
 
 **NOTA:** Los IDs serán actualizados cuando se creen las stories en Jira (siguiente paso)

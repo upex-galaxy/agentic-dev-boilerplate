@@ -118,7 +118,7 @@ Antes de clasificar, pregúntate:
 - Story Points totales: [estimación]
 - Épicas necesarias: [número] - [nombres si aplica]
 
-**Épica existente (si aplica):** [EPIC-XXX-nombre] o "N/A - requiere nueva épica"
+**Épica existente (si aplica):** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} o "N/A - requiere nueva épica"
 
 **Dependencias identificadas:**
 [Listar dependencias con otras épicas o sistemas]
@@ -671,21 +671,21 @@ Esta feature requiere **[número] épicas** para implementarse correctamente.
 ## Orden de Implementación Recomendado
 
 ### Fase 1: Foundation (Sprint 1-X)
-1. **ÉPICA [NUM]** - [Nombre] (base fundamental)
+1. **EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** - [Descripción] (base fundamental)
    - **¿Por qué primero?** [Razón]
 
 ### Fase 2: Core Features (Sprint X-Y)
-2. **ÉPICA [NUM]** - [Nombre] (funcionalidad principal)
-   - **Depende de:** ÉPICA [NUM]
+2. **EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** - [Descripción] (funcionalidad principal)
+   - **Depende de:** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
    - **¿Por qué ahora?** [Razón]
 
-3. **ÉPICA [NUM]** - [Nombre]
-   - **Depende de:** ÉPICA [NUM]
+3. **EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** - [Descripción]
+   - **Depende de:** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
    - **¿Por qué ahora?** [Razón]
 
 ### Fase 3: Enhancements (Sprint Y-Z)
-4. **ÉPICA [NUM]** - [Nombre] (mejoras y optimizaciones)
-   - **Depende de:** ÉPICA [NUM], ÉPICA [NUM]
+4. **EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** - [Descripción] (mejoras y optimizaciones)
+   - **Depende de:** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}, EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
    - **¿Por qué al final?** [Razón]
 
 ---
@@ -821,7 +821,7 @@ STORY-{PROYECTO}-{NUMERO}-{nombre-descriptivo}/
 1. Analizar → Clasificar como Nivel 1
 2. Identificar épica padre existente
 3. Crear story en Jira → Obtener ID
-4. Crear carpeta local STORY-XXX/
+4. Crear carpeta local STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/
 5. Crear story.md
 6. Actualizar epic.md de épica padre
 7. Actualizar epic-tree.md
@@ -834,10 +834,10 @@ STORY-{PROYECTO}-{NUMERO}-{nombre-descriptivo}/
 1. Analizar → Clasificar como Nivel 2
 2. Definir épica y descomponer en stories
 3. Crear épica en Jira → Obtener ID
-4. Crear carpeta local EPIC-XXX/
+4. Crear carpeta local EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/
 5. Crear epic.md
 6. Crear todas las stories en Jira → Obtener IDs
-7. Crear carpetas locales STORY-XXX/
+7. Crear carpetas locales STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/
 8. Crear archivos story.md
 9. Actualizar epic.md con IDs reales
 10. Actualizar epic-tree.md
