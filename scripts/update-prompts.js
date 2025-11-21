@@ -75,6 +75,11 @@ async function main() {
       path.join(backupDir, "context-engineering.md")
     );
   }
+  if (fs.existsSync("templates/mcp")) {
+    fs.cpSync("templates/mcp", path.join(backupDir, "templates/mcp"), {
+      recursive: true,
+    });
+  }
 
   log(`✅ Backup guardado en: ${backupDir}`, "green");
 
@@ -158,6 +163,14 @@ async function main() {
     });
   }
 
+  // Actualizar templates/mcp/
+  const templatesPath = path.join(TEMP_DIR, "templates", "mcp");
+  if (fs.existsSync(templatesPath)) {
+    log("🔧 Actualizando templates/mcp/...", "yellow");
+    fs.mkdirSync("templates/mcp", { recursive: true });
+    fs.cpSync(templatesPath, "templates/mcp", { recursive: true });
+  }
+
   // Limpiar
   fs.rmSync(TEMP_DIR, { recursive: true, force: true });
 
@@ -175,6 +188,7 @@ async function main() {
   console.log("  • context-engineering.md");
   console.log("  • docs/ (solo archivos del template)");
   console.log("  • scripts/update-prompts.js y .md");
+  console.log("  • templates/mcp/ (todos los templates de MCP)");
 }
 
 main().catch((error) => {

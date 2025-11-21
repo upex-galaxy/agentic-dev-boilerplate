@@ -67,12 +67,35 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
      - "Shadcn/ui installation Next.js App Router"
      - "Lucide React icons usage"
 
-2. **NO se requieren otros MCP** para esta fase
+2. **MCP shadcn/ui** - ALTAMENTE RECOMENDADO (si usuario eligió shadcn/ui)
+   - ⭐ **IMPORTANTE:** Si está disponible, úsalo para búsqueda de componentes
+   - Permite buscar cualquier componente por lenguaje natural
+   - Mucho más rápido que buscar manualmente
+   - **Recomendación al usuario:** "Activa el MCP de shadcn/ui para desarrollo más eficiente"
+   - Si NO está disponible: usar Context7 o búsqueda manual (funciona igual, pero más lento)
+
+3. **NO se requieren otros MCP** para esta fase
 
 ### Herramientas Locales:
-- Node.js instalado
+- Node.js instalado (v18+ recomendado)
 - Package manager (npm/pnpm/yarn/bun) - se preguntará al usuario
 - Git (para verificar estado)
+
+### ⚠️ IMPORTANTE - Sobre Tailwind CSS v4:
+
+**Tailwind CSS v4 es ESTABLE** (desde enero 22, 2025):
+- ✅ Versión estable actual (no alpha/beta)
+- ✅ Compatible con Next.js 15.2+
+- ✅ Compatible con shadcn/ui (documentación oficial actualizada)
+- ✅ 10+ meses de estabilidad en producción
+
+**Cambios principales vs v3:**
+- Configuración CSS-first (no más tailwind.config.js)
+- `@import "tailwindcss"` en lugar de `@tailwind` directives
+- Performance 5x-100x más rápida
+- Colores OKLCH (mejor percepción visual)
+
+**Si el proyecto ya tiene v3:** Context7 mostrará upgrade path.
 
 ---
 
@@ -181,28 +204,9 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 **Creando archivo...**
 ```
 
-**Contenido:**
+**Directiva:**
 
-```typescript
-// Import database types generated from Supabase schema
-import type { Database } from './database.types'
-
-// Extract table row types
-export type User = Database['public']['Tables']['users']['Row']
-export type UserInsert = Database['public']['Tables']['users']['Insert']
-export type UserUpdate = Database['public']['Tables']['users']['Update']
-
-// Add more types as needed based on your schema
-// Example:
-// export type Profile = Database['public']['Tables']['profiles']['Row']
-// export type Post = Database['public']['Tables']['posts']['Row']
-
-// Helper type for API responses
-export type ApiResponse<T> = {
-  data: T | null
-  error: string | null
-}
-```
+Importar tipos de `database.types` y extraer tipos específicos de tablas (Row, Insert, Update). Crear helper types para respuestas de API si es necesario.
 
 **Explicación al usuario:**
 
@@ -215,21 +219,9 @@ export type ApiResponse<T> = {
 2. **Autocomplete:** TypeScript sabe exactamente qué campos tiene cada entidad
 3. **Refactoring seguro:** Cambios en el schema se reflejan automáticamente
 
-**Ejemplo de uso en componentes:**
+**Ejemplo conceptual:**
 
-```typescript
-import type { User } from '@/lib/types'
-
-// El componente sabe exactamente qué campos tiene User
-const UserCard = ({ user }: { user: User }) => {
-  return (
-    <div>
-      <h3>{user.name}</h3>  {/* ✅ TypeScript valida que 'name' existe */}
-      <p>{user.email}</p>    {/* ✅ TypeScript valida que 'email' existe */}
-    </div>
-  )
-}
-```
+Los componentes importan tipos de `@/lib/types` y TypeScript valida automáticamente los campos disponibles.
 
 **Si el schema cambia:**
 - Re-generas tipos: `npx supabase gen types typescript...`
@@ -668,7 +660,149 @@ Basándome en tus preferencias y el análisis del proyecto, aquí está el plan 
 
 ---
 
-**Próximo paso:** Implementar este diseño en el proyecto.
+**Próximo paso:** Decidir estrategia de componentes UI.
+```
+
+---
+
+## 🧩 FASE 1.6: ESTRATEGIA DE COMPONENTES UI (INTERACTIVA)
+
+**Objetivo:** Decidir cómo implementar el design system (componentes UI).
+
+**CRÍTICO:** Esta decisión afecta significativamente el tiempo y esfuerzo de desarrollo.
+
+---
+
+### Paso 1.6.1: Pregunta - Estrategia de Componentes UI
+
+**Usa `AskUserQuestion` tool:**
+
+**Pregunta:** "¿Cómo prefieres implementar los componentes UI del design system?"
+
+**Header:** "Estrategia UI"
+
+**Opciones:**
+
+1. **shadcn/ui** (Recomendado - Rápido y profesional) ⭐
+   - **Descripción:** "Componentes pre-hechos, modernos y accesibles que se instalan con CLI. Compatible con Tailwind v4. Se integran directamente en tu código (no en node_modules) para total customización. Ahorra 80-90% del tiempo. Incluye: Button, Card, Input, Dialog, Select, Dropdown, Tooltip, y 40+ componentes más. Usado por Vercel, shadcn, y miles de proyectos."
+
+2. **Componentes desde cero** (Control total y educativo)
+   - **Descripción:** "La IA creará cada componente manualmente desde cero usando TypeScript + Tailwind CSS. Control absoluto sobre cada línea de código. Ideal para: aprender desarrollo de componentes, requisitos muy específicos, o proyectos con design system único. Más lento pero educativo."
+
+3. **Headless UI + estilos custom** (Balance intermedio)
+   - **Descripción:** "Usa Headless UI de Tailwind Labs para la lógica (accesibilidad, estados, keyboard navigation) y la IA crea los estilos visuales con Tailwind. Balance entre rapidez y control. Ideal para: necesitas accesibilidad garantizada pero quieres estilos únicos."
+
+4. **Elige por mí** (Recomendación automática)
+   - **Descripción:** "La IA analizará el tipo de proyecto y elegirá la mejor opción. Por defecto recomienda shadcn/ui por eficiencia, calidad y tiempo de desarrollo. Solo elegirá manual si detecta requisitos muy específicos."
+
+**MultiSelect:** false
+
+---
+
+### Paso 1.6.2: Procesar Respuesta y Documentar Decisión
+
+**Según la respuesta del usuario:**
+
+**Si elige "shadcn/ui":**
+
+```markdown
+## ✅ Estrategia Seleccionada: shadcn/ui
+
+**Ventajas para tu proyecto:**
+- ✅ 40+ componentes profesionales en minutos (vs días/semanas)
+- ✅ Accesibilidad WAI-ARIA incluida (screen readers, keyboard navigation)
+- ✅ Responsive por defecto
+- ✅ Compatible con Tailwind v4 (verificado)
+- ✅ Compatible con React 19 + Next.js 15
+- ✅ Código en tu proyecto (100% customizable)
+- ✅ TypeScript con tipos completos
+- ✅ Comunidad activa (miles de proyectos)
+
+**Componentes disponibles:**
+- UI Básico: Button, Card, Badge, Avatar, Separator
+- Formularios: Input, Textarea, Select, Checkbox, Radio, Switch, Label
+- Overlays: Dialog, Popover, Tooltip, Sheet, Drawer
+- Navigation: Tabs, Dropdown Menu, Command Menu
+- Feedback: Alert, Toast, Progress, Skeleton
+- Layout: Accordion, Collapsible, Separator
+- Data: Table, Data Table (con sorting, filtering)
+- Y 20+ más...
+
+**Instalación:** Se realizará en Fase 4.
+
+**Próximo paso:** Decidir páginas demo del MVP.
+```
+
+**Si elige "Componentes desde cero":**
+
+```markdown
+## ✅ Estrategia Seleccionada: Componentes desde cero
+
+**Beneficios para tu proyecto:**
+- ✅ Control total sobre cada línea de código
+- ✅ Aprendizaje profundo de arquitectura de componentes
+- ✅ Sin dependencias externas
+- ✅ 100% customizado a tu necesidad específica
+
+**Componentes a crear:**
+[Usar lista del Paso 1.5.5: Componentes UI a Crear]
+
+**Consideraciones:**
+- ⚠️ Mayor tiempo de desarrollo (3-5x más lento)
+- ⚠️ La IA deberá implementar accesibilidad manualmente
+- ⚠️ Cada componente = 50-150 líneas de código
+
+**Implementación:** Se realizará en Fase 4.
+
+**Próximo paso:** Decidir páginas demo del MVP.
+```
+
+**Si elige "Headless UI":**
+
+```markdown
+## ✅ Estrategia Seleccionada: Headless UI + estilos custom
+
+**Beneficios para tu proyecto:**
+- ✅ Lógica de componentes robusta (Tailwind Labs)
+- ✅ Accesibilidad garantizada
+- ✅ Estilos 100% personalizados
+- ✅ Más rápido que desde cero
+- ✅ Official support de Tailwind team
+
+**Componentes disponibles:**
+- Listbox (Select), Combobox (Autocomplete)
+- Menu (Dropdown), Popover, Dialog (Modal)
+- Disclosure (Accordion), Tabs, Switch
+- Radio Group, Transition utilities
+
+**Implementación:** Se realizará en Fase 4.
+
+**Próximo paso:** Decidir páginas demo del MVP.
+```
+
+**Si elige "Elige por mí":**
+
+```markdown
+## 🤖 Analizando proyecto para recomendar estrategia...
+
+**Análisis:**
+- Tipo de proyecto: [Inferir del PRD]
+- Complejidad UI: [Analizar épicas del PBI]
+- Tiempo disponible: [Inferir de urgencia en PRD]
+- Requisitos especiales: [Buscar en SRS]
+
+**Recomendación: shadcn/ui** ⭐
+
+**Razón:**
+Tu proyecto [tipo de proyecto] requiere [X] componentes UI. shadcn/ui ofrece:
+- [Beneficio específico 1 basado en épicas]
+- [Beneficio específico 2 basado en user journeys]
+- Reducción de tiempo de desarrollo en ~85%
+
+Si tuvieras requisitos muy específicos de [área], recomendaría componentes desde cero.
+Pero para tu caso, shadcn/ui es la opción óptima.
+
+**Próximo paso:** Decidir páginas demo del MVP.
 ```
 
 ---
@@ -733,24 +867,75 @@ SI app_tipo == "gestión de recursos":
 
 **Proceso:**
 
-1. **Core framework:**
-```bash
-[pnpm/bun] add [framework-packages]
+1. **Verificar versiones con Context7 PRIMERO:**
+```markdown
+Antes de instalar, consultar Context7 MCP para versiones actualizadas:
+- "Next.js latest stable version installation"
+- "Tailwind CSS v4 installation packages"
+- "Supabase SSR Next.js latest version"
 ```
 
-2. **UI Library:**
+2. **Core Framework (Next.js):**
 ```bash
-[pnpm/bun] add [ui-packages]
+# Next.js 15.x (estable)
+[pnpm/bun] add next@latest react@latest react-dom@latest
+
+# Verificar versión instalada
+[pnpm/bun] list next
+# Esperado: next@15.x.x o superior
 ```
 
-3. **Auth Provider:**
+3. **UI Library (Tailwind CSS v4):**
 ```bash
-[pnpm/bun] add [auth-packages]
+# Tailwind v4 + Vite plugin (recomendado)
+[pnpm/bun] add -D tailwindcss@latest @tailwindcss/vite@latest
+
+# PostCSS (alternativa si no se usa Vite)
+[pnpm/bun] add -D tailwindcss@latest postcss@latest autoprefixer@latest
+
+# Verificar versión instalada
+[pnpm/bun] list tailwindcss
+# Esperado: tailwindcss@4.x.x
 ```
 
-4. **TypeScript + Dev Tools:**
+4. **Auth Provider (Supabase):**
+```bash
+# Supabase clients (versiones estables)
+[pnpm/bun] add @supabase/supabase-js@latest @supabase/ssr@latest
+
+# Verificar versiones instaladas
+[pnpm/bun] list | grep supabase
+# Esperado:
+# @supabase/supabase-js@2.x.x
+# @supabase/ssr@0.x.x
+```
+
+5. **TypeScript + Dev Tools:**
 ```bash
 [pnpm/bun] add -D typescript @types/react @types/node eslint prettier
+
+# Si se usa shadcn/ui (opcional):
+[pnpm/bun] add -D @types/react-dom
+```
+
+6. **Validar todas las versiones:**
+```bash
+# Ver versiones de dependencias críticas
+[pnpm/bun] list | grep -E "(next|react|tailwindcss|supabase)"
+```
+
+**Output esperado:**
+```markdown
+✅ Dependencias instaladas:
+   - next: ^15.x.x ✓
+   - react: ^19.x.x ✓
+   - tailwindcss: ^4.x.x ✓
+   - @supabase/ssr: ^0.x.x ✓
+   - @supabase/supabase-js: ^2.x.x ✓
+
+⚠️ Si alguna versión es diferente:
+   - Consultar Context7 para confirmar compatibilidad
+   - Actualizar: [pm] add [paquete]@latest
 ```
 
 ---
@@ -772,157 +957,297 @@ SI app_tipo == "gestión de recursos":
 
 ---
 
-### Paso 3.4: Configurar Tailwind con Paleta Personalizada
+### Paso 3.4: Configurar Tailwind v4 con Paleta Personalizada
 
-**NUEVO - MUY IMPORTANTE:**
+**NUEVO - MUY IMPORTANTE:** Tailwind v4 usa configuración CSS-first (no más tailwind.config.js).
 
-**Acción:** Crea `tailwind.config.ts` con la paleta de colores seleccionada.
+**🎯 Verificar con Context7 PRIMERO:**
+
+Antes de implementar, consultar Context7 MCP:
+- Query: "Tailwind CSS v4 Next.js 15 setup configuration"
+- Query: "Tailwind CSS v4 Vite plugin installation"
+
+**Acción:** Configurar Tailwind v4 según el approach detectado en el proyecto.
 
 ```markdown
-### 🎨 Creando Configuración de Tailwind con Paleta Personalizada
+### 🎨 Configurando Tailwind v4 (CSS-First)
 
-**Archivo:** `tailwind.config.ts`
+**IMPORTANTE - Cambio en v4:**
+Tailwind v4 (estable desde enero 2025) usa configuración CSS-first:
+- ✅ NO necesita `tailwind.config.js` o `tailwind.config.ts`
+- ✅ Configuración directamente en CSS con `@theme`
+- ✅ Detección automática de archivos (no necesita `content` paths)
+- ✅ 5x más rápido en builds, 100x+ en incrementales
 
 **Propósito:** Aplicar la paleta de colores seleccionada en Fase 1.5 a todo el proyecto.
-
-**Colores aplicados:**
-- Primary: [Color hex elegido]
-- Secondary: [Color hex]
-- Accent: [Color hex]
-- [etc.]
-
-**Ejemplo de uso posterior:**
-```tsx
-<button className="bg-primary text-white hover:bg-primary/90">
-  Botón Primary
-</button>
 ```
 
-**Creando archivo...**
+**Paso 3.4.1: Instalar plugin de Vite (Recomendado para Next.js 15.2+)**
+
+```markdown
+**Instalando @tailwindcss/vite:**
+```bash
+[pnpm/bun] add -D @tailwindcss/vite
 ```
 
-**Contenido del archivo (adaptado a la paleta elegida):**
+**Directiva:**
 
-```typescript
-import type { Config } from 'tailwindcss'
+Crear/actualizar `vite.config.ts` agregando el plugin `@tailwindcss/vite` al array de plugins. Si no usa Vite, configurar PostCSS con `@tailwindcss/postcss`.
 
-const config: Config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          DEFAULT: '[color-hex]',
-          50: '[lighter-shade]',
-          100: '[lighter-shade]',
-          // ... gradaciones
-          900: '[darker-shade]',
-        },
-        secondary: {
-          DEFAULT: '[color-hex]',
-          // ... gradaciones
-        },
-        accent: {
-          DEFAULT: '[color-hex]',
-          // ... gradaciones
-        },
-      },
-      borderRadius: {
-        // Ajustar según estilo visual elegido
-        'xl': '[value según estilo]', // Ej: '1rem' para moderno, '0.5rem' para corporativo
-      },
-      boxShadow: {
-        // Ajustar según estilo visual elegido
-        'card': '[value]', // Ej: '0 4px 6px rgba(0,0,0,0.1)' para moderno
-      },
-    },
-  },
-  plugins: [],
-}
-export default config
-```
+**Paso 3.4.2: Configurar paleta en CSS**
+
+**Archivo:** `app/globals.css` (se actualizará en Paso 3.5)
 
 **Explicación al usuario:**
 ```markdown
-**Paleta aplicada:** He configurado Tailwind con la paleta [Nombre] que seleccionaste.
+**✅ Tailwind v4 configurado**
 
-**Uso en componentes:**
+**Ventajas de v4:**
+- ✅ Configuración más simple (todo en CSS)
+- ✅ Detección automática de archivos
+- ✅ Performance extrema (100x más rápido en dev)
+- ✅ Sintaxis moderna con OKLCH colors
+
+**Uso en componentes (igual que v3):**
 - `bg-primary` → Color principal
 - `text-primary` → Texto en color principal
 - `border-primary` → Borde en color principal
-- `bg-primary-50` → Tono más claro
-- `bg-primary-900` → Tono más oscuro
+- `bg-primary/90` → Primary con 90% opacidad
 
-**Estilo visual aplicado:**
-- Bordes redondeados: [Descripción según estilo]
-- Sombras: [Descripción según estilo]
-
-Estos valores se usarán en todos los componentes UI para mantener coherencia visual.
+**Próximo paso:** Configurar estilos globales con la paleta.
 ```
 
 ---
 
-### Paso 3.5: Configurar Archivo de Estilos Globales
+### Paso 3.5: Configurar Archivo de Estilos Globales con Tailwind v4
 
-**NUEVO:**
+**NUEVO - Sintaxis de Tailwind v4:**
 
 ```markdown
-### 🎨 Creando Estilos Globales
+### 🎨 Creando Estilos Globales (Tailwind v4)
 
 **Archivo:** `app/globals.css` (o ubicación según framework)
 
-**Propósito:** Aplicar estilos base y variables CSS personalizadas.
+**Propósito:**
+1. Importar Tailwind v4
+2. Definir paleta de colores con `@theme`
+3. Aplicar estilos base personalizados
 
 **Creando archivo...**
 ```
 
-**Contenido (adaptado al estilo visual):**
+**Directiva:**
 
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+1. Usar `@import "tailwindcss"` (reemplaza las directivas `@tailwind` de v3)
+2. Definir `@theme` con variables CSS:
+   - Colores en formato OKLCH: `--color-primary`, `--color-secondary`, `--color-accent`, y sus gradaciones (50-900)
+   - Colores de sistema: `background`, `foreground`, `card`, `border`, `muted`
+   - Border radius según estilo visual: `--radius-sm/md/lg/xl`
+   - Sombras según estilo: `--shadow-card`, `--shadow-lg`
+3. En `@layer base`, aplicar colores base al body
+4. En `@layer utilities`, agregar utilidades custom necesarias
 
-/* Variables CSS según paleta elegida */
-:root {
-  --color-primary: [hsl value];
-  --color-secondary: [hsl value];
-  --color-accent: [hsl value];
-  --radius: [value según estilo]; /* Ej: 0.5rem */
-}
+**Nota sobre OKLCH:**
+```markdown
+**¿Por qué OKLCH en lugar de HSL?**
 
-/* Estilos base según estilo visual elegido */
-@layer base {
-  body {
-    @apply bg-background text-foreground;
-    /* Tipografía según estilo */
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
+Tailwind v4 recomienda OKLCH porque:
+- ✅ Percepción de brillo consistente
+- ✅ Gamut de colores más amplio
+- ✅ Mejor para gradientes y transiciones
 
-/* Utilities personalizadas */
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+**Conversión automática:**
+Si prefieres trabajar con hex/hsl inicialmente:
+1. Define colores en hex durante desarrollo
+2. La IA puede convertirlos a OKLCH en producción
+3. O usa herramientas: https://oklch.com
+
+**Ejemplo de conversión:**
+- Hex: #3B82F6 (blue)
+- OKLCH: oklch(0.62 0.23 262)
 ```
 
 ---
 
-## 🎨 FASE 4: CREAR DESIGN SYSTEM (COMPONENTES UI)
+## 🎨 FASE 4: IMPLEMENTAR DESIGN SYSTEM (COMPONENTES UI)
 
-**Objetivo:** Crear componentes UI reutilizables, bonitos y coherentes con el diseño elegido.
+**Objetivo:** Implementar componentes UI según la estrategia elegida en Fase 1.6.
 
 **ESTA ES LA FASE MÁS IMPORTANTE PARA EL DISEÑO VISUAL**
 
+**Estrategias disponibles:**
+- **Opción A:** shadcn/ui (Rápido - instalación CLI)
+- **Opción B:** Componentes desde cero (Manual - implementación completa)
+- **Opción C:** Headless UI + estilos (Híbrido)
+
+**Seguir la sección correspondiente a la estrategia elegida.**
+
 ---
 
-### Paso 4.1: Crear Componente Button (Esencial)
+## 📦 OPCIÓN A: IMPLEMENTAR CON SHADCN/UI
+
+**Usar SOLO si el usuario eligió "shadcn/ui" en Fase 1.6**
+
+### Paso 4A.1: Verificar Herramientas MCP y Compatibilidad
+
+**⚠️ RECOMENDACIÓN AL USUARIO:**
+
+```markdown
+## 💡 Recomendación: MCP shadcn/ui
+
+**Para desarrollo más rápido y eficiente, activa el MCP de shadcn/ui.**
+
+Con el MCP:
+- ✅ Busca componentes por lenguaje natural
+- ✅ Ve opciones disponibles instantáneamente
+- ✅ Acelera implementación 3-5x
+
+Sin el MCP:
+- ⚠️ Debes buscar componentes manualmente
+- ⚠️ Proceso más lento (pero funciona igual)
+
+**¿Continúo?** (La IA continuará con o sin MCP)
+```
+
+**Verificar compatibilidad (Context7 o shadcn/ui MCP):**
+
+```markdown
+**Query:** "shadcn/ui Tailwind v4 Next.js 15 compatibility"
+
+**Validación esperada:**
+- ✅ shadcn/ui soporta Tailwind v4
+- ✅ Compatible con Next.js 15 + React 19
+```
+
+---
+
+### Paso 4A.2: Inicializar shadcn/ui
+
+```markdown
+## 🎬 Inicializando shadcn/ui CLI
+
+**Comando:**
+```bash
+[pnpm/bun] dlx shadcn@latest init
+```
+
+**Proceso interactivo (responder):**
+
+1. **Would you like to use TypeScript?** → Yes
+2. **Which style would you like to use?** → Default (o New York si prefieres más minimalista)
+3. **Which color would you like to use as base color?** → [Elegir según paleta de Fase 1.5]
+   - Si paleta es azul → Slate o Blue
+   - Si paleta es verde → Green o Emerald
+   - Si paleta es morado → Violet
+   - Si paleta es naranja → Orange
+4. **Where is your global CSS file?** → `app/globals.css` (o según ubicación)
+5. **Would you like to use CSS variables for colors?** → Yes
+6. **Are you using a custom tailwind prefix?** → No
+7. **Where is your tailwind.config located?** → (Dejar en blanco - v4 no usa archivo)
+8. **Configure the import alias for components** → `@/components`
+9. **Configure the import alias for utils** → `@/lib/utils`
+
+**Output esperado:**
+```
+✔ Writing components.json
+✔ Installing dependencies
+✔ Created lib/utils.ts
+```
+
+**Explicar al usuario:**
+```markdown
+✅ shadcn/ui inicializado
+
+**Archivos creados:**
+- `components.json` - Configuración de shadcn/ui
+- `lib/utils.ts` - Utilidad cn() (merge de clases Tailwind)
+
+**Próximo paso:** Instalar componentes esenciales.
+```
+
+---
+
+### Paso 4A.3: Configurar Colores con Paleta de Fase 1.5
+
+**Acción:** Mapear CSS variables de shadcn/ui a la paleta definida en Fase 1.5.
+
+**Pseudocódigo:**
+```
+En globals.css, después de @theme:
+  Agregar sección :root {}
+  Mapear variables shadcn/ui → variables custom:
+    - --background → var(--color-background)
+    - --primary → var(--color-primary)
+    - --card → var(--color-card)
+    - etc. (mapear todas las variables necesarias)
+```
+
+**Resultado:** Componentes shadcn/ui usan automáticamente tu paleta personalizada.
+
+---
+
+### Paso 4A.4: Instalar Componentes según Selección de Fase 1.5.4
+
+**Estrategia de instalación:**
+
+**Si usuario tiene MCP shadcn/ui:** Buscar componentes por lenguaje natural según necesidad.
+
+**Si NO tiene MCP:** Instalar con CLI:
+
+```pseudocode
+Comando base: [pm] dlx shadcn@latest add [componente]
+
+Componentes SIEMPRE:
+  - button, card, label
+
+SI usuario seleccionó "Forms & Inputs" en Fase 1.5.4:
+  - input, textarea, select, checkbox, radio-group, switch
+
+SI usuario seleccionó "Modals & Dialogs":
+  - dialog, popover, tooltip, sheet
+
+Adicionales recomendados:
+  - badge, avatar, separator, skeleton
+```
+
+**Resultado:** Componentes en `components/ui/`, fully typed, con accesibilidad WAI-ARIA.
+
+---
+
+### Paso 4A.5: Validar Instalación
+
+```markdown
+## ✅ Validando instalación de shadcn/ui
+```
+
+**Comando:**
+```bash
+ls -la components/ui/
+```
+
+**Verificar que existen:**
+- `button.tsx` ✓
+- `card.tsx` ✓
+- `input.tsx` ✓ (si instalado)
+- [otros componentes instalados]
+
+**Comando de build para verificar tipos:**
+```bash
+[pnpm/bun] run build
+```
+
+**Esperado:**
+- ✅ Sin errores de TypeScript
+- ✅ Componentes compilan correctamente
+- ✅ CSS de Tailwind v4 funciona
+
+---
+
+## 🔧 OPCIÓN B: IMPLEMENTAR COMPONENTES DESDE CERO
+
+**Usar SOLO si el usuario eligió "Componentes desde cero" en Fase 1.6**
+
+### Paso 4B.1: Crear Componente Button (Esencial)
 
 ```markdown
 ### 🔘 Creando Componente Button
@@ -1067,33 +1392,64 @@ Estos valores se usarán en todos los componentes UI para mantener coherencia vi
 
 ---
 
-### Paso 4.5: Crear Utilidad cn() (Esencial)
+## 🎭 OPCIÓN C: IMPLEMENTAR CON HEADLESS UI
 
-```markdown
-### 🛠️ Creando Utilidad cn()
+**Usar SOLO si el usuario eligió "Headless UI" en Fase 1.6**
+
+### Paso 4C.1: Instalar Headless UI
+
+```bash
+[pm] add @headlessui/react
+```
+
+**Verificar:** `@headlessui/react@2.x.x`
+
+---
+
+### Paso 4C.2: Crear Componentes Híbridos
+
+**Estrategia:** Headless UI para lógica/accesibilidad + Tailwind para estilos.
+
+**Componentes con Headless UI:**
+- Dialog, Listbox (Select), Menu (Dropdown), Popover
+- Tabs, Switch, Disclosure (Accordion), Radio Group
+- Combobox (Autocomplete), Transition (animaciones)
+
+**Componentes manuales simples:**
+- Button, Card, Input, Badge, Avatar (sin lógica compleja)
+
+**Directiva para la IA:**
+
+```pseudocode
+Para componentes con Headless UI:
+  1. Importar componente de @headlessui/react
+  2. Crear wrapper que aplique estilos Tailwind según paleta de Fase 1.5
+  3. Incluir transiciones suaves con <Transition>
+  4. Exportar API simple
+
+Para componentes simples:
+  Crear manualmente con Tailwind (ver Opción B)
+```
+
+**Resultado:** Balance entre rapidez (lógica pre-hecha) y customización (estilos propios).
+
+---
+
+## 🛠️ COMÚN A TODAS LAS OPCIONES
+
+**Los siguientes pasos aplican sin importar la estrategia elegida:**
+
+---
+
+### Paso 4.5: Crear Utilidad cn() (Esencial)
 
 **Archivo:** `lib/utils.ts`
 
-**Propósito:** Función helper para combinar clases de Tailwind de forma inteligente.
+**Propósito:** Combinar clases Tailwind inteligentemente (merge + conditional).
 
-**Creando archivo...**
-```
+**Directiva:** Crear función `cn()` usando `clsx` + `tailwind-merge` que permita merge condicional de clases.
 
-**Contenido:**
-
-```typescript
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-```
-
-**Uso:**
-```tsx
-<button className={cn("px-4 py-2", isPrimary && "bg-primary", className)} />
-```
+**Nota:** shadcn/ui crea esto automáticamente. Si hiciste Opción B o C, créalo manualmente.
 
 ---
 
@@ -1347,13 +1703,9 @@ Analizar épicas del PBI:
 **Mock data:**
 [Crear 4-6 items de mock data apropiados al dominio]
 
-**TypeScript types (NUEVO):**
-```typescript
-import type { [Entity] } from '@/lib/types'
+**Directiva de tipos:**
 
-// Usar tipos reales del backend para mock data
-const mockData: [Entity][] = [...]
-```
+Importar tipo de entidad desde `@/lib/types` y tipar el mock data con ese tipo para garantizar type-safety.
 
 **Creando página...**
 ```
@@ -1390,14 +1742,9 @@ const mockData: [Entity][] = [...]
 1. [Sección 1]: [Descripción]
 2. [Sección 2]: [Descripción]
 
-**Mock data (usando tipos del backend):**
-```typescript
-import type { [Entity] } from '@/lib/types'
+**Directiva de mock data:**
 
-const mockData: [Entity][] = [
-  // Mock data que cumple con la estructura del backend
-]
-```
+Importar tipo de entidad desde `@/lib/types` y crear array de mock data tipado que cumpla con la estructura del backend.
 
 **Estados a implementar:**
 - Loading (skeleton)
@@ -1445,12 +1792,56 @@ const mockData: [Entity][] = [
 
 **Objetivo:** Verificar que el proyecto compila y se ve bien.
 
-### Paso 6.1: Validar Compilación
+### Paso 6.1: Verificar Versiones Instaladas
+
+**CRÍTICO - Validar antes del build:**
+
+```markdown
+## 🔍 Verificando Versiones de Dependencias
+
+**Propósito:** Asegurar que todas las dependencias son versiones estables compatibles.
+```
+
+**Comando:**
+```bash
+[pnpm/bun] list | grep -E "(next|react|tailwindcss|supabase)"
+```
+
+**Output esperado (Noviembre 2025):**
+```
+✅ Versiones Validadas:
+
+Stack Frontend:
+- next: 15.x.x ✓ (estable)
+- react: 19.x.x ✓ (estable)
+- react-dom: 19.x.x ✓ (estable)
+- tailwindcss: 4.x.x ✓ (estable)
+- @tailwindcss/vite: 4.x.x ✓ (o @tailwindcss/postcss)
+
+Stack Backend/Auth:
+- @supabase/ssr: 0.x.x ✓ (estable)
+- @supabase/supabase-js: 2.x.x ✓ (estable)
+
+⚠️ Si alguna versión NO coincide:
+1. Consultar Context7 MCP: "[paquete] latest stable version"
+2. Actualizar: [pm] add [paquete]@latest
+3. Re-ejecutar esta validación
+```
+
+**Compatibilidad cruzada verificada:**
+- ✅ Next.js 15.x + Tailwind v4 → Compatible oficialmente
+- ✅ Next.js 15.x + Supabase SSR 0.x → Compatible (async cookies)
+- ✅ Tailwind v4 + shadcn/ui → Compatible (docs oficiales)
+- ✅ React 19.x + Next.js 15.x → Compatible oficialmente
+
+---
+
+### Paso 6.2: Validar Compilación
 
 **Usar package manager seleccionado:**
 
 ```markdown
-## 🔍 Validando Proyecto
+## 🔍 Validando Build del Proyecto
 
 **Comando a ejecutar:**
 ```bash
@@ -1461,12 +1852,31 @@ const mockData: [Entity][] = [
 - Es un comando que termina (no interactivo)
 - Detecta errores de TypeScript, imports, etc.
 - **Valida que los tipos del backend están correctos**
+- Verifica configuración de Tailwind v4
 
 **Ejecutando build...**
 ```
 
 ```bash
 [pnpm/bun] run build
+```
+
+**Problemas comunes y soluciones:**
+
+```markdown
+❌ Si falla con error de Tailwind:
+   → Verificar que globals.css usa `@import "tailwindcss"` (no @tailwind)
+   → Verificar que existe vite.config.ts o postcss.config.mjs
+   → Consultar Context7: "Tailwind CSS v4 Next.js build error"
+
+❌ Si falla con error de Supabase tipos:
+   → Verificar que database.types.ts existe
+   → Regenerar tipos: npx supabase gen types typescript...
+   → Verificar imports en lib/types.ts
+
+❌ Si falla con error de React/Next:
+   → Verificar versiones compatibles (React 19 + Next 15)
+   → Limpiar cache: rm -rf .next && [pm] run build
 ```
 
 ---
@@ -1586,16 +1996,10 @@ const UserCard = ({ user }: { user: User }) => {
 | **Error**   | [#HEX] | Errores, validaciones fallidas            |
 | **Info**    | [#HEX] | Mensajes informativos                     |
 
-**Acceso en código:**
+**Uso en componentes:**
 
-```tsx
-// Tailwind classes
-className="bg-primary text-white"
-className="border-border text-muted-foreground"
-
-// CSS variables (si necesitas hex directo)
-color: var(--color-primary);
-```
+- Clases Tailwind: `bg-primary`, `text-primary`, `border-border`, `text-muted-foreground`, etc.
+- Variables CSS directas: `var(--color-primary)`, `var(--color-secondary)`, etc.
 
 ---
 
@@ -1620,23 +2024,9 @@ color: var(--color-primary);
 - `md` - Mediano (height: 40px) - **Default**
 - `lg` - Grande (height: 48px)
 
-**Ejemplo de uso:**
+**Uso:**
 
-```tsx
-import { Button } from '@/components/ui/button'
-
-// Botón primary
-<Button>Guardar</Button>
-
-// Botón secondary
-<Button variant="secondary">Cancelar</Button>
-
-// Botón outline grande
-<Button variant="outline" size="lg">Ver más</Button>
-
-// Botón danger
-<Button variant="danger">Eliminar</Button>
-```
+Importar de `@/components/ui/button` y usar con props `variant` (default/secondary/outline/ghost/danger) y `size` (sm/md/lg).
 
 ---
 
@@ -1655,26 +2045,9 @@ import { Button } from '@/components/ui/button'
 - `hover` - Con efecto hover (sube)
 - `clickable` - Cursor pointer + hover
 
-**Ejemplo de uso con tipos del backend:**
+**Uso:**
 
-```tsx
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
-import type { User } from '@/lib/types'
-
-const UserCard = ({ user }: { user: User }) => (
-  <Card className="hover:shadow-lg transition-shadow">
-    <CardHeader>
-      <h3 className="text-xl font-semibold">{user.name}</h3>
-    </CardHeader>
-    <CardContent>
-      <p className="text-muted-foreground">{user.email}</p>
-    </CardContent>
-    <CardFooter>
-      <Button>Ver perfil</Button>
-    </CardFooter>
-  </Card>
-)
-```
+Importar sub-componentes (Card, CardHeader, CardContent, CardFooter) de `@/components/ui/card`. Usar tipos del backend de `@/lib/types` para tipar props. Aplicar efectos hover con clases Tailwind.
 
 ---
 

@@ -40,7 +40,7 @@ Abre tu `package.json` y agrega esta línea en la sección `"scripts"`:
 ```json
 {
   "scripts": {
-    "up:prompt": "node scripts/update-prompts.js"
+    "up": "node scripts/update-prompts.js"
   }
 }
 ```
@@ -67,11 +67,11 @@ Ignorar `.backups` ayuda a:
 ### 🔄 Actualizar (cuando Ely anuncie cambios)
 ```bash
 # con Bun:
-bun up:prompt
+bun up
 ```
 ```bash
 # con pnpm:
-pnpm run up:prompt
+pnpm run up
 ```
 
 **Eso es todo.** Funciona igual en Mac, Windows y Linux.
@@ -92,6 +92,11 @@ pnpm run up:prompt
 - `scripts/` → Solo los scripts de actualización:
   - `update-prompts.js`
   - `update-prompts.md`
+- `templates/mcp/` → Todos los templates de configuración de MCP:
+  - `claude.template.json`
+  - `codex.template.toml`
+  - `gemini.template.json`
+  - `README.md`
 
 ❌ **NO se tocan (tu trabajo):**
 - `.context/` → Toda tu documentación del proyecto
@@ -142,13 +147,14 @@ ls -la .backups/
 # Restaurar el último backup (reemplaza la fecha con la del backup que quieres)
 cp -r .backups/prompts-2024-XX-XX-XXXXXX/.prompts .
 cp .backups/prompts-2024-XX-XX-XXXXXX/context-engineering.md .
+cp -r .backups/prompts-2024-XX-XX-XXXXXX/templates/mcp templates/
 ```
 
 ---
 
 ### 💡 Tips
 
-- Ejecuta `update-prompts.js` (ya sea directamente con node o con un script con bun) cada vez que Ely anuncie actualizaciones en Slack
+- Ejecuta `bun up` (o `pnpm run up`) cada vez que Ely anuncie actualizaciones en Slack
 - El script **nunca toca** tu carpeta `.context/` donde está tu trabajo
 - Si tienes dudas, revisa el CHANGELOG.md para ver qué cambió
 - Los backups se guardan automáticamente, así que puedes probar sin miedo
