@@ -81,21 +81,22 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 - Package manager (npm/pnpm/yarn/bun) - se preguntará al usuario
 - Git (para verificar estado)
 
-### ⚠️ IMPORTANTE - Sobre Tailwind CSS v4:
+### ⚠️ IMPORTANTE - Sobre Tailwind CSS (Versión 3):
 
-**Tailwind CSS v4 es ESTABLE** (desde enero 22, 2025):
-- ✅ Versión estable actual (no alpha/beta)
-- ✅ Compatible con Next.js 15.2+
-- ✅ Compatible con shadcn/ui (documentación oficial actualizada)
-- ✅ 10+ meses de estabilidad en producción
+**Usaremos Tailwind CSS v3** (versión estable y probada):
+- ✅ **Versión recomendada:** v3.4.x (última estable de la serie v3)
+- ✅ **Compatible con Next.js 15** + React 19
+- ✅ **Totalmente compatible con shadcn/ui** (sin problemas de CLI)
+- ✅ Configuración tradicional con `tailwind.config.js/ts`
+- ✅ Sintaxis conocida: `@tailwind base/components/utilities`
 
-**Cambios principales vs v3:**
-- Configuración CSS-first (no más tailwind.config.js)
-- `@import "tailwindcss"` en lugar de `@tailwind` directives
-- Performance 5x-100x más rápida
-- Colores OKLCH (mejor percepción visual)
+**¿Por qué v3 en lugar de v4?**
+- ❌ Tailwind v4 tiene problemas conocidos de compatibilidad con shadcn-cli
+- ❌ Errores de validación durante instalación de componentes
+- ❌ Configuración CSS-first más compleja
+- ✅ v3 es más estable, probado y sin errores con shadcn/ui
 
-**Si el proyecto ya tiene v3:** Context7 mostrará upgrade path.
+**IMPORTANTE:** Al instalar, especificar explícitamente `tailwindcss@3` (npm install ahora usa v4 por defecto).
 
 ---
 
@@ -885,18 +886,17 @@ Antes de instalar, consultar Context7 MCP para versiones actualizadas:
 # Esperado: next@15.x.x o superior
 ```
 
-3. **UI Library (Tailwind CSS v4):**
+3. **UI Library (Tailwind CSS v3):**
 ```bash
-# Tailwind v4 + Vite plugin (recomendado)
-[pnpm/bun] add -D tailwindcss@latest @tailwindcss/vite@latest
-
-# PostCSS (alternativa si no se usa Vite)
-[pnpm/bun] add -D tailwindcss@latest postcss@latest autoprefixer@latest
+# IMPORTANTE: Especificar versión 3 explícitamente
+[pnpm/bun] add -D tailwindcss@3 postcss@latest autoprefixer@latest
 
 # Verificar versión instalada
 [pnpm/bun] list tailwindcss
-# Esperado: tailwindcss@4.x.x
+# Esperado: tailwindcss@3.4.x
 ```
+
+**⚠️ CRÍTICO:** Usar `tailwindcss@3` (NO `@latest`) ya que npm ahora instala v4 por defecto.
 
 4. **Auth Provider (Supabase):**
 ```bash
@@ -929,13 +929,13 @@ Antes de instalar, consultar Context7 MCP para versiones actualizadas:
 ✅ Dependencias instaladas:
    - next: ^15.x.x ✓
    - react: ^19.x.x ✓
-   - tailwindcss: ^4.x.x ✓
+   - tailwindcss: ^3.4.x ✓ (IMPORTANTE: debe ser v3, NO v4)
    - @supabase/ssr: ^0.x.x ✓
    - @supabase/supabase-js: ^2.x.x ✓
 
-⚠️ Si alguna versión es diferente:
-   - Consultar Context7 para confirmar compatibilidad
-   - Actualizar: [pm] add [paquete]@latest
+⚠️ Si tailwindcss es 4.x.x:
+   - PROBLEMA: Se instaló v4 por error
+   - Solución: [pm] remove tailwindcss && [pm] add -D tailwindcss@3
 ```
 
 ---
@@ -957,58 +957,61 @@ Antes de instalar, consultar Context7 MCP para versiones actualizadas:
 
 ---
 
-### Paso 3.4: Configurar Tailwind v4 con Paleta Personalizada
+### Paso 3.4: Configurar Tailwind v3 con Paleta Personalizada
 
-**NUEVO - MUY IMPORTANTE:** Tailwind v4 usa configuración CSS-first (no más tailwind.config.js).
+**Configuración tradicional con tailwind.config.ts**
 
-**🎯 Verificar con Context7 PRIMERO:**
+**🎯 Verificar con Context7 (opcional):**
 
-Antes de implementar, consultar Context7 MCP:
-- Query: "Tailwind CSS v4 Next.js 15 setup configuration"
-- Query: "Tailwind CSS v4 Vite plugin installation"
+Si necesitas referencia, consultar Context7 MCP:
+- Query: "Tailwind CSS v3 Next.js 15 setup configuration"
 
-**Acción:** Configurar Tailwind v4 según el approach detectado en el proyecto.
+**Acción:** Crear archivos de configuración de Tailwind v3.
 
 ```markdown
-### 🎨 Configurando Tailwind v4 (CSS-First)
+### 🎨 Configurando Tailwind v3 (Configuración Tradicional)
 
-**IMPORTANTE - Cambio en v4:**
-Tailwind v4 (estable desde enero 2025) usa configuración CSS-first:
-- ✅ NO necesita `tailwind.config.js` o `tailwind.config.ts`
-- ✅ Configuración directamente en CSS con `@theme`
-- ✅ Detección automática de archivos (no necesita `content` paths)
-- ✅ 5x más rápido en builds, 100x+ en incrementales
+**Configuración de Tailwind v3:**
+- ✅ Usa `tailwind.config.ts` (o `.js`)
+- ✅ Configuración de `content` paths para detección de clases
+- ✅ Extensión de `theme` para colores personalizados
+- ✅ Compatible 100% con shadcn/ui
 
 **Propósito:** Aplicar la paleta de colores seleccionada en Fase 1.5 a todo el proyecto.
 ```
 
-**Paso 3.4.1: Instalar plugin de Vite (Recomendado para Next.js 15.2+)**
+**Paso 3.4.1: Inicializar configuración de Tailwind**
 
 ```markdown
-**Instalando @tailwindcss/vite:**
+**Creando archivos de configuración:**
 ```bash
-[pnpm/bun] add -D @tailwindcss/vite
+npx tailwindcss init -p
 ```
+
+**Archivos creados:**
+- `tailwind.config.js` (o renombrar a `.ts`)
+- `postcss.config.js`
+
+**Paso 3.4.2: Configurar tailwind.config.ts con paleta personalizada**
+
+**Archivo:** `tailwind.config.ts`
 
 **Directiva:**
 
-Crear/actualizar `vite.config.ts` agregando el plugin `@tailwindcss/vite` al array de plugins. Si no usa Vite, configurar PostCSS con `@tailwindcss/postcss`.
+Configurar `content` paths para detectar archivos que usan Tailwind, y extender `theme.extend.colors` con CSS variables que se definirán en globals.css. Usar formato HSL para compatibilidad con shadcn/ui.
 
-**Paso 3.4.2: Configurar paleta en CSS**
-
-**Archivo:** `app/globals.css` (se actualizará en Paso 3.5)
+**Paso 3.4.3: Explicación al usuario**
 
 **Explicación al usuario:**
 ```markdown
-**✅ Tailwind v4 configurado**
+**✅ Tailwind v3 configurado**
 
-**Ventajas de v4:**
-- ✅ Configuración más simple (todo en CSS)
-- ✅ Detección automática de archivos
-- ✅ Performance extrema (100x más rápido en dev)
-- ✅ Sintaxis moderna con OKLCH colors
+**Ventajas de v3 para este proyecto:**
+- ✅ Totalmente compatible con shadcn/ui (sin errores)
+- ✅ Configuración clara y documentada
+- ✅ Stable y probado con Next.js 15
 
-**Uso en componentes (igual que v3):**
+**Uso en componentes:**
 - `bg-primary` → Color principal
 - `text-primary` → Texto en color principal
 - `border-primary` → Borde en color principal
@@ -1019,18 +1022,18 @@ Crear/actualizar `vite.config.ts` agregando el plugin `@tailwindcss/vite` al arr
 
 ---
 
-### Paso 3.5: Configurar Archivo de Estilos Globales con Tailwind v4
+### Paso 3.5: Configurar Archivo de Estilos Globales con Tailwind v3
 
-**NUEVO - Sintaxis de Tailwind v4:**
+**Sintaxis tradicional de Tailwind v3:**
 
 ```markdown
-### 🎨 Creando Estilos Globales (Tailwind v4)
+### 🎨 Creando Estilos Globales (Tailwind v3)
 
 **Archivo:** `app/globals.css` (o ubicación según framework)
 
 **Propósito:**
-1. Importar Tailwind v4
-2. Definir paleta de colores con `@theme`
+1. Importar directivas de Tailwind v3
+2. Definir CSS variables para paleta de colores
 3. Aplicar estilos base personalizados
 
 **Creando archivo...**
@@ -1038,33 +1041,36 @@ Crear/actualizar `vite.config.ts` agregando el plugin `@tailwindcss/vite` al arr
 
 **Directiva:**
 
-1. Usar `@import "tailwindcss"` (reemplaza las directivas `@tailwind` de v3)
-2. Definir `@theme` con variables CSS:
-   - Colores en formato OKLCH: `--color-primary`, `--color-secondary`, `--color-accent`, y sus gradaciones (50-900)
-   - Colores de sistema: `background`, `foreground`, `card`, `border`, `muted`
-   - Border radius según estilo visual: `--radius-sm/md/lg/xl`
-   - Sombras según estilo: `--shadow-card`, `--shadow-lg`
-3. En `@layer base`, aplicar colores base al body
-4. En `@layer utilities`, agregar utilidades custom necesarias
+1. Usar directivas tradicionales de v3:
+   - `@tailwind base;`
+   - `@tailwind components;`
+   - `@tailwind utilities;`
 
-**Nota sobre OKLCH:**
+2. Definir CSS variables en `:root` y `.dark`:
+   - Colores en formato HSL: `--background`, `--foreground`, `--primary`, `--secondary`, etc.
+   - Border radius: `--radius`
+   - Usar formato compatible con shadcn/ui
+
+3. En `@layer base`, aplicar estilos base al body
+
+**Nota sobre HSL:**
 ```markdown
-**¿Por qué OKLCH en lugar de HSL?**
+**¿Por qué HSL?**
 
-Tailwind v4 recomienda OKLCH porque:
-- ✅ Percepción de brillo consistente
-- ✅ Gamut de colores más amplio
-- ✅ Mejor para gradientes y transiciones
+Tailwind v3 + shadcn/ui usan HSL porque:
+- ✅ Compatible con CSS variables
+- ✅ Fácil manipulación de opacidad (ej: `hsl(var(--primary) / 0.9)`)
+- ✅ Totalmente compatible con shadcn/ui
+- ✅ Formato estándar y conocido
 
-**Conversión automática:**
-Si prefieres trabajar con hex/hsl inicialmente:
-1. Define colores en hex durante desarrollo
-2. La IA puede convertirlos a OKLCH en producción
-3. O usa herramientas: https://oklch.com
-
-**Ejemplo de conversión:**
-- Hex: #3B82F6 (blue)
-- OKLCH: oklch(0.62 0.23 262)
+**Ejemplo de CSS variables:**
+```css
+:root {
+  --background: 0 0% 100%;       /* white */
+  --foreground: 222.2 84% 4.9%;  /* dark text */
+  --primary: 221.2 83.2% 53.3%;  /* blue */
+  --secondary: 210 40% 96.1%;    /* light blue */
+}
 ```
 
 ---
@@ -1112,11 +1118,12 @@ Sin el MCP:
 **Verificar compatibilidad (Context7 o shadcn/ui MCP):**
 
 ```markdown
-**Query:** "shadcn/ui Tailwind v4 Next.js 15 compatibility"
+**Query (opcional):** "shadcn/ui Tailwind v3 Next.js 15 compatibility"
 
 **Validación esperada:**
-- ✅ shadcn/ui soporta Tailwind v4
+- ✅ shadcn/ui totalmente compatible con Tailwind v3
 - ✅ Compatible con Next.js 15 + React 19
+- ✅ Sin problemas de validación de CLI
 ```
 
 ---
@@ -1143,7 +1150,7 @@ Sin el MCP:
 4. **Where is your global CSS file?** → `app/globals.css` (o según ubicación)
 5. **Would you like to use CSS variables for colors?** → Yes
 6. **Are you using a custom tailwind prefix?** → No
-7. **Where is your tailwind.config located?** → (Dejar en blanco - v4 no usa archivo)
+7. **Where is your tailwind.config located?** → `tailwind.config.ts` (o `.js` según tu archivo)
 8. **Configure the import alias for components** → `@/components`
 9. **Configure the import alias for utils** → `@/lib/utils`
 
@@ -1169,18 +1176,17 @@ Sin el MCP:
 
 ### Paso 4A.3: Configurar Colores con Paleta de Fase 1.5
 
-**Acción:** Mapear CSS variables de shadcn/ui a la paleta definida en Fase 1.5.
+**Acción:** Las CSS variables de shadcn/ui ya están configuradas en globals.css.
 
-**Pseudocódigo:**
-```
-En globals.css, después de @theme:
-  Agregar sección :root {}
-  Mapear variables shadcn/ui → variables custom:
-    - --background → var(--color-background)
-    - --primary → var(--color-primary)
-    - --card → var(--color-card)
-    - etc. (mapear todas las variables necesarias)
-```
+**Directiva:**
+
+shadcn/ui CLI crea automáticamente las CSS variables en `:root` y `.dark` cuando ejecutas `shadcn@latest init`. Estas variables ya están en formato HSL compatible. Solo necesitas ajustar los valores HSL según la paleta elegida en Fase 1.5.
+
+**Variables principales a personalizar:**
+- `--primary`: Color principal de la paleta elegida
+- `--secondary`: Color secundario
+- `--accent`: Color de acento
+- `--background`, `--foreground`: Colores de fondo y texto
 
 **Resultado:** Componentes shadcn/ui usan automáticamente tu paleta personalizada.
 
@@ -1239,7 +1245,8 @@ ls -la components/ui/
 **Esperado:**
 - ✅ Sin errores de TypeScript
 - ✅ Componentes compilan correctamente
-- ✅ CSS de Tailwind v4 funciona
+- ✅ CSS de Tailwind v3 funciona
+- ✅ shadcn/ui componentes sin errores de CLI
 
 ---
 
@@ -1815,23 +1822,24 @@ Stack Frontend:
 - next: 15.x.x ✓ (estable)
 - react: 19.x.x ✓ (estable)
 - react-dom: 19.x.x ✓ (estable)
-- tailwindcss: 4.x.x ✓ (estable)
-- @tailwindcss/vite: 4.x.x ✓ (o @tailwindcss/postcss)
+- tailwindcss: 3.4.x ✓ (estable - IMPORTANTE: debe ser v3)
+- postcss: latest ✓
+- autoprefixer: latest ✓
 
 Stack Backend/Auth:
 - @supabase/ssr: 0.x.x ✓ (estable)
 - @supabase/supabase-js: 2.x.x ✓ (estable)
 
-⚠️ Si alguna versión NO coincide:
-1. Consultar Context7 MCP: "[paquete] latest stable version"
-2. Actualizar: [pm] add [paquete]@latest
+⚠️ Si tailwindcss es 4.x.x:
+1. PROBLEMA: Se instaló v4 por error (incompatible con shadcn-cli)
+2. Solución: [pm] remove tailwindcss && [pm] add -D tailwindcss@3
 3. Re-ejecutar esta validación
 ```
 
 **Compatibilidad cruzada verificada:**
-- ✅ Next.js 15.x + Tailwind v4 → Compatible oficialmente
+- ✅ Next.js 15.x + Tailwind v3 → Compatible oficialmente
 - ✅ Next.js 15.x + Supabase SSR 0.x → Compatible (async cookies)
-- ✅ Tailwind v4 + shadcn/ui → Compatible (docs oficiales)
+- ✅ Tailwind v3 + shadcn/ui → Compatible 100% (sin errores de CLI)
 - ✅ React 19.x + Next.js 15.x → Compatible oficialmente
 
 ---
@@ -1865,9 +1873,15 @@ Stack Backend/Auth:
 
 ```markdown
 ❌ Si falla con error de Tailwind:
-   → Verificar que globals.css usa `@import "tailwindcss"` (no @tailwind)
-   → Verificar que existe vite.config.ts o postcss.config.mjs
-   → Consultar Context7: "Tailwind CSS v4 Next.js build error"
+   → Verificar que globals.css usa `@tailwind base;` `@tailwind components;` `@tailwind utilities;`
+   → Verificar que existe tailwind.config.ts y postcss.config.js
+   → Verificar que tailwindcss es versión 3.x (NO 4.x)
+   → Consultar Context7: "Tailwind CSS v3 Next.js build error"
+
+❌ Si falla con error de shadcn/ui:
+   → Verificar que tailwindcss es 3.x (shadcn-cli tiene problemas con v4)
+   → Reinstalar: [pm] remove tailwindcss && [pm] add -D tailwindcss@3
+   → Re-ejecutar shadcn@latest init
 
 ❌ Si falla con error de Supabase tipos:
    → Verificar que database.types.ts existe
