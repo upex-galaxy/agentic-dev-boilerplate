@@ -136,27 +136,24 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 - ✅ Importa de `src/types/supabase.ts` (creado en backend-setup)
 
 ### Design System:
-- ✅ `src/components/ui/Button.tsx` - Componente botón reutilizable
-- ✅ `src/components/ui/Card.tsx` - Componente card
-- ✅ `src/components/ui/Input.tsx` - Componente input/form
-- ✅ `src/components/ui/Badge.tsx` - Badges y tags
-- ✅ `src/components/ui/Avatar.tsx` - Avatar component
+- ✅ `src/components/ui/[componentName].tsx` - Componente reutilizable
 - ✅ (Más componentes según necesidad del proyecto)
 
 ### Layout Components:
-- ✅ `src/components/layout/Navbar.tsx` - Navigation bar
-- ✅ `src/components/layout/Sidebar.tsx` - (Si aplica) Sidebar navigation
-- ✅ `src/components/layout/Footer.tsx` - Footer component
+- ✅ `src/components/layout/[componentName].tsx` - Navs, Sidebar, Footer, etc.
 - ✅ `src/app/layout.tsx` - Root layout con providers
 
-### Páginas Demo (2-3 estratégicas):
-- ✅ `src/app/page.tsx` - Landing/Home page demo
-- ✅ `src/app/dashboard/page.tsx` - (Si aplica) Dashboard demo
-- ✅ `src/app/[otra-pagina]/page.tsx` - Página demo según dominio
+### Auth (si aplica):
+- ✅ `middleware.ts` - Middleware de Next.js para proteger rutas
+- ✅ `src/app/login/page.tsx` - Página de login funcional con credenciales demo
+
+### Páginas Demo (las mínimas más importantes para una Demo):
+- ✅ `src/app/page.tsx` - Landing/Home page (hero, features, CTA) **SOLO si aplica al negocio**
+- ✅ `src/app/[pageName]/page.tsx` - Páginas core según épicas prioritarias y contexto del proyecto
 
 ### Estilos:
 - ✅ `src/app/globals.css` - Global styles + TailwindCSS imports
-- ✅ Custom CSS variables para paleta de colores
+- ✅ Custom CSS variables para paleta de colores aplicadas **consistentemente**
 - ✅ Typography system (font families, sizes)
 
 ### Documentación:
@@ -164,9 +161,12 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 - ✅ `SETUP.md` o `README.md` - Setup instructions para developers
 
 ### Validation:
-- ✅ TypeScript build successful (sin errores de tipos)
-- ✅ Dev server starts sin warnings críticos
-- ✅ Design system visualmente coherente y atractivo
+- ✅ TypeScript build successful (sin errores de tipos): `[package-manager] run build`
+- ✅ **UI refleja la personalidad elegida** (Minimalista/Bold/Corporativo/Playful)
+- ✅ **Paleta de colores aplicada consistentemente** en todas las páginas
+- ✅ **Content Writing real** basado en contexto de negocio (NO texto genérico)
+- ✅ Pídele al usuario que corra el servidor para verificar que compile sin warnings y que las páginas se vean bien
+- ✅ Design system visualmente coherente y atractivo (MCP Playwright si disponible, o verificación manual del usuario)
 
 ---
 
@@ -1638,11 +1638,14 @@ Para componentes simples:
 - Link para "Forgot password?" (si aplica)
 - Background: [Gradiente sutil o color sólido según estilo]
 
-**Funcionalidad moqueada:**
+**Funcionalidad REAL (NO moqueada):**
 - ✅ UI completa y bonita
 - ✅ Validación visual (error states en inputs)
 - ✅ Loading state en botón
-- ⏭️ Integración real con auth provider (Fase 7)
+- ✅ **Integración REAL con Supabase Auth** (signInWithPassword)
+- ✅ **Manejo de errores reales** (credenciales incorrectas, etc.)
+- ✅ **Redirección automática** al dashboard/home tras login exitoso
+- ✅ **Credenciales demo visibles en la UI** para testing
 
 **Paleta aplicada:**
 - Card: bg-card con sombra
@@ -1654,44 +1657,217 @@ Para componentes simples:
 
 **Directiva para la IA:**
 
-"Crea página de login visualmente atractiva. Usa Card component para contener el formulario. Usa Input y Button del design system. Include Logo (usa nombre del proyecto del PRD). Background con gradiente sutil (ej: bg-gradient-to-br from-primary/5 to-secondary/5). Include estados de error con mensajes visuales (border-red-500 + text-red-500). Botón con loading spinner cuando se envía. NO implementes lógica real de auth, solo UI + validación visual básica."
+"Crea página de login FUNCIONAL con Supabase Auth. Usa Card component para contener el formulario. Usa Input y Button del design system. Include Logo (usa nombre del proyecto del PRD). Background con gradiente sutil (ej: bg-gradient-to-br from-primary/5 to-secondary/5).
 
-**Mock data para testing:**
-- Simular loading state (1-2 segundos)
-- Simular error si email no es válido
-- Redirect a home al "login exitoso"
+**CRÍTICO - Credenciales Demo:**
+Agrega un Alert/Banner visible en la UI que muestre las credenciales de prueba:
+- Email: [inferir del contexto del PRD - ej: admin@empresa.com, demo@producto.com]
+- Password: [sugerir password de demo - ej: Demo123!]
+
+**Implementación:**
+- Usa `supabase.auth.signInWithPassword()` del cliente Supabase
+- Include estados de error REALES con mensajes del API
+- Loading spinner durante autenticación
+- Redirect a '/' o '/dashboard' (según contexto) tras login exitoso
+- Manejo de errores: 'Invalid credentials', 'Network error', etc."
+
+**Nota importante:**
+Las credenciales demo mostradas en la UI deben coincidir con un usuario real creado en Supabase durante backend-setup, o indicar al usuario que las cree.
 
 ---
 
-### Paso 5.2: Crear Página Principal/Home
+### Paso 5.1.5: Implementar Middleware de Next.js para Proteger Rutas
+
+**CRÍTICO - Solo si se implementó auth en Paso 5.1:**
 
 ```markdown
-### 🏠 Creando Página Principal
+### 🛡️ Creando Middleware de Protección de Rutas
 
-**Ruta:** (Analizar el PRD/PBI para determinar la ruta apropiada según el dominio de negocio del proyecto)
+**Archivo:** `middleware.ts` (en la raíz del proyecto, mismo nivel que `package.json`)
+
+**Propósito:** Proteger rutas privadas y redirigir usuarios no autenticados al login.
+
+**Creando middleware...**
+```
+
+**Directiva para la IA:**
+
+"Crea archivo `middleware.ts` en la raíz del proyecto que:
+
+**Funcionalidad:**
+1. **Verificar sesión activa** usando `@supabase/ssr` con `createServerClient`
+2. **Proteger rutas privadas:**
+   - Analizar el PRD/PBI para identificar qué rutas necesitan autenticación
+   - Típicamente: `/dashboard`, `/[entidad-principal]`, `/profile`, etc.
+   - Dejar públicas: `/`, `/login`, `/signup`, rutas de marketing
+3. **Redirecciones automáticas:**
+   - Si usuario NO autenticado intenta acceder ruta protegida → Redirect a `/login`
+   - Si usuario autenticado intenta acceder `/login` → Redirect a `/dashboard` o `/` (según contexto)
+4. **Refrescar sesión** si es necesario (updateSession de Supabase)
+
+**Configuración del matcher:**
+- Usar `config.matcher` para optimizar performance
+- Solo ejecutar middleware en rutas que lo necesiten
+- Excluir assets estáticos (_next/static, _next/image, favicon.ico)
+
+**Basarse en contexto:**
+- Identificar del PRD/PBI cuáles son las páginas privadas del proyecto
+- Si es SaaS/Dashboard → Proteger dashboard y funcionalidades principales
+- Si es eCommerce → Proteger checkout, perfil, órdenes
+- Si es plataforma → Proteger área de usuario/workspace"
+
+**Explicación al usuario:**
+
+```markdown
+**✅ Middleware de Auth implementado**
+
+**Rutas protegidas:**
+[Listar las rutas protegidas según el contexto del proyecto]
+
+**Flujo de autenticación:**
+1. Usuario intenta acceder `/dashboard` (protegida)
+2. Middleware verifica sesión de Supabase
+3. Si NO autenticado → Redirect a `/login`
+4. Si autenticado → Permite acceso
+
+**Rutas públicas:**
+- `/` - Landing page
+- `/login` - Página de login
+- [Otras rutas públicas según contexto]
+
+**Próximo paso:** Implementar páginas principales del proyecto.
+```
+
+---
+
+### Paso 5.2: Crear Landing Page "/" (si aplica al negocio)
+
+**⚠️ CRÍTICO - Leer esto primero:**
+
+```markdown
+## 🏠 Decisión: ¿Necesita Landing Page?
+
+**Analiza el PRD/PBI/idea para determinar:**
+
+**SÍ necesita Landing Page** si:
+- ✅ Es producto B2C (consumidores)
+- ✅ Es SaaS con marketing público
+- ✅ Es plataforma que requiere captación de usuarios
+- ✅ Es eCommerce
+- ✅ PRD menciona "landing page", "marketing", "captación"
+
+**NO necesita Landing Page** si:
+- ❌ Es dashboard interno/corporativo
+- ❌ Es herramienta solo para usuarios autenticados
+- ❌ Usuario explícitamente dice "no necesito landing"
+- ❌ PRD solo describe funcionalidades internas
+
+**Si NO aplica:** Salta al Paso 5.3 (páginas core del dominio).
+```
+
+---
+
+**Si SÍ necesita Landing Page, continuar:**
+
+```markdown
+### 🚀 Creando Landing Page (/)
+
+**Ruta:** `/` (root del sitio)
+**Archivo:** `app/page.tsx` (o según framework)
+
+**⭐ MUY IMPORTANTE - Content Writing Real:**
+
+**NO uses texto genérico.** Todo el contenido debe basarse en:
+- `.context/idea/` → Problema que resuelve, solución propuesta
+- `.context/PRD/executive-summary.md` → Propuesta de valor
+- `.context/PRD/user-personas.md` → A quién va dirigido
+- `.context/PRD/mvp-scope.md` → Features principales
+
+**Estructura de Landing Page:**
+
+1. **Hero Section** (Above the fold)
+   - **Headline:** Propuesta de valor principal (extraída del PRD)
+   - **Subheadline:** Explicación breve del problema que resuelve
+   - **CTA Primary:** Botón principal (ej: "Comenzar gratis", "Ver demo", "Registrarse")
+   - **Hero Visual:** Ilustración/imagen/screenshot del producto (placeholder o ícono relevante)
+   - **Social Proof (opcional):** Badges, testimonios breves
+
+2. **Features Section**
+   - **3-6 features principales** (extraídas de las épicas del PBI)
+   - Cada feature: Ícono + Título + Descripción breve
+   - Usar Grid responsive (2 o 3 columnas)
+   - Aplicar paleta de colores elegida
+
+3. **How It Works / Benefits** (opcional según negocio)
+   - 3 pasos simples de cómo funciona
+   - O beneficios clave del producto
+
+4. **CTA Section** (Final)
+   - Repetir CTA principal
+   - Mensaje motivacional
+   - Botón destacado (variant="default" del design system)
+
+5. **Footer**
+   - Links básicos (Contacto, Términos, Privacidad)
+   - Copyright
+   - Redes sociales (si aplica)
+
+**Creando landing page...**
+```
+
+**Directiva para la IA:**
+
+"**CRÍTICO:** Esta es la cara del producto. Debe ser HERMOSA y PROFESIONAL.
+
+**Content Writing:**
+1. Lee `.context/PRD/executive-summary.md` - Extrae la propuesta de valor REAL
+2. Lee `.context/idea/README.md` - Entiende el problema y solución
+3. Lee `.context/PRD/mvp-scope.md` - Identifica las 3-6 features principales
+4. **NO uses frases genéricas** como 'Bienvenido a nuestra plataforma', 'La mejor solución'
+5. **USA el vocabulario del dominio** del proyecto (nombres reales, términos específicos)
+
+**Diseño:**
+- Hero con gradiente de fondo usando paleta elegida (ej: `bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10`)
+- Headline: `text-4xl md:text-6xl font-bold` aplicando paleta
+- Features grid: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8`
+- Cada feature card con hover effect del design system
+- CTA buttons con `variant='default'` (primary) y tamaño `lg`
+- Secciones con padding generoso: `py-16 md:py-24`
+- Aplicar personalidad visual elegida (Minimalista/Bold/Corporativo/Playful)
+
+**Componentes a usar:**
+- Button del design system
+- Card para features (opcional)
+- Iconos de lucide-react relevantes al dominio
+
+**Resultado esperado:**
+Una landing page que se vea profesional, moderna, y que comunique claramente el valor del producto usando contenido REAL extraído del contexto del proyecto."
+
+---
+
+### Paso 5.3: Crear Dashboard/Página Principal (si aplica)
+
+**Solo si el proyecto requiere una página principal post-login:**
+
+```markdown
+### 🏠 Creando Dashboard/Página Principal
+
+**Ruta:** `/dashboard` o `/` (según si hay landing page)
 **Archivo:** [Ubicación según framework]
 
 **Diseño a implementar:**
 
-**Header de página:**
-- Título (usando nombre del dominio)
-- Descripción breve
-- CTA button (si aplica según negocio)
-
-**Grid de Cards o Sección principal:**
-[Analizar épicas del PBI para decidir qué mostrar]
-
-**Pseudocódigo para inferir:**
+**Pseudocódigo para decidir layout:**
 ```pseudocode
 Analizar épicas del PBI:
   Identificar ENTIDAD_PRINCIPAL del dominio
-  
+
   SI épica principal muestra listado de [ENTIDAD]:
     Crear: Grid de [ENTIDAD] cards (responsive, hover effects)
-  
+
   SI épica principal muestra estadísticas:
     Crear: Dashboard con stats cards (métricas del PRD)
-  
+
   SI épica principal muestra flujo/timeline:
     Crear: Feed/timeline de [ENTIDAD] items
 ```
@@ -1699,16 +1875,8 @@ Analizar épicas del PBI:
 **Componentes a usar:**
 - Card component del design system
 - Button components
+- Stats/Metrics cards si aplica
 - [Otros según necesidad]
-
-**Diseño aplicado:**
-- Grid: gap-6, responsive (grid-cols-1 md:grid-cols-2 lg:grid-cols-3)
-- Cards con hover effect
-- Skeleton/Loading states (placeholder)
-- Empty state (si no hay datos)
-
-**Mock data:**
-[Crear 4-6 items de mock data apropiados al dominio]
 
 **Directiva de tipos:**
 
@@ -1719,11 +1887,11 @@ Importar tipo de entidad desde `@/lib/types` y tipar el mock data con ese tipo p
 
 **Directiva para la IA:**
 
-"Crea página home/principal del dominio. Analiza las épicas del PBI para identificar ENTIDAD_PRINCIPAL (la entidad core del negocio). **USA los tipos del backend importados de @/lib/types** para crear mock data type-safe. Crea 4-6 items de mock data realistas que cumplan con la estructura del tipo. Usa Card component con hover effect. Include loading skeleton states. Si grid está vacío, muestra empty state bonito con ilustración/ícono + CTA. Usa paleta de colores del theme. Title con text-3xl font-bold, description con text-muted-foreground."
+"Crea dashboard/página principal post-login del dominio. Analiza las épicas del PBI para identificar ENTIDAD_PRINCIPAL (la entidad core del negocio). **USA los tipos del backend importados de @/lib/types** para crear mock data type-safe. Crea 4-6 items de mock data realistas que cumplan con la estructura del tipo. Usa Card component con hover effect. Include loading skeleton states. Si grid está vacío, muestra empty state bonito con ilustración/ícono + CTA. Usa paleta de colores del theme consistentemente. Title con text-3xl font-bold, description con text-muted-foreground."
 
 ---
 
-### Paso 5.3: Crear Páginas Core del Dominio (1-3 páginas)
+### Paso 5.4: Crear Páginas Core del Dominio (1-3 páginas adicionales)
 
 **Por cada página core seleccionada en Fase 2:**
 
@@ -1777,20 +1945,46 @@ Importar tipo de entidad desde `@/lib/types` y crear array de mock data tipado q
 
 ---
 
-### Paso 5.4: Aplicar Consistencia Visual
+### Paso 5.5: Aplicar Consistencia Visual y Personalidad UI/UX
 
 ```markdown
 ## 🎨 Validación de Consistencia Visual
 
-**Revisión:** Verifico que todas las páginas usen:
-- ✅ Misma paleta de colores (primary, secondary, accent)
-- ✅ Mismos componentes del design system (Button, Card, etc.)
+**⚠️ CRÍTICO - NO omitir este paso:**
+
+**Revisión exhaustiva de TODAS las páginas creadas:**
+
+**1. Paleta de Colores:**
+- ✅ **Verifica que la paleta elegida en Fase 1.5 esté aplicada CONSISTENTEMENTE**
+- ✅ Primary color usado en CTAs, links, focus states
+- ✅ Secondary color en elementos secundarios
+- ✅ Accent color en highlights, badges
+- ✅ Background, foreground, card colors aplicados correctamente
+- ❌ **NO debe haber colores hardcodeados** que no sean de la paleta
+
+**2. Personalidad UI/UX:**
+- ✅ **Verifica que el estilo visual elegido (Minimalista/Bold/Corporativo/Playful) esté reflejado**
+- Si Minimalista → Espacios generosos, tipografía limpia, sombras sutiles
+- Si Bold/Moderno → Gradientes, sombras pronunciadas, bordes redondeados
+- Si Corporativo → Líneas rectas, colores sobrios, profesional
+- Si Playful → Colores vibrantes, ilustraciones, bordes muy redondeados
+
+**3. Design System:**
+- ✅ Mismos componentes del design system en todas las páginas
 - ✅ Mismo espaciado (padding, margin consistentes)
-- ✅ Misma tipografía (tamaños de text-)
-- ✅ Mismas sombras y bordes (según estilo elegido)
+- ✅ Misma tipografía (jerarquía de text- consistente)
+- ✅ Mismas sombras y bordes según estilo elegido
 - ✅ **Tipos del backend para mock data** (type-safe)
 
-**Resultado:** Aplicación con identidad visual coherente y profesional.
+**4. Content Writing:**
+- ✅ **Verifica que NO haya texto genérico** ('Bienvenido', 'La mejor plataforma')
+- ✅ Todo el texto debe reflejar el contexto del proyecto (PRD/idea)
+- ✅ Vocabulario del dominio usado correctamente
+- ✅ Propuesta de valor clara y específica
+
+**Si algo NO cumple:** Corregir inmediatamente antes de continuar.
+
+**Resultado:** Aplicación con identidad visual coherente, profesional, y personalizada al proyecto.
 ```
 
 ---
