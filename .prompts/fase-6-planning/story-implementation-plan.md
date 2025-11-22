@@ -114,6 +114,111 @@ Implementar funcionalidad de [descripción breve].
 - Borders/Dividers: `border-border`
 - Text: `text-foreground` / `text-muted-foreground`
 
+### Personalidad UI/UX aplicada:
+
+**⚠️ IMPORTANTE:** Esta story debe reflejar la personalidad visual elegida en Fase 3 (frontend-setup).
+
+**Estilo visual a seguir:** [Del design system - Minimalista/Bold/Corporativo/Playful]
+
+**Según personalidad elegida:**
+
+- **Si Minimalista:**
+  - Espacios generosos (padding/margin amplios)
+  - Tipografía limpia, jerárquica
+  - Sombras sutiles (`shadow-sm`)
+  - Bordes suaves (`rounded-md`)
+
+- **Si Bold/Moderno:**
+  - Gradientes sutiles en backgrounds
+  - Sombras pronunciadas (`shadow-lg`, `shadow-xl`)
+  - Bordes redondeados (`rounded-lg`, `rounded-xl`)
+  - Hover effects con transforms
+
+- **Si Corporativo:**
+  - Líneas rectas, estructura formal
+  - Bordes mínimos o rectos (`rounded-sm`)
+  - Colores sobrios, sin gradientes
+  - Profesional y serio
+
+- **Si Playful:**
+  - Colores vibrantes del accent
+  - Bordes muy redondeados (`rounded-2xl`, `rounded-full`)
+  - Ilustraciones o íconos coloridos
+  - Animaciones suaves
+
+**Validar en diseño:**
+- ✅ Bordes consistentes con estilo elegido
+- ✅ Sombras consistentes con estilo elegido
+- ✅ Espaciado consistente con estilo elegido
+- ✅ Efectos hover/active coherentes con personalidad
+
+---
+
+## Types & Type Safety
+
+**⚠️ IMPORTANTE:** Esta story debe usar tipos del backend para garantizar type-safety y zero type mismatches.
+
+**Tipos disponibles:**
+- `lib/database.types.ts` - Tipos generados desde database schema (Fase 3.2 - Backend Setup)
+- `lib/types.ts` - Type helpers extraídos del backend
+
+**Directiva para componentes:**
+- ✅ Importar tipos desde `@/lib/types`
+- ✅ Tipar props de componentes con tipos del backend
+- ✅ Crear mock data (si aplica) que cumpla con la estructura de tipos
+- ✅ Usar `z.infer<>` si se usan schemas de Zod
+
+**Ejemplo:**
+```typescript
+import type { User, Mentor } from '@/lib/types'
+
+interface MentorCardProps {
+  mentor: Mentor  // ✅ Tipo del backend
+  onSelect: (id: string) => void
+}
+
+// Mock data type-safe
+const mockMentors: Mentor[] = [
+  { id: '1', name: 'John Doe', ... } // ✅ TypeScript valida estructura
+]
+```
+
+**Beneficios:**
+- Zero type mismatches entre frontend y backend
+- Autocomplete completo en componentes
+- Refactoring seguro (cambios en schema se detectan automáticamente)
+
+---
+
+## Content Writing (Si la story tiene UI con texto)
+
+**⚠️ CRÍTICO:** NO usar texto genérico o placeholder.
+
+**Directiva para la IA:**
+1. **Leer contexto de negocio:**
+   - `.context/PRD/executive-summary.md` - Propuesta de valor, problema que resuelve
+   - `.context/idea/README.md` - Problema y solución del negocio
+   - `.context/PRD/user-personas.md` - A quién va dirigido
+2. **Usar vocabulario del dominio:**
+   - Identificar entidades principales del proyecto (del PRD/PBI)
+   - Usar nombres reales, NO genéricos
+3. **Evitar frases placeholder:**
+   - ❌ "Bienvenido a nuestra plataforma"
+   - ❌ "La mejor solución para..."
+   - ❌ "Gestiona tus recursos fácilmente"
+4. **Aplicar tono coherente:**
+   - Según personalidad del producto (del PRD)
+   - Formal/Casual/Técnico/Amigable
+
+**Ejemplos según dominio:**
+- ❌ Genérico: "Bienvenido a nuestra plataforma de gestión"
+- ✅ Contextual (si proyecto es MentorYourMind): "Encuentra mentores expertos en tu área"
+- ✅ Contextual (si proyecto es ShopFlow): "Administra tu inventario en tiempo real"
+- ✅ Contextual (si proyecto es BlogHub): "Publica y monetiza tus artículos"
+
+**Resultado esperado:**
+Textos que reflejan el contexto específico del proyecto, usando vocabulario del dominio identificado en el PRD/idea.
+
 ---
 
 ## Implementation Steps
@@ -226,6 +331,24 @@ Implementar funcionalidad de [descripción breve].
 
 - [ ] Código implementado según este plan
 - [ ] Todos los Acceptance Criteria pasando
+- [ ] **Tipos del backend usados correctamente**
+  - [ ] Imports desde `@/lib/types` en componentes
+  - [ ] Props de componentes tipadas con tipos del backend
+  - [ ] Mock data (si aplica) cumple estructura de tipos
+  - [ ] Zero type errors relacionados a entidades del backend
+- [ ] **Personalidad UI/UX aplicada consistentemente**
+  - [ ] Bordes según estilo elegido (Minimalista/Bold/Corporativo/Playful)
+  - [ ] Sombras según estilo elegido
+  - [ ] Espaciado según estilo elegido
+  - [ ] Paleta de colores aplicada (bg-primary, bg-secondary, etc.)
+  - [ ] Efectos hover/active coherentes con personalidad
+- [ ] **Content Writing contextual (NO genérico)**
+  - [ ] Vocabulario del dominio usado (del PRD/idea)
+  - [ ] Sin frases placeholder ("Bienvenido", "La mejor plataforma")
+  - [ ] Tono coherente con personalidad del producto
+- [ ] **Protección de rutas (si aplica)**
+  - [ ] Middleware actualizado si se agregaron rutas privadas
+  - [ ] Rutas públicas/privadas correctamente configuradas
 - [ ] Tests unitarios escritos (coverage > 80%)
   - [ ] [Componente específico 1]
   - [ ] [Componente específico 2]
@@ -238,9 +361,13 @@ Implementar funcionalidad de [descripción breve].
 - [ ] Code review aprobado
 - [ ] Sin errores de linting/TypeScript
   - [ ] Linting passes
-  - [ ] Build passes
+  - [ ] Build passes (`npm run build` o equivalente)
+  - [ ] Zero TypeScript errors
 - [ ] Deployed to staging
 - [ ] Manual smoke test en staging
+  - [ ] UI se ve correcta en desktop
+  - [ ] UI se ve correcta en mobile
+  - [ ] Design system aplicado consistentemente
 
 ---
 
