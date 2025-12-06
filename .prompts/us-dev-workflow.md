@@ -1,399 +1,412 @@
-# US Development Workflow Strategy
+# US Development Workflow
 
-> **Contexto Constante para IA** - Este archivo debe leerse al inicio de cada sesion de trabajo para mantener continuidad y saber exactamente que hacer y donde estamos.
-
----
-
-## Proposito
-
-Este documento define la estrategia completa de desarrollo por User Story (US), desde que tiene Shift-Left Testing hasta su despliegue a staging. Sirve como guia para ejecutar las **Fases 6-9** del blueprint de manera sistematica.
-
-**Objetivo:** Implementar cada US que tenga Shift-Left completado, siguiendo un flujo estandarizado que garantiza calidad, trazabilidad y documentacion automatica.
+> **Propósito:** Guía completa para desarrollar User Stories desde diagnóstico hasta deploy.
+> Este es el ÚNICO archivo que necesitas para sesiones de desarrollo de US.
 
 ---
 
-## Archivos de Contexto Esenciales
+## REGLA CRÍTICA: Lectura de Prompts
 
-### Leer SIEMPRE al inicio de sesion
+Cuando este workflow te indique leer un prompt (ej: `.prompts/fase-7-implementation/implement-story.md`):
 
-| Archivo | Proposito |
-|---------|-----------|
-| `.context/PRD/shift-left-status-report.md` | Lista de US con Shift-Left listas para implementar |
-| `.prompts/us-dev-workflow.md` | **Este archivo** - Estrategia de workflow |
-| `CLAUDE.md` | Instrucciones del proyecto y configuracion |
+1. **LEE EL PROMPT COMPLETO** antes de ejecutar cualquier acción
+2. **SIGUE LAS INSTRUCCIONES** del prompt al pie de la letra
+3. Si el prompt referencia otros archivos de contexto, **LÉELOS TAMBIÉN**
+4. **NO ASUMAS** - cada prompt tiene instrucciones específicas que DEBES seguir
+5. **VUELVE A ESTE WORKFLOW** después de completar lo que indica el prompt
 
-### Leer segun la US en trabajo
+```
+⚠️ La cadena de lectura puede ser:
+   workflow → prompt fase X → contexto A → contexto B
 
-| Archivo | Cuando leer |
-|---------|-------------|
-| `.context/PBI/epics/EPIC-MYM-{N}-{name}/stories/STORY-MYM-{N}-{name}/story.md` | Antes de planificar |
-| `.context/PBI/epics/EPIC-MYM-{N}-{name}/stories/STORY-MYM-{N}-{name}/test-cases.md` | Durante planificacion |
-| `.context/design-system.md` | Durante implementacion UI |
-| `.context/guidelines/code-standards.md` | Durante code review |
-
-### Prompts a ejecutar (leer UNO a la vez, cuando toque)
-
-| Fase | Prompt | Cuando ejecutar |
-|------|--------|-----------------|
-| 6 | `.prompts/fase-6-planning/story-implementation-plan.md` | Paso 2: Crear plan |
-| 7 | `.prompts/fase-7-implementation/implement-story.md` | Paso 3: Implementar |
-| Git | `.prompts/git-flow.md` | Paso 4: Git flow y PR |
-| 8 | `.prompts/fase-8-code-review/review-pr.md` | Paso 6: Code review |
+   Sigue la cadena completa. No te saltes archivos.
+```
 
 ---
 
-## Los 11 Pasos del Workflow
+## FASE 1: DIAGNÓSTICO INICIAL
+
+### Detección de Modo de Sesión
+
+**Primero, determina en qué modo estás:**
+
+| Modo | Condición | Acción |
+|------|-----------|--------|
+| **A: Nueva** | No hay Resumen de Progreso adjunto | Ir a "Diagnóstico Automático" |
+| **B: Reanudación** | Usuario adjuntó Resumen de Progreso | Ir a "Reanudación de Sesión" (al final) |
+
+---
+
+### Diagnóstico Automático
+
+**Ejecuta este checklist EN ORDEN:**
+
+#### Paso D1: Verificar Shift-Left Testing
+
+**Buscar:** `.context/PBI/epics/EPIC-MYM-{N}-*/stories/STORY-MYM-{N}-*/test-cases.md`
+
+| Estado | Acción |
+|--------|--------|
+| **NO existe** | ⛔ STOP. Informar: "Debe ejecutar Shift-Left Testing primero con `.prompts/fase-5-shift-left-testing/story-test-cases.md`". NO continuar. |
+| **SÍ existe** | ✅ Continuar a Paso D2 |
+
+#### Paso D2: Verificar Feature Implementation Plan
+
+**Buscar:** `.context/PBI/epics/EPIC-MYM-{N}-*/feature-implementation-plan.md`
+
+| Estado | Acción |
+|--------|--------|
+| **NO existe** | 📝 Leer y ejecutar `.prompts/fase-6-planning/feature-implementation-plan.md`. Commit. Generar Resumen de Progreso. FIN de sesión. |
+| **SÍ existe** | ✅ Continuar a Paso D3 |
+
+#### Paso D3: Verificar Story Implementation Plan
+
+**Buscar:** `.context/PBI/epics/EPIC-MYM-{N}-*/stories/STORY-MYM-{N}-*/implementation-plan.md`
+
+| Estado | Acción |
+|--------|--------|
+| **NO existe** | 📝 Leer y ejecutar `.prompts/fase-6-planning/story-implementation-plan.md`. Commit. Generar Resumen de Progreso. FIN de sesión. |
+| **SÍ existe** | ✅ Continuar a FASE 2: Los 11 Pasos |
+
+---
+
+### Reportar Estado Detectado
+
+Después del diagnóstico, muestra:
+
+```markdown
+## Estado Detectado
+
+**Epic:** EPIC-MYM-{N} - {nombre}
+**Story:** MYM-{N} - {nombre}
+
+**Checklist:**
+- [x] Shift-Left Testing: Existe
+- [x] Feature Implementation Plan: Existe
+- [x] Story Implementation Plan: Existe
+
+**Siguiente Acción:** Ejecutar los 11 pasos del workflow
+**Paso inicial:** Paso 1 - Verificar Status en Jira
+```
+
+---
+
+## FASE 2: LOS 11 PASOS DEL WORKFLOW
+
+```
+⚠️ EJECUTA ESTOS PASOS EN ORDEN. NO TE SALTES NINGUNO.
+```
+
+---
 
 ### PASO 1: Verificar Status en Jira
 
-**Objetivo:** Asegurar que la US esta en estado correcto para trabajar.
+**Objetivo:** Asegurar que la US está lista para trabajar.
 
 **Acciones:**
+1. Obtener detalles con `mcp__atlassian__getJiraIssue`
+2. Verificar status = `Ready For Dev`
+3. Transitar a `In Progress` con `mcp__atlassian__transitionJiraIssue`
 
-1. Obtener detalles de la US en Jira usando `mcp__atlassian__getJiraIssue`
-2. Verificar que el status sea `Ready For Dev`
-3. Si no esta en `Ready For Dev`, transitar al estado correcto
-4. Transitar a `In Progress` usando `mcp__atlassian__transitionJiraIssue`
-
-**Criterio de exito:** US en Jira con status `In Progress`
+**Criterio de éxito:** ✅ US en Jira con status `In Progress`
 
 ---
 
-### PASO 2: Crear Plan de Implementacion (Fase 6)
+### PASO 2: Crear Rama y Leer Plan
 
-**Objetivo:** Definir como se implementara la US tecnicamente.
+**Objetivo:** Preparar entorno de desarrollo.
 
 **Acciones:**
+1. Crear rama: `git checkout -b feat/MYM-{N}/{short-name}`
+2. Leer el `implementation-plan.md` de la story
+3. Entender los steps que vas a implementar
 
-1. Leer el prompt `.prompts/fase-6-planning/story-implementation-plan.md`
-2. Leer la story (`story.md`) y test cases (`test-cases.md`)
-3. Crear rama local: `git checkout -b feat/MYM-{N}/{short-name}`
-4. Generar `implementation-plan.md` en la carpeta de la story
-5. Commit del plan
-
-**Criterio de exito:** Archivo `implementation-plan.md` creado y commiteado
+**Criterio de éxito:** ✅ Rama creada, plan leído y entendido
 
 ---
 
-### PASO 3: Implementar el Plan (Fase 7)
+### PASO 3: Implementar (Fase 7)
 
-**Objetivo:** Escribir el codigo funcional segun el plan.
+```
+⚠️ CRÍTICO: LEE EL PROMPT COMPLETO ANTES DE IMPLEMENTAR
+```
+
+**Prompt a leer:** `.prompts/fase-7-implementation/implement-story.md`
 
 **Acciones:**
+1. **LEE** el prompt completo de implementación
+2. **LEE** los archivos de contexto que indica el prompt:
+   - `.context/design-system.md` (si hay UI)
+   - `.context/guidelines/code-standards.md`
+   - `.context/backend-setup.md` (si aplica)
+3. **IMPLEMENTA** siguiendo los steps del `implementation-plan.md`
+4. Verifica: `bun run lint && bun run build`
+5. Commits atómicos por cada step completado
 
-1. Leer el prompt `.prompts/fase-7-implementation/implement-story.md`
-2. Seguir los steps del `implementation-plan.md` creado
-3. Implementar codigo respetando:
-   - Design system (`.context/design-system.md`)
-   - Code standards (`.context/guidelines/code-standards.md`)
-   - Types del backend (`src/lib/types.ts`)
-4. Verificar que pasa linting y build: `bun run lint && bun run build`
-5. Commits atomicos por cada step completado
-
-**Criterio de exito:** Codigo implementado, linting y build pasan
+**Criterio de éxito:** ✅ Código implementado, lint y build pasan
 
 ---
 
 ### PASO 4: Git Flow y Crear PR
 
-**Objetivo:** Subir cambios y crear Pull Request hacia staging.
+**Prompt de referencia:** `.prompts/git-flow.md`
 
 **Acciones:**
+1. Push de la rama: `git push -u origin feat/MYM-{N}/{short-name}`
+2. Crear PR con `gh pr create`:
+   ```bash
+   gh pr create --base staging --title "feat(MYM-{N}): {descripción}" --body "..."
+   ```
+3. Guardar URL del PR creado
 
-1. Seguir instrucciones de `.prompts/git-flow.md`
-2. Push de la rama: `git push -u origin feat/MYM-{N}/{short-name}`
-3. Crear PR con `gh pr create`:
-   - Base branch: `staging`
-   - Titulo: `feat(MYM-{N}): {descripcion corta}`
-   - Body: Resumen de cambios + link a Jira
-4. Obtener URL del PR creado
-
-**Criterio de exito:** PR creado apuntando a staging, URL obtenida
+**Criterio de éxito:** ✅ PR creado apuntando a staging
 
 ---
 
-### PASO 5: Verificar Transicion Automatica en Jira
+### PASO 5: Verificar Transición Automática
 
-**Objetivo:** Confirmar que la automation rule de Jira detecto el PR.
+**Objetivo:** Confirmar que Jira detectó el PR.
 
 **Acciones:**
+1. Esperar ~30 segundos
+2. Verificar status con `mcp__atlassian__getJiraIssue`
+3. Status debería ser `In Review` automáticamente
 
-1. Esperar ~30 segundos para que la automation se ejecute
-2. Verificar status de la US en Jira con `mcp__atlassian__getJiraIssue`
-3. El status deberia ser `In Review` automaticamente
+**Si NO cambió:** Informar al usuario que la automation no funcionó.
 
-**Si el status NO cambio:**
-
-- Informar al usuario que la automation rule no funciono
-- Puede ser necesario revisar la configuracion de Jira
-
-**Criterio de exito:** US en Jira con status `In Review` (o informar si no cambio)
+**Criterio de éxito:** ✅ US en Jira con status `In Review`
 
 ---
 
 ### PASO 6: Code Review (Fase 8)
 
-**Objetivo:** Verificar calidad del codigo antes de merge.
+```
+⚠️ CRÍTICO: LEE EL PROMPT DE REVIEW COMPLETO
+```
+
+**Prompt a leer:** `.prompts/fase-8-code-review/review-pr.md`
 
 **Acciones:**
-
-1. Leer el prompt `.prompts/fase-8-code-review/review-pr.md`
-2. Revisar el codigo en local siguiendo el checklist:
+1. **LEE** el prompt completo de code review
+2. Revisar código con el checklist del prompt:
    - Acceptance Criteria cumplidos
-   - Linting y build pasan
+   - Lint y build pasan
    - Code standards respetados
    - Security checks
-   - UI/UX segun design system
-3. Si hay issues criticos o medium:
-   - Corregir en la misma rama
-   - Hacer push de los fixes
-   - Re-verificar
+   - UI/UX según design system
+3. Si hay issues: corregir, push, re-verificar
 
-**Criterio de exito:** Code review aprobado, todos los checks pasan
+**Criterio de éxito:** ✅ Code review aprobado, todos los checks pasan
 
 ---
 
 ### PASO 7: Merge del PR
 
-**Objetivo:** Mergear el PR a staging (auto-deploy).
-
 **Acciones:**
+1. Verificar todos los checks en verde
+2. Mergear: `gh pr merge {PR_NUMBER} --squash`
+3. Eliminar rama local: `git checkout staging && git branch -d feat/MYM-{N}/{short-name}`
 
-1. Verificar que todos los checks del PR estan en verde
-2. Mergear usando `gh pr merge {PR_NUMBER} --squash`
-3. Eliminar rama local: `git checkout main && git branch -d feat/MYM-{N}/{short-name}`
-4. Pull de staging: `git checkout staging && git pull`
-
-**Criterio de exito:** PR mergeado, rama eliminada, staging actualizado
+**Criterio de éxito:** ✅ PR mergeado
 
 ---
 
-### PASO 8: Verificar Transicion a Ready For QA
-
-**Objetivo:** Confirmar que la automation rule detecto el merge.
+### PASO 8: Verificar Transición a Ready For QA
 
 **Acciones:**
+1. Esperar ~30 segundos
+2. Verificar status con `mcp__atlassian__getJiraIssue`
+3. Status debería ser `Ready For QA` automáticamente
 
-1. Esperar ~30 segundos para que la automation se ejecute
-2. Verificar status de la US en Jira con `mcp__atlassian__getJiraIssue`
-3. El status deberia ser `Ready For QA` automaticamente
+**Si NO cambió:** Informar al usuario.
 
-**Si el status NO cambio:**
-
-- Informar al usuario que la automation rule no funciono
-- Puede ser necesario transitar manualmente
-
-**Criterio de exito:** US en Jira con status `Ready For QA` (o informar si no cambio)
+**Criterio de éxito:** ✅ US en Jira con status `Ready For QA`
 
 ---
 
 ### PASO 9: Notificar en Jira
 
-**Objetivo:** Informar al equipo de QA que la feature esta lista para pruebas.
-
 **Acciones:**
+1. Agregar comentario con `mcp__atlassian__addCommentToJiraIssue`:
 
-1. Identificar quien realizo el Shift-Left Testing (buscar en comentarios de Jira)
-2. Agregar comentario en Jira usando `mcp__atlassian__addCommentToJiraIssue`:
+```
+Feature implementada y desplegada en staging.
 
-   ```
-   Feature implementada y desplegada en staging.
+PR: [URL del PR]
+Branch: feat/MYM-{N}/{short-name}
 
-   PR: [URL del PR]
-   Branch: feat/MYM-{N}/{short-name}
+La funcionalidad está lista para pruebas en staging.
+```
 
-   @{qa-person} La funcionalidad esta lista para pruebas en el ambiente de staging.
-   ```
-
-**Criterio de exito:** Comentario agregado en Jira
+**Criterio de éxito:** ✅ Comentario agregado
 
 ---
 
-### PASO 10: Actualizar Documentacion (en rama de la US)
+### PASO 10: Actualizar Documentación
 
-**Objetivo:** Mantener el status report y release notes actualizados.
+```
+⚠️ CRÍTICO: Esto debe hacerse ANTES del merge o en un PR separado
+```
 
-**Acciones:**
+**Archivos a actualizar:**
+1. `.context/PRD/shift-left-status-report.md`:
+   - Marcar implementation plan como completado
+   - Actualizar estado del PR
+   - Actualizar contadores
 
-1. **ANTES del merge**, en la rama de la US, actualizar:
-   - `.context/PRD/shift-left-status-report.md`:
-     - Marcar implementation plan como completado
-     - Actualizar estado del PR (MERGED o por mergear)
-     - Actualizar contadores
-   - `.context/PRD/release-notes.md` (opcional):
-     - Agregar entrada para la US implementada
-     - Formato changelog estandar
-
-2. Incluir cambios de docs en el commit de la US o como commit separado en la misma rama:
-
-   ```bash
-   git add .context/ && git commit -m "docs: update status report after MYM-{N} completion"
+2. `.context/PRD/release-notes.md` (opcional):
+   ```markdown
+   #### MYM-{N}: {Título}
+   - **Epic:** EPIC-MYM-{N}
+   - **PR:** #{número}
+   - **Cambios:** {lista de cambios}
    ```
 
-**Criterio de exito:** Cambios de documentacion incluidos en el PR de la US
-
-**Nota:** Los docs viajan junto con el codigo de la US, no se pushean directo a staging.
+**Criterio de éxito:** ✅ Documentación actualizada
 
 ---
 
-### PASO 11: Sincronizar y Esperar Instrucciones
-
-**Objetivo:** Sincronizar staging local con los cambios mergeados y preparar para la siguiente US.
+### PASO 11: Sincronizar y Preparar Siguiente
 
 **Acciones:**
-
-1. Moverse a staging y hacer pull de los cambios mergeados:
-
+1. Actualizar staging local:
    ```bash
    git checkout staging && git pull origin staging
    ```
+2. Verificar merge: `git log --oneline -3`
+3. Esperar instrucciones del usuario sobre siguiente US
 
-2. Verificar que el merge se refleja localmente:
-
-   ```bash
-   git log --oneline -3
-   ```
-
-3. Esperar instrucciones del usuario sobre cual US trabajar a continuacion
-
-4. Cuando se indique la siguiente US, crear o moverse a su rama:
-
-   ```bash
-   # Si la rama no existe:
-   git checkout -b feat/MYM-{N}/{short-name}
-
-   # Si la rama ya existe:
-   git checkout feat/MYM-{N}/{short-name}
-   git merge staging -m "chore: sync with staging after MYM-{prev} completion"
-   ```
-
-5. Continuar con Paso 1 de la nueva US
-
-**Criterio de exito:** Staging local actualizado, listo para siguiente US
-
-**Nota:** No se pushea nada a staging directamente. Los cambios de docs viajan con el PR de cada US.
+**Criterio de éxito:** ✅ Staging actualizado, listo para siguiente US
 
 ---
 
-## Sistema de Tracking de Progreso
+## FASE 3: REANUDACIÓN DE SESIÓN
 
-### Template de Estado por US
+**Solo si el usuario adjuntó un Resumen de Progreso.**
 
-Usar este template al inicio de cada sesion para identificar donde quedamos:
+### Paso R1: Verificar Progreso
+
+```bash
+git log --oneline -5
+git status
+git branch --show-current
+```
+
+Lee los archivos mencionados en el resumen para confirmar que existen.
+
+### Paso R2: Validar Alineación
+
+Compara el resumen con:
+1. El `implementation-plan.md` → ¿Los steps coinciden?
+2. Los archivos reales → ¿El código existe?
+
+**Si hay discrepancias:**
+```
+⚠️ Detecté diferencias entre el resumen y el estado actual:
+- Resumen dice: {X}
+- Estado real: {Y}
+
+Continuando basándome en el estado real.
+```
+
+### Paso R3: Continuar
 
 ```markdown
-## US en Trabajo: MYM-{N}
+## Reanudación Verificada
 
-| Paso | Estado | Notas |
-|------|--------|-------|
-| 1. Jira In Progress | [Pendiente/Completado] | |
-| 2. Implementation Plan | [Pendiente/Completado] | Branch: feat/MYM-{N}/... |
-| 3. Implementacion | [Pendiente/En progreso/Completado] | |
-| 4. PR Creado | [Pendiente/Completado] | PR #... |
-| 5. Jira In Review | [Pendiente/Completado/Manual requerido] | |
-| 6. Code Review | [Pendiente/Completado] | |
-| 7. Merge PR | [Pendiente/Completado] | |
-| 8. Jira Ready For QA | [Pendiente/Completado/Manual requerido] | |
-| 9. Comentario Jira | [Pendiente/Completado] | |
-| 10. Docs Actualizados | [Pendiente/Completado] | |
-| 11. Preparar Siguiente US | [Pendiente/Completado] | Rama: feat/MYM-{next}/... |
-
-**Siguiente paso:** [Numero y descripcion del paso pendiente]
-**Blocker actual:** [Si hay alguno]
+**Progreso confirmado:** [lista de lo completado]
+**Continuando desde:** Paso {N} - {descripción}
+**Próxima acción:** {qué voy a hacer}
 ```
 
 ---
 
-## Como Identificar Donde Quedamos
+## FASE 4: RESUMEN DE PROGRESO
 
-Al inicio de cada sesion, la IA debe:
+### Cuándo Generarlo
 
-1. **Verificar ramas locales:**
+Genera resumen automáticamente al:
+- ✅ Completar un `implementation-plan.md`
+- ✅ Completar cada Step del plan durante implementación
+- ✅ Usuario escribe: `resumen`, `pausa`, `guardar progreso`
 
-   ```bash
-   git branch --list 'feat/MYM-*'
-   ```
-
-2. **Verificar PRs abiertos:**
-
-   ```bash
-   gh pr list --state open
-   ```
-
-3. **Revisar shift-left-status-report.md:**
-   - Ver columna "Implementation Plan"
-   - Ver columna "PR"
-
-4. **Consultar Jira si es necesario:**
-   - Status actual de la US
-   - Ultimo comentario
-
-Con esta informacion, construir el estado actual y determinar el siguiente paso.
-
----
-
-## Release Notes Format
-
-Archivo: `.context/PRD/release-notes.md`
+### Template
 
 ```markdown
-# Release Notes - Upex My Mentor
+## Resumen de Progreso
 
-## [Unreleased]
+**Sesión:** {fecha aproximada}
+**Epic:** EPIC-MYM-{N} - {nombre}
+**Story:** MYM-{N} - {nombre}
 
-### Features Implementadas
+### Estado del Workflow
+- **Paso actual:** {número y nombre}
+- **Fase actual:** {5/6/7/8}
 
-#### MYM-{N}: {Titulo de la Story}
-- **Epic:** EPIC-MYM-{N} ({nombre del epic})
-- **PR:** #{numero}
-- **Implementado por:** Claude + Developer
-- **Descripcion:** {Descripcion breve de la funcionalidad}
-- **Cambios principales:**
-  - {Cambio 1}
-  - {Cambio 2}
+### Progreso Completado
+- [x] {tarea 1}
+- [x] {tarea 2}
 
----
+### Archivos Creados/Modificados
+| Archivo | Estado | Descripción |
+|---------|--------|-------------|
+| `{ruta}` | Creado | {descripción} |
 
-## [v0.x.x] - {YYYY-MM-DD}
+### Commits Realizados
+- `{hash}`: {mensaje}
 
-### Added
-- ...
+### Tarea en Progreso
+**Qué estaba haciendo:** {descripción}
+**Siguiente acción:** {qué hacer}
 
-### Fixed
-- ...
+### Contexto Crítico
+{decisiones técnicas, problemas resueltos, dependencias}
 
-### Changed
-- ...
+### Verificación Rápida
+1. `git log --oneline -5`
+2. `git status`
+3. Leer `{archivo clave}`
 ```
 
 ---
 
-## Reglas Importantes
+## REFERENCIAS RÁPIDAS
 
-1. **Leer un prompt a la vez:** No leer prompts de fases futuras hasta que toque ejecutarlas
-2. **Commits atomicos:** Un commit por step o cambio logico
-3. **Verificar siempre:** Linting y build antes de push
-4. **Documentar progreso:** Actualizar el tracking despues de cada paso
-5. **No asumir:** Verificar estados en Jira, no asumir que las automations funcionaron
+### MCPs Disponibles
+
+| MCP | Uso |
+|-----|-----|
+| **Atlassian** | Jira (issues, transiciones, comentarios) |
+| **Supabase** | Backend (DB, migraciones, queries) |
+| **Context7** | Documentación actualizada de librerías |
+| **shadcn** | Componentes UI |
+
+### Configuración
+
+- **Jira CloudID:** `348c51d9-ae78-4544-b33e-4ee8e89a7534`
+- **Jira Project:** `MYM`
+- **Supabase ProjectID:** `ionevzckjyxtpmyenbxc`
+
+### Archivos de Contexto por Fase
+
+| Fase | Archivos a Leer |
+|------|-----------------|
+| **Planificación** | `story.md`, `test-cases.md`, `epic.md` |
+| **Implementación** | `implementation-plan.md`, `design-system.md`, `code-standards.md` |
+| **Code Review** | `code-standards.md`, `data-testid-standards.md` |
 
 ---
 
-## Configuracion Jira (Referencia Rapida)
+## REGLAS IMPORTANTES
 
-- **Cloud ID:** `348c51d9-ae78-4544-b33e-4ee8e89a7534`
-- **Project Key:** `MYM`
-- **Transiciones comunes:**
-  - `Ready For Dev` -> `In Progress`: Usar transition disponible
-  - `In Progress` -> `In Review`: Automatico via PR
-  - `In Review` -> `Ready For QA`: Automatico via Merge
-
----
-
-## Supabase (Referencia Rapida)
-
-- **Project ID:** `ionevzckjyxtpmyenbxc`
+1. **LEE los prompts completos** - No asumas, cada prompt tiene instrucciones específicas
+2. **Sigue la cadena de contexto** - Si un prompt referencia otro archivo, léelo
+3. **Commits atómicos** - Un commit por step o cambio lógico
+4. **Verifica siempre** - Lint y build antes de push
+5. **No asumas estados** - Verifica Jira, no confíes en automations
+6. **Documenta progreso** - Genera resumen en cada hito
 
 ---
 
-*Ultima actualizacion: 2025-12-05*
-*Generado por Claude Code*
+**Versión:** 2.0 (fusionado)
+**Última actualización:** 2025-12-05
