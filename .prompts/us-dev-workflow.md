@@ -30,6 +30,8 @@ Este documento define la estrategia completa de desarrollo por User Story (US), 
 | `.context/PBI/epics/EPIC-{PROJECT_KEY}-{N}-{name}/feature-implementation-plan.md` | Paso 0: Verificar precondiciones |
 | `.context/PBI/epics/EPIC-{PROJECT_KEY}-{N}-{name}/stories/STORY-{PROJECT_KEY}-{N}-{name}/story.md` | Antes de planificar |
 | `.context/PBI/epics/EPIC-{PROJECT_KEY}-{N}-{name}/stories/STORY-{PROJECT_KEY}-{N}-{name}/test-cases.md` | Durante planificacion |
+| `.context/backend-setup.md` | Durante implementacion con DB/Auth |
+| `.context/api-documentation.md` | Durante implementacion de API calls |
 | `.context/design-system.md` | Durante implementacion UI |
 | `.context/guidelines/code-standards.md` | Durante code review |
 
