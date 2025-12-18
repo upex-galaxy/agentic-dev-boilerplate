@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "ai": "node scripts/mcp-builder.js",
-    "up": "node scripts/update-prompts.js"
+    "ai": "bun scripts/mcp-builder.js",
+    "up": "bun scripts/update-prompts.js",
+    "kata:manifest": "bun scripts/kata-manifest.ts",
+    "api:sync": "bun scripts/sync-openapi.ts"
   },
   "keywords": [],
   "author": "",

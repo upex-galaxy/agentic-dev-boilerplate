@@ -1,11 +1,10 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-// =========== CARGA VARIABLES DE ENTORNO ============
-process.loadEnvFile() // default as '.env' in cwd
-// Actualizar Node.js si es necesario para usar loadEnvFile()
+// =========== VARIABLES DE ENTORNO ============
+// Bun carga automáticamente el archivo .env del directorio actual
 const { MCP_CATALOG_FILE, MCP_FILE, AI_COMMAND_PATH } = process.env;
 // Validar variables de entorno críticas (AI_COMMAND_PATH es opcional)
 if (!MCP_CATALOG_FILE || !MCP_FILE) {
