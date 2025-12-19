@@ -38,7 +38,7 @@ Only automate functionality that has been validated manually and documented.
 
 | Prompt                           | Purpose                                 |
 | -------------------------------- | --------------------------------------- |
-| `kata-framework-setup.md`        | Initial setup or refactoring (one-time) |
+| `../kata-framework-setup.md`     | Initial setup or refactoring (one-time) |
 | `automation-e2e-test.md`         | Implement E2E (UI) test automation      |
 | `automation-integration-test.md` | Implement API test automation           |
 
