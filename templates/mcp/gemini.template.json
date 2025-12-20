@@ -21,18 +21,29 @@
         "chrome-devtools-mcp"
       ]
     },
-    "mailtrap": {
+    "api": {
       "command": "npx",
       "args": [
         "-y",
-        "mcp-mailtrap"
+        "@ivotoby/openapi-mcp-server",
+        "--tools dynamic"
       ],
       "env": {
-        "MAILTRAP_API_TOKEN": "your_mailtrap_api_token",
-        "DEFAULT_FROM_EMAIL": "your_sender@example.com",
-        "MAILTRAP_ACCOUNT_ID": "your_account_id",
-        "MAILTRAP_TEST_INBOX_ID": "your_test_inbox_id"
+        "API_BASE_URL": "https://{SUPABASE_URL}.supabase.co/rest/v1",
+        "OPENAPI_SPEC_PATH": "https://{SUPABASE_URL}.supabase.co/rest/v1/?apikey={SUPABASE_ANON_KEY}",
+        "API_HEADERS": "apikey:{SUPABASE_ANON_KEY}"
       }
+    },
+    "sql": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub",
+        "--transport",
+        "stdio",
+        "--dsn",
+        "postgresql://{USER}.{DATABASE}.{HOST}:{PORT}/{DATABASE}"
+      ]
     },
     "shadcn": {
       "command": "npx",
