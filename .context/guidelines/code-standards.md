@@ -8,6 +8,7 @@
 ## 🎯 Principios Fundamentales
 
 ### 1. **DRY** (Don't Repeat Yourself)
+
 ```typescript
 // ❌ MAL - Repetición
 function getUserEmail(userId: string) {
@@ -35,6 +36,7 @@ function getUserEmail(userId: string) {
 ```
 
 ### 2. **KISS** (Keep It Simple, Stupid)
+
 ```typescript
 // ❌ MAL - Over-engineering
 const getUserStatus = (user: User): UserStatus => {
@@ -57,6 +59,7 @@ const getUserStatus = (user: User): UserStatus => {
 ```
 
 ### 3. **YAGNI** (You Aren't Gonna Need It)
+
 ```typescript
 // ❌ MAL - Funcionalidad que nadie pidió
 interface User {
@@ -81,6 +84,7 @@ interface User {
 ## 📝 Naming Conventions
 
 ### Variables y Funciones
+
 ```typescript
 // ✅ camelCase para variables y funciones
 const userName = "John"
@@ -92,6 +96,7 @@ function calculateTotal(items: Item[]) {}
 ```
 
 ### Componentes React
+
 ```typescript
 // ✅ PascalCase para componentes
 function LoginForm() {}
@@ -100,6 +105,7 @@ const NavBar = () => {}
 ```
 
 ### Constantes
+
 ```typescript
 // ✅ UPPER_SNAKE_CASE para constantes
 const MAX_RETRIES = 3
@@ -108,6 +114,7 @@ const DEFAULT_TIMEOUT = 5000
 ```
 
 ### Tipos e Interfaces
+
 ```typescript
 // ✅ PascalCase con 'I' o 'T' prefix (opcional)
 interface User {}
@@ -117,6 +124,7 @@ type UserRole = "admin" | "user" | "guest"
 ```
 
 ### Archivos
+
 ```
 ✅ kebab-case para archivos:
 - user-profile.tsx
@@ -150,6 +158,7 @@ type UserRole = "admin" | "user" | "guest"
 ```
 
 ### Evitar `any`
+
 ```typescript
 // ❌ MAL
 function processData(data: any) {
@@ -167,6 +176,7 @@ function processData(data: DataPayload) {
 ```
 
 ### Usar tipos explícitos
+
 ```typescript
 // ❌ MAL - Tipo inferido puede cambiar
 const users = []
@@ -180,6 +190,7 @@ const users: User[] = []
 ## 🎨 Component Structure (React)
 
 ### Orden de elementos
+
 ```typescript
 // ✅ Orden estándar
 import React, { useState, useEffect } from 'react'
@@ -223,6 +234,7 @@ export function UserProfile({ userId }: UserProfileProps) {
 ```
 
 ### Props destructuring
+
 ```typescript
 // ✅ Destructure props en signature
 function UserCard({ name, email, avatar }: UserCardProps) {
@@ -240,6 +252,7 @@ function UserCard(props: UserCardProps) {
 ## ⚡ Performance Best Practices
 
 ### 1. Memoization
+
 ```typescript
 import { useMemo, useCallback } from 'react'
 
@@ -259,6 +272,7 @@ function ExpensiveComponent({ items }: Props) {
 ```
 
 ### 2. Lazy loading
+
 ```typescript
 import { lazy, Suspense } from 'react'
 
@@ -275,6 +289,7 @@ function Dashboard() {
 ```
 
 ### 3. Evitar re-renders innecesarios
+
 ```typescript
 import { memo } from 'react'
 
@@ -289,6 +304,7 @@ export const UserCard = memo(function UserCard({ user }: Props) {
 ## ♿ Accessibility (a11y)
 
 ### Semantic HTML
+
 ```tsx
 // ❌ MAL
 <div onClick={handleClick}>Click me</div>
@@ -298,6 +314,7 @@ export const UserCard = memo(function UserCard({ user }: Props) {
 ```
 
 ### ARIA labels
+
 ```tsx
 // ✅ Labels descriptivos
 <button aria-label="Close dialog">
@@ -312,6 +329,7 @@ export const UserCard = memo(function UserCard({ user }: Props) {
 ```
 
 ### Keyboard navigation
+
 ```tsx
 // ✅ Soporte de teclado
 <div
@@ -333,6 +351,7 @@ export const UserCard = memo(function UserCard({ user }: Props) {
 ## 📦 Code Organization
 
 ### Estructura de carpetas
+
 ```
 src/
 ├── components/
@@ -347,6 +366,7 @@ src/
 ```
 
 ### Barrel exports
+
 ```typescript
 // components/ui/index.ts
 export { Button } from './Button'
@@ -362,6 +382,7 @@ import { Button, Input, Card } from '@/components/ui'
 ## 🚫 Qué NO Hacer
 
 ### 1. NO hardcodear valores
+
 ```typescript
 // ❌ MAL
 const apiUrl = "https://api.example.com"
@@ -371,6 +392,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL
 ```
 
 ### 2. NO dejar console.log()
+
 ```typescript
 // ❌ MAL
 console.log('User data:', user)
@@ -381,6 +403,7 @@ logger.info('User data loaded', { userId: user.id })
 ```
 
 ### 3. NO usar var
+
 ```typescript
 // ❌ MAL
 var count = 0
@@ -391,6 +414,7 @@ let counter = 0
 ```
 
 ### 4. NO mutar state directamente
+
 ```typescript
 // ❌ MAL
 const [users, setUsers] = useState<User[]>([])
@@ -401,6 +425,7 @@ setUsers([...users, newUser])
 ```
 
 ### 5. NO ignorar errores
+
 ```typescript
 // ❌ MAL
 try {
@@ -423,6 +448,7 @@ try {
 ## ✅ Checklist de Code Quality
 
 Antes de commit:
+
 - [ ] Código sigue DRY, KISS, YAGNI
 - [ ] Naming conventions seguidas
 - [ ] TypeScript strict (sin `any`)

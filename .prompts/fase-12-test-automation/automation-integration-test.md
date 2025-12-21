@@ -9,11 +9,13 @@
 Create API Integration automated tests for validated scenarios using the KATA framework.
 
 **This prompt is executed AFTER:**
+
 - Test documented in Jira (Fase 11)
 - Test marked as "automation-candidate"
 - Framework setup complete (kata-framework-setup.md)
 
 **Prerequisites:**
+
 - KATA framework configured in project
 - API documentation available (OpenAPI preferred)
 - Test case documented in Jira
@@ -32,6 +34,7 @@ MANDATORY READING (in order):
 ```
 
 **Key KATA principles for API testing:**
+
 - Use `ApiBase` methods: `apiGET`, `apiPOST`, `apiPUT`, `apiPATCH`, `apiDELETE`
 - Return tuples: `[APIResponse, TBody]` or `[APIResponse, TBody, TPayload]`
 - Type-safe generics for request/response
@@ -48,6 +51,7 @@ Provide ONE of the following:
 3. **OpenAPI operation** - Operation ID from OpenAPI spec
 
 **Also specify:**
+
 - Target API component (existing or new)
 - Authentication requirements
 

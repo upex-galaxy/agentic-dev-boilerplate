@@ -9,11 +9,13 @@
 Create E2E (End-to-End) automated tests for validated scenarios using the KATA framework.
 
 **This prompt is executed AFTER:**
+
 - Test documented in Jira (Fase 11)
 - Test marked as "automation-candidate"
 - Framework setup complete (kata-framework-setup.md)
 
 **Prerequisites:**
+
 - Access to Playwright MCP tools (for exploration)
 - KATA framework configured in project
 - Test case documented in Jira
@@ -32,6 +34,7 @@ MANDATORY READING (in order):
 ```
 
 **Key KATA principles to follow:**
+
 - ATCs represent UNIQUE expected outputs
 - Locators INLINE within ATCs (no separate storage)
 - NO helper methods for single Playwright actions
@@ -49,6 +52,7 @@ Provide ONE of the following:
 3. **Multiple Test IDs** - For batch automation
 
 **Also specify:**
+
 - Target component (existing or new)
 - Related User Story ID
 

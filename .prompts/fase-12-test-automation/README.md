@@ -5,6 +5,7 @@
 Implement automated tests for documented test cases using the KATA framework.
 
 **IMPORTANT:** This phase comes AFTER:
+
 - Fase 10: Exploratory Testing (feature validated)
 - Fase 11: Test Documentation (tests documented in Jira)
 
@@ -103,11 +104,13 @@ Layer 1: TestContext
 ## Test Types
 
 ### E2E Tests (UI)
+
 - Location: `tests/e2e/{feature}/`
 - Fixture: `{ kata }` or `{ ui }`
 - Uses UI components (e.g., `LoginPage`)
 
 ### Integration Tests (API)
+
 - Location: `tests/integration/{resource}/`
 - Fixture: `{ api }`
 - Uses API components (e.g., `AuthApi`)

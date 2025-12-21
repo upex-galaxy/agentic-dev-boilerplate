@@ -9,10 +9,12 @@
 Document prioritized test cases in Jira as "Test" issue type for traceability and regression management.
 
 **This prompt is executed AFTER:**
+
 - Test analysis completed
 - Tests prioritized for regression
 
 **Prerequisites:**
+
 - Access to Atlassian MCP tools (`mcp__atlassian__*`)
 - Jira project with "Test" issue type configured
 - Prioritized test list from previous steps
@@ -291,6 +293,7 @@ h3. Metadata
 ## Post-Refactor Note
 
 **PENDING:** This prompt needs further refinement:
+
 - Specify exact Custom Field IDs for the project
 - Define Test Status workflow transitions
 - Add support for X-Ray specific fields (if using X-Ray)

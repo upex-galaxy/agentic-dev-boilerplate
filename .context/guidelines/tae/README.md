@@ -48,11 +48,13 @@ Generate with: `bun run kata:manifest`
 ## Quick Reference
 
 ### For AI Agents
+
 1. Read `KATA-AI-GUIDE.md` for orientation
 2. Follow `.prompts/fase-11-test-automation/kata-workflow.md` for implementation
 3. Run `bun run kata:manifest` to see existing components
 
 ### For QA Engineers
+
 1. Read `kata-architecture.md` to understand KATA
 2. Read `automation-standards.md` for coding rules
 3. Follow `kata-implementation-plan.md` to create components

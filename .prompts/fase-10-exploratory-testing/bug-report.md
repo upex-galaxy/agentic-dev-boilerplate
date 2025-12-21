@@ -13,6 +13,7 @@ Identify, validate, and report defects found during exploratory testing. This pr
 3. **Create the bug in Jira** using MCP Atlassian
 
 **Prerequisites:**
+
 - Bug identified during exploratory testing
 - Access to Playwright MCP tools (`mcp__playwright__*`)
 - Access to Atlassian MCP tools (`mcp__atlassian__*`)
@@ -193,6 +194,7 @@ Purpose: Get the schema for Bug issue type including custom fields
 **After creating the bug:**
 
 1. **Confirm creation** with user:
+
    ```
    Bug created successfully!
 
@@ -203,6 +205,7 @@ Purpose: Get the schema for Bug issue type including custom fields
    ```
 
 2. **Link to related story** (if applicable):
+
    ```
    Tool: mcp__atlassian__addCommentToJiraIssue
 

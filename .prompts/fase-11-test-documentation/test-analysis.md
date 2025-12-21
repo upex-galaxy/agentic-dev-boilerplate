@@ -9,6 +9,7 @@
 Review the outcomes of exploratory testing to identify which scenarios should become regression tests.
 
 **This prompt is executed AFTER:**
+
 - Exploratory testing passed (US status: QA Approved)
 - Session notes document validated scenarios
 
@@ -39,6 +40,7 @@ Sources to analyze:
 ```
 
 **Extract:**
+
 - Scenarios that were tested
 - Outcomes (PASSED, FAILED, OBSERVATIONS)
 - Edge cases discovered

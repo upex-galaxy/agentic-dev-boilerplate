@@ -36,6 +36,7 @@ Contexto obligatorio:
 ```
 
 **Checklist de contexto**:
+
 - [ ] Story completa leída
 - [ ] Test cases comprendidos
 - [ ] Implementation plan revisado
@@ -103,6 +104,7 @@ Don't:
 ```
 
 **Ejemplo de commits**:
+
 ```bash
 git commit -m "feat(auth): add login form component with validation"
 git commit -m "feat(auth): create login API endpoint"
@@ -133,6 +135,7 @@ Si algún check falla → ARREGLAR antes de continuar.
 ### **6. Testing Continuo**
 
 **Durante implementación**:
+
 ```bash
 # Ejecutar tests unitarios frecuentemente
 npm test LoginForm.test.tsx
@@ -145,6 +148,7 @@ npm run type-check
 ```
 
 **Antes de marcar story como completa**:
+
 ```bash
 # Todos los tests
 npm test
@@ -197,18 +201,21 @@ Documentar:
 Durante implementación, usar MCPs estratégicamente:
 
 **Supabase MCP**:
+
 ```
 Cuándo: Necesitas schema real de DB
 Ejemplo: "¿Qué columnas tiene la tabla users?"
 ```
 
 **Context7 MCP**:
+
 ```
 Cuándo: Necesitas docs de biblioteca
 Ejemplo: "¿Cómo usar React Hook Form?"
 ```
 
 **Playwright MCP**:
+
 ```
 Cuándo: Implementando E2E tests
 Ejemplo: "Genera test para flujo de login"
@@ -220,11 +227,13 @@ Ver detalles en `mcp-usage-tips.md`.
 
 ## ⚠️ Errores Comunes a Evitar
 
-### ❌ NO hacer:
+### ❌ NO hacer
+
 1. **Implementar sin leer el plan**
    - Resultado: Código que no cumple requirements
 
 2. **Hardcodear valores**
+
    ```typescript
    // ❌ MAL
    const apiUrl = "https://api.example.com"
@@ -234,6 +243,7 @@ Ver detalles en `mcp-usage-tips.md`.
    ```
 
 3. **Ignorar edge cases**
+
    ```typescript
    // ❌ MAL
    function divide(a, b) {
@@ -248,6 +258,7 @@ Ver detalles en `mcp-usage-tips.md`.
    ```
 
 4. **Commits sin contexto**
+
    ```bash
    # ❌ MAL
    git commit -m "fixes"

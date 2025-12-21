@@ -56,6 +56,7 @@ export class NotFoundError extends AppError {
 ## ✅ Uso Correcto
 
 ### API Routes (Next.js)
+
 ```typescript
 // app/api/users/[id]/route.ts
 import { AppError, NotFoundError } from '@/lib/errors'
@@ -93,6 +94,7 @@ export async function GET(
 ```
 
 ### Client-side
+
 ```typescript
 // lib/api-client.ts
 async function fetchUser(id: string): Promise<User> {
@@ -198,6 +200,7 @@ logger.error('Payment failed', {
 ## ⚠️ Qué NO Hacer
 
 ### ❌ NO silenciar errores
+
 ```typescript
 // ❌ MAL
 try {
@@ -216,6 +219,7 @@ try {
 ```
 
 ### ❌ NO hardcodear mensajes
+
 ```typescript
 // ❌ MAL
 throw new Error('User not found')
@@ -225,6 +229,7 @@ throw new NotFoundError('User')
 ```
 
 ### ❌ NO exponer detalles internos
+
 ```typescript
 // ❌ MAL
 return Response.json({

@@ -29,12 +29,14 @@ Living Data (usar MCP) vs Static Docs (leer archivo)
 ### **Supabase MCP**
 
 **Cuándo usar**:
+
 - Necesitas schema real de base de datos
 - Quieres ver datos de ejemplo
 - Verificar relaciones entre tablas
 - Conocer constraints, indexes, policies
 
 **Ejemplos**:
+
 ```
 Fase 5 (Planning):
 "¿Qué columnas tiene la tabla users?"
@@ -46,6 +48,7 @@ Fase 6 (Implementation):
 ```
 
 **NO usar para**:
+
 - ❌ Operaciones que modifican datos (solo lectura)
 - ❌ Consultas complejas (usa tu DB client directamente)
 
@@ -54,12 +57,14 @@ Fase 6 (Implementation):
 ### **Atlassian MCP** (Jira + Confluence)
 
 **Cuándo usar**:
+
 - Sincronizar stories con Jira
 - Crear issues automáticamente
 - Leer requirements de Confluence
 - Actualizar status de tickets
 
 **Ejemplos**:
+
 ```
 Fase 3 (Specification):
 "Crea un issue en Jira para esta story"
@@ -70,6 +75,7 @@ Fase 8 (Test Automation):
 ```
 
 **NO usar para**:
+
 - ❌ Tareas que puedes hacer directamente en Jira web
 - ❌ Bulk operations (usa Jira API directamente)
 
@@ -78,11 +84,13 @@ Fase 8 (Test Automation):
 ### **Context7 MCP**
 
 **Cuándo usar**:
+
 - Necesitas documentación OFICIAL de bibliotecas
 - Quieres ver ejemplos de uso de una librería
 - Verificar API de framework (Next.js, React, etc.)
 
 **Ejemplos**:
+
 ```
 Fase 5 (Planning):
 "¿Cómo implementar server actions en Next.js 14?"
@@ -94,6 +102,7 @@ Fase 6 (Implementation):
 ```
 
 **NO usar para**:
+
 - ❌ Preguntas sobre tu código específico
 - ❌ Debugging (usa IDE diagnostics)
 - ❌ Búsquedas en foros (usa Tavily MCP)
@@ -103,6 +112,7 @@ Fase 6 (Implementation):
 ### **Tavily MCP** 🔍
 
 **Cuándo usar**:
+
 - Buscar soluciones a problemas técnicos
 - Investigar errores específicos (Stack Overflow, GitHub issues)
 - Comparar tecnologías/bibliotecas
@@ -111,10 +121,12 @@ Fase 6 (Implementation):
 - Investigar bugs conocidos de bibliotecas
 
 **Diferencia con Context7**:
+
 - **Context7**: Docs oficiales de bibliotecas → "¿Cómo usar React Hooks?"
 - **Tavily**: Búsqueda web general → "¿Cómo resolver error 'hydration mismatch' en Next.js?"
 
 **Ejemplos**:
+
 ```
 Fase 4 (Planning):
 "Busca best practices para estructurar folders en Next.js 15"
@@ -131,6 +143,7 @@ Fase 8 (Test Automation):
 ```
 
 **Casos de uso únicos**:
+
 - Buscar en GitHub issues de bibliotecas
 - Investigar discusiones en Reddit/dev.to
 - Encontrar posts de blogs técnicos
@@ -138,6 +151,7 @@ Fase 8 (Test Automation):
 - Investigar problemas específicos de versiones
 
 **NO usar para**:
+
 - ❌ Docs oficiales (usa Context7)
 - ❌ Código de tu proyecto (lee archivos locales)
 - ❌ Información de tu DB (usa Supabase MCP)
@@ -147,11 +161,13 @@ Fase 8 (Test Automation):
 ### **Playwright MCP**
 
 **Cuándo usar**:
+
 - Generar tests E2E automatizados
 - Crear Page Object Models
 - Simular interacciones de usuario
 
 **Ejemplos**:
+
 ```
 Fase 8 (Test Automation):
 "Genera un test E2E para el flujo de login"
@@ -160,6 +176,7 @@ Fase 8 (Test Automation):
 ```
 
 **NO usar para**:
+
 - ❌ Unit tests (usa Jest/Vitest directamente)
 - ❌ Integration tests simples
 
@@ -168,6 +185,7 @@ Fase 8 (Test Automation):
 ### **Chrome DevTools MCP** 🔧
 
 **Cuándo usar**:
+
 - Debug de tests E2E fallidos
 - Inspeccionar network requests durante testing
 - Ver console errors en tests
@@ -176,6 +194,7 @@ Fase 8 (Test Automation):
 - Capturar screenshots/videos de tests
 
 **Ejemplos**:
+
 ```
 Fase 8 (Test Automation):
 "Inspecciona los console errors durante el test de login"
@@ -186,10 +205,12 @@ Fase 8 (Test Automation):
 ```
 
 **Complementa a Playwright**:
+
 - **Playwright**: Ejecuta tests E2E
 - **DevTools**: Debug cuando tests fallan o son lentos
 
 **NO usar para**:
+
 - ❌ Unit testing (usa Jest/Vitest)
 - ❌ Production debugging (usa Sentry MCP)
 - ❌ API testing (usa Postman MCP)
@@ -199,11 +220,13 @@ Fase 8 (Test Automation):
 ### **Postman MCP**
 
 **Cuándo usar**:
+
 - Testear endpoints de API
 - Verificar respuestas de API
 - Crear colecciones de requests
 
 **Ejemplos**:
+
 ```
 Fase 6 (Implementation):
 "Testea el endpoint POST /api/users"
@@ -214,6 +237,7 @@ Fase 8 (Test Automation):
 ```
 
 **NO usar para**:
+
 - ❌ Testing de UI (usa Playwright)
 - ❌ Load testing (usa herramienta específica)
 
@@ -222,6 +246,7 @@ Fase 8 (Test Automation):
 ### **Sentry MCP** 🐛
 
 **Cuándo usar**:
+
 - Investigar errores en producción
 - Ver stack traces de bugs reportados
 - Analizar frecuencia de errores
@@ -230,6 +255,7 @@ Fase 8 (Test Automation):
 - Verificar si un bug ya fue reportado
 
 **Ejemplos**:
+
 ```
 Fase 6 (Implementation):
 "¿Qué errores se están reportando en production?"
@@ -243,12 +269,14 @@ Fase 8 (Test Automation):
 ```
 
 **Trazabilidad de bugs**:
+
 - Ver errores reportados en tiempo real
 - Analizar patrones de errores
 - Priorizar fixes basado en frecuencia
 - Verificar si un fix resolvió el problema
 
 **NO usar para**:
+
 - ❌ Local debugging (usa DevTools)
 - ❌ Test errors (usa Playwright trace viewer)
 - ❌ Build errors (usa logs de CI/CD)
@@ -258,12 +286,14 @@ Fase 8 (Test Automation):
 ### **GitHub MCP**
 
 **Cuándo usar**:
+
 - Crear issues automáticamente
 - Buscar PRs relacionadas
 - Leer código de otros repos
 - Verificar historial de commits
 
 **Ejemplos**:
+
 ```
 Fase 3 (Specification):
 "Crea un issue para implementar dark mode"
@@ -278,11 +308,13 @@ Fase 7 (Code Review):
 ### **Slack MCP**
 
 **Cuándo usar**:
+
 - Notificar al equipo de cambios importantes
 - Enviar reportes de test results
 - Comunicar deploys
 
 **Ejemplos**:
+
 ```
 Fase 8 (Test Automation):
 "Envía reporte de test results al canal #qa"
@@ -296,11 +328,13 @@ Fase 6 (Implementation):
 ### **Memory MCP**
 
 **Cuándo usar**:
+
 - Recordar contexto entre sesiones
 - Guardar decisiones técnicas
 - Mantener estado de proyecto
 
 **Ejemplos**:
+
 ```
 Cualquier fase:
 "Recuerda que usamos Zod para validación"
@@ -355,6 +389,7 @@ Cualquier fase:
 ### Usar MCPs estratégicamente
 
 **Perfil "backend"** (carga 3 MCPs):
+
 ```bash
 node scripts/mcp-builder.js backend
 # Carga: supabase + context7 + tavily
@@ -365,6 +400,7 @@ Usa tavily para investigar problemas técnicos
 ```
 
 **Perfil "frontend"** (carga 3 MCPs):
+
 ```bash
 node scripts/mcp-builder.js frontend
 # Carga: context7 + tavily + playwright
@@ -375,6 +411,7 @@ Usa playwright para tests E2E (si se necesitan)
 ```
 
 **Perfil "testing"** (carga 4 MCPs):
+
 ```bash
 node scripts/mcp-builder.js uitest
 # Carga: playwright + devtools + context7 + tavily
@@ -386,6 +423,7 @@ Usa tavily para best practices de testing
 ```
 
 **Perfil "debugging"** (carga 4 MCPs):
+
 ```bash
 node scripts/mcp-builder.js debug
 # Carga: devtools + sentry + tavily + supabase
@@ -402,8 +440,10 @@ Usa supabase para ver datos DB
 
 ## ⚠️ Errores Comunes
 
-### ❌ NO hacer:
+### ❌ NO hacer
+
 1. **Cargar todos los MCPs siempre**
+
    ```bash
    # ❌ MAL
    node scripts/mcp-builder.js full
@@ -413,12 +453,14 @@ Usa supabase para ver datos DB
    ```
 
 2. **Usar MCP para lo que puedes hacer localmente**
+
    ```
    ❌ "Usa Context7 para leer mi código local"
    ✅ Lee el archivo directamente
    ```
 
 3. **No cambiar MCPs entre tareas**
+
    ```
    ❌ Usar perfil "backend" para testing
    ✅ Cambiar a perfil "uitest" cuando hagas tests
@@ -428,16 +470,16 @@ Usa supabase para ver datos DB
 
 ## 🔄 Context7 vs Tavily: ¿Cuál usar?
 
-| Escenario | Context7 | Tavily |
-|-----------|----------|--------|
-| "¿Cómo usar useState en React?" | ✅ Docs oficiales | ❌ Overkill |
-| "Error: hydration mismatch en Next.js" | ❌ No indexa foros | ✅ Stack Overflow |
-| "¿Playwright tiene retry automático?" | ✅ Docs oficiales | ❌ Innecesario |
-| "Best practices para folder structure" | ❌ No opina | ✅ Blogs + foros |
-| "¿Hay bugs conocidos de Zustand + React 19?" | ❌ No indexa issues | ✅ GitHub issues |
-| "Comparar Zod vs Yup" | ❌ Solo docs individuales | ✅ Comparaciones |
-| "¿Cómo configurar Playwright?" | ✅ Docs oficiales | ❌ Innecesario |
-| "¿Por qué Supabase Auth no funciona con SSR?" | ❌ Problema específico | ✅ Reddit/GitHub |
+| Escenario                                     | Context7                 | Tavily           |
+| --------------------------------------------- | ------------------------ | ---------------- |
+| "¿Cómo usar useState en React?"               | ✅ Docs oficiales         | ❌ Overkill       |
+| "Error: hydration mismatch en Next.js"        | ❌ No indexa foros        | ✅ Stack Overflow |
+| "¿Playwright tiene retry automático?"         | ✅ Docs oficiales         | ❌ Innecesario    |
+| "Best practices para folder structure"        | ❌ No opina               | ✅ Blogs + foros  |
+| "¿Hay bugs conocidos de Zustand + React 19?"  | ❌ No indexa issues       | ✅ GitHub issues  |
+| "Comparar Zod vs Yup"                         | ❌ Solo docs individuales | ✅ Comparaciones  |
+| "¿Cómo configurar Playwright?"                | ✅ Docs oficiales         | ❌ Innecesario    |
+| "¿Por qué Supabase Auth no funciona con SSR?" | ❌ Problema específico    | ✅ Reddit/GitHub  |
 
 **Regla de oro**: Context7 para **"cómo usar"**, Tavily para **"cómo resolver"**.
 
@@ -446,6 +488,7 @@ Usa supabase para ver datos DB
 ## 💡 Tips Finales
 
 1. **Cambia perfil según task**:
+
    ```bash
    # Implementing backend
    node scripts/mcp-builder.js backend
@@ -486,19 +529,19 @@ Usa supabase para ver datos DB
 
 **Total MCPs disponibles**: 11
 
-| MCP | Tipo | Cuándo usar |
-|-----|------|-------------|
-| Supabase | Database | Schema, datos, policies |
-| Atlassian | Project Mgmt | Jira, Confluence |
-| Context7 | Docs Oficiales | React, Next.js, Playwright |
-| **Tavily** ⭐ | Web Search | Stack Overflow, foros, blogs |
-| Playwright | E2E Testing | User flows, interactions |
-| **DevTools** ⭐ | E2E Debug | Console, network, performance |
-| Postman | API Testing | Endpoints, responses |
-| **Sentry** ⭐ | Monitoring | Production errors, traces |
-| GitHub | Repository | Issues, PRs, code |
-| Slack | Communication | Notificaciones, reportes |
-| Memory | Persistence | Contexto entre sesiones |
+| MCP            | Tipo           | Cuándo usar                   |
+| -------------- | -------------- | ----------------------------- |
+| Supabase       | Database       | Schema, datos, policies       |
+| Atlassian      | Project Mgmt   | Jira, Confluence              |
+| Context7       | Docs Oficiales | React, Next.js, Playwright    |
+| **Tavily** ⭐   | Web Search     | Stack Overflow, foros, blogs  |
+| Playwright     | E2E Testing    | User flows, interactions      |
+| **DevTools** ⭐ | E2E Debug      | Console, network, performance |
+| Postman        | API Testing    | Endpoints, responses          |
+| **Sentry** ⭐   | Monitoring     | Production errors, traces     |
+| GitHub         | Repository     | Issues, PRs, code             |
+| Slack          | Communication  | Notificaciones, reportes      |
+| Memory         | Persistence    | Contexto entre sesiones       |
 
 ---
 

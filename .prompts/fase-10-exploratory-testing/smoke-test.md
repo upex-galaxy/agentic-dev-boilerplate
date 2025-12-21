@@ -17,21 +17,25 @@ Validar que el deployment en staging es funcional ANTES de comenzar exploratory 
 ### 1. Deployment en Staging
 
 **Verificar:**
+
 - Código desplegado en staging (Fase 9 completada)
 - Staging URL accesible
 - CI/CD workflow pasó exitosamente
 
 **Información necesaria del usuario:**
+
 - Staging URL: `https://[project]-develop.vercel.app`
 - Feature/Story recién desplegada: `STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}`
 
 ### 2. Story Actual
 
 **Leer:**
+
 - `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md` - **CRÍTICO** - Acceptance criteria
 - `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md` - Test cases definidos (Fase 5)
 
 **Qué identificar:**
+
 1. ¿Cuál es el happy path de la story?
 2. ¿Qué funcionalidad crítica debe validarse?
 3. ¿Hay integración con backend/auth que validar?
@@ -39,6 +43,7 @@ Validar que el deployment en staging es funcional ANTES de comenzar exploratory 
 ### 3. Deployment Context
 
 **Leer:**
+
 - `.context/ci-cd-setup.md` - Workflow de deployment
 - `.context/environment-variables.md` - Variables de staging
 - `.context/infrastructure-setup.md` - URLs y configuración
@@ -49,7 +54,8 @@ Validar que el deployment en staging es funcional ANTES de comenzar exploratory 
 
 **NO se requieren MCP para esta fase.**
 
-### Herramientas Manuales:
+### Herramientas Manuales
+
 - Browser (Chrome/Firefox/Safari)
 - DevTools (F12) para revisar console/network
 - Acceso a staging URL
@@ -61,6 +67,7 @@ Validar que el deployment en staging es funcional ANTES de comenzar exploratory 
 Crear smoke test checklist para validar deployment funcional:
 
 **Incluye:**
+
 - ✅ Validar que aplicación carga sin errores 500
 - ✅ Verificar assets cargan (CSS, JS, imágenes)
 - ✅ Validar autenticación funciona (si aplica)
@@ -69,6 +76,7 @@ Crear smoke test checklist para validar deployment funcional:
 - ✅ Validar navegación básica funciona
 
 **NO incluye:**
+
 - ❌ Exploratory testing completo (eso es test-charter.md + session-notes.md)
 - ❌ Edge cases o negative testing (eso es exploratory testing)
 - ❌ Tests automatizados (eso es Fase 11: Test Automation)
@@ -79,10 +87,12 @@ Crear smoke test checklist para validar deployment funcional:
 
 ## 📤 OUTPUT GENERADO
 
-### Smoke Test Checklist:
+### Smoke Test Checklist
+
 - ✅ `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/smoke-test.md` - Checklist ejecutable
 
 **Estructura del checklist:**
+
 ```markdown
 # Smoke Test: [STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} - Nombre]
 
@@ -127,7 +137,7 @@ Crear smoke test checklist para validar deployment funcional:
 
 ## 🚨 RESTRICCIONES CRÍTICAS
 
-### ❌ NO HACER:
+### ❌ NO HACER
 
 - **NO hacer exploratory testing completo** - Solo smoke test rápido
 - **NO testear edge cases todavía** - Eso es para exploratory testing
@@ -135,7 +145,7 @@ Crear smoke test checklist para validar deployment funcional:
 - **NO invertir más de 10 minutos** - Smoke test debe ser rápido
 - **NO asumir que deployment funciona** - Validar manualmente
 
-### ✅ SÍ HACER:
+### ✅ SÍ HACER
 
 - **Validar lo mínimo necesario** - Aplicación carga + happy path funciona
 - **Revisar console y network** - Identificar errores técnicos
@@ -157,6 +167,7 @@ Crear smoke test checklist para validar deployment funcional:
 **Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md`
 
 **Identificar:**
+
 1. **Acceptance Criteria (AC):**
    - ¿Qué debe funcionar?
    - ¿Cuál es el happy path?
@@ -173,6 +184,7 @@ Crear smoke test checklist para validar deployment funcional:
 **Acción:** Leer `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/test-cases.md`
 
 **Identificar:**
+
 - Test case #1 (happy path) → Smoke test debe cubrir esto
 - Funcionalidad mínima que debe funcionar
 
@@ -185,6 +197,7 @@ Crear smoke test checklist para validar deployment funcional:
 ### Paso 2.1: Abrir Staging URL
 
 **Acción:**
+
 1. Abrir browser (Chrome recomendado)
 2. Abrir DevTools (F12)
 3. Navegar a: `https://[project]-develop.vercel.app`
@@ -196,21 +209,25 @@ Crear smoke test checklist para validar deployment funcional:
 **Checklist:**
 
 **1. Aplicación carga sin errores 500:**
+
 - [ ] Landing page carga completamente
 - [ ] No hay pantalla de error 500 o 404
 - [ ] Loading states terminan correctamente
 
 **2. No hay errores en console:**
+
 - Abrir Console tab (F12)
 - [ ] No hay errores rojos en console
 - [ ] Advertencias amarillas son aceptables (no críticas)
 
 **3. Assets cargan correctamente:**
+
 - [ ] CSS carga (página se ve con estilos)
 - [ ] JavaScript carga (interacciones funcionan)
 - [ ] Imágenes cargan (no hay placeholders rotos)
 
 **Si algo falla aquí:**
+
 ```markdown
 ## ❌ SMOKE TEST FAILED - Acceso Básico
 
@@ -220,7 +237,9 @@ Crear smoke test checklist para validar deployment funcional:
 - Screenshot: [Adjuntar]
 - Console errors:
   ```
+
   [Copiar errores de console]
+
   ```
 
 **Acción:** Reportar a Development inmediatamente, NO continuar.
@@ -235,12 +254,14 @@ Crear smoke test checklist para validar deployment funcional:
 ### Paso 3.1: Login
 
 **Acción:**
+
 1. Navegar a `/login` (o la ruta de login)
 2. Usar credenciales de test:
    - Email: `test@example.com` (o según `.env.example`)
    - Password: `Test123!`
 
 **Validar:**
+
 - [ ] Login form aparece correctamente
 - [ ] Submit login funciona
 - [ ] Redirect a dashboard/home después de login exitoso
@@ -251,9 +272,11 @@ Crear smoke test checklist para validar deployment funcional:
 ### Paso 3.2: Sesión Persistencia
 
 **Acción:**
+
 1. Después de login exitoso, refrescar página (F5)
 
 **Validar:**
+
 - [ ] Sesión persiste (no te saca de la app)
 - [ ] User info aparece correctamente (avatar, nombre, etc.)
 
@@ -262,14 +285,17 @@ Crear smoke test checklist para validar deployment funcional:
 ### Paso 3.3: Logout
 
 **Acción:**
+
 1. Click en logout button
 
 **Validar:**
+
 - [ ] Logout funciona
 - [ ] Redirect a landing/login page
 - [ ] Sesión se limpia (no puedes acceder a rutas protegidas)
 
 **Si auth falla:**
+
 ```markdown
 ## ❌ SMOKE TEST FAILED - Autenticación
 
@@ -325,6 +351,7 @@ Ejemplos: mentors/skills en MYM, products/price en SHOP, posts/author en BLOG)
 ### Paso 4.2: Validar Visualmente
 
 **Checklist visual:**
+
 - [ ] UI se ve como en diseños (colores, spacing, fonts)
 - [ ] Componentes se renderizan correctamente
 - [ ] Responsive design funciona (resize browser)
@@ -332,6 +359,7 @@ Ejemplos: mentors/skills en MYM, products/price en SHOP, posts/author en BLOG)
 - [ ] No hay layouts rotos o overlapping elements
 
 **Si happy path falla:**
+
 ```markdown
 ## ❌ SMOKE TEST FAILED - Happy Path
 
@@ -355,17 +383,20 @@ Ejemplos: mentors/skills en MYM, products/price en SHOP, posts/author en BLOG)
 ### Paso 5.1: Revisar Network Tab
 
 **Acción:**
+
 1. Abrir Network tab en DevTools (F12)
 2. Ejecutar happy path nuevamente
 3. Observar requests
 
 **Validar:**
+
 - [ ] API calls a backend retornan 200 OK (no 500, no 404)
 - [ ] Datos se envían correctamente (payload en request)
 - [ ] Datos se reciben correctamente (response tiene data esperada)
 - [ ] No hay requests que fallen continuamente
 
 **Ejemplo de validación:**
+
 ```
 GET /api/[entities] → 200 OK
 Response: { "data": [...entities] }  ✅
@@ -382,11 +413,13 @@ Ejemplos: mentors/sessions en MYM, products/orders en SHOP, posts/comments en BL
 ### Paso 5.2: Validar Persistencia de Datos
 
 **Acción (si story modifica datos):**
+
 1. Crear/modificar data via UI (ej: crear entidad, editar perfil, etc.)
 2. Refrescar página (F5)
 3. Validar que cambios persisten
 
 **Validar:**
+
 - [ ] Datos se guardan en DB (persisten después de refresh)
 - [ ] No hay data loss
 - [ ] Data muestra valores correctos
@@ -557,25 +590,28 @@ Use: .prompts/fase-10-exploratory-testing/bug-report.md
 
 ---
 
-### ❌ Si Smoke Test FAILED:
+### ❌ Si Smoke Test FAILED
 
 **NO continuar con exploratory testing.**
 
 **Acción inmediata:**
+
 1. Reportar bug crítico a Development
 2. Incluir evidencia (screenshots, console errors)
 3. Deployment debe corregirse antes de continuar
 
 **Flujo de fix:**
+
 ```
 Bug reportado → Development fix → Re-deploy a staging → Re-ejecutar smoke test
 ```
 
 ---
 
-## 📊 Checklist Generado:
+## 📊 Checklist Generado
 
 **Secciones incluidas:**
+
 - ✅ Acceso básico (app carga, console sin errores, assets OK)
 - ✅ Autenticación (login, logout, sesión persiste)
 - ✅ Happy path de la story (steps específicos)
@@ -584,6 +620,7 @@ Bug reportado → Development fix → Re-deploy a staging → Re-ejecutar smoke 
 **Duración estimada:** 5-10 minutos
 
 **Ready para ejecutar!**
+
 ```
 
 ---

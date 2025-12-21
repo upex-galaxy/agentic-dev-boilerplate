@@ -424,12 +424,14 @@ Archivo: `.context/PRD/release-notes.md`
 ## Configuracion del Proyecto (Referencia)
 
 > **Nota:** Los siguientes valores deben estar definidos en el archivo de configuración del AI tool que se esté usando (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `CURSOR.md`, etc.):
+>
 > - `PROJECT_KEY`: Key del proyecto en Jira (ej: MYM, UPEX, etc.)
 > - `PRODUCT_NAME`: Nombre del producto para release notes
 > - `JIRA_CLOUD_ID`: ID del cloud de Jira (si se usa MCP Atlassian)
 > - `SUPABASE_PROJECT_ID`: ID del proyecto en Supabase (si aplica)
 
 **Transiciones comunes en Jira:**
+
 - `Ready For Dev` -> `In Progress`: Usar transition disponible
 - `In Progress` -> `In Review`: Automatico via PR
 - `In Review` -> `Ready For QA`: Automatico via Merge

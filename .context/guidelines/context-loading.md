@@ -159,18 +159,21 @@ Leer ANTES de automatizar:
 ## 💡 Tips de Eficiencia
 
 ### 1. Cargar solo lo necesario
+
 ```
 ❌ Leer todo .context/ cada vez
 ✅ Leer solo la carpeta de la story actual + guidelines relevantes
 ```
 
 ### 2. Usar MCPs para datos en vivo
+
 ```
 ❌ Leer schema en docs (puede estar desactualizado)
 ✅ Supabase MCP: "¿Qué columnas tiene la tabla users?"
 ```
 
 ### 3. Context layering
+
 ```
 1. Story context (específico)
 2. Epic context (feature level)
@@ -182,7 +185,8 @@ Leer ANTES de automatizar:
 
 ## ⚠️ Errores Comunes
 
-### ❌ NO hacer:
+### ❌ NO hacer
+
 1. **Leer documentación desactualizada**
    - Usa MCPs para datos en vivo
 

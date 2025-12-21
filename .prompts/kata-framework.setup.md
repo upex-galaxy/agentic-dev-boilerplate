@@ -468,6 +468,8 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
     "api:types": "bunx openapi-typescript api/openapi.yaml -o api/types.ts",
     "kata:manifest": "bun run scripts/kata-manifest.ts",
     "kata:manifest:watch": "bun run scripts/kata-manifest.ts --watch",
+    "mcp": "bun run scripts/mcp-builder.js",
+    "up": "bun run scripts/update-prompts.js",
     "install:browsers": "playwright install --with-deps",
     "prepare": "husky"
   },
@@ -484,7 +486,7 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 
 **IMPORTANT:** This is where AI generates project-specific code based on context.
 
-#### For each domain entity (e.g., User, Product, Order):
+#### For each domain entity (e.g., User, Product, Order)
 
 **1. Create API Component:**
 

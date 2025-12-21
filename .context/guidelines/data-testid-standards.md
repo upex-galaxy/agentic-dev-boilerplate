@@ -27,10 +27,10 @@ La decisión de dónde colocar el `data-testid` debe basarse en la **mantenibili
 
 ### Regla General
 
-| Tipo de Componente | Ubicación del data-testid | Razón |
-|--------------------|---------------------------|-------|
-| **Componentes UI base** (Button, Input, Card, etc.) | Donde se **usa**, NO en la definición | Se usan en múltiples contextos con diferentes propósitos |
-| **Componentes de dominio específicos** (ShoppingCart, UserProfile, ArticleCard, etc.) | En la **definición** del componente | Tienen propósito único, más fácil de mantener |
+| Tipo de Componente                                                                    | Ubicación del data-testid             | Razón                                                    |
+| ------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| **Componentes UI base** (Button, Input, Card, etc.)                                   | Donde se **usa**, NO en la definición | Se usan en múltiples contextos con diferentes propósitos |
+| **Componentes de dominio específicos** (ShoppingCart, UserProfile, ArticleCard, etc.) | En la **definición** del componente   | Tienen propósito único, más fácil de mantener            |
 
 ---
 
@@ -139,13 +139,14 @@ export function FriendsList({ friends }) {
 ```
 
 **Patrón de conversión:**
-| Nombre Componente | data-testid |
-|-------------------|-------------|
-| `ProductCard` | `productCard` |
-| `ShoppingCart` | `shoppingCart` |
-| `UserProfile` | `userProfile` |
-| `SearchBar` | `searchBar` |
-| `Navbar` | `navbar` |
+
+| Nombre Componente | data-testid    |
+| ----------------- | -------------- |
+| `ProductCard`     | `productCard`  |
+| `ShoppingCart`    | `shoppingCart` |
+| `UserProfile`     | `userProfile`  |
+| `SearchBar`       | `searchBar`    |
+| `Navbar`          | `navbar`       |
 
 ### 2. Elementos Específicos Internos: snake_case
 
@@ -182,6 +183,7 @@ export function AppHeader() {
 ```
 
 **Patrón de nomenclatura:**
+
 - `{descripcion}_{tipo}` donde tipo puede ser: `input`, `button`, `link`, `container`, `list`, `item`, `section`, etc.
 
 ---
@@ -276,6 +278,7 @@ function ProductList({ products }) {
 ```
 
 **Razón:** Los QA Automation combinan `data-testid` con:
+
 - Índices: `$$('[data-testid="productCard"]')[2]`
 - Selectores CSS: `$('[data-testid="productCard"]:has-text("iPhone")')`
 - Atributos: `$('[data-testid="productCard"][data-product-id="123"]')`
@@ -319,6 +322,7 @@ export function RegistrationForm({ onSubmit }) {
 ```
 
 **Selectores disponibles para QA:**
+
 ```javascript
 // Formulario completo
 $('[data-testid="registrationForm"]')
@@ -339,7 +343,7 @@ $('[data-testid="registrationForm"] button[type="submit"]')
 
 ## Cuándo Agregar data-testid
 
-### SIEMPRE agregar en:
+### SIEMPRE agregar en
 
 1. **Componentes de dominio específicos** (cards, formularios, secciones)
 2. **Formularios y sus campos** (inputs, selects, textareas)
@@ -350,7 +354,7 @@ $('[data-testid="registrationForm"] button[type="submit"]')
 7. **Mensajes de feedback** (errores, éxito, warnings)
 8. **Dropdowns y menús**
 
-### Opcional en:
+### Opcional en
 
 1. Elementos puramente decorativos
 2. Wrappers de layout sin interacción
@@ -360,12 +364,12 @@ $('[data-testid="registrationForm"] button[type="submit"]')
 
 ## Resumen de Convenciones
 
-| Contexto | Nomenclatura | Ejemplo |
-|----------|--------------|---------|
-| Componente (root) | camelCase | `data-testid="shoppingCart"` |
-| Elemento específico | snake_case | `data-testid="email_input"` |
-| Sección de componente | snake_case | `data-testid="billing_section"` |
-| Botón de acción | snake_case | `data-testid="checkout_button"` |
+| Contexto              | Nomenclatura | Ejemplo                         |
+| --------------------- | ------------ | ------------------------------- |
+| Componente (root)     | camelCase    | `data-testid="shoppingCart"`    |
+| Elemento específico   | snake_case   | `data-testid="email_input"`     |
+| Sección de componente | snake_case   | `data-testid="billing_section"` |
+| Botón de acción       | snake_case   | `data-testid="checkout_button"` |
 
 ---
 

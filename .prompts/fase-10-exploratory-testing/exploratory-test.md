@@ -9,10 +9,12 @@
 Execute exploratory testing on a deployed feature to validate functionality, discover edge cases, and identify potential defects before automation.
 
 **This prompt is executed AFTER:**
+
 - Smoke test passed (deployment is functional)
 - Feature is deployed to staging
 
 **Prerequisites:**
+
 - Access to Playwright MCP tools (`mcp__playwright__*`)
 - Staging URL accessible
 - Test cases or acceptance criteria as input
@@ -72,6 +74,7 @@ Provide:
    - Data flows to verify
 
 **Output to user:**
+
 ```markdown
 ## Exploration Plan
 
@@ -156,6 +159,7 @@ Shall I proceed with the exploration?
    - Concurrent modifications
 
 **Document each test:**
+
 ```markdown
 ### Edge Case: [Description]
 

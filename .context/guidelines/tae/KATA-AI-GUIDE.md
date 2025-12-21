@@ -323,6 +323,7 @@ Phase 5: Validation & Git Commit
 ## Auto-Generated Context
 
 Run `bun run kata:manifest` to generate `kata-manifest.json` with:
+
 - All components (API, UI, Preconditions)
 - All ATCs with their Jira IDs
 - File locations and method names
