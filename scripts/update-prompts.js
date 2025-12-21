@@ -55,6 +55,10 @@ const DOCS_FILES = [
   "README.md",
 ];
 
+const DOCS_DIRECTORIES = [
+  "api-testing-guide",
+];
+
 const SCRIPT_FILES = [
   "update-prompts.js",
   "update-prompts.md",
@@ -450,6 +454,17 @@ function updateDocs() {
       const srcFile = path.join(docsPath, file);
       fs.cpSync(srcFile, path.join("docs", file));
       logSuccess(file);
+    }
+  }
+
+  // Update documentation directories (like api-testing-guide)
+  for (const dir of DOCS_DIRECTORIES) {
+    const srcDir = path.join(docsPath, dir);
+    const destDir = path.join("docs", dir);
+    if (fs.existsSync(srcDir)) {
+      fs.rmSync(destDir, { recursive: true, force: true });
+      fs.cpSync(srcDir, destDir, { recursive: true });
+      logSuccess(`${dir}/ (directorio)`);
     }
   }
 }

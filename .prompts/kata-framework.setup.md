@@ -9,11 +9,13 @@
 Set up the complete KATA test automation framework by downloading core files from the template repository and generating domain-specific components.
 
 **Use this prompt when:**
+
 - Starting test automation in a new project
 - Setting up KATA in an existing project without automation
 - Reconstructing KATA framework after cloning a project
 
 **Prerequisites:**
+
 - Project uses TypeScript
 - Bun runtime installed (`curl -fsSL https://bun.sh/install | bash`)
 - Git initialized in project
@@ -23,12 +25,14 @@ Set up the complete KATA test automation framework by downloading core files fro
 ## Template Repository
 
 All core KATA files are available at:
+
 ```
 https://github.com/upex-galaxy/kata-playwright-template
 Branch: template
 ```
 
 **Download method:**
+
 ```bash
 curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template/template/[PATH]" -o [PATH]
 ```
@@ -54,12 +58,14 @@ ls .context/guidelines/tae/KATA-AI-GUIDE.md 2>/dev/null && echo "✓ TAE Guideli
 **Step 2: Determine project context**
 
 Before proceeding, identify:
+
 - Project name/prefix (e.g., `PROJ`, `MYM`, `SHOP`)
 - Main domain entities (e.g., Users, Products, Orders)
 - API base URL (from environment or documentation)
 - UI base URL (from environment or documentation)
 
 **Ask user:**
+
 ```
 What is your project context?
 1. Project prefix for test IDs (e.g., PROJ-UI-001): ___
@@ -80,14 +86,23 @@ bun add -d @playwright/test
 bunx playwright install chromium
 
 # Allure reporting
-bun add -d allure-playwright allure-commandline
+bun add -d allure-playwright
 
-# TypeScript & Linting
+# Allure CLI (install globally if not present)
+which allure || bun add -g allure-commandline
+
+# TypeScript & Linting (using @antfu/eslint-config for modern flat config)
 bun add -d typescript @types/node
-bun add -d eslint @eslint/js typescript-eslint globals
+bun add -d eslint @antfu/eslint-config
 
-# Dotenv for configuration
-bun add -d dotenv
+# Code Formatting & Git Hooks
+bun add -d prettier husky lint-staged
+
+# Test Data Generation
+bun add -d @faker-js/faker
+
+# OpenAPI Types Generation (optional, for API testing)
+bun add -d openapi-typescript
 ```
 
 ---
@@ -221,11 +236,62 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 [ ! -f .env.example ] && \
 curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template/template/.env.example" \
   -o .env.example
+
+# Prettier configuration
+[ ! -f .prettierrc ] && \
+curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template/template/.prettierrc" \
+  -o .prettierrc
+
+# Prettier ignore
+[ ! -f .prettierignore ] && \
+curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template/template/.prettierignore" \
+  -o .prettierignore
+
+# EditorConfig
+[ ! -f .editorconfig ] && \
+curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template/template/.editorconfig" \
+  -o .editorconfig
 ```
 
 ---
 
-### Phase 5: Download TAE Guidelines
+### Phase 5: Setup Code Quality Tools (Git Hooks)
+
+**Configure Husky and lint-staged for automatic code quality checks on commit:**
+
+```bash
+# Initialize Husky
+bunx husky init
+
+# Create pre-commit hook
+echo "bunx lint-staged" > .husky/pre-commit
+```
+
+**Add lint-staged configuration to package.json:**
+
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,yml,yaml}": ["prettier --write"]
+  }
+}
+```
+
+**Add format scripts to package.json:**
+
+```json
+{
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  }
+}
+```
+
+---
+
+### Phase 6: Download TAE Guidelines
 
 **These files provide context for AI-assisted development:**
 
@@ -273,7 +339,7 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 
 ---
 
-### Phase 6: Download Scripts
+### Phase 7: Download Scripts
 
 ```bash
 # KATA Manifest - Extracts ATCs from codebase
@@ -290,7 +356,7 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 
 ---
 
-### Phase 7: Download CI/CD Workflows (Optional)
+### Phase 8: Download CI/CD Workflows (Optional)
 
 ```bash
 # Main Playwright workflow
@@ -326,7 +392,7 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 
 ---
 
-### Phase 8: Download Examples (Optional)
+### Phase 9: Download Examples (Optional)
 
 **For reference on patterns - ask user before downloading:**
 
@@ -365,7 +431,7 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 
 ---
 
-### Phase 9: Update package.json
+### Phase 10: Update package.json
 
 **Add or merge these scripts into package.json:**
 
@@ -373,34 +439,55 @@ curl -sL "https://raw.githubusercontent.com/upex-galaxy/kata-playwright-template
 {
   "scripts": {
     "test": "playwright test",
-    "test:e2e": "playwright test tests/e2e --project=chromium",
-    "test:integration": "playwright test tests/integration --project=integration",
-    "test:smoke": "playwright test --grep @smoke",
-    "test:sanity": "playwright test --grep @sanity",
-    "test:regression": "playwright test --grep @regression",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
     "test:headed": "playwright test --headed",
-    "test:debug": "PWDEBUG=1 playwright test",
+    "test:retries": "playwright test --retries=2",
+    "test:last-failed": "playwright test --last-failed",
+    "test:e2e": "playwright test tests/e2e",
+    "test:e2e:critical": "playwright test tests/e2e --grep @critical",
+    "test:integration": "playwright test tests/integration --project=api",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:api": "playwright test --project=api",
     "test:report": "playwright show-report",
-    "allure:generate": "allure generate allure-results --clean -o allure-report",
-    "allure:open": "allure open allure-report",
-    "allure:serve": "allure serve allure-results",
-    "kata:manifest": "bun scripts/kata-manifest.ts",
-    "api:sync": "bun scripts/sync-openapi.ts",
+    "test:allure": "allure generate ./allure-results -o ./allure-report --clean && allure open ./allure-report",
+    "test:allure:generate": "allure generate ./allure-results -o ./allure-report --clean",
+    "test:allure:open": "allure open ./allure-report",
+    "test:sync": "bun run tests/utils/tmsSync.ts",
+    "clean": "rm -rf test-results playwright-report allure-results allure-report reports",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "api:sync": "bun run scripts/sync-openapi.ts",
+    "api:sync:types": "bun run scripts/sync-openapi.ts -c -t",
+    "api:types": "bunx openapi-typescript api/openapi.yaml -o api/types.ts",
+    "kata:manifest": "bun run scripts/kata-manifest.ts",
+    "kata:manifest:watch": "bun run scripts/kata-manifest.ts --watch",
+    "install:browsers": "playwright install --with-deps",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,yml,yaml}": ["prettier --write"]
   }
 }
 ```
 
 ---
 
-### Phase 10: Generate Domain-Specific Components
+### Phase 11: Generate Domain-Specific Components
 
 **IMPORTANT:** This is where AI generates project-specific code based on context.
 
 #### For each domain entity (e.g., User, Product, Order):
 
 **1. Create API Component:**
+
 ```typescript
 // tests/components/api/{Entity}Api.ts
 import { ApiBase } from './ApiBase';
@@ -433,6 +520,7 @@ export class {Entity}Api extends ApiBase {
 ```
 
 **2. Create UI Component:**
+
 ```typescript
 // tests/components/ui/{Entity}Page.ts
 import { UiBase } from './UiBase';
@@ -463,6 +551,7 @@ export class {Entity}Page extends UiBase {
 **3. Update Fixtures to include new components:**
 
 Add to `ApiFixture.ts`:
+
 ```typescript
 {entity}Api: async ({ context }, use) => {
   await use(new {Entity}Api(context));
@@ -470,6 +559,7 @@ Add to `ApiFixture.ts`:
 ```
 
 Add to `UiFixture.ts`:
+
 ```typescript
 {entity}Page: async ({ page }, use) => {
   await use(new {Entity}Page(page));
@@ -478,7 +568,7 @@ Add to `UiFixture.ts`:
 
 ---
 
-### Phase 11: Create Environment File
+### Phase 12: Create Environment File
 
 ```bash
 # Copy example to .env if not exists
@@ -490,7 +580,7 @@ echo "Please update .env with your actual values"
 
 ---
 
-### Phase 12: Validate Setup
+### Phase 13: Validate Setup
 
 ```bash
 # Run TypeScript compilation check
@@ -498,6 +588,12 @@ bunx tsc --noEmit
 
 # Run linting
 bun run lint
+
+# Run format check
+bun run format:check
+
+# Verify git hooks are installed
+ls .husky/pre-commit && echo "✓ Git hooks installed"
 
 # Run a simple test to verify setup
 bun run test --grep "@smoke" || bun run test tests/e2e/example
@@ -536,10 +632,18 @@ for file in \
   "playwright.config.ts" \
   "tsconfig.json" \
   "eslint.config.js" \
-  ".env.example"
+  ".env.example" \
+  ".prettierrc" \
+  ".prettierignore" \
+  ".editorconfig"
 do
   [ ! -f "$file" ] && curl -sL "$REPO/$file" -o "$file" && echo "✓ Downloaded $file"
 done
+
+# Setup git hooks
+bunx husky init
+echo "bunx lint-staged" > .husky/pre-commit
+echo "✓ Git hooks configured"
 
 # Download TAE guidelines
 for file in \
@@ -563,19 +667,28 @@ echo "KATA Framework setup complete!"
 ## File Summary
 
 ### Downloaded from Template (DO NOT modify without need)
-| File                              | Purpose                       |
-| --------------------------------- | ----------------------------- |
-| `tests/utils/decorators.ts`       | @atc decorator implementation |
-| `tests/utils/KataReporter.ts`     | Allure reporter integration   |
-| `tests/utils/tmsSync.ts`          | TMS synchronization           |
-| `tests/components/TestContext.ts` | Base utilities layer          |
-| `tests/components/api/ApiBase.ts` | HTTP client wrapper           |
-| `tests/components/ui/UiBase.ts`   | Playwright page wrapper       |
-| `tests/components/*Fixture.ts`    | DI containers                 |
-| `playwright.config.ts`            | Playwright configuration      |
-| `config/variables.ts`             | Environment configuration     |
+
+| File                              | Purpose                        |
+| --------------------------------- | ------------------------------ |
+| `tests/utils/decorators.ts`       | @atc decorator implementation  |
+| `tests/utils/KataReporter.ts`     | Allure reporter integration    |
+| `tests/utils/tmsSync.ts`          | TMS synchronization            |
+| `tests/components/TestContext.ts` | Base utilities layer           |
+| `tests/components/api/ApiBase.ts` | HTTP client wrapper            |
+| `tests/components/ui/UiBase.ts`   | Playwright page wrapper        |
+| `tests/components/*Fixture.ts`    | DI containers                  |
+| `playwright.config.ts`            | Playwright configuration       |
+| `config/variables.ts`             | Environment configuration      |
+| `scripts/kata-manifest.ts`        | Extract ATCs from codebase     |
+| `scripts/sync-openapi.ts`         | Sync OpenAPI spec & types      |
+| `.prettierrc`                     | Prettier code formatter config |
+| `.prettierignore`                 | Files to ignore in formatting  |
+| `.editorconfig`                   | Editor consistency settings    |
+| `eslint.config.js`                | ESLint flat config             |
+| `tsconfig.json`                   | TypeScript configuration       |
 
 ### Generated Per Project (AI creates these)
+
 | File                                            | Purpose                |
 | ----------------------------------------------- | ---------------------- |
 | `tests/components/api/{Entity}Api.ts`           | Domain API components  |
@@ -610,9 +723,13 @@ After setup, always consult these guidelines:
 - [ ] Directory structure created
 - [ ] Core framework files downloaded
 - [ ] Configuration files in place
+- [ ] Code quality tools configured (Prettier, ESLint)
+- [ ] Git hooks installed (Husky, lint-staged)
 - [ ] TAE guidelines downloaded
 - [ ] `.env` file configured
 - [ ] TypeScript compiles without errors
+- [ ] Linting passes (`bun run lint`)
+- [ ] Format check passes (`bun run format:check`)
 - [ ] Sample test runs successfully
 - [ ] Domain-specific components created
 - [ ] Fixtures updated with new components

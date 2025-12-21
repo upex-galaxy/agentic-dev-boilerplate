@@ -146,6 +146,7 @@ bun up prompts --standalone   # Solo archivos standalone (git-flow, workflows)
   - `AMBIENTES.md`
   - `README.md`
   - `mcp-config-*.md` (todos los archivos de MCP)
+  - `api-testing-guide/` (guia completa de API testing)
 - `scripts/` → Scripts de actualización:
   - `update-prompts.js`
   - `update-prompts.md`
