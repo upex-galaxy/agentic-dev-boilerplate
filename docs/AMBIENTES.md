@@ -9,11 +9,13 @@ Los ambientes te permiten probar cambios sin afectar a usuarios reales. Son como
 ## Los 4 ambientes estándar del mercado
 
 ### 1. Development (dev)
+
 **Propósito:** Desarrollo activo de código.
 
 Aquí los desarrolladores escriben features nuevas, experimentan y hacen cambios frecuentes. El código puede romperse varias veces al día.
 
 **Características:**
+
 - Cambios constantes
 - Tests básicos (unitarios, integración)
 - Datos de prueba simples
@@ -26,11 +28,13 @@ Aquí los desarrolladores escriben features nuevas, experimentan y hacen cambios
 ---
 
 ### 2. Staging (stage/pre-prod)
+
 **Propósito:** Testing formal antes de producción.
 
 Es una **réplica casi exacta de producción**. Aquí se ejecutan todos los tests de QA, validaciones y ensayos finales.
 
 **Características:**
+
 - Réplica de producción (mismo OS, versiones, configuración)
 - Datos similares a producción (pero no reales)
 - Tests completos de QA
@@ -43,11 +47,13 @@ Es una **réplica casi exacta de producción**. Aquí se ejecutan todos los test
 ---
 
 ### 3. Production (prod)
+
 **Propósito:** Usuarios reales usando la aplicación.
 
 El ambiente que tus clientes ven. **Nunca se prueba aquí**, solo se monitorea.
 
 **Características:**
+
 - Usuarios reales
 - Datos reales
 - Máxima estabilidad requerida
@@ -61,11 +67,13 @@ El ambiente que tus clientes ven. **Nunca se prueba aquí**, solo se monitorea.
 ---
 
 ### 4. Local (tu computadora)
+
 **Propósito:** Desarrollo y pruebas individuales.
 
 No es técnicamente un "ambiente compartido", pero es donde pasas la mayor parte del tiempo como QA.
 
 **Características:**
+
 - Solo tú lo ves
 - Puedes romper todo sin consecuencias
 - Iteración rápida
@@ -96,27 +104,35 @@ prueba    integran    valida      usan
 No todas las empresas usan los mismos nombres o cantidad de ambientes.
 
 ### Empresas pequeñas (startup)
+
 ```
 Local → Staging → Production
 ```
+
 Solo 2 ambientes compartidos. Development y staging se combinan.
 
 ### Empresas medianas (más común)
+
 ```
 Local → Development → Staging → Production
 ```
+
 El estándar de la industria.
 
 ### Empresas grandes (enterprise)
+
 ```
 Local → Development → QA → Staging → Production
 ```
+
 Ambiente de QA separado para testing extensivo. Staging solo para validación final.
 
 ### Empresas muy grandes (tech giants)
+
 ```
 Local → Dev → QA → Staging → Canary → Production
 ```
+
 Múltiples ambientes intermedios. "Canary" despliega a un pequeño % de usuarios reales primero.
 
 ## Ambientes en este repositorio template
@@ -124,19 +140,23 @@ Múltiples ambientes intermedios. "Canary" despliega a un pequeño % de usuarios
 Para este proyecto educativo, usamos **3 ambientes**:
 
 ### Local (tu máquina)
+
 Desarrollas y pruebas tus tests de automation aquí.
 
 ### Staging (rama `staging`)
+
 Ambiente de integración donde todos los cambios se validan antes de production.
 
 **Este es tu ambiente principal de trabajo como QA.**
 
 ### Production (rama `main`)
+
 Código estable y aprobado.
 
 ## Por qué NO usamos "qa" como nombre de rama
 
 Aunque algunas empresas tienen ambientes llamados "qa", **staging es el término estándar** que encontrarás en:
+
 - 90% de ofertas de trabajo
 - Documentación de CI/CD (GitHub Actions, GitLab CI, Jenkins)
 - Tutoriales y cursos
@@ -163,6 +183,7 @@ main             →    Production         Sí (con aprobación)
 Cada ambiente tiene su propia configuración:
 
 **Development/Staging:**
+
 ```
 DATABASE_URL=postgres://staging-db.company.com
 API_KEY=test_key_12345
@@ -170,6 +191,7 @@ DEBUG_MODE=true
 ```
 
 **Production:**
+
 ```
 DATABASE_URL=postgres://prod-db.company.com
 API_KEY=live_key_67890
@@ -181,17 +203,20 @@ Esto se maneja con archivos `.env` o variables de entorno en el servidor.
 ## Testing en cada ambiente
 
 ### Local
+
 - Tests unitarios
 - Tests de componentes
 - Debugging de tests
 
 ### Staging
+
 - Test suites completas (E2E)
 - Regression testing
 - Performance testing básico
 - Validación de features nuevas
 
 ### Production
+
 - **NO se ejecutan tests**
 - Solo monitoring y alertas
 - Smoke tests post-deploy (verificación rápida)
@@ -199,14 +224,17 @@ Esto se maneja con archivos `.env` o variables de entorno en el servidor.
 ## Datos en cada ambiente
 
 ### Local
+
 Datos ficticios que creas tú. Puedes resetearlos cuando quieras.
 
 ### Staging
+
 Datos de prueba realistas pero no reales. Usuarios ficticios con nombres como "Test User 1".
 
 **Importante:** Nunca uses datos reales de clientes en staging.
 
 ### Production
+
 Datos reales de usuarios reales. Protegidos por leyes (GDPR, etc).
 
 ## Errores comunes que debes evitar

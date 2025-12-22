@@ -470,8 +470,8 @@ Usa supabase para ver datos DB
 
 ## 🔄 Context7 vs Tavily: ¿Cuál usar?
 
-| Escenario                                     | Context7                 | Tavily           |
-| --------------------------------------------- | ------------------------ | ---------------- |
+| Escenario                                     | Context7                  | Tavily            |
+| --------------------------------------------- | ------------------------- | ----------------- |
 | "¿Cómo usar useState en React?"               | ✅ Docs oficiales         | ❌ Overkill       |
 | "Error: hydration mismatch en Next.js"        | ❌ No indexa foros        | ✅ Stack Overflow |
 | "¿Playwright tiene retry automático?"         | ✅ Docs oficiales         | ❌ Innecesario    |
@@ -529,19 +529,19 @@ Usa supabase para ver datos DB
 
 **Total MCPs disponibles**: 11
 
-| MCP            | Tipo           | Cuándo usar                   |
-| -------------- | -------------- | ----------------------------- |
-| Supabase       | Database       | Schema, datos, policies       |
-| Atlassian      | Project Mgmt   | Jira, Confluence              |
-| Context7       | Docs Oficiales | React, Next.js, Playwright    |
+| MCP             | Tipo           | Cuándo usar                   |
+| --------------- | -------------- | ----------------------------- |
+| Supabase        | Database       | Schema, datos, policies       |
+| Atlassian       | Project Mgmt   | Jira, Confluence              |
+| Context7        | Docs Oficiales | React, Next.js, Playwright    |
 | **Tavily** ⭐   | Web Search     | Stack Overflow, foros, blogs  |
-| Playwright     | E2E Testing    | User flows, interactions      |
+| Playwright      | E2E Testing    | User flows, interactions      |
 | **DevTools** ⭐ | E2E Debug      | Console, network, performance |
-| Postman        | API Testing    | Endpoints, responses          |
+| Postman         | API Testing    | Endpoints, responses          |
 | **Sentry** ⭐   | Monitoring     | Production errors, traces     |
-| GitHub         | Repository     | Issues, PRs, code             |
-| Slack          | Communication  | Notificaciones, reportes      |
-| Memory         | Persistence    | Contexto entre sesiones       |
+| GitHub          | Repository     | Issues, PRs, code             |
+| Slack           | Communication  | Notificaciones, reportes      |
+| Memory          | Persistence    | Contexto entre sesiones       |
 
 ---
 

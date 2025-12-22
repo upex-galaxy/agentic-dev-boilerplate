@@ -2,13 +2,14 @@
 
 **Komponent Action Test Architecture**
 
-> *"Como un kata en artes marciales, donde cada movimiento se practica repetidamente hasta la perfección, KATA framework convierte las acciones del sistema en bloques reutilizables y precisos."*
+> _"Como un kata en artes marciales, donde cada movimiento se practica repetidamente hasta la perfección, KATA framework convierte las acciones del sistema en bloques reutilizables y precisos."_
 
 ---
 
 > **Note**: This is the **conceptual fundamentals document** for KATA Framework.
 >
 > For implementation-specific guides, see:
+>
 > - **AI Entry Point**: `.context/guidelines/tae/KATA-AI-GUIDE.md`
 > - **Architecture**: `.context/guidelines/tae/kata-architecture.md`
 > - **Standards**: `.context/guidelines/tae/automation-standards.md`
@@ -153,7 +154,7 @@ test('refund reduces balance', async ({ api }) => {
   // Acción 2: Procesar reembolso (con fixed assertions internas)
   await api.payments.refundPaymentSuccessfully({
     loanId: loan.id,
-    amount: 200
+    amount: 200,
   });
 
   // Test-level assertion: valida el efecto combinado
@@ -283,14 +284,14 @@ export class ApiBase extends TestContext {
   protected async apiGET<T>(endpoint: string): Promise<[APIResponse, T]> {
     const ctx = await this.getRequestContext();
     const response = await ctx.get(this.buildApiUrl(endpoint));
-    const body = await response.json() as T;
+    const body = (await response.json()) as T;
     return [response, body];
   }
 
   protected async apiPOST<T, P>(endpoint: string, payload: P): Promise<[APIResponse, T, P]> {
     const ctx = await this.getRequestContext();
     const response = await ctx.post(this.buildApiUrl(endpoint), { data: payload });
-    const body = await response.json() as T;
+    const body = (await response.json()) as T;
     return [response, body, payload];
   }
 
@@ -368,7 +369,9 @@ export class UsersApi extends ApiBase {
    * Fixed Validations: Status 201, ID presente, email correcto
    */
   @atc('USER-001')
-  async createUserSuccessfully(payload: CreateUserPayload): Promise<[APIResponse, User, CreateUserPayload]> {
+  async createUserSuccessfully(
+    payload: CreateUserPayload
+  ): Promise<[APIResponse, User, CreateUserPayload]> {
     const [response, body, sentPayload] = await this.apiPOST<User, CreateUserPayload>(
       '/users',
       payload
@@ -1845,18 +1848,18 @@ def test_multi_section_form(fixture):
 
 ### Repositorios de ejemplo
 
-- [KATA Python Template](https://github.com/example/kata-python) *(placeholder)*
-- [KATA JavaScript Template](https://github.com/example/kata-js) *(placeholder)*
+- [KATA Python Template](https://github.com/example/kata-python) _(placeholder)_
+- [KATA JavaScript Template](https://github.com/example/kata-js) _(placeholder)_
 
 ### Artículos y presentaciones
 
-- "Introducción a KATA Framework" *(pendiente)*
-- "Migrando de Page Object Model a KATA" *(pendiente)*
-- "Trazabilidad automatizada con KATA" *(pendiente)*
+- "Introducción a KATA Framework" _(pendiente)_
+- "Migrando de Page Object Model a KATA" _(pendiente)_
+- "Trazabilidad automatizada con KATA" _(pendiente)_
 
 ### Comunidad
 
-- Discord: [KATA Community](https://discord.gg/kata) *(placeholder)*
+- Discord: [KATA Community](https://discord.gg/kata) _(placeholder)_
 - GitHub Discussions: Comparte experiencias y mejores prácticas
 
 ---
@@ -1884,4 +1887,4 @@ Como un kata en artes marciales, KATA Framework te invita a practicar buenos há
 
 ---
 
-*"El código bien estructurado es como un kata perfecto: cada movimiento tiene propósito, y la práctica constante lleva a la maestría."*
+_"El código bien estructurado es como un kata perfecto: cada movimiento tiene propósito, y la práctica constante lleva a la maestría."_

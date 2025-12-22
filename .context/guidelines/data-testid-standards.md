@@ -84,25 +84,21 @@ export function ShoppingCart({ items }) {
     <aside data-testid="shoppingCart">
       {/* El carrito siempre es "shoppingCart" donde se use */}
     </aside>
-  )
+  );
 }
 
 // Ejemplo SaaS:
 export function PricingTable({ plans }) {
   return (
-    <div data-testid="pricingTable">
-      {/* La tabla de precios siempre es "pricingTable" */}
-    </div>
-  )
+    <div data-testid="pricingTable">{/* La tabla de precios siempre es "pricingTable" */}</div>
+  );
 }
 
 // Ejemplo blog:
 export function ArticleCard({ article }) {
   return (
-    <article data-testid="articleCard">
-      {/* Cada card de artículo es "articleCard" */}
-    </article>
-  )
+    <article data-testid="articleCard">{/* Cada card de artículo es "articleCard" */}</article>
+  );
 }
 ```
 
@@ -119,22 +115,22 @@ El `data-testid` del **elemento raíz** de un componente usa **camelCase** basad
 
 // E-commerce
 export function ProductCard({ product }) {
-  return <div data-testid="productCard">...</div>
+  return <div data-testid="productCard">...</div>;
 }
 
 // SaaS
 export function UserDashboard({ user }) {
-  return <main data-testid="userDashboard">...</main>
+  return <main data-testid="userDashboard">...</main>;
 }
 
 // Blog
 export function CommentSection({ comments }) {
-  return <section data-testid="commentSection">...</section>
+  return <section data-testid="commentSection">...</section>;
 }
 
 // Red social
 export function FriendsList({ friends }) {
-  return <ul data-testid="friendsList">...</ul>
+  return <ul data-testid="friendsList">...</ul>;
 }
 ```
 
@@ -164,21 +160,23 @@ export function CheckoutForm({ onSubmit }) {
         Pagar
       </button>
     </form>
-  )
+  );
 }
 
 // Ejemplo: Header de aplicación (genérico)
 export function AppHeader() {
   return (
     <header data-testid="appHeader">
-      <a data-testid="logo_link" href="/">Logo</a>
+      <a data-testid="logo_link" href="/">
+        Logo
+      </a>
       <nav data-testid="main_nav">...</nav>
       <button data-testid="menu_toggle">Menu</button>
       <div data-testid="user_menu">
         <button data-testid="logout_button">Salir</button>
       </div>
     </header>
-  )
+  );
 }
 ```
 
@@ -202,7 +200,7 @@ export function SearchBar() {
       <input placeholder="Buscar..." />
       <button>Buscar</button>
     </div>
-  )
+  );
 }
 
 // Uso en tests:
@@ -218,7 +216,7 @@ export function SearchBar() {
       <input data-testid="searchInput" />
       <button data-testid="searchButton">Buscar</button>
     </div>
-  )
+  );
 }
 ```
 
@@ -233,7 +231,7 @@ export function SubmitButton({ children }) {
     <button data-testid="submitButton" type="submit">
       {children}
     </button>
-  )
+  );
 }
 ```
 
@@ -317,7 +315,7 @@ export function RegistrationForm({ onSubmit }) {
         </a>
       </div>
     </form>
-  )
+  );
 }
 ```
 
@@ -325,18 +323,18 @@ export function RegistrationForm({ onSubmit }) {
 
 ```javascript
 // Formulario completo
-$('[data-testid="registrationForm"]')
+$('[data-testid="registrationForm"]');
 
 // Campos específicos
-$('[data-testid="email_input"]')
-$('[data-testid="password_input"]')
+$('[data-testid="email_input"]');
+$('[data-testid="password_input"]');
 
 // Navegación dentro del componente
-$('[data-testid="registrationForm"] [data-testid="submit_button"]')
-$('[data-testid="personal_info_section"] input')
+$('[data-testid="registrationForm"] [data-testid="submit_button"]');
+$('[data-testid="personal_info_section"] input');
 
 // Combinaciones con selectores CSS
-$('[data-testid="registrationForm"] button[type="submit"]')
+$('[data-testid="registrationForm"] button[type="submit"]');
 ```
 
 ---
@@ -399,15 +397,13 @@ export function ProductCard({ product }) {
       <h3 data-testid="product_name">{product.name}</h3>
       <p data-testid="product_price">${product.price}</p>
       <div data-testid="product_actions">
-        <Button data-testid="add_to_cart_button">
-          Agregar al carrito
-        </Button>
+        <Button data-testid="add_to_cart_button">Agregar al carrito</Button>
         <Button data-testid="view_details_button" variant="outline">
           Ver detalles
         </Button>
       </div>
     </article>
-  )
+  );
 }
 ```
 
@@ -421,14 +417,14 @@ export function PricingCard({ plan }) {
       <p data-testid="plan_price">${plan.price}/mes</p>
       <ul data-testid="features_list">
         {plan.features.map(feature => (
-          <li data-testid="feature_item" key={feature}>{feature}</li>
+          <li data-testid="feature_item" key={feature}>
+            {feature}
+          </li>
         ))}
       </ul>
-      <Button data-testid="select_plan_button">
-        Seleccionar plan
-      </Button>
+      <Button data-testid="select_plan_button">Seleccionar plan</Button>
     </div>
-  )
+  );
 }
 ```
 
@@ -449,7 +445,7 @@ export function ArticleCard({ article }) {
         Leer más
       </a>
     </article>
-  )
+  );
 }
 ```
 
@@ -464,20 +460,24 @@ export function MainNavigation() {
       </a>
 
       <div data-testid="nav_links">
-        <a data-testid="home_link" href="/">Inicio</a>
-        <a data-testid="features_link" href="/features">Características</a>
-        <a data-testid="pricing_link" href="/pricing">Precios</a>
+        <a data-testid="home_link" href="/">
+          Inicio
+        </a>
+        <a data-testid="features_link" href="/features">
+          Características
+        </a>
+        <a data-testid="pricing_link" href="/pricing">
+          Precios
+        </a>
       </div>
 
       <div data-testid="auth_actions">
         <Button data-testid="login_button" variant="ghost">
           Iniciar sesión
         </Button>
-        <Button data-testid="signup_button">
-          Registrarse
-        </Button>
+        <Button data-testid="signup_button">Registrarse</Button>
       </div>
     </nav>
-  )
+  );
 }
 ```

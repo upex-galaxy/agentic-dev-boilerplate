@@ -380,12 +380,14 @@ export default defineConfig({
   ],
 
   // Web server for E2E tests
-  webServer: isCI ? undefined : {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !isCI,
-    timeout: 120 * 1000,
-  },
+  webServer: isCI
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !isCI,
+        timeout: 120 * 1000,
+      },
 });
 ```
 
@@ -586,7 +588,7 @@ Use **GitHub Actions Dashboard** or **Allure Reports** for trends:
 **Solution**: Reduce workers
 
 ```typescript
-workers: process.env.CI ? 1 : undefined
+workers: process.env.CI ? 1 : undefined;
 ```
 
 ### Issue: "Tests are flaky in CI"
@@ -596,13 +598,13 @@ workers: process.env.CI ? 1 : undefined
 1. Increase timeouts for CI:
 
    ```typescript
-   timeout: isCI ? 60000 : 30000
+   timeout: isCI ? 60000 : 30000;
    ```
 
 2. Enable retries:
 
    ```typescript
-   retries: isCI ? 2 : 0
+   retries: isCI ? 2 : 0;
    ```
 
 3. Add wait conditions:

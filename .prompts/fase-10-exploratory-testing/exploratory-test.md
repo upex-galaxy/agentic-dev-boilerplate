@@ -83,10 +83,11 @@ Provide:
 **Staging URL:** [URL]
 
 ### Scenarios to Explore:
+
 1. [Scenario 1 - Happy path]
 2. [Scenario 2 - Edge case]
 3. [Scenario 3 - Negative]
-...
+   ...
 
 Shall I proceed with the exploration?
 ```
@@ -123,6 +124,7 @@ Shall I proceed with the exploration?
 ### Scenario: [Name]
 
 **Steps Executed:**
+
 1. [Action] → [Result]
 2. [Action] → [Result]
 3. [Action] → [Result]
@@ -130,6 +132,7 @@ Shall I proceed with the exploration?
 **Outcome:** [PASSED / ISSUE FOUND]
 
 **Notes:**
+
 - [Observation 1]
 - [Observation 2]
 ```
@@ -196,9 +199,11 @@ Shall I proceed with the exploration?
 ## Scenarios Tested
 
 ### 1. [Scenario Name] - [PASSED/FAILED]
+
 [Details...]
 
 ### 2. [Scenario Name] - [PASSED/FAILED]
+
 [Details...]
 
 ---
@@ -206,6 +211,7 @@ Shall I proceed with the exploration?
 ## Issues Found
 
 ### Issue 1: [Title]
+
 - **Severity:** [Critical/High/Medium/Low]
 - **Steps to Reproduce:**
   1. [Step 1]
@@ -219,12 +225,15 @@ Shall I proceed with the exploration?
 ## Observations & Recommendations
 
 ### Positive Findings:
+
 - [What worked well]
 
 ### Areas of Concern:
+
 - [Potential issues to monitor]
 
 ### Recommendations for Automation:
+
 - [Scenarios that should be automated]
 - [Priority suggestions]
 

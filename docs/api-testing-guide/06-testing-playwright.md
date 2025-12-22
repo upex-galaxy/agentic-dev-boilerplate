@@ -57,18 +57,18 @@ tests/
 
 ```typescript
 // tests/utils/test-context.ts
-import { APIRequestContext } from '@playwright/test'
+import { APIRequestContext } from '@playwright/test';
 
 export interface TestConfig {
-  baseUrl: string
-  apiUrl: string
-  supabaseUrl: string
-  supabaseAnonKey: string
-  projectRef: string
+  baseUrl: string;
+  apiUrl: string;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  projectRef: string;
   testUsers: {
-    customer: { email: string; password: string }
-    admin: { email: string; password: string }
-  }
+    customer: { email: string; password: string };
+    admin: { email: string; password: string };
+  };
 }
 
 export const testConfig: TestConfig = {
@@ -80,14 +80,14 @@ export const testConfig: TestConfig = {
   testUsers: {
     customer: {
       email: process.env.TEST_USER_EMAIL || 'test.customer@example.com',
-      password: process.env.TEST_USER_PASSWORD || 'Customer123!'
+      password: process.env.TEST_USER_PASSWORD || 'Customer123!',
     },
     admin: {
       email: process.env.TEST_ADMIN_EMAIL || 'test.admin@example.com',
-      password: process.env.TEST_ADMIN_PASSWORD || 'Admin123!'
-    }
-  }
-}
+      password: process.env.TEST_ADMIN_PASSWORD || 'Admin123!',
+    },
+  },
+};
 
 export class TestContext {
   constructor(
@@ -96,7 +96,7 @@ export class TestContext {
   ) {}
 
   log(message: string) {
-    console.log(`[TEST] ${new Date().toISOString()} - ${message}`)
+    console.log(`[TEST] ${new Date().toISOString()} - ${message}`);
   }
 }
 ```
@@ -107,64 +107,64 @@ export class TestContext {
 
 ```typescript
 // tests/components/api/base/api-base.ts
-import { APIRequestContext, APIResponse, expect } from '@playwright/test'
-import { TestContext, testConfig } from '../../../utils/test-context'
+import { APIRequestContext, APIResponse, expect } from '@playwright/test';
+import { TestContext, testConfig } from '../../../utils/test-context';
 
 export interface ApiResponse<T = unknown> {
-  status: number
-  data: T
-  headers: Record<string, string>
+  status: number;
+  data: T;
+  headers: Record<string, string>;
 }
 
 export class ApiBase {
-  protected context: TestContext
-  protected request: APIRequestContext
-  protected baseUrl: string
-  protected authToken: string | null = null
+  protected context: TestContext;
+  protected request: APIRequestContext;
+  protected baseUrl: string;
+  protected authToken: string | null = null;
 
   constructor(context: TestContext) {
-    this.context = context
-    this.request = context.request
-    this.baseUrl = context.config.supabaseUrl
+    this.context = context;
+    this.request = context.request;
+    this.baseUrl = context.config.supabaseUrl;
   }
 
   setAuthToken(token: string) {
-    this.authToken = token
+    this.authToken = token;
   }
 
   clearAuthToken() {
-    this.authToken = null
+    this.authToken = null;
   }
 
   protected getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      'apikey': testConfig.supabaseAnonKey,
-      'Content-Type': 'application/json'
-    }
+      apikey: testConfig.supabaseAnonKey,
+      'Content-Type': 'application/json',
+    };
 
     if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`
+      headers['Authorization'] = `Bearer ${this.authToken}`;
     }
 
-    return headers
+    return headers;
   }
 
   protected async get<T>(
     endpoint: string,
     params?: Record<string, string>
   ): Promise<ApiResponse<T>> {
-    const url = new URL(`${this.baseUrl}/rest/v1${endpoint}`)
+    const url = new URL(`${this.baseUrl}/rest/v1${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.append(key, value)
-      })
+        url.searchParams.append(key, value);
+      });
     }
 
     const response = await this.request.get(url.toString(), {
-      headers: this.getHeaders()
-    })
+      headers: this.getHeaders(),
+    });
 
-    return this.parseResponse<T>(response)
+    return this.parseResponse<T>(response);
   }
 
   protected async post<T>(
@@ -172,20 +172,17 @@ export class ApiBase {
     data: unknown,
     options?: { returnRepresentation?: boolean }
   ): Promise<ApiResponse<T>> {
-    const headers = this.getHeaders()
+    const headers = this.getHeaders();
     if (options?.returnRepresentation) {
-      headers['Prefer'] = 'return=representation'
+      headers['Prefer'] = 'return=representation';
     }
 
-    const response = await this.request.post(
-      `${this.baseUrl}/rest/v1${endpoint}`,
-      {
-        headers,
-        data
-      }
-    )
+    const response = await this.request.post(`${this.baseUrl}/rest/v1${endpoint}`, {
+      headers,
+      data,
+    });
 
-    return this.parseResponse<T>(response)
+    return this.parseResponse<T>(response);
   }
 
   protected async patch<T>(
@@ -193,58 +190,52 @@ export class ApiBase {
     data: unknown,
     options?: { returnRepresentation?: boolean }
   ): Promise<ApiResponse<T>> {
-    const headers = this.getHeaders()
+    const headers = this.getHeaders();
     if (options?.returnRepresentation) {
-      headers['Prefer'] = 'return=representation'
+      headers['Prefer'] = 'return=representation';
     }
 
-    const response = await this.request.patch(
-      `${this.baseUrl}/rest/v1${endpoint}`,
-      {
-        headers,
-        data
-      }
-    )
+    const response = await this.request.patch(`${this.baseUrl}/rest/v1${endpoint}`, {
+      headers,
+      data,
+    });
 
-    return this.parseResponse<T>(response)
+    return this.parseResponse<T>(response);
   }
 
   protected async delete(endpoint: string): Promise<ApiResponse<void>> {
-    const response = await this.request.delete(
-      `${this.baseUrl}/rest/v1${endpoint}`,
-      {
-        headers: this.getHeaders()
-      }
-    )
+    const response = await this.request.delete(`${this.baseUrl}/rest/v1${endpoint}`, {
+      headers: this.getHeaders(),
+    });
 
     return {
       status: response.status(),
       data: undefined as void,
-      headers: this.extractHeaders(response)
-    }
+      headers: this.extractHeaders(response),
+    };
   }
 
   private async parseResponse<T>(response: APIResponse): Promise<ApiResponse<T>> {
-    let data: T
+    let data: T;
     try {
-      data = await response.json()
+      data = await response.json();
     } catch {
-      data = {} as T
+      data = {} as T;
     }
 
     return {
       status: response.status(),
       data,
-      headers: this.extractHeaders(response)
-    }
+      headers: this.extractHeaders(response),
+    };
   }
 
   private extractHeaders(response: APIResponse): Record<string, string> {
-    const headers: Record<string, string> = {}
+    const headers: Record<string, string> = {};
     response.headersArray().forEach(({ name, value }) => {
-      headers[name.toLowerCase()] = value
-    })
-    return headers
+      headers[name.toLowerCase()] = value;
+    });
+    return headers;
   }
 }
 ```
@@ -257,34 +248,34 @@ export class ApiBase {
 
 ```typescript
 // tests/components/api/auth-api.ts
-import { expect } from '@playwright/test'
-import { ApiBase } from './base/api-base'
-import { TestContext, testConfig } from '../../utils/test-context'
+import { expect } from '@playwright/test';
+import { ApiBase } from './base/api-base';
+import { TestContext, testConfig } from '../../utils/test-context';
 
 interface LoginResponse {
-  access_token: string
-  refresh_token: string
+  access_token: string;
+  refresh_token: string;
   user: {
-    id: string
-    email: string
+    id: string;
+    email: string;
     user_metadata: {
-      name: string
-      role: string
-    }
-  }
+      name: string;
+      role: string;
+    };
+  };
 }
 
 interface AuthenticatedUser {
-  token: string
-  userId: string
-  email: string
-  name: string
-  role: string
+  token: string;
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
 }
 
 export class AuthApi extends ApiBase {
   constructor(context: TestContext) {
-    super(context)
+    super(context);
   }
 
   /**
@@ -292,37 +283,36 @@ export class AuthApi extends ApiBase {
    * Login with email and password
    */
   async login(email: string, password: string): Promise<AuthenticatedUser> {
-    this.context.log(`Logging in as ${email}`)
+    this.context.log(`Logging in as ${email}`);
 
-    const response = await this.request.post(
-      `${this.baseUrl}/auth/v1/token?grant_type=password`,
-      {
-        headers: {
-          'apikey': testConfig.supabaseAnonKey,
-          'Content-Type': 'application/json'
-        },
-        data: { email, password }
-      }
-    )
+    const response = await this.request.post(`${this.baseUrl}/auth/v1/token?grant_type=password`, {
+      headers: {
+        apikey: testConfig.supabaseAnonKey,
+        'Content-Type': 'application/json',
+      },
+      data: { email, password },
+    });
 
-    expect(response.status()).toBe(200)
+    expect(response.status()).toBe(200);
 
-    const data: LoginResponse = await response.json()
-    expect(data.access_token).toBeDefined()
-    expect(data.user.id).toBeDefined()
+    const data: LoginResponse = await response.json();
+    expect(data.access_token).toBeDefined();
+    expect(data.user.id).toBeDefined();
 
     // Set token for subsequent requests
-    this.setAuthToken(data.access_token)
+    this.setAuthToken(data.access_token);
 
-    this.context.log(`Logged in as ${data.user.user_metadata.name} (${data.user.user_metadata.role})`)
+    this.context.log(
+      `Logged in as ${data.user.user_metadata.name} (${data.user.user_metadata.role})`
+    );
 
     return {
       token: data.access_token,
       userId: data.user.id,
       email: data.user.email,
       name: data.user.user_metadata.name,
-      role: data.user.user_metadata.role
-    }
+      role: data.user.user_metadata.role,
+    };
   }
 
   /**
@@ -330,8 +320,8 @@ export class AuthApi extends ApiBase {
    * Login as test customer
    */
   async loginAsCustomer(): Promise<AuthenticatedUser> {
-    const { email, password } = testConfig.testUsers.customer
-    return this.login(email, password)
+    const { email, password } = testConfig.testUsers.customer;
+    return this.login(email, password);
   }
 
   /**
@@ -339,8 +329,8 @@ export class AuthApi extends ApiBase {
    * Login as test admin
    */
   async loginAsAdmin(): Promise<AuthenticatedUser> {
-    const { email, password } = testConfig.testUsers.admin
-    return this.login(email, password)
+    const { email, password } = testConfig.testUsers.admin;
+    return this.login(email, password);
   }
 
   /**
@@ -348,8 +338,8 @@ export class AuthApi extends ApiBase {
    * Logout and clear authentication
    */
   async logout(): Promise<void> {
-    this.clearAuthToken()
-    this.context.log('Logged out')
+    this.clearAuthToken();
+    this.context.log('Logged out');
   }
 }
 ```
@@ -358,23 +348,23 @@ export class AuthApi extends ApiBase {
 
 ```typescript
 // tests/components/api/users-api.ts
-import { expect } from '@playwright/test'
-import { ApiBase } from './base/api-base'
-import { TestContext } from '../../utils/test-context'
+import { expect } from '@playwright/test';
+import { ApiBase } from './base/api-base';
+import { TestContext } from '../../utils/test-context';
 
 interface User {
-  id: string
-  email: string
-  name: string
-  role: 'customer' | 'seller' | 'admin'
-  avatar_url?: string
-  bio?: string
-  created_at: string
+  id: string;
+  email: string;
+  name: string;
+  role: 'customer' | 'seller' | 'admin';
+  avatar_url?: string;
+  bio?: string;
+  created_at: string;
 }
 
 export class UsersApi extends ApiBase {
   constructor(context: TestContext) {
-    super(context)
+    super(context);
   }
 
   /**
@@ -382,18 +372,18 @@ export class UsersApi extends ApiBase {
    * Get all users with specific role (public)
    */
   async getUsersByRole(role: string): Promise<User[]> {
-    this.context.log(`Getting all users with role: ${role}`)
+    this.context.log(`Getting all users with role: ${role}`);
 
     const response = await this.get<User[]>('/users', {
-      'role': `eq.${role}`,
-      'select': 'id,name,email,avatar_url,bio'
-    })
+      role: `eq.${role}`,
+      select: 'id,name,email,avatar_url,bio',
+    });
 
-    expect(response.status).toBe(200)
-    expect(Array.isArray(response.data)).toBe(true)
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.data)).toBe(true);
 
-    this.context.log(`Found ${response.data.length} users`)
-    return response.data
+    this.context.log(`Found ${response.data.length} users`);
+    return response.data;
   }
 
   /**
@@ -401,22 +391,22 @@ export class UsersApi extends ApiBase {
    * Get user by ID (requires auth for private data)
    */
   async getUserById(id: string): Promise<User | null> {
-    this.context.log(`Getting user ${id}`)
+    this.context.log(`Getting user ${id}`);
 
     const response = await this.get<User[]>('/users', {
-      'id': `eq.${id}`,
-      'select': '*'
-    })
+      id: `eq.${id}`,
+      select: '*',
+    });
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(200);
 
     if (response.data.length === 0) {
-      this.context.log(`User ${id} not found`)
-      return null
+      this.context.log(`User ${id} not found`);
+      return null;
     }
 
-    this.context.log(`Found user: ${response.data[0].name}`)
-    return response.data[0]
+    this.context.log(`Found user: ${response.data[0].name}`);
+    return response.data[0];
   }
 
   /**
@@ -427,19 +417,17 @@ export class UsersApi extends ApiBase {
     userId: string,
     updates: Partial<Pick<User, 'name' | 'bio' | 'avatar_url'>>
   ): Promise<User> {
-    this.context.log(`Updating profile ${userId}`)
+    this.context.log(`Updating profile ${userId}`);
 
-    const response = await this.patch<User[]>(
-      `/users?id=eq.${userId}`,
-      updates,
-      { returnRepresentation: true }
-    )
+    const response = await this.patch<User[]>(`/users?id=eq.${userId}`, updates, {
+      returnRepresentation: true,
+    });
 
-    expect(response.status).toBe(200)
-    expect(response.data.length).toBe(1)
+    expect(response.status).toBe(200);
+    expect(response.data.length).toBe(1);
 
-    this.context.log(`Profile updated: ${response.data[0].name}`)
-    return response.data[0]
+    this.context.log(`Profile updated: ${response.data[0].name}`);
+    return response.data[0];
   }
 
   /**
@@ -450,25 +438,23 @@ export class UsersApi extends ApiBase {
     otherId: string,
     updates: Partial<User>
   ): Promise<{ success: boolean; data: User[] }> {
-    this.context.log(`Attempting to update other profile ${otherId}`)
+    this.context.log(`Attempting to update other profile ${otherId}`);
 
-    const response = await this.patch<User[]>(
-      `/users?id=eq.${otherId}`,
-      updates,
-      { returnRepresentation: true }
-    )
+    const response = await this.patch<User[]>(`/users?id=eq.${otherId}`, updates, {
+      returnRepresentation: true,
+    });
 
     // RLS should return empty array (no rows affected)
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(200);
 
-    const success = response.data.length > 0
+    const success = response.data.length > 0;
     if (!success) {
-      this.context.log(`RLS blocked update to other profile (expected)`)
+      this.context.log(`RLS blocked update to other profile (expected)`);
     } else {
-      this.context.log(`RLS did NOT block update (unexpected!)`)
+      this.context.log(`RLS did NOT block update (unexpected!)`);
     }
 
-    return { success, data: response.data }
+    return { success, data: response.data };
   }
 }
 ```
@@ -477,30 +463,30 @@ export class UsersApi extends ApiBase {
 
 ```typescript
 // tests/components/api/orders-api.ts
-import { expect } from '@playwright/test'
-import { ApiBase } from './base/api-base'
-import { TestContext } from '../../utils/test-context'
+import { expect } from '@playwright/test';
+import { ApiBase } from './base/api-base';
+import { TestContext } from '../../utils/test-context';
 
-type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled'
+type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
 
 interface Order {
-  id: string
-  user_id: string
-  status: OrderStatus
-  total: number
-  shipping_address: Record<string, string>
-  created_at: string
+  id: string;
+  user_id: string;
+  status: OrderStatus;
+  total: number;
+  shipping_address: Record<string, string>;
+  created_at: string;
 }
 
 interface CreateOrderData {
-  user_id: string
-  total: number
-  shipping_address: Record<string, string>
+  user_id: string;
+  total: number;
+  shipping_address: Record<string, string>;
 }
 
 export class OrdersApi extends ApiBase {
   constructor(context: TestContext) {
-    super(context)
+    super(context);
   }
 
   /**
@@ -508,24 +494,24 @@ export class OrdersApi extends ApiBase {
    * Get my orders
    */
   async getMyOrders(userId: string): Promise<Order[]> {
-    this.context.log(`Getting orders for user ${userId}`)
+    this.context.log(`Getting orders for user ${userId}`);
 
     const response = await this.get<Order[]>('/orders', {
-      'user_id': `eq.${userId}`,
-      'select': '*',
-      'order': 'created_at.desc'
-    })
+      user_id: `eq.${userId}`,
+      select: '*',
+      order: 'created_at.desc',
+    });
 
-    expect(response.status).toBe(200)
-    expect(Array.isArray(response.data)).toBe(true)
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.data)).toBe(true);
 
     // Verify all orders belong to this user
     response.data.forEach(order => {
-      expect(order.user_id).toBe(userId)
-    })
+      expect(order.user_id).toBe(userId);
+    });
 
-    this.context.log(`Found ${response.data.length} orders`)
-    return response.data
+    this.context.log(`Found ${response.data.length} orders`);
+    return response.data;
   }
 
   /**
@@ -533,45 +519,42 @@ export class OrdersApi extends ApiBase {
    * Create a new order
    */
   async createOrder(data: CreateOrderData): Promise<Order> {
-    this.context.log(`Creating order for user ${data.user_id}`)
+    this.context.log(`Creating order for user ${data.user_id}`);
 
     const response = await this.post<Order[]>(
       '/orders',
       { ...data, status: 'pending' },
       { returnRepresentation: true }
-    )
+    );
 
-    expect(response.status).toBe(201)
-    expect(response.data.length).toBe(1)
-    expect(response.data[0].id).toBeDefined()
-    expect(response.data[0].status).toBe('pending')
+    expect(response.status).toBe(201);
+    expect(response.data.length).toBe(1);
+    expect(response.data[0].id).toBeDefined();
+    expect(response.data[0].status).toBe('pending');
 
-    this.context.log(`Order created: ${response.data[0].id}`)
-    return response.data[0]
+    this.context.log(`Order created: ${response.data[0].id}`);
+    return response.data[0];
   }
 
   /**
    * @atc ORDER-003
    * Update order status
    */
-  async updateOrderStatus(
-    orderId: string,
-    status: OrderStatus
-  ): Promise<Order> {
-    this.context.log(`Updating order ${orderId} to status: ${status}`)
+  async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
+    this.context.log(`Updating order ${orderId} to status: ${status}`);
 
     const response = await this.patch<Order[]>(
       `/orders?id=eq.${orderId}`,
       { status },
       { returnRepresentation: true }
-    )
+    );
 
-    expect(response.status).toBe(200)
-    expect(response.data.length).toBe(1)
-    expect(response.data[0].status).toBe(status)
+    expect(response.status).toBe(200);
+    expect(response.data.length).toBe(1);
+    expect(response.data[0].status).toBe(status);
 
-    this.context.log(`Order status updated to: ${status}`)
-    return response.data[0]
+    this.context.log(`Order status updated to: ${status}`);
+    return response.data[0];
   }
 
   /**
@@ -579,12 +562,12 @@ export class OrdersApi extends ApiBase {
    * Delete pending order
    */
   async deletePendingOrder(orderId: string): Promise<void> {
-    this.context.log(`Deleting pending order ${orderId}`)
+    this.context.log(`Deleting pending order ${orderId}`);
 
-    const response = await this.delete(`/orders?id=eq.${orderId}`)
+    const response = await this.delete(`/orders?id=eq.${orderId}`);
 
-    expect(response.status).toBe(204)
-    this.context.log(`Order deleted`)
+    expect(response.status).toBe(204);
+    this.context.log(`Order deleted`);
   }
 
   /**
@@ -592,17 +575,17 @@ export class OrdersApi extends ApiBase {
    * Attempt to view other user's orders (should return empty)
    */
   async attemptViewOtherOrders(otherUserId: string): Promise<Order[]> {
-    this.context.log(`Attempting to view orders of user ${otherUserId}`)
+    this.context.log(`Attempting to view orders of user ${otherUserId}`);
 
     const response = await this.get<Order[]>('/orders', {
-      'user_id': `eq.${otherUserId}`
-    })
+      user_id: `eq.${otherUserId}`,
+    });
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(200);
     // RLS should filter out orders that don't belong to authenticated user
-    this.context.log(`Found ${response.data.length} orders (expected: 0 if RLS works)`)
+    this.context.log(`Found ${response.data.length} orders (expected: 0 if RLS works)`);
 
-    return response.data
+    return response.data;
   }
 }
 ```
@@ -611,29 +594,29 @@ export class OrdersApi extends ApiBase {
 
 ```typescript
 // tests/components/api/reviews-api.ts
-import { expect } from '@playwright/test'
-import { ApiBase } from './base/api-base'
-import { TestContext } from '../../utils/test-context'
+import { expect } from '@playwright/test';
+import { ApiBase } from './base/api-base';
+import { TestContext } from '../../utils/test-context';
 
 interface Review {
-  id: string
-  product_id: string
-  user_id: string
-  rating: number
-  comment: string
-  created_at: string
+  id: string;
+  product_id: string;
+  user_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
 }
 
 interface CreateReviewData {
-  product_id: string
-  user_id: string
-  rating: number
-  comment: string
+  product_id: string;
+  user_id: string;
+  rating: number;
+  comment: string;
 }
 
 export class ReviewsApi extends ApiBase {
   constructor(context: TestContext) {
-    super(context)
+    super(context);
   }
 
   /**
@@ -641,19 +624,19 @@ export class ReviewsApi extends ApiBase {
    * Get reviews for a product (public)
    */
   async getProductReviews(productId: string): Promise<Review[]> {
-    this.context.log(`Getting reviews for product ${productId}`)
+    this.context.log(`Getting reviews for product ${productId}`);
 
     const response = await this.get<Review[]>('/reviews', {
-      'product_id': `eq.${productId}`,
-      'select': '*',
-      'order': 'created_at.desc'
-    })
+      product_id: `eq.${productId}`,
+      select: '*',
+      order: 'created_at.desc',
+    });
 
-    expect(response.status).toBe(200)
-    expect(Array.isArray(response.data)).toBe(true)
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.data)).toBe(true);
 
-    this.context.log(`Found ${response.data.length} reviews`)
-    return response.data
+    this.context.log(`Found ${response.data.length} reviews`);
+    return response.data;
   }
 
   /**
@@ -661,24 +644,20 @@ export class ReviewsApi extends ApiBase {
    * Create a review
    */
   async createReview(data: CreateReviewData): Promise<Review> {
-    this.context.log(`Creating review for product ${data.product_id}`)
+    this.context.log(`Creating review for product ${data.product_id}`);
 
     // Validate rating range
-    expect(data.rating).toBeGreaterThanOrEqual(1)
-    expect(data.rating).toBeLessThanOrEqual(5)
+    expect(data.rating).toBeGreaterThanOrEqual(1);
+    expect(data.rating).toBeLessThanOrEqual(5);
 
-    const response = await this.post<Review[]>(
-      '/reviews',
-      data,
-      { returnRepresentation: true }
-    )
+    const response = await this.post<Review[]>('/reviews', data, { returnRepresentation: true });
 
-    expect(response.status).toBe(201)
-    expect(response.data.length).toBe(1)
-    expect(response.data[0].rating).toBe(data.rating)
+    expect(response.status).toBe(201);
+    expect(response.data.length).toBe(1);
+    expect(response.data[0].rating).toBe(data.rating);
 
-    this.context.log(`Review created with rating: ${data.rating}/5`)
-    return response.data[0]
+    this.context.log(`Review created with rating: ${data.rating}/5`);
+    return response.data[0];
   }
 
   /**
@@ -686,17 +665,17 @@ export class ReviewsApi extends ApiBase {
    * Calculate average rating for a product
    */
   async calculateProductAverageRating(productId: string): Promise<number> {
-    const reviews = await this.getProductReviews(productId)
+    const reviews = await this.getProductReviews(productId);
 
     if (reviews.length === 0) {
-      return 0
+      return 0;
     }
 
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0)
-    const average = sum / reviews.length
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    const average = sum / reviews.length;
 
-    this.context.log(`Average rating: ${average.toFixed(2)} from ${reviews.length} reviews`)
-    return average
+    this.context.log(`Average rating: ${average.toFixed(2)} from ${reviews.length} reviews`);
+    return average;
   }
 }
 ```
@@ -707,49 +686,49 @@ export class ReviewsApi extends ApiBase {
 
 ```typescript
 // tests/fixtures/api-fixture.ts
-import { test as base, APIRequestContext } from '@playwright/test'
-import { TestContext, testConfig } from '../utils/test-context'
-import { AuthApi } from '../components/api/auth-api'
-import { UsersApi } from '../components/api/users-api'
-import { OrdersApi } from '../components/api/orders-api'
-import { ReviewsApi } from '../components/api/reviews-api'
+import { test as base, APIRequestContext } from '@playwright/test';
+import { TestContext, testConfig } from '../utils/test-context';
+import { AuthApi } from '../components/api/auth-api';
+import { UsersApi } from '../components/api/users-api';
+import { OrdersApi } from '../components/api/orders-api';
+import { ReviewsApi } from '../components/api/reviews-api';
 
 interface ApiFixture {
-  context: TestContext
-  auth: AuthApi
-  users: UsersApi
-  orders: OrdersApi
-  reviews: ReviewsApi
+  context: TestContext;
+  auth: AuthApi;
+  users: UsersApi;
+  orders: OrdersApi;
+  reviews: ReviewsApi;
 }
 
 export const test = base.extend<ApiFixture>({
   context: async ({ request }, use) => {
-    const context = new TestContext(request, testConfig)
-    await use(context)
+    const context = new TestContext(request, testConfig);
+    await use(context);
   },
 
   auth: async ({ context }, use) => {
-    const auth = new AuthApi(context)
-    await use(auth)
+    const auth = new AuthApi(context);
+    await use(auth);
   },
 
   users: async ({ context }, use) => {
-    const users = new UsersApi(context)
-    await use(users)
+    const users = new UsersApi(context);
+    await use(users);
   },
 
   orders: async ({ context }, use) => {
-    const orders = new OrdersApi(context)
-    await use(orders)
+    const orders = new OrdersApi(context);
+    await use(orders);
   },
 
   reviews: async ({ context }, use) => {
-    const reviews = new ReviewsApi(context)
-    await use(reviews)
-  }
-})
+    const reviews = new ReviewsApi(context);
+    await use(reviews);
+  },
+});
 
-export { expect } from '@playwright/test'
+export { expect } from '@playwright/test';
 ```
 
 ---
@@ -760,110 +739,108 @@ export { expect } from '@playwright/test'
 
 ```typescript
 // tests/integration/auth.spec.ts
-import { test, expect } from '../fixtures/api-fixture'
+import { test, expect } from '../fixtures/api-fixture';
 
 test.describe('Authentication API', () => {
   test('AUTH-001: Login with valid credentials', async ({ auth }) => {
-    const user = await auth.loginAsCustomer()
+    const user = await auth.loginAsCustomer();
 
-    expect(user.token).toBeDefined()
-    expect(user.email).toContain('@')
-    expect(user.role).toBe('customer')
-  })
+    expect(user.token).toBeDefined();
+    expect(user.email).toContain('@');
+    expect(user.role).toBe('customer');
+  });
 
   test('AUTH-002: Login with invalid credentials should fail', async ({ auth }) => {
-    await expect(
-      auth.login('invalid@email.com', 'wrongpassword')
-    ).rejects.toThrow()
-  })
+    await expect(auth.login('invalid@email.com', 'wrongpassword')).rejects.toThrow();
+  });
 
   test('AUTH-003: Login as admin', async ({ auth }) => {
-    const user = await auth.loginAsAdmin()
+    const user = await auth.loginAsAdmin();
 
-    expect(user.role).toBe('admin')
-  })
-})
+    expect(user.role).toBe('admin');
+  });
+});
 ```
 
 ### Users Tests
 
 ```typescript
 // tests/integration/users.spec.ts
-import { test, expect } from '../fixtures/api-fixture'
+import { test, expect } from '../fixtures/api-fixture';
 
 test.describe('Users API', () => {
   test('USER-001: Get all sellers (public)', async ({ users }) => {
-    const sellers = await users.getUsersByRole('seller')
+    const sellers = await users.getUsersByRole('seller');
 
-    expect(sellers.length).toBeGreaterThanOrEqual(0)
+    expect(sellers.length).toBeGreaterThanOrEqual(0);
     sellers.forEach(seller => {
-      expect(seller.name).toBeDefined()
-    })
-  })
+      expect(seller.name).toBeDefined();
+    });
+  });
 
   test('USER-002: Get my profile (authenticated)', async ({ auth, users }) => {
-    const user = await auth.loginAsCustomer()
+    const user = await auth.loginAsCustomer();
 
     // Share auth token with users API
-    users.setAuthToken(user.token)
+    users.setAuthToken(user.token);
 
-    const profile = await users.getUserById(user.userId)
+    const profile = await users.getUserById(user.userId);
 
-    expect(profile).not.toBeNull()
-    expect(profile?.email).toBe(user.email)
-  })
+    expect(profile).not.toBeNull();
+    expect(profile?.email).toBe(user.email);
+  });
 
   test('USER-003: Update my profile', async ({ auth, users }) => {
-    const user = await auth.loginAsCustomer()
-    users.setAuthToken(user.token)
+    const user = await auth.loginAsCustomer();
+    users.setAuthToken(user.token);
 
-    const newBio = `Updated at ${new Date().toISOString()}`
+    const newBio = `Updated at ${new Date().toISOString()}`;
     const updated = await users.updateMyProfile(user.userId, {
-      bio: newBio
-    })
+      bio: newBio,
+    });
 
-    expect(updated.bio).toBe(newBio)
-  })
+    expect(updated.bio).toBe(newBio);
+  });
 
   test('USER-004: Cannot update other user profile (RLS)', async ({ auth, users }) => {
-    const customer = await auth.loginAsCustomer()
-    users.setAuthToken(customer.token)
+    const customer = await auth.loginAsCustomer();
+    users.setAuthToken(customer.token);
 
     // Use a fake user ID
-    const fakeUserId = '00000000-0000-0000-0000-000000000000'
+    const fakeUserId = '00000000-0000-0000-0000-000000000000';
 
     const result = await users.attemptUpdateOtherProfile(fakeUserId, {
-      bio: 'Hacked!'
-    })
+      bio: 'Hacked!',
+    });
 
     // RLS should prevent this
-    expect(result.success).toBe(false)
-  })
-})
+    expect(result.success).toBe(false);
+  });
+});
 ```
 
 ### Orders Tests
 
 ```typescript
 // tests/integration/orders.spec.ts
-import { test, expect } from '../fixtures/api-fixture'
+import { test, expect } from '../fixtures/api-fixture';
 
 test.describe('Orders API', () => {
   test('ORDER-001: Get my orders', async ({ auth, orders }) => {
-    const user = await auth.loginAsCustomer()
-    orders.setAuthToken(user.token)
+    const user = await auth.loginAsCustomer();
+    orders.setAuthToken(user.token);
 
-    const myOrders = await orders.getMyOrders(user.userId)
+    const myOrders = await orders.getMyOrders(user.userId);
 
     // All orders should belong to this user
     myOrders.forEach(order => {
-      expect(order.user_id).toBe(user.userId)
-    })
-  })
+      expect(order.user_id).toBe(user.userId);
+    });
+  });
 
   test('ORDER-002: Create and delete pending order', async ({ auth, orders }) => {
-    const customer = await auth.loginAsCustomer()
-    orders.setAuthToken(customer.token)
+    const customer = await auth.loginAsCustomer();
+    orders.setAuthToken(customer.token);
 
     // Create order
     const order = await orders.createOrder({
@@ -872,67 +849,67 @@ test.describe('Orders API', () => {
       shipping_address: {
         street: '123 Test Street',
         city: 'Test City',
-        zip: '12345'
-      }
-    })
+        zip: '12345',
+      },
+    });
 
-    expect(order.status).toBe('pending')
+    expect(order.status).toBe('pending');
 
     // Cleanup: delete the pending order
-    await orders.deletePendingOrder(order.id)
-  })
+    await orders.deletePendingOrder(order.id);
+  });
 
   test('ORDER-003: Cannot view other user orders (RLS)', async ({ auth, orders }) => {
-    const customer = await auth.loginAsCustomer()
-    orders.setAuthToken(customer.token)
+    const customer = await auth.loginAsCustomer();
+    orders.setAuthToken(customer.token);
 
     // Use a fake user ID
-    const fakeUserId = '00000000-0000-0000-0000-000000000000'
-    const otherOrders = await orders.attemptViewOtherOrders(fakeUserId)
+    const fakeUserId = '00000000-0000-0000-0000-000000000000';
+    const otherOrders = await orders.attemptViewOtherOrders(fakeUserId);
 
     // RLS should return empty array
-    expect(otherOrders.length).toBe(0)
-  })
-})
+    expect(otherOrders.length).toBe(0);
+  });
+});
 ```
 
 ### Reviews Tests
 
 ```typescript
 // tests/integration/reviews.spec.ts
-import { test, expect } from '../fixtures/api-fixture'
+import { test, expect } from '../fixtures/api-fixture';
 
 test.describe('Reviews API', () => {
   test('REVIEW-001: Get product reviews (public)', async ({ reviews }) => {
     // Use a known product ID or skip if none exists
-    const productId = process.env.TEST_PRODUCT_ID
+    const productId = process.env.TEST_PRODUCT_ID;
     if (!productId) {
-      test.skip()
-      return
+      test.skip();
+      return;
     }
 
-    const productReviews = await reviews.getProductReviews(productId)
+    const productReviews = await reviews.getProductReviews(productId);
 
     productReviews.forEach(review => {
-      expect(review.product_id).toBe(productId)
-      expect(review.rating).toBeGreaterThanOrEqual(1)
-      expect(review.rating).toBeLessThanOrEqual(5)
-    })
-  })
+      expect(review.product_id).toBe(productId);
+      expect(review.rating).toBeGreaterThanOrEqual(1);
+      expect(review.rating).toBeLessThanOrEqual(5);
+    });
+  });
 
   test('REVIEW-002: Calculate product average rating', async ({ reviews }) => {
-    const productId = process.env.TEST_PRODUCT_ID
+    const productId = process.env.TEST_PRODUCT_ID;
     if (!productId) {
-      test.skip()
-      return
+      test.skip();
+      return;
     }
 
-    const avgRating = await reviews.calculateProductAverageRating(productId)
+    const avgRating = await reviews.calculateProductAverageRating(productId);
 
-    expect(avgRating).toBeGreaterThanOrEqual(0)
-    expect(avgRating).toBeLessThanOrEqual(5)
-  })
-})
+    expect(avgRating).toBeGreaterThanOrEqual(0);
+    expect(avgRating).toBeLessThanOrEqual(5);
+  });
+});
 ```
 
 ---
@@ -990,14 +967,14 @@ TEST_PRODUCT_ID=some-product-uuid
 
 ```typescript
 test('Flow completo', async ({ auth, orders, reviews }) => {
-  const user = await auth.loginAsCustomer()
+  const user = await auth.loginAsCustomer();
 
   // Compartir token con todos los components
-  orders.setAuthToken(user.token)
-  reviews.setAuthToken(user.token)
+  orders.setAuthToken(user.token);
+  reviews.setAuthToken(user.token);
 
   // Ahora ambos pueden hacer requests autenticados
-})
+});
 ```
 
 ### 2. Cleanup de Datos de Prueba
@@ -1021,29 +998,30 @@ test('Create and cleanup', async ({ auth, orders }) => {
 ```typescript
 test.describe('Como Customer', () => {
   test.beforeEach(async ({ auth, orders }) => {
-    const user = await auth.loginAsCustomer()
-    orders.setAuthToken(user.token)
-  })
+    const user = await auth.loginAsCustomer();
+    orders.setAuthToken(user.token);
+  });
 
   test('puede ver sus ordenes', async ({ orders }) => {
     // Ya esta autenticado
-  })
-})
+  });
+});
 ```
 
 ---
 
 ## Resumen
 
-| Capa | Responsabilidad |
-|------|-----------------|
-| **Layer 1** | Configuracion y contexto global |
+| Capa        | Responsabilidad                                   |
+| ----------- | ------------------------------------------------- |
+| **Layer 1** | Configuracion y contexto global                   |
 | **Layer 2** | Helpers HTTP genericos (get, post, patch, delete) |
-| **Layer 3** | ATCs especificos por dominio con assertions |
-| **Layer 4** | Fixture que inyecta dependencias |
-| **Layer 5** | Tests que componen ATCs |
+| **Layer 3** | ATCs especificos por dominio con assertions       |
+| **Layer 4** | Fixture que inyecta dependencias                  |
+| **Layer 5** | Tests que componen ATCs                           |
 
 Esta arquitectura permite:
+
 - Reutilizacion de codigo
 - Trazabilidad a test cases
 - Assertions garantizan calidad

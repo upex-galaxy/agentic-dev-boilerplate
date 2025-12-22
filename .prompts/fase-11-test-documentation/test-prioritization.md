@@ -175,11 +175,13 @@ RISK       │    MEDIUM     │    LOW        │      RISK
 ## Recommendations
 
 ### Immediate Actions:
+
 1. Document top [N] scenarios in Jira (next: test-documentation.md)
 2. Mark automation candidates with label `automation-candidate`
 3. Add manual tests to regression checklist
 
 ### For Fase 12 (Automation):
+
 - Start with scenarios ranked 1-3
 - Estimated [X] ATCs to implement
 - Test types: [N] E2E, [M] Integration

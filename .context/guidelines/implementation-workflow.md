@@ -51,6 +51,7 @@ Antes de escribir código, REVISAR el implementation plan:
 
 ```markdown
 ¿El plan tiene?:
+
 - [ ] Breakdown en subtareas claras
 - [ ] Orden de implementación lógico
 - [ ] Consideraciones de testing
@@ -236,10 +237,10 @@ Ver detalles en `mcp-usage-tips.md`.
 
    ```typescript
    // ❌ MAL
-   const apiUrl = "https://api.example.com"
+   const apiUrl = 'https://api.example.com';
 
    // ✅ BIEN
-   const apiUrl = process.env.NEXT_PUBLIC_API_URL
+   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
    ```
 
 3. **Ignorar edge cases**
@@ -247,13 +248,13 @@ Ver detalles en `mcp-usage-tips.md`.
    ```typescript
    // ❌ MAL
    function divide(a, b) {
-     return a / b
+     return a / b;
    }
 
    // ✅ BIEN
    function divide(a, b) {
-     if (b === 0) throw new Error("Division by zero")
-     return a / b
+     if (b === 0) throw new Error('Division by zero');
+     return a / b;
    }
    ```
 

@@ -151,11 +151,7 @@ export class TestContext {
   );
 
   async seedUser(userData: UserData): Promise<User> {
-    const { data, error } = await this.supabase
-      .from('users')
-      .insert(userData)
-      .select()
-      .single();
+    const { data, error } = await this.supabase.from('users').insert(userData).select().single();
 
     if (error) throw new Error(`Failed to seed user: ${error.message}`);
     return data;

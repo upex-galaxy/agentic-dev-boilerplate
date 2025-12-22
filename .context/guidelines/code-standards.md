@@ -12,26 +12,26 @@
 ```typescript
 // ❌ MAL - Repetición
 function getUserEmail(userId: string) {
-  const response = await fetch(`/api/users/${userId}`)
-  const user = await response.json()
-  return user.email
+  const response = await fetch(`/api/users/${userId}`);
+  const user = await response.json();
+  return user.email;
 }
 
 function getUserName(userId: string) {
-  const response = await fetch(`/api/users/${userId}`)
-  const user = await response.json()
-  return user.name
+  const response = await fetch(`/api/users/${userId}`);
+  const user = await response.json();
+  return user.name;
 }
 
 // ✅ BIEN - Reutilizable
 async function getUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`)
-  return await response.json()
+  const response = await fetch(`/api/users/${userId}`);
+  return await response.json();
 }
 
 function getUserEmail(userId: string) {
-  const user = await getUser(userId)
-  return user.email
+  const user = await getUser(userId);
+  return user.email;
 }
 ```
 
@@ -46,16 +46,16 @@ const getUserStatus = (user: User): UserStatus => {
         ? UserStatus.PREMIUM_ACTIVE
         : UserStatus.TRIAL_ACTIVE
       : UserStatus.FREE_ACTIVE
-    : UserStatus.INACTIVE
-}
+    : UserStatus.INACTIVE;
+};
 
 // ✅ BIEN - Simple y legible
 const getUserStatus = (user: User): UserStatus => {
-  if (!user.isActive) return UserStatus.INACTIVE
-  if (!user.isPremium) return UserStatus.FREE_ACTIVE
-  if (user.trialEnded) return UserStatus.PREMIUM_ACTIVE
-  return UserStatus.TRIAL_ACTIVE
-}
+  if (!user.isActive) return UserStatus.INACTIVE;
+  if (!user.isPremium) return UserStatus.FREE_ACTIVE;
+  if (user.trialEnded) return UserStatus.PREMIUM_ACTIVE;
+  return UserStatus.TRIAL_ACTIVE;
+};
 ```
 
 ### 3. **YAGNI** (You Aren't Gonna Need It)
@@ -63,19 +63,19 @@ const getUserStatus = (user: User): UserStatus => {
 ```typescript
 // ❌ MAL - Funcionalidad que nadie pidió
 interface User {
-  id: string
-  name: string
-  email: string
-  socialSecurity?: string  // ¿Para qué?
-  bloodType?: string       // ¿Para qué?
-  favoriteColor?: string   // ¿Para qué?
+  id: string;
+  name: string;
+  email: string;
+  socialSecurity?: string; // ¿Para qué?
+  bloodType?: string; // ¿Para qué?
+  favoriteColor?: string; // ¿Para qué?
 }
 
 // ✅ BIEN - Solo lo necesario
 interface User {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
 }
 ```
 
@@ -87,9 +87,9 @@ interface User {
 
 ```typescript
 // ✅ camelCase para variables y funciones
-const userName = "John"
-const isActive = true
-const totalCount = 42
+const userName = 'John';
+const isActive = true;
+const totalCount = 42;
 
 function getUserById(id: string) {}
 function calculateTotal(items: Item[]) {}
@@ -101,16 +101,16 @@ function calculateTotal(items: Item[]) {}
 // ✅ PascalCase para componentes
 function LoginForm() {}
 function UserProfile() {}
-const NavBar = () => {}
+const NavBar = () => {};
 ```
 
 ### Constantes
 
 ```typescript
 // ✅ UPPER_SNAKE_CASE para constantes
-const MAX_RETRIES = 3
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-const DEFAULT_TIMEOUT = 5000
+const MAX_RETRIES = 3;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const DEFAULT_TIMEOUT = 5000;
 ```
 
 ### Tipos e Interfaces
@@ -119,8 +119,8 @@ const DEFAULT_TIMEOUT = 5000
 // ✅ PascalCase con 'I' o 'T' prefix (opcional)
 interface User {}
 interface UserResponse {}
-type UserId = string
-type UserRole = "admin" | "user" | "guest"
+type UserId = string;
+type UserRole = 'admin' | 'user' | 'guest';
 ```
 
 ### Archivos
@@ -162,16 +162,16 @@ type UserRole = "admin" | "user" | "guest"
 ```typescript
 // ❌ MAL
 function processData(data: any) {
-  return data.value
+  return data.value;
 }
 
 // ✅ BIEN
 interface DataPayload {
-  value: string
+  value: string;
 }
 
 function processData(data: DataPayload) {
-  return data.value
+  return data.value;
 }
 ```
 
@@ -179,10 +179,10 @@ function processData(data: DataPayload) {
 
 ```typescript
 // ❌ MAL - Tipo inferido puede cambiar
-const users = []
+const users = [];
 
 // ✅ BIEN - Tipo explícito
-const users: User[] = []
+const users: User[] = [];
 ```
 
 ---
@@ -336,9 +336,9 @@ export const UserCard = memo(function UserCard({ user }: Props) {
   role="button"
   tabIndex={0}
   onClick={handleClick}
-  onKeyDown={(e) => {
+  onKeyDown={e => {
     if (e.key === 'Enter' || e.key === ' ') {
-      handleClick()
+      handleClick();
     }
   }}
 >
@@ -369,12 +369,12 @@ src/
 
 ```typescript
 // components/ui/index.ts
-export { Button } from './Button'
-export { Input } from './Input'
-export { Card } from './Card'
+export { Button } from './Button';
+export { Input } from './Input';
+export { Card } from './Card';
 
 // Uso
-import { Button, Input, Card } from '@/components/ui'
+import { Button, Input, Card } from '@/components/ui';
 ```
 
 ---
@@ -385,43 +385,43 @@ import { Button, Input, Card } from '@/components/ui'
 
 ```typescript
 // ❌ MAL
-const apiUrl = "https://api.example.com"
+const apiUrl = 'https://api.example.com';
 
 // ✅ BIEN
-const apiUrl = process.env.NEXT_PUBLIC_API_URL
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 ```
 
 ### 2. NO dejar console.log()
 
 ```typescript
 // ❌ MAL
-console.log('User data:', user)
+console.log('User data:', user);
 
 // ✅ BIEN (si necesitas logging)
-import { logger } from '@/lib/logger'
-logger.info('User data loaded', { userId: user.id })
+import { logger } from '@/lib/logger';
+logger.info('User data loaded', { userId: user.id });
 ```
 
 ### 3. NO usar var
 
 ```typescript
 // ❌ MAL
-var count = 0
+var count = 0;
 
 // ✅ BIEN
-const count = 0
-let counter = 0
+const count = 0;
+let counter = 0;
 ```
 
 ### 4. NO mutar state directamente
 
 ```typescript
 // ❌ MAL
-const [users, setUsers] = useState<User[]>([])
-users.push(newUser) // ❌ Mutation!
+const [users, setUsers] = useState<User[]>([]);
+users.push(newUser); // ❌ Mutation!
 
 // ✅ BIEN
-setUsers([...users, newUser])
+setUsers([...users, newUser]);
 ```
 
 ### 5. NO ignorar errores
@@ -429,17 +429,17 @@ setUsers([...users, newUser])
 ```typescript
 // ❌ MAL
 try {
-  await fetchData()
+  await fetchData();
 } catch (error) {
   // Silenciosamente ignorado
 }
 
 // ✅ BIEN
 try {
-  await fetchData()
+  await fetchData();
 } catch (error) {
-  logger.error('Failed to fetch data', error)
-  throw new AppError('FETCH_FAILED', 'Unable to load data')
+  logger.error('Failed to fetch data', error);
+  throw new AppError('FETCH_FAILED', 'Unable to load data');
 }
 ```
 

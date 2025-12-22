@@ -23,13 +23,13 @@ GET  /rest/v1/orders?or=(user_id.eq.xxx,seller_id.eq.xxx)&order=created_at.desc
 
 ### Por Que es Diferente
 
-| Aspecto | API Tradicional | Supabase PostgREST |
-|---------|-----------------|---------------------|
-| **URL** | `/api/products` | `/rest/v1/products` |
-| **Query Params** | `?id=abc` | `?id=eq.abc` |
-| **Filtros** | En el backend | En la URL (sintaxis PostgREST) |
-| **Seleccion de campos** | Backend decide | `?select=id,name,price` |
-| **Ordenamiento** | Backend decide | `?order=created_at.desc` |
+| Aspecto                 | API Tradicional | Supabase PostgREST             |
+| ----------------------- | --------------- | ------------------------------ |
+| **URL**                 | `/api/products` | `/rest/v1/products`            |
+| **Query Params**        | `?id=abc`       | `?id=eq.abc`                   |
+| **Filtros**             | En el backend   | En la URL (sintaxis PostgREST) |
+| **Seleccion de campos** | Backend decide  | `?select=id,name,price`        |
+| **Ordenamiento**        | Backend decide  | `?order=created_at.desc`       |
 
 ---
 
@@ -88,11 +88,11 @@ GET  /rest/v1/orders?or=(user_id.eq.xxx,seller_id.eq.xxx)&order=created_at.desc
 
 Usa estos filtros para ver solo lo relevante:
 
-| Filtro | Que muestra |
-|--------|-------------|
-| `Fetch/XHR` | Requests de API (AJAX) |
-| `Doc` | Navegacion de paginas |
-| `WS` | WebSocket (real-time de Supabase) |
+| Filtro      | Que muestra                       |
+| ----------- | --------------------------------- |
+| `Fetch/XHR` | Requests de API (AJAX)            |
+| `Doc`       | Navegacion de paginas             |
+| `WS`        | WebSocket (real-time de Supabase) |
 
 **Recomendado:** Click en `Fetch/XHR` para ver solo API calls.
 
@@ -135,12 +135,14 @@ POST {{SUPABASE_URL}}/auth/v1/token?grant_type=password
 ```
 
 **Headers:**
+
 ```
 apikey: eyJhbGciOiJIUzI1NiIs...  (anon key)
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "test.user@miproyecto.com",
@@ -149,6 +151,7 @@ Content-Type: application/json
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzA...",
@@ -183,6 +186,7 @@ Content-Type: application/json
 Despues de hacer login, navega a `/dashboard/orders`:
 
 **Request:**
+
 ```
 GET {{SUPABASE_URL}}/rest/v1/orders
     ?select=*,products:order_items(product:products(id,name,image_url))
@@ -194,6 +198,7 @@ GET {{SUPABASE_URL}}/rest/v1/orders
 ```
 
 **Headers Importantes:**
+
 ```
 apikey: eyJhbGciOiJIUzI1NiIs...           # Anon key (siempre)
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...  # Tu JWT de login
@@ -201,14 +206,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...  # Tu JWT de login
 
 **Desglose de la URL:**
 
-| Parte | Significado |
-|-------|-------------|
-| `/rest/v1/orders` | Tabla orders |
+| Parte                                | Significado                           |
+| ------------------------------------ | ------------------------------------- |
+| `/rest/v1/orders`                    | Tabla orders                          |
 | `select=*,products:order_items(...)` | Todos los campos + JOIN con productos |
-| `user_id=eq.xxx` | Donde soy el usuario |
-| `order=created_at.desc` | Ordenar por fecha descendente |
+| `user_id=eq.xxx`                     | Donde soy el usuario                  |
+| `order=created_at.desc`              | Ordenar por fecha descendente         |
 
 **Response (200 OK):**
+
 ```json
 [
   {
@@ -241,20 +247,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...  # Tu JWT de login
 
 ```javascript
 // Obtener el cliente de Supabase
-const { createClient } = await import('@supabase/supabase-js')
+const { createClient } = await import('@supabase/supabase-js');
 const supabase = createClient(
-  '{{SUPABASE_URL}}',  // Ejemplo: 'https://abcdefghijklmnop.supabase.co'
+  '{{SUPABASE_URL}}', // Ejemplo: 'https://abcdefghijklmnop.supabase.co'
   '{{SUPABASE_ANON_KEY}}'
-)
+);
 
 // Intentar ver ordenes de OTRO usuario
-const { data, error } = await supabase
-  .from('orders')
-  .select('*')
-  .eq('user_id', 'otro-usuario-id')
+const { data, error } = await supabase.from('orders').select('*').eq('user_id', 'otro-usuario-id');
 
-console.log('Data:', data)   // [] - Array vacio!
-console.log('Error:', error) // null - No hay error, pero no hay datos
+console.log('Data:', data); // [] - Array vacio!
+console.log('Error:', error); // null - No hay error, pero no hay datos
 ```
 
 **Resultado:** RLS policy bloquea el acceso. No ves error, pero tampoco datos.
@@ -270,6 +273,7 @@ Response: []
 ```
 
 La policy `"Users can view their own orders"` filtra automaticamente:
+
 ```sql
 -- Solo retorna filas donde:
 auth.uid() = user_id
@@ -281,32 +285,33 @@ auth.uid() = user_id
 
 ### Que Validar en Cada Request
 
-| Aspecto | Que Revisar |
-|---------|-------------|
-| **Status Code** | 200 (OK), 201 (Created), 204 (No Content) |
-| **Headers** | `content-type: application/json` |
-| **Body Structure** | Campos esperados presentes |
-| **Data Types** | Strings, numbers, dates correctos |
-| **Relationships** | JOINs incluyen datos relacionados |
-| **Pagination** | `content-range` header si aplica |
+| Aspecto            | Que Revisar                               |
+| ------------------ | ----------------------------------------- |
+| **Status Code**    | 200 (OK), 201 (Created), 204 (No Content) |
+| **Headers**        | `content-type: application/json`          |
+| **Body Structure** | Campos esperados presentes                |
+| **Data Types**     | Strings, numbers, dates correctos         |
+| **Relationships**  | JOINs incluyen datos relacionados         |
+| **Pagination**     | `content-range` header si aplica          |
 
 ### Status Codes Comunes
 
-| Code | Significado | Cuando |
-|------|-------------|--------|
-| `200` | OK | GET exitoso |
-| `201` | Created | POST exitoso |
-| `204` | No Content | DELETE exitoso |
-| `400` | Bad Request | Sintaxis incorrecta |
-| `401` | Unauthorized | Falta JWT o expiro |
-| `403` | Forbidden | RLS bloqueo la operacion |
-| `404` | Not Found | Recurso no existe |
-| `409` | Conflict | Violacion de constraint unico |
-| `422` | Unprocessable | Validacion fallo |
+| Code  | Significado   | Cuando                        |
+| ----- | ------------- | ----------------------------- |
+| `200` | OK            | GET exitoso                   |
+| `201` | Created       | POST exitoso                  |
+| `204` | No Content    | DELETE exitoso                |
+| `400` | Bad Request   | Sintaxis incorrecta           |
+| `401` | Unauthorized  | Falta JWT o expiro            |
+| `403` | Forbidden     | RLS bloqueo la operacion      |
+| `404` | Not Found     | Recurso no existe             |
+| `409` | Conflict      | Violacion de constraint unico |
+| `422` | Unprocessable | Validacion fallo              |
 
 ### Ejemplo: Crear Review (POST)
 
 **Request:**
+
 ```
 POST /rest/v1/reviews
 Headers:
@@ -325,6 +330,7 @@ Body:
 ```
 
 **Response Esperada (201 Created):**
+
 ```json
 [
   {
@@ -339,6 +345,7 @@ Body:
 ```
 
 **Validaciones:**
+
 - [ ] Status: 201
 - [ ] `id` generado automaticamente
 - [ ] `created_at` tiene timestamp actual
@@ -379,12 +386,12 @@ curl '{{SUPABASE_URL}}/rest/v1/products?category=eq.electronics' \
 Para replicar en JavaScript:
 
 ```javascript
-fetch("{{SUPABASE_URL}}/rest/v1/products?category=eq.electronics", {
+fetch('{{SUPABASE_URL}}/rest/v1/products?category=eq.electronics', {
   headers: {
-    "apikey": "eyJ...",
-    "Authorization": "Bearer eyJ..."
-  }
-})
+    apikey: 'eyJ...',
+    Authorization: 'Bearer eyJ...',
+  },
+});
 
 // Ejemplo:
 // fetch("https://abcdefghijklmnop.supabase.co/rest/v1/products?category=eq.electronics", {...})

@@ -3,6 +3,7 @@
 ### ⚙️ Setup inicial (una sola vez)
 
 **1. Instalar GitHub CLI:**
+
 ```bash
 # Mac
 brew install gh
@@ -15,11 +16,13 @@ sudo apt install gh
 ```
 
 **2. Autenticarse en GitHub CLI:**
+
 ```bash
 gh auth login
 ```
 
 Selecciona:
+
 - ✅ GitHub.com
 - ✅ HTTPS
 - ✅ Login with web browser
@@ -27,6 +30,7 @@ Selecciona:
 - ✅ Pégalo en el navegador
 
 **3. Verificar acceso al template de UPEX Galaxy:**
+
 ```bash
 gh repo view upex-galaxy/ai-driven-project-starter
 ```
@@ -34,6 +38,7 @@ gh repo view upex-galaxy/ai-driven-project-starter
 Si ves la info del repo → ✅ Todo listo!
 
 **4. Instalar dependencias del script:**
+
 ```bash
 bun install
 ```
@@ -61,11 +66,13 @@ Abre tu `package.json` y agrega esta línea en la sección `"scripts"`:
 ### 🚀 Uso del Script
 
 #### Menú Interactivo (recomendado)
+
 ```bash
 bun up
 ```
 
 Abre un menú donde puedes seleccionar qué actualizar:
+
 - Todo (all)
 - Prompts (.prompts/)
 - Documentación (docs/)
@@ -74,6 +81,7 @@ Abre un menú donde puedes seleccionar qué actualizar:
 - Scripts de actualización
 
 #### Comandos Directos
+
 ```bash
 bun up all                    # Actualiza todo
 bun up prompts                # Menú para elegir fases
@@ -85,6 +93,7 @@ bun up help                   # Muestra ayuda
 ```
 
 #### Múltiples Componentes
+
 ```bash
 bun up prompts docs templates # Actualiza los 3 componentes
 ```
@@ -96,6 +105,7 @@ bun up prompts docs templates # Actualiza los 3 componentes
 Cuando usas `bun up prompts`, puedes especificar qué fases actualizar:
 
 #### Por Rol (presets)
+
 ```bash
 bun up prompts --rol qa       # Fases 5, 10, 11, 12 (Testing)
 bun up prompts --rol qa-full  # Fases 4, 5, 10, 11, 12 (Testing + Specification)
@@ -106,12 +116,14 @@ bun up prompts --rol setup    # Fases 1, 2, 3 (Setup inicial)
 ```
 
 #### Por Fases Específicas
+
 ```bash
 bun up prompts --fase 5       # Solo fase 5
 bun up prompts --fase 5,10,12 # Fases 5, 10 y 12
 ```
 
 #### Otras Opciones
+
 ```bash
 bun up prompts --all          # Todas las fases (1-14) + standalone
 bun up prompts --standalone   # Solo archivos standalone (git-flow, workflows)
@@ -121,20 +133,21 @@ bun up prompts --standalone   # Solo archivos standalone (git-flow, workflows)
 
 ### 👤 Roles Disponibles
 
-| Rol | Fases | Descripción |
-|-----|-------|-------------|
-| `qa` | 5, 10, 11, 12 | Shift-Left, Exploratory, Documentation, Automation |
-| `qa-full` | 4, 5, 10, 11, 12 | QA + Specification (contexto de negocio) |
-| `dev` | 6, 7, 8 | Planning, Implementation, Code Review |
-| `devops` | 3, 9, 13, 14 | Infrastructure, Staging, Production, Monitoring |
-| `po` | 1, 2, 4 | Constitution, Architecture, Specification |
-| `setup` | 1, 2, 3 | Fases sincrónicas iniciales |
+| Rol       | Fases            | Descripción                                        |
+| --------- | ---------------- | -------------------------------------------------- |
+| `qa`      | 5, 10, 11, 12    | Shift-Left, Exploratory, Documentation, Automation |
+| `qa-full` | 4, 5, 10, 11, 12 | QA + Specification (contexto de negocio)           |
+| `dev`     | 6, 7, 8          | Planning, Implementation, Code Review              |
+| `devops`  | 3, 9, 13, 14     | Infrastructure, Staging, Production, Monitoring    |
+| `po`      | 1, 2, 4          | Constitution, Architecture, Specification          |
+| `setup`   | 1, 2, 3          | Fases sincrónicas iniciales                        |
 
 ---
 
 ### 📋 ¿Qué se actualiza?
 
 ✅ **Se actualizan:**
+
 - `.prompts/` → Fases seleccionadas (o todas)
 - `context-engineering.md` → Documentación de la arquitectura del template
 - `docs/` → Archivos del template:
@@ -156,6 +169,7 @@ bun up prompts --standalone   # Solo archivos standalone (git-flow, workflows)
 - `.context/guidelines/` → Guías (excepto archivos proyecto-específicos)
 
 ❌ **NO se tocan (tu trabajo):**
+
 - `.context/idea/` → Tu documentación de negocio
 - `.context/PRD/` → Tus requerimientos de producto
 - `.context/SRS/` → Tus especificaciones técnicas
@@ -170,6 +184,7 @@ bun up prompts --standalone   # Solo archivos standalone (git-flow, workflows)
 ### 📦 Sistema de Backups
 
 Cada ejecución crea un **nuevo directorio** de backup con timestamp único:
+
 - Formato: `.backups/prompts-YYYY-MM-DD-HHMMSS/`
 - Ejemplo: `.backups/prompts-2024-11-13-101845/`
 - Los backups **NO se sobrescriben**, se acumulan
@@ -180,6 +195,7 @@ Cada ejecución crea un **nuevo directorio** de backup con timestamp único:
 ### 🆘 Troubleshooting
 
 **Error: "gh: command not found"**
+
 ```bash
 # Instala GitHub CLI según tu OS:
 # Mac: brew install gh
@@ -188,6 +204,7 @@ Cada ejecución crea un **nuevo directorio** de backup con timestamp único:
 ```
 
 **Error: "authentication required"**
+
 ```bash
 gh auth login
 # Sigue los pasos de autenticación
@@ -198,6 +215,7 @@ gh auth login
 → Contacta a Ely para que te agregue como colaborador
 
 **Error: "Cannot find module '@inquirer/prompts'"**
+
 ```bash
 bun install
 # O específicamente:
@@ -207,6 +225,7 @@ bun add @inquirer/prompts
 **Algo salió mal y quiero revertir los cambios**
 
 Los backups están en `.backups/prompts-FECHA/`:
+
 ```bash
 # Ver backups disponibles (ordenados por fecha)
 ls -la .backups/

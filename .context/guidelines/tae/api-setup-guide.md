@@ -89,6 +89,7 @@ Add to your Claude Code configuration (`.mcp.json` or VS Code settings):
 ### Step 4: Verify Setup
 
 Ask the AI:
+
 > "List all available API endpoints"
 
 The AI should use `list-api-endpoints` and show you all endpoints from your spec.

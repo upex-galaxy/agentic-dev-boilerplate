@@ -366,14 +366,17 @@ For each remaining automation candidate:
 **Status:** QA Approved
 
 ### Summary:
+
 - Exploratory Testing: PASSED
 - Tests Documented: [N] tests in Jira
 - Tests Automated: [M] ATCs implemented
 
 ### Files Created/Modified:
+
 - [List of test files]
 
 ### Next Steps:
+
 - Tests will run in CI pipeline
 - Manual tests added to regression checklist
 ```
@@ -415,6 +418,7 @@ Use this template to track workflow progress:
 ## QA Workflow Progress: [US-XXX]
 
 ### Fase 10: Exploratory Testing
+
 - [x] Step 0: Verify Ready For QA
 - [x] Step 1: Smoke Test - PASSED
 - [x] Step 2: Exploratory Testing - PASSED
@@ -422,11 +426,13 @@ Use this template to track workflow progress:
 - [x] Step 4: Decision - PASSED → QA Approved
 
 ### Fase 11: Test Documentation
+
 - [x] Step 5: Analyze candidates - 5 tests identified
 - [x] Step 6: Prioritize - 3 for automation, 2 manual
 - [x] Step 7: Created in Jira - TEST-001 to TEST-005
 
 ### Fase 12: Test Automation
+
 - [x] Step 8-11: TEST-001 - Automated
 - [x] Step 8-11: TEST-002 - Automated
 - [ ] Step 8-11: TEST-003 - In progress

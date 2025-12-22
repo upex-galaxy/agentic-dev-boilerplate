@@ -124,11 +124,13 @@ Sources to analyze:
 ## Automation Candidates Summary
 
 **Ready for automation (Fase 12):**
+
 1. [Scenario 1] - E2E
 2. [Scenario 2] - API Integration
 3. [Scenario 3] - E2E
 
 **Manual regression only:**
+
 1. [Scenario 4] - Requires visual validation
 2. [Scenario 5] - Complex third-party dependency
 
@@ -137,14 +139,17 @@ Sources to analyze:
 ## Recommendations
 
 ### For Test Documentation (next step):
+
 - Document scenarios [1-5] in Jira as Test issues
 - Use Gherkin format for clarity
 
 ### For Automation (Fase 12):
+
 - Prioritize scenarios [1-3] for first automation sprint
 - Consider [scenario 4] for future visual testing tools
 
 ### For Manual Regression:
+
 - Add [scenarios 4-5] to manual regression checklist
 ```
 

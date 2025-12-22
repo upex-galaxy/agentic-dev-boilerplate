@@ -21,21 +21,25 @@
 ### Método 1: Mediante CLI (Recomendado)
 
 #### Agregar servidor stdio local
+
 ```bash
 gemini mcp add myserver --command "python3 my_server.py" --port 8080
 ```
 
 #### Agregar servidor HTTP remoto
+
 ```bash
 gemini mcp add --transport http context7 https://context7.mcp.io
 ```
 
 #### Listar servidores configurados
+
 ```bash
 gemini mcp list
 ```
 
 #### Eliminar servidor
+
 ```bash
 gemini mcp remove myserver
 ```
@@ -109,11 +113,13 @@ gemini mcp remove myserver
 ### Ejemplo 1: Supabase MCP
 
 **Mediante CLI**:
+
 ```bash
 gemini mcp add --command "npx -y @supabase/mcp-server-supabase@latest" supabase
 ```
 
 **O manualmente en ~/.gemini/settings.json**:
+
 ```json
 {
   "mcpServers": {
@@ -169,21 +175,25 @@ gemini mcp add --transport http context7 https://context7.mcp.io
 Una vez iniciada una sesión de Gemini:
 
 ### Ver servidores disponibles
+
 ```bash
 /mcp
 ```
 
 ### Ver descripción de servidor específico
+
 ```bash
 /mcp desc nombre-servidor
 ```
 
 ### Autenticar servidor con OAuth
+
 ```bash
 /mcp auth nombre-servidor
 ```
 
 ### Listar todos los servidores
+
 ```bash
 /mcp list
 ```
@@ -193,17 +203,20 @@ Una vez iniciada una sesión de Gemini:
 ## 🌟 Extensiones de Gemini CLI
 
 Gemini CLI soporta **extensiones** que empaquetan:
+
 - Uno o más servidores MCP
 - Archivos de contexto personalizados
 - Comandos slash personalizados
 - Herramientas excluidas/incluidas
 
 ### Instalar extensión
+
 ```bash
 gemini extension install firebase
 ```
 
 ### Listar extensiones instaladas
+
 ```bash
 gemini extension list
 ```
@@ -211,11 +224,13 @@ gemini extension list
 ### Ejemplo: Instalar Firebase Extension
 
 **Opción 1**: Via extensión (recomendado)
+
 ```bash
 gemini extension install firebase
 ```
 
 **Opción 2**: Configuración manual
+
 ```bash
 # Editar ~/.gemini/settings.json
 ```
@@ -236,15 +251,19 @@ gemini extension install firebase
 ## 🔑 Características Especiales
 
 ### Auto-discovery
+
 Detecta automáticamente configuraciones de otros clientes MCP (Claude, Cursor, etc.)
 
 ### Gestión de Contexto
+
 Memoria conversacional y ramificación de conversaciones.
 
 ### Integración VS Code
+
 Extensión disponible para VS Code.
 
 ### Custom Slash Commands
+
 Permite crear comandos personalizados:
 
 ```json
@@ -265,6 +284,7 @@ Permite crear comandos personalizados:
 ### "Servidor no se encuentra"
 
 **Solución**: Usar rutas absolutas
+
 ```json
 {
   "command": "/usr/local/bin/node",
@@ -273,6 +293,7 @@ Permite crear comandos personalizados:
 ```
 
 **Verificar PATH**:
+
 ```bash
 which npx
 which node
@@ -281,6 +302,7 @@ which node
 ### "Token inválido" en HTTP
 
 **Soluciones**:
+
 1. Verificar formato de header
 2. Comprobar expiración del token
 3. Regenerar token en servicio origen
@@ -288,12 +310,14 @@ which node
 ### Herramientas no aparecen
 
 **Diagnóstico**:
+
 ```bash
 gemini --debug
 /mcp list
 ```
 
 **Soluciones**:
+
 1. Reiniciar Gemini CLI
 2. Verificar logs: `gemini --debug`
 3. Probar servidor manualmente:
@@ -435,11 +459,7 @@ gemini mcp list
     },
     "tavity": {
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"
-      ]
+      "args": ["-y", "mcp-remote", "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"]
     }
   }
 }

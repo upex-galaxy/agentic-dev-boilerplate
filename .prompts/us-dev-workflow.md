@@ -387,6 +387,7 @@ Archivo: `.context/PRD/release-notes.md`
 ### Features Implementadas
 
 #### {PROJECT_KEY}-{N}: {Titulo de la Story}
+
 - **Epic:** EPIC-{PROJECT_KEY}-{N} ({nombre del epic})
 - **PR:** #{numero}
 - **Implementado por:** Claude + Developer
@@ -400,12 +401,15 @@ Archivo: `.context/PRD/release-notes.md`
 ## [v0.x.x] - {YYYY-MM-DD}
 
 ### Added
+
 - ...
 
 ### Fixed
+
 - ...
 
 ### Changed
+
 - ...
 ```
 
@@ -438,5 +442,5 @@ Archivo: `.context/PRD/release-notes.md`
 
 ---
 
-*Ultima actualizacion: 2025-12-08*
-*Generado por Claude Code*
+_Ultima actualizacion: 2025-12-08_
+_Generado por Claude Code_

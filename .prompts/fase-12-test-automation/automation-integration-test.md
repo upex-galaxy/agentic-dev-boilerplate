@@ -111,15 +111,18 @@ Questions:
 ## Implementation Plan
 
 **Files to CREATE:**
+
 - tests/components/api/OrdersApi.ts
   └── ATC: createOrderSuccessfully
   └── ATC: createOrderWithInvalidData
 
 **Files to MODIFY:**
+
 - tests/components/ApiFixture.ts
   └── Add: readonly orders: OrdersApi
 
 **Test file:**
+
 - tests/integration/orders/orders.test.ts
 ```
 
@@ -284,12 +287,12 @@ import { OrdersApi } from '@components/api/OrdersApi';
 
 export class ApiFixture extends TestContext {
   readonly auth: AuthApi;
-  readonly orders: OrdersApi;  // Add
+  readonly orders: OrdersApi; // Add
 
   constructor(environment?: Environment) {
     super(environment);
     this.auth = new AuthApi(environment);
-    this.orders = new OrdersApi(environment);  // Initialize
+    this.orders = new OrdersApi(environment); // Initialize
   }
 }
 ```

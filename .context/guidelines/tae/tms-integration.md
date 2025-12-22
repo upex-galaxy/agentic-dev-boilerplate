@@ -103,11 +103,7 @@ interface AtcResult {
  * Usage: @atc('PROJECT-XXX')
  */
 export function atc(testId: string) {
-  return function (
-    target: any,
-    propertyName: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -201,10 +197,11 @@ export async function syncToXray() {
       tests.push({
         testKey: testId,
         status: finalStatus,
-        comment: `🤖 KATA ATC: ${lastExecution.methodName}\n` +
-                 `📊 Executions: ${executions.length}\n` +
-                 `⏱️ Last run: ${lastExecution.executedAt}\n` +
-                 (lastExecution.error ? `\n❌ Error:\n${lastExecution.error}` : ''),
+        comment:
+          `🤖 KATA ATC: ${lastExecution.methodName}\n` +
+          `📊 Executions: ${executions.length}\n` +
+          `⏱️ Last run: ${lastExecution.executedAt}\n` +
+          (lastExecution.error ? `\n❌ Error:\n${lastExecution.error}` : ''),
       });
     }
 
@@ -223,7 +220,7 @@ export async function syncToXray() {
       payload,
       {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }
@@ -232,7 +229,6 @@ export async function syncToXray() {
     console.log(`✅ Results synced to Xray Cloud successfully`);
     console.log(`   Test Execution: ${importResponse.data.key}`);
     console.log(`   URL: https://your-domain.atlassian.net/browse/${importResponse.data.key}`);
-
   } catch (error: any) {
     console.error('❌ Xray sync failed:', error.response?.data || error.message);
   }
@@ -345,7 +341,7 @@ export async function syncToJiraDirect() {
         },
         {
           headers: {
-            'Authorization': `Basic ${auth}`,
+            Authorization: `Basic ${auth}`,
             'Content-Type': 'application/json',
           },
         }
@@ -362,7 +358,11 @@ export async function syncToJiraDirect() {
               {
                 type: 'paragraph',
                 content: [
-                  { type: 'text', text: `🤖 KATA Execution - ${finalStatus}\n`, marks: [{ type: 'strong' }] },
+                  {
+                    type: 'text',
+                    text: `🤖 KATA Execution - ${finalStatus}\n`,
+                    marks: [{ type: 'strong' }],
+                  },
                 ],
               },
               {
@@ -373,23 +373,26 @@ export async function syncToJiraDirect() {
                   { type: 'text', text: `Last run: ${lastExecution.executedAt}\n` },
                 ],
               },
-              ...(lastExecution.error ? [{
-                type: 'codeBlock',
-                content: [{ type: 'text', text: `Error:\n${lastExecution.error}` }],
-              }] : []),
+              ...(lastExecution.error
+                ? [
+                    {
+                      type: 'codeBlock',
+                      content: [{ type: 'text', text: `Error:\n${lastExecution.error}` }],
+                    },
+                  ]
+                : []),
             ],
           },
         },
         {
           headers: {
-            'Authorization': `Basic ${auth}`,
+            Authorization: `Basic ${auth}`,
             'Content-Type': 'application/json',
           },
         }
       );
 
       console.log(`✅ Updated ${testId} → ${finalStatus}`);
-
     } catch (error: any) {
       console.error(`❌ Failed to update ${testId}:`, error.response?.data || error.message);
     }

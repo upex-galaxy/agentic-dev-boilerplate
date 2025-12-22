@@ -169,11 +169,13 @@ Si el usuario acepta:
 
    ```markdown
    ## Summary
+
    - [Lista de funcionalidades añadidas]
    - [Lista de bugs corregidos]
    - [Otros cambios relevantes]
 
    ## Test plan
+
    - [Pasos para probar los cambios]
 
    🤖 Generated with [Claude Code](https://claude.com/claude-code)

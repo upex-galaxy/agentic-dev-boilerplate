@@ -33,6 +33,7 @@ Traditional Approach (BAD):
 ```
 
 **The Issue**:
+
 - Each MCP server consumes tokens in the context window
 - 15 MCPs can consume 15,000-30,000 tokens before you even start
 - You're paying for tools you're not using
@@ -66,12 +67,12 @@ Result: 90% token reduction
 
 **Key Insight**: One task = One session = Specific MCP subset
 
-| Task Type | MCPs Needed | Token Savings |
-|-----------|-------------|---------------|
-| Backend coding | supabase, context7 | ~85% |
-| Frontend coding | playwright, context7 | ~85% |
-| API testing | postman, context7 | ~90% |
-| Documentation | notion, context7, tavity | ~80% |
+| Task Type       | MCPs Needed              | Token Savings |
+| --------------- | ------------------------ | ------------- |
+| Backend coding  | supabase, context7       | ~85%          |
+| Frontend coding | playwright, context7     | ~85%          |
+| API testing     | postman, context7        | ~90%          |
+| Documentation   | notion, context7, tavity | ~80%          |
 
 ---
 
@@ -147,14 +148,15 @@ User: node scripts/mcp-builder.js backend
 
 Pick your preferred CLI tool:
 
-| Tool | Template File | Catalog File (you create) | Config File (auto-generated) |
-|------|---------------|---------------------------|------------------------------|
-| **Gemini** | `templates/mcp/gemini.template.json` | `.gemini/settings.catalog.json` | `.gemini/settings.json` |
-| **Claude** | `templates/mcp/claude.template.json` | `.mcp.catalog.json` | `.mcp.json` |
+| Tool       | Template File                        | Catalog File (you create)       | Config File (auto-generated) |
+| ---------- | ------------------------------------ | ------------------------------- | ---------------------------- |
+| **Gemini** | `templates/mcp/gemini.template.json` | `.gemini/settings.catalog.json` | `.gemini/settings.json`      |
+| **Claude** | `templates/mcp/claude.template.json` | `.mcp.catalog.json`             | `.mcp.json`                  |
 
 ### Step 2: Copy Template to Create Catalog
 
 **For Gemini CLI**:
+
 ```bash
 # Create .gemini directory if it doesn't exist
 mkdir -p .gemini
@@ -164,6 +166,7 @@ cp templates/mcp/gemini.template.json .gemini/settings.catalog.json
 ```
 
 **For Claude Code**:
+
 ```bash
 # Copy template to create your catalog
 cp templates/mcp/claude.template.json .mcp.catalog.json
@@ -174,6 +177,7 @@ cp templates/mcp/claude.template.json .mcp.catalog.json
 Edit your catalog file (e.g., `.gemini/settings.catalog.json`) and **replace placeholders with actual values**:
 
 **Before** (template):
+
 ```json
 {
   "mcpServers": {
@@ -195,6 +199,7 @@ Edit your catalog file (e.g., `.gemini/settings.catalog.json`) and **replace pla
 ```
 
 **After** (your catalog with real secrets):
+
 ```json
 {
   "mcpServers": {
@@ -245,6 +250,7 @@ AI_COMMAND_PATH='/home/user/.nvm/versions/node/v22.11.0/bin/gemini'
 **Note**: The `.env.example` file contains examples for multiple AI tools (Gemini, Claude Code, Cursor) and space for your project-specific variables.
 
 **Find your AI_COMMAND_PATH**:
+
 ```bash
 # For Gemini
 which gemini
@@ -256,6 +262,7 @@ which claude
 **For Different Tools**:
 
 **Gemini CLI**:
+
 ```bash
 MCP_CATALOG_FILE='.gemini/settings.catalog.json'
 MCP_FILE='.gemini/settings.json'
@@ -263,6 +270,7 @@ AI_COMMAND_PATH='/path/to/gemini'
 ```
 
 **Claude Code**:
+
 ```bash
 MCP_CATALOG_FILE='.mcp.catalog.json'
 MCP_FILE='.mcp.json'
@@ -272,30 +280,35 @@ AI_COMMAND_PATH='/usr/local/bin/claude'
 ### Step 5: Run MCP Builder
 
 **Backend work**:
+
 ```bash
 node scripts/mcp-builder.js backend
 # Loads: supabase + context7
 ```
 
 **Frontend work**:
+
 ```bash
 node scripts/mcp-builder.js frontend
 # Loads: playwright + context7
 ```
 
 **Custom combination**:
+
 ```bash
 node scripts/mcp-builder.js supabase,postman,github
 # Loads: exactly those 3
 ```
 
 **No MCPs** (clean session):
+
 ```bash
 node scripts/mcp-builder.js
 # Loads: none (0 token overhead)
 ```
 
 **All MCPs** (NOT recommended, but available):
+
 ```bash
 node scripts/mcp-builder.js full
 # ⚠️ Loads ALL MCPs from catalog
@@ -306,17 +319,17 @@ node scripts/mcp-builder.js full
 
 ## 📋 Predefined Profiles
 
-| Profile | MCPs | Use Case | Token Savings |
-|---------|------|----------|---------------|
-| `backend` | supabase, context7 | Backend dev + DB | ~85% |
-| `frontend` | playwright, context7 | Frontend + E2E tests | ~85% |
-| `apitest` | postman, context7 | API testing | ~90% |
-| `uitest` | playwright, devtools, context7 | UI testing | ~80% |
-| `report` | github, atlassian, slack | Project management | ~80% |
-| `docs` | notion, context7, tavity | Documentation | ~80% |
-| `dbtest` | supabase, context7 | Database testing | ~85% |
-| `e2etest` | playwright, postman, supabase, context7 | Full-stack testing | ~70% |
-| `full` | ALL ⚠️ | Debugging/exploration | 0% |
+| Profile    | MCPs                                    | Use Case              | Token Savings |
+| ---------- | --------------------------------------- | --------------------- | ------------- |
+| `backend`  | supabase, context7                      | Backend dev + DB      | ~85%          |
+| `frontend` | playwright, context7                    | Frontend + E2E tests  | ~85%          |
+| `apitest`  | postman, context7                       | API testing           | ~90%          |
+| `uitest`   | playwright, devtools, context7          | UI testing            | ~80%          |
+| `report`   | github, atlassian, slack                | Project management    | ~80%          |
+| `docs`     | notion, context7, tavity                | Documentation         | ~80%          |
+| `dbtest`   | supabase, context7                      | Database testing      | ~85%          |
+| `e2etest`  | playwright, postman, supabase, context7 | Full-stack testing    | ~70%          |
+| `full`     | ALL ⚠️                                  | Debugging/exploration | 0%            |
 
 ---
 
@@ -354,6 +367,7 @@ gemini
 ```
 
 **Use Manual Mode When**:
+
 - You don't know the exact path to your CLI binary
 - You want to generate config and launch later
 - You're testing different configurations
@@ -411,6 +425,7 @@ Our repository includes **pre-configured templates** with popular MCP servers:
 ### Gemini Template (`templates/mcp/gemini.template.json`)
 
 Includes:
+
 - **playwright** - E2E testing with browser automation
 - **devtools** - Chrome DevTools integration
 - **supabase** - PostgreSQL database and auth
@@ -430,12 +445,14 @@ Includes:
 Same MCPs with Claude-specific configuration format (uses `type`, `url`, etc.)
 
 **Benefits**:
+
 - No need to research MCP configurations
 - Pre-tested and working setups
 - Easy to customize
 - **Just add your API keys and go!**
 
 **Template Updates**: This repository will receive updates with:
+
 - New MCP servers as they become available
 - Configuration improvements
 - Better defaults and optimizations
@@ -447,6 +464,7 @@ Same MCPs with Claude-specific configuration format (uses `type`, `url`, etc.)
 **Scenario**: Building a user authentication feature
 
 **Traditional Approach**:
+
 ```bash
 claude  # Launches with ALL 15 MCPs
 # Token usage per message: ~25,000 base + your prompt
@@ -454,6 +472,7 @@ claude  # Launches with ALL 15 MCPs
 ```
 
 **MCP Builder Approach**:
+
 ```bash
 node scripts/mcp-builder.js backend
 # Loads ONLY: supabase + context7
@@ -463,6 +482,7 @@ node scripts/mcp-builder.js backend
 ```
 
 **During the session**:
+
 ```
 You: "Create user authentication with Supabase"
 AI: [uses supabase MCP] "Here's the schema and auth setup..."
@@ -501,6 +521,7 @@ Session 3: node scripts/mcp-builder.js backend
 ### 3. Keep Your Catalog Updated
 
 As you add more MCP servers to your catalog:
+
 ```bash
 # Edit your catalog file
 vim .gemini/settings.catalog.json
@@ -523,6 +544,7 @@ const PROFILES = {
 ```
 
 Usage:
+
 ```bash
 node scripts/mcp-builder.js mystack
 ```
@@ -542,12 +564,14 @@ node scripts/mcp-builder.js full
 ```
 
 **Valid use cases**:
+
 - Debugging MCP configurations
 - Demos/presentations
 - Exploring available tools
 - You genuinely need everything
 
 **Invalid use cases**:
+
 - Regular coding sessions (wasteful)
 - When you only need 1-2 MCPs (inefficient)
 
@@ -560,6 +584,7 @@ node scripts/mcp-builder.js full
 **Cause**: No `.env` file
 
 **Fix**:
+
 ```bash
 # Recommended: Copy the example file
 cp .env.example .env
@@ -569,6 +594,7 @@ cp .env.example .env
 ```
 
 **Quick alternative** (if you don't have .env.example):
+
 ```bash
 cat > .env << EOF
 MCP_CATALOG_FILE='.gemini/settings.catalog.json'
@@ -582,6 +608,7 @@ EOF
 **Cause**: You didn't create the catalog file from template
 
 **Fix**:
+
 ```bash
 # For Gemini
 mkdir -p .gemini
@@ -596,6 +623,7 @@ cp templates/mcp/claude.template.json .mcp.catalog.json
 **Cause**: Requesting MCP not in your catalog
 
 **Fix**: Check available MCPs in your catalog
+
 ```bash
 cat .gemini/settings.catalog.json | grep '"' | head -20
 ```
@@ -605,6 +633,7 @@ cat .gemini/settings.catalog.json | grep '"' | head -20
 **Cause**: `AI_COMMAND_PATH` is wrong or missing
 
 **Fix**: Either correct the path OR omit it (manual mode)
+
 ```bash
 # Find correct path
 which gemini
@@ -617,6 +646,7 @@ which gemini
 **Cause**: You forgot to replace placeholders in catalog
 
 **Fix**: Edit catalog and add real values
+
 ```bash
 # Open your catalog
 vim .gemini/settings.catalog.json
@@ -671,6 +701,7 @@ export AI_COMMAND_PATH='/path/to/claude'
 ```
 
 Switch via `.env`:
+
 ```bash
 # Development
 MCP_CATALOG_FILE='.gemini/settings.catalog.dev.json'

@@ -28,7 +28,7 @@ const PROFILES = {
   apitest: ['postman', 'context7'], // Add @ivotoby/openapi-mcp-server MCP when project has openapi.json
   dbtest: ['supabase', 'context7'], // or use @bytebase/dbhub for SQL testing alternative.
   e2etest: ['playwright', 'postman', 'supabase', 'context7'],
-  full: 'ALL'  // Marcador especial: carga TODOS los MCPs del catálogo
+  full: 'ALL', // Marcador especial: carga TODOS los MCPs del catálogo
 };
 
 // ============ FUNCIONES ============
@@ -39,7 +39,7 @@ function loadCatalog() {
     console.error('💡 Crea el archivo con tus MCPs disponibles');
     process.exit(1);
   }
-  
+
   try {
     const content = fs.readFileSync(mcpCatalogFile, 'utf8');
     return JSON.parse(content);
@@ -65,7 +65,9 @@ function parseArgs(catalog) {
     const allMcps = Object.keys(catalog.mcpServers);
     console.log('\n⚠️  ADVERTENCIA: Usando perfil "full"');
     console.log('📊 Esto carga TODOS los MCPs disponibles en el catálogo');
-    console.log('💡 Consume muchos tokens. Considera usar perfiles específicos (backend, frontend, etc.)');
+    console.log(
+      '💡 Consume muchos tokens. Considera usar perfiles específicos (backend, frontend, etc.)'
+    );
     console.log(`📈 Total de MCPs a cargar: ${allMcps.length}\n`);
     return allMcps;
   }
@@ -103,14 +105,14 @@ function generateMcpJson(selectedMcps, catalog) {
     console.log(`✅ ${MCP_FILE} generado (vacío)`);
     return;
   }
-  
+
   // Construir objeto mcpServers con solo los seleccionados
   selectedMcps.forEach(name => {
     mcpServers[name] = catalog.mcpServers[name];
   });
-  
+
   const config = { mcpServers };
-  
+
   // Escribir nuevo .mcp.json
   fs.writeFileSync(mcpFile, JSON.stringify(config, null, 2), 'utf8');
   console.log(`✅ ${MCP_FILE} generado`);
@@ -130,10 +132,10 @@ function startCodeAgentCLI() {
 
   const codeAgent = spawn(aiCommandPath, [], {
     stdio: 'inherit',
-    shell: true
+    shell: true,
   });
 
-  codeAgent.on('error', (err) => {
+  codeAgent.on('error', err => {
     console.error(`\n❌ Error al iniciar ${codeAgentName}:`, err.message);
     process.exit(1);
   });
@@ -142,10 +144,10 @@ function startCodeAgentCLI() {
 // ============ MAIN ============
 function main() {
   console.log(`🔧 MCP Builder\n`);
-  
+
   const catalog = loadCatalog();
   const selectedMcps = parseArgs(catalog);
-  
+
   generateMcpJson(selectedMcps, catalog);
   startCodeAgentCLI();
 }

@@ -18,6 +18,7 @@ claude --dangerously-skip-permissions
 ```
 
 Esto:
+
 - Inicializa el directorio de configuración
 - Establece permisos de seguridad
 - Crea tokens de autenticación
@@ -44,21 +45,25 @@ Claude Code usa un sistema jerárquico:
 ### Método 1: Mediante CLI (Recomendado)
 
 #### Agregar servidor stdio
+
 ```bash
 claude mcp add -t stdio -s user mi-servidor -- npx -y @paquete/servidor
 ```
 
 #### Agregar servidor HTTP
+
 ```bash
 claude mcp add --transport http --scope user firebase https://firebase.mcp.com
 ```
 
 #### Listar servidores
+
 ```bash
 claude mcp list
 ```
 
 #### Eliminar servidor
+
 ```bash
 claude mcp remove mi-servidor
 ```
@@ -68,6 +73,7 @@ claude mcp remove mi-servidor
 #### ~/.claude.json
 
 **Servidor stdio Local**:
+
 ```json
 {
   "mcpServers": {
@@ -81,6 +87,7 @@ claude mcp remove mi-servidor
 ```
 
 **Servidor HTTP con Autenticación**:
+
 ```json
 {
   "mcpServers": {
@@ -103,6 +110,7 @@ claude mcp remove mi-servidor
 ```
 
 **Servidor con npx**:
+
 ```json
 {
   "mcpServers": {
@@ -133,6 +141,7 @@ Claude Code eliminó soporte para SSE en versiones superiores a 2.0.9.
 **Si tienes servidores SSE**:
 
 **Solución 1**: Usar versión anterior de Claude Code
+
 ```bash
 npm install -g claude-code@2.0.9
 ```
@@ -153,6 +162,7 @@ claude mcp add -t stdio -s user supabase -- npx -y @supabase/mcp-server-supabase
 ```
 
 **O manualmente en ~/.claude.json**:
+
 ```json
 {
   "mcpServers": {
@@ -217,17 +227,21 @@ claude mcp add --transport http --scope user context7 https://context7.mcp.io
 ## 🎯 Características Especiales
 
 ### Sistema Jerárquico
+
 Project > Local > User
 
 Los archivos en el proyecto sobrescriben configuración local y global.
 
 ### Gestión de Permisos
+
 Control granular de acceso a recursos del sistema.
 
 ### Registry de MCP
+
 Acceso a servidores verificados desde el registro oficial.
 
 ### Variables de Entrada
+
 Soporte para inputs interactivos:
 
 ```json
@@ -237,7 +251,7 @@ Soporte para inputs interactivos:
       "id": "unique-id",
       "type": "promptString",
       "description": "User-friendly description",
-      "password": true  // Oculta entrada
+      "password": true // Oculta entrada
     }
   ]
 }
@@ -250,6 +264,7 @@ Soporte para inputs interactivos:
 ### "Permission denied"
 
 **Solución**: Ejecutar setup inicial
+
 ```bash
 claude --dangerously-skip-permissions
 ```
@@ -259,6 +274,7 @@ claude --dangerously-skip-permissions
 **Causa**: Versión >2.0.9 no soporta SSE
 
 **Solución**:
+
 ```bash
 # Downgrade
 npm install -g claude-code@2.0.9
@@ -269,6 +285,7 @@ npm install -g claude-code@2.0.9
 ### Servidor no se encuentra
 
 **Solución**: Usar rutas absolutas
+
 ```json
 {
   "command": "/usr/local/bin/node",
@@ -277,6 +294,7 @@ npm install -g claude-code@2.0.9
 ```
 
 **Verificar PATH**:
+
 ```bash
 which npx
 which node
@@ -285,11 +303,13 @@ which node
 ### Herramientas no aparecen
 
 **Diagnóstico**:
+
 ```bash
 claude mcp list
 ```
 
 **Soluciones**:
+
 1. Reiniciar Claude Code completamente
 2. Verificar que el servidor use scope correcto
 3. Revisar logs de MCP
@@ -301,6 +321,7 @@ claude mcp list
 ### 1. Usar Proyecto para Configuración Específica
 
 `.mcp.json` en raíz del proyecto:
+
 ```json
 {
   "mcpServers": {

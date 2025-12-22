@@ -171,20 +171,20 @@
 
 ## Tabla de Requisitos por Endpoint (Ejemplo)
 
-| Endpoint | Metodo | Auth | Requisitos Especiales |
-|----------|--------|------|----------------------|
-| /api/checkout/session | POST | Cookie | Body: { order_id } |
-| /api/orders/[id]/cancel | POST | Cookie | Usuario debe ser propietario |
-| /api/orders/[id]/status | PATCH | Cookie | Solo admin puede cambiar |
-| /api/orders/[id]/tracking | GET | Cookie | Dentro de ventana de tiempo |
-| /api/stripe/connect/onboard | POST | Cookie | Usuario debe ser vendedor |
-| /api/stripe/connect/status | GET | Cookie | Usuario debe ser vendedor |
-| /api/webhooks/stripe | POST | Stripe-Signature | Solo Stripe puede llamar |
-| /api/products/[id]/availability | GET | Ninguna | Publico |
-| /api/notifications/unread | GET | Cookie | - |
-| /api/email/order-confirmation | POST | X-API-Key | Clave interna |
-| /api/cron/process-payouts | POST | Authorization | CRON_SECRET |
-| /api/testing/seed-data | POST | X-API-Key | Solo en dev/staging |
+| Endpoint                        | Metodo | Auth             | Requisitos Especiales        |
+| ------------------------------- | ------ | ---------------- | ---------------------------- |
+| /api/checkout/session           | POST   | Cookie           | Body: { order_id }           |
+| /api/orders/[id]/cancel         | POST   | Cookie           | Usuario debe ser propietario |
+| /api/orders/[id]/status         | PATCH  | Cookie           | Solo admin puede cambiar     |
+| /api/orders/[id]/tracking       | GET    | Cookie           | Dentro de ventana de tiempo  |
+| /api/stripe/connect/onboard     | POST   | Cookie           | Usuario debe ser vendedor    |
+| /api/stripe/connect/status      | GET    | Cookie           | Usuario debe ser vendedor    |
+| /api/webhooks/stripe            | POST   | Stripe-Signature | Solo Stripe puede llamar     |
+| /api/products/[id]/availability | GET    | Ninguna          | Publico                      |
+| /api/notifications/unread       | GET    | Cookie           | -                            |
+| /api/email/order-confirmation   | POST   | X-API-Key        | Clave interna                |
+| /api/cron/process-payouts       | POST   | Authorization    | CRON_SECRET                  |
+| /api/testing/seed-data          | POST   | X-API-Key        | Solo en dev/staging          |
 
 ---
 

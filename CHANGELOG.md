@@ -40,32 +40,36 @@
 
 ### 🔄 Fases Renombradas
 
-| Antes (v1.0) | Después (v2.0) | Razón |
-|--------------|----------------|-------|
-| fase-2.5-design | **Eliminada** | Contenido movido a fase-3-infrastructure/frontend-setup.md |
-| fase-3-specification | fase-4-specification | Escorrimiento por nueva fase-3 |
-| fase-4-shift-left-testing | fase-5-shift-left-testing | Escorrimiento por nueva fase-3 |
-| fase-5-planning | fase-6-planning | Escorrimiento por nueva fase-3 |
-| fase-6-implementation | fase-7-implementation | Escorrimiento por nueva fase-3 |
-| fase-7-code-review | fase-8-code-review | Escorrimiento por nueva fase-3 |
-| fase-8-test-automation | fase-11-test-automation | Movida después de fases 9 y 10 |
+| Antes (v1.0)              | Después (v2.0)            | Razón                                                      |
+| ------------------------- | ------------------------- | ---------------------------------------------------------- |
+| fase-2.5-design           | **Eliminada**             | Contenido movido a fase-3-infrastructure/frontend-setup.md |
+| fase-3-specification      | fase-4-specification      | Escorrimiento por nueva fase-3                             |
+| fase-4-shift-left-testing | fase-5-shift-left-testing | Escorrimiento por nueva fase-3                             |
+| fase-5-planning           | fase-6-planning           | Escorrimiento por nueva fase-3                             |
+| fase-6-implementation     | fase-7-implementation     | Escorrimiento por nueva fase-3                             |
+| fase-7-code-review        | fase-8-code-review        | Escorrimiento por nueva fase-3                             |
+| fase-8-test-automation    | fase-11-test-automation   | Movida después de fases 9 y 10                             |
 
 ### 📝 Cambios en Prompts
 
 #### Fase 3 (Infrastructure) - NUEVA
+
 - ✅ Creada carpeta completa con 4 archivos
 - ✅ frontend-setup.md contiene diseño completo del design system (movido desde fase-2.5)
 - ✅ Agrega sección de integración con tipos del backend
 
 #### Fase 7 (Implementation)
+
 - ✅ Agregado `unit-testing.md` - Unit tests durante implementación
 - ✅ Actualizado README.md para incluir unit testing en el flujo
 
 #### Fase 10 (Exploratory Testing) - NUEVA
+
 - ✅ Agregado `smoke-test.md` - Validación rápida post-deploy
 - ✅ Creados 4 prompts para testing exploratorio estructurado
 
 #### Fase 11 (Test Automation) - Expandida
+
 - ✅ **Preservados** 3 archivos KATA existentes:
   - test-strategy.md
   - automation-standards.md
@@ -89,6 +93,7 @@ Agregadas 4 guidelines en `.context/guidelines/`:
 ### 🔧 Mejoras de Arquitectura
 
 #### Backend primero → Frontend después (Fase 3)
+
 ```
 Antes (v1.0):
 - Frontend y backend en paralelo
@@ -102,6 +107,7 @@ Después (v2.0):
 ```
 
 #### Exploratory antes que Automation
+
 ```
 Antes (v1.0):
 - Automation directa después de implementation
@@ -115,6 +121,7 @@ Después (v2.0):
 ```
 
 #### KATA framework para todos los tests automation
+
 - Estructura unificada: Components → Actions → Tests
 - Integration y E2E siguen mismos patrones
 - Código de tests más mantenible y reutilizable
@@ -122,6 +129,7 @@ Después (v2.0):
 ### 📊 Estadísticas
 
 #### Antes (v1.0)
+
 - **Fases:** 8 (+ fase-2.5 decimal)
 - **Fases sincrónicas:** 2
 - **Fases asincrónicas:** 6
@@ -129,6 +137,7 @@ Después (v2.0):
 - **Testing strategy:** Lineal (shift-left → automation)
 
 #### Después (v2.0)
+
 - **Fases:** 13 (nomenclatura limpia, sin decimales)
 - **Fases sincrónicas:** 3 (Constitution, Architecture, Infrastructure)
 - **Fases asincrónicas:** 10 (Specification → Shift-Right Testing)
@@ -138,11 +147,13 @@ Después (v2.0):
 ### 🎯 Flujo de Trabajo Actualizado
 
 #### Fases Sincrónicas (una sola vez)
+
 1. **Constitution** - Idea de negocio
 2. **Architecture** - PRD + SRS (specs)
 3. **Infrastructure** ⭐ **NUEVA** - Setup técnico real (cloud + backend + frontend)
 
 #### Fases Asincrónicas (iterativas)
+
 4. **Specification** - Product backlog
 5. **Shift-Left Testing** - Test plans
 6. **Planning** - Implementation plans
@@ -181,6 +192,7 @@ Después (v2.0):
 Si tienes un proyecto usando v1.0:
 
 1. **Renombrar fases:**
+
    ```bash
    mv .prompts/fase-3-specification .prompts/fase-4-specification
    mv .prompts/fase-4-shift-left-testing .prompts/fase-5-shift-left-testing
@@ -188,6 +200,7 @@ Si tienes un proyecto usando v1.0:
    ```
 
 2. **Eliminar fase-2.5-design:**
+
    ```bash
    rm -rf .prompts/fase-2.5-design
    ```

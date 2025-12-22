@@ -25,6 +25,7 @@ Ctrl/Cmd + Shift + P
 ```
 
 Luego:
+
 1. Seleccionar tipo de servidor (Command/HTTP/SSE)
 2. Ingresar comando o URL
 3. Elegir scope (Global/Workspace)
@@ -196,15 +197,19 @@ Una vez configurado:
 ## 🌟 Características Especiales
 
 ### IntelliSense
+
 Autocompletado en `mcp.json` con validación de esquema.
 
 ### Botones de Control
+
 Start/Stop/Restart servers desde el editor.
 
 ### Agent Mode
+
 Uso de herramientas en contexto de chat.
 
 ### Dev Containers
+
 Soporte para configuración en contenedores.
 
 #### En .devcontainer/devcontainer.json:
@@ -227,12 +232,15 @@ Soporte para configuración en contenedores.
 ```
 
 ### Autodiscovery
+
 VS Code puede detectar automáticamente configuraciones de:
+
 - Claude Desktop (`claude_desktop_config.json`)
 - Cursor (`.cursor/mcp.json`)
 - Otros clientes MCP compatibles
 
 #### Habilitar en settings:
+
 ```json
 {
   "chat.mcp.discovery.enabled": true
@@ -246,6 +254,7 @@ VS Code puede detectar automáticamente configuraciones de:
 ### "Servidor no se encuentra"
 
 **Solución**: Usar rutas absolutas
+
 ```json
 {
   "command": "/usr/local/bin/node",
@@ -254,6 +263,7 @@ VS Code puede detectar automáticamente configuraciones de:
 ```
 
 **Verificar PATH**:
+
 ```bash
 which npx
 which node
@@ -262,6 +272,7 @@ which node
 ### Herramientas no aparecen
 
 **Soluciones**:
+
 1. Reiniciar VS Code
 2. Verificar que el servidor esté en `mcp.json`
 3. Revisar Output panel: `Output > MCP`
@@ -271,6 +282,7 @@ which node
 **Causa**: Inputs mal configurados
 
 **Solución**: Verificar estructura
+
 ```json
 {
   "inputs": [
@@ -287,6 +299,7 @@ which node
 ### Figma MCP no funciona
 
 **Requisitos**:
+
 1. Figma Desktop instalado
 2. Seat Dev/Full (Pro/Org/Enterprise)
 3. "Enable local MCP Server" en Preferences
@@ -298,6 +311,7 @@ which node
 ### 1. Usar Workspace Config para Proyectos
 
 `.vscode/mcp.json` en cada proyecto:
+
 ```json
 {
   "servers": {
@@ -339,6 +353,7 @@ which node
 ### 5. Usar Agent Mode
 
 En Copilot Chat:
+
 ```
 @workspace #playwright "crea un test para login"
 ```

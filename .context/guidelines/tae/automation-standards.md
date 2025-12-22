@@ -65,7 +65,7 @@ class SignupPage extends UiBase {
 
   @atc('PROJ-001')
   async signupSuccessfully(data: SignUpData) {
-    await this.fillEmail(data.email);  // Why abstract a one-liner?
+    await this.fillEmail(data.email); // Why abstract a one-liner?
   }
 }
 
@@ -272,7 +272,7 @@ KATA prioritizes **deterministic tests** over retry mechanisms.
 ```typescript
 // playwright.config.ts
 export default defineConfig({
-  retries: 0,  // KATA recommendation: investigate failures, don't mask them
+  retries: 0, // KATA recommendation: investigate failures, don't mask them
 });
 ```
 
@@ -600,10 +600,10 @@ async verifyOptionalField() {
 
 | Use Case               | Soft Fail |
 | ---------------------- | --------- |
-| Optional form fields   | ✅ Yes     |
-| Exploratory tests      | ✅ Yes     |
-| Critical functionality | ❌ No      |
-| Blocking validation    | ❌ No      |
+| Optional form fields   | ✅ Yes    |
+| Exploratory tests      | ✅ Yes    |
+| Critical functionality | ❌ No     |
+| Blocking validation    | ❌ No     |
 
 ---
 

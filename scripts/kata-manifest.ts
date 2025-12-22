@@ -13,15 +13,8 @@
  * Output: kata-manifest.json in project root
  */
 
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  statSync,
-  watch,
-  writeFileSync,
-} from "fs";
-import { basename, join, relative } from "path";
+import { existsSync, readdirSync, readFileSync, statSync, watch, writeFileSync } from 'fs';
+import { basename, join, relative } from 'path';
 
 // ============================================================================
 // Types
@@ -48,7 +41,7 @@ interface PreconditionInfo {
 }
 
 interface KataManifest {
-  version: "1.0";
+  version: '1.0';
   generatedAt: string;
   components: {
     api: ComponentInfo[];
@@ -69,24 +62,24 @@ interface KataManifest {
 // ============================================================================
 
 const PROJECT_ROOT = process.cwd();
-const COMPONENTS_DIR = join(PROJECT_ROOT, "tests", "components");
-const OUTPUT_FILE = join(PROJECT_ROOT, "kata-manifest.json");
+const COMPONENTS_DIR = join(PROJECT_ROOT, 'tests', 'components');
+const OUTPUT_FILE = join(PROJECT_ROOT, 'kata-manifest.json');
 
 const COMPONENT_PATHS = {
-  api: join(COMPONENTS_DIR, "api"),
-  ui: join(COMPONENTS_DIR, "ui"),
-  preconditions: join(COMPONENTS_DIR, "preconditions"),
+  api: join(COMPONENTS_DIR, 'api'),
+  ui: join(COMPONENTS_DIR, 'ui'),
+  preconditions: join(COMPONENTS_DIR, 'preconditions'),
 };
 
 // Files to exclude (base classes, fixtures, etc.)
 const EXCLUDED_FILES = [
-  "ApiBase.ts",
-  "UiBase.ts",
-  "TestContext.ts",
-  "TestFixture.ts",
-  "ApiFixture.ts",
-  "UiFixture.ts",
-  "index.ts",
+  'ApiBase.ts',
+  'UiBase.ts',
+  'TestContext.ts',
+  'TestFixture.ts',
+  'ApiFixture.ts',
+  'UiFixture.ts',
+  'index.ts',
 ];
 
 // ============================================================================
@@ -97,8 +90,8 @@ const EXCLUDED_FILES = [
  * Extract @atc decorator calls from a TypeScript file
  */
 function extractATCs(filePath: string): ATCInfo[] {
-  const content = readFileSync(filePath, "utf-8");
-  const lines = content.split("\n");
+  const content = readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n');
   const atcs: ATCInfo[] = [];
 
   // Pattern: @atc('PROJ-XXX') or @atc("PROJ-XXX")
@@ -110,16 +103,12 @@ function extractATCs(filePath: string): ATCInfo[] {
       const atcId = match[1];
 
       // Find the method name on the next non-empty line(s)
-      let methodName = "unknown";
+      let methodName = 'unknown';
       for (let i = index + 1; i < Math.min(index + 5, lines.length); i++) {
         const nextLine = lines[i].trim();
         // Match: async methodName( or methodName(
         const methodMatch = nextLine.match(/(?:async\s+)?(\w+)\s*\(/);
-        if (
-          methodMatch &&
-          !nextLine.startsWith("//") &&
-          !nextLine.startsWith("*")
-        ) {
+        if (methodMatch && !nextLine.startsWith('//') && !nextLine.startsWith('*')) {
           methodName = methodMatch[1];
           break;
         }
@@ -140,7 +129,7 @@ function extractATCs(filePath: string): ATCInfo[] {
  * Extract class name from a TypeScript file
  */
 function extractClassName(filePath: string): string {
-  const content = readFileSync(filePath, "utf-8");
+  const content = readFileSync(filePath, 'utf-8');
 
   // Pattern: export class ClassName extends or export class ClassName {
   const classMatch = content.match(/(?:export\s+)?class\s+([A-Z][a-zA-Z0-9]*)/);
@@ -149,14 +138,14 @@ function extractClassName(filePath: string): string {
   }
 
   // Fallback to filename without extension
-  return basename(filePath, ".ts");
+  return basename(filePath, '.ts');
 }
 
 /**
  * Extract public methods from a precondition file (non-ATC reusable flows)
  */
 function extractPreconditionMethods(filePath: string): string[] {
-  const content = readFileSync(filePath, "utf-8");
+  const content = readFileSync(filePath, 'utf-8');
   const methods: string[] = [];
 
   // Pattern: async methodName( - public methods (must start with lowercase letter)
@@ -166,7 +155,7 @@ function extractPreconditionMethods(filePath: string): string[] {
   while ((match = methodPattern.exec(content)) !== null) {
     const methodName = match[1];
     // Exclude constructor and private methods (starting with _)
-    if (methodName !== "constructor" && !methodName.startsWith("_")) {
+    if (methodName !== 'constructor' && !methodName.startsWith('_')) {
       methods.push(methodName);
     }
   }
@@ -191,11 +180,7 @@ function scanDirectory(dirPath: string): string[] {
       const fullPath = join(dirPath, entry);
       const stat = statSync(fullPath);
 
-      if (
-        stat.isFile() &&
-        entry.endsWith(".ts") &&
-        !EXCLUDED_FILES.includes(entry)
-      ) {
+      if (stat.isFile() && entry.endsWith('.ts') && !EXCLUDED_FILES.includes(entry)) {
         files.push(fullPath);
       }
     }
@@ -212,7 +197,7 @@ function scanDirectory(dirPath: string): string[] {
 
 function generateManifest(): KataManifest {
   const manifest: KataManifest = {
-    version: "1.0",
+    version: '1.0',
     generatedAt: new Date().toISOString(),
     components: {
       api: [],
@@ -271,8 +256,7 @@ function generateManifest(): KataManifest {
   // Update summary
   manifest.summary.apiComponents = manifest.components.api.length;
   manifest.summary.uiComponents = manifest.components.ui.length;
-  manifest.summary.totalComponents =
-    manifest.summary.apiComponents + manifest.summary.uiComponents;
+  manifest.summary.totalComponents = manifest.summary.apiComponents + manifest.summary.uiComponents;
   manifest.summary.preconditionModules = manifest.preconditions.length;
 
   return manifest;
@@ -284,8 +268,8 @@ function generateManifest(): KataManifest {
 
 function main() {
   const args = process.argv.slice(2);
-  const watchMode = args.includes("--watch") || args.includes("-w");
-  const stdoutMode = args.includes("--stdout") || args.includes("-s");
+  const watchMode = args.includes('--watch') || args.includes('-w');
+  const stdoutMode = args.includes('--stdout') || args.includes('-s');
 
   const generate = () => {
     const manifest = generateManifest();
@@ -294,15 +278,13 @@ function main() {
     if (stdoutMode) {
       console.log(json);
     } else {
-      writeFileSync(OUTPUT_FILE, json, "utf-8");
+      writeFileSync(OUTPUT_FILE, json, 'utf-8');
       console.log(`✅ Generated ${OUTPUT_FILE}`);
       console.log(
         `   📦 Components: ${manifest.summary.totalComponents} (${manifest.summary.apiComponents} API, ${manifest.summary.uiComponents} UI)`
       );
       console.log(`   🎯 ATCs: ${manifest.summary.totalATCs}`);
-      console.log(
-        `   🔗 Preconditions: ${manifest.summary.preconditionModules}`
-      );
+      console.log(`   🔗 Preconditions: ${manifest.summary.preconditionModules}`);
     }
   };
 
@@ -311,18 +293,14 @@ function main() {
 
   // Watch mode
   if (watchMode && !stdoutMode) {
-    console.log("\n👀 Watching for changes...\n");
+    console.log('\n👀 Watching for changes...\n');
 
-    const dirsToWatch = [
-      COMPONENT_PATHS.api,
-      COMPONENT_PATHS.ui,
-      COMPONENT_PATHS.preconditions,
-    ];
+    const dirsToWatch = [COMPONENT_PATHS.api, COMPONENT_PATHS.ui, COMPONENT_PATHS.preconditions];
 
     for (const dir of dirsToWatch) {
       if (existsSync(dir)) {
         watch(dir, { recursive: true }, (eventType, filename) => {
-          if (filename?.endsWith(".ts")) {
+          if (filename?.endsWith('.ts')) {
             console.log(`\n🔄 Change detected: ${filename}`);
             generate();
           }

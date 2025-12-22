@@ -7,15 +7,19 @@ Este proyecto usa un GitFlow adaptado para trabajo con inteligencia artificial. 
 ## Estructura de ramas
 
 ### main
+
 Código en producción. Solo recibe merges desde `staging` mediante pull requests aprobados.
 
 ### staging
+
 Rama de integración y testing. Aquí la IA commitea cambios agrupados mientras trabajas. Representa tu ambiente de QA/pre-producción.
 
 ### feature/nombre-tarea
+
 Una rama por funcionalidad específica. La IA crea estas ramas cuando inicias una tarea nueva.
 
 **Ejemplo de nomenclatura:**
+
 - `feature/login-validation`
 - `feature/dashboard-analytics`
 - `feature/payment-integration`
@@ -23,6 +27,7 @@ Una rama por funcionalidad específica. La IA crea estas ramas cuando inicias un
 ## Ciclo de trabajo típico
 
 ### 1. Iniciar nueva tarea
+
 ```bash
 # Desde staging
 git checkout staging
@@ -31,45 +36,56 @@ git checkout -b feature/nombre-tarea
 ```
 
 ### 2. Desarrollo con IA
+
 - Le das instrucciones a la IA sobre qué construir
 - La IA genera código y lo agrupa en commits semánticos
 - Cada commit es pequeño, funcional e independiente
 
 ### 3. Commits agrupados
+
 La IA analiza cambios y propone commits separados:
 
 **feat:** Nueva funcionalidad
+
 ```
 feat: añade validación de email en formulario
 ```
 
 **fix:** Corrección de bugs
+
 ```
 fix: corrige cálculo de descuentos en checkout
 ```
 
 **refactor:** Mejora de código existente
+
 ```
 refactor: optimiza consultas de base de datos
 ```
 
 **test:** Tests nuevos o modificados
+
 ```
 test: añade casos de prueba para login
 ```
 
 **docs:** Documentación
+
 ```
 docs: actualiza README con nuevas variables de entorno
 ```
 
 ### 4. Push opcional
+
 Después de cada grupo de commits, decides:
+
 - **Push ahora:** Sube cambios al repo remoto
 - **Continuar local:** Sigues iterando sin push
 
 ### 5. Pull Request
+
 Cuando la feature está completa:
+
 - Haces push final de la rama
 - Creas PR desde `feature/nombre` hacia `staging` o `main`
 - Revisas cambios en GitHub
@@ -103,23 +119,27 @@ feature/y ──────────────●───●
 ## Comandos útiles
 
 ### Ver estado actual
+
 ```bash
 git status
 git log --oneline -10
 ```
 
 ### Ver diferencias antes de commit
+
 ```bash
 git diff
 git diff --stat
 ```
 
 ### Revertir último commit (mantiene cambios)
+
 ```bash
 git reset HEAD~1
 ```
 
 ### Ver historial de una rama
+
 ```bash
 git log --graph --oneline --all
 ```
@@ -135,6 +155,7 @@ git log --graph --oneline --all
 ## Integración con GitHub
 
 Este flujo se potencia con GitHub MCP, que permite a la IA:
+
 - Ver pull requests existentes
 - Crear nuevos PRs con descripción automática
 - Listar issues y vincularlos a commits

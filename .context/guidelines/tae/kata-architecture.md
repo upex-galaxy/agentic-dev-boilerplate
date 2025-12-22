@@ -2,7 +2,7 @@
 
 **Komponent Action Test Architecture**
 
-> *"Como un kata en artes marciales, donde cada movimiento se practica repetidamente hasta la perfección, KATA framework convierte las acciones del sistema en bloques reutilizables y precisos."*
+> _"Como un kata en artes marciales, donde cada movimiento se practica repetidamente hasta la perfección, KATA framework convierte las acciones del sistema en bloques reutilizables y precisos."_
 
 **Full Documentation**: See `/docs/kata-test-architecture.md` for complete KATA framework documentation.
 
@@ -283,7 +283,11 @@ test('complete purchase flow', async ({ page }) => {
   const fixture = new TestFixture(page);
 
   // Use API for fast setup
-  const user = await fixture.api.users.createUserSuccessfully('John', 'john@example.com', 'pass123');
+  const user = await fixture.api.users.createUserSuccessfully(
+    'John',
+    'john@example.com',
+    'pass123'
+  );
 
   // Use UI for the flow to validate
   await fixture.ui.login.loginSuccessfully(user.email, 'pass123');

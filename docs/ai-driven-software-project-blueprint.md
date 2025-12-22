@@ -37,6 +37,7 @@
 ### **Arquitectura Unificada**
 
 TODO se integra en `.context/PBI/` donde cada épica/story es una **carpeta** conteniendo:
+
 - Documentación (Fase 4)
 - Pruebas (Fase 5)
 - Planes (Fase 6)
@@ -46,41 +47,36 @@ TODO se integra en `.context/PBI/` donde cada épica/story es una **carpeta** co
 ### **13 Fases: 3 Sincrónicas + 10 Asincrónicas**
 
 **Fases Sincrónicas** (una sola vez, setup inicial):
+
 1. **Constitution** - Idea de negocio → `.context/idea/`
 2. **Architecture** - Product + Technical specs → `.context/PRD/` + `.context/SRS/`
 3. **Infrastructure** ⭐ **NUEVA** - Setup técnico real (cloud + backend + frontend)
 
-**Fases Asincrónicas** (iterativas, por sprint/épica):
-4. **Specification** - Product backlog → `.context/PBI/`
-5. **Shift-Left Testing** - Test plans + test cases
-6. **Planning** - Implementation plans
-7. **Implementation** - Código + unit tests (guiado por `.context/guidelines/`)
-8. **Code Review** - Revisión de código
-9. **Deployment Staging** ⭐ **NUEVA** - CI/CD + deploy a staging
-10. **Exploratory Testing** ⭐ **NUEVA** - Testing manual rápido
-11. **Test Automation** - Integration + E2E tests (KATA framework)
-12. **Production Deployment** ⭐ **NUEVA** - Deploy a producción
-13. **Shift-Right Testing** ⭐ **NUEVA** - Monitoring y observabilidad
+**Fases Asincrónicas** (iterativas, por sprint/épica): 4. **Specification** - Product backlog → `.context/PBI/` 5. **Shift-Left Testing** - Test plans + test cases 6. **Planning** - Implementation plans 7. **Implementation** - Código + unit tests (guiado por `.context/guidelines/`) 8. **Code Review** - Revisión de código 9. **Deployment Staging** ⭐ **NUEVA** - CI/CD + deploy a staging 10. **Exploratory Testing** ⭐ **NUEVA** - Testing manual rápido 11. **Test Automation** - Integration + E2E tests (KATA framework) 12. **Production Deployment** ⭐ **NUEVA** - Deploy a producción 13. **Shift-Right Testing** ⭐ **NUEVA** - Monitoring y observabilidad
 
 ---
 
 ## 🔍 DETECCIÓN DE TIPO DE PROYECTO
 
 ### **🌱 Greenfield (Desde cero)**
+
 - Sin código base previo
 - Workflow: Idea → PRD → SRS → Infrastructure → PBI → Implementation
 
 **Señales:**
+
 - No hay `package.json` con dependencias
 - No existe `src/`, `app/` con código
 - No hay schema de DB
 - `.context` vacío
 
 ### **🏛️ Legacy (Existente)**
+
 - Código ya implementado
 - Workflow: Análisis Reverso → Documentación → Testing → Refactoring
 
 **Señales:**
+
 - `package.json` con dependencies > 5
 - Directorio `src/`, `app/` con código
 - DB con schema y datos
@@ -101,15 +97,15 @@ Decisión:
 
 ### **Diferencias en Workflow**
 
-| Fase | Greenfield | Legacy |
-|------|-----------|--------|
-| **0. Análisis** | ❌ No aplica | ✅ Explorar codebase/DB → `legacy-analysis.md` |
-| **1. Constitution** | Desde idea | Desde código existente |
-| **2. Architecture** | PRD/SRS desde cero | Reverse engineering |
-| **3. Infrastructure** | Setup completo desde cero | Documentar infraestructura existente |
-| **4. Specification** | PBI desde cero | Mapear épicas existentes |
-| **5. Shift-Left Testing** | Tests para nuevas features | Tests de caracterización primero |
-| **6. Planning** | Diseño libre | Adaptarse a arquitectura existente |
+| Fase                      | Greenfield                 | Legacy                                         |
+| ------------------------- | -------------------------- | ---------------------------------------------- |
+| **0. Análisis**           | ❌ No aplica               | ✅ Explorar codebase/DB → `legacy-analysis.md` |
+| **1. Constitution**       | Desde idea                 | Desde código existente                         |
+| **2. Architecture**       | PRD/SRS desde cero         | Reverse engineering                            |
+| **3. Infrastructure**     | Setup completo desde cero  | Documentar infraestructura existente           |
+| **4. Specification**      | PBI desde cero             | Mapear épicas existentes                       |
+| **5. Shift-Left Testing** | Tests para nuevas features | Tests de caracterización primero               |
+| **6. Planning**           | Diseño libre               | Adaptarse a arquitectura existente             |
 
 ---
 
@@ -244,25 +240,30 @@ Decisión:
 ---
 
 ### **FASE 1: Constitution**
+
 **Rol:** Founder/Client/PO
 **Output:** `.context/idea/` completo (2-3 archivos)
 **Prompts:** Ver `.prompts/fase-1-constitution/`
 
 **Workflow:**
+
 1. Usar prompts para generar business-model.md y market-context.md
 2. Si es legacy, generar también legacy-analysis.md
 
 ---
 
 ### **FASE 2: Architecture (PRD + SRS)**
+
 **Rol:** Solution Architect/PM/BA
 **Output:**
+
 - `.context/PRD/` completo (4 archivos: executive-summary, user-personas, mvp-scope, user-journeys)
 - `.context/SRS/` completo (4 archivos: functional-specs, non-functional-specs, architecture-specs, api-contracts)
 
 **Prompts:** Ver `.prompts/fase-2-architecture/`
 
 **Workflow:**
+
 1. Generar PRD primero (business requirements)
 2. Luego generar SRS (technical requirements)
 3. Asegurar mapeo 1:1 entre User Stories (PRD) y Functional Requirements (SRS)
@@ -270,6 +271,7 @@ Decisión:
 ---
 
 ### **FASE 3: Infrastructure Setup** ⭐ **NUEVA**
+
 **Rol:** DevOps/Backend Dev/Frontend Dev
 **Output:** `.context/infrastructure/` completo (4 archivos)
 
@@ -278,6 +280,7 @@ Decisión:
 **⚠️ ORDEN CRÍTICO: Backend → Frontend**
 
 **Workflow:**
+
 1. **Cloud Services Setup** (15-30 min)
    - Crear proyecto en Supabase
    - Crear proyecto en Vercel/Railway
@@ -297,6 +300,7 @@ Decisión:
    - Configurar Tailwind + componentes base
 
 **Por qué Backend primero:**
+
 ```
 Backend define schemas → Genera tipos TypeScript automáticamente
 ↓
@@ -313,25 +317,25 @@ export type Database = {
   public: {
     Tables: {
       users: {
-        Row: { id: string; email: string; created_at: string }
-        Insert: { email: string }
-        Update: { email?: string }
-      }
-    }
-  }
-}
+        Row: { id: string; email: string; created_at: string };
+        Insert: { email: string };
+        Update: { email?: string };
+      };
+    };
+  };
+};
 
 // lib/types.ts (helper creado manualmente)
-import type { Database } from './database.types'
+import type { Database } from './database.types';
 
-export type User = Database['public']['Tables']['users']['Row']
-export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type User = Database['public']['Tables']['users']['Row'];
+export type UserInsert = Database['public']['Tables']['users']['Insert'];
 
 // components/UserProfile.tsx (frontend consume tipos reales)
-import type { User } from '@/lib/types'
+import type { User } from '@/lib/types';
 
 interface UserProfileProps {
-  user: User  // ✅ Tipo real del backend
+  user: User; // ✅ Tipo real del backend
 }
 ```
 
@@ -342,8 +346,10 @@ interface UserProfileProps {
 ---
 
 ### **FASE 4: Specification (PBI)**
+
 **Rol:** PO/PM
 **Output:**
+
 - `.context/PBI/epic-tree.md`
 - `.context/PBI/epics/EPIC-XXX/epic.md`
 - `.context/PBI/epics/EPIC-XXX/stories/STORY-XXX/story.md`
@@ -351,6 +357,7 @@ interface UserProfileProps {
 **Prompts:** Ver `.prompts/fase-4-specification/`
 
 **Workflow:**
+
 1. Generar epic-tree.md (árbol completo de épicas)
 2. Por cada épica: crear carpeta + epic.md
 3. Por cada story: crear carpeta + story.md con Gherkin
@@ -358,13 +365,16 @@ interface UserProfileProps {
 ---
 
 ### **FASE 5: Shift-Left Testing**
+
 **Rol:** QA Engineer
 
 **Por cada épica:**
+
 1. Leer `epic.md`
 2. Crear `feature-test-plan.md` (test strategy, risk analysis)
 
 **Por cada story:**
+
 1. Leer `story.md` + PRD + SRS relacionado
 2. Refinar acceptance criteria
 3. Identificar edge cases
@@ -376,14 +386,17 @@ interface UserProfileProps {
 ---
 
 ### **FASE 6: Planning**
+
 **Rol:** Tech Lead/Dev
 
 **Por cada épica (una vez):**
+
 1. Leer `epic.md` + SRS
 2. Tomar decisiones técnicas a nivel feature
 3. Crear `feature-implementation-plan.md`
 
 **Por cada story (antes de codear):**
+
 1. Leer `story.md` + `test-cases.md` + `feature-implementation-plan.md`
 2. Crear `implementation-plan.md` detallado
 3. IA decide si necesita archivos auxiliares (components.md, api-details.md, etc.)
@@ -393,9 +406,11 @@ interface UserProfileProps {
 ---
 
 ### **FASE 7: Implementation**
+
 **Rol:** Dev (con IA)
 
 **Workflow:**
+
 1. Cargar contexto completo (leer `implementation-plan.md`)
 2. Leer `.context/guidelines/*.md` (TODOS los archivos)
 3. Ejecutar subtareas según plan
@@ -404,6 +419,7 @@ interface UserProfileProps {
 6. Usar MCP tools (Supabase, Atlassian)
 
 **Unit Tests en Implementation:**
+
 - Funciones con lógica de negocio compleja
 - Utilidades y helpers reutilizables
 - Validaciones y transformaciones de datos
@@ -416,9 +432,11 @@ interface UserProfileProps {
 ---
 
 ### **FASE 8: Code Review**
+
 **Rol:** Tech Lead/Senior Dev
 
 **Workflow:**
+
 1. Revisar Pull Request
 2. Verificar adherencia a `.context/guidelines/code-standards.md`
 3. Verificar tests (unit tests deben existir)
@@ -430,9 +448,11 @@ interface UserProfileProps {
 ---
 
 ### **FASE 9: Deployment Staging** ⭐ **NUEVA**
+
 **Rol:** DevOps/Tech Lead
 
 **Workflow:**
+
 1. **Setup CI/CD** (primera vez)
    - Crear GitHub Actions workflow
    - Configurar secrets (SUPABASE_URL, VERCEL_TOKEN, etc.)
@@ -455,22 +475,24 @@ interface UserProfileProps {
 ---
 
 ### **FASE 10: Exploratory Testing** ⭐ **NUEVA**
+
 **Rol:** QA Engineer (manual)
 
 **⚠️ IMPORTANTE: Esta fase viene ANTES de Test Automation**
 
 **Por qué Exploratory antes de Automation:**
 
-| Aspecto | Exploratory (Fase 10) | Automation (Fase 11) |
-|---------|----------------------|---------------------|
-| **Tiempo** | 5-30 minutos por story | Horas/días por story |
-| **Qué encuentra** | Bugs de UX, edge cases, problemas visuales | Solo bugs de lógica/regresión |
-| **Inversión** | Baja (tiempo humano) | Alta (código, mantenimiento) |
-| **Cuándo** | Inmediatamente después de deploy | Después de validar manualmente |
+| Aspecto           | Exploratory (Fase 10)                      | Automation (Fase 11)           |
+| ----------------- | ------------------------------------------ | ------------------------------ |
+| **Tiempo**        | 5-30 minutos por story                     | Horas/días por story           |
+| **Qué encuentra** | Bugs de UX, edge cases, problemas visuales | Solo bugs de lógica/regresión  |
+| **Inversión**     | Baja (tiempo humano)                       | Alta (código, mantenimiento)   |
+| **Cuándo**        | Inmediatamente después de deploy           | Después de validar manualmente |
 
 **Principio:** No pierdas tiempo automatizando funcionalidad rota.
 
 **Workflow:**
+
 1. **Smoke Test** (5-10 min)
    - ¿La app carga?
    - ¿Login funciona?
@@ -491,6 +513,7 @@ interface UserProfileProps {
    - Documentar en `.context/testing/exploratory/bug-reports/`
 
 **Output:**
+
 - Smoke test completado
 - Session notes documentadas
 - Bug reports creados (si aplica)
@@ -501,6 +524,7 @@ interface UserProfileProps {
 ---
 
 ### **FASE 11: Test Automation Engineering** (KATA Framework)
+
 **Rol:** QA Automation Engineer / SDET (con IA)
 
 **⚠️ IMPORTANTE: Esta fase viene DESPUÉS de Exploratory Testing (Fase 10)**
@@ -530,12 +554,14 @@ tests/
 **Workflow:**
 
 **Primera vez (setup):**
+
 1. Generar Test Strategy (leer PRD + SRS + PBI completo)
 2. Diseñar Arquitectura KATA (adaptar KATA al proyecto)
 3. Definir Estándares (naming, estructura, best practices)
 4. Crear estructura `/tests` con TestContext
 
 **Por cada story (iterativo):**
+
 1. Leer exploratory session notes (bugs ya encontrados)
 2. Crear Integration Test Plan (API tests)
 3. Crear E2E Test Plan (user flows críticos)
@@ -547,6 +573,7 @@ tests/
 **Output:** Directorio `.context/guidelines/tae/` completo + estructura de `/tests`
 
 **Diferencias Legacy vs Greenfield:**
+
 - **Greenfield**: Diseñar suite completa desde cero
 - **Legacy**: Evaluar suite existente → Migrar a KATA o crear desde cero con tests de caracterización primero
 
@@ -555,6 +582,7 @@ tests/
 ---
 
 ### **FASE 12: Production Deployment** ⭐ **NUEVA**
+
 **Rol:** DevOps/Tech Lead
 
 **⚠️ IMPORTANTE: Ejecutar checklist ANTES de deploy**
@@ -592,6 +620,7 @@ tests/
 ---
 
 ### **FASE 13: Shift-Right Testing** ⭐ **NUEVA**
+
 **Rol:** DevOps/SRE/QA (Monitoring)
 
 **⚠️ Esta fase es continua (siempre activa en producción)**
@@ -619,6 +648,7 @@ tests/
    - Post-mortem y lessons learned
 
 **Output:**
+
 - `.context/testing/shift-right/monitoring-config.md`
 - `.context/testing/shift-right/incident-reports/`
 
@@ -632,12 +662,12 @@ tests/
 
 #### **Carpeta `.context/idea/`**
 
-| Archivo | Contenido | Longitud |
-|---------|-----------|----------|
-| `README.md` | "Fase 1: Constitución del proyecto" | 1 párrafo |
-| `business-model.md` | Business Model Canvas (9 bloques) + Problem Statement + MVP Hypothesis | 2-3 páginas |
-| `market-context.md` | Competitive Landscape + Market Opportunity + Trends | 2 páginas |
-| `legacy-analysis.md` | Tech stack + Features existentes + Gaps de docs (solo legacy) | 2-3 páginas |
+| Archivo              | Contenido                                                              | Longitud    |
+| -------------------- | ---------------------------------------------------------------------- | ----------- |
+| `README.md`          | "Fase 1: Constitución del proyecto"                                    | 1 párrafo   |
+| `business-model.md`  | Business Model Canvas (9 bloques) + Problem Statement + MVP Hypothesis | 2-3 páginas |
+| `market-context.md`  | Competitive Landscape + Market Opportunity + Trends                    | 2 páginas   |
+| `legacy-analysis.md` | Tech stack + Features existentes + Gaps de docs (solo legacy)          | 2-3 páginas |
 
 **Prompts:** `.prompts/fase-1-constitution/`
 
@@ -647,21 +677,21 @@ tests/
 
 #### **Carpeta `.context/PRD/`**
 
-| Archivo | Contenido |
-|---------|-----------|
+| Archivo                | Contenido                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
 | `executive-summary.md` | Problem Statement + Solution Overview + Success Metrics (3-5 KPIs) + Target Users (2-3 personas breves) |
-| `user-personas.md` | 2-3 personas con: Demographics, Goals, Pain Points, Tech Savviness, Quote |
-| `mvp-scope.md` | In Scope (5-7 épicas con 3-5 user stories cada una) + Out of Scope + Success Criteria |
-| `user-journeys.md` | 2-3 journeys (Happy Path + Edge Cases) con Steps, User Actions, System Responses, Pain Points |
+| `user-personas.md`     | 2-3 personas con: Demographics, Goals, Pain Points, Tech Savviness, Quote                               |
+| `mvp-scope.md`         | In Scope (5-7 épicas con 3-5 user stories cada una) + Out of Scope + Success Criteria                   |
+| `user-journeys.md`     | 2-3 journeys (Happy Path + Edge Cases) con Steps, User Actions, System Responses, Pain Points           |
 
 #### **Carpeta `.context/SRS/`**
 
-| Archivo | Contenido |
-|---------|-----------|
-| `functional-specs.md` | FRs mapeados 1:1 con User Stories. FR-001, FR-002... (Input, Processing, Output, Validations) |
-| `non-functional-specs.md` | Performance, Security, Scalability, Accessibility, Browser Support |
-| `architecture-specs.md` | System Architecture (C4 Mermaid), Database Design (ERD Mermaid), Tech Stack Justification, Data Flow, Security Architecture |
-| `api-contracts.yaml` | OpenAPI 3.0 spec con endpoints, request/response schemas, status codes |
+| Archivo                   | Contenido                                                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `functional-specs.md`     | FRs mapeados 1:1 con User Stories. FR-001, FR-002... (Input, Processing, Output, Validations)                               |
+| `non-functional-specs.md` | Performance, Security, Scalability, Accessibility, Browser Support                                                          |
+| `architecture-specs.md`   | System Architecture (C4 Mermaid), Database Design (ERD Mermaid), Tech Stack Justification, Data Flow, Security Architecture |
+| `api-contracts.yaml`      | OpenAPI 3.0 spec con endpoints, request/response schemas, status codes                                                      |
 
 **⚠️ IMPORTANTE:** NO generar SQL schemas estáticos. Usar Supabase MCP para obtener schema real.
 
@@ -673,14 +703,15 @@ tests/
 
 #### **Carpeta `.context/infrastructure/`**
 
-| Archivo | Contenido |
-|---------|-----------|
-| `cloud-setup.md` | Projects creados en Supabase, Vercel, Railway. URLs, API keys, environment setup |
-| `backend-schema.md` | DB schemas creados, tipos TypeScript generados, API boilerplate, seed data |
+| Archivo               | Contenido                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| `cloud-setup.md`      | Projects creados en Supabase, Vercel, Railway. URLs, API keys, environment setup       |
+| `backend-schema.md`   | DB schemas creados, tipos TypeScript generados, API boilerplate, seed data             |
 | `frontend-project.md` | Design System implementado, proyecto frontend scaffolded, tipos del backend importados |
-| `env-config.md` | Todas las environment variables con valores de ejemplo (sin secrets reales) |
+| `env-config.md`       | Todas las environment variables con valores de ejemplo (sin secrets reales)            |
 
 **Orden de ejecución:**
+
 1. Cloud Services Setup → `cloud-setup.md`
 2. Backend Setup → `backend-schema.md`
 3. Frontend Setup → `frontend-project.md`
@@ -697,6 +728,7 @@ tests/
 ##### **Nivel ÉPICA (Carpeta)**
 
 Archivo `epic.md`:
+
 - **Metadata**: id, jira_id, priority, business_value, estimated_story_points
 - **Description**
 - **Scope** (In/Out)
@@ -705,12 +737,14 @@ Archivo `epic.md`:
 - **User Stories** (lista con links relativos)
 
 Archivos generados en fases posteriores:
+
 - `feature-test-plan.md` (Fase 5)
 - `feature-implementation-plan.md` (Fase 6)
 
 ##### **Nivel STORY (Carpeta)**
 
 Archivo `story.md`:
+
 - **Metadata**: id, jira_id, epic_id, title, priority, story_points, assignee, status
 - **Description**
 - **Acceptance Criteria** (Gherkin: Given/When/Then)
@@ -718,6 +752,7 @@ Archivo `story.md`:
 - **Definition of Done** (checklist)
 
 Archivos generados en fases posteriores:
+
 - `test-cases.md` (Fase 5)
 - `implementation-plan.md` (Fase 6)
 - Opcionales: `components.md`, `api-details.md`, `database-changes.md` (IA decide)
@@ -731,6 +766,7 @@ Archivos generados en fases posteriores:
 #### **Feature Test Plan (epic level)**
 
 Archivo `feature-test-plan.md`:
+
 - **Test Strategy**: Scope (In/Out), Test Levels (unit, integration, e2e), Test Types
 - **Test Scope**: Features to test, Features NOT to test
 - **Risk Analysis**: High risk areas con Impact, Likelihood, Mitigation
@@ -741,6 +777,7 @@ Archivo `feature-test-plan.md`:
 #### **Test Cases (story level)**
 
 Archivo `test-cases.md`:
+
 - **Refined Acceptance Criteria**: Escenarios refinados con datos específicos
 - **Test Cases**: Mínimo 6 test cases (3 positive, 2 negative, 1 boundary)
   - TC-001: Related Story, Type, Priority, Preconditions, Test Steps, Expected Result, Test Data
@@ -756,6 +793,7 @@ Archivo `test-cases.md`:
 #### **Feature Implementation Plan (epic level)**
 
 Archivo `feature-implementation-plan.md`:
+
 - **Overview**: Alcance, Stack técnico
 - **Technical Decisions**: Options considered, Chosen, Reasoning (✅/❌), Implementation notes
 - **Shared Dependencies**: Pre-requisitos comunes para todas las stories
@@ -767,6 +805,7 @@ Archivo `feature-implementation-plan.md`:
 #### **Implementation Plan (story level)**
 
 Archivo `implementation-plan.md`:
+
 - **Overview**: Qué se va a implementar, Acceptance Criteria a cumplir
 - **Technical Approach**: Chosen approach, Alternatives considered, Why this approach
 - **Implementation Steps**: Step 1, 2, 3... (Task, Details, Testing, Estimated time)
@@ -784,6 +823,7 @@ Archivo `implementation-plan.md`:
 ### **FASE 7: IMPLEMENTATION**
 
 **Guidelines (Reference Material):**
+
 - `.context/guidelines/implementation-workflow.md` - Workflow paso a paso
 - `.context/guidelines/code-standards.md` - Estándares de código
 - `.context/guidelines/error-handling.md` - Manejo de errores
@@ -791,11 +831,13 @@ Archivo `implementation-plan.md`:
 - `.context/guidelines/mcp-usage-tips.md` - Cuándo usar MCPs
 
 **Unit Testing:**
+
 - Crear unit tests DURANTE implementation (Fase 7)
 - **NO** esperar hasta Fase 11 (que es para integration + e2e)
 - Ver prompt: `.prompts/fase-7-implementation/unit-testing.md`
 
 **Cuándo crear unit tests:**
+
 - ✅ Funciones con lógica de negocio compleja
 - ✅ Utilidades y helpers reutilizables
 - ✅ Validaciones y transformaciones de datos
@@ -807,9 +849,11 @@ Archivo `implementation-plan.md`:
 ### **FASE 8: CODE REVIEW**
 
 **Guidelines:**
+
 - `.context/guidelines/code-standards.md` - Checklist de revisión
 
 **Verificar:**
+
 - ✅ Código sigue estándares DRY
 - ✅ TypeScript strict mode sin errores
 - ✅ Unit tests existen y pasan
@@ -823,11 +867,13 @@ Archivo `implementation-plan.md`:
 ### **FASE 9: DEPLOYMENT STAGING** ⭐ **NUEVA**
 
 **Output:**
+
 - `.context/deployment/staging/ci-cd-config.yaml` - GitHub Actions workflow
 - `.context/deployment/staging/environment-vars.md` - Variables por ambiente
 - `.context/deployment/staging/deployment-log.md` - Historial de deploys
 
 **Workflow típico:**
+
 1. Crear GitHub Actions workflow (.github/workflows/deploy-staging.yml)
 2. Configurar secrets en GitHub (SUPABASE_URL, VERCEL_TOKEN, etc.)
 3. Merge PR a `develop` → CI/CD ejecuta automáticamente
@@ -841,18 +887,21 @@ Archivo `implementation-plan.md`:
 ### **FASE 10: EXPLORATORY TESTING** ⭐ **NUEVA**
 
 **Output:**
+
 - `.context/testing/exploratory/smoke-tests.md` - Smoke test completado
 - `.context/testing/exploratory/test-charters/STORY-XXX.md` - Charter de sesión
 - `.context/testing/exploratory/session-notes/STORY-XXX-session-YYYY-MM-DD.md` - Notas de sesión
 - `.context/testing/exploratory/bug-reports/BUG-XXX.md` - Bugs encontrados
 
 **Técnicas de exploración:**
+
 - **Tours**: Recorrer la aplicación como usuario
 - **Pairing**: Explorar en dupla (dev + QA)
 - **Personas**: Usar diferentes user personas del PRD
 - **Edge Cases**: Inputs inválidos, límites, casos raros
 
 **Criterios de salida:**
+
 - ✅ Smoke test pasó (funcionalidad básica funciona)
 - ✅ Session documentada con findings
 - ✅ Bugs críticos reportados y priorizados
@@ -865,6 +914,7 @@ Archivo `implementation-plan.md`:
 ### **FASE 11: TEST AUTOMATION ENGINEERING** (KATA)
 
 **Output:**
+
 - `.context/guidelines/tae/test-strategy.md` - Estrategia general
 - `.context/guidelines/tae/kata-implementation-plan.md` - Plan maestro KATA
 - `.context/guidelines/tae/automation-standards.md` - Estándares de código
@@ -897,6 +947,7 @@ tests/
 ```
 
 **Beneficios KATA:**
+
 - ✅ Componentes reutilizables (DRY)
 - ✅ Actions encapsulan lógica de negocio
 - ✅ Tests son declarativos y legibles
@@ -909,11 +960,13 @@ tests/
 ### **FASE 12: PRODUCTION DEPLOYMENT** ⭐ **NUEVA**
 
 **Output:**
+
 - `.context/deployment/production/pre-deploy-checklist.md` - Checklist completado
 - `.context/deployment/production/deployment-log.md` - Log del deploy
 - `.context/deployment/production/rollback-procedures.md` - Plan de rollback
 
 **Pre-Deploy Checklist:**
+
 - ✅ Todas las fases anteriores completadas
 - ✅ Exploratory testing aprobado
 - ✅ Automation tests passing
@@ -925,6 +978,7 @@ tests/
 - ✅ Equipo notificado del deploy
 
 **Deploy Strategy:**
+
 - **Opción 1**: Blue-Green deployment (Vercel lo hace automático)
 - **Opción 2**: Canary deployment (desplegar a 10% de tráfico primero)
 - **Opción 3**: Feature flags (deploy código apagado, activar gradualmente)
@@ -936,23 +990,27 @@ tests/
 ### **FASE 13: SHIFT-RIGHT TESTING** ⭐ **NUEVA**
 
 **Output:**
+
 - `.context/testing/shift-right/monitoring-config.md` - Sentry/DataDog setup
 - `.context/testing/shift-right/smoke-tests-automated.md` - Tests post-deploy
 - `.context/testing/shift-right/incident-reports/INCIDENT-XXX.md` - Incident reports
 
 **Monitoring Stack:**
+
 - **Error Tracking**: Sentry (errores de JavaScript, API errors)
 - **Performance**: Vercel Analytics (Core Web Vitals, TTFB, FCP)
 - **Logs**: Logtail o DataDog (logs centralizados)
 - **Uptime**: UptimeRobot (health checks cada 5 min)
 
 **Alertas configuradas:**
+
 - 🚨 Error rate > 5% en 5 minutos
 - 🚨 Response time > 2 segundos (p95)
 - 🚨 Health endpoint down por 2 minutos
 - 🚨 Critical user flow failing (login, signup)
 
 **Incident Response:**
+
 1. **Detect**: Alerta automática (Sentry, PagerDuty)
 2. **Assess**: Revisar logs, traces, error messages
 3. **Mitigate**: Rollback si es crítico (< 5 min)
@@ -986,6 +1044,7 @@ Todos los prompts están en `.prompts/` organizados por fase:
 **Instrucciones de uso:** Ver `.prompts/README.md`
 
 **Características:**
+
 - **Copy-paste ready**: Abrir archivo → Ctrl+A → Ctrl+C → usar
 - **Sin código**: Solo texto descriptivo (no ejemplos de código hardcodeados)
 - **Detallados**: Máximo nivel de detalle para resultados determinísticos
@@ -997,18 +1056,18 @@ Todos los prompts están en `.prompts/` organizados por fase:
 
 Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 
-| Archivo | Propósito | Fase |
-|---------|-----------|------|
-| `implementation-workflow.md` | Workflow paso a paso para implementar story | 7 |
-| `code-standards.md` | DRY, naming conventions, TypeScript strict, component structure | 7-8 |
-| `error-handling.md` | NO hardcodear fallbacks, custom error classes, retry logic | 7 |
-| `context-loading.md` | Qué archivos leer en cada fase, Living Documentation (MCPs) | 7 |
-| `mcp-usage-tips.md` | Cuándo usar Supabase MCP, Atlassian MCP, IDE Diagnostics | 7 |
-| `deployment-workflow.md` ⭐ **NUEVA** | Flujo staging → production, Git Flow strategy | 9-12 |
-| `testing-strategy.md` ⭐ **NUEVA** | Testing pyramid: unit → integration → e2e | 7-10-11 |
-| `exploratory-testing.md` ⭐ **NUEVA** | Técnicas de exploratory testing | 10 |
-| `git-flow.md` ⭐ **NUEVA** | Branching strategy: feature → develop → main | 7-9-12 |
-| `tae/*` | Test Automation Engineering (13 archivos KATA) | 11 |
+| Archivo                               | Propósito                                                       | Fase    |
+| ------------------------------------- | --------------------------------------------------------------- | ------- |
+| `implementation-workflow.md`          | Workflow paso a paso para implementar story                     | 7       |
+| `code-standards.md`                   | DRY, naming conventions, TypeScript strict, component structure | 7-8     |
+| `error-handling.md`                   | NO hardcodear fallbacks, custom error classes, retry logic      | 7       |
+| `context-loading.md`                  | Qué archivos leer en cada fase, Living Documentation (MCPs)     | 7       |
+| `mcp-usage-tips.md`                   | Cuándo usar Supabase MCP, Atlassian MCP, IDE Diagnostics        | 7       |
+| `deployment-workflow.md` ⭐ **NUEVA** | Flujo staging → production, Git Flow strategy                   | 9-12    |
+| `testing-strategy.md` ⭐ **NUEVA**    | Testing pyramid: unit → integration → e2e                       | 7-10-11 |
+| `exploratory-testing.md` ⭐ **NUEVA** | Técnicas de exploratory testing                                 | 10      |
+| `git-flow.md` ⭐ **NUEVA**            | Branching strategy: feature → develop → main                    | 7-9-12  |
+| `tae/*`                               | Test Automation Engineering (13 archivos KATA)                  | 11      |
 
 **Cuándo leer:** La IA debe leer TODOS los guidelines relevantes antes de ejecutar cada fase.
 
@@ -1059,12 +1118,14 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 ### **1. Architecture (Fase 2) vs Infrastructure (Fase 3)**
 
 **Architecture (Fase 2)** = Decisiones de diseño (documentos)
+
 - Qué stack usar (Next.js, Supabase, Vercel)
 - Diagramas (C4, ERD, Data Flow)
 - API contracts (OpenAPI spec)
 - **Output**: Documentos en `.context/PRD/` y `.context/SRS/`
 
 **Infrastructure (Fase 3)** = Implementación real (setup)
+
 - Crear proyectos en Supabase, Vercel, Railway
 - Crear DB schemas reales
 - Implementar Design System
@@ -1072,6 +1133,7 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 - **Output**: Infraestructura funcionando + documentación en `.context/infrastructure/`
 
 **Por qué separarlos:**
+
 - Architecture es planning (specs)
 - Infrastructure es execution (setup técnico)
 - Separación clara entre "qué" (Fase 2) y "cómo" (Fase 3)
@@ -1081,6 +1143,7 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 ### **2. Backend Before Frontend**
 
 **Flujo:**
+
 ```
 1. Backend define schemas (Fase 3.2)
    ↓
@@ -1094,12 +1157,14 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 ```
 
 **Beneficios:**
+
 - ✅ Un solo source of truth (backend schemas)
 - ✅ Frontend no puede usar tipos incorrectos
 - ✅ Refactorings más seguros
 - ✅ TypeScript compiler detecta breaking changes
 
 **Antes (sin esto):**
+
 - ❌ Frontend define tipos manualmente
 - ❌ Backend cambia schema → frontend rompe
 - ❌ Errores en runtime
@@ -1112,23 +1177,26 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 
 **Por qué Exploratory primero:**
 
-| Aspecto | Exploratory | Automation |
-|---------|------------|------------|
-| **Tiempo** | 5-30 min | Horas/días |
-| **Inversión** | Baja | Alta |
-| **Qué encuentra** | UX bugs, edge cases | Solo lógica/regresión |
-| **Cuándo** | Después de deploy | Después de validar manualmente |
+| Aspecto           | Exploratory         | Automation                     |
+| ----------------- | ------------------- | ------------------------------ |
+| **Tiempo**        | 5-30 min            | Horas/días                     |
+| **Inversión**     | Baja                | Alta                           |
+| **Qué encuentra** | UX bugs, edge cases | Solo lógica/regresión          |
+| **Cuándo**        | Después de deploy   | Después de validar manualmente |
 
 **Principio:**
+
 > No pierdas tiempo automatizando funcionalidad rota.
 
 **Flujo:**
+
 1. Deploy a staging (Fase 9)
 2. Explorar manualmente (Fase 10) - 30 min
 3. ¿Encontraste bugs críticos? → Fix (volver a Fase 7)
 4. ¿Todo OK? → Automatizar (Fase 11) - horas
 
 **Resultado:**
+
 - Automation tests solo para funcionalidad validada
 - Menos tests que mantener
 - Más confianza en la suite
@@ -1138,21 +1206,25 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 ### **4. Unit Tests en Implementation (Fase 7), NO en Automation (Fase 11)**
 
 **Fase 7 (Implementation):**
+
 - ✅ Unit tests para lógica de negocio
 - ✅ Tests para utilidades y helpers
 - ✅ Tests rápidos (< 1 segundo cada uno)
 
 **Fase 11 (Test Automation):**
+
 - ✅ Integration tests (API)
 - ✅ E2E tests (Playwright)
 - ❌ NO unit tests (ya se hicieron en Fase 7)
 
 **Por qué:**
+
 - Unit tests son parte del desarrollo (TDD/ATDD)
 - Automation es para regresión (integration + e2e)
 - Separar concerns: Fase 7 = feature completa con unit tests, Fase 11 = suite de regresión
 
 **Testing Pyramid:**
+
 ```
         /\
        /E2E\       ← Fase 11 (pocos, lentos, críticos)
@@ -1170,11 +1242,13 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 **KATA = Keyword-Action-Test**
 
 **Estructura:**
+
 - **Components**: Wrappers (Page Objects, API Clients)
 - **Actions**: Lógica reutilizable (User Flows, Business Logic)
 - **Tests**: Tests concretos (declarativos)
 
 **Ejemplo (E2E):**
+
 ```typescript
 // components/LoginPage.ts (Page Object)
 export class LoginPage {
@@ -1202,6 +1276,7 @@ test('should login successfully', async () => {
 ```
 
 **Beneficios:**
+
 - ✅ DRY (lógica reutilizable)
 - ✅ Declarativo (tests legibles)
 - ✅ Mantenible (cambios en un solo lugar)
@@ -1212,14 +1287,17 @@ test('should login successfully', async () => {
 ### **6. Shift-Left (Fase 5) + Shift-Right (Fase 13)**
 
 **Shift-Left** = Testing temprano (pre-development)
+
 - Fase 5: Crear test plans y test cases ANTES de codear
 - Beneficio: Detectar problemas en specs (no en código)
 
 **Shift-Right** = Testing en producción (post-deployment)
+
 - Fase 13: Monitoring, alertas, smoke tests automatizados
 - Beneficio: Detectar problemas reales de usuarios
 
 **Juntos:**
+
 ```
 Shift-Left (Fase 5) → Implementation (Fase 7) → Shift-Right (Fase 13)
        ↓                       ↓                         ↓
@@ -1276,21 +1354,12 @@ Shift-Left (Fase 5) → Implementation (Fase 7) → Shift-Right (Fase 13)
 ### **Fases Totales del Blueprint v4.0**
 
 **Fases Sincrónicas** (una sola vez, setup inicial):
+
 1. **Constitution** - Idea de negocio
 2. **Architecture** - PRD + SRS (product + technical specs)
 3. **Infrastructure** ⭐ - Cloud + Backend + Frontend setup
 
-**Fases Asincrónicas** (iterativas, por sprint/story):
-4. **Specification** - PBI (épicas + stories)
-5. **Shift-Left Testing** - Feature test plans + test cases
-6. **Planning** - Feature plans + implementation plans
-7. **Implementation** - Desarrollo + unit tests
-8. **Code Review** - Revisión de código
-9. **Deployment Staging** ⭐ - CI/CD + deploy a staging
-10. **Exploratory Testing** ⭐ - Testing manual rápido
-11. **Test Automation** - Integration + E2E tests (KATA)
-12. **Production Deployment** ⭐ - Deploy a producción
-13. **Shift-Right Testing** ⭐ - Monitoring + observabilidad
+**Fases Asincrónicas** (iterativas, por sprint/story): 4. **Specification** - PBI (épicas + stories) 5. **Shift-Left Testing** - Feature test plans + test cases 6. **Planning** - Feature plans + implementation plans 7. **Implementation** - Desarrollo + unit tests 8. **Code Review** - Revisión de código 9. **Deployment Staging** ⭐ - CI/CD + deploy a staging 10. **Exploratory Testing** ⭐ - Testing manual rápido 11. **Test Automation** - Integration + E2E tests (KATA) 12. **Production Deployment** ⭐ - Deploy a producción 13. **Shift-Right Testing** ⭐ - Monitoring + observabilidad
 
 ---
 

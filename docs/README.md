@@ -7,9 +7,11 @@ Bienvenido a la documentación del **AI-Driven Software Project Template**.
 ## 🗺️ Arquitectura y Blueprint
 
 ### [AI-Driven Software Project Blueprint](./ai-driven-software-project-blueprint.md)
+
 Documentación completa de la metodología y estructura del proyecto. Incluye las 8 fases del desarrollo impulsado por IA (2 sincrónicas + 6 asincrónicas).
 
 ### [KATA Test Architecture](./kata-test-architecture.md)
+
 Arquitectura completa de testing automatizado con el framework KATA (Knowledge-Aware Test Automation).
 
 ---
@@ -17,6 +19,7 @@ Arquitectura completa de testing automatizado con el framework KATA (Knowledge-A
 ## 🔧 MCP (Model Context Protocol)
 
 ### Conceptos Generales
+
 - **[MCP - Guía General](./mcp-config-general.md)**
   - ¿Qué es MCP?
   - Tipos de transporte (stdio, SSE, HTTP)
@@ -24,12 +27,14 @@ Arquitectura completa de testing automatizado con el framework KATA (Knowledge-A
   - Casos de uso comunes
 
 ### Configuración por Herramienta
+
 - **[Claude Code](./mcp-config-claudecode.md)** - CLI de Anthropic
 - **[Gemini CLI](./mcp-config-geminicli.md)** - CLI de Google
 - **[GitHub Copilot CLI](./mcp-config-copilotcli.md)** - CLI de GitHub
 - **[VS Code + GitHub Copilot](./mcp-config-vscode.md)** - Integración en VS Code
 
 ### Estrategia de Configuración
+
 - **[MCP Builder Strategy](./mcp-builder-strategy.md)**
   - Sistema de configuración dinámica
   - Carga de MCPs por sesión
@@ -65,6 +70,7 @@ Arquitectura completa de testing automatizado con el framework KATA (Knowledge-A
 ### Para Nuevos Proyectos
 
 **Fases Sincrónicas** (una sola vez, setup inicial):
+
 ```
 1. Fase 1: Constitution
    └─ Usa prompts de .prompts/fase-1-constitution/
@@ -74,6 +80,7 @@ Arquitectura completa de testing automatizado con el framework KATA (Knowledge-A
 ```
 
 **Fases Asincrónicas** (iterativas, por sprint/épica):
+
 ```
 3. Fase 3: Specification (PBI)
    └─ Usa prompts de .prompts/fase-3-specification/
@@ -116,17 +123,21 @@ node scripts/mcp-builder.js frontend
 ## 🔑 Conceptos Clave
 
 ### Context Engineering
+
 La ingeniería de contexto es fundamental en este template:
+
 - **Modular**: Información organizada por fases y épicas
 - **DRY**: Sin duplicación, referencias cuando sea posible
 - **Eficiente**: Solo carga lo necesario (MCP Builder)
 
 ### Token Optimization
+
 - Usa MCP Builder para cargar solo MCPs necesarios
 - 80-90% reducción en uso de tokens
 - Respuestas más rápidas y económicas
 
 ### AI-First Development
+
 - Documentación estructurada para IA
 - Prompts optimizados en `.prompts/`
 - Guidelines claros en `.context/guidelines/`
@@ -138,14 +149,17 @@ La ingeniería de contexto es fundamental en este template:
 ### Problemas Comunes
 
 **MCPs no cargan**:
+
 - Verifica [MCP Builder Strategy](./mcp-builder-strategy.md)
 - Revisa configuración específica de tu herramienta
 
 **Tokens muy altos**:
+
 - Usa MCP Builder para optimizar
 - Lee sobre "Token Hell" en [MCP Builder](./mcp-builder-strategy.md)
 
 **Testing no funciona**:
+
 - Consulta [KATA Architecture](./kata-test-architecture.md)
 - Revisa `.context/guidelines/tae/`
 
@@ -154,14 +168,17 @@ La ingeniería de contexto es fundamental en este template:
 ## 📚 Documentos por Categoría
 
 ### Arquitectura
+
 - [AI-Driven Blueprint](./ai-driven-software-project-blueprint.md)
 - [KATA Test Architecture](./kata-test-architecture.md)
 
 ### MCP General
+
 - [MCP - Guía General](./mcp-config-general.md)
 - [MCP Builder Strategy](./mcp-builder-strategy.md)
 
 ### MCP por Herramienta
+
 - [Claude Code](./mcp-config-claudecode.md)
 - [Gemini CLI](./mcp-config-geminicli.md)
 - [GitHub Copilot CLI](./mcp-config-copilotcli.md)
@@ -172,6 +189,7 @@ La ingeniería de contexto es fundamental en este template:
 ## 🔄 Actualizaciones
 
 Este repositorio se actualiza regularmente con:
+
 - Nuevos MCP servers en templates
 - Mejoras a MCP Builder
 - Nuevas estrategias de testing

@@ -453,12 +453,14 @@ Quien: SRE, DevOps
 ### Architecture (Fase 2) vs Infrastructure (Fase 3)
 
 **Architecture (Fase 2):**
+
 - Specs tecnicas en papel
 - Diagramas C4, ERD, API contracts
 - Decisiones de diseño
 - **NO se escribe codigo**
 
 **Infrastructure (Fase 3):**
+
 - Implementacion de la base tecnica
 - Codigo real: backend + frontend
 - Se ejecuta **una sola vez**
@@ -489,6 +491,7 @@ const UserCard = ({ user }: { user: User }) => {
 ```
 
 **Beneficios:**
+
 - Zero type mismatches
 - Frontend consume APIs reales (no mock)
 - Cambios en backend se reflejan automaticamente en frontend
@@ -511,12 +514,14 @@ const UserCard = ({ user }: { user: User }) => {
 ### Unit Tests en Implementation (Fase 7)
 
 **Por que unit tests van en desarrollo:**
+
 - Son parte natural del codigo
 - Rapidos (milisegundos)
 - Corren local antes de commit
 - Evitan bugs antes de merge
 
 **Integration/E2E van despues (Fase 12):**
+
 - Necesitan ambiente real (staging)
 - Lentos (segundos/minutos)
 - Validan sistema completo integrado
@@ -526,6 +531,7 @@ const UserCard = ({ user }: { user: User }) => {
 **KATA** = Keyword-Action-Test Architecture
 
 Organiza tests en 3 capas:
+
 - **Components:** Wrappers de APIs o Page Objects
 - **Actions:** Flujos de negocio reutilizables
 - **Tests:** Casos de prueba concretos
@@ -538,17 +544,17 @@ Todos los tests automation siguen KATA.
 
 ### Archivos Totales Creados
 
-| Directorio                 | Archivos              | Proposito                               |
-| -------------------------- | --------------------- | --------------------------------------- |
-| `.context/idea/`           | 3-4                   | Fase 1: Constitution                    |
-| `.context/PRD/`            | 4                     | Fase 2: Architecture (business)         |
-| `.context/SRS/`            | 4                     | Fase 2: Architecture (technical)        |
-| `.context/PBI/`            | Variable              | Fases 4-6 (depende de # epicas/stories) |
-| `.context/guidelines/`     | 10                    | Fases 7-14: Reference material          |
-| `.context/guidelines/tae/` | 10                    | Fase 12: Test Automation                |
-| `.prompts/`                | ~40                   | Guias de prompts (todas las fases)      |
-| `docs/`                    | 9                     | Blueprints + MCP configs                |
-| **TOTAL BASE**             | **~80-90 archivos**   | Sistema completo (14 fases)             |
+| Directorio                 | Archivos            | Proposito                               |
+| -------------------------- | ------------------- | --------------------------------------- |
+| `.context/idea/`           | 3-4                 | Fase 1: Constitution                    |
+| `.context/PRD/`            | 4                   | Fase 2: Architecture (business)         |
+| `.context/SRS/`            | 4                   | Fase 2: Architecture (technical)        |
+| `.context/PBI/`            | Variable            | Fases 4-6 (depende de # epicas/stories) |
+| `.context/guidelines/`     | 10                  | Fases 7-14: Reference material          |
+| `.context/guidelines/tae/` | 10                  | Fase 12: Test Automation                |
+| `.prompts/`                | ~40                 | Guias de prompts (todas las fases)      |
+| `docs/`                    | 9                   | Blueprints + MCP configs                |
+| **TOTAL BASE**             | **~80-90 archivos** | Sistema completo (14 fases)             |
 
 ---
 
@@ -656,5 +662,57 @@ node scripts/mcp-builder.js frontend  # Solo playwright + context7
 
 **Este sistema es tu "segundo cerebro" para desarrollo de software impulsado por IA. Cada archivo tiene un proposito especifico en el flujo de trabajo completo de 14 fases.**
 
+---
+
+## CODE QUALITY TOOLS
+
+Este template incluye herramientas de code quality preconfiguradas:
+
+### Herramientas Incluidas
+
+| Herramienta      | Proposito                                | Configuracion      |
+| ---------------- | ---------------------------------------- | ------------------ |
+| **Prettier**     | Formateo automatico de codigo            | `.prettierrc`      |
+| **ESLint**       | Linting y deteccion de errores           | `eslint.config.js` |
+| **Husky**        | Git hooks automatizados                  | `.husky/`          |
+| **lint-staged**  | Ejecutar linters solo en archivos staged | `package.json`     |
+| **EditorConfig** | Consistencia de estilo entre editores    | `.editorconfig`    |
+
+### Scripts Disponibles
+
+```bash
+# Formateo
+bun run format          # Formatear todos los archivos
+bun run format:check    # Verificar formato sin modificar
+
+# Linting
+bun run lint            # Ejecutar ESLint
+bun run lint:fix        # Ejecutar ESLint con auto-fix
+```
+
+### Pre-commit Hook
+
+El hook pre-commit ejecuta automaticamente:
+
+1. **ESLint** con auto-fix en archivos `.ts`, `.tsx`, `.js`, `.jsx`
+2. **Prettier** en archivos modificados
+
+Esto asegura que todo codigo commiteado cumple con los estandares del proyecto.
+
+### Configuracion de Prettier
+
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "arrowParens": "avoid"
+}
+```
+
+---
+
 **Version 3.0** - Expandido de 13 a 14 fases con Test Documentation separada
-**Ultima actualizacion:** 2025-12-18
+**Ultima actualizacion:** 2025-12-21

@@ -19,20 +19,12 @@
     },
     "devtools": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "chrome-devtools-mcp"
-      ],
+      "command": ["npx", "-y", "chrome-devtools-mcp"],
       "enabled": true
     },
     "api": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@ivotoby/openapi-mcp-server",
-        "--tools dynamic"
-      ],
+      "args": ["-y", "@ivotoby/openapi-mcp-server", "--tools dynamic"],
       "env": {
         "API_BASE_URL": "https://{SUPABASE_URL}.supabase.co/rest/v1",
         "OPENAPI_SPEC_PATH": "https://{SUPABASE_URL}.supabase.co/rest/v1/?apikey={SUPABASE_ANON_KEY}",
@@ -52,11 +44,7 @@
     },
     "supabase": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@supabase/mcp-server-supabase@latest"
-      ],
+      "command": ["npx", "-y", "@supabase/mcp-server-supabase@latest"],
       "environment": {
         "SUPABASE_ACCESS_TOKEN": "{env:SUPABASE_ACCESS_TOKEN}"
       },
@@ -64,11 +52,7 @@
     },
     "shadcn": {
       "type": "local",
-      "command": [
-        "npx",
-        "shadcn@latest",
-        "mcp"
-      ],
+      "command": ["npx", "shadcn@latest", "mcp"],
       "enabled": true
     },
     "context7": {
@@ -111,10 +95,7 @@
     },
     "atlassian": {
       "type": "local",
-      "command": [
-        "uvx",
-        "mcp-atlassian"
-      ],
+      "command": ["uvx", "mcp-atlassian"],
       "environment": {
         "JIRA_URL": "{env:JIRA_URL}",
         "JIRA_USERNAME": "{env:JIRA_USERNAME}",
@@ -133,13 +114,7 @@
     },
     "slack": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "slack-mcp-server@latest",
-        "--transport",
-        "stdio"
-      ],
+      "command": ["npx", "-y", "slack-mcp-server@latest", "--transport", "stdio"],
       "environment": {
         "SLACK_MCP_XOXP_TOKEN": "{env:SLACK_MCP_XOXP_TOKEN}",
         "SLACK_MCP_ADD_MESSAGE_TOOL": "true",
@@ -150,11 +125,7 @@
     },
     "memory": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
       "environment": {
         "MEMORY_FILE_PATH": "{env:MEMORY_FILE_PATH}"
       },

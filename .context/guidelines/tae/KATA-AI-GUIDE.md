@@ -161,7 +161,7 @@ test('checkout flow', async ({ ui }) => {
 
 ```typescript
 // ❌ WRONG
-await page.waitForTimeout(3000);  // Arbitrary wait
+await page.waitForTimeout(3000); // Arbitrary wait
 
 // ✅ CORRECT
 await page.waitForSelector('[data-loaded="true"]');
@@ -171,7 +171,7 @@ await page.waitForResponse(resp => resp.url().includes('/api/data'));
 ```typescript
 // playwright.config.ts
 export default defineConfig({
-  retries: 0,  // Investigate failures, don't mask them
+  retries: 0, // Investigate failures, don't mask them
 });
 ```
 
@@ -263,9 +263,9 @@ These files are marked as **EXAMPLE COMPONENT** and demonstrate all KATA princip
 // Access configuration
 import { config, env } from '@config/variables';
 
-const baseUrl = config.baseUrl;        // Selected by TEST_ENV
+const baseUrl = config.baseUrl; // Selected by TEST_ENV
 const apiUrl = config.apiUrl;
-const testUser = config.testUser;      // { email, password }
+const testUser = config.testUser; // { email, password }
 const isCI = env.isCI;
 ```
 

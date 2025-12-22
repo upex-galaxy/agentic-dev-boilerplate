@@ -9,21 +9,27 @@
 ## 🏗️ Componentes de MCP
 
 ### Cliente MCP
+
 La aplicación que usa el modelo de IA (Gemini CLI, Claude Code, GitHub Copilot, etc.)
 
 ### Servidor MCP
+
 Un programa que expone herramientas, recursos y capacidades específicas al cliente.
 
 ### Transporte
+
 El método de comunicación entre cliente y servidor (stdio, SSE, HTTP).
 
 ### Herramientas (Tools)
+
 Funciones que el servidor expone y que el modelo puede invocar.
 
 ### Recursos (Resources)
+
 Datos que el servidor puede proporcionar (archivos, APIs, bases de datos).
 
 ### Prompts
+
 Plantillas predefinidas que el servidor puede ofrecer.
 
 ---
@@ -35,6 +41,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 **Uso principal**: Servidores locales que corren en la misma máquina que el cliente.
 
 #### Características
+
 - **Latencia**: Mínima (sin overhead de red)
 - **Seguridad**: Alta (comunicación local)
 - **Escalabilidad**: Limitada (un proceso por cliente)
@@ -42,6 +49,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - **Complejidad**: Baja
 
 #### Cuándo usar stdio
+
 - Desarrollo local y pruebas
 - Acceso a recursos del sistema de archivos local
 - Herramientas de línea de comandos
@@ -49,6 +57,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - Cuando el rendimiento es crítico
 
 #### Formato de configuración típico
+
 ```json
 {
   "mcpServers": {
@@ -68,6 +77,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 **Uso principal**: Servidores remotos con comunicación unidireccional servidor→cliente.
 
 #### Características
+
 - **Latencia**: Media (overhead de red HTTP)
 - **Seguridad**: Media (requiere HTTPS en producción)
 - **Escalabilidad**: Media (conexiones long-running)
@@ -75,9 +85,11 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - **Complejidad**: Media
 
 #### Estado actual
+
 ⚠️ **IMPORTANTE**: SSE está siendo deprecado en favor de HTTP Streamable. Muchos servidores y clientes están eliminando soporte para SSE.
 
 #### Formato de configuración típico
+
 ```json
 {
   "mcpServers": {
@@ -97,6 +109,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 **Uso principal**: Servidores remotos escalables y stateless.
 
 #### Características
+
 - **Latencia**: Media-baja (HTTP optimizado)
 - **Seguridad**: Alta (OAuth 2.0, API keys, tokens)
 - **Escalabilidad**: Alta (stateless, balanceo de carga)
@@ -104,6 +117,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - **Complejidad**: Media-alta
 
 #### Cuándo usar HTTP Streamable
+
 - **Producción** (siempre que sea posible)
 - Múltiples usuarios
 - Servicios en la nube
@@ -111,6 +125,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - Integraciones empresariales
 
 #### Formato de configuración típico
+
 ```json
 {
   "mcpServers": {
@@ -127,14 +142,14 @@ Plantillas predefinidas que el servidor puede ofrecer.
 
 ### Comparativa de Transportes
 
-| Feature | stdio | SSE | HTTP Streamable |
-|---------|-------|-----|-----------------|
-| **Latencia** | Muy baja | Media | Media-baja |
-| **Escalabilidad** | Baja | Media | Alta |
-| **Multi-usuario** | ❌ | Limitado | ✅ |
-| **Autenticación** | No necesaria | Básica | Robusta (OAuth) |
-| **Producción** | ❌ | ⚠️ Deprecado | ✅ Recomendado |
-| **Uso típico** | Desarrollo local | Transición | Servicios cloud |
+| Feature           | stdio            | SSE          | HTTP Streamable |
+| ----------------- | ---------------- | ------------ | --------------- |
+| **Latencia**      | Muy baja         | Media        | Media-baja      |
+| **Escalabilidad** | Baja             | Media        | Alta            |
+| **Multi-usuario** | ❌               | Limitado     | ✅              |
+| **Autenticación** | No necesaria     | Básica       | Robusta (OAuth) |
+| **Producción**    | ❌               | ⚠️ Deprecado | ✅ Recomendado  |
+| **Uso típico**    | Desarrollo local | Transición   | Servicios cloud |
 
 ---
 
@@ -143,6 +158,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 ### Métodos de Autenticación
 
 #### 1. API Keys
+
 **Uso**: Autenticación simple para prototipos
 
 ```json
@@ -157,6 +173,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 **Contras**: Menos seguro en producción, sin expiración automática
 
 #### 2. Bearer Tokens
+
 **Uso**: Tokens de autenticación estándar HTTP
 
 ```json
@@ -168,9 +185,11 @@ Plantillas predefinidas que el servidor puede ofrecer.
 ```
 
 #### 3. OAuth 2.0 (Recomendado)
+
 **Uso**: Autenticación robusta con delegación de permisos
 
 **Pros**:
+
 - Estándar de la industria
 - Tokens con expiración
 - Revocación granular
@@ -189,11 +208,13 @@ Plantillas predefinidas que el servidor puede ofrecer.
 #### Para Servidores stdio Locales
 
 ✅ **Hacer**:
+
 - Validar inputs del cliente
 - Limitar acceso a filesystem
 - Usar permisos mínimos necesarios
 
 ❌ **Evitar**:
+
 - Ejecutar comandos shell sin sanitizar
 - Acceso sin restricciones al filesystem
 - Confiar ciegamente en datos del cliente
@@ -201,6 +222,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 #### Para Servidores HTTP/SSE Remotos
 
 ✅ **Hacer**:
+
 - Usar HTTPS siempre
 - Implementar OAuth 2.0
 - Validar origen de peticiones (CORS)
@@ -208,6 +230,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 - Logs de auditoría
 
 ❌ **Evitar**:
+
 - HTTP en producción
 - API keys hardcodeadas
 - Tokens sin expiración
@@ -216,6 +239,7 @@ Plantillas predefinidas que el servidor puede ofrecer.
 ### Variables de Entorno y Secretos
 
 #### Approach 1: Variables de Entorno del Sistema
+
 ```bash
 export API_KEY="mi-clave-secreta"
 ```
@@ -229,6 +253,7 @@ export API_KEY="mi-clave-secreta"
 ```
 
 #### Approach 2: Input Prompts
+
 ```json
 {
   "inputs": [
@@ -247,22 +272,27 @@ export API_KEY="mi-clave-secreta"
 ## 📊 Casos de Uso Comunes
 
 ### 1. Acceso a Base de Datos
+
 **MCP Server**: PostgreSQL, MySQL, Supabase
 **Transporte**: stdio (local) o HTTP (remoto)
 
 ### 2. Testing Automatizado
+
 **MCP Server**: Playwright, Postman
 **Transporte**: stdio
 
 ### 3. Gestión de Proyectos
+
 **MCP Server**: GitHub, Atlassian, Notion
 **Transporte**: HTTP
 
 ### 4. Búsqueda y Documentación
+
 **MCP Server**: Context7, Tavily
 **Transporte**: HTTP
 
 ### 5. Comunicación en Equipo
+
 **MCP Server**: Slack, Discord
 **Transporte**: stdio o HTTP
 
@@ -271,18 +301,22 @@ export API_KEY="mi-clave-secreta"
 ## 🎯 Recomendaciones por Caso de Uso
 
 ### Desarrollo Local Individual
+
 - **Transporte**: stdio
 - **Por qué**: Latencia mínima, setup simple
 
 ### Equipo Pequeño (2-10 personas)
+
 - **Transporte**: stdio para recursos locales, HTTP para compartidos
 - **Por qué**: Balance entre simplicidad y colaboración
 
 ### Empresa/Producción
+
 - **Transporte**: HTTP Streamable exclusivamente
 - **Por qué**: Escalabilidad, OAuth, auditoría
 
 ### Experimentación/Prototyping
+
 - **Transporte**: Cualquiera
 - **Por qué**: Flexibilidad, rápida iteración
 
@@ -291,22 +325,26 @@ export API_KEY="mi-clave-secreta"
 ## 🛠️ MCPs Populares
 
 ### Desarrollo
+
 - **Supabase** - PostgreSQL database y auth
 - **Playwright** - E2E testing
 - **Postman** - API testing
 
 ### Productividad
+
 - **GitHub** - Repositorios y proyectos
 - **Atlassian** - Jira y Confluence
 - **Notion** - Documentación
 - **Slack** - Comunicación
 
 ### Información
+
 - **Context7** - Documentación de bibliotecas
 - **Tavily** - Web search
 - **Memory** - Memoria persistente
 
 ### DevOps
+
 - **Vercel** - Deployment
 - **Sentry** - Error monitoring
 
@@ -315,12 +353,15 @@ export API_KEY="mi-clave-secreta"
 ## 📚 Recursos
 
 ### Documentación Oficial
+
 - **MCP Specification**: https://modelcontextprotocol.io/
 - **GitHub MCP Registry**: https://github.com/modelcontextprotocol/servers
 - **Awesome MCP Servers**: https://github.com/punkpeye/awesome-mcp-servers
 
 ### Herramientas Específicas
+
 Para configuraciones específicas por herramienta, consulta:
+
 - [Claude Code](./mcp-config-claudecode.md)
 - [Gemini CLI](./mcp-config-geminicli.md)
 - [GitHub Copilot CLI](./mcp-config-copilotcli.md)

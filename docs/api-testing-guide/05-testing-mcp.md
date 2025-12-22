@@ -8,11 +8,11 @@ Esta guia explica como usar los MCP servers configurados para realizar API testi
 
 El proyecto puede tener configurados varios MCP servers para testing:
 
-| MCP | Proposito | Autenticacion |
-|-----|-----------|---------------|
-| `api` | REST API via OpenAPI spec | `anon_key` en headers |
-| `sql` | Queries SQL directos | Rol `qa_team` con acceso completo |
-| `supabase` | Gestion de proyecto Supabase | Service role (admin) |
+| MCP        | Proposito                    | Autenticacion                     |
+| ---------- | ---------------------------- | --------------------------------- |
+| `api`      | REST API via OpenAPI spec    | `anon_key` en headers             |
+| `sql`      | Queries SQL directos         | Rol `qa_team` con acceso completo |
+| `supabase` | Gestion de proyecto Supabase | Service role (admin)              |
 
 ---
 
@@ -35,6 +35,7 @@ El proyecto puede tener configurados varios MCP servers para testing:
 ```
 
 Ejemplo con valores reales:
+
 ```json
 {
   "api": {
@@ -53,23 +54,24 @@ Ejemplo con valores reales:
 
 Este MCP genera herramientas dinamicamente basadas en el schema OpenAPI:
 
-| Tool | Descripcion |
-|------|-------------|
-| `mcp__api__get-users` | GET /users |
-| `mcp__api__post-users` | POST /users |
-| `mcp__api__patch-users` | PATCH /users |
-| `mcp__api__delete-users` | DELETE /users |
-| `mcp__api__get-products` | GET /products |
-| `mcp__api__post-products` | POST /products |
-| `mcp__api__get-orders` | GET /orders |
-| `mcp__api__post-orders` | POST /orders |
-| ... | (una por cada tabla/operacion) |
+| Tool                      | Descripcion                    |
+| ------------------------- | ------------------------------ |
+| `mcp__api__get-users`     | GET /users                     |
+| `mcp__api__post-users`    | POST /users                    |
+| `mcp__api__patch-users`   | PATCH /users                   |
+| `mcp__api__delete-users`  | DELETE /users                  |
+| `mcp__api__get-products`  | GET /products                  |
+| `mcp__api__post-products` | POST /products                 |
+| `mcp__api__get-orders`    | GET /orders                    |
+| `mcp__api__post-orders`   | POST /orders                   |
+| ...                       | (una por cada tabla/operacion) |
 
 ### Limitacion Importante: Solo Anon Key
 
 **El MCP `api` esta configurado con el `anon_key`, NO con un JWT de usuario.**
 
 Esto significa:
+
 - Puede leer datos publicos (productos, reviews publicas)
 - No puede ejecutar operaciones autenticadas como un usuario especifico
 - RLS policies de usuario no aplican (usa el contexto "anonimo")
@@ -124,23 +126,30 @@ Puedes hacerlo en Postman o en el navegador."
   "sql": {
     "command": "npx",
     "args": [
-      "-y", "@bytebase/dbhub",
-      "--transport", "stdio",
-      "--dsn", "postgresql://{{DB_USER}}.{{PROJECT_REF}}:{{DB_PASSWORD}}@aws-0-{{REGION}}.pooler.supabase.com:6543/postgres"
+      "-y",
+      "@bytebase/dbhub",
+      "--transport",
+      "stdio",
+      "--dsn",
+      "postgresql://{{DB_USER}}.{{PROJECT_REF}}:{{DB_PASSWORD}}@aws-0-{{REGION}}.pooler.supabase.com:6543/postgres"
     ]
   }
 }
 ```
 
 Ejemplo con valores reales:
+
 ```json
 {
   "sql": {
     "command": "npx",
     "args": [
-      "-y", "@bytebase/dbhub",
-      "--transport", "stdio",
-      "--dsn", "postgresql://qa_team.abcdefghijklmnop:mypassword@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+      "-y",
+      "@bytebase/dbhub",
+      "--transport",
+      "stdio",
+      "--dsn",
+      "postgresql://qa_team.abcdefghijklmnop:mypassword@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
     ]
   }
 }
@@ -160,11 +169,11 @@ USING (true);
 
 ### Herramientas Disponibles
 
-| Tool | Descripcion |
-|------|-------------|
-| `mcp__sql__query` | Ejecutar SELECT queries |
-| `mcp__sql__execute` | Ejecutar INSERT/UPDATE/DELETE |
-| `mcp__sql__describe` | Describir tablas y schema |
+| Tool                 | Descripcion                   |
+| -------------------- | ----------------------------- |
+| `mcp__sql__query`    | Ejecutar SELECT queries       |
+| `mcp__sql__execute`  | Ejecutar INSERT/UPDATE/DELETE |
+| `mcp__sql__describe` | Describir tablas y schema     |
 
 ### Casos de Uso
 
@@ -210,13 +219,13 @@ WHERE status NOT IN ('pending', 'paid', 'shipped', 'delivered', 'cancelled');
 
 ### Herramientas Disponibles
 
-| Tool | Descripcion |
-|------|-------------|
-| `mcp__supabase__execute_sql` | Ejecutar SQL como service_role |
-| `mcp__supabase__list_tables` | Listar tablas del proyecto |
-| `mcp__supabase__get_logs` | Ver logs del proyecto |
-| `mcp__supabase__get_advisors` | Ver recomendaciones de seguridad |
-| `mcp__supabase__apply_migration` | Aplicar migraciones |
+| Tool                             | Descripcion                      |
+| -------------------------------- | -------------------------------- |
+| `mcp__supabase__execute_sql`     | Ejecutar SQL como service_role   |
+| `mcp__supabase__list_tables`     | Listar tablas del proyecto       |
+| `mcp__supabase__get_logs`        | Ver logs del proyecto            |
+| `mcp__supabase__get_advisors`    | Ver recomendaciones de seguridad |
+| `mcp__supabase__apply_migration` | Aplicar migraciones              |
 
 ### Casos de Uso para QA
 
@@ -296,10 +305,12 @@ IA ejecutara:
 **Problema:** El MCP `api` solo tiene el `anon_key`, no puede simular usuarios especificos.
 
 **Workaround actual:**
+
 - Usar MCP `sql` con rol `qa_team` para operaciones que requieren bypass de RLS
 - Usar Postman/DevTools para testing con JWT de usuario real
 
 **Solucion futura posible:**
+
 ```json
 {
   "api-authenticated": {

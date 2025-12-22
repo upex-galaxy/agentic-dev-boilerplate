@@ -36,14 +36,14 @@ TEST_ADMIN_PASSWORD={{TEST_ADMIN_PASSWORD}}
 
 ## Tabla de Contenidos
 
-| # | Documento | Descripcion | Nivel |
-|---|-----------|-------------|-------|
-| 1 | [Arquitectura](./01-architecture.md) | Vision general de las 2 APIs (Supabase REST + Next.js) | Fundamental |
-| 2 | [Autenticacion](./02-authentication.md) | Como usar UN token para ambas APIs | Fundamental |
-| 3 | [DevTools Testing](./03-testing-devtools.md) | Testing manual interceptando requests en el navegador | Basico |
-| 4 | [Postman Testing](./04-testing-postman.md) | Testing manual con colecciones y environments | Intermedio |
-| 5 | [MCP Testing](./05-testing-mcp.md) | Testing asistido por IA usando MCP tools | Intermedio |
-| 6 | [Playwright Testing](./06-testing-playwright.md) | Testing automatizado con arquitectura KATA | Avanzado |
+| #   | Documento                                        | Descripcion                                            | Nivel       |
+| --- | ------------------------------------------------ | ------------------------------------------------------ | ----------- |
+| 1   | [Arquitectura](./01-architecture.md)             | Vision general de las 2 APIs (Supabase REST + Next.js) | Fundamental |
+| 2   | [Autenticacion](./02-authentication.md)          | Como usar UN token para ambas APIs                     | Fundamental |
+| 3   | [DevTools Testing](./03-testing-devtools.md)     | Testing manual interceptando requests en el navegador  | Basico      |
+| 4   | [Postman Testing](./04-testing-postman.md)       | Testing manual con colecciones y environments          | Intermedio  |
+| 5   | [MCP Testing](./05-testing-mcp.md)               | Testing asistido por IA usando MCP tools               | Intermedio  |
+| 6   | [Playwright Testing](./06-testing-playwright.md) | Testing automatizado con arquitectura KATA             | Avanzado    |
 
 ---
 
@@ -65,12 +65,12 @@ Cliente --> PostgREST --> PostgreSQL + RLS Policies
 
 **Ejemplo de tablas tipicas:**
 
-| Endpoint | Descripcion |
-|----------|-------------|
-| `/users` | Perfiles de usuarios |
+| Endpoint    | Descripcion           |
+| ----------- | --------------------- |
+| `/users`    | Perfiles de usuarios  |
 | `/products` | Catalogo de productos |
-| `/orders` | Pedidos/ordenes |
-| `/reviews` | Resenas de productos |
+| `/orders`   | Pedidos/ordenes       |
+| `/reviews`  | Resenas de productos  |
 | `/payments` | Transacciones de pago |
 
 ### 2. Next.js API Routes (Custom)
@@ -84,14 +84,14 @@ Cliente --> Next.js API --> Logica de Negocio --> Supabase/Stripe/Email
 
 **Ejemplo de endpoints custom tipicos:**
 
-| Metodo | Endpoint | Descripcion |
-|--------|----------|-------------|
-| POST | `/api/checkout/session` | Crear sesion de pago |
-| POST | `/api/orders/[id]/cancel` | Cancelar un pedido |
-| GET | `/api/orders/[id]/tracking` | Obtener estado de envio |
-| GET | `/api/products/[id]/availability` | Verificar stock |
-| POST | `/api/webhooks/stripe` | Webhook de Stripe |
-| POST | `/api/webhooks/shipping` | Webhook de envios |
+| Metodo | Endpoint                          | Descripcion             |
+| ------ | --------------------------------- | ----------------------- |
+| POST   | `/api/checkout/session`           | Crear sesion de pago    |
+| POST   | `/api/orders/[id]/cancel`         | Cancelar un pedido      |
+| GET    | `/api/orders/[id]/tracking`       | Obtener estado de envio |
+| GET    | `/api/products/[id]/availability` | Verificar stock         |
+| POST   | `/api/webhooks/stripe`            | Webhook de Stripe       |
+| POST   | `/api/webhooks/shipping`          | Webhook de envios       |
 
 ---
 
@@ -99,12 +99,12 @@ Cliente --> Next.js API --> Logica de Negocio --> Supabase/Stripe/Email
 
 ### Conceptos Clave
 
-| Concepto | Descripcion |
-|----------|-------------|
-| **anon key** | Clave publica para acceso anonimo. Limitado por RLS. |
-| **service_role key** | Clave privada que bypasea RLS. SOLO backend. |
-| **User JWT** | Token del usuario autenticado. Contiene `user_id` y `role`. |
-| **RLS Policies** | Reglas en PostgreSQL que controlan acceso por usuario. |
+| Concepto             | Descripcion                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| **anon key**         | Clave publica para acceso anonimo. Limitado por RLS.        |
+| **service_role key** | Clave privada que bypasea RLS. SOLO backend.                |
+| **User JWT**         | Token del usuario autenticado. Contiene `user_id` y `role`. |
+| **RLS Policies**     | Reglas en PostgreSQL que controlan acceso por usuario.      |
 
 ### Flujo de Autenticacion
 
@@ -148,12 +148,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 
 ### Headers Requeridos
 
-| Header | Valor | Cuando |
-|--------|-------|--------|
-| `apikey` | `{{SUPABASE_ANON_KEY}}` | Siempre (Supabase REST) |
-| `Authorization` | `Bearer <JWT>` | Operaciones autenticadas |
-| `Content-Type` | `application/json` | POST/PATCH requests |
-| `Prefer` | `return=representation` | Para recibir el objeto creado/actualizado |
+| Header          | Valor                   | Cuando                                    |
+| --------------- | ----------------------- | ----------------------------------------- |
+| `apikey`        | `{{SUPABASE_ANON_KEY}}` | Siempre (Supabase REST)                   |
+| `Authorization` | `Bearer <JWT>`          | Operaciones autenticadas                  |
+| `Content-Type`  | `application/json`      | POST/PATCH requests                       |
+| `Prefer`        | `return=representation` | Para recibir el objeto creado/actualizado |
 
 ---
 
@@ -195,11 +195,11 @@ Body:
 
 ## Ambientes
 
-| Ambiente | Web URL | API URL |
-|----------|---------|---------|
-| Development | `http://localhost:3000` | `http://localhost:3000/api` |
-| Staging | `https://{{PROJECT}}-staging.vercel.app` | Mismo + `/api` |
-| Production | `https://{{PROJECT}}.vercel.app` | Mismo + `/api` |
+| Ambiente    | Web URL                                  | API URL                     |
+| ----------- | ---------------------------------------- | --------------------------- |
+| Development | `http://localhost:3000`                  | `http://localhost:3000/api` |
+| Staging     | `https://{{PROJECT}}-staging.vercel.app` | Mismo + `/api`              |
+| Production  | `https://{{PROJECT}}.vercel.app`         | Mismo + `/api`              |
 
 ---
 

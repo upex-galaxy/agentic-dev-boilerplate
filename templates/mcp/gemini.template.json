@@ -16,18 +16,11 @@
     },
     "devtools": {
       "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp"
-      ]
+      "args": ["-y", "chrome-devtools-mcp"]
     },
     "api": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@ivotoby/openapi-mcp-server",
-        "--tools dynamic"
-      ],
+      "args": ["-y", "@ivotoby/openapi-mcp-server", "--tools dynamic"],
       "env": {
         "API_BASE_URL": "https://{SUPABASE_URL}.supabase.co/rest/v1",
         "OPENAPI_SPEC_PATH": "https://{SUPABASE_URL}.supabase.co/rest/v1/?apikey={SUPABASE_ANON_KEY}",
@@ -47,35 +40,22 @@
     },
     "shadcn": {
       "command": "npx",
-      "args": [
-        "shadcn@latest",
-        "mcp"
-      ]
+      "args": ["shadcn@latest", "mcp"]
     },
     "supabase": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest"
-      ],
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
       "env": {
         "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
       }
     },
     "context7": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ]
+      "args": ["-y", "@upstash/context7-mcp"]
     },
     "tavity": {
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"
-      ]
+      "args": ["-y", "mcp-remote", "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"]
     },
     "postman": {
       "httpUrl": "https://mcp.postman.com/mcp",
@@ -94,9 +74,7 @@
     },
     "atlassian": {
       "command": "uvx",
-      "args": [
-        "mcp-atlassian"
-      ],
+      "args": ["mcp-atlassian"],
       "env": {
         "JIRA_URL": "https://tu-servidor.atlassian.net",
         "JIRA_USERNAME": "tu.email@servidor.com",
@@ -111,12 +89,7 @@
     },
     "slack": {
       "command": "npx",
-      "args": [
-        "-y",
-        "slack-mcp-server@latest",
-        "--transport",
-        "stdio"
-      ],
+      "args": ["-y", "slack-mcp-server@latest", "--transport", "stdio"],
       "env": {
         "SLACK_MCP_XOXP_TOKEN": "${SLACK_MCP_XOXP_TOKEN}",
         "SLACK_MCP_ADD_MESSAGE_TOOL": "true",
@@ -126,10 +99,7 @@
     },
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
       "env": {
         "MEMORY_FILE_PATH": "~/.gemini/mcp/memory.jsonl"
       }

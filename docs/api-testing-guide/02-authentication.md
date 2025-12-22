@@ -72,6 +72,7 @@ apikey: {{SUPABASE_ANON_KEY}}
 ```
 
 **Guardar:**
+
 - `access_token` --> Para usar en requests
 - `user.id` --> Para filtros y validaciones
 - `refresh_token` --> Para renovar el token cuando expire
@@ -108,18 +109,15 @@ curl -X GET \
 ### Ejemplo JavaScript
 
 ```javascript
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const response = await fetch(
-  `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}`,
-  {
-    headers: {
-      'apikey': ANON_KEY,
-      'Authorization': `Bearer ${accessToken}`
-    }
-  }
-)
+const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}`, {
+  headers: {
+    apikey: ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+  },
+});
 ```
 
 ---
@@ -165,15 +163,15 @@ const tokenData = {
   token_type: 'bearer',
   user: {
     id: userId,
-    email: userEmail
-  }
-}
+    email: userEmail,
+  },
+};
 
 // 2. Codificar en base64
-const cookieValue = btoa(JSON.stringify(tokenData))
+const cookieValue = btoa(JSON.stringify(tokenData));
 
 // 3. El nombre de la cookie (reemplaza PROJECT_REF con tu project ref de Supabase)
-const cookieName = 'sb-{{PROJECT_REF}}-auth-token'
+const cookieName = 'sb-{{PROJECT_REF}}-auth-token';
 // Ejemplo: 'sb-abcdefghijklmnop-auth-token'
 ```
 
@@ -223,12 +221,12 @@ const tokenData = {
   token_type: 'bearer',
   user: {
     id: pm.environment.get('user_id'),
-    email: pm.environment.get('user_email')
-  }
-}
+    email: pm.environment.get('user_email'),
+  },
+};
 
-const cookieValue = btoa(JSON.stringify(tokenData))
-pm.environment.set('cookie_value', cookieValue)
+const cookieValue = btoa(JSON.stringify(tokenData));
+pm.environment.set('cookie_value', cookieValue);
 ```
 
 ---
@@ -260,20 +258,17 @@ pm.environment.set('cookie_value', cookieValue)
 
 ```typescript
 // Configuracion
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const PROJECT_REF = SUPABASE_URL.split('//')[1].split('.')[0]
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const PROJECT_REF = SUPABASE_URL.split('//')[1].split('.')[0];
 // Ejemplo: 'abcdefghijklmnop' de 'https://abcdefghijklmnop.supabase.co'
 
 // 1. Login via API
-const loginResponse = await request.post(
-  `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-  {
-    headers: { apikey: ANON_KEY },
-    data: { email, password }
-  }
-)
-const { access_token, refresh_token, user } = await loginResponse.json()
+const loginResponse = await request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+  headers: { apikey: ANON_KEY },
+  data: { email, password },
+});
+const { access_token, refresh_token, user } = await loginResponse.json();
 
 // 2. Construir cookie
 const cookieData = {
@@ -281,20 +276,22 @@ const cookieData = {
   refresh_token,
   expires_at: Math.floor(Date.now() / 1000) + 3600,
   token_type: 'bearer',
-  user: { id: user.id, email: user.email }
-}
-const cookieValue = Buffer.from(JSON.stringify(cookieData)).toString('base64')
+  user: { id: user.id, email: user.email },
+};
+const cookieValue = Buffer.from(JSON.stringify(cookieData)).toString('base64');
 
 // 3. Inyectar en browser
-await page.context().addCookies([{
-  name: `sb-${PROJECT_REF}-auth-token`,
-  value: cookieValue,
-  domain: 'localhost',
-  path: '/'
-}])
+await page.context().addCookies([
+  {
+    name: `sb-${PROJECT_REF}-auth-token`,
+    value: cookieValue,
+    domain: 'localhost',
+    path: '/',
+  },
+]);
 
 // 4. Ahora el browser esta autenticado!
-await page.goto('/dashboard')  // Ya estas logueado, sin pasar por /login
+await page.goto('/dashboard'); // Ya estas logueado, sin pasar por /login
 
 // 5. Para requests API en el mismo test:
 //    - Supabase REST: usar access_token en header
@@ -305,27 +302,27 @@ await page.goto('/dashboard')  // Ya estas logueado, sin pasar por /login
 
 ## Tabla Resumen
 
-| API | Metodo de Auth | Como Enviar |
-|-----|----------------|-------------|
-| **Supabase REST** (`/rest/v1/*`) | Header | `Authorization: Bearer <access_token>` |
-| **Next.js API** (`/api/*`) | Cookie | `sb-{{PROJECT_REF}}-auth-token=<base64>` |
-| **Browser (UI)** | Cookie | Misma cookie, se envia automaticamente |
+| API                              | Metodo de Auth | Como Enviar                              |
+| -------------------------------- | -------------- | ---------------------------------------- |
+| **Supabase REST** (`/rest/v1/*`) | Header         | `Authorization: Bearer <access_token>`   |
+| **Next.js API** (`/api/*`)       | Cookie         | `sb-{{PROJECT_REF}}-auth-token=<base64>` |
+| **Browser (UI)**                 | Cookie         | Misma cookie, se envia automaticamente   |
 
 ---
 
 ## Usuarios de Prueba (Ejemplo)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| **Customer** | `{{TEST_USER_EMAIL}}` | `{{TEST_USER_PASSWORD}}` |
-| **Admin** | `{{TEST_ADMIN_EMAIL}}` | `{{TEST_ADMIN_PASSWORD}}` |
+| Rol          | Email                  | Password                  |
+| ------------ | ---------------------- | ------------------------- |
+| **Customer** | `{{TEST_USER_EMAIL}}`  | `{{TEST_USER_PASSWORD}}`  |
+| **Admin**    | `{{TEST_ADMIN_EMAIL}}` | `{{TEST_ADMIN_PASSWORD}}` |
 
 Ejemplo:
 
-| Rol | Email | Password |
-|-----|-------|----------|
+| Rol          | Email                          | Password       |
+| ------------ | ------------------------------ | -------------- |
 | **Customer** | `test.customer@miproyecto.com` | `Customer123!` |
-| **Admin** | `test.admin@miproyecto.com` | `Admin123!` |
+| **Admin**    | `test.admin@miproyecto.com`    | `Admin123!`    |
 
 ---
 
@@ -355,13 +352,14 @@ Para ver que contiene un JWT, decodificarlo en https://jwt.io o:
 
 ```javascript
 // Decodificar payload del JWT (sin verificar firma)
-const [header, payload, signature] = accessToken.split('.')
-const decoded = JSON.parse(atob(payload))
-console.log(decoded)
+const [header, payload, signature] = accessToken.split('.');
+const decoded = JSON.parse(atob(payload));
+console.log(decoded);
 // { sub: "user-id", email: "...", exp: 1703123456, ... }
 ```
 
 **Campos importantes del JWT:**
+
 - `sub`: ID del usuario
 - `email`: Email del usuario
 - `exp`: Timestamp de expiracion

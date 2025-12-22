@@ -35,6 +35,7 @@ guidelines/
 ```
 
 > **Nota:** Para workflows específicos (Git, Deployment, Testing), consulta los prompts en `.prompts/`:
+>
 > - Git Flow: `.prompts/git-flow.md`
 > - Git Conflicts: `.prompts/git-conflict-fix.md`
 > - Testing Strategy: `.prompts/fase-11-test-automation/test-strategy.md`
@@ -46,6 +47,7 @@ guidelines/
 ### **Fase 6: Implementation**
 
 La IA DEBE leer:
+
 ```
 ✅ implementation-workflow.md  # Cómo implementar
 ✅ code-standards.md          # Estándares de código
@@ -57,6 +59,7 @@ La IA DEBE leer:
 ### **Fase 7: Code Review**
 
 La IA DEBE leer:
+
 ```
 ✅ code-standards.md          # Verificar estándares
 ✅ error-handling.md          # Verificar errores
@@ -66,6 +69,7 @@ La IA DEBE leer:
 ### **Fase 8: Test Automation**
 
 La IA DEBE leer:
+
 ```
 ✅ tae/kata-architecture.md   # Arquitectura KATA
 ✅ tae/test-strategy.md       # Estrategia de testing
@@ -81,15 +85,16 @@ La IA DEBE leer:
 
 ### **1. Guidelines vs Documentation**
 
-| Tipo | Ubicación | Cuándo se lee |
-|------|-----------|---------------|
-| **Guidelines** | `.context/guidelines/` | SIEMPRE antes de implementar |
-| **Specs** | `.context/SRS/`, `.context/PRD/` | Al planificar features |
-| **Stories** | `.context/PBI/` | Al implementar tasks específicas |
+| Tipo           | Ubicación                        | Cuándo se lee                    |
+| -------------- | -------------------------------- | -------------------------------- |
+| **Guidelines** | `.context/guidelines/`           | SIEMPRE antes de implementar     |
+| **Specs**      | `.context/SRS/`, `.context/PRD/` | Al planificar features           |
+| **Stories**    | `.context/PBI/`                  | Al implementar tasks específicas |
 
 ### **2. Living Documentation**
 
 Guidelines promueven **living documentation**:
+
 - ✅ Usar Supabase MCP para schema real (no docs estáticos)
 - ✅ Usar Context7 MCP para docs oficiales (siempre actualizadas)
 - ✅ Usar Atlassian MCP para issues en vivo
@@ -99,6 +104,7 @@ Ver: `mcp-usage-tips.md`
 ### **3. Reference Material**
 
 Guidelines son **reference material**, NO se generan:
+
 - Pre-pobladas con best practices
 - Se consultan constantemente
 - Se actualizan solo cuando cambian estándares del proyecto
@@ -108,7 +114,9 @@ Guidelines son **reference material**, NO se generan:
 ## 📚 Archivos Detallados
 
 ### **implementation-workflow.md**
+
 Workflow completo de implementación:
+
 1. Cargar contexto
 2. Verificar plan
 3. Breakdown en subtareas
@@ -119,7 +127,9 @@ Workflow completo de implementación:
 8. Documentación
 
 ### **code-standards.md**
+
 Estándares de código:
+
 - DRY, KISS, YAGNI
 - Naming conventions
 - TypeScript strict mode
@@ -128,7 +138,9 @@ Estándares de código:
 - Accessibility (a11y)
 
 ### **error-handling.md**
+
 Manejo de errores:
+
 - Custom error classes
 - Structured responses
 - Retry logic
@@ -136,7 +148,9 @@ Manejo de errores:
 - Qué NO hacer
 
 ### **context-loading.md**
+
 Qué leer en cada fase:
+
 - Fase 3: Specification
 - Fase 4: Shift-Left Testing
 - Fase 5: Planning
@@ -145,7 +159,9 @@ Qué leer en cada fase:
 - Fase 8: Test Automation
 
 ### **mcp-usage-tips.md**
+
 Cuándo usar cada MCP:
+
 - Supabase → Database schema
 - Context7 → Docs oficiales
 - Atlassian → Project management
@@ -155,6 +171,7 @@ Cuándo usar cada MCP:
 - Slack → Notifications
 
 ### **tae/** (Test Automation Engineering)
+
 Ver `tae/README.md` para detalles completos de testing guidelines.
 
 ---
@@ -162,6 +179,7 @@ Ver `tae/README.md` para detalles completos de testing guidelines.
 ## ✅ Checklist para Developers
 
 Antes de implementar cualquier feature:
+
 - [ ] Leí `implementation-workflow.md`
 - [ ] Revisé `code-standards.md`
 - [ ] Entiendo `error-handling.md`

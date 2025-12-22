@@ -26,27 +26,30 @@ export class AppError extends Error {
     public statusCode: number = 500,
     public isOperational: boolean = true
   ) {
-    super(message)
-    this.name = 'AppError'
-    Error.captureStackTrace(this, this.constructor)
+    super(message);
+    this.name = 'AppError';
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public fields?: Record<string, string>) {
-    super('VALIDATION_ERROR', message, 400)
+  constructor(
+    message: string,
+    public fields?: Record<string, string>
+  ) {
+    super('VALIDATION_ERROR', message, 400);
   }
 }
 
 export class AuthenticationError extends AppError {
   constructor(message: string = 'Authentication required') {
-    super('AUTH_ERROR', message, 401)
+    super('AUTH_ERROR', message, 401);
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(resource: string) {
-    super('NOT_FOUND', `${resource} not found`, 404)
+    super('NOT_FOUND', `${resource} not found`, 404);
   }
 }
 ```
@@ -59,36 +62,30 @@ export class NotFoundError extends AppError {
 
 ```typescript
 // app/api/users/[id]/route.ts
-import { AppError, NotFoundError } from '@/lib/errors'
+import { AppError, NotFoundError } from '@/lib/errors';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const user = await db.user.findUnique({
-      where: { id: params.id }
-    })
+      where: { id: params.id },
+    });
 
     if (!user) {
-      throw new NotFoundError('User')
+      throw new NotFoundError('User');
     }
 
-    return Response.json(user)
+    return Response.json(user);
   } catch (error) {
     if (error instanceof AppError) {
       return Response.json(
         { error: error.message, code: error.code },
         { status: error.statusCode }
-      )
+      );
     }
 
     // Error inesperado
-    logger.error('Unexpected error in GET /api/users/[id]', error)
-    return Response.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    logger.error('Unexpected error in GET /api/users/[id]', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 ```
@@ -99,28 +96,24 @@ export async function GET(
 // lib/api-client.ts
 async function fetchUser(id: string): Promise<User> {
   try {
-    const response = await fetch(`/api/users/${id}`)
+    const response = await fetch(`/api/users/${id}`);
 
     if (!response.ok) {
-      const error = await response.json()
+      const error = await response.json();
       throw new AppError(
         error.code || 'FETCH_ERROR',
         error.message || 'Failed to fetch user',
         response.status
-      )
+      );
     }
 
-    return await response.json()
+    return await response.json();
   } catch (error) {
     if (error instanceof AppError) {
-      throw error
+      throw error;
     }
 
-    throw new AppError(
-      'NETWORK_ERROR',
-      'Network error occurred',
-      0
-    )
+    throw new AppError('NETWORK_ERROR', 'Network error occurred', 0);
   }
 }
 ```
@@ -134,40 +127,37 @@ async function fetchUser(id: string): Promise<User> {
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: {
-    maxRetries?: number
-    delay?: number
-    backoff?: boolean
+    maxRetries?: number;
+    delay?: number;
+    backoff?: boolean;
   } = {}
 ): Promise<T> {
-  const {
-    maxRetries = 3,
-    delay = 1000,
-    backoff = true
-  } = options
+  const { maxRetries = 3, delay = 1000, backoff = true } = options;
 
-  let lastError: Error
+  let lastError: Error;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error) {
-      lastError = error as Error
+      lastError = error as Error;
 
       if (i < maxRetries - 1) {
-        const waitTime = backoff ? delay * Math.pow(2, i) : delay
-        await new Promise(resolve => setTimeout(resolve, waitTime))
+        const waitTime = backoff ? delay * Math.pow(2, i) : delay;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
   }
 
-  throw lastError!
+  throw lastError!;
 }
 
 // Uso
-const user = await withRetry(
-  () => fetchUser(userId),
-  { maxRetries: 3, delay: 1000, backoff: true }
-)
+const user = await withRetry(() => fetchUser(userId), {
+  maxRetries: 3,
+  delay: 1000,
+  backoff: true,
+});
 ```
 
 ---
@@ -176,23 +166,23 @@ const user = await withRetry(
 
 ```typescript
 // lib/logger.ts
-import pino from 'pino'
+import pino from 'pino';
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   formatters: {
-    level: (label) => ({ level: label })
-  }
-})
+    level: label => ({ level: label }),
+  },
+});
 
 // Uso
-logger.info('User logged in', { userId, timestamp: Date.now() })
+logger.info('User logged in', { userId, timestamp: Date.now() });
 logger.error('Payment failed', {
   userId,
   amount,
   error: error.message,
-  stack: error.stack
-})
+  stack: error.stack,
+});
 ```
 
 ---
@@ -204,17 +194,17 @@ logger.error('Payment failed', {
 ```typescript
 // ❌ MAL
 try {
-  await dangerousOperation()
+  await dangerousOperation();
 } catch (error) {
   // Silenciado - muy peligroso!
 }
 
 // ✅ BIEN
 try {
-  await dangerousOperation()
+  await dangerousOperation();
 } catch (error) {
-  logger.error('Operation failed', error)
-  throw error // Re-throw si no puedes manejar
+  logger.error('Operation failed', error);
+  throw error; // Re-throw si no puedes manejar
 }
 ```
 
@@ -222,25 +212,31 @@ try {
 
 ```typescript
 // ❌ MAL
-throw new Error('User not found')
+throw new Error('User not found');
 
 // ✅ BIEN
-throw new NotFoundError('User')
+throw new NotFoundError('User');
 ```
 
 ### ❌ NO exponer detalles internos
 
 ```typescript
 // ❌ MAL
-return Response.json({
-  error: 'Database connection failed at 192.168.1.1:5432'
-}, { status: 500 })
+return Response.json(
+  {
+    error: 'Database connection failed at 192.168.1.1:5432',
+  },
+  { status: 500 }
+);
 
 // ✅ BIEN
-logger.error('DB connection failed', { host, port })
-return Response.json({
-  error: 'Service temporarily unavailable'
-}, { status: 503 })
+logger.error('DB connection failed', { host, port });
+return Response.json(
+  {
+    error: 'Service temporarily unavailable',
+  },
+  { status: 503 }
+);
 ```
 
 ---

@@ -106,21 +106,25 @@ Crear smoke test checklist para validar deployment funcional:
 ## ✅ Checklist
 
 ### 1. Acceso Básico
+
 - [ ] Aplicación carga sin errores 500
 - [ ] No hay errores en console (F12)
 - [ ] Assets cargan (CSS, JS, imágenes)
 
 ### 2. Autenticación (si aplica)
+
 - [ ] Login funciona
 - [ ] Logout funciona
 - [ ] Sesión persiste al refrescar
 
 ### 3. Happy Path de Story
+
 - [ ] [Paso 1 del happy path]
 - [ ] [Paso 2 del happy path]
 - [ ] [Paso 3 del happy path]
 
 ### 4. Integración Backend
+
 - [ ] APIs responden correctamente
 - [ ] Datos se guardan en DB
 - [ ] Datos se recuperan correctamente
@@ -234,13 +238,14 @@ Crear smoke test checklist para validar deployment funcional:
 **Blocker:** [Descripción del error]
 
 **Evidence:**
+
 - Screenshot: [Adjuntar]
 - Console errors:
-  ```
+```
 
-  [Copiar errores de console]
+[Copiar errores de console]
 
-  ```
+```
 
 **Acción:** Reportar a Development inmediatamente, NO continuar.
 ```
@@ -302,6 +307,7 @@ Crear smoke test checklist para validar deployment funcional:
 **Blocker:** [Login/Logout no funciona]
 
 **Steps to reproduce:**
+
 1. [Paso que falla]
 
 **Acción:** Reportar inmediatamente, auth es crítico.
@@ -499,6 +505,7 @@ Ejemplos: mentors/sessions en MYM, products/orders en SHOP, posts/comments en BL
    - Validar: [Resultado final esperado]
 
 **Validación visual:**
+
 - [ ] UI se ve como en diseños
 - [ ] No hay layouts rotos
 - [ ] Loading states son claros
@@ -548,10 +555,12 @@ Ejemplos: mentors/sessions en MYM, products/orders en SHOP, posts/comments en BL
 **Blocker:** [Descripción del error que bloquea]
 
 **Evidence:**
+
 - Screenshot: [Adjuntar]
 - Console errors: [Copiar]
 
 **Próximo paso:**
+
 - Reportar a Development inmediatamente
 - NO continuar con exploratory testing hasta que se fixee
 ```
@@ -562,7 +571,7 @@ Ejemplos: mentors/sessions en MYM, products/orders en SHOP, posts/comments en BL
 
 **Mostrar al usuario:**
 
-```markdown
+````markdown
 # ✅ SMOKE TEST CHECKLIST GENERADO
 
 ## Archivo Creado:
@@ -587,6 +596,7 @@ Use: .prompts/fase-10-exploratory-testing/session-notes.md
 # 3. Si encuentras bugs
 Use: .prompts/fase-10-exploratory-testing/bug-report.md
 ```
+````
 
 ---
 
@@ -727,3 +737,4 @@ Bug reportado → Development fix → Re-deploy a staging → Re-ejecutar smoke 
 ---
 
 **✅ Smoke Test = Validación rápida (5-10 min) + Go/No-Go decision + Fundación para exploratory testing**
+```

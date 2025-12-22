@@ -27,6 +27,7 @@
 ```
 
 Esto abrirá un asistente interactivo que te pedirá:
+
 1. **Server Name**: Nombre del servidor
 2. **Server Type**: stdio / HTTP / SSE
 3. **URL** (si es HTTP/SSE): URL del servidor
@@ -38,6 +39,7 @@ Esto abrirá un asistente interactivo que te pedirá:
 #### ~/.copilot/mcp-config.json
 
 **Servidor stdio Local**:
+
 ```json
 {
   "mcpServers": {
@@ -52,6 +54,7 @@ Esto abrirá un asistente interactivo que te pedirá:
 ```
 
 **Servidor HTTP Remoto**:
+
 ```json
 {
   "mcpServers": {
@@ -65,6 +68,7 @@ Esto abrirá un asistente interactivo que te pedirá:
 ```
 
 **Servidor con Autenticación**:
+
 ```json
 {
   "mcpServers": {
@@ -81,6 +85,7 @@ Esto abrirá un asistente interactivo que te pedirá:
 ```
 
 **Servidor con Herramientas Específicas**:
+
 ```json
 {
   "mcpServers": {
@@ -184,37 +189,44 @@ Esto abrirá un asistente interactivo que te pedirá:
 ## 🎯 Comandos en Sesión
 
 ### Ver servidores y herramientas disponibles
+
 ```bash
 /mcp
 ```
 
 ### Agregar nuevo servidor
+
 ```bash
 /mcp add
 ```
 
 ### Gestionar permisos de sesión
+
 ```bash
 /session
 ```
 
 ### Restablecer permisos
+
 ```bash
 /reset
 ```
 
 ### Agregar directorio permitido
+
 ```bash
 /add-directory /ruta/al/directorio
 ```
 
 ### Cambiar modelo
+
 ```bash
 /model o1
 /model gpt-4o
 ```
 
 ### Habilitar modo reasoning
+
 ```bash
 /model --reasoning
 ```
@@ -226,6 +238,7 @@ Esto abrirá un asistente interactivo que te pedirá:
 Copilot CLI viene con el **servidor GitHub MCP ya instalado**.
 
 Operaciones disponibles automáticamente:
+
 - Buscar issues
 - Crear issues
 - Listar PRs
@@ -243,37 +256,46 @@ Copilot: [usa github-mcp] "Encontré 3 issues..."
 ## 🔑 Características Especiales
 
 ### Agente de GitHub
+
 Acceso directo a GitHub.com sin configuración adicional.
 
 ### Gestión de Permisos
+
 Sistema de allowlist interactivo:
+
 ```bash
 /session  # Ver permisos actuales
 /add-directory /path/to/project  # Agregar acceso
 ```
 
 ### Historial Persistente
+
 Configuración se mantiene entre sesiones.
 
 ### Modelos Múltiples
+
 Cambio dinámico entre GPT-4o, o1, etc.:
+
 ```bash
 /model gpt-4o
 /model o1
 ```
 
 ### Selección de Herramientas
+
 Puedes especificar qué herramientas de un servidor cargar:
+
 ```json
 {
-  "tools": ["search_docs", "get_library"]  // Solo estas
+  "tools": ["search_docs", "get_library"] // Solo estas
 }
 ```
 
 O cargar todas:
+
 ```json
 {
-  "tools": ["*"]  // Todas las herramientas
+  "tools": ["*"] // Todas las herramientas
 }
 ```
 
@@ -286,6 +308,7 @@ O cargar todas:
 **Causa**: Configuración incorrecta de `tools`
 
 **Solución**:
+
 1. Verifica que uses `"tools": ["*"]` o listes herramientas específicas
 2. Reinicia Copilot CLI completamente
 3. Revisa logs en `~/.copilot/logs/`
@@ -293,6 +316,7 @@ O cargar todas:
 ### "Servidor no se encuentra"
 
 **Solución**: Usar rutas absolutas
+
 ```json
 {
   "command": "/usr/local/bin/npx"
@@ -300,6 +324,7 @@ O cargar todas:
 ```
 
 **Verificar instalación**:
+
 ```bash
 which npx
 which node
@@ -308,6 +333,7 @@ which node
 ### Permisos denegados
 
 **Solución**:
+
 ```bash
 /add-directory /path/to/project
 ```
@@ -330,7 +356,7 @@ cd ~/.copilot/logs/
 
 ```json
 {
-  "tools": ["*"]  // Más fácil, carga todo
+  "tools": ["*"] // Más fácil, carga todo
 }
 ```
 
@@ -370,6 +396,7 @@ export POSTMAN_API_KEY="pmk_your_key"
 ### 4. Aprovechar GitHub MCP
 
 Ya viene configurado, úsalo:
+
 ```bash
 Usuario: "Crea un issue para implementar dark mode"
 Copilot: [usa github-mcp] "Issue #123 creado"
