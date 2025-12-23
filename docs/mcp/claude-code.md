@@ -2,7 +2,7 @@
 
 **Claude Code** es la herramienta CLI oficial de Anthropic para codificación asistida directamente desde la terminal.
 
-> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./mcp-config-general.md)
+> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md)
 
 ---
 
@@ -425,8 +425,8 @@ claude mcp registry
 ## 📚 Recursos Adicionales
 
 - **Documentación Oficial**: https://docs.claude.com/en/docs/claude-code
-- **Conceptos MCP**: [MCP - Guía General](./mcp-config-general.md)
-- **MCP Builder Strategy**: [MCP Builder](./mcp-builder-strategy.md)
+- **Conceptos MCP**: [MCP - Guía General](./README.md)
+- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

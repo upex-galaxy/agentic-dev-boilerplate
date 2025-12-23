@@ -2,7 +2,7 @@
 
 **VS Code con GitHub Copilot** ofrece integración nativa de MCP directamente en el editor.
 
-> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./mcp-config-general.md)
+> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md)
 
 ---
 
@@ -466,8 +466,8 @@ Search: "mcp"
 ## 📚 Recursos Adicionales
 
 - **Documentación Oficial**: https://code.visualstudio.com/docs/copilot/customization/mcp-servers
-- **Conceptos MCP**: [MCP - Guía General](./mcp-config-general.md)
-- **MCP Builder Strategy**: [MCP Builder](./mcp-builder-strategy.md)
+- **Conceptos MCP**: [MCP - Guía General](./README.md)
+- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

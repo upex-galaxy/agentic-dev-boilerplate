@@ -2,7 +2,7 @@
 
 **Gemini CLI** es la herramienta oficial de Google para interactuar con Gemini desde la terminal.
 
-> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./mcp-config-general.md)
+> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md)
 
 ---
 
@@ -470,8 +470,8 @@ gemini mcp list
 ## 📚 Recursos Adicionales
 
 - **Documentación Oficial**: https://github.com/google-gemini/gemini-cli
-- **Conceptos MCP**: [MCP - Guía General](./mcp-config-general.md)
-- **MCP Builder Strategy**: [MCP Builder](./mcp-builder-strategy.md)
+- **Conceptos MCP**: [MCP - Guía General](./README.md)
+- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

@@ -36,14 +36,14 @@ TEST_ADMIN_PASSWORD={{TEST_ADMIN_PASSWORD}}
 
 ## Tabla de Contenidos
 
-| #   | Documento                                        | Descripcion                                            | Nivel       |
-| --- | ------------------------------------------------ | ------------------------------------------------------ | ----------- |
-| 1   | [Arquitectura](./01-architecture.md)             | Vision general de las 2 APIs (Supabase REST + Next.js) | Fundamental |
-| 2   | [Autenticacion](./02-authentication.md)          | Como usar UN token para ambas APIs                     | Fundamental |
-| 3   | [DevTools Testing](./03-testing-devtools.md)     | Testing manual interceptando requests en el navegador  | Basico      |
-| 4   | [Postman Testing](./04-testing-postman.md)       | Testing manual con colecciones y environments          | Intermedio  |
-| 5   | [MCP Testing](./05-testing-mcp.md)               | Testing asistido por IA usando MCP tools               | Intermedio  |
-| 6   | [Playwright Testing](./06-testing-playwright.md) | Testing automatizado con arquitectura KATA             | Avanzado    |
+| Documento                                     | Descripcion                                            | Nivel       |
+| --------------------------------------------- | ------------------------------------------------------ | ----------- |
+| [Arquitectura](./architecture.md)             | Vision general de las 2 APIs (Supabase REST + Next.js) | Fundamental |
+| [Autenticacion](./authentication.md)          | Como usar UN token para ambas APIs                     | Fundamental |
+| [DevTools Testing](./devtools-testing.md)     | Testing manual interceptando requests en el navegador  | Basico      |
+| [Postman Testing](./postman-testing.md)       | Testing manual con colecciones y environments          | Intermedio  |
+| [MCP Testing](./mcp-testing.md)               | Testing asistido por IA usando MCP tools               | Intermedio  |
+| [Playwright Testing](./playwright-testing.md) | Testing automatizado con arquitectura KATA             | Avanzado    |
 
 ---
 
@@ -207,9 +207,9 @@ Body:
 
 Elige la guia que mejor se adapte a tu necesidad:
 
-- **Entender la arquitectura?** --> [01-architecture.md](./01-architecture.md)
-- **Entender autenticacion?** --> [02-authentication.md](./02-authentication.md)
-- **Debugging en el navegador?** --> [03-testing-devtools.md](./03-testing-devtools.md)
-- **Crear colecciones reutilizables?** --> [04-testing-postman.md](./04-testing-postman.md)
-- **Testing con IA/Claude?** --> [05-testing-mcp.md](./05-testing-mcp.md)
-- **Automatizacion con codigo?** --> [06-testing-playwright.md](./06-testing-playwright.md)
+- **Entender la arquitectura?** --> [architecture.md](./architecture.md)
+- **Entender autenticacion?** --> [authentication.md](./authentication.md)
+- **Debugging en el navegador?** --> [devtools-testing.md](./devtools-testing.md)
+- **Crear colecciones reutilizables?** --> [postman-testing.md](./postman-testing.md)
+- **Testing con IA/Claude?** --> [mcp-testing.md](./mcp-testing.md)
+- **Automatizacion con codigo?** --> [playwright-testing.md](./playwright-testing.md)

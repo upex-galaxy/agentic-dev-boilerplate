@@ -7,12 +7,14 @@
 ---
 
 > **Note**: This is the **conceptual fundamentals document** for KATA Framework.
+> This document is for **reference only** - it provides philosophical and conceptual context.
+> **AI agents should NOT load this automatically** - use TAE guidelines instead.
 >
-> For implementation-specific guides, see:
+> For implementation-specific guides (mandatory for AI), see:
 >
-> - **AI Entry Point**: `.context/guidelines/tae/KATA-AI-GUIDE.md`
-> - **Architecture**: `.context/guidelines/tae/kata-architecture.md`
-> - **Standards**: `.context/guidelines/tae/automation-standards.md`
+> - **AI Entry Point**: `.context/guidelines/TAE/KATA-AI-GUIDE.md`
+> - **Architecture**: `.context/guidelines/TAE/kata-architecture.md`
+> - **Standards**: `.context/guidelines/TAE/automation-standards.md`
 >
 > All code examples use **TypeScript + Playwright + Bun**.
 

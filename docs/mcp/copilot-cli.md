@@ -2,7 +2,7 @@
 
 **GitHub Copilot CLI** es la herramienta oficial de GitHub para interactuar con Copilot desde la terminal, con capacidades agentic.
 
-> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./mcp-config-general.md)
+> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md)
 
 ---
 
@@ -483,8 +483,8 @@ Copilot: [usa github-mcp] "Issue #123 creado"
 ## 📚 Recursos Adicionales
 
 - **Documentación Oficial**: https://github.com/github/copilot-cli
-- **Conceptos MCP**: [MCP - Guía General](./mcp-config-general.md)
-- **MCP Builder Strategy**: [MCP Builder](./mcp-builder-strategy.md)
+- **Conceptos MCP**: [MCP - Guía General](./README.md)
+- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

@@ -358,14 +358,14 @@ export API_KEY="mi-clave-secreta"
 - **GitHub MCP Registry**: https://github.com/modelcontextprotocol/servers
 - **Awesome MCP Servers**: https://github.com/punkpeye/awesome-mcp-servers
 
-### Herramientas Específicas
+### Herramientas Especificas
 
-Para configuraciones específicas por herramienta, consulta:
+Para configuraciones especificas por herramienta, consulta:
 
-- [Claude Code](./mcp-config-claudecode.md)
-- [Gemini CLI](./mcp-config-geminicli.md)
-- [GitHub Copilot CLI](./mcp-config-copilotcli.md)
-- [VS Code con GitHub Copilot](./mcp-config-vscode.md)
+- [Claude Code](./claude-code.md)
+- [Gemini CLI](./gemini-cli.md)
+- [GitHub Copilot CLI](./copilot-cli.md)
+- [VS Code con GitHub Copilot](./vscode.md)
 
 ---
 

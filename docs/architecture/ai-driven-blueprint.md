@@ -210,7 +210,7 @@ Decisión:
     ├── exploratory-testing.md         ⭐ NUEVA - Guía de exploratory testing
     ├── git-flow.md                    ⭐ NUEVA - Estrategia de Git Flow
     │
-    └── tae/                           [FASE 11: Test Automation Engineering]
+    └── TAE/                           [FASE 11: Test Automation Engineering]
         ├── README.md
         ├── test-strategy.md           (generado con prompt)
         ├── kata-architecture.md       (reference doc - KATA framework completo)
@@ -228,7 +228,7 @@ Decisión:
 ### **Convenciones de Nomenclatura**
 
 - **Directorios principales en MAYÚSCULAS**: `PRD/`, `SRS/`, `PBI/` (siglas)
-- **Directorios secundarios en minúsculas**: `idea/`, `infrastructure/`, `deployment/`, `testing/`, `guidelines/`, `epics/`, `stories/`, `tae/`
+- **Directorios secundarios en minúsculas**: `idea/`, `infrastructure/`, `deployment/`, `testing/`, `guidelines/`, `epics/`, `stories/`, `TAE/`
 - **Archivos siempre en minúsculas con guiones**: `epic-tree.md`, `test-cases.md`
 
 ---
@@ -570,7 +570,7 @@ tests/
    - Actions (User Flows, Business Logic)
    - Tests (Concrete test cases)
 
-**Output:** Directorio `.context/guidelines/tae/` completo + estructura de `/tests`
+**Output:** Directorio `.context/guidelines/TAE/` completo + estructura de `/tests`
 
 **Diferencias Legacy vs Greenfield:**
 
@@ -915,11 +915,11 @@ Archivo `implementation-plan.md`:
 
 **Output:**
 
-- `.context/guidelines/tae/test-strategy.md` - Estrategia general
-- `.context/guidelines/tae/kata-implementation-plan.md` - Plan maestro KATA
-- `.context/guidelines/tae/automation-standards.md` - Estándares de código
-- `.context/guidelines/tae/integration-test-plan.md` - Plan de tests API
-- `.context/guidelines/tae/e2e-test-plan.md` - Plan de tests E2E
+- `.context/guidelines/TAE/test-strategy.md` - Estrategia general
+- `.context/guidelines/TAE/kata-implementation-plan.md` - Plan maestro KATA
+- `.context/guidelines/TAE/automation-standards.md` - Estándares de código
+- `.context/guidelines/TAE/integration-test-plan.md` - Plan de tests API
+- `.context/guidelines/TAE/e2e-test-plan.md` - Plan de tests E2E
 - Estructura `/tests` con componentes KATA implementados
 
 **Arquitectura KATA:**
@@ -1067,7 +1067,7 @@ Todos los guidelines están en `.context/guidelines/` para fases 7-8-11:
 | `testing-strategy.md` ⭐ **NUEVA**    | Testing pyramid: unit → integration → e2e                       | 7-10-11 |
 | `exploratory-testing.md` ⭐ **NUEVA** | Técnicas de exploratory testing                                 | 10      |
 | `git-flow.md` ⭐ **NUEVA**            | Branching strategy: feature → develop → main                    | 7-9-12  |
-| `tae/*`                               | Test Automation Engineering (13 archivos KATA)                  | 11      |
+| `TAE/*`                               | Test Automation Engineering (13 archivos KATA)                  | 11      |
 
 **Cuándo leer:** La IA debe leer TODOS los guidelines relevantes antes de ejecutar cada fase.
 
@@ -1320,7 +1320,7 @@ Shift-Left (Fase 5) → Implementation (Fase 7) → Shift-Right (Fase 13)
 ├── deployment/          ⭐ NUEVA (logs y configs) - Fases 9, 12: Deployments
 ├── testing/             ⭐ NUEVA (exploratory + shift-right) - Fases 10, 13
 └── guidelines/          (10 archivos) - Fases 7-8-11: Reference material
-    └── tae/             (13 archivos) - Fase 11: Test Automation (KATA)
+    └── TAE/             (13 archivos) - Fase 11: Test Automation (KATA)
 ```
 
 ### **Beneficios de la Arquitectura Unificada**
