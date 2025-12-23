@@ -821,6 +821,6 @@ export default defineConfig({
 ## References
 
 - **KATA Architecture**: `kata-architecture.md`
-- **Component Catalog**: `component-catalog.md`
-- **ATC Registry**: `atc-registry.md`
-- **Implementation Plan**: `kata-implementation-plan.md`
+- **Framework Setup**: `.prompts/kata-framework-setup.md`
+- **E2E Automation**: `.prompts/fase-12-test-automation/automation-e2e-test.md`
+- **API Automation**: `.prompts/fase-12-test-automation/automation-integration-test.md`

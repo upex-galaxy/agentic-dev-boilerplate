@@ -480,9 +480,8 @@ For a complete list of implemented components and their ATCs, see:
 
 ## 10. References
 
-- **Full KATA Documentation**: `/docs/kata-test-architecture.md`
-- **Test Strategy**: `.context/guidelines/tae/test-strategy.md`
-- **Implementation Plan**: `.context/guidelines/tae/kata-implementation-plan.md`
-- **Automation Standards**: `.context/guidelines/tae/automation-standards.md`
-- **TMS Integration**: `.context/guidelines/tae/tms-integration.md`
-- **CI/CD Integration**: `.context/guidelines/tae/ci-cd-integration.md`
+- **Full KATA Documentation**: `/docs/kata-fundamentals.md`
+- **Automation Standards**: `.context/guidelines/TAE/automation-standards.md`
+- **TMS Integration**: `.context/guidelines/TAE/tms-integration.md`
+- **CI/CD Integration**: `.context/guidelines/TAE/ci-cd-integration.md`
+- **Framework Setup**: `.prompts/kata-framework-setup.md`

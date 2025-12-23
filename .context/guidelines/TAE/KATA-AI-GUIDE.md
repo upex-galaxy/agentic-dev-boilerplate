@@ -29,21 +29,21 @@ KATA (Komponent Action Test Architecture) is a test automation framework where:
 
 ## Task-Based Navigation
 
-| If you need to...                  | Read this document                                    |
-| ---------------------------------- | ----------------------------------------------------- |
-| Understand KATA concepts           | `kata-architecture.md` or `docs/kata-fundamentals.md` |
-| Create a new UI component          | `kata-implementation-plan.md` (section 9)             |
-| Create a new API component         | `kata-implementation-plan.md` (section 9)             |
-| Know naming conventions            | `automation-standards.md` (section 2)                 |
-| See anti-patterns (what NOT to do) | `automation-standards.md` (section 11)                |
-| Setup project from scratch         | `PROJECT-SETUP.md` (root directory)                   |
-| Review ATC fundamental rules       | `automation-standards.md` (section 1)                 |
-| Understand test data strategy      | `test-data-management.md`                             |
-| Learn about Preconditions module   | `automation-standards.md` (section 1.7)               |
-| Configure TMS integration          | `tms-integration.md`                                  |
-| Configure CI/CD                    | `ci-cd-integration.md`                                |
-| Configure OpenAPI/MCP              | `api-setup-guide.md`                                  |
-| See existing components/ATCs       | Run `bun run kata:manifest`                           |
+| If you need to...                  | Read this document                                                |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| Understand KATA concepts           | `kata-architecture.md` or `docs/kata-fundamentals.md`             |
+| Create a new UI component          | `.prompts/fase-12-test-automation/automation-e2e-test.md`         |
+| Create a new API component         | `.prompts/fase-12-test-automation/automation-integration-test.md` |
+| Know naming conventions            | `automation-standards.md` (section 2)                             |
+| See anti-patterns (what NOT to do) | `automation-standards.md` (section 11)                            |
+| Setup project from scratch         | `.prompts/kata-framework-setup.md`                                |
+| Review ATC fundamental rules       | `automation-standards.md` (section 1)                             |
+| Understand test data strategy      | `test-data-management.md`                                         |
+| Learn about Preconditions module   | `automation-standards.md` (section 1.7)                           |
+| Configure TMS integration          | `tms-integration.md`                                              |
+| Configure CI/CD                    | `ci-cd-integration.md`                                            |
+| Configure OpenAPI/MCP              | `api-setup-guide.md`                                              |
+| See existing components/ATCs       | Run `bun run kata:manifest`                                       |
 
 ---
 
