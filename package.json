@@ -9,6 +9,7 @@
     "up": "bun scripts/update-prompts.js",
     "kata:manifest": "bun scripts/kata-manifest.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
+    "email:check": "bun scripts/email-checker.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

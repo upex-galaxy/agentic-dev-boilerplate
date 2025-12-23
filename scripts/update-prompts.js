@@ -11,6 +11,7 @@ const os = require('os');
 const TEMPLATE_REPO = 'upex-galaxy/ai-driven-project-starter';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 
+// Phase configuration for .prompts/
 const PHASE_CONFIG = {
   1: { name: 'Constitution', dir: 'fase-1-constitution' },
   2: { name: 'Architecture', dir: 'fase-2-architecture' },
@@ -28,6 +29,7 @@ const PHASE_CONFIG = {
   14: { name: 'Shift-Right Testing', dir: 'fase-14-shift-right-testing' },
 };
 
+// Role-based phase groupings
 const ROLE_PHASES = {
   qa: {
     phases: [5, 10, 11, 12],
@@ -46,34 +48,33 @@ const ROLE_PHASES = {
   setup: { phases: [1, 2, 3], description: 'Fases sincronicas iniciales' },
 };
 
+// Standalone prompts (files in root of .prompts/)
 const STANDALONE_PROMPTS = [
   'git-flow.md',
   'git-conflict-fix.md',
   'us-dev-workflow.md',
   'us-qa-workflow.md',
+  'kata-framework-setup.md',
   'README.md',
 ];
 
-const DOCS_FILES = [
-  'ai-driven-software-project-blueprint.md',
-  'kata-test-architecture.md',
-  'kata-fundamentals.md',
-  'mcp-builder-strategy.md',
-  'GITFLOW.md',
-  'AMBIENTES.md',
-  'README.md',
-];
+// Docs structure - directories to merge (not replace)
+const DOCS_DIRECTORIES = ['architecture', 'mcp', 'testing', 'workflows'];
 
-const DOCS_DIRECTORIES = ['api-testing-guide'];
+// Root-level docs files
+const DOCS_ROOT_FILES = ['README.md'];
 
-const SCRIPT_FILES = [
-  'update-prompts.js',
-  'update-prompts.md',
-  'mcp-builder.js',
-  'email-checker.js',
-];
+// Context structure
+const CONTEXT_FILES = ['system-prompt.md', 'README.md'];
 
-const PROJECT_SPECIFIC_FILES = ['data-testid-standards.md'];
+// Context guidelines subdirectories
+const CONTEXT_GUIDELINES_DIRS = ['DEV', 'QA', 'TAE', 'MCP'];
+
+// Context guidelines root files
+const CONTEXT_GUIDELINES_FILES = ['README.md'];
+
+// Scripts to update
+const SCRIPT_FILES = ['update-prompts.js', 'mcp-builder.js', 'email-checker.js'];
 
 // ============================================================================
 // TERMINAL COLORS
@@ -119,6 +120,88 @@ function logStep(message) {
   console.log(`${colors.yellow}📦 ${message}${colors.reset}`);
 }
 
+function logMerge(message) {
+  console.log(`${colors.magenta}🔀 ${message}${colors.reset}`);
+}
+
+// ============================================================================
+// MERGE UTILITIES
+// ============================================================================
+
+/**
+ * Merge files from source to destination without deleting user files.
+ * Only overwrites files that exist in source (template).
+ * Preserves any files/folders in destination that don't exist in source.
+ *
+ * @param {string} srcDir - Source directory (from template)
+ * @param {string} destDir - Destination directory (user's project)
+ * @param {string} prefix - Prefix for logging (indentation)
+ */
+function mergeDirectory(srcDir, destDir, prefix = '') {
+  // Ensure destination exists
+  fs.mkdirSync(destDir, { recursive: true });
+
+  // Get all items from source
+  const items = fs.readdirSync(srcDir, { withFileTypes: true });
+
+  for (const item of items) {
+    const srcPath = path.join(srcDir, item.name);
+    const destPath = path.join(destDir, item.name);
+
+    if (item.isDirectory()) {
+      // Recursively merge subdirectory
+      mergeDirectory(srcPath, destPath, prefix + '  ');
+      logSuccess(`${prefix}${item.name}/`);
+    } else {
+      // Copy file (overwrites if exists)
+      fs.cpSync(srcPath, destPath);
+      logSuccess(`${prefix}${item.name}`);
+    }
+  }
+}
+
+/**
+ * Merge specific files from source to destination.
+ *
+ * @param {string} srcDir - Source directory
+ * @param {string} destDir - Destination directory
+ * @param {string[]} files - List of files to copy
+ */
+function mergeFiles(srcDir, destDir, files) {
+  fs.mkdirSync(destDir, { recursive: true });
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const destPath = path.join(destDir, file);
+
+    if (fs.existsSync(srcPath)) {
+      fs.cpSync(srcPath, destPath);
+      logSuccess(file);
+    }
+  }
+}
+
+/**
+ * Merge specific subdirectories from source to destination.
+ *
+ * @param {string} srcDir - Source directory
+ * @param {string} destDir - Destination directory
+ * @param {string[]} dirs - List of subdirectories to merge
+ */
+function mergeSubdirectories(srcDir, destDir, dirs) {
+  fs.mkdirSync(destDir, { recursive: true });
+
+  for (const dir of dirs) {
+    const srcPath = path.join(srcDir, dir);
+    const destPath = path.join(destDir, dir);
+
+    if (fs.existsSync(srcPath)) {
+      logMerge(`Merging ${dir}/...`);
+      mergeDirectory(srcPath, destPath, '  ');
+    }
+  }
+}
+
 // ============================================================================
 // HELP
 // ============================================================================
@@ -132,10 +215,10 @@ ${colors.bold}USO:${colors.reset}
   bun up <comando> [opciones]   ${colors.dim}# Ejecucion directa${colors.reset}
 
 ${colors.bold}COMANDOS:${colors.reset}
-  all           Actualiza todo
+  all           Actualiza todo (merge inteligente)
   prompts       Actualiza .prompts/ (menu interactivo o con flags)
-  docs          Actualiza docs/
-  guidelines    Actualiza .context/guidelines/
+  docs          Actualiza docs/ (merge, preserva archivos del usuario)
+  context       Actualiza .context/ (system-prompt, guidelines)
   templates     Actualiza templates/mcp/
   scripts       Actualiza scripts de actualizacion
   help          Muestra esta ayuda
@@ -154,13 +237,19 @@ ${colors.bold}ROLES DISPONIBLES:${colors.reset}
   po       ${colors.dim}-> Fases 1, 2, 4 (Producto)${colors.reset}
   setup    ${colors.dim}-> Fases 1, 2, 3 (Setup inicial)${colors.reset}
 
+${colors.bold}MERGE INTELIGENTE:${colors.reset}
+  Este script usa merge inteligente:
+  - Solo actualiza archivos del template
+  - Preserva archivos/carpetas creados por el usuario
+  - No elimina nada que no exista en el template
+
 ${colors.bold}EJEMPLOS:${colors.reset}
   bun up                        ${colors.dim}# Menu interactivo${colors.reset}
   bun up all                    ${colors.dim}# Actualiza todo${colors.reset}
   bun up prompts                ${colors.dim}# Menu para elegir fases${colors.reset}
   bun up prompts --rol qa-full  ${colors.dim}# QA + Specification${colors.reset}
   bun up prompts --fase 7,8     ${colors.dim}# Fases 7 y 8${colors.reset}
-  bun up docs templates         ${colors.dim}# Multiples componentes${colors.reset}
+  bun up docs context           ${colors.dim}# Multiples componentes${colors.reset}
 `);
 }
 
@@ -178,7 +267,7 @@ async function showMainMenu() {
       { name: 'Todo (all)', value: 'all' },
       { name: 'Prompts (.prompts/)', value: 'prompts' },
       { name: 'Documentacion (docs/)', value: 'docs' },
-      { name: 'Guidelines (.context/guidelines/)', value: 'guidelines' },
+      { name: 'Context (.context/)', value: 'context' },
       { name: 'Templates MCP (templates/mcp/)', value: 'templates' },
       { name: 'Scripts de actualizacion', value: 'scripts' },
     ],
@@ -253,7 +342,17 @@ function parseArgs(args) {
     help: false,
   };
 
-  const validCommands = ['all', 'prompts', 'docs', 'guidelines', 'templates', 'scripts', 'help'];
+  // Support both 'guidelines' (legacy) and 'context' (new)
+  const validCommands = [
+    'all',
+    'prompts',
+    'docs',
+    'context',
+    'guidelines',
+    'templates',
+    'scripts',
+    'help',
+  ];
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -283,7 +382,8 @@ function parseArgs(args) {
         process.exit(1);
       }
     } else if (validCommands.includes(arg)) {
-      result.commands.push(arg);
+      // Map 'guidelines' to 'context' for backwards compatibility
+      result.commands.push(arg === 'guidelines' ? 'context' : arg);
     } else if (!arg.startsWith('-')) {
       logWarning(`Comando desconocido: ${arg}`);
     }
@@ -340,14 +440,14 @@ function createBackup(components) {
     new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] +
     '-' +
     new Date().toTimeString().split(' ')[0].replace(/:/g, '');
-  const backupDir = path.join('.backups', `prompts-${timestamp}`);
+  const backupDir = path.join('.backups', `update-${timestamp}`);
 
   fs.mkdirSync(backupDir, { recursive: true });
 
   const backupMap = {
     prompts: { src: '.prompts', dest: '.prompts' },
     docs: { src: 'docs', dest: 'docs' },
-    guidelines: { src: '.context/guidelines', dest: '.context/guidelines' },
+    context: { src: '.context', dest: '.context' },
     templates: { src: 'templates/mcp', dest: 'templates/mcp' },
     scripts: { src: 'scripts', dest: 'scripts' },
   };
@@ -392,8 +492,11 @@ async function cloneTemplate() {
 // UPDATE FUNCTIONS
 // ============================================================================
 
+/**
+ * Update .prompts/ directory using merge strategy
+ */
 function updatePrompts(phases, includeStandalone) {
-  logStep('Actualizando .prompts/...');
+  logStep('Actualizando .prompts/ (merge)...');
 
   const templatePromptsPath = path.join(TEMP_DIR, '.prompts');
   if (!fs.existsSync(templatePromptsPath)) {
@@ -404,7 +507,7 @@ function updatePrompts(phases, includeStandalone) {
   // Ensure .prompts exists
   fs.mkdirSync('.prompts', { recursive: true });
 
-  // Update specific phases
+  // Update specific phases using merge
   if (phases && phases.length > 0) {
     for (const phaseNum of phases) {
       const phaseConfig = PHASE_CONFIG[phaseNum];
@@ -414,9 +517,8 @@ function updatePrompts(phases, includeStandalone) {
       const destPath = path.join('.prompts', phaseConfig.dir);
 
       if (fs.existsSync(srcPath)) {
-        fs.rmSync(destPath, { recursive: true, force: true });
-        fs.cpSync(srcPath, destPath, { recursive: true });
-        logSuccess(`Fase ${phaseNum}: ${phaseConfig.name}`);
+        logMerge(`Fase ${phaseNum}: ${phaseConfig.name}`);
+        mergeDirectory(srcPath, destPath, '  ');
       } else {
         logWarning(`Fase ${phaseNum} no encontrada en template`);
       }
@@ -425,20 +527,16 @@ function updatePrompts(phases, includeStandalone) {
 
   // Update standalone prompts
   if (includeStandalone) {
-    for (const file of STANDALONE_PROMPTS) {
-      const srcPath = path.join(templatePromptsPath, file);
-      const destPath = path.join('.prompts', file);
-
-      if (fs.existsSync(srcPath)) {
-        fs.cpSync(srcPath, destPath);
-        logSuccess(`Standalone: ${file}`);
-      }
-    }
+    logMerge('Archivos standalone...');
+    mergeFiles(templatePromptsPath, '.prompts', STANDALONE_PROMPTS);
   }
 }
 
+/**
+ * Update docs/ directory using merge strategy
+ */
 function updateDocs() {
-  logStep('Actualizando docs/...');
+  logStep('Actualizando docs/ (merge)...');
 
   const docsPath = path.join(TEMP_DIR, 'docs');
   if (!fs.existsSync(docsPath)) {
@@ -446,73 +544,45 @@ function updateDocs() {
     return;
   }
 
-  fs.mkdirSync('docs', { recursive: true });
+  // Merge root-level files
+  mergeFiles(docsPath, 'docs', DOCS_ROOT_FILES);
 
-  // Update specific files
-  for (const file of DOCS_FILES) {
-    const srcFile = path.join(docsPath, file);
-    if (fs.existsSync(srcFile)) {
-      fs.cpSync(srcFile, path.join('docs', file));
-      logSuccess(file);
-    }
-  }
-
-  // Update all mcp-config-* files
-  const allDocsFiles = fs.readdirSync(docsPath);
-  for (const file of allDocsFiles) {
-    if (file.startsWith('mcp-config-')) {
-      const srcFile = path.join(docsPath, file);
-      fs.cpSync(srcFile, path.join('docs', file));
-      logSuccess(file);
-    }
-  }
-
-  // Update documentation directories (like api-testing-guide)
-  for (const dir of DOCS_DIRECTORIES) {
-    const srcDir = path.join(docsPath, dir);
-    const destDir = path.join('docs', dir);
-    if (fs.existsSync(srcDir)) {
-      fs.rmSync(destDir, { recursive: true, force: true });
-      fs.cpSync(srcDir, destDir, { recursive: true });
-      logSuccess(`${dir}/ (directorio)`);
-    }
-  }
+  // Merge subdirectories
+  mergeSubdirectories(docsPath, 'docs', DOCS_DIRECTORIES);
 }
 
-function updateGuidelines() {
-  logStep('Actualizando .context/guidelines/...');
+/**
+ * Update .context/ directory using merge strategy
+ */
+function updateContext() {
+  logStep('Actualizando .context/ (merge)...');
 
-  const guidelinesPath = path.join(TEMP_DIR, '.context', 'guidelines');
-  if (!fs.existsSync(guidelinesPath)) {
-    logWarning('No se encontro directorio .context/guidelines en el template');
+  const contextPath = path.join(TEMP_DIR, '.context');
+  if (!fs.existsSync(contextPath)) {
+    logWarning('No se encontro directorio .context en el template');
     return;
   }
 
-  // Save project-specific files
-  const savedFiles = {};
-  for (const file of PROJECT_SPECIFIC_FILES) {
-    const filePath = path.join('.context/guidelines', file);
-    if (fs.existsSync(filePath)) {
-      savedFiles[file] = fs.readFileSync(filePath);
-    }
+  // Merge root-level context files
+  logMerge('Archivos raiz de .context/...');
+  mergeFiles(contextPath, '.context', CONTEXT_FILES);
+
+  // Merge guidelines root files
+  const guidelinesPath = path.join(contextPath, 'guidelines');
+  if (fs.existsSync(guidelinesPath)) {
+    logMerge('guidelines/...');
+    mergeFiles(guidelinesPath, '.context/guidelines', CONTEXT_GUIDELINES_FILES);
+
+    // Merge guidelines subdirectories
+    mergeSubdirectories(guidelinesPath, '.context/guidelines', CONTEXT_GUIDELINES_DIRS);
   }
-
-  // Copy guidelines from template
-  fs.mkdirSync('.context/guidelines', { recursive: true });
-  fs.cpSync(guidelinesPath, '.context/guidelines', { recursive: true });
-
-  // Restore project-specific files
-  for (const [file, content] of Object.entries(savedFiles)) {
-    const filePath = path.join('.context/guidelines', file);
-    fs.writeFileSync(filePath, content);
-    logInfo(`Preservado: ${file} (proyecto-especifico)`);
-  }
-
-  logSuccess('Guidelines actualizados');
 }
 
+/**
+ * Update templates/mcp/ directory
+ */
 function updateTemplates() {
-  logStep('Actualizando templates/mcp/...');
+  logStep('Actualizando templates/mcp/ (merge)...');
 
   const templatesPath = path.join(TEMP_DIR, 'templates', 'mcp');
   if (!fs.existsSync(templatesPath)) {
@@ -520,12 +590,12 @@ function updateTemplates() {
     return;
   }
 
-  fs.mkdirSync('templates/mcp', { recursive: true });
-  fs.cpSync(templatesPath, 'templates/mcp', { recursive: true });
-
-  logSuccess('Templates MCP actualizados');
+  mergeDirectory(templatesPath, 'templates/mcp');
 }
 
+/**
+ * Update scripts/ directory (specific files only)
+ */
 function updateScripts() {
   logStep('Actualizando scripts/...');
 
@@ -535,17 +605,12 @@ function updateScripts() {
     return;
   }
 
-  fs.mkdirSync('scripts', { recursive: true });
-
-  for (const file of SCRIPT_FILES) {
-    const srcFile = path.join(scriptsPath, file);
-    if (fs.existsSync(srcFile)) {
-      fs.cpSync(srcFile, path.join('scripts', file));
-      logSuccess(file);
-    }
-  }
+  mergeFiles(scriptsPath, 'scripts', SCRIPT_FILES);
 }
 
+/**
+ * Update context-engineering.md from template README
+ */
 function updateContextEngineering() {
   const templateReadmePath = path.join(TEMP_DIR, 'README.md');
   if (fs.existsSync(templateReadmePath)) {
@@ -567,6 +632,7 @@ async function main() {
   const args = process.argv.slice(2);
 
   logHeader('📦 UPEX Template Updater');
+  logInfo('Usando merge inteligente (preserva archivos del usuario)');
 
   // No arguments -> Interactive menu
   if (args.length === 0) {
@@ -581,7 +647,7 @@ async function main() {
 
     // Determine which components to backup and update
     const components = selected.includes('all')
-      ? ['prompts', 'docs', 'guidelines', 'templates', 'scripts']
+      ? ['prompts', 'docs', 'context', 'templates', 'scripts']
       : selected;
 
     createBackup(components);
@@ -590,7 +656,7 @@ async function main() {
     if (selected.includes('all')) {
       updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true);
       updateDocs();
-      updateGuidelines();
+      updateContext();
       updateTemplates();
       updateScripts();
       updateContextEngineering();
@@ -601,8 +667,8 @@ async function main() {
           updatePrompts(promptsConfig.phases, promptsConfig.standalone);
         } else if (cmd === 'docs') {
           updateDocs();
-        } else if (cmd === 'guidelines') {
-          updateGuidelines();
+        } else if (cmd === 'context') {
+          updateContext();
         } else if (cmd === 'templates') {
           updateTemplates();
         } else if (cmd === 'scripts') {
@@ -613,6 +679,7 @@ async function main() {
 
     cleanup();
     logHeader('✅ Actualizacion completada!');
+    logInfo('Tus archivos personalizados han sido preservados.');
     return;
   }
 
@@ -634,7 +701,7 @@ async function main() {
 
   // Expand 'all' command
   if (parsed.commands.includes('all')) {
-    parsed.commands = ['prompts', 'docs', 'guidelines', 'templates', 'scripts'];
+    parsed.commands = ['prompts', 'docs', 'context', 'templates', 'scripts'];
     parsed.all = true;
   }
 
@@ -646,16 +713,12 @@ async function main() {
     switch (cmd) {
       case 'prompts':
         if (parsed.all) {
-          // --all flag or 'all' command
           updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true);
         } else if (parsed.phases) {
-          // --fase or --rol flag
           updatePrompts(parsed.phases, parsed.standalone);
         } else if (parsed.standalone) {
-          // --standalone flag only
           updatePrompts([], true);
         } else {
-          // No flags -> show interactive menu
           const promptsConfig = await showPromptsMenu();
           updatePrompts(promptsConfig.phases, promptsConfig.standalone);
         }
@@ -663,8 +726,8 @@ async function main() {
       case 'docs':
         updateDocs();
         break;
-      case 'guidelines':
-        updateGuidelines();
+      case 'context':
+        updateContext();
         break;
       case 'templates':
         updateTemplates();
@@ -682,6 +745,7 @@ async function main() {
 
   cleanup();
   logHeader('✅ Actualizacion completada!');
+  logInfo('Tus archivos personalizados han sido preservados.');
 }
 
 main().catch(error => {
