@@ -28,9 +28,9 @@ Create E2E (End-to-End) automated tests for validated scenarios using the KATA f
 
 ```
 MANDATORY READING (in order):
-1. .context/guidelines/tae/KATA-AI-GUIDE.md       # Quick orientation
-2. .context/guidelines/tae/automation-standards.md # Rules and patterns
-3. .context/guidelines/tae/kata-architecture.md    # Layer structure
+1. .context/guidelines/TAE/KATA-AI-GUIDE.md       # Quick orientation
+2. .context/guidelines/TAE/automation-standards.md # Rules and patterns
+3. .context/guidelines/TAE/kata-architecture.md    # Layer structure
 ```
 
 **Key KATA principles to follow:**

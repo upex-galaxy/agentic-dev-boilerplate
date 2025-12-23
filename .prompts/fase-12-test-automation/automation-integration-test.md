@@ -28,9 +28,9 @@ Create API Integration automated tests for validated scenarios using the KATA fr
 
 ```
 MANDATORY READING (in order):
-1. .context/guidelines/tae/KATA-AI-GUIDE.md       # Quick orientation
-2. .context/guidelines/tae/automation-standards.md # Rules and patterns
-3. .context/guidelines/tae/api-setup-guide.md     # API testing specifics
+1. .context/guidelines/TAE/KATA-AI-GUIDE.md       # Quick orientation
+2. .context/guidelines/TAE/automation-standards.md # Rules and patterns
+3. .context/guidelines/TAE/api-setup-guide.md     # API testing specifics
 ```
 
 **Key KATA principles for API testing:**

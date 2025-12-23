@@ -278,8 +278,9 @@ Use: setup-linting.md
 
 **Guidelines a consultar:**
 
-- `.context/guidelines/code-standards.md` - Estándares completos
-- `.context/guidelines/error-handling.md` - Manejo de errores
+- `.context/guidelines/DEV/code-standards.md` - Estándares completos
+- `.context/guidelines/DEV/error-handling.md` - Manejo de errores
+- `.context/guidelines/DEV/data-testid-standards.md` - Estándares data-testid
 - `.context/design-system.md` - UI/UX standards
 
 **Story context:**

@@ -296,8 +296,8 @@ Which test would you like to automate?
 
 **CRITICAL:** Before implementing, read KATA guidelines:
 
-- `.context/guidelines/tae/automation-standards.md`
-- `.context/guidelines/tae/kata-architecture.md`
+- `.context/guidelines/TAE/automation-standards.md`
+- `.context/guidelines/TAE/kata-architecture.md`
 
 **Actions:**
 
@@ -389,9 +389,9 @@ Before starting, ensure these files are available:
 
 | File                                              | Purpose                |
 | ------------------------------------------------- | ---------------------- |
-| `.context/guidelines/tae/KATA-AI-GUIDE.md`        | Quick KATA orientation |
-| `.context/guidelines/tae/automation-standards.md` | Coding standards       |
-| `.context/guidelines/tae/kata-architecture.md`    | Framework architecture |
+| `.context/guidelines/TAE/KATA-AI-GUIDE.md`        | Quick KATA orientation |
+| `.context/guidelines/TAE/automation-standards.md` | Coding standards       |
+| `.context/guidelines/TAE/kata-architecture.md`    | Framework architecture |
 
 ---
 
@@ -458,7 +458,7 @@ Use this template to track workflow progress:
 ## Related Documentation
 
 - **Developer Workflow:** `.prompts/us-dev-workflow.md`
-- **KATA Guidelines:** `.context/guidelines/tae/`
+- **KATA Guidelines:** `.context/guidelines/TAE/`
 - **Phase 10:** `.prompts/fase-10-exploratory-testing/`
 - **Phase 11:** `.prompts/fase-11-test-documentation/`
 - **Phase 12:** `.prompts/fase-12-test-automation/`

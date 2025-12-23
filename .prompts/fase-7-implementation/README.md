@@ -231,10 +231,9 @@ npm run dev
 ## 📖 Recursos adicionales
 
 **Guidelines a leer:**
-- `.context/guidelines/implementation-workflow.md` - Workflow detallado
-- `.context/guidelines/code-standards.md` - Estándares de código
-- `.context/guidelines/error-handling.md` - Manejo de errores
-- `.context/guidelines/mcp-usage-tips.md` - Tips de MCP tools
+- `.context/guidelines/DEV/` - Guidelines de desarrollo (code-standards, error-handling, data-testid)
+- `.context/guidelines/DEV/spec-driven-development.md` - Principio SDD
+- `.context/guidelines/MCP/` - Tips de MCP tools (un archivo por MCP)
 
 **Specs técnicas:**
 - `.context/SRS/architecture-specs.md` - Arquitectura del proyecto

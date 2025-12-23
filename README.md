@@ -59,7 +59,7 @@ aicode-starter/
 │       ├── context-loading.md          Para: Que archivos leer en cada fase
 │       ├── mcp-usage-tips.md           Para: Cuando usar Supabase/Atlassian MCP
 │       │
-│       └── tae/                        Para: FASE 12 - Test Automation Engineering
+│       └── TAE/                        Para: FASE 12 - Test Automation Engineering
 │           ├── README.md               Para: Explicar TAE y workflow de uso
 │           ├── test-strategy.md        Para: Estrategia general de testing del proyecto
 │           ├── kata-architecture.md    Para: Arquitectura KATA adaptada al proyecto
@@ -551,7 +551,7 @@ Todos los tests automation siguen KATA.
 | `.context/SRS/`            | 4                   | Fase 2: Architecture (technical)        |
 | `.context/PBI/`            | Variable            | Fases 4-6 (depende de # epicas/stories) |
 | `.context/guidelines/`     | 10                  | Fases 7-14: Reference material          |
-| `.context/guidelines/tae/` | 10                  | Fase 12: Test Automation                |
+| `.context/guidelines/TAE/` | 10                  | Fase 12: Test Automation                |
 | `.prompts/`                | ~40                 | Guias de prompts (todas las fases)      |
 | `docs/`                    | 9                   | Blueprints + MCP configs                |
 | **TOTAL BASE**             | **~80-90 archivos** | Sistema completo (14 fases)             |

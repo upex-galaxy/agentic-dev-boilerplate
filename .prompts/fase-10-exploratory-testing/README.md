@@ -85,4 +85,4 @@ If exploratory testing **PASSED**:
 ## Related Documentation
 
 - **QA Workflow:** `.prompts/us-qa-workflow.md`
-- **KATA Guidelines:** `.context/guidelines/tae/`
+- **KATA Guidelines:** `.context/guidelines/TAE/`

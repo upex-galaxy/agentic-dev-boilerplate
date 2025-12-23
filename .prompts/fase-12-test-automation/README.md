@@ -26,11 +26,10 @@ Only automate functionality that has been validated manually and documented.
 **Before ANY automation work, read:**
 
 ```
-.context/guidelines/tae/
+.context/guidelines/TAE/
 ├── KATA-AI-GUIDE.md          # Quick orientation
 ├── automation-standards.md    # Rules and patterns
-├── kata-architecture.md       # Layer structure
-└── kata-implementation-plan.md # Implementation details
+└── kata-architecture.md       # Layer structure
 ```
 
 ---
@@ -51,7 +50,7 @@ Only automate functionality that has been validated manually and documented.
 Test marked "automation-candidate" (from Fase 11)
         ↓
 Framework exists?
-    └── NO  → kata-framework-setup.md
+    └── NO  → ../kata-framework-setup.md
     └── YES → Continue
         ↓
 What type of test?
@@ -130,5 +129,5 @@ Layer 1: TestContext
 ## Related Documentation
 
 - **QA Workflow:** `.prompts/us-qa-workflow.md`
-- **KATA Guidelines:** `.context/guidelines/tae/`
+- **KATA Guidelines:** `.context/guidelines/TAE/`
 - **Previous Phase:** `.prompts/fase-11-test-documentation/`

@@ -91,25 +91,32 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 - Entender **cómo** implementarlo (pasos técnicos)
 - Entender **qué validar** después
 
-### 2. Guidelines (TODOS - crítico):
+### 2. Guidelines de Desarrollo (DEV):
 
 ```
-.context/guidelines/implementation-workflow.md
-.context/guidelines/code-standards.md
-.context/guidelines/error-handling.md
-.context/guidelines/context-loading.md
-.context/guidelines/mcp-usage-tips.md
-.context/guidelines/data-testid-standards.md
+.context/guidelines/DEV/
+├── code-standards.md           # Estándares de código (DRY, naming, TypeScript)
+├── error-handling.md           # Manejo de errores estructurado
+├── data-testid-standards.md    # Atributos data-testid para testing E2E
+└── spec-driven-development.md  # Principio de desarrollo guiado por specs
 ```
 
 **Propósito:**
 
-- Workflow correcto de implementación
 - Estándares de código (DRY, naming, TypeScript)
 - Manejo de errores estructurado
-- Qué archivos leer en cada caso
-- Cuándo y cómo usar MCPs
 - **Atributos `data-testid` para testing E2E**
+- Principios de Spec-Driven Development
+
+### 2.1 Guidelines de MCP (si necesitas herramientas):
+
+```
+.context/guidelines/MCP/
+├── README.md      # Decision tree: ¿Qué MCP usar?
+├── supabase.md    # Para queries de DB
+├── context7.md    # Para docs oficiales
+└── ...            # Otros MCPs según necesidad
+```
 
 ### 3. Design System (Si story tiene UI):
 
@@ -248,8 +255,8 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 **B) Implementa el código:**
 
 - Crea o modifica archivos
-- Sigue code standards (`.context/guidelines/code-standards.md`)
-- Aplica error handling (`.context/guidelines/error-handling.md`)
+- Sigue code standards (`.context/guidelines/DEV/code-standards.md`)
+- Aplica error handling (`.context/guidelines/DEV/error-handling.md`)
 - Si hay UI: usa componentes del design system
 - **Agrega `data-testid`** a todos los componentes UI (ver abajo)
 
@@ -290,7 +297,7 @@ export function MentorCard({ mentor }) {
 - **NUNCA** IDs dinámicos: ❌ `data-testid={`card-${id}`}`
 - Permite selectores descendientes: `$('[data-testid="mentorCard"] button')`
 
-**Referencia completa:** `.context/guidelines/data-testid-standards.md`
+**Referencia completa:** `.context/guidelines/DEV/data-testid-standards.md`
 
 **C) Explica decisiones importantes:**
 
@@ -342,7 +349,7 @@ npm run dev
 - **Manejar errores apropiadamente** (try-catch, error boundaries)
 - **Usar componentes del design system** (Button, Card, etc.)
 - **Validar inputs de usuario** (sanitización, validación)
-- **Agregar `data-testid` a componentes UI** (ver guidelines `data-testid-standards.md`)
+- **Agregar `data-testid` a componentes UI** (ver `.context/guidelines/DEV/data-testid-standards.md`)
 
 ---
 

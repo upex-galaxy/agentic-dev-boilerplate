@@ -152,5 +152,5 @@ For tests marked as **automation candidates**:
 ## Related Documentation
 
 - **QA Workflow:** `.prompts/us-qa-workflow.md`
-- **KATA Guidelines:** `.context/guidelines/tae/`
-- **TMS Integration:** `.context/guidelines/tae/tms-integration.md`
+- **KATA Guidelines:** `.context/guidelines/TAE/`
+- **TMS Integration:** `.context/guidelines/TAE/tms-integration.md`

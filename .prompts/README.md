@@ -175,7 +175,7 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 | Archivo                                                  | Proposito                                     |
 | -------------------------------------------------------- | --------------------------------------------- |
-| `fase-12-test-automation/kata-framework-setup.md`        | Setup inicial o refactoring de KATA framework |
+| `kata-framework-setup.md`                                | Setup inicial o refactoring de KATA framework |
 | `fase-12-test-automation/automation-e2e-test.md`         | Implementar tests E2E (UI)                    |
 | `fase-12-test-automation/automation-integration-test.md` | Implementar tests de integracion (API)        |
 
@@ -205,12 +205,13 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 ### **PROMPTS STANDALONE** (Utilidades)
 
-| Archivo               | Proposito                                   |
-| --------------------- | ------------------------------------------- |
-| `git-flow.md`         | Estrategia de branching y git workflow      |
-| `git-conflict-fix.md` | Resolver conflictos de merge                |
-| `us-dev-workflow.md`  | Workflow completo de desarrollo (Fases 6-9) |
-| `us-qa-workflow.md`   | Workflow completo de QA (Fases 10-12)       |
+| Archivo                   | Proposito                                     |
+| ------------------------- | --------------------------------------------- |
+| `git-flow.md`             | Estrategia de branching y git workflow        |
+| `git-conflict-fix.md`     | Resolver conflictos de merge                  |
+| `us-dev-workflow.md`      | Workflow completo de desarrollo (Fases 6-9)   |
+| `us-qa-workflow.md`       | Workflow completo de QA (Fases 10-12)         |
+| `kata-framework-setup.md` | Setup inicial o refactoring de KATA framework |
 
 ---
 
@@ -426,7 +427,7 @@ Despues de usar todos los prompts, tu directorio `.context/` debe verse asi:
     ├── context-loading.md
     ├── mcp-usage-tips.md
     │
-    └── tae/                       [Fase 12]
+    └── TAE/                       [Fase 12]
         ├── README.md
         ├── test-strategy.md
         ├── kata-architecture.md
@@ -448,7 +449,7 @@ Despues de usar todos los prompts, tu directorio `.context/` debe verse asi:
 ## RECURSOS ADICIONALES
 
 - **Guidelines para IA:** `.context/guidelines/`
-- **KATA Architecture (TAE):** `.context/guidelines/tae/`
+- **KATA Architecture (TAE):** `.context/guidelines/TAE/`
 
 ---
 

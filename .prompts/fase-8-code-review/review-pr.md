@@ -47,17 +47,19 @@ Puedo continuar, pero la revisión se basará en conocimiento interno (puede est
 - Entender Acceptance Criteria (qué debe cumplir)
 - Entender approach técnico planificado
 
-### 2. Code Standards:
+### 2. Code Standards (DEV):
 
 ```
-.context/guidelines/code-standards.md
-.context/guidelines/error-handling.md
+.context/guidelines/DEV/code-standards.md
+.context/guidelines/DEV/error-handling.md
+.context/guidelines/DEV/data-testid-standards.md
 ```
 
 **Propósito:**
 
 - Checklist de estándares de código
 - Reglas de manejo de errores
+- Estándares de data-testid para testing
 
 ### 3. Design System (si hay UI):
 
@@ -366,7 +368,7 @@ import { Button } from '@/components/ui/button';
 
 ### 8. 🧪 **Data-TestID para E2E Testing**
 
-**Revisar según `.context/guidelines/data-testid-standards.md`:**
+**Revisar según `.context/guidelines/DEV/data-testid-standards.md`:**
 
 - [ ] **Componentes de dominio** (MentorCard, LoginForm, etc.) tienen `data-testid` en su **definición**
 - [ ] **Componentes UI base** (Button, Card, Input de shadcn) reciben `data-testid` donde se **usan**, NO en su definición
@@ -558,7 +560,7 @@ Revisa el código implementado para STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}.
 
 - Story: .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md
 - Implementation plan: .../ implementation-plan.md
-- Code standards: .context/guidelines/code-standards.md
+- Code standards: .context/guidelines/DEV/
 
 (Donde {PROJECT_KEY}, {ISSUE_NUM}, {nombre} se obtienen de la story que estás revisando)
 
