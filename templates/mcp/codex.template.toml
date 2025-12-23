@@ -20,8 +20,11 @@ args = [
     "10000",
     "--timeout-navigation",
     "30000",
-    "--ignore-https-errors",
-    "--isolated"
+    "--isolated",
+    "--no-sandbox",
+    "--save-session",
+    "--viewport-size",
+    "1920x1080"
 ]
 
 [mcp_servers.devtools]
