@@ -5,14 +5,11 @@
       "args": [
         "@playwright/mcp@latest",
         "--caps",
-        "vision,pdf",
+        "vision,pdf,testing,tracing,tabs",
         "--timeout-action",
         "10000",
         "--timeout-navigation",
         "30000",
-        "--isolated",
-        "--no-sandbox",
-        "--save-session",
         "--viewport-size",
         "1920x1080"
       ]
