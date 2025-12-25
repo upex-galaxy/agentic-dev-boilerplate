@@ -1,5 +1,41 @@
 #!/usr/bin/env bun
-const { execSync, spawn } = require('child_process');
+/**
+ * @fileoverview UPEX Template Updater - CLI para sincronizar proyectos con el template
+ *
+ * Este script permite mantener proyectos derivados sincronizados con el template
+ * oficial de UPEX (ai-driven-project-starter). Usa una estrategia de "merge inteligente"
+ * que actualiza archivos del template sin eliminar archivos personalizados del usuario.
+ *
+ * @description
+ * Características principales:
+ * - Menú interactivo para selección de componentes
+ * - Actualización por roles (QA, Dev, DevOps, PO)
+ * - Actualización por fases específicas (1-14)
+ * - Sistema de backups automáticos
+ * - Merge inteligente (preserva archivos del usuario)
+ *
+ * @requires gh - GitHub CLI debe estar instalado y autenticado
+ * @requires bun - Runtime de JavaScript (o Node.js compatible)
+ *
+ * @example
+ * // Menú interactivo
+ * bun up
+ *
+ * @example
+ * // Actualizar todo
+ * bun up all
+ *
+ * @example
+ * // Actualizar por rol
+ * bun up prompts --rol qa
+ *
+ * @see docs/workflows/update-prompts-guide.md - Guía completa de uso
+ *
+ * @author UPEX Galaxy
+ * @version 3.0
+ */
+
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -81,6 +117,7 @@ const SCRIPT_FILES = ['update-prompts.js', 'mcp-builder.js', 'email-checker.js']
 // TERMINAL COLORS
 // ============================================================================
 
+/** @description ANSI escape codes para colorear output en terminal */
 const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
@@ -93,34 +130,37 @@ const colors = {
   reset: '\x1b[0m',
 };
 
-function log(message, color = 'reset') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
-
+/** @param {string} message - Título de sección */
 function logHeader(message) {
   console.log(`\n${colors.bold}${colors.cyan}${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje de éxito */
 function logSuccess(message) {
   console.log(`${colors.green}✅ ${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje de advertencia */
 function logWarning(message) {
   console.log(`${colors.yellow}⚠️  ${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje de error */
 function logError(message) {
   console.log(`${colors.red}❌ ${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje informativo */
 function logInfo(message) {
   console.log(`${colors.blue}ℹ️  ${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje de paso/progreso */
 function logStep(message) {
   console.log(`${colors.yellow}📦 ${message}${colors.reset}`);
 }
 
+/** @param {string} message - Mensaje de operación merge */
 function logMerge(message) {
   console.log(`${colors.magenta}🔀 ${message}${colors.reset}`);
 }
@@ -153,7 +193,11 @@ function isPackageInstalled(packageName) {
 }
 
 /**
- * Native prompt using readline (no external dependencies)
+ * Prompt nativo usando readline (sin dependencias externas).
+ * Se usa como fallback cuando @inquirer/prompts no está instalado.
+ *
+ * @param {string} question - Pregunta a mostrar al usuario
+ * @returns {Promise<string>} Respuesta del usuario en minúsculas y sin espacios
  */
 function nativePrompt(question) {
   return new Promise(resolve => {
@@ -437,6 +481,12 @@ async function showPhasesMenu() {
 // ARGUMENT PARSING
 // ============================================================================
 
+/**
+ * Parsea argumentos de línea de comandos.
+ *
+ * @param {string[]} args - Array de argumentos (process.argv.slice(2))
+ * @returns {{commands: string[], phases: number[]|null, role: string|null, standalone: boolean, all: boolean, help: boolean}}
+ */
 function parseArgs(args) {
   const result = {
     commands: [],
@@ -501,6 +551,13 @@ function parseArgs(args) {
 // PREREQUISITES
 // ============================================================================
 
+/**
+ * Verifica si un comando CLI está disponible en el sistema.
+ *
+ * @param {string} command - Comando a verificar (ej: 'gh', 'node')
+ * @param {string} name - Nombre descriptivo para mensajes de error
+ * @returns {boolean} true si el comando existe, false si no
+ */
 function checkCommand(command, name) {
   try {
     execSync(`${command} --version`, { stdio: 'ignore' });
@@ -511,6 +568,12 @@ function checkCommand(command, name) {
   }
 }
 
+/**
+ * Valida que GitHub CLI esté instalado y autenticado.
+ * Termina el proceso si no cumple los requisitos.
+ *
+ * @returns {Promise<void>}
+ */
 async function validatePrerequisites() {
   if (!checkCommand('gh', 'GitHub CLI (gh)')) {
     console.log('\nInstalalo con:');
@@ -538,6 +601,13 @@ async function validatePrerequisites() {
 // BACKUP
 // ============================================================================
 
+/**
+ * Crea un backup de los componentes antes de actualizarlos.
+ * Los backups se guardan en .backups/update-YYYY-MM-DD-HHMMSS/
+ *
+ * @param {string[]} components - Lista de componentes a respaldar ('prompts', 'docs', etc.)
+ * @returns {string} Ruta del directorio de backup creado
+ */
 function createBackup(components) {
   logStep('Creando backup...');
 
@@ -578,6 +648,13 @@ function createBackup(components) {
 // CLONE TEMPLATE
 // ============================================================================
 
+/**
+ * Clona el template desde GitHub a un directorio temporal.
+ * Usa GitHub CLI (gh) para manejar autenticación automáticamente.
+ *
+ * @returns {Promise<void>}
+ * @throws {Error} Si no hay autenticación o acceso al repo
+ */
 async function cloneTemplate() {
   logStep('Descargando ultima version del template...');
   console.log(`${colors.dim}  Repo: ${TEMPLATE_REPO}${colors.reset}`);
@@ -594,7 +671,7 @@ async function cloneTemplate() {
   try {
     execSync('gh auth status', { stdio: 'pipe' });
     console.log(`${colors.green}  ✓ GitHub CLI autenticado${colors.reset}`);
-  } catch (error) {
+  } catch {
     logError('GitHub CLI no esta autenticado');
     console.log(`\n${colors.yellow}Ejecuta primero:${colors.reset}`);
     console.log(`  ${colors.cyan}gh auth login${colors.reset}\n`);
@@ -740,7 +817,7 @@ function updateTemplates() {
 }
 
 /**
- * Update scripts/ directory (specific files only)
+ * Actualiza scripts/ (archivos específicos definidos en SCRIPT_FILES).
  */
 function updateScripts() {
   logStep('Actualizando scripts/...');
@@ -755,7 +832,38 @@ function updateScripts() {
 }
 
 /**
- * Update context-engineering.md from template README
+ * Auto-actualiza este script antes de cualquier operación.
+ * Compara el script actual con la versión del template y lo actualiza si hay diferencias.
+ *
+ * @returns {boolean} true si el script fue actualizado y necesita reiniciarse
+ */
+function selfUpdate() {
+  const currentScriptPath = path.join(process.cwd(), 'scripts', 'update-prompts.js');
+  const templateScriptPath = path.join(TEMP_DIR, 'scripts', 'update-prompts.js');
+
+  if (!fs.existsSync(templateScriptPath)) {
+    return false;
+  }
+
+  const currentContent = fs.existsSync(currentScriptPath)
+    ? fs.readFileSync(currentScriptPath, 'utf-8')
+    : '';
+  const templateContent = fs.readFileSync(templateScriptPath, 'utf-8');
+
+  if (currentContent !== templateContent) {
+    logStep('Auto-actualizando update-prompts.js...');
+    fs.mkdirSync('scripts', { recursive: true });
+    fs.cpSync(templateScriptPath, currentScriptPath);
+    logSuccess('update-prompts.js actualizado a la ultima version');
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Actualiza context-engineering.md desde el README del template.
+ * Este archivo sirve como documentación maestra de la arquitectura.
  */
 function updateContextEngineering() {
   const templateReadmePath = path.join(TEMP_DIR, 'README.md');
@@ -766,6 +874,10 @@ function updateContextEngineering() {
   }
 }
 
+/**
+ * Limpia el directorio temporal después de la actualización.
+ * Se ejecuta al final de cada operación exitosa.
+ */
 function cleanup() {
   fs.rmSync(TEMP_DIR, { recursive: true, force: true });
 }
@@ -802,6 +914,16 @@ async function main() {
 
     createBackup(components);
     await cloneTemplate();
+
+    // Auto-actualizar el script primero (siempre)
+    const wasUpdated = selfUpdate();
+    if (wasUpdated) {
+      logInfo(
+        'El script fue actualizado. Ejecuta el comando nuevamente para usar la nueva version.'
+      );
+      cleanup();
+      process.exit(0);
+    }
 
     if (selected.includes('all')) {
       updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true);
@@ -857,6 +979,14 @@ async function main() {
 
   createBackup(parsed.commands);
   await cloneTemplate();
+
+  // Auto-actualizar el script primero (siempre)
+  const wasUpdated = selfUpdate();
+  if (wasUpdated) {
+    logInfo('El script fue actualizado. Ejecuta el comando nuevamente para usar la nueva version.');
+    cleanup();
+    process.exit(0);
+  }
 
   // Execute commands
   for (const cmd of parsed.commands) {
