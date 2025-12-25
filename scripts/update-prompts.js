@@ -916,14 +916,7 @@ async function main() {
     await cloneTemplate();
 
     // Auto-actualizar el script primero (siempre)
-    const wasUpdated = selfUpdate();
-    if (wasUpdated) {
-      logInfo(
-        'El script fue actualizado. Ejecuta el comando nuevamente para usar la nueva version.'
-      );
-      cleanup();
-      process.exit(0);
-    }
+    selfUpdate();
 
     if (selected.includes('all')) {
       updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true);
@@ -981,12 +974,7 @@ async function main() {
   await cloneTemplate();
 
   // Auto-actualizar el script primero (siempre)
-  const wasUpdated = selfUpdate();
-  if (wasUpdated) {
-    logInfo('El script fue actualizado. Ejecuta el comando nuevamente para usar la nueva version.');
-    cleanup();
-    process.exit(0);
-  }
+  selfUpdate();
 
   // Execute commands
   for (const cmd of parsed.commands) {
