@@ -1510,7 +1510,10 @@ async function cmdImportXray(flags: Record<string, string | boolean>): Promise<v
 
 async function cmdBackupExport(flags: Record<string, string | boolean>): Promise<void> {
   const config = loadConfig();
-  const project = requireFlag(flags, 'project') || config?.default_project;
+  const project = getFlag(flags, 'project') || config?.default_project;
+  if (!project) {
+    throw new Error('Missing required flag: --project (or set default_project in config)');
+  }
   const output = getFlag(flags, 'output') || `xray-backup-${project}-${Date.now()}.json`;
   const includeRuns = flags['include-runs'] === true || flags['include-runs'] === 'true';
   const limit = parseInt(getFlag(flags, 'limit', '100') || '100', 10);
