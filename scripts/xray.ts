@@ -304,9 +304,73 @@ interface TestStep {
   result?: string;
 }
 
-interface GraphQLResponse<T = any> {
+interface GraphQLResponse<T = unknown> {
   data?: T;
   errors?: Array<{ message: string; path?: string[] }>;
+}
+
+// GraphQL response types for Xray API
+interface JiraFields {
+  key?: string;
+  summary?: string;
+  description?: string;
+  status?: string;
+  labels?: string[];
+}
+
+interface TestTypeInfo {
+  name: string;
+  kind?: string;
+}
+
+interface TestStepResponse {
+  id: string;
+  action: string;
+  data?: string;
+  result?: string;
+  comment?: string;
+  status?: { name: string; color?: string };
+}
+
+interface PreconditionResult {
+  issueId: string;
+  jira: JiraFields;
+}
+
+interface TestResult {
+  issueId: string;
+  projectId?: string;
+  testType: TestTypeInfo;
+  steps?: TestStepResponse[];
+  gherkin?: string;
+  unstructured?: string;
+  preconditions?: { results: PreconditionResult[] };
+  jira: JiraFields;
+}
+
+interface TestRunResult {
+  id: string;
+  status: { name: string; color?: string; description?: string };
+  comment?: string;
+  startedOn?: string;
+  finishedOn?: string;
+  defects?: string[];
+  evidence?: Array<{ id: string; filename: string }>;
+  steps?: TestStepResponse[];
+  test?: { issueId: string; jira: JiraFields };
+  testExecution?: { issueId: string; jira: JiraFields };
+}
+
+interface TestExecutionResult {
+  issueId: string;
+  jira: JiraFields;
+  tests?: { total: number; results: TestResult[] };
+  testRuns?: { total: number; results: TestRunResult[] };
+}
+
+interface TestPlanResult {
+  issueId: string;
+  jira: JiraFields;
 }
 
 // Backup types
@@ -386,7 +450,7 @@ const log = {
   error: (msg: string) => console.error(`${colors.red}✖${colors.reset} ${msg}`),
   title: (msg: string) => console.log(`\n${colors.bold}${colors.cyan}${msg}${colors.reset}\n`),
   dim: (msg: string) => console.log(`${colors.dim}${msg}${colors.reset}`),
-  json: (obj: any) => console.log(JSON.stringify(obj, null, 2)),
+  json: (obj: unknown) => console.log(JSON.stringify(obj, null, 2)),
 };
 
 // ============================================================================
@@ -485,7 +549,7 @@ async function getValidToken(): Promise<string> {
 // GRAPHQL CLIENT
 // ============================================================================
 
-async function graphql<T = any>(query: string, variables?: Record<string, any>): Promise<T> {
+async function graphql<T = any>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const token = await getValidToken();
 
   const response = await fetch(XRAY_GRAPHQL_URL, {
@@ -516,14 +580,14 @@ async function graphql<T = any>(query: string, variables?: Record<string, any>):
 // REST API CLIENT (for imports)
 // ============================================================================
 
-async function restApi(
+async function restApi<T = any>(
   endpoint: string,
   options: {
     method?: string;
-    body?: any;
+    body?: unknown;
     contentType?: string;
   } = {}
-): Promise<any> {
+): Promise<T> {
   const token = await getValidToken();
   const { method = 'POST', body, contentType = 'application/json' } = options;
 
@@ -548,9 +612,9 @@ async function restApi(
 
   const text = await response.text();
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   } catch {
-    return text;
+    return text as T;
   }
 }
 
@@ -1143,7 +1207,7 @@ async function cmdTestGet(
 
   if (test.steps && test.steps.length > 0) {
     console.log(`\nSteps (${test.steps.length}):`);
-    test.steps.forEach((s: any, i: number) => {
+    test.steps.forEach((s: TestStepResponse, i: number) => {
       console.log(`  ${i + 1}. ${s.action}`);
       if (s.data) console.log(`     Data: ${s.data}`);
       if (s.result) console.log(`     Expected: ${s.result}`);
@@ -1152,7 +1216,7 @@ async function cmdTestGet(
 
   if (test.preconditions?.results?.length > 0) {
     console.log(`\nPreconditions:`);
-    test.preconditions.results.forEach((p: any) => {
+    test.preconditions.results.forEach((p: PreconditionResult) => {
       console.log(`  - ${p.jira.key}: ${p.jira.summary}`);
     });
   }
@@ -1175,7 +1239,7 @@ async function cmdTestList(flags: Record<string, string | boolean>): Promise<voi
     return;
   }
 
-  result.getTests.results.forEach((t: any) => {
+  result.getTests.results.forEach((t: TestResult) => {
     const status = t.jira.status || 'Unknown';
     console.log(`${t.jira.key}  [${t.testType.name}]  ${status}  ${t.jira.summary}`);
   });
@@ -1243,7 +1307,7 @@ async function cmdExecGet(
 
   if (exec.testRuns.results.length > 0) {
     console.log(`\nTest Runs:`);
-    exec.testRuns.results.forEach((tr: any) => {
+    exec.testRuns.results.forEach((tr: TestRunResult) => {
       const testKey = tr.test?.jira?.key || 'Unknown';
       console.log(`  ${tr.id}  ${testKey}  [${tr.status.name}]`);
     });
@@ -1269,7 +1333,7 @@ async function cmdExecList(flags: Record<string, string | boolean>): Promise<voi
     return;
   }
 
-  result.getTestExecutions.results.forEach((e: any) => {
+  result.getTestExecutions.results.forEach((e: TestExecutionResult) => {
     console.log(`${e.jira.key}  ${e.jira.status}  ${e.jira.summary}`);
   });
 }
@@ -1312,7 +1376,7 @@ async function cmdRunGet(
 
   if (run.steps?.length > 0) {
     console.log(`\nSteps (${run.steps.length}):`);
-    run.steps.forEach((s: any, i: number) => {
+    run.steps.forEach((s: TestStepResponse, i: number) => {
       const statusIcon =
         s.status?.name === 'PASSED' ? '✔' : s.status?.name === 'FAILED' ? '✖' : '○';
       console.log(`  ${statusIcon} ${i + 1}. ${s.action} [${s.status?.name || 'TODO'}]`);
@@ -1412,7 +1476,7 @@ async function cmdPlanList(flags: Record<string, string | boolean>): Promise<voi
     return;
   }
 
-  result.getTestPlans.results.forEach((p: any) => {
+  result.getTestPlans.results.forEach((p: TestPlanResult) => {
     console.log(`${p.jira.key}  ${p.jira.status}  ${p.jira.summary}`);
   });
 }
@@ -1549,7 +1613,7 @@ async function cmdBackupExport(flags: Record<string, string | boolean>): Promise
 
       // Add type-specific data
       if (testType === 'Manual' && t.steps?.length > 0) {
-        backupTest.steps = t.steps.map((s: any) => ({
+        backupTest.steps = t.steps.map((s: TestStepResponse) => ({
           action: s.action || '',
           data: s.data || undefined,
           result: s.result || undefined,
@@ -1602,7 +1666,7 @@ async function cmdBackupExport(flags: Record<string, string | boolean>): Promise
 
           // Include step statuses if available
           if (run.steps?.length > 0) {
-            testRun.stepStatuses = run.steps.map((s: any, idx: number) => ({
+            testRun.stepStatuses = run.steps.map((s: TestStepResponse, idx: number) => ({
               stepIndex: idx,
               status: s.status?.name || 'TODO',
               comment: s.comment || undefined,
@@ -1688,7 +1752,11 @@ async function cmdBackupRestore(flags: Record<string, string | boolean>): Promis
   console.log('\nRestoring tests...');
 
   for (const test of backup.tests) {
-    const newKey = keyMap.get(test.originalKey);
+    // Check if we already have a mapping for this key (skip if exists)
+    if (keyMap.has(test.originalKey)) {
+      log.dim(`  Skipping ${test.originalKey} (already mapped)`);
+      continue;
+    }
 
     if (dryRun) {
       console.log(`  [DRY] Would create: ${test.summary} (${test.testType})`);
@@ -1698,7 +1766,7 @@ async function cmdBackupRestore(flags: Record<string, string | boolean>): Promis
 
     try {
       // Prepare variables for createTest mutation
-      const variables: Record<string, any> = {
+      const variables: Record<string, unknown> = {
         testType: { name: test.testType },
         projectKey: targetProject,
         summary: test.summary,
@@ -1739,7 +1807,6 @@ async function cmdBackupRestore(flags: Record<string, string | boolean>): Promis
 
   // Restore executions (if any)
   let execsCreated = 0;
-  const runsUpdated = 0;
 
   if (backup.executions.length > 0) {
     console.log('\nRestoring executions...');
