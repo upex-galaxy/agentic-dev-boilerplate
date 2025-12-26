@@ -200,7 +200,8 @@ Tools:
 ```markdown
 ## Bug Details
 
-**Title:** [Clear, descriptive title - format: "[Component] Brief issue description"]
+**Title:** [Formato estándar: <EPICNAME>: <COMPONENT>: <ISSUE_SUMMARY>]
+Ejemplo: "CheckoutFlow: Payment: No se muestra error al ingresar contraseña incorrecta"
 
 **Error Type:** [Functional/UI-Visual/Performance/Data/Integration/Security]
 
@@ -282,7 +283,7 @@ Tool: mcp__atlassian__jira_create_issue
 
 {
   "project_key": "[PROJECT_KEY]",  // e.g., "MYM", "UPEX", "QA", etc.
-  "summary": "[Bug title - format: [Component] Brief description]",
+  "summary": "[Formato: <EPICNAME>: <COMPONENT>: <ISSUE_SUMMARY>]",
   "issue_type": "Bug",
   "description": "[See Jira Description Template below]",
   "additional_fields": {
@@ -422,6 +423,33 @@ _RELATED STORIES_
 * Relacionado: [STORY-XXX if applicable]
 * Bloquea: [Other issues blocked by this bug]
 ```
+
+---
+
+## Nomenclatura de Bugs
+
+**Formato estándar para títulos de Bug/Defect:**
+
+```
+<EPICNAME>: <COMPONENT>: <ISSUE_SUMMARY>
+```
+
+| Componente      | Descripción                        |
+| --------------- | ---------------------------------- |
+| `EPICNAME`      | Nombre de la épica o sistema (SUT) |
+| `COMPONENT`     | Módulo donde ocurre el error       |
+| `ISSUE_SUMMARY` | Breve descripción de la falla      |
+
+**Ejemplos:**
+
+```
+CheckoutFlow: Payment: No se muestra error al ingresar contraseña incorrecta
+UserAuth: Login: Sesión expira sin mensaje de advertencia
+Dashboard: Charts: Gráfico de ventas muestra datos incorrectos
+API: Users: PUT /users/settings retorna 500 al guardar
+```
+
+**Referencia completa:** `.context/guidelines/QA/jira-test-management.md` → Sección "Nomenclatura de Tickets en Jira"
 
 ---
 
