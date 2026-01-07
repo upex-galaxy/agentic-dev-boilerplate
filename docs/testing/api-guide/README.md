@@ -215,3 +215,13 @@ Elige la guia que mejor se adapte a tu necesidad:
 - **Testing con IA (OpenAPI/SQL)?** --> [mcp-testing.md](./mcp-testing.md)
 - **Testing con IA (Postman MCP)?** --> [mcp-postman.md](./mcp-postman.md)
 - **Automatizacion con codigo?** --> [playwright-testing.md](./playwright-testing.md)
+
+---
+
+## Ver Tambien
+
+- [UI Guide](../ui-guide/README.md) - Testing de UI con Playwright
+- [Database Guide](../database-guide/README.md) - Testing de base de datos
+- [Project Management Guide](../project-management-guide/README.md) - Jira y GitHub
+- [Monitoring Guide](../monitoring-guide/README.md) - Sentry y Slack
+- [Research Guide](../research-guide/README.md) - Context7 y Tavily

@@ -88,5 +88,8 @@ Los problemas documentados en troubleshooting son errores reales encontrados dur
 
 ## Ver Tambien
 
-- [API Testing Guide](../api-guide/README.md) - Testing de APIs con multiples herramientas
-- [MCP General](../../mcp/README.md) - Conceptos generales de MCP
+- [API Guide](../api-guide/README.md) - Testing de APIs con multiples herramientas
+- [UI Guide](../ui-guide/README.md) - Testing de UI con Playwright
+- [Project Management Guide](../project-management-guide/README.md) - Jira y GitHub
+- [Monitoring Guide](../monitoring-guide/README.md) - Sentry y Slack
+- [Research Guide](../research-guide/README.md) - Context7 y Tavily
