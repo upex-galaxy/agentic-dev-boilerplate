@@ -16,6 +16,7 @@
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { createInterface } from 'readline';
 
 // ============================================
 // Configuration
@@ -84,15 +85,20 @@ function saveConfig(config: OpenAPIConfig): void {
   log(`Configuration saved to ${CONFIG_FILE}`, 'success');
 }
 
-async function prompt(question: string, defaultValue?: string): Promise<string> {
-  const defaultStr = defaultValue ? ` (${defaultValue})` : '';
-  process.stdout.write(`${question}${defaultStr}: `);
+function prompt(question: string, defaultValue?: string): Promise<string> {
+  return new Promise(resolve => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
 
-  for await (const line of console) {
-    const answer = line.trim();
-    return answer || defaultValue || '';
-  }
-  return defaultValue || '';
+    const defaultStr = defaultValue ? ` (${defaultValue})` : '';
+
+    rl.question(`${question}${defaultStr}: `, answer => {
+      rl.close();
+      resolve(answer.trim() || defaultValue || '');
+    });
+  });
 }
 
 // ============================================
