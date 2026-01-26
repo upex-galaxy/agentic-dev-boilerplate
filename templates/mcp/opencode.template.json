@@ -24,8 +24,7 @@
     },
     "api": {
       "type": "local",
-      "command": "npx",
-      "args": ["-y", "@ivotoby/openapi-mcp-server"],
+      "command": ["npx", "-y", "@ivotoby/openapi-mcp-server"],
       "environment": {
         "API_BASE_URL": "https://api.example.com",
         "OPENAPI_SPEC_PATH": "https://api.example.com/openapi.json",
@@ -35,8 +34,8 @@
     },
     "sql": {
       "type": "local",
-      "command": "npx",
-      "args": [
+      "command": [
+        "npx",
         "-y",
         "@bytebase/dbhub",
         "--transport",
