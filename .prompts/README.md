@@ -93,12 +93,13 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 #### **Fase 3: Infrastructure** (Setup tecnico base)
 
-| Archivo                                   | Proposito                                       |
-| ----------------------------------------- | ----------------------------------------------- |
-| `fase-3-infrastructure/backend-setup.md`  | DB schemas + API boilerplate + tipos TypeScript |
-| `fase-3-infrastructure/frontend-setup.md` | Design System + proyecto frontend               |
+| Archivo                                      | Proposito                                       |
+| -------------------------------------------- | ----------------------------------------------- |
+| `fase-3-infrastructure/backend-setup.md`     | DB schemas + API boilerplate + tipos TypeScript |
+| `fase-3-infrastructure/frontend-setup.md`    | Design System + proyecto frontend               |
+| `fase-3-infrastructure/project-doc-setup.md` | README profesional + System Prompt para AI      |
 
-**Orden critico:** Backend → Frontend (tipos generados del backend se importan en frontend)
+**Orden critico:** Backend → Frontend → Project Docs (documentación final del proyecto)
 
 **Features adicionales (opcionales):**
 

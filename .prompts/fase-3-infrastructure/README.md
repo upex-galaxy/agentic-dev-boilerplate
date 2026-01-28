@@ -24,11 +24,11 @@ La **Fase 3: Infrastructure** implementa la base técnica del proyecto ANTES de 
 
 ## 📋 Prompts de esta Fase
 
-| #   | Archivo             | Descripción                                                 | Duración   | MCP Requerido         |
-| --- | ------------------- | ----------------------------------------------------------- | ---------- | --------------------- |
-| 1   | `cloud-services.md` | Configurar cloud provider (Supabase, Vercel, Railway)       | 15-30 min  | ❌ Ninguno            |
-| 2   | `backend-setup.md`  | Crear DB schemas, Auth, API layer, seed data                | 45-90 min  | ✅ Supabase, Context7 |
-| 3   | `frontend-setup.md` | Design System, Layout, páginas demo, integrar tipos backend | 60-120 min | ✅ Context7           |
+| #   | Archivo                | Descripción                                                 | Duración   | MCP Requerido         |
+| --- | ---------------------- | ----------------------------------------------------------- | ---------- | --------------------- |
+| 1   | `backend-setup.md`     | Crear DB schemas, Auth, API layer, seed data                | 45-90 min  | ✅ Supabase, Context7 |
+| 2   | `frontend-setup.md`    | Design System, Layout, páginas demo, integrar tipos backend | 60-120 min | ✅ Context7           |
+| 3   | `project-doc-setup.md` | README profesional + System Prompt para AI coding agents    | 15-30 min  | ❌ Ninguno            |
 
 **Total estimado:** 2-4 horas (depende de complejidad del proyecto)
 
@@ -39,20 +39,14 @@ La **Fase 3: Infrastructure** implementa la base técnica del proyecto ANTES de 
 ### **⚠️ ORDEN CRÍTICO - NO ALTERAR**
 
 ```
-1. cloud-services.md       (PRIMERO - Setup de infraestructura cloud)
+1. backend-setup.md        (PRIMERO - Schemas + API + Tipos)
                            ↓
-2. backend-setup.md        (SEGUNDO - Schemas + API + Tipos)
+2. frontend-setup.md       (SEGUNDO - UI + Integración de tipos)
                            ↓
-3. frontend-setup.md       (TERCERO - UI + Integración de tipos)
+3. project-doc-setup.md    (TERCERO - README + System Prompt para AI)
 ```
 
 ### **Por qué este orden:**
-
-**🔹 Cloud Services primero:**
-
-- Crea los proyectos en Supabase/Vercel
-- Obtiene credenciales (URLs, API keys)
-- Sin esto, backend-setup no puede conectar a la DB
 
 **🔹 Backend antes que Frontend:**
 
@@ -187,15 +181,17 @@ Al finalizar esta fase tendrás:
 
 **Situación:** Estás empezando un proyecto completamente nuevo.
 
+**Pre-requisito:** Configura manualmente tu proyecto en Supabase/Vercel antes de comenzar.
+
 **Flujo:**
 
-1. Ejecuta `cloud-services.md` → Crea proyectos en Supabase/Vercel
-2. Ejecuta `backend-setup.md` → Crea DB schemas, auth, seed data
-3. Ejecuta `frontend-setup.md` → Crea proyecto frontend, integra tipos
+1. Ejecuta `backend-setup.md` → Crea DB schemas, auth, seed data, genera tipos
+2. Ejecuta `frontend-setup.md` → Crea proyecto frontend, integra tipos del backend
+3. Ejecuta `project-doc-setup.md` → Genera README profesional y System Prompt
 
 **Duración:** 2-4 horas
 
-**Output:** Stack completo funcional, listo para implementar features en Fase 7.
+**Output:** Stack completo funcional + documentación lista, listo para implementar features en Fase 7.
 
 ---
 
@@ -205,12 +201,12 @@ Al finalizar esta fase tendrás:
 
 **Flujo:**
 
-1. Ejecuta `cloud-services.md` → Configura Supabase/Vercel
-2. Ejecuta `backend-setup.md` → Crea DB, genera tipos, conecta frontend
-3. **Salta `frontend-setup.md`** o úsalo solo como referencia para:
+1. Ejecuta `backend-setup.md` → Crea DB, genera tipos, conecta frontend
+2. **Salta `frontend-setup.md`** o úsalo solo como referencia para:
    - Importar tipos generados (`src/types/supabase.ts`)
    - Crear `lib/types.ts` helper
    - Reemplazar mock data con queries reales
+3. Ejecuta `project-doc-setup.md` → Documenta el proyecto
 
 **Duración:** 1-2 horas (sin frontend-setup)
 
@@ -224,12 +220,11 @@ Al finalizar esta fase tendrás:
 
 **Flujo:**
 
-1. Ejecuta `cloud-services.md` → **Adapta para tu stack**
-   - El prompt te guiará a configurar el provider elegido en el SRS
-2. Ejecuta `backend-setup.md` → **Adapta para tu stack**
+1. Ejecuta `backend-setup.md` → **Adapta para tu stack**
    - Si no usas Supabase, adapta queries al ORM que uses (Prisma, Drizzle, etc.)
    - Genera tipos según tu stack
-3. Ejecuta `frontend-setup.md` → **Integra tipos de tu backend**
+2. Ejecuta `frontend-setup.md` → **Integra tipos de tu backend**
+3. Ejecuta `project-doc-setup.md` → **Documenta tu stack específico**
 
 **Duración:** 3-5 horas (requiere más adaptación manual)
 
@@ -343,13 +338,6 @@ Fase 7 (implementando story "Ver [recursos de negocio]"):
 
 ### **Checklist de Validación:**
 
-**Después de `cloud-services.md`:**
-
-- [ ] Proyecto Supabase creado y accesible
-- [ ] Proyecto Vercel desplegado
-- [ ] URLs documentadas en `.context/infrastructure-setup.md`
-- [ ] Credenciales agregadas a `.env`
-
 **Después de `backend-setup.md`:**
 
 - [ ] Tablas fundacionales visibles en Supabase Dashboard
@@ -366,6 +354,13 @@ Fase 7 (implementando story "Ver [recursos de negocio]"):
 - [ ] Archivo `lib/types.ts` importa desde `src/types/supabase.ts`
 - [ ] `npm run build` pasa sin errores
 - [ ] No hay type errors en editor
+
+**Después de `project-doc-setup.md`:**
+
+- [ ] README.md generado en el root del proyecto
+- [ ] System Prompt (CLAUDE.md/GEMINI.md/AGENTS.md) creado
+- [ ] Badges y links verificados
+- [ ] No hay información sensible expuesta
 
 ---
 
@@ -443,8 +438,8 @@ Type 'User' is not assignable to type 'UserInsert'
 
 ### **1. Ejecuta en orden estricto**
 
-- ❌ NO saltes de `cloud-services` a `frontend-setup`
-- ✅ Sigue: cloud → backend → frontend
+- ❌ NO saltes de `backend-setup` a `project-doc-setup`
+- ✅ Sigue: backend → frontend → project-docs
 
 ### **2. Documenta todo**
 
@@ -460,14 +455,14 @@ Type 'User' is not assignable to type 'UserInsert'
 ### **4. Commitea después de cada prompt**
 
 ```bash
-# Después de cloud-services.md
-git add . && git commit -m "feat: cloud infrastructure setup"
-
 # Después de backend-setup.md
 git add . && git commit -m "feat: backend schemas + auth + types"
 
 # Después de frontend-setup.md
 git add . && git commit -m "feat: design system + frontend integration"
+
+# Después de project-doc-setup.md
+git add . && git commit -m "docs: project README + AI system prompt"
 ```
 
 ### **5. No implementes features todavía**
