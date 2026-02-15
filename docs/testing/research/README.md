@@ -111,6 +111,6 @@ Developers, QA Engineers y TAEs que quieren:
 
 ## Ver Tambien
 
-- [API Guide](../api-guide/README.md) - Testing de APIs
-- [UI Guide](../ui-guide/README.md) - Testing de UI
-- [Database Guide](../database-guide/README.md) - Testing de base de datos
+- [API Guide](../api/README.md) - Testing de APIs
+- [UI Guide](../ui/README.md) - Testing de UI
+- [Database Guide](../database/README.md) - Testing de base de datos

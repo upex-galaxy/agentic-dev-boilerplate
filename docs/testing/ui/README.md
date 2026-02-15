@@ -120,8 +120,8 @@ Para automatizar tests E2E con Playwright:
 
 ## Ver Tambien
 
-- [API Guide](../api-guide/README.md) - Testing de APIs
-- [Database Guide](../database-guide/README.md) - Testing de base de datos
-- [Project Management Guide](../project-management-guide/README.md) - Jira y GitHub
-- [Monitoring Guide](../monitoring-guide/README.md) - Sentry y Slack
-- [Research Guide](../research-guide/README.md) - Context7 y Tavily
+- [API Guide](../api/README.md) - Testing de APIs
+- [Database Guide](../database/README.md) - Testing de base de datos
+- [Project Management Guide](../project-management/README.md) - Jira y GitHub
+- [Observability Guide](../observability/README.md) - Sentry y Slack
+- [Research Guide](../research/README.md) - Context7 y Tavily

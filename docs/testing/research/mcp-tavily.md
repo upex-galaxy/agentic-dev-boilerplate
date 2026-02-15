@@ -458,4 +458,4 @@ Para documentacion oficial de librerias:
 --> [mcp-context7.md](./mcp-context7.md)
 
 Para testing con Playwright:
---> [../ui-guide/mcp-playwright.md](../ui-guide/mcp-playwright.md)
+--> [../ui/mcp-playwright.md](../ui/mcp-playwright.md)

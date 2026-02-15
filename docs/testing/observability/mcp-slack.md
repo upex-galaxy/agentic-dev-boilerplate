@@ -469,4 +469,4 @@ Para monitoreo de errores:
 --> [mcp-sentry.md](./mcp-sentry.md)
 
 Para busquedas web:
---> [mcp-tavily.md](../research-guide/mcp-tavily.md)
+--> [mcp-tavily.md](../research/mcp-tavily.md)

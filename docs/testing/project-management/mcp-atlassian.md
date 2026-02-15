@@ -432,4 +432,4 @@ Para testing con GitHub:
 --> [mcp-github.md](./mcp-github.md)
 
 Para monitoreo de errores:
---> [mcp-sentry.md](../monitoring-guide/mcp-sentry.md)
+--> [mcp-sentry.md](../observability/mcp-sentry.md)

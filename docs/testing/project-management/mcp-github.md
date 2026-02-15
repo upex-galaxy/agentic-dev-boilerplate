@@ -527,4 +527,4 @@ Para gestion de proyectos con Atlassian:
 --> [mcp-atlassian.md](./mcp-atlassian.md)
 
 Para monitoreo de errores:
---> [mcp-sentry.md](../monitoring-guide/mcp-sentry.md)
+--> [mcp-sentry.md](../observability/mcp-sentry.md)

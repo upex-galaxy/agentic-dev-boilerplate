@@ -101,6 +101,6 @@ QA Engineers y Test Automation Engineers que quieren:
 
 ## Ver Tambien
 
-- [Project Management Guide](../project-management-guide/README.md) - Jira y GitHub
-- [Database Guide](../database-guide/README.md) - Testing de base de datos
-- [API Guide](../api-guide/README.md) - Testing de APIs
+- [Project Management Guide](../project-management/README.md) - Jira y GitHub
+- [Database Guide](../database/README.md) - Testing de base de datos
+- [API Guide](../api/README.md) - Testing de APIs

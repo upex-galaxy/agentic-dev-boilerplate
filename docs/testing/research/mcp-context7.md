@@ -442,4 +442,4 @@ Para busquedas web y debugging:
 --> [mcp-tavily.md](./mcp-tavily.md)
 
 Para testing con Playwright:
---> [../ui-guide/mcp-playwright.md](../ui-guide/mcp-playwright.md)
+--> [../ui/mcp-playwright.md](../ui/mcp-playwright.md)

@@ -82,6 +82,6 @@ QA Engineers y Test Automation Engineers que quieren:
 
 ## Ver Tambien
 
-- [Monitoring Guide](../monitoring-guide/README.md) - Sentry y Slack para alertas
-- [Database Guide](../database-guide/README.md) - Testing de base de datos
-- [API Guide](../api-guide/README.md) - Testing de APIs
+- [Observability Guide](../observability/README.md) - Sentry y Slack para alertas
+- [Database Guide](../database/README.md) - Testing de base de datos
+- [API Guide](../api/README.md) - Testing de APIs

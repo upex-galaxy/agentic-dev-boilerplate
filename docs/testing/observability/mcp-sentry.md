@@ -444,7 +444,7 @@ Verificar:
 ## Siguiente Paso
 
 Para gestion de repositorios:
---> [mcp-github.md](../project-management-guide/mcp-github.md)
+--> [mcp-github.md](../project-management/mcp-github.md)
 
 Para comunicacion de errores:
 --> [mcp-slack.md](./mcp-slack.md)
