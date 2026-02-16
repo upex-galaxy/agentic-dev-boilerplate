@@ -90,14 +90,8 @@ const ROLE_PHASES = {
 };
 
 // Tooling files - universal framework configuration files
-const TOOLING_FILES = [
-  '.editorconfig',
-  '.prettierrc',
-  '.prettierignore',
-  'eslint.config.js',
-  'tsconfig.json',
-  '.gitignore',
-];
+// NOTE: Excludes project-specific files (tsconfig.json, eslint.config.js, .gitignore)
+const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore'];
 
 // Example/template files for user configuration
 const EXAMPLE_FILES = ['.env.example'];
