@@ -326,7 +326,7 @@
   "material-icon-theme.folders.associations": {
     "utils": "tools",
     "test-results": "temp",
-    "tests": "test",
+    "qa": "test",
     "__tests__": "test"
   },
   // =====================
