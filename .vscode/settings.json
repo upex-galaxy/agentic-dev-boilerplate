@@ -77,8 +77,8 @@
   // =====================
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit", // Ejecuta fix all de todos los linters
-    "source.organizeImports": "explicit", // Organiza imports automáticamente
-    "source.fixAll.eslint": "explicit", // ESLint fixes
+    "source.organizeImports": "never", // Desactivado: usa perfectionist/sort-imports de ESLint
+    "source.fixAll.eslint": "explicit", // ESLint fixes (incluye ordenar imports)
     "source.fixAll.markdownlint": "explicit" // Markdown lint fixes
   },
   // =====================
