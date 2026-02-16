@@ -58,34 +58,25 @@ git status
 [ -d "qa" ] && echo "WARNING: qa/ directory already exists" || echo "OK: Ready to proceed"
 ```
 
-### Step 1.2: Clone Repository
+### Step 1.2: Download Repository (Without Git History)
 
-**Clone the KATA boilerplate into `qa/` directory:**
-
-```bash
-gh repo clone upex-galaxy/ai-driven-test-automation-boilerplate qa -- --depth 1
-```
-
-> **Note:** `--depth 1` creates a shallow clone (only latest commit, no full history), but still creates a `.git` directory.
-
-### Step 1.3: Remove Git History (CRITICAL)
-
-**IMPORTANT:** The clone brings its own `.git` directory. You MUST remove it to:
-- Avoid nested git repositories (git inside git)
-- Ensure `qa/` is tracked by the root project's git
-- Prevent conflicts and confusion
+**Download the KATA boilerplate as a tarball (no git history, no commits from template authors):**
 
 ```bash
-rm -rf qa/.git
+# Create qa/ directory and download boilerplate without any git history
+mkdir -p qa && \
+gh api repos/upex-galaxy/ai-driven-test-automation-boilerplate/tarball \
+  -H "Accept: application/vnd.github+json" | \
+  tar -xz -C qa --strip-components=1
 ```
 
-**Verify removal:**
+> **Why tarball instead of clone?**
+>
+> - `git clone` brings commit history - template authors would appear in your git log
+> - Tarball downloads **only the files** - like GitHub's "Use this template" feature
+> - Files appear as "new" when you commit - clean history with only your commits
 
-```bash
-[ -d "qa/.git" ] && echo "ERROR: .git still exists!" || echo "OK: .git removed"
-```
-
-### Step 1.4: Verify Structure
+### Step 1.3: Verify Structure
 
 ```bash
 tree qa/ -L 2
@@ -439,10 +430,12 @@ set -e
 
 echo "🚀 Setting up KATA Framework..."
 
-# Phase 1: Clone
-echo "📦 Cloning boilerplate..."
-gh repo clone upex-galaxy/ai-driven-test-automation-boilerplate qa -- --depth 1
-rm -rf qa/.git
+# Phase 1: Download (without git history)
+echo "📦 Downloading boilerplate..."
+mkdir -p qa && \
+gh api repos/upex-galaxy/ai-driven-test-automation-boilerplate/tarball \
+  -H "Accept: application/vnd.github+json" | \
+  tar -xz -C qa --strip-components=1
 
 # Phase 2: Clean up
 echo "🧹 Cleaning up..."
@@ -476,8 +469,7 @@ echo "5. Run: cd qa && bun run test --project=api-setup"
 
 ## Post-Setup Checklist
 
-- [ ] Boilerplate cloned to `qa/`
-- [ ] `.git` directory removed from `qa/`
+- [ ] Boilerplate downloaded to `qa/` (no git history)
 - [ ] Unnecessary files cleaned up
 - [ ] Dependencies installed (`qa/node_modules/`)
 - [ ] Playwright browsers installed
@@ -497,7 +489,7 @@ echo "5. Run: cd qa && bun run test --project=api-setup"
 
 ## Troubleshooting
 
-### Clone fails
+### Download fails
 
 ```bash
 # Verify GitHub CLI auth
@@ -505,6 +497,11 @@ gh auth status
 
 # Verify repo access
 gh repo view upex-galaxy/ai-driven-test-automation-boilerplate
+
+# Alternative: manual download
+# 1. Go to https://github.com/upex-galaxy/ai-driven-test-automation-boilerplate
+# 2. Click "Code" > "Download ZIP"
+# 3. Extract contents into qa/ directory
 ```
 
 ### Auth setup fails
