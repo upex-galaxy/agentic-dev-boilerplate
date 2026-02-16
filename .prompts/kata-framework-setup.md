@@ -66,12 +66,23 @@ git status
 gh repo clone upex-galaxy/ai-driven-test-automation-boilerplate qa -- --depth 1
 ```
 
-### Step 1.3: Remove Git History
+> **Note:** `--depth 1` creates a shallow clone (only latest commit, no full history), but still creates a `.git` directory.
 
-**Important:** Remove the `.git` directory to avoid nested git repos:
+### Step 1.3: Remove Git History (CRITICAL)
+
+**IMPORTANT:** The clone brings its own `.git` directory. You MUST remove it to:
+- Avoid nested git repositories (git inside git)
+- Ensure `qa/` is tracked by the root project's git
+- Prevent conflicts and confusion
 
 ```bash
 rm -rf qa/.git
+```
+
+**Verify removal:**
+
+```bash
+[ -d "qa/.git" ] && echo "ERROR: .git still exists!" || echo "OK: .git removed"
 ```
 
 ### Step 1.4: Verify Structure
