@@ -115,7 +115,7 @@ claude mcp add-json --scope=user my-server '{"command":"npx","args":[...]}'
       "env": {
         "API_BASE_URL": "https://staging-upexsoloq.vercel.app/api",
         "OPENAPI_SPEC_PATH": "https://staging-upexsoloq.vercel.app/api/openapi",
-        "API_HEADERS": "Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "API_HEADERS": "Authorization:Bearer {{JWT_ACCESS_TOKEN}}"
       }
     },
     "sql": {
@@ -187,7 +187,7 @@ claude mcp add-json --scope=user my-server '{"command":"npx","args":[...]}'
       "environment": {
         "API_BASE_URL": "https://staging-upexsoloq.vercel.app/api",
         "OPENAPI_SPEC_PATH": "https://staging-upexsoloq.vercel.app/api/openapi",
-        "API_HEADERS": "Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "API_HEADERS": "Authorization:Bearer {{JWT_ACCESS_TOKEN}}"
       },
       "enabled": true
     },
@@ -263,7 +263,7 @@ args = ["-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
 [mcp_servers.openapi.env]
 API_BASE_URL = "https://staging-upexsoloq.vercel.app/api"
 OPENAPI_SPEC_PATH = "https://staging-upexsoloq.vercel.app/api/openapi"
-API_HEADERS = "Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+API_HEADERS = "Authorization:Bearer {{JWT_ACCESS_TOKEN}}"
 
 [mcp_servers.sql]
 command = "npx"
@@ -341,7 +341,7 @@ gemini mcp remove server-name
       "env": {
         "API_BASE_URL": "https://staging-upexsoloq.vercel.app/api",
         "OPENAPI_SPEC_PATH": "https://staging-upexsoloq.vercel.app/api/openapi",
-        "API_HEADERS": "Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "API_HEADERS": "Authorization:Bearer {{JWT_ACCESS_TOKEN}}"
       }
     },
     "sql": {
@@ -373,8 +373,8 @@ type = "postgres"
 host = "aws-1-us-east-2.pooler.supabase.com"
 port = 5432
 database = "postgres"
-user = "qa_team.czuusjchqpgvanvbdrnz"
-password = "QA_SoloQ_2024_Secure!"
+user = "{{DB_USER}}"
+password = "{{DB_PASSWORD}}"
 sslmode = "require"
 ```
 
@@ -427,7 +427,7 @@ Ejecuta tu agente y usa `/mcp` para verificar que el MCP está conectado.
 Para conectarte via extensión de editor:
 
 ```
-postgresql://qa_team.czuusjchqpgvanvbdrnz:QA_SoloQ_2024_Secure!@aws-1-us-east-2.pooler.supabase.com:5432/postgres
+postgresql://{{DB_USER}}:{{DB_PASSWORD}}@aws-1-us-east-2.pooler.supabase.com:5432/postgres
 ```
 
 ---
@@ -483,7 +483,7 @@ args = ["-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
 [mcp_servers.openapi.env]
 API_BASE_URL = "https://staging-upexsoloq.vercel.app/api"
 OPENAPI_SPEC_PATH = "https://staging-upexsoloq.vercel.app/api/openapi"
-API_HEADERS = "Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+API_HEADERS = "Authorization:Bearer {{JWT_ACCESS_TOKEN}}"
 ```
 
 #### Gemini CLI (`settings.json`)
@@ -617,7 +617,7 @@ POST https://czuusjchqpgvanvbdrnz.supabase.co/auth/v1/token?grant_type=password
 **Headers:**
 
 ```
-apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6dXVzamNocXBndmFudmJkcm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5Mzk2MTksImV4cCI6MjA4NDUxNTYxOX0.Mw9nRvqGURfpXuZ0_5wjjI0K8X6aPWq_93ufzj8_Bjc
+apikey: {{SUPABASE_ANON_KEY}}
 Content-Type: application/json
 ```
 
@@ -625,8 +625,8 @@ Content-Type: application/json
 
 ```json
 {
-  "email": "demo@soloq.app",
-  "password": "Demo123!"
+  "email": "{{DEMO_EMAIL}}",
+  "password": "{{DEMO_PASSWORD}}"
 }
 ```
 
@@ -656,9 +656,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```bash
 # Paso 1: Obtener token
 curl -X POST 'https://czuusjchqpgvanvbdrnz.supabase.co/auth/v1/token?grant_type=password' \
-  -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6dXVzamNocXBndmFudmJkcm56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5Mzk2MTksImV4cCI6MjA4NDUxNTYxOX0.Mw9nRvqGURfpXuZ0_5wjjI0K8X6aPWq_93ufzj8_Bjc' \
+  -H 'apikey: {{SUPABASE_ANON_KEY}}' \
   -H 'Content-Type: application/json' \
-  -d '{"email":"demo@soloq.app","password":"Demo123!"}'
+  -d '{"email":"{{DEMO_EMAIL}}","password":"{{DEMO_PASSWORD}}"}'
 
 # Paso 2: Usar token en API call
 curl 'https://staging-upexsoloq.vercel.app/api/clients' \
