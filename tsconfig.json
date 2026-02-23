@@ -2,18 +2,18 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "resolveJsonModule": true,
     "types": ["bun-types", "node"],
     "strict": true,
-    "skipLibCheck": true,
     "noEmit": true,
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "skipLibCheck": true
   },
   "include": ["scripts/**/*.ts", "**/*.ts", "scripts/spike/xraycli/tsconfig.json"],
   "exclude": ["node_modules", ".backups"]

@@ -39,11 +39,11 @@
  * @version 3.0
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const readline = require('readline');
+const { execSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const readline = require('node:readline');
 
 // ============================================================================
 // CONFIGURATION
@@ -72,7 +72,7 @@ const PHASE_CONFIG = {
 
 // Role-based phase groupings
 const ROLE_PHASES = {
-  qa: {
+  'qa': {
     phases: [5, 10, 11, 12],
     description: 'Shift-Left, Exploratory, Documentation, Automation',
   },
@@ -80,13 +80,13 @@ const ROLE_PHASES = {
     phases: [4, 5, 10, 11, 12],
     description: 'QA + Specification (contexto de negocio)',
   },
-  dev: { phases: [6, 7, 8], description: 'Planning, Implementation, Code Review' },
-  devops: {
+  'dev': { phases: [6, 7, 8], description: 'Planning, Implementation, Code Review' },
+  'devops': {
     phases: [3, 9, 13, 14],
     description: 'Infrastructure, Staging, Production, Monitoring',
   },
-  po: { phases: [1, 2, 4], description: 'Constitution, Architecture, Specification' },
-  setup: { phases: [1, 2, 3], description: 'Fases sincronicas iniciales' },
+  'po': { phases: [1, 2, 4], description: 'Constitution, Architecture, Specification' },
+  'setup': { phases: [1, 2, 3], description: 'Fases sincronicas iniciales' },
 };
 
 // Tooling files - universal framework configuration files
@@ -105,15 +105,15 @@ const EXAMPLE_FILES = ['.env.example'];
 
 /** @description ANSI escape codes para colorear output en terminal */
 const colors = {
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
-  magenta: '\x1b[35m',
-  bold: '\x1b[1m',
-  dim: '\x1b[2m',
-  reset: '\x1b[0m',
+  green: '\x1B[32m',
+  yellow: '\x1B[33m',
+  red: '\x1B[31m',
+  blue: '\x1B[34m',
+  cyan: '\x1B[36m',
+  magenta: '\x1B[35m',
+  bold: '\x1B[1m',
+  dim: '\x1B[2m',
+  reset: '\x1B[0m',
 };
 
 /** @param {string} message - Título de sección */
@@ -186,13 +186,13 @@ function isPackageInstalled(packageName) {
  * @returns {Promise<string>} Respuesta del usuario en minúsculas y sin espacios
  */
 function nativePrompt(question) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
 
-    rl.question(question, answer => {
+    rl.question(question, (answer) => {
       rl.close();
       resolve(answer.trim().toLowerCase());
     });
@@ -244,15 +244,17 @@ Ahora puedes ejecutar el script nuevamente:
 
 `);
       process.exit(0);
-    } catch (error) {
+    }
+    catch (error) {
       logError(`Error instalando dependencia: ${error.message}`);
       console.log(`\n${colors.yellow}Intenta instalar manualmente:${colors.reset}`);
       console.log(`  ${colors.green}bun add @inquirer/prompts${colors.reset}\n`);
       process.exit(1);
     }
-  } else {
+  }
+  else {
     console.log(`\n${colors.yellow}Instalación cancelada.${colors.reset}`);
-    console.log(`\nPuedes usar comandos directos sin el menú interactivo:`);
+    console.log('\nPuedes usar comandos directos sin el menú interactivo:');
     console.log(`  ${colors.green}bun up all${colors.reset}      - Actualizar todo`);
     console.log(`  ${colors.green}bun up help${colors.reset}     - Ver todas las opciones\n`);
     process.exit(0);
@@ -285,9 +287,10 @@ function mergeDirectory(srcDir, destDir, prefix = '') {
 
     if (item.isDirectory()) {
       // Recursively merge subdirectory
-      mergeDirectory(srcPath, destPath, prefix + '  ');
+      mergeDirectory(srcPath, destPath, `${prefix}  `);
       logSuccess(`${prefix}${item.name}/`);
-    } else {
+    }
+    else {
       // Copy file (overwrites if exists)
       fs.cpSync(srcPath, destPath);
       logSuccess(`${prefix}${item.name}`);
@@ -478,11 +481,14 @@ function parseArgs(args) {
 
     if (arg === 'help' || arg === '--help' || arg === '-h') {
       result.help = true;
-    } else if (arg === '--all') {
+    }
+    else if (arg === '--all') {
       result.all = true;
-    } else if (arg === '--standalone') {
+    }
+    else if (arg === '--standalone') {
       result.standalone = true;
-    } else if (arg === '--fase' || arg === '--phase') {
+    }
+    else if (arg === '--fase' || arg === '--phase') {
       const nextArg = args[++i];
       if (nextArg) {
         result.phases = nextArg
@@ -490,20 +496,24 @@ function parseArgs(args) {
           .map(Number)
           .filter(n => n >= 1 && n <= 14);
       }
-    } else if (arg === '--rol' || arg === '--role') {
+    }
+    else if (arg === '--rol' || arg === '--role') {
       const nextArg = args[++i];
       if (nextArg && ROLE_PHASES[nextArg]) {
         result.role = nextArg;
         result.phases = ROLE_PHASES[nextArg].phases;
-      } else if (nextArg) {
+      }
+      else if (nextArg) {
         logError(`Rol desconocido: ${nextArg}`);
         logInfo(`Roles disponibles: ${Object.keys(ROLE_PHASES).join(', ')}`);
         process.exit(1);
       }
-    } else if (validCommands.includes(arg)) {
+    }
+    else if (validCommands.includes(arg)) {
       // Map 'guidelines' to 'context' for backwards compatibility
       result.commands.push(arg === 'guidelines' ? 'context' : arg);
-    } else if (!arg.startsWith('-')) {
+    }
+    else if (!arg.startsWith('-')) {
       logWarning(`Comando desconocido: ${arg}`);
     }
   }
@@ -526,7 +536,8 @@ function checkCommand(command, name) {
   try {
     execSync(`${command} --version`, { stdio: 'ignore' });
     return true;
-  } catch {
+  }
+  catch {
     logError(`${name} no esta instalado`);
     return false;
   }
@@ -543,9 +554,11 @@ async function validatePrerequisites() {
     console.log('\nInstalalo con:');
     if (process.platform === 'darwin') {
       console.log('  brew install gh');
-    } else if (process.platform === 'win32') {
+    }
+    else if (process.platform === 'win32') {
       console.log('  winget install GitHub.cli');
-    } else {
+    }
+    else {
       console.log('  sudo apt install gh  # Ubuntu/Debian');
       console.log('  O visita: https://cli.github.com/');
     }
@@ -554,7 +567,8 @@ async function validatePrerequisites() {
 
   try {
     execSync('gh auth status', { stdio: 'ignore' });
-  } catch {
+  }
+  catch {
     logWarning('No estas autenticado en GitHub CLI');
     console.log('Ejecuta: gh auth login');
     process.exit(1);
@@ -575,10 +589,10 @@ async function validatePrerequisites() {
 function createBackup(components) {
   logStep('Creando backup...');
 
-  const timestamp =
-    new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] +
-    '-' +
-    new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+  const timestamp
+    = `${new Date().toISOString().replace(/[:.]/g, '-').split('T')[0]
+    }-${
+      new Date().toTimeString().split(' ')[0].replace(/:/g, '')}`;
   const backupDir = path.join('.backups', `update-${timestamp}`);
 
   fs.mkdirSync(backupDir, { recursive: true });
@@ -656,7 +670,8 @@ async function cloneTemplate() {
   try {
     execSync('gh auth status', { stdio: 'pipe' });
     console.log(`${colors.green}  ✓ GitHub CLI autenticado${colors.reset}`);
-  } catch {
+  }
+  catch {
     logError('GitHub CLI no esta autenticado');
     console.log(`\n${colors.yellow}Ejecuta primero:${colors.reset}`);
     console.log(`  ${colors.cyan}gh auth login${colors.reset}\n`);
@@ -665,7 +680,7 @@ async function cloneTemplate() {
 
   // Clone the repository
   console.log(
-    `${colors.dim}  Clonando repositorio (esto puede tomar unos segundos)...${colors.reset}`
+    `${colors.dim}  Clonando repositorio (esto puede tomar unos segundos)...${colors.reset}`,
   );
 
   try {
@@ -675,7 +690,8 @@ async function cloneTemplate() {
       timeout: 60000, // 60 second timeout
     });
     console.log(`${colors.green}  ✓ Template descargado correctamente${colors.reset}`);
-  } catch (error) {
+  }
+  catch (error) {
     if (error.killed) {
       logError('Timeout: La descarga tardo demasiado (>60s)');
       console.log(`${colors.yellow}Posibles causas:${colors.reset}`);
@@ -683,7 +699,8 @@ async function cloneTemplate() {
       console.log('  • Problemas con GitHub');
       console.log(`\n${colors.yellow}Intenta ejecutar manualmente:${colors.reset}`);
       console.log(`  ${colors.cyan}gh repo clone ${TEMPLATE_REPO}${colors.reset}\n`);
-    } else {
+    }
+    else {
       logError('Error al descargar el template');
       console.log(`${colors.yellow}Posibles causas:${colors.reset}`);
       console.log('  • No tienes acceso al repositorio privado de UPEX Galaxy');
@@ -720,10 +737,10 @@ function updatePrompts(phases, includeStandalone) {
 
   // Check if this is a full update (all phases + standalone)
   const allPhaseNums = Object.keys(PHASE_CONFIG).map(Number);
-  const isFullUpdate =
-    includeStandalone &&
-    phases.length === allPhaseNums.length &&
-    allPhaseNums.every(p => phases.includes(p));
+  const isFullUpdate
+    = includeStandalone
+      && phases.length === allPhaseNums.length
+      && allPhaseNums.every(p => phases.includes(p));
 
   if (isFullUpdate) {
     // Full directory merge - syncs everything from template
@@ -736,7 +753,7 @@ function updatePrompts(phases, includeStandalone) {
   if (phases && phases.length > 0) {
     for (const phaseNum of phases) {
       const phaseConfig = PHASE_CONFIG[phaseNum];
-      if (!phaseConfig) continue;
+      if (!phaseConfig) { continue; }
 
       const srcPath = path.join(templatePromptsPath, phaseConfig.dir);
       const destPath = path.join('.prompts', phaseConfig.dir);
@@ -744,7 +761,8 @@ function updatePrompts(phases, includeStandalone) {
       if (fs.existsSync(srcPath)) {
         logMerge(`Fase ${phaseNum}: ${phaseConfig.name}`);
         mergeDirectory(srcPath, destPath, '  ');
-      } else {
+      }
+      else {
         logWarning(`Fase ${phaseNum} no encontrada en template`);
       }
     }
@@ -758,14 +776,15 @@ function updatePrompts(phases, includeStandalone) {
 
     for (const item of items) {
       // Skip phase directories - only sync non-phase items
-      if (phaseDirs.includes(item.name)) continue;
+      if (phaseDirs.includes(item.name)) { continue; }
 
       const srcPath = path.join(templatePromptsPath, item.name);
       const destPath = path.join('.prompts', item.name);
 
       if (item.isDirectory()) {
         mergeDirectory(srcPath, destPath, '  ');
-      } else {
+      }
+      else {
         fs.cpSync(srcPath, destPath);
         logSuccess(`  ${item.name}`);
       }
@@ -794,10 +813,10 @@ function updateBooks(phases, includeStandalone) {
 
   // Check if this is a full update (all phases + standalone)
   const allPhaseNums = Object.keys(PHASE_CONFIG).map(Number);
-  const isFullUpdate =
-    includeStandalone &&
-    phases.length === allPhaseNums.length &&
-    allPhaseNums.every(p => phases.includes(p));
+  const isFullUpdate
+    = includeStandalone
+      && phases.length === allPhaseNums.length
+      && allPhaseNums.every(p => phases.includes(p));
 
   if (isFullUpdate) {
     // Full directory merge - syncs everything from template
@@ -810,7 +829,7 @@ function updateBooks(phases, includeStandalone) {
   if (phases && phases.length > 0) {
     for (const phaseNum of phases) {
       const phaseConfig = PHASE_CONFIG[phaseNum];
-      if (!phaseConfig) continue;
+      if (!phaseConfig) { continue; }
 
       const srcPath = path.join(templateBooksPath, phaseConfig.dir);
       const destPath = path.join('.books', phaseConfig.dir);
@@ -818,7 +837,8 @@ function updateBooks(phases, includeStandalone) {
       if (fs.existsSync(srcPath)) {
         logMerge(`Fase ${phaseNum}: ${phaseConfig.name}`);
         mergeDirectory(srcPath, destPath, '  ');
-      } else {
+      }
+      else {
         logWarning(`Fase ${phaseNum} no encontrada en template .books/`);
       }
     }
@@ -832,14 +852,15 @@ function updateBooks(phases, includeStandalone) {
 
     for (const item of items) {
       // Skip phase directories - only sync non-phase items
-      if (phaseDirs.includes(item.name)) continue;
+      if (phaseDirs.includes(item.name)) { continue; }
 
       const srcPath = path.join(templateBooksPath, item.name);
       const destPath = path.join('.books', item.name);
 
       if (item.isDirectory()) {
         mergeDirectory(srcPath, destPath, '  ');
-      } else {
+      }
+      else {
         fs.cpSync(srcPath, destPath);
         logSuccess(`  ${item.name}`);
       }
@@ -959,7 +980,8 @@ function updateTooling() {
     if (fs.existsSync(srcPath)) {
       fs.cpSync(srcPath, file);
       logSuccess(file);
-    } else {
+    }
+    else {
       logWarning(`${file} no encontrado en template`);
     }
   }
@@ -977,7 +999,8 @@ function updateExamples() {
     if (fs.existsSync(srcPath)) {
       fs.cpSync(srcPath, file);
       logSuccess(file);
-    } else {
+    }
+    else {
       logWarning(`${file} no encontrado en template`);
     }
   }
@@ -1048,7 +1071,7 @@ async function main() {
   if (args.length === 0) {
     // Check for interactive dependencies before showing menu
     const depsReady = await ensureDependencies();
-    if (!depsReady) return; // Script is restarting after install
+    if (!depsReady) { return; } // Script is restarting after install
 
     const selected = await showMainMenu();
 
@@ -1082,29 +1105,39 @@ async function main() {
       updateTooling();
       updateExamples();
       updateContextEngineering();
-    } else {
+    }
+    else {
       for (const cmd of selected) {
         if (cmd === 'prompts') {
           const promptsConfig = await showPromptsMenu();
           updatePrompts(promptsConfig.phases, promptsConfig.standalone);
-        } else if (cmd === 'books') {
+        }
+        else if (cmd === 'books') {
           const booksConfig = await showPromptsMenu();
           updateBooks(booksConfig.phases, booksConfig.standalone);
-        } else if (cmd === 'docs') {
+        }
+        else if (cmd === 'docs') {
           updateDocs();
-        } else if (cmd === 'context') {
+        }
+        else if (cmd === 'context') {
           updateContext();
-        } else if (cmd === 'templates') {
+        }
+        else if (cmd === 'templates') {
           updateTemplates();
-        } else if (cmd === 'scripts') {
+        }
+        else if (cmd === 'scripts') {
           updateScripts();
-        } else if (cmd === 'vscode') {
+        }
+        else if (cmd === 'vscode') {
           updateVscode();
-        } else if (cmd === 'husky') {
+        }
+        else if (cmd === 'husky') {
           updateHusky();
-        } else if (cmd === 'tooling') {
+        }
+        else if (cmd === 'tooling') {
           updateTooling();
-        } else if (cmd === 'examples') {
+        }
+        else if (cmd === 'examples') {
           updateExamples();
         }
       }
@@ -1150,14 +1183,17 @@ async function main() {
       case 'prompts':
         if (parsed.all) {
           updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true);
-        } else if (parsed.phases) {
+        }
+        else if (parsed.phases) {
           updatePrompts(parsed.phases, parsed.standalone);
-        } else if (parsed.standalone) {
+        }
+        else if (parsed.standalone) {
           updatePrompts([], true);
-        } else {
+        }
+        else {
           // Check for interactive dependencies before showing prompts menu
           const depsReady = await ensureDependencies();
-          if (!depsReady) return;
+          if (!depsReady) { return; }
 
           const promptsConfig = await showPromptsMenu();
           updatePrompts(promptsConfig.phases, promptsConfig.standalone);
@@ -1166,14 +1202,17 @@ async function main() {
       case 'books':
         if (parsed.all) {
           updateBooks(Object.keys(PHASE_CONFIG).map(Number), true);
-        } else if (parsed.phases) {
+        }
+        else if (parsed.phases) {
           updateBooks(parsed.phases, parsed.standalone);
-        } else if (parsed.standalone) {
+        }
+        else if (parsed.standalone) {
           updateBooks([], true);
-        } else {
+        }
+        else {
           // Check for interactive dependencies before showing menu
           const depsReady = await ensureDependencies();
-          if (!depsReady) return;
+          if (!depsReady) { return; }
 
           const booksConfig = await showPromptsMenu();
           updateBooks(booksConfig.phases, booksConfig.standalone);
@@ -1216,7 +1255,7 @@ async function main() {
   logInfo('Tus archivos personalizados han sido preservados.');
 }
 
-main().catch(error => {
+main().catch((error) => {
   logError('Error inesperado:');
   console.error(error);
   process.exit(1);
