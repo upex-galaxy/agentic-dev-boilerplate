@@ -318,6 +318,7 @@ ${colors.bold}COMANDOS:${colors.reset}
   context       Actualiza .context/ (merge completo del directorio)
   templates     Actualiza templates/mcp/ (merge completo del directorio)
   scripts       Actualiza scripts/ (merge completo del directorio)
+  cli           Actualiza cli/ (Xray CLI y otras herramientas)
   vscode        Actualiza .vscode/ (extensions.json, settings.json)
   husky         Actualiza .husky/ (git hooks)
   tooling       Actualiza archivos de configuracion del framework
@@ -377,6 +378,7 @@ async function showMainMenu() {
       { name: 'Context (.context/)', value: 'context' },
       { name: 'Templates MCP (templates/mcp/)', value: 'templates' },
       { name: 'Scripts de actualizacion', value: 'scripts' },
+      { name: 'CLI Tools (cli/) - Xray CLI', value: 'cli' },
       { name: 'VS Code (.vscode/)', value: 'vscode' },
       { name: 'Husky (.husky/) - Git hooks', value: 'husky' },
       { name: 'Tooling - Archivos de configuracion', value: 'tooling' },
@@ -469,6 +471,7 @@ function parseArgs(args) {
     'guidelines',
     'templates',
     'scripts',
+    'cli',
     'vscode',
     'husky',
     'tooling',
@@ -604,6 +607,7 @@ function createBackup(components) {
     context: { src: '.context', dest: '.context' },
     templates: { src: 'templates/mcp', dest: 'templates/mcp' },
     scripts: { src: 'scripts', dest: 'scripts' },
+    cli: { src: 'cli', dest: 'cli' },
     vscode: { src: '.vscode', dest: '.vscode' },
     husky: { src: '.husky', dest: '.husky' },
   };
@@ -935,6 +939,23 @@ function updateScripts() {
 }
 
 /**
+ * Update cli/ directory using merge strategy.
+ * Merges entire directory - syncs Xray CLI and other CLI tools.
+ */
+function updateCli() {
+  logStep('Actualizando cli/ (merge)...');
+
+  const cliPath = path.join(TEMP_DIR, 'cli');
+  if (!fs.existsSync(cliPath)) {
+    logWarning('No se encontro directorio cli en el template');
+    return;
+  }
+
+  logMerge('Sincronizando directorio completo...');
+  mergeDirectory(cliPath, 'cli');
+}
+
+/**
  * Update .vscode/ directory using merge strategy.
  * Merges entire directory - syncs extensions.json, settings.json, etc.
  */
@@ -1084,7 +1105,7 @@ async function main() {
 
     // Determine which components to backup and update
     const components = selected.includes('all')
-      ? ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'vscode', 'husky', 'tooling', 'examples']
+      ? ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'vscode', 'husky', 'tooling', 'examples']
       : selected;
 
     createBackup(components);
@@ -1100,6 +1121,7 @@ async function main() {
       updateContext();
       updateTemplates();
       updateScripts();
+      updateCli();
       updateVscode();
       updateHusky();
       updateTooling();
@@ -1127,6 +1149,9 @@ async function main() {
         }
         else if (cmd === 'scripts') {
           updateScripts();
+        }
+        else if (cmd === 'cli') {
+          updateCli();
         }
         else if (cmd === 'vscode') {
           updateVscode();
@@ -1167,7 +1192,7 @@ async function main() {
 
   // Expand 'all' command
   if (parsed.commands.includes('all')) {
-    parsed.commands = ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'vscode', 'husky', 'tooling', 'examples'];
+    parsed.commands = ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'vscode', 'husky', 'tooling', 'examples'];
     parsed.all = true;
   }
 
@@ -1229,6 +1254,9 @@ async function main() {
         break;
       case 'scripts':
         updateScripts();
+        break;
+      case 'cli':
+        updateCli();
         break;
       case 'vscode':
         updateVscode();
