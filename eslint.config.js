@@ -25,6 +25,8 @@ export default antfu({
     '**/*.md',
     // GitHub workflows (YAML files)
     '.github/**',
+    // Legacy CLI files (backup)
+    'cli/legacy/**',
   ],
 
   // Custom rules
