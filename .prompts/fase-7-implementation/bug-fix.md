@@ -1239,9 +1239,174 @@ Is Crítica + Production? ───Yes──> HOTFIX Flow
 
 ---
 
-## Output
+## Output: Final Report to User
 
-After completing this workflow:
+After completing the workflow, present this consolidated report to the user in the chat:
+
+### Fix Report Template
+
+```markdown
+## ✅ [ISSUE_KEY] - FIX COMPLETADO
+
+| Aspecto              | Detalle                                                    |
+|----------------------|------------------------------------------------------------|
+| Issue Key            | [ISSUE_KEY]                                                |
+| Título               | [Bug summary/title]                                        |
+| Estado Final         | Ready For QA                                               |
+| Asignado a           | [Tester name] (reporter/tester original)                   |
+| Branch               | `fix/[ISSUE_KEY]/[description]`                            |
+| Commit               | [Full commit URL - clickeable]                             |
+| PR                   | [PR URL - clickeable] (si aplica)                          |
+| Archivos Modificados | [List of modified files]                                   |
+| Causa Raíz           | [Category]: [Brief explanation]                            |
+| URL Jira             | [Full Jira URL - clickeable]                               |
+
+---
+
+### Acciones Realizadas
+
+| Acción             | Detalle                                                  |
+|--------------------|----------------------------------------------------------|
+| Jira - Read        | `jira_get_issue` [ISSUE_KEY] (con comentarios/changelog) |
+| Jira - Transition  | [Status inicial] → In Progress → Ready For QA            |
+| Jira - Fields      | Root Cause, Fix Type actualizados                        |
+| Jira - Comments    | [N] comentarios añadidos (Fix documentation [+ Feedback])|
+| Jira - Assign      | Asignado a [Tester name] para re-test                    |
+| Git - Branch       | `fix/[ISSUE_KEY]/[description]`                          |
+| Git - Commit       | `fix([ISSUE_KEY]): [commit message]`                     |
+| Git - Push         | → [target branch: staging/main]                          |
+| Verificación       | typecheck ✓, lint ✓, build ✓                             |
+
+---
+
+### Triage Assessment
+
+| Criterio              | Resultado                                               |
+|-----------------------|---------------------------------------------------------|
+| ¿Es realmente un bug? | ✅ Sí / ⚠️ Parcial / ❌ No (es enhancement)             |
+| ¿Alineado con AC?     | [Sí/No - referencia AC si existe]                       |
+| ¿Reproducible?        | ✅ Sí / ⚠️ Intermitente / ❌ No                         |
+| Tipo de Fix           | Bugfix / Hotfix                                         |
+| Decisión              | [Breve explicación de la decisión tomada]               |
+
+**Análisis:**
+[1-2 párrafos explicando:
+- Contexto del bug
+- Por qué ocurría
+- Decisiones tomadas durante el fix
+- Notas relevantes para QA (casos edge, limitaciones, etc.)
+- Si fue un caso borderline (Bug vs Enhancement), explicar el razonamiento]
+
+---
+
+### Cómo Verificar el Fix
+
+1. Navegar a [URL/página específica]
+2. [Paso específico de verificación]
+3. [Paso específico de verificación]
+4. **Expected:** [Comportamiento esperado después del fix]
+
+---
+
+**Próximo paso:** QA re-testea usando `.prompts/fase-10-exploratory-testing/exploratory-test.md`
+```
+
+### Report Variations
+
+**For HOTFIX (critical production bugs):**
+
+Add this banner at the top:
+
+```markdown
+## 🚨 [ISSUE_KEY] - HOTFIX COMPLETADO
+
+> **HOTFIX:** Este fix fue aplicado directamente a `main` por ser crítico en producción.
+> Backport a staging: [Sí, commit: XXX / Pendiente / N/A]
+```
+
+**For Duplicate resolution:**
+
+```markdown
+## 🔗 [ISSUE_KEY] - DUPLICADO
+
+| Aspecto        | Detalle                                |
+|----------------|----------------------------------------|
+| Issue Key      | [ISSUE_KEY]                            |
+| Duplicado de   | [EXISTING_ISSUE_KEY]                   |
+| Estado Final   | Duplicate                              |
+| URL Jira       | [Jira URL]                             |
+
+### Acciones Realizadas
+
+| Acción            | Detalle                              |
+|-------------------|--------------------------------------|
+| Jira - Read       | `jira_get_issue` [ISSUE_KEY]         |
+| Jira - Link       | Linked to [EXISTING_ISSUE_KEY]       |
+| Jira - Transition | [Status] → Duplicate                 |
+| Jira - Comment    | Documented duplicate reasoning       |
+
+**Análisis:** [Por qué es duplicado, qué issue tiene el fix/tracking]
+
+**Próximo paso:** Seguir progreso en [EXISTING_ISSUE_KEY]
+```
+
+**For WAD (Working As Designed):**
+
+```markdown
+## ✅ [ISSUE_KEY] - CERRADO (WAD)
+
+| Aspecto        | Detalle                                |
+|----------------|----------------------------------------|
+| Issue Key      | [ISSUE_KEY]                            |
+| Resolución     | Working As Designed (WAD)              |
+| Estado Final   | Won't Fix                              |
+| URL Jira       | [Jira URL]                             |
+
+### Acciones Realizadas
+
+| Acción            | Detalle                              |
+|-------------------|--------------------------------------|
+| Jira - Read       | `jira_get_issue` [ISSUE_KEY]         |
+| Jira - Transition | [Status] → Won't Fix                 |
+| Jira - Comment    | Documented WAD reasoning             |
+
+**Análisis:**
+[Por qué no es un bug - referencia a AC, diseño, o documentación]
+
+**Recomendación:** [Si aplica, sugerir crear Enhancement]
+```
+
+**For Cannot Reproduce:**
+
+```markdown
+## ❓ [ISSUE_KEY] - NO REPRODUCIBLE
+
+| Aspecto        | Detalle                                |
+|----------------|----------------------------------------|
+| Issue Key      | [ISSUE_KEY]                            |
+| Estado Final   | Need Info / Cannot Reproduce           |
+| Intentos       | [N] intentos de reproducción           |
+| URL Jira       | [Jira URL]                             |
+
+### Acciones Realizadas
+
+| Acción            | Detalle                              |
+|-------------------|--------------------------------------|
+| Jira - Read       | `jira_get_issue` [ISSUE_KEY]         |
+| Jira - Comment    | Preguntas específicas al reporter    |
+| Jira - Transition | [Status] → Need Info                 |
+
+**Análisis:**
+[Qué se intentó, qué información falta, preguntas para el reporter]
+
+**Próximo paso:** Esperar respuesta del reporter con más detalles
+```
+
+---
+
+## Output Checklist (Internal)
+
+Before presenting the final report, verify:
 
 **Jira Updates:**
 
@@ -1251,7 +1416,7 @@ After completing this workflow:
 - [ ] Root Cause custom fields updated
 - [ ] Fix documentation comment added
 - [ ] Issue transitioned to Ready For QA
-- [ ] Assignee updated (if applicable)
+- [ ] Assignee updated to original reporter/tester
 
 **Code Changes:**
 
@@ -1259,7 +1424,14 @@ After completing this workflow:
 - [ ] Fix verified (typecheck, lint, build, manual test)
 - [ ] Branch created with proper naming
 - [ ] Commit with semantic message
-- [ ] PR created with detailed description
+- [ ] PR created with detailed description (if applicable)
+
+**Report Quality:**
+
+- [ ] All URLs are complete and clickeable
+- [ ] Triage assessment includes reasoning
+- [ ] Analysis section provides useful context
+- [ ] "Cómo Verificar" has specific, actionable steps
 
 **Optional:**
 
