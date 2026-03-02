@@ -126,7 +126,6 @@ This workflow requires GitHub CLI for:
 | `customfield_10116` | SEVERITY                | Dropdown | Crítica/Mayor/Moderada/Menor/Trivial                                                  |
 | `customfield_12210` | Test Environment        | Dropdown | Dev/QA/UAT/Staging/Production                                                         |
 | `customfield_10701` | Root Cause🐞            | Dropdown | Code Error/Config-Env Error/Environment Error/Requirement Error/WAD/Third-Party/etc. |
-| `customfield_10049` | Root Cause Text         | Textarea | Technical analysis: file, function, API endpoint                                      |
 | `customfield_12212` | Fix                     | Radio    | Bugfix (standard) / Hotfix (critical, immediate deploy)                               |
 
 ### Root Cause Categories
@@ -724,7 +723,6 @@ Parameters:
 - issue_key: "[BUG_ID]"
 - fields: {
     "customfield_10701": {"value": "[Root Cause Category]"},
-    "customfield_10049": "[Technical root cause: file, function, explanation]",
     "customfield_12212": {"value": "Bugfix"}  // or "Hotfix"
   }
 ```
