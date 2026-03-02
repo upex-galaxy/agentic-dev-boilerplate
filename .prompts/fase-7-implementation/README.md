@@ -59,7 +59,7 @@ Fase 11 (Test Automation - Integration/E2E)
 | ---------------------------------- | ----------------------------------- | -------------------------------------- | --------- |
 | **`implement-story.md`** ⭐        | Iniciar story desde cero            | Implementar funcionalidad completa     | 1-4 hours |
 | **`unit-testing.md`** ⭐           | Durante/después de implementación   | Crear unit tests para lógica crítica   | 30-90 min |
-| **`bug-fix.md`** ⭐ **NUEVO**      | Bug/Defect reportado en Jira        | Analizar, corregir y documentar fix    | 30-90 min |
+| **`bug-fix-workflow.md`** ⭐       | Bug/Defect reportado en Jira        | Workflow completo: triage, fix, document | 30-90 min |
 | **`continue-implementation.md`**   | Retomar story pausada               | Continuar desde donde quedó            | Variable  |
 | **`fix-issues.md`**                | Debuggear errores durante desarrollo| Corregir bugs encontrados localmente   | Variable  |
 
@@ -115,7 +115,7 @@ Use: unit-testing.md
 
 ```bash
 # 1. Bug reportado en Jira por QA o usuarios
-Use: bug-fix.md
+Use: bug-fix-workflow.md
 
 # 2. La IA:
 #    - Lee contexto completo de Jira (issue + comentarios)
@@ -128,6 +128,10 @@ Use: bug-fix.md
 # 3. Si es HOTFIX (crítico en producción):
 #    - Branch: hotfix/ISSUE-KEY/...
 #    - PR directo a main
+
+# 4. Para múltiples bugs en una sesión:
+#    - Usa JQL query del prompt para listar bugs pendientes
+#    - Usa Session Report Template al finalizar
 ```
 
 ### Escenario 5: Solo agregar tests a código existente

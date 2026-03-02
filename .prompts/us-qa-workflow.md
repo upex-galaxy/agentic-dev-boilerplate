@@ -40,7 +40,7 @@ This workflow guides AI through the complete QA process for a User Story, coveri
 │ Step 2 → Exploratory Testing                                    │
 │ Step 3 → Bug Report (conditional)                               │
 │ Step 4 → Decision: PASSED / FAILED                              │
-│      └── FAILED? → DEV uses bug-fix.md, return to Step 1        │
+│      └── FAILED? → DEV uses bug-fix-workflow.md, return to Step 1 │
 │      └── PASSED? → Transition to "QA Approved", continue        │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
@@ -188,8 +188,8 @@ Proceeding to Smoke Test...
 | Result                 | Action                                                                      |
 | ---------------------- | --------------------------------------------------------------------------- |
 | **PASSED**             | Transition US to "QA Approved", continue to Step 5                          |
-| **PASSED WITH ISSUES** | Create bugs, DEV uses `bug-fix.md` to fix, re-test                          |
-| **FAILED**             | Report issues, DEV uses `.prompts/fase-7-implementation/bug-fix.md` to fix  |
+| **PASSED WITH ISSUES** | Create bugs, DEV uses `bug-fix-workflow.md` to fix, re-test                          |
+| **FAILED**             | Report issues, DEV uses `.prompts/fase-7-implementation/bug-fix-workflow.md` to fix  |
 
 **Transition:**
 

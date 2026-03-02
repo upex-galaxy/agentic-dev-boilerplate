@@ -142,7 +142,7 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 | `fase-7-implementation/continue-implementation.md` | Continuar story pausada                      |
 | `fase-7-implementation/fix-issues.md`              | Debuggear y corregir errores                 |
 | `fase-7-implementation/unit-testing.md`            | Crear unit tests durante implementacion      |
-| `fase-7-implementation/bug-fix.md`                 | Corregir bugs/defects reportados en Jira     |
+| `fase-7-implementation/bug-fix-workflow.md`        | Workflow completo de bug fixing (triage, fix, document) |
 
 **IMPORTANTE:** Unit tests se crean AQUI (Fase 7), NO en fases posteriores.
 **IMPORTANTE:** Bug fixing tambien va aqui - es una tarea de implementacion.

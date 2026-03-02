@@ -1453,6 +1453,29 @@ Before presenting the final report, verify:
 | Take screenshot           | Browser automation tool (if available)  |
 | Check library docs        | `mcp__context7__get-library-docs`       |
 
+## Quick Reference: Jira Transition IDs (UPEX Galaxy)
+
+> **Note:** Transition IDs may vary by workspace. Use `mcp__atlassian__jira_get_transitions` to get available transitions for a specific issue.
+
+| ID  | Transition Name | From → To                    |
+| --- | --------------- | ---------------------------- |
+| 121 | start fixing    | OPEN → In Progress           |
+| 5   | Hard pushed     | In Progress → Ready For QA   |
+| 141 | is not a Bug    | OPEN → Enhancement           |
+| 71  | is duplicated   | OPEN → Duplicated            |
+| 8   | is CNR          | OPEN → Cannot Reproduce      |
+| 111 | is WAD          | OPEN → Working As Designed   |
+| 51  | defer           | OPEN → Deferred              |
+
+**Usage:**
+
+```
+Tool: mcp__atlassian__jira_transition_issue
+Parameters:
+- issue_key: "PROJ-123"
+- transition_id: "121"  // or transition name: "start fixing"
+```
+
 ## Quick Reference: Git Commands
 
 | Action               | Command                                           |
@@ -1485,6 +1508,152 @@ Before presenting the final report, verify:
 | `fase-7-implementation/implement-story.md`         | For implementing new features             |
 | `fase-8-code-review/review-pr.md`                  | For code review of the fix PR             |
 | `git-flow.md`                                      | For advanced git operations               |
+
+---
+
+## Multi-Bug Session Support
+
+This section provides templates for handling multiple bugs in a single session.
+
+### JQL Query for Pending Bugs
+
+Use this query to get a list of bugs to work on:
+
+```
+project = [PROJECT_KEY] AND issuetype in (Bug, Defect) AND status = OPEN ORDER BY priority DESC, created ASC
+```
+
+**Tool usage:**
+
+```
+Tool: mcp__atlassian__jira_search
+Parameters:
+- jql: "project = PROJ AND issuetype in (Bug, Defect) AND status = OPEN ORDER BY priority DESC"
+- fields: "summary,priority,status,reporter,created"
+- limit: 20
+```
+
+---
+
+### Bug List Template
+
+Use this table to track progress across multiple bugs:
+
+```markdown
+## Lista de Bugs - Sesión [DATE]
+
+| # | Key | Summary | Priority | Status | Resultado |
+|---|-----|---------|----------|--------|-----------|
+| 1 | [PROJ-XX] | [Summary] | Highest | OPEN | ⏳ Pendiente |
+| 2 | [PROJ-XX] | [Summary] | High | OPEN | ✅ Fixed |
+| 3 | [PROJ-XX] | [Summary] | Medium | OPEN | ❌ WAD |
+| 4 | [PROJ-XX] | [Summary] | Low | OPEN | 🔗 Duplicate |
+
+**Leyenda:**
+- ⏳ Pendiente
+- ✅ Fixed (Ready For QA)
+- ❌ WAD / Rejected
+- 🔗 Duplicate
+- ❓ CNR (Cannot Reproduce)
+- 🔄 Enhancement
+```
+
+---
+
+### Session Report Template
+
+Use this report at the end of a multi-bug session:
+
+```markdown
+## 📊 Reporte de Sesión - Bug Fixing [DATE]
+
+### Resumen Ejecutivo
+
+| Métrica | Valor |
+|---------|-------|
+| Bugs analizados | [N] |
+| Bugs arreglados | [N] |
+| Bugs rechazados (WAD/CNR/Duplicate) | [N] |
+| Commits realizados | [N] |
+| Archivos modificados | [N] |
+
+---
+
+### Bugs Procesados
+
+#### ✅ [PROJ-XX] - [Summary]
+
+| Aspecto | Detalle |
+|---------|---------|
+| Estado Final | Ready For QA |
+| Root Cause | [Category]: [Brief] |
+| Commit | [URL] |
+| Asignado a | [Tester] |
+
+#### ❌ [PROJ-XX] - [Summary]
+
+| Aspecto | Detalle |
+|---------|---------|
+| Estado Final | WAD / Duplicate / CNR |
+| Razón | [Explicación breve] |
+
+---
+
+### Cambios en Código
+
+| Archivo | Bugs Relacionados | Cambio |
+|---------|-------------------|--------|
+| `path/to/file.ts` | PROJ-XX, PROJ-YY | [Descripción] |
+| `path/to/other.ts` | PROJ-ZZ | [Descripción] |
+
+---
+
+### Feedback Educacional Entregado
+
+| Tester | Puntos Clave |
+|--------|--------------|
+| [Name] | [Resumen del feedback] |
+
+---
+
+### Próximos Bugs a Atender
+
+| # | Key | Summary | Priority |
+|---|-----|---------|----------|
+| 1 | [PROJ-XX] | [Summary] | [Priority] |
+| 2 | [PROJ-XX] | [Summary] | [Priority] |
+```
+
+---
+
+### Session Continuation Template
+
+To continue a previous session, paste this block with updated data:
+
+```markdown
+---
+
+## Continuación de Sesión Anterior
+
+**Sesión anterior:** [DATE]
+**Bugs completados:** [N]
+**Bugs pendientes:** [N]
+
+### Resumen del Progreso Anterior
+
+[Pegar aquí el reporte de sesión anterior o resumen clave]
+
+### Bugs Pendientes de la Sesión Anterior
+
+| # | Key | Summary | Priority | Notas |
+|---|-----|---------|----------|-------|
+| 1 | [PROJ-XX] | [Summary] | [Priority] | [Contexto si hay] |
+| 2 | [PROJ-XX] | [Summary] | [Priority] | |
+
+---
+
+**Continuando con:** [PROJ-XX]
+```
 
 ---
 
