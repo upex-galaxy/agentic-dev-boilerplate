@@ -205,19 +205,36 @@ As last resort:
 
 ### 1. Bug Issue from Jira
 
-Use `mcp__atlassian__jira_get_issue` with:
+> **⚠️ IMPORTANT:** The Atlassian MCP may not return custom fields with `fields: "*all"`. Make TWO calls to ensure complete data.
 
-- `issue_key`: The bug ID (e.g., "PROJ-123")
-- `fields`: "\*all" (to get all custom fields)
-- `comment_limit`: 50 (to get full discussion history)
+**Call 1 - Standard fields:**
 
-**Extract:**
+```
+Tool: mcp__atlassian__jira_get_issue
+Parameters:
+- issue_key: "PROJ-123"
+- fields: "*all"
+- expand: "changelog"
+- comment_limit: 50
+```
+
+**Call 2 - Custom fields explicitly:**
+
+```
+Tool: mcp__atlassian__jira_get_issue
+Parameters:
+- issue_key: "PROJ-123"
+- fields: "customfield_10109,customfield_10110,customfield_10112,customfield_10116,customfield_12210,customfield_10701,customfield_10111,customfield_10607,customfield_12212"
+```
+
+**Extract from combined results:**
 
 - Summary and Description
 - Steps to Reproduce
-- Actual Result vs Expected Result
-- Error Type and Severity
-- Test Environment
+- **Actual Result** (customfield_10109) vs **Expected Result** (customfield_10110)
+- **Error Type** (customfield_10112) and **Severity** (customfield_10116)
+- **Test Environment** (customfield_12210)
+- **Root Cause** (customfield_10701) - may be empty initially
 - All comments (context, discussions, prior attempts)
 - Attachments (screenshots, logs)
 
@@ -257,15 +274,38 @@ Check issue links for:
 
 **Objective:** Understand the bug completely before attempting to fix.
 
-**Step 1: Read the bug issue**
+**Step 1: Read the bug issue (TWO CALLS REQUIRED)**
+
+> **CRITICAL:** The Atlassian MCP may not return custom fields with `fields: "*all"`. You MUST make TWO separate calls to ensure you have all information.
+
+**Call 1 - Standard fields and comments:**
 
 ```
 Tool: mcp__atlassian__jira_get_issue
 Parameters:
 - issue_key: "[BUG_ID]"
 - fields: "*all"
+- expand: "changelog"
 - comment_limit: 50
 ```
+
+**Call 2 - Custom fields explicitly (REQUIRED):**
+
+```
+Tool: mcp__atlassian__jira_get_issue
+Parameters:
+- issue_key: "[BUG_ID]"
+- fields: "customfield_10109,customfield_10110,customfield_10112,customfield_10116,customfield_12210,customfield_10701,customfield_10111,customfield_10607,customfield_12212"
+```
+
+**Why two calls?**
+- Call 1: Gets summary, description, status, comments, changelog
+- Call 2: Explicitly retrieves custom field VALUES (Actual/Expected Result, Severity, Error Type, etc.)
+
+**If custom fields return `null` or "field not found":**
+1. Use `mcp__atlassian__jira_search_fields` to find equivalent fields
+2. Ask user for correct field IDs (see Fallback Strategy section)
+3. Do NOT assume fields are empty without verifying
 
 **Step 2: Extract and present critical information**
 
@@ -766,6 +806,24 @@ Parameters:
 
 - User explicitly requests feedback mode
 - User asks "give me feedback on this bug report"
+
+**⚠️ CRITICAL: Verify Custom Fields Before Giving Feedback**
+
+Before evaluating whether fields are "missing" or "incomplete":
+
+1. **Ensure you made the explicit custom fields call** (Phase 1, Call 2)
+2. **Re-verify if uncertain:** Make another call with explicit field IDs
+3. **List found values:** In your feedback, show the ACTUAL values found
+4. **Only mark as "missing" if the explicit call returned `null` or empty**
+
+```
+Tool: mcp__atlassian__jira_get_issue
+Parameters:
+- issue_key: "[BUG_ID]"
+- fields: "customfield_10109,customfield_10110,customfield_10112,customfield_10116,customfield_12210,customfield_10701,customfield_10111,customfield_10607,customfield_12212"
+```
+
+**If fields return null after explicit call:** Then it's valid to note as missing in feedback.
 
 **Evaluation Criteria:**
 
@@ -1667,3 +1725,43 @@ To continue a previous session, paste this block with updated data:
 | Fix breaks other tests                | Investigate regression, consider scope of fix        |
 | PR conflicts                          | Rebase on target branch, resolve conflicts           |
 | Hotfix needs backport                 | Use cherry-pick to apply to staging/develop          |
+
+### Custom Fields Not Returned (Common Issue)
+
+**Problem:** `jira_get_issue` with `fields: "*all"` returns standard fields but custom field values are `null` or missing.
+
+**Root Cause:** The Atlassian MCP may not expand custom fields automatically.
+
+**Solution:** Always make TWO calls:
+
+1. **First call:** `fields: "*all"` for standard fields + comments
+2. **Second call:** Explicitly list custom field IDs:
+   ```
+   fields: "customfield_10109,customfield_10110,customfield_10112,customfield_10116,customfield_12210,customfield_10701,customfield_10111,customfield_10607,customfield_12212"
+   ```
+
+**If still not found:**
+
+1. Verify field exists: `mcp__atlassian__jira_search_fields` with keyword
+2. Ask user for correct field ID
+3. Check if field is only visible to certain roles/projects
+
+**NEVER assume a field is empty without making the explicit call.**
+
+### Incorrect Feedback Due to Missing Fields
+
+**Problem:** AI gives feedback that custom fields are "missing" when they were actually filled.
+
+**Root Cause:** AI only made one call with `fields: "*all"` and assumed empty = not filled.
+
+**Prevention:**
+
+1. Always make the second explicit call for custom fields
+2. Before giving feedback on missing fields, verify with explicit field query
+3. In Phase 8 (Feedback), explicitly list which fields WERE found and their values
+
+**If you already gave incorrect feedback:**
+
+1. Acknowledge the error to the user
+2. Re-query with explicit field IDs
+3. Provide corrected assessment
