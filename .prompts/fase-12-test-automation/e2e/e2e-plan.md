@@ -14,7 +14,7 @@
 2. `qa/.context/guidelines/TAE/kata-architecture.md` → Estructura de capas
 3. `qa/.context/guidelines/TAE/e2e-testing-patterns.md` → Patrones específicos E2E
 4. `qa/.context/guidelines/TAE/automation-standards.md` → Reglas y convenciones de nombres
-5. `qa/.context/playwright-automation-system.md` → Overview de arquitectura de código
+5. `qa/.context/guidelines/TAE/playwright-automation-system.md` → Overview de arquitectura de código
 6. `.context/test-management-system.md` → Configuración TMS (para formato de Test ID)
 
 ---

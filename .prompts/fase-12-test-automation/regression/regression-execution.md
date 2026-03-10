@@ -13,7 +13,7 @@
 1. `.github/workflows/regression.yml` → Estructura del workflow de regresión completa
 2. `.github/workflows/smoke.yml` → Workflow de smoke tests
 3. `.github/workflows/sanity.yml` → Workflow de sanity tests
-4. `qa/.context/test-management-system.md` → Configuración de TMS (si se sincroniza)
+4. `.context/test-management-system.md` → Configuración de TMS (si se sincroniza)
 
 ---
 

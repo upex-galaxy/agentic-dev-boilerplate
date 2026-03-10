@@ -13,7 +13,7 @@
 1. `qa/.context/guidelines/TAE/kata-ai-index.md` → Patrones core KATA
 2. `qa/.context/guidelines/TAE/typescript-patterns.md` → Convenciones TypeScript
 3. `qa/.context/guidelines/TAE/automation-standards.md` → Reglas y estándares
-4. `qa/.context/playwright-automation-system.md` → Arquitectura de código
+4. `qa/.context/guidelines/TAE/playwright-automation-system.md` → Arquitectura de código
 
 **Opcional (para exploración UI):**
 

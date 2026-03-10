@@ -14,7 +14,7 @@
 2. `qa/.context/guidelines/TAE/kata-architecture.md` → Estructura de capas
 3. `qa/.context/guidelines/TAE/api-testing-patterns.md` → Patrones específicos de API
 4. `qa/.context/guidelines/TAE/typescript-patterns.md` → Convenciones TypeScript
-5. `qa/.context/playwright-automation-system.md` → Overview de arquitectura
+5. `qa/.context/guidelines/TAE/playwright-automation-system.md` → Overview de arquitectura
 6. `.context/test-management-system.md` → Configuración TMS
 
 **Opcional (para exploración de API):**
