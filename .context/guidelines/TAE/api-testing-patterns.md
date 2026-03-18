@@ -108,7 +108,7 @@ tests/
 import { expect, test } from '@TestFixture';
 
 test.describe('Auth API', () => {
-  test('should login with valid credentials', async ({ api }) => {
+  test('TK-XXX: should login with valid credentials', async ({ api }) => {
     // ARRANGE - Prepare test data
     const credentials = {
       username: 'test@example.com',
@@ -122,7 +122,7 @@ test.describe('Auth API', () => {
     expect(body.access_token).toContain('eyJ'); // JWT format
   });
 
-  test('should reject invalid credentials', async ({ api }) => {
+  test('TK-XXX: should reject invalid credentials', async ({ api }) => {
     // ARRANGE
     const invalidCredentials = {
       username: 'fake@example.com',
@@ -162,7 +162,7 @@ export class BookingsApi extends ApiBase {
   // ATCs - Complete Test Cases
   // ============================================
 
-  @atc('CUR-BOOK-001')
+  @atc('PROJ-BOOK-001')
   async getBookingsSuccessfully(hotelId: number): Promise<[APIResponse, Booking[]]> {
     const [response, body] = await this.apiGET<Booking[]>(`/bookings?hotelId=${hotelId}`);
 
@@ -173,7 +173,7 @@ export class BookingsApi extends ApiBase {
     return [response, body];
   }
 
-  @atc('CUR-BOOK-002')
+  @atc('PROJ-BOOK-002')
   async createBookingSuccessfully(
     payload: BookingPayload
   ): Promise<[APIResponse, Booking, BookingPayload]> {
@@ -189,7 +189,7 @@ export class BookingsApi extends ApiBase {
     return [response, body, sentPayload];
   }
 
-  @atc('CUR-BOOK-003')
+  @atc('PROJ-BOOK-003')
   async getBookingNotFound(bookingId: number): Promise<[APIResponse, Record<string, unknown>]> {
     const [response, body] = await this.apiGET<Record<string, unknown>>(`/bookings/${bookingId}`);
 
@@ -290,7 +290,7 @@ const [response, body] = await this.apiGET<SearchResults>('/search', {
 ### Login and Store Token
 
 ```typescript
-test('authenticated API call', async ({ api }) => {
+test('TK-XXX: should make authenticated API call', async ({ api }) => {
   // Login first - token is automatically stored
   await api.auth.loginSuccessfully({
     username: 'admin@example.com',
@@ -327,7 +327,7 @@ type Invoice = components['schemas']['InvoiceModel'];
 type Hotel = components['schemas']['HotelModel'];
 
 // Use in ATCs
-@atc('CUR-BOOK-001')
+@atc('PROJ-BOOK-001')
 async getBookingsSuccessfully(hotelId: number): Promise<[APIResponse, Booking[]]> {
   const [response, body] = await this.apiGET<Booking[]>(`/bookings?hotelId=${hotelId}`);
   // body is typed as Booking[]
@@ -351,15 +351,15 @@ async getBookingsSuccessfully(hotelId: number): Promise<[APIResponse, Booking[]]
 
 ```typescript
 // Success scenarios
-@atc('CUR-BOOK-001') async getBookingsSuccessfully(...) { ... }
-@atc('CUR-BOOK-002') async createBookingSuccessfully(...) { ... }
-@atc('CUR-BOOK-003') async updateBookingSuccessfully(...) { ... }
+@atc('PROJ-BOOK-001') async getBookingsSuccessfully(...) { ... }
+@atc('PROJ-BOOK-002') async createBookingSuccessfully(...) { ... }
+@atc('PROJ-BOOK-003') async updateBookingSuccessfully(...) { ... }
 
 // Error scenarios
-@atc('CUR-BOOK-010') async getBookingNotFound(...) { ... }
-@atc('CUR-BOOK-011') async createBookingWithInvalidData(...) { ... }
-@atc('CUR-BOOK-012') async deleteBookingForbidden(...) { ... }
-@atc('CUR-BOOK-013') async getBookingsUnauthorized(...) { ... }
+@atc('PROJ-BOOK-010') async getBookingNotFound(...) { ... }
+@atc('PROJ-BOOK-011') async createBookingWithInvalidData(...) { ... }
+@atc('PROJ-BOOK-012') async deleteBookingForbidden(...) { ... }
+@atc('PROJ-BOOK-013') async getBookingsUnauthorized(...) { ... }
 ```
 
 ---
@@ -369,7 +369,7 @@ async getBookingsSuccessfully(hotelId: number): Promise<[APIResponse, Booking[]]
 Every ATC must include **fixed assertions** that validate the expected behavior:
 
 ```typescript
-@atc('CUR-BOOK-001')
+@atc('PROJ-BOOK-001')
 async createBookingSuccessfully(payload: BookingPayload): Promise<[APIResponse, Booking, BookingPayload]> {
   const [response, body, sentPayload] = await this.apiPOST<Booking, BookingPayload>(
     '/bookings',
@@ -390,7 +390,7 @@ async createBookingSuccessfully(payload: BookingPayload): Promise<[APIResponse, 
 Additional assertions can be added in test files for flow validation:
 
 ```typescript
-test('booking flow', async ({ api }) => {
+test('TK-XXX: should complete booking flow', async ({ api }) => {
   const payload = { hotelId: 123, guestEmail: 'test@example.com', ... };
 
   // ATC has fixed assertions
@@ -430,21 +430,21 @@ Each ATC should have a unique expected outcome. Don't create separate ATCs for t
 
 ```typescript
 // ✅ CORRECT - One ATC for valid login
-@atc('CUR-AUTH-001')
+@atc('PROJ-AUTH-001')
 async loginSuccessfully(credentials: LoginPayload) { ... }
 
 // ❌ WRONG - Multiple ATCs for same outcome
-@atc('CUR-AUTH-001')
+@atc('PROJ-AUTH-001')
 async loginWithEmail(email: string) { ... }
 
-@atc('CUR-AUTH-002')
+@atc('PROJ-AUTH-002')
 async loginWithUsername(username: string) { ... }
 ```
 
 ### 2. Use Test Data Generation
 
 ```typescript
-test('create booking', async ({ api }) => {
+test('TK-XXX: should create booking with generated data', async ({ api }) => {
   const payload = {
     guestEmail: api.generateEmail('booking-test'),
     guestName: api.generateName(),
@@ -458,7 +458,7 @@ test('create booking', async ({ api }) => {
 ### 3. Chain ATCs for Complex Flows
 
 ```typescript
-test('complete booking flow', async ({ api }) => {
+test('TK-XXX: should complete booking flow end to end', async ({ api }) => {
   // Login first
   await api.auth.loginSuccessfully(credentials);
 
