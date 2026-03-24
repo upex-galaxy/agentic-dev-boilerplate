@@ -16,6 +16,6 @@
     "verbatimModuleSyntax": false,
     "skipLibCheck": true
   },
-  "include": ["scripts/**/*.ts", "**/*.ts", "scripts/spike/xraycli/tsconfig.json"],
-  "exclude": ["node_modules", ".backups"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 }
