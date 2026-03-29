@@ -1022,7 +1022,7 @@ cd qa && bun run type-check
 | `.context/` | Duplicate of root `.context/` (includes TAE guidelines) |
 | `tests/e2e/example/` | Will create project-specific tests |
 | `cli/legacy/` | Deprecated, no longer needed |
-| `scripts/kata-manifest.ts` | Already exists in root project |
+| `scripts/kata-manifest.ts` | Deprecated, no longer maintained |
 
 ### Create Per Project
 

@@ -39,7 +39,7 @@ Leer: .context/guidelines/QA/jira-test-management.md
 **Xray CLI - Documentación y Configuración:**
 
 ```
-Archivo: scripts/xray.ts
+Archivo: cli/xray/index.ts
 ```
 
 El CLI de Xray es self-documented. **OBLIGATORIO leerlo** antes de usar para:

@@ -38,14 +38,6 @@ Quick orientation, critical rules, and task-based navigation.
 | `docs/methodology/kata-fundamentals.md`         | KATA philosophy and conceptual foundations |
 | `docs/testing/automation/dependency-injection.md` | DI architecture, Playwright lazy loading   |
 
-### Auto-Generated
-
-| File                        | Purpose                   |
-| --------------------------- | ------------------------- |
-| `kata-manifest.json` (root) | Component and ATC catalog |
-
-Generate with: `bun run kata:manifest`
-
 ---
 
 ## Quick Reference
@@ -53,7 +45,6 @@ Generate with: `bun run kata:manifest`
 ### For AI Agents
 
 1. Read `kata-ai-index.md` for orientation
-3. Run `bun run kata:manifest` to see existing components
 
 ### For QA Engineers
 
@@ -97,4 +88,3 @@ E2E/Integration tickets (TK-YYY) ───►    test('TK-YYY: should...') in Te
 - **AI Guide**: `kata-ai-index.md`
 - **Fundamentals**: `docs/methodology/kata-fundamentals.md` (conceptual reference only)
 - **DI Strategy**: `docs/testing/automation/dependency-injection.md` (Playwright lazy loading)
-- **Component Catalog**: `kata-manifest.json` (run `bun run kata:manifest`)

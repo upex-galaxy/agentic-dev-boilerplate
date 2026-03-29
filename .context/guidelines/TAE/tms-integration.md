@@ -256,7 +256,7 @@ Both approaches use the same test ID format:
 
 ## 8. Xray CLI Commands
 
-The Xray CLI is available in `cli/xray.ts`:
+The Xray CLI is available in `cli/xray/` (entry point: `cli/xray/index.ts`):
 
 ```bash
 # Authenticate
@@ -374,7 +374,7 @@ In GitHub Actions, enable sync only on `main` branch:
 - **Jira Cloud API**: <https://developer.atlassian.com/cloud/jira/platform/rest/v3/>
 - **Xray Pricing**: <https://marketplace.atlassian.com/apps/1211769/xray-test-management-for-jira>
 - **Jira API Tokens**: <https://id.atlassian.com/manage-profile/security/api-tokens>
-- **Xray CLI**: `cli/xray.ts` in this repo
+- **Xray CLI**: `cli/xray/` in this repo
 - **Jira Sync**: `tests/utils/jiraSync.ts` in this repo
 
 ---

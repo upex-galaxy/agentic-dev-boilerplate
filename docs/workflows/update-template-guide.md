@@ -52,7 +52,7 @@ bun install
 ```json
 {
   "scripts": {
-    "up": "bun scripts/update-template.js"
+    "up": "bun cli/update-template.js"
   }
 }
 ```
@@ -82,6 +82,11 @@ Abre un menu donde puedes seleccionar que actualizar:
 - Context (.context/)
 - Templates MCP (templates/mcp/)
 - Scripts de actualizacion
+- CLI Tools (cli/) - Xray CLI
+- VS Code (.vscode/)
+- Husky (.husky/) - Git hooks
+- Tooling - Archivos de configuracion
+- Examples - Archivos de ejemplo
 
 ### Comandos Directos
 
@@ -93,6 +98,11 @@ bun up docs                   # Actualiza docs/
 bun up context                # Actualiza .context/
 bun up templates              # Actualiza templates/mcp/
 bun up scripts                # Actualiza scripts
+bun up cli                    # Actualiza CLI tools
+bun up vscode                 # Actualiza .vscode/
+bun up husky                  # Actualiza .husky/
+bun up tooling                # Actualiza archivos de configuracion
+bun up examples               # Actualiza archivos de ejemplo
 bun up help                   # Muestra ayuda
 ```
 
@@ -175,15 +185,16 @@ docs/testing/
 
 ### Se actualizan (merge)
 
-| Componente               | Contenido                                                    |
-| ------------------------ | ------------------------------------------------------------ |
-| `.prompts/`              | Fases seleccionadas + archivos standalone                    |
-| `.books/`                | Manuales para humanos (mismas fases que prompts)             |
-| `docs/`                  | architectures/, methodology/, testing/, workflows/, setup/   |
-| `.context/`              | system-prompt.md, README.md, guidelines/ (DEV, QA, TAE, MCP) |
-| `templates/mcp/`         | Todos los templates de configuracion MCP                     |
-| `scripts/`               | update-template.js, mcp-builder.js, email-checker.js         |
-| `context-engineering.md` | Documentacion de la arquitectura del template                |
+| Componente               | Contenido                                                  |
+| ------------------------ | ---------------------------------------------------------- |
+| `.prompts/`              | Fases seleccionadas + archivos standalone                  |
+| `.books/`                | Manuales para humanos (mismas fases que prompts)           |
+| `docs/`                  | architectures/, methodology/, testing/, workflows/, setup/ |
+| `.context/`              | system-prompt.md, README.md, guidelines/ (DEV, QA, TAE)    |
+| `templates/mcp/`         | Todos los templates de configuracion MCP                   |
+| `scripts/`               | jira-sync.ts                                               |
+| `cli/`                   | update-template.js, resend.ts, sync-openapi.ts, xray/      |
+| `context-engineering.md` | Documentacion de la arquitectura del template              |
 
 ### NO se tocan (tu trabajo)
 

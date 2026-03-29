@@ -44,7 +44,9 @@ KATA (Komponent Action Test Architecture) is a test automation framework where:
 | Configure TMS integration          | `tms-integration.md`                                              |
 | Configure CI/CD                    | `ci-cd-integration.md`                                            |
 | Configure OpenAPI/MCP              | `openapi-integration.md`                                          |
-| See existing components/ATCs       | Run `bun run kata:manifest`                                       |
+| Understand `@step` decorator       | `kata-architecture.md` (section 7)                                |
+| Understand ATC tracing & results   | `atc-tracing-system.md`                                           |
+| Debug ATC report or TMS sync       | `atc-tracing-system.md` (section 9)                               |
 
 ---
 
@@ -371,16 +373,6 @@ Phase 5: Validation & Git Commit
 
 ---
 
-## Auto-Generated Context
-
-Run `bun run kata:manifest` to generate `kata-manifest.json` with:
-
-- All components (API, UI, Steps)
-- All ATCs with their Jira/Xray IDs
-- File locations and method names
-
-This provides context without scanning the entire codebase.
-
 ---
 
 ## References
@@ -392,4 +384,3 @@ This provides context without scanning the entire codebase.
 | `kata-architecture.md`                                       | Full architecture documentation             |
 | `automation-standards.md`                                    | All rules and standards                     |
 | `openapi-integration.md`                                     | OpenAPI integration and MCP setup           |
-| `kata-manifest.json` (root)                                  | Auto-generated component catalog            |

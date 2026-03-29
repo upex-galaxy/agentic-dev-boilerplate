@@ -674,36 +674,6 @@ Nota: Usa gh (CLI de GitHub) para crear PR, hacer reviews, y todo lo relacionado
 
 ---
 
-## MCPs Disponibles
-
-| MCP        | Cuándo usar                        |
-| ---------- | ---------------------------------- |
-| Supabase   | Schema, datos, policies de DB      |
-| Context7   | Docs oficiales de bibliotecas      |
-| Tavily     | Búsqueda web, foros, errores       |
-| Playwright | Tests E2E, interacciones UI        |
-| DevTools   | Debug de tests, network, console   |
-| Postman    | API testing con colecciones        |
-| OpenAPI    | API testing via spec (requests)    |
-| DBHub      | SQL queries, verificación de datos |
-| Sentry     | Errores en producción              |
-| Atlassian  | Jira, Confluence                   |
-| GitHub     | Issues, PRs, código                |
-| Slack      | Notificaciones                     |
-| Memory     | Contexto entre sesiones            |
-
-### Trifuerza Testing (QA)
-
-| Capa | MCPs                 |
-| ---- | -------------------- |
-| UI   | `playwright`         |
-| API  | `postman`, `openapi` |
-| DB   | `dbhub`              |
-
-Ver `.context/guidelines/MCP/` para detalles de cada uno.
-
----
-
 ## Reglas de Oro
 
 1. **Spec First**: Lee la especificación antes de actuar

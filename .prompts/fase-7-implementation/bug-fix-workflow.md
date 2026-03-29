@@ -50,9 +50,8 @@ This workflow requires Jira integration to:
 - Add documentation comments
 
 **How to connect:**
-1. Review: `.context/guidelines/MCP/atlassian.md`
-2. Add Atlassian MCP to your configuration
-3. Restart the chat session
+1. Add Atlassian MCP to your configuration
+2. Restart the chat session
 
 **Cannot proceed without Atlassian MCP.**
 ```

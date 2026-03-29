@@ -25,29 +25,16 @@ guidelines/
 │   ├── data-testid-usage.md       # Cómo USAR data-testid en tests
 │   └── jira-test-management.md    # Gestión de tests en Jira
 │
-├── TAE/                           # Test Automation Engineering
-│   ├── README.md                  # Índice de TAE
-│   ├── KATA-AI-GUIDE.md           # Entry point para IA
-│   ├── kata-architecture.md       # Arquitectura KATA
-│   ├── automation-standards.md    # Estándares de tests
-│   ├── api-setup-guide.md         # Setup de API testing
-│   ├── test-data-management.md    # Manejo de datos de prueba
-│   ├── tms-integration.md         # Integración con Jira/Xray
-│   └── ci-cd-integration.md       # Integración con CI/CD
-│
-└── MCP/                           # MCP Guidelines (atomizado)
-    ├── README.md                  # Overview + decision tree
-    ├── supabase.md                # Solo Supabase
-    ├── context7.md                # Solo Context7
-    ├── tavily.md                  # Solo Tavily
-    ├── playwright.md              # Solo Playwright
-    ├── devtools.md                # Solo DevTools
-    ├── postman.md                 # Solo Postman
-    ├── sentry.md                  # Solo Sentry
-    ├── atlassian.md               # Solo Atlassian/Jira
-    ├── github.md                  # Solo GitHub
-    ├── slack.md                   # Solo Slack
-    └── memory.md                  # Solo Memory
+└── TAE/                           # Test Automation Engineering
+    ├── README.md                  # Índice de TAE
+    ├── kata-ai-index.md           # Entry point para IA
+    ├── kata-architecture.md       # Arquitectura KATA
+    ├── automation-standards.md    # Estándares de tests
+    ├── atc-tracing-system.md      # Sistema de trazabilidad ATC
+    ├── api-testing-patterns.md    # Patrones de API testing
+    ├── test-data-management.md    # Manejo de datos de prueba
+    ├── tms-integration.md         # Integración con Jira/Xray
+    └── ci-cd-integration.md       # Integración con CI/CD
 ```
 
 ---
@@ -61,8 +48,7 @@ Leer ANTES de implementar:
 ├── DEV/code-standards.md
 ├── DEV/error-handling.md
 ├── DEV/data-testid-standards.md
-├── DEV/spec-driven-development.md
-└── MCP/ (los que necesites)
+└── DEV/spec-driven-development.md
 ```
 
 ### QA Engineer (Testing Manual)
@@ -72,18 +58,16 @@ Leer ANTES de testear:
 ├── QA/spec-driven-testing.md
 ├── QA/exploratory-testing.md
 ├── QA/data-testid-usage.md
-├── QA/jira-test-management.md
-└── MCP/ (los que necesites)
+└── QA/jira-test-management.md
 ```
 
 ### QA Automation Engineer (TAE)
 
 ```
 Leer ANTES de automatizar:
-├── TAE/KATA-AI-GUIDE.md (entry point)
+├── TAE/kata-ai-index.md (entry point)
 ├── TAE/kata-architecture.md
-├── TAE/automation-standards.md
-└── MCP/ (los que necesites)
+└── TAE/automation-standards.md
 ```
 
 ---
@@ -97,7 +81,6 @@ Cada carpeta contiene los guidelines específicos para un rol:
 - **DEV**: Cómo escribir código de calidad
 - **QA**: Cómo hacer testing manual efectivo
 - **TAE**: Cómo automatizar tests
-- **MCP**: Cómo usar herramientas externas
 
 ### 2. Principios Compartidos
 
@@ -106,14 +89,6 @@ Aunque cada rol tiene sus guidelines, comparten principios:
 - **Spec-Driven**: Todo nace de especificaciones
 - **Quality First**: Calidad desde el inicio
 - **Traceability**: Todo mapea a requirements
-
-### 3. MCP Atomizado
-
-La carpeta MCP tiene un archivo por herramienta:
-
-- Carga **solo** el MCP que necesitas
-- Evita llenar contexto con información irrelevante
-- Ver `MCP/README.md` para el decision tree
 
 ---
 

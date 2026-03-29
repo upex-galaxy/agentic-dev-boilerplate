@@ -14,8 +14,7 @@ Este directorio contiene toda la documentación que la IA lee para trabajar en e
 └── guidelines/         FASES 7-14: Reference material por ROL
     ├── DEV/            Development Guidelines
     ├── QA/             Quality Engineering Guidelines
-    ├── TAE/            Test Automation Engineering
-    └── MCP/            MCP Guidelines (atomizado)
+    └── TAE/            Test Automation Engineering
 ```
 
 ## 🚀 Cómo empezar
@@ -55,7 +54,6 @@ Antes de empezar, configura tu IA:
 | Desarrollador | `guidelines/DEV/` | Fases 7, 8       |
 | QA Engineer   | `guidelines/QA/`  | Fases 10, 11     |
 | QA Automation | `guidelines/TAE/` | Fase 12          |
-| Cualquier rol | `guidelines/MCP/` | Cuando uses MCPs |
 
 ## 📖 Referencias
 

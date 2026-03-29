@@ -113,16 +113,6 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 - **Atributos `data-testid` para testing E2E**
 - Principios de Spec-Driven Development
 
-### 2.1 Guidelines de MCP (si necesitas herramientas):
-
-```
-.context/guidelines/MCP/
-├── README.md      # Decision tree: ¿Qué MCP usar?
-├── supabase.md    # Para queries de DB
-├── context7.md    # Para docs oficiales
-└── ...            # Otros MCPs según necesidad
-```
-
 ### 3. Design System (Si story tiene UI):
 
 ```
