@@ -94,7 +94,7 @@ const ROLE_PHASES = {
 const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore'];
 
 // Example/template files for user configuration
-const EXAMPLE_FILES = ['.env.example'];
+const EXAMPLE_FILES = [];
 
 // NOTE: No hardcoded file lists for directories - all use mergeDirectory() for full sync
 // This ensures any new files/folders in the template are automatically included
@@ -319,10 +319,12 @@ ${colors.bold}COMANDOS:${colors.reset}
   templates     Actualiza templates/mcp/ (merge completo del directorio)
   scripts       Actualiza scripts/ (merge completo del directorio)
   cli           Actualiza cli/ (Xray CLI y otras herramientas)
+  agents        Actualiza .agents/ (skills de agentes IA)
+  claude        Actualiza .claude/ (settings.json + skill symlinks)
   vscode        Actualiza .vscode/ (extensions.json, settings.json)
   husky         Actualiza .husky/ (git hooks)
   tooling       Actualiza archivos de configuracion del framework
-  examples      Actualiza archivos de ejemplo (.env.example, etc.)
+  examples      Actualiza archivos de ejemplo
   help          Muestra esta ayuda
 
 ${colors.bold}FLAGS PARA 'prompts' y 'books':${colors.reset}
@@ -381,6 +383,8 @@ async function showMainMenu() {
       { name: 'CLI Tools (cli/) - Xray CLI', value: 'cli' },
       { name: 'VS Code (.vscode/)', value: 'vscode' },
       { name: 'Husky (.husky/) - Git hooks', value: 'husky' },
+      { name: 'Agents (.agents/) - Skills de agentes IA', value: 'agents' },
+      { name: 'Claude (.claude/) - Settings y skill symlinks', value: 'claude' },
       { name: 'Tooling - Archivos de configuracion', value: 'tooling' },
       { name: 'Examples - Archivos de ejemplo', value: 'examples' },
     ],
@@ -1058,6 +1062,70 @@ function selfUpdate() {
 }
 
 /**
+ * Update .agents/ directory using merge strategy.
+ * Merges entire directory - syncs all agent skills source files.
+ */
+function updateAgents() {
+  logStep('Actualizando .agents/ (merge)...');
+
+  const agentsPath = path.join(TEMP_DIR, '.agents');
+  if (!fs.existsSync(agentsPath)) {
+    logWarning('No se encontro directorio .agents en el template');
+    return;
+  }
+
+  logMerge('Sincronizando directorio completo...');
+  mergeDirectory(agentsPath, '.agents');
+}
+
+/**
+ * Update .claude/ directory with selective sync.
+ * - Copies settings.json (shared project settings)
+ * - Recreates skill symlinks based on .agents/skills/ contents
+ * - NEVER touches settings.local.json (personal per-user settings)
+ */
+function updateClaude() {
+  logStep('Actualizando .claude/ (selective)...');
+
+  // 1. Copy settings.json if exists in template
+  const settingsPath = path.join(TEMP_DIR, '.claude', 'settings.json');
+  if (fs.existsSync(settingsPath)) {
+    fs.mkdirSync('.claude', { recursive: true });
+    fs.cpSync(settingsPath, '.claude/settings.json');
+    logSuccess('settings.json');
+  }
+
+  // 2. Recreate skill symlinks from .agents/skills/
+  const agentsSkillsDir = path.join('.agents', 'skills');
+  if (fs.existsSync(agentsSkillsDir)) {
+    const skillsDir = path.join('.claude', 'skills');
+    fs.mkdirSync(skillsDir, { recursive: true });
+
+    const skills = fs.readdirSync(agentsSkillsDir, { withFileTypes: true });
+    for (const skill of skills) {
+      if (!skill.isDirectory()) { continue; }
+
+      const symlinkPath = path.join(skillsDir, skill.name);
+      const symlinkTarget = path.join('..', '..', '.agents', 'skills', skill.name);
+
+      // Remove existing (file, dir, or broken symlink) before creating new symlink
+      try {
+        const stat = fs.lstatSync(symlinkPath);
+        if (stat) { fs.rmSync(symlinkPath, { recursive: true, force: true }); }
+      }
+      catch {
+        // Path doesn't exist, nothing to remove
+      }
+
+      fs.symlinkSync(symlinkTarget, symlinkPath);
+      logSuccess(`skills/${skill.name} -> ${symlinkTarget}`);
+    }
+  }
+
+  logInfo('settings.local.json preservado (nunca se sincroniza)');
+}
+
+/**
  * Actualiza context-engineering.md desde el README del template.
  * Este archivo sirve como documentación maestra de la arquitectura.
  */
@@ -1105,7 +1173,7 @@ async function main() {
 
     // Determine which components to backup and update
     const components = selected.includes('all')
-      ? ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'vscode', 'husky', 'tooling', 'examples']
+      ? ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
       : selected;
 
     createBackup(components);
@@ -1122,6 +1190,8 @@ async function main() {
       updateTemplates();
       updateScripts();
       updateCli();
+      updateAgents();
+      updateClaude();
       updateVscode();
       updateHusky();
       updateTooling();
@@ -1152,6 +1222,12 @@ async function main() {
         }
         else if (cmd === 'cli') {
           updateCli();
+        }
+        else if (cmd === 'agents') {
+          updateAgents();
+        }
+        else if (cmd === 'claude') {
+          updateClaude();
         }
         else if (cmd === 'vscode') {
           updateVscode();
@@ -1192,7 +1268,7 @@ async function main() {
 
   // Expand 'all' command
   if (parsed.commands.includes('all')) {
-    parsed.commands = ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'vscode', 'husky', 'tooling', 'examples'];
+    parsed.commands = ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
     parsed.all = true;
   }
 
@@ -1257,6 +1333,12 @@ async function main() {
         break;
       case 'cli':
         updateCli();
+        break;
+      case 'agents':
+        updateAgents();
+        break;
+      case 'claude':
+        updateClaude();
         break;
       case 'vscode':
         updateVscode();
