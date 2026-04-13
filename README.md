@@ -57,8 +57,7 @@ aicode-starter/
 │       ├── code-standards.md           Para: DRY, naming, TypeScript strict
 │       ├── error-handling.md           Para: NO hardcodear, error classes, logging
 │       ├── context-loading.md          Para: Que archivos leer en cada fase
-│       ├── mcp-usage-tips.md           Para: Cuando usar Supabase/Atlassian MCP
-│       │
+│
 │       └── TAE/                        Para: FASE 12 - Test Automation Engineering
 │           ├── README.md               Para: Explicar TAE y workflow de uso
 │           ├── test-strategy.md        Para: Estrategia general de testing del proyecto
@@ -346,7 +345,7 @@ Quien: QA Engineer
 Input: Tests documentados (Fase 11)
 Usar: .prompts/fase-12-test-automation/
 
-Arquitectura: KATA Framework
+Arquitectura: KATA Architecture
 
 Flujo:
 1. kata-framework-setup.md         → Setup inicial (primera vez)
