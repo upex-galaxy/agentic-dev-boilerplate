@@ -345,7 +345,7 @@ Quien: QA Engineer
 Input: Tests documentados (Fase 11)
 Usar: .prompts/fase-12-test-automation/
 
-Arquitectura: KATA Framework
+Arquitectura: KATA Architecture
 
 Flujo:
 1. kata-framework-setup.md         → Setup inicial (primera vez)
