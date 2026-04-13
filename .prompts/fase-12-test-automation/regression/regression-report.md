@@ -184,7 +184,7 @@ Si la sincronización con TMS está configurada en `.context/test-management-sys
 
 #### Para MCP de Atlassian (si está disponible)
 
-Usar herramientas `mcp__atlassian__*` para actualizar ejecución de tests en Jira/Xray.
+Usar `[ISSUE_TRACKER_TOOL]` para actualizar ejecución de tests en Jira/Xray.
 
 ---
 

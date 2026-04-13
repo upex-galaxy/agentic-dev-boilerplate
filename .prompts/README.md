@@ -184,7 +184,7 @@ Este directorio contiene prompts optimizados para generar documentación de proy
 
 **Por que esta fase:** Documentar tests en Jira DESPUES de validacion exploratoria para trazabilidad.
 
-#### **Fase 12: Test Automation** (Integration + E2E - KATA Framework)
+#### **Fase 12: Test Automation** (Integration + E2E - KATA Architecture)
 
 | Archivo                                                  | Proposito                                     |
 | -------------------------------------------------------- | --------------------------------------------- |
@@ -579,7 +579,6 @@ Despues de usar todos los prompts, tu directorio `.context/` debe verse asi:
     ├── code-standards.md
     ├── error-handling.md
     ├── context-loading.md
-    ├── mcp-usage-tips.md
     │
     └── TAE/                       [Fase 12]
         ├── README.md

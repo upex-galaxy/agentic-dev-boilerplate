@@ -1,4 +1,4 @@
-# Fase 10: Exploratory Testing
+# Stage 2: Exploratory Testing
 
 ## Purpose
 
@@ -13,13 +13,13 @@ Execute manual exploratory testing to validate functionality and discover defect
 
 ---
 
-## The Trifuerza of Testing
+## The Triforce of Testing
 
-This phase supports **complete feature validation** through three testing layers:
+This stage supports **complete feature validation** through three testing layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    TRIFUERZA TESTING                        │
+│                    TRIFORCE TESTING                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
@@ -30,8 +30,8 @@ This phase supports **complete feature validation** through three testing layers
 │  │    MCP      │  │ OpenAPI MCP │  │    MCP      │         │
 │  └─────────────┘  └─────────────┘  └─────────────┘         │
 │                                                             │
-│  exploratory-    exploratory-     exploratory-              │
-│  test.md         api-test.md      db-test.md                │
+│  ui-exploration    api-exploration   db-exploration         │
+│  .md               .md               .md                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -42,7 +42,7 @@ This phase supports **complete feature validation** through three testing layers
 | UI-focused feature   | UI → API → DB                  |
 | API-first feature    | API → DB → UI (if applicable)  |
 | Data-focused feature | DB → API → UI (if applicable)  |
-| Full-stack feature   | All three (Trifuerza completa) |
+| Full-stack feature   | All three (Complete Triforce)  |
 
 ---
 
@@ -55,19 +55,37 @@ This phase supports **complete feature validation** through three testing layers
 
 ---
 
-## Prompts in This Phase
+## Entry / Exit Criteria
 
-| Order | Prompt                    | Purpose                                        | MCP Required     |
-| ----- | ------------------------- | ---------------------------------------------- | ---------------- |
-| 1     | `smoke-test.md`           | Quick validation that deployment is functional | playwright       |
-| 2a    | `exploratory-test.md`     | Deep UI exploration                            | playwright       |
-| 2b    | `exploratory-api-test.md` | Deep API exploration                           | postman, openapi |
-| 2c    | `exploratory-db-test.md`  | Deep database verification                     | dbhub            |
-| 3     | `bug-report.md`           | Report defects found (conditional)             | atlassian        |
+### Entry Criteria
+
+- [ ] Feature deployed to staging environment
+- [ ] User Story in "Ready For QA" status
+- [ ] Test cases or Acceptance Criteria available (from Stage 1 or Jira)
+- [ ] Required MCPs configured (Playwright, Postman, DBHub as needed)
+- [ ] Staging URL accessible
+
+### Exit Criteria
+
+- [ ] Smoke test PASSED (or blocker reported)
+- [ ] Exploratory testing completed for relevant layers (UI/API/DB)
+- [ ] Session notes documented with findings
+- [ ] Bugs reported in Jira (if any found)
+- [ ] US transitioned to "QA Approved" (if PASSED) or "Failed" (if issues)
+
+---
+
+## Prompts in This Stage
+
+| Order | Prompt                 | Purpose                               | MCP Required     |
+| ----- | ---------------------- | ------------------------------------- | ---------------- |
+| 1     | `smoke-test.md`        | Quick validation that deployment works | playwright       |
+| 2a    | `ui-exploration.md`    | Deep UI exploration                   | playwright       |
+| 2b    | `api-exploration.md`   | Deep API exploration                  | postman, openapi |
+| 2c    | `db-exploration.md`    | Deep database verification            | dbhub            |
+| 3     | `bug-report.md`        | Report defects found (conditional)    | atlassian        |
 
 **Note:** 2a, 2b, 2c can be executed in any order or combination based on feature needs.
-
-**Bug Fixing:** When bugs are reported, developers use `.prompts/fase-7-implementation/bug-fix-workflow.md` to implement fixes.
 
 ---
 
@@ -81,15 +99,15 @@ US Status: Ready For QA
         ↓
 [2] Exploratory Testing (choose based on feature)
     │
-    ├── [2a] UI Testing (exploratory-test.md)
+    ├── [2a] UI Testing (ui-exploration.md)
     │   └── Uses Playwright MCP for UI exploration
     │   └── Validates user experience
     │
-    ├── [2b] API Testing (exploratory-api-test.md)
+    ├── [2b] API Testing (api-exploration.md)
     │   └── Uses Postman/OpenAPI MCP
     │   └── Validates backend contracts, auth, RLS
     │
-    └── [2c] DB Testing (exploratory-db-test.md)
+    └── [2c] DB Testing (db-exploration.md)
         └── Uses DBHub MCP for SQL verification
         └── Validates data integrity, constraints, triggers
         ↓
@@ -99,7 +117,7 @@ US Status: Ready For QA
         ↓
 Decision: PASSED or FAILED?
     └── PASSED → Transition US to "QA Approved"
-    └── FAILED → Wait for fixes (DEV uses bug-fix-workflow.md), re-test
+    └── FAILED → Wait for fixes, re-test
 ```
 
 ---
@@ -109,9 +127,9 @@ Decision: PASSED or FAILED?
 | MCP             | Purpose                                   | Prompt(s)          |
 | --------------- | ----------------------------------------- | ------------------ |
 | `playwright`    | UI exploration, screenshots, interactions | smoke, exploratory |
-| `postman`       | API collections, authenticated flows      | exploratory-api    |
-| `openapi` (api) | API endpoint exploration                  | exploratory-api    |
-| `dbhub` (sql)   | SQL queries, data verification            | exploratory-db     |
+| `postman`       | API collections, authenticated flows      | api-exploration    |
+| `openapi` (api) | API endpoint exploration                  | api-exploration    |
+| `dbhub` (sql)   | SQL queries, data verification            | db-exploration     |
 | `atlassian`     | Bug creation, story transitions           | bug-report         |
 
 ---
@@ -129,14 +147,14 @@ Decision: PASSED or FAILED?
 
 ## When to Use Each Testing Layer
 
-### UI Testing (`exploratory-test.md`)
+### UI Testing (`ui-exploration.md`)
 
 - User-facing features
 - Form validations visible to user
 - Navigation and workflows
 - Visual/UX issues
 
-### API Testing (`exploratory-api-test.md`)
+### API Testing (`api-exploration.md`)
 
 - Endpoints without UI yet
 - Authentication/authorization logic
@@ -144,7 +162,7 @@ Decision: PASSED or FAILED?
 - API contracts and error handling
 - Backend business logic
 
-### DB Testing (`exploratory-db-test.md`)
+### DB Testing (`db-exploration.md`)
 
 - Data created by API/UI operations
 - Trigger and constraint verification
@@ -156,7 +174,7 @@ Decision: PASSED or FAILED?
 
 ## Recommended Combinations
 
-### Full-Stack Feature (Complete Trifuerza)
+### Full-Stack Feature (Complete Triforce)
 
 ```
 1. API Testing → Verify backend works
@@ -182,11 +200,57 @@ Decision: PASSED or FAILED?
 
 ---
 
-## Next Phase
+## Key Concepts
+
+### Smoke Test vs Exploratory Testing
+
+| Aspect       | Smoke Test         | Exploratory Testing    |
+| ------------ | ------------------ | ---------------------- |
+| **Duration** | 5-10 minutes       | 60-90 minutes          |
+| **Scope**    | Happy path only    | Full coverage          |
+| **Goal**     | Go/No-Go decision  | Find bugs, edge cases  |
+| **Depth**    | Surface validation | Deep investigation     |
+
+### Bug Severity Guidelines
+
+| Severity     | Criteria                              |
+| ------------ | ------------------------------------- |
+| **Critical** | Core functionality blocked, data loss |
+| **High**     | Major feature broken                  |
+| **Medium**   | Feature issue with workaround         |
+| **Low**      | Cosmetic, doesn't affect function     |
+
+---
+
+## When to Re-run
+
+| Situation                    | Action                          |
+| ---------------------------- | ------------------------------- |
+| Smoke test failed            | Wait for fix, re-run smoke      |
+| Bug fixed and redeployed     | Re-run affected exploratory     |
+| New stories added            | Run smoke + exploratory for new |
+| Regression detected          | Full exploratory re-run         |
+
+---
+
+## Output Files Location
+
+```
+.context/PBI/epics/
+└── EPIC-{KEY}-{NUM}-{name}/
+    └── stories/
+        └── STORY-{KEY}-{NUM}-{name}/
+            ├── smoke-test.md           # Smoke test results
+            └── exploratory-notes.md    # Session findings
+```
+
+---
+
+## Next Stage
 
 If exploratory testing **PASSED**:
 
-- Proceed to **Fase 11: Test Documentation**
+- Proceed to **Stage 3: Test Documentation**
 - Document test cases in Jira
 - Identify automation candidates
 
@@ -195,7 +259,7 @@ If exploratory testing **PASSED**:
 ## Related Documentation
 
 - **QA Workflow:** `.prompts/us-qa-workflow.md`
-- **Bug Fixing (DEV):** `.prompts/fase-7-implementation/bug-fix-workflow.md`
 - **KATA Guidelines:** `.context/guidelines/TAE/`
-- **API Testing Guide:** `docs/testing/api-guide/`
-- **Database Testing Guide:** `docs/testing/database-guide/`
+- **Stage 1:** `.prompts/fase-5-shift-left-testing/README.md`
+- **Stage 3:** `.prompts/fase-10-exploratory-testing/README.md`
+- **Stage 4:** `.prompts/fase-11-test-documentation/README.md`
