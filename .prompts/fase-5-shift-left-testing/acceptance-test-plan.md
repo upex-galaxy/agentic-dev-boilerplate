@@ -975,7 +975,7 @@ Should <BEHAVIOR> <CONDITION>
 
    ### Refined Acceptance Criteria
 
-   [Paste refined scenarios from Step 3]
+   [Insert refined scenarios from Step 3 above]
 
    ### Edge Cases Identified
 
@@ -1630,7 +1630,7 @@ See documentation:
 
 | Field ID            | Name                        | Type     | Level |
 | ------------------- | --------------------------- | -------- | ----- |
-| `customfield_12400` | Acceptance Test Plan (QA)🧪 | Textarea | Story |
+| `{{jira.acceptance_test_plan_atp}}` | Acceptance Test Plan (QA)🧪 | Textarea | Story |
 
 ### Sync Instructions
 
@@ -1638,14 +1638,14 @@ See documentation:
 
 1. **Check if Story has the custom field:**
    - Use Atlassian MCP to get Story: `jira_get_issue`
-   - Check if `customfield_12400` exists and is available in response
+   - Check if `{{jira.acceptance_test_plan_atp}}` exists and is available in response
 
 2. **If field exists:**
    - Copy COMPLETE content from generated `acceptance-test-plan.md`
    - Update Story in Jira using MCP `jira_update_issue`:
      ```
      fields: {
-       "customfield_12400": "[acceptance-test-plan.md content]"
+       "{{jira.acceptance_test_plan_atp}}": "[acceptance-test-plan.md content]"
      }
      ```
    - Add label: `test-plan-ready`
@@ -1663,6 +1663,6 @@ See documentation:
 ### Expected Output
 
 - [ ] `acceptance-test-plan.md` file created in `.context/PBI/epics/.../stories/.../`
-- [ ] Custom field `customfield_12400` updated in Jira (if exists)
+- [ ] Custom field `{{jira.acceptance_test_plan_atp}}` updated in Jira (if exists)
 - [ ] Label `test-plan-ready` added to Story
 - [ ] Comment added as fallback (if field doesn't exist)

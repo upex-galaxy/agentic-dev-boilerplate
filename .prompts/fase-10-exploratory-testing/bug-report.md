@@ -31,26 +31,25 @@ Identify, validate, and report defects found during exploratory testing. This pr
 
 | Field ID            | Jira Field Name                   | Type     | What to Fill                                                                                                                                                    |
 | ------------------- | --------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `customfield_10109` | Actual Result (Behavior)          | Textarea | Describe exactly what happened (the bug behavior). Include error messages, unexpected UI states, or incorrect data shown.                                       |
-| `customfield_10110` | Expected Result (Output)          | Textarea | Describe what SHOULD have happened according to requirements or standard UX patterns.                                                                           |
-| `customfield_10112` | Error Type                        | Dropdown | `Functional`, `Visual`, `Content`, `Performance`, `Crash`, `Data`, `Integration`, `Security`                                                                    |
-| `customfield_10116` | SEVERITY                          | Dropdown | `Critical`, `Major`, `Moderate`, `Minor`, `Trivial`                                                                                                             |
-| `customfield_12210` | Test Environment                  | Dropdown | `Dev`, `QA`, `UAT`, `Staging`, `Production`                                                                                                                     |
-| `customfield_10701` | Root Cause                        | Dropdown | `Code Error`, `Config/Env Error`, `Environment Error`, `Requirement Error`, `Working As Designed (WAD)`, `Third-Party Error`, `Integration Error`, `Data Error` |
-| `customfield_10049` | Root Cause Text                   | Textarea | Technical analysis: file path, function name, API endpoint, or "Investigation needed" if unknown                                                                |
+| `{{jira.actual_result_comportamiento}}` | Actual Result (Behavior)          | Textarea | Describe exactly what happened (the bug behavior). Include error messages, unexpected UI states, or incorrect data shown.                                       |
+| `{{jira.expected_result_output}}` | Expected Result (Output)          | Textarea | Describe what SHOULD have happened according to requirements or standard UX patterns.                                                                           |
+| `{{jira.error_type}}` | Error Type                        | Dropdown | `Functional`, `Visual`, `Content`, `Performance`, `Crash`, `Data`, `Integration`, `Security`                                                                    |
+| `{{jira.severity}}` | SEVERITY                          | Dropdown | `Critical`, `Major`, `Moderate`, `Minor`, `Trivial`                                                                                                             |
+| `{{jira.test_environment}}` | Test Environment                  | Dropdown | `Dev`, `QA`, `UAT`, `Staging`, `Production`                                                                                                                     |
+| `{{jira.root_cause}}` | Root Cause                        | Dropdown | `Code Error`, `Config/Env Error`, `Environment Error`, `Requirement Error`, `Working As Designed (WAD)`, `Third-Party Error`, `Integration Error`, `Data Error` |
 
 ### Optional Fields
 
 | Field ID            | Jira Field Name | Type     | When to Use                                                                                                                    |
 | ------------------- | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `customfield_10111` | Workaround      | Textarea | Only if a temporary solution exists. Otherwise, omit.                                                                          |
-| `customfield_10607` | EVIDENCE        | Textarea | Additional notes about evidence (e.g., "See attached screenshot", "Video in attachments"). Omit if using attachments parameter |
-| `customfield_12212` | Fix             | Radio    | `Bugfix` (standard) or `Hotfix` (critical for immediate deploy). For normal bugs use `Bugfix`.                                 |
+| `{{jira.workaround}}` | Workaround      | Textarea | Only if a temporary solution exists. Otherwise, omit.                                                                          |
+| `{{jira.evidence}}` | EVIDENCE        | Textarea | Additional notes about evidence (e.g., "See attached screenshot", "Video in attachments"). Omit if using attachments parameter |
+| `{{jira.fix}}` | Fix             | Radio    | `Bugfix` (standard) or `Hotfix` (critical for immediate deploy). For normal bugs use `Bugfix`.                                 |
 | N/A                 | Web Link        | URL      | Only if the bug relates to a specific external URL or documentation. Omit if not applicable.                                   |
 
 ### Dropdown Values Reference
 
-**`customfield_10112` (Error Type) - Use exact string:**
+**`{{jira.error_type}}` (Error Type) - Use exact string:**
 
 ```
 "Functional"  → Feature doesn't work as specified or AC
@@ -63,7 +62,7 @@ Identify, validate, and report defects found during exploratory testing. This pr
 "Security"    → Auth bypass, data exposure, XSS, CSRF, permissions
 ```
 
-**`customfield_10116` (SEVERITY) - Use exact string:**
+**`{{jira.severity}}` (SEVERITY) - Use exact string:**
 
 ```
 "Critical"  → Core functionality blocked, no workaround, blocks release
@@ -73,7 +72,7 @@ Identify, validate, and report defects found during exploratory testing. This pr
 "Trivial"   → Cosmetic, very low impact, fix when there's time
 ```
 
-**`customfield_12210` (Test Environment) - Use exact string:**
+**`{{jira.test_environment}}` (Test Environment) - Use exact string:**
 
 ```
 "Dev"        → Local development (localhost, 127.0.0.1)
@@ -83,7 +82,7 @@ Identify, validate, and report defects found during exploratory testing. This pr
 "Production" → Live production environment
 ```
 
-**`customfield_10701` (Root Cause) - Use exact string:**
+**`{{jira.root_cause}}` (Root Cause) - Use exact string:**
 
 ```
 "Code Error"                → Bug in source code, incorrect logic
@@ -96,7 +95,7 @@ Identify, validate, and report defects found during exploratory testing. This pr
 "Data Error"                → Corrupted data in DB, failed migration
 ```
 
-**`customfield_12212` (Fix) - Use exact string:**
+**`{{jira.fix}}` (Fix) - Use exact string:**
 
 ```
 "Bugfix" → Standard fix for normal bugs
@@ -160,7 +159,7 @@ The custom field IDs in this prompt are specific to UPEX Galaxy workspace. For o
 
 ### Fallback 1: Search for Equivalent Field
 
-When a custom field ID fails (e.g., `customfield_10116` doesn't exist), search for the equivalent field:
+When a custom field ID fails (e.g., `{{jira.severity}}` doesn't exist), search for the equivalent field:
 
 ```
 [ISSUE_TRACKER_TOOL] Search fields:
@@ -420,16 +419,15 @@ Do you want me to:
 
 | Domain Field     | Field ID            | Format   |
 | ---------------- | ------------------- | -------- |
-| Actual Result    | `customfield_10109` | String   |
-| Expected Result  | `customfield_10110` | String   |
-| Error Type       | `customfield_10112` | Dropdown |
-| SEVERITY         | `customfield_10116` | Dropdown |
-| Test Environment | `customfield_12210` | Dropdown |
-| Root Cause       | `customfield_10701` | Dropdown |
-| Root Cause Text  | `customfield_10049` | String   |
-| Workaround       | `customfield_10111` | String   |
-| Evidence         | `customfield_10607` | String   |
-| Fix              | `customfield_12212` | Dropdown |
+| Actual Result    | `{{jira.actual_result_comportamiento}}` | String   |
+| Expected Result  | `{{jira.expected_result_output}}` | String   |
+| Error Type       | `{{jira.error_type}}` | Dropdown |
+| SEVERITY         | `{{jira.severity}}` | Dropdown |
+| Test Environment | `{{jira.test_environment}}` | Dropdown |
+| Root Cause       | `{{jira.root_cause}}` | Dropdown |
+| Workaround       | `{{jira.workaround}}` | String   |
+| Evidence         | `{{jira.evidence}}` | String   |
+| Fix              | `{{jira.fix}}` | Dropdown |
 
 **Field Format Rules:**
 
@@ -528,6 +526,15 @@ _TECHNICAL ANALYSIS_
 * _Function:_ [Function/Component name]
 * _Network:_ [API call info if relevant]
 * _Console:_ [Error messages if any]
+
+----
+
+_ROOT CAUSE_
+
+* [Narrative explanation of WHY the bug happens — what is broken at the source level. Use when triage has identified the cause.]
+* [If unknown after triage: "Investigation needed - <hypothesis or area to investigate>"]
+
+> Note: the categorical value (Code Error / Config Error / etc.) goes in the Root Cause dropdown custom field separately. This body section is the free-text supplement — narrative goes here, classification goes in the field.
 
 ----
 

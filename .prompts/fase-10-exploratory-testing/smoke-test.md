@@ -10,7 +10,7 @@
 
 Validate that the deployment in staging is functional BEFORE beginning full exploratory testing.
 
-**This prompt is executed IMMEDIATELY** after deployment to staging and BEFORE ui-exploration.md.
+**This prompt is executed IMMEDIATELY** after deployment to staging and BEFORE exploratory-test.md.
 
 > **TCs as Guides**: If Test Cases exist from Stage 1 planning, use them as a guide but explore freely. Update TC statuses (PASSED/FAILED) as you validate. Discovering new scenarios beyond the TCs is expected and encouraged.
 
@@ -81,7 +81,7 @@ Create smoke test checklist to validate functional deployment:
 
 **Does NOT include:**
 
-- Full exploratory testing (that's ui-exploration.md)
+- Full exploratory testing (that's exploratory-test.md)
 - Edge cases or negative testing (that's exploratory testing)
 - Automated tests (that's Stage 4: Test Automation)
 
@@ -589,13 +589,13 @@ Continue with exploratory testing:
 
 ```bash
 # 1. UI Exploration
-Use: .prompts/fase-10-exploratory-testing/ui-exploration.md
+Use: .prompts/fase-10-exploratory-testing/exploratory-test.md
 
 # 2. API Exploration (if applicable)
-Use: .prompts/fase-10-exploratory-testing/api-exploration.md
+Use: .prompts/fase-10-exploratory-testing/exploratory-api-test.md
 
 # 3. DB Exploration (if applicable)
-Use: .prompts/fase-10-exploratory-testing/db-exploration.md
+Use: .prompts/fase-10-exploratory-testing/exploratory-db-test.md
 
 # 4. If you find bugs
 Use: .prompts/fase-10-exploratory-testing/bug-report.md
@@ -733,7 +733,7 @@ Bug reported → Development fix → Re-deploy to staging → Re-execute smoke t
 - https://www.guru99.com/smoke-testing.html
 
 **Exploratory testing:**
-- `.prompts/fase-10-exploratory-testing/ui-exploration.md` - UI exploration
+- `.prompts/fase-10-exploratory-testing/exploratory-test.md` - UI exploration
 
 **Testing strategy:**
 - `.prompts/fase-12-test-automation/README.md` - Complete strategy

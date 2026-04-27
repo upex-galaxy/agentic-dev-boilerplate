@@ -1,9 +1,8 @@
 # Test Automation Agent - Orchestrator Prompt
 
-> **Purpose**: Orchestrate the test automation workflow (Planning, Coding, Review) for a module's test specs.
+> **Purpose**: Orchestrate the Stage 5 automation workflow (Planning, Coding, Review) for a module's test specs.
 > **When to use**: After test specs exist in `.context/PBI/{module}/test-specs/` and you want to automate them.
-> This template uses `{{VARIABLE}}` references defined in `CLAUDE.md` -> Project Variables.
-> All `{{...}}` tokens are substituted lazily at load time from the Project Variables table.
+> Variable references in this template (`{{...}}` and `<<...>>`) resolve from `.agents/project.yaml` and `.agents/jira.json`. See `.agents/README.md` for the full syntax.
 
 ---
 
@@ -141,7 +140,7 @@ Ready to start planning. Confirm?
 ROLE: You are a QA sub-agent executing PLANNING (Phase 1 of 3) for ticket {ticket-id}.
 
 INSTRUCTIONS FILE: Read and execute the instructions in:
-  .prompts/fase-12-test-automation/planning/atc-implementation-plan.md
+  .prompts/fase-12-test-automation/planning/test-implementation-plan.md
 
 CONTEXT FILES TO READ (in this order):
   1. .context/PBI/{module}/test-specs/{ticket-dir}/spec.md — the test specification

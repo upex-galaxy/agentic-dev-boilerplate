@@ -154,9 +154,9 @@ Load these files before starting (ordered by priority):
    - Check no blocking errors
 
 2. **Deep Exploration** (varies)
-   - Use: `.prompts/fase-10-exploratory-testing/ui-exploration.md` (for UI)
-   - Use: `.prompts/fase-10-exploratory-testing/api-exploration.md` (for API)
-   - Use: `.prompts/fase-10-exploratory-testing/db-exploration.md` (for data validation)
+   - Use: `.prompts/fase-10-exploratory-testing/exploratory-test.md` (for UI)
+   - Use: `.prompts/fase-10-exploratory-testing/exploratory-api-test.md` (for API)
+   - Use: `.prompts/fase-10-exploratory-testing/exploratory-db-test.md` (for data validation)
    - Test happy paths and edge cases
    - Document findings
 
@@ -291,20 +291,20 @@ Use: `.prompts/fase-12-test-automation/planning/atc-implementation-plan.md`
 
 ```markdown
 # For E2E (UI) tests:
-Use: `.prompts/fase-12-test-automation/coding/e2e-test-coding.md`
+Use: `.prompts/fase-12-test-automation/e2e/e2e-coding.md`
 
 # For Integration (API) tests:
-Use: `.prompts/fase-12-test-automation/coding/integration-test-coding.md`
+Use: `.prompts/fase-12-test-automation/integration/integration-coding.md`
 ```
 
 #### Phase 3: Review
 
 ```markdown
 # For E2E (UI) tests:
-Use: `.prompts/fase-12-test-automation/review/e2e-test-review.md`
+Use: `.prompts/fase-12-test-automation/e2e/e2e-review.md`
 
 # For Integration (API) tests:
-Use: `.prompts/fase-12-test-automation/review/integration-test-review.md`
+Use: `.prompts/fase-12-test-automation/integration/integration-review.md`
 ```
 
 ### Validation

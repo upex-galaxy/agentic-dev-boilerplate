@@ -260,8 +260,8 @@ A: Re-run the prompt with updated context. Files will be overwritten.
 
 - **Product Backlog:** `.context/PBI/`
 - **Main README:** `.prompts/README.md`
-- **Stage 2:** `.prompts/fase-10-exploratory-testing/README.md`
-- **Stage 3:** `.prompts/fase-10-exploratory-testing/README.md`
-- **Stage 4:** `.prompts/fase-11-test-documentation/README.md`
-- **Stage 5:** `.prompts/fase-12-test-automation/README.md`
-- **Stage 6:** `.prompts/fase-12-test-automation/regression/README.md`
+- **Fase 10 (Exploratory Testing):** `.prompts/fase-10-exploratory-testing/README.md`
+- **Fase 10 (Reporting):** `.prompts/fase-10-exploratory-testing/README.md`
+- **Fase 11 (Test Documentation):** `.prompts/fase-11-test-documentation/README.md`
+- **Fase 12 (Test Automation):** `.prompts/fase-12-test-automation/README.md`
+- **Fase 12 (Regression):** `.prompts/fase-12-test-automation/regression/README.md`

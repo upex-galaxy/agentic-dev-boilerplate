@@ -971,9 +971,9 @@ export default defineConfig({
 ## References
 
 - **KATA Architecture**: `kata-architecture.md`
-- **E2E Automation**: `.prompts/stage-5-automation/coding/e2e-test-coding.md`
-- **API Automation**: `.prompts/stage-5-automation/coding/integration-test-coding.md`
-- **E2E Review**: `.prompts/stage-5-automation/review/e2e-test-review.md`
-- **API Review**: `.prompts/stage-5-automation/review/integration-test-review.md`
-- **Module Test Spec**: `.prompts/stage-5-automation/planning/module-test-specification.md`
-- **Test Implementation Plan**: `.prompts/stage-5-automation/planning/test-implementation-plan.md`
+- **E2E Automation**: `.prompts/fase-12-test-automation/e2e/e2e-coding.md`
+- **API Automation**: `.prompts/fase-12-test-automation/integration/integration-coding.md`
+- **E2E Review**: `.prompts/fase-12-test-automation/e2e/e2e-review.md`
+- **API Review**: `.prompts/fase-12-test-automation/integration/integration-review.md`
+- **Module Test Spec**: `.prompts/fase-12-test-automation/planning/module-test-specification.md`
+- **Test Implementation Plan**: `.prompts/fase-12-test-automation/planning/test-implementation-plan.md`

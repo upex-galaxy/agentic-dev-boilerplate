@@ -40,6 +40,9 @@ bun run format:check      # Check formatting
 bun run up                # Update template from upstream
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run xray              # Xray TMS CLI
+bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
+bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira.json
+bun run jira:check        # Validate Jira manifest vs catalog
 ```
 
 **Generate/Update Project Documentation:**
@@ -81,37 +84,27 @@ bun run xray              # Xray TMS CLI
 
 ## Project Variables
 
-> **Purpose**: Centralized project configuration referenced by all `.prompts/` and templates via `{{VARIABLE_NAME}}` syntax.
-> **Usage**: Fill in real values once here. All prompts that use `{{VARIABLES}}` will auto-adapt.
-> **Rationale**: Prevents multi-file maintenance — change a value once, it propagates everywhere.
+Project-specific values live in `.agents/project.yaml` (single source of truth). Four reference syntaxes coexist across prompts and docs; each tells you which file resolves the value.
 
-| Variable                | Description                                         | Example Value                 |
-| ----------------------- | --------------------------------------------------- | ----------------------------- |
-| `{{PROJECT_NAME}}`      | Project name                                        | MyProject                     |
-| `{{BACKEND_REPO}}`      | Relative path to backend repository                 | ../my-backend                 |
-| `{{BACKEND_STACK}}`     | Backend technology stack                            | Node.js + Express             |
-| `{{BACKEND_ENTRY}}`     | Backend source entry point                          | src/                          |
-| `{{FRONTEND_REPO}}`     | Relative path to frontend repository                | ../my-frontend                |
-| `{{FRONTEND_STACK}}`    | Frontend technology stack                           | React + TypeScript            |
-| `{{FRONTEND_ENTRY}}`    | Frontend source entry point                         | src/                          |
-| `{{DB_TYPE}}`           | Database engine                                     | PostgreSQL                    |
-| `{{DB_MCP_LOCAL}}`      | MCP server name for local DB                        | myproject-local-db            |
-| `{{DB_MCP_STAGING}}`    | MCP server name for staging DB                      | myproject-staging-db          |
-| `{{API_MCP_LOCAL}}`     | MCP server name for local API                       | myproject-local-api           |
-| `{{API_MCP_STAGING}}`   | MCP server name for staging API                     | myproject-staging-api         |
-| `{{SPA_URL_LOCAL}}`     | Frontend URL (local)                                | localhost:3000                |
-| `{{SPA_URL_STAGING}}`   | Frontend URL (staging)                              | staging.myproject.com         |
-| `{{API_URL_LOCAL}}`     | API base URL (local)                                | localhost:3000/api            |
-| `{{API_URL_STAGING}}`   | API base URL (staging)                              | api-staging.myproject.com     |
-| `{{ISSUE_TRACKER}}`     | Issue tracking tool                                 | Jira                          |
-| `{{ISSUE_TRACKER_CLI}}` | CLI command to query tickets                        | jira-cli / gh issue           |
-| `{{PROJECT_KEY}}`       | Project key in issue tracker (e.g., PROJ, OB, UPEX) | PROJ                          |
-| `{{TMS_CLI}}`           | Test management CLI command                         | bun xray                      |
-| `{{DEFAULT_ENV}}`       | Default testing environment                         | staging                       |
-| `{{JIRA_URL}}`          | Jira instance base URL                              | https://company.atlassian.net |
-| `{{WEBAPP_DOMAIN}}`     | Domain of the web application under test            | myproject.com                 |
+| Syntax                         | Purpose                                         | Resolves from                                                                                                                                                                                                 |
+| ------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)       | `.agents/project.yaml`. Flat keys lex-lookup (`{{PROJECT_KEY}}` → `project.project_key`). Env-scoped keys (`{{WEB_URL}}`, `{{API_URL}}`, `{{DB_MCP}}`, `{{API_MCP}}`) resolve against the active environment. |
+| `{{environments.<env>.<var>}}` | Explicit cross-env reference (multi-env tables) | `.agents/project.yaml` → `environments.<env>.<var>` directly, regardless of active env.                                                                                                                       |
+| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`)    | Computed by the calling prompt at runtime. Never declared, never persisted.                                                                                                                                   |
+| `{{jira.<slug>}}`              | Jira custom field reference                     | `.agents/jira-required.yaml` (canonical manifest) + `.agents/jira.json` (workspace-resolved IDs).                                                                                                             |
 
-**Note**: Variables are substituted lazily — a prompt containing `{{API_URL_STAGING}}` will read this table at load time. Keep values accurate.
+**Active environment** (for env-scoped vars):
+
+1. Session override (e.g. user says "test against production")
+2. Otherwise: `testing.default_env` from `.agents/project.yaml`
+
+**Validation scripts:**
+
+- `bun run lint:agents` — every `{{VAR}}` and `{{jira.*}}` reference in prompts/context resolves against config
+- `bun run jira:sync-fields` — discover Jira custom fields → write `.agents/jira.json`
+- `bun run jira:check` — validate `jira-required.yaml` manifest against `.agents/jira.json` catalog
+
+See `.agents/README.md` for the full contract, workflows (new-user setup, adding prompts, adding required Jira fields), and troubleshooting.
 
 ---
 

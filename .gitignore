@@ -62,6 +62,7 @@ Thumbs.db
 .playwright-mcp
 .backups/
 .context/mcp/outputs
+.scratch/
 
 # ===== MCP Configuration (contain secrets - DO NOT COMMIT) =====
 .mcp.json

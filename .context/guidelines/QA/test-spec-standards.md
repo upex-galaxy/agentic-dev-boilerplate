@@ -1,7 +1,7 @@
 # Test Spec Standards
 
 > **Purpose**: How to discover, design, and document test cases — whether they come from a user story, a module investigation, a regression, or exploratory testing.
-> **Audience**: QA Engineers and AI agents working on test documentation (Stage 3) and automation planning (Stage 5).
+> **Audience**: QA Engineers and AI agents working on test documentation (Fase 11) and automation planning (Fase 12).
 > **Rule**: Read this before creating or updating test cases. The TC Identity Rule is the foundation of correct test design.
 
 ---
@@ -427,6 +427,6 @@ Before finalizing test specs, verify:
 
 - **TC Identity Rule (source of truth)**: `.context/guidelines/TAE/test-design-principles.md` (Section 1)
 - **ATC Definition Strategy**: `.context/guidelines/QA/atc-definition-strategy.md`
-- **Planning Scopes**: `.prompts/stage-5-automation/README.md` (Section: Planning Scope)
-- **Module Test Specification** (macro planning): `.prompts/stage-5-automation/planning/module-test-specification.md`
-- **Test Implementation Plan** (per ticket): `.prompts/stage-5-automation/planning/test-implementation-plan.md`
+- **Planning Scopes**: `.prompts/fase-12-test-automation/README.md` (Section: Planning Scope)
+- **Module Test Specification** (macro planning): `.prompts/fase-12-test-automation/planning/module-test-specification.md`
+- **Test Implementation Plan** (per ticket): `.prompts/fase-12-test-automation/planning/test-implementation-plan.md`

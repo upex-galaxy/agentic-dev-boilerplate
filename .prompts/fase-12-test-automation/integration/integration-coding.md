@@ -2,7 +2,7 @@
 
 > **Phase**: 2 of 3 (Plan → Coding → Review)
 > **Purpose**: Implement API Integration test automation following KATA architecture.
-> **Input**: Approved plan from `e2e/e2e-plan.md`.
+> **Input**: Approved plan from `planning/test-implementation-plan.md`.
 
 ---
 
@@ -29,7 +29,7 @@ Create API Integration automated tests for validated scenarios using the KATA ar
 Before proceeding, verify that an implementation plan exists for this ticket:
 
 1. Check for `{ticket-dir}/implementation-plan.md`
-2. If it does **NOT** exist: **STOP**. Create it first using `.prompts/fase-12-test-automation/e2e/e2e-plan.md`
+2. If it does **NOT** exist: **STOP**. Create it first using `.prompts/fase-12-test-automation/planning/test-implementation-plan.md`
 3. If it **DOES** exist: Read it and use it as your blueprint for this phase.
 
 ---

@@ -3,8 +3,7 @@
 > **Type**: Orchestrator
 > **Usage**: Load directly via `@.prompts/orchestrators/sprint-testing-agent.md`
 > **Purpose**: Manages multi-ticket in-sprint QA testing with auto-progression, sub-agent dispatch, and shared memory.
-> This orchestrator uses `{{VARIABLE}}` references defined in `CLAUDE.md` -> Project Variables.
-> All `{{...}}` tokens are substituted lazily at load time from the Project Variables table.
+> Variable references in this orchestrator (`{{...}}` and `<<...>>`) resolve from `.agents/project.yaml` and `.agents/jira.json`. See `.agents/README.md` for the full syntax.
 
 ---
 
@@ -143,7 +142,7 @@ Execute Session Start as defined in the instructions file. This includes:
      - If .context/PBI/{module-name}/module-context.md EXISTS -> read it (routes, DB tables, business rules, test data tips)
      - If it DOES NOT EXIST -> explore code fully, then create it using .context/PBI/templates/module-context-template.md
   5. Explore code in backend ({{BACKEND_REPO}}) and frontend ({{FRONTEND_REPO}}) as applicable
-  6. Find test data candidates via database queries ({{DB_MCP_STAGING}} MCP)
+  6. Find test data candidates via database queries ({{DB_MCP}} MCP)
   7. Create PBI folder: .context/PBI/{module-name}/{{PROJECT_KEY}}{number}-{brief-title}/
   8. Create context.md inside PBI folder
   9. Create test-session-memory.md inside PBI folder (template below)
@@ -189,10 +188,10 @@ Written for the user (QA lead) to understand and confirm before proceeding.}
 {Key points from {{ISSUE_TRACKER}} comments -- decisions, clarifications, constraints. Chronological.}
 
 ## Environment
-- SPA: {{SPA_URL_STAGING}}
-- API: {{API_URL_STAGING}}
-- DB MCP: {{DB_MCP_STAGING}}
-- API MCP: {{API_MCP_STAGING}}
+- SPA: {{WEB_URL}}
+- API: {{API_URL}}
+- DB MCP: {{DB_MCP}}
+- API MCP: {{API_MCP}}
 
 ## Test Data
 {Entities, IDs found during exploration. Format:
@@ -339,7 +338,7 @@ TYPE: {type}
 TASK:
 Execute Stage 1 Planning as defined in the instructions file. This includes:
   1. Triage the ticket (veto check or risk score)
-  2. Discover test data via database queries ({{DB_MCP_STAGING}} MCP)
+  2. Discover test data via database queries ({{DB_MCP}} MCP)
   3. Create ATP linked to User Story ({{TMS_CLI}} atp create --story "{full title}")
   4. Create ATR linked to User Story ({{TMS_CLI}} atr create --story "{full title}")
   5. Link ATP to ATR ({{TMS_CLI}} atp update {id} --results "Test Results: {{PROJECT_KEY}}{number}")
@@ -451,15 +450,15 @@ Execute Stage 2 as defined in the instructions files:
      - Execute happy path (primary AC)
      - Result: Go (proceed) or No-Go (STOP and report)
   2. UI EXPLORATION (if applicable):
-     - Test all ACs via UI against {{SPA_URL_STAGING}}
+     - Test all ACs via UI against {{WEB_URL}}
      - Use TCs as guides, explore beyond them
      - Capture evidence screenshots
      - Update TC statuses ({{TMS_CLI}} tc update {id} --status PASSED/FAILED)
   3. API EXPLORATION (if applicable):
-     - Validate endpoints on {{API_URL_STAGING}}, data contracts, auth
+     - Validate endpoints on {{API_URL}}, data contracts, auth
      - Test edge cases
   4. DB EXPLORATION (if applicable):
-     - Cross-validate data integrity via {{DB_MCP_STAGING}}
+     - Cross-validate data integrity via {{DB_MCP}}
      - Verify business rules at data level
 
 CRITICAL: Stage 2 is where REAL testing happens. TCs from Planning are the MINIMUM.
@@ -512,7 +511,7 @@ Execute Phase 2 of the Bug QA Workflow:
   2. Reproduce original bug (verify it existed before fix)
   3. Verify the fix resolves the bug (test against ACs)
   4. Regression check on adjacent areas
-  5. DB cross-validation (if applicable, via {{DB_MCP_STAGING}})
+  5. DB cross-validation (if applicable, via {{DB_MCP}})
   6. Capture evidence screenshots
 
 IMPORTANT -- test-session-memory.md UPDATE:

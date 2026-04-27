@@ -72,20 +72,14 @@ Stage 4 Output (Gherkin + Variables + Test IDs)
 fase-12-test-automation/
 ├── README.md                                  # This file
 ├── planning/
-│   ├── atc-implementation-plan.md             # ATC spec (API + UI)
-│   ├── module-test-specification.md           # Module-level test planning
-│   └── test-specification.md                  # Single ticket/bug test spec
-├── e2e/
-│   ├── e2e-plan.md                            # Phase 1: Planning (E2E + Integration)
-│   ├── e2e-coding.md                          # Phase 2: UI components + locators
-│   └── e2e-review.md                          # Phase 3: E2E code review checklist
-├── integration/
-│   ├── integration-coding.md                  # Phase 2: API components + tuples
-│   └── integration-review.md                  # Phase 3: Integration code review checklist
-└── regression/
-    ├── regression-execution.md                # Phase 1: Run suite
-    ├── regression-analysis.md                 # Phase 2: Analyze results
-    └── regression-report.md                   # Phase 3: GO/NO-GO report
+│   ├── test-implementation-plan.md            # Unified (E2E + Integration)
+│   └── atc-implementation-plan.md             # ATC spec (API + UI)
+├── coding/
+│   ├── e2e-coding.md                     # UI components + locators
+│   └── integration-coding.md             # API components + tuples
+└── review/
+    ├── e2e-review.md                     # E2E code review checklist
+    └── integration-review.md             # Integration code review checklist
 ```
 
 ---
@@ -96,7 +90,7 @@ fase-12-test-automation/
 
 | Prompt | Scope | Purpose |
 |--------|-------|---------|
-| `e2e/e2e-plan.md` | E2E + Integration | Full implementation plan for a test ticket (scenarios, ATCs, data strategy, file map) |
+| `planning/test-implementation-plan.md` | E2E + Integration | Full implementation plan for a test ticket (scenarios, ATCs, data strategy, file map) |
 | `planning/atc-implementation-plan.md` | API + UI | Detailed spec for a single ATC (contract, assertions, code template) |
 
 ### Phase 2: Coding
@@ -121,7 +115,7 @@ Before using these prompts:
 
 1. **Tests documented in TMS** (Stage 4 completed)
 2. **Tests marked as "automation-candidate"**
-3. **KATA architecture configured** (see `.prompts/fase-12-test-automation/setup/kata-architecture-adaptation.md`)
+3. **KATA architecture configured** (see `.prompts/setup/kata-architecture-adaptation.md`)
 
 ### Context Files Required
 
@@ -256,4 +250,4 @@ After completing all three phases:
 
 ---
 
-**Next**: Start with `e2e/e2e-plan.md` to plan your implementation.
+**Next**: Start with `planning/test-implementation-plan.md` to plan your implementation.

@@ -572,12 +572,12 @@ Con los tests pasando en CI, creas un **Pull Request para revisión** por otro m
 
 Para ejecutar cada stage con ayuda de AI:
 
-| Stage   | Prompt                                                             |
-| ------- | ------------------------------------------------------------------ |
-| Stage 1 | `.prompts/stage-4-automation/planning/test-implementation-plan.md` |
-| Stage 2 | `.prompts/stage-4-automation/coding/e2e-test-coding.md`            |
-| Stage 3 | Verificación manual en CI                                          |
-| Stage 4 | `.prompts/stage-4-automation/review/e2e-test-review.md`            |
+| Stage   | Prompt                                                                  |
+| ------- | ----------------------------------------------------------------------- |
+| Stage 1 | `.prompts/fase-12-test-automation/planning/test-implementation-plan.md` |
+| Stage 2 | `.prompts/fase-12-test-automation/e2e/e2e-coding.md`                    |
+| Stage 3 | Verificación manual en CI                                               |
+| Stage 4 | `.prompts/fase-12-test-automation/e2e/e2e-review.md`                    |
 
 ---
 
