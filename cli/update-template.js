@@ -584,6 +584,8 @@ function parseArgs(args) {
     'templates',
     'scripts',
     'cli',
+    'agents',
+    'claude',
     'vscode',
     'husky',
     'tooling',
