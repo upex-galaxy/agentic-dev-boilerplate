@@ -1,4 +1,4 @@
-# KATA Architecture Adaptation
+# Test Framework Adaptation
 
 > **Purpose**: Bridge between project Discovery and writing real feature tests. Connects the KATA architecture (`tests/`, `api/schemas/`, `config/`) of this boilerplate to the target project's stack already reverse-engineered by Discovery.
 >
@@ -8,7 +8,7 @@
 >
 > **When to invoke**: Immediately after Discovery (`.prompts/discovery/`) and BEFORE writing any feature tests with `.prompts/fase-12-test-automation/`.
 >
-> **Output**: `.context/PBI/kata-architecture-adaptation-plan.md` (Phase 1) + Implementation (Phase 2, on approval).
+> **Output**: `.context/PBI/test-framework-adaptation-plan.md` (Phase 1) + Implementation (Phase 2, on approval).
 
 ## Scope
 
@@ -261,12 +261,12 @@ To complete the adaptation plan, I need clarification:
 
 ### STEP 1.8: Generate Adaptation Plan
 
-Create file: `.context/PBI/kata-architecture-adaptation-plan.md`
+Create file: `.context/PBI/test-framework-adaptation-plan.md`
 
 **Use this template:**
 
 ```markdown
-# KATA Architecture Adaptation Plan
+# Test Framework Adaptation Plan
 
 > **Generated**: {DATE}
 > **Project**: {PROJECT_NAME}
@@ -526,7 +526,7 @@ Any gaps in Discovery that surfaced during adaptation (and could not be resolved
 
 ### STEP 2.1: Read Approved Plan
 
-Read `.context/PBI/kata-architecture-adaptation-plan.md` to understand:
+Read `.context/PBI/test-framework-adaptation-plan.md` to understand:
 
 - Exact changes needed for each file
 - Order of implementation
@@ -1031,7 +1031,7 @@ This keeps the test repo clean — no orphan placeholders pretending to be real 
 
 Update artifacts:
 
-- `.context/PBI/kata-architecture-adaptation-plan.md` — mark `Status: COMPLETED` and append a "Results" block with:
+- `.context/PBI/test-framework-adaptation-plan.md` — mark `Status: COMPLETED` and append a "Results" block with:
   - Auth strategy resolved (token / cookie / hybrid)
   - First entity adapted: `{Entity}`
   - Discovery Gaps surfaced (anything Discovery did not cover that came up during adaptation)
