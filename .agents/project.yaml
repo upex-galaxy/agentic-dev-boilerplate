@@ -31,8 +31,7 @@ issue_tracker:
   jira_url: null # TODO: fill per project — Jira instance base URL (e.g. https://company.atlassian.net)
 
 testing:
-  default_env: null # TODO: fill per project — Default testing environment — must match a key under `environments:` (e.g. staging)
-  tms_cli: null # TODO: fill per project — Test management CLI command (e.g. bun xray)
+  default_env: null # TODO: fill per project — Default working environment — must match a key under `environments:` (e.g. staging)
 
 # Per-environment config. Add/remove environments freely (production, dev, qa, uat, etc.).
 # Each environment must define ALL four keys: web_url, api_url, db_mcp, api_mcp.

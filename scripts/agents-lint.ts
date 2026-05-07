@@ -46,11 +46,14 @@ const JIRA_REQUIRED_YAML = join(REPO_ROOT, '.agents', 'jira-required.yaml');
 const SCAN_ROOTS = [
   '.prompts',
   '.context',
+  '.claude/skills',
+  '.claude/commands',
 ];
 
 // Single root-level file to also scan.
 const SCAN_FILES = [
   'CLAUDE.md',
+  'AGENTS.md',
 ];
 
 // Directories to skip outright while walking.
@@ -84,6 +87,10 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['PROJECT_VARIABLE', 'CLAUDE.md'],
   // tms-workflow.md value-types table documents {{VARIABLE}} as a literal example
   ['VARIABLE', 'tms-workflow.md'],
+  // init-project SKILL.md: documents {{VAR}} as the resolution syntax itself
+  ['VAR', 'init-project/SKILL.md'],
+  // project-foundation SKILL.md: references {{VAR}} as the syntax (lint check phrasing)
+  ['VAR', 'project-foundation/SKILL.md'],
 ];
 
 // -----------------------------------------------------------------------------

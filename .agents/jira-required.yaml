@@ -132,23 +132,6 @@ required:
     description: 'Type of fix applied (bugfix vs urgent hotfix).'
     used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
 
-  # ---- TMS Modality fields (Jira-native, no Xray) ----
-  acceptance_test_plan_atp:
-    name: '🧪 Acceptance Test Plan (ATP)'
-    type: string
-    description: |
-      Stores the QA Acceptance Test Plan body on the Story itself (Modality B
-      flow). Mirrored as a Jira comment for diff history. Modality A teams (Xray)
-      use a separate Test Plan issue and may not need this field.
-    used_by: [fase-5-shift-left-testing/acceptance-test-plan]
-
-  test_status:
-    name: 'Test Status🧪'
-    type: option
-    options: [blocked, failed, n_r, passed]
-    description: 'Per-Test issue execution status (Jira-native TMS).'
-    used_by: [config/variables, tms-integration, docs/kata-fundamentals]
-
 optional:
   # (empty)
 
