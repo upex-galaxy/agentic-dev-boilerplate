@@ -1,0 +1,436 @@
+# Project Memory
+
+<!--
+TEMPLATE — DO NOT EDIT IN PLACE WHEN BOOTSTRAPPING.
+This file lives at .claude/skills/framework-core/templates/AGENTS.md.template.
+It is mirrored manually with the live AGENTS.md at the repo root.
+When updating structural sections (Critical Rules, Skills, Tool Resolution, Orchestration Mode, etc.),
+edit BOTH this template AND the live AGENTS.md.
+
+Refresh of project-specific FACTS (Project Identity, Environment URLs, Discovery Progress, etc.)
+is handled by the `/refresh-ai-memory` command — do NOT update those here.
+-->
+
+> Operational context loaded every AI session. Replace `[PLACEHOLDER]` values with your project specifics.
+
+---
+
+## Quick Start
+
+This project is driven by **agent skills**. Each skill owns an end-to-end slice of the software development lifecycle and self-loads its own operational detail. Invoke a skill by its trigger phrase (e.g. "implement this story", "write unit tests", "plan the sprint", "code review for PR #123", "deploy to staging") and the matching skill will take over.
+
+The development workflow is distributed across skills:
+- **Foundation** (one-time setup) -> `/project-foundation` (PRD, SRS, discovery) + `/project-bootstrap` (infrastructure scaffolding)
+- **Product management** (continuous) -> `/product-management` (epics, story creation, refinement, AC)
+- **Per-story dev loop** -> `/sprint-dev` (planning -> implementation -> review -> deploy)
+- **TDD/unit testing** (composable) -> `/unit-testing` (TDD red-green-refactor, mocking, coverage)
+- **Init/bootstrap** -> `/init-project` (this skill's bootstrap mode)
+
+**Common commands:**
+
+```bash
+bun run lint              # Lint codebase
+bun run lint:fix          # Auto-fix lint issues
+bun run format            # Format with Prettier
+bun run format:check      # Check formatting
+bun run up                # Update template from upstream
+```
+
+---
+
+## Critical Rules (Always Apply)
+
+1. **Login Credentials**: ALWAYS read from `.env` file -- NEVER hardcode or guess passwords.
+   - Example keys: `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`, `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD`
+
+2. **Plan Before Coding**: Always produce an implementation plan (`spec.md`) before writing code. Development follows Plan -> Code -> Review.
+
+3. **No AI Attribution**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines in commit messages. Commits must look human-authored.
+
+4. **Shift-Left**: Evaluate Acceptance Criteria for clarity, testability, and completeness. Raise questions only when genuine gaps exist -- never force questions to fill a checklist.
+
+5. **Confirm Before Push to Main**: Never push to `main` without explicit user confirmation.
+
+6. **Git History Management**:
+   - NEVER rewrite pushed history (`rebase`, `amend` on pushed commits)
+   - NEVER force push to any shared branch
+   - NEVER delete remote branches without confirmation
+   - ALWAYS add forward (new commits to fix, not rewrite)
+   - ALWAYS preserve merge history
+
+7. **Quality Verification**: After code changes, verify in order: run tests -> check types -> lint. Do not skip steps.
+
+8. **File Operations**: Always read a file before editing it. Preserve existing formatting and indentation. Never overwrite files without reading first.
+
+9. **Skills-First**: All operational workflows live in `.claude/skills/`. Never ask users to copy-paste instructions. Invoke the relevant skill and let it self-load its detail. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
+
+10. **Playwright CLI Usage**: For browser automation, load the `/playwright-cli` skill. It provides screenshots, tracing, video recording, session management, and request mocking. See `.claude/skills/playwright-cli/` for details.
+
+---
+
+## Project Variables
+
+Project-specific values (paths, URLs, project key, DB names, MCP servers, issue tracker metadata, etc.) are declared in **`.agents/project.yaml`**. Before resolving any `{{VAR_NAME}}` in any skill, command, template or doc, read `.agents/project.yaml` once per session and cache the values.
+
+Variable syntaxes that exist and must not be confused:
+
+- `{{VAR_NAME}}` — **project variable**, static per-repo value; resolves to `.agents/project.yaml` (snake_case key; `{{PROJECT_NAME}}` → `project.project_name`).
+  - **Flat vars** live at top-level sections (e.g. `{{PROJECT_KEY}}` → `project.project_key`, `{{JIRA_URL}}` → `issue_tracker.jira_url`).
+  - **Env-scoped vars** (`{{WEB_URL}}`, `{{API_URL}}`, `{{DB_MCP}}`, `{{API_MCP}}`) resolve to `environments[active_env].<var>` — where `active_env` is the env the user explicitly chose for this session, falling back to `testing.default_env`. If the user says "test against production", switch `active_env` to `production` for that session and ignore `default_env` until the session ends.
+  - For explicit cross-env references (rare; only in multi-env documents), use `{{environments.<env>.<var>}}` (e.g. `{{environments.local.web_url}}`).
+- `<<VAR_NAME>>` — **session variable**, computed at runtime by the command that uses it (e.g. `<<ISSUE_KEY>>` extracted from the git branch name); never persisted.
+- `{{jira.<slug>}}` — **Jira custom field reference**, resolves to `.agents/jira-fields.json` via `.agents/jira-required.yaml`. Sub-forms: `{{jira.<slug>.<option>}}` for plain `option` / array-of-option fields, `{{jira.<slug>.<parent>.<child>}}` for cascading `option-with-child`. See `.agents/README.md` for the full convention.
+- `{{jira.work_type.<slug>}}` / `{{jira.status.<work_type>.<slug>}}` / `{{jira.transition.<work_type>.<slug>}}` — **Jira workflow references**. `work_type` resolves to the literal issue-type name (e.g. `"Story"`); `status` resolves to the literal status name (sub-keys: `.id`, `.category`); `transition` resolves to the transition `id` (sub-key: `.name`) — use the id form to invoke transitions unambiguously via REST. All resolve to `.agents/jira-workflows.json` via `.agents/jira-required.yaml` `work_types:`. See `.agents/README.md` for the full convention.
+
+---
+
+## Tool Resolution
+
+> When skills use `[TAG_TOOL]` pseudocode, resolve to the actual tool using this table.
+> **Priority**: CLI tools first (fewer tokens), MCP as fallback. Skills are self-documenting.
+
+### Resolution Table
+
+| Tag | Domain | Primary Tool | Fallback | Skill/Reference |
+|-----|--------|-------------|----------|-----------------|
+| `[ISSUE_TRACKER_TOOL]` | Issue Tracking (Project Management: Jira Cloud, story/bug/epic) | `/acli` skill (Atlassian CLI) | MCP Atlassian | `.claude/skills/acli/` |
+| `[AUTOMATION_TOOL]` | Browser Automation | `/playwright-cli` skill | MCP Playwright | `.claude/skills/playwright-cli/` |
+| `[DB_TOOL]` | Database | DBHub MCP | Supabase MCP / raw SQL | MCP tool list |
+| `[API_TOOL]` | API Exploration | OpenAPI MCP | Postman / curl | MCP tool list |
+
+### Critical rule: load the skill before invoking the tool
+
+When a skill or workflow says `[TAG_TOOL]`, do not assume the tool's CLI syntax. Load the skill referenced in the Tool Resolution table FIRST (it has the up-to-date commands and gotchas), then execute. This avoids stale CLI patterns and respects skill-owned conventions.
+
+Example: if a skill says `[ISSUE_TRACKER_TOOL] update issue UPEX-123 status to In Progress`, the AI loads `acli` skill (or whatever resolves), reads its syntax, then executes the actual command.
+
+### Pseudocode Syntax
+
+Format: `[TAG_TOOL] Action:` with parameters using these value types:
+- **Literal value** (`type: Manual`) -- fixed domain concepts
+- **Convention ref** (`{per TC naming convention}`) -- forces AI to consult skill references
+- **Project variable** (`{{PROJECT_KEY}}`) -- configured once per project
+- **Context-derived** (`{from test analysis}`) -- derived during session
+
+Conventions (TC naming, labeling, bug summary format, execution naming, etc.) live inside the owning skill's `references/` directory. The skill loads them on demand.
+
+---
+
+## Project Identity
+
+> Replace placeholders with your project details.
+
+| Aspect | Value |
+|--------|-------|
+| **Name** | [Your Project Name] |
+| **Type** | [e.g., B2B Web Platform, E-commerce, SaaS] |
+| **Stack** | [e.g., React + TypeScript (FE), Node.js (BE), PostgreSQL] |
+| **Target Repo** | [Path to application repository] |
+| **Test Repo** | [Path to this test repository] |
+| **Tooling** | Playwright (E2E local validation), Vitest/Jest (unit tests), TypeScript |
+
+**TL;DR Flow:**
+
+```
+[User Action] -> [System Process] -> [Outcome]
+```
+
+---
+
+## Environment URLs
+
+> Replace with your project URLs. Keep the same structure so tooling and context files can reference it.
+
+| Environment | Frontend | Backend (API) |
+|---|---|---|
+| **Local** | `http://localhost:3000` | `http://localhost:3000/api` |
+| **Staging** | `https://staging.example.com` | `https://staging.example.com/api` |
+| **Production** | `https://example.com` | `https://example.com/api` |
+
+> If the Frontend and Backend are on **different hosts**, document it here and make sure API tests target the API host directly.
+
+---
+
+## Orchestration Mode (Subagent Strategy)
+
+**Core Principle**: Main conversation = command center. Subagents = executors.
+
+**Use subagents for**: Reading/writing multiple files, MCP operations, research across repos, git operations, verification (tests/types/lint), multi-file edits.
+
+**Do NOT use subagents for**: Quick lookups, memory reads/writes, task tracking, asking the user, planning.
+
+**Briefing format** -- every dispatch must include:
+1. **Goal**: One-sentence description
+2. **Context docs**: Which files to read first
+3. **Skills to load**: Which skills the subagent needs (e.g., `/playwright-cli`)
+4. **Exact instructions**: Step-by-step, not vague goals
+5. **Report format**: What to return (files changed, tests passed/failed, blockers)
+6. **Rules**: Relevant Critical Rules to follow
+
+### Execution Patterns
+
+| Pattern | When | Example |
+|---------|------|---------|
+| **Parallel** | Independent tasks | Read 3 context files simultaneously |
+| **Sequential** | Dependent tasks | Plan -> Code -> Test |
+| **Background** | Long-running | Test suite execution while planning next ticket |
+| **Single** | Simple task | One file edit with verification |
+
+**Error protocol**: On subagent error -- STOP, report to user with full context, do NOT fix without approval, present options (retry/skip/abort).
+
+**Planning**: Present plan -> wait for approval -> track progress -> report results.
+
+---
+
+## Skills Available
+
+> All workflows live in `.claude/skills/`. Skills auto-load their own operational detail (phases, references, checklists). Invoke by trigger phrase.
+
+| Skill | Trigger | Description |
+|-------|---------|-------------|
+| **init-project** | `/init-project` | Bootstrap a new repo with foundation files (this skill, on first run) |
+| **project-foundation** | `/project-foundation` | Constitution + Architecture (PRD, SRS) + Discovery (business-data-map, api-architecture) |
+| **project-bootstrap** | `/project-bootstrap` | Infrastructure scaffolding: backend, frontend, OpenAPI, env setup |
+| **product-management** | `/product-management` | Backlog seed + add-feature + epic creation + story refinement (AC, INVEST, edge cases) |
+| **sprint-dev** | `/sprint-dev` | Per-story dev loop: planning -> implementation -> review -> deploy. Mega-orchestrator. |
+| **unit-testing** | `/unit-testing` | TDD workflow, test naming, mocking patterns, coverage. Composable with sprint-dev. |
+| **playwright-cli** | `/playwright-cli` | Browser automation (E2E validation, screenshots, tracing) |
+| **frontend-design** | `/frontend-design` | Production-grade frontend interfaces with high design quality |
+| **next-best-practices** | `/next-best-practices` | Next.js patterns: file conventions, RSC boundaries, data patterns |
+| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache, cacheLife, cacheTag |
+| **next-upgrade** | `/next-upgrade` | Upgrade Next.js following official migration guides and codemods |
+
+**Decision Tree:**
+
+| Need | Tool |
+|------|------|
+| Bootstrap a new repo with foundation files | `/init-project` |
+| Generate PRD/SRS/discovery context | `/project-foundation` |
+| Scaffold backend/frontend infrastructure | `/project-bootstrap` |
+| Create epics or refine user stories | `/product-management` |
+| Implement a story (plan -> code -> review -> deploy) | `/sprint-dev` |
+| Write unit tests / TDD loop | `/unit-testing` |
+| Browser interaction | `/playwright-cli` |
+| Frontend design & UI quality | `/frontend-design` |
+| API exploration | OpenAPI MCP |
+| Database query | DBHub MCP |
+| Library docs | Context7 MCP |
+| Community solutions | Tavily MCP |
+
+Skills are committed to the repo. User-specific settings (`.claude/settings.local.json`) are gitignored.
+
+---
+
+## Commands Available
+
+> Single-file utilities under `.claude/commands/`. Invoke with `/<command-name>`.
+
+| Command | Purpose |
+|---------|---------|
+| `/refresh-ai-memory` | Regenerate `README.md` and the AI memory file (`CLAUDE.md` / `GEMINI.md` / `AGENTS.md` / `.cursor/rules` / etc., auto-detected) so they reflect the current `.context/` and `package.json` state. Run when documentation drifts. |
+| `/project-doc-setup` | Generate / regenerate project documentation (README.md, CLAUDE.md) from the current state of `.context/` and `package.json`. |
+| `/context-engineering-setup` | Bootstrap or refresh the `.context/` engineering layer (mapping files, dev/test guides, glossary). |
+| `/business-data-map` | Generate or refresh `.context/mapping/business-data-map.md` (entities, flows, state machines). |
+| `/business-feature-map` | Generate or refresh `.context/mapping/business-feature-map.md` (feature catalog, CRUD matrix, integrations). |
+| `/sprint-report` | Produce a sprint summary from completed work (commits, merged PRs, closed tickets). |
+| `/git-flow`, `/git-conflict-fix` | Git workflow helpers (branch / commit / push / PR conventions; conflict resolution). |
+
+---
+
+## Fundamental Rules (Always in Memory)
+
+> Quick-reference summary. Detailed patterns live inside each skill's `references/` directory, loaded on demand.
+
+### TypeScript Patterns
+
+| Pattern | Rule |
+|---------|------|
+| **Parameters** | Max 2 positional. 3+ -> use object parameter |
+| **Utilities** | Only agnostic utilities go to `tests/utils/` |
+| **Locators** | Inline in ATCs. Extract only if used 2+ times |
+| **Imports** | Always use aliases (`@api/`, `@schemas/`, `@utils/`). No relative imports |
+| **Types** | Define interfaces at top of file, after imports |
+| **Errors** | Public methods: fail fast. Utilities: silent fail (return null) |
+
+**DRY - Context Matters:**
+
+- `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`)
+- `tests/utils/` = Agnostic utilities only (works for API + UI)
+- `UiBase` = All Playwright/Page helpers
+- `ApiBase` = All HTTP helpers
+- `TestContext` = Shared across both (config, faker)
+
+---
+
+## Git Workflow
+
+### Branch Strategy
+
+Protected branches:
+
+| Branch | Role |
+|---|---|
+| `main` | Production. PRs merged from `staging` or a semantic branch after review. |
+| `staging` | Integration branch for AI commits and pre-release validation. |
+
+Task branches follow the **same semantic vocabulary as commits** — the prefix announces the contract of the work. Pick the prefix that matches the *dominant* change (weight: `feat` > `fix` > `refactor` > `test` > `docs` > `chore`).
+
+| Prefix | Use when the dominant change is… | Example |
+|---|---|---|
+| `feat/` | A new feature or capability | `feat/UPEX-123-bulk-assign-users` |
+| `fix/` | A bug fix | `fix/UPEX-45-empty-reservation-list` |
+| `test/` | Writing or updating automated tests (no product-code changes) | `test/UPEX-277-login-smoke-tests` |
+| `docs/` | Documentation only | `docs/UPEX-310-clarify-fixtures` |
+| `refactor/` | Code change without behaviour change | `refactor/split-fixtures` |
+| `chore/` | Tooling, config, deps, housekeeping | `chore/bump-playwright-1.50` |
+
+Name format: `{prefix}/{ISSUE-KEY}-{kebab-slug}` when an issue key exists, `{prefix}/{kebab-slug}` otherwise.
+
+### Commit Rules
+
+- **Semantic prefixes**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`
+- **One commit = one responsibility**
+- **Clear messages**: Someone should understand the change without reading the diff
+- **NO AI attribution**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines. Commits must look human-authored.
+- **Confirm before push to main**: Always ask user confirmation before pushing to `main`.
+
+### Pull Requests
+
+- Title format: `{type}({ISSUE-KEY}): {description}` — include the issue key whenever one exists. Fallback: `{type}: {description}`.
+- Branch names follow the semantic prefix vocabulary documented in the Branch Strategy table above.
+- PR templates (if any) live in `.github/` so they can evolve without bloating `AGENTS.md` / `CLAUDE.md`.
+
+**Example**: `git checkout -b feat/UPEX-123-add-login` -> commit -> push with `-u` -> `gh pr create --base staging`. For general work on `main`, always ask "Confirm push to main?" before pushing.
+
+---
+
+## Context System
+
+### Level 1: Project-Wide (generated by `/project-discovery` + `/business-*-map` + `/master-test-plan`)
+
+```
+.context/mapping/business-data-map.md     -> System flows and entities              (/business-data-map)
+.context/mapping/business-feature-map.md  -> Feature catalog, CRUD matrix, flags    (/business-feature-map)
+.context/mapping/business-api-map.md      -> Auth model, critical endpoints, arch   (/business-api-map)
+.context/master-test-plan.md              -> What to test and why                   (/master-test-plan)
+.context/test-management-system.md        -> TMS architecture + conventions + workflow
+api/schemas/                              -> OpenAPI-derived TypeScript types       (bun run api:sync)
+```
+
+### Level 2 + 3: PBI (per module / per ticket)
+
+```
+.context/PBI/{module}/
+  module-context.md                            -> Module overview
+  test-specs/
+    ROADMAP.md                                 -> All tickets + automation status
+    PROGRESS.md                                -> Current progress
+    {PREFIX}-T{id}-{name}/
+      spec.md                                  -> Test specification
+      implementation-plan.md                   -> Automation plan
+      atc/*.md                                 -> Individual ATC designs
+```
+
+**Living examples**: API components in `tests/components/api/*Api.ts`, UI components in `tests/components/ui/*Page.ts`, tests in `tests/e2e/` or `tests/integration/`.
+
+---
+
+## MCPs Available
+
+| MCP | When to Use |
+|-----|-------------|
+| **Playwright** | E2E testing, UI automation, screenshots |
+| **OpenAPI** | API endpoint exploration, contract testing |
+| **DBHub** | Database queries, data validation |
+| **Atlassian** | Jira/Xray test management |
+| **Context7** | Official library documentation |
+| **Tavily** | Web search, troubleshooting |
+
+**Decision Rule:**
+
+- Context7 for "how to use X" (official docs)
+- Tavily for "how to solve X" (community solutions)
+
+---
+
+## AI Behavior
+
+**Workflow**: Plan first (wait for approval) -> delegate to subagents -> use skills -> track progress -> report results -> verify quality.
+
+### During Development
+
+1. **Explain the story**: Once you understand the ticket, explain briefly:
+   - What the feature is about
+   - How it works (in simple terms)
+   - What we will be implementing
+
+2. **Wait for confirmation**: After important explanations, WAIT for the user to respond before continuing. This allows the user to:
+   - Read and understand
+   - Ask questions if needed
+   - Confirm whether to proceed
+
+3. **Explain defects**: When you find a bug or unexpected behavior:
+   - Describe what you observed
+   - Explain why it is a problem
+   - Suggest the impact (severity, affected users, business risk)
+
+4. **Language**: Default to **English**. If the user writes in another language, mirror that language for user-facing communication. Documentation and code are always written in English.
+
+### Environment Selection
+
+Default to **staging** unless the user specifies otherwise. Ask when ambiguous. Use URLs from "Environment URLs" table and credentials from `.env`.
+
+### Context Efficiency
+
+Main conversation stays lean (no large file reads). Subagents do heavy reading. Skills load only the references the current phase needs.
+
+---
+
+## Local Context (PBI)
+
+For every ticket being tested, maintain local documentation under `.context/PBI/`:
+
+```
+.context/PBI/{module-name}/{TICKET-ID}-{brief-title}/
+  context.md          # Main file: ACs, test data, session notes, open questions
+  test-analysis.md    # Test plan / Acceptance Test Plan (ATP) mirror
+  test-report.md      # Test report / Acceptance Test Report (ATR) mirror
+  evidence/           # Screenshots, traces, logs (gitignored)
+```
+
+**Variables**: `{module-name}` = kebab-case module (e.g., `user-management`), `{TICKET-ID}` = TMS identifier (e.g., `UPEX-277`), `{brief-title}` = max ~5 words kebab-case (e.g., `empty-states`).
+
+**Entry point**: invoke `/sprint-dev` -- it fetches the ticket, explains the story, loads context, explores code, creates the PBI folder, then runs the per-story dev loop (planning -> implementation -> review -> deploy).
+
+**Resume a session**: invoke `/sprint-dev` (or describe the task in natural language). The skill reads `PROGRESS.md` + `ROADMAP.md` automatically and picks up where the last session left off -- no static prompt file needed.
+
+---
+
+## CLI Tools
+
+| Script | Usage | Documentation |
+|--------|-------|---------------|
+| `bun run api:sync` | Sync OpenAPI spec + generate types | `scripts/sync-openapi.ts` |
+| `bun run lint` | Lint codebase with ESLint | `eslint.config.js` |
+| `bun run format` | Format with Prettier | `.prettierrc` |
+
+**Run `bun <script> --help`** for usage details.
+
+---
+
+## Quick Reference
+
+**Pre-flight checklist:**
+
+- [ ] Plan presented and approved before coding
+- [ ] Aliases used for imports (`@api/`, `@schemas/`, `@utils/`)
+- [ ] Credentials from `.env`, never hardcoded
+- [ ] Tests run and pass
+- [ ] No AI attribution in commits
+- [ ] Context loaded progressively (not all at once)
+
+See "Quick Start" above for common test commands.
+
+---
+
+*Update this file when skills, core rules, or workflow patterns change.*
