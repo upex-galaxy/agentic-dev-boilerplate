@@ -11,8 +11,6 @@
     "up": "bun cli/update-template.js",
     "api:sync": "bun cli/sync-openapi.ts",
     "resend": "bun cli/resend.ts",
-    "xray": "bun cli/xray/index.ts",
-    "xray:skills": "cp -r cli/xray/skills/ .claude/skills/xray-cli/",
     "jira:sync": "bun scripts/jira-sync.ts",
     "lint:agents": "bun run scripts/agents-lint.ts",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",

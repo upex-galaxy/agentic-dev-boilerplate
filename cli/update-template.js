@@ -10,7 +10,7 @@
  * Características principales:
  * - Menú interactivo para selección de componentes
  * - Actualización por roles (QA, Dev, DevOps, PO)
- * - Actualización por fases específicas (1-14)
+ * - Actualización por fases específicas (1-13)
  * - Sistema de backups automáticos
  * - Merge inteligente (preserva archivos del usuario)
  * - MergeResult tracking (success/error counts per operation)
@@ -81,26 +81,22 @@ const PHASE_CONFIG = {
   7: { name: 'Implementation', dir: 'fase-7-implementation' },
   8: { name: 'Code Review', dir: 'fase-8-code-review' },
   9: { name: 'Deployment Staging', dir: 'fase-9-deployment-staging' },
-  10: { name: 'Exploratory Testing', dir: 'fase-10-exploratory-testing' },
-  11: { name: 'Test Documentation', dir: 'fase-11-test-documentation' },
-  12: { name: 'Test Automation', dir: 'fase-12-test-automation' },
   13: { name: 'Production Deployment', dir: 'fase-13-production-deployment' },
-  14: { name: 'Shift-Right Testing', dir: 'fase-14-shift-right-testing' },
 };
 
 // Role-based phase groupings
 const ROLE_PHASES = {
   'qa': {
-    phases: [5, 10, 11, 12],
+    phases: [5],
     description: 'Shift-Left, Exploratory, Documentation, Automation',
   },
   'qa-full': {
-    phases: [4, 5, 10, 11, 12],
+    phases: [4, 5],
     description: 'QA + Specification (contexto de negocio)',
   },
   'dev': { phases: [6, 7, 8], description: 'Planning, Implementation, Code Review' },
   'devops': {
-    phases: [3, 9, 13, 14],
+    phases: [3, 9, 13],
     description: 'Infrastructure, Staging, Production, Monitoring',
   },
   'po': { phases: [1, 2, 4], description: 'Constitution, Architecture, Specification' },
@@ -456,16 +452,16 @@ ${colors.bold}FLAGS GLOBALES:${colors.reset}
   --rollback    Restaura desde el backup mas reciente
 
 ${colors.bold}FLAGS PARA 'prompts' y 'books':${colors.reset}
-  --all         Todas las fases (1-14) + standalone
-  --fase N      Fases especificas (ej: --fase 5 o --fase 5,10,11)
+  --all         Todas las fases (1-13) + standalone
+  --fase N      Fases especificas (ej: --fase 5 o --fase 7,8)
   --rol ROLE    Por rol (ver roles disponibles)
   --standalone  Solo archivos standalone
 
 ${colors.bold}ROLES DISPONIBLES:${colors.reset}
-  qa       ${colors.dim}-> Fases 5, 10, 11, 12 (Testing)${colors.reset}
-  qa-full  ${colors.dim}-> Fases 4, 5, 10, 11, 12 (Testing + Specification)${colors.reset}
+  qa       ${colors.dim}-> Fases 5 (Testing)${colors.reset}
+  qa-full  ${colors.dim}-> Fases 4, 5 (Testing + Specification)${colors.reset}
   dev      ${colors.dim}-> Fases 6, 7, 8 (Desarrollo)${colors.reset}
-  devops   ${colors.dim}-> Fases 3, 9, 13, 14 (Infraestructura)${colors.reset}
+  devops   ${colors.dim}-> Fases 3, 9, 13 (Infraestructura)${colors.reset}
   po       ${colors.dim}-> Fases 1, 2, 4 (Producto)${colors.reset}
   setup    ${colors.dim}-> Fases 1, 2, 3 (Setup inicial)${colors.reset}
 
@@ -527,7 +523,7 @@ async function showPromptsMenu() {
   const mode = await select({
     message: 'Que fases deseas actualizar?',
     choices: [
-      { name: 'Todas las fases (1-14) + standalone', value: 'all' },
+      { name: 'Todas las fases (1-13) + standalone', value: 'all' },
       { name: 'Por rol...', value: 'role' },
       { name: 'Fases especificas...', value: 'phases' },
       { name: 'Solo archivos standalone (git-flow, workflows)', value: 'standalone' },
@@ -642,7 +638,7 @@ function parseArgs(args) {
         result.phases = nextArg
           .split(',')
           .map(Number)
-          .filter(n => n >= 1 && n <= 14);
+          .filter(n => n >= 1 && n <= 13);
       }
     }
     else if (arg === '--rol' || arg === '--role') {
