@@ -1,0 +1,52 @@
+{
+  "evals": [
+    {
+      "name": "should-trigger-manual-split-request",
+      "prompt": "Split this into chained PRs — the change is going to touch 12 files, no way it stays under 400 lines.",
+      "expected_behavior": "Activates chained-pr in manual mode. Reads decision-tree.md reference. Probes for missing inputs (mechanical vs cognitive? shared scaffolding? safe intermediate states?). Walks Q1 -> Q2 -> Q3, picks a strategy (likely stacked-to-main or feature-branch-chain depending on scaffolding answer), emits Chain Strategy Decision block with concrete branch plan. Does NOT run git commands; hands off to /git-flow for execution.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-sprint-dev-handoff",
+      "prompt": "Workload Forecast risk=High, chain_strategy=pending — resolve before Stage 2 starts. Plan estimates 850 lines across 6 new files and 8 modified.",
+      "expected_behavior": "Activates chained-pr in auto-handoff mode (called from sprint-dev gate). Reads the forecast block + impl-plan task list. Applies decision tree: 6 new files + 8 modified with cross-cutting types is shared scaffolding territory -> feature-branch-chain. Emits Chain Strategy Decision block with tracker branch + 4-5 child PR plan. Updates the forecast block from chain_strategy=pending to chain_strategy=feature-branch-chain. Returns control so sprint-dev Stage 2 unblocks.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-stacked-vs-feature-branch-question",
+      "prompt": "What's the difference between stacked-to-main and feature-branch-chain? Trying to figure out which one fits a multi-step refactor.",
+      "expected_behavior": "Activates chained-pr in advisory mode. Reads stacked-to-main.md and feature-branch-chain.md references. Explains the distinction: stacked-to-main is for linear feature work where main/staging is safe between merges; feature-branch-chain is for shared-scaffolding work where partial merges would leave staging broken. Walks the decision tree (Q2 vs Q3) so the user can apply it to their own change. Asks the deciding question: 'is staging still working if I merge slice 1 and stop?'",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-spanish-trigger",
+      "prompt": "Este cambio toca 8 archivos nuevos y 5 modificados, va a quedar gigante el PR. Cómo lo trozeo?",
+      "expected_behavior": "Activates chained-pr in manual mode. Mirrors Spanish in conversation. Reads decision-tree.md reference. Probes for the missing decision-tree inputs (mechanical? shared scaffolding? safe intermediate states?). Walks Q1 -> Q2 -> Q3 and picks a strategy. Likely stacked-to-main if the 13 files decompose into 2-4 independent slices; feature-branch-chain if shared types span all of them. Emits Chain Strategy Decision block in English (artifacts always English) but explains in Spanish.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-size-exception-question",
+      "prompt": "I'm doing a mass rename of `User` to `Account` across 50 files. Diff is 600 lines but it's all mechanical. Is this a chained-pr scenario?",
+      "expected_behavior": "Activates chained-pr in advisory mode. Reads decision-tree.md reference. Recognizes the change as mechanical (Q1 = Yes) -> size-exception. Explains the size-exception requirements: explicit user override + written rationale in PR description, generated/vendor file list documented, reviewer told upfront not to read line-by-line. Provides the Reviewer note template. Confirms 'size-exception is the right answer for mechanical bulk; the 400-line budget protects cognitive review, not mechanical line counts'.",
+      "category": "positive"
+    },
+    {
+      "name": "should-not-trigger-simple-pr-creation",
+      "prompt": "Open a PR for UPEX-123 — the implementation is done, just push and create.",
+      "expected_behavior": "Does NOT activate chained-pr. Should route to /git-flow because this is straightforward PR creation, not a strategic chain decision. chained-pr is only invoked when a change is too big for a single PR; a normal-sized completed implementation goes through the standard /git-flow path.",
+      "category": "negative"
+    },
+    {
+      "name": "should-not-trigger-merge-conflict",
+      "prompt": "Fix the merge conflict in src/auth.ts — the PR can't merge until I resolve it.",
+      "expected_behavior": "Does NOT activate chained-pr. Should route to /git-conflict-fix because this is conflict resolution, not chain strategy. chained-pr does NOT run git operations or resolve conflicts; it picks a layout at planning time.",
+      "category": "negative"
+    },
+    {
+      "name": "should-not-trigger-feature-implementation",
+      "prompt": "Implement UPEX-277 — the empty states story. Plan, code, review, deploy.",
+      "expected_behavior": "Does NOT activate chained-pr directly. Should route to /sprint-dev because this is full-story orchestration. sprint-dev's Stage 1 (Planning) emits the Workload Forecast block; if risk=High and chain_strategy=pending, sprint-dev hands off to chained-pr automatically. The user entry point is the orchestrator, not the strategic skill.",
+      "category": "negative"
+    }
+  ]
+}

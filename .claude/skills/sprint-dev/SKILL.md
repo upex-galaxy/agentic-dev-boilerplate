@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Sprint Dev — Plan, Code, Review, Deploy per Story
 
 Drive the per-story development loop from Jira ticket to deployed code. Five stages, always in this order: **Stage 1 Planning -> Stage 2 Implementation -> Stage 3 Code Review -> Stage 4 Staging Deploy -> Stage 5 Production Deploy (gated, optional)**. Mega-orchestrator equivalent of `sprint-testing` from the sister repo, on the development side.
@@ -148,12 +158,31 @@ Read for guidance:
 
 Output: `implementation-plan.md` per story (or `feature-implementation-plan.md` per feature). Lives alongside the story folder in the project repo. Commit it before Stage 2 starts. Transition Jira `Ready For Dev -> In Progress`.
 
+Persistence: story plans persist at `.context/PBI/{ticket}/impl-plan.md` with topic_key `pbi/{ticket}/impl-plan`; macro feature plans use `pbi/{epic-slug}/feature-impl-plan`. Auto-generated, so `capture_prompt: false`. See `init-project/references/topic-key-conventions.md`.
+
+#### Workload Forecast (required output of Stage 1)
+
+After the impl-plan is written, the planner emits a forecast block at the bottom of `implementation-plan.md` and into the orchestrator turn-summary:
+
+```
+## Review Workload Forecast
+
+Estimated: <X> additions + <Y> deletions = <Z> total lines
+400-line budget risk: Low | Medium | High
+Chain strategy: stacked-to-main | feature-branch-chain | size-exception | pending
+Decision needed before apply: Yes | No
+```
+
+Algorithm (per-file multipliers, 20% test+docs buffer), risk thresholds (`<200` Low, `200-400` Medium, `>400` High), and chain-strategy options live in `references/workload-forecast.md`. The block is emitted by the planner; the **gate** is enforced by the orchestrator at the Stage 1 → Stage 2 boundary (see Stage 2 below).
+
 ### Stage 2: Implementation
+
+**Gate (workload forecast)**: Stage 2 does NOT start if the Stage 1 forecast block reports `risk=High` AND `chain_strategy=pending`. Resolve the strategy by handing off to the `/chained-pr` skill (decision tree + concrete branch plan), then return: update the forecast block in `implementation-plan.md` with the chosen strategy and proceed. See `references/workload-forecast.md` for full gate behavior.
 
 Pick the right entry point based on ticket type:
 
 - **New story** -> `references/implement-story.md` (main flow). Walk the impl plan step-by-step.
-- **Bug fix** -> `references/bug-fix-workflow.md` (root-cause first; reproduce; fix; regression check).
+- **Bug fix** -> `references/bug-fix-workflow.md` (root-cause first; reproduce; fix; regression check). Root-cause notes persist at `.context/PBI/{ticket}/bug-fix.md` with topic_key `pbi/{ticket}/bug-fix`. See `init-project/references/topic-key-conventions.md`.
 - **Resuming after interruption** -> `references/continue-implementation.md` (re-orient, identify last completed step, resume).
 - **PR feedback / lint or CI red** -> `references/fix-issues.md` (address comments without rewriting history).
 
@@ -179,11 +208,29 @@ Review checklist (driven by `references/review-pr.md`):
 - Security checks (no secrets in diff, auth handled, input validation)
 - UI/UX adherence to design system (where applicable)
 
+Review notes persist at `.context/PBI/{ticket}/review.md` with topic_key `pbi/{ticket}/review`. Auto-generated review summaries use `capture_prompt: false`; human-prompted architectural decisions use `capture_prompt: true`. See `init-project/references/topic-key-conventions.md`.
+
 Findings loop back to Stage 2 with `fix-issues.md`. Architectural rework loops back to Stage 1 with a new spec (rare).
 
 **Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
 
 Hand-off: `/git-flow` for PR creation/merge ops; `/git-conflict-fix` for conflict resolution.
+
+#### Spec Compliance Matrix (required output of Stage 3)
+
+After the static code review checklist passes, the reviewer/orchestrator generates a Spec Compliance Matrix — one row per AC scenario from the story, mapping each scenario to the evidence that proves it works:
+
+```
+| AC scenario (Gherkin) | covered_by | evidence | status |
+|---|---|---|---|
+| <one row per AC scenario from the story> | <type:id> | <link or path> | <status> |
+```
+
+`covered_by` accepts: `test:<id>`, `manual:<evidence-path>`, `exempt:<reason>`, `review-approved:<reviewer>`. Status legend: `covered` | `manual` | `exempt` | `review-approved` | `uncovered`.
+
+**Gate**: PR cannot merge if any row is `uncovered` without justification. Resolve by adding a test, adding manual evidence, or reclassifying to `exempt:<specific reason>` (vague reasons are rejected). If the scenario truly cannot be verified, loop back to Stage 1 and re-spec the AC.
+
+Algorithm, four `covered_by` shapes with examples, full status legend, the 2FA-login worked example, and persistence (`.context/PBI/{ticket}/compliance-matrix.md`, topic_key `pbi/{ticket}/compliance-matrix`): see `references/spec-compliance-matrix.md`.
 
 ### Stage 4: Staging Deploy
 

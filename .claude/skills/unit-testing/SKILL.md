@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Unit Testing
 
 Focused skill for designing and writing unit-level tests. Covers TDD cycles, test naming conventions, mocking decisions, and coverage strategy. TDD-friendly and stack-agnostic (Jest, Vitest, Mocha, or any runner with a similar API). Plays well as a standalone skill or as a mid-flight callee from `/sprint-dev` when a slice benefits from test-first development.

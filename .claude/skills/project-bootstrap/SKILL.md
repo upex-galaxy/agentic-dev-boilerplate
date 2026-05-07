@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Project Bootstrap — Infrastructure scaffolding
 
 `project-bootstrap` scaffolds the codebase foundation: it turns the product specs produced by `/project-foundation` into a working backend + frontend with the integration plumbing wired in. Where `project-foundation` answers "what are we building", this skill answers "now stand up the repo so we can start building it".

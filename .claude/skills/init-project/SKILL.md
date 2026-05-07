@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: bootstrap
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Init Project — Foundation references + bootstrap
 
 `init-project` is the skill that other skills assume already exists. It plays two distinct roles in the same package:
@@ -39,8 +49,9 @@ Bootstrap writes files in **this exact order**. Each step is justified by what d
 5. **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
 6. **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
 7. **`AGENTS.md`** + symlink **`CLAUDE.md → AGENTS.md`** (last). `AGENTS.md` cites every file written in steps 1-6, so it must be written after all of them. The `CLAUDE.md → AGENTS.md` symlink must be created after the real file exists.
+8. **`.context/testing-capabilities.json`** (post-bootstrap detection). After AGENTS.md / CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
 
-Files MUST NOT be reordered. The dependency chain is real: a user who runs the bootstrap halfway and then types `bun run agents:setup` would otherwise hit "missing script" errors.
+Files MUST NOT be reordered. The dependency chain is real: a user who runs the bootstrap halfway and then types `bun run agents:setup` would otherwise hit "missing script" errors. Step 8 must follow step 7 because the strict-TDD priority chain reads `CLAUDE.md`.
 
 **Post-bootstrap order for the user.** After `init` completes, the report should instruct the user to run, in this exact order:
 
@@ -78,11 +89,12 @@ Detect platform from `process.platform`. Symlinks on Windows require either admi
 
 ## References cited by other skills
 
-| File                                   | Cited by                                                                                                                   | Purpose                                                                                         |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `references/briefing-template.md`      | `sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern. |
-| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                            | Decision table + heuristic for picking Single / Sequential / Parallel / Background.             |
-| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `AGENTS.md`                                              | Cacheable mirror of `AGENTS.md` §"Orchestration Mode (Subagent Strategy)".                      |
+| File                                   | Cited by                                                                                                                   | Purpose                                                                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `references/briefing-template.md`      | `sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern.                             |
+| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                            | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                                         |
+| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `AGENTS.md`                                              | Cacheable mirror of `AGENTS.md` §"Orchestration Mode (Subagent Strategy)".                                                  |
+| `references/testing-capabilities.md`   | `unit-testing`, `sprint-dev`                                                                                               | Cache schema + detection algorithm for `.context/testing-capabilities.json` (runner / e2e / typecheck / lint / strict_tdd). |
 
 When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `init-project` before continuing.
 

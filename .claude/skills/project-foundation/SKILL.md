@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Project Foundation — Product definition orchestrator
 
 `project-foundation` orchestrates the one-time, up-front definition of a product: **why** we are building it (Constitution), **what** we are building (Architecture: PRD + SRS), and **how the system maps to its world** (Discovery). It produces the documents every later skill assumes already exist.

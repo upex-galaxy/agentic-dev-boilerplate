@@ -6,6 +6,16 @@ compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: management
 ---
 
+<!-- Model preferences (advisory; dispatchers may use to route) -->
+<!--
+model_preferences:
+  foundation: opus       # high-leverage architectural work
+  planning: sonnet       # structured writing
+  implementation: sonnet # default for code work
+  review: opus           # critical analysis
+  archive: haiku         # mechanical close-out
+-->
+
 # Product Management
 
 Orchestrates the continuous product management lifecycle: turning a fresh PRD into an initial Jira backlog, adding new features incrementally as the product evolves, structuring epics, and refining individual stories until they are truly "ready for development". Unlike `/project-foundation` (one-time, foundational), product management is **ongoing work** — re-invoke this skill any time backlog work surfaces.
@@ -36,7 +46,7 @@ When you have a fresh PRD/SRS and zero issues in Jira, generate the initial back
 
 Read `references/product-backlog-seed.md`.
 
-Output: `.context/PBI/epic-tree.md` + per-epic folders + initial stories created in Jira under `{{PROJECT_KEY}}`.
+Output: `.context/PBI/epic-tree.md` + per-epic folders + initial stories created in Jira under `{{PROJECT_KEY}}`. Each epic file persists with topic_key `pbi/{epic-slug}/epic`; per-story files use `pbi/{ticket}/spec`. See `init-project/references/topic-key-conventions.md`.
 
 ### B. Incremental feature addition (continuous)
 
@@ -52,7 +62,7 @@ When you need to formally structure a new epic — naming, scope boundaries, dec
 
 Read `references/epic-creation.md`.
 
-Output: epic folder under `.context/PBI/{epic-slug}/` + `epic.md` + decomposed child stories.
+Output: epic folder under `.context/PBI/{epic-slug}/` + `epic.md` + decomposed child stories. Topic_key: `pbi/{epic-slug}/epic` (UPSERT semantics; see `init-project/references/topic-key-conventions.md`).
 
 ### D. Story refinement (per story)
 
@@ -68,7 +78,7 @@ When a story has rough acceptance criteria — vague conditions, missing data, n
 
 Read `references/acceptance-criteria.md`.
 
-Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS.
+Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists at `.context/PBI/{ticket}/spec.md` with topic_key `pbi/{ticket}/spec`. See `init-project/references/topic-key-conventions.md`.
 
 ### F. Edge-case enumeration (per feature/epic)
 
@@ -76,7 +86,7 @@ When designing or refining a feature and you need to systematically enumerate fa
 
 Read `references/edge-cases-enumeration.md`.
 
-Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA).
+Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists at `.context/PBI/{ticket}/edge-cases.md` with topic_key `pbi/{ticket}/edge-cases`. See `init-project/references/topic-key-conventions.md`.
 
 ## Specific tasks — which reference to read
 
@@ -88,6 +98,18 @@ Output: cataloged edge cases with criticality + decision (high-criticality + cle
 | "refine this story" / "INVEST" / "ready for development" / "3 amigos" / "story slicing" | `references/story-refinement.md`       |
 | "refine AC" / "acceptance criteria quality" / "Gherkin scenarios" / "AC ambiguities"    | `references/acceptance-criteria.md`    |
 | "enumerate edge cases" / "boundary scenarios" / "failure modes" / "what could go wrong" | `references/edge-cases-enumeration.md` |
+
+## Optional: Delta Specs Pattern
+
+For projects with concurrent devs on the same feature, compliance/audit requirements, or capabilities that need an explicit history of behavioral change, an opt-in formal change-tracking pattern is available. Instead of editing acceptance criteria in place on each story, you maintain:
+
+- **Source-of-truth specs** at `.context/PBI/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
+- **Delta specs** per change at `.context/PBI/{ticket}/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
+- **Archive process** that merges deltas back into the source-of-truth on story close and moves the change folder under `.context/PBI/archive/YYYY-MM-DD-{ticket}/`
+
+See `references/delta-specs.md` for the full pattern: when to adopt it, requirement format, the **copy-full-then-edit rule** for MODIFIED requirements, the archive protocol, and migration guidance.
+
+**Default flow remains in-place AC editing** (lower overhead, fits solo developers and small teams). Adopt delta specs only when one of the conditions in the reference document actually holds — the overhead is real.
 
 ## Hand-offs
 

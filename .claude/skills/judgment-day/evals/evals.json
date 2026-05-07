@@ -1,0 +1,52 @@
+{
+  "evals": [
+    {
+      "name": "should-trigger-judgment-day-pr-url",
+      "prompt": "Judgment day on PR #345 — this one touches the auth middleware and I want two perspectives before merge.",
+      "expected_behavior": "Activates judgment-day in manual mode. Reads target via PR URL (gh pr diff #345). Reads jury-protocol.md for Judge A and Judge B briefings. Builds identical Project Standards block from .context/skill-registry.md filtered by auth/* path. Dispatches Judge A (correctness) and Judge B (robustness) IN PARALLEL in the same function_calls block — not sequentially. Each judge is blind to the other. Receives both reports, synthesizes per synthesis-rules.md (real vs theoretical, severity reconciliation), produces synthesized verdict with grouped findings (Critical / Major / Minor) + Theoretical INFO bucket. If Critical findings exist → dispatches fix agent with action items, then re-judges in parallel for Round 2.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-doble-review-spanish",
+      "prompt": "Doble review para el refactor de auth — quiero que dos jueces lo miren de forma independiente antes de mergear.",
+      "expected_behavior": "Activates judgment-day in manual mode. Mirrors Spanish in conversation (artifacts in English). Probes for the target if not specified (PR URL? branch? PBI folder?). Dispatches both judges in parallel with identical Project Standards block + divergent focus (correctness vs robustness). Synthesizes per the cross-check algorithm. Reports verdict in Spanish to the user; the synthesized report itself is in English (artifact convention).",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-rioplatense-voseo",
+      "prompt": "Que lo juzguen, esto toca payments y no quiero comerme un bug en producción.",
+      "expected_behavior": "Activates judgment-day in manual mode. Recognizes Rioplatense voseo trigger ('que lo juzguen'). Mirrors Spanish in conversation. Identifies that 'payments' is in the auto_trigger_paths default list, so even if this had been a sprint-dev Stage 3 review, judgment-day would have fired automatically. Probes for the PR/branch target. Dispatches both judges in parallel. Synthesis emphasizes security findings (Judge B's domain) given the payments path.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-adversarial-security-middleware",
+      "prompt": "Adversarial review of the security middleware change in feat/UPEX-401-rate-limit. I want to catch anything sketchy before it hits staging.",
+      "expected_behavior": "Activates judgment-day in manual mode with branch-name target. Runs git diff staging...feat/UPEX-401-rate-limit to build the target packet. Filters Project Standards block for security/* path matches (security-scan, code-auditor rules if registered). Dispatches Judge A (correctness — does it rate-limit per the spec?) and Judge B (robustness — bypass vectors, race conditions, fail-open vs fail-closed, denial-of-service amplification) in parallel. Synthesizer emphasizes any security-category findings as Critical regardless of frequency.",
+      "category": "positive"
+    },
+    {
+      "name": "should-trigger-auto-from-sprint-dev",
+      "prompt": "[sprint-dev Stage 3 auto-handoff] Diff in PR #401 touches src/security/csrf.ts and src/auth/session.ts — invoking judgment-day per .agents/project.yaml::judgment_day.auto_trigger_paths.",
+      "expected_behavior": "Activates judgment-day in auto-trigger mode (called from sprint-dev Stage 3 gate). Recognizes 'security/' and 'auth/' as configured trigger paths. Reads the diff sprint-dev already produced (no need to re-fetch). Both judges dispatched in parallel with identical briefings. Verdict block returned to sprint-dev so Stage 3 can either proceed (APPROVED) or stay blocked (ESCALATED) per the contract in SKILL.md §'Hand-off contract'. judgment-day does NOT call back into sprint-dev steps; it just returns the verdict and exits.",
+      "category": "positive"
+    },
+    {
+      "name": "should-not-trigger-routine-review",
+      "prompt": "Review this PR — small CRUD change to the user profile page, nothing fancy.",
+      "expected_behavior": "Does NOT activate judgment-day. Should route to sprint-dev Stage 3 (single-reviewer code review). Reasoning: routine CRUD change, no sensitive paths in the diff, no user request for adversarial review. judgment-day is reserved for critical PRs and high-stakes architectural changes; it would be wasted compute (2 parallel subagents) on a trivial diff. If the orchestrator is uncertain, it surfaces 'this looks routine — sprint-dev Stage 3 single-reviewer is the default. Confirm if you want adversarial review anyway.'",
+      "category": "negative"
+    },
+    {
+      "name": "should-not-trigger-merge-conflict",
+      "prompt": "Fix the merge conflict in src/auth/session.ts — staging diverged from my branch.",
+      "expected_behavior": "Does NOT activate judgment-day. Should route to /git-conflict-fix. Reasoning: judgment-day reviews finished code; it does not resolve conflicts or make Git decisions. Even though the file is in auth/* (a sensitive path), the task is conflict resolution, not adversarial review.",
+      "category": "negative"
+    },
+    {
+      "name": "should-not-trigger-feature-implementation",
+      "prompt": "Implement UPEX-501 — the new payment-method dropdown. Plan, code, review, deploy.",
+      "expected_behavior": "Does NOT activate judgment-day directly. Should route to /sprint-dev for full-story orchestration. Reasoning: judgment-day is a review-stage skill, not an implementation orchestrator. sprint-dev's Stage 3 may auto-invoke judgment-day if the diff touches auto_trigger_paths (and 'payment-method' likely lives under payments/, so the auto-trigger will fire), but the user entry point is sprint-dev, not judgment-day directly.",
+      "category": "negative"
+    }
+  ]
+}
