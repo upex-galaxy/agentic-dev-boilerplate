@@ -1,23 +1,24 @@
 # Context Engineering Strategy
 
-> **Purpose**: Explain the context engineering strategy for AI-driven test automation.
+> **Purpose**: Explain the context engineering strategy that powers AI-driven development in this repo.
 > **Audience**: Humans learning the system + AI when needing to understand "why".
-> **Related**: `CLAUDE.md` contains the operational context loaded each session.
+> **Related**: `CLAUDE.md` and `AGENTS.md` contain the operational context loaded each session.
 
 ---
 
 ## 1. What is Context Engineering?
 
-**Context Engineering** is the practice of structuring information so AI assistants can work effectively on a codebase. Instead of the AI reading everything (expensive, slow), we provide curated context based on the task.
+**Context Engineering** is the practice of structuring information so AI assistants can work effectively on a codebase. Instead of the AI reading everything (expensive, slow, prone to hallucination), we provide curated context based on the task.
 
 ### Core Principles
 
-| Principle                  | Description                                  |
-| -------------------------- | -------------------------------------------- |
-| **Token Efficiency**       | Load only what's needed for the current task |
-| **Progressive Loading**    | Start with summary, load details on demand   |
-| **Context Relevance**      | Different tasks need different context       |
-| **Single Source of Truth** | One place for each type of information       |
+| Principle                  | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| **Token Efficiency**       | Load only what's needed for the current task                        |
+| **Progressive Loading**    | Start with summary, load details on demand                          |
+| **Context Relevance**      | Different tasks need different context                              |
+| **Single Source of Truth** | One place for each type of information                              |
+| **Skills over prompts**    | Executable workflows live in skills, not in copy-paste prompt files |
 
 ---
 
@@ -26,104 +27,92 @@
 This repository separates concerns into distinct directories, each with a specific purpose:
 
 ```
-ai-driven-test-automation-boilerplate/
+ai-driven-project-starter/
 │
-├── .context/       → Documentation THAT the AI reads (context)
-├── .prompts/       → Instructions FOR the AI to execute tasks
-├── docs/           → Documentation for humans
-├── tests/          → KATA framework implementation
-└── CLAUDE.md       → Project memory (loaded every session)
+├── .context/         → Project memory the AI reads (PRD, SRS, PBI, business map)
+├── .claude/skills/   → Executable workflows the AI runs (auto-triggered)
+├── .claude/commands/ → Slash commands of utility (/git-flow, /sprint-report, …)
+├── .agents/          → Project variable contract (project.yaml, jira.json, …)
+├── docs/             → Documentation for humans
+├── CLAUDE.md         → Operational context (loaded every Claude Code session)
+└── AGENTS.md         → Same content, mirrored for non-Claude agents
 ```
 
 ### Why This Separation?
 
-| Directory   | Contains                                           | When Loaded                              |
-| ----------- | -------------------------------------------------- | ---------------------------------------- |
-| `.context/` | Facts about the system (what exists, how it works) | When AI needs to understand the system   |
-| `.prompts/` | Task instructions (what to do, step by step)       | When AI needs to perform a specific task |
-| `docs/`     | Learning material for humans                       | When humans need to learn                |
-| `CLAUDE.md` | Operational rules + project state                  | Every session automatically              |
+| Directory           | Contains                                           | When Loaded                              |
+| ------------------- | -------------------------------------------------- | ---------------------------------------- |
+| `.context/`         | Facts about the system (what exists, how it works) | When AI needs to understand the system   |
+| `.claude/skills/`   | Workflow instructions (what to do, step by step)   | Auto-triggered by Claude Code on intent  |
+| `.claude/commands/` | Standalone slash commands invoked by `/<name>`     | When the user explicitly invokes them    |
+| `.agents/`          | Variable resolution (project.yaml + jira manifest) | Read by linters and skills at runtime    |
+| `docs/`             | Learning material for humans                       | When humans need to learn                |
+| `CLAUDE.md`         | Operational rules + project state                  | Every Claude Code session, automatically |
+
+> **Note (history).** Earlier versions of this template used `.prompts/` as a workflow directory and `.context/guidelines/` as a rules directory. Both have been retired: workflow content moved to `.claude/skills/` and rules now live inside each skill. The CLI (`bun run up`) v4.1+ no longer syncs the legacy directories.
 
 ---
 
 ## 3. Directory Structure
 
-### .context/ - AI Context
+### `.context/` — Project Memory
 
 ```
 .context/
-├── guidelines/           → Rules and patterns for development
-│   ├── TAE/             → Test Automation Engineering (KATA framework)
-│   ├── QA/              → Manual testing guidelines
-│   └── MCP/             → MCP integration guides
+├── idea/                   → Constitution: business model, glossary, market context
+├── PRD/                    → Product requirements (user journeys, MVP scope, personas)
+├── SRS/                    → Software requirements + infrastructure
+├── PBI/                    → Per-story local context (ACs, plan, evidence)
 │
-├── PRD/                 → Product Requirements (generated)
-├── SRS/                 → Software Requirements (generated)
-├── idea/                → Business context (generated)
-├── PBI/                 → Backlog items (generated)
-│
-├── business-data-map.md    → System flows (generated)
-├── api-architecture.md     → API documentation (generated)
-└── project-test-guide.md   → Testing guide (generated)
+├── business-data-map.md    → System flows and entities (Discovery output)
+├── api-architecture.md     → API endpoints reference (Discovery output)
+├── project-dev-guide.md    → How to develop features in this codebase
+└── system-prompt.md        → AI session bootstrap context
 ```
 
-**Key Files (Fixed Names)**:
+**Generated by:** `/project-foundation` (Discovery step) and `/context-engineering-setup`.
 
-- `guidelines/TAE/kata-ai-index.md` - Entry point for test automation
+### `.claude/skills/` — Executable Workflows
 
-### .prompts/ - AI Operations Center
+Workflow skills (project-starter):
 
 ```
-.prompts/
-├── discovery/           → One-time project setup (phases 1-4)
-│   ├── phase-1-constitution/
-│   ├── phase-2-architecture/
-│   ├── phase-3-infrastructure/
-│   └── phase-4-specification/
-│
-├── fase-5-shift-left-testing/  → Test planning (per story)
-├── fase-10-exploratory-testing/ → Manual testing (per story)
-├── fase-11-test-documentation/ → TMS documentation (per story)
-├── fase-12-test-automation/    → Test automation (per story)
-│   └── regression/             → Regression testing (per release)
-│
-├── utilities/           → Helpers + context generators
-└── us-qa-workflow.md    → QA workflow orchestrator
+.claude/skills/
+├── init-project/           → One-time bootstrap (.agents/, scripts, AGENTS.md)
+├── project-foundation/     → Constitution + PRD + SRS + Discovery
+├── project-bootstrap/      → Backend + frontend + features (OpenAPI, auth, env)
+├── product-management/     → Backlog seed, epic creation, story refinement
+├── sprint-dev/             → Per-story dev loop (Plan → Code → Review → Deploy)
+└── unit-testing/           → TDD workflow (composable mid-flight)
 ```
 
-**Key Files (Fixed Names)**:
+Reusable knowledge skills (e.g. `frontend-design`, `next-best-practices`, `playwright-cli`) live alongside these. Each skill is self-documenting via its `SKILL.md`.
 
-- `us-qa-workflow.md` - Orchestrates the entire QA workflow
-- `utilities/context-engineering-setup.md` - Generates README.md + CLAUDE.md
+### `.claude/commands/` — Utility Slash Commands
 
-### docs/ - Human Documentation
+```
+.claude/commands/
+├── git-flow.md                  → Feature/release/hotfix branch guidance
+├── git-conflict-fix.md          → Resolve merge conflicts safely
+├── project-doc-setup.md         → Regenerate README.md / CLAUDE.md
+├── context-engineering-setup.md → Build the .context/ structure for a project
+└── sprint-report.md             → Generate sprint progress report
+```
+
+### `docs/` — Human Documentation
 
 ```
 docs/
-├── architectures/       → Target application architecture
-├── methodology/         → Testing methodology (IQL, KATA phases)
-├── setup/               → Setup guides (MCP, tools)
-├── testing/             → Testing guides (API, DB, automation)
-├── workflows/           → Workflow guides (git, environments)
+├── architectures/      → Stack-specific guides (e.g. supabase-nextjs)
+├── methodology/        → Testing methodology (IQL, Jira platform, etc.)
+├── setup/              → Setup guides (MCP, Jira)
+├── workflows/          → Tooling workflows (git-flow, update-template, OpenAPI sync)
 └── context-engineering.md → This file
 ```
 
-### tests/ - KATA Implementation
+### `.agents/` — Variable Contract
 
-```
-tests/
-├── components/          → KATA components (Layers 1-4)
-│   ├── TestContext.ts   → Layer 1: Config, Faker, utilities
-│   ├── api/             → Layers 2-3: ApiBase + domain APIs
-│   ├── ui/              → Layers 2-3: UiBase + domain pages
-│   ├── flows/           → Reusable ATC chains
-│   └── TestFixture.ts   → Layer 4: Dependency injection
-│
-├── e2e/                 → E2E tests (UI + API)
-├── integration/         → Integration tests (API only)
-├── data/                → Test data (fixtures, uploads)
-└── utils/               → Decorators, reporters
-```
+`project.yaml` is the single source of truth for project values referenced by skills and prompts as `{{VAR_NAME}}`. `jira-required.yaml` + `jira.json` provide Jira custom-field resolution. See `.agents/README.md` for the full contract.
 
 ---
 
@@ -131,47 +120,43 @@ tests/
 
 These files have stable names and locations. Reference them confidently:
 
-| File                                              | Purpose                              |
-| ------------------------------------------------- | ------------------------------------ |
-| `CLAUDE.md`                                       | Project memory, loaded every session |
-| `.context/guidelines/TAE/kata-ai-index.md`        | Entry point for writing tests        |
-| `.prompts/us-qa-workflow.md`                      | QA workflow orchestrator             |
-| `.prompts/utilities/context-engineering-setup.md` | Generate project documentation       |
+| File                                 | Purpose                                          |
+| ------------------------------------ | ------------------------------------------------ |
+| `CLAUDE.md`                          | Project memory, loaded every Claude Code session |
+| `AGENTS.md`                          | Same as CLAUDE.md, for non-Claude agents         |
+| `.agents/project.yaml`               | Project variable values (single source of truth) |
+| `.context/business-data-map.md`      | System flows and entities (Discovery output)     |
+| `.context/api-architecture.md`       | API endpoints reference (Discovery output)       |
+| `.claude/skills/sprint-dev/SKILL.md` | Per-story dev loop entry point                   |
 
 ---
 
 ## 5. Workflow Overview
 
-### One-Time Setup (Discovery)
+### One-Time Setup (Foundation)
 
 ```
-Phase 1: Constitution    → Understand the business
-Phase 2: Architecture    → Document PRD + SRS
-Phase 3: Infrastructure  → Map technical stack
-Phase 4: Specification   → Connect to backlog
+/init-project           → Bootstrap .agents/, scripts, AGENTS.md
+/project-foundation     → Constitution + PRD + SRS + Discovery outputs
+/project-bootstrap      → Backend + frontend skeleton + features
 ```
 
-**Output**: Populated `.context/` directories
+**Output:** Populated `.context/` directories and a working dev infrastructure.
 
-### Context Generators
-
-After discovery, generate operational context:
+### Continuous Product Management
 
 ```
-.prompts/utilities/business-data-map.md    → .context/business-data-map.md
-.prompts/utilities/api-architecture.md     → .context/api-architecture.md
-.prompts/utilities/project-test-guide.md   → .context/project-test-guide.md
+/product-management → Seed backlog, add features, create epics, refine stories (INVEST + AC)
 ```
 
-### QA Stages (Per User Story)
+### Per-Story Dev Loop
 
 ```
-Stage 1: Shift-Left     → Plan tests BEFORE development
-Stage 2: Exploratory    → Manual validation BEFORE automation
-Stage 3: Documentation  → Document tests in TMS
-Stage 4: Automation     → Write automated tests
-Stage 5: Regression     → Execute and report
+/sprint-dev → Planning → Implementation → Code Review → Staging → (gated) Production
+                            └── /unit-testing (composable, optional TDD slice)
 ```
+
+> **QA workflows** (sprint testing, exploratory testing, automation, regression) live in the sister repo `agentic-qa-boilerplate`.
 
 ---
 
@@ -179,21 +164,22 @@ Stage 5: Regression     → Execute and report
 
 ### By Task Type
 
-| Task                    | Load First              | Load If Needed            |
-| ----------------------- | ----------------------- | ------------------------- |
-| **Write E2E Test**      | `kata-ai-index.md`      | `e2e-testing-patterns.md` |
-| **Write API Test**      | `kata-ai-index.md`      | `api-testing-patterns.md` |
-| **Exploratory Testing** | `project-test-guide.md` | MCP guides                |
-| **Understand System**   | `business-data-map.md`  | `PRD/*`, `SRS/*`          |
-| **Use MCP**             | `MCP/README.md`         | Specific MCP guide        |
+| Task                  | Load First                               | Load If Needed                              |
+| --------------------- | ---------------------------------------- | ------------------------------------------- |
+| **Develop a Feature** | `project-dev-guide.md`                   | Module `module-context.md`                  |
+| **Plan a Story**      | `module-context.md` + story `context.md` | `business-data-map.md`                      |
+| **Write Unit Test**   | `/unit-testing` skill                    | Existing tests in repo                      |
+| **Understand System** | `business-data-map.md`                   | `PRD/*`, `SRS/*`                            |
+| **Use MCP Tools**     | `CLAUDE.md` § Tool Resolution            | Specific MCP doc in `docs/setup/`           |
+| **Bootstrap Project** | `/init-project`                          | `/project-foundation`, `/project-bootstrap` |
 
 ### By Role
 
-| Role                      | Primary Context                                                 |
-| ------------------------- | --------------------------------------------------------------- |
-| **TAE (Test Automation)** | `guidelines/TAE/*`                                              |
-| **QA (Manual Testing)**   | `guidelines/QA/*` + `fase-10-exploratory-testing/*`             |
-| **DevOps**                | `ci-cd-integration.md` + `fase-12-test-automation/regression/*` |
+| Role               | Primary Entry Points                                            |
+| ------------------ | --------------------------------------------------------------- |
+| **Developer**      | `/sprint-dev` (+ optional `/unit-testing`)                      |
+| **Product / PM**   | `/product-management`, `/project-foundation`                    |
+| **DevOps / Infra** | `/project-bootstrap`, `docs/workflows/update-template-guide.md` |
 
 ---
 
@@ -201,50 +187,54 @@ Stage 5: Regression     → Execute and report
 
 ### DO
 
-- Load `CLAUDE.md` first (automatic)
-- Load task-specific guidelines
-- Use prompts from `.prompts/` for structured tasks
-- Reference code in `tests/components/` as living examples
+- Let `CLAUDE.md` load automatically (it's small and curated)
+- Invoke skills by intent — they self-load only what they need
+- Use Discovery outputs (`.context/business-data-map.md`, `.context/api-architecture.md`) as living documentation
+- Reference code in `tests/components/` (or feature folders) as living examples
 
 ### DON'T
 
-- Load all guidelines at once
-- Include full file trees in prompts
+- Load all skill files at once
+- Include full file trees in your prompts
 - Duplicate information across files
-- Load PRD/SRS for simple test writing
+- Load PRD/SRS for simple per-story work — `module-context.md` is usually enough
 
 ---
 
 ## 8. Maintenance Guidelines
 
-### When to Update CLAUDE.md
+### When to Update CLAUDE.md / AGENTS.md
 
 - Project identity changes
 - New MCPs configured
 - New CLI tools added
-- Testing decisions documented
+- Critical Reminders or Rules change
 
-### When to Update Guidelines
+> Use `/project-doc-setup` to regenerate both files from the current repo state.
 
-- Framework patterns change
-- New conventions adopted
-- Best practices refined
-
-### When to Update Prompts
+### When to Update a Skill
 
 - Workflow steps change
 - New outputs required
 - Better instructions discovered
 
+Edit the relevant `.claude/skills/<name>/SKILL.md` directly. Skills are committed to the repo so every clone gets them.
+
+### When to Update `.context/`
+
+- After Discovery (one-time per major architecture change)
+- When the business data map or API architecture genuinely changes
+- After a story closes that introduced new domain concepts (update relevant `module-context.md`)
+
 ---
 
 ## Related Documentation
 
-- **CLAUDE.md** - Operational context (project root)
-- **README.md** - Project overview for humans
-- `.context/guidelines/TAE/kata-ai-index.md` - KATA framework entry point
-- `.prompts/README.md` - How to use prompts
+- `CLAUDE.md` / `AGENTS.md` — Operational context (project root)
+- `README.md` — Project overview for humans
+- `.agents/README.md` — Variable contract and validation scripts
+- `docs/workflows/update-template-guide.md` — How to sync this template upstream
 
 ---
 
-**Last Updated**: 2026-02-12
+**Last Updated**: 2026-05-07

@@ -26,7 +26,7 @@ required:
     name: '✅ Acceptance Criteria (Gherkin)'
     type: string
     description: 'Gherkin-formatted acceptance criteria attached to user stories.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by: [jira-sync, sprint-dev]
 
   business_rules_specification:
     name: '🚩Business Rules Specification'
@@ -64,39 +64,65 @@ required:
     description: 'External reference URL attached to the story.'
     used_by: [jira-sync]
 
-  # ---- Bug / Defect fields (consumed by scripts/jira-sync.ts + fase-10-exploratory-testing/bug-report) ----
+  # ---- Bug / Defect fields (consumed by scripts/jira-sync.ts + sprint-dev/references/bug-fix-workflow.md;
+  #      also reserved for downstream agentic-qa-boilerplate sister repo's sprint-testing/bug-report) ----
   actual_result_comportamiento:
     name: '🐞 Actual Result (Comportamiento)'
     type: string
     description: 'Observed behavior captured during bug repro.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   expected_result_output:
     name: '✅ Expected Result (Output)'
     type: string
     description: 'Expected behavior per acceptance criteria, contrasted against the bug.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   error_type:
     name: 'Error Type'
     type: option
     options: [content, crash, data, functional, integration, performance, security, visual]
     description: 'Bug taxonomy by error category.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   severity:
     name: 'Severity 🚩'
     type: option
     options: [critica, mayor, menor, moderada, trivial]
     description: 'Bug severity classification (impact-based).'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   test_environment:
     name: 'Test Environment 📦️'
     type: option
     options: [dev, production, qa, staging, uat]
     description: 'Environment where the bug was reproduced or where the test ran.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   root_cause:
     name: 'Root Cause🐞'
@@ -111,26 +137,46 @@ required:
       - third_party_error
       - working_as_designed_wad
     description: 'Post-mortem cause classification, set after the fix.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   workaround:
     name: '🚩 Workaround'
     type: string
     description: 'Temporary mitigation steps to unblock users until the fix ships.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   evidence:
     name: '🧫EVIDENCE'
     type: string
     description: 'Bug evidence: screenshots, traces, logs, repro recordings.'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
   fix:
     name: 'Fix'
     type: option
     options: [bugfix, hotfix]
     description: 'Type of fix applied (bugfix vs urgent hotfix).'
-    used_by: [jira-sync, fase-10-exploratory-testing/bug-report]
+    used_by:
+      [
+        jira-sync,
+        sprint-dev/references/bug-fix-workflow.md,
+        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
+      ]
 
 optional:
   # (empty)

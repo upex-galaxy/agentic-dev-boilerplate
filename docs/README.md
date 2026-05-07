@@ -2,11 +2,11 @@
 
 > **Idioma:** Español
 
-Bienvenido a la documentación del **AI-Driven Test Automation Boilerplate**.
+Bienvenido a la documentación del **AI-Driven Project Starter**.
 
-Esta documentación está orientada a **humanos** - para aprender conceptos, entender metodologías y seguir guías paso a paso.
+Esta documentación está orientada a **humanos** — para aprender conceptos, entender metodologías y seguir guías paso a paso.
 
-> **Nota**: Para documentación **orientada a AI**, consulta `.context/guidelines/`.
+> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `CLAUDE.md` y `AGENTS.md` en la raíz del repo. El resto del comportamiento de la AI vive en skills (`.claude/skills/`) y commands (`.claude/commands/`).
 
 ---
 
@@ -14,92 +14,67 @@ Esta documentación está orientada a **humanos** - para aprender conceptos, ent
 
 ```
 docs/
-├── methodology/              # Metodologías de testing
-│   ├── IQL-methodology.md    # Integrated Quality Lifecycle
-│   ├── early-game-testing.md # Fase shift-left
-│   ├── mid-game-testing.md   # Fase de desarrollo activo
-│   ├── late-game-testing.md  # Fase de regresión
-│   └── kata-fundamentals.md  # Filosofía del framework KATA
+├── methodology/                  # Metodologías de testing y QA
+│   ├── IQL-methodology.md        # Integrated Quality Lifecycle
+│   ├── early-game-testing.md     # Fase shift-left
+│   ├── mid-game-testing.md       # Fase de desarrollo activo
+│   ├── late-game-testing.md     # Fase de regresión
+│   └── jira-platform.md          # Uso de Jira en el flujo
 │
-├── testing/                  # Guías de testing por tipo
-│   ├── api/                  # Testing de APIs
-│   ├── database/             # Testing de base de datos
-│   └── automation/           # Automatización de tests
+├── setup/                        # Guías de configuración (MCPs, Jira)
+│   ├── jira-setup-guide.md       # Configurar Jira/Atlassian
+│   ├── mcp-dbhub.md              # DBHub MCP
+│   ├── mcp-openapi.md            # OpenAPI MCP
+│   └── mcp/                      # Templates de configuración MCP
 │
-├── setup/                    # Guías de configuración
-│   ├── mcp-dbhub.md          # Configuración de DBHub MCP
-│   └── mcp-openapi.md        # Configuración de OpenAPI MCP
+├── workflows/                    # Flujos de trabajo
+│   ├── environments.md           # Ambientes dev, staging, prod
+│   ├── git-flow.md               # Flujo Git para desarrollo asistido por AI
+│   ├── sync-openapi-guide.md     # Uso de `bun run api:sync`
+│   └── update-template-guide.md  # Uso de `bun run up`
 │
-├── workflows/                # Flujos de trabajo
-│   ├── environments.md       # Ambientes dev, staging, prod
-│   ├── git-flow.md           # Flujo Git para desarrollo AI
-│   ├── test-manual-lifecycle.md   # Flujo TMLC
-│   └── test-automation-lifecycle.md # Flujo TALC
+├── architectures/                # Guías específicas por stack
+│   └── supabase-nextjs/          # Configuración Supabase + Next.js
 │
-└── architectures/            # Guías específicas por stack
-    └── supabase-nextjs/      # Configuración Supabase + Next.js
+└── context-engineering.md        # Estrategia de context engineering
 ```
 
 ---
 
 ## Metodología
 
-La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)** con tres fases:
+La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)**.
 
-| Documento                                                    | Descripción                    |
-| ------------------------------------------------------------ | ------------------------------ |
-| [IQL-methodology.md](./methodology/IQL-methodology.md)       | Vista completa de IQL          |
-| [early-game-testing.md](./methodology/early-game-testing.md) | Testing shift-left (Steps 1-4) |
-| [mid-game-testing.md](./methodology/mid-game-testing.md)     | Automatización (Steps 5-9)     |
-| [late-game-testing.md](./methodology/late-game-testing.md)   | Producción (Steps 10-15)       |
-| [kata-fundamentals.md](./methodology/kata-fundamentals.md)   | Filosofía del framework KATA   |
-
----
-
-## Guías de Testing
-
-### [API Testing](./testing/api/)
-
-| Documento                                                | Descripción                       | Estado        |
-| -------------------------------------------------------- | --------------------------------- | ------------- |
-| [authentication.md](./testing/api/authentication.md)     | Patrones de autenticación de APIs | ✅ Disponible |
-| [contract-testing.md](./testing/api/contract-testing.md) | Contract testing con OpenAPI/Zod  | ✅ Disponible |
-| [devtools-testing.md](./testing/api/devtools-testing.md) | Testing manual con DevTools       | ✅ Disponible |
-| [postman-testing.md](./testing/api/postman-testing.md)   | Testing con Postman               | ✅ Disponible |
-
-### [Database Testing](./testing/database/)
-
-| Documento                                             | Descripción                 | Estado        |
-| ----------------------------------------------------- | --------------------------- | ------------- |
-| [fundamentals.md](./testing/database/fundamentals.md) | Conceptos API vs DB testing | ✅ Disponible |
-
-### [Test Automation](./testing/automation/)
-
-| Documento                                                                   | Descripción                            | Estado        |
-| --------------------------------------------------------------------------- | -------------------------------------- | ------------- |
-| [dependency-injection.md](./testing/automation/dependency-injection.md)     | Estrategia DI en arquitectura de tests | ✅ Disponible |
-| [playwright-framework.md](./testing/automation/playwright-framework.md)     | Guía de proyectos Playwright           | ✅ Disponible |
-| [playwright-api-testing.md](./testing/automation/playwright-api-testing.md) | API testing con Playwright + KATA      | ✅ Disponible |
+| Documento                                                    | Descripción                        |
+| ------------------------------------------------------------ | ---------------------------------- |
+| [IQL-methodology.md](./methodology/IQL-methodology.md)       | Vista completa de IQL              |
+| [early-game-testing.md](./methodology/early-game-testing.md) | Testing shift-left                 |
+| [mid-game-testing.md](./methodology/mid-game-testing.md)     | Desarrollo + automatización        |
+| [late-game-testing.md](./methodology/late-game-testing.md)   | Regresión y producción             |
+| [jira-platform.md](./methodology/jira-platform.md)           | Uso de Jira en el flujo end-to-end |
 
 ---
 
 ## Guías de Configuración
 
-| Documento                                | Descripción                                 |
-| ---------------------------------------- | ------------------------------------------- |
-| [mcp-dbhub.md](./setup/mcp-dbhub.md)     | DBHub MCP para exploración de base de datos |
-| [mcp-openapi.md](./setup/mcp-openapi.md) | OpenAPI MCP para schema de APIs             |
+| Documento                                          | Descripción                                     |
+| -------------------------------------------------- | ----------------------------------------------- |
+| [jira-setup-guide.md](./setup/jira-setup-guide.md) | Configurar credenciales y MCP de Atlassian/Jira |
+| [mcp-dbhub.md](./setup/mcp-dbhub.md)               | DBHub MCP para exploración de base de datos     |
+| [mcp-openapi.md](./setup/mcp-openapi.md)           | OpenAPI MCP para schema de APIs                 |
+
+Los templates listos-para-copiar viven en [`./setup/mcp/`](./setup/mcp/).
 
 ---
 
 ## Workflows
 
-| Documento                                                                | Descripción                     | Estado        |
-| ------------------------------------------------------------------------ | ------------------------------- | ------------- |
-| [environments.md](./workflows/environments.md)                           | Guía de ambientes de desarrollo | ✅ Disponible |
-| [git-flow.md](./workflows/git-flow.md)                                   | Flujo Git para desarrollo AI    | ✅ Disponible |
-| [test-manual-lifecycle.md](./workflows/test-manual-lifecycle.md)         | TMLC - Flujo de testing manual  | ✅ Disponible |
-| [test-automation-lifecycle.md](./workflows/test-automation-lifecycle.md) | TALC - Flujo de automatización  | ✅ Disponible |
+| Documento                                                        | Descripción                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------- |
+| [environments.md](./workflows/environments.md)                   | Guía de ambientes de desarrollo                   |
+| [git-flow.md](./workflows/git-flow.md)                           | Flujo Git para desarrollo asistido por AI         |
+| [sync-openapi-guide.md](./workflows/sync-openapi-guide.md)       | `bun run api:sync` — sincronizar OpenAPI + tipos  |
+| [update-template-guide.md](./workflows/update-template-guide.md) | `bun run up` — sincronizar este template upstream |
 
 ---
 
@@ -111,7 +86,7 @@ Guías para stacks tecnológicos específicos:
 | ---------------------- | -------------------------------- | ---------------------------------------------------- |
 | **Supabase + Next.js** | PostgreSQL + PostgREST + Next.js | [supabase-nextjs/](./architectures/supabase-nextjs/) |
 
-> **Nota**: Los conceptos genéricos de testing pertenecen a `testing/`. Solo las configuraciones específicas de cada stack van en `architectures/`.
+> **Nota**: Conceptos genéricos de testing pertenecen a `methodology/`. Solo configuraciones específicas de cada stack van en `architectures/`.
 
 ---
 
@@ -123,37 +98,37 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 ### 2. Configurar Tus Herramientas
 
-Configura los MCPs que necesites:
-
 - Acceso a base de datos: [mcp-dbhub.md](./setup/mcp-dbhub.md)
 - Schema de API: [mcp-openapi.md](./setup/mcp-openapi.md)
+- Jira / Atlassian: [jira-setup-guide.md](./setup/jira-setup-guide.md)
 
-### 3. Aprender Patrones de Testing
-
-Elige según tus necesidades de testing:
-
-- Testing de APIs → [testing/api/](./testing/api/)
-- Testing de base de datos → [testing/database/](./testing/database/)
-- Automatización de tests → [testing/automation/](./testing/automation/)
-
-### 4. Seguir los Workflows
+### 3. Aprender los Workflows
 
 - [Flujo Git](./workflows/git-flow.md) para control de versiones
 - [Ambientes](./workflows/environments.md) para etapas de deployment
+- [Update Template](./workflows/update-template-guide.md) para mantenerte sincronizado
+
+### 4. Usar Skills y Commands de Claude Code
+
+El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejecutar el sprint) vive en skills bajo `.claude/skills/`. Cada skill se invoca con `/<nombre>` (por ejemplo `/sprint-dev`, `/project-foundation`). Lista completa en `CLAUDE.md` sección **Skills**.
 
 ---
 
-## Relación con `.context/`
+## Relación con `.context/` y `.claude/`
 
-| Directorio  | Audiencia | Propósito                                      |
-| ----------- | --------- | ---------------------------------------------- |
-| `docs/`     | Humanos   | Aprendizaje, tutoriales, referencia            |
-| `.context/` | AI        | Guidelines, memoria persistente, instrucciones |
+| Directorio          | Audiencia | Propósito                                                        |
+| ------------------- | --------- | ---------------------------------------------------------------- |
+| `docs/`             | Humanos   | Aprendizaje, tutoriales, referencia                              |
+| `.context/`         | AI        | Memoria persistente del proyecto (PRD, SRS, business map, PBI)   |
+| `.claude/skills/`   | AI        | Workflows ejecutables (skills auto-cargadas por Claude Code)     |
+| `.claude/commands/` | AI        | Slash commands de utilidad (`/git-flow`, `/sprint-report`, etc.) |
+| `CLAUDE.md`         | AI        | Operational context cargado en cada sesión                       |
 
 **Regla general**:
 
-- Si necesitas **aprender** algo → `docs/`
-- Si la AI necesita **recordar** algo → `.context/guidelines/`
+- Si un humano necesita **aprender** algo → `docs/`
+- Si la AI necesita **recordar** algo del proyecto → `.context/`
+- Si la AI necesita **ejecutar** un workflow → `.claude/skills/`
 
 ---
 
@@ -161,17 +136,17 @@ Elige según tus necesidades de testing:
 
 Para agregar documentación:
 
-1. **Educacional/Tutorial** → Agregar al subdirectorio apropiado de `docs/`
-2. **Guidelines para AI** → Agregar a `.context/guidelines/`
-3. **Prompts ejecutables** → Agregar a `.prompts/`
+1. **Educacional / Tutorial** → Agregar al subdirectorio apropiado de `docs/`
+2. **Workflow ejecutable para AI** → Crear o editar una skill en `.claude/skills/<nombre>/SKILL.md`
+3. **Slash command de utilidad** → Crear o editar un command en `.claude/commands/<nombre>.md`
 
 ### Agregar Nuevas Arquitecturas
 
 1. Crear carpeta: `docs/architectures/{nombre-stack}/`
 2. Agregar `README.md` con overview de la arquitectura
 3. Agregar guías de configuración específicas
-4. Mantener conceptos genéricos en `docs/testing/`
+4. Mantener conceptos genéricos en `docs/methodology/`
 
 ---
 
-**Última actualización**: 2026-02-12
+**Última actualización**: 2026-05-07

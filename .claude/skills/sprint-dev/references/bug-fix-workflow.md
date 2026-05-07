@@ -244,7 +244,7 @@ Check issue links for:
 ### 3. Code Standards (when implementing fix)
 
 ```
-.context/guidelines/DEV/
+.claude/skills/sprint-dev/references/
 ├── code-standards.md           # Coding standards (DRY, naming, TypeScript)
 ├── error-handling.md           # Error handling patterns
 └── data-testid-standards.md    # Test attributes (if UI fix)
@@ -555,8 +555,8 @@ git checkout -b hotfix/[ISSUE_KEY]/[short-description]
 
 - **Minimal changes:** Fix only what's broken
 - **Don't refactor:** Unless directly related to the bug
-- **Follow code standards:** `.context/guidelines/DEV/code-standards.md`
-- **Error handling:** `.context/guidelines/DEV/error-handling.md`
+- **Follow code standards:** `references/code-standards.md`
+- **Error handling:** `references/error-handling.md`
 - **Add data-testid:** If UI element involved (for future automation)
 - **Consider edge cases:** Related scenarios that might be affected
 

@@ -63,8 +63,8 @@ Debuggear y corregir errores en la implementación de **STORY-{PROJECT_KEY}-{ISS
 2. **Consulta Context7 MCP si es error de biblioteca externa**
    - Ejemplo: Error de Next.js → buscar en docs oficiales
 3. **Revisa guidelines:**
-   - `.context/guidelines/error-handling.md`
-   - `.context/guidelines/code-standards.md`
+   - `references/error-handling.md`
+   - `references/code-standards.md`
 
 **Causas comunes:**
 

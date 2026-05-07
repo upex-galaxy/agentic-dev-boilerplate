@@ -9,8 +9,9 @@
  * @description
  * Características principales:
  * - Menú interactivo para selección de componentes
- * - Actualización por roles (QA, Dev, DevOps, PO)
- * - Actualización por fases específicas (1-13)
+ * - Sincroniza skills (.claude/skills/), commands (.claude/commands/),
+ *   .agents/, scripts/, cli/, .vscode/, .husky/, docs/, .context/,
+ *   templates/mcp/, y archivos de tooling
  * - Sistema de backups automáticos
  * - Merge inteligente (preserva archivos del usuario)
  * - MergeResult tracking (success/error counts per operation)
@@ -21,6 +22,12 @@
  * - Variable detection (warns about unfilled {{VARIABLE}} placeholders)
  * - Migration detection (upgrade notice for pre-variables consumers)
  * - Sync summary (clean table of results)
+ *
+ * Nota v4.1: el modelo legacy .prompts/fase-* + .books/ fue retirado.
+ * Workflow content ahora vive en .claude/skills/ y .claude/commands/. Los
+ * comandos `prompts` y `books`, junto con flags `--fase`, `--rol` y
+ * `--standalone`, fueron eliminados. Los aliases mapean a `claude` y
+ * emiten un warning, para no romper muscle memory de inmediato.
  *
  * @requires gh - GitHub CLI debe estar instalado y autenticado
  * @requires bun - Runtime de JavaScript (o Node.js compatible)
@@ -34,8 +41,8 @@
  * bun up all
  *
  * @example
- * // Actualizar por rol
- * bun up prompts --rol qa
+ * // Sincronizar skills + commands + settings
+ * bun up claude
  *
  * @example
  * // Actualizar configuración de desarrollo
@@ -52,7 +59,7 @@
  * @see docs/workflows/update-template-guide.md - Guía completa de uso
  *
  * @author UPEX Galaxy
- * @version 4.0
+ * @version 4.1
  */
 
 const { execSync } = require('node:child_process');
@@ -65,43 +72,14 @@ const readline = require('node:readline');
 // CONFIGURATION
 // ============================================================================
 
-const CLI_VERSION = '4.0';
+const CLI_VERSION = '4.1';
 const TEMPLATE_REPO = 'upex-galaxy/ai-driven-project-starter';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template-version.json';
 
-// Phase configuration for .prompts/
-const PHASE_CONFIG = {
-  1: { name: 'Constitution', dir: 'fase-1-constitution' },
-  2: { name: 'Architecture', dir: 'fase-2-architecture' },
-  3: { name: 'Infrastructure', dir: 'fase-3-infrastructure' },
-  4: { name: 'Specification', dir: 'fase-4-specification' },
-  5: { name: 'Shift-Left Testing', dir: 'fase-5-shift-left-testing' },
-  6: { name: 'Planning', dir: 'fase-6-planning' },
-  7: { name: 'Implementation', dir: 'fase-7-implementation' },
-  8: { name: 'Code Review', dir: 'fase-8-code-review' },
-  9: { name: 'Deployment Staging', dir: 'fase-9-deployment-staging' },
-  13: { name: 'Production Deployment', dir: 'fase-13-production-deployment' },
-};
-
-// Role-based phase groupings
-const ROLE_PHASES = {
-  'qa': {
-    phases: [5],
-    description: 'Shift-Left, Exploratory, Documentation, Automation',
-  },
-  'qa-full': {
-    phases: [4, 5],
-    description: 'QA + Specification (contexto de negocio)',
-  },
-  'dev': { phases: [6, 7, 8], description: 'Planning, Implementation, Code Review' },
-  'devops': {
-    phases: [3, 9, 13],
-    description: 'Infrastructure, Staging, Production, Monitoring',
-  },
-  'po': { phases: [1, 2, 4], description: 'Constitution, Architecture, Specification' },
-  'setup': { phases: [1, 2, 3], description: 'Fases sincronicas iniciales' },
-};
+// NOTE: As of v4.1 the legacy .prompts/ + .books/ + fase-* model is gone.
+// Workflow content lives in .claude/skills/ and .claude/commands/. The
+// prompts/books commands and --fase/--rol flags were removed accordingly.
 
 // Tooling files - universal framework configuration files
 // NOTE: Excludes project-specific files (tsconfig.json, eslint.config.js, .gitignore)
@@ -128,8 +106,11 @@ const AGENTS_BOOTSTRAP_FILES = [
 // in scripts/ are not touched.
 const SCRIPTS_FILES = [
   'agents-lint.ts',
-  'sync-jira-fields.ts',
+  'agents-setup.ts',
   'check-jira-setup.ts',
+  'jira-sync.ts',
+  'sync-jira-fields.ts',
+  'sync-jira-workflows.ts',
 ];
 
 // Files removed from the template (renamed or replaced). On `up`, these are
@@ -279,7 +260,7 @@ Esta dependencia es necesaria para el ${colors.cyan}menú interactivo${colors.re
 ${colors.dim}Sin ella, solo puedes usar comandos directos como:${colors.reset}
   ${colors.green}bun up all${colors.reset}              - Actualizar todo
   ${colors.green}bun up docs${colors.reset}             - Actualizar docs/
-  ${colors.green}bun up prompts --rol qa${colors.reset} - Actualizar prompts para QA
+  ${colors.green}bun up claude agents${colors.reset}    - Skills/commands + agents config
 
 ${colors.bold}¿Deseas instalar la dependencia ahora?${colors.reset}
 `);
@@ -429,17 +410,19 @@ ${colors.bold}USO:${colors.reset}
   bun up                        ${colors.dim}# Menu interactivo${colors.reset}
   bun up <comando> [opciones]   ${colors.dim}# Ejecucion directa${colors.reset}
 
+Sincroniza skills, commands, scripts, .agents/, y archivos de configuracion
+desde el boilerplate upstream. Las skills (.claude/skills/) y commands
+(.claude/commands/) reemplazan al modelo legacy de .prompts/fase-*.
+
 ${colors.bold}COMANDOS:${colors.reset}
   all           Actualiza todo (merge completo de todos los directorios)
-  prompts       Actualiza .prompts/ (menu interactivo o con flags)
-  books         Actualiza .books/ (manuales para humanos, mismas flags que prompts)
   docs          Actualiza docs/ (merge completo del directorio)
   context       Actualiza .context/ (merge completo del directorio)
   templates     Actualiza templates/mcp/ (merge completo del directorio)
-  scripts       Actualiza scripts/ (solo framework: lint + jira)
+  scripts       Actualiza scripts/ (solo framework: agents + jira)
   cli           Actualiza cli/ (Xray CLI y otras herramientas)
   agents        Actualiza .agents/ (framework + bootstrap protegido)
-  claude        Actualiza .claude/ (settings.json + skill symlinks)
+  claude        Actualiza .claude/ (settings.json + skills/ + commands/)
   vscode        Actualiza .vscode/ (extensions.json, settings.json)
   husky         Actualiza .husky/ (git hooks)
   tooling       Actualiza archivos de configuracion del framework
@@ -450,20 +433,7 @@ ${colors.bold}COMANDOS:${colors.reset}
 ${colors.bold}FLAGS GLOBALES:${colors.reset}
   --dry-run     Preview de cambios sin modificar archivos
   --rollback    Restaura desde el backup mas reciente
-
-${colors.bold}FLAGS PARA 'prompts' y 'books':${colors.reset}
-  --all         Todas las fases (1-13) + standalone
-  --fase N      Fases especificas (ej: --fase 5 o --fase 7,8)
-  --rol ROLE    Por rol (ver roles disponibles)
-  --standalone  Solo archivos standalone
-
-${colors.bold}ROLES DISPONIBLES:${colors.reset}
-  qa       ${colors.dim}-> Fases 5 (Testing)${colors.reset}
-  qa-full  ${colors.dim}-> Fases 4, 5 (Testing + Specification)${colors.reset}
-  dev      ${colors.dim}-> Fases 6, 7, 8 (Desarrollo)${colors.reset}
-  devops   ${colors.dim}-> Fases 3, 9, 13 (Infraestructura)${colors.reset}
-  po       ${colors.dim}-> Fases 1, 2, 4 (Producto)${colors.reset}
-  setup    ${colors.dim}-> Fases 1, 2, 3 (Setup inicial)${colors.reset}
+  --help, -h    Muestra esta ayuda
 
 ${colors.bold}MERGE INTELIGENTE:${colors.reset}
   Este script sincroniza TODOS los archivos del template:
@@ -475,11 +445,7 @@ ${colors.bold}MERGE INTELIGENTE:${colors.reset}
 ${colors.bold}EJEMPLOS:${colors.reset}
   bun up                        ${colors.dim}# Menu interactivo${colors.reset}
   bun up all                    ${colors.dim}# Actualiza todo${colors.reset}
-  bun up prompts                ${colors.dim}# Menu para elegir fases${colors.reset}
-  bun up prompts --rol qa-full  ${colors.dim}# QA + Specification${colors.reset}
-  bun up prompts --fase 7,8     ${colors.dim}# Fases 7 y 8${colors.reset}
-  bun up books --all            ${colors.dim}# Todos los manuales${colors.reset}
-  bun up books --rol qa         ${colors.dim}# Manuales de QA${colors.reset}
+  bun up claude agents          ${colors.dim}# Skills/commands + agents config${colors.reset}
   bun up docs context           ${colors.dim}# Multiples componentes${colors.reset}
   bun up vscode husky           ${colors.dim}# Config de VS Code y git hooks${colors.reset}
   bun up tooling examples       ${colors.dim}# Archivos de configuracion${colors.reset}
@@ -500,75 +466,19 @@ async function showMainMenu() {
     instructions: '(Usa las flechas, ESPACIO para seleccionar, ENTER para confirmar)',
     choices: [
       { name: 'Todo (all)', value: 'all' },
-      { name: 'Prompts (.prompts/)', value: 'prompts' },
-      { name: 'Books (.books/) - Manuales para humanos', value: 'books' },
+      { name: 'Claude (.claude/) - Skills, commands y settings', value: 'claude' },
+      { name: 'Agents (.agents/) - Framework + bootstrap protegido', value: 'agents' },
+      { name: 'Scripts (scripts/) - Solo framework (agents + jira)', value: 'scripts' },
+      { name: 'CLI Tools (cli/) - Xray CLI y otras herramientas', value: 'cli' },
       { name: 'Documentacion (docs/)', value: 'docs' },
       { name: 'Context (.context/)', value: 'context' },
       { name: 'Templates MCP (templates/mcp/)', value: 'templates' },
-      { name: 'Scripts (scripts/) - Solo framework (lint + jira)', value: 'scripts' },
-      { name: 'CLI Tools (cli/) - Xray CLI', value: 'cli' },
       { name: 'VS Code (.vscode/)', value: 'vscode' },
       { name: 'Husky (.husky/) - Git hooks', value: 'husky' },
-      { name: 'Agents (.agents/) - Framework + bootstrap protegido', value: 'agents' },
-      { name: 'Claude (.claude/) - Settings y skill symlinks', value: 'claude' },
       { name: 'Tooling - Archivos de configuracion', value: 'tooling' },
       { name: 'Examples - Archivos de ejemplo', value: 'examples' },
     ],
   });
-}
-
-async function showPromptsMenu() {
-  const { select } = await import('@inquirer/prompts');
-
-  const mode = await select({
-    message: 'Que fases deseas actualizar?',
-    choices: [
-      { name: 'Todas las fases (1-13) + standalone', value: 'all' },
-      { name: 'Por rol...', value: 'role' },
-      { name: 'Fases especificas...', value: 'phases' },
-      { name: 'Solo archivos standalone (git-flow, workflows)', value: 'standalone' },
-    ],
-  });
-
-  switch (mode) {
-    case 'all':
-      return { phases: Object.keys(PHASE_CONFIG).map(Number), standalone: true };
-    case 'role':
-      return await showRoleMenu();
-    case 'phases':
-      return await showPhasesMenu();
-    case 'standalone':
-      return { phases: [], standalone: true };
-  }
-}
-
-async function showRoleMenu() {
-  const { select } = await import('@inquirer/prompts');
-
-  const role = await select({
-    message: 'Selecciona un rol:',
-    choices: Object.entries(ROLE_PHASES).map(([key, value]) => ({
-      name: `${key.toUpperCase()} (fases ${value.phases.join(', ')}) - ${value.description}`,
-      value: key,
-    })),
-  });
-
-  return { phases: ROLE_PHASES[role].phases, standalone: false };
-}
-
-async function showPhasesMenu() {
-  const { checkbox } = await import('@inquirer/prompts');
-
-  const phases = await checkbox({
-    message: 'Selecciona las fases a actualizar:',
-    instructions: '(ESPACIO para seleccionar, ENTER para confirmar)',
-    choices: Object.entries(PHASE_CONFIG).map(([num, config]) => ({
-      name: `Fase ${num}: ${config.name}`,
-      value: Number(num),
-    })),
-  });
-
-  return { phases, standalone: false };
 }
 
 // ============================================================================
@@ -579,25 +489,21 @@ async function showPhasesMenu() {
  * Parsea argumentos de línea de comandos.
  *
  * @param {string[]} args - Array de argumentos (process.argv.slice(2))
- * @returns {{commands: string[], phases: number[]|null, role: string|null, standalone: boolean, all: boolean, help: boolean, dryRun: boolean, rollback: boolean}}
+ * @returns {{commands: string[], help: boolean, dryRun: boolean, rollback: boolean}}
  */
 function parseArgs(args) {
   const result = {
     commands: [],
-    phases: null,
-    role: null,
-    standalone: false,
-    all: false,
     help: false,
     dryRun: false,
     rollback: false,
   };
 
-  // Support both 'guidelines' (legacy) and 'context' (new)
+  // Support both 'guidelines' (legacy) and 'context' (new).
+  // 'prompts'/'books' from the legacy fase-based model are gone — they map to
+  // 'claude' (skills + commands) so old muscle memory still does something useful.
   const validCommands = [
     'all',
-    'prompts',
-    'books',
     'docs',
     'context',
     'guidelines',
@@ -613,6 +519,11 @@ function parseArgs(args) {
     'help',
     'rollback',
   ];
+  const legacyAliases = {
+    prompts: 'claude',
+    books: 'claude',
+    guidelines: 'context',
+  };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -620,42 +531,28 @@ function parseArgs(args) {
     if (arg === 'help' || arg === '--help' || arg === '-h') {
       result.help = true;
     }
-    else if (arg === '--all') {
-      result.all = true;
-    }
     else if (arg === '--dry-run') {
       result.dryRun = true;
     }
     else if (arg === '--rollback' || arg === 'rollback') {
       result.rollback = true;
     }
-    else if (arg === '--standalone') {
-      result.standalone = true;
+    else if (arg === '--all' || arg === '--standalone' || arg === '--fase'
+      || arg === '--phase' || arg === '--rol' || arg === '--role') {
+      // Legacy flags (fase-based prompts/books model) — silently consume any
+      // adjacent value and warn the user once. Kept as no-op for muscle memory.
+      if (arg === '--fase' || arg === '--phase' || arg === '--rol' || arg === '--role') {
+        i++; // skip the value that used to follow
+      }
+      logWarning(`Flag legacy ignorada: ${arg} (el modelo .prompts/fase-* fue retirado en v4.1)`);
     }
-    else if (arg === '--fase' || arg === '--phase') {
-      const nextArg = args[++i];
-      if (nextArg) {
-        result.phases = nextArg
-          .split(',')
-          .map(Number)
-          .filter(n => n >= 1 && n <= 13);
-      }
-    }
-    else if (arg === '--rol' || arg === '--role') {
-      const nextArg = args[++i];
-      if (nextArg && ROLE_PHASES[nextArg]) {
-        result.role = nextArg;
-        result.phases = ROLE_PHASES[nextArg].phases;
-      }
-      else if (nextArg) {
-        logError(`Rol desconocido: ${nextArg}`);
-        logInfo(`Roles disponibles: ${Object.keys(ROLE_PHASES).join(', ')}`);
-        process.exit(1);
-      }
+    else if (legacyAliases[arg]) {
+      const mapped = legacyAliases[arg];
+      logWarning(`Comando legacy '${arg}' mapeado a '${mapped}' (skills + commands reemplazan a .prompts/.books)`);
+      result.commands.push(mapped);
     }
     else if (validCommands.includes(arg)) {
-      // Map 'guidelines' to 'context' for backwards compatibility
-      result.commands.push(arg === 'guidelines' ? 'context' : arg);
+      result.commands.push(arg);
     }
     else if (!arg.startsWith('-')) {
       logWarning(`Comando desconocido: ${arg}`);
@@ -742,13 +639,13 @@ function createBackup(components) {
   fs.mkdirSync(backupDir, { recursive: true });
 
   const backupMap = {
-    prompts: { src: '.prompts', dest: '.prompts' },
-    books: { src: '.books', dest: '.books' },
     docs: { src: 'docs', dest: 'docs' },
     context: { src: '.context', dest: '.context' },
     templates: { src: 'templates/mcp', dest: 'templates/mcp' },
     scripts: { src: 'scripts', dest: 'scripts' },
     cli: { src: 'cli', dest: 'cli' },
+    agents: { src: '.agents', dest: '.agents' },
+    claude: { src: '.claude', dest: '.claude' },
     vscode: { src: '.vscode', dest: '.vscode' },
     husky: { src: '.husky', dest: '.husky' },
   };
@@ -928,11 +825,8 @@ function executeDryRun(commands, allMode) {
 
   const components = [];
 
-  if (commands.includes('prompts') || allMode) {
-    components.push({ name: 'Prompts (.prompts/)', dir: path.join(TEMP_DIR, '.prompts') });
-  }
-  if (commands.includes('books') || allMode) {
-    components.push({ name: 'Books (.books/)', dir: path.join(TEMP_DIR, '.books') });
+  if (commands.includes('claude') || allMode) {
+    components.push({ name: 'Claude (.claude/)', dir: path.join(TEMP_DIR, '.claude') });
   }
   if (commands.includes('context') || allMode) {
     components.push({ name: 'Context (.context/)', dir: path.join(TEMP_DIR, '.context') });
@@ -1063,199 +957,6 @@ async function cloneTemplate() {
 // ============================================================================
 // UPDATE FUNCTIONS
 // ============================================================================
-
-/**
- * Update .prompts/ directory using merge strategy.
- * - Full update (all phases + standalone): merges entire directory
- * - Specific phases: merges only those phase directories
- * - Standalone only: merges root files/folders that are NOT phase directories
- *
- * @param {number[]} phases - Phase numbers to update
- * @param {boolean} includeStandalone - Whether to include standalone files
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updatePrompts(phases, includeStandalone) {
-  logStep('Actualizando .prompts/ (merge)...');
-
-  const totals = { success: 0, errors: 0 };
-
-  const templatePromptsPath = path.join(TEMP_DIR, '.prompts');
-  if (!fs.existsSync(templatePromptsPath)) {
-    logWarning('No se encontro directorio .prompts en el template');
-    return totals;
-  }
-
-  // Ensure .prompts exists
-  fs.mkdirSync('.prompts', { recursive: true });
-
-  // Check if this is a full update (all phases + standalone)
-  const allPhaseNums = Object.keys(PHASE_CONFIG).map(Number);
-  const isFullUpdate
-    = includeStandalone
-      && phases.length === allPhaseNums.length
-      && allPhaseNums.every(p => phases.includes(p));
-
-  if (isFullUpdate) {
-    // Full directory merge - syncs everything from template
-    logMerge('Sincronizando directorio completo...');
-    const result = mergeDirectory(templatePromptsPath, '.prompts');
-    totals.success += result.success;
-    totals.errors += result.errors;
-    return totals;
-  }
-
-  // Update specific phases
-  if (phases && phases.length > 0) {
-    for (const phaseNum of phases) {
-      const phaseConfig = PHASE_CONFIG[phaseNum];
-      if (!phaseConfig) { continue; }
-
-      const srcPath = path.join(templatePromptsPath, phaseConfig.dir);
-      const destPath = path.join('.prompts', phaseConfig.dir);
-
-      if (fs.existsSync(srcPath)) {
-        logMerge(`Fase ${phaseNum}: ${phaseConfig.name}`);
-        const result = mergeDirectory(srcPath, destPath, '  ');
-        totals.success += result.success;
-        totals.errors += result.errors;
-      }
-      else {
-        logWarning(`Fase ${phaseNum} no encontrada en template`);
-      }
-    }
-  }
-
-  // Update standalone (non-phase files/folders)
-  if (includeStandalone) {
-    logMerge('Archivos standalone...');
-    const phaseDirs = Object.values(PHASE_CONFIG).map(c => c.dir);
-    const items = fs.readdirSync(templatePromptsPath, { withFileTypes: true });
-
-    for (const item of items) {
-      // Skip phase directories - only sync non-phase items
-      if (phaseDirs.includes(item.name)) { continue; }
-
-      const srcPath = path.join(templatePromptsPath, item.name);
-      const destPath = path.join('.prompts', item.name);
-
-      if (item.isDirectory()) {
-        const result = mergeDirectory(srcPath, destPath, '  ');
-        totals.success += result.success;
-        totals.errors += result.errors;
-      }
-      else {
-        try {
-          fs.cpSync(srcPath, destPath);
-          totals.success++;
-          logSuccess(`  ${item.name}`);
-        }
-        catch (err) {
-          logWarning(`  Skipped ${item.name}: ${err.message || String(err)}`);
-          totals.errors++;
-        }
-      }
-    }
-  }
-
-  return totals;
-}
-
-/**
- * Update .books/ directory using merge strategy.
- * Books are human-readable manuals that mirror .prompts/ structure.
- * - Full update (all phases + standalone): merges entire directory
- * - Specific phases: merges only those phase directories
- * - Standalone only: merges root files/folders that are NOT phase directories
- *
- * @param {number[]} phases - Phase numbers to update
- * @param {boolean} includeStandalone - Whether to include standalone files
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateBooks(phases, includeStandalone) {
-  logStep('Actualizando .books/ (merge)...');
-
-  const totals = { success: 0, errors: 0 };
-
-  const templateBooksPath = path.join(TEMP_DIR, '.books');
-  if (!fs.existsSync(templateBooksPath)) {
-    logWarning('No se encontro directorio .books en el template');
-    return totals;
-  }
-
-  // Ensure .books exists
-  fs.mkdirSync('.books', { recursive: true });
-
-  // Check if this is a full update (all phases + standalone)
-  const allPhaseNums = Object.keys(PHASE_CONFIG).map(Number);
-  const isFullUpdate
-    = includeStandalone
-      && phases.length === allPhaseNums.length
-      && allPhaseNums.every(p => phases.includes(p));
-
-  if (isFullUpdate) {
-    // Full directory merge - syncs everything from template
-    logMerge('Sincronizando directorio completo...');
-    const result = mergeDirectory(templateBooksPath, '.books');
-    totals.success += result.success;
-    totals.errors += result.errors;
-    return totals;
-  }
-
-  // Update specific phases
-  if (phases && phases.length > 0) {
-    for (const phaseNum of phases) {
-      const phaseConfig = PHASE_CONFIG[phaseNum];
-      if (!phaseConfig) { continue; }
-
-      const srcPath = path.join(templateBooksPath, phaseConfig.dir);
-      const destPath = path.join('.books', phaseConfig.dir);
-
-      if (fs.existsSync(srcPath)) {
-        logMerge(`Fase ${phaseNum}: ${phaseConfig.name}`);
-        const result = mergeDirectory(srcPath, destPath, '  ');
-        totals.success += result.success;
-        totals.errors += result.errors;
-      }
-      else {
-        logWarning(`Fase ${phaseNum} no encontrada en template .books/`);
-      }
-    }
-  }
-
-  // Update standalone (non-phase files/folders)
-  if (includeStandalone) {
-    logMerge('Archivos standalone...');
-    const phaseDirs = Object.values(PHASE_CONFIG).map(c => c.dir);
-    const items = fs.readdirSync(templateBooksPath, { withFileTypes: true });
-
-    for (const item of items) {
-      // Skip phase directories - only sync non-phase items
-      if (phaseDirs.includes(item.name)) { continue; }
-
-      const srcPath = path.join(templateBooksPath, item.name);
-      const destPath = path.join('.books', item.name);
-
-      if (item.isDirectory()) {
-        const result = mergeDirectory(srcPath, destPath, '  ');
-        totals.success += result.success;
-        totals.errors += result.errors;
-      }
-      else {
-        try {
-          fs.cpSync(srcPath, destPath);
-          totals.success++;
-          logSuccess(`  ${item.name}`);
-        }
-        catch (err) {
-          logWarning(`  Skipped ${item.name}: ${err.message || String(err)}`);
-          totals.errors++;
-        }
-      }
-    }
-  }
-
-  return totals;
-}
 
 /**
  * Update docs/ directory using merge strategy.
@@ -1602,13 +1303,14 @@ function updateAgents() {
 /**
  * Update .claude/ directory with selective sync.
  * - Copies settings.json (shared project settings)
- * - Recreates skill symlinks based on .agents/skills/ contents
+ * - Merges .claude/skills/ (workflow skills from upstream — replaces legacy .prompts/)
+ * - Merges .claude/commands/ (slash commands from upstream)
  * - NEVER touches settings.local.json (personal per-user settings)
  *
  * @returns {{success: number, errors: number}} Merge result totals
  */
 function updateClaude() {
-  logStep('Actualizando .claude/ (selective)...');
+  logStep('Actualizando .claude/ (skills + commands + settings)...');
 
   let success = 0;
   let errors = 0;
@@ -1628,38 +1330,22 @@ function updateClaude() {
     }
   }
 
-  // 2. Recreate skill symlinks from .agents/skills/
-  const agentsSkillsDir = path.join('.agents', 'skills');
-  if (fs.existsSync(agentsSkillsDir)) {
-    const skillsDir = path.join('.claude', 'skills');
-    fs.mkdirSync(skillsDir, { recursive: true });
+  // 2. Merge .claude/skills/ from upstream (workflow skills — the new prompts).
+  const upstreamSkillsDir = path.join(TEMP_DIR, '.claude', 'skills');
+  if (fs.existsSync(upstreamSkillsDir)) {
+    logMerge('skills/ (from upstream):');
+    const result = mergeDirectory(upstreamSkillsDir, path.join('.claude', 'skills'), '  ');
+    success += result.success;
+    errors += result.errors;
+  }
 
-    const skills = fs.readdirSync(agentsSkillsDir, { withFileTypes: true });
-    for (const skill of skills) {
-      if (!skill.isDirectory()) { continue; }
-
-      const symlinkPath = path.join(skillsDir, skill.name);
-      const symlinkTarget = path.join('..', '..', '.agents', 'skills', skill.name);
-
-      // Remove existing (file, dir, or broken symlink) before creating new symlink
-      try {
-        const stat = fs.lstatSync(symlinkPath);
-        if (stat) { fs.rmSync(symlinkPath, { recursive: true, force: true }); }
-      }
-      catch {
-        // Path doesn't exist, nothing to remove
-      }
-
-      try {
-        fs.symlinkSync(symlinkTarget, symlinkPath);
-        logSuccess(`skills/${skill.name} -> ${symlinkTarget}`);
-        success++;
-      }
-      catch (err) {
-        logWarning(`Skipped symlink ${skill.name}: ${err.message || String(err)}`);
-        errors++;
-      }
-    }
+  // 3. Merge .claude/commands/ from upstream (slash commands).
+  const upstreamCommandsDir = path.join(TEMP_DIR, '.claude', 'commands');
+  if (fs.existsSync(upstreamCommandsDir)) {
+    logMerge('commands/ (from upstream):');
+    const result = mergeDirectory(upstreamCommandsDir, path.join('.claude', 'commands'), '  ');
+    success += result.success;
+    errors += result.errors;
   }
 
   logInfo('settings.local.json preservado (nunca se sincroniza)');
@@ -1792,7 +1478,7 @@ function detectUnfilledVariables() {
 
   // Scan synced directories for {{VARIABLE}} usage
   const VARIABLE_REGEX = /\{\{([A-Z][A-Z_]+)\}\}/g;
-  const syncedDirs = ['.prompts', '.context/guidelines', 'docs'];
+  const syncedDirs = ['.claude/skills', '.claude/commands', '.context/guidelines', 'docs'];
   const varUsage = new Map(); // varName -> file count
 
   for (const dir of syncedDirs) {
@@ -1866,8 +1552,8 @@ function detectUnfilledVariables() {
 
   console.log('');
   logInfo('Abre CLAUDE.md y completa la tabla de Project Variables.');
-  logInfo('O ejecuta este prompt en tu asistente IA:\n');
-  console.log(`   ${colors.cyan}@.prompts/project-doc-setup.md${colors.reset}\n`);
+  logInfo('O ejecuta este comando en tu asistente IA:\n');
+  console.log(`   ${colors.cyan}/project-doc-setup${colors.reset}\n`);
 }
 
 // ============================================================================
@@ -1911,7 +1597,7 @@ ${colors.yellow}║${colors.reset}  se resuelven desde tu configuracion en CLAUD
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  ${colors.bold}DESPUES${colors.reset} de que esta actualizacion termine, ejecuta:        ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
-${colors.yellow}║${colors.reset}    ${colors.green}@.prompts/project-doc-setup.md${colors.reset}                          ${colors.yellow}║${colors.reset}
+${colors.yellow}║${colors.reset}    ${colors.green}/project-doc-setup${colors.reset}                                      ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  Esto actualizara tu CLAUDE.md con la nueva tabla de         ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  variables y lo configurara para tu proyecto.                ${colors.yellow}║${colors.reset}
@@ -2047,7 +1733,7 @@ async function main() {
 
     // Determine which components to backup and update
     const components = selected.includes('all')
-      ? ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
+      ? ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
       : selected;
 
     createBackup(components);
@@ -2060,8 +1746,6 @@ async function main() {
     selfUpdate();
 
     if (selected.includes('all')) {
-      addResult(updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true));
-      addResult(updateBooks(Object.keys(PHASE_CONFIG).map(Number), true));
       addResult(updateDocs());
       addResult(updateContext());
       addResult(updateTemplates());
@@ -2077,15 +1761,7 @@ async function main() {
     }
     else {
       for (const cmd of selected) {
-        if (cmd === 'prompts') {
-          const promptsConfig = await showPromptsMenu();
-          addResult(updatePrompts(promptsConfig.phases, promptsConfig.standalone));
-        }
-        else if (cmd === 'books') {
-          const booksConfig = await showPromptsMenu();
-          addResult(updateBooks(booksConfig.phases, booksConfig.standalone));
-        }
-        else if (cmd === 'docs') {
+        if (cmd === 'docs') {
           addResult(updateDocs());
         }
         else if (cmd === 'context') {
@@ -2157,16 +1833,17 @@ async function main() {
   await validatePrerequisites();
 
   // Expand 'all' command
+  let allMode = false;
   if (parsed.commands.includes('all')) {
-    parsed.commands = ['prompts', 'books', 'docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
-    parsed.all = true;
+    parsed.commands = ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
+    allMode = true;
   }
 
   await cloneTemplate();
 
   // Dry-run mode: preview changes without modifying files
   if (parsed.dryRun) {
-    executeDryRun(parsed.commands, parsed.all);
+    executeDryRun(parsed.commands, allMode);
     previewDeprecatedCleanup(parsed.commands);
     cleanup();
     return;
@@ -2183,44 +1860,6 @@ async function main() {
   // Execute commands
   for (const cmd of parsed.commands) {
     switch (cmd) {
-      case 'prompts':
-        if (parsed.all) {
-          addResult(updatePrompts(Object.keys(PHASE_CONFIG).map(Number), true));
-        }
-        else if (parsed.phases) {
-          addResult(updatePrompts(parsed.phases, parsed.standalone));
-        }
-        else if (parsed.standalone) {
-          addResult(updatePrompts([], true));
-        }
-        else {
-          // Check for interactive dependencies before showing prompts menu
-          const depsReady = await ensureDependencies();
-          if (!depsReady) { return; }
-
-          const promptsConfig = await showPromptsMenu();
-          addResult(updatePrompts(promptsConfig.phases, promptsConfig.standalone));
-        }
-        break;
-      case 'books':
-        if (parsed.all) {
-          addResult(updateBooks(Object.keys(PHASE_CONFIG).map(Number), true));
-        }
-        else if (parsed.phases) {
-          addResult(updateBooks(parsed.phases, parsed.standalone));
-        }
-        else if (parsed.standalone) {
-          addResult(updateBooks([], true));
-        }
-        else {
-          // Check for interactive dependencies before showing menu
-          const depsReady = await ensureDependencies();
-          if (!depsReady) { return; }
-
-          const booksConfig = await showPromptsMenu();
-          addResult(updateBooks(booksConfig.phases, booksConfig.standalone));
-        }
-        break;
       case 'docs':
         addResult(updateDocs());
         break;
@@ -2258,7 +1897,7 @@ async function main() {
   }
 
   // Also update context-engineering.md when updating all
-  if (parsed.commands.includes('prompts') && parsed.all) {
+  if (allMode) {
     addResult(updateContextEngineering());
   }
 

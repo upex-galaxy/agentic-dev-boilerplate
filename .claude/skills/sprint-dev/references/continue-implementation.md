@@ -16,7 +16,7 @@ Continuar la implementación de **STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** que
 2. **Supabase MCP** - Úsalo si la story requiere cambios de DB
 3. **shadcn MCP** - Úsalo si necesitas componentes UI (y el proyecto usa shadcn)
 
-**Nota:** Ver `.prompts/fase-7-implementation/implement-story.md` (sección "Verificación de Herramientas") para más detalles sobre cada MCP.
+**Nota:** Ver `references/implement-story.md` (sección "Verificación de Herramientas") para más detalles sobre cada MCP.
 
 ---
 

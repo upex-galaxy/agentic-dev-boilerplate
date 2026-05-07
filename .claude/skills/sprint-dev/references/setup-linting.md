@@ -330,7 +330,7 @@ package-lock.json
 
 4. **Continuar con Code Review:**
    - Ahora que linting está configurado
-   - Usar `.prompts/fase-8-code-review/review-pr.md`
+   - Usar `references/review-pr.md` (sibling en este skill)
 
 ### ⚠️ Notas:
 

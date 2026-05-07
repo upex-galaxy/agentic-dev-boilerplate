@@ -146,10 +146,10 @@ To generate project-specific documentation, I need:
 3. **Tech Stack**: Frontend, backend, database technologies
 4. **Main Flows**: Top 3 user journeys
 
-Or run discovery prompts first:
+Or run the foundational skills first:
 
-1. `.prompts/discovery/phase-1-constitution/project-connection.md`
-2. `.prompts/utilities/business-data-map.md`
+1. Load `/project-foundation` to define product, PRD, SRS, and discovery context
+2. The skill produces `.context/business-data-map.md`, `.context/api-architecture.md`, and `.context/project-dev-guide.md`
 ```
 
 ---
@@ -330,7 +330,7 @@ Include in the Quick Start section:
 
 # Use this prompt to regenerate README.md and update this file
 
-@.prompts/utilities/context-engineering-setup.md
+/context-engineering-setup
 ```
 
 ---

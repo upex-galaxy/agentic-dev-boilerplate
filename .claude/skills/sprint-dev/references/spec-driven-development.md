@@ -159,7 +159,7 @@ Después del código:
 - `code-standards.md` - Estándares de código
 - `error-handling.md` - Manejo de errores
 - `data-testid-standards.md` - Estándares de data-testid
-- `.prompts/us-dev-workflow.md` - Workflow de desarrollo
+- _Workflow de desarrollo: ver `SKILL.md` del skill `sprint-dev`_
 
 ---
 

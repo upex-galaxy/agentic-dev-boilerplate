@@ -99,7 +99,7 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 ### 2. Guidelines de Desarrollo (DEV):
 
 ```
-.context/guidelines/DEV/
+.claude/skills/sprint-dev/references/
 ├── code-standards.md           # Estándares de código (DRY, naming, TypeScript)
 ├── error-handling.md           # Manejo de errores estructurado
 ├── data-testid-standards.md    # Atributos data-testid para testing E2E
@@ -252,8 +252,8 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 **B) Implementa el código:**
 
 - Crea o modifica archivos
-- Sigue code standards (`.context/guidelines/DEV/code-standards.md`)
-- Aplica error handling (`.context/guidelines/DEV/error-handling.md`)
+- Sigue code standards (`references/code-standards.md`)
+- Aplica error handling (`references/error-handling.md`)
 - Si hay UI: usa componentes del design system
 - **Agrega `data-testid`** a todos los componentes UI (ver abajo)
 
@@ -294,7 +294,7 @@ export function MentorCard({ mentor }) {
 - **NUNCA** IDs dinámicos: ❌ `data-testid={`card-${id}`}`
 - Permite selectores descendientes: `$('[data-testid="mentorCard"] button')`
 
-**Referencia completa:** `.context/guidelines/DEV/data-testid-standards.md`
+**Referencia completa:** `references/data-testid-standards.md`
 
 **C) Explica decisiones importantes:**
 
@@ -346,7 +346,7 @@ npm run dev
 - **Manejar errores apropiadamente** (try-catch, error boundaries)
 - **Usar componentes del design system** (Button, Card, etc.)
 - **Validar inputs de usuario** (sanitización, validación)
-- **Agregar `data-testid` a componentes UI** (ver `.context/guidelines/DEV/data-testid-standards.md`)
+- **Agregar `data-testid` a componentes UI** (ver `references/data-testid-standards.md`)
 
 ---
 
@@ -449,12 +449,12 @@ npm run dev
 
 **1. Unit Tests (si no se hicieron):**
 
-- Usa `.prompts/fase-7-implementation/unit-testing.md`
+- Carga el skill `/unit-testing` para diseño de unit tests (TDD, AAA, mocking)
 - Crea tests para lógica de negocio crítica
 
 **2. Code Review (Fase 8):**
 
-- Usa `.prompts/fase-8-code-review/review-pr.md`
+- Usa `references/review-pr.md` (sibling en este skill)
 - Revisa código con análisis estático
 
 **3. Integration/E2E Tests (out of scope for this skill):**
@@ -492,7 +492,7 @@ Implementa STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} siguiendo estos pasos:
 
 **Contexto a leer:**
 1. .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/implementation-plan.md
-2. .context/guidelines/ (todos los archivos)
+2. .claude/skills/sprint-dev/references/ (code-standards, error-handling, data-testid-standards, spec-driven-development)
 3. .context/design-system.md
 
 **Proceso:**

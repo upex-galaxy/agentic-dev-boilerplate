@@ -50,9 +50,9 @@ Puedo continuar, pero la revisión se basará en conocimiento interno (puede est
 ### 2. Code Standards (DEV):
 
 ```
-.context/guidelines/DEV/code-standards.md
-.context/guidelines/DEV/error-handling.md
-.context/guidelines/DEV/data-testid-standards.md
+references/code-standards.md
+references/error-handling.md
+references/data-testid-standards.md
 ```
 
 **Propósito:**
@@ -368,7 +368,7 @@ import { Button } from '@/components/ui/button';
 
 ### 8. 🧪 **Data-TestID para Identidad de Componentes**
 
-**Revisar según `.context/guidelines/DEV/data-testid-standards.md`:**
+**Revisar según `references/data-testid-standards.md`:**
 
 - [ ] **Componentes de dominio** (MentorCard, LoginForm, etc.) tienen `data-testid` en su **definición**
 - [ ] **Componentes UI base** (Button, Card, Input de shadcn) reciben `data-testid` donde se **usan**, NO en su definición
@@ -558,7 +558,7 @@ Revisa el código implementado para STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}.
 
 - Story: .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md
 - Implementation plan: .../ implementation-plan.md
-- Code standards: .context/guidelines/DEV/
+- Code standards: .claude/skills/sprint-dev/references/ (code-standards.md, error-handling.md, data-testid-standards.md)
 
 (Donde {PROJECT_KEY}, {ISSUE_NUM}, {nombre} se obtienen de la story que estás revisando)
 

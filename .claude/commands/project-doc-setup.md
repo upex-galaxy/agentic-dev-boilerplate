@@ -433,17 +433,17 @@ This project uses **Context Engineering** for AI-assisted development.
 
 ### Structure
 
-| Directory   | Purpose                                          |
-| ----------- | ------------------------------------------------ |
-| `.context/` | Documentation AI reads to understand the project |
-| `.prompts/` | Templates for generating documentation           |
-| `docs/`     | System blueprints and guides                     |
+| Directory         | Purpose                                          |
+| ----------------- | ------------------------------------------------ |
+| `.context/`       | Documentation AI reads to understand the project |
+| `.claude/skills/` | Pre-built skills (orchestration + references)    |
+| `docs/`           | System blueprints and guides                     |
 
 ### Context Loading
 
 The AI loads different context files based on the task:
 
-- **DEV tasks:** `.context/guidelines/DEV/`
+- **DEV tasks:** DEV coding standards are part of the `sprint-dev` skill (see `.claude/skills/sprint-dev/references/`)
 
 See [{system-prompt-file}]({path}) for detailed instructions.
 
@@ -481,7 +481,7 @@ See [{system-prompt-file}]({path}) for detailed instructions.
 ## Contributing
 
 1. Read the [Context Engineering Guide](.context/context-engineering.md)
-2. Follow the [Code Standards](.context/guidelines/DEV/code-standards.md)
+2. Follow the Code Standards (see `.claude/skills/sprint-dev/references/code-standards.md`)
 3. Use conventional commits
 4. Create PR against `develop` branch
 
@@ -568,8 +568,8 @@ especificaciones definidas en `.context/`.
 
 ````
 
-Antes de codear, leer:
-├── .context/guidelines/DEV/
+Antes de codear, leer (skill `sprint-dev`):
+├── .claude/skills/sprint-dev/references/
 │ ├── code-standards.md # Estándares de código
 │ ├── error-handling.md # Manejo de errores
 │ ├── data-testid-standards.md # Cómo crear data-testid
@@ -653,7 +653,7 @@ Nota: Usa gh (CLI de GitHub) para crear PR, hacer reviews, y todo lo relacionado
 ---
 
 **Última actualización**: {fecha actual}
-**Ver también**: `.context/guidelines/` para guidelines detallados por rol
+**Ver también**: `.claude/skills/sprint-dev/references/` para guidelines de desarrollo
 
 ```
 
