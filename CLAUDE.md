@@ -11,23 +11,20 @@
 
 ```bash
 # PROJECT STARTER — GETTING ORIENTED:
-# When you start a new session, load these context files FIRST:
-# 1. .context/business-data-map.md     → System flows and entities
-# 2. .context/api-architecture.md      → API endpoints reference
-# 3. .context/project-dev-guide.md     → How to develop features
-# 4. .context/project-test-guide.md    → What to test and why
-# 5. .context/guidelines/TAE/kata-ai-index.md → How to write tests (KATA)
-
-# UNDERSTAND THE WORKFLOW:
-# This project follows the AI-Driven Software Project Blueprint (14 Fases).
-# Synchronous fases (1-3): Constitution → Architecture → Infrastructure (one-time)
-# Asynchronous fases (4-14): Specification → ... → Shift-Right Testing (iterative)
-# Full workflow: .prompts/README.md
-
-# PLAN BEFORE CODING:
-# Development follows a Plan → Code → Review workflow. Never jump straight to code.
-# Dev workflow: .prompts/us-dev-workflow.md (Fases 6-9)
-# QA workflow:  .prompts/us-qa-workflow.md  (Fases 10-12)
+# When you start a new session, the relevant workflow skill auto-triggers.
+# Manual invocation order for a new project:
+# 1. /init-project              → Bootstrap .agents/ + scripts + AGENTS.md
+# 2. /project-foundation        → Constitution + PRD + SRS + Discovery
+# 3. /project-bootstrap         → Backend + Frontend + features
+# 4. /product-management        → Seed backlog, refine stories
+# 5. /sprint-dev                → Per-story dev loop (orchestrator)
+# 6. /unit-testing              → Composable TDD inside sprint-dev
+#
+# Slash commands (utilities):
+# /git-flow, /git-conflict-fix, /project-doc-setup,
+# /context-engineering-setup, /sprint-report
+#
+# Plan-driven development: each skill plans before coding (skill-internal pattern).
 ```
 
 **Common commands:**
@@ -39,7 +36,6 @@ bun run format            # Format with Prettier
 bun run format:check      # Check formatting
 bun run up                # Update template from upstream
 bun run api:sync          # Sync OpenAPI spec + generate types
-bun run xray              # Xray TMS CLI
 bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
 bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira.json
 bun run jira:check        # Validate Jira manifest vs catalog
@@ -48,8 +44,8 @@ bun run jira:check        # Validate Jira manifest vs catalog
 **Generate/Update Project Documentation:**
 
 ```bash
-# Use this prompt to regenerate README.md and update CLAUDE.md
-@.prompts/project-doc-setup.md
+# Use this slash command to regenerate README.md and update CLAUDE.md
+/project-doc-setup
 ```
 
 ---
@@ -61,24 +57,21 @@ bun run jira:check        # Validate Jira manifest vs catalog
 1. **This is a project starter template**: All sections with `[PLACEHOLDER]` or `{{VARIABLE}}` values must be filled in per-project. Do not assume defaults.
 2. **Login Credentials**: ALWAYS read from `.env` file — NEVER hardcode or guess passwords.
    - Example keys: `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`, `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD`
-3. **Plan before coding**: Always produce a plan (spec / implementation plan) before writing code or tests.
+3. **Plan before coding**: Always produce a plan (spec / implementation plan) before writing code. Each workflow skill enforces this internally.
 4. **No AI attribution in commits**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines in commit messages.
-5. **Shift-Left**: Evaluate Acceptance Criteria for clarity, testability, and completeness. Raise questions only when genuine gaps exist — never force questions to fill a checklist.
-6. **Confirm before push to main**: Never push to `main` without explicit user confirmation.
-7. **14-Fase Workflow**: Follow the fase order (1-14). Do not skip fases — each builds on the previous.
-8. **Exploratory before Automation**: Do not automate tests (Fase 12) before exploratory testing (Fase 10) validates the feature.
-9. **Unit tests in implementation**: Unit tests belong in Fase 7 (Implementation), NOT in Fase 12 (Automation).
-10. **Git History Management**:
-    - NEVER rewrite pushed history (`rebase`, `amend` on pushed commits)
-    - NEVER force push to any shared branch
-    - NEVER delete remote branches without confirmation
-    - ALWAYS add forward (new commits to fix, not rewrite)
-    - ALWAYS preserve merge history
-11. **Quality Verification**: After code changes, verify in order: run tests → check types → lint. Do not skip steps.
-12. **File Operations**: Always read a file before editing it. Preserve existing formatting and indentation. Never overwrite files without reading first.
-13. **No Copy-Paste in Prompts**: All prompts are @-loadable. Never ask users to copy-paste prompt content. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
-14. **Playwright CLI Usage**: For browser automation, load the `/playwright-cli` skill. It provides screenshots, tracing, video recording, session management, and request mocking. See `.claude/skills/playwright-cli/` for details.
-15. [Add project-specific reminders here — e.g., "SPA and API are on different hosts — use correct base URLs"]
+5. **Confirm before push to main**: Never push to `main` without explicit user confirmation.
+6. **Unit tests are part of `/sprint-dev`**: Optionally TDD via `/unit-testing` (composable mid-flight from sprint-dev).
+7. **Git History Management**:
+   - NEVER rewrite pushed history (`rebase`, `amend` on pushed commits)
+   - NEVER force push to any shared branch
+   - NEVER delete remote branches without confirmation
+   - ALWAYS add forward (new commits to fix, not rewrite)
+   - ALWAYS preserve merge history
+8. **Quality Verification**: After code changes, verify in order: run tests → check types → lint. Do not skip steps.
+9. **File Operations**: Always read a file before editing it. Preserve existing formatting and indentation. Never overwrite files without reading first.
+10. **No Copy-Paste in Skills**: All skills and slash commands are invocable via `/<name>`. Never ask users to copy-paste content. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
+11. **Playwright CLI Usage**: For browser automation, load the `/playwright-cli` skill. It provides screenshots, tracing, video recording, session management, and request mocking. See `.claude/skills/playwright-cli/` for details.
+12. [Add project-specific reminders here — e.g., "SPA and API are on different hosts — use correct base URLs"]
 
 ---
 
@@ -118,7 +111,6 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 | Tag                    | Domain             | Primary Tool            | Fallback               | Skill/Reference                  |
 | ---------------------- | ------------------ | ----------------------- | ---------------------- | -------------------------------- |
-| `[TMS_TOOL]`           | Test Management    | `/xray-cli` skill       | MCP Atlassian          | `.claude/skills/xray-cli/`       |
 | `[ISSUE_TRACKER_TOOL]` | Issue Tracking     | Atlassian CLI (`acli`)  | MCP Atlassian          | MCP tool list                    |
 | `[AUTOMATION_TOOL]`    | Browser Automation | `/playwright-cli` skill | MCP Playwright         | `.claude/skills/playwright-cli/` |
 | `[DB_TOOL]`            | Database           | DBHub MCP               | Supabase MCP / raw SQL | MCP tool list                    |
@@ -152,13 +144,8 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 ### Convention References
 
-| Convention                  | Guideline Location                                                                  |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| TC naming convention        | `.context/guidelines/TAE/test-design-principles.md`                                 |
-| TC specification convention | `.context/guidelines/TAE/test-design-principles.md`                                 |
-| Labeling convention         | `.prompts/fase-11-test-documentation/test-documentation.md` section Labels          |
-| Bug naming convention       | `.prompts/fase-10-exploratory-testing/bug-report.md` section Summary format         |
-| Execution naming convention | `.prompts/fase-11-test-documentation/test-documentation.md` section Test Executions |
+> Dev-side conventions are owned by the relevant skill (e.g., `/sprint-dev` for branch/PR naming, `/product-management` for AC format).
+> QA-side conventions (TC naming, label format, execution naming) live in the sister repo `agentic-qa-boilerplate`.
 
 ---
 
@@ -166,14 +153,13 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 > Replace placeholders with your project details.
 
-| Aspect             | Value                                                     |
-| ------------------ | --------------------------------------------------------- |
-| **Name**           | [Your Project Name]                                       |
-| **Type**           | [e.g., B2B Web Platform, E-commerce, SaaS]                |
-| **Stack**          | [e.g., React + TypeScript (FE), Node.js (BE), PostgreSQL] |
-| **Target Repo**    | [Path to application repository]                          |
-| **Starter Repo**   | [Path to this project-starter repository]                 |
-| **Test Framework** | Playwright + KATA + Allure                                |
+| Aspect           | Value                                                     |
+| ---------------- | --------------------------------------------------------- |
+| **Name**         | [Your Project Name]                                       |
+| **Type**         | [e.g., B2B Web Platform, E-commerce, SaaS]                |
+| **Stack**        | [e.g., React + TypeScript (FE), Node.js (BE), PostgreSQL] |
+| **Target Repo**  | [Path to application repository]                          |
+| **Starter Repo** | [Path to this project-starter repository]                 |
 
 **TL;DR Flow:**
 
@@ -197,40 +183,17 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 ---
 
-## QA Workflow by Work Type
-
-| Work Type            | Workflow                   | Entry Point                                          |
-| -------------------- | -------------------------- | ---------------------------------------------------- |
-| **User Story (Dev)** | Full 14-fase workflow      | `.prompts/us-dev-workflow.md`                        |
-| **User Story (QA)**  | QA 3-fase workflow (10-12) | `.prompts/us-qa-workflow.md`                         |
-| **Bug**              | Triage → Fix → Document    | `.prompts/fase-7-implementation/bug-fix-workflow.md` |
-| **Bug (QA)**         | Triage → Verify → Report   | `.prompts/fase-10-exploratory-testing/bug-report.md` |
-
----
-
-## Dev + QA Planning Scopes
+## Planning Scopes
 
 ### Development Planning
 
-| Scope                     | Prompt                                           | When to Use                             |
-| ------------------------- | ------------------------------------------------ | --------------------------------------- |
-| **Feature-level** (Macro) | `fase-6-planning/feature-implementation-plan.md` | Plan entire feature/epic implementation |
-| **Story-level** (Micro)   | `fase-6-planning/story-implementation-plan.md`   | Plan specific user story implementation |
+| Scope                   | Skill / Reference               | When to Use                              |
+| ----------------------- | ------------------------------- | ---------------------------------------- |
+| **Epic / Feature**      | `/product-management`           | Plan an epic and seed its stories        |
+| **Story-level** (Micro) | `/sprint-dev` (Planning step)   | Implementation plan for a specific story |
+| **Unit-test slice**     | `/unit-testing` (TDD red-green) | TDD workflow for an isolated unit        |
 
-### Test Planning
-
-| Scope                      | Prompt                                              | When to Use                    |
-| -------------------------- | --------------------------------------------------- | ------------------------------ |
-| **Feature-driven** (Macro) | `fase-5-shift-left-testing/feature-test-plan.md`    | Test plan for entire epic      |
-| **Story-driven** (Micro)   | `fase-5-shift-left-testing/acceptance-test-plan.md` | Acceptance test plan per story |
-
-### Test Automation Planning
-
-| Scope                | Prompt                                                    | When to Use                          |
-| -------------------- | --------------------------------------------------------- | ------------------------------------ |
-| **E2E Test**         | `fase-12-test-automation/e2e/e2e-plan.md`                 | Plan E2E test automation             |
-| **Integration Test** | `fase-12-test-automation/integration/integration-plan.md` | Plan API integration test            |
-| **Regression**       | `fase-12-test-automation/regression/`                     | Adding regression test after bug fix |
+> QA test planning (acceptance test plans, regression suites, E2E automation plans) lives in the sister repo `agentic-qa-boilerplate`.
 
 ---
 
@@ -238,56 +201,21 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 ### TypeScript Patterns
 
-| Pattern        | Rule                                                                      |
-| -------------- | ------------------------------------------------------------------------- |
-| **Parameters** | Max 2 positional. 3+ → use object parameter                               |
-| **Utilities**  | Only agnostic utilities go to `tests/utils/`                              |
-| **Locators**   | Inline in ATCs. Extract only if used 2+ times                             |
-| **Imports**    | Always use aliases (`@api/`, `@schemas/`, `@utils/`). No relative imports |
-| **Types**      | Define interfaces at top of file, after imports                           |
-| **Errors**     | Public methods: fail fast. Utilities: silent fail (return null)           |
+| Pattern        | Rule                                                                           |
+| -------------- | ------------------------------------------------------------------------------ |
+| **Parameters** | Max 2 positional. 3+ → use object parameter                                    |
+| **Utilities**  | Agnostic utilities only — no domain coupling in shared modules                 |
+| **Imports**    | Always use aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
+| **Types**      | Define interfaces at top of file, after imports                                |
+| **Errors**     | Public methods: fail fast. Utilities: silent fail (return null)                |
 
-**DRY - Context Matters:**
+**DRY — Context Matters:**
 
 - `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`)
-- `tests/utils/` = Agnostic utilities only (works for API + UI)
-- `UiBase` = All Playwright/Page helpers
-- `ApiBase` = All HTTP helpers
-- `TestContext` = Shared across both (config, faker)
+- Shared utilities = framework-agnostic only
+- Domain logic stays inside its feature folder
 
-→ **Full details**: `.context/guidelines/TAE/typescript-patterns.md`
-
-### KATA Architecture
-
-```
-TestContext (Layer 1) - Config, Faker, utilities
-    ↓ extends
-ApiBase / UiBase (Layer 2) - HTTP / Playwright helpers
-    ↓ extends
-YourApi / YourPage (Layer 3) - ATCs live here
-    ↓ used by
-TestFixture (Layer 4) - Dependency injection
-    ↓ used by
-Test Files - Orchestrate ATCs
-```
-
-**ATC Rules:**
-
-- ATC = Complete test case (mini-flow), NOT single interaction
-- ATCs are atomic: don't call other ATCs
-- Use Steps module for reusable ATC chains
-- Fixed assertions inside ATC, test-level assertions in test file
-- Equivalence Partitioning: same output = one parameterized ATC
-
-**Fixture Selection:**
-
-| Test Type | Fixture    | Browser?  |
-| --------- | ---------- | --------- |
-| API only  | `{ api }`  | No (lazy) |
-| UI only   | `{ ui }`   | Yes       |
-| Hybrid    | `{ test }` | Yes       |
-
-→ **Full details**: `.context/guidelines/TAE/kata-architecture.md`
+> Full TS conventions live in the relevant feature's `dev-guide` (Discovery output). The `/sprint-dev` skill points to it during Planning.
 
 ---
 
@@ -327,7 +255,7 @@ git push -u origin feature/UPEX-123-add-login-tests
 gh pr create --base staging
 ```
 
-→ **Full details**: `.prompts/git-flow.md`
+→ **Full details**: `/git-flow` slash command (and `/git-conflict-fix` for merge conflicts)
 
 ---
 
@@ -365,14 +293,16 @@ gh pr create --base staging
 
 ## Usage Modes & Entry Points
 
-| Mode                 | Entry Point                                                            | When to Use                               |
-| -------------------- | ---------------------------------------------------------------------- | ----------------------------------------- |
-| **Sprint Testing**   | `@.prompts/orchestrators/sprint-testing-agent.md`                      | Multiple tickets in a sprint              |
-| **User Story (QA)**  | `@.prompts/us-qa-workflow.md`                                          | Single story, full QA cycle (Fases 10-12) |
-| **User Story (Dev)** | `@.prompts/us-dev-workflow.md`                                         | Single story, full Dev cycle (Fases 6-9)  |
-| **Bug**              | `@.prompts/bug-qa-workflow.md`                                         | Bug triage, verification, and reporting   |
-| **Automation**       | `@.prompts/orchestrators/test-automation-agent.md`                     | Automate existing specs                   |
-| **Regression**       | `@.prompts/fase-12-test-automation/regression/regression-execution.md` | Post-release validation                   |
+| Mode                        | Entry Point           | When to Use                                                        |
+| --------------------------- | --------------------- | ------------------------------------------------------------------ |
+| **New project bootstrap**   | `/init-project`       | One-time: scaffold `.agents/`, scripts, AGENTS.md                  |
+| **Foundational definition** | `/project-foundation` | Constitution + PRD + SRS + Discovery (one-time per product)        |
+| **Infra scaffolding**       | `/project-bootstrap`  | Backend + frontend skeleton + features (OpenAPI, auth, env, types) |
+| **Backlog & refinement**    | `/product-management` | Seed backlog, add feature, create epic, refine story (INVEST + AC) |
+| **Per-story dev loop**      | `/sprint-dev`         | Plan → Code → Review → Staging → (gated) Production                |
+| **TDD slice**               | `/unit-testing`       | Standalone or composable mid-flight from `/sprint-dev`             |
+
+> QA workflows (sprint testing, exploratory testing, automation, regression) live in the sister repo `agentic-qa-boilerplate`.
 
 ---
 
@@ -384,50 +314,39 @@ gh pr create --base staging
 .context/business-data-map.md      → System flows and entities
 .context/api-architecture.md       → API endpoints reference
 .context/project-dev-guide.md      → How to develop features
-.context/project-test-guide.md     → What to test and why
 ```
 
-### Level 2: Module-Level (shared across tickets in a module)
+### Level 2: Module-Level (shared across stories in a module)
 
 ```
 .context/PBI/{module}/
   module-context.md                → Module overview and shared context
-  test-specs/
-    ROADMAP.md                     → All tickets and their automation status
-    PROGRESS.md                    → Current progress tracker
-    SESSION-PROMPT.md              → @-loadable session resume prompt
+  ROADMAP.md                       → All stories and their dev status
+  PROGRESS.md                      → Current progress tracker
+  SESSION-PROMPT.md                → @-loadable session resume prompt
 ```
 
-### Level 3: Ticket-Level (per ticket)
+### Level 3: Story-Level (per story)
 
 ```
-.context/PBI/{module}/test-specs/{PREFIX}-T{id}-{name}/
-  spec.md                         → Test specification
-  implementation-plan.md           → Automation plan
-  atc/*.md                         → Individual ATC designs
+.context/PBI/{module}/{TICKET-ID}-{name}/
+  context.md                       → ACs, data, session notes, open questions
+  implementation-plan.md           → Plan produced by /sprint-dev
+  evidence/                        → Screenshots, traces, logs (gitignored)
 ```
 
 ### Context Loading by Task
 
-| Task                    | Load These Files                                                              |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| **Develop a Feature**   | `project-dev-guide.md` + `guidelines/DEV/spec-driven-development.md`          |
-| **Write E2E Test**      | `kata-ai-index.md` + `e2e-testing-patterns.md`                                |
-| **Write API Test**      | `kata-ai-index.md` + `api-testing-patterns.md`                                |
-| **Write Unit Test**     | `guidelines/DEV/code-standards.md`                                            |
-| **Exploratory Testing** | `project-test-guide.md` + `CLAUDE.md section Tool Resolution`                 |
-| **Understand System**   | `business-data-map.md` + `PRD/user-journeys.md`                               |
-| **Use MCP Tools**       | `CLAUDE.md section Tool Resolution`                                           |
-| **TMS Operations**      | `guidelines/QA/jira-test-management.md` + `guidelines/TAE/tms-integration.md` |
-| **Code Review**         | `.prompts/fase-8-code-review/review-pr.md`                                    |
-| **Plan Implementation** | `.prompts/fase-6-planning/story-implementation-plan.md`                       |
-| **Shift-Left Testing**  | `.prompts/fase-5-shift-left-testing/acceptance-test-plan.md`                  |
-
-**Living Code Examples:**
-
-- API Component: `tests/components/api/` (any `*Api.ts`)
-- UI Component: `tests/components/ui/` (any `*Page.ts`)
-- Test File: `tests/e2e/` or `tests/integration/`
+| Task                    | Load These Files                                                      |
+| ----------------------- | --------------------------------------------------------------------- |
+| **Develop a Feature**   | `project-dev-guide.md` + relevant `module-context.md`                 |
+| **Plan a Story**        | `module-context.md` + story `context.md` + `business-data-map.md`     |
+| **Write Unit Test**     | `/unit-testing` skill internal docs                                   |
+| **Understand System**   | `business-data-map.md` + `PRD/user-journeys.md`                       |
+| **Use MCP Tools**       | `CLAUDE.md section Tool Resolution`                                   |
+| **Code Review**         | `/sprint-dev` skill (Code Review step)                                |
+| **Plan Implementation** | `/sprint-dev` skill (Planning step)                                   |
+| **Bootstrap Project**   | `/init-project` + `/project-foundation` + `/project-bootstrap` skills |
 
 ---
 
@@ -438,7 +357,7 @@ gh pr create --base staging
 | **Playwright** | E2E testing, UI automation, screenshots    |
 | **OpenAPI**    | API endpoint exploration, contract testing |
 | **DBHub**      | Database queries, data validation          |
-| **Atlassian**  | Jira/Xray test management                  |
+| **Atlassian**  | Jira issue tracking and ticket workflows   |
 | **Context7**   | Official library documentation             |
 | **Tavily**     | Web search, troubleshooting                |
 
@@ -488,43 +407,40 @@ Main conversation stays lean (no large file reads). Subagents do heavy reading. 
 
 ## Local Context (PBI)
 
-For every ticket being worked on, maintain local documentation under `.context/PBI/`:
+For every story being worked on, maintain local documentation under `.context/PBI/`:
 
 ```
 .context/PBI/{module-name}/
   module-context.md                → Module overview and shared context
-  test-specs/
-    ROADMAP.md                     → All tickets and their automation status
-    PROGRESS.md                    → Current progress tracker
-    SESSION-PROMPT.md              → @-loadable session resume prompt
-    {TICKET-ID}-{brief-title}/
-      context.md                   → Main file: ACs, data, session notes, open questions
-      test-analysis.md             → Test plan / Acceptance Test Plan (ATP) mirror
-      test-report.md               → Test report / Acceptance Test Report (ATR) mirror
-      evidence/                    → Screenshots, traces, logs (gitignored)
+  ROADMAP.md                       → All stories and their dev status
+  PROGRESS.md                      → Current progress tracker
+  SESSION-PROMPT.md                → @-loadable session resume prompt
+  {TICKET-ID}-{brief-title}/
+    context.md                     → ACs, data, session notes, open questions
+    implementation-plan.md         → Plan produced by /sprint-dev
+    evidence/                      → Screenshots, traces, logs (gitignored)
 ```
 
 **Variables:**
 
 - `{module-name}`: kebab-case of the module or epic (e.g., `user-management`)
-- `{TICKET-ID}`: TMS ticket identifier (e.g., `UPEX-277`)
+- `{TICKET-ID}`: Issue tracker identifier (e.g., `UPEX-277`)
 - `{brief-title}`: AI-generated summary of the ticket title, max ~5 words, kebab-case (e.g., `empty-states`)
 
-**Entry point**: `@.prompts/session-start.md` — fetches ticket, explains story, loads context, explores code, creates PBI folder.
+**Entry point**: `/sprint-dev` — fetches ticket, explains story, loads context, drives plan-code-review-deploy.
 
-**Resume a session**: `@.context/PBI/{module}/test-specs/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
+**Resume a session**: `@.context/PBI/{module}/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
 
 ---
 
 ## CLI Tools
 
-| Script             | Usage                              | Documentation                 |
-| ------------------ | ---------------------------------- | ----------------------------- |
-| `bun xray`         | TMS sync (import/export/sync)      | `cli/xray/` (self-documented) |
-| `bun run api:sync` | Sync OpenAPI spec + generate types | `cli/sync-openapi.ts`         |
-| `bun run up`       | Update template from upstream      | `cli/update-template.js`      |
-| `bun run lint`     | Lint codebase with ESLint          | `eslint.config.js`            |
-| `bun run format`   | Format with Prettier               | `.prettierrc`                 |
+| Script             | Usage                              | Documentation            |
+| ------------------ | ---------------------------------- | ------------------------ |
+| `bun run api:sync` | Sync OpenAPI spec + generate types | `cli/sync-openapi.ts`    |
+| `bun run up`       | Update template from upstream      | `cli/update-template.js` |
+| `bun run lint`     | Lint codebase with ESLint          | `eslint.config.js`       |
+| `bun run format`   | Format with Prettier               | `.prettierrc`            |
 
 **Run `bun <script> --help`** for usage details.
 
@@ -534,62 +450,51 @@ For every ticket being worked on, maintain local documentation under `.context/P
 
 > Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
 
-| Skill                     | Trigger                  | Description                                                                                                     |
-| ------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| **playwright-cli**        | `/playwright-cli`        | Browser automation: screenshots, tracing, video recording, session management, request mocking, test generation |
-| **xray-cli**              | `/xray-cli`              | Xray Cloud test management: create tests, manage executions, import results, backup/restore                     |
-| **frontend-design**       | `/frontend-design`       | Create distinctive, production-grade frontend interfaces with high design quality                               |
-| **next-best-practices**   | `/next-best-practices`   | Next.js best practices: file conventions, RSC boundaries, data patterns, metadata, error handling               |
-| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache directive, cacheLife, cacheTag, updateTag                              |
-| **next-upgrade**          | `/next-upgrade`          | Upgrade Next.js to latest version following official migration guides and codemods                              |
+### Workflow Skills (project-starter, 6)
 
-**Note:** Skills are committed to the repo so anyone who clones the project gets them out of the box. User-specific settings (`.claude/settings.local.json`) are gitignored.
+| Skill                  | Trigger               | Description                                                                                      |
+| ---------------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
+| **init-project**       | `/init-project`       | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, AGENTS.md            |
+| **project-foundation** | `/project-foundation` | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)               |
+| **project-bootstrap**  | `/project-bootstrap`  | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                      |
+| **product-management** | `/product-management` | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)           |
+| **sprint-dev**         | `/sprint-dev`         | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator. |
+| **unit-testing**       | `/unit-testing`       | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-dev`.                     |
 
----
+### Reusable Knowledge Skills (5)
 
-## Test Project Structure
+| Skill                     | Trigger                  | Description                                                                       |
+| ------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| **frontend-design**       | `/frontend-design`       | Production-grade frontend interfaces with high design quality                     |
+| **next-best-practices**   | `/next-best-practices`   | Next.js best practices: file conventions, RSC boundaries, data patterns, metadata |
+| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache, cacheLife, cacheTag                     |
+| **next-upgrade**          | `/next-upgrade`          | Upgrade Next.js with official migration guides and codemods                       |
+| **playwright-cli**        | `/playwright-cli`        | Browser automation: screenshots, tracing, recording, mocking                      |
 
-```
-tests/
-├── components/
-│   ├── TestContext.ts        # Layer 1: Config + Faker
-│   ├── TestFixture.ts        # Layer 4: Unified fixture
-│   ├── api/
-│   │   ├── ApiBase.ts        # Layer 2: HTTP client
-│   │   └── [YourApi.ts]      # Layer 3: Domain components
-│   ├── ui/
-│   │   ├── UiBase.ts         # Layer 2: Page base
-│   │   └── [YourPage.ts]     # Layer 3: Domain components
-│   └── steps/                # Reusable step chains (preconditions)
-├── e2e/                      # E2E tests
-├── integration/              # API tests
-└── data/fixtures/            # Test data JSON
-```
+### Slash Commands (utilities)
 
----
+| Command                      | Purpose                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| `/git-flow`                  | Git Flow workflow guidance                              |
+| `/git-conflict-fix`          | Resolve merge conflicts safely                          |
+| `/project-doc-setup`         | Regenerate README.md and CLAUDE.md from repo state      |
+| `/context-engineering-setup` | Set up `.context/` directory structure                  |
+| `/sprint-report`             | Generate sprint progress report (epics + stories + PRs) |
 
-## Critical Test Priorities
-
-> Update with your project's priorities.
-
-| Priority | Flow     | Business Impact  | Status |
-| -------- | -------- | ---------------- | ------ |
-| Critical | [Flow 1] | [Why it matters] | [ ]    |
-| Critical | [Flow 2] | [Why it matters] | [ ]    |
-| High     | [Flow 3] | [Why it matters] | [ ]    |
+**Note:** Skills and commands are committed to the repo so anyone who clones the project gets them out of the box. User-specific settings (`.claude/settings.local.json`) are gitignored.
 
 ---
 
 ## Discovery Progress
 
-> Track which discovery prompts have been completed.
+> Track which foundation steps have been completed.
 
-| Phase                  | Status         | Output Files                                                                       |
-| ---------------------- | -------------- | ---------------------------------------------------------------------------------- |
-| Fase 1: Constitution   | [Pending/Done] | `idea/*`                                                                           |
-| Fase 2: Architecture   | [Pending/Done] | `PRD/*`, `SRS/*`                                                                   |
-| Fase 3: Infrastructure | [Pending/Done] | `SRS/infrastructure.md`                                                            |
-| Context Generators     | [Pending/Done] | `business-data-map`, `api-architecture`, `project-dev-guide`, `project-test-guide` |
+| Step                     | Skill                 | Status         | Output Files                                                 |
+| ------------------------ | --------------------- | -------------- | ------------------------------------------------------------ |
+| Constitution             | `/project-foundation` | [Pending/Done] | `idea/*`                                                     |
+| Architecture (PRD + SRS) | `/project-foundation` | [Pending/Done] | `PRD/*`, `SRS/*`                                             |
+| Infrastructure scaffold  | `/project-bootstrap`  | [Pending/Done] | `SRS/infrastructure.md`, backend/frontend boilerplate        |
+| Discovery                | `/project-foundation` | [Pending/Done] | `business-data-map`, `api-architecture`, `project-dev-guide` |
 
 ---
 
@@ -599,7 +504,7 @@ tests/
 
 - [ ] Playwright MCP (browser automation)
 - [ ] Database MCP (data validation)
-- [ ] Atlassian MCP (Jira/Xray integration)
+- [ ] Atlassian MCP (Jira issue tracking)
 - [ ] OpenAPI MCP (API exploration)
 - [ ] Context7 MCP (library documentation)
 - [ ] Bun runtime installed
@@ -612,20 +517,8 @@ tests/
 
 - [ ] Populate `.env` with staging/production URLs
 - [ ] Populate `.env` with test user credentials (`LOCAL_*`, `STAGING_*`)
-- [ ] Configure TMS credentials (Xray Cloud: `XRAY_CLIENT_ID`, `XRAY_CLIENT_SECRET`)
 - [ ] Run `bun run env:validate` to check configuration
 - [ ] Restart Claude Code after any MCP credential change (configs are cached)
-
----
-
-## Testing Decisions
-
-| Aspect        | Decision                   | Rationale         |
-| ------------- | -------------------------- | ----------------- |
-| **Priority**  | [API first / E2E first]    | [Reason]          |
-| **Browsers**  | [Chromium / multi-browser] | [Reason]          |
-| **Test Data** | [Faker / fixtures / both]  | [Reason]          |
-| **Isolation** | Each test independent      | Standard practice |
 
 ---
 
@@ -633,15 +526,31 @@ tests/
 
 **Pre-flight checklist:**
 
-- [ ] Plan presented and approved before coding
-- [ ] KATA architecture followed (layers, ATCs, fixtures)
+- [ ] Plan presented and approved before coding (skill-internal)
 - [ ] Aliases used for imports (`@api/`, `@schemas/`, `@utils/`)
 - [ ] Credentials from `.env`, never hardcoded
-- [ ] Tests run and pass
+- [ ] Unit tests pass (when applicable; see `/unit-testing`)
+- [ ] Lint + types green (`bun run lint`, `tsc --noEmit`)
 - [ ] No AI attribution in commits
 - [ ] Context loaded progressively (not all at once)
 
 See "Quick Start" above for common commands.
+
+---
+
+## Future Hooks (gentle-ai inspired)
+
+The skill architecture leaves room for future enhancements without requiring rework:
+
+1. **Per-phase model routing.** Each SKILL.md declares `phase:` in frontmatter. A future orchestrator can read this and route to a different model per phase (e.g., Opus for foundation, Sonnet for implementation, Haiku for review). Hook point: SKILL.md frontmatter is already structured.
+
+2. **Skill registry.** A future `scripts/skill-registry.ts` could scan `.claude/skills/` and emit a machine-readable catalog. Useful for skills that need to discover other skills, or for dashboards. Hook point: `.claude/skills/` directory structure is already conventional.
+
+3. **Engram-style persistent memory.** Today we use `.context/PBI/{module}/{ticket}/` plus auto-memory. A richer cross-session memory layer (sync between machines, team-shared) could plug in here. Hook point: `.context/.engram/` (TBD).
+
+4. **Cross-agent portability.** Each skill's frontmatter declares `compatibility: [claude-code, copilot, cursor, codex, opencode]`. To validate cross-agent reliability, a future CI step could spin up multiple runners. Hook point: `.claude/skills/` follows the agentskills.io standard.
+
+These hooks are documented but not implemented. Reopen when there's concrete demand.
 
 ---
 
