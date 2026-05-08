@@ -44,7 +44,6 @@ const JIRA_REQUIRED_YAML = join(REPO_ROOT, '.agents', 'jira-required.yaml');
 
 // Directories to scan recursively. AI-facing content only.
 const SCAN_ROOTS = [
-  '.prompts',
   '.context',
   '.claude/skills',
   '.claude/commands',

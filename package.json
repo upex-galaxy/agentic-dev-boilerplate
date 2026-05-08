@@ -15,10 +15,13 @@
     "lint:agents": "bun run scripts/agents-lint.ts",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
     "jira:check": "bun run scripts/check-jira-setup.ts",
+    "agents:setup": "bun run scripts/agents-setup.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf node_modules dist",
     "prepare": "husky"
   },
   "dependencies": {
