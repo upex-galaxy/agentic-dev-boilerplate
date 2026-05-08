@@ -1,182 +1,182 @@
-# Guía de Configuración de Jira + Xray TMS
+# Jira + Xray TMS Setup Guide
 
-> **Propósito**: Guía paso a paso para configurar Jira con Xray como Sistema de Gestión de Tests (TMS) alineado con la metodología IQL.
-> **Prerrequisito**: Leer `jira-platform.md` y `test-management-system.md` primero.
-> **Tiempo Estimado**: 2-4 horas para configuración completa.
-
----
-
-## Tabla de Contenidos
-
-1. [Lista de Verificación Pre-Setup](#1-lista-de-verificación-pre-setup)
-2. [Instalar Xray](#2-instalar-xray)
-3. [Configurar Proyecto](#3-configurar-proyecto)
-4. [Configurar Tipos de Issue](#4-configurar-tipos-de-issue)
-5. [Configurar Campos Personalizados](#5-configurar-campos-personalizados)
-6. [Crear Workflows](#6-crear-workflows)
-7. [Configurar Repositorio de Tests](#7-configurar-repositorio-de-tests)
-8. [Configurar Acceso a API](#8-configurar-acceso-a-api)
-9. [Crear Test Plan](#9-crear-test-plan)
-10. [Validación Final](#10-validación-final)
+> **Purpose**: Step-by-step guide to configure Jira with Xray as a Test Management System (TMS) aligned with IQL methodology.
+> **Prerequisite**: Read `jira-platform.md` and `test-management-system.md` first.
+> **Time Estimate**: 2-4 hours for complete setup.
 
 ---
 
-## 1. Lista de Verificación Pre-Setup
+## Table of Contents
 
-Antes de comenzar, asegúrate de tener:
-
-- [ ] Instancia de Jira Cloud o Jira Data Center
-- [ ] Permisos de Administrador de Jira
-- [ ] Licencia de Xray (trial o pagada)
-- [ ] Lista de módulos/features definida
-- [ ] Entender la distinción entre Test Type y Test Run Status (ver `jira-platform.md`)
-
-### Conceptos Clave a Recordar
-
-| Concepto            | Propósito                   | Valores de Ejemplo        |
-| ------------------- | --------------------------- | ------------------------- |
-| **Test Type**       | Clasificación del test      | Manual, Cucumber, Generic |
-| **Test Status**     | Estado del workflow de Jira | Draft, Ready, Automated   |
-| **Test Run Status** | Resultado de ejecución      | TODO, PASS, FAIL, BLOCKED |
-| **Requirement**     | Tipo de issue cubrible      | Story, Epic, Bug          |
+1. [Pre-Setup Checklist](#1-pre-setup-checklist)
+2. [Install Xray](#2-install-xray)
+3. [Configure Project](#3-configure-project)
+4. [Set Up Issue Types](#4-set-up-issue-types)
+5. [Configure Custom Fields](#5-configure-custom-fields)
+6. [Create Workflows](#6-create-workflows)
+7. [Set Up Test Repository](#7-set-up-test-repository)
+8. [Configure API Access](#8-configure-api-access)
+9. [Create Test Plan](#9-create-test-plan)
+10. [Final Validation](#10-final-validation)
 
 ---
 
-## 2. Instalar Xray
+## 1. Pre-Setup Checklist
 
-### Paso 2.1: Instalar desde Marketplace
+Before starting, ensure you have:
 
-**Para Jira Cloud:**
+- [ ] Jira Cloud or Jira Data Center instance
+- [ ] Jira Administrator permissions
+- [ ] Xray license (trial or paid)
+- [ ] Defined your modules/features list
+- [ ] Understood Test Type vs Test Run Status distinction (see `jira-platform.md`)
 
-1. Ve a **Configuración** (ícono de engranaje) > **Apps** > **Buscar nuevas apps**
-2. Busca "Xray Test Management"
-3. Haz clic en **Obtener app** > **Obtener ahora**
-4. Espera a que complete la instalación
-5. Haz clic en **Comenzar** para iniciar la configuración
+### Key Concepts to Remember
 
-**Para Jira Data Center:**
-
-1. Ve a **Configuración** > **Administrar apps** > **Buscar nuevas apps**
-2. Busca "Xray Test Management for Jira"
-3. Haz clic en **Instalar** y acepta el acuerdo de licencia
-4. Espera a que complete la instalación
-
-### Paso 2.2: Activar Licencia
-
-1. Ve a **Configuración** > **Administrar apps** > **Xray**
-2. Ingresa tu clave de licencia o inicia un trial
-3. Haz clic en **Actualizar**
-
-### Paso 2.3: Verificar Instalación
-
-Después de la instalación, deberías ver:
-
-- Nuevos tipos de issue: Test, Pre-Condition, Test Set, Test Execution, Test Plan
-- Sección de Xray en **Configuración** > **Apps**
-- Paneles de Xray en las vistas de issues
+| Concept             | Purpose                | Example Values            |
+| ------------------- | ---------------------- | ------------------------- |
+| **Test Type**       | Classification of test | Manual, Cucumber, Generic |
+| **Test Status**     | Jira workflow status   | Draft, Ready, Automated   |
+| **Test Run Status** | Execution result       | TODO, PASS, FAIL, BLOCKED |
+| **Requirement**     | Coverable issue type   | Story, Epic, Bug          |
 
 ---
 
-## 3. Configurar Proyecto
+## 2. Install Xray
 
-### Paso 3.1: Agregar Tipos de Issue de Xray al Proyecto
+### Step 2.1: Install from Marketplace
 
-1. Ve a **Configuración del Proyecto** > **Tipos de issue**
-2. Haz clic en **Acciones** > **Agregar Tipos de Issue de Xray**
-3. Selecciona todos los tipos de issue de Xray:
+**For Jira Cloud:**
+
+1. Go to **Settings** (gear icon) > **Apps** > **Find new apps**
+2. Search for "Xray Test Management"
+3. Click **Get app** > **Get it now**
+4. Wait for installation to complete
+5. Click **Get started** to begin configuration
+
+**For Jira Data Center:**
+
+1. Go to **Settings** > **Manage apps** > **Find new apps**
+2. Search for "Xray Test Management for Jira"
+3. Click **Install** and accept the license agreement
+4. Wait for installation to complete
+
+### Step 2.2: Activate License
+
+1. Go to **Settings** > **Manage apps** > **Xray**
+2. Enter your license key or start a trial
+3. Click **Update**
+
+### Step 2.3: Verify Installation
+
+After installation, you should see:
+
+- New issue types: Test, Pre-Condition, Test Set, Test Execution, Test Plan
+- Xray section in **Settings** > **Apps**
+- Xray panels in issue views
+
+---
+
+## 3. Configure Project
+
+### Step 3.1: Add Xray Issue Types to Project
+
+1. Go to **Project Settings** > **Issue types**
+2. Click **Actions** > **Add Xray Issue Types**
+3. Select all Xray issue types:
    - [ ] Test
    - [ ] Pre-Condition
    - [ ] Test Set
    - [ ] Test Execution
    - [ ] Test Plan
-4. Haz clic en **Agregar**
+4. Click **Add**
 
-### Paso 3.2: Configurar Cobertura de Requisitos
+### Step 3.2: Configure Requirement Coverage
 
-1. Ve a **Configuración del Proyecto** > **Apps** > **Configuración de Xray**
-2. Haz clic en **Cobertura de Tests**
-3. Selecciona qué tipos de issue pueden ser "cubiertos" por tests:
+1. Go to **Project Settings** > **Apps** > **Xray Settings**
+2. Click **Test Coverage**
+3. Select which issue types can be "covered" by tests:
    - [ ] Story
    - [ ] Epic
-   - [ ] Bug (opcional)
-   - [ ] Task (opcional)
-4. Haz clic en **Guardar**
+   - [ ] Bug (optional)
+   - [ ] Task (optional)
+4. Click **Save**
 
-### Paso 3.3: Configurar Mapeo de Tipos de Issue (Global)
+### Step 3.3: Configure Issue Type Mapping (Global)
 
-1. Ve a **Configuración** > **Apps** > **Xray** > **Mapeo de Tipos de Issue**
-2. Configura:
-   - **Tipos de Issue de Requisitos**: Story, Epic
-   - **Tipos de Issue de Defectos**: Bug
-3. Haz clic en **Guardar**
-
----
-
-## 4. Configurar Tipos de Issue
-
-### Paso 4.1: Configurar Tipo de Issue Test
-
-1. Ve a **Configuración** > **Issues** > **Tipos de issue**
-2. Encuentra el tipo de issue **Test**
-3. Configura pantallas y campos (ver Paso 5)
-
-### Paso 4.2: Configuración de Test Types
-
-Xray soporta tres tipos de test por defecto:
-
-| Test Type    | Descripción                        | Cuándo Usar                            |
-| ------------ | ---------------------------------- | -------------------------------------- |
-| **Manual**   | Caso de test paso a paso           | Tests ejecutados por humanos           |
-| **Cucumber** | Sintaxis BDD/Gherkin               | Specification by example               |
-| **Generic**  | No estructurado, referencia por ID | Tests automatizados (Playwright, Jest) |
-
-**Para configurar test types:**
-
-1. Ve a **Configuración** > **Apps** > **Xray** > **Test Types**
-2. Revisa los tipos por defecto (Manual, Cucumber, Generic)
-3. Opcionalmente agrega tipos personalizados si es necesario
-
-### Paso 4.3: Crear Estados de Test (Estados de Workflow)
-
-Crea estos estados de workflow para issues de Test:
-
-| Estado     | Categoría   | Descripción                    | Etapa IQL  |
-| ---------- | ----------- | ------------------------------ | ---------- |
-| Draft      | Por Hacer   | Estado inicial, siendo escrito | TMLC       |
-| Ready      | Por Hacer   | Listo para revisión            | TMLC       |
-| Approved   | En Progreso | Revisado y aprobado            | TMLC       |
-| Manual     | Hecho       | Permanecerá manual             | TMLC       |
-| Automating | En Progreso | Siendo automatizado            | TALC       |
-| Automated  | Hecho       | Completamente automatizado     | TALC       |
-| Deprecated | Hecho       | Ya no es válido                | Cualquiera |
+1. Go to **Settings** > **Apps** > **Xray** > **Issue Type Mapping**
+2. Configure:
+   - **Requirement Issue Types**: Story, Epic
+   - **Defect Issue Types**: Bug
+3. Click **Save**
 
 ---
 
-## 5. Configurar Campos Personalizados
+## 4. Set Up Issue Types
 
-### Paso 5.1: Revisar Campos Personalizados de Xray
+### Step 4.1: Configure Test Issue Type
 
-Xray crea automáticamente estos campos personalizados:
+1. Go to **Settings** > **Issues** > **Issue types**
+2. Find **Test** issue type
+3. Configure screens and fields (see Step 5)
 
-| Campo                   | Tipo            | Tipos de Issue | Propósito                    |
-| ----------------------- | --------------- | -------------- | ---------------------------- |
-| Test Type               | Select          | Test           | Manual/Cucumber/Generic      |
-| Manual Test Steps       | Editor de Pasos | Test           | Definición de pasos de test  |
-| Cucumber Test Type      | Select          | Test           | Feature/Scenario             |
-| Generic Test Definition | Texto           | Test           | Referencia de automatización |
-| Test Environments       | Multi-select    | Test Execution | Ambientes objetivo           |
-| Revision                | Texto           | Test Execution | Info de build/versión        |
-| Begin Date              | DateTime        | Test Execution | Hora de inicio               |
-| End Date                | DateTime        | Test Execution | Hora de fin                  |
-| Test Execution Status   | Progreso        | Test Execution | Progreso general             |
-| Test Plan Status        | Progreso        | Test Plan      | Progreso general             |
-| Requirement Status      | Estado          | Story/Epic     | Estado de cobertura          |
+### Step 4.2: Test Types Configuration
 
-### Paso 5.2: Agregar Campos Personalizados a Pantallas
+Xray supports three test types out of the box:
 
-1. Ve a **Configuración** > **Issues** > **Pantallas**
-2. Encuentra **Default Test Screen** o crea una nueva
-3. Agrega estos campos:
+| Test Type    | Description                | When to Use                        |
+| ------------ | -------------------------- | ---------------------------------- |
+| **Manual**   | Step-by-step test case     | Human-executed tests               |
+| **Cucumber** | BDD/Gherkin syntax         | Specification by example           |
+| **Generic**  | Unstructured, ID reference | Automated tests (Playwright, Jest) |
+
+**To configure test types:**
+
+1. Go to **Settings** > **Apps** > **Xray** > **Test Types**
+2. Review default types (Manual, Cucumber, Generic)
+3. Optionally add custom types if needed
+
+### Step 4.3: Create Test Statuses (Workflow States)
+
+Create these workflow statuses for Test issues:
+
+| Status     | Category    | Description                  | IQL Stage |
+| ---------- | ----------- | ---------------------------- | --------- |
+| Draft      | To Do       | Initial state, being written | TMLC      |
+| Ready      | To Do       | Ready for review             | TMLC      |
+| Approved   | In Progress | Reviewed and approved        | TMLC      |
+| Manual     | Done        | Will remain manual           | TMLC      |
+| Automating | In Progress | Being automated              | TALC      |
+| Automated  | Done        | Fully automated              | TALC      |
+| Deprecated | Done        | No longer valid              | Any       |
+
+---
+
+## 5. Configure Custom Fields
+
+### Step 5.1: Review Xray Custom Fields
+
+Xray automatically creates these custom fields:
+
+| Field                   | Type         | Issue Types    | Purpose                 |
+| ----------------------- | ------------ | -------------- | ----------------------- |
+| Test Type               | Select       | Test           | Manual/Cucumber/Generic |
+| Manual Test Steps       | Steps Editor | Test           | Test steps definition   |
+| Cucumber Test Type      | Select       | Test           | Feature/Scenario        |
+| Generic Test Definition | Text         | Test           | Automation reference    |
+| Test Environments       | Multi-select | Test Execution | Target environments     |
+| Revision                | Text         | Test Execution | Build/version info      |
+| Begin Date              | DateTime     | Test Execution | Start time              |
+| End Date                | DateTime     | Test Execution | End time                |
+| Test Execution Status   | Progress     | Test Execution | Overall progress        |
+| Test Plan Status        | Progress     | Test Plan      | Overall progress        |
+| Requirement Status      | Status       | Story/Epic     | Coverage status         |
+
+### Step 5.2: Add Custom Fields to Screens
+
+1. Go to **Settings** > **Issues** > **Screens**
+2. Find **Default Test Screen** or create a new one
+3. Add these fields:
    - [ ] Test Type
    - [ ] Manual Test Steps
    - [ ] Generic Test Definition
@@ -185,32 +185,32 @@ Xray crea automáticamente estos campos personalizados:
    - [ ] Priority
    - [ ] Fix Version
 
-### Paso 5.3: Crear Campos Específicos del Proyecto (Opcional)
+### Step 5.3: Create Project-Specific Fields (Optional)
 
-Puedes agregar campos personalizados para tu proyecto:
+You can add custom fields for your project:
 
-**Campo de Módulo/Feature:**
+**Module/Feature Field:**
 
-1. Ve a **Configuración** > **Issues** > **Campos personalizados**
-2. Haz clic en **Crear campo personalizado**
-3. Selecciona **Lista de Selección (opción única)**
-4. Nombre: `Module`
-5. Agrega opciones: Auth, Bookings, Invoices, Reconciliation, etc.
-6. Asocia con el tipo de issue Test
+1. Go to **Settings** > **Issues** > **Custom fields**
+2. Click **Create custom field**
+3. Select **Select List (single choice)**
+4. Name: `Module`
+5. Add options: Auth, Bookings, Invoices, Reconciliation, etc.
+6. Associate with Test issue type
 
 ---
 
-## 6. Crear Workflows
+## 6. Create Workflows
 
-### Paso 6.1: Crear Workflow de Test
+### Step 6.1: Create Test Workflow
 
-1. Ve a **Configuración** > **Issues** > **Workflows**
-2. Haz clic en **Agregar workflow**
-3. Nombre: `Test Lifecycle Workflow`
-4. Agrega estados y transiciones:
+1. Go to **Settings** > **Issues** > **Workflows**
+2. Click **Add workflow**
+3. Name: `Test Lifecycle Workflow`
+4. Add statuses and transitions:
 
 ```
-WORKFLOW DE TEST:
+TEST WORKFLOW:
 
 ┌─────────┐        ┌─────────┐        ┌──────────┐
 │  Draft  │───────▶│  Ready  │───────▶│ Approved │
@@ -229,43 +229,43 @@ WORKFLOW DE TEST:
                                    └───────────┘
 ```
 
-### Paso 6.2: Definir Transiciones
+### Step 6.2: Define Transitions
 
-| Desde      | Hacia      | Nombre de Transición | Condiciones      |
-| ---------- | ---------- | -------------------- | ---------------- |
-| Draft      | Ready      | Submit               | Summary no vacío |
-| Ready      | Approved   | Approve              | -                |
-| Ready      | Draft      | Reject               | -                |
-| Approved   | Manual     | Mark as Manual       | -                |
-| Approved   | Automating | Start Automation     | -                |
-| Approved   | Deprecated | Deprecate            | -                |
-| Automating | Automated  | Complete Automation  | -                |
-| Automating | Approved   | Cancel Automation    | -                |
-| Manual     | Automated  | Automate             | -                |
-| Cualquiera | Deprecated | Deprecate            | -                |
+| From       | To         | Transition Name     | Conditions        |
+| ---------- | ---------- | ------------------- | ----------------- |
+| Draft      | Ready      | Submit              | Summary not empty |
+| Ready      | Approved   | Approve             | -                 |
+| Ready      | Draft      | Reject              | -                 |
+| Approved   | Manual     | Mark as Manual      | -                 |
+| Approved   | Automating | Start Automation    | -                 |
+| Approved   | Deprecated | Deprecate           | -                 |
+| Automating | Automated  | Complete Automation | -                 |
+| Automating | Approved   | Cancel Automation   | -                 |
+| Manual     | Automated  | Automate            | -                 |
+| Any        | Deprecated | Deprecate           | -                 |
 
-### Paso 6.3: Asignar Workflow al Proyecto
+### Step 6.3: Assign Workflow to Project
 
-1. Ve a **Configuración** > **Issues** > **Esquemas de workflow**
-2. Crea un nuevo esquema o edita el existente
-3. Asocia `Test Lifecycle Workflow` con el tipo de issue **Test**
-4. Asigna el esquema a tu proyecto
+1. Go to **Settings** > **Issues** > **Workflow schemes**
+2. Create new scheme or edit existing
+3. Associate `Test Lifecycle Workflow` with **Test** issue type
+4. Assign scheme to your project
 
 ---
 
-## 7. Configurar Repositorio de Tests
+## 7. Set Up Test Repository
 
-El Test Repository es la estructura de carpetas de Xray para organizar tests.
+The Test Repository is Xray's folder structure for organizing tests.
 
-### Paso 7.1: Acceder al Test Repository
+### Step 7.1: Access Test Repository
 
-1. Ve a tu proyecto
-2. Haz clic en **Tests** en la barra lateral izquierda
-3. Haz clic en la pestaña **Test Repository**
+1. Go to your project
+2. Click **Tests** in the left sidebar
+3. Click **Test Repository** tab
 
-### Paso 7.2: Crear Estructura de Carpetas
+### Step 7.2: Create Folder Structure
 
-Crea una estructura de carpetas que coincida con los módulos de tu aplicación:
+Create a folder structure that matches your application modules:
 
 ```
 Test Repository
@@ -286,196 +286,196 @@ Test Repository
     └── Critical Paths
 ```
 
-**Para crear carpetas:**
+**To create folders:**
 
-1. Haz clic derecho en la raíz del repositorio
-2. Selecciona **Crear carpeta**
-3. Ingresa el nombre de la carpeta
-4. Repite para subcarpetas
+1. Right-click on the repository root
+2. Select **Create folder**
+3. Enter folder name
+4. Repeat for subfolders
 
-### Paso 7.3: Organizar Tests Existentes
+### Step 7.3: Organize Existing Tests
 
-1. Selecciona tests de la lista
-2. Arrastra y suelta en las carpetas apropiadas
-3. O usa acciones masivas para mover múltiples tests
+1. Select tests from the list
+2. Drag and drop into appropriate folders
+3. Or use bulk actions to move multiple tests
 
 ---
 
-## 8. Configurar Acceso a API
+## 8. Configure API Access
 
-### Paso 8.1: Crear Credenciales de API (Cloud)
+### Step 8.1: Create API Credentials (Cloud)
 
-1. Ve a **Configuración** > **Apps** > **Xray** > **API Keys**
-2. Haz clic en **Crear API Key**
-3. Ingresa un nombre descriptivo: `QA Automation - CI/CD`
-4. Haz clic en **Generar**
-5. **Guarda ambos valores de forma segura:**
+1. Go to **Settings** > **Apps** > **Xray** > **API Keys**
+2. Click **Create API Key**
+3. Enter a descriptive name: `QA Automation - CI/CD`
+4. Click **Generate**
+5. **Save both values securely:**
    ```
    Client ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    Client Secret: YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
    ```
 
-### Paso 8.2: Crear Personal Access Token (Server/DC)
+### Step 8.2: Create Personal Access Token (Server/DC)
 
-1. Haz clic en tu avatar de perfil > **Perfil**
-2. Ve a **Personal Access Tokens**
-3. Haz clic en **Crear token**
-4. Ingresa nombre: `QA Automation`
-5. Establece expiración (o sin expiración para CI)
-6. Copia y guarda el token
+1. Click your profile avatar > **Profile**
+2. Go to **Personal Access Tokens**
+3. Click **Create token**
+4. Enter name: `QA Automation`
+5. Set expiration (or no expiry for CI)
+6. Copy and save the token
 
-### Paso 8.3: Probar Conexión de API
+### Step 8.3: Test API Connection
 
 **Cloud:**
 
 ```bash
-# Obtener token de autenticación
+# Get authentication token
 curl -X POST \
   https://xray.cloud.getxray.app/api/v2/authenticate \
   -H "Content-Type: application/json" \
-  -d '{"client_id": "TU_CLIENT_ID", "client_secret": "TU_CLIENT_SECRET"}'
+  -d '{"client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET"}'
 
-# Debería retornar un token JWT
+# Should return a JWT token
 ```
 
 **Server/DC:**
 
 ```bash
-# Probar con PAT
-curl -H "Authorization: Bearer TU_PAT" \
-  https://tu-jira.com/rest/raven/2.0/api/test
+# Test with PAT
+curl -H "Authorization: Bearer YOUR_PAT" \
+  https://your-jira.com/rest/raven/2.0/api/test
 
-# Debería retornar datos de test
+# Should return test data
 ```
 
-### Paso 8.4: Configurar Variables de Entorno
+### Step 8.4: Configure Environment Variables
 
-Crea o actualiza tu archivo `.env`:
+Create or update your `.env` file:
 
 ```bash
-# Configuración de Jira + Xray
-JIRA_BASE_URL=https://tu-empresa.atlassian.net
+# Jira + Xray Configuration
+JIRA_BASE_URL=https://your-company.atlassian.net
 JIRA_PROJECT_KEY=PROJ
 
-# Autenticación Cloud
-XRAY_CLIENT_ID=tu_client_id
-XRAY_CLIENT_SECRET=tu_client_secret
+# Cloud Authentication
+XRAY_CLIENT_ID=your_client_id
+XRAY_CLIENT_SECRET=your_client_secret
 
-# Autenticación Server/DC (alternativa)
-# XRAY_TOKEN=tu_personal_access_token
+# Server/DC Authentication (alternative)
+# XRAY_TOKEN=your_personal_access_token
 
-# Opcional: Valores por defecto
+# Optional: Default values
 XRAY_TEST_PLAN_KEY=PROJ-300
 XRAY_ENVIRONMENT=staging
 ```
 
 ---
 
-## 9. Crear Test Plan
+## 9. Create Test Plan
 
-### Paso 9.1: Crear Tu Primer Test Plan
+### Step 9.1: Create Your First Test Plan
 
-1. Haz clic en **Crear** (botón +)
-2. Selecciona tipo de issue **Test Plan**
-3. Completa los detalles:
-   - **Resumen**: `Regression v2.0`
-   - **Fix Version**: Selecciona versión objetivo
-   - **Descripción**: Agrega objetivos del plan
-4. Haz clic en **Crear**
+1. Click **Create** (+ button)
+2. Select **Test Plan** issue type
+3. Fill in details:
+   - **Summary**: `Regression v2.0`
+   - **Fix Version**: Select target version
+   - **Description**: Add plan objectives
+4. Click **Create**
 
-### Paso 9.2: Agregar Tests al Plan
+### Step 9.2: Add Tests to Plan
 
-1. Abre el Test Plan
-2. Ve a la sección **Tests**
-3. Haz clic en **Agregar Tests**
-4. Elige método:
-   - **Buscar**: Encontrar tests individuales
-   - **Test Set**: Agregar todos los tests de un set
-   - **Carpeta**: Agregar todos los tests de una carpeta del repositorio
-5. Selecciona tests y haz clic en **Agregar**
+1. Open the Test Plan
+2. Go to **Tests** section
+3. Click **Add Tests**
+4. Choose method:
+   - **Search**: Find individual tests
+   - **Test Set**: Add all tests from a set
+   - **Folder**: Add all tests from a repository folder
+5. Select tests and click **Add**
 
-### Paso 9.3: Crear Test Execution
+### Step 9.3: Create Test Execution
 
-1. Abre el Test Plan
-2. Haz clic en **Crear Test Execution**
-3. Completa los detalles:
-   - **Resumen**: `Regression Staging Sprint 5`
-   - **Test Environments**: Selecciona `staging`
-   - **Revision**: Ingresa versión del build
-4. Los tests se agregan automáticamente del plan
-5. Haz clic en **Crear**
+1. Open the Test Plan
+2. Click **Create Test Execution**
+3. Fill in details:
+   - **Summary**: `Regression Staging Sprint 5`
+   - **Test Environments**: Select `staging`
+   - **Revision**: Enter build version
+4. Tests are automatically added from the plan
+5. Click **Create**
 
-### Paso 9.4: Configurar Test Environments
+### Step 9.4: Configure Test Environments
 
-1. Ve a **Configuración** > **Apps** > **Xray** > **Test Environments**
-2. Agrega ambientes:
+1. Go to **Settings** > **Apps** > **Xray** > **Test Environments**
+2. Add environments:
    - `local`
    - `dev`
    - `staging`
    - `production`
-3. Haz clic en **Guardar**
+3. Click **Save**
 
 ---
 
-## 10. Validación Final
+## 10. Final Validation
 
-### Paso 10.1: Validar Configuración de Tipos de Issue
+### Step 10.1: Validate Issue Type Configuration
 
-Ejecuta estas verificaciones:
+Run these checks:
 
-- [ ] El tipo de issue Test tiene todos los campos requeridos
-- [ ] Los Test Types están configurados (Manual, Cucumber, Generic)
-- [ ] El workflow está asignado al tipo de issue Test
-- [ ] El Test Repository es accesible
-- [ ] La cobertura de requisitos está habilitada para Story/Epic
+- [ ] Test issue type has all required fields
+- [ ] Test Types are configured (Manual, Cucumber, Generic)
+- [ ] Workflow is assigned to Test issue type
+- [ ] Test Repository is accessible
+- [ ] Requirement coverage is enabled for Story/Epic
 
-### Paso 10.2: Validar Conexión de API
+### Step 10.2: Validate API Connection
 
 ```bash
-# Configurar autenticación
-export XRAY_CLIENT_ID="tu_client_id"
-export XRAY_CLIENT_SECRET="tu_client_secret"
+# Set up authentication
+export XRAY_CLIENT_ID="your_client_id"
+export XRAY_CLIENT_SECRET="your_client_secret"
 
-# Probar conexión CLI
+# Test CLI connection
 bun xray auth status
 
-# Listar tests (debería retornar datos)
+# List tests (should return data)
 bun xray test list
 
-# Crear un caso de test
+# Create a test case
 bun xray test create \
   --summary "Verify login flow" \
   --type Generic \
   --project PROJ
 
-# Importar resultados de muestra
+# Import sample results
 bun xray import sample-results.xml \
   --project PROJ \
   --test-plan PROJ-300
 ```
 
-### Paso 10.3: Probar Flujo Completo
+### Step 10.3: Test Full Workflow
 
-1. **Crear Test**: Crea un test Generic con patrón de ID
-2. **Agregar al Plan**: Agrega el test a un Test Plan
-3. **Ejecutar Playwright**: Ejecuta con reporter JUnit
-4. **Importar Resultados**: Usa API o CLI para importar
-5. **Verificar en Xray**: Verifica que el Test Execution muestre resultados
+1. **Create Test**: Create a Generic test with ID pattern
+2. **Add to Plan**: Add test to a Test Plan
+3. **Run Playwright**: Execute with JUnit reporter
+4. **Import Results**: Use API or CLI to import
+5. **Verify in Xray**: Check Test Execution shows results
 
-### Paso 10.4: Documentar Tu Configuración
+### Step 10.4: Document Your Configuration
 
-Después del setup, guarda tus valores específicos:
+After setup, save your specific values:
 
 ```yaml
-# Referencia de Configuración Xray
+# Xray Configuration Reference
 jira:
-  base_url: https://tu-empresa.atlassian.net
+  base_url: https://your-company.atlassian.net
   project_key: PROJ
 
 xray:
-  api_type: cloud # o server
-  client_id: (guardado en .env)
-  client_secret: (guardado en .env)
+  api_type: cloud # or server
+  client_id: (stored in .env)
+  client_secret: (stored in .env)
 
 issue_types:
   test: 10001
@@ -496,63 +496,63 @@ test_execution_naming: 'CI Run #[number] - [Environment]'
 
 ---
 
-## Solución de Problemas
+## Troubleshooting
 
-### Problemas Comunes
+### Common Issues
 
-| Problema                           | Solución                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Los paneles de Xray no se muestran | Verifica que el esquema de tipos de issue incluya los tipos de Xray                              |
-| No se pueden agregar tests al plan | Verifica que los tests existan y el usuario tenga permisos                                       |
-| API retorna 401                    | Regenera las credenciales de API                                                                 |
-| API retorna 404                    | Verifica que la clave del proyecto y las claves de issues existan                                |
-| Tests no coinciden al importar     | Asegúrate de que los nombres de test incluyan claves de Jira (ej: `PROJ-101 \| nombre del test`) |
-| Cobertura no se muestra            | Habilita cobertura de requisitos en configuración del proyecto                                   |
+| Issue                        | Solution                                                            |
+| ---------------------------- | ------------------------------------------------------------------- |
+| Xray panels not showing      | Check issue type scheme includes Xray types                         |
+| Cannot add tests to plan     | Verify tests exist and user has permissions                         |
+| API returns 401              | Regenerate API credentials                                          |
+| API returns 404              | Verify project key and issue keys exist                             |
+| Tests not matching on import | Ensure test names include Jira keys (e.g., `PROJ-101 \| test name`) |
+| Coverage not showing         | Enable requirement coverage in project settings                     |
 
-### Queries JQL Útiles
+### Useful JQL Queries
 
 ```jql
-# Encontrar todos los tests automatizados
+# Find all automated tests
 project = PROJ AND issuetype = Test AND status = Automated
 
-# Encontrar tests sin cobertura
+# Find tests without coverage
 project = PROJ AND issuetype = Test AND "Requirement Status" is EMPTY
 
-# Encontrar test runs fallidos
+# Find failed test runs
 project = PROJ AND issuetype = "Test Execution" AND "Test Execution Status" = FAIL
 
-# Encontrar tests en carpeta específica
+# Find tests in specific folder
 project = PROJ AND issuetype = Test AND "Test Repository Path" ~ "Auth/Login"
 
-# Encontrar tests por label
+# Find tests by label
 project = PROJ AND issuetype = Test AND labels in (regression, smoke)
 ```
 
 ---
 
-## Próximos Pasos
+## Next Steps
 
-Después de completar este setup:
+After completing this setup:
 
-1. **Crear Tests**: Comienza a crear casos de test para tu aplicación
-2. **Organizar Repositorio**: Estructura tests por módulo/feature
-3. **Vincular a Requisitos**: Asocia tests con Stories/Epics
-4. **Configurar CI/CD**: Configura importación automática de resultados
-5. **Capacitar al Equipo**: Comparte esta guía con los miembros del equipo
-
----
-
-## Fuentes y Referencias
-
-- [Documentación de Xray Cloud](https://docs.getxray.app/display/XRAYCLOUD)
-- [Documentación de Xray Server/DC](https://docs.getxray.app/display/XRAY)
-- [Xray Academy - Curso de Fundamentos](https://academy.getxray.app/)
-- [Referencia de API REST de Xray](https://docs.getxray.app/display/XRAYCLOUD/REST+API)
-- [Administración de Jira Atlassian](https://support.atlassian.com/jira-cloud-administration/)
-- [Integración Playwright-Xray](https://github.com/inluxc/playwright-xray)
+1. **Create Tests**: Start creating test cases for your application
+2. **Organize Repository**: Structure tests by module/feature
+3. **Link to Requirements**: Associate tests with Stories/Epics
+4. **Configure CI/CD**: Set up automated result import
+5. **Train Team**: Share this guide with team members
 
 ---
 
-**Documento Creado**: 2026-02-09
-**Versión IQL**: 2.0
-**Compatible Con**: jira-platform.md v1.0, cli/xray v2.0.0
+## Sources & References
+
+- [Xray Cloud Documentation](https://docs.getxray.app/display/XRAYCLOUD)
+- [Xray Server/DC Documentation](https://docs.getxray.app/display/XRAY)
+- [Xray Academy - Essentials Course](https://academy.getxray.app/)
+- [Xray REST API Reference](https://docs.getxray.app/display/XRAYCLOUD/REST+API)
+- [Atlassian Jira Administration](https://support.atlassian.com/jira-cloud-administration/)
+- [Playwright Xray Integration](https://github.com/inluxc/playwright-xray)
+
+---
+
+**Document Created**: 2026-02-09
+**IQL Version**: 2.0
+**Compatible With**: jira-platform.md v1.0, cli/xray v2.0.0
