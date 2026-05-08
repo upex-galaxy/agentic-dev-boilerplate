@@ -214,7 +214,7 @@ Findings loop back to Stage 2 with `fix-issues.md`. Architectural rework loops b
 
 **Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
 
-Hand-off: `/git-flow` for PR creation/merge ops; `/git-conflict-fix` for conflict resolution.
+Hand-off: `/git-flow` for PR creation/merge ops; `/fix-git-conflict` for conflict resolution.
 
 #### Spec Compliance Matrix (required output of Stage 3)
 
@@ -318,7 +318,7 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 
 - **TDD on a function** -> `/unit-testing` skill (composable mid-implementation)
 - **PR creation / merge / branch ops** -> `/git-flow` slash command
-- **Conflict resolution** -> `/git-conflict-fix` slash command
+- **Conflict resolution** -> `/fix-git-conflict` slash command
 - **Backlog item missing or AC unclear** -> `/product-management` skill (refine first, then come back)
 - **Foundation/infrastructure missing** -> `/project-foundation` or `/project-bootstrap`
 - **QA verification on staging** -> out of scope here; sister repo `agentic-qa-boilerplate`'s `sprint-testing` skill picks up from `Ready For QA`

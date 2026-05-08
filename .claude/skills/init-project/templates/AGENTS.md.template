@@ -233,7 +233,7 @@ Skills are committed to the repo. User-specific settings (`.claude/settings.loca
 | `/business-data-map` | Generate or refresh `.context/mapping/business-data-map.md` (entities, flows, state machines). |
 | `/business-feature-map` | Generate or refresh `.context/mapping/business-feature-map.md` (feature catalog, CRUD matrix, integrations). |
 | `/sprint-report` | Produce a sprint summary from completed work (commits, merged PRs, closed tickets). |
-| `/git-flow`, `/git-conflict-fix` | Git workflow helpers (branch / commit / push / PR conventions; conflict resolution). |
+| `/git-flow`, `/fix-git-conflict` | Git workflow helpers (branch / commit / push / PR conventions; conflict resolution). |
 
 ---
 

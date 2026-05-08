@@ -238,10 +238,10 @@ Do you need help with anything else?
 ```
 ⚠️ Detected a Git problem
 
-To resolve conflicts and Git errors, use the prompt:
-@utilities/git-conflict-fix.md
+To resolve conflicts and Git errors, use the slash command:
+/fix-git-conflict
 
-This specialized prompt will guide you step by step.
+This specialized command will guide you step by step.
 ```
 
 ## IMPORTANT RULES

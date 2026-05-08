@@ -39,7 +39,7 @@
     {
       "name": "should-not-trigger-merge-conflict",
       "prompt": "Fix the merge conflict in src/auth.ts — the PR can't merge until I resolve it.",
-      "expected_behavior": "Does NOT activate chained-pr. Should route to /git-conflict-fix because this is conflict resolution, not chain strategy. chained-pr does NOT run git operations or resolve conflicts; it picks a layout at planning time.",
+      "expected_behavior": "Does NOT activate chained-pr. Should route to /fix-git-conflict because this is conflict resolution, not chain strategy. chained-pr does NOT run git operations or resolve conflicts; it picks a layout at planning time.",
       "category": "negative"
     },
     {

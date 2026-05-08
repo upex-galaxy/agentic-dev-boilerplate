@@ -21,7 +21,7 @@
 # 6. /unit-testing              → Composable TDD inside sprint-dev
 #
 # Slash commands (utilities):
-# /git-flow, /git-conflict-fix, /project-doc-setup,
+# /git-flow, /fix-git-conflict, /project-doc-setup,
 # /context-engineering-setup, /sprint-report
 #
 # Plan-driven development: each skill plans before coding (skill-internal pattern).
@@ -255,7 +255,7 @@ git push -u origin feature/UPEX-123-add-login-tests
 gh pr create --base staging
 ```
 
-→ **Full details**: `/git-flow` slash command (and `/git-conflict-fix` for merge conflicts)
+→ **Full details**: `/git-flow` slash command (and `/fix-git-conflict` for merge conflicts)
 
 ---
 
@@ -476,7 +476,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 | Command                      | Purpose                                                 |
 | ---------------------------- | ------------------------------------------------------- |
 | `/git-flow`                  | Git Flow workflow guidance                              |
-| `/git-conflict-fix`          | Resolve merge conflicts safely                          |
+| `/fix-git-conflict`          | Resolve merge conflicts safely                          |
 | `/project-doc-setup`         | Regenerate README.md and CLAUDE.md from repo state      |
 | `/context-engineering-setup` | Set up `.context/` directory structure                  |
 | `/sprint-report`             | Generate sprint progress report (epics + stories + PRs) |

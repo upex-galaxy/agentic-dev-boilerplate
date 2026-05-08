@@ -1,6 +1,6 @@
 ---
 name: chained-pr
-description: "Strategic decision skill for splitting oversized changes into a chain of reviewable PRs. Triggers when sprint-dev's Workload Forecast emits risk=High and chain_strategy=pending, or when user manually invokes. Outputs: chosen strategy (stacked-to-main vs feature-branch-chain vs size-exception) + concrete branch plan. Triggers on: 'split this into chained PRs', 'stacked PR strategy', 'PR demasiado grande', 'chained-pr', 'too big PR', 'how to split this', 'cómo trozeo este cambio', 'workload forecast risk=high'. Do NOT use for: simple Git Flow operations (use /git-flow), merge conflicts (use /git-conflict-fix), or feature implementation (use /sprint-dev)."
+description: "Strategic decision skill for splitting oversized changes into a chain of reviewable PRs. Triggers when sprint-dev's Workload Forecast emits risk=High and chain_strategy=pending, or when user manually invokes. Outputs: chosen strategy (stacked-to-main vs feature-branch-chain vs size-exception) + concrete branch plan. Triggers on: 'split this into chained PRs', 'stacked PR strategy', 'PR demasiado grande', 'chained-pr', 'too big PR', 'how to split this', 'cómo trozeo este cambio', 'workload forecast risk=high'. Do NOT use for: simple Git Flow operations (use /git-flow), merge conflicts (use /fix-git-conflict), or feature implementation (use /sprint-dev)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: planning
@@ -208,7 +208,7 @@ When invoked directly by the user (not from sprint-dev):
 ## Hand-offs
 
 - **PR creation / branch ops** → `/git-flow` skill (this skill picks the layout; `/git-flow` runs the commands)
-- **Merge conflicts during chain rebase** → `/git-conflict-fix` skill
+- **Merge conflicts during chain rebase** → `/fix-git-conflict` skill
 - **Feature implementation** → `/sprint-dev` skill (this skill is invoked FROM sprint-dev, not the other way around)
 - **Workload forecast algorithm / thresholds** → `sprint-dev/references/workload-forecast.md`
 

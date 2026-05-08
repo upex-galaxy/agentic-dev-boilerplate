@@ -39,7 +39,7 @@
     {
       "name": "should-not-trigger-merge-conflict",
       "prompt": "Fix the merge conflict in src/auth/session.ts — staging diverged from my branch.",
-      "expected_behavior": "Does NOT activate judgment-day. Should route to /git-conflict-fix. Reasoning: judgment-day reviews finished code; it does not resolve conflicts or make Git decisions. Even though the file is in auth/* (a sensitive path), the task is conflict resolution, not adversarial review.",
+      "expected_behavior": "Does NOT activate judgment-day. Should route to /fix-git-conflict. Reasoning: judgment-day reviews finished code; it does not resolve conflicts or make Git decisions. Even though the file is in auth/* (a sensitive path), the task is conflict resolution, not adversarial review.",
       "category": "negative"
     },
     {

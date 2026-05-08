@@ -93,7 +93,7 @@ Reusable knowledge skills (e.g. `frontend-design`, `next-best-practices`, `playw
 ```
 .claude/commands/
 ├── git-flow.md                  → Feature/release/hotfix branch guidance
-├── git-conflict-fix.md          → Resolve merge conflicts safely
+├── fix-git-conflict.md          → Resolve merge conflicts safely
 ├── project-doc-setup.md         → Regenerate README.md / CLAUDE.md
 ├── context-engineering-setup.md → Build the .context/ structure for a project
 └── sprint-report.md             → Generate sprint progress report

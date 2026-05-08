@@ -55,7 +55,7 @@ Este repo era `ai-driven-project-starter` con 14 fases de prompts mezclando dev 
 | `comment-writer`                              | utility            | implementation | "review comment", "redactar respuesta"                            |
 | `frontend-design`, `next-*`, `playwright-cli` | reusable knowledge | varias         | (preservadas tal cual eran, son symlinks a `.agents/skills/`)     |
 
-**Slash commands (5)**: `/git-flow`, `/git-conflict-fix`, `/project-doc-setup`, `/context-engineering-setup`, `/sprint-report` (en `.claude/commands/`)
+**Slash commands (5)**: `/git-flow`, `/fix-git-conflict`, `/project-doc-setup`, `/context-engineering-setup`, `/sprint-report` (en `.claude/commands/`)
 
 ---
 

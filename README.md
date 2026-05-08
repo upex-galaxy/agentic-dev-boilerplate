@@ -72,7 +72,7 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 | Command                      | Purpose                                                                             |
 | ---------------------------- | ----------------------------------------------------------------------------------- |
 | `/git-flow`                  | Git Flow guidance: feature/release/hotfix branches, commit conventions, PR creation |
-| `/git-conflict-fix`          | Resolve merge conflicts safely (understand -> choose -> verify)                     |
+| `/fix-git-conflict`          | Resolve merge conflicts safely (understand -> choose -> verify)                     |
 | `/project-doc-setup`         | Regenerate `README.md` and `CLAUDE.md` from current repo state                      |
 | `/context-engineering-setup` | Set up `.context/` (business-data-map, api-architecture, project-dev-guide)         |
 | `/sprint-report`             | Generate a sprint progress report — epics + stories + PRs                           |

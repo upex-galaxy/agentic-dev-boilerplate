@@ -1,6 +1,6 @@
 ---
 name: judgment-day
-description: "Adversarial parallel review protocol: launches 2 independent blind judge subagents simultaneously to review the same target, synthesizes findings, applies fixes, re-judges until both pass or escalates after 2 iterations. Use for critical PRs (security/auth/billing/payments paths) and high-stakes architectural changes. Composable from sprint-dev Stage 3 (manual or auto-trigger on sensitive paths). Triggers on: 'judgment day', 'doble review', 'adversarial review', 'que lo juzguen', 'dual review', 'critical PR review', 'security review of this PR'. Do NOT use for: routine code review (use sprint-dev Stage 3 directly), single-perspective review, or merge-conflict resolution (use /git-conflict-fix)."
+description: "Adversarial parallel review protocol: launches 2 independent blind judge subagents simultaneously to review the same target, synthesizes findings, applies fixes, re-judges until both pass or escalates after 2 iterations. Use for critical PRs (security/auth/billing/payments paths) and high-stakes architectural changes. Composable from sprint-dev Stage 3 (manual or auto-trigger on sensitive paths). Triggers on: 'judgment day', 'doble review', 'adversarial review', 'que lo juzguen', 'dual review', 'critical PR review', 'security review of this PR'. Do NOT use for: routine code review (use sprint-dev Stage 3 directly), single-perspective review, or merge-conflict resolution (use /fix-git-conflict)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: review
@@ -62,7 +62,7 @@ Manual mode accepts any of: a PR URL, a branch name, a `.context/PBI/{ticket}/` 
 - **Routine code review** — sprint-dev Stage 3 single-reviewer pass is enough. Don't burn two parallel subagents on a 50-line CRUD change.
 - **Doc-only PRs** — README, comments, type doc. Lint catches these; adversarial review adds noise.
 - **Low-risk changes** — UI tweaks, copy changes, dependency bumps with no security implications.
-- **Merge-conflict resolution** — use `/git-conflict-fix`. This skill judges code, it doesn't resolve conflicts.
+- **Merge-conflict resolution** — use `/fix-git-conflict`. This skill judges code, it doesn't resolve conflicts.
 - **Single-perspective review** — if you only want one opinion, just use sprint-dev Stage 3.
 
 If the user invokes judgment-day for a clearly-low-risk change, surface the cost ("this will dispatch 2 parallel subagents — confirm?") and let them confirm or downgrade to standard review.
@@ -255,7 +255,7 @@ If unset, fall back to the defaults listed and surface a one-line warning that `
 
 - **Routine review (single perspective)** → sprint-dev Stage 3 directly (no judgment-day).
 - **Fix application after synthesis** → sprint-dev Stage 2 fix-and-iterate (`fix-issues.md`). Judgment-day's fix agent IS that loop, just scoped to the synthesis action items.
-- **Merge conflict resolution** → `/git-conflict-fix`.
+- **Merge conflict resolution** → `/fix-git-conflict`.
 - **PR creation / merge ops** → `/git-flow`.
 - **Test automation** of any uncovered AC scenario surfaced by the judges → out of scope here. Surface the gap to the caller; sprint-testing (sister repo) handles automation.
 

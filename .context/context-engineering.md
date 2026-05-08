@@ -149,7 +149,7 @@ aicode-starter/
 │   │   └── incident-response.md        Para: Playbook de incidentes
 │   │
 │   ├── git-flow.md                     Para: Estrategia de branching
-│   ├── git-conflict-fix.md             Para: Resolver conflictos de merge
+│   ├── fix-git-conflict.md             Para: Resolver conflictos de merge
 │   ├── us-dev-workflow.md              Para: Workflow completo de desarrollo (Fases 6-9)
 │   └── us-qa-workflow.md               Para: Workflow completo de QA (Fases 10-12)
 │
