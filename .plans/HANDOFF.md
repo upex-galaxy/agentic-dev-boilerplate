@@ -475,4 +475,73 @@ Cuando la próxima IA se sume, opciones razonables (en orden de prioridad probab
 - Si una decisión te parece random, mirá las memorias en `/home/sai/.claude/projects/.../memory/` — el user ya validó preferencias.
 - Si hay un blocker no documentado, **PARAR Y PREGUNTAR**. Mejor que improvisar.
 
-**Última actualización**: 2026-05-07, después del commit `ed1e041` (Fase 14).
+**Última actualización**: 2026-05-08, después del commit `96c5fe5` (Fase 15-pre).
+
+---
+
+## Sesión 2026-05-08 — Auditoría comparativa cross-repo + cleanup
+
+> Sesión post-Fase 14. Pre-push (Fase 13 sigue diferida). El user pidió comparar A vs sister repo `agentic-qa-boilerplate` antes de continuar con push o Fase 15.
+
+### Lo entregado en esta sesión (5 commits)
+
+| Commit    | Bloque                                                                                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `c916bce` | Audit doc: `.plans/AUDIT-CROSS-REPO-2026-05-08.md` (520 L, 30+ candidates catalogued)                                                                                         |
+| `e219a2d` | Quick wins Q1+Q2+Q4 + AB4+AB5: CLAUDE↔AGENTS symlink, agents-lint cleanup (`.prompts/` removed), `.agents/README.md` cleanup, `type-check`/`agents:setup`/`clean` npm scripts |
+| `10d0a53` | Bloque 2: AB1 port `commit-push-pr.md`, AB2 port `refresh-ai-memory.md`, D5 rename `git-conflict-fix.md` → `fix-git-conflict.md` (12 ref updates)                             |
+| `374d2a3` | Bloque 3: S5 jira-setup-guide.md ES → EN (port from B)                                                                                                                        |
+| `96c5fe5` | Bloque 4: AB3 port `acli` skill (8 files, 2262 insertions; DEV-adapted)                                                                                                       |
+
+### Audit corrections (no eran reales)
+
+- **Q3/L4**: `scripts/jira-sync.ts` SÍ existe — `jira:sync` npm script no es referencia rota.
+- **Q5/L2**: `.context/guidelines/DEV/` ya no existe — fue borrado en cleanup previo.
+- **Bonus encontrado**: `scripts/agents-lint.ts:47` SCAN_ROOTS todavía listaba `.prompts` (legacy). Limpiado en commit `e219a2d`.
+
+### Decisiones D1-D7 tomadas
+
+| ID  | Decisión                                                                            | Aplicada?             |
+| --- | ----------------------------------------------------------------------------------- | --------------------- |
+| D1  | Mantener `init-project` (A) y `framework-core` (B) divergentes — naming por dominio | NO-OP                 |
+| D2  | Inglés canónico para docs/skills/commands                                           | Aplicada parcial (S5) |
+| D3  | `.context/` migra a `mapping/+reports/` — **DEFER**                                 | Defer                 |
+| D4  | `.books/` se queda en A                                                             | NO-OP                 |
+| D5  | Naming verbo-primero (`fix-git-conflict`)                                           | Aplicada              |
+| D6  | `cli/` → `scripts/` migración — **DEFER** (toca infra)                              | Defer                 |
+| D7  | `build-skill-registry` on-demand                                                    | NO-OP                 |
+
+### Items DEFERIDOS para sesiones futuras (con razón)
+
+| #          | Item                                                                                                                                                                      | Razón defer                                                                                                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AB7        | "Customization Guide" section en CLAUDE.md                                                                                                                                | Cubierto por `/refresh-ai-memory` bootstrap template (recién portado)                                                                                                                             |
+| L3         | `.context/idea/` legacy — mantener                                                                                                                                        | Decisión D-style; contenido narrativo válido                                                                                                                                                      |
+| L7 (NUEVO) | `docs/setup/mcp-dbhub.md` y `mcp-openapi.md` tienen contenido QA-flavored heredado (audience "QA Engineers", `qa_automation` SQL user, refs a KATA + `docs/testing/api/`) | Detectado por subagente S6; cleanup útil pero scope separado al sync. Convertir a DEV-flavor: cambiar audience, ejemplos `qa_automation` → `dev_automation`, eliminar refs KATA/docs/testing/api/ |
+| D3         | `.context/` arquitectura migration                                                                                                                                        | ADR mayor; requiere alineación + decisión tooling                                                                                                                                                 |
+| D6         | `cli/` → `scripts/` migration                                                                                                                                             | Riesgo medio; toca `package.json` 3 scripts (`up`, `api:sync`, `resend`) + 3 archivos. Mejor en commit dedicado                                                                                   |
+| S2         | `docs/methodology/early-game-testing.md` divergencia silenciosa                                                                                                           | Investigación reveló: solo paths de links difieren (A: `./file.md`, B: `docs/methodology/file.md`). Contenido 99.5% idéntico. Sync por estilo no urgente                                          |
+| S4         | `docs/workflows/environments.md` divergencia silenciosa                                                                                                                   | Misma causa que S2 (paths de links). No urgente                                                                                                                                                   |
+
+### Estado final del repo post-sesión
+
+- 11 workflow skills (10 originales + nueva `acli`) + 5 reusable (symlinks)
+- 7 slash commands (5 originales + 2 nuevos: `commit-push-pr`, `refresh-ai-memory`; `git-conflict-fix` renombrado a `fix-git-conflict`)
+- CLAUDE.md ahora symlink → AGENTS.md (cero drift)
+- 3 npm scripts nuevos (`type-check`, `agents:setup`, `clean`)
+- `docs/setup/jira-setup-guide.md` en inglés (D2)
+- `scripts/agents-lint.ts` ya no escanea `.prompts/` (legacy ref limpiada)
+- `.agents/README.md` actualizado (referencias `prompts` → `skills/commands`)
+
+### Verificaciones baseline mantenidas
+
+- `bun run lint:agents`: 7 errors AGENTS.md placeholders + 5 warnings unused vars (mismo baseline pre-sesión, gotcha #7)
+- `bun run type-check`: 1 error TS preexistente en `cli/sync-openapi.ts:116` (heredado de main; no introducido en esta sesión)
+
+### Próximos pasos sugeridos (en orden razonable)
+
+1. **Fase 13 (push)** — diferida indefinidamente. Cuando el user lo decida.
+2. **L7 cleanup** — DEV-flavor mcp-dbhub/mcp-openapi (subagente, ~30 min).
+3. **D6 migración** — `cli/` → `scripts/` (subagente con cuidado, propio commit).
+4. **Fase 15** — super-installer + onboarding gentle-ai (out of scope este ciclo).
+5. **D3 ADR** — decidir si `.context/` migra a `mapping/+reports/` (alineación con B, requiere tooling).
