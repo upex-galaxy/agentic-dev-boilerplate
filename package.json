@@ -10,7 +10,6 @@
   "scripts": {
     "up": "bun cli/update-template.js",
     "api:sync": "bun cli/sync-openapi.ts",
-    "resend": "bun cli/resend.ts",
     "jira:sync": "bun scripts/jira-sync.ts",
     "lint:agents": "bun run scripts/agents-lint.ts",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
