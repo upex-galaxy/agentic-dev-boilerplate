@@ -632,3 +632,118 @@ Cuando la próxima IA se sume, opciones razonables (en orden de prioridad probab
 | D6      | `cli/` → `scripts/` migration (queda `update-template.js` y `sync-openapi.ts`) | Sesión separada                                 |
 | D3      | `.context/` arquitectura migration a `mapping/+reports/`                       | ADR explícito requerido                         |
 | S2/S4   | docs/methodology + workflows/environments link path drift                      | Estilo, no urgente                              |
+
+---
+
+## Continuación 2026-05-09b — gentle-ai research + git-flow-master + Fase 15 plan
+
+> Sub-bloque post-2026-05-09. El user pidió investigar gentle-ai a fondo, decidir qué skills traer, y consolidar todos los comandos git/PR en una super-skill propia ANTES de Fase 15.
+
+### Audit gaps detectados (NO estaban en `AUDIT-CROSS-REPO-2026-05-08.md`)
+
+1. **`.claude/settings.json`**: A estaba MUY pobre (17 blanket allow vs ~70 granular en B). Resuelto en commit `fb5b601` (sub-bloque 2026-05-09a).
+2. **`.mcp.example.json`** sin Supabase MCP. Resuelto en commit `f14d3dc`. **Pero la lista canónica REAL del user es solo 4 MCPs**: tavily, context7, supabase, **n8n** (con su skill). Resto via CLI + skills. Necesita cleanup futuro: sacar atlassian/playwright/dbhub/openapi/postman, agregar n8n.
+3. **`skills-lock.json`** existe en A (lockfile de skills externas con SHA hashes). El audit lo nombró mal "skills.log.json" — el correcto es **`skills-lock.json`**.
+4. **`cli/resend.ts`** deprecable: hay skill oficial `resend-cli` ahora. Resuelto en commit `3001cc8`.
+5. **5 errors lint `{{ATLASSIAN_SITE}}`** en acli skill (introducidos cuando portamos acli en commit `96c5fe5`). Resuelto en commit `b7fe7a4` (mini-fase 15-pre).
+6. **Templates per-agente en `templates/mcp/`**: existen `claude.template.json`, `opencode.template.json`, `codex.template.toml`, `gemini.template.json`, `dbhub.example.toml`. Decisión: **NO borrar** (user puede borrar después según necesite). El installer puede usar los templates como base para configurar MCPs interactivamente.
+
+### Mini-fase 15-pre completada (3 commits)
+
+| Commit    | Cambio                                                                                                                                                                             |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `b7fe7a4` | `chore`: declare ATLASSIAN_SITE + remove 3 git/PR commands + chained-pr skill (consolidados en git-flow-master)                                                                    |
+| `e2da049` | `feat(skills)`: add `git-flow-master` super-skill (352 L SKILL + 4 references + 8 evals) + cross-ref updates en sprint-dev, comment-writer, judgment-day, AGENTS.md, settings.json |
+| `5530492` | `docs(plans)`: add `.plans/GENTLE-AI-RESEARCH.md` (792 L) — investigación completa del ecosistema gentle-ai v1.26.5                                                                |
+
+**git-flow-master soporta 7 estrategias de branching** (más de las 3 que el user pidió):
+
+1. `solo-main` (personal/side projects)
+2. `main-integration` (Apex Galaxy style)
+3. `enterprise` (multi-branch + release/hotfix)
+4. `trunk-based` (feature flags, <1d branches)
+5. `gitflow` (Vincent Driessen clásico)
+6. `github-flow` (main + features, no integration)
+7. `gitlab-flow` (env branches: pre-production, production)
+
+Auto-detecta strategy via `.git/config` + branches existentes + marker `<!-- git-flow-master:strategy:value -->` en AGENTS.md. Si ambiguo, pregunta al user y persiste la decisión.
+
+**Lint baseline**: ahora **7 errors + 5 warnings** (era 12+5; ATLASSIAN_SITE fix bajó 5 errors).
+
+### Decisiones del user para Fase 15 (D9 — D14 NUEVAS)
+
+| ID  | Decisión                                                                                                                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D9  | gentle-ai NOT mandatory pero **quasi-must-have**. Engram = casi obligatorio. SDD skills = casi obligatorias. Resto opcional pero el installer ofrece todas las que marcamos. CLAUDE.md/AGENTS.md debe documentar: "este repo usa gentle-ai como base global, NO crítico" |
+| D10 | Installer formato: **bun script CLI interactivo** (confirmado)                                                                                                                                                                                                           |
+| D11 | NO usar `gentle-ai install --preset ecosystem-only` — instalar **por args específicos** para tener control granular y evitar que gentle-ai agregue cosas extras a presets                                                                                                |
+| D12 | `templates/mcp/` **NO borrar**. User decide qué borrar después. Script `update-boilerplate.ts` puede actualizar el template del agent que el user elija                                                                                                                  |
+| D13 | Lista **canónica de MCPs**: tavily, context7, supabase, **n8n** (con skill de n8n). Todos los demás via CLI + skills                                                                                                                                                     |
+| D14 | Soportar SOLO **2 agentes**: Claude Code + OpenCode. Todo lo demás (Codex, Gemini, Cursor, Copilot, etc.) fuera de scope                                                                                                                                                 |
+
+### Decisiones sobre skills a traer de gentle-ai (D15)
+
+**15 skills selectas** (NO las 22 community + NO chained-pr/branch-pr/work-unit-commits/skill-creator/go-testing):
+
+✅ **SDD bloque completo (11)**: `sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`, `sdd-onboard`, `skill-registry`
+
+✅ **Foundation (4)**: `judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`
+
+❌ **Descartadas**:
+
+- `chained-pr`, `branch-pr`, `work-unit-commits` — consolidados en `/git-flow-master` propio
+- `skill-creator` — el oficial de Anthropic se instala via `npx skills add skill-creator`
+- `go-testing` — no usamos Go
+- 22 community skills (`react-19`, `nextjs-15`, `typescript`, `tailwind-4`, `zod-4`, etc.) — preferimos skills oficiales via `find-skills` (que el user ya tiene global)
+
+### Skill propia adicional para Fase 15
+
+✅ Crear `/agentic-dev-onboard` (mejor nombre que `/dev-onboard`) — explica el flujo del repo (`/sprint-dev` + Jira + Next.js + Supabase). Complementa al `sdd-onboard` de gentle-ai.
+
+### Lista de cleanup a hacer DURANTE Fase 15 (consolidado)
+
+1. **Eliminar copias locales de skills borrowed** (vienen de gentle-ai user-install):
+   - `.claude/skills/judgment-day/`
+   - `.claude/skills/cognitive-doc-design/`
+   - `.claude/skills/comment-writer/`
+   - (`chained-pr` ya borrada en `b7fe7a4`)
+   - Update `.claude/settings.json` Skill() entries
+
+2. **`.mcp.example.json`** rehacerlo con lista canónica: tavily, context7, supabase, n8n. Sacar atlassian, playwright, dbhub, openapi, postman.
+
+3. **Agregar `Bash(supabase *)`, `Bash(vercel *)`, etc.** al settings.json allow (CLIs que el installer verifica).
+
+4. **`cli/update-template.js`** → migrar a `cli/update-boilerplate.ts` (TypeScript + bun, alineado con QA boilerplate).
+
+5. **Crear `cli/install.ts`** (o `scripts/install.ts`) — el installer interactivo dual.
+
+6. **Crear `docs/setup/integrating-gentle-ai.md`** + hand-off matrix `/sprint-dev` ↔ `/sdd-*`.
+
+### Plan Fase 15 (actualizado, próxima sesión, orquestación pura)
+
+**Phase A — Diseño concreto** (1 sub-agent `Plan` o `sdd-propose`):
+
+- Confirmar D9-D15 + ajustar
+- Diseñar el flow exacto del installer (steps, prompts, fallbacks)
+- Decidir cómo se persiste si el user opt-out de gentle-ai (script anota decisión, no re-pregunta)
+
+**Phase B — Build** (2-3 subagentes en paralelo):
+
+- `cli/install.ts` — installer dual (delega a gentle-ai via args específicos + verifica CLIs externos + configura MCPs interactivo)
+- `cli/update-boilerplate.ts` — migración TS + lógica de update de templates por agent
+- `docs/setup/integrating-gentle-ai.md` — guía + hand-off matrix `/sprint-dev` ↔ `/sdd-*`
+- `.mcp.example.json` rehecho con lista canónica
+- Update `.claude/settings.json`
+
+**Phase C — Migración + nueva skill propia** (1 subagent):
+
+- Eliminar 3 copias locales de skills borrowed (judgment-day, cognitive-doc-design, comment-writer)
+- Update settings.json para sacar Skill() entries (vienen del user-level)
+- Crear `/agentic-dev-onboard` skill nueva (con `skill-creator` oficial)
+- Actualizar AGENTS.md sección Skills + Future Hooks
+
+**Phase D — Verify + cierre** (1 subagent):
+
+- Smoke test: simular "Create from Template" → run installer → todo funciona
+- Update CLAUDE.md/AGENTS.md sección Onboarding
+- Update HANDOFF + cierre Fase 15
