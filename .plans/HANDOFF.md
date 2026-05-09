@@ -545,3 +545,90 @@ Cuando la próxima IA se sume, opciones razonables (en orden de prioridad probab
 3. **D6 migración** — `cli/` → `scripts/` (subagente con cuidado, propio commit).
 4. **Fase 15** — super-installer + onboarding gentle-ai (out of scope este ciclo).
 5. **D3 ADR** — decidir si `.context/` migra a `mapping/+reports/` (alineación con B, requiere tooling).
+
+---
+
+## Continuación 2026-05-09 — Sub-bloque post-audit (3 commits)
+
+> Continuación de la sesión 2026-05-08. El user pidió evaluar items que el audit anterior NO cubrió: `.claude/settings.json`, `.mcp.example.json` (Supabase MCP), `cli/resend.ts` deprecation, y "stale files".
+
+### Audit gaps detectados (no estaban en `AUDIT-CROSS-REPO-2026-05-08.md`)
+
+1. **`.claude/settings.json`** — A estaba MUY pobre vs B (17 blanket allow vs ~70 granular).
+2. **`.mcp.example.json`** — byte-idéntico A↔B PERO **falta Supabase MCP** (parte del stack DEV documentado en CLAUDE.md MCPs Available).
+3. **`skills-lock.json`** — A SÍ lo tiene (no "skills.log.json" como dijo el audit; nombre real `skills-lock.json`). Lockfile estilo package-lock para reusable skills externas con SHA hashes.
+4. **`.gemini/settings.{json,catalog.json}`** — config Gemini CLI solo en A, no comparada.
+5. **`cli/resend.ts`** — script custom deprecable, suplantado por skill oficial `resend-cli` (de `resend/resend-cli` GitHub) que apareció via skill management (no manual).
+
+### Audit corrections (segundo round)
+
+- `cli/resend.ts` se referencia en docs colaterales (api-architecture.md, srs.MANUAL.md, implementation-planning.MANUAL.md), PERO esas refs son al **producto Resend** (email service) o al verbo "re-send", NO al script. **Cero edits colaterales requeridos** para deprecar el script.
+- `.mcp.json` está en `.gitignore` (línea 68) y nunca commiteado — el local con tokens reales NO leak.
+
+### Commits del sub-bloque
+
+| Commit    | Cambio                                                                                                                                                                                                                                                                            |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fb5b601` | `chore(settings)`: upgrade `.claude/settings.json` (B-style, granular permissions, skill allowlist 24 entries, deny destructive 14 entries, removed `disableAllHooks` y `defaultMode: acceptEdits`). **Absorbió `cli/resend.ts` deletion** porque `git rm` lo había staged previo |
+| `f14d3dc` | `feat(mcp)`: add Supabase MCP server to `.mcp.example.json` con env vars `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`                                                                                                                |
+| `3001cc8` | `refactor(cli)`: replace `cli/resend.ts` with official `resend-cli` skill (from `resend/resend-cli` GitHub). 19 files: SKILL.md + 16 references + symlink + skills-lock.json update + package.json clean                                                                          |
+
+### Decisión estratégica del user (D8 NUEVA)
+
+> **Implementar Fase 15 (super-installer + onboarding gentle-ai)** — confirmada por user como dirección estratégica.
+
+**Implicaciones**:
+
+- Las 4 skills borrowed de gentle-ai (chained-pr, judgment-day, cognitive-doc-design, comment-writer) eventualmente migran a venir de gentle-ai user-install en lugar de copias locales.
+- A va a tener un script de instalación que detecta y conecta con gentle-ai.
+- Onboarding guiado para new users.
+
+**Constraint del user (recordatorio explícito)**: Fase 15 debe ejecutarse en **modo orquestación pura** — el hilo principal NO ejecuta, solo despacha subagentes con briefings inteligentes (alineado con `feedback_orchestration_mode.md` memory).
+
+### Plan tentativo Fase 15 (próxima sesión dedicada, 1-2 sesiones)
+
+**Phase A — Diseño** (1 sub-agent `Plan` o invocar `sdd-propose`):
+
+- Propuesta + spec + design para el installer
+- Decisión: ¿gentle-ai como hard dep o soft (fallback a copies locales si no instalado)?
+- Decisión: formato del installer (bun script CLI, npm postinstall, Make target, etc.)
+- Decisión: qué skills migran a referencia gentle-ai vs cuáles se mantienen locales
+
+**Phase B — Build** (subagentes en paralelo):
+
+- `scripts/install.ts` — detector + linker
+- `docs/setup/integrating-gentle-ai.md` — guía onboarding user-facing
+- Hand-off matrix: cuándo usar `/sprint-dev` vs delegar a `/sdd-*` para change-rigorous flows
+
+**Phase C — Migración de skills borrowed** (1 subagent):
+
+- Si se decide referencia: convert chained-pr, judgment-day, cognitive-doc-design, comment-writer a symlinks/references hacia `~/.claude/skills/`
+- Si se decide hybrid: documentar la relación + crear `scripts/sync-from-gentle-ai.ts` para drift detection
+- Update settings.json (remover Skill() entries que ahora vienen de user-level)
+
+**Phase D — Verify** (1 subagent):
+
+- Smoke test installer en repo dummy
+- Update CLAUDE.md / AGENTS.md con sección Onboarding
+- Update HANDOFF cierre
+
+### Estado final post-2026-05-09 sub-bloque
+
+- 11 workflow skills + 5 reusable + **6 reusable** (con `resend-cli`)
+- 7 slash commands
+- `.claude/settings.json` modernizado (B-style con adaptaciones DEV)
+- `.mcp.example.json` con 8 MCPs (incl. Supabase)
+- `skills-lock.json` con 5 entradas (4 originales + resend-cli)
+- `cli/resend.ts` deprecado; package.json sin script `resend`
+- `cli/` ahora tiene solo: `update-template.js`, `sync-openapi.ts` (D6 migración a `scripts/` sigue pendiente)
+
+### Items que siguen DEFERIDOS
+
+| #       | Item                                                                           | Fase asignada                                   |
+| ------- | ------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Fase 13 | Push como `agentic-dev-boilerplate`                                            | Cuando user lo decida                           |
+| Fase 15 | Super-installer + onboarding gentle-ai                                         | **Próxima sesión dedicada (orquestación pura)** |
+| L7      | mcp-dbhub/mcp-openapi DEV-flavor cleanup                                       | Sesión separada                                 |
+| D6      | `cli/` → `scripts/` migration (queda `update-template.js` y `sync-openapi.ts`) | Sesión separada                                 |
+| D3      | `.context/` arquitectura migration a `mapping/+reports/`                       | ADR explícito requerido                         |
+| S2/S4   | docs/methodology + workflows/environments link path drift                      | Estilo, no urgente                              |
