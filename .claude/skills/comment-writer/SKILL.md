@@ -1,6 +1,6 @@
 ---
 name: comment-writer
-description: "Write warm, direct, human PR/issue comments and review feedback. Style: Rioplatense voseo for ES, neutral professional for EN; no em-dashes; concrete and concise; no AI-tells. Use for: review comments on PRs, issue triage notes, replies to teammates, code review feedback. Triggers on: 'escribir comentario para este PR', 'comentario para issue', 'review comment', 'responder a este comentario', 'redactar la respuesta', 'how should I word this PR comment?'. Do NOT use for: commit messages (different convention, see /git-flow), formal documentation (use cognitive-doc-design), or external customer-facing copy."
+description: "Write warm, direct, human PR/issue comments and review feedback. Style: Rioplatense voseo for ES, neutral professional for EN; no em-dashes; concrete and concise; no AI-tells. Use for: review comments on PRs, issue triage notes, replies to teammates, code review feedback. Triggers on: 'escribir comentario para este PR', 'comentario para issue', 'review comment', 'responder a este comentario', 'redactar la respuesta', 'how should I word this PR comment?'. Do NOT use for: commit messages (different convention, see /git-flow-master), formal documentation (use cognitive-doc-design), or external customer-facing copy."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
@@ -35,7 +35,7 @@ Cargá este skill cuando:
 
 No lo uses para:
 
-- **Commit messages** — eso es otra convención (ver `/git-flow`).
+- **Commit messages** — eso es otra convención (ver `/git-flow-master`).
 - **Docs formales** (READMEs, ADRs, runbooks) — usá `/cognitive-doc-design`.
 - **Copy customer-facing** (emails de soporte, landing copy, comunicados) — el tono y los stakes son distintos.
 

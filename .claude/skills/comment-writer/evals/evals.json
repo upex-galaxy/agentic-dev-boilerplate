@@ -27,7 +27,7 @@
     {
       "name": "should-not-trigger-commit-message",
       "prompt": "Write the commit message for this change — I refactored the auth middleware to use the new token validator.",
-      "expected_behavior": "Does NOT activate comment-writer. Commit messages follow a different convention (semantic prefixes, imperative mood, line-length rules) and live under /git-flow. Should route to /git-flow or the project's commit-message guidance. comment-writer is for human-to-human conversational artifacts, not git metadata.",
+      "expected_behavior": "Does NOT activate comment-writer. Commit messages follow a different convention (semantic prefixes, imperative mood, line-length rules) and live under /git-flow-master. Should route to /git-flow-master or the project's commit-message guidance. comment-writer is for human-to-human conversational artifacts, not git metadata.",
       "category": "negative"
     },
     {

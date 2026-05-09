@@ -12,7 +12,7 @@ The forecast block makes the size cost visible at planning time, when restructur
 Two gates fall out of this:
 
 1. **Size visibility** — every Stage 1 plan ends with a forecast block.
-2. **Chain decision** — Stage 2 (Implementation) does NOT start while `risk = High` AND `chain_strategy = pending`. The orchestrator hands off to the `/chained-pr` skill to resolve, then returns.
+2. **Chain decision** — Stage 2 (Implementation) does NOT start while `risk = High` AND `chain_strategy = pending`. The orchestrator hands off to the `/git-flow-master` skill (Step 4 — chained-PR decision tree) to resolve, then returns.
 
 ---
 
@@ -94,17 +94,17 @@ After summing per-file estimates, add **20%** to cover:
 
 ## Risk thresholds
 
-| Total lines (`<Z>`) | Risk   | Action                                                                            |
-| ------------------- | ------ | --------------------------------------------------------------------------------- |
-| `< 200`             | Low    | Proceed to Stage 2. No chain decision needed.                                     |
-| `200 – 400`         | Medium | Proceed; warn the user that the PR is approaching the budget. Chain optional.     |
-| `> 400`             | High   | GATE: `chain_strategy` must NOT be `pending`. Hand off to `/chained-pr` if it is. |
+| Total lines (`<Z>`) | Risk   | Action                                                                                          |
+| ------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `< 200`             | Low    | Proceed to Stage 2. No chain decision needed.                                                   |
+| `200 – 400`         | Medium | Proceed; warn the user that the PR is approaching the budget. Chain optional.                   |
+| `> 400`             | High   | GATE: `chain_strategy` must NOT be `pending`. Hand off to `/git-flow-master` (Step 4) if it is. |
 
 ---
 
 ## Chain strategy options
 
-Each `chain_strategy` value maps to a concrete PR layout. Full patterns live in the `chained-pr` skill (`references/stacked-to-main.md`, `references/feature-branch-chain.md`, `references/decision-tree.md`).
+Each `chain_strategy` value maps to a concrete PR layout. Full patterns live in `/git-flow-master` (`references/branching-strategies.md` § Chained-PR decision tree).
 
 ### `stacked-to-main`
 
@@ -139,7 +139,7 @@ Each `chain_strategy` value maps to a concrete PR layout. Full patterns live in 
 At the boundary between Stage 1 and Stage 2 the orchestrator inspects the forecast block:
 
 1. If `risk` is `Low` or `Medium`: proceed to Stage 2 regardless of `chain_strategy`.
-2. If `risk` is `High` AND `chain_strategy` is `pending`: STOP. Surface the forecast block to the user and hand off to the `/chained-pr` skill (decision tree + concrete branch plan). When `chained-pr` returns with a chosen strategy, update the forecast block in `implementation-plan.md` and proceed to Stage 2.
+2. If `risk` is `High` AND `chain_strategy` is `pending`: STOP. Surface the forecast block to the user and hand off to the `/git-flow-master` skill (Step 4 — chained-PR decision tree + concrete branch plan). When it returns with a chosen strategy, update the forecast block in `implementation-plan.md` and proceed to Stage 2.
 3. If `risk` is `High` AND `chain_strategy` is one of the resolved values (`stacked-to-main`, `feature-branch-chain`, `size-exception`): proceed to Stage 2. Stage 3 (Code Review) and Stage 4 (Staging Deploy) follow the chosen strategy's PR layout.
 
 The gate is the only mechanism that can block Stage 2; it is not advisory. A `pending` strategy on a `High`-risk plan is treated as an incomplete plan.
@@ -170,7 +170,7 @@ When emitting the forecast block:
 4. Pick a `chain_strategy`:
    - If `Z < 200` → `pending` is fine; no decision required.
    - If `Z` is `200 – 400` → suggest `stacked-to-main` if the work decomposes linearly; otherwise `pending`.
-   - If `Z > 400` → emit `pending` and surface the gate. Do NOT pick a strategy yourself; that is the `/chained-pr` skill's job.
+   - If `Z > 400` → emit `pending` and surface the gate. Do NOT pick a strategy yourself; that is the `/git-flow-master` skill's job (Step 4).
 5. Append the block at the bottom of `implementation-plan.md` and to the orchestrator turn-summary.
 
 The planner does NOT block; it emits. The **orchestrator** enforces the gate at the Stage 2 boundary.

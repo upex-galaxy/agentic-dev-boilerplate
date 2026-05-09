@@ -21,8 +21,8 @@
 # 6. /unit-testing              → Composable TDD inside sprint-dev
 #
 # Slash commands (utilities):
-# /git-flow, /fix-git-conflict, /project-doc-setup,
-# /context-engineering-setup, /sprint-report
+# /project-doc-setup, /context-engineering-setup, /sprint-report
+# (Git/branch/commit/PR work is consolidated in the /git-flow-master skill)
 #
 # Plan-driven development: each skill plans before coding (skill-internal pattern).
 ```
@@ -255,7 +255,7 @@ git push -u origin feature/UPEX-123-add-login-tests
 gh pr create --base staging
 ```
 
-→ **Full details**: `/git-flow` slash command (and `/fix-git-conflict` for merge conflicts)
+→ **Full details**: `/git-flow-master` skill (covers branches, commits, push, PR creation, merge conflicts, and chained-PR planning — auto-adapts to the project's branching strategy)
 
 ---
 
@@ -475,11 +475,12 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 | Command                      | Purpose                                                 |
 | ---------------------------- | ------------------------------------------------------- |
-| `/git-flow`                  | Git Flow workflow guidance                              |
-| `/fix-git-conflict`          | Resolve merge conflicts safely                          |
 | `/project-doc-setup`         | Regenerate README.md and CLAUDE.md from repo state      |
 | `/context-engineering-setup` | Set up `.context/` directory structure                  |
 | `/sprint-report`             | Generate sprint progress report (epics + stories + PRs) |
+| `/refresh-ai-memory`         | Refresh README + AI memory file from current repo state |
+
+> Git, branch, commit, push, PR, conflict-fix and chained-PR planning are all in the `/git-flow-master` skill (Workflow Skills table above), not as separate slash commands.
 
 **Note:** Skills and commands are committed to the repo so anyone who clones the project gets them out of the box. User-specific settings (`.claude/settings.local.json`) are gitignored.
 

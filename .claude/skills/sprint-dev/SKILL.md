@@ -108,7 +108,7 @@ This skill is compliant with the doctrine in `init-project/references/orchestrat
    +--------------------------+
    | Stage 3: CODE REVIEW     |   references/review-pr.md, setup-linting.md
    |  - Push branch + open PR |
-   |    (-> /git-flow)        |
+   |    (-> /git-flow-master) |
    |  - Jira: auto -> In Review
    |  - Static review checklist
    |  - Fix-and-iterate loop  |
@@ -177,7 +177,7 @@ Algorithm (per-file multipliers, 20% test+docs buffer), risk thresholds (`<200` 
 
 ### Stage 2: Implementation
 
-**Gate (workload forecast)**: Stage 2 does NOT start if the Stage 1 forecast block reports `risk=High` AND `chain_strategy=pending`. Resolve the strategy by handing off to the `/chained-pr` skill (decision tree + concrete branch plan), then return: update the forecast block in `implementation-plan.md` with the chosen strategy and proceed. See `references/workload-forecast.md` for full gate behavior.
+**Gate (workload forecast)**: Stage 2 does NOT start if the Stage 1 forecast block reports `risk=High` AND `chain_strategy=pending`. Resolve the strategy by handing off to the `/git-flow-master` skill (Step 4 — chained-PR decision tree + concrete branch plan), then return: update the forecast block in `implementation-plan.md` with the chosen strategy and proceed. See `references/workload-forecast.md` for full gate behavior.
 
 Pick the right entry point based on ticket type:
 
@@ -198,7 +198,7 @@ If the work needs TDD on a specific function, hand off to `/unit-testing` mid-im
 
 ### Stage 3: Code Review
 
-Push the feature branch and open the PR via the `/git-flow` slash command (PR base is `staging`, title format `feat({{PROJECT_KEY}}-N): <short>`). Jira automation rule should auto-transition the ticket from `In Progress -> In Review` within ~30s of PR creation; if it doesn't, surface a manual-transition warning.
+Push the feature branch and open the PR via the `/git-flow-master` skill (it auto-detects the project's branching strategy — typically `staging` base for the main+integration pattern — and uses title format `feat({{PROJECT_KEY}}-N): <short>`). Jira automation rule should auto-transition the ticket from `In Progress -> In Review` within ~30s of PR creation; if it doesn't, surface a manual-transition warning.
 
 Review checklist (driven by `references/review-pr.md`):
 
@@ -214,7 +214,7 @@ Findings loop back to Stage 2 with `fix-issues.md`. Architectural rework loops b
 
 **Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
 
-Hand-off: `/git-flow` for PR creation/merge ops; `/fix-git-conflict` for conflict resolution.
+Hand-off: `/git-flow-master` for PR creation, merge ops, and conflict resolution.
 
 #### Spec Compliance Matrix (required output of Stage 3)
 
@@ -317,8 +317,7 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 ## Hand-offs
 
 - **TDD on a function** -> `/unit-testing` skill (composable mid-implementation)
-- **PR creation / merge / branch ops** -> `/git-flow` slash command
-- **Conflict resolution** -> `/fix-git-conflict` slash command
+- **PR creation / merge / branch ops / conflict resolution / chained-PR planning** -> `/git-flow-master` skill
 - **Backlog item missing or AC unclear** -> `/product-management` skill (refine first, then come back)
 - **Foundation/infrastructure missing** -> `/project-foundation` or `/project-bootstrap`
 - **QA verification on staging** -> out of scope here; sister repo `agentic-qa-boilerplate`'s `sprint-testing` skill picks up from `Ready For QA`
@@ -373,7 +372,7 @@ If any required var is unset, run `/init-project` first.
 - [ ] Stage 1 plan committed; Jira transitioned to `In Progress`
 - [ ] ATP discovered (Jira comments -> custom field -> local fallback) and mapped into the plan
 - [ ] Stage 2 verification (lint + types + tests) green; commits atomic
-- [ ] Stage 3 PR opened via `/git-flow`; Jira auto-transition to `In Review` verified
+- [ ] Stage 3 PR opened via `/git-flow-master`; Jira auto-transition to `In Review` verified
 - [ ] Stage 3 docs (status-report + release-notes) updated in the PR branch
 - [ ] Stage 4 PR merged to `staging`; CI green; auto-deploy fired; Jira to `Ready For QA`; QA notified in comment
 - [ ] Stage 5 (only if applicable): pre-deploy checklist green; rollback plan loaded; monitoring window observed
