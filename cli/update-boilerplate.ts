@@ -1,110 +1,57 @@
 #!/usr/bin/env bun
 /**
- * @fileoverview UPEX Template Updater - CLI para sincronizar proyectos con el template
+ * @fileoverview UPEX Boilerplate Updater — sync a consumer project with the upstream boilerplate.
  *
- * Este script permite mantener proyectos derivados sincronizados con el template
- * oficial de UPEX (ai-driven-project-starter). Usa una estrategia de "merge inteligente"
- * que actualiza archivos del template sin eliminar archivos personalizados del usuario.
+ * Strategy: "intelligent merge" — copies files from upstream over the consumer's tree
+ * without deleting user-owned files. Skills, commands, .agents/, scripts/, cli/, .vscode/,
+ * .husky/, docs/, .context/, templates/mcp/, and tooling files are all in scope.
  *
- * @description
- * Características principales:
- * - Menú interactivo para selección de componentes
- * - Sincroniza skills (.claude/skills/), commands (.claude/commands/),
- *   .agents/, scripts/, cli/, .vscode/, .husky/, docs/, .context/,
- *   templates/mcp/, y archivos de tooling
- * - Sistema de backups automáticos
- * - Merge inteligente (preserva archivos del usuario)
- * - MergeResult tracking (success/error counts per operation)
- * - --dry-run flag (preview changes without modifying files)
- * - --rollback flag (restore from most recent backup)
- * - Version tracking (.template-version.json)
- * - Enhanced self-update with major version detection
- * - Variable detection (warns about unfilled {{VARIABLE}} placeholders)
- * - Migration detection (upgrade notice for pre-variables consumers)
- * - Sync summary (clean table of results)
+ * v5.0 — TypeScript migration. Renamed from update-template.js → update-boilerplate.ts.
+ * v4.1 — legacy `.prompts/fase-*` + `.books/` model retired; content now lives in
+ * `.claude/skills/` and `.claude/commands/`. Legacy commands map to `claude` with a warning.
  *
- * Nota v4.1: el modelo legacy .prompts/fase-* + .books/ fue retirado.
- * Workflow content ahora vive en .claude/skills/ y .claude/commands/. Los
- * comandos `prompts` y `books`, junto con flags `--fase`, `--rol` y
- * `--standalone`, fueron eliminados. Los aliases mapean a `claude` y
- * emiten un warning, para no romper muscle memory de inmediato.
- *
- * @requires gh - GitHub CLI debe estar instalado y autenticado
- * @requires bun - Runtime de JavaScript (o Node.js compatible)
+ * Requires: gh CLI (authenticated), bun runtime.
  *
  * @example
- * // Menú interactivo
- * bun up
- *
- * @example
- * // Actualizar todo
- * bun up all
- *
- * @example
- * // Sincronizar skills + commands + settings
- * bun up claude
- *
- * @example
- * // Actualizar configuración de desarrollo
- * bun up vscode husky tooling
- *
- * @example
- * // Preview sin modificar
- * bun up all --dry-run
- *
- * @example
- * // Restaurar desde backup
- * bun up --rollback
- *
- * @see docs/workflows/update-template-guide.md - Guía completa de uso
- *
- * @author UPEX Galaxy
- * @version 4.1
+ *   bun up                           # interactive menu
+ *   bun up all                       # sync everything
+ *   bun up claude agents             # subset
+ *   bun up all --dry-run             # preview only
+ *   bun up --rollback                # restore latest backup
+ *   bun up --update-mcp-template claude   # refresh templates/mcp/claude.template.json
  */
 
-const { execSync } = require('node:child_process');
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const readline = require('node:readline');
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import * as readline from 'node:readline';
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
 
-const CLI_VERSION = '4.1';
+const CLI_VERSION = '5.0';
 const TEMPLATE_REPO = 'upex-galaxy/ai-driven-project-starter';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template-version.json';
 
-// NOTE: As of v4.1 the legacy .prompts/ + .books/ + fase-* model is gone.
-// Workflow content lives in .claude/skills/ and .claude/commands/. The
-// prompts/books commands and --fase/--rol flags were removed accordingly.
+const TOOLING_FILES: string[] = ['.editorconfig', '.prettierrc', '.prettierignore'];
+const EXAMPLE_FILES: string[] = [];
 
-// Tooling files - universal framework configuration files
-// NOTE: Excludes project-specific files (tsconfig.json, eslint.config.js, .gitignore)
-const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore'];
-
-// Example/template files for user configuration
-const EXAMPLE_FILES = [];
-
-// .agents/ files that are framework universals (always overwritten on sync).
-const AGENTS_FRAMEWORK_FILES = [
+// `.agents/` framework universals — always overwritten.
+const AGENTS_FRAMEWORK_FILES: string[] = [
   'README.md',
   'jira-required.yaml',
 ];
 
-// .agents/ files that are project-specific bootstraps:
-//   - Synced ONLY if missing in the user's project (initial setup).
-//   - NEVER overwritten — they hold user-specific config / workspace data.
-const AGENTS_BOOTSTRAP_FILES = [
-  'project.yaml', // user fills with their project values
-  'jira.json', // generated by `bun run jira:sync-fields` against user's Jira
+// `.agents/` bootstraps — copied only if missing locally; never overwritten.
+const AGENTS_BOOTSTRAP_FILES: string[] = [
+  'project.yaml',
+  'jira.json',
 ];
 
-// Framework scripts that ship with the project-starter. User-created scripts
-// in scripts/ are not touched.
-const SCRIPTS_FILES = [
+const SCRIPTS_FILES: string[] = [
   'agents-lint.ts',
   'agents-setup.ts',
   'check-jira-setup.ts',
@@ -113,16 +60,25 @@ const SCRIPTS_FILES = [
   'sync-jira-workflows.ts',
 ];
 
-// Files removed from the template (renamed or replaced). On `up`, these are
-// deleted from the consumer's repo if present. The pre-update backup captures
-// them, so `--rollback` restores them if needed.
-//
-// When you rename or remove a file from the template, add an entry here with:
-//   - path:            relative path of the OLD file
-//   - component:       component name from validCommands (scopes the cleanup)
-//   - reason:          short note (where the content moved, or why it was removed)
-//   - deprecatedSince: ISO date (helps users gauge how long ago this happened)
-const DEPRECATED_FILES = [
+// Supported MCP template agents. Keep in sync with `templates/mcp/`.
+const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex', 'gemini'] as const;
+type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
+
+const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
+  claude: 'claude.template.json',
+  opencode: 'opencode.template.json',
+  codex: 'codex.template.toml',
+  gemini: 'gemini.template.json',
+};
+
+interface DeprecatedFile {
+  path: string
+  component: string
+  reason: string
+  deprecatedSince: string
+}
+
+const DEPRECATED_FILES: DeprecatedFile[] = [
   {
     path: '.prompts/setup/kata-framework-setup.md',
     component: 'prompts',
@@ -137,14 +93,31 @@ const DEPRECATED_FILES = [
   },
 ];
 
-// NOTE: No hardcoded file lists for directories - all use mergeDirectory() for full sync
-// This ensures any new files/folders in the template are automatically included
+interface MergeResult {
+  success: number
+  errors: number
+}
+
+interface ParsedArgs {
+  commands: string[]
+  help: boolean
+  dryRun: boolean
+  rollback: boolean
+  updateMcpTemplate: McpAgent | null
+}
+
+interface SyncVersion {
+  lastSync: string
+  templateCommit: string
+  cliVersion: string
+  syncedComponents: string[]
+  variableSystemVersion: boolean
+}
 
 // ============================================================================
 // TERMINAL COLORS
 // ============================================================================
 
-/** @description ANSI escape codes para colorear output en terminal */
 const colors = {
   green: '\x1B[32m',
   yellow: '\x1B[33m',
@@ -155,59 +128,51 @@ const colors = {
   bold: '\x1B[1m',
   dim: '\x1B[2m',
   reset: '\x1B[0m',
-};
+} as const;
 
-/** @param {string} message - Título de sección */
-function logHeader(message) {
+function logHeader(message: string): void {
   console.log(`\n${colors.bold}${colors.cyan}${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje de éxito */
-function logSuccess(message) {
+function logSuccess(message: string): void {
   console.log(`${colors.green}✅ ${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje de advertencia */
-function logWarning(message) {
+function logWarning(message: string): void {
   console.log(`${colors.yellow}⚠️  ${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje de error */
-function logError(message) {
+function logError(message: string): void {
   console.log(`${colors.red}❌ ${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje informativo */
-function logInfo(message) {
+function logInfo(message: string): void {
   console.log(`${colors.blue}ℹ️  ${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje de paso/progreso */
-function logStep(message) {
+function logStep(message: string): void {
   console.log(`${colors.yellow}📦 ${message}${colors.reset}`);
 }
 
-/** @param {string} message - Mensaje de operación merge */
-function logMerge(message) {
+function logMerge(message: string): void {
   console.log(`${colors.magenta}🔀 ${message}${colors.reset}`);
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) { return err.message; }
+  return String(err);
 }
 
 // ============================================================================
 // DEPENDENCY CHECK
 // ============================================================================
 
-/**
- * Check if a npm package is installed locally
- * Uses filesystem check instead of require.resolve for Bun compatibility
- */
-function isPackageInstalled(packageName) {
-  // Check in node_modules (works with both npm and bun)
+function isPackageInstalled(packageName: string): boolean {
   const nodeModulesPath = path.join(process.cwd(), 'node_modules', packageName);
   if (fs.existsSync(nodeModulesPath)) {
     return true;
   }
 
-  // Also check for scoped packages like @inquirer/prompts
   if (packageName.startsWith('@')) {
     const [scope, name] = packageName.split('/');
     const scopedPath = path.join(process.cwd(), 'node_modules', scope, name);
@@ -219,14 +184,7 @@ function isPackageInstalled(packageName) {
   return false;
 }
 
-/**
- * Prompt nativo usando readline (sin dependencias externas).
- * Se usa como fallback cuando @inquirer/prompts no está instalado.
- *
- * @param {string} question - Pregunta a mostrar al usuario
- * @returns {Promise<string>} Respuesta del usuario en minúsculas y sin espacios
- */
-function nativePrompt(question) {
+async function nativePrompt(question: string): Promise<string> {
   return new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,
@@ -240,12 +198,7 @@ function nativePrompt(question) {
   });
 }
 
-/**
- * Check if interactive mode dependencies are available.
- * If not, offer to install them.
- * @returns {Promise<boolean>} true if dependencies are ready, false if user declined
- */
-async function ensureDependencies() {
+async function ensureDependencies(): Promise<boolean> {
   if (isPackageInstalled('@inquirer/prompts')) {
     return true;
   }
@@ -286,8 +239,8 @@ Ahora puedes ejecutar el script nuevamente:
 `);
       process.exit(0);
     }
-    catch (error) {
-      logError(`Error instalando dependencia: ${error.message}`);
+    catch (err) {
+      logError(`Error instalando dependencia: ${errorMessage(err)}`);
       console.log(`\n${colors.yellow}Intenta instalar manualmente:${colors.reset}`);
       console.log(`  ${colors.green}bun add @inquirer/prompts${colors.reset}\n`);
       process.exit(1);
@@ -306,24 +259,12 @@ Ahora puedes ejecutar el script nuevamente:
 // MERGE UTILITIES
 // ============================================================================
 
-/**
- * Merge files from source to destination without deleting user files.
- * Only overwrites files that exist in source (template).
- * Preserves any files/folders in destination that don't exist in source.
- *
- * @param {string} srcDir - Source directory (from template)
- * @param {string} destDir - Destination directory (user's project)
- * @param {string} prefix - Prefix for logging (indentation)
- * @returns {{success: number, errors: number}} Count of files synced and errors
- */
-function mergeDirectory(srcDir, destDir, prefix = '') {
+function mergeDirectory(srcDir: string, destDir: string, prefix = ''): MergeResult {
   let success = 0;
   let errors = 0;
 
-  // Ensure destination exists
   fs.mkdirSync(destDir, { recursive: true });
 
-  // Get all items from source
   const items = fs.readdirSync(srcDir, { withFileTypes: true });
 
   for (const item of items) {
@@ -332,21 +273,19 @@ function mergeDirectory(srcDir, destDir, prefix = '') {
 
     try {
       if (item.isDirectory()) {
-        // Recursively merge subdirectory
         const sub = mergeDirectory(srcPath, destPath, `${prefix}  `);
         success += sub.success;
         errors += sub.errors;
         logSuccess(`${prefix}${item.name}/`);
       }
       else {
-        // Copy file (overwrites if exists)
         fs.cpSync(srcPath, destPath);
         success++;
         logSuccess(`${prefix}${item.name}`);
       }
     }
     catch (err) {
-      logWarning(`${prefix}Skipped ${item.name}: ${err.message || String(err)}`);
+      logWarning(`${prefix}Skipped ${item.name}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -354,13 +293,7 @@ function mergeDirectory(srcDir, destDir, prefix = '') {
   return { success, errors };
 }
 
-/**
- * Count files in a directory recursively (for dry-run mode).
- *
- * @param {string} dir - Directory to count files in
- * @returns {number} Total file count
- */
-function countFilesInDir(dir) {
+function countFilesInDir(dir: string): number {
   if (!fs.existsSync(dir)) { return 0; }
   let count = 0;
   const items = fs.readdirSync(dir, { withFileTypes: true });
@@ -375,14 +308,8 @@ function countFilesInDir(dir) {
   return count;
 }
 
-/**
- * Recursively collect all file paths in a directory.
- *
- * @param {string} dir - Directory to collect files from
- * @returns {string[]} Array of absolute file paths
- */
-function collectFiles(dir) {
-  const files = [];
+function collectFiles(dir: string): string[] {
+  const files: string[] = [];
   if (!fs.existsSync(dir)) { return files; }
 
   const items = fs.readdirSync(dir, { withFileTypes: true });
@@ -402,9 +329,9 @@ function collectFiles(dir) {
 // HELP
 // ============================================================================
 
-function showHelp() {
+function showHelp(): void {
   console.log(`
-${colors.bold}${colors.cyan}📦 UPEX Template Updater v${CLI_VERSION} - Ayuda${colors.reset}
+${colors.bold}${colors.cyan}📦 UPEX Boilerplate Updater v${CLI_VERSION} - Ayuda${colors.reset}
 
 ${colors.bold}USO:${colors.reset}
   bun up                        ${colors.dim}# Menu interactivo${colors.reset}
@@ -431,9 +358,11 @@ ${colors.bold}COMANDOS:${colors.reset}
   help          Muestra esta ayuda
 
 ${colors.bold}FLAGS GLOBALES:${colors.reset}
-  --dry-run     Preview de cambios sin modificar archivos
-  --rollback    Restaura desde el backup mas reciente
-  --help, -h    Muestra esta ayuda
+  --dry-run                       Preview de cambios sin modificar archivos
+  --rollback                      Restaura desde el backup mas reciente
+  --update-mcp-template <agent>   Refresca templates/mcp/<agent>.template.* desde upstream
+                                  (agents soportados: ${MCP_TEMPLATE_AGENTS.join(', ')})
+  --help, -h                      Muestra esta ayuda
 
 ${colors.bold}MERGE INTELIGENTE:${colors.reset}
   Este script sincroniza TODOS los archivos del template:
@@ -443,14 +372,15 @@ ${colors.bold}MERGE INTELIGENTE:${colors.reset}
   - Sin listas hardcodeadas: nuevos archivos del template se incluyen automaticamente
 
 ${colors.bold}EJEMPLOS:${colors.reset}
-  bun up                        ${colors.dim}# Menu interactivo${colors.reset}
-  bun up all                    ${colors.dim}# Actualiza todo${colors.reset}
-  bun up claude agents          ${colors.dim}# Skills/commands + agents config${colors.reset}
-  bun up docs context           ${colors.dim}# Multiples componentes${colors.reset}
-  bun up vscode husky           ${colors.dim}# Config de VS Code y git hooks${colors.reset}
-  bun up tooling examples       ${colors.dim}# Archivos de configuracion${colors.reset}
-  bun up all --dry-run          ${colors.dim}# Preview sin modificar${colors.reset}
-  bun up --rollback             ${colors.dim}# Restaurar ultimo backup${colors.reset}
+  bun up                                    ${colors.dim}# Menu interactivo${colors.reset}
+  bun up all                                ${colors.dim}# Actualiza todo${colors.reset}
+  bun up claude agents                      ${colors.dim}# Skills/commands + agents config${colors.reset}
+  bun up docs context                       ${colors.dim}# Multiples componentes${colors.reset}
+  bun up vscode husky                       ${colors.dim}# Config de VS Code y git hooks${colors.reset}
+  bun up tooling examples                   ${colors.dim}# Archivos de configuracion${colors.reset}
+  bun up all --dry-run                      ${colors.dim}# Preview sin modificar${colors.reset}
+  bun up --rollback                         ${colors.dim}# Restaurar ultimo backup${colors.reset}
+  bun up --update-mcp-template claude       ${colors.dim}# Refrescar el template MCP de Claude${colors.reset}
 `);
 }
 
@@ -458,12 +388,11 @@ ${colors.bold}EJEMPLOS:${colors.reset}
 // INTERACTIVE MENUS
 // ============================================================================
 
-async function showMainMenu() {
+async function showMainMenu(): Promise<string[]> {
   const { checkbox } = await import('@inquirer/prompts');
 
-  return await checkbox({
-    message: 'Que deseas actualizar?',
-    instructions: '(Usa las flechas, ESPACIO para seleccionar, ENTER para confirmar)',
+  return checkbox({
+    message: 'Que deseas actualizar? (flechas, ESPACIO selecciona, ENTER confirma)',
     choices: [
       { name: 'Todo (all)', value: 'all' },
       { name: 'Claude (.claude/) - Skills, commands y settings', value: 'claude' },
@@ -485,23 +414,19 @@ async function showMainMenu() {
 // ARGUMENT PARSING
 // ============================================================================
 
-/**
- * Parsea argumentos de línea de comandos.
- *
- * @param {string[]} args - Array de argumentos (process.argv.slice(2))
- * @returns {{commands: string[], help: boolean, dryRun: boolean, rollback: boolean}}
- */
-function parseArgs(args) {
-  const result = {
+function isMcpAgent(value: string): value is McpAgent {
+  return (MCP_TEMPLATE_AGENTS as readonly string[]).includes(value);
+}
+
+function parseArgs(args: string[]): ParsedArgs {
+  const result: ParsedArgs = {
     commands: [],
     help: false,
     dryRun: false,
     rollback: false,
+    updateMcpTemplate: null,
   };
 
-  // Support both 'guidelines' (legacy) and 'context' (new).
-  // 'prompts'/'books' from the legacy fase-based model are gone — they map to
-  // 'claude' (skills + commands) so old muscle memory still does something useful.
   const validCommands = [
     'all',
     'docs',
@@ -519,7 +444,7 @@ function parseArgs(args) {
     'help',
     'rollback',
   ];
-  const legacyAliases = {
+  const legacyAliases: Record<string, string> = {
     prompts: 'claude',
     books: 'claude',
     guidelines: 'context',
@@ -537,12 +462,23 @@ function parseArgs(args) {
     else if (arg === '--rollback' || arg === 'rollback') {
       result.rollback = true;
     }
+    else if (arg === '--update-mcp-template') {
+      const next = args[i + 1];
+      if (!next || next.startsWith('-')) {
+        logError(`--update-mcp-template requiere un agente: ${MCP_TEMPLATE_AGENTS.join(', ')}`);
+        process.exit(1);
+      }
+      if (!isMcpAgent(next)) {
+        logError(`Agente desconocido: ${next}. Soportados: ${MCP_TEMPLATE_AGENTS.join(', ')}`);
+        process.exit(1);
+      }
+      result.updateMcpTemplate = next;
+      i++;
+    }
     else if (arg === '--all' || arg === '--standalone' || arg === '--fase'
       || arg === '--phase' || arg === '--rol' || arg === '--role') {
-      // Legacy flags (fase-based prompts/books model) — silently consume any
-      // adjacent value and warn the user once. Kept as no-op for muscle memory.
       if (arg === '--fase' || arg === '--phase' || arg === '--rol' || arg === '--role') {
-        i++; // skip the value that used to follow
+        i++;
       }
       logWarning(`Flag legacy ignorada: ${arg} (el modelo .prompts/fase-* fue retirado en v4.1)`);
     }
@@ -566,14 +502,7 @@ function parseArgs(args) {
 // PREREQUISITES
 // ============================================================================
 
-/**
- * Verifica si un comando CLI está disponible en el sistema.
- *
- * @param {string} command - Comando a verificar (ej: 'gh', 'node')
- * @param {string} name - Nombre descriptivo para mensajes de error
- * @returns {boolean} true si el comando existe, false si no
- */
-function checkCommand(command, name) {
+function checkCommand(command: string, name: string): boolean {
   try {
     execSync(`${command} --version`, { stdio: 'ignore' });
     return true;
@@ -584,13 +513,7 @@ function checkCommand(command, name) {
   }
 }
 
-/**
- * Valida que GitHub CLI esté instalado y autenticado.
- * Termina el proceso si no cumple los requisitos.
- *
- * @returns {Promise<void>}
- */
-async function validatePrerequisites() {
+async function validatePrerequisites(): Promise<void> {
   if (!checkCommand('gh', 'GitHub CLI (gh)')) {
     console.log('\nInstalalo con:');
     if (process.platform === 'darwin') {
@@ -620,25 +543,16 @@ async function validatePrerequisites() {
 // BACKUP
 // ============================================================================
 
-/**
- * Crea un backup de los componentes antes de actualizarlos.
- * Los backups se guardan en .backups/update-YYYY-MM-DD-HHMMSS/
- *
- * @param {string[]} components - Lista de componentes a respaldar ('prompts', 'docs', etc.)
- * @returns {string} Ruta del directorio de backup creado
- */
-function createBackup(components) {
+function createBackup(components: string[]): string {
   logStep('Creando backup...');
 
-  const timestamp
-    = `${new Date().toISOString().replace(/[:.]/g, '-').split('T')[0]
-    }-${
-      new Date().toTimeString().split(' ')[0].replace(/:/g, '')}`;
-  const backupDir = path.join('.backups', `update-${timestamp}`);
+  const dateSegment = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+  const timeSegment = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+  const backupDir = path.join('.backups', `update-${dateSegment}-${timeSegment}`);
 
   fs.mkdirSync(backupDir, { recursive: true });
 
-  const backupMap = {
+  const backupMap: Record<string, { src: string, dest: string }> = {
     docs: { src: 'docs', dest: 'docs' },
     context: { src: '.context', dest: '.context' },
     templates: { src: 'templates/mcp', dest: 'templates/mcp' },
@@ -659,7 +573,6 @@ function createBackup(components) {
     }
   }
 
-  // Backup tooling files
   if (components.includes('tooling')) {
     for (const file of TOOLING_FILES) {
       if (fs.existsSync(file)) {
@@ -668,7 +581,6 @@ function createBackup(components) {
     }
   }
 
-  // Backup example files
   if (components.includes('examples')) {
     for (const file of EXAMPLE_FILES) {
       if (fs.existsSync(file)) {
@@ -685,18 +597,7 @@ function createBackup(components) {
   return backupDir;
 }
 
-/**
- * Elimina archivos deprecated del repo local si existen.
- *
- * Recorre `DEPRECATED_FILES`, filtra por componentes que se estan sincronizando
- * en esta corrida (un deprecated en `.prompts/` solo se borra si `prompts` esta
- * en `components`), y elimina los que existen localmente. El backup previo los
- * captura, asi que `--rollback` los restaura si el usuario lo necesita.
- *
- * @param {string[]} components - Componentes que se estan sincronizando
- * @returns {{ removed: number }} Conteo de archivos eliminados
- */
-function cleanupDeprecatedFiles(components) {
+function cleanupDeprecatedFiles(components: string[]): { removed: number } {
   const allMode = components.includes('all');
   const relevant = DEPRECATED_FILES.filter(d => allMode || components.includes(d.component));
   const present = relevant.filter(d => fs.existsSync(d.path));
@@ -717,19 +618,14 @@ function cleanupDeprecatedFiles(components) {
       removed++;
     }
     catch (err) {
-      logWarning(`  No se pudo eliminar ${dep.path}: ${err.message || String(err)}`);
+      logWarning(`  No se pudo eliminar ${dep.path}: ${errorMessage(err)}`);
     }
   }
 
   return { removed };
 }
 
-/**
- * Preview de archivos deprecated que serian eliminados (modo dry-run).
- *
- * @param {string[]} commands - Componentes que se sincronizarian
- */
-function previewDeprecatedCleanup(commands) {
+function previewDeprecatedCleanup(commands: string[]): void {
   const allMode = commands.includes('all');
   const relevant = DEPRECATED_FILES.filter(d => allMode || commands.includes(d.component));
   const present = relevant.filter(d => fs.existsSync(d.path));
@@ -745,12 +641,7 @@ function previewDeprecatedCleanup(commands) {
   }
 }
 
-/**
- * Restaura archivos desde el backup más reciente en .backups/.
- * Lista todos los backups disponibles, muestra el más reciente,
- * y copia los archivos de vuelta al proyecto.
- */
-function rollbackFromBackup() {
+function rollbackFromBackup(): void {
   logHeader('🔄 Rollback desde Backup');
 
   const backupsDir = '.backups';
@@ -785,9 +676,8 @@ function rollbackFromBackup() {
   console.log('');
   logStep(`Restaurando desde: ${latest}`);
 
-  // Walk the backup directory and copy files back
   let restored = 0;
-  const restoreDir = (srcDir, destDir) => {
+  const restoreDir = (srcDir: string, destDir: string): void => {
     const items = fs.readdirSync(srcDir, { withFileTypes: true });
     for (const item of items) {
       const srcPath = path.join(srcDir, item.name);
@@ -808,22 +698,16 @@ function rollbackFromBackup() {
     logSuccess(`Restaurados ${restored} archivos desde ${latest}`);
   }
   catch (err) {
-    logError(`Rollback fallido: ${err.message || String(err)}`);
+    logError(`Rollback fallido: ${errorMessage(err)}`);
     process.exit(1);
   }
 }
 
-/**
- * Ejecuta un dry-run: muestra qué cambiaría sin modificar archivos.
- *
- * @param {string[]} commands - Lista de componentes a previsualizar
- * @param {boolean} allMode - Si se está ejecutando en modo 'all'
- */
-function executeDryRun(commands, allMode) {
+function executeDryRun(commands: string[], allMode: boolean): void {
   logHeader('🔍 DRY RUN — No se modificaran archivos');
   console.log('');
 
-  const components = [];
+  const components: { name: string, dir: string }[] = [];
 
   if (commands.includes('claude') || allMode) {
     components.push({ name: 'Claude (.claude/)', dir: path.join(TEMP_DIR, '.claude') });
@@ -888,25 +772,16 @@ function executeDryRun(commands, allMode) {
 // CLONE TEMPLATE
 // ============================================================================
 
-/**
- * Clona el template desde GitHub a un directorio temporal.
- * Usa GitHub CLI (gh) para manejar autenticación automáticamente.
- *
- * @returns {Promise<void>}
- * @throws {Error} Si no hay autenticación o acceso al repo
- */
-async function cloneTemplate() {
+async function cloneTemplate(): Promise<void> {
   logStep('Descargando ultima version del template...');
   console.log(`${colors.dim}  Repo: ${TEMPLATE_REPO}${colors.reset}`);
   console.log(`${colors.dim}  Destino temporal: ${TEMP_DIR}${colors.reset}`);
 
-  // Clean up any previous temp directory
   if (fs.existsSync(TEMP_DIR)) {
     console.log(`${colors.dim}  Limpiando directorio temporal anterior...${colors.reset}`);
     fs.rmSync(TEMP_DIR, { recursive: true, force: true });
   }
 
-  // First, verify gh CLI is authenticated
   console.log(`${colors.dim}  Verificando autenticacion de GitHub CLI...${colors.reset}`);
   try {
     execSync('gh auth status', { stdio: 'pipe' });
@@ -919,7 +794,6 @@ async function cloneTemplate() {
     process.exit(1);
   }
 
-  // Clone the repository
   console.log(
     `${colors.dim}  Clonando repositorio (esto puede tomar unos segundos)...${colors.reset}`,
   );
@@ -928,12 +802,15 @@ async function cloneTemplate() {
     const cloneCommand = `gh repo clone ${TEMPLATE_REPO} "${TEMP_DIR}" -- --depth 1 --quiet`;
     execSync(cloneCommand, {
       stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 60000, // 60 second timeout
+      timeout: 60000,
     });
     console.log(`${colors.green}  ✓ Template descargado correctamente${colors.reset}`);
   }
-  catch (error) {
-    if (error.killed) {
+  catch (err) {
+    const killed = typeof err === 'object' && err !== null && 'killed' in err
+      ? Boolean((err as { killed?: unknown }).killed)
+      : false;
+    if (killed) {
       logError('Timeout: La descarga tardo demasiado (>60s)');
       console.log(`${colors.yellow}Posibles causas:${colors.reset}`);
       console.log('  • Conexion a internet lenta');
@@ -958,13 +835,7 @@ async function cloneTemplate() {
 // UPDATE FUNCTIONS
 // ============================================================================
 
-/**
- * Update docs/ directory using merge strategy.
- * Merges entire directory - any new files/folders in template are synced.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateDocs() {
+function updateDocs(): MergeResult {
   logStep('Actualizando docs/ (merge)...');
 
   const docsPath = path.join(TEMP_DIR, 'docs');
@@ -977,13 +848,7 @@ function updateDocs() {
   return mergeDirectory(docsPath, 'docs');
 }
 
-/**
- * Update .context/ directory using merge strategy.
- * Merges entire directory - any new files/folders in template are synced.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateContext() {
+function updateContext(): MergeResult {
   logStep('Actualizando .context/ (merge)...');
 
   const contextPath = path.join(TEMP_DIR, '.context');
@@ -996,12 +861,7 @@ function updateContext() {
   return mergeDirectory(contextPath, '.context');
 }
 
-/**
- * Update templates/mcp/ directory.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateTemplates() {
+function updateTemplates(): MergeResult {
   logStep('Actualizando templates/mcp/ (merge)...');
 
   const templatesPath = path.join(TEMP_DIR, 'templates', 'mcp');
@@ -1013,14 +873,7 @@ function updateTemplates() {
   return mergeDirectory(templatesPath, 'templates/mcp');
 }
 
-/**
- * Update scripts/ directory.
- * Syncs ONLY the framework scripts (overwrites). User-created scripts and
- * other files in scripts/ are never touched.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateScripts() {
+function updateScripts(): MergeResult {
   logStep('Actualizando scripts/ (framework scripts only)...');
 
   let success = 0;
@@ -1043,7 +896,7 @@ function updateScripts() {
       }
     }
     catch (err) {
-      logWarning(`Skipped scripts/${file}: ${err.message || String(err)}`);
+      logWarning(`Skipped scripts/${file}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -1051,13 +904,7 @@ function updateScripts() {
   return { success, errors };
 }
 
-/**
- * Update cli/ directory using merge strategy.
- * Merges entire directory - syncs Xray CLI and other CLI tools.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateCli() {
+function updateCli(): MergeResult {
   logStep('Actualizando cli/ (merge)...');
 
   const cliPath = path.join(TEMP_DIR, 'cli');
@@ -1070,13 +917,7 @@ function updateCli() {
   return mergeDirectory(cliPath, 'cli');
 }
 
-/**
- * Update .vscode/ directory using merge strategy.
- * Merges entire directory - syncs extensions.json, settings.json, etc.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateVscode() {
+function updateVscode(): MergeResult {
   logStep('Actualizando .vscode/ (merge)...');
 
   const vscodePath = path.join(TEMP_DIR, '.vscode');
@@ -1089,13 +930,7 @@ function updateVscode() {
   return mergeDirectory(vscodePath, '.vscode');
 }
 
-/**
- * Update .husky/ directory using merge strategy.
- * Merges entire directory - syncs git hooks (pre-commit, etc.)
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateHusky() {
+function updateHusky(): MergeResult {
   logStep('Actualizando .husky/ (merge)...');
 
   const huskyPath = path.join(TEMP_DIR, '.husky');
@@ -1108,13 +943,7 @@ function updateHusky() {
   return mergeDirectory(huskyPath, '.husky');
 }
 
-/**
- * Update tooling files - universal framework configuration.
- * Copies individual config files from the template root.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateTooling() {
+function updateTooling(): MergeResult {
   logStep('Actualizando archivos de tooling...');
 
   let success = 0;
@@ -1133,7 +962,7 @@ function updateTooling() {
       }
     }
     catch (err) {
-      logWarning(`Skipped ${file}: ${err.message || String(err)}`);
+      logWarning(`Skipped ${file}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -1141,13 +970,7 @@ function updateTooling() {
   return { success, errors };
 }
 
-/**
- * Update example files - template files for user configuration.
- * Copies individual example files from the template root.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateExamples() {
+function updateExamples(): MergeResult {
   logStep('Actualizando archivos de ejemplo...');
 
   let success = 0;
@@ -1166,7 +989,7 @@ function updateExamples() {
       }
     }
     catch (err) {
-      logWarning(`Skipped ${file}: ${err.message || String(err)}`);
+      logWarning(`Skipped ${file}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -1174,34 +997,36 @@ function updateExamples() {
   return { success, errors };
 }
 
-/**
- * Extract CLI_VERSION from a script's source code.
- *
- * @param {string} content - Source code content
- * @returns {string|null} Version string or null if not found
- */
-function extractVersion(content) {
+function extractVersion(content: string): string | null {
   const match = content.match(/const\s+CLI_VERSION\s*=\s*['"]([^'"]+)['"]/);
   return match ? match[1] : null;
 }
 
 /**
- * Auto-actualiza este script antes de cualquier operación.
- * Compara el script actual con la versión del template y lo actualiza si hay diferencias.
- * Detects major version changes and logs version transition.
+ * Auto-update this script from upstream before running other operations.
  *
- * @returns {boolean} true si el script fue actualizado y necesita reiniciarse
+ * Why: prefer the upstream `update-boilerplate.ts` first; fall back to the
+ * legacy `update-template.js` filename so older consumers still get refreshed
+ * in place during the transition.
  */
-function selfUpdate() {
-  const currentScriptPath = path.join(process.cwd(), 'cli', 'update-template.js');
-  const templateScriptPath = path.join(TEMP_DIR, 'cli', 'update-template.js');
+function selfUpdate(): boolean {
+  const upstreamCandidates = [
+    path.join(TEMP_DIR, 'cli', 'update-boilerplate.ts'),
+    path.join(TEMP_DIR, 'cli', 'update-template.js'),
+  ];
 
-  if (!fs.existsSync(templateScriptPath)) {
+  const templateScriptPath = upstreamCandidates.find(p => fs.existsSync(p));
+  if (!templateScriptPath) {
     return false;
   }
 
-  const currentContent = fs.existsSync(currentScriptPath)
-    ? fs.readFileSync(currentScriptPath, 'utf-8')
+  const upstreamIsTs = templateScriptPath.endsWith('.ts');
+  const localScriptPath = upstreamIsTs
+    ? path.join(process.cwd(), 'cli', 'update-boilerplate.ts')
+    : path.join(process.cwd(), 'cli', 'update-template.js');
+
+  const currentContent = fs.existsSync(localScriptPath)
+    ? fs.readFileSync(localScriptPath, 'utf-8')
     : '';
   const templateContent = fs.readFileSync(templateScriptPath, 'utf-8');
 
@@ -1209,7 +1034,6 @@ function selfUpdate() {
     const currentVer = extractVersion(currentContent) || 'unknown';
     const templateVer = extractVersion(templateContent) || 'unknown';
 
-    // Detect major version change
     const currentMajor = currentVer.split('.')[0];
     const templateMajor = templateVer.split('.')[0];
 
@@ -1218,27 +1042,18 @@ function selfUpdate() {
       logInfo('Revisa el changelog por posibles cambios incompatibles despues de esta actualizacion.');
     }
 
-    logStep(`Auto-actualizando update-template.js (v${currentVer} → v${templateVer})...`);
+    const baseName = path.basename(localScriptPath);
+    logStep(`Auto-actualizando ${baseName} (v${currentVer} → v${templateVer})...`);
     fs.mkdirSync('cli', { recursive: true });
-    fs.cpSync(templateScriptPath, currentScriptPath);
-    logSuccess(`update-template.js actualizado a v${templateVer}`);
+    fs.cpSync(templateScriptPath, localScriptPath);
+    logSuccess(`${baseName} actualizado a v${templateVer}`);
     return true;
   }
 
   return false;
 }
 
-/**
- * Update .agents/ directory with selective sync.
- * - Framework files (README.md, jira-required.yaml) are always overwritten.
- * - Bootstrap files (project.yaml, jira.json) are copied ONLY if missing
- *   in the user's project — they hold user-specific config / workspace data
- *   and are never overwritten.
- * - .agents/skills/ subdirectory is preserved as-is (managed via `claude` cmd).
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateAgents() {
+function updateAgents(): MergeResult {
   logStep('Actualizando .agents/ (framework files + bootstrap)...');
 
   let success = 0;
@@ -1261,7 +1076,7 @@ function updateAgents() {
       }
     }
     catch (err) {
-      logWarning(`Skipped .agents/${file}: ${err.message || String(err)}`);
+      logWarning(`Skipped .agents/${file}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -1282,7 +1097,6 @@ function updateAgents() {
         success++;
       }
       else if (file === 'jira.json') {
-        // Bootstrap default for jira.json if not present in template
         fs.writeFileSync(destPath, '{}\n');
         logSuccess(`  ${file} (bootstrapped: {})`);
         success++;
@@ -1292,7 +1106,7 @@ function updateAgents() {
       }
     }
     catch (err) {
-      logWarning(`Skipped .agents/${file}: ${err.message || String(err)}`);
+      logWarning(`Skipped .agents/${file}: ${errorMessage(err)}`);
       errors++;
     }
   }
@@ -1300,22 +1114,12 @@ function updateAgents() {
   return { success, errors };
 }
 
-/**
- * Update .claude/ directory with selective sync.
- * - Copies settings.json (shared project settings)
- * - Merges .claude/skills/ (workflow skills from upstream — replaces legacy .prompts/)
- * - Merges .claude/commands/ (slash commands from upstream)
- * - NEVER touches settings.local.json (personal per-user settings)
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateClaude() {
+function updateClaude(): MergeResult {
   logStep('Actualizando .claude/ (skills + commands + settings)...');
 
   let success = 0;
   let errors = 0;
 
-  // 1. Copy settings.json if exists in template
   const settingsPath = path.join(TEMP_DIR, '.claude', 'settings.json');
   if (fs.existsSync(settingsPath)) {
     try {
@@ -1325,12 +1129,11 @@ function updateClaude() {
       success++;
     }
     catch (err) {
-      logWarning(`Skipped settings.json: ${err.message || String(err)}`);
+      logWarning(`Skipped settings.json: ${errorMessage(err)}`);
       errors++;
     }
   }
 
-  // 2. Merge .claude/skills/ from upstream (workflow skills — the new prompts).
   const upstreamSkillsDir = path.join(TEMP_DIR, '.claude', 'skills');
   if (fs.existsSync(upstreamSkillsDir)) {
     logMerge('skills/ (from upstream):');
@@ -1339,7 +1142,6 @@ function updateClaude() {
     errors += result.errors;
   }
 
-  // 3. Merge .claude/commands/ from upstream (slash commands).
   const upstreamCommandsDir = path.join(TEMP_DIR, '.claude', 'commands');
   if (fs.existsSync(upstreamCommandsDir)) {
     logMerge('commands/ (from upstream):');
@@ -1352,13 +1154,7 @@ function updateClaude() {
   return { success, errors };
 }
 
-/**
- * Actualiza context-engineering.md desde el README del template.
- * Este archivo sirve como documentación maestra de la arquitectura.
- *
- * @returns {{success: number, errors: number}} Merge result totals
- */
-function updateContextEngineering() {
+function updateContextEngineering(): MergeResult {
   const templateReadmePath = path.join(TEMP_DIR, 'README.md');
   if (fs.existsSync(templateReadmePath)) {
     logStep('Actualizando context-engineering.md...');
@@ -1368,7 +1164,7 @@ function updateContextEngineering() {
       return { success: 1, errors: 0 };
     }
     catch (err) {
-      logWarning(`Skipped context-engineering.md: ${err.message || String(err)}`);
+      logWarning(`Skipped context-engineering.md: ${errorMessage(err)}`);
       return { success: 0, errors: 1 };
     }
   }
@@ -1376,10 +1172,60 @@ function updateContextEngineering() {
 }
 
 /**
- * Limpia el directorio temporal después de la actualización.
- * Se ejecuta al final de cada operación exitosa.
+ * Refresh a single MCP template file (templates/mcp/<agent>.template.*) from
+ * upstream while leaving every other template untouched.
+ *
+ * Why: per D12 in FASE-15-DESIGN, templates/mcp/ is user-managed (the user
+ * fills placeholders), but the updater can opt-in refresh a specific agent's
+ * template when upstream adds new MCP servers or fixes structure.
  */
-function cleanup() {
+async function updateMcpTemplateForAgent(agent: McpAgent): Promise<MergeResult> {
+  logHeader(`📦 UPEX Boilerplate Updater v${CLI_VERSION} — MCP template refresh`);
+  logInfo(`Agente: ${agent}`);
+
+  await validatePrerequisites();
+  await cloneTemplate();
+
+  const fileName = MCP_TEMPLATE_FILE[agent];
+  const srcPath = path.join(TEMP_DIR, 'templates', 'mcp', fileName);
+  const destPath = path.join('templates', 'mcp', fileName);
+
+  if (!fs.existsSync(srcPath)) {
+    logError(`Upstream no contiene templates/mcp/${fileName}`);
+    cleanup();
+    return { success: 0, errors: 1 };
+  }
+
+  fs.mkdirSync(path.dirname(destPath), { recursive: true });
+
+  if (fs.existsSync(destPath)) {
+    const localContent = fs.readFileSync(destPath, 'utf-8');
+    const upstreamContent = fs.readFileSync(srcPath, 'utf-8');
+    if (localContent === upstreamContent) {
+      logInfo(`Sin cambios — tu templates/mcp/${fileName} ya esta sincronizado.`);
+      cleanup();
+      return { success: 0, errors: 0 };
+    }
+    logWarning(`Tu archivo local templates/mcp/${fileName} sera sobrescrito.`);
+    logInfo('Tip: ejecuta "bun up --rollback" si necesitas revertir.');
+  }
+
+  try {
+    const componentBackup = createBackup(['templates']);
+    fs.cpSync(srcPath, destPath);
+    logSuccess(`templates/mcp/${fileName} actualizado desde upstream`);
+    logInfo(`Backup disponible en: ${componentBackup}`);
+    cleanup();
+    return { success: 1, errors: 0 };
+  }
+  catch (err) {
+    logError(`No se pudo actualizar templates/mcp/${fileName}: ${errorMessage(err)}`);
+    cleanup();
+    return { success: 0, errors: 1 };
+  }
+}
+
+function cleanup(): void {
   fs.rmSync(TEMP_DIR, { recursive: true, force: true });
 }
 
@@ -1387,12 +1233,7 @@ function cleanup() {
 // VERSION TRACKING
 // ============================================================================
 
-/**
- * Get the HEAD commit hash from the cloned template repo.
- *
- * @returns {string} Git commit hash or 'unknown'
- */
-function getTemplateCommit() {
+function getTemplateCommit(): string {
   try {
     return execSync('git rev-parse HEAD', { cwd: TEMP_DIR, stdio: ['pipe', 'pipe', 'pipe'] })
       .toString()
@@ -1403,13 +1244,8 @@ function getTemplateCommit() {
   }
 }
 
-/**
- * Record sync metadata to .template-version.json after successful sync.
- *
- * @param {string[]} syncedComponents - List of component names that were synced
- */
-function recordSyncVersion(syncedComponents) {
-  const version = {
+function recordSyncVersion(syncedComponents: string[]): void {
+  const version: SyncVersion = {
     lastSync: new Date().toISOString(),
     templateCommit: getTemplateCommit(),
     cliVersion: CLI_VERSION,
@@ -1421,15 +1257,10 @@ function recordSyncVersion(syncedComponents) {
   logSuccess(`Version registrada en ${VERSION_FILE}`);
 }
 
-/**
- * Read the current .template-version.json if it exists.
- *
- * @returns {object|null} Parsed version object or null
- */
-function readSyncVersion() {
+function readSyncVersion(): SyncVersion | null {
   if (!fs.existsSync(VERSION_FILE)) { return null; }
   try {
-    return JSON.parse(fs.readFileSync(VERSION_FILE, 'utf-8'));
+    return JSON.parse(fs.readFileSync(VERSION_FILE, 'utf-8')) as SyncVersion;
   }
   catch {
     return null;
@@ -1440,32 +1271,25 @@ function readSyncVersion() {
 // VARIABLE DETECTION
 // ============================================================================
 
-/**
- * Scan synced files for {{VARIABLE}} placeholders and check against CLAUDE.md.
- * Warns the user about unfilled variables that need configuration.
- */
-function detectUnfilledVariables() {
+function detectUnfilledVariables(): void {
   const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
   if (!fs.existsSync(claudeMdPath)) {
-    return; // No CLAUDE.md — migration notice handles this
+    return;
   }
 
   const claudeContent = fs.readFileSync(claudeMdPath, 'utf-8');
 
-  // Check if CLAUDE.md has the Project Variables section
   if (!claudeContent.includes('## Project Variables')) {
-    return; // Pre-variables consumer — migration notice handles this
+    return;
   }
 
-  // Extract variable definitions from the table by parsing lines
-  const definedVars = new Map(); // varName -> value
+  const definedVars = new Map<string, string>();
   const varLineRegex = /`\{\{([A-Z][A-Z_]+)\}\}`/;
 
   for (const line of claudeContent.split('\n')) {
     const varMatch = varLineRegex.exec(line);
     if (!varMatch) { continue; }
 
-    // Split the table row by | and grab the value column (3rd cell)
     const cells = line.split('|').map(c => c.trim());
     if (cells.length >= 4) {
       definedVars.set(varMatch[1], cells[3]);
@@ -1473,13 +1297,12 @@ function detectUnfilledVariables() {
   }
 
   if (definedVars.size === 0) {
-    return; // Table exists but no variables found
+    return;
   }
 
-  // Scan synced directories for {{VARIABLE}} usage
   const VARIABLE_REGEX = /\{\{([A-Z][A-Z_]+)\}\}/g;
   const syncedDirs = ['.claude/skills', '.claude/commands', '.context/guidelines', 'docs'];
-  const varUsage = new Map(); // varName -> file count
+  const varUsage = new Map<string, number>();
 
   for (const dir of syncedDirs) {
     const files = collectFiles(dir);
@@ -1488,7 +1311,7 @@ function detectUnfilledVariables() {
 
       try {
         const content = fs.readFileSync(file, 'utf-8');
-        const varsInFile = new Set();
+        const varsInFile = new Set<string>();
 
         for (const varMatch of content.matchAll(VARIABLE_REGEX)) {
           varsInFile.add(varMatch[1]);
@@ -1505,13 +1328,12 @@ function detectUnfilledVariables() {
   }
 
   if (varUsage.size === 0) {
-    return; // No variables found in synced files
+    return;
   }
 
-  // Determine which variables are still placeholder values
   const PLACEHOLDER_PATTERNS = ['[', 'example', 'myproject', 'localhost', 'company.atlassian'];
-  const unfilled = [];
-  const filled = [];
+  const unfilled: { name: string, files: number }[] = [];
+  const filled: { name: string, files: number }[] = [];
 
   for (const [varName, fileCount] of varUsage) {
     const value = definedVars.get(varName) || '';
@@ -1527,14 +1349,13 @@ function detectUnfilledVariables() {
   }
 
   if (unfilled.length === 0) {
-    return; // All variables are configured
+    return;
   }
 
-  // Print warning
   console.log('');
   logWarning('Variables necesitan configuracion en CLAUDE.md:\n');
 
-  const maxNameLen = Math.max(...[...unfilled, ...filled].map(v => v.name.length + 4)); // +4 for {{ }}
+  const maxNameLen = Math.max(...[...unfilled, ...filled].map(v => v.name.length + 4));
   const header = `   ${'Variable'.padEnd(maxNameLen + 2)}${'Usado en'.padEnd(12)}Estado`;
   console.log(`${colors.dim}${header}${colors.reset}`);
   console.log(`${colors.dim}   ${'─'.repeat(maxNameLen + 2 + 12 + 15)}${colors.reset}`);
@@ -1560,12 +1381,7 @@ function detectUnfilledVariables() {
 // MIGRATION DETECTION
 // ============================================================================
 
-/**
- * Detect if consumer is upgrading from a pre-variables template.
- * Shows a migration banner if CLAUDE.md lacks the Project Variables section.
- */
-function checkMigrationNeeded() {
-  // If version file exists and shows variables system is known, skip
+function checkMigrationNeeded(): void {
   const syncVersion = readSyncVersion();
   if (syncVersion && syncVersion.variableSystemVersion) {
     return;
@@ -1573,19 +1389,16 @@ function checkMigrationNeeded() {
 
   const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
 
-  // No CLAUDE.md at all — likely a fresh project, not a migration
   if (!fs.existsSync(claudeMdPath)) {
     return;
   }
 
   const content = fs.readFileSync(claudeMdPath, 'utf-8');
 
-  // Already has variables section — no migration needed
   if (content.includes('## Project Variables')) {
     return;
   }
 
-  // Pre-variables consumer — show migration notice
   console.log(`
 ${colors.yellow}╔══════════════════════════════════════════════════════════════╗${colors.reset}
 ${colors.yellow}║${colors.reset}${colors.bold}                      UPGRADE NOTICE                        ${colors.reset}${colors.yellow}║${colors.reset}
@@ -1610,32 +1423,33 @@ ${colors.yellow}╚════════════════════�
 // POST-SYNC NOTICES
 // ============================================================================
 
-/**
- * After syncing .agents/ or scripts/, warn the user about npm scripts and
- * dependencies they need to add to their package.json (which is never synced
- * because it is project-specific).
- */
-function checkAgentsPackageJsonMigration() {
+interface PackageJson {
+  scripts?: Record<string, string>
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+}
+
+function checkAgentsPackageJsonMigration(): void {
   const pkgPath = path.join(process.cwd(), 'package.json');
   if (!fs.existsSync(pkgPath)) {
     return;
   }
 
-  let pkg;
+  let pkg: PackageJson;
   try {
-    pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as PackageJson;
   }
   catch {
     return;
   }
 
-  const expectedScripts = {
+  const expectedScripts: Record<string, string> = {
     'lint:agents': 'bun run scripts/agents-lint.ts',
     'jira:sync-fields': 'bun run scripts/sync-jira-fields.ts',
     'jira:check': 'bun run scripts/check-jira-setup.ts',
   };
 
-  const missingScripts = [];
+  const missingScripts: string[] = [];
   for (const [name, command] of Object.entries(expectedScripts)) {
     if (!pkg.scripts || pkg.scripts[name] !== command) {
       missingScripts.push(name);
@@ -1687,12 +1501,7 @@ Mas detalles en: ${colors.cyan}.agents/README.md${colors.reset}
 // SYNC SUMMARY
 // ============================================================================
 
-/**
- * Print a clean summary of sync results.
- *
- * @param {{success: number, errors: number}} totals - Aggregated merge results
- */
-function printSyncSummary(totals) {
+function printSyncSummary(totals: MergeResult): void {
   if (totals.errors > 0) {
     logWarning(`Sync finalizado con advertencias: ${totals.success} archivos sincronizados, ${totals.errors} omitidos`);
     logInfo('Revisa las advertencias arriba para detalles. Tu backup esta disponible en .backups/');
@@ -1706,21 +1515,34 @@ function printSyncSummary(totals) {
 // MAIN
 // ============================================================================
 
-async function main() {
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
-  logHeader(`📦 UPEX Template Updater v${CLI_VERSION}`);
+  // Pre-route --update-mcp-template: it's a standalone flow that does its own
+  // clone/backup, so we short-circuit before the menu / regular component sync.
+  if (args.includes('--update-mcp-template')) {
+    const parsed = parseArgs(args);
+    if (parsed.help) {
+      showHelp();
+      process.exit(0);
+    }
+    if (!parsed.updateMcpTemplate) {
+      process.exit(1);
+    }
+    const result = await updateMcpTemplateForAgent(parsed.updateMcpTemplate);
+    printSyncSummary(result);
+    return;
+  }
+
+  logHeader(`📦 UPEX Boilerplate Updater v${CLI_VERSION}`);
   logInfo('Usando merge inteligente (preserva archivos del usuario)');
 
-  /** @type {{success: number, errors: number}} */
-  const totals = { success: 0, errors: 0 };
-  const addResult = (r) => { totals.success += r.success; totals.errors += r.errors; };
+  const totals: MergeResult = { success: 0, errors: 0 };
+  const addResult = (r: MergeResult): void => { totals.success += r.success; totals.errors += r.errors; };
 
-  // No arguments -> Interactive menu
   if (args.length === 0) {
-    // Check for interactive dependencies before showing menu
     const depsReady = await ensureDependencies();
-    if (!depsReady) { return; } // Script is restarting after install
+    if (!depsReady) { return; }
 
     const selected = await showMainMenu();
 
@@ -1731,7 +1553,6 @@ async function main() {
 
     await validatePrerequisites();
 
-    // Determine which components to backup and update
     const components = selected.includes('all')
       ? ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
       : selected;
@@ -1739,10 +1560,7 @@ async function main() {
     createBackup(components);
     await cloneTemplate();
 
-    // Check for migration after cloning template
     checkMigrationNeeded();
-
-    // Auto-actualizar el script primero (siempre)
     selfUpdate();
 
     if (selected.includes('all')) {
@@ -1810,7 +1628,6 @@ async function main() {
     return;
   }
 
-  // Parse arguments
   const parsed = parseArgs(args);
 
   if (parsed.help) {
@@ -1818,7 +1635,6 @@ async function main() {
     process.exit(0);
   }
 
-  // Handle rollback
   if (parsed.rollback) {
     rollbackFromBackup();
     return;
@@ -1832,7 +1648,6 @@ async function main() {
 
   await validatePrerequisites();
 
-  // Expand 'all' command
   let allMode = false;
   if (parsed.commands.includes('all')) {
     parsed.commands = ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
@@ -1841,7 +1656,6 @@ async function main() {
 
   await cloneTemplate();
 
-  // Dry-run mode: preview changes without modifying files
   if (parsed.dryRun) {
     executeDryRun(parsed.commands, allMode);
     previewDeprecatedCleanup(parsed.commands);
@@ -1849,15 +1663,12 @@ async function main() {
     return;
   }
 
-  // Check for migration after cloning template
   checkMigrationNeeded();
 
   createBackup(parsed.commands);
 
-  // Auto-actualizar el script primero (siempre)
   selfUpdate();
 
-  // Execute commands
   for (const cmd of parsed.commands) {
     switch (cmd) {
       case 'docs':
@@ -1896,7 +1707,6 @@ async function main() {
     }
   }
 
-  // Also update context-engineering.md when updating all
   if (allMode) {
     addResult(updateContextEngineering());
   }
@@ -1913,8 +1723,8 @@ async function main() {
   logInfo('Tus archivos personalizados han sido preservados.');
 }
 
-main().catch((error) => {
+main().catch((err: unknown) => {
   logError('Error inesperado:');
-  console.error(error);
+  console.error(err);
   process.exit(1);
 });

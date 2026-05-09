@@ -23,109 +23,99 @@
 required:
   # ---- Story / User-story fields (consumed by scripts/jira-sync.ts) ----
   acceptance_criteria_gherkin:
-    name: '✅ Acceptance Criteria (Gherkin)'
+    name: ✅ Acceptance Criteria (Gherkin)
     type: string
-    description: 'Gherkin-formatted acceptance criteria attached to user stories.'
+    description: Gherkin-formatted acceptance criteria attached to user stories.
     used_by: [jira-sync, sprint-dev]
 
   business_rules_specification:
-    name: '🚩Business Rules Specification'
+    name: 🚩Business Rules Specification
     type: string
     description: 'Business rules tied to a user story, separate from acceptance criteria.'
     used_by: [jira-sync]
 
   scope:
-    name: 'Scope ⛳'
+    name: Scope ⛳
     type: string
-    description: 'In-scope / out-of-scope notes captured at story-grooming time.'
+    description: In-scope / out-of-scope notes captured at story-grooming time.
     used_by: [jira-sync]
 
   mockup:
-    name: 'Mockup 🎴'
+    name: Mockup 🎴
     type: string
-    description: 'Link or embed of the design mockup for the story.'
+    description: Link or embed of the design mockup for the story.
     used_by: [jira-sync]
 
   workflow:
-    name: '🧬WORKFLOW'
+    name: 🧬WORKFLOW
     type: string
-    description: 'User journey / workflow narrative for the story.'
+    description: User journey / workflow narrative for the story.
     used_by: [jira-sync]
 
   story_points:
-    name: 'Story Points'
+    name: Story Points
     type: number
-    description: 'Agile estimate for the story (planning poker).'
+    description: Agile estimate for the story (planning poker).
     used_by: [jira-sync]
 
   weblink_url:
-    name: 'Weblink (URL) 🌍️'
+    name: Weblink (URL) 🌍️
     type: string
-    description: 'External reference URL attached to the story.'
+    description: External reference URL attached to the story.
     used_by: [jira-sync]
 
   # ---- Bug / Defect fields (consumed by scripts/jira-sync.ts + sprint-dev/references/bug-fix-workflow.md;
   #      also reserved for downstream agentic-qa-boilerplate sister repo's sprint-testing/bug-report) ----
   actual_result_comportamiento:
-    name: '🐞 Actual Result (Comportamiento)'
+    name: 🐞 Actual Result (Comportamiento)
     type: string
-    description: 'Observed behavior captured during bug repro.'
+    description: Observed behavior captured during bug repro.
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   expected_result_output:
-    name: '✅ Expected Result (Output)'
+    name: ✅ Expected Result (Output)
     type: string
     description: 'Expected behavior per acceptance criteria, contrasted against the bug.'
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   error_type:
-    name: 'Error Type'
+    name: Error Type
     type: option
     options: [content, crash, data, functional, integration, performance, security, visual]
-    description: 'Bug taxonomy by error category.'
+    description: Bug taxonomy by error category.
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   severity:
-    name: 'Severity 🚩'
+    name: Severity 🚩
     type: option
     options: [critica, mayor, menor, moderada, trivial]
-    description: 'Bug severity classification (impact-based).'
+    description: Bug severity classification (impact-based).
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   test_environment:
-    name: 'Test Environment 📦️'
+    name: Test Environment 📦️
     type: option
     options: [dev, production, qa, staging, uat]
-    description: 'Environment where the bug was reproduced or where the test ran.'
+    description: Environment where the bug was reproduced or where the test ran.
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   root_cause:
-    name: 'Root Cause🐞'
+    name: Root Cause🐞
     type: option
     options:
       - code_error
@@ -138,48 +128,40 @@ required:
       - working_as_designed_wad
     description: 'Post-mortem cause classification, set after the fix.'
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   workaround:
-    name: '🚩 Workaround'
+    name: 🚩 Workaround
     type: string
-    description: 'Temporary mitigation steps to unblock users until the fix ships.'
+    description: Temporary mitigation steps to unblock users until the fix ships.
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   evidence:
-    name: '🧫EVIDENCE'
+    name: 🧫EVIDENCE
     type: string
     description: 'Bug evidence: screenshots, traces, logs, repro recordings.'
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
   fix:
-    name: 'Fix'
+    name: Fix
     type: option
     options: [bugfix, hotfix]
-    description: 'Type of fix applied (bugfix vs urgent hotfix).'
+    description: Type of fix applied (bugfix vs urgent hotfix).
     used_by:
-      [
-        jira-sync,
-        sprint-dev/references/bug-fix-workflow.md,
-        agentic-qa-boilerplate sister repo (sprint-testing/bug-report),
-      ]
+      - jira-sync
+      - sprint-dev/references/bug-fix-workflow.md
+      - agentic-qa-boilerplate sister repo (sprint-testing/bug-report)
 
 optional:
-  # (empty)
+# (empty)
 
 # Special markers — fields the methodology expects to exist semantically but
 # that haven't been mapped to a real Jira custom field yet. The check command
@@ -187,6 +169,6 @@ optional:
 # move the entry to `required:` above and update the corresponding prompt files
 # to use {{jira.<slug>}} instead of the literal customfield_X marker.
 unmapped:
-  # (empty — declare a slug here when the methodology expects a field
-  # semantically but no real Jira field exists yet, then promote it to
-  # `required:` once configured.)
+# (empty — declare a slug here when the methodology expects a field
+# semantically but no real Jira field exists yet, then promote it to
+# `required:` once configured.)

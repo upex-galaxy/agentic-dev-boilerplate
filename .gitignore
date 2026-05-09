@@ -71,3 +71,6 @@ Thumbs.db
 .mcpservers.json
 opencode.json
 dbhub.toml
+
+# ===== Installer state (local dev tracker, not project state) =====
+.agents/install-state.json

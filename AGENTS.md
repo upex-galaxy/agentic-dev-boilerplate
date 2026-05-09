@@ -50,6 +50,27 @@ bun run jira:check        # Validate Jira manifest vs catalog
 
 ---
 
+## Onboarding (first time using this repo)
+
+If this is your first time on this repo, run:
+
+```bash
+bun run setup
+```
+
+This launches an interactive installer that:
+
+1. Detects gentle-ai (installs via `brew install gentle-ai` or `go install ...` if missing)
+2. Detects your AI agent (Claude Code or OpenCode)
+3. Installs 15 skills + engram + SDD orchestrator via gentle-ai (skip if you opt out)
+4. Configures the 4 canonical MCPs (Tavily, Context7, Supabase, n8n) interactively
+5. Verifies external CLIs are present (vercel, supabase, acli, playwright, resend)
+6. Writes `.mcp.json` (or `opencode.json`) and `.agents/install-state.json`
+
+For details on the gentle-ai integration, see [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
+
+---
+
 ## Critical Reminders
 
 > These rules override defaults and must always be in context.
@@ -352,19 +373,19 @@ gh pr create --base staging
 
 ## MCPs Available
 
-| MCP            | When to Use                                |
-| -------------- | ------------------------------------------ |
-| **Playwright** | E2E testing, UI automation, screenshots    |
-| **OpenAPI**    | API endpoint exploration, contract testing |
-| **DBHub**      | Database queries, data validation          |
-| **Atlassian**  | Jira issue tracking and ticket workflows   |
-| **Context7**   | Official library documentation             |
-| **Tavily**     | Web search, troubleshooting                |
+| MCP          | When to Use                          |
+| ------------ | ------------------------------------ |
+| **Tavily**   | Web search, troubleshooting          |
+| **Context7** | Official library documentation       |
+| **Supabase** | Database queries, project management |
+| **n8n**      | Workflow automation, integrations    |
 
 **Decision Rule:**
 
 - Context7 for "how to use X" (official docs)
 - Tavily for "how to solve X" (community solutions)
+- Supabase for database/project state
+- n8n for workflow automation
 
 ---
 
@@ -449,6 +470,8 @@ For every story being worked on, maintain local documentation under `.context/PB
 ## Skills (Claude Code)
 
 > Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
+
+> **Note**: This repo is moving toward a hybrid model where some skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`) are installed via gentle-ai user-level instead of committed locally. Run `bun run setup` to install them via gentle-ai. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
 
 ### Workflow Skills (project-starter, 6)
 

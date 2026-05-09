@@ -108,7 +108,7 @@ SLACK_MCP_CHANNELS_CACHE = "$HOME/.codex/mcp-cache/slack/"
 
 [mcp_servers.nanobanana]
 command = "uvx"
-args = ["nanobanana-mcp-server@latest"]
+args = [ "nanobanana-mcp-server@latest" ]
 
 [mcp_servers.nanobanana.env]
 GEMINI_API_KEY = "{{your-gemini-api-key-here}}"
