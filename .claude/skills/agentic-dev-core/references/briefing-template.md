@@ -11,7 +11,7 @@
 4. **Skills to load** — skill triggers (e.g. `/acli`, `/xray-cli`, `/playwright-cli`) the subagent must invoke before issuing tool calls. The orchestrator never inlines tool syntax — that lives in the owning skill.
 5. **Exact instructions** — numbered steps. No ambiguity. Each step names the tool / skill action.
 6. **Report format** — what the subagent returns to the orchestrator. Either a JSON object with named fields, or a bullet list with explicit headings. Avoid free-form prose.
-7. **Rules** — constraints (relevant Critical Rules from `AGENTS.md`, project-specific guardrails, Git rules, env-selection rules).
+7. **Rules** — constraints (relevant Critical Rules from `CLAUDE.md`, project-specific guardrails, Git rules, env-selection rules).
 
 ## Filled template (skeleton)
 
@@ -204,7 +204,7 @@ Rules:
 ## Anti-patterns (do NOT delegate)
 
 - **Quick lookups (1-2 file reads)** — inline `Read` is faster, doesn't pay the subagent overhead.
-- **Memory reads/writes** — orchestrator owns memory. Subagents must not read or write `CLAUDE.md` / `AGENTS.md` / persistent memory.
+- **Memory reads/writes** — orchestrator owns memory. Subagents must not read or write `CLAUDE.md` / `CLAUDE.md` / persistent memory.
 - **Task tracking** (TaskCreate / TaskUpdate / progress files) — orchestrator owns tasks.
 - **Asking the user for input** — only the orchestrator can prompt the user. Subagents that hit a question must STOP and report.
 - **Planning / decision-making** — the orchestrator decides what to do next. Subagents execute pre-decided steps.
@@ -213,7 +213,7 @@ Rules:
 
 ---
 
-## Error protocol (mirrors AGENTS.md §Orchestration Mode)
+## Error protocol (mirrors CLAUDE.md §Orchestration Mode)
 
 If a subagent fails:
 
@@ -223,4 +223,4 @@ If a subagent fails:
 4. Do NOT auto-fix without approval. The user may need to fix env config, restore credentials, or re-scope the task.
 5. Pre-existing files written by failed subagents are NOT cleaned up automatically. The orchestrator decides whether to restore.
 
-This protocol mirrors `AGENTS.md` §"Orchestration Mode (Subagent Strategy)". When in doubt, the live `AGENTS.md` is canonical.
+This protocol mirrors `CLAUDE.md` §"Orchestration Mode (Subagent Strategy)". When in doubt, the live `CLAUDE.md` is canonical.

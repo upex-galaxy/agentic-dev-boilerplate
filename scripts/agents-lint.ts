@@ -52,7 +52,6 @@ const SCAN_ROOTS = [
 // Single root-level file to also scan.
 const SCAN_FILES = [
   'CLAUDE.md',
-  'AGENTS.md',
 ];
 
 // Directories to skip outright while walking.
@@ -218,8 +217,8 @@ function walkMarkdown(root: string, files: string[]): void {
   for (const name of entries) {
     const full = join(root, name);
 
-    // lstat — do not follow symlinks. Prevents double-counting of any
-    // CLAUDE.md → AGENTS.md style symlinks (or vice versa).
+    // lstat — do not follow symlinks (defensive: prevents double-counting
+    // if a downstream consumer re-introduces a symlink layout).
     let stat;
     try {
       stat = lstatSync(full);

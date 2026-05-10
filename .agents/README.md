@@ -105,7 +105,7 @@ When the methodology evolves and needs a brand-new custom field that doesn't exi
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bun run jira:sync-fields` | Discover Jira custom fields → write `jira.json`. Flags: `--force` (overwrite), `--allow-collisions` (suffix slug duplicates), `--dry-run`, `--verbose`, `--json`.                                     |
 | `bun run jira:check`       | Compare `jira-required.yaml` vs `jira.json` → setup report. Flags: `--json` (machine-readable), `--verbose` (include OK rows), `--help`. Exits 1 if any required field is missing or type-mismatched. |
-| `bun run lint:agents`      | Validate every `{{VAR}}` and `{{jira.*}}` reference across `.claude/skills/`, `.claude/commands/`, `.context/`, `CLAUDE.md`/`AGENTS.md`. Exits 1 if any are undeclared.                               |
+| `bun run lint:agents`      | Validate every `{{VAR}}` and `{{jira.*}}` reference across `.claude/skills/`, `.claude/commands/`, `.context/`, `CLAUDE.md`/`CLAUDE.md`. Exits 1 if any are undeclared.                               |
 
 ## Troubleshooting
 

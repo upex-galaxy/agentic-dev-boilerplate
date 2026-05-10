@@ -2,7 +2,7 @@
 
 > **Purpose**: Explain the context engineering strategy that powers AI-driven development in this repo.
 > **Audience**: Humans learning the system + AI when needing to understand "why".
-> **Related**: `CLAUDE.md` and `AGENTS.md` contain the operational context loaded each session.
+> **Related**: `CLAUDE.md` and `CLAUDE.md` contain the operational context loaded each session.
 
 ---
 
@@ -35,7 +35,7 @@ ai-driven-project-starter/
 ├── .agents/          → Project variable contract (project.yaml, jira.json, …)
 ├── docs/             → Documentation for humans
 ├── CLAUDE.md         → Operational context (loaded every Claude Code session)
-└── AGENTS.md         → Same content, mirrored for non-Claude agents
+└── CLAUDE.md         → Same content, mirrored for non-Claude agents
 ```
 
 ### Why This Separation?
@@ -78,7 +78,7 @@ Workflow skills (project-starter):
 
 ```
 .claude/skills/
-├── agentic-dev-core/           → One-time bootstrap (.agents/, scripts, AGENTS.md)
+├── agentic-dev-core/           → One-time bootstrap (.agents/, scripts, CLAUDE.md)
 ├── project-foundation/     → Constitution + PRD + SRS + Discovery
 ├── project-bootstrap/      → Backend + frontend + features (OpenAPI, auth, env)
 ├── product-management/     → Backlog seed, epic creation, story refinement
@@ -123,7 +123,7 @@ These files have stable names and locations. Reference them confidently:
 | File                                 | Purpose                                          |
 | ------------------------------------ | ------------------------------------------------ |
 | `CLAUDE.md`                          | Project memory, loaded every Claude Code session |
-| `AGENTS.md`                          | Same as CLAUDE.md, for non-Claude agents         |
+| `CLAUDE.md`                          | Same as CLAUDE.md, for non-Claude agents         |
 | `.agents/project.yaml`               | Project variable values (single source of truth) |
 | `.context/business-data-map.md`      | System flows and entities (Discovery output)     |
 | `.context/api-architecture.md`       | API endpoints reference (Discovery output)       |
@@ -136,7 +136,7 @@ These files have stable names and locations. Reference them confidently:
 ### One-Time Setup (Foundation)
 
 ```
-/agentic-dev-core           → Bootstrap .agents/, scripts, AGENTS.md
+/agentic-dev-core           → Bootstrap .agents/, scripts, CLAUDE.md
 /project-foundation     → Constitution + PRD + SRS + Discovery outputs
 /project-bootstrap      → Backend + frontend skeleton + features
 ```
@@ -203,7 +203,7 @@ These files have stable names and locations. Reference them confidently:
 
 ## 8. Maintenance Guidelines
 
-### When to Update CLAUDE.md / AGENTS.md
+### When to Update CLAUDE.md
 
 - Project identity changes
 - New MCPs configured
@@ -230,7 +230,7 @@ Edit the relevant `.claude/skills/<name>/SKILL.md` directly. Skills are committe
 
 ## Related Documentation
 
-- `CLAUDE.md` / `AGENTS.md` — Operational context (project root)
+- `CLAUDE.md` / `CLAUDE.md` — Operational context (project root)
 - `README.md` — Project overview for humans
 - `.agents/README.md` — Variable contract and validation scripts
 - `docs/workflows/update-template-guide.md` — How to sync this template upstream

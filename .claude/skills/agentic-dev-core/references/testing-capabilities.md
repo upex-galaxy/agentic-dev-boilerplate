@@ -53,13 +53,13 @@ The cache lives at `.context/testing-capabilities.json` (gitignored or not — t
 
 Resolved in this order; first hit wins:
 
-1. **CLAUDE.md marker** (highest priority — explicit user override). The script greps `CLAUDE.md` (and follows it as a symlink, e.g. to `AGENTS.md`) for an HTML comment marker:
+1. **CLAUDE.md marker** (highest priority — explicit user override). The script greps `CLAUDE.md` for an HTML comment marker:
    - `<!-- strict_tdd: true -->` → `strict_tdd = true`
    - `<!-- strict_tdd: false -->` → `strict_tdd = false`
 2. **`.agents/project.yaml`** → `testing.strict_tdd`. If present and a boolean, that's the answer.
 3. **Runner-based fallback.** If a test runner was detected (`runner !== null`) → `strict_tdd = true`. Otherwise → `strict_tdd = false`. Rationale: a project with a runner installed has the infrastructure for TDD; absence of a runner makes red-green meaningless.
 
-Ties go to the highest-priority signal. If `CLAUDE.md` says `false` but `project.yaml` says `true`, the marker wins — the user added the marker on purpose.
+Ties go to the highest-priority signal. If `CLAUDE.md` says `false` but `project.yaml` says `true`, the CLAUDE.md marker wins — the user added the marker on purpose.
 
 ## Cache lifecycle
 

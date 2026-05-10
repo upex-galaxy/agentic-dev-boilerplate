@@ -29,7 +29,7 @@ bun install
 bun run setup
 
 # 4. Bootstrap project context (in Claude Code)
-/agentic-dev-core          # scaffolds .agents/, scripts, AGENTS.md
+/agentic-dev-core          # scaffolds .agents/, scripts, CLAUDE.md
 
 # 5. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
@@ -61,7 +61,7 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 | Skill                  | Phase          | Purpose                                                                              |
 | ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `/agentic-dev-core`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `AGENTS.md`)        |
+| `/agentic-dev-core`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)        |
 | `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
 | `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
@@ -101,7 +101,7 @@ These skills are not committed in this repo; the installer fetches them via `npx
 scripts/                  # CLI tooling: agents-lint, jira-sync, etc.
 .plans/MASTER-PLAN.md     # The migration plan that produced this repo
 CLAUDE.md                 # Project memory loaded every AI session
-AGENTS.md                 # Cross-agent compatibility template (mirror of CLAUDE.md)
+CLAUDE.md                 # Cross-agent compatibility template (mirror of CLAUDE.md)
 ```
 
 ---

@@ -45,7 +45,6 @@ const REPO_ROOT = process.cwd();
 const PACKAGE_JSON = join(REPO_ROOT, 'package.json');
 const TSCONFIG = join(REPO_ROOT, 'tsconfig.json');
 const CLAUDE_MD = join(REPO_ROOT, 'CLAUDE.md');
-const AGENTS_MD = join(REPO_ROOT, 'AGENTS.md');
 const PROJECT_YAML = join(REPO_ROOT, '.agents', 'project.yaml');
 const CACHE_DIR = join(REPO_ROOT, '.context');
 const CACHE_FILE = join(CACHE_DIR, 'testing-capabilities.json');
@@ -201,25 +200,22 @@ function detectLint(pkg: PackageJson): boolean {
   return result;
 }
 
-/**
- * Priority 1: <!-- strict_tdd: true|false --> marker in CLAUDE.md / AGENTS.md.
- * `readIfExists` follows symlinks transparently (CLAUDE.md → AGENTS.md is the
- * default Linux/macOS install layout per agentic-dev-core SKILL.md).
- */
+/** Priority 1: <!-- strict_tdd: true|false --> marker in CLAUDE.md. */
 function detectStrictTddFromMarker(): boolean | null {
-  for (const path of [CLAUDE_MD, AGENTS_MD]) {
-    const text = readIfExists(path);
-    if (text === null) { continue; }
-    if (/<!--\s*strict_tdd:\s*true\s*-->/i.test(text)) {
-      vlog(`[strict_tdd] marker = true (from ${relative(REPO_ROOT, path)})`);
-      return true;
-    }
-    if (/<!--\s*strict_tdd:\s*false\s*-->/i.test(text)) {
-      vlog(`[strict_tdd] marker = false (from ${relative(REPO_ROOT, path)})`);
-      return false;
-    }
+  const text = readIfExists(CLAUDE_MD);
+  if (text === null) {
+    vlog('[strict_tdd] no CLAUDE.md');
+    return null;
   }
-  vlog('[strict_tdd] no CLAUDE.md/AGENTS.md marker');
+  if (/<!--\s*strict_tdd:\s*true\s*-->/i.test(text)) {
+    vlog(`[strict_tdd] marker = true (from ${relative(REPO_ROOT, CLAUDE_MD)})`);
+    return true;
+  }
+  if (/<!--\s*strict_tdd:\s*false\s*-->/i.test(text)) {
+    vlog(`[strict_tdd] marker = false (from ${relative(REPO_ROOT, CLAUDE_MD)})`);
+    return false;
+  }
+  vlog('[strict_tdd] no marker in CLAUDE.md');
   return null;
 }
 

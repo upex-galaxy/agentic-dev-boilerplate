@@ -6,7 +6,7 @@ Bienvenido a la documentación del **AI-Driven Project Starter**.
 
 Esta documentación está orientada a **humanos** — para aprender conceptos, entender metodologías y seguir guías paso a paso.
 
-> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `CLAUDE.md` y `AGENTS.md` en la raíz del repo. El resto del comportamiento de la AI vive en skills (`.claude/skills/`) y commands (`.claude/commands/`).
+> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `CLAUDE.md` y `CLAUDE.md` en la raíz del repo. El resto del comportamiento de la AI vive en skills (`.claude/skills/`) y commands (`.claude/commands/`).
 
 ---
 

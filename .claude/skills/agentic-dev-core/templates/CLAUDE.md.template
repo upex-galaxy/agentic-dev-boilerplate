@@ -2,10 +2,10 @@
 
 <!--
 TEMPLATE — DO NOT EDIT IN PLACE WHEN BOOTSTRAPPING.
-This file lives at .claude/skills/framework-core/templates/AGENTS.md.template.
-It is mirrored manually with the live AGENTS.md at the repo root.
+This file lives at .claude/skills/framework-core/templates/CLAUDE.md.template.
+It is mirrored manually with the live CLAUDE.md at the repo root.
 When updating structural sections (Critical Rules, Skills, Tool Resolution, Orchestration Mode, etc.),
-edit BOTH this template AND the live AGENTS.md.
+edit BOTH this template AND the live CLAUDE.md.
 
 Refresh of project-specific FACTS (Project Identity, Environment URLs, Discovery Progress, etc.)
 is handled by the `/refresh-ai-memory` command — do NOT update those here.
@@ -227,7 +227,7 @@ Skills are committed to the repo. User-specific settings (`.claude/settings.loca
 
 | Command | Purpose |
 |---------|---------|
-| `/refresh-ai-memory` | Regenerate `README.md` and the AI memory file (`CLAUDE.md` / `GEMINI.md` / `AGENTS.md` / `.cursor/rules` / etc., auto-detected) so they reflect the current `.context/` and `package.json` state. Run when documentation drifts. |
+| `/refresh-ai-memory` | Regenerate `README.md` and the AI memory file (`CLAUDE.md` / `GEMINI.md` / `CLAUDE.md` / `.cursor/rules` / etc., auto-detected) so they reflect the current `.context/` and `package.json` state. Run when documentation drifts. |
 | `/project-doc-setup` | Generate / regenerate project documentation (README.md, CLAUDE.md) from the current state of `.context/` and `package.json`. |
 | `/context-engineering-setup` | Bootstrap or refresh the `.context/` engineering layer (mapping files, dev/test guides, glossary). |
 | `/business-data-map` | Generate or refresh `.context/mapping/business-data-map.md` (entities, flows, state machines). |
@@ -298,7 +298,7 @@ Name format: `{prefix}/{ISSUE-KEY}-{kebab-slug}` when an issue key exists, `{pre
 
 - Title format: `{type}({ISSUE-KEY}): {description}` — include the issue key whenever one exists. Fallback: `{type}: {description}`.
 - Branch names follow the semantic prefix vocabulary documented in the Branch Strategy table above.
-- PR templates (if any) live in `.github/` so they can evolve without bloating `AGENTS.md` / `CLAUDE.md`.
+- PR templates (if any) live in `.github/` so they can evolve without bloating `CLAUDE.md` / `CLAUDE.md`.
 
 **Example**: `git checkout -b feat/UPEX-123-add-login` -> commit -> push with `-u` -> `gh pr create --base staging`. For general work on `main`, always ask "Confirm push to main?" before pushing.
 

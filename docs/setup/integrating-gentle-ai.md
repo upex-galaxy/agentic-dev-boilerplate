@@ -61,7 +61,7 @@ Skills that are workflow-specific to this boilerplate live in `.claude/skills/` 
 
 | Skill                 | Trigger                | Why it stays local                                          |
 | --------------------- | ---------------------- | ----------------------------------------------------------- |
-| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/` + scripts + AGENTS.md      |
+| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/` + scripts + CLAUDE.md      |
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product) |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env) |
 | `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement      |
@@ -134,5 +134,5 @@ What you keep: every workflow skill committed in this repo (`/sprint-dev`, `/age
 ## See also
 
 - [.plans/GENTLE-AI-RESEARCH.md](../../.plans/GENTLE-AI-RESEARCH.md) — full research doc on the gentle-ai ecosystem (commands, components, agent matrix)
-- [AGENTS.md § Onboarding](../../AGENTS.md) — quick-start entry point for `bun run setup`
+- [CLAUDE.md § Onboarding](../../CLAUDE.md) — quick-start entry point for `bun run setup`
 - [docs/setup/README.md](./README.md) — index of setup guides in this repo

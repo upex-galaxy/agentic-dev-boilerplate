@@ -29,7 +29,7 @@ First, identify which AI tool is being used. Check for existing configuration:
 # Check for existing AI config files
 ls CLAUDE.md 2>/dev/null && echo "✓ Claude Code detected (CLAUDE.md exists)"
 ls GEMINI.md 2>/dev/null && echo "✓ Gemini CLI detected (GEMINI.md exists)"
-ls AGENTS.md 2>/dev/null && echo "✓ Claude Agent SDK detected (AGENTS.md exists)"
+ls CLAUDE.md 2>/dev/null && echo "✓ Claude Agent SDK detected (CLAUDE.md exists)"
 ls .cursor/rules 2>/dev/null && echo "✓ Cursor detected (.cursor/rules exists)"
 ls .github/copilot-instructions.md 2>/dev/null && echo "✓ GitHub Copilot detected"
 ```
@@ -45,7 +45,7 @@ Which AI tool are you using? I need to create the correct project memory file:
 | -------------------- | ---------------------------------- | --------------------------------- |
 | **Claude Code**      | `CLAUDE.md`                        | Project root                      |
 | **Gemini CLI**       | `GEMINI.md`                        | Project root                      |
-| **Claude Agent SDK** | `AGENTS.md`                        | Project root                      |
+| **Claude Agent SDK** | `CLAUDE.md`                        | Project root                      |
 | **Cursor**           | `rules`                            | `.cursor/rules`                   |
 | **GitHub Copilot**   | `copilot-instructions.md`          | `.github/copilot-instructions.md` |
 | **Windsurf**         | `rules`                            | `.windsurf/rules`                 |
@@ -60,7 +60,7 @@ Based on detection or user response:
 | ---------------- | ------------------------- | ----------------------------------- | ------------ |
 | Claude Code      | `CLAUDE.md`               | `./CLAUDE.md`                       | Yes          |
 | Gemini CLI       | `GEMINI.md`               | `./GEMINI.md`                       | Yes          |
-| Claude Agent SDK | `AGENTS.md`               | `./AGENTS.md`                       | Yes          |
+| Claude Agent SDK | `CLAUDE.md`               | `./CLAUDE.md`                       | Yes          |
 | Cursor           | `rules`                   | `./.cursor/rules`                   | Yes          |
 | GitHub Copilot   | `copilot-instructions.md` | `./.github/copilot-instructions.md` | Yes          |
 | Windsurf         | `rules`                   | `./.windsurf/rules`                 | Yes          |

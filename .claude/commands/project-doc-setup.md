@@ -7,7 +7,7 @@ description: Regenerate README.md and CLAUDE.md from current repo state and .age
 > **Tipo:** Prompt Standalone (Reutilizable)
 > **Objetivo:** Crear README profesional + System Prompt para AI Coding Agents
 > **Pre-requisito:** Proyecto con estructura básica definida (recomendado: después de Fase 3 Infrastructure)
-> **Output:** `README.md` + archivo de system prompt (`CLAUDE.md` / `GEMINI.md` / `AGENTS.md`)
+> **Output:** `README.md` + archivo de system prompt (`CLAUDE.md` / `GEMINI.md` / `CLAUDE.md`)
 
 ---
 
@@ -154,7 +154,7 @@ Primero, busca archivos de system prompt existentes en el root del proyecto:
 Verificar existencia de:
 ├── CLAUDE.md     → Si existe, el usuario probablemente usa Claude Code
 ├── GEMINI.md     → Si existe, el usuario probablemente usa Gemini CLI
-└── AGENTS.md     → Si existe, el usuario usa otra herramienta
+└── CLAUDE.md     → Si existe, el usuario usa otra herramienta
 
 SI existe algún archivo:
   → Informar al usuario:
@@ -185,8 +185,8 @@ Si no se detectó ningún archivo existente, pregunta:
 │     → Ubicación: ./GEMINI.md (root del proyecto)                    │
 │                                                                      │
 │  3. Opencode / Otros                                                │
-│     → Genera: AGENTS.md                                             │
-│     → Ubicación: ./AGENTS.md (root del proyecto)                    │
+│     → Genera: CLAUDE.md                                             │
+│     → Ubicación: ./CLAUDE.md (root del proyecto)                    │
 │                                                                      │
 │  4. Todos (generar los 3 archivos)                                  │
 │                                                                      │
@@ -202,7 +202,7 @@ Si no se detectó ningún archivo existente, pregunta:
 >
 > - **CLAUDE.md**: Claude Code lo lee automáticamente al iniciar sesión
 > - **GEMINI.md**: Gemini CLI lo lee como instrucciones del sistema
-> - **AGENTS.md**: Formato genérico para otras herramientas
+> - **CLAUDE.md**: Formato genérico para otras herramientas
 >
 > Estos archivos contienen:
 >
@@ -667,8 +667,8 @@ Nota: Usa gh (CLI de GitHub) para crear PR, hacer reviews, y todo lo relacionado
 - Ubicación: `./GEMINI.md` (root)
 - Gemini CLI lo lee con `--system-instruction`
 
-**Para AGENTS.md:**
-- Ubicación: `./AGENTS.md` (root)
+**Para CLAUDE.md:**
+- Ubicación: `./CLAUDE.md` (root)
 - Formato genérico compatible con múltiples herramientas
 
 ---
@@ -691,7 +691,7 @@ Según la elección del usuario:
 
 - Opción 1: ./CLAUDE.md
 - Opción 2: ./GEMINI.md
-- Opción 3: ./AGENTS.md
+- Opción 3: ./CLAUDE.md
 - Opción 4: Los 3 archivos
 
 ```
@@ -754,7 +754,7 @@ Secciones a personalizar:
 
 ```
 
-### System Prompt (CLAUDE.md / GEMINI.md / AGENTS.md)
+### System Prompt (CLAUDE.md / GEMINI.md / CLAUDE.md)
 
 ```
 

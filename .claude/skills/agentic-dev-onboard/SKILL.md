@@ -142,7 +142,7 @@ Verify your config with `bun run lint:agents` (should report 0 errors when fully
 
 | Skill                 | Trigger                | Purpose                                                             |
 | --------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/`, scripts, AGENTS.md                |
+| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                |
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                              |
 | `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                |

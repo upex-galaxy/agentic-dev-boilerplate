@@ -4,7 +4,7 @@
 >
 > - Claude Code: `CLAUDE.md` (en el root)
 > - Gemini CLI: `GEMINI.md` (en el root)
-> - OpenCode: `AGENTS.md` (en el root)
+> - OpenCode: `CLAUDE.md` (en el root)
 
 ---
 
@@ -179,7 +179,7 @@ Nota: Usa gh (CLI de GitHub) para crear PR, hacer reviews, y todo lo relacionado
 2. **Pega** en tu archivo de configuración de IA:
    - Claude Code: `CLAUDE.md` (en el root)
    - Gemini CLI: `GEMINI.md` (en el root)
-   - OpenCode: `AGENTS.md` (en el root)
+   - OpenCode: `CLAUDE.md` (en el root)
 3. **Inicia** una nueva sesión con tu IA
 4. La IA ahora sabrá cómo cargar contexto correctamente
 
