@@ -21,6 +21,7 @@ frontend:
   frontend_repo: null # TODO: fill per project — Relative path to frontend repository (e.g. ../my-frontend)
   frontend_stack: null # TODO: fill per project — Frontend technology stack (e.g. React + TypeScript)
   frontend_entry: null # TODO: fill per project — Frontend source entry point (e.g. src/)
+  design_md_path: null # OPTIONAL — path to DESIGN.md produced by /design-system. Defaults to ./DESIGN.md when null. Override only for atypical layouts (e.g. .context/DESIGN.md).
 
 database:
   db_type: null # TODO: fill per project — Database engine (e.g. PostgreSQL)
