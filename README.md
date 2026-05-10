@@ -11,7 +11,7 @@
 
 ## What this is
 
-A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Nine workflow skills cover foundation, management, and implementation; four utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) <!-- TODO: confirm sister repo URL --> — the two repos are designed as a complementary pair.
+A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Nine workflow skills cover foundation, management, and implementation; four utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — the two repos are designed as a complementary pair.
 
 ---
 
@@ -147,7 +147,7 @@ bun run jira:check        # Validate Jira manifest vs catalog
 
 ## Companion repo
 
-Software testing — sprint-testing, test-documentation, test-automation, regression-testing — lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) <!-- TODO: confirm sister repo URL -->. The two repos share the same `.agents/` variable system and `agentskills.io` skill layout, so a project can adopt both without duplication.
+Software testing — sprint-testing, test-documentation, test-automation, regression-testing — lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate). The two repos share the same `.agents/` variable system and `agentskills.io` skill layout, so a project can adopt both without duplication.
 
 ---
 
