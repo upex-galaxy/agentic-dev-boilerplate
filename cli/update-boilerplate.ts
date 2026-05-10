@@ -55,7 +55,7 @@ const SCRIPTS_FILES: string[] = [
   'agents-lint.ts',
   'agents-setup.ts',
   'check-jira-setup.ts',
-  'jira-sync.ts',
+  'sync-jira-issues.ts',
   'sync-jira-fields.ts',
   'sync-jira-workflows.ts',
 ];

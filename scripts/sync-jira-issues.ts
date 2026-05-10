@@ -161,7 +161,7 @@ function buildCustomFields(): Record<SemanticKey, string> {
     if (!entry || typeof entry.id !== 'string') {
       throw new Error(
         `jira-sync: slug '${slug}' (for '${semanticKey}') not found in .agents/jira.json. `
-        + 'Run `bun run jira:sync-fields --force` to refresh, or update SLUG_MAPPING in scripts/jira-sync.ts.',
+        + 'Run `bun run jira:sync-fields --force` to refresh, or update SLUG_MAPPING in scripts/sync-jira-issues.ts.',
       );
     }
     out[semanticKey] = entry.id;

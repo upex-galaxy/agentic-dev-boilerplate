@@ -96,7 +96,7 @@ Abre un menu donde puedes seleccionar que actualizar:
 bun up all           # Actualiza todo
 bun up claude        # Actualiza .claude/ (settings.json + skills/ + commands/)
 bun up agents        # Actualiza .agents/ (framework + bootstrap protegido)
-bun up scripts       # Actualiza scripts/ (jira-sync.ts y otros del framework)
+bun up scripts       # Actualiza scripts/ (sync-jira-issues.ts y otros del framework)
 bun up cli           # Actualiza cli/ (Xray CLI, sync-openapi, update-template)
 bun up docs          # Actualiza docs/
 bun up context       # Actualiza .context/
@@ -311,7 +311,7 @@ update-template.js actualizado a v4.1
 | ---------------- | ---------------------------------------------------------------------- |
 | `.claude/`       | `settings.json` + `skills/` + `commands/` (workflows + slash commands) |
 | `.agents/`       | `project.yaml`, `jira-required.yaml`, `jira.json`, framework files     |
-| `scripts/`       | `agents/`, `jira-sync.ts` (solo del framework)                         |
+| `scripts/`       | `agents/`, `sync-jira-issues.ts` (solo del framework)                         |
 | `cli/`           | `update-template.js`, `sync-openapi.ts`, `xray/`                       |
 | `docs/`          | `architectures/`, `methodology/`, `setup/`, `workflows/`               |
 | `.context/`      | `system-prompt.md`, `README.md`, archivos de Discovery (genericos)     |

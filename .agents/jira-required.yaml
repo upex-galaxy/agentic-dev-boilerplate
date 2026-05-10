@@ -21,7 +21,7 @@
 #               (e.g. `customfield_ATR`) with TODO comments. Reported as INFO.
 
 required:
-  # ---- Story / User-story fields (consumed by scripts/jira-sync.ts) ----
+  # ---- Story / User-story fields (consumed by scripts/sync-jira-issues.ts) ----
   acceptance_criteria_gherkin:
     name: ✅ Acceptance Criteria (Gherkin)
     type: string
@@ -64,7 +64,7 @@ required:
     description: External reference URL attached to the story.
     used_by: [jira-sync]
 
-  # ---- Bug / Defect fields (consumed by scripts/jira-sync.ts + sprint-dev/references/bug-fix-workflow.md;
+  # ---- Bug / Defect fields (consumed by scripts/sync-jira-issues.ts + sprint-dev/references/bug-fix-workflow.md;
   #      also reserved for downstream agentic-qa-boilerplate sister repo's sprint-testing/bug-report) ----
   actual_result_comportamiento:
     name: 🐞 Actual Result (Comportamiento)

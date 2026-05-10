@@ -10,8 +10,8 @@
   "scripts": {
     "setup": "bun cli/install.ts",
     "up": "bun cli/update-boilerplate.ts",
-    "api:sync": "bun cli/sync-openapi.ts",
-    "jira:sync": "bun scripts/jira-sync.ts",
+    "api:sync": "bun scripts/sync-openapi.ts",
+    "jira:sync-issues": "bun run scripts/sync-jira-issues.ts",
     "lint:agents": "bun run scripts/agents-lint.ts",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
     "jira:check": "bun run scripts/check-jira-setup.ts",

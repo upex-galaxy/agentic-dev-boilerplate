@@ -135,7 +135,7 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 | `[ISSUE_TRACKER_TOOL]` | Issue Tracking     | `acli` CLI (`/acli` skill) | manual via Atlassian UI  | `.claude/skills/acli/`           |
 | `[AUTOMATION_TOOL]`    | Browser Automation | `/playwright-cli` skill    | —                        | `.claude/skills/playwright-cli/` |
 | `[DB_TOOL]`            | Database           | Supabase MCP               | raw SQL via Supabase CLI | `.mcp.example.json`              |
-| `[API_TOOL]`           | API Exploration    | curl + OpenAPI types       | Postman manual           | `cli/sync-openapi.ts`            |
+| `[API_TOOL]`           | API Exploration    | curl + OpenAPI types       | Postman manual           | `scripts/sync-openapi.ts`            |
 
 ### How It Works
 
@@ -458,7 +458,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 | Script             | Usage                                               | Documentation               |
 | ------------------ | --------------------------------------------------- | --------------------------- |
-| `bun run api:sync` | Sync OpenAPI spec + generate types                  | `cli/sync-openapi.ts`       |
+| `bun run api:sync` | Sync OpenAPI spec + generate types                  | `scripts/sync-openapi.ts`       |
 | `bun run setup`    | Run interactive installer (gentle-ai + MCPs + CLIs) | `cli/install.ts`            |
 | `bun run up`       | Update template from upstream                       | `cli/update-boilerplate.ts` |
 | `bun run lint`     | Lint codebase with ESLint                           | `eslint.config.js`          |
