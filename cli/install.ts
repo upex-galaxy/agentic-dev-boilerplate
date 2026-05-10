@@ -124,6 +124,46 @@ const SKILL_SLUGS = [
 
 const CANONICAL_MCPS = ['tavily', 'context7', 'supabase', 'n8n'] as const;
 
+interface CommunitySkill {
+  package: string
+  skill?: string  // omit or '*' to install all skills from the package
+}
+
+// Community skills installed at PROJECT level (`npx skills add`).
+// Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn + Supabase + Vercel.
+// Users can run `npx autoskills` later to refine for their concrete stack.
+const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
+  { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
+  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'react-best-practices' },
+  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'composition-patterns' },
+  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
+  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-best-practices' },
+  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-cache-components' },
+  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-upgrade' },
+  { package: 'https://github.com/pproenca/dot-skills', skill: 'react-hook-form' },
+  { package: 'https://github.com/pproenca/dot-skills', skill: 'zod' },
+  { package: 'https://github.com/shadcn/ui', skill: 'shadcn' },
+  { package: 'https://github.com/supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
+  { package: 'https://github.com/midudev/autoskills', skill: 'bun' },
+  { package: 'https://github.com/giuseppe-trisciuoglio/developer-kit', skill: 'tailwind-css-patterns' },
+  { package: 'https://github.com/wshobson/agents', skill: 'typescript-advanced-types' },
+  { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'accessibility' },
+  { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'seo' },
+];
+
+// Community skills installed at USER (global) level — useful across most projects.
+const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
+  { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
+  { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
+  { package: 'https://github.com/github/awesome-copilot', skill: 'gh-cli' },
+  { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
+  { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
+  { package: 'czlonkowski/n8n-skills' },  // whole repo (n8n MCP toolkit)
+  { package: 'https://github.com/emilkowalski/skill', skill: 'emil-design-eng' },
+  { package: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', skill: 'ui-ux-pro-max' },
+  { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
+];
+
 const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string }> = [
   { name: 'vercel', install: 'npm i -g vercel' },
   { name: 'supabase', install: 'brew install supabase/tap/supabase  (or: npm i -g supabase)' },
@@ -407,6 +447,66 @@ async function installSkillsViaGentleAi(
 }
 
 // ============================================================================
+// Step 6.5 — install community skills via npx skills CLI
+// ============================================================================
+
+function describeSkill(item: CommunitySkill): string {
+  if (!item.skill || item.skill === '*') {
+    return item.package.split('/').slice(-2).join('/');
+  }
+  return item.skill;
+}
+
+async function installCommunitySkills(
+  state: InstallState,
+  level: 'project' | 'global',
+): Promise<void> {
+  const list = level === 'project' ? PROJECT_LEVEL_SKILLS : USER_LEVEL_SKILLS;
+  const label = level === 'project' ? 'project-level' : 'user-level (global)';
+
+  log.banner(`Community skills — ${label}`);
+  log.info(`This will run ${list.length} \`npx skills add\` commands (${label}).`);
+
+  const proceed = await confirm({
+    message: `Install ${label} community skills?`,
+    default: true,
+  });
+  if (!proceed) {
+    log.warn(`Skipping ${label} community skills.`);
+    for (const item of list) {
+      const slug = describeSkill(item);
+      const key = `community:${level}:${slug}`;
+      if (!state.skills[key]) { state.skills[key] = 'skipped'; }
+    }
+    return;
+  }
+
+  for (const item of list) {
+    const slug = describeSkill(item);
+    const key = `community:${level}:${slug}`;
+    if (state.skills[key] === 'installed') {
+      log.dim(`  skipping ${slug} (already installed)`);
+      continue;
+    }
+    const args = ['skills', 'add', item.package];
+    if (item.skill && item.skill !== '*') {
+      args.push('--skill', item.skill);
+    }
+    if (level === 'global') { args.push('--global'); }
+    args.push('--yes');
+    const result = tryRun('npx', args);
+    if (result.ok) {
+      log.success(`  installed: ${slug}`);
+      state.skills[key] = 'installed';
+    }
+    else {
+      log.error(`  failed: ${slug} — ${(result.stderr || result.stdout).trim().slice(0, 120) || 'unknown error'}`);
+      state.skills[key] = 'failed';
+    }
+  }
+}
+
+// ============================================================================
 // Step 7 — MCP configuration
 // ============================================================================
 
@@ -652,8 +752,14 @@ function buildInitialState(prior: InstallState | null): InstallState {
 // ============================================================================
 
 function printClosingSummary(state: InstallState): void {
-  const skillCount = Object.values(state.skills).filter(s => s === 'installed').length;
-  const skillTotal = Object.keys(state.skills).length;
+  const allSkillEntries = Object.entries(state.skills);
+  const gentleSkills = allSkillEntries.filter(([k]) => !k.startsWith('community:'));
+  const projectCommunity = allSkillEntries.filter(([k]) => k.startsWith('community:project:'));
+  const userCommunity = allSkillEntries.filter(([k]) => k.startsWith('community:global:'));
+
+  const gentleInstalled = gentleSkills.filter(([, s]) => s === 'installed').length;
+  const projectInstalled = projectCommunity.filter(([, s]) => s === 'installed').length;
+  const userInstalled = userCommunity.filter(([, s]) => s === 'installed').length;
 
   const mcpConfigured = Object.values(state.mcps).filter(
     s => s === 'configured-with-key' || s === 'configured-no-key' || s === 'placeholder',
@@ -667,16 +773,18 @@ function printClosingSummary(state: InstallState): void {
     .map(([name]) => name);
 
   log.banner('Installer complete.');
-  process.stdout.write(`Skills installed   : ${skillCount}/${skillTotal}\n`);
-  process.stdout.write(`MCPs configured    : ${mcpConfigured}/${mcpTotal} (${CANONICAL_MCPS.join(', ')})\n`);
-  process.stdout.write(`External CLIs      : ${cliFound}/${cliTotal} found`);
+  process.stdout.write(`gentle-ai skills    : ${gentleInstalled}/${gentleSkills.length}\n`);
+  process.stdout.write(`Project skills (npx): ${projectInstalled}/${projectCommunity.length}\n`);
+  process.stdout.write(`User skills   (npx): ${userInstalled}/${userCommunity.length}\n`);
+  process.stdout.write(`MCPs configured     : ${mcpConfigured}/${mcpTotal} (${CANONICAL_MCPS.join(', ')})\n`);
+  process.stdout.write(`External CLIs       : ${cliFound}/${cliTotal} found`);
   if (cliMissing.length > 0) { process.stdout.write(` (missing: ${cliMissing.join(', ')})`); }
   process.stdout.write('\n');
   if (state.pendingEnvVars.length > 0) {
-    process.stdout.write(`Pending env vars   : ${state.pendingEnvVars.join(', ')}\n`);
+    process.stdout.write(`Pending env vars    : ${state.pendingEnvVars.join(', ')}\n`);
   }
   else {
-    process.stdout.write('Pending env vars   : (none)\n');
+    process.stdout.write('Pending env vars    : (none)\n');
   }
 
   process.stdout.write('\n');
@@ -686,6 +794,8 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write('  3. Run: bun run lint:agents (validate config)\n');
   process.stdout.write('  4. In your agent: /refresh-ai-memory (load initial context)\n');
   process.stdout.write('  5. In your agent: /agentic-dev-core (bootstrap on this repo)\n');
+  process.stdout.write('  6. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n');
+  process.stdout.write('  7. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n');
   process.stdout.write('\n');
   log.dim('Full docs: docs/setup/integrating-gentle-ai.md');
 }
@@ -699,11 +809,11 @@ async function main(): Promise<void> {
   log.dim('See .plans/FASE-15-DESIGN.md for the spec this implements.');
 
   // Step 1
-  log.step(1, 10, 'Verifying repo root');
+  log.step(1, 11, 'Verifying repo root');
   await verifyRepoRoot();
 
   // Step 2
-  log.step(2, 10, 'Detecting gentle-ai');
+  log.step(2, 11, 'Detecting gentle-ai');
   const gentleAi = detectGentleAi();
   if (gentleAi.found && gentleAi.version) {
     if (gentleAi.compatible) {
@@ -727,7 +837,7 @@ async function main(): Promise<void> {
   };
 
   // Step 3
-  log.step(3, 10, 'gentle-ai install / skip decision');
+  log.step(3, 11, 'gentle-ai install / skip decision');
   let runSkillInstall = false;
   if (gentleAi.status === 'installed') {
     runSkillInstall = true;
@@ -750,7 +860,7 @@ async function main(): Promise<void> {
   }
 
   // Step 4
-  log.step(4, 10, 'Detecting agents');
+  log.step(4, 11, 'Detecting agents');
   const detected = await detectAgents();
   log.info(
     `Claude Code: ${detected.claudeCode ? 'found' : 'not found'} | OpenCode: ${detected.opencode ? 'found' : 'not found'}`,
@@ -763,13 +873,13 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  // Step 5/6
+  // Step 5
   if (runSkillInstall) {
-    log.step(5, 10, 'Installing skills via gentle-ai');
+    log.step(5, 11, 'Installing gentle-ai skills (engram + SDD + foundation)');
     await installSkillsViaGentleAi(agents, state);
   }
   else {
-    log.step(5, 10, 'Skipping skill install (no compatible gentle-ai)');
+    log.step(5, 11, 'Skipping gentle-ai skill install (no compatible gentle-ai)');
     for (const slug of [ENGRAM_COMPONENT, ...SKILL_SLUGS]) {
       for (const agent of agents) {
         const key = `${slug}::${agent}`;
@@ -778,20 +888,25 @@ async function main(): Promise<void> {
     }
   }
 
+  // Step 6 — community skills via npx skills CLI (independent of gentle-ai)
+  log.step(6, 11, 'Installing community skills via npx skills CLI');
+  await installCommunitySkills(state, 'project');
+  await installCommunitySkills(state, 'global');
+
   // Step 7
-  log.step(7, 10, 'Configuring MCPs');
+  log.step(7, 11, 'Configuring MCPs');
   await configureMcps(agents, state);
 
   // Step 8
-  log.step(8, 10, 'Verifying external CLIs');
+  log.step(8, 11, 'Verifying external CLIs');
   verifyExternalClis(state);
 
   // Step 9
-  log.step(9, 10, 'Persisting state');
+  log.step(9, 11, 'Persisting state');
   await writeInstallState(state);
 
-  // Step 10
-  log.step(10, 10, 'Done');
+  // Step 10 (closing summary)
+  log.step(10, 11, 'Closing summary');
   printClosingSummary(state);
 }
 
