@@ -1,20 +1,10 @@
 ---
 name: acli
-description: 'Atlassian CLI (official `acli` binary, v1.3+) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal. Use whenever the user wants to create, view, edit, transition, assign, clone, archive, comment on, link, or bulk-operate on Jira work items (Story, Bug, Task, Epic) from the command line; list or manage projects, boards, sprints, filters, dashboards; create or update Confluence spaces or blog posts; or authenticate to Atlassian from a shell or CI pipeline. Triggers on: `acli`, `atlassian CLI`, `use acli`, `Jira from the terminal`, `transition Jira ticket`, `transition story to In Review`, `create Jira issue from CLI`, `create bug from CLI`, `fetch story details from CLI`, `link PR to story`, `bulk Jira operations`, `script Jira`, `automate Jira tickets`, `transition a bunch of issues`, `CI pipeline that touches Jira`, `log in to Jira CLI`, `switch Atlassian sites`, `API-token auth for Jira`. Use this skill even when the user does not say the word `acli` — if the task is CLI-driven Jira or Confluence work, this is the right tool. Do NOT use for: full sprint-dev orchestration (use /sprint-dev), code review workflow (use /sprint-dev Stage 3), product backlog seeding (use /product-management), Bitbucket command-line needs (acli does not cover Bitbucket), or the legacy Appfire/Bob Swift `acli` tool (a different product that happens to share the binary name).'
+description: "Atlassian CLI (official `acli` binary, v1.3+ as of 2026) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal. Use whenever the user wants to create, view, edit, transition, assign, clone, archive, comment on, link, or bulk-operate on Jira work items (Story, Bug, Task, Epic) from the command line; list or manage projects, boards, sprints, filters, dashboards, or custom-field definitions; create or update Confluence spaces, pages, or blog posts; activate/deactivate users at the org level; or authenticate to Atlassian from a shell or CI pipeline. Triggers on: `acli`, Atlassian CLI, Jira from the terminal, Confluence from the terminal, transition Jira ticket, transition story to In Review, create Jira issue from CLI, create bug from CLI, fetch story details from CLI, link PR to story, bulk Jira operations, create issues from a JSON/CSV file, script Jira, automate Jira tickets, transition a bunch of issues, CI pipeline that touches Jira, log in to Jira CLI, switch Atlassian sites, API-token auth for Jira. Use this skill even when the user does not say the word `acli` — if the task is CLI-driven Jira or Confluence work, this is the right tool. Do NOT use for: full sprint-dev orchestration (use /sprint-dev), code review workflow (use /sprint-dev Stage 3), product backlog seeding (use /product-management), Bitbucket command-line needs (acli does not cover Bitbucket), or the legacy Appfire/Bob Swift `acli` tool (a different product that happens to share the binary name)."
 license: MIT
-compatibility: [claude-code, copilot, cursor, codex, opencode]
-phase: implementation
+compatibility: [claude-code, cursor, codex, opencode]
+allowed-tools: Bash(acli:*)
 ---
-
-<!-- Model preferences (advisory; dispatchers may use to route) -->
-<!--
-model_preferences:
-  foundation: opus       # high-leverage architectural work
-  planning: sonnet       # structured writing
-  implementation: sonnet # default for code work
-  review: opus           # critical analysis
-  archive: haiku         # mechanical close-out
--->
 
 # Atlassian CLI (`acli`)
 
@@ -256,6 +246,7 @@ Load the reference that matches the user's current need. Do not preload all of t
 | Log in, switch sites, handle tokens, authenticate in CI                                                         | `references/auth.md`                  |
 | Work with Jira tickets (create, edit, transition, search, bulk, comments, links, watchers, custom-field shapes) | `references/workitem.md`              |
 | Manage projects, boards, sprints, filters, dashboards, custom-field definitions                                 | `references/project-board-sprint.md`  |
+| Work with Confluence spaces, blogs, pages                                                                       | `references/confluence.md`            |
 | Run org-level admin tasks (API key, user lifecycle)                                                             | `references/admin.md`                 |
 | Pipe output, produce JSON/CSV, dry-run, run on CI/CD                                                            | `references/output-and-automation.md` |
 | Diagnose surprising behavior, known bugs, REST fallback points                                                  | `references/gotchas.md`               |

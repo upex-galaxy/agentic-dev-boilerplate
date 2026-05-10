@@ -47,15 +47,6 @@ Get-Content token.txt | .\acli.exe jira auth login `
 
 `--token` has no argument form — it always reads from stdin. Any of pipe, redirect, or here-string works.
 
-In `.env` for this boilerplate, the canonical variables are:
-
-```bash
-ATLASSIAN_EMAIL=you@example.com
-ATLASSIAN_API_TOKEN=<your-token>
-ATLASSIAN_SITE=mysite.atlassian.net
-ATLASSIAN_URL=https://mysite.atlassian.net
-```
-
 ## OAuth (interactive only)
 
 ```bash
