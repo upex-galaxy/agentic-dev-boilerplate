@@ -101,7 +101,7 @@ curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
   | jq '.[] | {id, name, custom, schema}'
 
 # 3. From the boilerplate's substrate
-cat .agents/jira.json
+cat .agents/jira-fields.json
 ```
 
 In this boilerplate, prefer reference-by-slug (`{{jira.<slug>}}`) over hardcoding numeric IDs. Run `bun run jira:sync-fields` to refresh the catalog after any custom-field change in your Jira workspace.

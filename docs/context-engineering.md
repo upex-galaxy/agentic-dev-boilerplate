@@ -32,7 +32,7 @@ ai-driven-project-starter/
 ├── .context/         → Project memory the AI reads (PRD, SRS, PBI, business map)
 ├── .claude/skills/   → Executable workflows the AI runs (auto-triggered)
 ├── .claude/commands/ → Slash commands of utility (/git-flow, /sprint-report, …)
-├── .agents/          → Project variable contract (project.yaml, jira.json, …)
+├── .agents/          → Project variable contract (project.yaml, jira-fields.json, jira-workflows.json, …)
 ├── docs/             → Documentation for humans
 ├── CLAUDE.md         → Operational context (loaded every Claude Code session)
 └── CLAUDE.md         → Same content, mirrored for non-Claude agents
@@ -112,7 +112,7 @@ docs/
 
 ### `.agents/` — Variable Contract
 
-`project.yaml` is the single source of truth for project values referenced by skills and prompts as `{{VAR_NAME}}`. `jira-required.yaml` + `jira.json` provide Jira custom-field resolution. See `.agents/README.md` for the full contract.
+`project.yaml` is the single source of truth for project values referenced by skills and prompts as `{{VAR_NAME}}`. `jira-required.yaml` + `jira-fields.json` (+ `jira-workflows.json`) provide Jira custom-field and workflow resolution. See `.agents/README.md` for the full contract.
 
 ---
 

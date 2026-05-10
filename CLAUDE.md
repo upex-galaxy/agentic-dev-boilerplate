@@ -37,7 +37,7 @@ bun run format:check      # Check formatting
 bun run up                # Update template from upstream
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
-bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira.json
+bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```
 
@@ -167,7 +167,7 @@ Project-specific values live in `.agents/project.yaml` (single source of truth).
 | `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)       | `.agents/project.yaml`. Flat keys lex-lookup (`{{PROJECT_KEY}}` → `project.project_key`). Env-scoped keys (`{{WEB_URL}}`, `{{API_URL}}`, `{{DB_MCP}}`, `{{API_MCP}}`) resolve against the active environment. |
 | `{{environments.<env>.<var>}}` | Explicit cross-env reference (multi-env tables) | `.agents/project.yaml` → `environments.<env>.<var>` directly, regardless of active env.                                                                                                                       |
 | `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`)    | Computed by the calling prompt at runtime. Never declared, never persisted.                                                                                                                                   |
-| `{{jira.<slug>}}`              | Jira custom field reference                     | `.agents/jira-required.yaml` (canonical manifest) + `.agents/jira.json` (workspace-resolved IDs).                                                                                                             |
+| `{{jira.<slug>}}`              | Jira custom field reference                     | `.agents/jira-required.yaml` (canonical manifest) + `.agents/jira-fields.json` (workspace-resolved IDs).                                                                                                             |
 
 **Active environment** (for env-scoped vars):
 
@@ -177,8 +177,8 @@ Project-specific values live in `.agents/project.yaml` (single source of truth).
 **Validation scripts:**
 
 - `bun run lint:agents` — every `{{VAR}}` and `{{jira.*}}` reference in prompts/context resolves against config
-- `bun run jira:sync-fields` — discover Jira custom fields → write `.agents/jira.json`
-- `bun run jira:check` — validate `jira-required.yaml` manifest against `.agents/jira.json` catalog
+- `bun run jira:sync-fields` — discover Jira custom fields → write `.agents/jira-fields.json`
+- `bun run jira:check` — validate `jira-required.yaml` manifest against `.agents/jira-fields.json` catalog
 
 See `.agents/README.md` for the full contract, workflows (new-user setup, adding prompts, adding required Jira fields), and troubleshooting.
 

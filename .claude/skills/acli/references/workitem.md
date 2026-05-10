@@ -151,7 +151,7 @@ Example: `--fields "*navigable,-comment"` — everything navigable except the co
 
 Default view fields: `key,issuetype,summary,status,assignee,description`.
 
-> The actual `customfield_NNNNN` IDs in the example above are illustrative — your real IDs come from `.agents/jira.json` after `bun run jira:sync-fields`. Reference them by slug via `{{jira.<slug>}}` in prompts and skill bodies (e.g. `{{jira.acceptance_criteria_gherkin}}`).
+> The actual `customfield_NNNNN` IDs in the example above are illustrative — your real IDs come from `.agents/jira-fields.json` after `bun run jira:sync-fields`. Reference them by slug via `{{jira.<slug>}}` in prompts and skill bodies (e.g. `{{jira.acceptance_criteria_gherkin}}`).
 
 ## <a id="search"></a>search
 
@@ -243,7 +243,7 @@ Two known limitations:
 - **No `--transition-id`.** If two transitions lead to the same status with different validators (e.g. both "Resolve" and "Cancel" end in "{{jira.status.bug.closed}}"), `acli` may pick the wrong one and fail.
 - **Loop transitions** (actions that keep the status the same) are supported — just pass the same status name.
 
-Fallback when the CLI cannot disambiguate: call `POST /rest/api/3/issue/{key}/transitions` directly. See `references/gotchas.md` §9 for the canonical pattern using `{{jira.transition.<work_type>.<slug>}}` from `.agents/jira.json`.
+Fallback when the CLI cannot disambiguate: call `POST /rest/api/3/issue/{key}/transitions` directly. See `references/gotchas.md` §9 for the canonical pattern using `{{jira.transition.<work_type>.<slug>}}` from `.agents/jira-fields.json`.
 
 ## <a id="assign"></a>assign
 
@@ -567,7 +567,7 @@ curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
   "https://${ATLASSIAN_SITE}/rest/api/3/field" | jq '.[] | {id, name, custom, schema}'
 ```
 
-In this boilerplate, `bun run jira:sync-fields` writes the canonical map to `.agents/jira.json`. Reference fields by slug via `{{jira.<slug>}}` instead of hardcoding numeric IDs. The DEV slugs you'll touch most often:
+In this boilerplate, `bun run jira:sync-fields` writes the canonical map to `.agents/jira-fields.json`. Reference fields by slug via `{{jira.<slug>}}` instead of hardcoding numeric IDs. The DEV slugs you'll touch most often:
 
 - `{{jira.acceptance_criteria_gherkin}}` — Gherkin ACs on a Story
 - `{{jira.business_rules_specification}}` — story-level business rules
@@ -582,7 +582,7 @@ In this boilerplate, `bun run jira:sync-fields` writes the canonical map to `.ag
 # 1. Scaffold
 acli jira workitem create --generate-json > new-story.json
 
-# 2. Edit to include the DEV custom fields (the IDs come from .agents/jira.json)
+# 2. Edit to include the DEV custom fields (the IDs come from .agents/jira-fields.json)
 cat > new-story.json <<'JSON'
 {
   "summary": "Add empty-states to the dashboard",
@@ -601,4 +601,4 @@ JSON
 acli jira workitem create --from-json new-story.json
 ```
 
-_(IDs like `customfield_10016` are illustrative. Your actual IDs come from `.agents/jira.json` after `bun run jira:sync-fields`.)_
+_(IDs like `customfield_10016` are illustrative. Your actual IDs come from `.agents/jira-fields.json` after `bun run jira:sync-fields`.)_

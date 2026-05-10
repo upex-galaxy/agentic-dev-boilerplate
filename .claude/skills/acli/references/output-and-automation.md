@@ -34,7 +34,7 @@ The JSON emitted by `workitem search`, `workitem view`, and similar commands mir
 - The top-level array from `search` is `issues`, **not** `workitems` (the rename is UI/CLI-surface only).
 - Each issue has the standard REST shape: `{ id, key, self, fields: { summary, status, assignee, customfield_X, ... } }`.
 
-_(IDs like `customfield_10016` shown below are illustrative — they reflect the JSON shape returned by `acli`. Your actual custom field IDs come from `.agents/jira.json` after `bun run jira:sync-fields`.)_
+_(IDs like `customfield_10016` shown below are illustrative — they reflect the JSON shape returned by `acli`. Your actual custom field IDs come from `.agents/jira-fields.json` after `bun run jira:sync-fields`.)_
 
 ```bash
 # Extract the summary from a view

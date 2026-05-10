@@ -48,7 +48,8 @@ const AGENTS_FRAMEWORK_FILES: string[] = [
 // `.agents/` bootstraps — copied only if missing locally; never overwritten.
 const AGENTS_BOOTSTRAP_FILES: string[] = [
   'project.yaml',
-  'jira.json',
+  'jira-fields.json',
+  'jira-workflows.json',
 ];
 
 const SCRIPTS_FILES: string[] = [
@@ -1096,9 +1097,17 @@ function updateAgents(): MergeResult {
         logSuccess(`  ${file} (bootstrapped)`);
         success++;
       }
-      else if (file === 'jira.json') {
+      else if (file === 'jira-fields.json') {
         fs.writeFileSync(destPath, '{}\n');
         logSuccess(`  ${file} (bootstrapped: {})`);
+        success++;
+      }
+      else if (file === 'jira-workflows.json') {
+        fs.writeFileSync(
+          destPath,
+          '{\n  "story": {\n    "jira_issue_type": null,\n    "workflow_scheme": null,\n    "workflow": null,\n    "statuses": {},\n    "transitions": {}\n  },\n  "bug": {\n    "jira_issue_type": null,\n    "workflow_scheme": null,\n    "workflow": null,\n    "statuses": {},\n    "transitions": {}\n  }\n}\n',
+        );
+        logSuccess(`  ${file} (bootstrapped: empty work_types shell)`);
         success++;
       }
       else {

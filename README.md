@@ -94,8 +94,9 @@ These skills are not committed in this repo; the installer fetches them via `npx
 └── commands/       # 4 utility slash commands
 .agents/
 ├── project.yaml          # Per-project variables (template)
-├── jira-required.yaml    # Custom field manifest
-├── jira.json             # Workspace-resolved IDs (regenerated per project)
+├── jira-required.yaml    # Custom field + work_type manifest
+├── jira-fields.json      # Workspace-resolved field IDs (regenerated per project)
+├── jira-workflows.json   # Workspace-resolved workflows / statuses / transitions
 └── README.md             # The .agents/ contract
 .context/                 # Per-project context (PBI, PRD, SRS, idea, dev guide)
 scripts/                  # CLI tooling: agents-lint, jira-sync, etc.
@@ -115,7 +116,7 @@ The `.agents/` directory hosts a 4-syntax variable system used by every skill an
 | `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)    | `.agents/project.yaml`                               |
 | `{{environments.<env>.<var>}}` | Explicit cross-env reference                 | `.agents/project.yaml` -> `environments.<env>.<var>` |
 | `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`) | Computed by the calling prompt at runtime            |
-| `{{jira.<slug>}}`              | Jira custom field reference                  | `.agents/jira-required.yaml` + `.agents/jira.json`   |
+| `{{jira.<slug>}}`              | Jira custom field reference                  | `.agents/jira-required.yaml` + `.agents/jira-fields.json` |
 
 See `.agents/README.md` for the full contract.
 
@@ -123,8 +124,8 @@ See `.agents/README.md` for the full contract.
 
 ```bash
 bun run lint:agents        # Every {{VAR}} and {{jira.*}} reference resolves
-bun run jira:sync-fields   # Discover Jira custom fields -> .agents/jira.json
-bun run jira:check         # Validate jira-required.yaml against jira.json
+bun run jira:sync-fields   # Discover Jira custom fields -> .agents/jira-fields.json
+bun run jira:check         # Validate jira-required.yaml against jira-fields.json
 ```
 
 ---
@@ -139,7 +140,7 @@ bun run format:check      # Check formatting
 bun run up                # Update template from upstream
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
-bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira.json
+bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```
 

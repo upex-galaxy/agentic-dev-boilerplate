@@ -310,7 +310,7 @@ update-template.js actualizado a v4.1
 | Componente       | Contenido                                                              |
 | ---------------- | ---------------------------------------------------------------------- |
 | `.claude/`       | `settings.json` + `skills/` + `commands/` (workflows + slash commands) |
-| `.agents/`       | `project.yaml`, `jira-required.yaml`, `jira.json`, framework files     |
+| `.agents/`       | `project.yaml`, `jira-required.yaml`, `jira-fields.json`, `jira-workflows.json`, framework files     |
 | `scripts/`       | `agents/`, `sync-jira-issues.ts` (solo del framework)                         |
 | `cli/`           | `update-template.js`, `sync-openapi.ts`, `xray/`                       |
 | `docs/`          | `architectures/`, `methodology/`, `setup/`, `workflows/`               |

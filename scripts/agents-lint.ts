@@ -24,7 +24,7 @@
  *                      under either `required:` or `optional:`. The manifest is the
  *                      canonical declaration of slugs the methodology consumes.
  *                      Validating that those declared slugs actually exist in
- *                      the user's Jira (`.agents/jira.json`) is owned by
+ *                      the user's Jira (`.agents/jira-fields.json`) is owned by
  *                      `bun run jira:check`.
  *
  * Exit code: 0 if no ERRORs, 1 otherwise. WARNs do not affect exit code.

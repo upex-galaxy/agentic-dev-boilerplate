@@ -346,7 +346,7 @@ Subcommands: `cancel-delete`, `create`, `delete`, `update`.
 >
 > - **What it manages**: custom-field DEFINITIONS at the site/admin level (the schema — name, type, description, searcher).
 > - **What it does NOT manage**: custom-field VALUES on individual work items (use `workitem create --from-json` with `additionalAttributes` instead — and even that has limitations; see `references/workitem.md` §Custom fields).
-> - **What is missing entirely**: there is **no `list`, `get`, `view`, or `search` subcommand**. To enumerate all custom fields on a site, fall back to REST `GET /rest/api/3/field` (or `cat .agents/jira.json` if `bun run jira:sync-fields` has been run).
+> - **What is missing entirely**: there is **no `list`, `get`, `view`, or `search` subcommand**. To enumerate all custom fields on a site, fall back to REST `GET /rest/api/3/field` (or `cat .agents/jira-fields.json` if `bun run jira:sync-fields` has been run).
 > - **What is also missing**: there is no command to manage select/dropdown OPTIONS for an existing field. To add or remove dropdown options, fall back to REST `/rest/api/3/field/{fieldId}/option`.
 
 ### create

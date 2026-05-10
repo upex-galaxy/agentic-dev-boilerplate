@@ -413,13 +413,9 @@ function loadProjectKey(): string | null {
       continue;
     }
     if (inProjectSection) {
-      // Capture everything after `project_key:` then split off the optional
-      // `# comment` in code. Single greedy capture avoids the
-      // `\s*(.*?)\s*` ambiguity flagged by `regexp/no-super-linear-backtracking`.
-      const m = line.match(/^ {2}project_key:(.*)$/);
+      const m = line.match(/^ {2}project_key:[ \t]*(\S.*)?$/);
       if (m) {
-        const hashIdx = m[1].indexOf('#');
-        const raw = (hashIdx === -1 ? m[1] : m[1].slice(0, hashIdx)).trim();
+        const raw = (m[1] ?? '').replace(/[ \t]*#.*$/, '').trim();
         if (raw === '' || raw === 'null' || raw === '~') { return null; }
         // Strip surrounding quotes if present.
         return raw.replace(/^["'](.*)["']$/, '$1');
@@ -458,11 +454,8 @@ function loadManifestWorkTypes(): ManifestWorkType[] {
   const sectionRe = /^work_types:\s*$/;
   const topLevelRe = /^[a-z_][\w-]*:\s*(?:#.*)?$/;
   const workTypeHeaderRe = /^ {2}([a-z_][a-z0-9_]*):\s*$/;
-  // Greedy single-capture for the value; downstream consumers (`stripYamlScalar`,
-  // `parseInlineMapping`) trim whitespace. This avoids the `\s*(.*?)\s*`
-  // ambiguity flagged by `regexp/no-super-linear-backtracking`.
-  const subKeyRe = /^ {4}([a-z_][a-z0-9_]*):(.*)$/;
-  const entryRe = /^ {6}([a-z_][a-z0-9_]*):(.*)$/;
+  const subKeyRe = /^ {4}([a-z_][a-z0-9_]*):[ \t]*(\S.*)?$/;
+  const entryRe = /^ {6}([a-z_][a-z0-9_]*):[ \t]*(\S.*)?$/;
 
   function finalizeWorkType(): void {
     if (currentWorkType) {
@@ -502,7 +495,7 @@ function loadManifestWorkTypes(): ManifestWorkType[] {
     const subKey = subKeyRe.exec(line);
     if (subKey) {
       const key = subKey[1];
-      const rawValue = subKey[2];
+      const rawValue = (subKey[2] ?? '').trim();
       currentMap = null;
       if (key === 'jira_issue_type') {
         currentWorkType.jiraIssueType = stripYamlScalar(rawValue);
@@ -523,7 +516,7 @@ function loadManifestWorkTypes(): ManifestWorkType[] {
     const entry = entryRe.exec(line);
     if (entry && currentMap) {
       const slug = entry[1];
-      const inlineBody = entry[2];
+      const inlineBody = entry[2] ?? '';
       const parsed = parseInlineMapping(inlineBody);
       if (currentMap === 'required_statuses') {
         currentWorkType.requiredStatuses.push({
@@ -904,29 +897,17 @@ function persistProjectKey(projectKey: string): boolean {
       continue;
     }
     if (inProjectSection) {
-      // Match `  project_key:` (2-space indent), then split the tail into
-      // value + optional trailing `# comment` in code. The single greedy
-      // capture avoids the `\s*(.*?)\s*` ambiguity flagged by
-      // `regexp/no-super-linear-backtracking` while preserving the original
-      // rewrite semantics (whitespace between `:` and value is kept verbatim;
-      // when no comment is present, trailing whitespace is dropped — same as
-      // the prior `\s*(.*?)(\s*#.*)?$` behaviour).
-      const m = line.match(/^( {2}project_key:)(.*)$/);
+      // Match `  project_key:` (2-space indent), capture the value + optional
+      // trailing comment so we can rewrite just the value.
+      const m = line.match(/^( {2}project_key:[ \t]*)(\S.*)?$/);
       if (m) {
-        const keyPrefix = m[1];
-        const tail = m[2];
-        const hashIdx = tail.indexOf('#');
-        const valuePart = hashIdx === -1 ? tail : tail.slice(0, hashIdx);
-        const trailingComment = hashIdx === -1 ? '' : tail.slice(hashIdx);
-        const currentValue = valuePart.trim();
+        const prefix = m[1];
+        const tail = m[2] ?? '';
+        const commentIdx = tail.search(/[ \t]+#/);
+        const currentValue = (commentIdx === -1 ? tail : tail.slice(0, commentIdx)).trim();
+        const trailingComment = commentIdx === -1 ? '' : tail.slice(commentIdx);
         if (currentValue === '' || currentValue === 'null' || currentValue === '~') {
-          // Preserve the leading whitespace after `:`. Trailing whitespace
-          // before `#` is kept (it ends up in `trailingComment`); when there is
-          // no comment, the original regex absorbed all trailing whitespace
-          // into the optional `(\s*#.*)?` group, so we drop it here too.
-          const leadingWs = /^[\t ]*/.exec(valuePart)?.[0] ?? '';
-          const trailingWs = hashIdx === -1 ? '' : (/[\t ]*$/.exec(valuePart)?.[0] ?? '');
-          lines[i] = `${keyPrefix}${leadingWs}${projectKey}${trailingWs}${trailingComment}`;
+          lines[i] = `${prefix}${projectKey}${trailingComment}`;
           mutated = true;
         }
         break;
