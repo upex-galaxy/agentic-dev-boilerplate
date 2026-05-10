@@ -472,7 +472,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 > Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
 
-> **Note**: This repo uses a hybrid model. Some skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`) are installed at user level via gentle-ai instead of committed locally — they are no longer present in `.claude/skills/`. Run `bun run setup` to install them. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
+> **Note**: This repo uses a hybrid model. Workflow skills are committed in `.claude/skills/`. Foundation/SDD skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, the SDD bloque) come from gentle-ai user-install. Reusable community skills (next-*, react-*, shadcn, supabase-postgres-best-practices, etc.) come from `npx skills add` invoked by the installer. Run `bun run setup` to install everything. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
 
 ### Workflow Skills (project-starter, 9)
 
@@ -488,16 +488,15 @@ For every story being worked on, maintain local documentation under `.context/PB
 | **acli**                | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows.                                                    |
 | **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-dev vs /sdd-\*, MCPs, env vars.            |
 
-### Reusable Knowledge Skills (6)
+### Reusable Community Skills (installed by `bun run setup`)
 
-| Skill                     | Trigger                  | Description                                                                                              |
-| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| **frontend-design**       | `/frontend-design`       | Production-grade frontend interfaces with high design quality                                            |
-| **next-best-practices**   | `/next-best-practices`   | Next.js best practices: file conventions, RSC boundaries, data patterns, metadata                        |
-| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache, cacheLife, cacheTag                                            |
-| **next-upgrade**          | `/next-upgrade`          | Upgrade Next.js with official migration guides and codemods                                              |
-| **playwright-cli**        | `/playwright-cli`        | Browser automation: screenshots, tracing, recording, mocking                                             |
-| **resend-cli**            | `/resend-cli`            | Operate Resend (email service) from terminal: send emails, manage domains, contacts, templates, webhooks |
+These skills are NOT committed in this repo. The installer fetches them via `npx skills add` from community repositories.
+
+**Project-level (auto-installed via `bun run setup`)**: stack-aware skills like `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `supabase-postgres-best-practices`, `bun`, `accessibility`, `seo`, `frontend-design`.
+
+**User-level (auto-installed globally)**: cross-cutting skills like `skill-creator`, `find-skills`, `gh-cli`, `github-actions-docs`, `playwright-cli`, `n8n-skills`, `ui-ux-pro-max`, `emil-design-eng`, `brainstorming`.
+
+After running `/project-foundation` and `/project-bootstrap`, run `npx autoskills` to auto-detect your concrete stack and install additional matching skills.
 
 ### Slash Commands (utilities)
 

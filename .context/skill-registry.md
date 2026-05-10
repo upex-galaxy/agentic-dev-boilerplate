@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-05-10T03:56:44.256Z`
+> Generated: `2026-05-10T07:32:45.092Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 15
+Skills indexed: 9
 
 ---
 ## Skill: acli
@@ -91,31 +91,6 @@ Skills indexed: 15
 
 ---
 
-## Skill: frontend-design
-
-**Purpose**: Create distinctive, production-grade frontend interfaces with high design quality.
-
-**Compact Rules**:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/frontend-design/SKILL.md` · phase: `unknown` · extraction strategy: B
-
----
-
 ## Skill: git-flow-master
 
 **Purpose**: End-to-end Git operator for any branching strategy.
@@ -141,107 +116,6 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/git-flow-master/SKILL.md` · phase: `implementation` · extraction strategy: B
-
----
-
-## Skill: next-best-practices
-
-**Purpose**: Next.js best practices - file conventions, RSC boundaries, data patterns, async APIs, metadata, error handling, route handlers, image/fon...
-
-**Compact Rules**:
-- Project structure and special files
-- Route segments (dynamic, catch-all, groups)
-- Parallel and intercepting routes
-- Middleware rename in v16 (middleware → proxy)
-- Async client component detection (invalid)
-- Non-serializable props detection
-- Server Action exceptions
-- Async `params` and `searchParams`
-- Async `cookies()` and `headers()`
-- Migration codemod
-- Default to Node.js runtime
-- When Edge runtime is appropriate
-- `'use client'`, `'use server'` (React)
-- `'use cache'` (Next.js)
-- Navigation hooks: `useRouter`, `usePathname`, `useSearchParams`, `useParams`
-- (truncated — read full SKILL.md for the rest)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/next-best-practices/SKILL.md` · phase: `unknown` · extraction strategy: B
-
----
-
-## Skill: next-cache-components
-
-**Purpose**: Next.js 16 Cache Components - PPR, use cache directive, cacheLife, cacheTag, updateTag
-
-**Compact Rules**:
-- **Build ID** - invalidates all caches on deploy
-- **Function ID** - hash of function location
-- **Serializable arguments** - props become part of key
-- **Closure variables** - outer scope values included
-- **No manual cache keys** - `use cache` generates keys automatically from function arguments and closures. The `keyParts` array from `unstable_cache` is no longer needed.
-- **Tags** - Replace `options.tags` with `cacheTag()` calls inside the function.
-- **Revalidation** - Replace `options.revalidate` with `cacheLife({ revalidate: N })` or a built-in profile like `cacheLife('minutes')`.
-- **Dynamic data** - `unstable_cache` did not support `cookies()` or `headers()` inside the callback. The same restriction applies to `use cache`, but you can use `'use cache: private'` if needed.
-- **Edge runtime not supported** - requires Node.js
-- **Static export not supported** - needs server
-- **Non-deterministic values** (`Math.random()`, `Date.now()`) execute once at build time inside `use cache`
-- [Cache Components Guide](https://nextjs.org/docs/app/getting-started/cache-components)
-- [use cache Directive](https://nextjs.org/docs/app/api-reference/directives/use-cache)
-- [unstable_cache (legacy)](https://nextjs.org/docs/app/api-reference/functions/unstable_cache)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/next-cache-components/SKILL.md` · phase: `unknown` · extraction strategy: B
-
----
-
-## Skill: next-upgrade
-
-**Purpose**: Upgrade Next.js to the latest version following official migration guides and codemods
-
-**Compact Rules**:
-- **Detect current version**: Read `package.json` to identify the current Next.js version and related dependencies (React, React DOM, etc.)
-- **Fetch the latest upgrade guide**: Use WebFetch to get the official upgrade documentation:
-- Codemods: https://nextjs.org/docs/app/guides/upgrading/codemods
-- Version-specific guides (adjust version as needed):
-- https://nextjs.org/docs/app/guides/upgrading/version-16
-- https://nextjs.org/docs/app/guides/upgrading/version-15
-- https://nextjs.org/docs/app/guides/upgrading/version-14
-- **Determine upgrade path**: Based on current version, identify which migration steps apply. For major version jumps, upgrade incrementally (e.g., 13 → 14 → 15).
-- **Run codemods first**: Next.js provides codemods to automate breaking changes:
-- `next-async-request-api` - Updates async Request APIs (v15)
-- `next-request-geo-ip` - Migrates geo/ip properties (v15)
-- `next-dynamic-access-named-export` - Transforms dynamic imports (v15)
-- **Update dependencies**: Upgrade Next.js and peer dependencies together:
-- **Review breaking changes**: Check the upgrade guide for manual changes needed:
-- API changes (e.g., async params in v15)
-- (truncated — read full SKILL.md for the rest)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/next-upgrade/SKILL.md` · phase: `unknown` · extraction strategy: B
-
----
-
-## Skill: playwright-cli
-
-**Purpose**: Automates browser interactions for web testing, form filling, screenshots, and data extraction.
-
-**Compact Rules**:
-- **Request mocking** [references/request-mocking.md](references/request-mocking.md)
-- **Running Playwright code** [references/running-code.md](references/running-code.md)
-- **Browser session management** [references/session-management.md](references/session-management.md)
-- **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
-- **Test generation** [references/test-generation.md](references/test-generation.md)
-- **Tracing** [references/tracing.md](references/tracing.md)
-- **Video recording** [references/video-recording.md](references/video-recording.md)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/playwright-cli/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -326,34 +200,6 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/project-foundation/SKILL.md` · phase: `foundation` · extraction strategy: B
-
----
-
-## Skill: resend-cli
-
-**Purpose**: Operate the Resend platform from the terminal — send emails (including React Email .tsx templates via --react-email), manage domains, con...
-
-**Compact Rules**:
-- Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
-- Pass `--quiet` (or `-q`) to suppress spinners and status messages.
-- Exit `0` = success, `1` = error.
-- Error JSON goes to stderr, success JSON goes to stdout:
-- Use `--api-key` or `RESEND_API_KEY` env var. Never rely on interactive login.
-- All `delete`/`rm` commands require `--yes` in non-interactive mode.
-- **Sending or reading emails** → [references/emails.md](references/emails.md)
-- **Setting up or verifying a domain** → [references/domains.md](references/domains.md)
-- **Managing API keys** → [references/api-keys.md](references/api-keys.md)
-- **Creating or sending broadcasts** → [references/broadcasts.md](references/broadcasts.md)
-- **Managing contacts, segments, or topics** → [references/contacts.md](references/contacts.md), [references/segments.md](references/segments.md), [references/topics.md](references/topics.md)
-- **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
-- **Working with templates** → [references/templates.md](references/templates.md)
-- **Viewing API request logs** → [references/logs.md](references/logs.md)
-- **Creating automations or sending events** → [references/automations.md](references/automations.md)
-- (truncated — read full SKILL.md for the rest)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/resend-cli/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 

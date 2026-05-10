@@ -71,9 +71,9 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 | `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                   |
 | `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills         |
 
-### Reusable knowledge skills
+### Reusable community skills (installed by `bun run setup`)
 
-`/frontend-design`, `/next-best-practices`, `/next-cache-components`, `/next-upgrade`, `/playwright-cli`, `/resend-cli`
+These skills are not committed in this repo; the installer fetches them via `npx skills add` from upstream community repositories. The installer recommends a curated stack-aware list (Next.js, React, shadcn/ui, Supabase, Vercel, etc.) at project level, plus a smaller cross-cutting set at user level (`skill-creator`, `gh-cli`, `find-skills`, `playwright-cli`, `n8n-skills`, `ui-ux-pro-max`, `frontend-design`, etc.). After running `/project-foundation` and `/project-bootstrap`, you can also run `npx autoskills` to auto-detect your stack and add more.
 
 ### Slash commands (utilities)
 
@@ -90,7 +90,7 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ```
 .claude/
-├── skills/         # 9 workflow + 6 reusable knowledge skills
+├── skills/         # 9 workflow skills (community skills installed by bun run setup)
 └── commands/       # 4 utility slash commands
 .agents/
 ├── project.yaml          # Per-project variables (template)
