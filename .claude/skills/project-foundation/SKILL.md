@@ -75,6 +75,18 @@ The PRD turns the constitution into a buildable product spec. It defines the pro
 
 Output: `.context/PRD/*.md` files (one per sub-deliverable, or a consolidated `prd.md`).
 
+### 2.5 Design system (Visual identity)
+
+Before closing Architecture and dropping to the SRS, invoke `/design-system` to produce `DESIGN.md` at the project root. This persists the product's visual identity (palette, typography, spacing, components) in a portable format consumable by every downstream agent, and replaces the legacy interactive Q&A buried inside `frontend-setup.md`.
+
+- Hand off to `/design-system` (default path = `npx getdesign` + LLM-matcher driven by Constitution + PRD inputs).
+- Skip when `DESIGN.md` already exists at root and the user did not request a rebrand.
+- See `.claude/skills/design-system/SKILL.md` for the five available paths (getdesign default, manual gallery, Open Design app, Claude Design handoff, LLM-authored custom).
+
+Why here (post-PRD, pre-SRS): the visual identity co-evolves with product ideation, and some architecture decisions (motion-rich Framer Motion stack vs. plain Tailwind; rich-media stack vs. minimal) flow from the design system. Producing `DESIGN.md` before the SRS lets Phase 3 consume it as input.
+
+Output: `DESIGN.md` at the project root (or the path configured under `design_md_path` in `.agents/project.yaml`).
+
 ### 3. Architecture: SRS (Software Requirements Specification)
 
 The SRS turns the PRD into a technical contract: formal functional requirements, non-functional constraints, system architecture decisions, and the API contract. This is the input `/project-bootstrap` consumes to scaffold the codebase.
@@ -108,6 +120,7 @@ Output: `.context/business-data-map.md`, `.context/api-architecture.md`, `.conte
 | "user personas" / "perfiles de usuario" / "target users"     | `references/prd-personas.md`                |
 | "MVP scope" / "epic breakdown" / "must-have stories"         | `references/prd-mvp-scope.md`               |
 | "user journeys" / "happy path" / "edge cases" / "flujos"     | `references/prd-user-journeys.md`           |
+| "design system" / "DESIGN.md" / "paleta" / "branding"        | hand off to `/design-system` (Phase 2.5)    |
 | "functional requirements" / "SRS funcional" / "FR formales"  | `references/srs-functional.md`              |
 | "NFR" / "performance/security/scalability" / "no funcional"  | `references/srs-non-functional.md`          |
 | "system architecture" / "tech stack" / "diagrama de sistema" | `references/srs-architecture.md`            |
