@@ -74,3 +74,6 @@ dbhub.toml
 
 # ===== Installer state (local dev tracker, not project state) =====
 .agents/install-state.json
+
+# ===== Planning artifacts (local context only, not part of boilerplate) =====
+.plans/
