@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-05-07T21:20:52.041Z`
+> Generated: `2026-05-10T01:02:27.084Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/init-project/references/skill-resolver.md`
 
@@ -11,84 +11,55 @@ Subagents trust those compact rules and only read the full SKILL.md when explici
 Skills indexed: 15
 
 ---
-## Skill: chained-pr
+## Skill: acli
 
-**Purpose**: Strategic decision skill for splitting oversized changes into a chain of reviewable PRs.
+**Purpose**: Atlassian CLI (official `acli` binary, v1.3+) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal.
 
 **Compact Rules**:
-- "split this into chained PRs"
-- "stacked PR strategy"
-- "este PR va a quedar enorme, cómo lo trozeo"
-- "what's the difference between stacked-to-main and feature-branch-chain"
-- "we need to chain this — pick a layout"
-- "workload forecast risk=high, chain_strategy=pending — resolve"
-- A change description detailed enough to identify: rough file count, whether the change has shared scaffolding (types, base classes, schemas), whether it's mechanical (rename / format / generated) vs cognitive (new logic).
-- For auto-handoff: the forecast block from sprint-dev with `<X>`, `<Y>`, `<Z>` populated.
-- Project Git Flow understood. PR base is `staging` in this repo (not `main` directly); production promotion is a separate gated event. Adjust branch naming examples accordingly.
-- **Forecast block** (from sprint-dev):
-- **User-provided change description** (manual invocation): free-form prose. The skill will probe for the decision-tree inputs below.
-- <branch name> -> targets <branch> | scope: <one line> | est lines: <N>
-- <branch name> -> targets <branch> | scope: <one line> | est lines: <N>
-- Emit the Chain Strategy Decision block above.
-- Update the forecast block in `implementation-plan.md` from `chain_strategy: pending` to the chosen value.
+- **Silent pagination truncation.** `workitem search` without `--paginate` returns the first page only — no warning. Scripts that count or iterate keys read the wrong number of items.
+- **Auth is per-product.** `acli jira auth login` does not authenticate `acli admin`, `acli confluence`, or `acli rovodev`. There is also a top-level `acli auth` for global OAuth (newer surface). Each scope has its own session.
+- **The "work item" vs "issue" split.** The CLI renamed commands (`jira issue` → `jira workitem`) but the JSON response still has a top-level `issues[]` array and CSV inputs still use `issueType`/`parentIssueId` spellings. Mixing old and new terminology in the same script works, but confuses readers.
+- **Unknown subcommands fail silently.** Typing `acli jira workflow --help` does NOT error — it falls back to `acli jira --help` with exit 0. So "no error" ≠ "command exists". Always verify by checking the help body actually changed.
+- **Hard limits the docs do not advertise.** `acli` cannot list custom fields, edit custom-field values on existing items, manage workflows, manage issue types, or touch project versions/components. See `references/gotchas.md`.
+- `acli` binary is not installed in the environment.
+- `acli` auth fails and cannot be fixed in the current session.
+- The operation is one of the documented `acli` blind spots: enumerate custom fields, edit custom-field values on existing work items, manage workflows / issue types / priorities / resolutions / project versions / components, upload attachments, add watchers, add an item to a sprint.
+- Bulk operations (acli consumes far fewer tokens per call).
+- Scripting / CI pipelines.
+- Operations that return large result sets (MCP payloads inflate token usage).
+- `-y, --yes` — skip the interactive confirmation prompt. Required in CI; if omitted the command hangs waiting on stdin. **Note:** this flag does NOT exist on `admin user delete` / `admin user cancel-delete` (use `--ignore-errors` there instead).
+- `--ignore-errors` — do not abort the batch when a single item fails.
+- default table (human-readable)
+- `--json` (for `jq` / scripts)
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.claude/skills/chained-pr/SKILL.md` · phase: `planning` · extraction strategy: B
+> Source: `.claude/skills/acli/SKILL.md` · phase: `implementation` · extraction strategy: B
 
 ---
 
-## Skill: cognitive-doc-design
+## Skill: agentic-dev-onboard
 
-**Purpose**: Reduce cognitive load in technical documentation through progressive disclosure, chunking, signposting, tables vs prose, and descriptive...
+**Purpose**: Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready F...
 
 **Compact Rules**:
-- Estás escribiendo o revisando un README, ADR, runbook, post-mortem, design doc, o cualquier guía interna.
-- Un doc existente "se siente largo" o el reviewer pide TL;DR.
-- Necesitás que un onboarding sea consumible sin un humano al lado.
-- Tenés que documentar un PR no trivial donde el reviewer va a pagar el costo cognitivo.
-- Auto-generar referencia de API desde JSDoc / OpenAPI (eso es otra herramienta).
-- Reescribir copy de marketing o landing pages.
-- Generar código documentado a partir de specs.
-- <First action>
-- <Second action>
-- <Verification or expected result>
-- [ ] <Reader can confirm this>
-- [ ] <Reader can confirm that>
-- Comparás 3+ opciones en 2+ dimensiones.
-- El lector va a volver a buscar un valor puntual.
-- La info es paralela (mismo tipo de dato por fila).
-- (truncated — read full SKILL.md for the rest)
+- Use **Context7** for "how to use X" — official docs, current API
+- Use **Tavily** for "how to solve X" — community fixes, troubleshooting
+- [ ] Did you run `bun run setup`?
+- [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
+- [ ] Does `bun run lint:agents` exit clean (0 errors)?
+- [ ] Do the gentle-ai skills appear in autocomplete (restart your agent if not)?
+- [ ] Ready for your first ticket: `/sprint-dev <UPEX-XXX>`
+- Implement features → use `/sprint-dev`
+- Write unit tests → use `/unit-testing`
+- Refine acceptance criteria → use `/product-management`
+- Define a brand-new product → use `/project-foundation`
+- Scaffold backend / frontend code → use `/project-bootstrap`
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.claude/skills/cognitive-doc-design/SKILL.md` · phase: `implementation` · extraction strategy: B
-
----
-
-## Skill: comment-writer
-
-**Purpose**: Write warm, direct, human PR/issue comments and review feedback.
-
-**Compact Rules**:
-- Tenés que escribir feedback en un PR (request changes, approve con notas, comentario en línea).
-- Estás respondiendo un issue (triage, follow-up, cierre con explicación).
-- Necesitás contestar a un teammate en un thread async (Slack, Discord, comentario de Jira).
-- Tenés una observación clara y querés ponerla en palabras sin sonar a IA.
-- **Commit messages** — eso es otra convención (ver `/git-flow`).
-- **Docs formales** (READMEs, ADRs, runbooks) — usá `/cognitive-doc-design`.
-- **Copy customer-facing** (emails de soporte, landing copy, comunicados) — el tono y los stakes son distintos.
-- **Identificá el ask** — ¿qué querés que pase después de este comentario? (cambio, aprobación, info, decisión).
-- **Elegí el idioma** — espejo del thread. Si es ambiguo, mirá el último comentario del autor.
-- **Aplicá la fórmula** — observación → razón (si hace falta) → próximo paso.
-- **Pasada anti-AI** — buscá em-dashes, "I'd like to", "kindly", rule-of-three forzado, hedging. Reemplazá.
-- **Pasada de longitud** — ¿se puede decir en menos? Borrá adjetivos vacíos.
-- **Lectura en voz alta** — ¿suena a vos hablando con un compañero? Si suena a soporte automático, reescribí.
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/comment-writer/SKILL.md` · phase: `implementation` · extraction strategy: B
+> Source: `.claude/skills/agentic-dev-onboard/SKILL.md` · phase: `bootstrap` · extraction strategy: B
 
 ---
 
@@ -117,6 +88,34 @@ Skills indexed: 15
 
 ---
 
+## Skill: git-flow-master
+
+**Purpose**: End-to-end Git operator for any branching strategy.
+
+**Compact Rules**:
+- "I want to start work on UPEX-123" → branch creation
+- "commit and push", "subir cambios", "push to main" → commit + push flow
+- "abrí un PR contra staging" → PR creation
+- "tengo conflictos al hacer pull" → conflict resolution
+- "este PR va a quedar enorme" → chained-PR planning hand-off
+- "qué estrategia de git usamos en este repo" → strategy detection / persistence
+- "el push fue rechazado" → diagnostic + recovery flow
+- Current branch.
+- Dirty / clean working tree (staged / unstaged / untracked counts).
+- Unpushed / unpulled commits (ahead / behind upstream).
+- Upstream status (no upstream, up-to-date, diverged).
+- Remote name(s) — most repos have one (`origin`); some have a fork + upstream.
+- **Marker in `AGENTS.md`** — search for `<!-- git-flow-master:strategy:VALUE -->` where `VALUE` is one of the seven slugs. If found, use it. This is the persisted decision.
+- **Single-branch heuristic** — `git branch -a` shows only `main` (or `master`) and no integration branch in the remote → `solo-main`.
+- **Two-branch heuristic** — exactly `main` (or `master`) + one of `{staging, dev, develop, integration}` exists upstream → `main-integration` (record the integration branch name).
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/git-flow-master/SKILL.md` · phase: `implementation` · extraction strategy: B
+
+---
+
 ## Skill: init-project
 
 **Purpose**: Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctr...
@@ -142,34 +141,6 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/init-project/SKILL.md` · phase: `bootstrap` · extraction strategy: B
-
----
-
-## Skill: judgment-day
-
-**Purpose**: Adversarial parallel review protocol: launches 2 independent blind judge subagents simultaneously to review the same target, synthesizes...
-
-**Compact Rules**:
-- security/
-- auth/
-- billing/
-- payments/
-- secrets/
-- "judgment day on PR #345"
-- "doble review for the auth refactor"
-- "que lo juzguen, esto toca payments"
-- "adversarial review of the security middleware change"
-- "critical PR review"
-- "I want two perspectives on this before merge"
-- **Routine code review** — sprint-dev Stage 3 single-reviewer pass is enough. Don't burn two parallel subagents on a 50-line CRUD change.
-- **Doc-only PRs** — README, comments, type doc. Lint catches these; adversarial review adds noise.
-- **Low-risk changes** — UI tweaks, copy changes, dependency bumps with no security implications.
-- **Merge-conflict resolution** — use `/git-conflict-fix`. This skill judges code, it doesn't resolve conflicts.
-- (truncated — read full SKILL.md for the rest)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/judgment-day/SKILL.md` · phase: `review` · extraction strategy: B
 
 ---
 
@@ -355,6 +326,34 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/project-foundation/SKILL.md` · phase: `foundation` · extraction strategy: B
+
+---
+
+## Skill: resend-cli
+
+**Purpose**: Operate the Resend platform from the terminal — send emails (including React Email .tsx templates via --react-email), manage domains, con...
+
+**Compact Rules**:
+- Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
+- Pass `--quiet` (or `-q`) to suppress spinners and status messages.
+- Exit `0` = success, `1` = error.
+- Error JSON goes to stderr, success JSON goes to stdout:
+- Use `--api-key` or `RESEND_API_KEY` env var. Never rely on interactive login.
+- All `delete`/`rm` commands require `--yes` in non-interactive mode.
+- **Sending or reading emails** → [references/emails.md](references/emails.md)
+- **Setting up or verifying a domain** → [references/domains.md](references/domains.md)
+- **Managing API keys** → [references/api-keys.md](references/api-keys.md)
+- **Creating or sending broadcasts** → [references/broadcasts.md](references/broadcasts.md)
+- **Managing contacts, segments, or topics** → [references/contacts.md](references/contacts.md), [references/segments.md](references/segments.md), [references/topics.md](references/topics.md)
+- **Defining contact properties** → [references/contact-properties.md](references/contact-properties.md)
+- **Working with templates** → [references/templates.md](references/templates.md)
+- **Viewing API request logs** → [references/logs.md](references/logs.md)
+- **Creating automations or sending events** → [references/automations.md](references/automations.md)
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/resend-cli/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 

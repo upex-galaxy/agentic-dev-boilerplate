@@ -747,3 +747,61 @@ Auto-detecta strategy via `.git/config` + branches existentes + marker `<!-- git
 - Smoke test: simular "Create from Template" → run installer → todo funciona
 - Update CLAUDE.md/AGENTS.md sección Onboarding
 - Update HANDOFF + cierre Fase 15
+
+---
+
+## Continuación 2026-05-09c — Fase 15 ejecutada (cierre)
+
+> Fase 15 completada en orquestación pura. 4 phases (A/B/C/D), 4 commits, sin push.
+
+### Commits Fase 15
+
+| Commit    | Cambio                                                                                                                                                                                                                                                                                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bdf0227` | `docs(plans)`: add Fase 15 design doc (Phase A output) — 8 decisiones cerradas + flow del installer en 10 steps + 3 anexos. D6 resuelta: mantener `cli/`.                                                                                                                                                                                                                     |
+| `d6c2bc1` | `feat(installer)`: Fase 15 Phase B — super-installer + boilerplate updater + integration docs. `cli/install.ts` (806 L), `cli/update-boilerplate.ts` (1730 L, rename desde `update-template.js`), `.mcp.example.json` reducido a 4 canónicos, `docs/setup/integrating-gentle-ai.md`, AGENTS.md sections (Onboarding nueva + MCPs Available reducida + nota arriba de Skills). |
+| `4077ae9` | `feat(skills)`: Fase 15 Phase C — migrate borrowed skills + add `/agentic-dev-onboard`. 3 skills locales borradas (vienen de gentle-ai user-level), `settings.json` actualizado, `/agentic-dev-onboard` skill nueva (207 L SKILL.md + 7 evals).                                                                                                                               |
+| Phase D   | `docs(plans)`: Fase 15 Phase D — smoke test verified + HANDOFF cierre + skill-registry regen (este commit).                                                                                                                                                                                                                                                                   |
+
+### Estado final del repo post-Fase 15
+
+- **9 workflow skills locales** (incluye `agentic-dev-onboard` nueva, sin las 3 borrowed): `init-project`, `project-foundation`, `project-bootstrap`, `product-management`, `sprint-dev`, `unit-testing`, `git-flow-master`, `acli`, `agentic-dev-onboard`
+- **6 reusable skills** (symlinks): `frontend-design`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `playwright-cli`, `resend-cli`
+- **4 slash commands** (utilities): `project-doc-setup`, `context-engineering-setup`, `sprint-report`, `refresh-ai-memory`
+- **4 MCPs canónicos** en `.mcp.example.json`: `tavily`, `context7`, `supabase`, `n8n`
+- **Lint baseline**: 7 errors AGENTS.md placeholders + 5 warnings declared-unused (sin regresión)
+- **`cli/`**: `install.ts` (nuevo) + `update-boilerplate.ts` (renamed desde `update-template.js`) + `sync-openapi.ts` (intacto)
+- **`package.json`**: scripts `setup` (nuevo, → `cli/install.ts`) + `up` (target actualizado a `cli/update-boilerplate.ts`)
+
+### Items que quedan deferidos
+
+| #       | Item                                                    | Razón                                                  |
+| ------- | ------------------------------------------------------- | ------------------------------------------------------ |
+| Fase 13 | Push como `agentic-dev-boilerplate`                     | User decide cuándo pushear                             |
+| L7      | DEV-flavor cleanup en `mcp-dbhub.md` y `mcp-openapi.md` | Esos MCPs ya no son canónicos (D13); evaluar si borrar |
+| D6      | Migración `cli/` → `scripts/`                           | Acumulada para sesión separada con propio commit       |
+| D3      | `.context/` migration a `mapping/+reports/`             | ADR explícito requerido                                |
+
+### Smoke test result
+
+**Pass — partial** (esperado: el installer es interactivo y depende de TTY).
+
+Verificado en `mktemp -d` con copia limpia del repo:
+
+- ✓ Script arranca sin error de TypeScript / runtime crash
+- ✓ Banner `ai-driven-project-starter — installer` renderiza correctamente
+- ✓ Step 1 `[1/10] Verifying repo root` pasa OK
+- ✓ Step 2 `[2/10] Detecting gentle-ai` detecta gentle-ai 1.26.2 (warning: <1.26.5 required), comparación de versiones funciona
+- ✓ Step 3 `[3/10] gentle-ai install / skip decision` emite primer prompt user-facing: `gentle-ai is installed but version is older than required. Try anyway? (y/N)`
+- ✓ Time-to-first-prompt: <1 segundo
+- ✓ Zero stderr output (sin stack traces ni warnings de runtime)
+
+No verificado (requiere interacción TTY o entornos diferentes):
+
+- Path "skip" cuando gentle-ai NO está instalado (user actual lo tiene instalado)
+- Steps 4-10 (selección de agentes, install per-skill, configuración de MCPs, persistencia de `.agents/install-state.json`)
+- Idempotencia (re-correr con `install-state.json` ya existente)
+
+### Cierre
+
+Fase 15 cerrada con 4 commits (`bdf0227`, `d6c2bc1`, `4077ae9` + commit Phase D). Próxima sesión: opcionalmente Fase 13 (push como `agentic-dev-boilerplate`) cuando el user lo decida.
