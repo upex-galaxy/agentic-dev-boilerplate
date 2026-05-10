@@ -512,7 +512,63 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 
 ---
 
+## FASE 1.4: PRE-FLIGHT DESIGN.md (NUEVO)
+
+**Objetivo:** Detectar si existe un `DESIGN.md` ya generado por `/design-system` y, si lo hay, derivar los tokens visuales (paleta, tipografía, espaciado) directamente del archivo — saltando la Fase 1.5 interactiva.
+
+### Paso 1.4.1: Detectar DESIGN.md
+
+```bash
+DESIGN_MD_PATH=$(yq '.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
+
+if [ -f "$DESIGN_MD_PATH" ]; then
+  echo "DESIGN.md encontrado en $DESIGN_MD_PATH — derivando tokens, saltando Fase 1.5 (Q&A interactivo)."
+else
+  echo "DESIGN.md no encontrado. Para producir uno antes del scaffolding correr /design-system primero. Procediendo con Q&A legacy."
+fi
+```
+
+**Decisión:**
+
+- **Si existe `DESIGN.md`**: parsear el frontmatter YAML, mapear a `tailwind.config.js` + `globals.css` (ver tabla abajo), **saltar Fase 1.5 entera** y continuar con Fase 1.6 (estrategia de componentes).
+- **Si NO existe**: imprimir el hint sobre `/design-system` y proseguir con Fase 1.5 legacy. La retrocompatibilidad se preserva — proyectos que ya scaffoldearon sin DESIGN.md siguen funcionando.
+
+### Paso 1.4.2: Mapeo DESIGN.md → Tailwind config
+
+Cuando se procede via DESIGN.md, los tokens del frontmatter mapean así:
+
+| DESIGN.md frontmatter         | Tailwind config target                       |
+| ----------------------------- | -------------------------------------------- |
+| `colors.primary`              | `theme.colors.primary.DEFAULT`               |
+| `colors.secondary`            | `theme.colors.secondary.DEFAULT`             |
+| `colors.tertiary`             | `theme.colors.accent.DEFAULT`                |
+| `colors.neutral`              | `theme.colors.neutral.DEFAULT`               |
+| `colors.background`           | `theme.colors.background`                    |
+| `colors.text`                 | `theme.colors.foreground`                    |
+| `colors.border`               | `theme.colors.border`                        |
+| `typography.h1.fontFamily`    | `theme.fontFamily.heading`                   |
+| `typography.body.fontFamily`  | `theme.fontFamily.sans`                      |
+| `typography.body.fontSize`    | `theme.fontSize.base[0]`                     |
+| `rounded.sm/md/lg/full`       | `theme.borderRadius.{sm,DEFAULT,lg,full}`    |
+| `spacing.sm/md/lg`            | `theme.spacing.{2,4,8}` (escala base 4px)    |
+
+Por qué este mapeo: respeta la convención Tailwind sin reescribir el theme desde cero, y los semantic-tokens (primary/secondary/accent) coinciden con la nomenclatura de shadcn/ui.
+
+### Paso 1.4.3: Generar archivos derivados
+
+Una vez parseado el frontmatter:
+
+1. Generar `tailwind.config.js` con los tokens mapeados — no preguntar al user, el `DESIGN.md` ya es la fuente.
+2. Generar `globals.css` con las CSS custom properties (`--color-primary`, `--font-heading`, etc.) apuntando a los mismos valores.
+3. Continuar directamente con Fase 1.6 (estrategia de componentes UI: shadcn vs manual vs híbrido).
+
+**No saltar Fase 1.6**: la elección de cómo implementar componentes es ortogonal al design system. shadcn/ui sigue siendo una pregunta válida incluso con DESIGN.md.
+
+---
+
 ## 🎨 FASE 1.5: DISEÑO & PREFERENCIAS VISUALES (INTERACTIVA)
+
+> **Skip this phase entirely if Fase 1.4 detected `DESIGN.md`** — tokens are derived from the frontmatter, no need to ask the user. Resume at Fase 1.6.
 
 **Objetivo:** Recopilar preferencias visuales del usuario para crear un diseño coherente y bonito.
 
