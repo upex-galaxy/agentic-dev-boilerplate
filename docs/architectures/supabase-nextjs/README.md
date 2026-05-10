@@ -78,4 +78,3 @@ Login Usuario → Supabase Auth → JWT Token → Usar para ambas APIs
 **Ver También:**
 
 - `docs/testing/api/authentication.md` - Patrones genéricos de autenticación
-- `docs/setup/mcp-dbhub.md` - Configuración de DBHub MCP (genérico)

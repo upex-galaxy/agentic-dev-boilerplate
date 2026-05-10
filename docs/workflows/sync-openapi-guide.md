@@ -125,8 +125,6 @@ Usa el spec descargado con `@ivotoby/openapi-mcp-server`:
 }
 ```
 
-Ver: [Configuracion MCP OpenAPI](../setup/mcp-openapi.md)
-
 ### Opcion B: Usar tipos en tests Playwright
 
 ```typescript
@@ -183,7 +181,6 @@ gh api /repos/owner/repo/contents/path/to/openapi.yaml
 | ------------------- | ----------------------------- | ------------------------------------------------------------------------- |
 | **sync-openapi.ts** | Backend externo tiene el spec | Este documento                                                            |
 | **Zod-to-OpenAPI**  | Tu defines schemas con Zod    | [openapi-contract-testing.md](../testing/api/openapi-contract-testing.md) |
-| **MCP OpenAPI**     | AI testing con cualquier spec | [mcp-openapi.md](../setup/mcp-openapi.md)                                 |
 
 ---
 

@@ -23,8 +23,6 @@ docs/
 │
 ├── setup/                        # Guías de configuración (MCPs, Jira)
 │   ├── jira-setup-guide.md       # Configurar Jira/Atlassian
-│   ├── mcp-dbhub.md              # DBHub MCP
-│   ├── mcp-openapi.md            # OpenAPI MCP
 │   └── mcp/                      # Templates de configuración MCP
 │
 ├── workflows/                    # Flujos de trabajo
@@ -60,8 +58,6 @@ La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)*
 | Documento                                          | Descripción                                     |
 | -------------------------------------------------- | ----------------------------------------------- |
 | [jira-setup-guide.md](./setup/jira-setup-guide.md) | Configurar credenciales y MCP de Atlassian/Jira |
-| [mcp-dbhub.md](./setup/mcp-dbhub.md)               | DBHub MCP para exploración de base de datos     |
-| [mcp-openapi.md](./setup/mcp-openapi.md)           | OpenAPI MCP para schema de APIs                 |
 
 Los templates listos-para-copiar viven en [`./setup/mcp/`](./setup/mcp/).
 
@@ -98,8 +94,6 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 ### 2. Configurar Tus Herramientas
 
-- Acceso a base de datos: [mcp-dbhub.md](./setup/mcp-dbhub.md)
-- Schema de API: [mcp-openapi.md](./setup/mcp-openapi.md)
 - Jira / Atlassian: [jira-setup-guide.md](./setup/jira-setup-guide.md)
 
 ### 3. Aprender los Workflows
