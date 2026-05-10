@@ -130,12 +130,12 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 ### Resolution Table
 
-| Tag                    | Domain             | Primary Tool            | Fallback               | Skill/Reference                  |
-| ---------------------- | ------------------ | ----------------------- | ---------------------- | -------------------------------- |
-| `[ISSUE_TRACKER_TOOL]` | Issue Tracking     | Atlassian CLI (`acli`)  | MCP Atlassian          | MCP tool list                    |
-| `[AUTOMATION_TOOL]`    | Browser Automation | `/playwright-cli` skill | MCP Playwright         | `.claude/skills/playwright-cli/` |
-| `[DB_TOOL]`            | Database           | DBHub MCP               | Supabase MCP / raw SQL | MCP tool list                    |
-| `[API_TOOL]`           | API Exploration    | OpenAPI MCP             | Postman / curl         | MCP tool list                    |
+| Tag                    | Domain             | Primary Tool               | Fallback                 | Skill/Reference                  |
+| ---------------------- | ------------------ | -------------------------- | ------------------------ | -------------------------------- |
+| `[ISSUE_TRACKER_TOOL]` | Issue Tracking     | `acli` CLI (`/acli` skill) | manual via Atlassian UI  | `.claude/skills/acli/`           |
+| `[AUTOMATION_TOOL]`    | Browser Automation | `/playwright-cli` skill    | —                        | `.claude/skills/playwright-cli/` |
+| `[DB_TOOL]`            | Database           | Supabase MCP               | raw SQL via Supabase CLI | `.mcp.example.json`              |
+| `[API_TOOL]`           | API Exploration    | curl + OpenAPI types       | Postman manual           | `cli/sync-openapi.ts`            |
 
 ### How It Works
 
@@ -456,12 +456,13 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 ## CLI Tools
 
-| Script             | Usage                              | Documentation            |
-| ------------------ | ---------------------------------- | ------------------------ |
-| `bun run api:sync` | Sync OpenAPI spec + generate types | `cli/sync-openapi.ts`    |
-| `bun run up`       | Update template from upstream      | `cli/update-template.js` |
-| `bun run lint`     | Lint codebase with ESLint          | `eslint.config.js`       |
-| `bun run format`   | Format with Prettier               | `.prettierrc`            |
+| Script             | Usage                                               | Documentation               |
+| ------------------ | --------------------------------------------------- | --------------------------- |
+| `bun run api:sync` | Sync OpenAPI spec + generate types                  | `cli/sync-openapi.ts`       |
+| `bun run setup`    | Run interactive installer (gentle-ai + MCPs + CLIs) | `cli/install.ts`            |
+| `bun run up`       | Update template from upstream                       | `cli/update-boilerplate.ts` |
+| `bun run lint`     | Lint codebase with ESLint                           | `eslint.config.js`          |
+| `bun run format`   | Format with Prettier                                | `.prettierrc`               |
 
 **Run `bun <script> --help`** for usage details.
 
@@ -473,26 +474,30 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 > **Note**: This repo uses a hybrid model. Some skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`) are installed at user level via gentle-ai instead of committed locally — they are no longer present in `.claude/skills/`. Run `bun run setup` to install them. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
 
-### Workflow Skills (project-starter, 6)
+### Workflow Skills (project-starter, 9)
 
-| Skill                  | Trigger               | Description                                                                                      |
-| ---------------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
-| **init-project**       | `/init-project`       | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, AGENTS.md            |
-| **project-foundation** | `/project-foundation` | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)               |
-| **project-bootstrap**  | `/project-bootstrap`  | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                      |
-| **product-management** | `/product-management` | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)           |
-| **sprint-dev**         | `/sprint-dev`         | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator. |
-| **unit-testing**       | `/unit-testing`       | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-dev`.                     |
+| Skill                   | Trigger                | Description                                                                                                            |
+| ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **init-project**        | `/init-project`        | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, AGENTS.md                                  |
+| **project-foundation**  | `/project-foundation`  | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)                                     |
+| **project-bootstrap**   | `/project-bootstrap`   | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                                            |
+| **product-management**  | `/product-management`  | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)                                 |
+| **sprint-dev**          | `/sprint-dev`          | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator.                       |
+| **unit-testing**        | `/unit-testing`        | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-dev`.                                           |
+| **git-flow-master**     | `/git-flow-master`     | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning. Auto-detects branching strategy. |
+| **acli**                | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows.                                                    |
+| **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-dev vs /sdd-\*, MCPs, env vars.            |
 
-### Reusable Knowledge Skills (5)
+### Reusable Knowledge Skills (6)
 
-| Skill                     | Trigger                  | Description                                                                       |
-| ------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
-| **frontend-design**       | `/frontend-design`       | Production-grade frontend interfaces with high design quality                     |
-| **next-best-practices**   | `/next-best-practices`   | Next.js best practices: file conventions, RSC boundaries, data patterns, metadata |
-| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache, cacheLife, cacheTag                     |
-| **next-upgrade**          | `/next-upgrade`          | Upgrade Next.js with official migration guides and codemods                       |
-| **playwright-cli**        | `/playwright-cli`        | Browser automation: screenshots, tracing, recording, mocking                      |
+| Skill                     | Trigger                  | Description                                                                                              |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| **frontend-design**       | `/frontend-design`       | Production-grade frontend interfaces with high design quality                                            |
+| **next-best-practices**   | `/next-best-practices`   | Next.js best practices: file conventions, RSC boundaries, data patterns, metadata                        |
+| **next-cache-components** | `/next-cache-components` | Next.js Cache Components: PPR, use cache, cacheLife, cacheTag                                            |
+| **next-upgrade**          | `/next-upgrade`          | Upgrade Next.js with official migration guides and codemods                                              |
+| **playwright-cli**        | `/playwright-cli`        | Browser automation: screenshots, tracing, recording, mocking                                             |
+| **resend-cli**            | `/resend-cli`            | Operate Resend (email service) from terminal: send emails, manage domains, contacts, templates, webhooks |
 
 ### Slash Commands (utilities)
 
@@ -526,11 +531,10 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 ### Configured
 
-- [ ] Playwright MCP (browser automation)
-- [ ] Database MCP (data validation)
-- [ ] Atlassian MCP (Jira issue tracking)
-- [ ] OpenAPI MCP (API exploration)
+- [ ] Tavily MCP (web search)
 - [ ] Context7 MCP (library documentation)
+- [ ] Supabase MCP (database + project queries)
+- [ ] n8n MCP (workflow automation)
 - [ ] Bun runtime installed
 - [ ] Playwright browsers installed
 - [ ] GitHub Actions workflows

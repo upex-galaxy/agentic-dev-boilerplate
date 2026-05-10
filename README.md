@@ -11,7 +11,7 @@
 
 ## What this is
 
-A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Six workflow skills cover foundation, management, and implementation; five utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/<TBD>) — the two repos are designed as a complementary pair.
+A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Nine workflow skills cover foundation, management, and implementation; four utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) <!-- TODO: confirm sister repo URL --> — the two repos are designed as a complementary pair.
 
 ---
 
@@ -19,23 +19,28 @@ A project starter for teams that want AI agents to drive their development workf
 
 ```bash
 # 1. Clone the boilerplate
-git clone <TBD> my-new-project
+git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git my-new-project
 cd my-new-project
 
-# 2. Install deps + bootstrap the project
+# 2. Install deps
 bun install
-/init-project          # in Claude Code: scaffolds .agents/, scripts, AGENTS.md
 
-# 3. Define what to build (one-time)
+# 3. Run interactive installer (gentle-ai + MCPs + CLIs verification)
+bun run setup
+
+# 4. Bootstrap project context (in Claude Code)
+/init-project          # scaffolds .agents/, scripts, AGENTS.md
+
+# 5. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
 
-# 4. Scaffold the codebase (one-time)
+# 6. Scaffold the codebase (one-time)
 /project-bootstrap     # Backend, frontend, OpenAPI, env, auth
 
-# 5. Manage the backlog (continuous)
+# 7. Manage the backlog (continuous)
 /product-management    # Seed backlog, refine stories, AC, edge cases
 
-# 6. Implement (per story)
+# 8. Implement (per story)
 /sprint-dev            # Plan -> Code -> Review -> Deploy
 /unit-testing          # Composable mid-flight from sprint-dev for TDD
 ```
@@ -54,28 +59,30 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ### Workflow skills (auto-trigger)
 
-| Skill                 | Phase          | Purpose                                                                              |
-| --------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `/init-project`       | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `AGENTS.md`)        |
-| `/project-foundation` | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
-| `/project-bootstrap`  | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
-| `/product-management` | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
-| `/sprint-dev`         | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
-| `/unit-testing`       | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-dev`          |
+| Skill                  | Phase          | Purpose                                                                              |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
+| `/init-project`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `AGENTS.md`)        |
+| `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
+| `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
+| `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
+| `/sprint-dev`          | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
+| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-dev`          |
+| `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning |
+| `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                   |
+| `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills         |
 
 ### Reusable knowledge skills
 
-`/frontend-design`, `/next-best-practices`, `/next-cache-components`, `/next-upgrade`, `/playwright-cli`
+`/frontend-design`, `/next-best-practices`, `/next-cache-components`, `/next-upgrade`, `/playwright-cli`, `/resend-cli`
 
 ### Slash commands (utilities)
 
-| Command                      | Purpose                                                                             |
-| ---------------------------- | ----------------------------------------------------------------------------------- |
-| `/git-flow`                  | Git Flow guidance: feature/release/hotfix branches, commit conventions, PR creation |
-| `/fix-git-conflict`          | Resolve merge conflicts safely (understand -> choose -> verify)                     |
-| `/project-doc-setup`         | Regenerate `README.md` and `CLAUDE.md` from current repo state                      |
-| `/context-engineering-setup` | Set up `.context/` (business-data-map, api-architecture, project-dev-guide)         |
-| `/sprint-report`             | Generate a sprint progress report — epics + stories + PRs                           |
+| Command                      | Purpose                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `/project-doc-setup`         | Regenerate `README.md` and `CLAUDE.md` from current repo state              |
+| `/context-engineering-setup` | Set up `.context/` (business-data-map, api-architecture, project-dev-guide) |
+| `/sprint-report`             | Generate a sprint progress report — epics + stories + PRs                   |
+| `/refresh-ai-memory`         | Refresh README + AI memory file from current repo state                     |
 
 ---
 
@@ -83,8 +90,8 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ```
 .claude/
-├── skills/         # 6 workflow + 5 reusable knowledge skills
-└── commands/       # 5 utility slash commands
+├── skills/         # 9 workflow + 6 reusable knowledge skills
+└── commands/       # 4 utility slash commands
 .agents/
 ├── project.yaml          # Per-project variables (template)
 ├── jira-required.yaml    # Custom field manifest
@@ -140,7 +147,7 @@ bun run jira:check        # Validate Jira manifest vs catalog
 
 ## Companion repo
 
-Software testing — sprint-testing, test-documentation, test-automation, regression-testing — lives in [agentic-qa-boilerplate](https://github.com/<TBD>). The two repos share the same `.agents/` variable system and `agentskills.io` skill layout, so a project can adopt both without duplication.
+Software testing — sprint-testing, test-documentation, test-automation, regression-testing — lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) <!-- TODO: confirm sister repo URL -->. The two repos share the same `.agents/` variable system and `agentskills.io` skill layout, so a project can adopt both without duplication.
 
 ---
 
