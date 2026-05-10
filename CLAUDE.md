@@ -15,7 +15,8 @@
 # Manual invocation order for a new project:
 # 1. /agentic-dev-core              → Bootstrap .agents/ + scripts + CLAUDE.md
 # 2. /project-foundation        → Constitution + PRD + SRS + Discovery
-# 3. /project-bootstrap         → Backend + Frontend + features
+# 2.5. /design-system           → DESIGN.md (visual identity) — invoked by foundation Phase 2.5
+# 3. /project-bootstrap         → Backend + Frontend + features (reads DESIGN.md if present)
 # 4. /product-management        → Seed backlog, refine stories
 # 5. /sprint-dev                → Per-story dev loop (orchestrator)
 # 6. /unit-testing              → Composable TDD inside sprint-dev
@@ -106,7 +107,7 @@ For details on the gentle-ai integration, see [docs/setup/integrating-gentle-ai.
 - If you notice unrelated dead code, mention it — don't delete it.
 - Remove imports/variables/functions that **your** changes made unused.
 
-> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/project-bootstrap` (backend + frontend scaffolding), `/refresh-ai-memory` (project memory), `/sprint-dev` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
+> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/refresh-ai-memory` (project memory), `/sprint-dev` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
 
 ### 4. Goal-Driven Execution
 
@@ -380,6 +381,7 @@ gh pr create --base staging
 | --------------------------- | --------------------- | ------------------------------------------------------------------ |
 | **New project bootstrap**   | `/agentic-dev-core`       | One-time: scaffold `.agents/`, scripts, CLAUDE.md                  |
 | **Foundational definition** | `/project-foundation` | Constitution + PRD + SRS + Discovery (one-time per product)        |
+| **Design system**           | `/design-system`      | DESIGN.md (Google Labs spec) before scaffolding — 5 paths (getdesign default, manual, Open Design, Claude Design, LLM-authored) |
 | **Infra scaffolding**       | `/project-bootstrap`  | Backend + frontend skeleton + features (OpenAPI, auth, env, types) |
 | **Backlog & refinement**    | `/product-management` | Seed backlog, add feature, create epic, refine story (INVEST + AC) |
 | **Per-story dev loop**      | `/sprint-dev`         | Plan → Code → Review → Staging → (gated) Production                |
@@ -536,12 +538,13 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 > **Note**: This repo uses a hybrid model. Workflow skills are committed in `.claude/skills/`. Foundation/SDD skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, the SDD bloque) come from gentle-ai user-install. Reusable community skills (next-*, react-*, shadcn, supabase-postgres-best-practices, etc.) come from `npx skills add` invoked by the installer. Run `bun run setup` to install everything. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
 
-### Workflow Skills (project-starter, 9)
+### Workflow Skills (project-starter, 10)
 
 | Skill                   | Trigger                | Description                                                                                                            |
 | ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **agentic-dev-core**        | `/agentic-dev-core`        | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, CLAUDE.md                                  |
 | **project-foundation**  | `/project-foundation`  | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)                                     |
+| **design-system**       | `/design-system`       | Generates DESIGN.md (Google Labs Apache-2.0 spec) at project root — 5 paths: getdesign default, manual gallery, Open Design app, Claude Design handoff, LLM-authored. Invoked by foundation Phase 2.5; consumed by bootstrap frontend-setup. |
 | **project-bootstrap**   | `/project-bootstrap`   | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                                            |
 | **product-management**  | `/product-management`  | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)                                 |
 | **sprint-dev**          | `/sprint-dev`          | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator.                       |

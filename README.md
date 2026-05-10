@@ -34,8 +34,11 @@ bun run setup
 # 5. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
 
+# 5.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
+/design-system         # DESIGN.md (Google Labs spec) — paleta, tipografía, tokens
+
 # 6. Scaffold the codebase (one-time)
-/project-bootstrap     # Backend, frontend, OpenAPI, env, auth
+/project-bootstrap     # Backend, frontend, OpenAPI, env, auth (reads DESIGN.md if present)
 
 # 7. Manage the backlog (continuous)
 /product-management    # Seed backlog, refine stories, AC, edge cases
@@ -63,6 +66,7 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 | ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
 | `/agentic-dev-core`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)        |
 | `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
+| `/design-system`       | foundation     | DESIGN.md generation (Google Labs spec) before frontend scaffolding — 5 paths        |
 | `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
 | `/sprint-dev`          | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
