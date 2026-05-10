@@ -471,7 +471,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 > Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
 
-> **Note**: This repo is moving toward a hybrid model where some skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`) are installed via gentle-ai user-level instead of committed locally. Run `bun run setup` to install them via gentle-ai. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
+> **Note**: This repo uses a hybrid model. Some skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`) are installed at user level via gentle-ai instead of committed locally — they are no longer present in `.claude/skills/`. Run `bun run setup` to install them. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
 
 ### Workflow Skills (project-starter, 6)
 
