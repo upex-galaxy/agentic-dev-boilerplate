@@ -12,7 +12,7 @@
 
 This repo treats gentle-ai as a **base global "quasi-must-have"**. The recommended onboarding (`bun run setup`) installs it if missing, then layers 15 skills + Engram + the SDD orchestrator on top of your agent. The result is one consistent skillset across every repo on your machine that follows this model.
 
-The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-dev`, `/init-project`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
+The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-dev`, `/agentic-dev-core`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
 
 ---
 
@@ -61,7 +61,7 @@ Skills that are workflow-specific to this boilerplate live in `.claude/skills/` 
 
 | Skill                 | Trigger                | Why it stays local                                          |
 | --------------------- | ---------------------- | ----------------------------------------------------------- |
-| `init-project`        | `/init-project`        | One-time bootstrap of `.agents/` + scripts + AGENTS.md      |
+| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/` + scripts + AGENTS.md      |
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product) |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env) |
 | `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement      |
@@ -127,7 +127,7 @@ What you lose:
 - **Cognitive doc design (cognitive-doc-design)** — no skill that explicitly optimizes docs for low cognitive load. You write the docs by feel.
 - **Issue creation (issue-creation)** — no issue-first enforcement helper. You file issues however your team usually does.
 
-What you keep: every workflow skill committed in this repo (`/sprint-dev`, `/init-project`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
+What you keep: every workflow skill committed in this repo (`/sprint-dev`, `/agentic-dev-core`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
 
 ---
 

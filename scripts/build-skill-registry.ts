@@ -9,7 +9,7 @@
  *
  * Subagents trust the compact rules and DO NOT re-read full SKILL.md unless
  * the briefing explicitly says so. Protocol:
- *   `.claude/skills/init-project/references/skill-resolver.md`.
+ *   `.claude/skills/agentic-dev-core/references/skill-resolver.md`.
  *
  * Extraction strategies (per skill):
  *   - A (preferred): if the SKILL.md body contains a section literally titled
@@ -348,7 +348,7 @@ function renderRegistry(entries: SkillEntry[]): string {
     '',
     `> Generated: \`${generated}\``,
     '> Generator: `bun scripts/build-skill-registry.ts`',
-    '> Protocol: `.claude/skills/init-project/references/skill-resolver.md`',
+    '> Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`',
     '',
     'This file is the per-session compact-rules cache for the Skill Resolver protocol.',
     'The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.',

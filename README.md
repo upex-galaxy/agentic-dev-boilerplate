@@ -29,7 +29,7 @@ bun install
 bun run setup
 
 # 4. Bootstrap project context (in Claude Code)
-/init-project          # scaffolds .agents/, scripts, AGENTS.md
+/agentic-dev-core          # scaffolds .agents/, scripts, AGENTS.md
 
 # 5. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
@@ -61,7 +61,7 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 | Skill                  | Phase          | Purpose                                                                              |
 | ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `/init-project`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `AGENTS.md`)        |
+| `/agentic-dev-core`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `AGENTS.md`)        |
 | `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
 | `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |

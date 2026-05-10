@@ -7,7 +7,7 @@
 
 1. **Goal** — one sentence. What outcome the subagent must achieve.
 2. **Context docs** — files the subagent reads before acting. Absolute paths.
-3. **Project Standards (auto-resolved)** — REQUIRED. Compact rules of skills relevant to this dispatch. Pulled from `.context/skill-registry.md` (built once per session by `bun scripts/build-skill-registry.ts`). The subagent treats this section as authoritative for the listed conventions and does NOT re-read the full SKILL.md unless explicitly told to. Protocol: `init-project/references/skill-resolver.md`.
+3. **Project Standards (auto-resolved)** — REQUIRED. Compact rules of skills relevant to this dispatch. Pulled from `.context/skill-registry.md` (built once per session by `bun scripts/build-skill-registry.ts`). The subagent treats this section as authoritative for the listed conventions and does NOT re-read the full SKILL.md unless explicitly told to. Protocol: `agentic-dev-core/references/skill-resolver.md`.
 4. **Skills to load** — skill triggers (e.g. `/acli`, `/xray-cli`, `/playwright-cli`) the subagent must invoke before issuing tool calls. The orchestrator never inlines tool syntax — that lives in the owning skill.
 5. **Exact instructions** — numbered steps. No ambiguity. Each step names the tool / skill action.
 6. **Report format** — what the subagent returns to the orchestrator. Either a JSON object with named fields, or a bullet list with explicit headings. Avoid free-form prose.
@@ -50,7 +50,7 @@ Rules:
   - <project guardrail>
 ```
 
-> The `Project Standards (auto-resolved)` section is built by the orchestrator from `.context/skill-registry.md` (see `init-project/references/skill-resolver.md` for the protocol). The subagent treats those bullets as authoritative for the listed conventions and skips re-reading full SKILL.md files unless the briefing explicitly says otherwise.
+> The `Project Standards (auto-resolved)` section is built by the orchestrator from `.context/skill-registry.md` (see `agentic-dev-core/references/skill-resolver.md` for the protocol). The subagent treats those bullets as authoritative for the listed conventions and skips re-reading full SKILL.md files unless the briefing explicitly says otherwise.
 
 ---
 

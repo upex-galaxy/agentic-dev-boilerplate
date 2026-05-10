@@ -301,7 +301,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 
 - `{{PROJECT_KEY}}` — issue prefix for branch naming (e.g. `UPEX-123`). Resolves from `.agents/project.yaml`.
 - `{{JIRA_URL}}` — base URL for the Traceability section in PR bodies. Resolves from `.agents/project.yaml`.
-- Any project that has not run `/init-project` yet will not have these. Fall back to a generic `{prefix}/{slug}` and surface a one-line warning suggesting `/init-project`.
+- Any project that has not run `/agentic-dev-core` yet will not have these. Fall back to a generic `{prefix}/{slug}` and surface a one-line warning suggesting `/agentic-dev-core`.
 
 ---
 

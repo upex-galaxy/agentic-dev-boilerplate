@@ -1,6 +1,6 @@
 ---
-name: init-project
-description: "Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctrine) and (b) bootstraps a target repo with the boilerplate's foundation files (CLAUDE.md / AGENTS.md, .agents/, scripts/, package.json updates). Triggers on: `/init-project`, `initialize the project`, `bootstrap framework`, `setup foundation`, `regenerate AGENTS.md`, `install project scripts`. Do NOT use for: refreshing project memory facts (use `/refresh-ai-memory`), onboarding project discovery (use `/project-discovery` if available), or test framework adaptation (testing-only, not in scope)."
+name: agentic-dev-core
+description: "Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctrine) and (b) bootstraps a target repo with the boilerplate's foundation files (CLAUDE.md / AGENTS.md, .agents/, scripts/, package.json updates). Triggers on: `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation`, `regenerate AGENTS.md`, `install project scripts`. Do NOT use for: refreshing project memory facts (use `/refresh-ai-memory`), onboarding project discovery (use `/project-discovery` if available), or test framework adaptation (testing-only, not in scope)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: bootstrap
@@ -16,14 +16,14 @@ model_preferences:
   archive: haiku         # mechanical close-out
 -->
 
-# Init Project — Foundation references + bootstrap
+# Agentic Dev Core — Foundation references + bootstrap
 
-`init-project` is the skill that other skills assume already exists. It plays two distinct roles in the same package:
+`agentic-dev-core` is the skill that other skills assume already exists. It plays two distinct roles in the same package:
 
-1. **Passive — shared reference library.** Workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `init-project/references/*.md` on demand.
-2. **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-dev/` only), they end up missing the foundation files those skills depend on (`AGENTS.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/init-project` regenerates that foundation from the templates shipped under `templates/`.
+1. **Passive — shared reference library.** Workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `agentic-dev-core/references/*.md` on demand.
+2. **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-dev/` only), they end up missing the foundation files those skills depend on (`AGENTS.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/agentic-dev-core` regenerates that foundation from the templates shipped under `templates/`.
 
-Without `init-project`, every other workflow skill would either silently rely on files that don't exist or copy-paste the same boilerplate-foundation paragraphs into its own `references/`. This skill is the single source of truth for both.
+Without `agentic-dev-core`, every other workflow skill would either silently rely on files that don't exist or copy-paste the same boilerplate-foundation paragraphs into its own `references/`. This skill is the single source of truth for both.
 
 ---
 
@@ -32,9 +32,9 @@ Without `init-project`, every other workflow skill would either silently rely on
 | Role                            | Trigger                                                                              | Consumers                                                                                                                  |
 | ------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | **Reference library (passive)** | Other skills loading on-demand                                                       | `sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> |
-| **Bootstrap (active)**          | `/init-project`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                         |
+| **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                         |
 
-Passive role: nobody invokes `init-project` directly to read a reference — they just cite `init-project/references/<file>.md` and the AI loads it. Active role: only the user invokes it, and only when foundation files are missing.
+Passive role: nobody invokes `agentic-dev-core` directly to read a reference — they just cite `agentic-dev-core/references/<file>.md` and the AI loads it. Active role: only the user invokes it, and only when foundation files are missing.
 
 ---
 
@@ -96,21 +96,21 @@ Detect platform from `process.platform`. Symlinks on Windows require either admi
 | `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `AGENTS.md`                                              | Cacheable mirror of `AGENTS.md` §"Orchestration Mode (Subagent Strategy)".                                                  |
 | `references/testing-capabilities.md`   | `unit-testing`, `sprint-dev`                                                                                               | Cache schema + detection algorithm for `.context/testing-capabilities.json` (runner / e2e / typecheck / lint / strict_tdd). |
 
-When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `init-project` before continuing.
+When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `agentic-dev-core` before continuing.
 
 ---
 
 ## Dependency declaration for downstream skills
 
-Every workflow skill that cites `init-project/references/*.md` should declare it explicitly so the AI knows what to load on demand. Example block to add near the top of the skill's `SKILL.md`:
+Every workflow skill that cites `agentic-dev-core/references/*.md` should declare it explicitly so the AI knows what to load on demand. Example block to add near the top of the skill's `SKILL.md`:
 
 ```markdown
 ## Dependencies
 
-Requires `init-project`. Loads on demand:
+Requires `agentic-dev-core`. Loads on demand:
 
-- init-project/references/briefing-template.md
-- init-project/references/dispatch-patterns.md
+- agentic-dev-core/references/briefing-template.md
+- agentic-dev-core/references/dispatch-patterns.md
 ```
 
 The block is documentation — the AI reads it and pulls the cited files. There is no automated wiring: skills are markdown, not code.
@@ -149,7 +149,7 @@ The same contract applies to `templates/project.yaml.template`, `templates/jira-
 
 ## Out of scope
 
-`init-project` does not:
+`agentic-dev-core` does not:
 
 - Create or modify `.context/` files (that belongs to `/project-discovery` if available).
 - Generate or scaffold tests, fixtures, or test components (that belongs to test-automation skills).
@@ -158,4 +158,4 @@ The same contract applies to `templates/project.yaml.template`, `templates/jira-
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command beyond file writes — no `bun install`, no `git`, no `gh`.
 
-If a user invokes `/init-project` and then asks "now configure the project", route them to the project-discovery / foundation skill. If they ask "now wire the test fixtures", route them to the test-automation skill.
+If a user invokes `/agentic-dev-core` and then asks "now configure the project", route them to the project-discovery / foundation skill. If they ask "now wire the test fixtures", route them to the test-automation skill.

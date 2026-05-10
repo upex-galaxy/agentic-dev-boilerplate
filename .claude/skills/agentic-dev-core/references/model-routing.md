@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Every workflow skill in this boilerplate (`init-project`, `project-foundation`, `project-bootstrap`, `product-management`, `sprint-dev`, `unit-testing`) declares a `model_preferences` block immediately after its YAML frontmatter. The block is HTML-comment-wrapped YAML and documents which model tier is most appropriate for each broad **phase** of the workflow.
+Every workflow skill in this boilerplate (`agentic-dev-core`, `project-foundation`, `project-bootstrap`, `product-management`, `sprint-dev`, `unit-testing`) declares a `model_preferences` block immediately after its YAML frontmatter. The block is HTML-comment-wrapped YAML and documents which model tier is most appropriate for each broad **phase** of the workflow.
 
 This is **pure documentation today**. Claude Code reads `SKILL.md` frontmatter for `name` / `description` / `phase` and ignores the comment block. But the block is structured so that dispatchers (this repo's orchestrators, OpenCode profiles, future cross-agent tooling) can parse it and use it to pass `model:` when launching subagents.
 
@@ -81,7 +81,7 @@ The metadata block is identical in all six skills, but each skill spends most of
 
 | Skill                | Primary phases                                    | Notes                                                                                       |
 | -------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `init-project`       | `foundation`                                      | One-time setup. All five keys present for completeness; `foundation` is the active one.     |
+| `agentic-dev-core`       | `foundation`                                      | One-time setup. All five keys present for completeness; `foundation` is the active one.     |
 | `project-foundation` | `foundation`, `planning`                          | All five keys; `foundation` (Constitution) and `planning` (PRD / SRS) are the active ones.  |
 | `project-bootstrap`  | `foundation`, `implementation`                    | Bootstrap decisions are foundation-y; scaffolding is implementation-y.                      |
 | `product-management` | `planning`, `review`                              | Backlog work is planning + reviewing AC quality and INVEST.                                 |

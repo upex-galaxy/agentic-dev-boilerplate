@@ -10,7 +10,7 @@ Every artifact a workflow skill produces (spec, impl-plan, review, test-report, 
 2. **A predictable retrieval path.** Anyone (human or agent) can guess the key from the ticket number and artifact name.
 3. **A bridge to Engram without coupling.** If `engram` is on `PATH`, `scripts/engram-bridge.ts` mirrors the file under the same key. If absent, everything still works file-first; nothing else changes.
 
-This document is the **single source of truth** for the key format and storage layout. Skills cite it (`See init-project/references/topic-key-conventions.md`) instead of redefining the convention inline.
+This document is the **single source of truth** for the key format and storage layout. Skills cite it (`See agentic-dev-core/references/topic-key-conventions.md`) instead of redefining the convention inline.
 
 ## Convention
 

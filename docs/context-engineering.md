@@ -78,7 +78,7 @@ Workflow skills (project-starter):
 
 ```
 .claude/skills/
-├── init-project/           → One-time bootstrap (.agents/, scripts, AGENTS.md)
+├── agentic-dev-core/           → One-time bootstrap (.agents/, scripts, AGENTS.md)
 ├── project-foundation/     → Constitution + PRD + SRS + Discovery
 ├── project-bootstrap/      → Backend + frontend + features (OpenAPI, auth, env)
 ├── product-management/     → Backlog seed, epic creation, story refinement
@@ -136,7 +136,7 @@ These files have stable names and locations. Reference them confidently:
 ### One-Time Setup (Foundation)
 
 ```
-/init-project           → Bootstrap .agents/, scripts, AGENTS.md
+/agentic-dev-core           → Bootstrap .agents/, scripts, AGENTS.md
 /project-foundation     → Constitution + PRD + SRS + Discovery outputs
 /project-bootstrap      → Backend + frontend skeleton + features
 ```
@@ -171,7 +171,7 @@ These files have stable names and locations. Reference them confidently:
 | **Write Unit Test**   | `/unit-testing` skill                    | Existing tests in repo                      |
 | **Understand System** | `business-data-map.md`                   | `PRD/*`, `SRS/*`                            |
 | **Use MCP Tools**     | `CLAUDE.md` § Tool Resolution            | Specific MCP doc in `docs/setup/`           |
-| **Bootstrap Project** | `/init-project`                          | `/project-foundation`, `/project-bootstrap` |
+| **Bootstrap Project** | `/agentic-dev-core`                          | `/project-foundation`, `/project-bootstrap` |
 
 ### By Role
 

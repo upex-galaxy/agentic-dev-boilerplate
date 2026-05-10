@@ -35,7 +35,7 @@ The skill is reference-driven: each workflow points to a specific reference file
 ## Pre-requisites
 
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
-- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — run `/init-project` if missing
+- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — run `/agentic-dev-core` if missing
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
 
 ## Main workflows
@@ -46,7 +46,7 @@ When you have a fresh PRD/SRS and zero issues in Jira, generate the initial back
 
 Read `references/product-backlog-seed.md`.
 
-Output: `.context/PBI/epic-tree.md` + per-epic folders + initial stories created in Jira under `{{PROJECT_KEY}}`. Each epic file persists with topic_key `pbi/{epic-slug}/epic`; per-story files use `pbi/{ticket}/spec`. See `init-project/references/topic-key-conventions.md`.
+Output: `.context/PBI/epic-tree.md` + per-epic folders + initial stories created in Jira under `{{PROJECT_KEY}}`. Each epic file persists with topic_key `pbi/{epic-slug}/epic`; per-story files use `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### B. Incremental feature addition (continuous)
 
@@ -62,7 +62,7 @@ When you need to formally structure a new epic — naming, scope boundaries, dec
 
 Read `references/epic-creation.md`.
 
-Output: epic folder under `.context/PBI/{epic-slug}/` + `epic.md` + decomposed child stories. Topic_key: `pbi/{epic-slug}/epic` (UPSERT semantics; see `init-project/references/topic-key-conventions.md`).
+Output: epic folder under `.context/PBI/{epic-slug}/` + `epic.md` + decomposed child stories. Topic_key: `pbi/{epic-slug}/epic` (UPSERT semantics; see `agentic-dev-core/references/topic-key-conventions.md`).
 
 ### D. Story refinement (per story)
 
@@ -78,7 +78,7 @@ When a story has rough acceptance criteria — vague conditions, missing data, n
 
 Read `references/acceptance-criteria.md`.
 
-Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists at `.context/PBI/{ticket}/spec.md` with topic_key `pbi/{ticket}/spec`. See `init-project/references/topic-key-conventions.md`.
+Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists at `.context/PBI/{ticket}/spec.md` with topic_key `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### F. Edge-case enumeration (per feature/epic)
 
@@ -86,7 +86,7 @@ When designing or refining a feature and you need to systematically enumerate fa
 
 Read `references/edge-cases-enumeration.md`.
 
-Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists at `.context/PBI/{ticket}/edge-cases.md` with topic_key `pbi/{ticket}/edge-cases`. See `init-project/references/topic-key-conventions.md`.
+Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists at `.context/PBI/{ticket}/edge-cases.md` with topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ## Specific tasks — which reference to read
 
@@ -127,11 +127,11 @@ This skill uses standard `.agents/project.yaml` variables resolved at runtime:
 - `{{ISSUE_TRACKER}}` — issue tracker name (typically `Jira`)
 - `{{JIRA_URL}}` — workspace URL
 
-If unset, run `/init-project` first.
+If unset, run `/agentic-dev-core` first.
 
 ## Notes
 
 - Refinement is a **continuous activity**, not a one-time gate. Re-invoke this skill any time AC questions emerge, edge cases surface during design, or a story is found to violate INVEST mid-sprint.
 - The 3-amigos protocol is **optional** in story refinement — recommended for stories larger than ~5 SP, integration-heavy stories, or anything touching unfamiliar areas of the system.
 - Edge cases that don't make it into AC are not lost — they live in QA test cases (out of scope here; documented in `agentic-qa-boilerplate`).
-- Orchestration: for parallel research tasks (e.g., competitive analysis on a feature, prior-art review, persona impact study), dispatch via the briefing template at `.claude/skills/init-project/references/briefing-template.md`.
+- Orchestration: for parallel research tasks (e.g., competitive analysis on a feature, prior-art review, persona impact study), dispatch via the briefing template at `.claude/skills/agentic-dev-core/references/briefing-template.md`.

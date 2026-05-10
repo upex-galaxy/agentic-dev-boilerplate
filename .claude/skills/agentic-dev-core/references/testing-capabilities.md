@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Downstream workflow skills (`unit-testing` decides whether to enforce TDD red-green; `sprint-dev` decides whether its quality gate runs `bun run typecheck` / `bun run lint`) need a yes/no answer on what the project supports. Re-detecting this on every invocation is wasteful and inconsistent. The cache is a single JSON file regenerated only when `/init-project` runs, so consumers read it as a static fact.
+Downstream workflow skills (`unit-testing` decides whether to enforce TDD red-green; `sprint-dev` decides whether its quality gate runs `bun run typecheck` / `bun run lint`) need a yes/no answer on what the project supports. Re-detecting this on every invocation is wasteful and inconsistent. The cache is a single JSON file regenerated only when `/agentic-dev-core` runs, so consumers read it as a static fact.
 
 ## Cache schema
 
@@ -65,10 +65,10 @@ Ties go to the highest-priority signal. If `CLAUDE.md` says `false` but `project
 
 | Event                           | Action                                                                                                                             |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `/init-project` is invoked      | The bootstrap step runs `bun scripts/detect-testing-capabilities.ts`, which (re)writes `.context/testing-capabilities.json`.       |
+| `/agentic-dev-core` is invoked      | The bootstrap step runs `bun scripts/detect-testing-capabilities.ts`, which (re)writes `.context/testing-capabilities.json`.       |
 | Consumer skill needs the cache  | Read the JSON file directly. Treat as static. Do NOT re-detect.                                                                    |
-| Cache is missing                | Tell the user to run `/init-project`. Do not silently re-detect — that defeats the purpose of caching.                             |
-| `package.json` changes mid-flow | Cache becomes stale by definition. Stale cache is preferred to inconsistent re-detection; user re-runs `/init-project` when ready. |
+| Cache is missing                | Tell the user to run `/agentic-dev-core`. Do not silently re-detect — that defeats the purpose of caching.                             |
+| `package.json` changes mid-flow | Cache becomes stale by definition. Stale cache is preferred to inconsistent re-detection; user re-runs `/agentic-dev-core` when ready. |
 
 The script never deletes anything. It only writes `.context/testing-capabilities.json` (creating `.context/` if missing).
 

@@ -41,7 +41,7 @@ Trigger phrases: "implementar esta historia", "implement this story", "trabajar 
 
 ## Pre-requisites
 
-- `.agents/project.yaml` populated. If missing, run `/init-project` first.
+- `.agents/project.yaml` populated. If missing, run `/agentic-dev-core` first.
 - Story exists in the issue tracker with refined Acceptance Criteria. If backlog is empty or AC are unclear, run `/product-management` first.
 - Branch policy clear and CI configured. First-time-only setup lives in `references/setup-linting.md` and `references/ci-cd-setup.md`.
 - Working directory is the **target project repo**. Sprint-dev runs there, not in the boilerplate.
@@ -53,7 +53,7 @@ If any of the above is missing, fast-fail and hand off to the appropriate setup 
 
 ## Subagent Dispatch Strategy
 
-This skill is compliant with the doctrine in `init-project/references/orchestration-doctrine.md`. Every dispatch follows the 6-component briefing format defined in `init-project/references/briefing-template.md`, and the pattern selected per stage matches the decision guide in `init-project/references/dispatch-patterns.md`.
+This skill is compliant with the doctrine in `agentic-dev-core/references/orchestration-doctrine.md`. Every dispatch follows the 6-component briefing format defined in `agentic-dev-core/references/briefing-template.md`, and the pattern selected per stage matches the decision guide in `agentic-dev-core/references/dispatch-patterns.md`.
 
 | Stage / step                              | Pattern                | Subagent role                                                                                 |
 | ----------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
@@ -69,7 +69,7 @@ This skill is compliant with the doctrine in `init-project/references/orchestrat
 
 > **Sequential, not Parallel, across stages**: each stage feeds the next (Stage 1's plan is read by Stage 2; Stage 2's diff is read by Stage 3; Stage 3's approval gates Stage 4). Parallelism happens _inside_ a stage (e.g., parallel verification, multi-file impl).
 
-> **On any subagent failure**: STOP, report partial state (which stages completed, what artifacts landed, which Jira transitions fired), present retry / skip-step / abort options. Do NOT auto-fix nor auto-rollback. See `init-project/references/orchestration-doctrine.md`.
+> **On any subagent failure**: STOP, report partial state (which stages completed, what artifacts landed, which Jira transitions fired), present retry / skip-step / abort options. Do NOT auto-fix nor auto-rollback. See `agentic-dev-core/references/orchestration-doctrine.md`.
 
 ---
 
@@ -158,7 +158,7 @@ Read for guidance:
 
 Output: `implementation-plan.md` per story (or `feature-implementation-plan.md` per feature). Lives alongside the story folder in the project repo. Commit it before Stage 2 starts. Transition Jira `Ready For Dev -> In Progress`.
 
-Persistence: story plans persist at `.context/PBI/{ticket}/impl-plan.md` with topic_key `pbi/{ticket}/impl-plan`; macro feature plans use `pbi/{epic-slug}/feature-impl-plan`. Auto-generated, so `capture_prompt: false`. See `init-project/references/topic-key-conventions.md`.
+Persistence: story plans persist at `.context/PBI/{ticket}/impl-plan.md` with topic_key `pbi/{ticket}/impl-plan`; macro feature plans use `pbi/{epic-slug}/feature-impl-plan`. Auto-generated, so `capture_prompt: false`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 #### Workload Forecast (required output of Stage 1)
 
@@ -182,7 +182,7 @@ Algorithm (per-file multipliers, 20% test+docs buffer), risk thresholds (`<200` 
 Pick the right entry point based on ticket type:
 
 - **New story** -> `references/implement-story.md` (main flow). Walk the impl plan step-by-step.
-- **Bug fix** -> `references/bug-fix-workflow.md` (root-cause first; reproduce; fix; regression check). Root-cause notes persist at `.context/PBI/{ticket}/bug-fix.md` with topic_key `pbi/{ticket}/bug-fix`. See `init-project/references/topic-key-conventions.md`.
+- **Bug fix** -> `references/bug-fix-workflow.md` (root-cause first; reproduce; fix; regression check). Root-cause notes persist at `.context/PBI/{ticket}/bug-fix.md` with topic_key `pbi/{ticket}/bug-fix`. See `agentic-dev-core/references/topic-key-conventions.md`.
 - **Resuming after interruption** -> `references/continue-implementation.md` (re-orient, identify last completed step, resume).
 - **PR feedback / lint or CI red** -> `references/fix-issues.md` (address comments without rewriting history).
 
@@ -208,7 +208,7 @@ Review checklist (driven by `references/review-pr.md`):
 - Security checks (no secrets in diff, auth handled, input validation)
 - UI/UX adherence to design system (where applicable)
 
-Review notes persist at `.context/PBI/{ticket}/review.md` with topic_key `pbi/{ticket}/review`. Auto-generated review summaries use `capture_prompt: false`; human-prompted architectural decisions use `capture_prompt: true`. See `init-project/references/topic-key-conventions.md`.
+Review notes persist at `.context/PBI/{ticket}/review.md` with topic_key `pbi/{ticket}/review`. Auto-generated review summaries use `capture_prompt: false`; human-prompted architectural decisions use `capture_prompt: true`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 Findings loop back to Stage 2 with `fix-issues.md`. Architectural rework loops back to Stage 1 with a new spec (rare).
 
@@ -345,7 +345,7 @@ Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolv
 - `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}` — stack-specific patterns
 - `{{jira.*}}` — story custom fields (acceptance_criteria_gherkin, business_rules, acceptance_test_plan, etc.)
 
-If any required var is unset, run `/init-project` first.
+If any required var is unset, run `/agentic-dev-core` first.
 
 ---
 
@@ -384,6 +384,6 @@ If any required var is unset, run `/init-project` first.
 
 - This skill ASSUMES `/project-foundation`, `/project-bootstrap`, and `/product-management` have run already (or are not needed for this project). Fast-fail if PRD/SRS missing or no story exists.
 - Iterate. Don't try to ship through all 5 stages in one pass. Each PR is one Stage 4. Production (Stage 5) is a separate, gated event triggered by business approval.
-- Orchestration: use the briefing template in `init-project/references/briefing-template.md` whenever dispatching subagents (multi-file edits, parallel verification, deploy + monitor, etc.).
-- Dispatch discipline: at each stage, re-evaluate Single / Sequential / Parallel / Background per the work shape. See `init-project/references/dispatch-patterns.md`.
-- On any subagent failure: STOP, report, present options. Never auto-fix or auto-rollback. See `init-project/references/orchestration-doctrine.md`.
+- Orchestration: use the briefing template in `agentic-dev-core/references/briefing-template.md` whenever dispatching subagents (multi-file edits, parallel verification, deploy + monitor, etc.).
+- Dispatch discipline: at each stage, re-evaluate Single / Sequential / Parallel / Background per the work shape. See `agentic-dev-core/references/dispatch-patterns.md`.
+- On any subagent failure: STOP, report, present options. Never auto-fix or auto-rollback. See `agentic-dev-core/references/orchestration-doctrine.md`.

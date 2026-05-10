@@ -26,10 +26,10 @@ It is invoked once per project, after the PRD / SRS / API contract exist, and be
 
 ## Dependencies
 
-Requires `init-project`. Loads on demand:
+Requires `agentic-dev-core`. Loads on demand:
 
-- `init-project/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
-- `init-project/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
+- `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
 
 ---
 
@@ -47,7 +47,7 @@ Do NOT use this skill to:
 - Implement an individual user story (planning → code → review → deploy) — that's `/sprint-dev`.
 - Set up a unit-test framework — that's `/unit-testing` (and is its own concern).
 
-The infrastructure choices below flow from the SRS architecture decisions made during `/project-foundation`. If `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, or `{{DB_TYPE}}` are unset in `.agents/project.yaml`, run `/init-project` and `/project-foundation` first.
+The infrastructure choices below flow from the SRS architecture decisions made during `/project-foundation`. If `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, or `{{DB_TYPE}}` are unset in `.agents/project.yaml`, run `/agentic-dev-core` and `/project-foundation` first.
 
 ---
 
@@ -99,14 +99,14 @@ If the user intent does not match a row, fall back to `references/backend-setup.
 
 ## Subagent dispatch
 
-Backend and frontend setup are **independent** — once the SRS exists, both can run in parallel under separate subagents. Use the parallel dispatch pattern from `init-project/references/dispatch-patterns.md`.
+Backend and frontend setup are **independent** — once the SRS exists, both can run in parallel under separate subagents. Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`.
 
 Incremental features are usually **sequential after the base** but independent from each other:
 
 - After base backend exists → `openapi-setup`, `api-routes-setup`, `bearer-token-support`, `env-url-setup` can each run in their own subagent.
 - After base frontend exists → `supabase-types-setup` wires backend types into the frontend.
 
-Briefings for each subagent must follow the 6-component template in `init-project/references/briefing-template.md`. Each briefing should cite the specific reference file the subagent must read.
+Briefings for each subagent must follow the 6-component template in `agentic-dev-core/references/briefing-template.md`. Each briefing should cite the specific reference file the subagent must read.
 
 ---
 
@@ -139,6 +139,6 @@ If any check fails, surface the failure in the report rather than papering over 
 ## Notes
 
 - Each "incremental feature" reference is composable — the project does not need all of them. Pick by need, skip the rest.
-- This skill consumes `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}`, `{{API_URL}}`, `{{WEB_URL}}` from `.agents/project.yaml`. If unset, run `/init-project` and `/project-foundation` first.
-- For parallel scaffolding (backend + frontend at the same time), dispatch via the briefing template in `init-project/references/briefing-template.md`.
+- This skill consumes `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}`, `{{API_URL}}`, `{{WEB_URL}}` from `.agents/project.yaml`. If unset, run `/agentic-dev-core` and `/project-foundation` first.
+- For parallel scaffolding (backend + frontend at the same time), dispatch via the briefing template in `agentic-dev-core/references/briefing-template.md`.
 - The references are written in Spanish in some sections (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.

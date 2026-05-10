@@ -1,8 +1,8 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-05-10T01:02:27.084Z`
+> Generated: `2026-05-10T03:56:44.256Z`
 > Generator: `bun scripts/build-skill-registry.ts`
-> Protocol: `.claude/skills/init-project/references/skill-resolver.md`
+> Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`
 
 This file is the per-session compact-rules cache for the Skill Resolver protocol.
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
@@ -36,6 +36,34 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/acli/SKILL.md` · phase: `implementation` · extraction strategy: B
+
+---
+
+## Skill: agentic-dev-core
+
+**Purpose**: Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctr...
+
+**Compact Rules**:
+- **Passive — shared reference library.** Workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `agentic-dev-core/references/*.md` on demand.
+- **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-dev/` only), they end up missing the foundation files those skills depend on (`AGENTS.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/agentic-dev-core` regenerates that foundation from the templates shipped under `templates/`.
+- **`.agents/project.yaml`** — template variable source. Skills resolve `{{VAR}}` against this. Nothing depends on it yet at this point in the install, so write it first.
+- **`.agents/jira-required.yaml`** — manifest of Jira custom fields AND `work_types:` (issue types + canonical statuses + canonical transitions) the methodology requires. Read by `scripts/check-jira-setup.ts`, `scripts/sync-jira-workflows.ts`, and `scripts/agents-lint.ts`.
+- **`.agents/jira-fields.json`** — empty stub (`{}`). Real catalog is written later by `bun run jira:sync-fields`. Documented in `templates/jira-fields.json.template` so the file exists from minute zero.
+- **`.agents/jira-workflows.json`** — empty shell with one entry per declared `work_type` (e.g. `{"story": {...}, "bug": {...}}` with `null`/`{}` placeholders). Real catalog is written later by `bun run jira:sync-workflows`. Documented in `templates/jira-workflows.json.template` so the file exists from minute zero.
+- **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
+- **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
+- **`AGENTS.md`** + symlink **`CLAUDE.md → AGENTS.md`** (last). `AGENTS.md` cites every file written in steps 1-6, so it must be written after all of them. The `CLAUDE.md → AGENTS.md` symlink must be created after the real file exists.
+- **`.context/testing-capabilities.json`** (post-bootstrap detection). After AGENTS.md / CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
+- `bun run agents:setup` — fill `.agents/project.yaml` interactively.
+- `bun run jira:sync-fields` — populate `.agents/jira-fields.json` from their Jira workspace.
+- `bun run jira:sync-workflows` — populate `.agents/jira-workflows.json` from their Jira workspace (interactive on first run for canonical slugs that don't auto-resolve to a workflow's real status / transition names).
+- `bun run jira:check` — validate that BOTH catalogs satisfy the manifest (custom fields + `work_types`).
+- `bun run lint:agents` — confirm every project-variable and Jira reference (custom fields, work types, statuses, transitions) resolves.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/agentic-dev-core/SKILL.md` · phase: `bootstrap` · extraction strategy: B
 
 ---
 
@@ -113,34 +141,6 @@ Skills indexed: 15
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/git-flow-master/SKILL.md` · phase: `implementation` · extraction strategy: B
-
----
-
-## Skill: init-project
-
-**Purpose**: Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctr...
-
-**Compact Rules**:
-- **Passive — shared reference library.** Workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `init-project/references/*.md` on demand.
-- **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-dev/` only), they end up missing the foundation files those skills depend on (`AGENTS.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/init-project` regenerates that foundation from the templates shipped under `templates/`.
-- **`.agents/project.yaml`** — template variable source. Skills resolve `{{VAR}}` against this. Nothing depends on it yet at this point in the install, so write it first.
-- **`.agents/jira-required.yaml`** — manifest of Jira custom fields AND `work_types:` (issue types + canonical statuses + canonical transitions) the methodology requires. Read by `scripts/check-jira-setup.ts`, `scripts/sync-jira-workflows.ts`, and `scripts/agents-lint.ts`.
-- **`.agents/jira-fields.json`** — empty stub (`{}`). Real catalog is written later by `bun run jira:sync-fields`. Documented in `templates/jira-fields.json.template` so the file exists from minute zero.
-- **`.agents/jira-workflows.json`** — empty shell with one entry per declared `work_type` (e.g. `{"story": {...}, "bug": {...}}` with `null`/`{}` placeholders). Real catalog is written later by `bun run jira:sync-workflows`. Documented in `templates/jira-workflows.json.template` so the file exists from minute zero.
-- **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
-- **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
-- **`AGENTS.md`** + symlink **`CLAUDE.md → AGENTS.md`** (last). `AGENTS.md` cites every file written in steps 1-6, so it must be written after all of them. The `CLAUDE.md → AGENTS.md` symlink must be created after the real file exists.
-- **`.context/testing-capabilities.json`** (post-bootstrap detection). After AGENTS.md / CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
-- `bun run agents:setup` — fill `.agents/project.yaml` interactively.
-- `bun run jira:sync-fields` — populate `.agents/jira-fields.json` from their Jira workspace.
-- `bun run jira:sync-workflows` — populate `.agents/jira-workflows.json` from their Jira workspace (interactive on first run for canonical slugs that don't auto-resolve to a workflow's real status / transition names).
-- `bun run jira:check` — validate that BOTH catalogs satisfy the manifest (custom fields + `work_types`).
-- `bun run lint:agents` — confirm every project-variable and Jira reference (custom fields, work types, statuses, transitions) resolves.
-- (truncated — read full SKILL.md for the rest)
-
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
-
-> Source: `.claude/skills/init-project/SKILL.md` · phase: `bootstrap` · extraction strategy: B
 
 ---
 
@@ -256,7 +256,7 @@ Skills indexed: 15
 - You're systematically enumerating edge cases / failure modes for a feature
 - You're seeding the very first product backlog from a freshly minted PRD
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
-- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — run `/init-project` if missing
+- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — run `/agentic-dev-core` if missing
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
 - **Source-of-truth specs** at `.context/PBI/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
 - **Delta specs** per change at `.context/PBI/{ticket}/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
@@ -278,8 +278,8 @@ Skills indexed: 15
 **Purpose**: Scaffolds the technical infrastructure of a new project: backend (DB schemas, API base, types, error handling), frontend (design system,...
 
 **Compact Rules**:
-- `init-project/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
-- `init-project/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
+- `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
 - A fresh repo has its product foundation (`/project-foundation` already ran) but no code yet.
 - An existing repo needs an incremental infrastructure feature added (e.g. "add OpenAPI to the API", "add bearer auth", "wire Supabase types into the frontend").
 - Define the product (PRD, user journeys, architecture decisions) — that's `/project-foundation`.
@@ -306,8 +306,8 @@ Skills indexed: 15
 **Purpose**: Orchestrates the foundational definition of a new product/project: Constitution (business model + market context), Architecture (PRD + SR...
 
 **Compact Rules**:
-- `init-project/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
-- `init-project/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
+- `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
 - A new product/project is being defined from scratch and you need Constitution + PRD + SRS + Discovery artifacts.
 - An existing project needs to redefine scope significantly (e.g. pivot, new MVP cut) and the foundation docs must be regenerated.
 - A specific section is missing or stale (e.g. user journeys haven't been written yet) — invoke just that phase via the Specific tasks table below.
@@ -368,7 +368,7 @@ Skills indexed: 15
 - **Resume from interruption** -> Stage 2 entry via `continue-implementation.md`
 - **PR feedback / code review iteration** -> Stage 3 with `fix-issues.md`, fix-and-iterate loop
 - **Production deploy** (separate event) -> Stage 5, only after QA green + business approval
-- `.agents/project.yaml` populated. If missing, run `/init-project` first.
+- `.agents/project.yaml` populated. If missing, run `/agentic-dev-core` first.
 - Story exists in the issue tracker with refined Acceptance Criteria. If backlog is empty or AC are unclear, run `/product-management` first.
 - Branch policy clear and CI configured. First-time-only setup lives in `references/setup-linting.md` and `references/ci-cd-setup.md`.
 - Working directory is the **target project repo**. Sprint-dev runs there, not in the boilerplate.

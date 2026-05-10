@@ -685,7 +685,7 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write('  2. Install missing CLIs (see table above)\n');
   process.stdout.write('  3. Run: bun run lint:agents (validate config)\n');
   process.stdout.write('  4. In your agent: /refresh-ai-memory (load initial context)\n');
-  process.stdout.write('  5. In your agent: /init-project (bootstrap on this repo)\n');
+  process.stdout.write('  5. In your agent: /agentic-dev-core (bootstrap on this repo)\n');
   process.stdout.write('\n');
   log.dim('Full docs: docs/setup/integrating-gentle-ai.md');
 }

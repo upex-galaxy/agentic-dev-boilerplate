@@ -63,7 +63,7 @@ ls .agents/project.yaml 2>/dev/null
 | ------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `.context/PRD/` + at least one Discovery output              | **Full Update**    | Rewrite README + refresh memory file with real values                                                                                |
 | `package.json` + `.agents/project.yaml` only, no `.context/` | **Minimal Update** | Generate README + memory file with `<<PLACEHOLDER>>` values                                                                          |
-| No `package.json` or no `.agents/`                           | **Stop**           | Tell the user to run `/init-project` first, then `/project-foundation` to define identity, then `/project-bootstrap` for scaffolding |
+| No `package.json` or no `.agents/`                           | **Stop**           | Tell the user to run `/agentic-dev-core` first, then `/project-foundation` to define identity, then `/project-bootstrap` for scaffolding |
 
 ---
 
@@ -173,7 +173,7 @@ A redaction never silently succeeds — the user must see what was removed befor
 
 ## AI-assisted development
 
-{Reference to the AI memory file from Step 0 + a note about `/init-project`, `/project-foundation`, `/sprint-dev`}
+{Reference to the AI memory file from Step 0 + a note about `/agentic-dev-core`, `/project-foundation`, `/sprint-dev`}
 
 ## Links
 
@@ -222,7 +222,7 @@ These are stable rules — leave them alone unless the user asks otherwise:
 
 ### If the memory file does not yet exist
 
-Create it from the canonical template at `.claude/skills/init-project/templates/AGENTS.md.template` (which is the source-of-truth mirror of the live `AGENTS.md`). Copy the full structure, then fill or placeholder each section based on what `.context/` provides.
+Create it from the canonical template at `.claude/skills/agentic-dev-core/templates/AGENTS.md.template` (which is the source-of-truth mirror of the live `AGENTS.md`). Copy the full structure, then fill or placeholder each section based on what `.context/` provides.
 
 If no template exists in the project, generate a fresh skeleton based on the structure of `AGENTS.md` in the boilerplate root.
 

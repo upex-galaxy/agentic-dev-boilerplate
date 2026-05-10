@@ -10,7 +10,7 @@
  * Convention: artifacts are stored file-first under
  * `.context/PBI/{ticket}/{artifact}.md`. The bridge mirrors them to Engram with
  * the deterministic topic_key `pbi/{ticket}/{artifact}` (UPSERT semantics).
- * See `.claude/skills/init-project/references/topic-key-conventions.md`.
+ * See `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`.
  *
  * Subcommands:
  *   save <ticket> <artifact-path>
@@ -92,7 +92,7 @@ Exit codes:
   0 — success, engram absent (no-op), or --dry-run
   1 — bad arguments, file not found, or engram exec failed
 
-See .claude/skills/init-project/references/topic-key-conventions.md for the
+See .claude/skills/agentic-dev-core/references/topic-key-conventions.md for the
 convention this script implements.
 `);
 }

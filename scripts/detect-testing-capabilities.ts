@@ -5,7 +5,7 @@
  * Cached, write-once snapshot of the project's testing tooling so downstream
  * skills (`unit-testing`, `sprint-dev`) can read a static fact instead of
  * re-scanning `package.json` on every dispatch. Regenerated only when
- * `/init-project` runs.
+ * `/agentic-dev-core` runs.
  *
  * Detection algorithm:
  *   - `runner`     — vitest > jest > null (from package.json deps).
@@ -20,7 +20,7 @@
  *                    2. testing.strict_tdd in .agents/project.yaml
  *                    3. fallback: runner !== null
  *
- * See `.claude/skills/init-project/references/testing-capabilities.md` for
+ * See `.claude/skills/agentic-dev-core/references/testing-capabilities.md` for
  * the full rationale and consumer table.
  *
  * Flags:
@@ -204,7 +204,7 @@ function detectLint(pkg: PackageJson): boolean {
 /**
  * Priority 1: <!-- strict_tdd: true|false --> marker in CLAUDE.md / AGENTS.md.
  * `readIfExists` follows symlinks transparently (CLAUDE.md → AGENTS.md is the
- * default Linux/macOS install layout per init-project SKILL.md).
+ * default Linux/macOS install layout per agentic-dev-core SKILL.md).
  */
 function detectStrictTddFromMarker(): boolean | null {
   for (const path of [CLAUDE_MD, AGENTS_MD]) {

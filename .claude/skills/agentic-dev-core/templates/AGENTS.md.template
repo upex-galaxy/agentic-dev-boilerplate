@@ -24,7 +24,7 @@ The development workflow is distributed across skills:
 - **Product management** (continuous) -> `/product-management` (epics, story creation, refinement, AC)
 - **Per-story dev loop** -> `/sprint-dev` (planning -> implementation -> review -> deploy)
 - **TDD/unit testing** (composable) -> `/unit-testing` (TDD red-green-refactor, mocking, coverage)
-- **Init/bootstrap** -> `/init-project` (this skill's bootstrap mode)
+- **Init/bootstrap** -> `/agentic-dev-core` (this skill's bootstrap mode)
 
 **Common commands:**
 
@@ -188,7 +188,7 @@ Conventions (TC naming, labeling, bug summary format, execution naming, etc.) li
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
-| **init-project** | `/init-project` | Bootstrap a new repo with foundation files (this skill, on first run) |
+| **agentic-dev-core** | `/agentic-dev-core` | Bootstrap a new repo with foundation files (this skill, on first run) |
 | **project-foundation** | `/project-foundation` | Constitution + Architecture (PRD, SRS) + Discovery (business-data-map, api-architecture) |
 | **project-bootstrap** | `/project-bootstrap` | Infrastructure scaffolding: backend, frontend, OpenAPI, env setup |
 | **product-management** | `/product-management` | Backlog seed + add-feature + epic creation + story refinement (AC, INVEST, edge cases) |
@@ -204,7 +204,7 @@ Conventions (TC naming, labeling, bug summary format, execution naming, etc.) li
 
 | Need | Tool |
 |------|------|
-| Bootstrap a new repo with foundation files | `/init-project` |
+| Bootstrap a new repo with foundation files | `/agentic-dev-core` |
 | Generate PRD/SRS/discovery context | `/project-foundation` |
 | Scaffold backend/frontend infrastructure | `/project-bootstrap` |
 | Create epics or refine user stories | `/product-management` |

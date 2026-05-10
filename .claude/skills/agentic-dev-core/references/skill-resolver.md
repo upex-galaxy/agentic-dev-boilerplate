@@ -1,6 +1,6 @@
 # Skill Resolver Protocol
 
-> Cited by: `init-project/references/briefing-template.md` and every workflow skill that dispatches subagents (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`).
+> Cited by: `agentic-dev-core/references/briefing-template.md` and every workflow skill that dispatches subagents (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`).
 > Companion script: `scripts/build-skill-registry.ts`. Cache file: `.context/skill-registry.md`.
 
 ## Purpose

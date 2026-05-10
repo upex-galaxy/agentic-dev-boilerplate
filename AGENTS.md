@@ -13,7 +13,7 @@
 # PROJECT STARTER — GETTING ORIENTED:
 # When you start a new session, the relevant workflow skill auto-triggers.
 # Manual invocation order for a new project:
-# 1. /init-project              → Bootstrap .agents/ + scripts + AGENTS.md
+# 1. /agentic-dev-core              → Bootstrap .agents/ + scripts + AGENTS.md
 # 2. /project-foundation        → Constitution + PRD + SRS + Discovery
 # 3. /project-bootstrap         → Backend + Frontend + features
 # 4. /product-management        → Seed backlog, refine stories
@@ -316,7 +316,7 @@ gh pr create --base staging
 
 | Mode                        | Entry Point           | When to Use                                                        |
 | --------------------------- | --------------------- | ------------------------------------------------------------------ |
-| **New project bootstrap**   | `/init-project`       | One-time: scaffold `.agents/`, scripts, AGENTS.md                  |
+| **New project bootstrap**   | `/agentic-dev-core`       | One-time: scaffold `.agents/`, scripts, AGENTS.md                  |
 | **Foundational definition** | `/project-foundation` | Constitution + PRD + SRS + Discovery (one-time per product)        |
 | **Infra scaffolding**       | `/project-bootstrap`  | Backend + frontend skeleton + features (OpenAPI, auth, env, types) |
 | **Backlog & refinement**    | `/product-management` | Seed backlog, add feature, create epic, refine story (INVEST + AC) |
@@ -367,7 +367,7 @@ gh pr create --base staging
 | **Use MCP Tools**       | `CLAUDE.md section Tool Resolution`                                   |
 | **Code Review**         | `/sprint-dev` skill (Code Review step)                                |
 | **Plan Implementation** | `/sprint-dev` skill (Planning step)                                   |
-| **Bootstrap Project**   | `/init-project` + `/project-foundation` + `/project-bootstrap` skills |
+| **Bootstrap Project**   | `/agentic-dev-core` + `/project-foundation` + `/project-bootstrap` skills |
 
 ---
 
@@ -478,7 +478,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 | Skill                   | Trigger                | Description                                                                                                            |
 | ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **init-project**        | `/init-project`        | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, AGENTS.md                                  |
+| **agentic-dev-core**        | `/agentic-dev-core`        | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, AGENTS.md                                  |
 | **project-foundation**  | `/project-foundation`  | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)                                     |
 | **project-bootstrap**   | `/project-bootstrap`   | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                                            |
 | **product-management**  | `/product-management`  | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)                                 |

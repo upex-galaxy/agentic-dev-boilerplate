@@ -26,10 +26,10 @@ It is invoked once per project at inception, before any infrastructure scaffoldi
 
 ## Dependencies
 
-Requires `init-project`. Loads on demand:
+Requires `agentic-dev-core`. Loads on demand:
 
-- `init-project/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
-- `init-project/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
+- `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
 
 ---
 
@@ -128,7 +128,7 @@ Phases 1 → 2 → 3 → 4 are **logically sequential** (each phase consumes out
 - **Phase 3 (SRS)**: `srs-functional`, `srs-non-functional`, `srs-architecture`, `srs-api-contracts` can run in parallel once the PRD is locked.
 - **Phase 4 (Discovery)**: all three discovery docs are independent and run in parallel against the same source code / SRS.
 
-Use the parallel dispatch pattern from `init-project/references/dispatch-patterns.md`. Each subagent briefing must follow the 6-component template in `init-project/references/briefing-template.md` and cite the specific reference file the subagent must read.
+Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 6-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
 
 For research-heavy tasks (market sizing, competitor audits, persona interviews) dispatch a single subagent with web/search tools rather than running the research from the main conversation.
 
@@ -163,5 +163,5 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 
 - This skill is **one-time per project**. If scope changes significantly mid-project, re-invoke specific phases (e.g. only `references/prd-mvp-scope.md` to re-cut the MVP).
 - Several reference files are written in Spanish (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
-- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If those are unset, run `/init-project` first.
+- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If those are unset, run `/agentic-dev-core` first.
 - The discovery references (`business-data-map.md`, `api-architecture.md`, `project-dev-guide.md`) are intentionally agnostic of stack and can run on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code).

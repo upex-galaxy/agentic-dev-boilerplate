@@ -202,6 +202,6 @@ If the matrix exposes a scenario that nobody can figure out how to verify at all
 The matrix lives in two places:
 
 - **Inline in the PR** (description or top-of-thread comment) so reviewers see it without leaving GitHub.
-- **In the project repo** at `.context/PBI/{ticket}/compliance-matrix.md`, topic_key `pbi/{ticket}/compliance-matrix`. Auto-generated, so `capture_prompt: false`. See `init-project/references/topic-key-conventions.md`.
+- **In the project repo** at `.context/PBI/{ticket}/compliance-matrix.md`, topic_key `pbi/{ticket}/compliance-matrix`. Auto-generated, so `capture_prompt: false`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 Both copies must agree at merge time. If they drift, the in-repo copy is canonical.
