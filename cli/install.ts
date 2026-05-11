@@ -7,7 +7,7 @@
  *   2. Detect agents (Claude Code / OpenCode) and prompt selection
  *   3. Optionally install 15 skills + engram via gentle-ai
  *   4. Configure 4 canonical MCPs (tavily, context7, supabase, n8n)
- *   5. Verify external CLIs (vercel, supabase, acli, playwright, resend)
+ *   5. Verify external CLIs (vercel, supabase, acli, playwright-cli, resend)
  *   6. Persist `.agents/install-state.json` for idempotency
  *
  * Usage:
@@ -164,12 +164,38 @@ const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
 ];
 
-const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string }> = [
-  { name: 'vercel', install: 'npm i -g vercel' },
-  { name: 'supabase', install: 'brew install supabase/tap/supabase  (or: npm i -g supabase)' },
-  { name: 'acli', install: 'brew install --cask atlassian-cli' },
-  { name: 'playwright', install: 'npm i -D @playwright/test' },
-  { name: 'resend', install: 'npm i -g resend' },
+const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string, docs: string }> = [
+  {
+    name: 'vercel',
+    install: 'npm i -g vercel',
+    docs: 'https://vercel.com/docs/cli',
+  },
+  {
+    name: 'supabase',
+    install: 'brew install supabase/tap/supabase  (or: npm i -g supabase)',
+    docs: 'https://supabase.com/docs/guides/local-development/cli/getting-started',
+  },
+  {
+    // `acli` is a brew TAP formula, not a cask. The previous string
+    // (`brew install --cask atlassian-cli`) was wrong on both counts.
+    name: 'acli',
+    install: 'brew tap atlassian/homebrew-acli && brew install acli',
+    docs: 'https://developer.atlassian.com/cloud/acli/guides/install-macos/',
+  },
+  {
+    // Binary produced by @playwright/cli is `playwright-cli`, used by the
+    // /playwright-cli skill. NOT @playwright/test, which is a devDep test
+    // runner library producing no global binary — `which playwright` would
+    // never find it.
+    name: 'playwright-cli',
+    install: 'bun add -g @playwright/cli@latest  (or: npm install -g @playwright/cli@latest)',
+    docs: 'https://playwright.dev/agent-cli/introduction',
+  },
+  {
+    name: 'resend',
+    install: 'npm i -g resend',
+    docs: 'https://resend.com/docs/send-with-nodejs',
+  },
 ];
 
 // TODO: B3 confirms exact npx package name + invocation flags for n8n MCP.
@@ -689,24 +715,33 @@ async function configureMcps(agents: AgentId[], state: InstallState): Promise<vo
 // Step 8 — verify external CLIs
 // ============================================================================
 
-function verifyExternalClis(state: InstallState): { name: string, status: CliStatus, install: string }[] {
-  const results = EXTERNAL_CLIS.map((cli) => {
+interface CliResult {
+  name: string
+  status: CliStatus
+  install: string
+  docs: string
+}
+
+function verifyExternalClis(state: InstallState): CliResult[] {
+  const results: CliResult[] = EXTERNAL_CLIS.map((cli) => {
     const found = which(cli.name) !== null;
     const status: CliStatus = found ? 'found' : 'missing';
     state.externalClis[cli.name] = status;
-    return { name: cli.name, status, install: cli.install };
+    return { name: cli.name, status, install: cli.install, docs: cli.docs };
   });
 
   process.stdout.write('\n');
-  process.stdout.write(`${COLORS.bold}CLI            Status      Install (if missing)${COLORS.reset}\n`);
-  process.stdout.write(`${'─'.repeat(64)}\n`);
+  process.stdout.write(`${COLORS.bold}CLI              Status      Install (if missing) / Docs${COLORS.reset}\n`);
+  process.stdout.write(`${'─'.repeat(80)}\n`);
   for (const r of results) {
-    const statusColor = r.status === 'found' ? COLORS.green : COLORS.yellow;
-    const statusText = `${statusColor}${r.status}${COLORS.reset}`;
-    const padName = r.name.padEnd(14);
+    const padName = r.name.padEnd(16);
     const padStatus = r.status === 'found' ? 'found     ' : 'missing   ';
+    const statusColor = r.status === 'found' ? COLORS.green : COLORS.yellow;
     const installCol = r.status === 'found' ? '(skip)' : r.install;
-    process.stdout.write(`${padName} ${statusText.replace(r.status, padStatus.trim().padEnd(11))} ${installCol}\n`);
+    process.stdout.write(`${padName} ${statusColor}${padStatus}${COLORS.reset} ${installCol}\n`);
+    if (r.status === 'missing') {
+      process.stdout.write(`${' '.repeat(28)}${COLORS.dim}docs: ${r.docs}${COLORS.reset}\n`);
+    }
   }
   return results;
 }
