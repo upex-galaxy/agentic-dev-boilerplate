@@ -703,5 +703,31 @@ Esto asegura que todo codigo commiteado cumple con los estandares del proyecto.
 
 ---
 
+## Deferred patterns
+
+Patterns considered for adoption but explicitly deferred. Recorded here so future sessions find the rationale and do not re-debate.
+
+### Pattern 7 — Master strategic roadmap (`master-roadmap.md`)
+
+**Considered:** 2026-05-10. **Decision:** DEFER.
+
+**Source:** Hand-off from the sister `agentic-qa-boilerplate` (`/home/sai/Desktop/upex/web-apps/agentic-qa-boilerplate/.scratch/handoffs/context-structure-comparison.md`) observed that QA produces a `.context/master-test-plan.md` synthesizing `mapping/` + `PRD/` + `SRS/` into a risk-ranked test plan, and suggested DEV could mirror the structural pattern as a `.context/master-roadmap.md` synthesizing the same lower-level context into a prioritized feature build order.
+
+**Why deferred:**
+
+1. **No generator exists.** The project principle is that every file under `.context/` is produced by a script, command, or skill. No current skill or script generates a strategic roadmap synthesizing PRD + SRS + business-data-map. Adding the file without the generator would create a manually-maintained outlier inconsistent with the rest of the directory.
+2. **No demonstrated demand.** No user has asked for a prioritized feature build order at the `.context/` level. `/sprint-dev` operates per ticket from Jira; `/product-management` handles backlog seeding and refinement. The gap is not load-bearing today.
+3. **Heavy to implement.** A faithful adoption would mean designing and shipping a new `/master-roadmap` skill — a multi-input synthesizer with non-trivial heuristics for prioritization. Equivalent to a small skill in its own right.
+
+**Reopen when:**
+
+- A user explicitly wants `.context/master-roadmap.md` as a prioritized feature build order across the project.
+- A concrete generator (skill or script) exists or is planned that would produce the file deterministically.
+- Either condition met → design the skill, add the file with a clear generator attribution, and document the trigger.
+
+Until then, the strategic prioritization decision lives where it always has: in conversation between the user, `/product-management` (epic precheck), and `/sprint-dev` (per-ticket scope). No file required.
+
+---
+
 **Version 3.0** - Expandido de 13 a 14 fases con Test Documentation separada
 **Ultima actualizacion:** 2025-12-21
