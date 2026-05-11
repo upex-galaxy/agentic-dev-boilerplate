@@ -41,6 +41,10 @@ yarn-error.log*
 .env.local
 .env.*.local
 .env.sentry-build-plugin
+.envrc.local
+.direnv/
+# Force-track .envrc (overrides global gitignore, which often blanket-ignores it)
+!.envrc
 
 # ===== IDE & Editor =====
 .idea/
@@ -64,12 +68,16 @@ Thumbs.db
 .context/mcp/outputs
 .scratch/
 
-# ===== MCP Configuration (contain secrets - DO NOT COMMIT) =====
-.mcp.json
+# ===== MCP Configuration =====
+# .mcp.json and opencode.jsonc are COMMITTED — they reference secrets via
+# ${VAR} / {env:VAR} expansion. Real values live in .env (ignored above).
+# Local per-developer overrides go in *.local.* files (ignored below).
+.mcp.local.json
+opencode.local.jsonc
+opencode.json
 .mcp.catalog.json
 *.catalog.json
 .mcpservers.json
-opencode.json
 dbhub.toml
 
 # ===== Installer state (local dev tracker, not project state) =====
