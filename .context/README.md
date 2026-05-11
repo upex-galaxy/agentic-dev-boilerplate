@@ -1,90 +1,76 @@
-# .context/ - Context Engineering Directory
+# `.context/` — Project Memory the AI Reads
 
-This directory contains all the documentation that the AI reads to work on the project.
+This directory is what makes a fresh AI session productive on day one. Every file here is either **auto-generated** by a script or skill, or **source-of-truth** that downstream tooling regenerates from.
 
 ## Structure
 
 ```
 .context/
-├── idea/               PHASE 1: Constitution (business)
-├── PRD/                PHASE 2: Architecture - Product Requirements
-├── SRS/                PHASE 2: Architecture - Software Requirements
-├── PBI/                PHASES 4-6: Product Backlog (Specification, Testing, Planning)
-├── guidelines/         PHASES 7-14: Reference material by ROLE
-│   ├── DEV/            Development Guidelines
-│   ├── QA/             Quality Engineering Guidelines
-│   └── TAE/            Test Automation Engineering
-├── business-data-map.md    # Generated: System flows
-├── api-architecture.md     # Generated: API documentation
-└── project-test-guide.md   # Generated: Testing guide
+├── README.md                      This file — index + generator map
+│
+├── _framework/                    Framework infrastructure (auto-generated + source-of-truth)
+│   ├── context-engineering.md     Repo architecture map                (manual)
+│   ├── system-prompt.md           Source-of-truth template for CLAUDE.md (manual)
+│   ├── skill-registry.md          Compact-rules cache for skills        (scripts/build-skill-registry.ts)
+│   └── testing-capabilities.json  Testing tooling cache                 (scripts/detect-testing-capabilities.ts; gitignored)
+│
+├── discovery/                     Outputs of /project-foundation Phase 4 — Discovery
+│   ├── business-data-map.md       Entities, flows, state machines
+│   ├── api-architecture.md        Auth model, critical endpoints, data flows
+│   └── project-dev-guide.md       How to build features in this codebase
+│
+├── idea/                          Output of /project-foundation Phase 1 — Constitution
+│   └── README.md                  Phase placeholder (see file)
+│
+├── PRD/                           Output of /project-foundation Phase 2 — Product Requirements
+│   └── README.md                  Phase placeholder (see file)
+│
+├── SRS/                           Output of /project-foundation Phase 2 — Software Requirements
+│   └── README.md                  Phase placeholder (see file)
+│
+└── PBI/                           Outputs of /product-management + /sprint-dev (per epic / per ticket)
+    └── README.md                  Backlog layout (see file)
 ```
 
-## Getting Started
+## Who generates what
 
-### Project Memory Setup
+Every file in `.context/` has an owner. Do not edit auto-generated files by hand — re-run the owner.
 
-Configure your AI tool's project memory:
+| File / Pattern                                      | Owner                                   | Notes                                                  |
+| --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| `_framework/context-engineering.md`                 | Manual (human-curated)                  | Repo architecture map                                  |
+| `_framework/system-prompt.md`                       | Manual (human-curated)                  | Mirrored into CLAUDE.md by `/refresh-ai-memory`        |
+| `_framework/skill-registry.md`                      | `bun scripts/build-skill-registry.ts`   | Re-run when skills change                              |
+| `_framework/testing-capabilities.json`              | `bun scripts/detect-testing-capabilities.ts` | Re-run during `/agentic-dev-core` bootstrap            |
+| `discovery/business-data-map.md`                    | `/project-foundation` (Phase 4)         | Re-run if data model pivots                            |
+| `discovery/api-architecture.md`                     | `/project-foundation` (Phase 4)         | Re-run if API auth or topology changes                 |
+| `discovery/project-dev-guide.md`                    | `/project-foundation` (Phase 4)         | Re-run if codebase architecture changes                |
+| `idea/*.md`                                         | `/project-foundation` (Phase 1)         | Business model + market context                        |
+| `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
+| `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
+| `PBI/{epic-slug}/epic.md`                           | `/product-management` (epic creation)   | Topic key: `pbi/{epic-slug}/epic`                      |
+| `PBI/{ticket}/spec.md`                              | `/product-management` (AC refinement)   | Topic key: `pbi/{ticket}/spec`                         |
+| `PBI/{ticket}/impl-plan.md`                         | `/sprint-dev` Stage 1                   | Topic key: `pbi/{ticket}/impl-plan`                    |
+| `PBI/{ticket}/review.md`                            | `/sprint-dev` Stage 3                   | Topic key: `pbi/{ticket}/review`                       |
+| `PBI/{ticket}/compliance-matrix.md`                 | `/sprint-dev` Stage 3                   | Topic key: `pbi/{ticket}/compliance-matrix`            |
+| `PBI/{ticket}/bug-fix.md`                           | `/sprint-dev` Stage 2 (bug-fix flow)    | Topic key: `pbi/{ticket}/bug-fix`                      |
+| `PBI/{ticket}/edge-cases.md`                        | `/product-management` (enumeration)     | Topic key: `pbi/{ticket}/edge-cases`                   |
 
-```bash
-# Run this prompt to generate/update documentation
-@.prompts/utilities/context-engineering-setup.md
-```
+Full topic-key conventions: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`.
 
-This prompt will:
-1. Detect your AI tool (Claude Code, Gemini CLI, Cursor, Copilot, etc.)
-2. Generate the correct configuration file (`CLAUDE.md`, `GEMINI.md`, etc.)
-3. Generate a professional `README.md`
+## Minimum viable context
 
-### Project Phases
+A brand-new project that wants productive AI sessions should produce, in order:
 
-**Synchronous Phases (one-time):**
+1. `/agentic-dev-core` — bootstraps `.agents/`, scripts, CLAUDE.md, then runs `detect-testing-capabilities`.
+2. `/project-foundation` — Constitution → PRD → SRS → Discovery outputs.
+3. `/product-management` — Seed initial backlog (epics + foundational stories) under `PBI/`.
 
-1. **PHASE 1**: Use `.prompts/fase-1-constitution/` → generates `idea/`
-2. **PHASE 2**: Use `.prompts/fase-2-architecture/` → generates `PRD/`, `SRS/`
-3. **PHASE 3**: Use `.prompts/fase-3-infrastructure/` → technical setup
-
-**Asynchronous Phases (iterative per sprint):**
-
-4. **PHASE 4**: Use `.prompts/fase-4-specification/` → generates `PBI/`
-5. **PHASE 5**: Use `.prompts/fase-5-shift-left-testing/` → test cases in `PBI/`
-6. **PHASE 6**: Use `.prompts/fase-6-planning/` → implementation plans in `PBI/`
-7. **PHASE 7**: Implementation — read `guidelines/DEV/`
-8. **PHASE 8**: Code Review — read `guidelines/DEV/`
-9. **PHASES 9-14**: Deployment, Testing, Automation — read `guidelines/` by role
-
-## Guidelines by Role
-
-| Role          | Folder            | When to Read       |
-| ------------- | ----------------- | ------------------ |
-| Developer     | `guidelines/DEV/` | Phases 7, 8        |
-| QA Engineer   | `guidelines/QA/`  | Phases 10, 11      |
-| QA Automation | `guidelines/TAE/` | Phase 12           |
-| Any role      | `CLAUDE.md` MCPs Available section | When using MCPs |
-
-## Recommended Context Files
-
-These files are generated by context generators and discovery prompts. If they don't exist yet, create them using the corresponding prompt:
-
-| File | Generator | Required For |
-|------|-----------|-------------|
-| `business-data-map.md` | `discovery/business-data-map.md` | Understanding system flows and entities |
-| `api-architecture.md` | `discovery/api-architecture.md` | API testing, integration tests |
-| `project-test-guide.md` | `utilities/project-test-guide.md` | Knowing what to test and why |
-| `idea/business-model.md` | `discovery/phase-1-constitution/business-model-discovery.md` | Business context for test planning |
-| `idea/domain-glossary.md` | `discovery/phase-1-constitution/domain-glossary.md` | Consistent terminology |
-| `PRD/*.md` | `discovery/phase-2-architecture/` | User personas, feature inventory |
-| `SRS/*.md` | `discovery/phase-2-architecture/` + `phase-3-infrastructure/` | Technical specs, API contracts |
-
-**Minimum viable context:** `business-data-map.md` + `project-test-guide.md` (run these two generators first).
-
----
+After that, `/sprint-dev` operates per ticket and fills in `PBI/{ticket}/*` files as work progresses.
 
 ## References
 
-- **Project Memory**: `CLAUDE.md` (or equivalent for your AI tool)
-- **Context Engineering**: `docs/context-engineering.md`
-- **Prompt instructions**: `.prompts/README.md`
-
----
-
-**Last Updated**: 2026-04-13
+- Repo architecture: `_framework/context-engineering.md`
+- Project memory: `CLAUDE.md` (root) — generated/refreshed via `/refresh-ai-memory`
+- Skill cookbook: `.claude/skills/*/SKILL.md` (also indexed in `_framework/skill-registry.md`)
+- Topic keys for engram: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`
