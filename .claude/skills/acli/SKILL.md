@@ -55,7 +55,7 @@ This skill complements the `/sprint-dev` mega-orchestrator. It does NOT drive th
 | `/sprint-dev` Stage 3 — found a defect mid-implementation     | `acli jira workitem create --project UPEX --type Bug --summary "..." --parent UPEX-123`         |
 | Linking the merged PR back to the ticket                      | `acli jira workitem link create --out UPEX-123 --in <pr-issue-or-remote-link>`                  |
 | `/product-management` — bulk-create stories from a CSV        | `acli jira workitem create-bulk --from-csv stories.csv --yes`                                   |
-| `/sprint-report` — pull all in-flight stories                 | `acli jira workitem search --jql "..." --paginate --json`                                       |
+| `/product-management` (workflow G) — pull all in-flight stories for a sprint report | `acli jira workitem search --jql "..." --paginate --json`                                       |
 
 Issue types DEV cares about: **Story**, **Bug**, **Task**, **Epic**. Test-management issue types live in the sister QA repo and are not handled here.
 

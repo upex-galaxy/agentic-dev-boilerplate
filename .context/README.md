@@ -8,16 +8,17 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 .context/
 ├── README.md                      This file — index + generator map
 │
-├── _framework/                    Framework infrastructure (auto-generated + source-of-truth)
-│   ├── context-engineering.md     Repo architecture map                (manual)
-│   ├── system-prompt.md           Source-of-truth template for CLAUDE.md (manual)
+├── _framework/                    Framework infrastructure (auto-generated)
 │   ├── skill-registry.md          Compact-rules cache for skills        (scripts/build-skill-registry.ts)
 │   └── testing-capabilities.json  Testing tooling cache                 (scripts/detect-testing-capabilities.ts; gitignored)
 │
-├── discovery/                     Outputs of /project-foundation Phase 4 — Discovery
-│   ├── business-data-map.md       Entities, flows, state machines
-│   ├── api-architecture.md        Auth model, critical endpoints, data flows
-│   └── project-dev-guide.md       How to build features in this codebase
+├── business/                      Outputs of /project-foundation Phase 4 + business-* commands
+│   ├── business-data-map.md       Entities, flows, state machines  (/business-data-map)
+│   ├── business-feature-map.md    Feature catalog, CRUD matrix     (/business-feature-map)
+│   ├── business-api-map.md        Auth model, critical journeys    (/business-api-map)
+│   └── project-dev-guide.md       How to build features here       (/project-foundation Phase 4 embedded)
+│
+├── master-implementation-plan.md  High-level dependency-cascaded roadmap (/master-implementation-plan)
 │
 ├── idea/                          Output of /project-foundation Phase 1 — Constitution
 │   └── README.md                  Phase placeholder (see file)
@@ -38,13 +39,13 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 
 | File / Pattern                                      | Owner                                   | Notes                                                  |
 | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
-| `_framework/context-engineering.md`                 | Manual (human-curated)                  | Repo architecture map                                  |
-| `_framework/system-prompt.md`                       | Manual (human-curated)                  | Mirrored into CLAUDE.md by `/refresh-ai-memory`        |
 | `_framework/skill-registry.md`                      | `bun scripts/build-skill-registry.ts`   | Re-run when skills change                              |
 | `_framework/testing-capabilities.json`              | `bun scripts/detect-testing-capabilities.ts` | Re-run during `/agentic-dev-core` bootstrap            |
-| `discovery/business-data-map.md`                    | `/project-foundation` (Phase 4)         | Re-run if data model pivots                            |
-| `discovery/api-architecture.md`                     | `/project-foundation` (Phase 4)         | Re-run if API auth or topology changes                 |
-| `discovery/project-dev-guide.md`                    | `/project-foundation` (Phase 4)         | Re-run if codebase architecture changes                |
+| `business/business-data-map.md`                     | `/business-data-map` command            | Invoked by `/project-foundation` Phase 4 Step 1        |
+| `business/business-feature-map.md`                  | `/business-feature-map` command         | Invoked by `/project-foundation` Phase 4 Step 2        |
+| `business/business-api-map.md`                      | `/business-api-map` command             | Invoked by `/project-foundation` Phase 4 Step 3        |
+| `business/project-dev-guide.md`                     | `/project-foundation` (Phase 4 Step 4)  | Embedded skill logic; re-run if architecture changes   |
+| `master-implementation-plan.md`                     | `/master-implementation-plan` command   | Invoked by `/project-foundation` Phase 4 Step 5        |
 | `idea/*.md`                                         | `/project-foundation` (Phase 1)         | Business model + market context                        |
 | `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
@@ -70,7 +71,7 @@ After that, `/sprint-dev` operates per ticket and fills in `PBI/{ticket}/*` file
 
 ## References
 
-- Repo architecture: `_framework/context-engineering.md`
+- Repo architecture: `CONTEXT.md` (root) — canonical Context Engineering map
 - Project memory: `CLAUDE.md` (root) — generated/refreshed via `/refresh-ai-memory`
 - Skill cookbook: `.claude/skills/*/SKILL.md` (also indexed in `_framework/skill-registry.md`)
 - Topic keys for engram: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`

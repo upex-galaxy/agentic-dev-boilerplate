@@ -13,7 +13,7 @@
   </head>
   <body>
     <header class="shell hero">
-      <span class="hero-eyebrow">Onboarding · v1.0</span>
+      <span class="hero-eyebrow">Onboarding · v1.1</span>
       <h1>Agentic <span class="accent">Dev</span> Boilerplate</h1>
       <p class="hero-sub">AI-driven development on Next.js + Supabase + TypeScript.</p>
       <p class="hero-tagline">
@@ -267,19 +267,19 @@
             <p>
               Read
               <a
-                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/README.md"
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
                 target="_blank"
                 rel="noopener"
-                ><code>README.md</code></a
+                ><code>agentic-development-engineering.md</code></a
               >
-              for the project-level Quick Start and
+              for the strategy behind the practice and
               <a
-                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CLAUDE.md"
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CONTEXT.md"
                 target="_blank"
                 rel="noopener"
-                ><code>CLAUDE.md</code></a
+                ><code>CONTEXT.md</code></a
               >
-              for the canonical project memory. This page focuses on
+              for why the knowledge layer is split the way it is. This page focuses on
               <em>how the pieces connect</em> — what to invoke, in what order, and what each piece
               actually does.
             </p>
@@ -588,14 +588,18 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <dt>Trigger</dt>
                     <dd>
                       <code>/project-foundation</code> — runs Constitution → Architecture (PRD +
-                      SRS) → Discovery (business-data-map, api-architecture, project-dev-guide).
+                      SRS) → Discovery (orchestrates <code>/business-data-map</code>,
+                      <code>/business-feature-map</code>, <code>/business-api-map</code>,
+                      <code>/master-implementation-plan</code> + embedded project-dev-guide).
                     </dd>
                     <dt>Produces</dt>
                     <dd>
                       <code>idea/*</code> (constitution), <code>PRD/*</code>,
-                      <code>SRS/*</code>, <code>.context/discovery/business-data-map.md</code>,
-                      <code>.context/discovery/api-architecture.md</code>,
-                      <code>.context/discovery/project-dev-guide.md</code>. The skill orchestrates each
+                      <code>SRS/*</code>, <code>.context/business/business-data-map.md</code>,
+                      <code>.context/business/business-feature-map.md</code>,
+                      <code>.context/business/business-api-map.md</code>,
+                      <code>.context/business/project-dev-guide.md</code>,
+                      <code>.context/master-implementation-plan.md</code>. The skill orchestrates each
                       phase with explicit human checkpoints.
                     </dd>
                     <dt>When to repeat</dt>
@@ -697,19 +701,21 @@ bun run lint:agents           # validate placeholders</code></pre>
                       Refreshed memory files and re-cataloged Jira fields:
                       <ul>
                         <li>
-                          <code>/refresh-ai-memory</code> — re-syncs <code>CLAUDE.md</code> +
-                          <code>README.md</code>.
+                          <code>/refresh-ai-memory</code> — audit + patch the 5 always-included docs
+                          (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
+                          <code>docs/agentic-development-engineering.md</code>,
+                          <code>docs/getting-started.md</code>) plus any auto-detected
+                          high-frequency markdown.
                         </li>
                         <li>
-                          <code>/project-doc-setup</code> — regenerate
-                          <code>README.md</code> and <code>CLAUDE.md</code> from current repo
-                          state.
+                          <code>/business-data-map</code>, <code>/business-feature-map</code>,
+                          <code>/business-api-map</code> — regenerate the business maps under
+                          <code>.context/business/</code>.
                         </li>
                         <li>
-                          <code>/context-engineering-setup</code> — set up or refresh the
-                          <code>.context/</code> directory structure
-                          (<code>business-data-map</code>, <code>api-architecture</code>,
-                          <code>project-dev-guide</code>).
+                          <code>/master-implementation-plan</code> — regenerate
+                          <code>.context/master-implementation-plan.md</code> (high-level
+                          dependency-cascaded roadmap).
                         </li>
                         <li>
                           <code>bun run jira:sync-fields</code> — re-catalog Jira custom fields
@@ -1537,20 +1543,28 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <td><code>/judgment-day</code> (gentle-ai)</td>
                   </tr>
                   <tr>
-                    <td>Refresh <code>CLAUDE.md</code> + <code>README.md</code> after drift</td>
+                    <td>Audit + refresh all AI-consumed docs after drift</td>
                     <td><code>/refresh-ai-memory</code></td>
                   </tr>
                   <tr>
-                    <td>Regenerate the project docs</td>
-                    <td><code>/project-doc-setup</code></td>
+                    <td>Map the business domain (entities, flows, state machines)</td>
+                    <td><code>/business-data-map</code></td>
                   </tr>
                   <tr>
-                    <td>Set up the <code>.context/</code> directory structure</td>
-                    <td><code>/context-engineering-setup</code></td>
+                    <td>Inventory all features (catalog, CRUD matrix, flags)</td>
+                    <td><code>/business-feature-map</code></td>
                   </tr>
                   <tr>
-                    <td>Sprint progress report</td>
-                    <td><code>/sprint-report</code></td>
+                    <td>Map the API (auth model, critical journeys)</td>
+                    <td><code>/business-api-map</code></td>
+                  </tr>
+                  <tr>
+                    <td>High-level implementation roadmap (waves, dependencies)</td>
+                    <td><code>/master-implementation-plan</code></td>
+                  </tr>
+                  <tr>
+                    <td>Sprint progress report (PM visibility)</td>
+                    <td><code>/product-management</code> (Workflow G)</td>
                   </tr>
                   <tr>
                     <td>Take a screenshot via AI</td>
@@ -1858,33 +1872,41 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </p>
                 <ul class="list-plain">
                   <li>
-                    <code>/project-doc-setup</code>
-                    <span class="muted"
-                      >Regenerate <code>README.md</code> and <code>CLAUDE.md</code> from current
-                      repo state and <code>.agents/project.yaml</code>.</span
-                    >
-                  </li>
-                  <li>
                     <code>/refresh-ai-memory</code>
                     <span class="muted"
-                      >Re-sync <code>CLAUDE.md</code>, <code>README.md</code> (and per-tool memory
-                      files like <code>AGENTS.md</code>) against current
-                      <code>.context/</code> + <code>package.json</code>.</span
+                      >Audit + patch the 5 always-included docs
+                      (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
+                      <code>docs/agentic-development-engineering.md</code>,
+                      <code>docs/getting-started.md</code>) plus auto-detected high-frequency
+                      markdown. Preserves human-authored structure.</span
                     >
                   </li>
                   <li>
-                    <code>/context-engineering-setup</code>
+                    <code>/business-data-map</code>
                     <span class="muted"
-                      >Set up the <code>.context/</code> directory structure —
-                      <code>business-data-map</code>, <code>api-architecture</code>,
-                      <code>project-dev-guide</code>.</span
+                      >Generate / update <code>.context/business/business-data-map.md</code> —
+                      entities, flows, state machines, external integrations.</span
                     >
                   </li>
                   <li>
-                    <code>/sprint-report</code>
+                    <code>/business-feature-map</code>
                     <span class="muted"
-                      >Generate a sprint progress report (epics + stories + PRs), focused on
-                      development progress.</span
+                      >Generate / update <code>.context/business/business-feature-map.md</code> —
+                      feature catalog by domain, CRUD matrix, API inventory, flags.</span
+                    >
+                  </li>
+                  <li>
+                    <code>/business-api-map</code>
+                    <span class="muted"
+                      >Generate / update <code>.context/business/business-api-map.md</code> — auth
+                      model, critical journeys, architecture, external integrations.</span
+                    >
+                  </li>
+                  <li>
+                    <code>/master-implementation-plan</code>
+                    <span class="muted"
+                      >Generate / update <code>.context/master-implementation-plan.md</code> —
+                      high-level dependency-cascaded roadmap of what to build first and why.</span
                     >
                   </li>
                 </ul>
@@ -2006,8 +2028,9 @@ bun run lint:agents           # validate placeholders</code></pre>
               </li>
               <li>
                 <strong><code>.context/</code></strong> = what the AI KNOWS about the project
-                (generated by <code>/project-foundation</code>, kept fresh by
-                <code>/refresh-ai-memory</code> and <code>/context-engineering-setup</code>).
+                (generated by <code>/project-foundation</code> and the
+                <code>/business-*-map</code> commands, kept fresh by
+                <code>/refresh-ai-memory</code>).
               </li>
               <li>
                 <strong>Application code</strong> = the real product, scaffolded by
@@ -2045,21 +2068,39 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
           <a
             class="footer-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="footer-card-title">agentic-development-engineering.md</span>
+            <span class="footer-card-desc">Strategy + 5-stage sprint-dev pipeline + Next.js + Supabase architecture.</span>
+          </a>
+          <a
+            class="footer-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CONTEXT.md"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="footer-card-title">CONTEXT.md</span>
+            <span class="footer-card-desc">Why the knowledge layer is split the way it is.</span>
+          </a>
+          <a
+            class="footer-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/getting-started.md"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="footer-card-title">getting-started.md</span>
+            <span class="footer-card-desc">The Markdown source this page expands on — fresh-clone walkthrough.</span>
+          </a>
+          <a
+            class="footer-card"
             href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CLAUDE.md"
             target="_blank"
             rel="noopener"
           >
             <span class="footer-card-title">CLAUDE.md</span>
             <span class="footer-card-desc">Canonical project memory + Tool Resolution table.</span>
-          </a>
-          <a
-            class="footer-card"
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/integrating-gentle-ai.md"
-            target="_blank"
-            rel="noopener"
-          >
-            <span class="footer-card-title">integrating-gentle-ai.md</span>
-            <span class="footer-card-desc">How gentle-ai installs skills + MCPs at user level.</span>
           </a>
           <a
             class="footer-card"
@@ -2072,12 +2113,12 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
           <a
             class="footer-card"
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.claude/skills/agentic-dev-onboard/SKILL.md"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.claude/skills/agentic-dev-core/SKILL.md"
             target="_blank"
             rel="noopener"
           >
-            <span class="footer-card-title">agentic-dev-onboard/SKILL.md</span>
-            <span class="footer-card-desc">First-time tour of the repo (markdown source).</span>
+            <span class="footer-card-title">agentic-dev-core/SKILL.md</span>
+            <span class="footer-card-desc">Foundation skill internals + bootstrap order.</span>
           </a>
           <a
             class="footer-card"
@@ -2090,6 +2131,15 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
           <a
             class="footer-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/integrating-gentle-ai.md"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="footer-card-title">integrating-gentle-ai.md</span>
+            <span class="footer-card-desc">How gentle-ai installs skills + MCPs at user level.</span>
+          </a>
+          <a
+            class="footer-card"
             href="https://github.com/upex-galaxy/agentic-qa-boilerplate"
             target="_blank"
             rel="noopener"
@@ -2099,8 +2149,8 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
         </div>
         <p class="footer-meta">
-          <code>agentic-dev-boilerplate</code> · MIT License · Onboarding page v1.0 · Last updated
-          2026-05-10
+          <code>agentic-dev-boilerplate</code> · MIT License · Onboarding page v1.1 · Last updated
+          2026-05-11
         </p>
       </footer>
     </div>

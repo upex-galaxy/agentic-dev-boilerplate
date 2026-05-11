@@ -4,6 +4,7 @@
 > **Usage**: AI reads this file automatically at session start.
 > **Customize**: Replace `[PLACEHOLDER]` values with your project specifics.
 > **Note**: This is the **AI-Driven Project Starter** template. Each project that uses this starter should fill in the placeholder values below.
+> **Companion files**: `README.md` (humans-first overview), `CONTEXT.md` (Context Engineering canonical map), `DESIGN.md` (visual identity contract), `docs/agentic-development-engineering.md` (methodology deep dive), `docs/getting-started.md` (onboarding for new contributors).
 
 ---
 
@@ -22,8 +23,9 @@
 # 6. /unit-testing              → Composable TDD inside sprint-dev
 #
 # Slash commands (utilities):
-# /project-doc-setup, /context-engineering-setup, /sprint-report
-# (Git/branch/commit/PR work is consolidated in the /git-flow-master skill)
+# /refresh-ai-memory
+# (Git/branch/commit/PR work is consolidated in the /git-flow-master skill;
+#  sprint reporting now lives inside the /product-management skill — workflow G)
 #
 # Plan-driven development: each skill plans before coding (skill-internal pattern).
 ```
@@ -40,13 +42,6 @@ bun run api:sync          # Sync OpenAPI spec + generate types
 bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
 bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
-```
-
-**Generate/Update Project Documentation:**
-
-```bash
-# Use this slash command to regenerate README.md and update CLAUDE.md
-/project-doc-setup
 ```
 
 ---
@@ -396,9 +391,10 @@ gh pr create --base staging
 ### Level 1: Project-Wide (loaded at session start)
 
 ```
-.context/discovery/business-data-map.md   → System flows and entities
-.context/discovery/api-architecture.md    → API endpoints reference
-.context/discovery/project-dev-guide.md   → How to develop features
+.context/business/business-data-map.md     → System flows and entities
+.context/business/business-feature-map.md  → Feature inventory (CRUD matrix, UI inventory)
+.context/business/business-api-map.md      → API as journey-enabler (auth model, endpoints)
+.context/master-implementation-plan.md     → Prioritized feature roadmap
 ```
 
 ### Level 2: Module-Level (shared across stories in a module)
@@ -424,7 +420,7 @@ gh pr create --base staging
 
 | Task                    | Load These Files                                                      |
 | ----------------------- | --------------------------------------------------------------------- |
-| **Develop a Feature**   | `project-dev-guide.md` + relevant `module-context.md`                 |
+| **Develop a Feature**   | `business-feature-map.md` + relevant `module-context.md`              |
 | **Plan a Story**        | `module-context.md` + story `context.md` + `business-data-map.md`     |
 | **Write Unit Test**     | `/unit-testing` skill internal docs                                   |
 | **Understand System**   | `business-data-map.md` + `PRD/user-journeys.md`                       |
@@ -565,12 +561,15 @@ After running `/project-foundation` and `/project-bootstrap`, run `npx autoskill
 
 ### Slash Commands (utilities)
 
-| Command                      | Purpose                                                 |
-| ---------------------------- | ------------------------------------------------------- |
-| `/project-doc-setup`         | Regenerate README.md and CLAUDE.md from repo state      |
-| `/context-engineering-setup` | Set up `.context/` directory structure                  |
-| `/sprint-report`             | Generate sprint progress report (epics + stories + PRs) |
-| `/refresh-ai-memory`         | Refresh README + AI memory file from current repo state |
+| Command                       | Purpose                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| `/refresh-ai-memory`          | Refresh README + AI memory file from current repo state                       |
+| `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                   |
+| `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                |
+| `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                    |
+| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md` (prioritized roadmap) |
+
+> Sprint reporting (epics + stories + PRs snapshot) lives inside `/product-management` (workflow G) — trigger with "sprint report", "estado del sprint", or "qué hay en el sprint".
 
 > Git, branch, commit, push, PR, conflict-fix and chained-PR planning are all in the `/git-flow-master` skill (Workflow Skills table above), not as separate slash commands.
 

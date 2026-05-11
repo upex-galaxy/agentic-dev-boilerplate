@@ -83,7 +83,7 @@ jq '.fields | keys[] | select(startswith("customfield_"))'
 # Default fields (issuetype,key,assignee,priority,status,summary)
 acli jira workitem search --jql "project = UPEX" --paginate --csv > upex.csv
 
-# Custom columns — sprint snapshot for /sprint-report
+# Custom columns — sprint snapshot for /product-management workflow G (sprint report)
 acli jira workitem search --jql "project = UPEX AND sprint in openSprints()" --paginate \
   --fields "key,summary,assignee,status,priority,created,updated" \
   --csv > sprint-detailed.csv

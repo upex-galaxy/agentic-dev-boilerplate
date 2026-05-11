@@ -100,13 +100,44 @@ Output: `.context/SRS/*.md` files.
 
 ### 4. Discovery (Codify the system mental model)
 
-Discovery produces the running-mental-model docs every later skill loads at session start: the entity map, the API map, and a conversational dev guide. These three docs are what makes a fresh AI session productive on day one.
+Discovery produces the running-mental-model docs every later skill loads at session start: the entity map, the feature inventory, the API map, and a conversational dev guide. Together they make a fresh AI session productive on day one.
 
-- Read `references/business-data-map.md` to map entities, relationships, and business flows visually.
-- Read `references/api-architecture.md` to discover (existing system) or design (new system) the endpoint catalog with auth classification and testing examples.
-- Read `references/project-dev-guide.md` to produce a conversational guide that answers "how do I build feature X here?".
+Phase 4 is now an **orchestrator** — it delegates to four standalone commands (each invocable on its own from any session) plus the one in-skill reference for the dev guide. Re-running individual commands later (after schema or feature changes) is the supported maintenance flow.
 
-Output: `.context/discovery/business-data-map.md`, `.context/discovery/api-architecture.md`, `.context/discovery/project-dev-guide.md`.
+**Step 1 — Business data map** (entities, business flows, state machines, automatic processes, external integrations):
+- Invoke the `/business-data-map` command.
+- Pointer: `references/business-data-map.md`.
+- Output: `.context/business/business-data-map.md`.
+
+**Step 2 — Business feature map** (feature inventory by domain, CRUD matrix, endpoint catalog, UI component inventory, third-party integrations, feature flags):
+- Invoke the `/business-feature-map` command.
+- Soft gate: Step 1 should be done first (the command will surface a warning if `business-data-map.md` is missing but will not block).
+- Output: `.context/business/business-feature-map.md`.
+
+**Step 3 — Business API map** (auth model, critical user journeys traced through API call chains, architecture behind the API, integrations at the API boundary):
+- Invoke the `/business-api-map` command.
+- Pointer: `references/api-architecture.md` (kept under the legacy name for grep-stability; the command writes `business-api-map.md` instead of the legacy `api-architecture.md`).
+- Soft gates: Steps 1 and 2 inform but do not block.
+- Output: `.context/business/business-api-map.md`.
+
+**Step 4 — Project dev guide** (conversational onboarding guide for any developer — human or AI — joining the project):
+- Read `references/project-dev-guide.md` and execute it in-skill (this one has no standalone command — its content is unique to the foundation flow).
+- Hard prerequisite: `.context/business/business-data-map.md` from Step 1.
+- Output: `.context/business/project-dev-guide.md`.
+
+**Step 5 — Master implementation plan** (bonus: roadmap of all features to build, dependency-cascaded and value-prioritized — the natural synthesis of Steps 1–3):
+- Invoke the `/master-implementation-plan` command.
+- Hard gate: `.context/business/business-data-map.md` (Step 1).
+- Soft gate: `.context/business/business-feature-map.md` (Step 2).
+- Output: `.context/master-implementation-plan.md`.
+- This step is **recommended but optional**. Skip it if the user has not yet defined product scope (e.g. greenfield where only the constitution exists). Re-invoke later, after `/product-management` has seeded the backlog, to align the master plan with the planned epics.
+
+**Final Phase 4 outputs:**
+- `.context/business/business-data-map.md`
+- `.context/business/business-feature-map.md`
+- `.context/business/business-api-map.md`
+- `.context/business/project-dev-guide.md`
+- `.context/master-implementation-plan.md` (if Step 5 ran)
 
 ---
 
@@ -125,9 +156,11 @@ Output: `.context/discovery/business-data-map.md`, `.context/discovery/api-archi
 | "NFR" / "performance/security/scalability" / "no funcional"  | `references/srs-non-functional.md`          |
 | "system architecture" / "tech stack" / "diagrama de sistema" | `references/srs-architecture.md`            |
 | "API contracts" / "OpenAPI" / "endpoints definition"         | `references/srs-api-contracts.md`           |
-| "business data map" / "entity model" / "mapa de negocio"     | `references/business-data-map.md`           |
-| "API architecture discovery" / "endpoint catalog"            | `references/api-architecture.md`            |
+| "business data map" / "entity model" / "mapa de negocio"     | invoke `/business-data-map` (pointer: `references/business-data-map.md`) |
+| "business feature map" / "feature inventory" / "CRUD matrix" | invoke `/business-feature-map`              |
+| "API architecture discovery" / "endpoint catalog" / "auth model" | invoke `/business-api-map` (pointer: `references/api-architecture.md`) |
 | "project dev guide" / "guía de desarrollo" / "onboarding"    | `references/project-dev-guide.md`           |
+| "master implementation plan" / "what to build first" / "roadmap" | invoke `/master-implementation-plan`     |
 
 If the user intent does not match a row exactly, identify the closest phase (Constitution / PRD / SRS / Discovery) and fall back to the most relevant reference, surfacing in the report that no exact match was found.
 
@@ -139,7 +172,7 @@ Phases 1 → 2 → 3 → 4 are **logically sequential** (each phase consumes out
 
 - **Phase 2 (PRD)**: `prd-personas`, `prd-user-journeys`, `prd-mvp-scope` can run in parallel after `prd-executive-summary` is drafted.
 - **Phase 3 (SRS)**: `srs-functional`, `srs-non-functional`, `srs-architecture`, `srs-api-contracts` can run in parallel once the PRD is locked.
-- **Phase 4 (Discovery)**: all three discovery docs are independent and run in parallel against the same source code / SRS.
+- **Phase 4 (Discovery)**: Steps 1 (`/business-data-map`) and 2 (`/business-feature-map`) can run in parallel against the same source code / SRS. Step 3 (`/business-api-map`) is parallel-friendly with 1 and 2 (soft gates only). Step 4 (`project-dev-guide`) has a hard prerequisite on Step 1. Step 5 (`/master-implementation-plan`) is the natural synthesis after Steps 1–3 — run it last.
 
 Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 6-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
 
@@ -177,4 +210,4 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 - This skill is **one-time per project**. If scope changes significantly mid-project, re-invoke specific phases (e.g. only `references/prd-mvp-scope.md` to re-cut the MVP).
 - Several reference files are written in Spanish (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
 - This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If those are unset, run `/agentic-dev-core` first.
-- The discovery references (`business-data-map.md`, `api-architecture.md`, `project-dev-guide.md`) are intentionally agnostic of stack and can run on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code).
+- The discovery step now delegates to four standalone commands (`/business-data-map`, `/business-feature-map`, `/business-api-map`, `/master-implementation-plan`) plus one in-skill reference (`references/project-dev-guide.md`). All are intentionally agnostic of stack and work on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code). Re-invoke an individual command directly when only one artifact needs refreshing — there's no need to re-run the whole foundation.

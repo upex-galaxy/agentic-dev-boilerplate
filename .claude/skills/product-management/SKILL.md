@@ -1,6 +1,6 @@
 ---
 name: product-management
-description: "Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refinement (INVEST + 3-amigos), AC quality refinement (Gherkin), and edge-case enumeration. Triggers on: 'create epic', 'crear épica', 'agregar historia al backlog', 'add feature', 'refine acceptance criteria', 'enumerar edge cases', 'INVEST a esta historia', '3 amigos', 'story refinement', 'product backlog seed', 'epic creation', 'ready for development checklist'. Do NOT use for: foundational product definition (use `/project-foundation`), infrastructure scaffolding (use `/project-bootstrap`), per-story implementation (use `/sprint-dev`), unit testing (use `/unit-testing`), or formal QA test cases / TMS workflows (out of scope, see `agentic-qa-boilerplate`)."
+description: "Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refinement (INVEST + 3-amigos), AC quality refinement (Gherkin), edge-case enumeration, and sprint reporting (PM visibility snapshot). Triggers on: 'create epic', 'crear épica', 'agregar historia al backlog', 'add feature', 'refine acceptance criteria', 'enumerar edge cases', 'INVEST a esta historia', '3 amigos', 'story refinement', 'product backlog seed', 'epic creation', 'ready for development checklist', 'sprint report', 'reporte de sprint', 'estado del sprint', 'reporte de épicas y stories', 'qué hay en el sprint', 'progress report', 'dashboard del backlog', 'in-flight stories snapshot'. Do NOT use for: foundational product definition (use `/project-foundation`), infrastructure scaffolding (use `/project-bootstrap`), per-story implementation (use `/sprint-dev`), unit testing (use `/unit-testing`), or formal QA test cases / TMS workflows (out of scope, see `agentic-qa-boilerplate`)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: management
@@ -88,16 +88,25 @@ Read `references/edge-cases-enumeration.md`.
 
 Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists at `.context/PBI/{ticket}/edge-cases.md` with topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
+### G. Sprint reporting (read-only PM snapshot)
+
+When the user wants a development-oriented view of the current sprint and backlog — epics, stories, PRs grouped by status (BLOCKED, In Progress, In Review, Ready For Dev, Backlog, Done) with metrics and alerts. This is **read-only** — it does not change Jira state, does not create issues, and does not write to `.context/`. Its job is to gather state from `[ISSUE_TRACKER_TOOL]` (and optionally `gh` for PRs) and render a structured markdown report in the conversation.
+
+Read `references/sprint-report.md`.
+
+Output: a markdown sprint report rendered inline (epics + stories + PRs + status summary + per-epic progress + alerts). Not persisted by default — persist only if the user explicitly asks.
+
 ## Specific tasks — which reference to read
 
-| User intent                                                                             | Read                                   |
-| --------------------------------------------------------------------------------------- | -------------------------------------- |
-| "create initial backlog from PRD" / "seed the product backlog"                          | `references/product-backlog-seed.md`   |
-| "add new feature" / "agregar feature al backlog" / "incremental story creation"         | `references/add-feature.md`            |
-| "create epic" / "crear épica" / "epic structure" / "epic vs feature flag"               | `references/epic-creation.md`          |
-| "refine this story" / "INVEST" / "ready for development" / "3 amigos" / "story slicing" | `references/story-refinement.md`       |
-| "refine AC" / "acceptance criteria quality" / "Gherkin scenarios" / "AC ambiguities"    | `references/acceptance-criteria.md`    |
-| "enumerate edge cases" / "boundary scenarios" / "failure modes" / "what could go wrong" | `references/edge-cases-enumeration.md` |
+| User intent                                                                                                                      | Read                                   |
+| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| "create initial backlog from PRD" / "seed the product backlog"                                                                   | `references/product-backlog-seed.md`   |
+| "add new feature" / "agregar feature al backlog" / "incremental story creation"                                                  | `references/add-feature.md`            |
+| "create epic" / "crear épica" / "epic structure" / "epic vs feature flag"                                                        | `references/epic-creation.md`          |
+| "refine this story" / "INVEST" / "ready for development" / "3 amigos" / "story slicing"                                          | `references/story-refinement.md`       |
+| "refine AC" / "acceptance criteria quality" / "Gherkin scenarios" / "AC ambiguities"                                             | `references/acceptance-criteria.md`    |
+| "enumerate edge cases" / "boundary scenarios" / "failure modes" / "what could go wrong"                                          | `references/edge-cases-enumeration.md` |
+| "sprint report" / "reporte de sprint" / "estado del sprint" / "qué hay en el sprint" / "progress report" / "dashboard del backlog" | `references/sprint-report.md`          |
 
 ## Optional: Delta Specs Pattern
 

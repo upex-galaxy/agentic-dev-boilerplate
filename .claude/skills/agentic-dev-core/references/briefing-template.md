@@ -138,9 +138,11 @@ Stage 1 — Planning agent
 Goal: Produce an implementation plan for ticket <<ISSUE_KEY>> under .context/PBI/<<ISSUE_KEY>>/impl-plan.md.
 
 Context docs:
-  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/discovery/business-data-map.md
-  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/discovery/api-architecture.md
-  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/discovery/project-dev-guide.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/business/business-data-map.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/business/business-feature-map.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/business/business-api-map.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/business/project-dev-guide.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/master-implementation-plan.md
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/PBI/<<ISSUE_KEY>>/spec.md
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.claude/skills/sprint-dev/references/spec-driven-development.md
 

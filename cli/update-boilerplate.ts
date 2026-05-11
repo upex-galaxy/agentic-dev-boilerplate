@@ -1501,8 +1501,6 @@ function detectUnfilledVariables(): void {
 
   console.log('');
   logInfo('Abre CLAUDE.md y completa la tabla de Project Variables.');
-  logInfo('O ejecuta este comando en tu asistente IA:\n');
-  console.log(`   ${colors.cyan}/project-doc-setup${colors.reset}\n`);
 }
 
 // ============================================================================
@@ -1538,7 +1536,7 @@ ${colors.yellow}║${colors.reset}  se resuelven desde tu configuracion en CLAUD
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  ${colors.bold}DESPUES${colors.reset} de que esta actualizacion termine, ejecuta:        ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
-${colors.yellow}║${colors.reset}    ${colors.green}/project-doc-setup${colors.reset}                                      ${colors.yellow}║${colors.reset}
+${colors.yellow}║${colors.reset}    ${colors.green}/refresh-ai-memory${colors.reset}                                      ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  Esto actualizara tu CLAUDE.md con la nueva tabla de         ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  variables y lo configurara para tu proyecto.                ${colors.yellow}║${colors.reset}

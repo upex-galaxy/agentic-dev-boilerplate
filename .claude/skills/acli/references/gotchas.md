@@ -28,7 +28,7 @@ Everything the official docs do not make obvious. Every item here is something t
 
 **The problem.** `workitem search`, `project list`, and every other list/search command stops at the server default (30–50 rows) when `--paginate` is not set. There is no warning, no non-zero exit code, no stderr message.
 
-**Why it matters.** Audit scripts that count tickets (e.g. `/sprint-report` counting in-flight stories), batch scripts that iterate over keys, or anything making decisions based on the result set will silently make the wrong decision.
+**Why it matters.** Audit scripts that count tickets (e.g. `/product-management` workflow G counting in-flight stories for a sprint report), batch scripts that iterate over keys, or anything making decisions based on the result set will silently make the wrong decision.
 
 **Fix.** Always pass `--paginate` in automation. If your use case truly wants only the top N, pass an explicit `--limit N` to make the cap intentional.
 

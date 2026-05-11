@@ -269,14 +269,11 @@ Variables necesitan configuracion en CLAUDE.md / .agents/project.yaml:
    {{JIRA_URL}}             3 archivos   Configurado
 
 Abre CLAUDE.md y completa la tabla de Project Variables (o edita .agents/project.yaml).
-O ejecuta este slash command en tu asistente:
-
-   /project-doc-setup
 ```
 
 ### Como resolver
 
-Abre `CLAUDE.md`, busca la seccion **Project Variables** y reemplaza los valores de ejemplo. Tambien puedes editar directamente `.agents/project.yaml` (single source of truth) y validar con `bun run lint:agents`. El slash command `/project-doc-setup` regenera `README.md` y `CLAUDE.md` desde el estado actual del repo.
+Abre `CLAUDE.md`, busca la seccion **Project Variables** y reemplaza los valores de ejemplo. Tambien puedes editar directamente `.agents/project.yaml` (single source of truth) y validar con `bun run lint:agents`.
 
 ---
 
@@ -394,7 +391,7 @@ bun add @inquirer/prompts
 
 ### Mi proyecto venia de v3.x y no veo skills
 
-Ejecuta `bun up claude` para sincronizar `.claude/skills/` y `.claude/commands/`. Despues ejecuta `/project-doc-setup` en Claude Code para regenerar `CLAUDE.md` con la lista actualizada de skills.
+Ejecuta `bun up claude` para sincronizar `.claude/skills/` y `.claude/commands/`.
 
 ---
 
@@ -407,7 +404,7 @@ Ejecuta `bun up claude` para sincronizar `.claude/skills/` y `.claude/commands/`
 - Usa `--dry-run` antes de actualizar para ver que cambiaria sin riesgo
 - Usa `--rollback` si algo salio mal — restaura el backup mas reciente en un paso
 - Revisa `.template-version.json` para saber cuando fue tu ultima sincronizacion
-- Si ves advertencias de variables, completa la tabla en `CLAUDE.md` o ejecuta `/project-doc-setup`
+- Si ves advertencias de variables, completa la tabla en `CLAUDE.md`
 
 ---
 
