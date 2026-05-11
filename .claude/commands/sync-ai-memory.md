@@ -1,13 +1,13 @@
 ---
-name: refresh-ai-memory
-description: Audit + refresh all AI-consumed documentation in this repo. Detects critical markdown files (README, CLAUDE.md, CONTEXT.md, docs/agentic-development-engineering.md, docs/getting-started.md, plus auto-detected high-frequency docs) and patches them in-place. Preserves human-authored structure — never rewrites from scratch. Triggers on 'refresh memory', 'refresh ai memory', 'sync docs', 'actualizar memoria', 'docs audit', 'refrescar documentación', 'realinear documentación con el estado del repo'. Do NOT use for: writing new docs (use /agentic-dev-core or manual), generating business maps (use /business-data-map etc.), creating CONTEXT.md from scratch (one-time manual creation).
+name: sync-ai-memory
+description: Audit + sync all AI-consumed documentation in this repo. Detects critical markdown files (README, CLAUDE.md, CONTEXT.md, docs/agentic-development-engineering.md, docs/getting-started.md, plus auto-detected high-frequency docs) and patches them in-place. Also syncs the rendered HTML mirror (docs/onboarding/index.html) when present. Preserves human-authored structure — never rewrites from scratch. Triggers on 'sync ai memory', 'sync docs', 'sincronizar memoria', 'docs audit', 'realinear documentación con el estado del repo' (canonical), plus back-compat aliases 'refresh memory', 'refresh ai memory', 'actualizar memoria', 'refrescar documentación'. Do NOT use for: writing new docs (use /agentic-dev-core or manual), generating business maps (use /business-data-map etc.), creating CONTEXT.md from scratch (one-time manual creation).
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 ---
 
-# Refresh AI Memory — Repo Doc Audit & Sync
+# Sync AI Memory — Repo Doc Audit & Sync
 
-Audit every markdown file the AI consumes at session start (or that humans treat as authoritative), then **patch in place** only the facts that have drifted. This is a **multi-doc sync**, not a single-file refresh and not a from-scratch regeneration. Every doc in scope is either patched surgically or confirmed unchanged.
+Audit every markdown file the AI consumes at session start (or that humans treat as authoritative), then **patch in place** only the facts that have drifted. The verb is **sync**, not refresh: once the operation grew to audit + cross-doc consistency check + per-doc preserve-list + HTML rendered-from sync, the original "refresh" framing was too narrow. Every doc in scope is either patched surgically or confirmed unchanged.
 
 **Target**: `$ARGUMENTS` (leave blank to operate on the current repo)
 

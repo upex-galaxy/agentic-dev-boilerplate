@@ -115,7 +115,7 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 | `docs/`             | Humanos   | Aprendizaje, tutoriales, referencia                              |
 | `.context/`         | AI        | Memoria persistente del proyecto (PRD, SRS, business map, PBI)   |
 | `.claude/skills/`   | AI        | Workflows ejecutables (skills auto-cargadas por Claude Code)     |
-| `.claude/commands/` | AI        | Slash commands de utilidad (`/refresh-ai-memory`, `/business-*`, etc.) |
+| `.claude/commands/` | AI        | Slash commands de utilidad (`/sync-ai-memory`, `/business-*`, etc.) |
 | `CLAUDE.md`         | AI        | Operational context cargado en cada sesión                       |
 
 **Regla general**:

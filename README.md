@@ -83,7 +83,7 @@ These skills are not committed in this repo; the installer fetches them via `npx
 
 | Command                       | Purpose                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------- |
-| `/refresh-ai-memory`          | Refresh README + AI memory file from current repo state                       |
+| `/sync-ai-memory`             | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
 | `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                   |
 | `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                |
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                    |

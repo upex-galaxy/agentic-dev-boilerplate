@@ -26,7 +26,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-ma
 ## Why this is a pointer, not the playbook
 
 Keeping the playbook in one place (`.claude/commands/business-data-map.md`) means:
-- `/sprint-dev`, `/refresh-ai-memory`, and ad-hoc discovery all share the same generator.
+- `/sprint-dev`, `/sync-ai-memory`, and ad-hoc discovery all share the same generator.
 - Changes to entity-mapping heuristics happen in one file.
 - Phase 4 of `project-foundation` stays an orchestrator, not a duplicate of the command.
 

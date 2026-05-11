@@ -129,7 +129,7 @@ These files have stable names and locations. Any skill, command, or doc can refe
 
 | Command                       | Purpose                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------- |
-| `/refresh-ai-memory`          | Refresh `README.md` + `CLAUDE.md` from current repo state                     |
+| `/sync-ai-memory`             | Audit + sync `README.md`, `CLAUDE.md`, `CONTEXT.md`, `docs/`, and onboarding HTML against current repo state |
 | `/business-data-map`          | Generate/update `.context/business/business-data-map.md`                      |
 | `/business-feature-map`       | Generate/update `.context/business/business-feature-map.md`                   |
 | `/business-api-map`           | Generate/update `.context/business/business-api-map.md`                       |
@@ -288,7 +288,7 @@ Curated, repo-specific. The full list of generic rules lives in `CLAUDE.md` — 
 4. **Treat skills as the workflow source of truth** — if a workflow lives in a doc but not a skill, the doc is wrong.
 5. **Save decisions to engram** as you make them (`mem_save`) — they survive sessions and compactions.
 6. **Re-run a generator instead of hand-editing** any file under `.context/_framework/` or `.context/business/`.
-7. **Use `/refresh-ai-memory` after a major repo change** — keeps `README.md` and `CLAUDE.md` in sync.
+7. **Use `/sync-ai-memory` after a major repo change** — keeps `README.md`, `CLAUDE.md`, `CONTEXT.md`, `docs/`, and the onboarding HTML in sync.
 
 ### DON'T
 
@@ -309,8 +309,8 @@ Use this table to decide what to re-generate after what kind of change.
 
 | Change                                    | Update                                              | How                                              |
 | ----------------------------------------- | --------------------------------------------------- | ------------------------------------------------ |
-| Project identity (name, key, URLs)        | `.agents/project.yaml`, then `CLAUDE.md`            | Edit YAML; run `/refresh-ai-memory`              |
-| New MCP added/removed                     | `CLAUDE.md` § MCPs Available, `.mcp.json`           | Edit manually; run `/refresh-ai-memory`          |
+| Project identity (name, key, URLs)        | `.agents/project.yaml`, then `CLAUDE.md`            | Edit YAML; run `/sync-ai-memory`                 |
+| New MCP added/removed                     | `CLAUDE.md` § MCPs Available, `.mcp.json`           | Edit manually; run `/sync-ai-memory`             |
 | New skill added/removed                   | `.context/_framework/skill-registry.md`             | `bun scripts/build-skill-registry.ts`            |
 | Stack/conventions evolve                  | `.claude/skills/<name>/references/`                 | Edit skill references directly                   |
 | Domain model pivots                       | `.context/business/business-data-map.md`            | `/business-data-map`                             |
@@ -318,7 +318,7 @@ Use this table to decide what to re-generate after what kind of change.
 | API auth or topology changes              | `.context/business/business-api-map.md`             | `/business-api-map`                              |
 | New epic / story refinement               | `.context/PBI/<epic-or-ticket>/*`                   | `/product-management`                            |
 | Major rebrand / new visual identity       | `DESIGN.md` at repo root                            | `/design-system`                                 |
-| This file (`CONTEXT.md`) drifts from repo | Update sections that no longer match the filesystem | Edit manually or `/refresh-ai-memory` if covered |
+| This file (`CONTEXT.md`) drifts from repo | Update sections that no longer match the filesystem | Edit manually or `/sync-ai-memory` if covered    |
 
 ---
 
@@ -339,4 +339,4 @@ Use this table to decide what to re-generate after what kind of change.
 
 ---
 
-**Maintenance**: If you find yourself in the codebase and notice that this file no longer matches reality, update the affected section directly or run `/refresh-ai-memory` if the drift is covered there. The cost of stale context is paid by every future session — keep it honest.
+**Maintenance**: If you find yourself in the codebase and notice that this file no longer matches reality, update the affected section directly or run `/sync-ai-memory` if the drift is covered there. The cost of stale context is paid by every future session — keep it honest.

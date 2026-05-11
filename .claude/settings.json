@@ -59,7 +59,7 @@
       "Skill(acli)",
       "Skill(git-flow-master)",
       "Skill(agentic-dev-onboard)",
-      "Skill(refresh-ai-memory)"
+      "Skill(sync-ai-memory)"
     ],
     "deny": [
       "Bash(rm -rf *)",

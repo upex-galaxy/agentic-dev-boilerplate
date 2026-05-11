@@ -1536,7 +1536,7 @@ ${colors.yellow}║${colors.reset}  se resuelven desde tu configuracion en CLAUD
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  ${colors.bold}DESPUES${colors.reset} de que esta actualizacion termine, ejecuta:        ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
-${colors.yellow}║${colors.reset}    ${colors.green}/refresh-ai-memory${colors.reset}                                      ${colors.yellow}║${colors.reset}
+${colors.yellow}║${colors.reset}    ${colors.green}/sync-ai-memory${colors.reset}                                         ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}                                                            ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  Esto actualizara tu CLAUDE.md con la nueva tabla de         ${colors.yellow}║${colors.reset}
 ${colors.yellow}║${colors.reset}  variables y lo configurara para tu proyecto.                ${colors.yellow}║${colors.reset}

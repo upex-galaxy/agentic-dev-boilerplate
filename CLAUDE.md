@@ -23,7 +23,7 @@
 # 6. /unit-testing              → Composable TDD inside sprint-dev
 #
 # Slash commands (utilities):
-# /refresh-ai-memory
+# /sync-ai-memory
 # (Git/branch/commit/PR work is consolidated in the /git-flow-master skill;
 #  sprint reporting now lives inside the /product-management skill — workflow G)
 #
@@ -102,7 +102,7 @@ For details on every installer layer (gentle-ai, community skills, MCPs, externa
 - If you notice unrelated dead code, mention it — don't delete it.
 - Remove imports/variables/functions that **your** changes made unused.
 
-> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/refresh-ai-memory` (project memory), `/sprint-dev` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
+> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/sync-ai-memory` (project memory + cross-doc consistency + HTML rendered-from sync), `/sprint-dev` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
 
 ### 4. Goal-Driven Execution
 
@@ -563,7 +563,7 @@ After running `/project-foundation` and `/project-bootstrap`, run `npx autoskill
 
 | Command                       | Purpose                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------- |
-| `/refresh-ai-memory`          | Refresh README + AI memory file from current repo state                       |
+| `/sync-ai-memory`             | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
 | `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                   |
 | `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                |
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                    |

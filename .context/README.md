@@ -72,6 +72,6 @@ After that, `/sprint-dev` operates per ticket and fills in `PBI/{ticket}/*` file
 ## References
 
 - Repo architecture: `CONTEXT.md` (root) — canonical Context Engineering map
-- Project memory: `CLAUDE.md` (root) — generated/refreshed via `/refresh-ai-memory`
+- Project memory: `CLAUDE.md` (root) — generated/synced via `/sync-ai-memory`
 - Skill cookbook: `.claude/skills/*/SKILL.md` (also indexed in `_framework/skill-registry.md`)
 - Topic keys for engram: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`
