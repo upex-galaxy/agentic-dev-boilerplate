@@ -22,7 +22,7 @@ Tu objetivo es **DOCUMENTAR COMPLETAMENTE** la arquitectura de APIs del proyecto
 - **No duplicar:** Si existe `business-data-map.md`, referencia flujos de negocio
 - **Mantenible:** Patrón CREATE/UPDATE para mantener sincronizado
 
-**Output:** `.context/api-architecture.md`
+**Output:** `.context/discovery/api-architecture.md`
 
 ---
 
@@ -45,7 +45,7 @@ Tu objetivo es **DOCUMENTAR COMPLETAMENTE** la arquitectura de APIs del proyecto
    - Usar para comprender esquema si es necesario
 
 4. **Documentación existente:**
-   - Buscar: `.context/business-data-map.md` (flujos de negocio)
+   - Buscar: `.context/discovery/business-data-map.md` (flujos de negocio)
    - Buscar: `.context/SRS/` (especificaciones técnicas)
    - Buscar: `.context/api-auth.md` (documentación de auth existente)
 
@@ -75,7 +75,7 @@ Tu objetivo es **DOCUMENTAR COMPLETAMENTE** la arquitectura de APIs del proyecto
 ### 0.3 Detectar Modo
 
 ```
-¿Existe .context/api-architecture.md?
+¿Existe .context/discovery/api-architecture.md?
   → SÍ: Modo UPDATE (mostrar diff, pedir confirmación)
   → NO: Modo CREATE (generar desde cero)
 ```
@@ -186,13 +186,13 @@ grep -r "@app\.\(get\|post\|put\|patch\|delete\)" --include="*.py"
 - ¿Qué endpoints escriben a qué tablas?
 - ¿Hay operaciones que cruzan múltiples tablas?
 
-**Si existe `.context/business-data-map.md`, referenciar** en lugar de duplicar.
+**Si existe `.context/discovery/business-data-map.md`, referenciar** en lugar de duplicar.
 
 ---
 
 ## FASE 2: GENERACIÓN DEL DOCUMENTO
 
-### Genera: `.context/api-architecture.md`
+### Genera: `.context/discovery/api-architecture.md`
 
 El documento debe ser **VISUAL** y orientado a **TESTING**. Usa diagramas ASCII extensivamente.
 
@@ -756,7 +756,7 @@ Buscar en el archivo de system prompt (CLAUDE.md o similar) si existe una secci�
 ```markdown
 ## API Architecture
 
-See `.context/api-architecture.md` for comprehensive API documentation including:
+See `.context/discovery/api-architecture.md` for comprehensive API documentation including:
 
 - Complete endpoint catalog grouped by domain
 - Authentication requirements per endpoint
@@ -826,7 +826,7 @@ Al terminar, mostrar:
 
 ## Archivo Creado:
 
-`.context/api-architecture.md`
+`.context/discovery/api-architecture.md`
 
 ## Sistema Documentado:
 
@@ -848,7 +848,7 @@ Al terminar, mostrar:
 
 ## Documentos Relacionados:
 
-- `.context/business-data-map.md` - Flujos de negocio
+- `.context/discovery/business-data-map.md` - Flujos de negocio
 - `.context/api-auth.md` - Documentación detallada de auth
 
 ## Próximos Pasos:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * detect-testing-capabilities.ts — emits `.context/testing-capabilities.json`.
+ * detect-testing-capabilities.ts — emits `.context/_framework/testing-capabilities.json`.
  *
  * Cached, write-once snapshot of the project's testing tooling so downstream
  * skills (`unit-testing`, `sprint-dev`) can read a static fact instead of
@@ -46,7 +46,7 @@ const PACKAGE_JSON = join(REPO_ROOT, 'package.json');
 const TSCONFIG = join(REPO_ROOT, 'tsconfig.json');
 const CLAUDE_MD = join(REPO_ROOT, 'CLAUDE.md');
 const PROJECT_YAML = join(REPO_ROOT, '.agents', 'project.yaml');
-const CACHE_DIR = join(REPO_ROOT, '.context');
+const CACHE_DIR = join(REPO_ROOT, '.context', '_framework');
 const CACHE_FILE = join(CACHE_DIR, 'testing-capabilities.json');
 
 const ESLINT_CONFIGS = [
@@ -93,7 +93,7 @@ function printHelp(): void {
   console.log(`Usage: bun scripts/detect-testing-capabilities.ts [--dry-run] [--verbose] [--help]
 
 Detects the project's testing capabilities (runner, e2e, typecheck, lint,
-strict_tdd) and writes .context/testing-capabilities.json. Consumed by the
+strict_tdd) and writes .context/_framework/testing-capabilities.json. Consumed by the
 unit-testing and sprint-dev skills.
 
 Flags:

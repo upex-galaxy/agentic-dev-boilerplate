@@ -8,7 +8,7 @@ Downstream workflow skills (`unit-testing` decides whether to enforce TDD red-gr
 
 ## Cache schema
 
-The cache lives at `.context/testing-capabilities.json` (gitignored or not — that's the project's call; the file is reproducible). Schema:
+The cache lives at `.context/_framework/testing-capabilities.json` (gitignored or not — that's the project's call; the file is reproducible). Schema:
 
 ```jsonc
 {
@@ -65,12 +65,12 @@ Ties go to the highest-priority signal. If `CLAUDE.md` says `false` but `project
 
 | Event                           | Action                                                                                                                             |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `/agentic-dev-core` is invoked      | The bootstrap step runs `bun scripts/detect-testing-capabilities.ts`, which (re)writes `.context/testing-capabilities.json`.       |
+| `/agentic-dev-core` is invoked      | The bootstrap step runs `bun scripts/detect-testing-capabilities.ts`, which (re)writes `.context/_framework/testing-capabilities.json`.       |
 | Consumer skill needs the cache  | Read the JSON file directly. Treat as static. Do NOT re-detect.                                                                    |
 | Cache is missing                | Tell the user to run `/agentic-dev-core`. Do not silently re-detect — that defeats the purpose of caching.                             |
 | `package.json` changes mid-flow | Cache becomes stale by definition. Stale cache is preferred to inconsistent re-detection; user re-runs `/agentic-dev-core` when ready. |
 
-The script never deletes anything. It only writes `.context/testing-capabilities.json` (creating `.context/` if missing).
+The script never deletes anything. It only writes `.context/_framework/testing-capabilities.json` (creating `.context/_framework/` if missing).
 
 ## Consumers
 

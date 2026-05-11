@@ -125,8 +125,8 @@ These files have stable names and locations. Reference them confidently:
 | `CLAUDE.md`                          | Project memory, loaded every Claude Code session |
 | `CLAUDE.md`                          | Same as CLAUDE.md, for non-Claude agents         |
 | `.agents/project.yaml`               | Project variable values (single source of truth) |
-| `.context/business-data-map.md`      | System flows and entities (Discovery output)     |
-| `.context/api-architecture.md`       | API endpoints reference (Discovery output)       |
+| `.context/discovery/business-data-map.md`      | System flows and entities (Discovery output)     |
+| `.context/discovery/api-architecture.md`       | API endpoints reference (Discovery output)       |
 | `.claude/skills/sprint-dev/SKILL.md` | Per-story dev loop entry point                   |
 
 ---
@@ -189,7 +189,7 @@ These files have stable names and locations. Reference them confidently:
 
 - Let `CLAUDE.md` load automatically (it's small and curated)
 - Invoke skills by intent — they self-load only what they need
-- Use Discovery outputs (`.context/business-data-map.md`, `.context/api-architecture.md`) as living documentation
+- Use Discovery outputs (`.context/discovery/business-data-map.md`, `.context/discovery/api-architecture.md`) as living documentation
 - Reference code in `tests/components/` (or feature folders) as living examples
 
 ### DON'T

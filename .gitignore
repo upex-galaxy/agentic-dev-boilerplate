@@ -77,3 +77,6 @@ dbhub.toml
 
 # ===== Planning artifacts (local context only, not part of boilerplate) =====
 .plans/
+
+# ===== Auto-generated framework caches with timestamps =====
+.context/_framework/testing-capabilities.json

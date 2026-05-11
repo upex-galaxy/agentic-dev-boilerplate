@@ -480,7 +480,7 @@ See [{system-prompt-file}]({path}) for detailed instructions.
 
 ## Contributing
 
-1. Read the [Context Engineering Guide](.context/context-engineering.md)
+1. Read the [Context Engineering Guide](.context/_framework/context-engineering.md)
 2. Follow the Code Standards (see `.claude/skills/sprint-dev/references/code-standards.md`)
 3. Use conventional commits
 4. Create PR against `develop` branch
@@ -495,7 +495,7 @@ See [{system-prompt-file}]({path}) for detailed instructions.
 
 ## Links
 
-- [Context Engineering Guide](.context/context-engineering.md)
+- [Context Engineering Guide](.context/_framework/context-engineering.md)
 - {otros links relevantes}
 
 ````
@@ -504,7 +504,7 @@ See [{system-prompt-file}]({path}) for detailed instructions.
 
 ## PASO 5: Generar System Prompt
 
-Basándose en `.context/system-prompt.md` como template, genera el archivo correspondiente:
+Basándose en `.context/_framework/system-prompt.md` como template, genera el archivo correspondiente:
 
 ### 5.1 Template Base
 

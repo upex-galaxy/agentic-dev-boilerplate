@@ -396,9 +396,9 @@ gh pr create --base staging
 ### Level 1: Project-Wide (loaded at session start)
 
 ```
-.context/business-data-map.md      → System flows and entities
-.context/api-architecture.md       → API endpoints reference
-.context/project-dev-guide.md      → How to develop features
+.context/discovery/business-data-map.md   → System flows and entities
+.context/discovery/api-architecture.md    → API endpoints reference
+.context/discovery/project-dev-guide.md   → How to develop features
 ```
 
 ### Level 2: Module-Level (shared across stories in a module)

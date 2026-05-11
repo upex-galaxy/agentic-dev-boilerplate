@@ -106,7 +106,7 @@ Discovery produces the running-mental-model docs every later skill loads at sess
 - Read `references/api-architecture.md` to discover (existing system) or design (new system) the endpoint catalog with auth classification and testing examples.
 - Read `references/project-dev-guide.md` to produce a conversational guide that answers "how do I build feature X here?".
 
-Output: `.context/business-data-map.md`, `.context/api-architecture.md`, `.context/project-dev-guide.md`.
+Output: `.context/discovery/business-data-map.md`, `.context/discovery/api-architecture.md`, `.context/discovery/project-dev-guide.md`.
 
 ---
 

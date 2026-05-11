@@ -77,9 +77,9 @@ Run these checks to understand the current state:
 
 ```bash
 # Context Files
-ls .context/business-data-map.md 2>/dev/null && echo "✓ Business data map exists"
-ls .context/api-architecture.md 2>/dev/null && echo "✓ API architecture exists"
-ls .context/project-dev-guide.md 2>/dev/null && echo "✓ Dev guide exists"
+ls .context/discovery/business-data-map.md 2>/dev/null && echo "✓ Business data map exists"
+ls .context/discovery/api-architecture.md 2>/dev/null && echo "✓ API architecture exists"
+ls .context/discovery/project-dev-guide.md 2>/dev/null && echo "✓ Dev guide exists"
 
 # Project Identity
 ls .context/idea/business-model.md 2>/dev/null && echo "✓ Business model exists"
@@ -108,9 +108,9 @@ Priority 1 (Project Identity):
 └── .context/project-config.md (if exists)
 
 Priority 2 (Technical Context):
-├── .context/api-architecture.md
-├── .context/business-data-map.md
-└── .context/project-dev-guide.md
+├── .context/discovery/api-architecture.md
+├── .context/discovery/business-data-map.md
+└── .context/discovery/project-dev-guide.md
 
 Priority 3 (Configuration):
 ├── package.json
@@ -149,7 +149,7 @@ To generate project-specific documentation, I need:
 Or run the foundational skills first:
 
 1. Load `/project-foundation` to define product, PRD, SRS, and discovery context
-2. The skill produces `.context/business-data-map.md`, `.context/api-architecture.md`, and `.context/project-dev-guide.md`
+2. The skill produces `.context/discovery/business-data-map.md`, `.context/discovery/api-architecture.md`, and `.context/discovery/project-dev-guide.md`
 ```
 
 ---

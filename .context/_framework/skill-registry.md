@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-05-10T07:35:16.772Z`
+> Generated: `2026-05-11T00:07:09.872Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,12 +8,12 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 9
+Skills indexed: 10
 
 ---
 ## Skill: acli
 
-**Purpose**: Atlassian CLI (official `acli` binary, v1.3+) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal.
+**Purpose**: Atlassian CLI (official `acli` binary, v1.3+ as of 2026) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal.
 
 **Compact Rules**:
 - **Silent pagination truncation.** `workitem search` without `--paginate` returns the first page only — no warning. Scripts that count or iterate keys read the wrong number of items.
@@ -35,7 +35,7 @@ Skills indexed: 9
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.claude/skills/acli/SKILL.md` · phase: `implementation` · extraction strategy: B
+> Source: `.claude/skills/acli/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -53,7 +53,7 @@ Skills indexed: 9
 - **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
 - **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
 - **`CLAUDE.md`** (last). It cites every file written in steps 1-6, so it must be written after all of them. OpenCode reads `CLAUDE.md` as a fallback per its Claude Code compat docs, so a single canonical file covers both supported agents — no symlink needed.
-- **`.context/testing-capabilities.json`** (post-bootstrap detection). After CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
+- **`.context/_framework/testing-capabilities.json`** (post-bootstrap detection). After CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/_framework/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
 - `bun run agents:setup` — fill `.agents/project.yaml` interactively.
 - `bun run jira:sync-fields` — populate `.agents/jira-fields.json` from their Jira workspace.
 - `bun run jira:sync-workflows` — populate `.agents/jira-workflows.json` from their Jira workspace (interactive on first run for canonical slugs that don't auto-resolve to a workflow's real status / transition names).
@@ -88,6 +88,34 @@ Skills indexed: 9
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/agentic-dev-onboard/SKILL.md` · phase: `bootstrap` · extraction strategy: B
+
+---
+
+## Skill: design-system
+
+**Purpose**: Genera un DESIGN.md (formato Google Labs Apache-2.0) en el root del proyecto antes del scaffolding del frontend.
+
+**Compact Rules**:
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching to a subagent (Open Design or Claude Design handoff conversion).
+- `agentic-dev-core/references/dispatch-patterns.md` — selects Single / Sequential / Parallel for the chosen path.
+- `.context/idea/business-model.md` — industria, value-prop, tone implícito.
+- `.context/PRD/personas.md` — target visual, demographic signal.
+- `.context/PRD/executive-summary.md` — positioning, success KPIs.
+- A new project just finished the PRD and needs to define visual identity before the SRS architecture phase.
+- An existing project wants to rebrand without touching Constitution / PRD / code.
+- A team wants to centralize design tokens in a portable format consumable by multiple AI agents.
+- Implement UI / components — that's `/sprint-dev` + community skill `frontend-design`.
+- Define PRD or personas — that's `/project-foundation` phases 2.x.
+- Scaffold the frontend code (Tailwind install, page skeletons, shadcn setup) — that's `/project-bootstrap` frontend-setup.
+- Tweak existing tokens after scaffolding — edit `DESIGN.md` directly and re-run the bootstrap pre-flight.
+- **`DESIGN.md`** at the project root (path configurable via `design_md_path` in `.agents/project.yaml`, default `./DESIGN.md`).
+- Format: Apache-2.0 spec from Google Labs (`google-labs-code/design.md`). YAML frontmatter with design tokens + markdown prose with rationale.
+- Eight prescribed sections (order matters, sections may be omitted but never reordered): Overview → Colors → Typography → Layout → Elevation & Depth → Shapes → Components → Do's and Don'ts.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/design-system/SKILL.md` · phase: `foundation` · extraction strategy: B
 
 ---
 

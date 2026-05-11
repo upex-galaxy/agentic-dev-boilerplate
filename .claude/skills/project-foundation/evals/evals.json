@@ -15,7 +15,7 @@
     {
       "name": "should-trigger-discovery-on-existing-codebase",
       "prompt": "Generate the business data map and api architecture for this codebase — I want the discovery context files.",
-      "expected_behavior": "Activates project-foundation in Discovery mode. Reads phase-4-discovery references and walks code + DB to produce .context/business-data-map.md, .context/api-architecture.md, .context/project-dev-guide.md. Uses [DB_TOOL] and [API_TOOL] per CLAUDE.md tool resolution. Final report lists artifacts created.",
+      "expected_behavior": "Activates project-foundation in Discovery mode. Reads phase-4-discovery references and walks code + DB to produce .context/discovery/business-data-map.md, .context/discovery/api-architecture.md, .context/discovery/project-dev-guide.md. Uses [DB_TOOL] and [API_TOOL] per CLAUDE.md tool resolution. Final report lists artifacts created.",
       "category": "positive"
     },
     {

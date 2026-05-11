@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * build-skill-registry.ts — emits `.context/skill-registry.md`.
+ * build-skill-registry.ts — emits `.context/_framework/skill-registry.md`.
  *
  * Token-saving cache for the Skill Resolver protocol. Scans
  * `.claude/skills/*\/SKILL.md`, extracts a 5-15-line "Compact Rules" block per
@@ -45,7 +45,7 @@ import { parse as parseYaml } from 'yaml';
 
 const REPO_ROOT = process.cwd();
 const SKILLS_DIR = join(REPO_ROOT, '.claude', 'skills');
-const CACHE_DIR = join(REPO_ROOT, '.context');
+const CACHE_DIR = join(REPO_ROOT, '.context', '_framework');
 const CACHE_FILE = join(CACHE_DIR, 'skill-registry.md');
 
 const MAX_RULES = 15;
@@ -83,7 +83,7 @@ function printHelp(): void {
 
 Builds the per-session skill registry consumed by the Skill Resolver protocol.
 Scans .claude/skills/*/SKILL.md, extracts compact rules per skill, and writes
-.context/skill-registry.md.
+.context/_framework/skill-registry.md.
 
 Flags:
   --dry-run    Print would-be output to stdout; do not write the file.

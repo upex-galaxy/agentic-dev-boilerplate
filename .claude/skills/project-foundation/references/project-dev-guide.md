@@ -22,9 +22,9 @@ Generar una **guía conversacional** que oriente a cualquier desarrollador (huma
 
 **NO incluir:** Snippets de código, templates, comandos específicos
 
-**Prerequisito:** Debe existir `.context/business-data-map.md`
+**Prerequisito:** Debe existir `.context/discovery/business-data-map.md`
 
-**Output:** `.context/project-dev-guide.md`
+**Output:** `.context/discovery/project-dev-guide.md`
 
 ---
 
@@ -33,7 +33,7 @@ Generar una **guía conversacional** que oriente a cualquier desarrollador (huma
 ### 0.1 Verificar Business Data Map
 
 ```
-¿Existe .context/business-data-map.md?
+¿Existe .context/discovery/business-data-map.md?
   → NO: DETENER. Indicar que primero debe ejecutarse business-data-map.md
   → SÍ: Continuar
 ```
@@ -60,7 +60,7 @@ Identificar:
 
 ## FASE 1: GENERACIÓN DEL DOCUMENTO
 
-### Genera: `.context/project-dev-guide.md`
+### Genera: `.context/discovery/project-dev-guide.md`
 
 El documento debe sentirse como una conversación con un compañero que conoce el proyecto.
 
@@ -76,7 +76,7 @@ El documento debe sentirse como una conversación con un compañero que conoce e
 ║ "Lo que necesitas saber para trabajar aquí" ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-> Este documento asume que ya leíste `.context/business-data-map.md` para
+> Este documento asume que ya leíste `.context/discovery/business-data-map.md` para
 > entender los flujos de negocio. Aquí te explico qué considerar al desarrollar.
 ```
 
@@ -320,7 +320,7 @@ sorprenden o causan problemas..."
 
 [Referencias a otros documentos o recursos del proyecto]
 
-- `.context/business-data-map.md` - Para entender los flujos
+- `.context/discovery/business-data-map.md` - Para entender los flujos
 - `.context/project-test-guide.md` - Para saber qué validar
 - [Otros recursos relevantes]
 ```
@@ -336,7 +336,7 @@ Si no existe una sección de "Development Guide" en el system prompt, agregar:
 ```markdown
 ## Development Guide
 
-See `.context/project-dev-guide.md` for orientation on:
+See `.context/discovery/project-dev-guide.md` for orientation on:
 
 - How the project is structured
 - What to consider when working on each flow
@@ -368,11 +368,11 @@ Antes de guardar, verificar:
 
 ## Archivo Creado:
 
-`.context/project-dev-guide.md`
+`.context/discovery/project-dev-guide.md`
 
 ## Basado en:
 
-`.context/business-data-map.md`
+`.context/discovery/business-data-map.md`
 
 ## Contenido:
 

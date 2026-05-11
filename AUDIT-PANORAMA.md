@@ -246,8 +246,8 @@ B tiene **2 prompts de planning completamente nuevos** (atc-implementation-plan,
 
 ### Solo en A (conservar — son propios del starter)
 
-- `.context/context-engineering.md` — arquitectura 14 fases
-- `.context/system-prompt.md` — template de system prompt
+- `.context/_framework/context-engineering.md` — arquitectura 14 fases
+- `.context/_framework/system-prompt.md` — template de system prompt
 - `.context/guidelines/DEV/` — 5 archivos de guidelines DEV
 - `docs/testing/ui/` — 4 archivos
 - `docs/testing/project-management/` — 3 archivos

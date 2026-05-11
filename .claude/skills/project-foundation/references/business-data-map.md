@@ -21,7 +21,7 @@ Tu objetivo es **COMPRENDER PROFUNDAMENTE** cómo funciona este sistema y genera
 - **No duplicar lo que da el MCP:** No listes schema, RLS, o funciones (eso se obtiene via MCP en tiempo real)
 - **Síntesis, no extracción:** Combina código + DB + lógica para crear comprensión
 
-**Output:** `.context/business-data-map.md`
+**Output:** `.context/discovery/business-data-map.md`
 
 ---
 
@@ -50,7 +50,7 @@ Tu objetivo es **COMPRENDER PROFUNDAMENTE** cómo funciona este sistema y genera
 ### 0.2 Detectar Modo
 
 ```
-¿Existe .context/business-data-map.md?
+¿Existe .context/discovery/business-data-map.md?
   → SÍ: Modo UPDATE (mostrar diff, pedir confirmación)
   → NO: Modo CREATE (generar desde cero)
 ```
@@ -120,7 +120,7 @@ Tu objetivo es **COMPRENDER PROFUNDAMENTE** cómo funciona este sistema y genera
 
 ## FASE 2: GENERACIÓN DEL DOCUMENTO
 
-### Genera: `.context/business-data-map.md`
+### Genera: `.context/discovery/business-data-map.md`
 
 El documento debe ser **VISUAL** y **NARRATIVO**. Usa diagramas ASCII extensivamente.
 
@@ -382,7 +382,7 @@ Buscar en el archivo de system prompt (CLAUDE.md o similar) si existe una secci�
 ```markdown
 ## Business Data Map
 
-See `.context/business-data-map.md` for comprehensive visual documentation of:
+See `.context/discovery/business-data-map.md` for comprehensive visual documentation of:
 
 - System overview and business purpose
 - Entity relationships and their business meaning
@@ -451,7 +451,7 @@ Al terminar, mostrar:
 
 ## Archivo Creado:
 
-`.context/business-data-map.md`
+`.context/discovery/business-data-map.md`
 
 ## Sistema Documentado:
 
