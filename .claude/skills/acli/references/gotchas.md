@@ -249,7 +249,7 @@ The global `acli auth login` (interactive OAuth) is the exception — it covers 
 
 ## <a id="comment-adf"></a>14. `comment create` has no `--body-adf`
 
-**The problem.** `acli jira workitem comment update` accepts `--body-adf <file>` for rich ADF-formatted comments. `acli jira workitem comment create` does **not**. If you need a formatted initial comment (e.g. an impl-notes block with code fences from `/sprint-dev`), you have to create with a placeholder body and then update.
+**The problem.** `acli jira workitem comment update` accepts `--body-adf <file>` for rich ADF-formatted comments. `acli jira workitem comment create` does **not**. If you need a formatted initial comment (e.g. an impl-notes block with code fences from `/sprint-development`), you have to create with a placeholder body and then update.
 
 **Fix.** Two-step pattern:
 

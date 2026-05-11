@@ -99,7 +99,7 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 ### 2. Guidelines de Desarrollo (DEV):
 
 ```
-.claude/skills/sprint-dev/references/
+.claude/skills/sprint-development/references/
 ├── code-standards.md           # Estándares de código (DRY, naming, TypeScript)
 ├── error-handling.md           # Manejo de errores estructurado
 ├── data-testid-standards.md    # Atributos data-testid para testing E2E
@@ -492,7 +492,7 @@ Implementa STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} siguiendo estos pasos:
 
 **Contexto a leer:**
 1. .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/implementation-plan.md
-2. .claude/skills/sprint-dev/references/ (code-standards, error-handling, data-testid-standards, spec-driven-development)
+2. .claude/skills/sprint-development/references/ (code-standards, error-handling, data-testid-standards, spec-driven-development)
 3. .context/design-system.md
 
 **Proceso:**

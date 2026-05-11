@@ -525,7 +525,7 @@ ORDER BY priority DESC
 
 The report itself is read-only, but it almost always surfaces follow-up work. Suggest these next steps to the user when conditions are met:
 
-- **BLOCKED items present** → investigate and unblock immediately (likely a `/sprint-dev` planning session or escalation)
+- **BLOCKED items present** → investigate and unblock immediately (likely a `/sprint-development` planning session or escalation)
 - **Open PRs with no activity** → push for reviews or reassign reviewers (consider `/git-flow-master` for PR hygiene)
 - **In Progress stories without PR > N days** → follow up with assignee, possibly re-scope
 - **Issues without assignee in active states** → assign owners

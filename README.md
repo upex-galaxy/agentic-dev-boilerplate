@@ -44,15 +44,15 @@ bun run setup
 /product-management    # Seed backlog, refine stories, AC, edge cases
 
 # 8. Implement (per story)
-/sprint-dev            # Plan -> Code -> Review -> Deploy
-/unit-testing          # Composable mid-flight from sprint-dev for TDD
+/sprint-development            # Plan -> Code -> Review -> Deploy
+/unit-testing          # Composable mid-flight from sprint-development for TDD
 ```
 
 ---
 
 ## How it works
 
-Skills auto-trigger from natural-language prompts that match each skill's `description` frontmatter; you can also force-load any of them via the slash trigger in Claude Code (e.g. `/sprint-dev`). Each skill is a `SKILL.md` plus a `references/` folder that loads progressively — the agent only reads the files relevant to the current step.
+Skills auto-trigger from natural-language prompts that match each skill's `description` frontmatter; you can also force-load any of them via the slash trigger in Claude Code (e.g. `/sprint-development`). Each skill is a `SKILL.md` plus a `references/` folder that loads progressively — the agent only reads the files relevant to the current step.
 
 Project-specific values (URLs, project key, Jira fields) live in `.agents/project.yaml` and are injected into prompts via a 4-syntax variable system. Workflow skills correspond to phases of the SDD lifecycle: foundation (one-time definition), management (continuous PM work), and implementation (per-story dev loop).
 
@@ -69,8 +69,8 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 | `/design-system`       | foundation     | DESIGN.md generation (Google Labs spec) before frontend scaffolding — 5 paths        |
 | `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
-| `/sprint-dev`          | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
-| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-dev`          |
+| `/sprint-development`          | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
+| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`          |
 | `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning |
 | `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                   |
 | `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills         |

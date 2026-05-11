@@ -19,7 +19,7 @@
 8. [Working with Claude Code: Daily Workflow](#8-working-with-claude-code-daily-workflow)
 9. [The Orchestration Model: AI Works, Human Decides](#9-the-orchestration-model-ai-works-human-decides)
 10. [The Foundation → Management → Implementation Pipeline](#10-the-foundation--management--implementation-pipeline)
-11. [The Per-Story Dev Loop: Sprint-Dev in Depth](#11-the-per-story-dev-loop-sprint-dev-in-depth)
+11. [The Per-Story Dev Loop: Sprint-Dev in Depth](#11-the-per-story-dev-loop-sprint-development-in-depth)
 12. [The AI Toolkit: Skills, Commands, Integrations](#12-the-ai-toolkit-skills-commands-integrations)
 13. [Quality Gates: Lint, Types, Tests, Review, Deploy](#13-quality-gates-lint-types-tests-review-deploy)
 14. [Anatomy of a Story Session](#14-anatomy-of-a-story-session)
@@ -47,7 +47,7 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
 | **Bootstrap** (one-time) | `agentic-dev-core` | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json` |
 | **Foundation** (one-time per product) | `project-foundation` → `design-system` → `project-bootstrap` | `.context/idea/`, `.context/PRD/`, `.context/SRS/`, `.context/business/`, `DESIGN.md`, scaffolded backend + frontend |
 | **Management** (continuous) | `product-management` | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots |
-| **Implementation** (per story) | `sprint-dev` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging |
+| **Implementation** (per story) | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging |
 | **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
@@ -95,7 +95,7 @@ Code is the last artefact produced, not the first. Before any line of TypeScript
 Constitution  →  PRD  →  SRS  →  Discovery  →  DESIGN.md  →  Epic  →  Story (with AC)  →  Implementation Plan  →  Code
 ```
 
-Each artefact is the input contract for the next. The Implementation Plan is the input to Stage 2 of `/sprint-dev`. The story's Acceptance Criteria are the input to the Implementation Plan. The PRD is the input to the backlog seed. None of these steps is optional in a regulated or revenue-bearing context.
+Each artefact is the input contract for the next. The Implementation Plan is the input to Stage 2 of `/sprint-development`. The story's Acceptance Criteria are the input to the Implementation Plan. The PRD is the input to the backlog seed. None of these steps is optional in a regulated or revenue-bearing context.
 
 ```
    Cost / Effort to Fix a Misread Requirement
@@ -124,7 +124,7 @@ Workflows live in `.claude/skills/<name>/SKILL.md`, not in copy-paste prompt fil
 
 - **Versioned** — committed to the repo, evolves with the project, reviewed in PRs.
 - **Self-documenting** — a `SKILL.md` describes when it triggers, what it does, what references it loads, what it produces.
-- **Composable** — `/unit-testing` runs standalone or mid-flight from `/sprint-dev`. `/design-system` runs standalone or from `/project-foundation` Phase 2.5.
+- **Composable** — `/unit-testing` runs standalone or mid-flight from `/sprint-development`. `/design-system` runs standalone or from `/project-foundation` Phase 2.5.
 - **Auto-triggered** — Claude Code matches user intent against the skill description and loads the right skill automatically. No `/<name>` typing required for common phrasings.
 
 Compare to the alternative: a `prompts/` directory full of `.md` files that developers copy into their chat window. There is no versioning of *behavior*, no autocomplete, no composition, no way to enforce that a "test plan" prompt is always run before a "test run" prompt.
@@ -176,7 +176,7 @@ This is the foundational decision behind every architectural choice in this repo
 | **PBI**                | Product Backlog Item. In this repo, the local folder (`.context/PBI/...`) that stores per-epic and per-story knowledge.                                          |
 | **SDD**                | Spec-Driven Development. Meta-skill bloque (`sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`).      |
 | **INVEST**             | Independent, Negotiable, Valuable, Estimable, Small, Testable. Validation criteria for user stories. Enforced by `/product-management`.                          |
-| **Implementation Plan**| The artefact produced by `/sprint-dev` Stage 1. The input contract for Stage 2 (coding).                                                                          |
+| **Implementation Plan**| The artefact produced by `/sprint-development` Stage 1. The input contract for Stage 2 (coding).                                                                          |
 | **Compact Rules**      | Pre-digested coding standards injected into subagent prompts so they do not have to load and parse a full skill registry on every dispatch.                      |
 | **Briefing Template**  | The 6-component format (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                       |
 | **Dispatch Pattern**   | One of Single / Sequential / Parallel / Background. Picked per stage in each skill's `## Subagent Dispatch Strategy` section.                                     |
@@ -244,7 +244,7 @@ The skill roster is split by *phase* (declared in each `SKILL.md` frontmatter as
 - **`bootstrap`** — `agentic-dev-core` (one-time foundation install), `agentic-dev-onboard` (guided tour for newcomers).
 - **`foundation`** — `project-foundation` (Constitution + PRD + SRS + Discovery), `design-system` (DESIGN.md), `project-bootstrap` (backend + frontend scaffolding).
 - **`management`** — `product-management` (backlog seed, epic creation, story refinement, AC quality, edge-case enumeration, sprint reporting).
-- **`implementation`** — `sprint-dev` (per-story mega-orchestrator), `unit-testing` (TDD composable slice), `git-flow-master` (branches, commits, PRs, conflicts).
+- **`implementation`** — `sprint-development` (per-story mega-orchestrator), `unit-testing` (TDD composable slice), `git-flow-master` (branches, commits, PRs, conflicts).
 
 On top of the project-shipped skills, the boilerplate composes with **two external skill catalogs** installed via `bun run setup`:
 
@@ -336,9 +336,9 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
         └── {TICKET-ID}-{title}/
             ├── spec.md              #   AC in Gherkin       (/product-management)
             ├── edge-cases.md        #   Enumeration         (/product-management)
-            ├── implementation-plan.md  # Plan              (/sprint-dev Stage 1)
-            ├── review.md            #   Code review notes   (/sprint-dev Stage 3)
-            ├── compliance-matrix.md #   AC → code mapping   (/sprint-dev Stage 3)
+            ├── implementation-plan.md  # Plan              (/sprint-development Stage 1)
+            ├── review.md            #   Code review notes   (/sprint-development Stage 3)
+            ├── compliance-matrix.md #   AC → code mapping   (/sprint-development Stage 3)
             └── evidence/            #   Screenshots, logs   (gitignored)
 ```
 
@@ -447,10 +447,10 @@ The daily workflow is plain English. The developer tells Claude Code what is nee
 
 ```text
 > implementar UPEX-123
-  → Auto-triggers: sprint-dev skill (full per-story loop)
+  → Auto-triggers: sprint-development skill (full per-story loop)
 
 > Fix the bug in UPEX-456
-  → Auto-triggers: sprint-dev skill in bug-fix mode
+  → Auto-triggers: sprint-development skill in bug-fix mode
 
 > agregar feature al backlog: "users can export their data"
   → Auto-triggers: product-management skill (incremental feature)
@@ -474,7 +474,7 @@ The daily workflow is plain English. The developer tells Claude Code what is nee
   → SDD orchestrator handles: exploration → proposal → spec → design → tasks → apply → verify → archive
 ```
 
-Auto-triggering is governed by each skill's `description` field, which lists the phrases the skill should respond to. The decision tree in `CLAUDE.md` documents the full mapping. Explicit invocation is also supported — `/sprint-dev`, `/product-management`, `/git-flow-master`, and so on — for cases where determinism is preferred over pattern matching.
+Auto-triggering is governed by each skill's `description` field, which lists the phrases the skill should respond to. The decision tree in `CLAUDE.md` documents the full mapping. Explicit invocation is also supported — `/sprint-development`, `/product-management`, `/git-flow-master`, and so on — for cases where determinism is preferred over pattern matching.
 
 ### What happens on invocation
 
@@ -564,7 +564,7 @@ The orchestration model is not improvised per session — it is captured in cano
 - **`agentic-dev-core/references/orchestration-doctrine.md`** — cacheable mirror loaded by subagents that need the full doctrine without re-reading `CLAUDE.md`.
 - **`agentic-dev-core/references/briefing-template.md`** — the six-component briefing format every dispatch uses (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules).
 - **`agentic-dev-core/references/dispatch-patterns.md`** — decision guide for the four patterns (Single, Sequential, Parallel, Background) and when each applies.
-- **`## Subagent Dispatch Strategy`** sections inside each workflow `SKILL.md` (`sprint-dev`, `project-foundation`, `project-bootstrap`, `product-management`, etc.) — per-stage tables declaring which steps delegate to subagents and with what pattern.
+- **`## Subagent Dispatch Strategy`** sections inside each workflow `SKILL.md` (`sprint-development`, `project-foundation`, `project-bootstrap`, `product-management`, etc.) — per-stage tables declaring which steps delegate to subagents and with what pattern.
 
 When a skill writes `Use the dispatch defined in §Subagent Dispatch Strategy: Parallel`, that line is shorthand for the full briefing assembled from the references above. The doctrine is a single source, cited from many places.
 
@@ -635,7 +635,7 @@ The practice's lifecycle is a **three-tier pipeline**. Each tier is owned by a d
      ▼
 ┌───────────────────────────────────────┐
 │  TIER 3: IMPLEMENTATION (per story)   │
-│  /sprint-dev (mega-orchestrator)      │
+│  /sprint-development (mega-orchestrator)      │
 │    Stage 1 — Planning                 │
 │    Stage 2 — Implementation           │
 │    Stage 3 — Code Review              │
@@ -719,15 +719,15 @@ After foundation, the backlog is still empty. `/product-management` is the conti
 | **F — Edge-case enumeration** | Systematically enumerate failure modes, boundary conditions, integration risks. Decide which become AC vs test-only. | `edge-cases-enumeration.md` |
 | **G — Sprint reporting** | Read-only PM snapshot: epics, stories, PRs grouped by status. No state mutation. | `sprint-report.md` |
 
-### Tier 3 — Implementation (`/sprint-dev`, `/unit-testing`, `/git-flow-master`)
+### Tier 3 — Implementation (`/sprint-development`, `/unit-testing`, `/git-flow-master`)
 
-Section 11 walks through this in depth. The short version: `/sprint-dev` is the mega-orchestrator that drives Planning → Implementation → Code Review → Staging → (gated) Production for one story at a time. Composable mid-flight with `/unit-testing` (TDD slice) and `/git-flow-master` (branches, commits, PRs, conflicts).
+Section 11 walks through this in depth. The short version: `/sprint-development` is the mega-orchestrator that drives Planning → Implementation → Code Review → Staging → (gated) Production for one story at a time. Composable mid-flight with `/unit-testing` (TDD slice) and `/git-flow-master` (branches, commits, PRs, conflicts).
 
 ---
 
 ## 11. The Per-Story Dev Loop: Sprint-Dev in Depth
 
-The `sprint-dev` skill handles the per-story work across five stages. A full cycle compresses what would otherwise be a multi-hour manual workflow into a predictable, repeatable per-ticket process. The 12-step workflow is dispatched stage-by-stage.
+The `sprint-development` skill handles the per-story work across five stages. A full cycle compresses what would otherwise be a multi-hour manual workflow into a predictable, repeatable per-ticket process. The 12-step workflow is dispatched stage-by-stage.
 
 ```
 [Story in Jira: Ready For Dev]
@@ -824,7 +824,7 @@ After each batch of edits, a **parallel verification trio** runs (cap = 3):
 
 If any verifier reports red, the implementation subagent picks up the failures and iterates. Maximum two iterations per slice before escalating to the developer.
 
-**TDD opt-in.** When the slice is TDD-friendly (pure function, complex branching, bug-fix reproducer), the developer or the orchestrator invokes `/unit-testing` mid-flight. Red-green-refactor runs inside the slice, then control returns to the `sprint-dev` main flow.
+**TDD opt-in.** When the slice is TDD-friendly (pure function, complex branching, bug-fix reproducer), the developer or the orchestrator invokes `/unit-testing` mid-flight. Red-green-refactor runs inside the slice, then control returns to the `sprint-development` main flow.
 
 ### Stage 3 — Code Review (`Single` + fix-iterate)
 
@@ -903,7 +903,7 @@ The 10 project-shipped workflow skills:
 | `design-system`         | foundation     | "definir design system", "crear DESIGN.md", "establecer paleta de colores", "branding del proyecto", "rebrandear el proyecto"                |
 | `project-bootstrap`     | foundation     | "scaffolding del proyecto", "setup del backend", "inicializar el frontend", "configurar OpenAPI", "bearer token authentication"              |
 | `product-management`    | management     | "create epic", "crear épica", "agregar historia al backlog", "refine acceptance criteria", "INVEST", "sprint report"                         |
-| `sprint-dev`            | implementation | "implementar esta historia", "trabajar el ticket UPEX-XXX", "plan to code to review to deploy", "fix this bug and merge", "deploy a staging" |
+| `sprint-development`            | implementation | "implementar esta historia", "trabajar el ticket UPEX-XXX", "plan to code to review to deploy", "fix this bug and merge", "deploy a staging" |
 | `unit-testing`          | implementation | "write unit tests", "TDD this function", "red-green-refactor", "what to mock", "AAA pattern", "coverage target"                              |
 | `git-flow-master`       | implementation | "crear branch", "commit and push", "abrir PR", "fix conflict", "stack of PRs", "qué estrategia de git usamos"                                |
 | `acli`                  | any            | Atlassian CLI for Jira from the terminal — create/edit/transition issues, bulk operations, scripting Jira                                    |
@@ -1015,7 +1015,7 @@ Foundation utilities written by `agentic-dev-core`:
 
 ## 13. Quality Gates: Lint, Types, Tests, Review, Deploy
 
-Every change merged to `staging` (and especially every change promoted to `main`) passes through the same gate. There is no "I think it's fine" shipping decision — the verdict is data-driven, owned by `/sprint-dev`'s Stage 3 and Stage 4 dispatchers, and enforced by CI.
+Every change merged to `staging` (and especially every change promoted to `main`) passes through the same gate. There is no "I think it's fine" shipping decision — the verdict is data-driven, owned by `/sprint-development`'s Stage 3 and Stage 4 dispatchers, and enforced by CI.
 
 ### The five gates
 
@@ -1041,7 +1041,7 @@ Every change merged to `staging` (and especially every change promoted to `main`
 
 Before any push to `main`:
 
-- [ ] Plan presented and approved before coding (skill-internal in `/sprint-dev`).
+- [ ] Plan presented and approved before coding (skill-internal in `/sprint-development`).
 - [ ] Aliases used for imports (`@api/`, `@schemas/`, `@utils/`). No deep relative imports.
 - [ ] Credentials read from `.env`, never hardcoded.
 - [ ] Unit tests pass (when applicable; see `/unit-testing`).
@@ -1064,7 +1064,7 @@ To illustrate how the pieces fit together, here is what a typical story's journe
 
 Consider a ticket `UPEX-XXX` with a handful of acceptance criteria covering a user-facing feature.
 
-1. **Session Start.** The developer types `implementar UPEX-XXX`. The `sprint-dev` skill auto-triggers. The orchestrator searches engram for prior work on this module (`mem_search`), opens the ticket via `acli`, explores the frontend and backend code paths related to the feature, queries the database via the Supabase MCP for relevant schema, and creates the PBI folder for the ticket if it does not exist.
+1. **Session Start.** The developer types `implementar UPEX-XXX`. The `sprint-development` skill auto-triggers. The orchestrator searches engram for prior work on this module (`mem_search`), opens the ticket via `acli`, explores the frontend and backend code paths related to the feature, queries the database via the Supabase MCP for relevant schema, and creates the PBI folder for the ticket if it does not exist.
 
 2. **Stage 1 — Planning.** A planner subagent is dispatched (Single pattern, model alias = sonnet). It reads the story, the AC, the module context, and produces `implementation-plan.md`. The plan is presented to the developer with open questions and approved. Jira transitions Ready For Dev → In Progress.
 
@@ -1074,7 +1074,7 @@ Consider a ticket `UPEX-XXX` with a handful of acceptance criteria covering a us
 
 5. **Stage 4 — Staging Deploy.** PR is merged to `staging`. Vercel deploys the preview. Supabase migrations run (if any). A background subagent watches health and smoke for N minutes. Jira transitions In Review → Ready For QA.
 
-6. **Stage 5 — Production Deploy (gated).** The developer triggers `/sprint-dev` Stage 5 explicitly after QA sign-off (from the sister `agentic-qa-boilerplate`) and business approval. Tag, promote, monitor, rollback-ready.
+6. **Stage 5 — Production Deploy (gated).** The developer triggers `/sprint-development` Stage 5 explicitly after QA sign-off (from the sister `agentic-qa-boilerplate`) and business approval. Tag, promote, monitor, rollback-ready.
 
 7. **Memory persistence.** Throughout the session, the orchestrator and subagents call `mem_save` on decisions, bug fixes, conventions, and discoveries — tagged with stable topic keys (`pbi/UPEX-XXX/impl-plan`, `pbi/UPEX-XXX/review`, etc.) so the next session can recover them.
 
@@ -1117,10 +1117,10 @@ Engram is structured by **topic key** — a stable identifier under which an art
 | `pbi/{epic-slug}/epic`                 | Epic spec                                         | `/product-management`          |
 | `pbi/{ticket}/spec`                    | Story spec with refined AC                        | `/product-management`          |
 | `pbi/{ticket}/edge-cases`              | Enumerated edge cases                             | `/product-management`          |
-| `pbi/{ticket}/impl-plan`               | Implementation plan                               | `/sprint-dev` Stage 1          |
-| `pbi/{ticket}/review`                  | Review notes                                      | `/sprint-dev` Stage 3          |
-| `pbi/{ticket}/compliance-matrix`       | AC → code mapping                                 | `/sprint-dev` Stage 3          |
-| `pbi/{ticket}/bug-fix`                 | Root cause + fix                                  | `/sprint-dev` bug-fix flow     |
+| `pbi/{ticket}/impl-plan`               | Implementation plan                               | `/sprint-development` Stage 1          |
+| `pbi/{ticket}/review`                  | Review notes                                      | `/sprint-development` Stage 3          |
+| `pbi/{ticket}/compliance-matrix`       | AC → code mapping                                 | `/sprint-development` Stage 3          |
+| `pbi/{ticket}/bug-fix`                 | Root cause + fix                                  | `/sprint-development` bug-fix flow     |
 | `sdd/{change}/explore` … `archive`     | SDD phase artefacts (8 keys per change)           | SDD bloque                     |
 | `architecture/<topic>`                 | Architectural decision (free-form)                | Any proactive save             |
 
@@ -1304,7 +1304,7 @@ The rest is execution.
 - `.claude/skills/design-system/SKILL.md` — DESIGN.md generation skill internals.
 - `.claude/skills/project-bootstrap/SKILL.md` — Infrastructure scaffolding skill internals.
 - `.claude/skills/product-management/SKILL.md` — Backlog + refinement skill internals.
-- `.claude/skills/sprint-dev/SKILL.md` — Per-story dev loop skill internals.
+- `.claude/skills/sprint-development/SKILL.md` — Per-story dev loop skill internals.
 - `.claude/skills/unit-testing/SKILL.md` — TDD slice skill internals.
 - `.claude/skills/git-flow-master/SKILL.md` — Git operator skill internals.
 - `.context/README.md` — canonical context layout.

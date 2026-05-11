@@ -1,6 +1,6 @@
 # Skill Resolver Protocol
 
-> Cited by: `agentic-dev-core/references/briefing-template.md` and every workflow skill that dispatches subagents (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`).
+> Cited by: `agentic-dev-core/references/briefing-template.md` and every workflow skill that dispatches subagents (`sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`).
 > Companion script: `scripts/build-skill-registry.ts`. Cache file: `.context/_framework/skill-registry.md`.
 
 ## Purpose
@@ -84,7 +84,7 @@ The block is at most ~20 lines including blank lines. Anything longer means the 
 Heuristic, applied per dispatch in order of priority:
 
 1. **Explicit skill mentions in the briefing.** If `Skills to load` lists `/unit-testing`, the registry block for `unit-testing` is included verbatim.
-2. **User-named slugs.** If the user says "use sprint-dev for this", the orchestrator includes `sprint-dev` even if no skill is loaded.
+2. **User-named slugs.** If the user says "use sprint-development for this", the orchestrator includes `sprint-development` even if no skill is loaded.
 3. **Name-match heuristic on the Goal + Context.** The orchestrator scans the dispatch's `Goal` and `Context docs` paths for known skill slugs. Match → include. (E.g. a goal that says "scaffold the bootstrap" includes `project-bootstrap`.)
 4. **Phase-match.** Each SKILL.md frontmatter declares `phase:` (`bootstrap`, `foundation`, `implementation`, etc.). If the orchestrator's current workflow phase matches the briefing's intent, include skills with that phase.
 5. **Cap at 5 skills per briefing.** Beyond five, the briefing becomes too noisy. The orchestrator picks the top 5 by relevance and lists the rest under "Other skills available — load on demand:".

@@ -32,7 +32,7 @@ required:
     name: '✅ Acceptance Criteria (Gherkin)'
     type: string
     description: 'Gherkin-formatted acceptance criteria attached to user stories.'
-    used_by: [sync-jira-issues, sprint-dev]
+    used_by: [sync-jira-issues, sprint-development]
 
   acceptance_test_results_atr:
     name: '🧪 Acceptance Test Results (ATR)'
@@ -80,7 +80,7 @@ required:
     used_by: [sync-jira-issues]
 
   # ---- Bug / Defect fields ----
-  # Consumed by scripts/sync-jira-issues.ts + sprint-dev/references/bug-fix-workflow.md
+  # Consumed by scripts/sync-jira-issues.ts + sprint-development/references/bug-fix-workflow.md
   # (dev side) and the agentic-qa-boilerplate sister repo (sprint-testing/bug-report).
   actual_result_comportamiento:
     name: '🐞 Actual Result (Comportamiento)'
@@ -88,7 +88,7 @@ required:
     description: 'Observed behavior captured during bug repro.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   expected_result_output:
@@ -97,7 +97,7 @@ required:
     description: 'Expected behavior per acceptance criteria, contrasted against the bug.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   error_type:
@@ -107,7 +107,7 @@ required:
     description: 'Bug taxonomy by error category.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   severity:
@@ -117,7 +117,7 @@ required:
     description: 'Bug severity classification (impact-based).'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   test_environment:
@@ -127,7 +127,7 @@ required:
     description: 'Environment where the bug was reproduced or where the test ran.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   root_cause:
@@ -145,7 +145,7 @@ required:
     description: 'Post-mortem cause classification, set after the fix.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   workaround:
@@ -154,7 +154,7 @@ required:
     description: 'Temporary mitigation steps to unblock users until the fix ships.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   evidence:
@@ -163,7 +163,7 @@ required:
     description: 'Bug evidence: screenshots, traces, logs, repro recordings.'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   fix:
@@ -173,7 +173,7 @@ required:
     description: 'Type of fix applied (bugfix vs urgent hotfix).'
     used_by:
       - sync-jira-issues
-      - sprint-dev/references/bug-fix-workflow.md
+      - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
   # ---- TMS Modality B fields (Jira-native, no Xray) ----
@@ -330,7 +330,7 @@ work_types:
           to: ready_for_dev,
           description: 'Restore an aborted story back to ready_for_dev',
         }
-    used_by: [acli, sprint-dev, agentic-qa-boilerplate (sprint-testing, test-documentation, project-discovery)]
+    used_by: [acli, sprint-development, agentic-qa-boilerplate (sprint-testing, test-documentation, project-discovery)]
 
   bug:
     jira_issue_type: 'Bug'
@@ -390,7 +390,7 @@ work_types:
       resume_fix: { from: deferred, to: in_progress, description: 'Resume work on a deferred bug' }
       # ---- Abort ----
       aborted: { from: any, to: aborted, description: 'Abandon the bug (global transition)' }
-    used_by: [acli, sprint-dev, agentic-qa-boilerplate (sprint-testing)]
+    used_by: [acli, sprint-development, agentic-qa-boilerplate (sprint-testing)]
 
   test_case:
     jira_issue_type: 'Test'

@@ -1,6 +1,6 @@
 ---
 name: unit-testing
-description: 'Focused skill for unit-test design — TDD workflow (red-green-refactor), test naming (AAA, Given-When-Then), mocking patterns (mocks/spies/stubs/fakes, dependency injection), and coverage strategy (line vs branch, mutation testing). Composable: invokable standalone (write unit tests for this function, qué mockear aquí, what to mock) or mid-flight from sprint-dev for TDD slices. Triggers on: write unit tests, TDD this function, test-driven development, qué mockear aquí, what to mock, test naming, AAA pattern, Given-When-Then, test coverage, branch coverage, Jest, Vitest, unit testing. Do NOT use for: feature implementation orchestration (use /sprint-dev), E2E or integration testing (out of scope, see playwright-cli skill or sister repo), production deploy, or formal QA workflow.'
+description: 'Focused skill for unit-test design — TDD workflow (red-green-refactor), test naming (AAA, Given-When-Then), mocking patterns (mocks/spies/stubs/fakes, dependency injection), and coverage strategy (line vs branch, mutation testing). Composable: invokable standalone (write unit tests for this function, qué mockear aquí, what to mock) or mid-flight from sprint-development for TDD slices. Triggers on: write unit tests, TDD this function, test-driven development, qué mockear aquí, what to mock, test naming, AAA pattern, Given-When-Then, test coverage, branch coverage, Jest, Vitest, unit testing. Do NOT use for: feature implementation orchestration (use /sprint-development), E2E or integration testing (out of scope, see playwright-cli skill or sister repo), production deploy, or formal QA workflow.'
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
@@ -18,7 +18,7 @@ model_preferences:
 
 # Unit Testing
 
-Focused skill for designing and writing unit-level tests. Covers TDD cycles, test naming conventions, mocking decisions, and coverage strategy. TDD-friendly and stack-agnostic (Jest, Vitest, Mocha, or any runner with a similar API). Plays well as a standalone skill or as a mid-flight callee from `/sprint-dev` when a slice benefits from test-first development.
+Focused skill for designing and writing unit-level tests. Covers TDD cycles, test naming conventions, mocking decisions, and coverage strategy. TDD-friendly and stack-agnostic (Jest, Vitest, Mocha, or any runner with a similar API). Plays well as a standalone skill or as a mid-flight callee from `/sprint-development` when a slice benefits from test-first development.
 
 ## When to use
 
@@ -27,13 +27,13 @@ Focused skill for designing and writing unit-level tests. Covers TDD cycles, tes
 - "What should I mock here?"
 - "How do I name this test?"
 - "What's the right coverage target for this module?"
-- Mid-flight from `/sprint-dev` Stage 2 (Implementation) when implementing TDD-friendly code (pure functions, complex branching, bug fix reproducers)
+- Mid-flight from `/sprint-development` Stage 2 (Implementation) when implementing TDD-friendly code (pure functions, complex branching, bug fix reproducers)
 
-## Composability with sprint-dev
+## Composability with sprint-development
 
-This skill is designed to interoperate with `sprint-dev`. From `sprint-dev` Stage 2 (Implementation), invoke `/unit-testing` for any TDD slice, then return to the main story-level flow. The hand-off is informal — both skills understand the boundary. `unit-testing` doesn't track Jira, doesn't deploy, doesn't run code review; it just produces tested code for one slice and hands control back.
+This skill is designed to interoperate with `sprint-development`. From `sprint-development` Stage 2 (Implementation), invoke `/unit-testing` for any TDD slice, then return to the main story-level flow. The hand-off is informal — both skills understand the boundary. `unit-testing` doesn't track Jira, doesn't deploy, doesn't run code review; it just produces tested code for one slice and hands control back.
 
-When invoked standalone (no `sprint-dev` parent), it operates self-sufficiently against whatever code the user points at.
+When invoked standalone (no `sprint-development` parent), it operates self-sufficiently against whatever code the user points at.
 
 ## Pre-requisites
 
@@ -54,13 +54,13 @@ When invoked standalone (no `sprint-dev` parent), it operates self-sufficiently 
 6. Verify coverage of the unit (see `references/test-coverage.md`)
 7. Report: files added, tests passing, coverage delta
 
-### Mid-flight from sprint-dev (TDD)
+### Mid-flight from sprint-development (TDD)
 
-1. `sprint-dev` is implementing a feature in Stage 2
+1. `sprint-development` is implementing a feature in Stage 2
 2. Encounter a slice that benefits from TDD (pure function, complex branching, bug fix reproducer)
 3. Invoke `/unit-testing` with the slice in scope
 4. Apply Red-Green-Refactor (see `references/tdd-workflow.md`)
-5. Once green and refactored, return control to `sprint-dev`'s main flow
+5. Once green and refactored, return control to `sprint-development`'s main flow
 
 ## Specific tasks — which reference to read
 
@@ -76,10 +76,10 @@ When in doubt, start with `references/unit-testing.md` — it covers the broad w
 
 ## Hand-offs
 
-- **Implementing a feature with TDD** → return to `/sprint-dev` Stage 2 once tests are green and the slice is refactored
+- **Implementing a feature with TDD** → return to `/sprint-development` Stage 2 once tests are green and the slice is refactored
 - **Integration / E2E tests** → out of scope; see `agentic-qa-boilerplate` (sister repo) for sprint-testing and test-automation
-- **First-time test runner setup in a fresh repo** → `/sprint-dev` Stage 4 (deploy/scaffolding) covers tooling installation; this skill assumes a runner exists
-- **Bug-fix workflow with reproducer-first** → invoke this skill from `/sprint-dev` for the reproducer test, then continue with the fix
+- **First-time test runner setup in a fresh repo** → `/sprint-development` Stage 4 (deploy/scaffolding) covers tooling installation; this skill assumes a runner exists
+- **Bug-fix workflow with reproducer-first** → invoke this skill from `/sprint-development` for the reproducer test, then continue with the fix
 
 ## Variables consumed
 

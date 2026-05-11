@@ -1,10 +1,10 @@
 # Testing Capabilities Cache
 
-> Cited by: `unit-testing`, `sprint-dev`. Loaded on demand when those skills need to know what test runners, e2e frameworks, type-checking, or lint tooling the project supports — without re-running a `package.json` scan on every dispatch.
+> Cited by: `unit-testing`, `sprint-development`. Loaded on demand when those skills need to know what test runners, e2e frameworks, type-checking, or lint tooling the project supports — without re-running a `package.json` scan on every dispatch.
 
 ## Purpose
 
-Downstream workflow skills (`unit-testing` decides whether to enforce TDD red-green; `sprint-dev` decides whether its quality gate runs `bun run typecheck` / `bun run lint`) need a yes/no answer on what the project supports. Re-detecting this on every invocation is wasteful and inconsistent. The cache is a single JSON file regenerated only when `/agentic-dev-core` runs, so consumers read it as a static fact.
+Downstream workflow skills (`unit-testing` decides whether to enforce TDD red-green; `sprint-development` decides whether its quality gate runs `bun run typecheck` / `bun run lint`) need a yes/no answer on what the project supports. Re-detecting this on every invocation is wasteful and inconsistent. The cache is a single JSON file regenerated only when `/agentic-dev-core` runs, so consumers read it as a static fact.
 
 ## Cache schema
 
@@ -77,7 +77,7 @@ The script never deletes anything. It only writes `.context/_framework/testing-c
 | Skill          | Reads which fields?                                                                                                                                                           |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `unit-testing` | `runner` (chooses `vitest` vs `jest` syntax in scaffolds), `strict_tdd` (whether the red-green-refactor flow is enforced or treated as a soft recommendation).                |
-| `sprint-dev`   | `typecheck` + `lint` (whether the quality gate at code-review time invokes `bun run typecheck` / `bun run lint`), `e2e` (whether to mention E2E smoke before staging deploy). |
+| `sprint-development`   | `typecheck` + `lint` (whether the quality gate at code-review time invokes `bun run typecheck` / `bun run lint`), `e2e` (whether to mention E2E smoke before staging deploy). |
 
 Future skills that depend on test capabilities should add a row here when they start consuming the cache.
 

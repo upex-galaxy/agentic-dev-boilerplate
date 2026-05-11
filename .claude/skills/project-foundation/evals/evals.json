@@ -39,7 +39,7 @@
     {
       "name": "should-not-trigger-story-implementation",
       "prompt": "Implement this story UPEX-277, it's about empty states in the dashboard.",
-      "expected_behavior": "Does NOT activate project-foundation. Should route to /sprint-dev because the request is per-story implementation. project-foundation defines the product/architecture once; sprint-dev runs every sprint per ticket.",
+      "expected_behavior": "Does NOT activate project-foundation. Should route to /sprint-development because the request is per-story implementation. project-foundation defines the product/architecture once; sprint-development runs every sprint per ticket.",
       "category": "negative"
     }
   ]

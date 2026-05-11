@@ -119,8 +119,8 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `/design-system`          | One-time: generate `DESIGN.md` (Google Labs spec) before frontend scaffolding                                                                                   |
 | `/project-bootstrap`      | One-time: backend + frontend + OpenAPI + auth + env scaffolding                                                                                                 |
 | `/product-management`     | Continuous: seed backlog, create epics, refine stories (INVEST + AC), sprint reporting                                                                          |
-| `/sprint-dev`             | Per-story: Plan → Code → Review → Staging → (gated) Production                                                                                                  |
-| `/unit-testing`           | Standalone or composable mid-flight from `/sprint-dev` for TDD slices                                                                                           |
+| `/sprint-development`             | Per-story: Plan → Code → Review → Staging → (gated) Production                                                                                                  |
+| `/unit-testing`           | Standalone or composable mid-flight from `/sprint-development` for TDD slices                                                                                           |
 | `/git-flow-master`        | Any git/PR work — auto-detects branching strategy and adapts                                                                                                    |
 | `/acli`                   | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                                                                                                        |
 | `/agentic-dev-onboard`    | Walk a new user through the repo's dev flow, MCPs, env vars, skills                                                                                             |
@@ -162,7 +162,7 @@ The repo composes work into three layers, in order of how often each runs:
 ### Per-Story Dev Loop
 
 ```
-/sprint-dev           → Planning → Implementation → Code Review → Staging → (gated) Production
+/sprint-development           → Planning → Implementation → Code Review → Staging → (gated) Production
                         └── /unit-testing (composable, optional TDD slice)
 /git-flow-master      → Branch, commit, push, PR, conflicts, chained-PR planning (auto-adapts to strategy)
 ```
@@ -201,13 +201,13 @@ The agent should load only what the current step needs. Use this table to decide
 | **Understand system** | `business-data-map.md` + `PRD/*`                          | `SRS/*`, `docs/architectures/`              |
 | **Use an MCP tool**   | `CLAUDE.md` § Tool Resolution                             | Specific MCP doc in `docs/setup/`           |
 | **Bootstrap project** | `/agentic-dev-core`                                       | `/project-foundation`, `/project-bootstrap` |
-| **Code review**       | `/sprint-dev` (Stage 3) + PR diff                         | `compliance-matrix.md` if exists            |
+| **Code review**       | `/sprint-development` (Stage 3) + PR diff                         | `compliance-matrix.md` if exists            |
 
 ### By Role
 
 | Role                      | Primary Entry Points                                                                |
 | ------------------------- | ----------------------------------------------------------------------------------- |
-| **Developer**             | `/sprint-dev` (+ optional `/unit-testing`); `.context/business/business-data-map.md` |
+| **Developer**             | `/sprint-development` (+ optional `/unit-testing`); `.context/business/business-data-map.md` |
 | **Product / PM**          | `/product-management`, `/project-foundation`; `.context/PRD/`, `.context/business/` |
 | **Architect / Founder**   | `/project-foundation`; `.context/idea/`, `.context/PRD/`, `.context/SRS/`            |
 | **DevOps / Infra**        | `/project-bootstrap`; `docs/workflows/update-template-guide.md`, `docs/setup/mcp/`   |

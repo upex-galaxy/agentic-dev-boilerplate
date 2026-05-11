@@ -13,7 +13,7 @@
 3. [The lifecycle: five phases](#3-the-lifecycle-five-phases)
 4. [The two confusing pieces](#4-the-two-confusing-pieces)
 5. [How everything connects internally](#5-how-everything-connects-internally)
-6. [`/sprint-dev` vs `/sdd-*` — when to use which](#6-sprint-dev-vs-sdd--when-to-use-which)
+6. [`/sprint-development` vs `/sdd-*` — when to use which](#6-sprint-development-vs-sdd--when-to-use-which)
 7. [Cheat sheet — "I want X, I run Y"](#7-cheat-sheet--i-want-x-i-run-y)
 8. [Pieces you NEVER invoke directly](#8-pieces-you-never-invoke-directly)
 9. [MCPs available](#9-mcps-available)
@@ -85,8 +85,8 @@ Each phase has a clear trigger (one of the three categories above), a determinis
 Three workflow skills cover the in-sprint loop, ordered by altitude:
 
 - `/product-management` — Backlog management: seed the backlog from the PRD, add a feature, create an epic, refine a story (INVEST + 3-amigos + Gherkin AC + edge cases), generate a sprint report. Continuous.
-- `/sprint-dev` — Per-story mega-orchestrator: Planning → Implementation → Code Review → Staging deploy → (gated) Production deploy. Drives the 12-step workflow per ticket (precheck epic, transition Jira ticket through dev states, plan, code, PR, review, docs, merge, deploy, optional rollback). Every story, every sprint.
-- `/unit-testing` — TDD slice (red-green-refactor), test naming, mocking patterns, coverage strategy. Standalone or composed mid-flight from `/sprint-dev` for TDD-shaped work.
+- `/sprint-development` — Per-story mega-orchestrator: Planning → Implementation → Code Review → Staging deploy → (gated) Production deploy. Drives the 12-step workflow per ticket (precheck epic, transition Jira ticket through dev states, plan, code, PR, review, docs, merge, deploy, optional rollback). Every story, every sprint.
+- `/unit-testing` — TDD slice (red-green-refactor), test naming, mocking patterns, coverage strategy. Standalone or composed mid-flight from `/sprint-development` for TDD-shaped work.
 
 The SDD bloque (`/sdd-explore`, `/sdd-propose`, `/sdd-spec`, `/sdd-design`, `/sdd-tasks`, `/sdd-apply`, `/sdd-verify`, `/sdd-archive`) is the alternative path for changes that look more like research projects than tickets — large refactors, architectural decisions, features without a ticket yet. See §6 for when to pick which.
 
@@ -124,7 +124,7 @@ Mnemonic:
 
 ### A passive role you never invoke
 
-`agentic-dev-core` has a second life beyond its `init` mode: it **hosts shared references** that workflow skills cite on demand. When `/sprint-dev`, `/product-management`, `/project-foundation`, or `/project-bootstrap` delegates to a subagent, the AI loads `agentic-dev-core/references/briefing-template.md`, `dispatch-patterns.md`, and `orchestration-doctrine.md` automatically. You never type `/agentic-dev-core` to read those files — they are pulled in as part of orchestration. This passive role is invisible from the user's seat, but it is why `agentic-dev-core` exists even after Phase 0 is complete.
+`agentic-dev-core` has a second life beyond its `init` mode: it **hosts shared references** that workflow skills cite on demand. When `/sprint-development`, `/product-management`, `/project-foundation`, or `/project-bootstrap` delegates to a subagent, the AI loads `agentic-dev-core/references/briefing-template.md`, `dispatch-patterns.md`, and `orchestration-doctrine.md` automatically. You never type `/agentic-dev-core` to read those files — they are pulled in as part of orchestration. This passive role is invisible from the user's seat, but it is why `agentic-dev-core` exists even after Phase 0 is complete.
 
 ---
 
@@ -172,7 +172,7 @@ For the deeper rationale on the knowledge split see [`agentic-development-engine
 ### Circuit 2 — Orchestration
 
 ```
-Workflow skill (e.g. /sprint-dev)
+Workflow skill (e.g. /sprint-development)
     |
     | cites §Subagent Dispatch Strategy
     v
@@ -193,7 +193,7 @@ acli jira workitem transition, git commit, gh pr create, playwright test, ...
 
 This is the canonical pattern the workflow skills follow. The doctrine itself lives in `CLAUDE.md` §Orchestration Mode and is mirrored at `.claude/skills/agentic-dev-core/references/orchestration-doctrine.md` so subagents can load it without pulling the full `CLAUDE.md` into their fresh context. Each workflow skill declares its specific dispatch points in a `## Subagent Dispatch Strategy` section per-skill (which steps delegate, which pattern, which subagent role).
 
-The takeaway: when you invoke `/sprint-dev` or `/project-foundation`, the orchestrator reads its own dispatch strategy, writes a 6-component briefing for each subagent (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules), and the subagent loads tool skills (`/acli`, `/git-flow-master`, `/playwright-cli`) to actually run shell commands. This is what makes the main conversation "lean" — the heavy reading happens inside subagents, not in the main thread.
+The takeaway: when you invoke `/sprint-development` or `/project-foundation`, the orchestrator reads its own dispatch strategy, writes a 6-component briefing for each subagent (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules), and the subagent loads tool skills (`/acli`, `/git-flow-master`, `/playwright-cli`) to actually run shell commands. This is what makes the main conversation "lean" — the heavy reading happens inside subagents, not in the main thread.
 
 ### The context system (3-level hierarchy)
 
@@ -223,29 +223,29 @@ A separate but related substrate is the per-project context AI agents read on de
 ```
 .context/PBI/{module}/{TICKET-ID}-{name}/
   context.md                       → ACs, data, session notes, open questions
-  implementation-plan.md           → Plan produced by /sprint-dev
+  implementation-plan.md           → Plan produced by /sprint-development
   evidence/                        → Screenshots, traces, logs (gitignored)
 ```
 
-`/sprint-dev` reads Level 1 + the relevant Level 2 + the story's Level 3 when it starts a ticket. `/product-management` writes Level 2 + Level 3 when it seeds stories. `/sync-ai-memory` keeps Level 1 in sync with reality.
+`/sprint-development` reads Level 1 + the relevant Level 2 + the story's Level 3 when it starts a ticket. `/product-management` writes Level 2 + Level 3 when it seeds stories. `/sync-ai-memory` keeps Level 1 in sync with reality.
 
 ---
 
-## 6. `/sprint-dev` vs `/sdd-*` — when to use which
+## 6. `/sprint-development` vs `/sdd-*` — when to use which
 
 The most common point of confusion. Both workflows can drive a feature to merge. They serve different shapes of work.
 
 | When                                                                 | Skill                                                        |
 | -------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Routine Jira ticket work (most cases)                                | `/sprint-dev` (ticket-driven workflow)                       |
+| Routine Jira ticket work (most cases)                                | `/sprint-development` (ticket-driven workflow)                       |
 | Large refactor / architectural decision / feature without ticket yet | `/sdd-*` (spec-driven workflow)                              |
-| Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-dev` for the cycle |
+| Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-development` for the cycle |
 
-### When to reach for `/sprint-dev`
+### When to reach for `/sprint-development`
 
 The default choice for normal day-to-day work. You have a Jira ticket, the AC is reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle: precheck the epic, transition the ticket through dev states (`Ready For Dev → In Progress → In Review → Ready For QA`), plan, code, code review, deploy to staging, optionally deploy to production. Nothing about the change requires a multi-page architectural document — a clear implementation plan is enough.
 
-Example: "Add empty state to the user list when no results match the filter." Ticket exists, AC is 3 bullets, scope is one component plus one helper. `/sprint-dev` drives the whole thing.
+Example: "Add empty state to the user list when no results match the filter." Ticket exists, AC is 3 bullets, scope is one component plus one helper. `/sprint-development` drives the whole thing.
 
 ### When to reach for `/sdd-*`
 
@@ -255,9 +255,9 @@ Example: "Replace the auth model — move from session cookies to JWT with refre
 
 ### When to combine both
 
-You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-dev` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
+You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-development` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
 
-The `/sdd-*` skills are installed by gentle-ai during `bun run setup`. If you opted out of gentle-ai, only `/sprint-dev` is available — see [`../INSTALLER.md`](../INSTALLER.md) for the opt-out trade-off.
+The `/sdd-*` skills are installed by gentle-ai during `bun run setup`. If you opted out of gentle-ai, only `/sprint-development` is available — see [`../INSTALLER.md`](../INSTALLER.md) for the opt-out trade-off.
 
 ---
 
@@ -269,7 +269,7 @@ The `/sdd-*` skills are installed by gentle-ai during `bun run setup`. If you op
 | Seed the backlog from the PRD | `/product-management` (seed flow) |
 | Add a new feature or epic | `/product-management` (add-feature / create-epic flow) |
 | Refine a story (INVEST + AC + edge cases) | `/product-management` (refine flow) |
-| Implement a Jira ticket end-to-end | `/sprint-dev` (pass the ticket key) |
+| Implement a Jira ticket end-to-end | `/sprint-development` (pass the ticket key) |
 | Plan a multi-PR refactor with architecture decisions | `/sdd-new <change>` (explore + propose) |
 | Fast-forward all SDD planning phases | `/sdd-ff <change>` (proposal → spec → design → tasks) |
 | Implement SDD tasks | `/sdd-apply` |
@@ -342,11 +342,11 @@ Decision rule for the AI (and for you when deciding which to suggest):
 - **Scripts** (`bun run …`) = what YOU run in the terminal to keep the fuel (`.agents/project.yaml` + Jira fields) healthy.
 - **`.context/`** = what the AI KNOWS about the product (generated by `/project-foundation`, kept fresh by `/sync-ai-memory` + `/business-*` commands).
 - **`DESIGN.md`** = the visual identity contract (generated by `/design-system`, consumed by `/project-bootstrap` when scaffolding the frontend).
-- **The repo** = the codebase itself (scaffolded by `/project-bootstrap`, developed via `/sprint-dev` + `/unit-testing`, or via `/sdd-*` for architectural changes).
+- **The repo** = the codebase itself (scaffolded by `/project-bootstrap`, developed via `/sprint-development` + `/unit-testing`, or via `/sdd-*` for architectural changes).
 
 If you only remember one thing:
 
-> Install with `bun run setup`, define the product with `/project-foundation` (which calls `/design-system` for visual identity), scaffold the codebase with `/project-bootstrap`, seed the backlog with `/product-management`, then drive every story with `/sprint-dev`. Reach for `/sdd-*` only when the change is too architectural to fit in a single ticket.
+> Install with `bun run setup`, define the product with `/project-foundation` (which calls `/design-system` for visual identity), scaffold the codebase with `/project-bootstrap`, seed the backlog with `/product-management`, then drive every story with `/sprint-development`. Reach for `/sdd-*` only when the change is too architectural to fit in a single ticket.
 
 ---
 
@@ -356,7 +356,7 @@ If you only remember one thing:
 - [`../CLAUDE.md`](../CLAUDE.md) — the canonical project memory + Tool Resolution table that maps `[TAG_TOOL]` pseudocode to concrete CLIs / MCPs.
 - [`../CONTEXT.md`](../CONTEXT.md) — Context Engineering canonical map for this repo: stable file names, the `.context/` vs `.claude/` split, architectural decisions, and operational DO/DON'T rules.
 - [`agentic-development-engineering.md`](agentic-development-engineering.md) — methodology deep dive. §6 covers the **why** behind the knowledge layer: token efficiency, progressive loading, the `.env` vs `.agents/project.yaml` split, the four variable syntaxes.
-- [`../INSTALLER.md`](../INSTALLER.md) — what `bun run setup` configures: gentle-ai (SDD skills, Engram, foundation skills), community skills, MCPs, external CLIs, the hand-off matrix `/sprint-dev` vs `/sdd-*`, and how to opt out of gentle-ai.
+- [`../INSTALLER.md`](../INSTALLER.md) — what `bun run setup` configures: gentle-ai (SDD skills, Engram, foundation skills), community skills, MCPs, external CLIs, the hand-off matrix `/sprint-development` vs `/sdd-*`, and how to opt out of gentle-ai.
 - [`setup/jira-setup-guide.md`](setup/jira-setup-guide.md) — configuring Jira credentials and the Atlassian MCP.
 - [`setup/README.md`](setup/README.md) — index of setup guides in this repo.
 - [`../.agents/README.md`](../.agents/README.md) — the full `.agents/` contract: variable syntaxes, validation scripts, workflows for adding prompts or required Jira fields, troubleshooting.

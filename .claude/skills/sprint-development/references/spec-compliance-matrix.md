@@ -1,6 +1,6 @@
 # Spec Compliance Matrix — Stage 3 AC↔evidence traceability gate
 
-> Reference for sprint-dev Stage 3 (Code Review).
+> Reference for sprint-development Stage 3 (Code Review).
 > Cited from: `SKILL.md` end-of-Stage-3, before merge to staging.
 
 ## Purpose

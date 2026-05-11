@@ -70,14 +70,14 @@ Durante el código:
 ## Flujo de Trabajo SDD
 
 ```
-Especificación (planning phase)            Implementación (sprint-dev)
+Especificación (planning phase)            Implementación (sprint-development)
      │                                            │
      ▼                                            ▼
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
 │  Story  │ → │  Test   │ → │  Plan   │ → │  Code   │
 │   +AC   │    │  Cases  │    │ Técnico │    │ + Tests │
 └─────────┘    └─────────┘    └─────────┘    └─────────┘
-  Planning      Planning       Planning      sprint-dev
+  Planning      Planning       Planning      sprint-development
 ```
 
 **Antes de escribir código** ya existe (artefactos de la fase de planning):
@@ -159,7 +159,7 @@ Después del código:
 - `code-standards.md` - Estándares de código
 - `error-handling.md` - Manejo de errores
 - `data-testid-standards.md` - Estándares de data-testid
-- _Workflow de desarrollo: ver `SKILL.md` del skill `sprint-dev`_
+- _Workflow de desarrollo: ver `SKILL.md` del skill `sprint-development`_
 
 ---
 

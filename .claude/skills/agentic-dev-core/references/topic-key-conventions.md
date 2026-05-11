@@ -1,6 +1,6 @@
 # Topic-Key Conventions for PBI Artifacts
 
-> Cited by: `product-management`, `sprint-dev`. Loaded on demand whenever an artifact (spec, implementation plan, code review, compliance matrix, etc.) is created or retrieved, so persistence is deterministic and the optional Engram bridge can mirror without coupling.
+> Cited by: `product-management`, `sprint-development`. Loaded on demand whenever an artifact (spec, implementation plan, code review, compliance matrix, etc.) is created or retrieved, so persistence is deterministic and the optional Engram bridge can mirror without coupling.
 
 ## Purpose
 
@@ -27,8 +27,8 @@ pbi/{ticket}/{artifact}
 **Examples:**
 
 - `pbi/UPEX-123/spec` — refined story spec
-- `pbi/UPEX-123/impl-plan` — implementation plan from `sprint-dev` Stage 1
-- `pbi/UPEX-123/review` — code-review notes from `sprint-dev` Stage 3
+- `pbi/UPEX-123/impl-plan` — implementation plan from `sprint-development` Stage 1
+- `pbi/UPEX-123/review` — code-review notes from `sprint-development` Stage 3
 - `pbi/UPEX-456/bug-fix` — bug fix plan + root-cause notes
 - `pbi/UPEX-789/compliance-matrix` — Stage 3 AC-vs-code coverage matrix
 
@@ -40,11 +40,11 @@ The vocabulary is open — pick whatever name the workflow naturally uses — bu
 | ------------------- | ----------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
 | `spec`              | `product-management` (AC refinement)      | Refined story spec (Gherkin AC, business rules, scope)      | `.context/PBI/{ticket}/spec.md`                 |
 | `epic`              | `product-management` (epic creation)      | Epic-level scope, child stories, traceability to PRD        | `.context/PBI/{epic-slug}/epic.md`              |
-| `impl-plan`         | `sprint-dev` Stage 1                      | Story implementation plan (tasks mapped to AC)              | `.context/PBI/{ticket}/impl-plan.md`            |
-| `feature-impl-plan` | `sprint-dev` Stage 1 (macro)              | Feature-level implementation plan across multiple stories   | `.context/PBI/{epic-slug}/feature-impl-plan.md` |
-| `review`            | `sprint-dev` Stage 3                      | Code-review findings against AC + standards                 | `.context/PBI/{ticket}/review.md`               |
-| `compliance-matrix` | `sprint-dev` Stage 3                      | AC-vs-code coverage matrix (which AC each commit closes)    | `.context/PBI/{ticket}/compliance-matrix.md`    |
-| `bug-fix`           | `sprint-dev` Stage 2 (`bug-fix-workflow`) | Root-cause + fix plan + regression notes                    | `.context/PBI/{ticket}/bug-fix.md`              |
+| `impl-plan`         | `sprint-development` Stage 1                      | Story implementation plan (tasks mapped to AC)              | `.context/PBI/{ticket}/impl-plan.md`            |
+| `feature-impl-plan` | `sprint-development` Stage 1 (macro)              | Feature-level implementation plan across multiple stories   | `.context/PBI/{epic-slug}/feature-impl-plan.md` |
+| `review`            | `sprint-development` Stage 3                      | Code-review findings against AC + standards                 | `.context/PBI/{ticket}/review.md`               |
+| `compliance-matrix` | `sprint-development` Stage 3                      | AC-vs-code coverage matrix (which AC each commit closes)    | `.context/PBI/{ticket}/compliance-matrix.md`    |
+| `bug-fix`           | `sprint-development` Stage 2 (`bug-fix-workflow`) | Root-cause + fix plan + regression notes                    | `.context/PBI/{ticket}/bug-fix.md`              |
 | `edge-cases`        | `product-management` (enumeration)        | Cataloged edge cases with criticality + AC-promote decision | `.context/PBI/{ticket}/edge-cases.md`           |
 | `test-report`       | (out of scope here; sister repo)          | QA test execution report — referenced for traceability      | `.context/PBI/{ticket}/test-report.md`          |
 
@@ -164,6 +164,6 @@ The renaming step is **opportunistic** — only do it when you're already editin
 
 ## Cross-references
 
-- **Producers** (skills that emit artifacts): `product-management/SKILL.md`, `sprint-dev/SKILL.md`. Both cite this file from the steps that emit artifacts.
+- **Producers** (skills that emit artifacts): `product-management/SKILL.md`, `sprint-development/SKILL.md`. Both cite this file from the steps that emit artifacts.
 - **Bridge implementation**: `scripts/engram-bridge.ts`. Auto-detects `engram` on `PATH`; no-ops cleanly when absent.
 - **Engram CLI surface used**: `engram save <title> <content> --topic <key> --type architecture --scope project`, `engram search <query>`, `engram timeline <id>`. We do not depend on the MCP server.

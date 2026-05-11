@@ -44,8 +44,8 @@ Skills indexed: 10
 **Purpose**: Foundation skill that (a) hosts shared references cited by all workflow skills (briefing template, dispatch patterns, orchestration doctr...
 
 **Compact Rules**:
-- **Passive — shared reference library.** Workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `agentic-dev-core/references/*.md` on demand.
-- **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-dev/` only), they end up missing the foundation files those skills depend on (`CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/agentic-dev-core` regenerates that foundation from the templates shipped under `templates/`.
+- **Passive — shared reference library.** Workflow skills (`sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) cite files under `references/` instead of duplicating the same briefing template, dispatch patterns and orchestration doctrine inside every skill. Loading a workflow skill therefore implies loading the relevant `agentic-dev-core/references/*.md` on demand.
+- **Active — bootstrap trigger.** When users adopt this boilerplate by downloading skills à la carte (e.g. cloning `.claude/skills/sprint-development/` only), they end up missing the foundation files those skills depend on (`CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, etc.). Invoking `/agentic-dev-core` regenerates that foundation from the templates shipped under `templates/`.
 - **`.agents/project.yaml`** — template variable source. Skills resolve `{{VAR}}` against this. Nothing depends on it yet at this point in the install, so write it first.
 - **`.agents/jira-required.yaml`** — manifest of Jira custom fields AND `work_types:` (issue types + canonical statuses + canonical transitions) the methodology requires. Read by `scripts/check-jira-setup.ts`, `scripts/sync-jira-workflows.ts`, and `scripts/agents-lint.ts`.
 - **`.agents/jira-fields.json`** — empty stub (`{}`). Real catalog is written later by `bun run jira:sync-fields`. Documented in `templates/jira-fields.json.template` so the file exists from minute zero.
@@ -53,7 +53,7 @@ Skills indexed: 10
 - **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
 - **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
 - **`CLAUDE.md`** (last). It cites every file written in steps 1-6, so it must be written after all of them. OpenCode reads `CLAUDE.md` as a fallback per its Claude Code compat docs, so a single canonical file covers both supported agents — no symlink needed.
-- **`.context/_framework/testing-capabilities.json`** (post-bootstrap detection). After CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/_framework/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-dev`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
+- **`.context/_framework/testing-capabilities.json`** (post-bootstrap detection). After CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/_framework/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-development`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
 - `bun run agents:setup` — fill `.agents/project.yaml` interactively.
 - `bun run jira:sync-fields` — populate `.agents/jira-fields.json` from their Jira workspace.
 - `bun run jira:sync-workflows` — populate `.agents/jira-workflows.json` from their Jira workspace (interactive on first run for canonical slugs that don't auto-resolve to a workflow's real status / transition names).
@@ -78,8 +78,8 @@ Skills indexed: 10
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
 - [ ] Does `bun run lint:agents` exit clean (0 errors)?
 - [ ] Do the gentle-ai skills appear in autocomplete (restart your agent if not)?
-- [ ] Ready for your first ticket: `/sprint-dev <UPEX-XXX>`
-- Implement features → use `/sprint-dev`
+- [ ] Ready for your first ticket: `/sprint-development <UPEX-XXX>`
+- Implement features → use `/sprint-development`
 - Write unit tests → use `/unit-testing`
 - Refine acceptance criteria → use `/product-management`
 - Define a brand-new product → use `/project-foundation`
@@ -104,7 +104,7 @@ Skills indexed: 10
 - A new project just finished the PRD and needs to define visual identity before the SRS architecture phase.
 - An existing project wants to rebrand without touching Constitution / PRD / code.
 - A team wants to centralize design tokens in a portable format consumable by multiple AI agents.
-- Implement UI / components — that's `/sprint-dev` + community skill `frontend-design`.
+- Implement UI / components — that's `/sprint-development` + community skill `frontend-design`.
 - Define PRD or personas — that's `/project-foundation` phases 2.x.
 - Scaffold the frontend code (Tailwind install, page skeletons, shadcn setup) — that's `/project-bootstrap` frontend-setup.
 - Tweak existing tokens after scaffolding — edit `DESIGN.md` directly and re-run the bootstrap pre-flight.
@@ -163,8 +163,8 @@ Skills indexed: 10
 - **Source-of-truth specs** at `.context/PBI/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
 - **Delta specs** per change at `.context/PBI/{ticket}/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
 - **Archive process** that merges deltas back into the source-of-truth on story close and moves the change folder under `.context/PBI/archive/YYYY-MM-DD-{ticket}/`
-- **Per-story implementation** → `/sprint-dev` (planning → code → review → deploy loop)
-- **TDD on a single function** → `/unit-testing` (composable inside `/sprint-dev`)
+- **Per-story implementation** → `/sprint-development` (planning → code → review → deploy loop)
+- **TDD on a single function** → `/unit-testing` (composable inside `/sprint-development`)
 - **Formal QA test cases, exploratory testing, automation, regression** → out of scope here; see the sister boilerplate `agentic-qa-boilerplate` for `sprint-testing`, `test-documentation`, `test-automation`, and related QA workflows
 - `{{PROJECT_KEY}}` — Jira project key (e.g., `MYM`, `UPEX`)
 - (truncated — read full SKILL.md for the rest)
@@ -186,7 +186,7 @@ Skills indexed: 10
 - An existing repo needs an incremental infrastructure feature added (e.g. "add OpenAPI to the API", "add bearer auth", "wire Supabase types into the frontend").
 - Define the product (PRD, user journeys, architecture decisions) — that's `/project-foundation`.
 - Seed the Jira backlog with epics + user stories — that's `/product-management`.
-- Implement an individual user story (planning → code → review → deploy) — that's `/sprint-dev`.
+- Implement an individual user story (planning → code → review → deploy) — that's `/sprint-development`.
 - Set up a unit-test framework — that's `/unit-testing` (and is its own concern).
 - **OpenAPI integration** → `references/openapi-setup.md`. Schema generation, Swagger / Scalar UI, contract publication.
 - **API routes + middleware** → `references/api-routes-setup.md`. Route conventions, error responses, request logging, auth middleware wiring.
@@ -215,7 +215,7 @@ Skills indexed: 10
 - A specific section is missing or stale (e.g. user journeys haven't been written yet) — invoke just that phase via the Specific tasks table below.
 - Scaffold the codebase (backend / frontend / OpenAPI / auth) — that's `/project-bootstrap`.
 - Seed the Jira backlog with epics + stories — that's `/product-management`.
-- Plan or implement an individual user story — that's `/sprint-dev`.
+- Plan or implement an individual user story — that's `/sprint-development`.
 - Set up unit tests — that's `/unit-testing`.
 - Run QA workflows (test plans, exploratory testing, automation) — out of scope, see the sister `agentic-qa-boilerplate`.
 - Read `references/constitution-business-model.md` for the canvas template (problem, solution, value prop, customer segments, channels, revenue model, cost structure, key metrics).
@@ -231,7 +231,7 @@ Skills indexed: 10
 
 ---
 
-## Skill: sprint-dev
+## Skill: sprint-development
 
 **Purpose**: Orchestrates the per-story dev loop end-to-end: Planning -> Implementation -> Code Review -> Staging deploy -> (gated) Production deploy.
 
@@ -255,7 +255,7 @@ Skills indexed: 10
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.claude/skills/sprint-dev/SKILL.md` · phase: `implementation` · extraction strategy: B
+> Source: `.claude/skills/sprint-development/SKILL.md` · phase: `implementation` · extraction strategy: B
 
 ---
 
@@ -269,7 +269,7 @@ Skills indexed: 10
 - "What should I mock here?"
 - "How do I name this test?"
 - "What's the right coverage target for this module?"
-- Mid-flight from `/sprint-dev` Stage 2 (Implementation) when implementing TDD-friendly code (pure functions, complex branching, bug fix reproducers)
+- Mid-flight from `/sprint-development` Stage 2 (Implementation) when implementing TDD-friendly code (pure functions, complex branching, bug fix reproducers)
 - Project has a unit test runner configured (Jest, Vitest, Mocha, or similar)
 - Test command exists in `package.json` (`bun test`, `npm test`, `vitest`, etc.)
 - For TDD: test runner supports watch mode (`--watch`)

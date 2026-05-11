@@ -1,6 +1,6 @@
 ---
 name: master-implementation-plan
-description: Generate or update .context/master-implementation-plan.md — high-level roadmap of all features to implement in this repo, dependency-cascaded, value-prioritized. The dev-side master plan derived from business-data-map + business-feature-map. Triggers on 'master plan', 'plan maestro de implementación', 'implementation roadmap', 'what to build first', 'qué construir y en qué orden', 'plan de features high-level'. Hard gate: business-data-map.md. Soft gate: business-feature-map.md. Do NOT use for: per-story implementation planning (use /sprint-dev planning stage), data entity mapping (use /business-data-map), feature inventory (use /business-feature-map), unit testing scope (use /unit-testing).
+description: Generate or update .context/master-implementation-plan.md — high-level roadmap of all features to implement in this repo, dependency-cascaded, value-prioritized. The dev-side master plan derived from business-data-map + business-feature-map. Triggers on 'master plan', 'plan maestro de implementación', 'implementation roadmap', 'what to build first', 'qué construir y en qué orden', 'plan de features high-level'. Hard gate: business-data-map.md. Soft gate: business-feature-map.md. Do NOT use for: per-story implementation planning (use /sprint-development planning stage), data entity mapping (use /business-data-map), feature inventory (use /business-feature-map), unit testing scope (use /unit-testing).
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 ---
@@ -29,7 +29,7 @@ The output contains:
 - Explicit out-of-scope section (to stop scope creep into the master plan)
 - Implementation gaps — spike candidates and unknowns to investigate before building
 
-This is **NOT** a story-level implementation plan (→ `/sprint-dev` Planning stage), a flow description (→ `business-data-map.md`), a feature inventory (→ `business-feature-map.md`), nor a per-epic ROADMAP (→ `.context/PBI/{module}/ROADMAP.md`). It is the **implementation-strategy layer** above those maps.
+This is **NOT** a story-level implementation plan (→ `/sprint-development` Planning stage), a flow description (→ `business-data-map.md`), a feature inventory (→ `business-feature-map.md`), nor a per-epic ROADMAP (→ `.context/PBI/{module}/ROADMAP.md`). It is the **implementation-strategy layer** above those maps.
 
 ---
 
@@ -130,7 +130,7 @@ Write `.context/master-implementation-plan.md` with this structure.
 
 **Tone**: conversational, senior-engineer voice, second person ("you will want to ship X before Y because…"). Assume the reader is a tech-lead onboarding to the project — guide them, do not lecture. Use the same feature / flow names as the data-map and feature-map.
 
-**What NOT to include**: feature catalogs (live in feature-map), flow diagrams (live in data-map), per-story implementation plans (live in `/sprint-dev`), API endpoint definitions (live in `business-api-map.md` or `api/openapi-types.ts`), code snippets, payloads, fixtures.
+**What NOT to include**: feature catalogs (live in feature-map), flow diagrams (live in data-map), per-story implementation plans (live in `/sprint-development`), API endpoint definitions (live in `business-api-map.md` or `api/openapi-types.ts`), code snippets, payloads, fixtures.
 
 ### 0. Header block
 
@@ -242,14 +242,14 @@ Short, action-oriented. No more than 12 items. Ordered by what is most often ski
 - Verify the feature has been demoed against staging before requesting review.
 ```
 
-No TC IDs (those live in the TMS / QA side). No code review checklist (that lives in `/sprint-dev`'s Code Review stage).
+No TC IDs (those live in the TMS / QA side). No code review checklist (that lives in `/sprint-development`'s Code Review stage).
 
 ### 11. What is NOT in scope
 
 Explicit delegation to stop scope creep into this plan:
 
 ```markdown
-- Per-story implementation plan, file-by-file design → `/sprint-dev` Planning stage, written to `.context/PBI/{module}/{ticket}/implementation-plan.md`
+- Per-story implementation plan, file-by-file design → `/sprint-development` Planning stage, written to `.context/PBI/{module}/{ticket}/implementation-plan.md`
 - Feature catalog, CRUD matrix, feature flags → `.context/business/business-feature-map.md`
 - Flow diagrams and state-machine transitions → `.context/business/business-data-map.md`
 - API endpoint inventory / contracts → `bun run api:sync` + `/business-api-map` (when available)
@@ -295,7 +295,7 @@ Each gap should be phrased as a one-line spike: "Spike: choose payment provider 
 
 - Never auto-overwrite an existing `.context/master-implementation-plan.md`. UPDATE mode always pauses for confirmation.
 - Never invent priorities. Every Wave 0 / Wave 1 claim cites a data-map flow, a feature-map row, a PRD priority, or a named integration constraint.
-- Never collapse this plan into a story-level plan. If the reader needs file-level detail, point them at `/sprint-dev`.
+- Never collapse this plan into a story-level plan. If the reader needs file-level detail, point them at `/sprint-development`.
 - Never include dates. Order matters; estimates do not belong here.
 - If neither `business-data-map.md` nor `business-feature-map.md` are present, STOP — the hard gate is non-negotiable.
 - Prose first, tables when they help, ASCII when narrative cannot carry the structure. No code blocks beyond the cascade graph and the markdown table examples shown above.

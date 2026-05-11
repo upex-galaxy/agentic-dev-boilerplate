@@ -49,7 +49,7 @@ acli jira workitem create \
   --assignee "@me" \
   --label "frontend,empty-states"
 
-# Create a Bug from inside /sprint-dev when QA reports an issue
+# Create a Bug from inside /sprint-development when QA reports an issue
 acli jira workitem create \
   --project "UPEX" \
   --type "Bug" \
@@ -119,7 +119,7 @@ acli jira workitem create-bulk --from-json bulk.json --yes
 # Default fields — quick peek at a story
 acli jira workitem view UPEX-123
 
-# Select fields — what /sprint-dev Stage 1 (impl-plan) actually consumes
+# Select fields — what /sprint-development Stage 1 (impl-plan) actually consumes
 acli jira workitem view UPEX-123 --fields "summary,status,assignee,description,parent"
 
 # JSON for scripting — feed the impl-plan generator
@@ -212,7 +212,7 @@ Removal flags: `--remove-assignee`, `--remove-labels`.
 
 ## <a id="transition"></a>transition
 
-This is the workhorse during `/sprint-dev`. The DEV-side workflow this boilerplate uses:
+This is the workhorse during `/sprint-development`. The DEV-side workflow this boilerplate uses:
 
 ```
 Ready For Dev → In Progress → In Review → Ready For QA
@@ -371,7 +371,7 @@ acli jira workitem comment visibility --group
 
 ## <a id="link"></a>link
 
-This is how `/sprint-dev` Stage 4 attaches a merged PR back to the story (`web link` to the PR URL is preferred — see REST fallback at the end of this section if you need a true remote link).
+This is how `/sprint-development` Stage 4 attaches a merged PR back to the story (`web link` to the PR URL is preferred — see REST fallback at the end of this section if you need a true remote link).
 
 ### create
 

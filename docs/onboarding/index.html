@@ -22,8 +22,8 @@
         staging, and hands off to QA — with human checkpoints between every stage.
       </p>
 
-      <!-- 5-stage sprint-dev pipeline diagram -->
-      <div class="hero-diagram" aria-label="Five-stage sprint-dev pipeline">
+      <!-- 5-stage sprint-development pipeline diagram -->
+      <div class="hero-diagram" aria-label="Five-stage sprint-development pipeline">
         <svg
           viewBox="0 0 920 150"
           width="100%"
@@ -228,7 +228,7 @@
               tooling that an AI agent uses to build a Next.js + Supabase application on top of it.
               The repo is a starter — you scaffold the actual app inside it via
               <code>/project-foundation</code> and <code>/project-bootstrap</code>, then drive
-              feature work through <code>/sprint-dev</code>.
+              feature work through <code>/sprint-development</code>.
             </p>
 
             <p>
@@ -657,13 +657,13 @@ bun run lint:agents           # validate placeholders</code></pre>
                           INVEST/AC refinement (before development).
                         </li>
                         <li>
-                          <code>/sprint-dev</code> — per-story 12-step loop: planning →
+                          <code>/sprint-development</code> — per-story 12-step loop: planning →
                           implementation → code review → staging deploy → (gated) production
                           deploy. The mega-orchestrator.
                         </li>
                         <li>
                           <code>/unit-testing</code> — TDD red-green-refactor for an isolated unit.
-                          Composable mid-flight from <code>/sprint-dev</code>.
+                          Composable mid-flight from <code>/sprint-development</code>.
                         </li>
                         <li>
                           <code>/git-flow-master</code> — end-to-end git operator (auto-detects the
@@ -749,7 +749,7 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h2><span class="num">4.</span>The Jira state machine</h2>
 
             <p>
-              <code>/sprint-dev</code> drives the ticket through a four-state Jira workflow. Every
+              <code>/sprint-development</code> drives the ticket through a four-state Jira workflow. Every
               transition is owned by a specific stage of the sprint loop — the AI does not skip
               ahead. You confirm at the gates.
             </p>
@@ -855,7 +855,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </g>
               </svg>
               <p class="diagram-caption">
-                Each transition is owned by a sprint-dev stage. The repo never reaches "Done" — QA
+                Each transition is owned by a sprint-development stage. The repo never reaches "Done" — QA
                 lives in the sister repo (<code>agentic-qa-boilerplate</code>).
               </p>
             </div>
@@ -1240,7 +1240,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <code>{{jira.&lt;slug&gt;}}</code> → portable Jira custom-field reference, resolves
                 through <code>.agents/jira-required.yaml</code> (manifest) +
                 <code>.agents/jira.json</code> (workspace catalog). Used by
-                <code>/sprint-dev</code> and <code>/product-management</code> when they need to
+                <code>/sprint-development</code> and <code>/product-management</code> when they need to
                 read or update fields like <code>acceptance_criteria_gherkin</code>.
               </li>
             </ul>
@@ -1279,7 +1279,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                       Workflow skill
                     </text>
                     <text x="440" y="58" text-anchor="middle" fill="#888" font-size="11">
-                      /sprint-dev, /product-management, ...
+                      /sprint-development, /product-management, ...
                     </text>
                   </g>
                   <g>
@@ -1524,7 +1524,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td>Implement a Jira ticket end-to-end</td>
-                    <td><code>/sprint-dev</code> (pass the ticket key)</td>
+                    <td><code>/sprint-development</code> (pass the ticket key)</td>
                   </tr>
                   <tr>
                     <td>TDD a single function</td>
@@ -1646,7 +1646,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p class="skill-card-trigger">/agentic-dev-onboard</p>
                 <p class="skill-card-desc">
                   Walks new users through this repo's dev flow — stack, Jira workflow, when to use
-                  <code>/sprint-dev</code> vs <code>/sdd-*</code>, MCPs, env vars. The tour ends
+                  <code>/sprint-development</code> vs <code>/sdd-*</code>, MCPs, env vars. The tour ends
                   when the user knows which skill to call next.
                 </p>
               </article>
@@ -1692,10 +1692,10 @@ bun run lint:agents           # validate placeholders</code></pre>
 
               <article class="skill-card">
                 <div class="skill-card-head">
-                  <span class="skill-card-name">sprint-dev</span>
+                  <span class="skill-card-name">sprint-development</span>
                   <span class="badge badge-workflow">Workflow</span>
                 </div>
-                <p class="skill-card-trigger">/sprint-dev</p>
+                <p class="skill-card-trigger">/sprint-development</p>
                 <p class="skill-card-desc">
                   Per-story 12-step loop: planning → implementation → code review → staging deploy
                   → (gated) production deploy. The mega-orchestrator. Drives Jira through
@@ -1712,7 +1712,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p class="skill-card-desc">
                   TDD red-green-refactor for an isolated unit. Test naming (AAA / Given-When-Then),
                   mocking patterns, coverage strategy. Composable mid-flight from
-                  <code>/sprint-dev</code> for TDD slices. Vitest by default.
+                  <code>/sprint-development</code> for TDD slices. Vitest by default.
                 </p>
               </article>
 
@@ -2035,7 +2035,7 @@ bun run lint:agents           # validate placeholders</code></pre>
               <li>
                 <strong>Application code</strong> = the real product, scaffolded by
                 <code>/project-bootstrap</code> and built feature-by-feature via
-                <code>/sprint-dev</code>.
+                <code>/sprint-development</code>.
               </li>
             </ul>
 
@@ -2044,7 +2044,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                 Fill <code>project.yaml</code> first (<code>bun run agents:setup</code>), then let
                 the AI define the product with <code>/project-foundation</code>, then scaffold the
                 Next.js + Supabase skeleton with <code>/project-bootstrap</code>. From there,
-                <code>/sprint-dev</code> drives every Jira ticket from
+                <code>/sprint-development</code> drives every Jira ticket from
                 <code>Ready For Dev</code> all the way to <code>Ready For QA</code>.
               </p>
             </blockquote>
@@ -2073,7 +2073,7 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">agentic-development-engineering.md</span>
-            <span class="footer-card-desc">Strategy + 5-stage sprint-dev pipeline + Next.js + Supabase architecture.</span>
+            <span class="footer-card-desc">Strategy + 5-stage sprint-development pipeline + Next.js + Supabase architecture.</span>
           </a>
           <a
             class="footer-card"
@@ -2104,11 +2104,11 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
           <a
             class="footer-card"
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.claude/skills/sprint-dev/SKILL.md"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.claude/skills/sprint-development/SKILL.md"
             target="_blank"
             rel="noopener"
           >
-            <span class="footer-card-title">sprint-dev/SKILL.md</span>
+            <span class="footer-card-title">sprint-development/SKILL.md</span>
             <span class="footer-card-desc">The 12-step per-story dev loop in detail.</span>
           </a>
           <a

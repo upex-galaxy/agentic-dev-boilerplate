@@ -33,7 +33,7 @@
     {
       "name": "should-not-trigger-story-implementation",
       "prompt": "Implement this story UPEX-277 about empty states — code + tests + PR.",
-      "expected_behavior": "Does NOT activate unit-testing directly. Should route to /sprint-dev because the request is full-story orchestration (planning, code, review, deploy). sprint-dev MAY invoke /unit-testing internally for TDD slices, but the entry point is the orchestrator, not the focused skill.",
+      "expected_behavior": "Does NOT activate unit-testing directly. Should route to /sprint-development because the request is full-story orchestration (planning, code, review, deploy). sprint-development MAY invoke /unit-testing internally for TDD slices, but the entry point is the orchestrator, not the focused skill.",
       "category": "negative"
     },
     {

@@ -3,7 +3,7 @@
  * detect-testing-capabilities.ts — emits `.context/_framework/testing-capabilities.json`.
  *
  * Cached, write-once snapshot of the project's testing tooling so downstream
- * skills (`unit-testing`, `sprint-dev`) can read a static fact instead of
+ * skills (`unit-testing`, `sprint-development`) can read a static fact instead of
  * re-scanning `package.json` on every dispatch. Regenerated only when
  * `/agentic-dev-core` runs.
  *
@@ -94,7 +94,7 @@ function printHelp(): void {
 
 Detects the project's testing capabilities (runner, e2e, typecheck, lint,
 strict_tdd) and writes .context/_framework/testing-capabilities.json. Consumed by the
-unit-testing and sprint-dev skills.
+unit-testing and sprint-development skills.
 
 Flags:
   --dry-run    Print the would-be JSON to stdout without writing the file.

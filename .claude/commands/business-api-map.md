@@ -180,7 +180,7 @@ The "Why it matters for dev" column answers questions like: *where do new endpoi
 - Feature-map features this API backs → pointers to `.context/business/business-feature-map.md` anchors.
 - OpenAPI spec location (file path or URL) for full endpoint specs.
 - `bun run api:sync` output path (`api/schemas/`) for TypeScript types.
-- Downstream consumers: `/master-implementation-plan` (sequences API-backed work), `/sprint-dev` (per-story implementation reads this map for context).
+- Downstream consumers: `/master-implementation-plan` (sequences API-backed work), `/sprint-development` (per-story implementation reads this map for context).
 
 Purpose: make it obvious where each flavor of API info lives so nothing gets re-documented here.
 
@@ -219,7 +219,7 @@ This command does one thing: narrate the **business-level API story** for develo
 | UI component inventory | `/business-feature-map` |
 | Entity schemas, state machines, business rules | `/business-data-map` |
 | Risk-ranked implementation roadmap ("what to build and why, in what order") | `/master-implementation-plan` |
-| Per-story implementation plan and code | `/sprint-dev` |
+| Per-story implementation plan and code | `/sprint-development` |
 | Unit-test design (TDD red-green for a function) | `/unit-testing` |
 | QA test cases, regression suites, automation | sister repo `agentic-qa-boilerplate` |
 

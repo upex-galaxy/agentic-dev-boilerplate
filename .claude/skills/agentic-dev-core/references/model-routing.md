@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Every workflow skill in this boilerplate (`agentic-dev-core`, `project-foundation`, `project-bootstrap`, `product-management`, `sprint-dev`, `unit-testing`) declares a `model_preferences` block immediately after its YAML frontmatter. The block is HTML-comment-wrapped YAML and documents which model tier is most appropriate for each broad **phase** of the workflow.
+Every workflow skill in this boilerplate (`agentic-dev-core`, `project-foundation`, `project-bootstrap`, `product-management`, `sprint-development`, `unit-testing`) declares a `model_preferences` block immediately after its YAML frontmatter. The block is HTML-comment-wrapped YAML and documents which model tier is most appropriate for each broad **phase** of the workflow.
 
 This is **pure documentation today**. Claude Code reads `SKILL.md` frontmatter for `name` / `description` / `phase` and ignores the comment block. But the block is structured so that dispatchers (this repo's orchestrators, OpenCode profiles, future cross-agent tooling) can parse it and use it to pass `model:` when launching subagents.
 
@@ -64,7 +64,7 @@ HTML comments are:
 
 Today, no dispatcher in this repo enforces `model_preferences`. The block is documentation. But the **shape** is fixed so that future tooling can rely on it. A future orchestrator (or this repo's own scripts) could:
 
-1. Resolve a skill at dispatch time (e.g. `/sprint-dev` -> `sprint-dev/SKILL.md`).
+1. Resolve a skill at dispatch time (e.g. `/sprint-development` -> `sprint-development/SKILL.md`).
 2. Identify the current phase (e.g. Stage 3 Code Review -> `review`).
 3. Parse the comment block, look up `review`, get `opus`.
 4. Pass `model: opus` when invoking the subagent for that stage.
@@ -85,10 +85,10 @@ The metadata block is identical in all six skills, but each skill spends most of
 | `project-foundation` | `foundation`, `planning`                          | All five keys; `foundation` (Constitution) and `planning` (PRD / SRS) are the active ones.  |
 | `project-bootstrap`  | `foundation`, `implementation`                    | Bootstrap decisions are foundation-y; scaffolding is implementation-y.                      |
 | `product-management` | `planning`, `review`                              | Backlog work is planning + reviewing AC quality and INVEST.                                 |
-| `sprint-dev`         | `planning`, `implementation`, `review`, `archive` | The per-story loop hits all four phases sequentially (plan -> code -> review -> close-out). |
+| `sprint-development`         | `planning`, `implementation`, `review`, `archive` | The per-story loop hits all four phases sequentially (plan -> code -> review -> close-out). |
 | `unit-testing`       | `implementation`                                  | TDD is implementation-phase. `planning` is light (test design lives inside the impl loop).  |
 
-A dispatcher that wants to be smart can use this table to pre-cache the right model before each stage of `sprint-dev`, for example.
+A dispatcher that wants to be smart can use this table to pre-cache the right model before each stage of `sprint-development`, for example.
 
 ---
 
@@ -126,11 +126,11 @@ grep -l "^model_preferences:" .claude/skills/*/SKILL.md
 
 # Each block has exactly five keys
 grep -c "^  \(foundation\|planning\|implementation\|review\|archive\):" \
-  .claude/skills/sprint-dev/SKILL.md
+  .claude/skills/sprint-development/SKILL.md
 # -> 5
 
 # Frontmatter still parses
-head -10 .claude/skills/sprint-dev/SKILL.md
+head -10 .claude/skills/sprint-development/SKILL.md
 ```
 
 If any of those checks fail in CI, treat it as a structural drift and re-sync from the canonical block in this file.

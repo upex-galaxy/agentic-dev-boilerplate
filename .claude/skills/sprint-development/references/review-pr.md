@@ -558,7 +558,7 @@ Revisa el código implementado para STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}.
 
 - Story: .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md
 - Implementation plan: .../ implementation-plan.md
-- Code standards: .claude/skills/sprint-dev/references/ (code-standards.md, error-handling.md, data-testid-standards.md)
+- Code standards: .claude/skills/sprint-development/references/ (code-standards.md, error-handling.md, data-testid-standards.md)
 
 (Donde {PROJECT_KEY}, {ISSUE_NUM}, {nombre} se obtienen de la story que estás revisando)
 

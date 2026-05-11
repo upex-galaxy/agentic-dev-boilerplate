@@ -1,6 +1,6 @@
 ---
 name: git-flow-master
-description: "End-to-end Git operator for any branching strategy. Auto-detects the project's strategy (solo-main, main+integration, enterprise multi-branch, trunk-based, GitFlow, GitHub Flow, GitLab Flow) from .git config, branches, and an CLAUDE.md marker, then adapts every commit, branch, push, PR, conflict-fix, and chained-PR action to that strategy. Use this skill whenever the user wants to: create a branch (`crear branch`, `new feature branch`, `start work on UPEX-123`), commit changes (`commit this`, `commitear esto`, `make a commit`, `commit and push`), push code (`push`, `push to main`, `push to staging`, `subir cambios`), open a pull request (`create PR`, `open PR`, `abrir PR`, `crear pull request`, `gh pr create`), fix merge conflicts (`fix conflict`, `resolver conflicto`, `merge conflict`, `rebase conflict`, `push rejected`), plan stacked or chained PRs (`stack of PRs`, `chained PRs`, `split this PR`, `PR demasiado grande`), or pick / change a branching strategy (`git flow`, `git strategy`, `branching strategy`, `which git flow do we use`). Trigger even when the user does not say `git-flow-master` literally — if the work is git-or-PR-shaped, this is the right tool. Do NOT use for: implementing features (use /sprint-dev), writing tests (use /unit-testing), product backlog refinement (use /product-management), or general code editing — git-flow-master operates strictly on the version-control layer."
+description: "End-to-end Git operator for any branching strategy. Auto-detects the project's strategy (solo-main, main+integration, enterprise multi-branch, trunk-based, GitFlow, GitHub Flow, GitLab Flow) from .git config, branches, and an CLAUDE.md marker, then adapts every commit, branch, push, PR, conflict-fix, and chained-PR action to that strategy. Use this skill whenever the user wants to: create a branch (`crear branch`, `new feature branch`, `start work on UPEX-123`), commit changes (`commit this`, `commitear esto`, `make a commit`, `commit and push`), push code (`push`, `push to main`, `push to staging`, `subir cambios`), open a pull request (`create PR`, `open PR`, `abrir PR`, `crear pull request`, `gh pr create`), fix merge conflicts (`fix conflict`, `resolver conflicto`, `merge conflict`, `rebase conflict`, `push rejected`), plan stacked or chained PRs (`stack of PRs`, `chained PRs`, `split this PR`, `PR demasiado grande`), or pick / change a branching strategy (`git flow`, `git strategy`, `branching strategy`, `which git flow do we use`). Trigger even when the user does not say `git-flow-master` literally — if the work is git-or-PR-shaped, this is the right tool. Do NOT use for: implementing features (use /sprint-development), writing tests (use /unit-testing), product backlog refinement (use /product-management), or general code editing — git-flow-master operates strictly on the version-control layer."
 license: MIT
 compatibility: [claude-code, opencode]
 phase: implementation
@@ -36,7 +36,7 @@ Trigger on any of these intents — even without literal keywords:
 - "qué estrategia de git usamos en este repo" → strategy detection / persistence
 - "el push fue rechazado" → diagnostic + recovery flow
 
-If the user is asking about feature implementation, test design, product backlog, or architecture — that is **not** this skill. Hand back to `/sprint-dev`, `/unit-testing`, or `/product-management`.
+If the user is asking about feature implementation, test design, product backlog, or architecture — that is **not** this skill. Hand back to `/sprint-development`, `/unit-testing`, or `/product-management`.
 
 ---
 
@@ -310,7 +310,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 | Situation                                              | Hand off to                                 |
 | ------------------------------------------------------ | ------------------------------------------- |
 | Strategic split of a large change                      | Step 4 (inline decision tree in this skill) |
-| Per-story dev loop including code review               | `/sprint-dev`                               |
+| Per-story dev loop including code review               | `/sprint-development`                               |
 | TDD inside a feature                                   | `/unit-testing`                             |
 | Atlassian (Jira) operations triggered by a commit / PR | `/acli`                                     |
 | Backlog grooming / story refinement                    | `/product-management`                       |

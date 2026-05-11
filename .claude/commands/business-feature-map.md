@@ -32,7 +32,7 @@ This is the **feature-centric** complement to:
 - `business-data-map.md` (data-centric — entities, flows, ownership)
 - `business-api-map.md` (API-centric — endpoint contracts, auth, error shapes)
 
-Together they let `/master-implementation-plan` and `/sprint-dev` reason about scope without re-reading the codebase from scratch.
+Together they let `/master-implementation-plan` and `/sprint-development` reason about scope without re-reading the codebase from scratch.
 
 ---
 
@@ -276,7 +276,7 @@ This file is consumed by:
 
 - `/master-implementation-plan` — uses the feature catalog and CRUD matrix to scope multi-story epics and identify gaps.
 - `/business-api-map` — cross-references the endpoint inventory section.
-- `/sprint-dev` (Planning step) — reads relevant domain section when scoping a story.
+- `/sprint-development` (Planning step) — reads relevant domain section when scoping a story.
 
 Keep section headings stable so downstream consumers can parse them.
 

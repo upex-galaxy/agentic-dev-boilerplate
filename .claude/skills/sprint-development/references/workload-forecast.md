@@ -1,6 +1,6 @@
 # Workload Forecast — Stage 1 review-budget gate
 
-> Reference for sprint-dev Stage 1 (Planning).
+> Reference for sprint-development Stage 1 (Planning).
 > Cited from: `SKILL.md` end-of-Stage-1, beginning-of-Stage-2.
 
 ## Purpose

@@ -43,15 +43,15 @@ Critical: refactor only when green. Refactoring while red means you're losing th
 
 Aim for 5-10 minute cycles. If a cycle takes >30 minutes, the slice is too big — break it down into smaller behavioral steps. The cadence itself is part of TDD's value: short cycles = many checkpoints = low risk per change.
 
-## Composability with sprint-dev
+## Composability with sprint-development
 
-When you're in the middle of `/sprint-dev` Stage 2 (Implementation):
+When you're in the middle of `/sprint-development` Stage 2 (Implementation):
 
 - Hit a function that's pure logic? → TDD it: invoke `/unit-testing` for the slice, then return.
 - Bug fix? → Write the failing reproducer first (TDD), then fix.
 - Complex branching logic with edge cases? → TDD instead of guessing the cases later.
 
-The hand-off is symmetric — sprint-dev's implementation prompt knows to dispatch to `/unit-testing` when TDD is appropriate, and `/unit-testing` returns control once the slice is green and refactored.
+The hand-off is symmetric — sprint-development's implementation prompt knows to dispatch to `/unit-testing` when TDD is appropriate, and `/unit-testing` returns control once the slice is green and refactored.
 
 ## Common TDD anti-patterns
 

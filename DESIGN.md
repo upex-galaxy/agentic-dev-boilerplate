@@ -14,7 +14,7 @@ DESIGN.md is the canonical design system of the project in the Google Labs Apach
 It serves as the source of truth (SOT) for:
 
 - `/project-bootstrap` (frontend-setup phase) — Tailwind, shadcn, and design-token configuration are derived from it.
-- `/sprint-dev` (Implementation stage) — feature implementation references DESIGN.md to keep visual consistency.
+- `/sprint-development` (Implementation stage) — feature implementation references DESIGN.md to keep visual consistency.
 - Any future tooling that needs to reason about brand or visual primitives.
 
 This file is currently a **stub**. Its real content is produced by running the `/design-system` skill.
@@ -49,7 +49,7 @@ Common triggers for re-running `/design-system`:
 ## Where this file is consumed
 
 - `/project-bootstrap` — the frontend-setup phase reads DESIGN.md to configure Tailwind, shadcn, and design tokens.
-- `/sprint-dev` — the Implementation stage consults DESIGN.md so feature UI stays visually consistent.
+- `/sprint-development` — the Implementation stage consults DESIGN.md so feature UI stays visually consistent.
 - Future hooks: design-system linters, code-generation tools, visual-regression baselines.
 
 If DESIGN.md is still a stub when one of these consumers runs, they should prompt the user to run `/design-system` first.

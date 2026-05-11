@@ -19,8 +19,8 @@
 # 2.5. /design-system           → DESIGN.md (visual identity) — invoked by foundation Phase 2.5
 # 3. /project-bootstrap         → Backend + Frontend + features (reads DESIGN.md if present)
 # 4. /product-management        → Seed backlog, refine stories
-# 5. /sprint-dev                → Per-story dev loop (orchestrator)
-# 6. /unit-testing              → Composable TDD inside sprint-dev
+# 5. /sprint-development                → Per-story dev loop (orchestrator)
+# 6. /unit-testing              → Composable TDD inside sprint-development
 #
 # Slash commands (utilities):
 # /sync-ai-memory
@@ -102,7 +102,7 @@ For details on every installer layer (gentle-ai, community skills, MCPs, externa
 - If you notice unrelated dead code, mention it — don't delete it.
 - Remove imports/variables/functions that **your** changes made unused.
 
-> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/sync-ai-memory` (project memory + cross-doc consistency + HTML rendered-from sync), `/sprint-dev` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
+> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/sync-ai-memory` (project memory + cross-doc consistency + HTML rendered-from sync), `/sprint-development` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
 
 ### 4. Goal-Driven Execution
 
@@ -139,7 +139,7 @@ These guidelines are working if: **fewer unnecessary changes in diffs, fewer rew
 3. **Plan before coding**: Always produce a plan (spec / implementation plan) before writing code. Each workflow skill enforces this internally.
 4. **No AI attribution in commits**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines in commit messages.
 5. **Confirm before push to main**: Never push to `main` without explicit user confirmation.
-6. **Unit tests are part of `/sprint-dev`**: Optionally TDD via `/unit-testing` (composable mid-flight from sprint-dev).
+6. **Unit tests are part of `/sprint-development`**: Optionally TDD via `/unit-testing` (composable mid-flight from sprint-development).
 7. **Git History Management**:
    - NEVER rewrite pushed history (`rebase`, `amend` on pushed commits)
    - NEVER force push to any shared branch
@@ -223,7 +223,7 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 
 ### Convention References
 
-> Dev-side conventions are owned by the relevant skill (e.g., `/sprint-dev` for branch/PR naming, `/product-management` for AC format).
+> Dev-side conventions are owned by the relevant skill (e.g., `/sprint-development` for branch/PR naming, `/product-management` for AC format).
 > QA-side conventions (TC naming, label format, execution naming) live in the sister repo `agentic-qa-boilerplate`.
 
 ---
@@ -269,7 +269,7 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 | Scope                   | Skill / Reference               | When to Use                              |
 | ----------------------- | ------------------------------- | ---------------------------------------- |
 | **Epic / Feature**      | `/product-management`           | Plan an epic and seed its stories        |
-| **Story-level** (Micro) | `/sprint-dev` (Planning step)   | Implementation plan for a specific story |
+| **Story-level** (Micro) | `/sprint-development` (Planning step)   | Implementation plan for a specific story |
 | **Unit-test slice**     | `/unit-testing` (TDD red-green) | TDD workflow for an isolated unit        |
 
 > QA test planning (acceptance test plans, regression suites, E2E automation plans) lives in the sister repo `agentic-qa-boilerplate`.
@@ -294,7 +294,7 @@ See `.agents/README.md` for the full contract, workflows (new-user setup, adding
 - Shared utilities = framework-agnostic only
 - Domain logic stays inside its feature folder
 
-> Full TS conventions live in the relevant feature's `dev-guide` (Discovery output). The `/sprint-dev` skill points to it during Planning.
+> Full TS conventions live in the relevant feature's `dev-guide` (Discovery output). The `/sprint-development` skill points to it during Planning.
 
 ---
 
@@ -379,8 +379,8 @@ gh pr create --base staging
 | **Design system**           | `/design-system`      | DESIGN.md (Google Labs spec) before scaffolding — 5 paths (getdesign default, manual, Open Design, Claude Design, LLM-authored) |
 | **Infra scaffolding**       | `/project-bootstrap`  | Backend + frontend skeleton + features (OpenAPI, auth, env, types) |
 | **Backlog & refinement**    | `/product-management` | Seed backlog, add feature, create epic, refine story (INVEST + AC) |
-| **Per-story dev loop**      | `/sprint-dev`         | Plan → Code → Review → Staging → (gated) Production                |
-| **TDD slice**               | `/unit-testing`       | Standalone or composable mid-flight from `/sprint-dev`             |
+| **Per-story dev loop**      | `/sprint-development`         | Plan → Code → Review → Staging → (gated) Production                |
+| **TDD slice**               | `/unit-testing`       | Standalone or composable mid-flight from `/sprint-development`             |
 
 > QA workflows (sprint testing, exploratory testing, automation, regression) live in the sister repo `agentic-qa-boilerplate`.
 
@@ -412,7 +412,7 @@ gh pr create --base staging
 ```
 .context/PBI/{module}/{TICKET-ID}-{name}/
   context.md                       → ACs, data, session notes, open questions
-  implementation-plan.md           → Plan produced by /sprint-dev
+  implementation-plan.md           → Plan produced by /sprint-development
   evidence/                        → Screenshots, traces, logs (gitignored)
 ```
 
@@ -425,8 +425,8 @@ gh pr create --base staging
 | **Write Unit Test**     | `/unit-testing` skill internal docs                                   |
 | **Understand System**   | `business-data-map.md` + `PRD/user-journeys.md`                       |
 | **Use MCP Tools**       | `CLAUDE.md section Tool Resolution`                                   |
-| **Code Review**         | `/sprint-dev` skill (Code Review step)                                |
-| **Plan Implementation** | `/sprint-dev` skill (Planning step)                                   |
+| **Code Review**         | `/sprint-development` skill (Code Review step)                                |
+| **Plan Implementation** | `/sprint-development` skill (Planning step)                                   |
 | **Bootstrap Project**   | `/agentic-dev-core` + `/project-foundation` + `/project-bootstrap` skills |
 
 ---
@@ -498,7 +498,7 @@ For every story being worked on, maintain local documentation under `.context/PB
   SESSION-PROMPT.md                → @-loadable session resume prompt
   {TICKET-ID}-{brief-title}/
     context.md                     → ACs, data, session notes, open questions
-    implementation-plan.md         → Plan produced by /sprint-dev
+    implementation-plan.md         → Plan produced by /sprint-development
     evidence/                      → Screenshots, traces, logs (gitignored)
 ```
 
@@ -508,7 +508,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 - `{TICKET-ID}`: Issue tracker identifier (e.g., `UPEX-277`)
 - `{brief-title}`: AI-generated summary of the ticket title, max ~5 words, kebab-case (e.g., `empty-states`)
 
-**Entry point**: `/sprint-dev` — fetches ticket, explains story, loads context, drives plan-code-review-deploy.
+**Entry point**: `/sprint-development` — fetches ticket, explains story, loads context, drives plan-code-review-deploy.
 
 **Resume a session**: `@.context/PBI/{module}/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
 
@@ -543,11 +543,11 @@ For every story being worked on, maintain local documentation under `.context/PB
 | **design-system**       | `/design-system`       | Generates DESIGN.md (Google Labs Apache-2.0 spec) at project root — 5 paths: getdesign default, manual gallery, Open Design app, Claude Design handoff, LLM-authored. Invoked by foundation Phase 2.5; consumed by bootstrap frontend-setup. |
 | **project-bootstrap**   | `/project-bootstrap`   | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                                            |
 | **product-management**  | `/product-management`  | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)                                 |
-| **sprint-dev**          | `/sprint-dev`          | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator.                       |
-| **unit-testing**        | `/unit-testing`        | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-dev`.                                           |
+| **sprint-development**          | `/sprint-development`          | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator.                       |
+| **unit-testing**        | `/unit-testing`        | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-development`.                                           |
 | **git-flow-master**     | `/git-flow-master`     | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning. Auto-detects branching strategy. |
 | **acli**                | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows.                                                    |
-| **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-dev vs /sdd-\*, MCPs, env vars.            |
+| **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-development vs /sdd-\*, MCPs, env vars.            |
 
 ### Reusable Community Skills (installed by `bun run setup`)
 

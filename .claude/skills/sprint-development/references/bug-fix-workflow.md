@@ -244,7 +244,7 @@ Check issue links for:
 ### 3. Code Standards (when implementing fix)
 
 ```
-.claude/skills/sprint-dev/references/
+.claude/skills/sprint-development/references/
 ├── code-standards.md           # Coding standards (DRY, naming, TypeScript)
 ├── error-handling.md           # Error handling patterns
 └── data-testid-standards.md    # Test attributes (if UI fix)

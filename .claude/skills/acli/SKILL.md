@@ -1,6 +1,6 @@
 ---
 name: acli
-description: "Atlassian CLI (official `acli` binary, v1.3+ as of 2026) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal. Use whenever the user wants to create, view, edit, transition, assign, clone, archive, comment on, link, or bulk-operate on Jira work items (Story, Bug, Task, Epic) from the command line; list or manage projects, boards, sprints, filters, dashboards, or custom-field definitions; create or update Confluence spaces, pages, or blog posts; activate/deactivate users at the org level; or authenticate to Atlassian from a shell or CI pipeline. Triggers on: `acli`, Atlassian CLI, Jira from the terminal, Confluence from the terminal, transition Jira ticket, transition story to In Review, create Jira issue from CLI, create bug from CLI, fetch story details from CLI, link PR to story, bulk Jira operations, create issues from a JSON/CSV file, script Jira, automate Jira tickets, transition a bunch of issues, CI pipeline that touches Jira, log in to Jira CLI, switch Atlassian sites, API-token auth for Jira. Use this skill even when the user does not say the word `acli` — if the task is CLI-driven Jira or Confluence work, this is the right tool. Do NOT use for: full sprint-dev orchestration (use /sprint-dev), code review workflow (use /sprint-dev Stage 3), product backlog seeding (use /product-management), Bitbucket command-line needs (acli does not cover Bitbucket), or the legacy Appfire/Bob Swift `acli` tool (a different product that happens to share the binary name)."
+description: "Atlassian CLI (official `acli` binary, v1.3+ as of 2026) for Jira Cloud, Confluence Cloud, and org admin tasks from the terminal. Use whenever the user wants to create, view, edit, transition, assign, clone, archive, comment on, link, or bulk-operate on Jira work items (Story, Bug, Task, Epic) from the command line; list or manage projects, boards, sprints, filters, dashboards, or custom-field definitions; create or update Confluence spaces, pages, or blog posts; activate/deactivate users at the org level; or authenticate to Atlassian from a shell or CI pipeline. Triggers on: `acli`, Atlassian CLI, Jira from the terminal, Confluence from the terminal, transition Jira ticket, transition story to In Review, create Jira issue from CLI, create bug from CLI, fetch story details from CLI, link PR to story, bulk Jira operations, create issues from a JSON/CSV file, script Jira, automate Jira tickets, transition a bunch of issues, CI pipeline that touches Jira, log in to Jira CLI, switch Atlassian sites, API-token auth for Jira. Use this skill even when the user does not say the word `acli` — if the task is CLI-driven Jira or Confluence work, this is the right tool. Do NOT use for: full sprint-development orchestration (use /sprint-development), code review workflow (use /sprint-development Stage 3), product backlog seeding (use /product-management), Bitbucket command-line needs (acli does not cover Bitbucket), or the legacy Appfire/Bob Swift `acli` tool (a different product that happens to share the binary name)."
 license: MIT
 compatibility: [claude-code, cursor, codex, opencode]
 allowed-tools: Bash(acli:*)
@@ -10,7 +10,7 @@ allowed-tools: Bash(acli:*)
 
 `acli` is Atlassian's official command-line tool for Jira Cloud, Confluence Cloud, and org admin operations. In this DEV boilerplate it serves as the primary `[ISSUE_TRACKER_TOOL]` — see `CLAUDE.md` Tool Resolution table. The Atlassian MCP server is the documented fallback when `acli` is not installed or authenticated.
 
-This skill teaches how to drive `acli` for any DEV intent: fetching story details for an implementation plan, transitioning a ticket through the Ready For Dev → In Progress → In Review → Ready For QA workflow, creating bugs from inside `/sprint-dev`, linking PRs to stories, and scripted/CI Jira automation.
+This skill teaches how to drive `acli` for any DEV intent: fetching story details for an implementation plan, transitioning a ticket through the Ready For Dev → In Progress → In Review → Ready For QA workflow, creating bugs from inside `/sprint-development`, linking PRs to stories, and scripted/CI Jira automation.
 
 ## Why this skill exists
 
@@ -44,15 +44,15 @@ If `acli` is not installed or authenticated, fall back to the Atlassian MCP serv
 
 ## Role inside the DEV workflow
 
-This skill complements the `/sprint-dev` mega-orchestrator. It does NOT drive the sprint loop — it is the underlying CLI surface that `/sprint-dev` and other DEV skills call when they need to talk to Jira:
+This skill complements the `/sprint-development` mega-orchestrator. It does NOT drive the sprint loop — it is the underlying CLI surface that `/sprint-development` and other DEV skills call when they need to talk to Jira:
 
 | DEV moment                                                    | What this skill does                                                                            |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `/sprint-dev` Stage 1 (Planning) — fetch ticket               | `acli jira workitem view UPEX-123 --json` → ACs, Gherkin, Scope, Mockup, Workflow custom fields |
-| `/sprint-dev` Stage 1 — transition story to In Progress       | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.in_progress}}"`     |
-| `/sprint-dev` Stage 3 (Code Review) — transition to In Review | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.in_review}}"`       |
-| `/sprint-dev` Stage 4 — handoff to QA                         | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.ready_for_qa}}"`    |
-| `/sprint-dev` Stage 3 — found a defect mid-implementation     | `acli jira workitem create --project UPEX --type Bug --summary "..." --parent UPEX-123`         |
+| `/sprint-development` Stage 1 (Planning) — fetch ticket               | `acli jira workitem view UPEX-123 --json` → ACs, Gherkin, Scope, Mockup, Workflow custom fields |
+| `/sprint-development` Stage 1 — transition story to In Progress       | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.in_progress}}"`     |
+| `/sprint-development` Stage 3 (Code Review) — transition to In Review | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.in_review}}"`       |
+| `/sprint-development` Stage 4 — handoff to QA                         | `acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.ready_for_qa}}"`    |
+| `/sprint-development` Stage 3 — found a defect mid-implementation     | `acli jira workitem create --project UPEX --type Bug --summary "..." --parent UPEX-123`         |
 | Linking the merged PR back to the ticket                      | `acli jira workitem link create --out UPEX-123 --in <pr-issue-or-remote-link>`                  |
 | `/product-management` — bulk-create stories from a CSV        | `acli jira workitem create-bulk --from-csv stories.csv --yes`                                   |
 | `/product-management` (workflow G) — pull all in-flight stories for a sprint report | `acli jira workitem search --jql "..." --paginate --json`                                       |
@@ -100,7 +100,7 @@ acli jira auth status
 # 3. Fetch the story you are about to implement (impl-plan input)
 acli jira workitem view UPEX-123 --json | jq '.fields | {summary, status, assignee, customfield_acceptance_criteria_gherkin}'
 
-# 4. Move it into "In Progress" when /sprint-dev Stage 1 starts
+# 4. Move it into "In Progress" when /sprint-development Stage 1 starts
 acli jira workitem transition --key UPEX-123 --status "{{jira.status.story.in_progress}}"
 
 # 5. Search for everything you own that is still open (sprint dashboard)

@@ -9,7 +9,7 @@
     {
       "name": "should-trigger-frontend-init",
       "prompt": "Inicializar el frontend con el design system y el skeleton de routing.",
-      "expected_behavior": "Activates project-bootstrap in frontend mode. Reads frontend-setup.md reference, scaffolds the project structure (routes/pages, layouts, base components, design tokens), wires the design system, and verifies the dev server boots. Stops at scaffolding — does NOT implement features (that is /sprint-dev).",
+      "expected_behavior": "Activates project-bootstrap in frontend mode. Reads frontend-setup.md reference, scaffolds the project structure (routes/pages, layouts, base components, design tokens), wires the design system, and verifies the dev server boots. Stops at scaffolding — does NOT implement features (that is /sprint-development).",
       "category": "positive"
     },
     {
@@ -33,7 +33,7 @@
     {
       "name": "should-not-trigger-story-implementation",
       "prompt": "Implement this user story UPEX-200 — add a 'forgot password' link to the login page.",
-      "expected_behavior": "Does NOT activate project-bootstrap. Should route to /sprint-dev because the request is per-story feature implementation, not infrastructure scaffolding. project-bootstrap stops once the skeleton is in place; sprint-dev builds features on top of it.",
+      "expected_behavior": "Does NOT activate project-bootstrap. Should route to /sprint-development because the request is per-story feature implementation, not infrastructure scaffolding. project-bootstrap stops once the skeleton is in place; sprint-development builds features on top of it.",
       "category": "negative"
     },
     {

@@ -32,7 +32,7 @@
     {
       "id": 5,
       "prompt": "Implement the bulk-assign action for the users table. It needs a domain model with validation, a thin API endpoint, and a UI hook. About 600 lines total.",
-      "expected_output": "Skill should NOT trigger as the primary handler — this is a feature-implementation request, owned by /sprint-dev. git-flow-master only enters the picture later when /sprint-dev needs branch/commit/PR operations. If git-flow-master responds at all, it should redirect to /sprint-dev.",
+      "expected_output": "Skill should NOT trigger as the primary handler — this is a feature-implementation request, owned by /sprint-development. git-flow-master only enters the picture later when /sprint-development needs branch/commit/PR operations. If git-flow-master responds at all, it should redirect to /sprint-development.",
       "should_trigger": false,
       "files": []
     },

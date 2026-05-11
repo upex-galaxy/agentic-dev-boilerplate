@@ -2,7 +2,7 @@
 
 > **This reference is a thin pointer.** The full generation logic lives in the standalone command `/business-data-map`.
 
-During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-map generation logic — it **invokes the command** so the same playbook is reusable from any session (sprint-dev planning, mid-project rediscovery, brownfield audits, etc.).
+During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-map generation logic — it **invokes the command** so the same playbook is reusable from any session (sprint-development planning, mid-project rediscovery, brownfield audits, etc.).
 
 ---
 
@@ -26,7 +26,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-ma
 ## Why this is a pointer, not the playbook
 
 Keeping the playbook in one place (`.claude/commands/business-data-map.md`) means:
-- `/sprint-dev`, `/sync-ai-memory`, and ad-hoc discovery all share the same generator.
+- `/sprint-development`, `/sync-ai-memory`, and ad-hoc discovery all share the same generator.
 - Changes to entity-mapping heuristics happen in one file.
 - Phase 4 of `project-foundation` stays an orchestrator, not a duplicate of the command.
 

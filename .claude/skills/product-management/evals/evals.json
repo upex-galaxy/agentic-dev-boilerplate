@@ -27,7 +27,7 @@
     {
       "name": "should-not-trigger-implementation",
       "prompt": "Implement UPEX-123. The story is refined and ready to code.",
-      "expected_behavior": "Does NOT activate product-management. Should route to /sprint-dev because the request is per-story implementation. product-management refines stories BEFORE coding; sprint-dev takes refined stories and codes them.",
+      "expected_behavior": "Does NOT activate product-management. Should route to /sprint-development because the request is per-story implementation. product-management refines stories BEFORE coding; sprint-development takes refined stories and codes them.",
       "category": "negative"
     },
     {

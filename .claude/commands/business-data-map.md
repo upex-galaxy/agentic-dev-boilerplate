@@ -22,7 +22,7 @@ Generate or update `.context/business/business-data-map.md` — a **visual and n
 | Synthesizing DB + backend + frontend into one map | Implementation roadmap → `/master-implementation-plan` |
 | Producing the canonical reference for downstream planning | QA test planning (out of scope, see sister repo) |
 
-The output feeds `/master-implementation-plan` and informs every `/sprint-dev` cycle. Treat this as the **most valuable context file in the repo** for developers.
+The output feeds `/master-implementation-plan` and informs every `/sprint-development` cycle. Treat this as the **most valuable context file in the repo** for developers.
 
 ---
 
@@ -336,7 +336,7 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 This map feeds:
 
 - `/master-implementation-plan` — uses entities + flows to schedule work
-- `/sprint-dev` — reads the relevant flow before planning a story
+- `/sprint-development` — reads the relevant flow before planning a story
 - `/business-api-map`, `/business-feature-map` — cross-reference entities
 
 ---

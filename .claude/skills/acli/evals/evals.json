@@ -3,7 +3,7 @@
     {
       "name": "should-trigger-transition-via-cli",
       "prompt": "Use acli to transition UPEX-123 to In Review now that the PR is open.",
-      "expected_behavior": "Activates acli skill. Reads SKILL.md for the transition section, then references/workitem.md §transition. Runs `acli jira workitem transition --key UPEX-123 --status \"{{jira.status.story.in_review}}\"`. If the user has not authenticated, suggests `acli jira auth status` first and points at references/auth.md. Does NOT route to /sprint-dev — the user explicitly asked for a CLI-only operation.",
+      "expected_behavior": "Activates acli skill. Reads SKILL.md for the transition section, then references/workitem.md §transition. Runs `acli jira workitem transition --key UPEX-123 --status \"{{jira.status.story.in_review}}\"`. If the user has not authenticated, suggests `acli jira auth status` first and points at references/auth.md. Does NOT route to /sprint-development — the user explicitly asked for a CLI-only operation.",
       "category": "positive"
     },
     {
@@ -37,9 +37,9 @@
       "category": "negative"
     },
     {
-      "name": "should-not-trigger-full-sprint-dev-loop",
+      "name": "should-not-trigger-full-sprint-development-loop",
       "prompt": "Implement UPEX-277 — full sprint loop, plan to code to review to deploy.",
-      "expected_behavior": "Does NOT activate acli skill as the entry point. Should route to /sprint-dev because this is full per-story orchestration. /sprint-dev will internally call acli for the Jira transitions (Ready For Dev -> In Progress -> In Review -> Ready For QA), but the user-facing entry point is the orchestrator, not the CLI primitive.",
+      "expected_behavior": "Does NOT activate acli skill as the entry point. Should route to /sprint-development because this is full per-story orchestration. /sprint-development will internally call acli for the Jira transitions (Ready For Dev -> In Progress -> In Review -> Ready For QA), but the user-facing entry point is the orchestrator, not the CLI primitive.",
       "category": "negative"
     },
     {

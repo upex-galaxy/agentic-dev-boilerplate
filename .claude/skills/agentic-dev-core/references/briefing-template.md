@@ -1,6 +1,6 @@
 # Subagent Briefing Template
 
-> Cited by: workflow skills (`sprint-dev`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) when they delegate to a subagent.
+> Cited by: workflow skills (`sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`) when they delegate to a subagent.
 > Format: every dispatch MUST fill the 7 components below.
 
 ## The 7 components
@@ -56,16 +56,16 @@ Rules:
 
 ## Examples (one per pattern)
 
-### Parallel — Download 3 CI artifacts in sprint-dev
+### Parallel — Download 3 CI artifacts in sprint-development
 
-When a CI run finishes in `sprint-dev` Stage 6, the orchestrator fans out THREE subagents in parallel — one per artifact type. They are independent (different artifact, different output dir), so Parallel is correct.
+When a CI run finishes in `sprint-development` Stage 6, the orchestrator fans out THREE subagents in parallel — one per artifact type. They are independent (different artifact, different output dir), so Parallel is correct.
 
 ```
 Goal: Download the Allure report artifact for run <<RUN_ID>> and unpack it into the local reports directory.
 
 Context docs:
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.github/workflows/regression.yml
-  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.claude/skills/sprint-dev/SKILL.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.claude/skills/sprint-development/SKILL.md
 
 Skills to load: (none — this is a pure gh CLI task)
 
@@ -92,7 +92,7 @@ Rules:
 
 The two sibling agents follow the same shape: one for `playwright-report` and one for `evidence/` (screenshots, traces, videos). All three dispatch in the same `<function_calls>` block so the network I/O overlaps.
 
-### Background — Watch a GitHub Actions run in sprint-dev
+### Background — Watch a GitHub Actions run in sprint-development
 
 A regression run takes 20-60 minutes. The orchestrator dispatches ONE background subagent that blocks on `gh run watch` and notifies the main thread when the run terminates. Picked because the work is long-running, idle (no CPU on the orchestrator side), and monitorable from outside.
 
@@ -127,9 +127,9 @@ Rules:
   - Do not retry the watch — if it errors, report and let the orchestrator decide.
 ```
 
-### Sequential — Planning → Implementation → Code Review in sprint-dev
+### Sequential — Planning → Implementation → Code Review in sprint-development
 
-In `sprint-dev`, the three stages have a strict data dependency: Implementation reads what Planning wrote, and Code Review reads what Implementation wrote. Sequential is the only correct pattern.
+In `sprint-development`, the three stages have a strict data dependency: Implementation reads what Planning wrote, and Code Review reads what Implementation wrote. Sequential is the only correct pattern.
 
 ```
 Stage 1 — Planning agent
@@ -144,7 +144,7 @@ Context docs:
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/business/project-dev-guide.md
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/master-implementation-plan.md
   - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.context/PBI/<<ISSUE_KEY>>/spec.md
-  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.claude/skills/sprint-dev/references/spec-driven-development.md
+  - /home/sai/Desktop/upex/web-apps/agentic-dev-boilerplate/.claude/skills/sprint-development/references/spec-driven-development.md
 
 Skills to load: /acli (to fetch the ticket if spec.md is missing fields)
 

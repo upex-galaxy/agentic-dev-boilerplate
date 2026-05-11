@@ -104,7 +104,7 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 ### 4. Usar Skills y Commands de Claude Code
 
-El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejecutar el sprint) vive en skills bajo `.claude/skills/`. Cada skill se invoca con `/<nombre>` (por ejemplo `/sprint-dev`, `/project-foundation`). Lista completa en `CLAUDE.md` sección **Skills**.
+El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejecutar el sprint) vive en skills bajo `.claude/skills/`. Cada skill se invoca con `/<nombre>` (por ejemplo `/sprint-development`, `/project-foundation`). Lista completa en `CLAUDE.md` sección **Skills**.
 
 ---
 

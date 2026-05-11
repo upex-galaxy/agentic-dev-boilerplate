@@ -1,6 +1,6 @@
 ---
 name: project-bootstrap
-description: 'Scaffolds the technical infrastructure of a new project: backend (DB schemas, API base, types, error handling), frontend (design system, project skeleton, routing), and incremental features (OpenAPI/Scalar UI, API routes + middleware, bearer-token auth, env vars + URL builders, Supabase types generation). Triggers on: `scaffolding del proyecto`, `setup del backend`, `inicializar el frontend`, `configurar OpenAPI`, `API routes setup`, `bearer token authentication`, `env vars setup`, `supabase types generation`, `infrastructure setup`, `backend skeleton`, `frontend boilerplate`. Do NOT use for: product definition (use `/project-foundation`), backlog seeding (use `/product-management`), per-story development (use `/sprint-dev`), unit testing (use `/unit-testing`), or test framework setup (out of scope).'
+description: 'Scaffolds the technical infrastructure of a new project: backend (DB schemas, API base, types, error handling), frontend (design system, project skeleton, routing), and incremental features (OpenAPI/Scalar UI, API routes + middleware, bearer-token auth, env vars + URL builders, Supabase types generation). Triggers on: `scaffolding del proyecto`, `setup del backend`, `inicializar el frontend`, `configurar OpenAPI`, `API routes setup`, `bearer token authentication`, `env vars setup`, `supabase types generation`, `infrastructure setup`, `backend skeleton`, `frontend boilerplate`. Do NOT use for: product definition (use `/project-foundation`), backlog seeding (use `/product-management`), per-story development (use `/sprint-development`), unit testing (use `/unit-testing`), or test framework setup (out of scope).'
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
@@ -44,7 +44,7 @@ Do NOT use this skill to:
 
 - Define the product (PRD, user journeys, architecture decisions) — that's `/project-foundation`.
 - Seed the Jira backlog with epics + user stories — that's `/product-management`.
-- Implement an individual user story (planning → code → review → deploy) — that's `/sprint-dev`.
+- Implement an individual user story (planning → code → review → deploy) — that's `/sprint-development`.
 - Set up a unit-test framework — that's `/unit-testing` (and is its own concern).
 
 The infrastructure choices below flow from the SRS architecture decisions made during `/project-foundation`. If `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, or `{{DB_TYPE}}` are unset in `.agents/project.yaml`, run `/agentic-dev-core` and `/project-foundation` first.
@@ -115,7 +115,7 @@ Briefings for each subagent must follow the 6-component template in `agentic-dev
 After bootstrap completes, the project is ready for:
 
 - **Backlog seeding** → `/product-management`. Turns the PRD into Jira epics + user stories with acceptance criteria.
-- **Per-story development** → `/sprint-dev`. The planning → implementation → review → deploy loop for each user story.
+- **Per-story development** → `/sprint-development`. The planning → implementation → review → deploy loop for each user story.
 - **Unit testing setup** → `/unit-testing` (separate concern, can run any time after base scaffolding).
 
 The bootstrap output is **not** ready for production — it is ready for feature work. Production-readiness gates (deployment, CI, observability hardening) are layered on by later skills as the product matures.

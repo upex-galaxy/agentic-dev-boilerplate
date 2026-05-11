@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-onboard
-description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-dev for ticket-driven work, /sdd-* for spec-driven work, MCPs available (Tavily, Context7, Supabase, n8n), critical env vars. Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-dev), test design (use /unit-testing), backlog refinement (use /product-management)."
+description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, /sdd-* for spec-driven work, MCPs available (Tavily, Context7, Supabase, n8n), critical env vars. Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, opencode]
 phase: bootstrap
@@ -20,7 +20,7 @@ model_preferences:
 
 Activate when a user lands on this repo for the first time and asks "where do I start?", "how does this work?", or invokes `/agentic-dev-onboard`. The skill is a guided tour, not an executor: it explains the stack, the workflow, the MCPs, and the env vars that everything depends on, then hands off to the right downstream skill.
 
-This skill complements `/sdd-onboard` (installed via gentle-ai). `/sdd-onboard` walks users through the SDD spec-driven loop in the abstract; `/agentic-dev-onboard` is specific to **this** Next.js + Supabase boilerplate and points at the concrete entry points (`/sprint-dev`, `/product-management`, etc.).
+This skill complements `/sdd-onboard` (installed via gentle-ai). `/sdd-onboard` walks users through the SDD spec-driven loop in the abstract; `/agentic-dev-onboard` is specific to **this** Next.js + Supabase boilerplate and points at the concrete entry points (`/sprint-development`, `/product-management`, etc.).
 
 ---
 
@@ -62,9 +62,9 @@ After setup, fill `.env` with the credentials the rest of the workflow expects (
 
 ---
 
-## Primary workflow: `/sprint-dev`
+## Primary workflow: `/sprint-development`
 
-`/sprint-dev` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-dev UPEX-123`) and it drives the full 12-step loop end-to-end.
+`/sprint-development` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-development UPEX-123`) and it drives the full 12-step loop end-to-end.
 
 **Jira state machine:**
 
@@ -92,11 +92,11 @@ Hand-off matrix copied from [`INSTALLER.md`](../../../INSTALLER.md):
 
 | When                                                              | Skill                                                         |
 | ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| Routine Jira ticket work (most cases)                             | `/sprint-dev` (ticket-driven)                                 |
+| Routine Jira ticket work (most cases)                             | `/sprint-development` (ticket-driven)                                 |
 | Large refactor, architectural decision, or feature without ticket | `/sdd-*` (spec-driven, explore → propose → spec → design → …) |
-| Story with detailed specs you want traced formally                | Both: `/sdd-spec` first, then `/sprint-dev` for the cycle     |
+| Story with detailed specs you want traced formally                | Both: `/sdd-spec` first, then `/sprint-development` for the cycle     |
 
-If the change feels like a research project (alternatives to compare, multiple modules touched, no ticket yet), reach for `/sdd-explore` first. Otherwise, stick with `/sprint-dev`.
+If the change feels like a research project (alternatives to compare, multiple modules touched, no ticket yet), reach for `/sdd-explore` first. Otherwise, stick with `/sprint-development`.
 
 ---
 
@@ -146,8 +146,8 @@ Verify your config with `bun run lint:agents` (should report 0 errors when fully
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                              |
 | `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                |
-| `sprint-dev`          | `/sprint-dev`          | Per-story dev loop (12-step orchestrator)                           |
-| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-dev`)   |
+| `sprint-development`          | `/sprint-development`          | Per-story dev loop (12-step orchestrator)                           |
+| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`)   |
 | `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy |
 | `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work             |
 | `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                 |
@@ -190,7 +190,7 @@ Run through this checklist before you reach for your first ticket:
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
 - [ ] Does `bun run lint:agents` exit clean (0 errors)?
 - [ ] Do the gentle-ai skills appear in autocomplete (restart your agent if not)?
-- [ ] Ready for your first ticket: `/sprint-dev <UPEX-XXX>`
+- [ ] Ready for your first ticket: `/sprint-development <UPEX-XXX>`
 
 If any box is unchecked, fix that first. The downstream skills assume a green foundation.
 
@@ -198,7 +198,7 @@ If any box is unchecked, fix that first. The downstream skills assume a green fo
 
 ## What this skill does NOT do
 
-- Implement features → use `/sprint-dev`
+- Implement features → use `/sprint-development`
 - Write unit tests → use `/unit-testing`
 - Refine acceptance criteria → use `/product-management`
 - Define a brand-new product → use `/project-foundation`

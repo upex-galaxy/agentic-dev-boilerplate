@@ -29,7 +29,7 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 ├── SRS/                           Output of /project-foundation Phase 2 — Software Requirements
 │   └── README.md                  Phase placeholder (see file)
 │
-└── PBI/                           Outputs of /product-management + /sprint-dev (per epic / per ticket)
+└── PBI/                           Outputs of /product-management + /sprint-development (per epic / per ticket)
     └── README.md                  Backlog layout (see file)
 ```
 
@@ -51,10 +51,10 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
 | `PBI/{epic-slug}/epic.md`                           | `/product-management` (epic creation)   | Topic key: `pbi/{epic-slug}/epic`                      |
 | `PBI/{ticket}/spec.md`                              | `/product-management` (AC refinement)   | Topic key: `pbi/{ticket}/spec`                         |
-| `PBI/{ticket}/impl-plan.md`                         | `/sprint-dev` Stage 1                   | Topic key: `pbi/{ticket}/impl-plan`                    |
-| `PBI/{ticket}/review.md`                            | `/sprint-dev` Stage 3                   | Topic key: `pbi/{ticket}/review`                       |
-| `PBI/{ticket}/compliance-matrix.md`                 | `/sprint-dev` Stage 3                   | Topic key: `pbi/{ticket}/compliance-matrix`            |
-| `PBI/{ticket}/bug-fix.md`                           | `/sprint-dev` Stage 2 (bug-fix flow)    | Topic key: `pbi/{ticket}/bug-fix`                      |
+| `PBI/{ticket}/impl-plan.md`                         | `/sprint-development` Stage 1                   | Topic key: `pbi/{ticket}/impl-plan`                    |
+| `PBI/{ticket}/review.md`                            | `/sprint-development` Stage 3                   | Topic key: `pbi/{ticket}/review`                       |
+| `PBI/{ticket}/compliance-matrix.md`                 | `/sprint-development` Stage 3                   | Topic key: `pbi/{ticket}/compliance-matrix`            |
+| `PBI/{ticket}/bug-fix.md`                           | `/sprint-development` Stage 2 (bug-fix flow)    | Topic key: `pbi/{ticket}/bug-fix`                      |
 | `PBI/{ticket}/edge-cases.md`                        | `/product-management` (enumeration)     | Topic key: `pbi/{ticket}/edge-cases`                   |
 
 Full topic-key conventions: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`.
@@ -67,7 +67,7 @@ A brand-new project that wants productive AI sessions should produce, in order:
 2. `/project-foundation` — Constitution → PRD → SRS → Discovery outputs.
 3. `/product-management` — Seed initial backlog (epics + foundational stories) under `PBI/`.
 
-After that, `/sprint-dev` operates per ticket and fills in `PBI/{ticket}/*` files as work progresses.
+After that, `/sprint-development` operates per ticket and fills in `PBI/{ticket}/*` files as work progresses.
 
 ## References
 

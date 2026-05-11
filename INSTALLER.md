@@ -14,7 +14,7 @@ This doc is the **contract that `cli/install.ts` implements**. It covers the fou
 
 This repo treats gentle-ai as a **base global "quasi-must-have"**. The recommended onboarding (`bun run setup`) installs it if missing, then layers 15 skills + Engram + the SDD orchestrator on top of your agent. The result is one consistent skillset across every repo on your machine that follows this model.
 
-The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-dev`, `/agentic-dev-core`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
+The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-development`, `/agentic-dev-core`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
 
 ---
 
@@ -67,8 +67,8 @@ Skills that are workflow-specific to this boilerplate live in `.claude/skills/` 
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product) |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env) |
 | `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement      |
-| `sprint-dev`          | `/sprint-dev`          | Per-story dev loop (mega-orchestrator, 12-step workflow)    |
-| `unit-testing`        | `/unit-testing`        | TDD slice — composable mid-flight from `/sprint-dev`        |
+| `sprint-development`          | `/sprint-development`          | Per-story dev loop (mega-orchestrator, 12-step workflow)    |
+| `unit-testing`        | `/unit-testing`        | TDD slice — composable mid-flight from `/sprint-development`        |
 | `git-flow-master`     | (auto)                 | Branching/commit/push/PR strategy auto-detected per repo    |
 | `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work     |
 | `agentic-dev-onboard` | `/agentic-dev-onboard` | End-to-end onboarding guided tour (pending Phase C)         |
@@ -83,7 +83,7 @@ Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does no
 
 | CLI              | Powers in this repo                                                                       | Install hint (when missing)                                                              | Official docs                                                          |
 | ---------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-dev` deploy steps)   | `npm i -g vercel`                                                                        | <https://vercel.com/docs/cli>                                          |
+| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps)   | `npm i -g vercel`                                                                        | <https://vercel.com/docs/cli>                                          |
 | `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)              | `brew install supabase/tap/supabase` (or: `npm i -g supabase`)                           | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
 | `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill          | `brew tap atlassian/homebrew-acli && brew install acli`                                  | <https://developer.atlassian.com/cloud/acli/guides/install-macos/>     |
 | `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                     | `bun add -g @playwright/cli@latest` (or: `npm install -g @playwright/cli@latest`)        | <https://playwright.dev/agent-cli/introduction>                        |
@@ -109,21 +109,21 @@ Three reasons:
 
 ---
 
-## Hand-off matrix — `/sprint-dev` vs `/sdd-*`
+## Hand-off matrix — `/sprint-development` vs `/sdd-*`
 
 This is the most common point of confusion. Both workflows can drive a feature to merge. They serve different shapes of work.
 
 | When                                                                 | Skill                                                        |
 | -------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Routine Jira ticket work (most cases)                                | `/sprint-dev` (ticket-driven workflow)                       |
+| Routine Jira ticket work (most cases)                                | `/sprint-development` (ticket-driven workflow)                       |
 | Large refactor / architectural decision / feature without ticket yet | `/sdd-*` (spec-driven workflow)                              |
-| Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-dev` for the cycle |
+| Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-development` for the cycle |
 
-### When to reach for `/sprint-dev`
+### When to reach for `/sprint-development`
 
 The default choice for normal day-to-day work. You have a Jira ticket, the AC is reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle: precheck the epic, transition the ticket through dev states, plan, code, code review, deploy to staging, optionally deploy to production. Nothing about the change requires a multi-page architectural document — a clear implementation plan is enough.
 
-Example: "Add empty state to the user list when no results match the filter." Ticket exists, AC is 3 bullets, scope is one component plus one helper. `/sprint-dev` drives the whole thing.
+Example: "Add empty state to the user list when no results match the filter." Ticket exists, AC is 3 bullets, scope is one component plus one helper. `/sprint-development` drives the whole thing.
 
 ### When to reach for `/sdd-*`
 
@@ -133,7 +133,7 @@ Example: "Replace the auth model — move from session cookies to JWT with refre
 
 ### When to combine both
 
-You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-dev` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
+You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-development` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
 
 ---
 
@@ -161,7 +161,7 @@ What you lose:
 - **Cognitive doc design (cognitive-doc-design)** — no skill that explicitly optimizes docs for low cognitive load. You write the docs by feel.
 - **Issue creation (issue-creation)** — no issue-first enforcement helper. You file issues however your team usually does.
 
-What you keep: every workflow skill committed in this repo (`/sprint-dev`, `/agentic-dev-core`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
+What you keep: every workflow skill committed in this repo (`/sprint-development`, `/agentic-dev-core`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
 
 ---
 
