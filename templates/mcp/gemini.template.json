@@ -78,7 +78,7 @@
       "command": "uvx",
       "args": ["nanobanana-mcp-server@latest"],
       "env": {
-        "GEMINI_API_KEY": "{{your-gemini-api-key-here}}"
+        "GEMINI_API_KEY": "{{GEMINI_API_KEY}}"
       }
     },
     "slack": {

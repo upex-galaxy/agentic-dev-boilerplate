@@ -14,14 +14,37 @@ This directory contains **pre-configured MCP server templates** for different AI
 
 ## Variable Format
 
-Templates use `{{VARIABLE}}` as universal placeholder format for sensitive data:
+Templates use `{{VARIABLE}}` as a universal **find-and-replace placeholder** — it's NOT runtime-evaluated syntax. Before using the file, replace every `{{VAR}}` using one of two strategies:
 
-- `{{API_BEARER_TOKEN}}` - Replace with your API bearer token
-- `{{POSTMAN_API_KEY}}` - Replace with your Postman API key
-- `{{JIRA_API_TOKEN}}` - Replace with your Jira API token
-- etc.
+| Strategy                           | Replace `{{VAR}}` with                       | Then                                              | Use when                          |
+| ---------------------------------- | -------------------------------------------- | ------------------------------------------------- | --------------------------------- |
+| **A. Literal value** (legacy)      | The real secret directly                     | Add the config file to `.gitignore`               | Personal-only config              |
+| **B. Native env-var expansion** ⭐ | Tool-native syntax (see table below)         | Store the real value in `.env`, commit the config | Team-shared config (recommended)  |
 
-Non-sensitive values (URLs, paths) use real examples from SoloQ project.
+### Native env-var syntax (for strategy B)
+
+| Tool        | Syntax                       | Example          | Missing-var behavior                 |
+| ----------- | ---------------------------- | ---------------- | ------------------------------------ |
+| Claude Code | `${VAR}` / `${VAR:-default}` | `${API_TOKEN}`   | **Fails to parse the config** (safe) |
+| OpenCode    | `{env:VAR}`                  | `{env:API_TOKEN}`| Substitutes empty string (footgun)   |
+| Codex CLI   | `${VAR}`                     | `${API_TOKEN}`   | Depends on field                     |
+| Gemini CLI  | `$VAR` / `${VAR}`            | `$API_TOKEN`     | Depends on field                     |
+
+For strategy B, also need a `.env` loader so the agent process has the vars at spawn time:
+
+- Cross-platform: `bun run claude` / `bun run opencode` (`dotenv-cli` wrapper in `package.json`)
+- Mac/Linux optional: a `.envrc` with `dotenv_if_exists .env` + `direnv allow`
+
+**Working example**: see `.mcp.json`, `opencode.jsonc`, and `.env.example` in this repo's root.
+
+Common `{{VAR}}` placeholders found in templates:
+
+- `{{API_BEARER_TOKEN}}` — your API bearer token
+- `{{POSTMAN_API_KEY}}` — your Postman API key
+- `{{JIRA_API_TOKEN}}` — your Jira API token
+- `{{TAVILY_API_KEY}}`, `{{SUPABASE_ACCESS_TOKEN}}`, `{{GEMINI_API_KEY}}`, `{{SLACK_MCP_XOXP_TOKEN}}`, `{{DB_USER}}`, `{{DB_PASSWORD}}`
+
+Non-sensitive values (URLs, paths) use real examples from the SoloQ project.
 
 ## MCP Servers Included
 
@@ -81,7 +104,9 @@ cp templates/mcp/dbhub.example.toml dbhub.toml
 
 ### 3. Replace Variables
 
-Open your config file and replace `{{VARIABLE}}` placeholders with real values:
+Open your config file and replace each `{{VARIABLE}}` placeholder. Pick a strategy:
+
+**Strategy A — literal value (then gitignore the file):**
 
 ```json
 "API_HEADERS": "Authorization:Bearer {{API_BEARER_TOKEN}}"
@@ -91,6 +116,26 @@ Open your config file and replace `{{VARIABLE}}` placeholders with real values:
 
 ```json
 "API_HEADERS": "Authorization:Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+**Strategy B — env-var expansion (then commit the file, secrets in `.env`):**
+
+For Claude Code:
+
+```json
+"API_HEADERS": "Authorization:Bearer ${API_BEARER_TOKEN}"
+```
+
+For OpenCode:
+
+```json
+"API_HEADERS": "Authorization:Bearer {env:API_BEARER_TOKEN}"
+```
+
+Then in `.env` (gitignored):
+
+```
+API_BEARER_TOKEN=eyJhbGciOiJIUzI1NiIs...
 ```
 
 ### 4. Verify Setup

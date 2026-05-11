@@ -43,22 +43,46 @@ Esta guía explica cómo configurar MCP (Model Context Protocol) servers para di
 
 ## Formato de Variables
 
+### Dos Estrategias Posibles
+
+| Estrategia                          | Cómo                                                                                                          | Cuándo usar                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **A. Replace + gitignore (legacy)** | Reemplazás `{{VAR}}` con el valor literal en el config y agregás el archivo al `.gitignore`                   | Configs personales que nunca se compartirán                            |
+| **B. Env-var expansion + commit**   | Reemplazás `{{VAR}}` con la sintaxis nativa de env vars de la herramienta y guardás el valor real en `.env`   | **Recomendado** para configs compartidos con el equipo (ver más abajo) |
+
 ### Formato Universal en Templates: `{{VAR}}`
 
-Los templates usan `{{VARIABLE}}` como formato universal para placeholders. **Debes reemplazar estos valores con datos reales** antes de usar el archivo.
+Los archivos en este directorio usan `{{VARIABLE}}` solo como marcador de "buscar y reemplazar". **No es sintaxis que ninguna herramienta entienda en runtime** — siempre tenés que reemplazarlo, ya sea por un valor literal (estrategia A) o por la sintaxis nativa de tu herramienta (estrategia B).
 
-### Formato Nativo por Herramienta
+### Formato Nativo por Herramienta (para estrategia B)
 
-Si prefieres usar variables de entorno en tiempo de ejecución, cada herramienta tiene su propio formato:
+| Herramienta | Formato Nativo                | Ejemplo                                | Si la var no existe                  |
+| ----------- | ----------------------------- | -------------------------------------- | ------------------------------------ |
+| Claude Code | `${VAR}` o `${VAR:-default}`  | `${API_TOKEN}` / `${HOST:-localhost}`  | **Falla al parsear el config** (safe) |
+| OpenCode    | `{env:VAR}`                   | `{env:API_TOKEN}`                      | Sustituye string vacío (footgun)     |
+| Codex CLI   | `${VAR}` / `bearer_token_env_var = "NAME"` | `${API_TOKEN}`            | Depende del campo                    |
+| Gemini CLI  | `$VAR` o `${VAR}`             | `$API_TOKEN`                           | Depende del campo                    |
 
-| Herramienta | Formato Nativo     | Ejemplo                |
-| ----------- | ------------------ | ---------------------- |
-| Claude Code | Sin soporte nativo | Usar valores literales |
-| OpenCode    | `{env:VAR}`        | `{env:API_TOKEN}`      |
-| Codex CLI   | `${VAR}`           | `${API_TOKEN}`         |
-| Gemini CLI  | `$VAR` o `${VAR}`  | `$API_TOKEN`           |
+**Campos donde la expansión funciona (Claude Code):** `command`, `args`, `env`, `url`, `headers`.
+**Campos donde la expansión funciona (OpenCode):** `headers`, `oauth`, y en la práctica también `command`, `environment`, `url` cuando se prueba.
 
-> **Recomendación:** Reemplaza `{{VAR}}` con valores reales en tus archivos de configuración locales (catalogs). No commitees archivos con credenciales reales.
+### Patrón Recomendado: Config Committeable con `.env`
+
+Para configs compartidos con el equipo (NO commitear credenciales pero SÍ commitear la estructura del config):
+
+1. Tomá el template (`claude.template.json`, `opencode.template.json`, etc.)
+2. Reemplazá cada `{{VAR}}` por la sintaxis nativa de tu herramienta:
+   - Claude: `{{TAVILY_API_KEY}}` → `${TAVILY_API_KEY}`
+   - OpenCode: `{{TAVILY_API_KEY}}` → `{env:TAVILY_API_KEY}`
+3. Guardá los valores reales en un archivo `.env` (gitignored)
+4. Cargá `.env` antes de lanzar el agente:
+   - Cross-platform: `bun run claude` / `bun run opencode` (wrapper con `dotenv-cli`)
+   - Mac/Linux opcional: `.envrc` con `dotenv_if_exists .env` + `direnv`
+5. Commiteá el `.mcp.json` / `opencode.jsonc` resultantes — sin secretos, listos para el equipo
+
+**Ejemplos vivos**: el repositorio `agentic-dev-boilerplate` ya usa este patrón. Ver `.mcp.json` (Claude) + `opencode.jsonc` (OpenCode) + `.env.example` en la raíz.
+
+> **⚠️ Regla crítica con env-var expansion**: si un MCP server falla al arrancar o devuelve 401/403, lo más probable es que una env var no está cargada. **Salí del agente, corregí `.env`, y volvé a entrar** — las env vars se leen una sola vez al spawnear el MCP.
 
 ---
 

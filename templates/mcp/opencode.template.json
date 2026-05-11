@@ -102,7 +102,7 @@
       "type": "local",
       "command": ["uvx", "nanobanana-mcp-server@latest"],
       "environment": {
-        "GEMINI_API_KEY": "{{your-gemini-api-key-here}}"
+        "GEMINI_API_KEY": "{{GEMINI_API_KEY}}"
       },
       "enabled": false
     },

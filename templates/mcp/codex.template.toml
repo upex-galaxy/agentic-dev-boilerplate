@@ -111,7 +111,7 @@ command = "uvx"
 args = [ "nanobanana-mcp-server@latest" ]
 
 [mcp_servers.nanobanana.env]
-GEMINI_API_KEY = "{{your-gemini-api-key-here}}"
+GEMINI_API_KEY = "{{GEMINI_API_KEY}}"
 
 # ============================================
 # ATLASSIAN - USANDO MCP-REMOTE (RECOMENDADO)
