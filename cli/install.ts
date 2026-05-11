@@ -797,7 +797,7 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write('  6. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n');
   process.stdout.write('  7. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n');
   process.stdout.write('\n');
-  log.dim('Full docs: docs/setup/integrating-gentle-ai.md');
+  log.dim('Full docs: INSTALLER.md');
 }
 
 // ============================================================================

@@ -60,10 +60,10 @@ This launches an interactive installer that:
 2. Detects your AI agent (Claude Code or OpenCode)
 3. Installs 15 skills + engram + SDD orchestrator via gentle-ai (skip if you opt out)
 4. Configures the 4 canonical MCPs (Tavily, Context7, Supabase, n8n) interactively
-5. Verifies external CLIs are present (vercel, supabase, acli, playwright, resend)
+5. Verifies external CLIs are present (vercel, supabase, acli, playwright-cli, resend)
 6. Writes `.mcp.json` (or `opencode.json`) and `.agents/install-state.json`
 
-For details on the gentle-ai integration, see [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
+For details on every installer layer (gentle-ai, community skills, MCPs, external CLIs, opt-out path), see [INSTALLER.md](INSTALLER.md).
 
 ---
 
@@ -532,7 +532,7 @@ For every story being worked on, maintain local documentation under `.context/PB
 
 > Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
 
-> **Note**: This repo uses a hybrid model. Workflow skills are committed in `.claude/skills/`. Foundation/SDD skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, the SDD bloque) come from gentle-ai user-install. Reusable community skills (next-*, react-*, shadcn, supabase-postgres-best-practices, etc.) come from `npx skills add` invoked by the installer. Run `bun run setup` to install everything. See [docs/setup/integrating-gentle-ai.md](docs/setup/integrating-gentle-ai.md).
+> **Note**: This repo uses a hybrid model. Workflow skills are committed in `.claude/skills/`. Foundation/SDD skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, the SDD bloque) come from gentle-ai user-install. Reusable community skills (next-*, react-*, shadcn, supabase-postgres-best-practices, etc.) come from `npx skills add` invoked by the installer. Run `bun run setup` to install everything. See [INSTALLER.md](INSTALLER.md).
 
 ### Workflow Skills (project-starter, 10)
 

@@ -1297,7 +1297,7 @@ The rest is execution.
 - `docs/methodology/IQL-methodology.md` — phased lifecycle deep-dive.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.
 - `docs/workflows/` — environments, git-flow, OpenAPI sync, template updates.
-- `docs/setup/integrating-gentle-ai.md` — gentle-ai installer integration.
+- `INSTALLER.md` — what `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out.
 - `.claude/skills/agentic-dev-core/SKILL.md` — foundation skill internals (bootstrap + shared references).
 - `.claude/skills/agentic-dev-core/references/orchestration-doctrine.md` — canonical orchestration doctrine cited by every workflow skill.
 - `.claude/skills/project-foundation/SKILL.md` — Constitution + PRD + SRS + Discovery skill internals.

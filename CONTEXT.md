@@ -332,7 +332,7 @@ Use this table to decide what to re-generate after what kind of change.
 | `docs/getting-started.md`                         | Onboarding for new contributors                                   |
 | `.context/README.md`                              | Generator map for `.context/` artifacts                           |
 | `.agents/README.md`                               | Variable contract: `{{VAR}}`, `{{jira.*}}`, validation scripts    |
-| `docs/setup/integrating-gentle-ai.md`             | How the installer wires up gentle-ai, MCPs, CLIs                  |
+| `INSTALLER.md`                                    | What `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out |
 | `docs/workflows/update-template-guide.md`         | How to sync this template upstream (`bun run up`)                 |
 | `docs/setup/jira-setup-guide.md`                  | Jira workspace setup + custom field configuration                 |
 | Sister repo: [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) | QA-side workflows (sprint testing, automation, regression) |

@@ -2,7 +2,7 @@
 
 > **Purpose**: Make sense of how this repo's pieces fit together — Skills, Commands, Scripts, and the configuration substrate. The 30-minute orientation a new contributor needs before opening any skill.
 > **Audience**: New developers, tech leads, or product engineers adopting this boilerplate. Read AFTER skimming [`../README.md`](../README.md) and BEFORE diving into individual skills.
-> **Related**: [`../README.md`](../README.md) (project overview + Quick Start) · [`../CONTEXT.md`](../CONTEXT.md) (Context Engineering canonical map for this repo) · [`agentic-development-engineering.md`](agentic-development-engineering.md) (methodology deep dive, includes §6 on the knowledge layer) · [`setup/integrating-gentle-ai.md`](setup/integrating-gentle-ai.md) (the SDD + Engram ecosystem this repo plugs into).
+> **Related**: [`../README.md`](../README.md) (project overview + Quick Start) · [`../CONTEXT.md`](../CONTEXT.md) (Context Engineering canonical map for this repo) · [`agentic-development-engineering.md`](agentic-development-engineering.md) (methodology deep dive, includes §6 on the knowledge layer) · [`../INSTALLER.md`](../INSTALLER.md) (what `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out).
 
 ---
 
@@ -257,7 +257,7 @@ Example: "Replace the auth model — move from session cookies to JWT with refre
 
 You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-dev` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
 
-The `/sdd-*` skills are installed by gentle-ai during `bun run setup`. If you opted out of gentle-ai, only `/sprint-dev` is available — see [`setup/integrating-gentle-ai.md`](setup/integrating-gentle-ai.md) for the opt-out trade-off.
+The `/sdd-*` skills are installed by gentle-ai during `bun run setup`. If you opted out of gentle-ai, only `/sprint-dev` is available — see [`../INSTALLER.md`](../INSTALLER.md) for the opt-out trade-off.
 
 ---
 
@@ -356,7 +356,7 @@ If you only remember one thing:
 - [`../CLAUDE.md`](../CLAUDE.md) — the canonical project memory + Tool Resolution table that maps `[TAG_TOOL]` pseudocode to concrete CLIs / MCPs.
 - [`../CONTEXT.md`](../CONTEXT.md) — Context Engineering canonical map for this repo: stable file names, the `.context/` vs `.claude/` split, architectural decisions, and operational DO/DON'T rules.
 - [`agentic-development-engineering.md`](agentic-development-engineering.md) — methodology deep dive. §6 covers the **why** behind the knowledge layer: token efficiency, progressive loading, the `.env` vs `.agents/project.yaml` split, the four variable syntaxes.
-- [`setup/integrating-gentle-ai.md`](setup/integrating-gentle-ai.md) — what gentle-ai installs (SDD skills, Engram, foundation skills), what stays local, the hand-off matrix `/sprint-dev` vs `/sdd-*`, and how to opt out.
+- [`../INSTALLER.md`](../INSTALLER.md) — what `bun run setup` configures: gentle-ai (SDD skills, Engram, foundation skills), community skills, MCPs, external CLIs, the hand-off matrix `/sprint-dev` vs `/sdd-*`, and how to opt out of gentle-ai.
 - [`setup/jira-setup-guide.md`](setup/jira-setup-guide.md) — configuring Jira credentials and the Atlassian MCP.
 - [`setup/README.md`](setup/README.md) — index of setup guides in this repo.
 - [`../.agents/README.md`](../.agents/README.md) — the full `.agents/` contract: variable syntaxes, validation scripts, workflows for adding prompts or required Jira fields, troubleshooting.

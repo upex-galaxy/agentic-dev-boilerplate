@@ -1,8 +1,10 @@
-# Integrating gentle-ai with this repo
+# The installer — what `bun run setup` configures
 
-> **Audience**: developers cloning `ai-driven-project-starter` for the first time, or anyone deciding whether to opt into the gentle-ai ecosystem.
-> **Read time**: 8 minutes.
-> **Status**: stable as of 2026-05-09.
+> **Audience**: developers cloning `agentic-dev-boilerplate` for the first time, anyone deciding whether to opt into the gentle-ai ecosystem, or anyone trying to understand which CLI / skill / MCP layer does what.
+> **Read time**: 10 minutes.
+> **Status**: stable as of 2026-05-11.
+
+This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — gentle-ai (~30%), community skills via `npx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step and the opt-out path.
 
 ---
 
@@ -71,7 +73,39 @@ Skills that are workflow-specific to this boilerplate live in `.claude/skills/` 
 | `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work     |
 | `agentic-dev-onboard` | `/agentic-dev-onboard` | End-to-end onboarding guided tour (pending Phase C)         |
 
-These skills evolve with the repo and are versioned in git. The split is intentional: gentle-ai owns the **horizontal** ecosystem (apply across all your repos), this repo owns the **vertical** workflow (specific to ai-driven-project-starter).
+These skills evolve with the repo and are versioned in git. The split is intentional: gentle-ai owns the **horizontal** ecosystem (apply across all your repos), this repo owns the **vertical** workflow (specific to `agentic-dev-boilerplate`).
+
+---
+
+## External CLIs (verified, not auto-installed)
+
+Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it only checks whether each binary is on `PATH` and prints an install hint (and the official docs URL) when missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
+
+| CLI              | Powers in this repo                                                                       | Install hint (when missing)                                                              | Official docs                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-dev` deploy steps)   | `npm i -g vercel`                                                                        | <https://vercel.com/docs/cli>                                          |
+| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)              | `brew install supabase/tap/supabase` (or: `npm i -g supabase`)                           | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill          | `brew tap atlassian/homebrew-acli && brew install acli`                                  | <https://developer.atlassian.com/cloud/acli/guides/install-macos/>     |
+| `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                     | `bun add -g @playwright/cli@latest` (or: `npm install -g @playwright/cli@latest`)        | <https://playwright.dev/agent-cli/introduction>                        |
+| `resend`         | Send transactional email via Resend (used by features that integrate email notifications) | `npm i -g resend`                                                                        | <https://resend.com/docs/send-with-nodejs>                             |
+
+### `playwright-cli` is NOT `@playwright/test`
+
+A subtle bit of confusion lives in the Playwright ecosystem. There are **three different identities** that all use the name "playwright":
+
+1. **`@playwright/test`** — a devDep test runner library, installed per-project. It produces no global binary. `which playwright` finds nothing even when this package is installed.
+2. **`@playwright/cli`** — a global agent-driven CLI. Installs as the binary `playwright-cli`. This is what powers the `/playwright-cli` skill in this repo.
+3. **`/playwright-cli`** — the local workflow skill in `.claude/skills/playwright-cli/`. It calls the `playwright-cli` binary from `@playwright/cli`.
+
+The installer verifies (2). If you need the test runner (1) for E2E suites, add it per-project: `bun add -D @playwright/test`.
+
+### Why verify and not install?
+
+Three reasons:
+
+1. **Cross-platform install paths differ**. macOS prefers Homebrew, Windows prefers winget/scoop, Linux varies by distro. A single auto-install path would be wrong for most users.
+2. **Global installs are user-scoped, not repo-scoped**. Installing `vercel` or `supabase` globally as part of `bun run setup` would leak state outside the repo. The installer is opinionated about staying local.
+3. **Verify + point at docs** is the polite alternative. When a CLI is missing, the installer prints the official documentation URL on a continuation line so users can install the way that fits their setup.
 
 ---
 
@@ -133,6 +167,7 @@ What you keep: every workflow skill committed in this repo (`/sprint-dev`, `/age
 
 ## See also
 
-- [.plans/GENTLE-AI-RESEARCH.md](../../.plans/GENTLE-AI-RESEARCH.md) — full research doc on the gentle-ai ecosystem (commands, components, agent matrix)
-- [CLAUDE.md § Onboarding](../../CLAUDE.md) — quick-start entry point for `bun run setup`
-- [docs/setup/README.md](./README.md) — index of setup guides in this repo
+- [.scratch/plans/GENTLE-AI-RESEARCH.md](./.scratch/plans/GENTLE-AI-RESEARCH.md) — full research doc on the gentle-ai ecosystem (commands, components, agent matrix)
+- [CLAUDE.md § Onboarding](./CLAUDE.md) — quick-start entry point for `bun run setup`
+- [README.md](./README.md) — project overview and Quick Start
+- [docs/setup/README.md](./docs/setup/README.md) — index of remaining setup guides (Jira, MCPs)
