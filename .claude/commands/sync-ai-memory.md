@@ -29,7 +29,7 @@ Audit every markdown file the AI consumes at session start (or that humans treat
 
 ---
 
-## The 5 always-included docs
+## The 5 always-included docs (+ 1 rendered-from HTML target)
 
 These are **always** in scope, regardless of what the audit discovers. They are the highest-frequency AI-consumed docs in this repo.
 
@@ -40,8 +40,15 @@ These are **always** in scope, regardless of what the audit discovers. They are 
 | `CONTEXT.md` | `anchor` | Canonical Context Engineering reference for this repo; patched for `.context/` path changes |
 | `docs/agentic-development-engineering.md` | `supplementary` | Vision + lifecycle overview; patched for command/skill/path drift |
 | `docs/getting-started.md` | `supplementary` | Operator guide; patched for command names, quick-reference tables |
+| `docs/onboarding/index.html` | `rendered-from` | HTML mirror of `docs/getting-started.md`. Sync via Phase 4b (patch-in-place text nodes only — sidebar/JS/CSS preserved) |
 
 The audit (Phase 1) may **add** docs to this list. It never removes a file from the always-included set — files that don't exist on disk are simply marked `skipped (not present)`.
+
+### What the `rendered-from` role means
+
+A `rendered-from` target is an HTML file whose **base name matches an adjacent MD file** (e.g. `docs/onboarding/index.html` is paired with `docs/getting-started.md` via narrative content, even though stems differ — the audit also accepts an explicit pairing manifest). The HTML carries hand-crafted sidebar nav, tab panels, JS-driven navigation, card layouts, and CSS classes that have no equivalent in the MD source.
+
+**Architectural decision — patch in place, do NOT regenerate from MD**. Regenerating would destroy the custom structure on every sync run. Phase 4b only patches **text nodes** that mirror drifted facts: `<code>` element contents, `<td>` cells, plain-text spans with classes like `mnemonic`. Sidebar, `<head>`, `<script>`, and `<style>` are treated as opaque-preserve.
 
 ---
 
@@ -84,10 +91,14 @@ RULE 4 — High inbound reference density (≥ 3 cross-references):
 RULE 5 — Likely-drifting content:
   File mentions ≥ 2 of: bun run commands, /skill or /command names, MCP names, env vars, .context/ paths, environment URLs. Higher count = stronger signal.
 
+RULE 6 — Rendered-from HTML (NEW):
+  Any `.html` file whose directory contains an MD file with overlapping narrative content (e.g. docs/onboarding/index.html mirrors docs/getting-started.md). These are tagged with role `rendered-from` and processed in Phase 4b (patch-in-place text nodes, sidebar/JS/CSS preserved). Do NOT classify as SKIP just because the file extension is not .md.
+
 Classification levels:
   CRITICAL — Anchor docs (Rule 1) + AI memory file. Patch failure is blocking.
   HIGH — Multi-rule matches OR top-level docs/ files referenced by skills. Patch failure surfaces but does not block.
   MEDIUM — Single-rule matches with drift signals. Patch best-effort.
+  RENDERED-FROM — HTML mirror of an MD doc (Rule 6). Patched in Phase 4b after the source MD is updated.
   SKIP — Excluded by the hard-skip list, or no drift signals detected.
 
 For each qualifying file, report:
@@ -253,6 +264,56 @@ On any match:
 
 ---
 
+## Phase 4b — Rendered-from HTML sync (patch-in-place, NEVER regenerate)
+
+Run **after** Phase 4 (so source MDs are up to date) and **before** Phase 5 (so the consistency check sees the synced HTML state). Process every target tagged `rendered-from`.
+
+### The patch-in-place rule for HTML
+
+Regenerating the HTML from the source MD would destroy the hand-crafted sidebar nav, tab panels, JS-driven interactive navigation, card layouts, and CSS classes — none of which exist in the MD source. Phase 4b patches **only text nodes** that mirror drifted facts from the just-patched source MD.
+
+### What is in scope for patching
+
+| HTML construct | In scope? | Notes |
+|---|---|---|
+| `<code>` element contents | ✅ Yes | Most command-name / path drift lives here |
+| `<td>` cells (plain text or single inline element) | ✅ Yes | Quick-reference tables, command tables |
+| `<span class="mnemonic">`, `<span class="muted">`, similar inline text spans | ✅ Yes | Short narrative phrases mirroring MD |
+| `<p>` paragraph text that quotes a command name verbatim | ✅ Yes | Only the quoted fact, not the surrounding sentence |
+| `<a href="https://github.com/.../blob/main/...">` URLs pointing at repo files | ✅ Yes | When the target file was renamed/moved |
+| `<a>` link text (visible label) | ✅ Yes | Only when the link target's name changed |
+
+### What is out of scope (opaque-preserve)
+
+- `<head>`, `<script>`, `<style>` sections — never touched.
+- Sidebar nav structure, IDs, classes — never touched.
+- Tab panel structure, `data-*` attributes — never touched.
+- Footer card structure (only the `href` and the text inside `<code>`/`<span>` cells inside cards are eligible).
+- Any whitespace, indentation, or attribute order — preserved byte-for-byte except for the targeted text node.
+
+### Algorithm
+
+1. **Read the HTML** in full.
+2. **Read the source MD** that this HTML mirrors (e.g. `docs/getting-started.md` for `docs/onboarding/index.html`).
+3. **Extract drifted facts** from the Phase 4 patch log for the source MD (command renames, path changes, count changes).
+4. For each drifted fact, **search the HTML** for occurrences inside the in-scope constructs above.
+5. **Apply the smallest possible Edit** — exact `old_string` containing the eligible construct, minimal `new_string` with the corrected text. Never use `Write` on an HTML file.
+6. If the same fact appears in an out-of-scope region (e.g. an `aria-label` attribute), flag it as `STRUCTURAL — HTML attribute drift` and let the user decide.
+
+### Trust the pre-commit hooks
+
+Prettier and any other pre-commit hooks are your last line of defense for HTML structure errors (a stray sed-style edit can truncate `</a>` to `</` and break the DOM). Do **NOT** bypass hooks with `--no-verify`. If a hook fails, fix the root cause manually — never paper over.
+
+### Reporting
+
+Emit one row per rendered-from target in the Phase 7 report with this format:
+
+```
+docs/onboarding/index.html | rendered-from | updated | +3 / -3 | command names | sidebar/JS/CSS preserved
+```
+
+---
+
 ## Phase 5 — Cross-doc consistency check
 
 After all individual patches are computed but **before any file is written**, verify cross-document consistency. If a fact appears in multiple docs, all copies must agree.
@@ -294,7 +355,7 @@ For each file, compute:
 ## Phase 7 — Report
 
 ```markdown
-✅ AI memory refresh complete
+✅ AI memory sync complete
 
 **AI tool detected**: {tool name}
 **Audit sub-agent**: returned {N} qualifying files
@@ -309,6 +370,7 @@ For each file, compute:
 | CONTEXT.md | CRITICAL | updated | +1 / -1 | `.context/` path | — |
 | docs/agentic-development-engineering.md | HIGH | updated | +2 / -2 | command rename | — |
 | docs/getting-started.md | HIGH | unchanged | — | — | no drift detected |
+| docs/onboarding/index.html | RENDERED-FROM | updated | +3 / -3 | command names | sidebar/JS/CSS preserved |
 | {auto-detected file} | MEDIUM | updated | +3 / -1 | bun script rename | — |
 
 **Cross-doc drift resolved:**
@@ -317,9 +379,11 @@ For each file, compute:
 **Sections preserved verbatim:**
 - CLAUDE.md: Critical Reminders, Behavioral Layer, Fundamental Rules, Git Workflow, Orchestration Mode, Session Log, Known Issues, Next Actions
 - README.md: Quick Start narrative, top-level section order
+- docs/onboarding/index.html: `<head>`, `<script>`, `<style>`, sidebar nav, tab structure, footer card layout
 
 **Structural drift flagged for user review (NOT auto-applied):**
 - {file} · {section} · {reason — e.g. "table references deleted skill X, suggest removing row"}
+- {html-file} · {selector or attribute} · "HTML attribute drift (e.g. aria-label) — confirm before editing"
 
 **Security / redaction log:**
 - {empty if none}
@@ -327,7 +391,7 @@ For each file, compute:
 
 **Suggested next steps:**
 - Review structural-drift flags above and decide manually
-- Commit the diff with a clear message: `docs: refresh AI memory — patch drift in {N} files`
+- Commit the diff with a clear message: `docs: sync AI memory — patch drift in {N} files (+ HTML mirror)`
 ```
 
 ---
@@ -338,10 +402,11 @@ For each file, compute:
 2. **Preserve human-authored structure.** Headers, comments, examples, blank lines, table widths — byte-for-byte except for the changed cell.
 3. **Approval gate before any write.** Phase 2 confirmation is non-negotiable. No file is touched until the user says `proceed`.
 4. **Credential safety.** Run the redaction scan in memory before every Write. Surface every redaction to the user.
-5. **Scope is dynamic.** The 5 always-included docs are a floor, not a ceiling. The audit can extend the list; it cannot shrink the floor.
+5. **Scope is dynamic.** The 5 always-included docs (+ 1 rendered-from HTML) are a floor, not a ceiling. The audit can extend the list; it cannot shrink the floor.
 6. **No rewrites of historical sections.** Session Log, Known Issues, Discovery Progress, Next Actions — those are human timelines and stay intact.
 7. **Structural drift requires user confirmation.** If a whole section is obsolete, flag it; do not delete autonomously.
 8. **Cross-doc consistency over single-doc cleanliness.** If patching one file would create drift with another, patch both in the same run.
+9. **HTML rendered-from targets patch in place, never regenerate.** Phase 4b touches only text nodes (`<code>`, `<td>`, `<span>`, link text/href). Sidebar, JS, CSS, `<head>` are opaque. Pre-commit hooks are your safety net — never bypass with `--no-verify`.
 
 ---
 
@@ -364,12 +429,14 @@ If the audit sub-agent surfaces one of these (mistake), drop it before showing t
 ## Final checklist
 
 - [ ] Audit sub-agent dispatched (Phase 1)
-- [ ] Audit list merged with 5 always-included docs (Phase 1)
+- [ ] Audit list merged with 5 always-included docs + 1 rendered-from HTML (Phase 1)
 - [ ] User confirmation received via approval gate (Phase 2)
 - [ ] AI memory file detected (Phase 3)
 - [ ] Each approved file read first, then patched in-place (Phase 4)
 - [ ] Preserve-lists applied per file (Phase 4d)
 - [ ] Credential redaction scan run before each Write (Phase 4e)
+- [ ] Rendered-from HTML targets synced via text-node patches only — sidebar/JS/CSS preserved (Phase 4b)
+- [ ] Pre-commit hooks not bypassed (no `--no-verify`)
 - [ ] Cross-doc consistency verified, drift resolved (Phase 5)
 - [ ] Diff summary computed per file (Phase 6)
 - [ ] Per-file outcome and redaction log reported to user (Phase 7)
