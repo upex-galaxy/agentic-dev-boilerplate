@@ -97,7 +97,22 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ### Reusable community skills (installed by `bun run setup`)
 
-These skills are not committed in this repo; the installer fetches them via `npx skills add` from upstream community repositories. The installer recommends a curated stack-aware list (Next.js, React, shadcn/ui, Supabase, Vercel, etc.) at project level, plus a smaller cross-cutting set at user level (`skill-creator`, `gh-cli`, `find-skills`, `playwright-cli`, `n8n-skills`, `ui-ux-pro-max`, `frontend-design`, etc.). After running `/project-foundation` and `/project-bootstrap`, you can also run `npx autoskills` to auto-detect your stack and add more.
+These skills are not committed in this repo; the installer fetches them via `npx skills add` from upstream community repositories. The exact list lives in `cli/install.ts` (source of truth — it changes faster than this README, so consult the file directly).
+
+After running `/project-foundation` and `/project-bootstrap`, you can also run `npx autoskills` to auto-detect your concrete stack and add more.
+
+### Skill tiers (T1–T4)
+
+The repo classifies every skill into one of four tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
+
+| Tier | What                              | Location                                            | Load behavior                                                 |
+| ---- | --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| T1   | Project-owned (this repo)         | `.claude/skills/`                                   | Silent — load on trigger                                      |
+| T2   | Project dependency (gentle-ai)    | Installed by gentle-ai (SDD bundle, judgment-day…)  | Silent inside T1 orchestrators                                |
+| T3   | Community project-level           | Installed by `install.ts` `PROJECT_LEVEL_SKILLS`    | Silent if matched by category                                 |
+| T4   | Community user-level (global)     | Installed by `install.ts` `USER_LEVEL_SKILLS`       | **ASK** user before load (cross-project, not always wanted)   |
+
+Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
 
 ### Slash commands (utilities)
 
