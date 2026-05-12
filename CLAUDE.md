@@ -1,734 +1,305 @@
-# Project Memory
+# CLAUDE.md — AI Persistent Memory
 
-> **Purpose**: Operational context loaded every AI session.
-> **Usage**: AI reads this file automatically at session start.
-> **Customize**: Replace `[PLACEHOLDER]` values with your project specifics.
-> **Note**: This is the **AI-Driven Project Starter** template. Each project that uses this starter should fill in the placeholder values below.
-> **Companion files**: `README.md` (humans-first overview), `CONTEXT.md` (Context Engineering canonical map), `DESIGN.md` (visual identity contract), `docs/agentic-development-engineering.md` (methodology deep dive), `docs/getting-started.md` (onboarding for new contributors).
-
----
-
-## Quick Start
-
-```bash
-# PROJECT STARTER — GETTING ORIENTED:
-# When you start a new session, the relevant workflow skill auto-triggers.
-# Manual invocation order for a new project:
-# 1. /agentic-dev-core              → Bootstrap .agents/ + scripts + CLAUDE.md
-# 2. /project-foundation        → Constitution + PRD + SRS + Discovery
-# 2.5. /design-system           → DESIGN.md (visual identity) — invoked by foundation Phase 2.5
-# 3. /project-bootstrap         → Backend + Frontend + features (reads DESIGN.md if present)
-# 4. /product-management        → Seed backlog, refine stories
-# 5. /sprint-development                → Per-story dev loop (orchestrator)
-# 6. /unit-testing              → Composable TDD inside sprint-development
-#
-# Slash commands (utilities):
-# /sync-ai-memory
-# (Git/branch/commit/PR work is consolidated in the /git-flow-master skill;
-#  sprint reporting now lives inside the /product-management skill — workflow G)
-#
-# Plan-driven development: each skill plans before coding (skill-internal pattern).
-```
-
-**Common commands:**
-
-```bash
-bun run lint              # Lint codebase
-bun run lint:fix          # Auto-fix lint issues
-bun run format            # Format with Prettier
-bun run format:check      # Check formatting
-bun run up                # Update template from upstream
-bun run api:sync          # Sync OpenAPI spec + generate types
-bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
-bun run lint:skills       # Validate skill composition (categories, tiers, sections)
-bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira-fields.json
-bun run jira:check        # Validate Jira manifest vs catalog
-```
+> **THIS IS NOT A README.** This file loads into AI context EVERY session. Every token persists. Keep lean, priority-ordered, AI-first.
+>
+> - User-facing setup, scripts, structure diagrams → `README.md` / `docs/`.
+> - Heavy detail → skill `references/` (lazy-loaded by sub-agents).
+> - Project values (URLs, project name, Jira URL) → `.agents/project.yaml`.
+> - Current scripts → READ `package.json` DIRECTLY. Do not trust hardcoded lists.
+>
+> Structural mirror: `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template`. Sync manually on structural changes.
 
 ---
 
-## Onboarding (first time using this repo)
+## 1. CRITICAL RULES — ALWAYS APPLY
 
-If this is your first time on this repo, run:
-
-```bash
-bun run setup
-```
-
-This launches an interactive installer that:
-
-1. Detects gentle-ai (installs via `brew install gentle-ai` or `go install ...` if missing)
-2. Detects your AI agent (Claude Code or OpenCode)
-3. Installs 15 skills + engram + SDD orchestrator via gentle-ai (skip if you opt out)
-4. Configures the 4 canonical MCPs (Tavily, Context7, Supabase, n8n) interactively
-5. Verifies external CLIs are present (vercel, supabase, acli, playwright-cli, resend)
-6. Writes `.mcp.json` (or `opencode.json`) and `.agents/install-state.json`
-
-For details on every installer layer (gentle-ai, community skills, MCPs, external CLIs, opt-out path), see [INSTALLER.md](INSTALLER.md).
+1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts — use correct base URLs").
+2. **PLAN BEFORE CODING**: Produce implementation plan (`spec.md` or skill-internal plan) BEFORE writing code. Flow: Plan → Code → Review.
+3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude" in commits. Commits look human-authored.
+4. **CONFIRM BEFORE PUSH TO MAIN**: NEVER push to `main` without explicit user confirmation.
+5. **GIT HISTORY**: NEVER rewrite pushed history (rebase / amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. ALWAYS add forward (new commits, not rewrite). ALWAYS preserve merge history.
+6. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. Do not skip steps.
+7. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading.
+8. **SKILLS-FIRST**: All workflows live in `.claude/skills/`. NEVER paste instructions inline. Invoke the matching skill, let it self-load detail. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
+9. **UNIT TESTS** are part of `/sprint-development`. Optionally TDD via `/unit-testing` (composable mid-flight).
+10. **PLAYWRIGHT CLI**: For browser automation, load `/playwright-cli` skill (screenshots, tracing, video, session mgmt, request mocking). Skill at `.claude/skills/playwright-cli/`.
+11. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: If MCP fails auth or env var missing (`.mcp.json` uses `${VAR}` — Claude Code fails parse if unset; `opencode.jsonc` uses `{env:VAR}` — OpenCode silently substitutes empty → 401/403 is the signal). DO NOT work around. STOP, tell user the exact env var, point to `.env` / `.env.example`, ask them to fix `.env` and **RESTART AGENT SESSION** (env cached at MCP-spawn time, won't refresh mid-session).
+12. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from this file or any doc — drift kills. Open `package.json` first, then answer.
 
 ---
 
-## Behavioral Layer
+## 2. BEHAVIORAL LAYER — HOW AI REASONS
 
-> How to reason before and during work. These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+> Bias toward caution over speed. Trivial tasks use judgment. Full examples + working-signals → `references/behavioral-layer.md`.
 
-### 1. Think Before Coding
+**THINK BEFORE CODING.** State assumptions explicit. Multiple interpretations → present them, NEVER pick silently. Simpler approach exists → say so. Unclear → STOP, name confusion, ASK. Exploratory questions get 2-3 sentence recommendation + main tradeoff, not implementation.
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+**SIMPLICITY FIRST.** Minimum code that solves problem. No features beyond ask. No abstractions for single-use. No "flexibility" not requested. No error handling for impossible scenarios. 200 lines that could be 50 → rewrite. *Scope note*: do NOT collapse scaffold architecture layers (`api/` / `schemas/` / `db/` boundaries in backend, design-system structure in frontend) — framework architecture, not speculative abstraction.
 
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+**SURGICAL CHANGES.** Touch only what required. Match existing style even if you'd do it differently. Don't refactor unbroken code. Don't improve adjacent comments/formatting. Notice unrelated dead code → mention, don't delete. Remove imports/vars YOUR changes made unused. *Scope note*: regenerative commands EXEMPT — regen IS the task: `/agentic-dev-core` init, `/project-foundation`, `/design-system`, `/project-bootstrap`, `/sync-ai-memory`, `/sprint-development` impl-plan stage, `/product-management` AC-writing.
 
-### 2. Simplicity First
+**GOAL-DRIVEN EXECUTION.** Define success criteria. Loop until verified. Transform vague tasks into testable goals ("add validation" → "write tests for invalid input, then make them pass"). Multi-step → state plan with explicit `verify:` per step (observable: test passes, file exists, exit 0, type-check clean). Complements 6-component briefing (§3) — does NOT replace it.
 
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-> **Scope note**: This rule applies to code authored by the agent within a task. Do **not** collapse the architecture layers of the scaffold (`api/`, `schemas/`, `db/` boundaries in backend; design system structure in frontend) — they are framework architecture, not speculative abstraction.
-
-### 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-- Remove imports/variables/functions that **your** changes made unused.
-
-> **Scope note**: This rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are exempt — regeneration is the task. This includes `/agentic-dev-core` init mode (foundation files), `/project-foundation` (PRD, SRS, Discovery), `/design-system` (DESIGN.md generation, including rebrand), `/project-bootstrap` (backend + frontend scaffolding), `/sync-ai-memory` (project memory + cross-doc consistency + HTML rendered-from sync), `/sprint-development` implementation-plan stage, and `/product-management` AC-writing (Gherkin scenarios).
-
-### 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan with explicit checks:
-
-```
-1. [Step] → verify: [observable check]
-2. [Step] → verify: [observable check]
-3. [Step] → verify: [observable check]
-```
-
-`verify` = an observable signal that the step actually landed (test passes, file exists, command exits 0, type-check clean). This format **complements** the 6-component subagent briefing in `Orchestration Mode` — it does **not** replace it. Use this format for thinking-out-loud during execution; use the briefing for delegation.
-
-### Working signals
-
-These guidelines are working if: **fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.**
+**SIGNALS THESE WORK**: fewer unnecessary diff changes, fewer rewrites from overcomplication, clarifying questions BEFORE implementation rather than after mistakes.
 
 ---
 
-## Critical Reminders
+## 3. ORCHESTRATION MODE — PERMANENTLY ACTIVE
 
-> These rules override defaults and must always be in context.
+> **Main conversation = command center. Subagents = executors.** Active EVERY session. Not optional.
 
-1. **This is a project starter template**: All sections with `[PLACEHOLDER]` or `{{VARIABLE}}` values must be filled in per-project. Do not assume defaults.
-2. **Login Credentials**: ALWAYS read from `.env` file — NEVER hardcode or guess passwords.
-   - Example keys: `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`, `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD`
-3. **Plan before coding**: Always produce a plan (spec / implementation plan) before writing code. Each workflow skill enforces this internally.
-4. **No AI attribution in commits**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines in commit messages.
-5. **Confirm before push to main**: Never push to `main` without explicit user confirmation.
-6. **Unit tests are part of `/sprint-development`**: Optionally TDD via `/unit-testing` (composable mid-flight from sprint-development).
-7. **Git History Management**:
-   - NEVER rewrite pushed history (`rebase`, `amend` on pushed commits)
-   - NEVER force push to any shared branch
-   - NEVER delete remote branches without confirmation
-   - ALWAYS add forward (new commits to fix, not rewrite)
-   - ALWAYS preserve merge history
-8. **Quality Verification**: After code changes, verify in order: run tests → check types → lint. Do not skip steps.
-9. **File Operations**: Always read a file before editing it. Preserve existing formatting and indentation. Never overwrite files without reading first.
-10. **No Copy-Paste in Skills**: All skills and slash commands are invocable via `/<name>`. Never ask users to copy-paste content. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
-11. **Playwright CLI Usage**: For browser automation, load the `/playwright-cli` skill. It provides screenshots, tracing, video recording, session management, and request mocking. See `.claude/skills/playwright-cli/` for details.
-12. **MCP credential failure = STOP immediately**: If any MCP server fails to start, returns an auth/credentials error, or appears blocked because of missing env vars (`.mcp.json` uses `${VAR}` — Claude Code fails to parse if unset; `opencode.jsonc` uses `{env:VAR}` — OpenCode silently substitutes empty string, so a 401/403 from the MCP is the signal), DO NOT keep working around it. Stop, tell the user exactly which env var is missing or invalid, point them to `.env` / `.env.example`, and ask them to:
-   1. Fix the value in `.env`
-   2. **Restart the agent session** (exit and re-enter) — env vars are read once at MCP-server spawn time and won't refresh mid-session.
-13. [Add project-specific reminders here — e.g., "SPA and API are on different hosts — use correct base URLs"]
+**USE SUBAGENTS FOR**: reading/writing multiple files, MCP operations, research across repos, git operations, verification (tests/types/lint), multi-file edits, long-running tasks.
 
----
+**DO NOT USE SUBAGENTS FOR**: quick lookups, memory reads/writes, task tracking, asking user, planning.
 
-## Project Variables
+**6-COMPONENT BRIEFING (MANDATORY every dispatch)**:
 
-Project-specific values live in `.agents/project.yaml` (single source of truth). Four reference syntaxes coexist across prompts and docs; each tells you which file resolves the value.
+1. **Goal** — one sentence
+2. **Context docs** — files to read first
+3. **Skills to load** — explicit (e.g. `/playwright-cli`)
+4. **Exact instructions** — step-by-step, not vague goals
+5. **Report format** — what to return (files changed, tests passed, blockers)
+6. **Rules** — relevant Critical Rules to follow
 
-| Syntax                         | Purpose                                         | Resolves from                                                                                                                                                                                                 |
-| ------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)       | `.agents/project.yaml`. Flat keys lex-lookup (`{{PROJECT_KEY}}` → `project.project_key`). Env-scoped keys (`{{WEB_URL}}`, `{{API_URL}}`, `{{DB_MCP}}`, `{{API_MCP}}`) resolve against the active environment. |
-| `{{environments.<env>.<var>}}` | Explicit cross-env reference (multi-env tables) | `.agents/project.yaml` → `environments.<env>.<var>` directly, regardless of active env.                                                                                                                       |
-| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`)    | Computed by the calling prompt at runtime. Never declared, never persisted.                                                                                                                                   |
-| `{{jira.<slug>}}`              | Jira custom field reference                     | `.agents/jira-required.yaml` (canonical manifest) + `.agents/jira-fields.json` (workspace-resolved IDs).                                                                                                             |
+**EXECUTION PATTERNS**:
 
-**Active environment** (for env-scoped vars):
+| Pattern | When | Example |
+|---|---|---|
+| Parallel | Independent tasks | Read 3 context files at once |
+| Sequential | Dependent tasks | Plan → Code → Test |
+| Background | Long-running | Test suite + plan next ticket |
+| Single | Simple task | One file edit + verification |
 
-1. Session override (e.g. user says "test against production")
-2. Otherwise: `testing.default_env` from `.agents/project.yaml`
+**ERROR PROTOCOL**: On subagent error → STOP, report full context, DO NOT fix without approval, offer retry/skip/abort.
 
-**Validation scripts:**
+**DEEP DETAIL** (subagent-cacheable, do not inline here):
 
-- `bun run lint:agents` — every `{{VAR}}` and `{{jira.*}}` reference in prompts/context resolves against config
-- `bun run lint:skills` — every T1 skill's `complementary_categories` resolves against strategy doc §5.1; every Expected matches skill resolves against `cli/install.ts` tier arrays; flags orphan categories, tier mismatches, missing Composable Skills sections, single-skill fragility, stale `.context/` paths
-- `bun run jira:sync-fields` — discover Jira custom fields → write `.agents/jira-fields.json`
-- `bun run jira:check` — validate `jira-required.yaml` manifest against `.agents/jira-fields.json` catalog
-
-See `.agents/README.md` for the full contract, workflows (new-user setup, adding prompts, adding required Jira fields), and troubleshooting.
+- `.claude/skills/agentic-dev-core/references/orchestration-doctrine.md` — cacheable mirror, subagent-loadable without full CLAUDE.md
+- `.claude/skills/agentic-dev-core/references/briefing-template.md` — 6-component briefing examples per pattern
+- `.claude/skills/agentic-dev-core/references/dispatch-patterns.md` — when to Single / Parallel / Sequential / Background
+- `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` — T1/T2/T3/T4 tier model, conflict resolutions, delegation points
 
 ---
 
-## Tool Resolution
+## 4. CONTEXT LOADING MAP — TASK → WHAT TO LOAD
 
-> When prompts use `[TAG_TOOL]` pseudocode, the AI resolves to the actual tool using this table.
-> **Priority rule**: CLI tools first (fewer tokens, faster execution), MCP as fallback.
-> Skills are self-documenting — the AI reads the skill file to learn exact syntax.
+> BEFORE responding to any task: identify task type → load matching skill → read listed context. NEVER guess scripts/commands — READ `package.json` DIRECTLY.
 
-### Resolution Table
+| Task | Trigger phrase | Load skill | Read context | Primary tool |
+|---|---|---|---|---|
+| First-time orientation | "onboard me", "first time using this" | `/agentic-dev-onboard` | (skill self-loads) | — |
+| One-time repo bootstrap | "initialize the project", "regenerate CLAUDE.md" | `/agentic-dev-core` | target repo state | Read + Write |
+| Foundational definition (PRD/SRS/Discovery) | "define el PRD", "ideando un nuevo producto" | `/project-foundation` | `idea/`, `PRD/`, `SRS/`, business maps | Read + Write |
+| Design system (DESIGN.md) | "definir design system", "rebrandear el proyecto" | `/design-system` | `idea/constitution.md`, `PRD/` | Write |
+| Infra scaffolding (backend/frontend) | "scaffolding del proyecto", "API routes setup" | `/project-bootstrap` | `SRS/infrastructure.md`, `DESIGN.md` | Code edit |
+| Backlog / story refinement | "create epic", "refine acceptance criteria" | `/product-management` | `.context/PBI/{module}/ROADMAP.md`, `PRD/` | `[ISSUE_TRACKER_TOOL]` |
+| Sprint-development ticket | "implementar esta historia", "trabajar UPEX-XXX" | `/sprint-development` | `.context/PBI/{module}/{TICKET}-*/` | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
+| TDD slice / unit tests | "write unit tests", "TDD this function" | `/unit-testing` | function under test, existing tests | Code edit |
+| Sync AI memory | "sync memory", `/sync-ai-memory` | `/sync-ai-memory` | `README.md`, this file, `.context/`, `package.json` | Edit |
+| Business map refresh | "refresh data map", `/business-*-map` | `/business-data-map` / `-feature-map` / `-api-map` | Supabase schema, backend code, PRD | Read + Write |
+| Git / PR work | any git intent | `/git-flow-master` (auto) | `git status`, `git log` | `git` + `gh` |
+| Browser action | "screenshot", "trace", "record" | `/playwright-cli` | — | Playwright CLI |
+| Jira operation | "Jira issue", "transition story" | `/acli` | `.agents/jira-required.yaml`, `.agents/jira-fields.json` | CLI |
+| Any script / build / test command question | "what command runs X", "how do I run lint" | — | **READ `package.json` FIRST** | — |
 
-| Tag                    | Domain             | Primary Tool               | Fallback                 | Skill/Reference                  |
-| ---------------------- | ------------------ | -------------------------- | ------------------------ | -------------------------------- |
-| `[ISSUE_TRACKER_TOOL]` | Issue Tracking     | `acli` CLI (`/acli` skill) | manual via Atlassian UI  | `.claude/skills/acli/`           |
-| `[AUTOMATION_TOOL]`    | Browser Automation | `/playwright-cli` skill    | —                        | `.claude/skills/playwright-cli/` |
-| `[DB_TOOL]`            | Database           | Supabase MCP               | raw SQL via Supabase CLI | `.mcp.example.json`              |
-| `[API_TOOL]`           | API Exploration    | curl + OpenAPI types       | Postman manual           | `scripts/sync-openapi.ts`            |
+**Key paths**:
 
-### How It Works
-
-1. Prompts describe WHAT to do using `[TAG_TOOL]` pseudocode
-2. The AI reads this table to determine WHICH tool to use
-3. The AI reads the skill/MCP documentation to learn HOW to execute
-4. If the primary tool is unavailable, try the fallback
-5. If all tools are unavailable, inform the user
-
-### Pseudocode Syntax
-
-```
-[TAG_TOOL] Action:
-  - parameter: value
-  - parameter: {per convention name}
-  - parameter: {{PROJECT_VARIABLE}}
-```
-
-**Value types in pseudocode:**
-
-| Type                 | Syntax               | Example                             | When to use                       |
-| -------------------- | -------------------- | ----------------------------------- | --------------------------------- |
-| Fixed/domain         | Literal value        | `type: Manual`                      | Domain concepts that never change |
-| Convention reference | `{per <convention>}` | `title: {per TC naming convention}` | Forces AI to consult guidelines   |
-| Project variable     | `{{VARIABLE}}`       | `project: {{PROJECT_KEY}}`          | Configured once per project       |
-| Context-derived      | `{from <source>}`    | `steps: {from test analysis}`       | Derived during session            |
-
-### Convention References
-
-> Dev-side conventions are owned by the relevant skill (e.g., `/sprint-development` for branch/PR naming, `/product-management` for AC format).
-> QA-side conventions (TC naming, label format, execution naming) live in the sister repo `agentic-qa-boilerplate`.
+- `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — system maps (refresh via `/business-*-map`)
+- `.context/master-implementation-plan.md` — prioritized roadmap
+- `.context/PBI/{module}/` — module-level (ROADMAP, PROGRESS, SESSION-PROMPT)
+- `.context/PBI/{module}/{TICKET}-{title}/` — story-level (context.md, implementation-plan.md, evidence/)
+- `.agents/project.yaml` — `{{VAR}}` source-of-truth (load ONCE per session, cache)
+- `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml` — Jira catalogs
 
 ---
 
-## Project Identity
+## 5. SKILLS + COMMANDS + MCPs REGISTRY
 
-> Replace placeholders with your project details.
+### Skills T1 (committed in `.claude/skills/`, 10)
 
-| Aspect           | Value                                                     |
-| ---------------- | --------------------------------------------------------- |
-| **Name**         | [Your Project Name]                                       |
-| **Type**         | [e.g., B2B Web Platform, E-commerce, SaaS]                |
-| **Stack**        | [e.g., React + TypeScript (FE), Node.js (BE), PostgreSQL] |
-| **Target Repo**  | [Path to application repository]                          |
-| **Starter Repo** | [Path to this project-starter repository]                 |
+| Skill | Trigger | Purpose |
+|---|---|---|
+| `agentic-dev-core` | `/agentic-dev-core` | Foundation: hosts shared references + bootstraps `.agents/`, scripts, CLAUDE.md. |
+| `agentic-dev-onboard` | `/agentic-dev-onboard` | First-time orientation. Stack + Jira workflow + skill map + MCPs. |
+| `project-foundation` | `/project-foundation` | Constitution + Architecture (PRD/SRS) + Discovery (data/api/dev-guide). |
+| `design-system` | `/design-system` | DESIGN.md (Google Labs spec) — 5 paths. Pre-scaffolding visual contract. |
+| `project-bootstrap` | `/project-bootstrap` | Infra scaffolding: backend, frontend, OpenAPI, auth, env, Supabase types. |
+| `product-management` | `/product-management` | Backlog seed + epic + INVEST/AC refinement + sprint report. |
+| `sprint-development` | `/sprint-development` | **Mega-orchestrator**. Per-story Plan → Implement → Review → Staging → Prod (gated). Composes SDD bundle on Path B (see §12). |
+| `unit-testing` | `/unit-testing` | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`. |
+| `git-flow-master` | (auto on git/PR intents) | End-to-end Git operator. Auto-detects branching strategy. |
+| `acli` | `/acli` | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`. |
+| `playwright-cli` | `/playwright-cli` | Browser CLI: screenshots, tracing, video, session, request mocking. |
 
-**TL;DR Flow:**
+> **T2 (gentle-ai, 15 skills)** — SDD bundle (sdd-init/explore/propose/spec/design/tasks/apply/verify/archive/onboard) + skill-registry + judgment-day + cognitive-doc-design + comment-writer. Composed silently by T1 orchestrators per the **Skill Composition Protocol** in `references/skill-composition-strategy.md`. Run `bun run setup` to install.
+>
+> **T3 (community project-level)** — frontend/backend skills matched by category at runtime, NOT by literal name. List lives in `cli/install.ts`.
+>
+> **T4 (community user-level)** — repo-agnostic skills, auto-discovered at runtime, **ASK before load** per strategy §3.2.
 
-```
-[User Action] → [System Process] → [Outcome]
-```
+### Slash commands (utilities, 5)
 
----
+| Command | Purpose |
+|---|---|
+| `/sync-ai-memory` | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, onboarding HTML against current repo state. |
+| `/business-data-map` | Refresh `.context/business/business-data-map.md` (entities, flows, state machines). |
+| `/business-feature-map` | Refresh `.context/business/business-feature-map.md` (CRUD matrix, UI inventory). |
+| `/business-api-map` | Refresh `.context/business/business-api-map.md` (auth model, endpoints, architecture). |
+| `/master-implementation-plan` | Refresh `.context/master-implementation-plan.md` (prioritized feature roadmap). |
 
-## Environment URLs
+### MCPs (configured in `.mcp.json`)
 
-> Replace with your project URLs. Keep the same structure so tooling and context files can reference it.
-
-| Environment    | Frontend                      | Backend (API)                     |
-| -------------- | ----------------------------- | --------------------------------- |
-| **Local**      | `http://localhost:3000`       | `http://localhost:3000/api`       |
-| **Staging**    | `https://staging.example.com` | `https://staging.example.com/api` |
-| **Production** | `https://example.com`         | `https://example.com/api`         |
-
-> If the Frontend and Backend are on **different hosts**, document it here and make sure API tests target the API host directly.
-
----
-
-## Planning Scopes
-
-### Development Planning
-
-| Scope                   | Skill / Reference               | When to Use                              |
-| ----------------------- | ------------------------------- | ---------------------------------------- |
-| **Epic / Feature**      | `/product-management`           | Plan an epic and seed its stories        |
-| **Story-level** (Micro) | `/sprint-development` (Planning step)   | Implementation plan for a specific story |
-| **Unit-test slice**     | `/unit-testing` (TDD red-green) | TDD workflow for an isolated unit        |
-
-> QA test planning (acceptance test plans, regression suites, E2E automation plans) lives in the sister repo `agentic-qa-boilerplate`.
+| MCP | Use for | Rule |
+|---|---|---|
+| Tavily | Web search, troubleshooting community solutions | `[WEB_SEARCH_TOOL]` |
+| Context7 | Library official docs ("how to use X") | Prefer over web search for library APIs |
+| Supabase | DB queries, schema, project state | `[DB_TOOL]` primary |
+| n8n | Workflow automation, integrations | `[AUTOMATION_FLOWS_TOOL]` |
+| Atlassian | Jira/Confluence fallback | Use only when `/acli` unavailable |
 
 ---
 
-## Fundamental Rules (Always in Memory)
+## 6. TOOL RESOLUTION ([TAG_TOOL] pseudocode)
 
-### TypeScript Patterns
+> Skills use `[TAG_TOOL]` pseudocode. Resolve via this table. **PRIORITY**: CLI tools first (fewer tokens). MCP = fallback only.
 
-| Pattern        | Rule                                                                           |
-| -------------- | ------------------------------------------------------------------------------ |
-| **Parameters** | Max 2 positional. 3+ → use object parameter                                    |
-| **Utilities**  | Agnostic utilities only — no domain coupling in shared modules                 |
-| **Imports**    | Always use aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
-| **Types**      | Define interfaces at top of file, after imports                                |
-| **Errors**     | Public methods: fail fast. Utilities: silent fail (return null)                |
+| Tag | Domain | Primary | Fallback |
+|---|---|---|---|
+| `[ISSUE_TRACKER_TOOL]` | Jira Cloud (story/bug/epic) | `/acli` | MCP Atlassian |
+| `[AUTOMATION_TOOL]` | Browser automation | `/playwright-cli` | MCP Playwright |
+| `[DB_TOOL]` | Database | Supabase MCP | raw SQL via Supabase CLI |
+| `[API_TOOL]` | API exploration | curl + OpenAPI types (`bun run api:sync`) | Postman manual |
 
-**DRY — Context Matters:**
+**MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside the owning skill's `references/`.
 
-- `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`)
-- Shared utilities = framework-agnostic only
-- Domain logic stays inside its feature folder
-
-> Full TS conventions live in the relevant feature's `dev-guide` (Discovery output). The `/sprint-development` skill points to it during Planning.
+**Pseudocode value types**: `Literal` (fixed domain) · `{per convention}` (consult skill ref) · `{{PROJECT_VAR}}` (from `.agents/project.yaml`) · `{from analysis}` (runtime-derived).
 
 ---
 
-## Git Workflow
+## 7. PROJECT VARIABLES — POINTER
 
-### Branch Strategy
+> ALL variable syntax + Jira field references documented in **`.agents/README.md`**. READ ONCE per session, cache values.
 
-| Branch      | Role                                                               |
-| ----------- | ------------------------------------------------------------------ |
-| `main`      | Production. PRs merged from `staging` or `feature/*` after review. |
-| `staging`   | Integration branch for AI commits and pre-release validation.      |
-| `feature/*` | Task-specific branches for new work. Use `feature/TICKET-ID-desc`. |
-| `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                        |
+Project values live in **`.agents/project.yaml`** — load once per session. NEVER hardcode Project Identity, environment URLs, Jira URL, project key, MCP names. ALWAYS read them from `.agents/project.yaml`.
 
-### Commit Rules
+**Variable syntaxes (cheat-sheet)**:
 
-- **Semantic prefixes**: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`
-- **One commit = one responsibility**
-- **Clear messages**: Someone should understand the change without reading the diff
-- **NO AI attribution**: Never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines. Commits must look human-authored.
-- **Confirm before push to main**: Always ask user confirmation before pushing to `main`.
+- `{{VAR_NAME}}` → static project var. Flat: `{{PROJECT_KEY}}` → `project.project_key`. Env-scoped: `{{WEB_URL}}`, `{{API_URL}}`, `{{DB_MCP}}`, `{{API_MCP}}` → `environments[active_env].<var>`. Cross-env: `{{environments.<env>.<var>}}`.
+- `<<VAR_NAME>>` → session var computed at runtime (e.g. `<<ISSUE_KEY>>` from git branch). Never persisted.
+- `{{jira.<slug>}}` → Jira custom field via `.agents/jira-fields.json` ↔ `.agents/jira-required.yaml`. Sub-forms: `{{jira.<slug>.<option>}}`, `{{jira.<slug>.<parent>.<child>}}`.
+- `{{jira.work_type.<slug>}}` / `{{jira.status.<work_type>.<slug>}}` / `{{jira.transition.<work_type>.<slug>}}` → Jira workflow refs via `.agents/jira-workflows.json`.
 
-### Example Flow
+**Active env**: `active_env` defaults to `testing.default_env` in `.agents/project.yaml`. If user says "test against production" → switch `active_env` to `production` for that session, ignore `default_env` until session ends.
 
-```bash
-# General work (no ticket)
-git add <files>
-git commit -m "docs: update context files"
-# → Ask: "Confirm push to main?"
-git push origin main
-
-# Ticket-based work
-git checkout -b feature/UPEX-123-add-login-tests
-git add <files>
-git commit -m "test: add login API tests"
-git push -u origin feature/UPEX-123-add-login-tests
-gh pr create --base staging
-```
-
-→ **Full details**: `/git-flow-master` skill (covers branches, commits, push, PR creation, merge conflicts, and chained-PR planning — auto-adapts to the project's branching strategy)
+**Validation**: `bun run lint:agents` checks every `{{VAR}}` resolves; `bun run jira:check` validates manifest vs catalog.
 
 ---
 
-## Orchestration Mode (Subagent Strategy)
+## 8. AI BEHAVIOR DURING DEVELOPMENT
 
-**Core Principle**: Main conversation = command center. Subagents = executors.
+1. **EXPLAIN THE STORY**: once ticket understood, briefly state — what the feature is, how it works (simple terms), what will be developed.
+2. **WAIT FOR CONFIRMATION**: after important explanations, WAIT for user response before continuing.
+3. **EXPLAIN DEFECTS**: on bug / unexpected behavior — describe observed, explain why it's a problem, suggest impact (severity, affected users, business risk).
+4. **LANGUAGE**: default English. If user writes other language → mirror it in user-facing communication. Docs + code ALWAYS English.
 
-**Use subagents for**: Reading/writing multiple files, MCP operations, research across repos, git operations, verification (tests/types/lint), multi-file edits.
+**ENVIRONMENT SELECTION**: default to **staging** unless user specifies otherwise. Ask when ambiguous. URLs from `.agents/project.yaml`. Credentials from `.env`.
 
-**Do NOT use subagents for**: Quick lookups, memory reads/writes, task tracking, asking the user, planning.
-
-**Briefing format** — every dispatch must include:
-
-1. **Goal**: One-sentence description
-2. **Context docs**: Which files to read first
-3. **Skills to load**: Which skills the subagent needs (e.g., `/playwright-cli`)
-4. **Exact instructions**: Step-by-step, not vague goals
-5. **Report format**: What to return (files changed, tests passed/failed, blockers)
-6. **Rules**: Relevant Critical Rules to follow
-
-### Execution Patterns
-
-| Pattern        | When              | Example                                         |
-| -------------- | ----------------- | ----------------------------------------------- |
-| **Parallel**   | Independent tasks | Read 3 context files simultaneously             |
-| **Sequential** | Dependent tasks   | Plan → Code → Test                              |
-| **Background** | Long-running      | Test suite execution while planning next ticket |
-| **Single**     | Simple task       | One file edit with verification                 |
-
-**Error protocol**: On subagent error — STOP, report to user with full context, do NOT fix without approval, present options (retry/skip/abort).
-
-**Planning**: Present plan → wait for approval → track progress → report results.
+**CONTEXT EFFICIENCY**: main conversation stays lean (no large file reads). Subagents do heavy reading. Skills load only the references the current phase needs.
 
 ---
 
-## Usage Modes & Entry Points
+## 9. LOCAL CONTEXT (PBI)
 
-| Mode                        | Entry Point           | When to Use                                                        |
-| --------------------------- | --------------------- | ------------------------------------------------------------------ |
-| **New project bootstrap**   | `/agentic-dev-core`       | One-time: scaffold `.agents/`, scripts, CLAUDE.md                  |
-| **Foundational definition** | `/project-foundation` | Constitution + PRD + SRS + Discovery (one-time per product)        |
-| **Design system**           | `/design-system`      | DESIGN.md (Google Labs spec) before scaffolding — 5 paths (getdesign default, manual, Open Design, Claude Design, LLM-authored) |
-| **Infra scaffolding**       | `/project-bootstrap`  | Backend + frontend skeleton + features (OpenAPI, auth, env, types) |
-| **Backlog & refinement**    | `/product-management` | Seed backlog, add feature, create epic, refine story (INVEST + AC) |
-| **Per-story dev loop**      | `/sprint-development`         | Plan → Code → Review → Staging → (gated) Production                |
-| **TDD slice**               | `/unit-testing`       | Standalone or composable mid-flight from `/sprint-development`             |
-
-> QA workflows (sprint testing, exploratory testing, automation, regression) live in the sister repo `agentic-qa-boilerplate`.
-
----
-
-## Context System (3-Level Hierarchy)
-
-### Level 1: Project-Wide (loaded at session start)
-
-```
-.context/business/business-data-map.md     → System flows and entities
-.context/business/business-feature-map.md  → Feature inventory (CRUD matrix, UI inventory)
-.context/business/business-api-map.md      → API as journey-enabler (auth model, endpoints)
-.context/master-implementation-plan.md     → Prioritized feature roadmap
-```
-
-### Level 2: Module-Level (shared across stories in a module)
-
-```
-.context/PBI/{module}/
-  module-context.md                → Module overview and shared context
-  ROADMAP.md                       → All stories and their dev status
-  PROGRESS.md                      → Current progress tracker
-  SESSION-PROMPT.md                → @-loadable session resume prompt
-```
-
-### Level 3: Story-Level (per story)
-
-```
-.context/PBI/{module}/{TICKET-ID}-{name}/
-  context.md                       → ACs, data, session notes, open questions
-  implementation-plan.md           → Plan produced by /sprint-development
-  evidence/                        → Screenshots, traces, logs (gitignored)
-```
-
-### Context Loading by Task
-
-| Task                    | Load These Files                                                      |
-| ----------------------- | --------------------------------------------------------------------- |
-| **Develop a Feature**   | `business-feature-map.md` + relevant `module-context.md`              |
-| **Plan a Story**        | `module-context.md` + story `context.md` + `business-data-map.md`     |
-| **Write Unit Test**     | `/unit-testing` skill internal docs                                   |
-| **Understand System**   | `business-data-map.md` + `PRD/user-journeys.md`                       |
-| **Use MCP Tools**       | `CLAUDE.md section Tool Resolution`                                   |
-| **Code Review**         | `/sprint-development` skill (Code Review step)                                |
-| **Plan Implementation** | `/sprint-development` skill (Planning step)                                   |
-| **Bootstrap Project**   | `/agentic-dev-core` + `/project-foundation` + `/project-bootstrap` skills |
-
----
-
-## MCPs Available
-
-| MCP          | When to Use                          |
-| ------------ | ------------------------------------ |
-| **Tavily**   | Web search, troubleshooting          |
-| **Context7** | Official library documentation       |
-| **Supabase** | Database queries, project management |
-| **n8n**      | Workflow automation, integrations    |
-
-**Decision Rule:**
-
-- Context7 for "how to use X" (official docs)
-- Tavily for "how to solve X" (community solutions)
-- Supabase for database/project state
-- n8n for workflow automation
-
----
-
-## AI Behavior During Sessions
-
-**Workflow**: Plan first (wait for approval) → delegate to subagents → use skills → track progress → report results → verify quality.
-
-### Explanations and Confirmations
-
-When working on a User Story, feature, or bug:
-
-1. **Explain the story**: Once you understand the ticket, explain briefly:
-   - What the feature is about
-   - How it works (in simple terms)
-   - What we'll be doing (developing, testing, or both)
-
-2. **Wait for confirmation**: After important explanations, WAIT for the user to respond before continuing. This allows the user to:
-   - Read and understand
-   - Ask questions if needed
-   - Confirm whether to proceed
-
-3. **Explain defects**: When you find a bug or unexpected behavior:
-   - Describe what you observed
-   - Explain why it's a problem
-   - Suggest the impact (severity, affected users, business risk)
-
-4. **Language**: Default to **English**. If the user writes in another language, mirror that language for user-facing communication. Documentation and code are always written in English.
-
-### Environment Selection
-
-- Ask the user which environment they're working on (e.g., "local or staging?") when it's ambiguous.
-- Default to **staging** unless the user specifies otherwise.
-- Use the environment URLs from the "Environment URLs" table above and credentials from `.env`.
-
-### Context Efficiency
-
-Main conversation stays lean (no large file reads). Subagents do heavy reading. Load only what the current step needs.
-
----
-
-## Local Context (PBI)
-
-For every story being worked on, maintain local documentation under `.context/PBI/`:
+For every story being developed, maintain local docs under `.context/PBI/`:
 
 ```
 .context/PBI/{module-name}/
-  module-context.md                → Module overview and shared context
-  ROADMAP.md                       → All stories and their dev status
-  PROGRESS.md                      → Current progress tracker
-  SESSION-PROMPT.md                → @-loadable session resume prompt
+  module-context.md          # Module overview + shared context
+  ROADMAP.md                 # All stories + dev status
+  PROGRESS.md                # Current progress tracker
+  SESSION-PROMPT.md          # @-loadable session resume prompt
   {TICKET-ID}-{brief-title}/
-    context.md                     → ACs, data, session notes, open questions
-    implementation-plan.md         → Plan produced by /sprint-development
-    evidence/                      → Screenshots, traces, logs (gitignored)
+    context.md               # ACs, data, session notes, open questions
+    implementation-plan.md   # Plan produced by /sprint-development
+    evidence/                # Screenshots, traces, logs (gitignored)
 ```
 
-**Variables:**
+Variables: `{module-name}` = kebab-case module (`user-management`). `{TICKET-ID}` = issue tracker id (`UPEX-277`). `{brief-title}` = max ~5 words kebab-case AI-generated.
 
-- `{module-name}`: kebab-case of the module or epic (e.g., `user-management`)
-- `{TICKET-ID}`: Issue tracker identifier (e.g., `UPEX-277`)
-- `{brief-title}`: AI-generated summary of the ticket title, max ~5 words, kebab-case (e.g., `empty-states`)
+**ENTRY POINT**: invoke `/sprint-development` — fetches ticket, explains story, loads context, drives plan → code → review → deploy.
 
-**Entry point**: `/sprint-development` — fetches ticket, explains story, loads context, drives plan-code-review-deploy.
-
-**Resume a session**: `@.context/PBI/{module}/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
+**RESUME SESSION**: `@.context/PBI/{module}/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
 
 ---
 
-## CLI Tools
+## 10. STACK QUICK-REFERENCE (TypeScript + DRY)
 
-| Script             | Usage                                               | Documentation               |
-| ------------------ | --------------------------------------------------- | --------------------------- |
-| `bun run api:sync` | Sync OpenAPI spec + generate types                  | `scripts/sync-openapi.ts`       |
-| `bun run setup`    | Run interactive installer (gentle-ai + MCPs + CLIs) | `cli/install.ts`            |
-| `bun run up`       | Update template from upstream                       | `cli/update-boilerplate.ts` |
-| `bun run lint`     | Lint codebase with ESLint                           | `eslint.config.js`          |
-| `bun run format`   | Format with Prettier                                | `.prettierrc`               |
+> Full TS conventions live in feature dev-guide (Discovery output via `/project-foundation`) if present, else fallback `.claude/skills/agentic-dev-core/references/typescript-patterns.md`. LOAD `/sprint-development` before writing or reviewing feature code.
 
-**Run `bun <script> --help`** for usage details.
+| Pattern | Rule |
+|---|---|
+| **Parameters** | Max 2 positional. 3+ → object param |
+| **Utilities** | Agnostic only — no domain coupling in shared modules |
+| **Imports** | Always aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
+| **Types** | Declare interfaces at top of file, after imports |
+| **Errors** | Public methods: fail fast (throw). Utilities: silent fail (return null) |
 
----
+**DRY — context matters**:
 
-## Skills (Claude Code)
-
-> Pre-built skills available in `.claude/skills/`. These are loaded automatically by Claude Code.
-
-> **Note**: This repo uses a hybrid model. Workflow skills are committed in `.claude/skills/`. Foundation/SDD skills (`judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, the SDD bloque) come from gentle-ai user-install. Reusable community skills (next-*, react-*, shadcn, supabase-postgres-best-practices, etc.) come from `npx skills add` invoked by the installer. Run `bun run setup` to install everything. See [INSTALLER.md](INSTALLER.md).
-
-### Workflow Skills (project-starter, 10)
-
-| Skill                   | Trigger                | Description                                                                                                            |
-| ----------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **agentic-dev-core**        | `/agentic-dev-core`        | Bootstrap a new repo with foundation files (one-time): `.agents/`, scripts, CLAUDE.md                                  |
-| **project-foundation**  | `/project-foundation`  | Constitution + Architecture (PRD, SRS) + Discovery (data map, API arch, dev guide)                                     |
-| **design-system**       | `/design-system`       | Generates DESIGN.md (Google Labs Apache-2.0 spec) at project root — 5 paths: getdesign default, manual gallery, Open Design app, Claude Design handoff, LLM-authored. Invoked by foundation Phase 2.5; consumed by bootstrap frontend-setup. |
-| **project-bootstrap**   | `/project-bootstrap`   | Infrastructure scaffolding: backend, frontend, OpenAPI, env, Supabase types                                            |
-| **product-management**  | `/product-management`  | Backlog seed + add-feature + epic creation + story refinement (INVEST, AC, edge cases)                                 |
-| **sprint-development**          | `/sprint-development`          | Per-story dev loop: Planning → Implementation → Code Review → Staging deploy. Mega-orchestrator.                       |
-| **unit-testing**        | `/unit-testing`        | TDD workflow, test naming, mocking, coverage. Composable with `/sprint-development`.                                           |
-| **git-flow-master**     | `/git-flow-master`     | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning. Auto-detects branching strategy. |
-| **acli**                | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows.                                                    |
-| **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-development vs /sdd-\*, MCPs, env vars.            |
-
-### Project Dependencies (gentle-ai, 15)
-
-> Installed at user level by `bun run setup` via gentle-ai. Treated as project-level dependencies of this repo. Composed silently inside project-owned orchestrators per the **Skill Composition Protocol** below. Full integration contract: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
-
-**SDD bundle (10)** — Spec-Driven Development phases. Composed by `/sprint-development` for complex stories (Path B):
-
-| Skill            | Used in `/sprint-development`                                                                |
-| ---------------- | -------------------------------------------------------------------------------------------- |
-| `sdd-init`       | Pre-flight: detect test runner, resolve Strict TDD mode, cache per project                   |
-| `sdd-explore`    | Stage 1 (optional): investigate codebase before designing                                    |
-| `sdd-propose`    | Stage 1: derive proposal from Jira AC                                                        |
-| `sdd-spec`       | Stage 1: write delta specs from proposal                                                     |
-| `sdd-design`     | Stage 1: architecture decisions for complex stories                                          |
-| `sdd-tasks`      | Stage 1: task breakdown + Review Workload Forecast (delivery strategy gate)                  |
-| `sdd-apply`      | Stage 2: batched implementation, Strict TDD enforcement, apply-progress merge across batches |
-| `sdd-verify`     | Stage 3: behavioral spec compliance matrix (test-execution proof)                            |
-| `sdd-archive`    | Post-merge: sync delta specs to main specs, audit trail                                      |
-| `sdd-onboard`    | Standalone: SDD walkthrough for new contributors                                             |
-
-**Other gentle-ai skills (5)**:
-
-| Skill                  | Hookup                                                                                                                       |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `skill-registry`       | Canonical skill discovery — used by orchestrator + every T1 skill                                                            |
-| `judgment-day`         | Default Stage 3 adversarial reviewer in `/sprint-development` (parallel blind judges)                                        |
-| `cognitive-doc-design` | Composable callee in `/agentic-dev-core` and `/sync-ai-memory` (category: doc-generation)                                    |
-| `comment-writer`       | Composable callee in `/sprint-development` Stage 3 + `/git-flow-master` (category: prose-polishing)                          |
-| `issue-creation`       | **Not adopted** — conflicts with the repo's Jira-first flow (use `/product-management` + `/acli` instead)                    |
-
-### Reusable Community Skills
-
-These skills are NOT committed in this repo. They are installed by `bun run setup` at two scopes; the installer (`cli/install.ts`) is the source of truth for which skills land where.
-
-**Project-level** (installed to user-scope but tied to this repo's stack — e.g. Next.js / React / Tailwind / Supabase / Bun helpers): auto-installed via `bun run setup`. The exact list lives in `cli/install.ts` (`PROJECT_LEVEL_SKILLS`). They are matched by **category** (frontend-ui, frontend-framework, backend-db, etc — see `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §5), not by individual name. This makes the repo resilient to community renames, deprecations, and replacements.
-
-**User-level** (cross-cutting, repo-agnostic — browser automation, design intelligence, GitHub CLI, brainstorming, etc): auto-installed globally. **Not enumerated here on purpose.** The orchestrator and project-owned skills auto-discover them at runtime via `skill-registry` and apply the threshold rule from `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §3.2 (silent for matched T1/T2/T3 categories, ASK before loading T4 user-level skills).
-
-After running `/project-foundation` and `/project-bootstrap`, run `npx autoskills` to auto-detect your concrete stack and install additional matching skills. (`autoskills` is a one-shot bootstrap step — not the same as the runtime `find-skills` discovery described in the Skill Composition Protocol below.)
-
-### Slash Commands (utilities)
-
-| Command                       | Purpose                                                                       |
-| ----------------------------- | ----------------------------------------------------------------------------- |
-| `/sync-ai-memory`             | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
-| `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                   |
-| `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                |
-| `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                    |
-| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md` (prioritized roadmap) |
-
-> Sprint reporting (epics + stories + PRs snapshot) lives inside `/product-management` (workflow G) — trigger with "sprint report", "estado del sprint", or "qué hay en el sprint".
-
-> Git, branch, commit, push, PR, conflict-fix and chained-PR planning are all in the `/git-flow-master` skill (Workflow Skills table above), not as separate slash commands.
-
-**Note:** Skills and commands are committed to the repo so anyone who clones the project gets them out of the box. User-specific settings (`.claude/settings.local.json`) are gitignored.
-
-### Skill Composition Protocol
-
-The repo composes skills across four tiers:
-
-- **T1 — Project-owned** (`.claude/skills/`, 10 skills, listed above)
-- **T2 — Project dependencies** (gentle-ai, 15 skills, listed above)
-- **T3 — Community project-level** (community, stack-matched — names live in `cli/install.ts`, matched by **category** at runtime, not by literal name)
-- **T4 — Community user-level** (community, repo-agnostic — auto-discovered at runtime, **ASK before load**)
-
-**Discovery**: `skill-registry` (gentle-ai) is the canonical scanner. Fallback: scan the `system-reminder` skill list at session start.
-
-**`find-skills` runtime discovery**: when a task domain has no T1/T2/T3 match AND would benefit from a specialized skill, the orchestrator may auto-invoke `find-skills` (T4) to suggest installable skills. Always asks the user before installing. Distinct from the bootstrap-only `npx autoskills`.
-
-**Sprint-development integrates SDD** via two paths:
-
-- **Path A — Story-driven simple**: Jira ticket, ≤400 lines, no architectural decisions. No SDD calls.
-- **Path B — Story-driven complex**: Jira ticket + (multi-file OR new architecture OR >400 lines OR Strict TDD). Sprint-dev delegates to `sdd-design` → `sdd-tasks` → `sdd-apply` → `sdd-verify` → `sdd-archive` while keeping ownership of Jira transitions, deploy, and rollback.
-
-**Full contract** (skill tier model, ownership map, 7 conflict resolutions, 5 delegation points, glue layer responsibilities, category vocabulary): **`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`**.
+- `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`). Single source of truth.
+- Shared utilities = framework-agnostic only. No React, no Next, no Bun-specific APIs.
+- Domain logic stays inside its feature folder. Move to `shared/` only when ≥2 features import AND abstraction is stable.
 
 ---
 
-## Discovery Progress
+## 11. GIT WORKFLOW — POINTERS
 
-> Track which foundation steps have been completed.
+Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills/git-flow-master/` and `docs/workflows/git-flow.md` if present.
 
-| Step                     | Skill                 | Status         | Output Files                                                 |
-| ------------------------ | --------------------- | -------------- | ------------------------------------------------------------ |
-| Constitution             | `/project-foundation` | [Pending/Done] | `idea/*`                                                     |
-| Architecture (PRD + SRS) | `/project-foundation` | [Pending/Done] | `PRD/*`, `SRS/*`                                             |
-| Infrastructure scaffold  | `/project-bootstrap`  | [Pending/Done] | `SRS/infrastructure.md`, backend/frontend boilerplate        |
-| Discovery                | `/project-foundation` | [Pending/Done] | `business-data-map`, `api-architecture`, `project-dev-guide` |
+**Protected branches**:
 
----
+| Branch | Role |
+|---|---|
+| `main` | Production. PRs merged from `staging` or `feature/*` after review. |
+| `staging` | Integration branch for AI commits + pre-release validation. |
+| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`. |
+| `fix/*` | Bug-fix branches. Use `fix/TICKET-ID-desc`. |
 
-## Access Configuration
+**Critical commit rules** (also enforced in §1):
 
-### Configured
-
-- [ ] Tavily MCP (web search)
-- [ ] Context7 MCP (library documentation)
-- [ ] Supabase MCP (database + project queries)
-- [ ] n8n MCP (workflow automation)
-- [ ] Bun runtime installed
-- [ ] Playwright browsers installed
-- [ ] GitHub Actions workflows
-- [ ] ESLint + Prettier configured
-- [ ] Husky pre-commit hooks
-
-### Pending / Manual Steps
-
-- [ ] Populate `.env` with staging/production URLs
-- [ ] Populate `.env` with test user credentials (`LOCAL_*`, `STAGING_*`)
-- [ ] Run `bun run env:validate` to check configuration
-- [ ] Restart Claude Code after any MCP credential change (configs are cached)
+- Semantic prefixes: `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`
+- One commit = one responsibility. Clear messages.
+- **NO AI attribution** in commits.
+- **Confirm before push to `main`**.
+- Branch + commit + push + PR + conflict-fix + chained-PR planning all in `/git-flow-master`.
 
 ---
 
-## Quick Reference
+## 12. DELIVERY STRATEGY — Path A vs Path B
 
-**Pre-flight checklist:**
+`/sprint-development` selects path based on story complexity. Pick the right path at session start to avoid wasted SDD overhead on simple stories or insufficient rigor on complex ones.
 
-- [ ] Plan presented and approved before coding (skill-internal)
-- [ ] Aliases used for imports (`@api/`, `@schemas/`, `@utils/`)
-- [ ] Credentials from `.env`, never hardcoded
-- [ ] Unit tests pass (when applicable; see `/unit-testing`)
-- [ ] Lint + types green (`bun run lint`, `tsc --noEmit`)
-- [ ] No AI attribution in commits
-- [ ] Context loaded progressively (not all at once)
+| Path | Gate | Skills invoked |
+|---|---|---|
+| **A — Simple** | Jira ticket · ≤400 LOC · no new architecture · no Strict TDD | `/sprint-development` only. No SDD calls. |
+| **B — Complex** | multi-file refactor OR new architecture OR >400 LOC OR Strict TDD active | `sprint-development` orchestrates: `sdd-init` → `sdd-design` → `sdd-tasks` (delivery-strategy gate) → `sdd-apply` → `sdd-verify` → `sdd-archive`. Sprint-dev keeps Jira transitions, deploy, rollback. |
 
-See "Quick Start" above for common commands.
+Full contract: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
 
 ---
 
-## Future Hooks (gentle-ai inspired)
+## 13. PROACTIVE MEMORY TRIGGERS
 
-The skill architecture leaves room for future enhancements without requiring rework:
+Engram MCP is configured. Call `mem_save` IMMEDIATELY (no user prompt needed) after ANY of:
 
-1. **Per-phase model routing.** Each SKILL.md declares `phase:` in frontmatter. A future orchestrator can read this and route to a different model per phase (e.g., Opus for foundation, Sonnet for implementation, Haiku for review). Hook point: SKILL.md frontmatter is already structured.
+- **Architecture / design decision made** (tradeoffs chosen, alternative rejected).
+- **Convention or workflow established** (naming, structure, lint rule, branch policy).
+- **Bug fix completed** — include root cause, not just the fix.
+- **Non-obvious discovery, gotcha, or edge case** found.
+- **Session close** — MANDATORY `mem_session_summary` before saying "done" / "listo".
 
-2. **Skill registry.** ✅ **Resolved** — adopted gentle-ai's `skill-registry` skill as canonical scanner. See "Skill Composition Protocol" subsection above and `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §3 for usage. (Original idea was a custom `scripts/skill-registry.ts`; the gentle-ai skill replaces it.)
-
-3. **Engram-style persistent memory.** Today we use `.context/PBI/{module}/{ticket}/` plus auto-memory. A richer cross-session memory layer (sync between machines, team-shared) could plug in here. Hook point: `.context/.engram/` (TBD).
-
-4. **Cross-agent portability.** Each skill's frontmatter declares `compatibility: [claude-code, copilot, cursor, codex, opencode]`. To validate cross-agent reliability, a future CI step could spin up multiple runners. Hook point: `.claude/skills/` follows the agentskills.io standard.
-
-These hooks are documented but not implemented. Reopen when there's concrete demand.
+Self-check after every task: *did I make a decision, fix a bug, learn something non-obvious, or establish a convention? If yes → `mem_save` NOW.*
 
 ---
 
-## Known Issues & Blockers
-
-| Issue               | Severity          | Status          |
-| ------------------- | ----------------- | --------------- |
-| [Issue description] | [HIGH/MEDIUM/LOW] | [Open/Resolved] |
-
----
-
-## Session Log
-
-> Log significant changes per session. Delete old entries as needed.
-
-### [DATE] - [Session Title]
-
-- [Change 1]
-- [Change 2]
-- Result: [Outcome]
-
----
-
-## Next Actions
-
-1. **[Priority 1]**
-   - [ ] [Subtask]
-   - [ ] [Subtask]
-
-2. **[Priority 2]**
-   - [ ] [Subtask]
-
----
-
-**Last Updated**: [DATE]
-**Session Count**: [N]
+*AI persistent memory. Update when behaviors / skills / rules change. Mirror to `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template`.*
