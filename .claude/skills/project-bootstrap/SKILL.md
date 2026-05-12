@@ -61,7 +61,7 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | Category            | Likely matches                                                                                  |
 | ------------------- | ----------------------------------------------------------------------------------------------- |
 | `frontend-framework`| `next-best-practices`, `next-cache-components`, `react-best-practices`, `composition-patterns`  |
-| `frontend-ui`       | `tailwind-css-patterns`, `shadcn`, `frontend-design` (T3); T4 ASK: `ui-ux-pro-max`, `emil-design-eng` |
+| `frontend-ui`       | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
 | `backend-db`        | `supabase-postgres-best-practices`                                                              |
 | `runtime`           | `bun`                                                                                           |
 | `language`          | `typescript-advanced-types`                                                                     |

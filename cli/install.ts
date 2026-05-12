@@ -126,6 +126,13 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/wshobson/agents', skill: 'typescript-advanced-types' },
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'accessibility' },
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'seo' },
+  { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
+  { package: 'czlonkowski/n8n-skills' },  // whole repo (n8n MCP toolkit)
+  { package: 'https://github.com/emilkowalski/skill', skill: 'emil-design-eng' },
+  { package: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', skill: 'ui-ux-pro-max' },
+  { package: 'https://github.com/pbakaus/impeccable', skill: 'impeccable' },
+  { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'design-taste-frontend' },
+  { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'redesign-existing-projects' },
 ];
 
 // Community skills installed at USER (global) level — useful across most projects.
@@ -134,11 +141,10 @@ const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
   { package: 'https://github.com/github/awesome-copilot', skill: 'gh-cli' },
   { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
-  { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
-  { package: 'czlonkowski/n8n-skills' },  // whole repo (n8n MCP toolkit)
-  { package: 'https://github.com/emilkowalski/skill', skill: 'emil-design-eng' },
-  { package: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', skill: 'ui-ux-pro-max' },
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
+  // cli-printing-press: full functionality requires Go 1.26.3+ (go install github.com/mvanhorn/cli-printing-press/v4/cmd/printing-press@latest); skill works standalone with degraded features
+  { package: 'https://github.com/mvanhorn/cli-printing-press', skill: 'cli-printing-press' },
+  { package: 'https://github.com/lewislulu/html-ppt-skill', skill: 'html-ppt' },
 ];
 
 const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string, docs: string }> = [

@@ -4,7 +4,7 @@
 >
 > **Home**: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` — meta-doctrine consumed by all T1 skills, sibling to `briefing-template.md`, `dispatch-patterns.md`, `orchestration-doctrine.md`, `skill-resolver.md`.
 >
-> **Status**: v1.2 — fully wired. CLAUDE.md, sprint-development, and all 9 other T1 skills have `complementary_categories` frontmatter + `## Composable Skills` workflow step (sprint-development integrates the equivalent under `## SDD Composition`). Pass 2 complete; project-bootstrap dry-run PASS.
+> **Status**: v1.3 — community catalog expanded. 4 skills promoted user→project (`playwright-cli`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`), 3 frontend-ui project skills added (`impeccable`, `design-taste-frontend`, `redesign-existing-projects`), 2 user-level utility skills added (`cli-printing-press`, `html-ppt`). New §5.1 categories: `cli-generation`, `presentation`. v1.2 wiring preserved.
 >
 > **Companion files**:
 > - `CLAUDE.md` (project memory — top-level rules and skill mentions)
@@ -21,8 +21,8 @@
 The repo ships with **10 project-owned workflow skills** (`.claude/skills/`). The installer (`cli/install.ts`) also installs:
 
 - **15 gentle-ai skills** (user-level): SDD bundle (`sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`, `sdd-onboard`) + 5 extras (`skill-registry`, `judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`).
-- **16 community skills (project-level)**: `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `supabase-postgres-best-practices`, `bun`, `accessibility`, `seo`, `frontend-design`.
-- **9 community skills (user-level / global)**: `skill-creator`, `find-skills`, `gh-cli`, `github-actions-docs`, `playwright-cli`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`, `brainstorming`.
+- **23 community skills (project-level)**: `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `supabase-postgres-best-practices`, `bun`, `accessibility`, `seo`, `frontend-design`, `playwright-cli`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects`.
+- **7 community skills (user-level / global)**: `skill-creator`, `find-skills`, `gh-cli`, `github-actions-docs`, `brainstorming`, `cli-printing-press`, `html-ppt`.
 
 Current state (CLAUDE.md): **all 4 tiers named explicitly**. Auto-discovery: zero mechanism. Cross-skill composition: only project-owned sister calls (`sprint-development` → `unit-testing`, `git-flow-master`).
 
@@ -44,7 +44,7 @@ Four tiers. Different discovery and load rules per tier.
 | **T1 — Project-owned** | `.claude/skills/` (committed) | `sprint-development`, `design-system`, `git-flow-master`, `product-management`, `project-foundation`, `project-bootstrap`, `agentic-dev-core`, `agentic-dev-onboard`, `acli`, `unit-testing` | Named in CLAUDE.md "Workflow Skills" table | Silent (load on trigger, no ask) |
 | **T2 — Project dependency (gentle-ai)** | `~/.claude/skills/sdd-*`, `judgment-day`, etc | All 15 gentle-ai skills | Named in CLAUDE.md (one section, with phase mapping) | Silent **inside** project-owned orchestrators (sprint-dev can call sdd-apply without asking) |
 | **T3 — Community project-level** | `~/.claude/skills/` (installed by `install.ts:135-152`) | `next-best-practices`, `shadcn`, `tailwind-css-patterns`, `zod`, `supabase-postgres-best-practices`, etc | Named **by category** in CLAUDE.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
-| **T4 — Community user-level** | `~/.claude/skills/` (installed by `install.ts:155-165`) | `playwright-cli`, `ui-ux-pro-max`, `emil-design-eng`, `gh-cli`, `github-actions-docs`, `brainstorming`, `n8n-skills`, `skill-creator`, `find-skills` | **NOT named in CLAUDE.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain | **ASK user before load** (may not be installed, or user may not want it for this task) |
+| **T4 — Community user-level** | `~/.claude/skills/` (installed by `install.ts` USER_LEVEL_SKILLS) | `gh-cli`, `github-actions-docs`, `brainstorming`, `skill-creator`, `find-skills`, `cli-printing-press`, `html-ppt` | **NOT named in CLAUDE.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain | **ASK user before load** (may not be installed, or user may not want it for this task) |
 
 ### Tier decision rule
 
@@ -212,7 +212,7 @@ Project-owned and project-dependency skills are named explicitly. Community skil
 
 | Category | Examples of skills that fit (T3/T4) | Used by (T1) |
 |--|--|--|
-| `frontend-ui` | `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `shadcn`, `tailwind-css-patterns` | `design-system`, `project-bootstrap` (frontend phase), `sprint-development` (UI work) |
+| `frontend-ui` | `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `shadcn`, `tailwind-css-patterns`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` | `design-system`, `project-bootstrap` (frontend phase), `sprint-development` (UI work) |
 | `frontend-framework` | `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns` | `project-bootstrap`, `sprint-development` |
 | `forms-validation` | `react-hook-form`, `zod` | `sprint-development` (form work) |
 | `backend-db` | `supabase-postgres-best-practices` | `project-bootstrap` (backend phase), `sprint-development` (DB work) |
@@ -231,6 +231,8 @@ Project-owned and project-dependency skills are named explicitly. Community skil
 | `doc-generation` | `cognitive-doc-design` (T2) | `agentic-dev-core`, `sync-ai-memory` |
 | `prose-polishing` | `comment-writer` (T2) | `sprint-development` (Stage 3), `git-flow-master` |
 | `adversarial-review` | `judgment-day` (T2) | `sprint-development` (Stage 3, default per §8.3) |
+| `cli-generation` | `cli-printing-press` | only on user request (generate Go CLIs from external APIs) |
+| `presentation` | `html-ppt`, `presentation-designer` | only on user request (HTML decks, slideshows) |
 
 ### 5.2 Matching rule
 

@@ -62,7 +62,7 @@ Expected matches (illustrative — actual list depends on what the user has inst
 
 | Category         | Likely matches                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------ |
-| `frontend-ui`    | `tailwind-css-patterns`, `shadcn`, `frontend-design` (T3); T4 ASK: `ui-ux-pro-max`, `emil-design-eng` |
+| `frontend-ui`    | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
 | `accessibility`  | `accessibility` (T3); T4 ASK: `accessibility-review`                                 |
 | `doc-generation` | `cognitive-doc-design` (T2)                                                          |
 
