@@ -4,6 +4,18 @@ description: "Orchestrates the per-story dev loop end-to-end: Planning -> Implem
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
+complementary_categories:
+  - frontend-ui
+  - frontend-framework
+  - forms-validation
+  - backend-db
+  - testing-e2e
+  - accessibility
+  - seo
+  - vcs
+  - ci-cd
+  - prose-polishing
+  - adversarial-review
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -70,6 +82,65 @@ This skill is compliant with the doctrine in `agentic-dev-core/references/orches
 > **Sequential, not Parallel, across stages**: each stage feeds the next (Stage 1's plan is read by Stage 2; Stage 2's diff is read by Stage 3; Stage 3's approval gates Stage 4). Parallelism happens _inside_ a stage (e.g., parallel verification, multi-file impl).
 
 > **On any subagent failure**: STOP, report partial state (which stages completed, what artifacts landed, which Jira transitions fired), present retry / skip-step / abort options. Do NOT auto-fix nor auto-rollback. See `agentic-dev-core/references/orchestration-doctrine.md`.
+
+---
+
+## SDD Composition (Path A vs Path B)
+
+This skill composes with the gentle-ai SDD bundle (T2 project dependencies). Full contract in `agentic-dev-core/references/skill-composition-strategy.md`. Summary below — sprint-dev stays in charge of the story lifecycle; SDD is delegated for architecture-heavy work and behavioral verification.
+
+### Pre-flight glue layer (run once per session)
+
+Before Stage 1 starts, the orchestrator:
+
+1. `mem_search("sdd-init/{project}")` — check if SDD is initialized for this project.
+2. If absent → run `sdd-init` silently. It detects the test runner, resolves Strict TDD mode, and caches testing-capabilities.
+3. Cache for the session:
+   - `strict_tdd: true | false`
+   - `test_command: <from project.yaml>`
+   - `delivery_strategy_default: ask-on-risk | auto-chain | single-pr | exception-ok`
+   - `artifact_backend: file | engram | hybrid` (default: **hybrid**)
+
+### Path selection (at Stage 1 entry)
+
+- **Path A — Story-driven simple**: Jira ticket, ≤400 lines forecast, no architectural decisions, no Strict TDD. No SDD calls. Run Stages 1-5 inline.
+- **Path B — Story-driven complex**: Jira ticket + (multi-file OR new architecture OR >400 lines forecast OR `strict_tdd=true`). Sprint-dev delegates to SDD skills at the 5 delegation points below. Sprint-dev keeps ownership of Jira transitions, deploy, rollback, and the AC compliance matrix gate.
+
+If Path is ambiguous, ASK the user once at Stage 1 entry. Cache the choice for the change.
+
+### 5 delegation points (Path B only)
+
+| Sprint-dev stage           | Delegate to    | Trigger                                                    | Data IN                                                  | Data OUT                                              |
+| -------------------------- | -------------- | ---------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------- |
+| Stage 1 — Planning         | `sdd-design`   | Multi-file / new module / architectural decisions needed   | proposal derived from Jira AC, affected paths, context   | `design.md` (architecture, data flow, file changes)   |
+| Stage 1 — Planning         | `sdd-tasks`    | Always when sdd-design was invoked                         | `design.md`                                              | `tasks.md` with Review Workload Forecast + decision   |
+| Stage 2 — Implementation   | `sdd-apply`    | `strict_tdd=true` OR delivery=chained/exception OR Path B  | `design.md`, `tasks.md`, TDD mode, delivery strategy     | `apply-progress` (merged across batches)              |
+| Stage 3 — Code Review      | `sdd-verify`   | Always when `sdd-apply` was invoked. Non-gating by default | spec/AC scenarios, `apply-progress`                      | verdict PASS / PASS WITH WARNINGS / FAIL + matrix     |
+| Post-merge (after Stage 4) | `sdd-archive`  | Always when SDD specs were authored                        | delta specs                                              | main specs synced + archive folder with date          |
+
+### What sprint-dev NEVER delegates
+
+- Jira transitions (Ready For Dev → In Progress → In Review → Ready For QA)
+- Jira custom field writes (ATP, implementation plan link)
+- PR open / merge (delegated to `/git-flow-master`, not SDD)
+- Staging / production deploy
+- Rollback
+- QA handoff (sister repo)
+- AC compliance matrix gate (sprint-dev owns the merge-blocking matrix; sdd-verify is an additional behavioral test, non-gating by default)
+
+### Composable callees (other T2 / T3 / T4 skills)
+
+Per `complementary_categories` in this skill's frontmatter and the matching rule in `agentic-dev-core/references/skill-composition-strategy.md` §3:
+
+- **Stage 3 adversarial review** → `judgment-day` (default per Skill Composition Protocol; user can skip per PR).
+- **Stage 3 PR comment polish** → `comment-writer` (category: `prose-polishing`, T2 silent inside this orchestrator).
+- **UI work in any stage** → `frontend-ui` category match (T3 or T4 — ASK if T4).
+- **Next.js / React patterns** → `frontend-framework` category match (T3 silent if matched).
+- **Forms work** → `forms-validation` category match (T3 silent).
+- **DB work** → `backend-db` category match (T3 silent).
+- **E2E tests if in scope** → `testing-e2e` category match (T4 — ASK before load).
+
+When delegating to a sub-agent, inject a `## Composable Skills` block into the sub-agent prompt listing the resolved skills + project standards (TDD mode, test command, delivery strategy, artifact backend) per `agentic-dev-core/references/skill-composition-strategy.md` §6.2.
 
 ---
 
@@ -160,6 +231,8 @@ Output: `implementation-plan.md` per story (or `feature-implementation-plan.md` 
 
 Persistence: story plans persist at `.context/PBI/{ticket}/impl-plan.md` with topic_key `pbi/{ticket}/impl-plan`; macro feature plans use `pbi/{epic-slug}/feature-impl-plan`. Auto-generated, so `capture_prompt: false`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
+**Path B (complex stories)**: delegate architecture + tasks to SDD per the **SDD Composition** section above. Sequence: `sdd-design` (architecture decisions, data flow, file changes) → `sdd-tasks` (formal Workload Forecast + delivery strategy decision). Sprint-dev writes its `implementation-plan.md` from the SDD outputs and persists a Jira-linked summary in the custom field. SDD artifacts live in engram topic keys `sdd/{change-name}/{design|tasks}`. The two artifact layers do not overlap.
+
 #### Workload Forecast (required output of Stage 1)
 
 After the impl-plan is written, the planner emits a forecast block at the bottom of `implementation-plan.md` and into the orchestrator turn-summary:
@@ -196,6 +269,8 @@ Verification runs in **parallel cap=3**: lint, typecheck/build, unit tests. Each
 
 If the work needs TDD on a specific function, hand off to `/unit-testing` mid-implementation. The hand-off is composable: come back to Stage 2 once the unit is green.
 
+**Path B (complex stories)**: delegate implementation to `sdd-apply` per the **SDD Composition** section above. `sdd-apply` runs batched (apply-progress merges across sessions), enforces Strict TDD if active, and respects the cached delivery strategy. Sprint-dev still owns commit cadence, parallel verification (lint+types+tests cap=3), and Jira state. If `strict_tdd=true` was cached at pre-flight, ad-hoc `/unit-testing` hand-off is replaced by `sdd-apply`'s strict-tdd module — do not mix the two for the same task.
+
 ### Stage 3: Code Review
 
 Push the feature branch and open the PR via the `/git-flow-master` skill (it auto-detects the project's branching strategy — typically `staging` base for the main+integration pattern — and uses title format `feat({{PROJECT_KEY}}-N): <short>`). Jira automation rule should auto-transition the ticket from `In Progress -> In Review` within ~30s of PR creation; if it doesn't, surface a manual-transition warning.
@@ -211,6 +286,12 @@ Review checklist (driven by `references/review-pr.md`):
 Review notes persist at `.context/PBI/{ticket}/review.md` with topic_key `pbi/{ticket}/review`. Auto-generated review summaries use `capture_prompt: false`; human-prompted architectural decisions use `capture_prompt: true`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 Findings loop back to Stage 2 with `fix-issues.md`. Architectural rework loops back to Stage 1 with a new spec (rare).
+
+**Default adversarial review** (per Skill Composition Protocol): after the static checklist passes, delegate to `judgment-day` (T2) for parallel blind-judge review. User can skip per PR via prompt flag.
+
+**Path B (complex stories)**: after the AC compliance matrix gate passes, delegate to `sdd-verify` for behavioral proof — per-scenario test execution. `sdd-verify` returns `PASS | PASS WITH WARNINGS | FAIL`. **Non-gating by default** (sprint-dev's AC matrix is the merge gate). If the project config opts in, `sdd-verify FAIL` blocks merge.
+
+**PR comment polish** (optional, T2 silent): delegate to `comment-writer` to refine PR description / review comment prose. Category: `prose-polishing`.
 
 **Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
 
@@ -245,6 +326,8 @@ Read for guidance:
 After deploy: post a QA notification comment on the ticket with PR URL, branch name, and an `@`-mention of the QA owner who did the Shift-Left.
 
 Sync `staging` locally (`git pull origin staging`) and clean up the merged branch. Wait for the user to indicate the next ticket.
+
+**Path B post-merge**: if SDD specs were authored (sdd-design + sdd-tasks ran in Stage 1), invoke `sdd-archive` to sync delta specs to main specs and move the change folder to `archive/YYYY-MM-DD-{change-name}/`. Single audit-trail entry per change. Runs once, after merge to `staging`, before clearing the orchestrator state for this ticket.
 
 **Hand-off**: QA verification on staging is **out of scope here**. See `agentic-qa-boilerplate` for the `sprint-testing` skill that picks up from `Ready For QA`.
 
@@ -316,11 +399,30 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 
 ## Hand-offs
 
-- **TDD on a function** -> `/unit-testing` skill (composable mid-implementation)
+### Project-owned (T1)
+
+- **TDD on a function (Path A)** -> `/unit-testing` skill (composable mid-implementation)
 - **PR creation / merge / branch ops / conflict resolution / chained-PR planning** -> `/git-flow-master` skill
 - **Backlog item missing or AC unclear** -> `/product-management` skill (refine first, then come back)
 - **Foundation/infrastructure missing** -> `/project-foundation` or `/project-bootstrap`
-- **QA verification on staging** -> out of scope here; sister repo `agentic-qa-boilerplate`'s `sprint-testing` skill picks up from `Ready For QA`
+
+### Project dependencies (T2 — gentle-ai, silent when Path B active)
+
+- **Architecture for complex stories** -> `sdd-design`
+- **Formal workload forecast + delivery strategy** -> `sdd-tasks`
+- **Batched implementation + Strict TDD enforcement** -> `sdd-apply`
+- **Behavioral spec compliance (non-gating add-on)** -> `sdd-verify`
+- **Post-merge spec sync + archive** -> `sdd-archive`
+- **Adversarial PR review (default Stage 3)** -> `judgment-day`
+- **PR comment / commit message prose polish (optional)** -> `comment-writer`
+
+### Composable category matches (T3/T4 — auto-discovered, ASK if T4)
+
+See `complementary_categories` in this skill's frontmatter. Discovery and threshold rules: `agentic-dev-core/references/skill-composition-strategy.md` §3.
+
+### Out of scope
+
+- **QA verification on staging** -> sister repo `agentic-qa-boilerplate`'s `sprint-testing` skill picks up from `Ready For QA`.
 
 If the prerequisite check at the top of this skill fails (no `.agents/project.yaml`, no story, no AC), STOP and hand off — do not continue.
 
@@ -368,13 +470,20 @@ If any required var is unset, run `/agentic-dev-core` first.
 ## Pre-flight checklist
 
 - [ ] Pre-requisites green (project.yaml, story exists, AC clear, .env populated)
+- [ ] **SDD glue layer resolved** (per `## SDD Composition`): `sdd-init` cached for project; `strict_tdd`, `test_command`, `delivery_strategy_default`, `artifact_backend` known
+- [ ] **Path selected** (A or B) at Stage 1 entry; cached for the change
 - [ ] Epic precheck: `feature-plan.md` + `feature-implementation-plan.md` exist or user confirmed proceeding without
 - [ ] Stage 1 plan committed; Jira transitioned to `In Progress`
 - [ ] ATP discovered (Jira comments -> custom field -> local fallback) and mapped into the plan
+- [ ] Path B: `sdd-design` + `sdd-tasks` outputs persisted to engram (`sdd/{change-name}/{design|tasks}`); workload decision recorded
 - [ ] Stage 2 verification (lint + types + tests) green; commits atomic
+- [ ] Path B: `sdd-apply` apply-progress merged across batches; Strict TDD evidence captured if active
 - [ ] Stage 3 PR opened via `/git-flow-master`; Jira auto-transition to `In Review` verified
 - [ ] Stage 3 docs (status-report + release-notes) updated in the PR branch
+- [ ] Stage 3 adversarial review (`judgment-day`) ran or explicitly skipped
+- [ ] Path B: `sdd-verify` verdict recorded (informational by default; gating only if project opts in)
 - [ ] Stage 4 PR merged to `staging`; CI green; auto-deploy fired; Jira to `Ready For QA`; QA notified in comment
+- [ ] Path B post-merge: `sdd-archive` ran (delta specs synced to main specs, change moved to archive folder)
 - [ ] Stage 5 (only if applicable): pre-deploy checklist green; rollback plan loaded; monitoring window observed
 - [ ] Hand-off identified for next step (QA via sister repo, or next story)
 

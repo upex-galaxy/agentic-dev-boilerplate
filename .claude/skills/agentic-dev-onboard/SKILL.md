@@ -4,6 +4,8 @@ description: "Walks new users through this repo's dev flow — Next.js + Supabas
 license: MIT
 compatibility: [claude-code, opencode]
 phase: bootstrap
+complementary_categories:
+  - doc-generation
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -29,6 +31,27 @@ This skill complements `/sdd-onboard` (installed via gentle-ai). `/sdd-onboard` 
 This is the **AI-Driven Project Starter** — a dev-only boilerplate for building Next.js + Supabase apps with AI agents in the loop. The repo ships skills, scripts, and conventions that turn a Jira ticket into merged code through a structured 12-step workflow. It does **not** ship a backend or a frontend; both are scaffolded on top of the boilerplate by `/project-bootstrap`.
 
 If you cloned this repo and you don't yet have `bun run setup` complete, start there. Everything else assumes the foundation is green.
+
+---
+
+## Composable Skills (auto-resolved at skill entry)
+
+This skill is mostly a static walkthrough — it rarely dispatches sub-agents, so composition is minimal. Run once at entry per `agentic-dev-core/references/skill-composition-strategy.md`.
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`doc-generation`).
+2. Resolve via `skill-registry`. Fallback: scan the session-start `system-reminder` skill list.
+3. Apply threshold rule per strategy doc §3.2 (T1/T2/T3 silent; T4 ASK).
+4. Inject a `## Composable Skills` block per strategy doc §6.2 only when (rarely) dispatching a sub-agent — e.g. regenerating an onboarding section via `cognitive-doc-design`.
+
+Expected matches (illustrative):
+
+| Category         | Likely matches                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when refreshing or extending the onboarding narrative   |
+
+Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline"` plus `missing: [<categories>]` per §3.4.
 
 ---
 

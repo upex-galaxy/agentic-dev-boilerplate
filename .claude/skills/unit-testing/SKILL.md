@@ -4,6 +4,8 @@ description: 'Focused skill for unit-test design — TDD workflow (red-green-ref
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
+complementary_categories:
+  - language
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -41,6 +43,28 @@ When invoked standalone (no `sprint-development` parent), it operates self-suffi
 - Test command exists in `package.json` (`bun test`, `npm test`, `vitest`, etc.)
 - For TDD: test runner supports watch mode (`--watch`)
 - If no runner is configured, the first task is to set one up — see `references/unit-testing.md` § Setup
+
+## Composable Skills (auto-resolved at skill entry)
+
+Run once when this skill is invoked, before any workflow below. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md`.
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`language`).
+2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+3. For each matched skill, classify tier per strategy doc §2.
+4. Apply threshold rule per strategy doc §3.2:
+   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this unit-test work? Y/N"`. Cache the answer for the session.
+5. When dispatching sub-agents (test author, mock designer, coverage auditor), inject a `## Composable Skills` block per strategy doc §6.2.
+
+Expected matches (illustrative — actual list depends on what the user has installed):
+
+| Category   | Likely matches                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| `language` | `typescript-advanced-types` (T3) — applied when designing type-aware mocks, generic test utilities        |
+
+Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ## Workflow
 

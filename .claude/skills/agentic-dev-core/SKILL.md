@@ -4,6 +4,9 @@ description: "Foundation skill that (a) hosts shared references cited by all wor
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: bootstrap
+complementary_categories:
+  - doc-generation
+  - meta-skill
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -35,6 +38,33 @@ Without `agentic-dev-core`, every other workflow skill would either silently rel
 | **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                         |
 
 Passive role: nobody invokes `agentic-dev-core` directly to read a reference — they just cite `agentic-dev-core/references/<file>.md` and the AI loads it. Active role: only the user invokes it, and only when foundation files are missing.
+
+---
+
+## Composable Skills (auto-resolved at active-role entry)
+
+When invoked in **active role** (bootstrap), run once before any write below. Follows the contract in `references/skill-composition-strategy.md` (this skill hosts the doc; downstream skills cite it as `agentic-dev-core/references/skill-composition-strategy.md`).
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`doc-generation`, `meta-skill`).
+2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+3. For each matched skill, classify tier per strategy doc §2.
+4. Apply threshold rule per strategy doc §3.2:
+   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this bootstrap? Y/N"`. Cache the answer for the session.
+5. When dispatching sub-agents (foundation file generation, scripts setup, package.json updates), inject a `## Composable Skills` block per strategy doc §6.2.
+
+Expected matches (illustrative — actual list depends on what the user has installed):
+
+| Category         | Likely matches                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when generating CLAUDE.md, README.md, .agents/ docs               |
+| `meta-skill`     | T4 ASK: `skill-creator` (custom skill authoring), `find-skills` (runtime skill discovery)               |
+
+Passive role (file-reference-only) skips this step entirely — no composition needed when another skill just cites a `references/*.md` file.
+
+Skip step also if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 

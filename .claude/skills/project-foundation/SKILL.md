@@ -4,6 +4,9 @@ description: 'Orchestrates the foundational definition of a new product/project:
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
+complementary_categories:
+  - doc-generation
+  - creativity
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -30,6 +33,32 @@ Requires `agentic-dev-core`. Loads on demand:
 
 - `agentic-dev-core/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
 - `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/skill-composition-strategy.md` — composition contract consumed by the step below.
+
+---
+
+## Composable Skills (auto-resolved at skill entry)
+
+Run once when this skill is invoked, before any phase below. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md`.
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`doc-generation`, `creativity`).
+2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+3. For each matched skill, classify tier per strategy doc §2.
+4. Apply threshold rule per strategy doc §3.2:
+   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this foundation work? Y/N"`. Cache the answer for the session.
+5. When dispatching sub-agents (Constitution, PRD, SRS, Discovery), inject a `## Composable Skills` block per strategy doc §6.2.
+
+Expected matches (illustrative — actual list depends on what the user has installed):
+
+| Category         | Likely matches                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when authoring PRD, SRS, Discovery markdown                    |
+| `creativity`     | T4 ASK: `brainstorming` — useful for persona generation, user journeys, MVP scoping                  |
+
+Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 

@@ -4,6 +4,8 @@ description: "Atlassian CLI (official `acli` binary, v1.3+ as of 2026) for Jira 
 license: MIT
 compatibility: [claude-code, cursor, codex, opencode]
 allowed-tools: Bash(acli:*)
+complementary_categories:
+  - issue-tracker
 ---
 
 # Atlassian CLI (`acli`)
@@ -23,6 +25,21 @@ This skill teaches how to drive `acli` for any DEV intent: fetching story detail
 5. **Hard limits the docs do not advertise.** `acli` cannot list custom fields, edit custom-field values on existing items, manage workflows, manage issue types, or touch project versions/components. See `references/gotchas.md`.
 
 The body below covers the core that applies to almost every DEV session. The `references/` directory holds the deep material — load only the one you need.
+
+## Composable Skills (auto-resolved at skill entry)
+
+`acli` is itself the canonical issue-tracker skill — there are no T2/T3 skills that overlap its category in `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §5.1. Composition is therefore minimal and exists for protocol consistency only.
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`).
+2. Resolve via `skill-registry`. Fallback: scan the session-start `system-reminder` skill list.
+3. Apply threshold rule per strategy doc §3.2 (T1/T2/T3 silent; T4 ASK).
+4. The Atlassian MCP fallback documented in the next section is NOT a skill — it is an MCP server. Do not treat it as a Composable Skills match.
+
+Expected matches: typically none. If the user has installed a future T4 skill in the `issue-tracker` category (e.g. an `acli` extension authored by a third party), it would surface here under the ASK rule.
+
+Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline"` plus `missing: [<categories>]` per §3.4.
 
 ## Fallback: Atlassian MCP
 

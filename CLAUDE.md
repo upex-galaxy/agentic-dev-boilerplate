@@ -40,6 +40,7 @@ bun run format:check      # Check formatting
 bun run up                # Update template from upstream
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
+bun run lint:skills       # Validate skill composition (categories, tiers, sections)
 bun run jira:sync-fields  # Sync Jira custom fields → .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```
@@ -176,6 +177,7 @@ Project-specific values live in `.agents/project.yaml` (single source of truth).
 **Validation scripts:**
 
 - `bun run lint:agents` — every `{{VAR}}` and `{{jira.*}}` reference in prompts/context resolves against config
+- `bun run lint:skills` — every T1 skill's `complementary_categories` resolves against strategy doc §5.1; every Expected matches skill resolves against `cli/install.ts` tier arrays; flags orphan categories, tier mismatches, missing Composable Skills sections, single-skill fragility, stale `.context/` paths
 - `bun run jira:sync-fields` — discover Jira custom fields → write `.agents/jira-fields.json`
 - `bun run jira:check` — validate `jira-required.yaml` manifest against `.agents/jira-fields.json` catalog
 
@@ -552,15 +554,44 @@ For every story being worked on, maintain local documentation under `.context/PB
 | **acli**                | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows.                                                    |
 | **agentic-dev-onboard** | `/agentic-dev-onboard` | Walks new users through this repo's dev flow: stack, Jira workflow, /sprint-development vs /sdd-\*, MCPs, env vars.            |
 
-### Reusable Community Skills (installed by `bun run setup`)
+### Project Dependencies (gentle-ai, 15)
 
-These skills are NOT committed in this repo. The installer fetches them via `npx skills add` from community repositories.
+> Installed at user level by `bun run setup` via gentle-ai. Treated as project-level dependencies of this repo. Composed silently inside project-owned orchestrators per the **Skill Composition Protocol** below. Full integration contract: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
 
-**Project-level (auto-installed via `bun run setup`)**: stack-aware skills like `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `supabase-postgres-best-practices`, `bun`, `accessibility`, `seo`, `frontend-design`.
+**SDD bundle (10)** — Spec-Driven Development phases. Composed by `/sprint-development` for complex stories (Path B):
 
-**User-level (auto-installed globally)**: cross-cutting skills like `skill-creator`, `find-skills`, `gh-cli`, `github-actions-docs`, `playwright-cli`, `n8n-skills`, `ui-ux-pro-max`, `emil-design-eng`, `brainstorming`.
+| Skill            | Used in `/sprint-development`                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------- |
+| `sdd-init`       | Pre-flight: detect test runner, resolve Strict TDD mode, cache per project                   |
+| `sdd-explore`    | Stage 1 (optional): investigate codebase before designing                                    |
+| `sdd-propose`    | Stage 1: derive proposal from Jira AC                                                        |
+| `sdd-spec`       | Stage 1: write delta specs from proposal                                                     |
+| `sdd-design`     | Stage 1: architecture decisions for complex stories                                          |
+| `sdd-tasks`      | Stage 1: task breakdown + Review Workload Forecast (delivery strategy gate)                  |
+| `sdd-apply`      | Stage 2: batched implementation, Strict TDD enforcement, apply-progress merge across batches |
+| `sdd-verify`     | Stage 3: behavioral spec compliance matrix (test-execution proof)                            |
+| `sdd-archive`    | Post-merge: sync delta specs to main specs, audit trail                                      |
+| `sdd-onboard`    | Standalone: SDD walkthrough for new contributors                                             |
 
-After running `/project-foundation` and `/project-bootstrap`, run `npx autoskills` to auto-detect your concrete stack and install additional matching skills.
+**Other gentle-ai skills (5)**:
+
+| Skill                  | Hookup                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `skill-registry`       | Canonical skill discovery — used by orchestrator + every T1 skill                                                            |
+| `judgment-day`         | Default Stage 3 adversarial reviewer in `/sprint-development` (parallel blind judges)                                        |
+| `cognitive-doc-design` | Composable callee in `/agentic-dev-core` and `/sync-ai-memory` (category: doc-generation)                                    |
+| `comment-writer`       | Composable callee in `/sprint-development` Stage 3 + `/git-flow-master` (category: prose-polishing)                          |
+| `issue-creation`       | **Not adopted** — conflicts with the repo's Jira-first flow (use `/product-management` + `/acli` instead)                    |
+
+### Reusable Community Skills
+
+These skills are NOT committed in this repo. They are installed by `bun run setup` at two scopes; the installer (`cli/install.ts`) is the source of truth for which skills land where.
+
+**Project-level** (installed to user-scope but tied to this repo's stack — e.g. Next.js / React / Tailwind / Supabase / Bun helpers): auto-installed via `bun run setup`. The exact list lives in `cli/install.ts` (`PROJECT_LEVEL_SKILLS`). They are matched by **category** (frontend-ui, frontend-framework, backend-db, etc — see `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §5), not by individual name. This makes the repo resilient to community renames, deprecations, and replacements.
+
+**User-level** (cross-cutting, repo-agnostic — browser automation, design intelligence, GitHub CLI, brainstorming, etc): auto-installed globally. **Not enumerated here on purpose.** The orchestrator and project-owned skills auto-discover them at runtime via `skill-registry` and apply the threshold rule from `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §3.2 (silent for matched T1/T2/T3 categories, ASK before loading T4 user-level skills).
+
+After running `/project-foundation` and `/project-bootstrap`, run `npx autoskills` to auto-detect your concrete stack and install additional matching skills. (`autoskills` is a one-shot bootstrap step — not the same as the runtime `find-skills` discovery described in the Skill Composition Protocol below.)
 
 ### Slash Commands (utilities)
 
@@ -577,6 +608,26 @@ After running `/project-foundation` and `/project-bootstrap`, run `npx autoskill
 > Git, branch, commit, push, PR, conflict-fix and chained-PR planning are all in the `/git-flow-master` skill (Workflow Skills table above), not as separate slash commands.
 
 **Note:** Skills and commands are committed to the repo so anyone who clones the project gets them out of the box. User-specific settings (`.claude/settings.local.json`) are gitignored.
+
+### Skill Composition Protocol
+
+The repo composes skills across four tiers:
+
+- **T1 — Project-owned** (`.claude/skills/`, 10 skills, listed above)
+- **T2 — Project dependencies** (gentle-ai, 15 skills, listed above)
+- **T3 — Community project-level** (community, stack-matched — names live in `cli/install.ts`, matched by **category** at runtime, not by literal name)
+- **T4 — Community user-level** (community, repo-agnostic — auto-discovered at runtime, **ASK before load**)
+
+**Discovery**: `skill-registry` (gentle-ai) is the canonical scanner. Fallback: scan the `system-reminder` skill list at session start.
+
+**`find-skills` runtime discovery**: when a task domain has no T1/T2/T3 match AND would benefit from a specialized skill, the orchestrator may auto-invoke `find-skills` (T4) to suggest installable skills. Always asks the user before installing. Distinct from the bootstrap-only `npx autoskills`.
+
+**Sprint-development integrates SDD** via two paths:
+
+- **Path A — Story-driven simple**: Jira ticket, ≤400 lines, no architectural decisions. No SDD calls.
+- **Path B — Story-driven complex**: Jira ticket + (multi-file OR new architecture OR >400 lines OR Strict TDD). Sprint-dev delegates to `sdd-design` → `sdd-tasks` → `sdd-apply` → `sdd-verify` → `sdd-archive` while keeping ownership of Jira transitions, deploy, and rollback.
+
+**Full contract** (skill tier model, ownership map, 7 conflict resolutions, 5 delegation points, glue layer responsibilities, category vocabulary): **`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`**.
 
 ---
 
@@ -638,7 +689,7 @@ The skill architecture leaves room for future enhancements without requiring rew
 
 1. **Per-phase model routing.** Each SKILL.md declares `phase:` in frontmatter. A future orchestrator can read this and route to a different model per phase (e.g., Opus for foundation, Sonnet for implementation, Haiku for review). Hook point: SKILL.md frontmatter is already structured.
 
-2. **Skill registry.** A future `scripts/skill-registry.ts` could scan `.claude/skills/` and emit a machine-readable catalog. Useful for skills that need to discover other skills, or for dashboards. Hook point: `.claude/skills/` directory structure is already conventional.
+2. **Skill registry.** ✅ **Resolved** — adopted gentle-ai's `skill-registry` skill as canonical scanner. See "Skill Composition Protocol" subsection above and `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §3 for usage. (Original idea was a custom `scripts/skill-registry.ts`; the gentle-ai skill replaces it.)
 
 3. **Engram-style persistent memory.** Today we use `.context/PBI/{module}/{ticket}/` plus auto-memory. A richer cross-session memory layer (sync between machines, team-shared) could plug in here. Hook point: `.context/.engram/` (TBD).
 

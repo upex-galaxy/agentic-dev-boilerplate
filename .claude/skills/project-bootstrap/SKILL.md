@@ -4,6 +4,14 @@ description: 'Scaffolds the technical infrastructure of a new project: backend (
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
+complementary_categories:
+  - frontend-framework
+  - frontend-ui
+  - backend-db
+  - runtime
+  - language
+  - ci-cd
+  - doc-generation
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -30,6 +38,37 @@ Requires `agentic-dev-core`. Loads on demand:
 
 - `agentic-dev-core/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
 - `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
+- `agentic-dev-core/references/skill-composition-strategy.md` — composition contract consumed by the step below.
+
+---
+
+## Composable Skills (auto-resolved at skill entry)
+
+Run once when this skill is invoked, before any phase below. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md`.
+
+Steps:
+
+1. Read `complementary_categories` from this skill's frontmatter (`frontend-framework`, `frontend-ui`, `backend-db`, `runtime`, `language`, `ci-cd`, `doc-generation`).
+2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+3. For each matched skill, classify tier per strategy doc §2 (path-based: `.claude/skills/` → T1; `cli/install.ts` SKILL_SLUGS → T2; PROJECT_LEVEL_SKILLS → T3; USER_LEVEL_SKILLS → T4).
+4. Apply threshold rule per strategy doc §3.2:
+   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this bootstrap? Y/N"`. Cache the answer for the session.
+5. When dispatching scaffolding sub-agents (Backend setup, Frontend setup, Incremental features), inject a `## Composable Skills` block per strategy doc §6.2 listing the resolved skills + project standards (test command, runtime, etc).
+
+Expected matches on a Next.js + Supabase project (illustrative — actual list depends on what the user has installed):
+
+| Category            | Likely matches                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `frontend-framework`| `next-best-practices`, `next-cache-components`, `react-best-practices`, `composition-patterns`  |
+| `frontend-ui`       | `tailwind-css-patterns`, `shadcn`, `frontend-design` (T3); T4 ASK: `ui-ux-pro-max`, `emil-design-eng` |
+| `backend-db`        | `supabase-postgres-best-practices`                                                              |
+| `runtime`           | `bun`                                                                                           |
+| `language`          | `typescript-advanced-types`                                                                     |
+| `ci-cd`             | `github-actions-docs`                                                                           |
+| `doc-generation`    | `cognitive-doc-design` (T2)                                                                     |
+
+Skip step only if neither `skill-registry` nor a session-start skill list is available (rare; pre-init or non-Claude-Code runtime). When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 
