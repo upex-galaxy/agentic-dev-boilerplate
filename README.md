@@ -22,31 +22,51 @@ A project starter for teams that want AI agents to drive their development workf
 git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git my-new-project
 cd my-new-project
 
-# 2. Install deps
-bun install
-
-# 3. Run interactive installer (gentle-ai + MCPs + CLIs verification)
+# 2. One-shot interactive setup (recommended):
+#    installs deps, gentle-ai + 15 skills, community skills, wires .env
+#    for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), and
+#    offers direnv autoload.
 bun run setup
 
-# 4. Bootstrap project context (in Claude Code)
+# Or, do it manually:
+bun install
+cp .env.example .env   # then fill in the values
+
+# 3. Bootstrap project context (in Claude Code)
 /agentic-dev-core          # scaffolds .agents/, scripts, CLAUDE.md
 
-# 5. Define what to build (one-time)
+# 4. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
 
-# 5.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
+# 4.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
 /design-system         # DESIGN.md (Google Labs spec) — paleta, tipografía, tokens
 
-# 6. Scaffold the codebase (one-time)
+# 5. Scaffold the codebase (one-time)
 /project-bootstrap     # Backend, frontend, OpenAPI, env, auth (reads DESIGN.md if present)
 
-# 7. Manage the backlog (continuous)
+# 6. Manage the backlog (continuous)
 /product-management    # Seed backlog, refine stories, AC, edge cases
 
-# 8. Implement (per story)
+# 7. Implement (per story)
 /sprint-development            # Plan -> Code -> Review -> Deploy
 /unit-testing          # Composable mid-flight from sprint-development for TDD
 ```
+
+### Launching the agent
+
+`.mcp.json` (Claude Code) and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}` expansion — real values live in `.env`. Launch the agent via one of these paths so the env vars get loaded:
+
+```bash
+# Cross-platform default (uses dotenv-cli, no extra tooling required):
+bun run claude        # Claude Code
+bun run opencode      # OpenCode
+
+# Optional: direnv autoload (any OS with direnv installed)
+direnv allow          # one-time per repo (the installer offers to run this)
+claude                # direct binary picks up .env from your shell
+```
+
+direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
 
 ---
 

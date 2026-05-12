@@ -6,9 +6,14 @@
  *   1. Detect gentle-ai (presence + version)
  *   2. Detect agents (Claude Code / OpenCode) and prompt selection
  *   3. Optionally install 15 skills + engram via gentle-ai
- *   4. Configure 4 canonical MCPs (tavily, context7, supabase, n8n)
+ *   4. Wire `.env` for MCP servers + offer direnv autoload
+ *      (`.mcp.json` and `opencode.jsonc` are committed with ${VAR}/{env:VAR}
+ *      expansion — installer only ensures `.env` has the required values)
  *   5. Verify external CLIs (vercel, supabase, acli, playwright-cli, resend)
  *   6. Persist `.agents/install-state.json` for idempotency
+ *
+ * Env:
+ *   INSTALL_SKIP_DIRENV=1   Skip direnv autoload sub-step
  *
  * Usage:
  *   bun run setup
@@ -20,7 +25,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-import { checkbox, confirm, password } from '@inquirer/prompts';
+import { checkbox, confirm, input, password } from '@inquirer/prompts';
 
 // ============================================================================
 // Types
@@ -61,44 +66,16 @@ interface InstallState {
   pendingEnvVars: string[]
 }
 
-interface ClaudeMcpEntry {
-  command?: string
-  args?: string[]
-  env?: Record<string, string>
-  type?: string
-  url?: string
-  headers?: Record<string, string>
-}
-
-interface ClaudeMcpFile {
-  mcpServers: Record<string, ClaudeMcpEntry>
-}
-
-interface OpencodeMcpEntry {
-  type: 'local' | 'remote'
-  command?: string[]
-  url?: string
-  oauth?: boolean
-  headers?: Record<string, string>
-  environment?: Record<string, string>
-  enabled: boolean
-}
-
-interface OpencodeMcpFile {
-  $schema?: string
-  mcp: Record<string, OpencodeMcpEntry>
-}
-
 // ============================================================================
 // Constants
 // ============================================================================
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
 const STATE_PATH = join(REPO_ROOT, '.agents', 'install-state.json');
-const CLAUDE_TEMPLATE_PATH = join(REPO_ROOT, 'templates', 'mcp', 'claude.template.json');
-const OPENCODE_TEMPLATE_PATH = join(REPO_ROOT, 'templates', 'mcp', 'opencode.template.json');
-const CLAUDE_MCP_OUTPUT = join(REPO_ROOT, '.mcp.json');
-const OPENCODE_MCP_OUTPUT = join(REPO_ROOT, 'opencode.json');
+const CLAUDE_MCP_PATH = join(REPO_ROOT, '.mcp.json');
+const OPENCODE_CONFIG_PATH = join(REPO_ROOT, 'opencode.jsonc');
+const ENV_PATH = join(REPO_ROOT, '.env');
+const ENV_EXAMPLE_PATH = join(REPO_ROOT, '.env.example');
 
 const MIN_GENTLE_AI_VERSION = [1, 26, 5] as const;
 
@@ -122,7 +99,7 @@ const SKILL_SLUGS = [
   'issue-creation',
 ] as const;
 
-const CANONICAL_MCPS = ['tavily', 'context7', 'supabase', 'n8n'] as const;
+const CANONICAL_MCPS = ['context7', 'tavily', 'atlassian', 'supabase', 'n8n'] as const;
 
 interface CommunitySkill {
   package: string
@@ -198,9 +175,39 @@ const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string, docs: string
   },
 ];
 
-// TODO: B3 confirms exact npx package name + invocation flags for n8n MCP.
-const N8N_NPX_PACKAGE = '@n8n/mcp-server';
-const N8N_API_KEY_VAR = 'N8N_API_KEY';
+// Matches Claude Code ${VAR} and ${VAR:-default} placeholders in .mcp.json.
+const MCP_VAR_PATTERN = /\$\{([A-Z][A-Z0-9_]*)(?::-[^}]*)?\}/g;
+// Matches OpenCode {env:VAR} placeholders in opencode.jsonc.
+const OPENCODE_VAR_PATTERN = /\{env:([A-Z][A-Z0-9_]*)\}/g;
+const SECRET_NAME_HINTS = ['TOKEN', 'KEY', 'SECRET', 'PASSWORD'];
+
+// Map MCP server → env vars its secrets depend on. Servers with empty arrays
+// have no secrets (so they're always "configured-no-key").
+const MCP_SERVER_SECRETS: Record<string, readonly string[]> = {
+  context7: [],
+  tavily: ['TAVILY_API_KEY'],
+  atlassian: ['JIRA_URL', 'JIRA_USERNAME', 'JIRA_API_TOKEN'],
+  supabase: [
+    'SUPABASE_ACCESS_TOKEN',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'SUPABASE_SERVICE_ROLE_KEY',
+  ],
+  n8n: ['N8N_API_URL', 'N8N_API_KEY'],
+};
+
+// ============================================================================
+// CLI flags
+// ============================================================================
+
+// Auto-detect non-TTY (e.g. when an AI agent or CI pipeline invokes the
+// installer) so prompts don't hang waiting for stdin. The flag still wins
+// explicitly when passed; without it, lack of a TTY forces the same mode.
+const NON_INTERACTIVE
+  = process.argv.includes('--non-interactive') || !process.stdin.isTTY;
+const AUTO_NON_INTERACTIVE
+  = !process.argv.includes('--non-interactive') && !process.stdin.isTTY;
+const SKIP_DIRENV = process.env.INSTALL_SKIP_DIRENV === '1';
 
 // ============================================================================
 // Logger
@@ -226,6 +233,15 @@ const log = {
     process.stdout.write(`\n${COLORS.bold}[${n}/${total}] ${title}${COLORS.reset}\n`),
   dim: (msg: string) => process.stdout.write(`${COLORS.dim}${msg}${COLORS.reset}\n`),
 };
+
+// ============================================================================
+// Prompt helpers
+// ============================================================================
+
+async function maybeConfirm(message: string, defaultYes: boolean): Promise<boolean> {
+  if (NON_INTERACTIVE) { return defaultYes; }
+  return confirm({ message, default: defaultYes });
+}
 
 // ============================================================================
 // Subprocess helpers
@@ -533,171 +549,88 @@ async function installCommunitySkills(
 }
 
 // ============================================================================
-// Step 7 — MCP configuration
+// Step 7 — Wire .env for MCP servers (+ direnv autoload offer)
 // ============================================================================
+//
+// `.mcp.json` and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}`
+// expansion. The installer no longer rewrites those files — it only ensures
+// `.env` contains the required values, then optionally enables direnv.
 
-async function resolveSecret(varName: string): Promise<{ value: string, source: 'env' | 'prompt' | 'placeholder' }> {
-  const fromEnv = process.env[varName];
-  if (fromEnv && fromEnv.trim().length > 0) {
-    log.dim(`  using ${varName} from environment`);
-    return { value: fromEnv.trim(), source: 'env' };
-  }
-  const entered = await password({
-    message: `${varName} (Enter to keep placeholder):`,
-    mask: '*',
-  });
-  const trimmed = entered.trim();
-  if (trimmed.length === 0) {
-    return { value: `{{${varName}}}`, source: 'placeholder' };
-  }
-  return { value: trimmed, source: 'prompt' };
+function isSecretName(name: string): boolean {
+  return SECRET_NAME_HINTS.some(hint => name.endsWith(hint) || name.endsWith(`_${hint}`));
 }
 
-function buildN8nClaudeEntry(): ClaudeMcpEntry {
-  return {
-    command: 'npx',
-    args: ['-y', N8N_NPX_PACKAGE],
-    env: {
-      [N8N_API_KEY_VAR]: `{{${N8N_API_KEY_VAR}}}`,
-    },
-  };
+function stripJsoncComments(input: string): string {
+  // Strip /* … */ block comments + // line comments. Conservative: only strips
+  // line comments that start the (trimmed) line, so URLs containing `//`
+  // inside JSON string values survive.
+  return input
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
 }
 
-function buildN8nOpencodeEntry(): OpencodeMcpEntry {
-  return {
-    type: 'local',
-    command: ['npx', '-y', N8N_NPX_PACKAGE],
-    environment: {
-      [N8N_API_KEY_VAR]: `{{${N8N_API_KEY_VAR}}}`,
-    },
-    enabled: true,
-  };
+async function discoverRequiredEnvVars(agents: AgentId[]): Promise<string[]> {
+  const seen = new Set<string>();
+  if (agents.includes('claude-code') && existsSync(CLAUDE_MCP_PATH)) {
+    const content = await readFile(CLAUDE_MCP_PATH, 'utf8');
+    for (const m of content.matchAll(MCP_VAR_PATTERN)) { seen.add(m[1]); }
+  }
+  if (agents.includes('opencode') && existsSync(OPENCODE_CONFIG_PATH)) {
+    const raw = await readFile(OPENCODE_CONFIG_PATH, 'utf8');
+    const content = stripJsoncComments(raw);
+    for (const m of content.matchAll(OPENCODE_VAR_PATTERN)) { seen.add(m[1]); }
+  }
+  return [...seen].sort();
 }
 
-function replacePlaceholders(input: unknown, replacements: Record<string, string>): unknown {
-  if (typeof input === 'string') {
-    let out = input;
-    for (const [key, value] of Object.entries(replacements)) {
-      out = out.split(`{{${key}}}`).join(value);
+function parseEnvFile(content: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trim();
+    if (line.length === 0 || line.startsWith('#')) { continue; }
+    const eq = line.indexOf('=');
+    if (eq <= 0) { continue; }
+    const key = line.slice(0, eq).trim();
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith('\'') && value.endsWith('\''))
+    ) {
+      value = value.slice(1, -1);
     }
-    return out;
+    out[key] = value;
   }
-  if (Array.isArray(input)) { return input.map(item => replacePlaceholders(item, replacements)); }
-  if (input && typeof input === 'object') {
-    const obj = input as Record<string, unknown>;
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) { result[k] = replacePlaceholders(v, replacements); }
-    return result;
-  }
-  return input;
+  return out;
 }
 
-async function configureMcpForClaude(
-  state: InstallState,
-  pendingEnvVars: Set<string>,
-): Promise<void> {
-  log.banner('Configuring MCPs for Claude Code (.mcp.json)');
-
-  const tavily = await resolveSecret('TAVILY_API_KEY');
-  if (tavily.source === 'placeholder') { pendingEnvVars.add('TAVILY_API_KEY'); }
-
-  const supabase = await resolveSecret('SUPABASE_ACCESS_TOKEN');
-  if (supabase.source === 'placeholder') { pendingEnvVars.add('SUPABASE_ACCESS_TOKEN'); }
-
-  const n8nKey = await resolveSecret(N8N_API_KEY_VAR);
-  if (n8nKey.source === 'placeholder') { pendingEnvVars.add(N8N_API_KEY_VAR); }
-
-  const templateRaw = await readFile(CLAUDE_TEMPLATE_PATH, 'utf8');
-  const template = JSON.parse(templateRaw) as ClaudeMcpFile;
-
-  const filtered: Record<string, ClaudeMcpEntry> = {};
-  for (const name of CANONICAL_MCPS) {
-    if (name === 'n8n') {
-      filtered[name] = buildN8nClaudeEntry();
-    }
-    else if (template.mcpServers[name]) {
-      filtered[name] = template.mcpServers[name];
-    }
+async function ensureEnvFileExists(): Promise<void> {
+  if (existsSync(ENV_PATH)) { return; }
+  if (existsSync(ENV_EXAMPLE_PATH)) {
+    const tmpl = await readFile(ENV_EXAMPLE_PATH, 'utf8');
+    await writeFile(ENV_PATH, tmpl, 'utf8');
+    log.success('Created .env from .env.example (values are empty — fill them below).');
+    return;
   }
-
-  const replaced = replacePlaceholders(
-    { mcpServers: filtered },
-    {
-      TAVILY_API_KEY: tavily.value,
-      SUPABASE_ACCESS_TOKEN: supabase.value,
-      [N8N_API_KEY_VAR]: n8nKey.value,
-    },
-  );
-
-  await writeMcpFile(CLAUDE_MCP_OUTPUT, replaced);
-  log.success(`Wrote ${CLAUDE_MCP_OUTPUT}`);
-
-  state.mcps.tavily = tavily.source === 'placeholder' ? 'placeholder' : 'configured-with-key';
-  state.mcps.context7 = 'configured-no-key';
-  state.mcps.supabase = supabase.source === 'placeholder' ? 'placeholder' : 'configured-with-key';
-  state.mcps.n8n = n8nKey.source === 'placeholder' ? 'placeholder' : 'configured-with-key';
+  await writeFile(ENV_PATH, '', 'utf8');
+  log.warn('.env.example missing; created empty .env.');
 }
 
-async function configureMcpForOpencode(
-  state: InstallState,
-  pendingEnvVars: Set<string>,
-): Promise<void> {
-  log.banner('Configuring MCPs for OpenCode (opencode.json)');
-
-  const tavily = await resolveSecret('TAVILY_API_KEY');
-  if (tavily.source === 'placeholder') { pendingEnvVars.add('TAVILY_API_KEY'); }
-
-  const supabase = await resolveSecret('SUPABASE_ACCESS_TOKEN');
-  if (supabase.source === 'placeholder') { pendingEnvVars.add('SUPABASE_ACCESS_TOKEN'); }
-
-  const n8nKey = await resolveSecret(N8N_API_KEY_VAR);
-  if (n8nKey.source === 'placeholder') { pendingEnvVars.add(N8N_API_KEY_VAR); }
-
-  const templateRaw = await readFile(OPENCODE_TEMPLATE_PATH, 'utf8');
-  const template = JSON.parse(templateRaw) as OpencodeMcpFile;
-
-  const filtered: Record<string, OpencodeMcpEntry> = {};
-  for (const name of CANONICAL_MCPS) {
-    if (name === 'n8n') {
-      filtered[name] = buildN8nOpencodeEntry();
-    }
-    else if (template.mcp[name]) {
-      filtered[name] = { ...template.mcp[name], enabled: true };
-    }
-  }
-
-  const replaced = replacePlaceholders(
-    { $schema: template.$schema, mcp: filtered },
-    {
-      TAVILY_API_KEY: tavily.value,
-      SUPABASE_ACCESS_TOKEN: supabase.value,
-      [N8N_API_KEY_VAR]: n8nKey.value,
-    },
-  );
-
-  await writeMcpFile(OPENCODE_MCP_OUTPUT, replaced);
-  log.success(`Wrote ${OPENCODE_MCP_OUTPUT}`);
-
-  // Don't overwrite Claude's MCP state if both agents share the run; merge by max truthiness.
-  if (!state.mcps.tavily || state.mcps.tavily === 'skipped-by-user') { state.mcps.tavily = tavily.source === 'placeholder' ? 'placeholder' : 'configured-with-key'; }
-  state.mcps.context7 = 'configured-no-key';
-  if (!state.mcps.supabase || state.mcps.supabase === 'skipped-by-user') { state.mcps.supabase = supabase.source === 'placeholder' ? 'placeholder' : 'configured-with-key'; }
-  if (!state.mcps.n8n || state.mcps.n8n === 'skipped-by-user') { state.mcps.n8n = n8nKey.source === 'placeholder' ? 'placeholder' : 'configured-with-key'; }
+async function appendVarsToEnv(vars: Record<string, string>): Promise<void> {
+  if (Object.keys(vars).length === 0) { return; }
+  const existing = await readFile(ENV_PATH, 'utf8');
+  const needsNewline = existing.length > 0 && !existing.endsWith('\n');
+  const header = '\n# ===== Added by `bun run setup` =====\n';
+  const body = `${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join('\n')}\n`;
+  await writeFile(ENV_PATH, `${existing}${needsNewline ? '\n' : ''}${header}${body}`, 'utf8');
 }
 
-async function writeMcpFile(target: string, content: unknown): Promise<void> {
-  if (existsSync(target)) {
-    const overwrite = await confirm({
-      message: `${target} already exists. Overwrite?`,
-      default: false,
-    });
-    if (!overwrite) {
-      log.warn(`Keeping existing ${target}.`);
-      return;
-    }
-  }
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, `${JSON.stringify(content, null, 2)}\n`, 'utf8');
+async function promptForVar(name: string): Promise<string> {
+  const ask = isSecretName(name) ? password : input;
+  const entered = await ask({
+    message: `${name} (Enter to skip — fill later in .env):`,
+    ...(isSecretName(name) ? { mask: '*' } : {}),
+  } as Parameters<typeof password>[0]);
+  return (entered ?? '').trim();
 }
 
 async function configureMcps(agents: AgentId[], state: InstallState): Promise<void> {
@@ -705,10 +638,162 @@ async function configureMcps(agents: AgentId[], state: InstallState): Promise<vo
     log.info('No agents selected, skipping MCP config.');
     return;
   }
-  const pending = new Set<string>();
-  if (agents.includes('claude-code')) { await configureMcpForClaude(state, pending); }
-  if (agents.includes('opencode')) { await configureMcpForOpencode(state, pending); }
-  state.pendingEnvVars = [...pending].sort();
+
+  await ensureEnvFileExists();
+
+  const required = await discoverRequiredEnvVars(agents);
+  if (required.length === 0) {
+    log.warn('No env-var placeholders found in .mcp.json or opencode.jsonc.');
+    state.pendingEnvVars = [];
+    return;
+  }
+
+  log.info(`Required MCP env vars (from committed configs): ${required.join(', ')}`);
+
+  const envValues = parseEnvFile(await readFile(ENV_PATH, 'utf8'));
+  const newValues: Record<string, string> = {};
+  const stillPending: string[] = [];
+
+  for (const name of required) {
+    const fromEnvFile = envValues[name];
+    if (fromEnvFile && fromEnvFile.trim().length > 0) {
+      log.dim(`  ${name}: already set in .env`);
+      continue;
+    }
+    const fromProcessEnv = process.env[name];
+    if (fromProcessEnv && fromProcessEnv.trim().length > 0) {
+      newValues[name] = fromProcessEnv.trim();
+      log.dim(`  ${name}: captured from shell environment`);
+      continue;
+    }
+    if (NON_INTERACTIVE) {
+      stillPending.push(name);
+      continue;
+    }
+    const value = await promptForVar(name);
+    if (value.length === 0) {
+      stillPending.push(name);
+    }
+    else {
+      newValues[name] = value;
+    }
+  }
+
+  if (Object.keys(newValues).length > 0) {
+    await appendVarsToEnv(newValues);
+    log.success(`Wrote ${Object.keys(newValues).length} var(s) to .env: ${Object.keys(newValues).join(', ')}`);
+  }
+  if (stillPending.length > 0) {
+    log.warn(`Pending (fill in .env manually): ${stillPending.join(', ')}`);
+  }
+
+  state.pendingEnvVars = stillPending;
+
+  // Per-server status — placeholder if any of its required vars are still pending.
+  const merged = { ...envValues, ...newValues };
+  for (const [server, secrets] of Object.entries(MCP_SERVER_SECRETS)) {
+    if (secrets.length === 0) {
+      state.mcps[server] = 'configured-no-key';
+    }
+    else {
+      const anyMissing = secrets.some(s => !merged[s] || merged[s].trim().length === 0);
+      state.mcps[server] = anyMissing ? 'placeholder' : 'configured-with-key';
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// direnv autoload sub-step (still part of Step 7)
+// ----------------------------------------------------------------------------
+
+interface DirenvInfo {
+  installed: boolean
+  version?: string
+  supportsDotenvIfExists: boolean
+  supportsPwshHook: boolean
+  platform: NodeJS.Platform
+}
+
+function detectDirenv(): DirenvInfo {
+  const platform = process.platform;
+  const result = tryRun('direnv', ['version']);
+  if (!result.ok) {
+    return { installed: false, supportsDotenvIfExists: false, supportsPwshHook: false, platform };
+  }
+  const version = result.stdout.trim();
+  const parts = version.split('.').map(n => Number.parseInt(n, 10));
+  const maj = parts[0] ?? 0;
+  const min = parts[1] ?? 0;
+  const supportsDotenvIfExists = maj > 2 || (maj === 2 && min >= 30);
+  const supportsPwshHook = maj > 2 || (maj === 2 && min >= 37);
+  return { installed: true, version, supportsDotenvIfExists, supportsPwshHook, platform };
+}
+
+function installHintForPlatform(): string {
+  if (process.platform === 'win32') {
+    return 'winget install direnv  (then restart Git Bash or PowerShell)';
+  }
+  if (process.platform === 'darwin') {
+    return 'brew install direnv';
+  }
+  return 'sudo apt install direnv  (or: dnf install direnv  /  pacman -S direnv)';
+}
+
+function shellHookHint(info: DirenvInfo): string {
+  const shell = (process.env.SHELL ?? '').toLowerCase();
+  if (process.platform === 'win32' && shell.length === 0) {
+    if (info.supportsPwshHook) {
+      return 'Invoke-Expression "$(direnv hook pwsh)"  →  add to $PROFILE  (PowerShell)';
+    }
+    return 'eval "$(direnv hook bash)"  →  add to ~/.bashrc  (Git Bash; PowerShell needs direnv 2.37+)';
+  }
+  if (shell.endsWith('zsh')) {
+    return 'eval "$(direnv hook zsh)"  →  add to ~/.zshrc';
+  }
+  if (shell.endsWith('fish')) {
+    return 'direnv hook fish | source  →  add to ~/.config/fish/config.fish';
+  }
+  if (shell.endsWith('bash')) {
+    return 'eval "$(direnv hook bash)"  →  add to ~/.bashrc';
+  }
+  return 'eval "$(direnv hook <your-shell>)"  →  see https://direnv.net/docs/hook.html';
+}
+
+async function offerDirenvAutoload(): Promise<void> {
+  if (SKIP_DIRENV) {
+    log.dim('  INSTALL_SKIP_DIRENV=1, skipping direnv setup.');
+    return;
+  }
+  const info = detectDirenv();
+
+  if (!info.installed) {
+    log.info('direnv not installed (optional).');
+    log.dim('  Launch agents with: bun run claude  /  bun run opencode  (dotenv-cli loads .env automatically).');
+    log.dim(`  Or install direnv for shell autoload: ${installHintForPlatform()}`);
+    return;
+  }
+  log.info(`direnv ${info.version} detected.`);
+  if (info.platform === 'win32') {
+    log.dim('  Tip: direnv on Windows works best in Git Bash. PowerShell support is experimental and requires direnv 2.37+.');
+  }
+
+  const proceed = await maybeConfirm(
+    'Run `direnv allow` so the repo\'s .envrc auto-loads .env into your shell?',
+    true,
+  );
+  if (!proceed) {
+    log.dim('  Skipped. Launch agents with: bun run claude  /  bun run opencode.');
+    return;
+  }
+  const result = tryRun('direnv', ['allow', REPO_ROOT]);
+  if (result.ok) {
+    log.success('direnv allow succeeded — .envrc will auto-load .env on cd.');
+    log.dim(`  Reminder: add this to your shell rc if not already done: ${shellHookHint(info)}`);
+  }
+  else {
+    log.warn('direnv allow failed. Launch agents with: bun run claude  /  bun run opencode.');
+    log.dim(`  ${(result.stderr || result.stdout).trim().slice(0, 200)}`);
+  }
 }
 
 // ============================================================================
@@ -824,13 +909,27 @@ function printClosingSummary(state: InstallState): void {
 
   process.stdout.write('\n');
   process.stdout.write(`${COLORS.bold}Next steps:${COLORS.reset}\n`);
-  process.stdout.write('  1. Resolve pending env vars (export in your shell or replace inline in .mcp.json)\n');
-  process.stdout.write('  2. Install missing CLIs (see table above)\n');
-  process.stdout.write('  3. Run: bun run lint:agents (validate config)\n');
-  process.stdout.write('  4. In your agent: /sync-ai-memory (load initial context)\n');
-  process.stdout.write('  5. In your agent: /agentic-dev-core (bootstrap on this repo)\n');
-  process.stdout.write('  6. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n');
-  process.stdout.write('  7. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n');
+  let n = 1;
+  if (state.pendingEnvVars.length > 0) {
+    process.stdout.write(`  ${n}. Fill remaining vars in .env: ${state.pendingEnvVars.join(', ')}\n`);
+    n++;
+  }
+  process.stdout.write(`  ${n}. Launch your agent:\n`);
+  process.stdout.write('       bun run claude       # Claude Code  (dotenv-cli wraps and loads .env)\n');
+  process.stdout.write('       bun run opencode     # OpenCode     (dotenv-cli wraps and loads .env)\n');
+  log.dim('       (or run `claude` / `opencode` directly if direnv autoload is set up)');
+  n++;
+  process.stdout.write(`  ${n}. Install missing CLIs (see table above)\n`);
+  n++;
+  process.stdout.write(`  ${n}. Run: bun run lint:agents (validate config)\n`);
+  n++;
+  process.stdout.write(`  ${n}. In your agent: /sync-ai-memory (load initial context)\n`);
+  n++;
+  process.stdout.write(`  ${n}. In your agent: /agentic-dev-core (bootstrap on this repo)\n`);
+  n++;
+  process.stdout.write(`  ${n}. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n`);
+  n++;
+  process.stdout.write(`  ${n}. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n`);
   process.stdout.write('\n');
   log.dim('Full docs: INSTALLER.md');
 }
@@ -842,6 +941,10 @@ function printClosingSummary(state: InstallState): void {
 async function main(): Promise<void> {
   log.banner('ai-driven-project-starter — installer');
   log.dim('See .plans/FASE-15-DESIGN.md for the spec this implements.');
+  if (AUTO_NON_INTERACTIVE) {
+    log.warn('No TTY detected — running in --non-interactive mode (prompts will use defaults).');
+    log.dim('  AI agents: parse pending vars from the closing summary, or run `bun run setup:doctor --json`.');
+  }
 
   // Step 1
   log.step(1, 11, 'Verifying repo root');
@@ -929,8 +1032,9 @@ async function main(): Promise<void> {
   await installCommunitySkills(state, 'global');
 
   // Step 7
-  log.step(7, 11, 'Configuring MCPs');
+  log.step(7, 11, 'Wiring .env for MCP servers');
   await configureMcps(agents, state);
+  await offerDirenvAutoload();
 
   // Step 8
   log.step(8, 11, 'Verifying external CLIs');

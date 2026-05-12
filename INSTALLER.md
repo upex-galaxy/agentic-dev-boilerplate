@@ -6,6 +6,94 @@
 
 This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — gentle-ai (~30%), community skills via `npx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step and the opt-out path.
 
+## Running setup from an AI agent
+
+Most users today ask an AI (Claude Code, OpenCode, Cursor, …) to drive the setup instead of running it by hand. The installer is built for both flows; the AI path uses a few specific entry points:
+
+### `bun run setup:doctor` — read-only health check
+
+The fastest way for an AI to figure out **what's wired and what's missing** without changing anything:
+
+```bash
+bun run setup:doctor          # human-readable summary
+bun run setup:doctor --json   # machine-readable, parse with jq / agent
+```
+
+Exit code: `0` when everything is green, `1` when any pending action remains. JSON shape:
+
+```json
+{
+  "status": "needs-action",
+  "platform": "linux",
+  "shell": "/usr/bin/bash",
+  "is_tty": true,
+  "env_vars": { "TAVILY_API_KEY": "set", "N8N_API_KEY": "missing", ... },
+  "direnv": { "installed": true, "version": "2.25.2", "envrc_allowed": true, "hook_in_rc": true, "rc_file": "/home/user/.bashrc" },
+  "pending_actions": [
+    { "type": "credential", "target": "N8N_API_KEY", "hint": "n8n API key for the n8n MCP server", "where": "n8n instance → Settings → API" },
+    { "type": "shell_hook", "target": "~/.bashrc", "hint": "Add direnv hook ...", "where": "eval \"$(direnv hook bash)\"" }
+  ]
+}
+```
+
+`pending_actions[].type` is one of: `credential` · `shell_hook` · `system_install` · `shell_command`. The AI iterates the list and picks the right tool per type:
+
+| type | Who handles it | How |
+|---|---|---|
+| `credential` | **User** | AI asks the user for the value in chat (e.g. "paste your Tavily key from https://app.tavily.com"). Then AI writes it to `.env`. |
+| `shell_hook` | **AI** | AI appends the `where` line to the `target` rc file with its Edit/Bash tool. Trivial. |
+| `system_install` | **User** | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password). |
+| `shell_command` | **AI** | AI runs the `target` command via Bash. |
+
+### What an AI **cannot** do (hard limits)
+
+- **Generate API tokens** — Tavily / Atlassian / Supabase / n8n keys all require an interactive web login + 2FA. The user creates and pastes them; the AI never sees the generation flow.
+- **Decide business config** — e.g. which Supabase project to target, which n8n instance to use, etc. The AI suggests; the user decides.
+- **Execute privileged installs cleanly** — `brew install`, `winget install`, `apt install` may show a sudo/admin prompt that lives outside the agent's terminal. The AI runs the command but the user clicks "allow".
+
+### `bun run setup --non-interactive` (or just `bun run setup` without a TTY)
+
+The installer auto-detects no-TTY (an agent invoking it without a terminal) and silently switches to `--non-interactive`. Prompts skip with their default answer. The closing summary lists pending env vars and next steps — same data the doctor exposes. Use this path when the AI wants to run the full setup batch:
+
+```bash
+TAVILY_API_KEY=tvly-... \
+  JIRA_URL=... \
+  JIRA_USERNAME=... \
+  JIRA_API_TOKEN=... \
+  SUPABASE_ACCESS_TOKEN=... \
+  bun run setup --non-interactive
+```
+
+Then `bun run setup:doctor --json` to confirm.
+
+### Skip flags (per-step opt-out)
+
+| Env var | Effect |
+|---|---|
+| `INSTALL_SKIP_DIRENV=1` | Skip direnv detection / autoload |
+
+---
+
+## Launching the agent after setup
+
+`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `JIRA_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
+
+| Method | Platform | One-time setup | Usage |
+|---|---|---|---|
+| **`bun run claude` / `bun run opencode`** (default) | Windows, macOS, Linux | None — `dotenv-cli` is a project devDep | `bun run claude` from the repo root |
+| **direnv autoload** (optional) | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude` or `opencode` from anywhere in the repo |
+
+### direnv hook per shell
+
+| Shell | Line to add | File |
+|---|---|---|
+| bash | `eval "$(direnv hook bash)"` | `~/.bashrc` (also works for Git Bash on Windows) |
+| zsh | `eval "$(direnv hook zsh)"` | `~/.zshrc` |
+| fish | `direnv hook fish \| source` | `~/.config/fish/config.fish` |
+| PowerShell | `Invoke-Expression "$(direnv hook pwsh)"` | `$PROFILE` (requires direnv 2.37+, experimental) |
+
+`.mcp.json` (Claude Code) and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}` placeholders. Real values live in `.env` (gitignored). If a server returns 401/403 at first call, the matching env var is missing — see `CLAUDE.md` Critical Reminder #12 (stop, fix `.env`, restart the agent session).
+
 ---
 
 ## What is gentle-ai and why this repo uses it
@@ -140,7 +228,9 @@ You have a ticket but the spec is dense and you want it traced formally. Run `/s
 ## Troubleshooting
 
 - **gentle-ai not detected after install** — re-run `bun run setup`. The detector probes `which gentle-ai` plus `gentle-ai version`; if either fails the installer falls back to "skip gentle-ai" branch. Confirm the binary is on PATH (`which gentle-ai` should return a path under `/usr/local/bin/`, `~/bin/`, `~/go/bin/`, or a Homebrew prefix).
-- **MCPs not loading** — open `.mcp.json` in the repo root and check that no `{{VAR_NAME}}` placeholders remain. The installer fills them with values you provided or with placeholders for later. Replace placeholders with real values, or export the env vars in your shell. `.mcp.json` is gitignored.
+- **MCPs returning 401/403** — the matching env var in `.env` is unset or wrong. `.mcp.json` (Claude) and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}` expansion; real values live in `.env`. Open `.env`, fill the var, and **restart the agent session** — env vars are read once at MCP-server spawn time. See `CLAUDE.md` Critical Reminder #12.
+- **MCPs not loading at all** — confirm you launched the agent via `bun run claude` / `bun run opencode` (wraps with `dotenv-cli`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). Launching `claude` directly without either path means MCP placeholders never get expanded.
+- **`direnv allow` produced `dotenv_if_exists: command not found`** — this would mean the `.envrc` is using a newer direnv feature than your version supports. The committed `.envrc` uses portable POSIX loading (works on direnv 2.21+), so if you see this, your `.envrc` has been edited locally — restore it from `git checkout .envrc`.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup.
 - **How do I uninstall gentle-ai skills?** — `gentle-ai uninstall --skill <slug> --agent <agent>` removes a single skill. `gentle-ai uninstall --all --agent <agent>` removes everything gentle-ai-managed for that agent. Backups are created automatically before uninstall.
 

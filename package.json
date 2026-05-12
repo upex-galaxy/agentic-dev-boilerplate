@@ -9,6 +9,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "bun cli/install.ts",
+    "setup:doctor": "bun cli/doctor.ts",
     "up": "bun cli/update-boilerplate.ts",
     "onboarding": "bun scripts/onboarding.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
