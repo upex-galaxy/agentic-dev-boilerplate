@@ -24,12 +24,12 @@ Audit every markdown file the AI consumes at session start (or that humans treat
 - **Does NOT rewrite docs from scratch.** README and CLAUDE.md are the BASE; this command edits them, never regenerates them.
 - **Does NOT generate new documentation files.** Use `/agentic-dev-core`, `/project-foundation`, or manual creation for new docs.
 - **Does NOT generate business maps.** Those are owned by `/business-data-map`, `/business-feature-map`, `/business-api-map`, `/master-implementation-plan`.
-- **Does NOT touch generated artifacts.** SKILL.md files, `references/*` caches, `testing-capabilities.json`, and other auto-generated files are skipped.
-- **Does NOT rewrite historical sections.** Session Log, Known Issues, Discovery Progress — those are human-authored timelines and stay intact.
+- **Does NOT touch generated artifacts.** SKILL.md files (except where listed below), `references/*` caches, `testing-capabilities.json`, and other auto-generated files are skipped.
+- **Does NOT rewrite skill reference files.** `.claude/skills/agentic-dev-core/references/behavioral-layer.md`, `typescript-patterns.md`, and the other 6 references are skill-internal — managed by `/agentic-dev-core`, not this command. Sync validates they exist + cross-doc consistency only.
 
 ---
 
-## The 5 always-included docs (+ 1 rendered-from HTML target)
+## The 6 always-included docs (+ 1 rendered-from HTML target)
 
 These are **always** in scope, regardless of what the audit discovers. They are the highest-frequency AI-consumed docs in this repo.
 
@@ -37,6 +37,7 @@ These are **always** in scope, regardless of what the audit discovers. They are 
 |---|---|---|
 | `README.md` | `anchor` | Human-facing entry point; synced from `package.json` scripts + project identity |
 | `CLAUDE.md` (or detected equivalent) | `anchor` | AI memory file loaded every session |
+| `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template` | `structural-mirror` | Template mirror of live `CLAUDE.md`. Must match the 13-section structure header-for-header. Sync via Phase 4c (structural diff + placeholder restore). |
 | `CONTEXT.md` | `anchor` | Canonical Context Engineering reference for this repo; patched for `.context/` path changes |
 | `docs/agentic-development-engineering.md` | `supplementary` | Vision + lifecycle overview; patched for command/skill/path drift |
 | `docs/getting-started.md` | `supplementary` | Operator guide; patched for command names, quick-reference tables |
@@ -119,8 +120,8 @@ If you make important discoveries, save them to engram via mem_save with project
 After the sub-agent returns:
 
 1. Take the audit result.
-2. Force-add the 5 always-included docs (skip ones not on disk; mark them `not present`).
-3. Force-promote `README.md`, `CLAUDE.md` (or detected equivalent), and `CONTEXT.md` to `CRITICAL` if they aren't already.
+2. Force-add the 6 always-included docs (skip ones not on disk; mark them `not present`).
+3. Force-promote `README.md`, `CLAUDE.md` (or detected equivalent), `CONTEXT.md`, and the template mirror to `CRITICAL` if they aren't already.
 4. Deduplicate.
 
 ---
@@ -193,7 +194,7 @@ For every fact in the file, verify it against the actual repo state. The most co
 | `bun run X` commands | Read `package.json` — is the script present? |
 | `/skill-name` references | `ls .claude/skills/<name>/` — does the skill exist? |
 | `/command-name` references | `ls .claude/commands/<name>.md` — does the command exist? |
-| MCP names | Read `.mcp.json` or `.mcp.example.json` — is the MCP listed? |
+| MCP names | Read `.mcp.json` — is the MCP listed? (`.mcp.example.json` was removed; `.mcp.json` is now committed) |
 | Env var names | Read `.env.example` — is the variable defined? |
 | Section counts / table row counts | Count actual entries vs. the declared count |
 | Versions, dates | Compare against current value |
@@ -219,18 +220,31 @@ Different docs have different stable sections. Apply the appropriate list:
 - Section order and top-level headings
 - The Quick Start narrative
 
-**`CLAUDE.md` (or detected equivalent):**
-- Critical Reminders / Critical Rules
-- Behavioral Layer (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution)
-- Fundamental Rules (TypeScript Patterns, etc.)
-- Git Workflow narrative
-- Orchestration Mode
-- AI Behavior During Sessions
-- Future Hooks
-- **Session Log** (human-authored timeline)
-- **Known Issues & Blockers** (human-authored)
-- **Next Actions** (human-curated)
-- **Discovery Progress** (human-curated status — only the status cells may be patched if observably out of sync, never the rows themselves)
+**`CLAUDE.md` (or detected equivalent)** — current structure is 13 numbered sections (see live CLAUDE.md). Preserve:
+- §1 CRITICAL RULES (12 items — only patch wording drift, never reorder)
+- §2 BEHAVIORAL LAYER (4 pillars + scope notes — full examples live in `references/behavioral-layer.md`)
+- §3 ORCHESTRATION MODE (6-component briefing + execution patterns + deep-detail pointers)
+- §4 CONTEXT LOADING MAP (task → trigger → skill → context → tool)
+- §6 TOOL RESOLUTION ([TAG_TOOL] pseudocode)
+- §7 PROJECT VARIABLES — POINTER (pointer-only by design; never inline `.agents/project.yaml` contents)
+- §8 AI BEHAVIOR DURING DEVELOPMENT (4 numbered items)
+- §9 LOCAL CONTEXT (PBI) — directory tree
+- §10 STACK QUICK-REFERENCE (TS Patterns + DRY — full conventions in `references/typescript-patterns.md`)
+- §11 GIT WORKFLOW — POINTERS (branch table + pointer to `/git-flow-master`)
+- §12 DELIVERY STRATEGY — Path A vs Path B
+- §13 PROACTIVE MEMORY TRIGGERS
+
+Sections that may be **patched** (data drift only): §5 SKILLS + COMMANDS + MCPs REGISTRY (T1 skill table, slash commands table, MCP table — verify against `.claude/skills/`, `.claude/commands/`, `.mcp.json`).
+
+**DELETED sections that MUST NOT be re-introduced** (engram MCP supersedes; flag any reappearance as drift):
+- ~~Quick Start / Onboarding~~ (moved to `README.md`)
+- ~~Project Identity / Environment URLs~~ (live in `.agents/project.yaml`)
+- ~~Discovery Progress / Access Configuration~~ (orphan trackers)
+- ~~Future Hooks~~ (moved to `docs/agentic-development-engineering.md`)
+- ~~Session Log / Known Issues / Next Actions~~ (engram supersedes)
+- ~~Quick Reference checklist~~ (duplicated §1 + §10)
+
+**Critical Rule #12 enforcement**: CLAUDE.md must NOT inline build/test/lint script names in tables. Detect any `| \`bun run` / `| \`npm run` / `| \`pnpm run` table row — flag as STRUCTURAL drift (violates Rule #12, scripts must defer to `package.json`).
 
 **`CONTEXT.md`** (when present):
 - All structural sections
@@ -259,6 +273,41 @@ On any match:
 1. Replace the literal with `<<REDACTED>>` (or `{your-{field-name}}` placeholder when the field is the point of the paragraph).
 2. Record the redaction: `{file} · {line reference} · {what was redacted} · {why}`.
 3. Surface the redaction log in the Phase 6 report. A redaction never silently succeeds — the user must see what was removed.
+
+---
+
+## Phase 4c — Template mirror sync (`.claude/skills/agentic-dev-core/templates/CLAUDE.md.template`)
+
+Run **after** Phase 4 (so the live CLAUDE.md is up to date) and **before** Phase 4b. The template mirror must match the live CLAUDE.md header-for-header, with project-specific values replaced by placeholders.
+
+### Why it exists
+
+`CLAUDE.md` (live, repo root) is consumed by the AI every session in THIS repo. `CLAUDE.md.template` is the structural mirror used by `/agentic-dev-core` init when bootstrapping a NEW project. They diverge over time unless synced — past drift has surfaced as renamed sections appearing in only one file (e.g. live had `Behavioral Layer`, template did not).
+
+### Algorithm
+
+1. **Extract section headings** from the live CLAUDE.md: `grep -E '^## [0-9]+\.' CLAUDE.md` → expect 13 numbered sections.
+2. **Extract section headings** from the template: same grep.
+3. **Diff the heading sequences**. If they differ, sync the template structure to match.
+4. **For each section body** that changed in Phase 4, copy the structural skeleton into the template, then:
+   - Replace project-specific values (project name, environment URLs, Jira URL, `{{TICKET-PREFIX}}-XXX` examples) with `[PLACEHOLDER]` or `{{TEMPLATE_VAR}}` markers.
+   - Re-introduce the `<!-- Add project-specific reminders as #13+ when bootstrapping. -->` slot in §1 if removed.
+   - Preserve the template's `<!-- TEMPLATE — DO NOT EDIT IN PLACE WHEN BOOTSTRAPPING -->` HTML comment header.
+5. **Verify final diff** of section headings is empty: `diff <(grep '^## [0-9]\.' CLAUDE.md) <(grep '^## [0-9]\.' .claude/skills/agentic-dev-core/templates/CLAUDE.md.template)` → expect 0 lines.
+
+### What stays project-specific in the template (always placeholders)
+
+- `[Project-specific reminders]` slot in §1
+- `[TICKET-PREFIX]-XXX` instead of `UPEX-XXX` examples
+- `{{PROJECT_KEY}}`, `{{WEB_URL}}`, `{{API_URL}}` references (the syntax is canonical; values must come from `.agents/project.yaml`)
+
+### Reporting
+
+Emit one row in the Phase 7 report:
+
+```
+.claude/skills/agentic-dev-core/templates/CLAUDE.md.template | structural-mirror | updated | +X / -Y | section headings + body skeletons | placeholders restored
+```
 
 ---
 
@@ -323,10 +372,13 @@ After all individual patches are computed but **before any file is written**, ve
 | Command names | All targets | `CLAUDE.md` says `/refresh-ai-memory`, `docs/getting-started.md` still says `/sync-ai-memory` |
 | Skill names | All targets | Skill renamed but not all docs updated |
 | `.context/` directory paths | `CLAUDE.md`, `README.md`, `CONTEXT.md` | One doc says `.context/business/`, another says `.context/discovery/` |
-| Environment URLs | `CLAUDE.md`, `README.md` | Staging URL changed in only one doc |
-| Script names | `CLAUDE.md`, `README.md`, `docs/getting-started.md` | Script renamed in `package.json` but not in docs |
-| Project identity | `README.md`, `CLAUDE.md` | Name / stack / target repo mismatch |
+| Environment URLs | `CLAUDE.md`, `README.md` | Staging URL changed in only one doc (note: CLAUDE.md should NOT inline env URLs — they live in `.agents/project.yaml`) |
+| Script names | `README.md`, `docs/getting-started.md` (NOT `CLAUDE.md` — Rule #12 forbids inlining scripts there) | Script renamed in `package.json` but not in docs |
+| Project identity | `README.md` only (NOT `CLAUDE.md` — lives in `.agents/project.yaml`) | Name / stack / target repo mismatch |
 | AI memory filename | `README.md`, `docs/*` | `GEMINI.md` is the active file but docs still say `CLAUDE.md` |
+| CLAUDE.md section headings | `CLAUDE.md` vs `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template` | Live and template diverge on §-count or section names (Phase 4c enforces) |
+| Reference files exist | `CLAUDE.md` pointers vs `.claude/skills/agentic-dev-core/references/` | CLAUDE.md §2 points to `behavioral-layer.md`, §10 to `typescript-patterns.md`, §3 to `orchestration-doctrine.md` / `briefing-template.md` / `dispatch-patterns.md` / `skill-composition-strategy.md` — all must exist on disk |
+| MCP table | `CLAUDE.md §5` vs `.mcp.json` | MCP listed in one but not the other |
 
 **Algorithm:**
 
@@ -364,7 +416,8 @@ For each file, compute:
 | File | Classification | Outcome | Lines changed | Drifts fixed | Notes |
 |---|---|---|---|---|---|
 | README.md | CRITICAL | updated | +12 / -8 | scripts table, env URLs | — |
-| CLAUDE.md | CRITICAL | updated | +5 / -3 | skill table, MCP list | Session Log preserved |
+| CLAUDE.md | CRITICAL | updated | +5 / -3 | §5 skill/MCP table | 13-section structure preserved |
+| .claude/skills/agentic-dev-core/templates/CLAUDE.md.template | CRITICAL | updated | +5 / -3 | mirrored §5 table | placeholders restored (Phase 4c) |
 | CONTEXT.md | CRITICAL | updated | +1 / -1 | `.context/` path | — |
 | docs/agentic-development-engineering.md | HIGH | updated | +2 / -2 | command rename | — |
 | docs/getting-started.md | HIGH | unchanged | — | — | no drift detected |
@@ -375,7 +428,8 @@ For each file, compute:
 - {fact}: {old value} → {new value} in {N} files
 
 **Sections preserved verbatim:**
-- CLAUDE.md: Critical Reminders, Behavioral Layer, Fundamental Rules, Git Workflow, Orchestration Mode, Session Log, Known Issues, Next Actions
+- CLAUDE.md: §1 CRITICAL RULES, §2 BEHAVIORAL LAYER, §3 ORCHESTRATION MODE, §4 CONTEXT LOADING MAP, §6 TOOL RESOLUTION, §7 PROJECT VARIABLES, §8 AI BEHAVIOR, §9 LOCAL CONTEXT, §10 STACK QUICK-REFERENCE, §11 GIT WORKFLOW, §12 DELIVERY STRATEGY, §13 PROACTIVE MEMORY TRIGGERS (only §5 SKILLS+COMMANDS+MCPs may be patched for data drift)
+- CLAUDE.md.template: same 13-section structure, with placeholders preserved
 - README.md: Quick Start narrative, top-level section order
 - docs/onboarding/index.html: `<head>`, `<script>`, `<style>`, sidebar nav, tab structure, footer card layout
 
@@ -401,7 +455,7 @@ For each file, compute:
 3. **Approval gate before any write.** Phase 2 confirmation is non-negotiable. No file is touched until the user says `proceed`.
 4. **Credential safety.** Run the redaction scan in memory before every Write. Surface every redaction to the user.
 5. **Scope is dynamic.** The 5 always-included docs (+ 1 rendered-from HTML) are a floor, not a ceiling. The audit can extend the list; it cannot shrink the floor.
-6. **No rewrites of historical sections.** Session Log, Known Issues, Discovery Progress, Next Actions — those are human timelines and stay intact.
+6. **No re-introduction of deleted CLAUDE.md sections.** Session Log, Known Issues, Discovery Progress, Next Actions, Future Hooks, Project Identity placeholder, Environment URLs placeholder, Quick Start, Onboarding — all retired (engram MCP + `.agents/project.yaml` + README supersede them). If the audit suggests adding any of these back to CLAUDE.md, flag as STRUCTURAL drift and refuse autonomously.
 7. **Structural drift requires user confirmation.** If a whole section is obsolete, flag it; do not delete autonomously.
 8. **Cross-doc consistency over single-doc cleanliness.** If patching one file would create drift with another, patch both in the same run.
 9. **HTML rendered-from targets patch in place, never regenerate.** Phase 4b touches only text nodes (`<code>`, `<td>`, `<span>`, link text/href). Sidebar, JS, CSS, `<head>` are opaque. Pre-commit hooks are your safety net — never bypass with `--no-verify`.
@@ -426,12 +480,15 @@ If the audit sub-agent surfaces one of these (mistake), drop it before showing t
 ## Final checklist
 
 - [ ] Audit sub-agent dispatched (Phase 1)
-- [ ] Audit list merged with 5 always-included docs + 1 rendered-from HTML (Phase 1)
+- [ ] Audit list merged with 6 always-included docs + 1 rendered-from HTML (Phase 1)
 - [ ] User confirmation received via approval gate (Phase 2)
 - [ ] AI memory file detected (Phase 3)
 - [ ] Each approved file read first, then patched in-place (Phase 4)
 - [ ] Preserve-lists applied per file (Phase 4d)
 - [ ] Credential redaction scan run before each Write (Phase 4e)
+- [ ] Template mirror synced (Phase 4c) — section headings diff empty against live CLAUDE.md
+- [ ] Rule #12 enforcement: CLAUDE.md contains 0 inlined `| \`bun run` table rows
+- [ ] Reference files exist + cross-doc consistent (`behavioral-layer.md`, `typescript-patterns.md`, `orchestration-doctrine.md`, `briefing-template.md`, `dispatch-patterns.md`, `skill-composition-strategy.md`)
 - [ ] Rendered-from HTML targets synced via text-node patches only — sidebar/JS/CSS preserved (Phase 4b)
 - [ ] Pre-commit hooks not bypassed (no `--no-verify`)
 - [ ] Cross-doc consistency verified, drift resolved (Phase 5)

@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-onboard
-description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, /sdd-* for spec-driven work, MCPs available (Tavily, Context7, Supabase, n8n), critical env vars. Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
+description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work (Path A simple, Path B complex via SDD bundle), MCPs available (Tavily, Context7, Supabase, n8n, Atlassian), critical env vars, Critical Rule #12 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, opencode]
 phase: bootstrap
@@ -28,7 +28,7 @@ This skill complements `/sdd-onboard` (installed via gentle-ai). `/sdd-onboard` 
 
 ## Welcome
 
-This is the **AI-Driven Project Starter** — a dev-only boilerplate for building Next.js + Supabase apps with AI agents in the loop. The repo ships skills, scripts, and conventions that turn a Jira ticket into merged code through a structured 12-step workflow. It does **not** ship a backend or a frontend; both are scaffolded on top of the boilerplate by `/project-bootstrap`.
+This is the **AI-Driven Project Starter** — a dev-only boilerplate for building Next.js + Supabase apps with AI agents in the loop. The repo ships skills, scripts, and conventions that turn a Jira ticket into merged code via `/sprint-development` (Path A simple, or Path B complex with SDD spec-driven bundle — see CLAUDE.md §12). It does **not** ship a backend or a frontend; both are scaffolded on top of the boilerplate by `/project-bootstrap`.
 
 If you cloned this repo and you don't yet have `bun run setup` complete, start there. Everything else assumes the foundation is green.
 
@@ -79,15 +79,22 @@ Run the interactive installer once after cloning:
 bun run setup
 ```
 
-This bootstraps `.agents/`, installs gentle-ai skills (15 of them), configures the 4 canonical MCPs, and writes `.mcp.json`. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
+This bootstraps `.agents/`, installs gentle-ai skills (15 of them), configures the 5 canonical MCPs (Tavily, Context7, Supabase, n8n, Atlassian), and writes `.mcp.json`. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
+
+> **Critical Rule #12** (CLAUDE.md §1): for build/test/lint commands, **READ `package.json` DIRECTLY** — never trust a hardcoded list in a doc. Scripts drift; `package.json` is canonical.
 
 ---
 
 ## Primary workflow: `/sprint-development`
 
-`/sprint-development` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-development UPEX-123`) and it drives the full 12-step loop end-to-end.
+`/sprint-development` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-development UPEX-123`) and it drives the per-story dev loop end-to-end. Path selection lives in CLAUDE.md §12:
+
+| Path | Gate | Skills invoked |
+| ---- | ---- | -------------- |
+| **A — Simple** | Jira ticket · ≤400 LOC · no new architecture · no Strict TDD | `/sprint-development` only |
+| **B — Complex** | multi-file refactor OR new architecture OR >400 LOC OR Strict TDD | `sprint-development` orchestrates `sdd-init` → `sdd-design` → `sdd-tasks` → `sdd-apply` → `sdd-verify` → `sdd-archive` |
 
 **Jira state machine:**
 
@@ -125,21 +132,23 @@ If the change feels like a research project (alternatives to compare, multiple m
 
 ## MCPs available
 
-Four canonical MCPs ship with the boilerplate:
+Five canonical MCPs ship with the boilerplate:
 
-| MCP      | Use it for                                 |
-| -------- | ------------------------------------------ |
-| Tavily   | Web search, troubleshooting community Q&A  |
-| Context7 | Official library docs (Next.js, Supabase…) |
-| Supabase | DB queries, migrations, type generation    |
-| n8n      | Workflow automation, scheduled jobs        |
+| MCP       | Use it for                                       |
+| --------- | ------------------------------------------------ |
+| Tavily    | Web search, troubleshooting community Q&A        |
+| Context7  | Official library docs (Next.js, Supabase…)       |
+| Supabase  | DB queries, migrations, type generation          |
+| n8n       | Workflow automation, scheduled jobs              |
+| Atlassian | Jira/Confluence fallback when `/acli` unavailable |
 
 **Decision rule:**
 
 - Use **Context7** for "how to use X" — official docs, current API
 - Use **Tavily** for "how to solve X" — community fixes, troubleshooting
+- Use **Atlassian** only as fallback — prefer `/acli` skill (fewer tokens, faster)
 
-`.mcp.json` lives at the repo root and is **gitignored** (it contains secrets).
+`.mcp.json` lives at the repo root and is **committed** (uses `${VAR}` references to `.env` — no secrets stored in the file).
 
 ---
 
@@ -155,27 +164,29 @@ Place these in `.env` before running anything that talks to a real environment:
 | `TAVILY_API_KEY`                               | Tavily MCP                             |
 | `SUPABASE_URL` / `SUPABASE_*_KEY`              | Supabase MCP + runtime                 |
 
-`.mcp.json` is **gitignored** — it holds the wired-up MCP configuration with secrets resolved. Never commit it.
+`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code) or `{env:VAR}` (OpenCode). The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
-Verify your config with `bun run lint:agents` (should report 0 errors when fully configured).
+Verify your config by running the linter declared in `package.json` (typically `bun run lint:agents`). Always check `package.json` for the canonical script name — Critical Rule #12.
 
 ---
 
-## Local skills (committed in this repo)
+## Local skills (committed in this repo — T1 per CLAUDE.md §5)
 
 | Skill                 | Trigger                | Purpose                                                             |
 | --------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                |
+| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                |
+| `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                 |
 | `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                |
+| `design-system`       | `/design-system`       | DESIGN.md (Google Labs spec) — visual identity contract              |
 | `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                              |
 | `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                |
-| `sprint-development`          | `/sprint-development`          | Per-story dev loop (12-step orchestrator)                           |
-| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`)   |
+| `sprint-development`  | `/sprint-development`  | Per-story dev loop — Path A/B mega-orchestrator (CLAUDE.md §12)     |
+| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`) |
 | `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy |
 | `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work             |
-| `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                 |
+| `playwright-cli`      | `/playwright-cli`      | Browser CLI — screenshots, tracing, video, session, request mocking |
 
-Reusable knowledge skills (symlinks): `frontend-design`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `playwright-cli`, `resend-cli`.
+Reusable knowledge skills (symlinks): `frontend-design`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `resend-cli`.
 
 ---
 
@@ -205,13 +216,25 @@ Plus `engram` (persistent memory across sessions). Full details in [`INSTALLER.m
 
 ---
 
+## Where to learn more (CLAUDE.md pointers)
+
+The AI persistent-memory file at the repo root carries the full operational contract. Before your first ticket, skim these sections:
+
+- **§1 CRITICAL RULES** — 12 rules that override defaults (credentials, plan-before-coding, no AI attribution, MCP credential failure protocol, `READ package.json DIRECTLY`).
+- **§4 CONTEXT LOADING MAP** — task → trigger phrase → skill → context files → primary tool.
+- **§5 SKILLS + COMMANDS + MCPs REGISTRY** — full T1/T2/T3/T4 skill model.
+- **§12 DELIVERY STRATEGY** — Path A vs Path B decision gate.
+- **§13 PROACTIVE MEMORY TRIGGERS** — when to call `mem_save` without being asked.
+
+---
+
 ## Next steps after the onboard
 
 Run through this checklist before you reach for your first ticket:
 
-- [ ] Did you run `bun run setup`?
+- [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
-- [ ] Does `bun run lint:agents` exit clean (0 errors)?
+- [ ] Does the agents linter (`bun run lint:agents` per `package.json`) exit clean (0 errors)?
 - [ ] Do the gentle-ai skills appear in autocomplete (restart your agent if not)?
 - [ ] Ready for your first ticket: `/sprint-development <UPEX-XXX>`
 
