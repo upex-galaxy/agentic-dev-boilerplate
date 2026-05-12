@@ -170,7 +170,9 @@ Verify your config by running the linter declared in `package.json` (typically `
 
 ---
 
-## Local skills (committed in this repo — T1 per CLAUDE.md §5)
+## Local skills (committed in this repo — T1 per CLAUDE.md §5, 10 ours only)
+
+> **Policy**: this repo commits ONLY skills WE maintain. Community / third-party skills (`playwright-cli`, `frontend-design`, `next-*`, `shadcn`, `supabase-postgres-best-practices`, etc.) are installed user-scope by `bun run setup` from upstream — never committed.
 
 | Skill                 | Trigger                | Purpose                                                             |
 | --------------------- | ---------------------- | ------------------------------------------------------------------- |
@@ -184,9 +186,8 @@ Verify your config by running the linter declared in `package.json` (typically `
 | `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`) |
 | `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy |
 | `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work             |
-| `playwright-cli`      | `/playwright-cli`      | Browser CLI — screenshots, tracing, video, session, request mocking |
 
-Reusable knowledge skills (symlinks): `frontend-design`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `resend-cli`.
+Browser automation is provided by `/playwright-cli` (community skill from `microsoft/playwright-cli`, installed by setup — see Critical Rule #11 in CLAUDE.md).
 
 ---
 

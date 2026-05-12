@@ -22,7 +22,7 @@
 7. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading.
 8. **SKILLS-FIRST**: All workflows live in `.claude/skills/`. NEVER paste instructions inline. Invoke the matching skill, let it self-load detail. Use `[TAG_TOOL]` pseudocode and `{{VARIABLES}}` for dynamic content.
 9. **UNIT TESTS** are part of `/sprint-development`. Optionally TDD via `/unit-testing` (composable mid-flight).
-10. **PLAYWRIGHT CLI**: For browser automation, load `/playwright-cli` skill (screenshots, tracing, video, session mgmt, request mocking). Skill at `.claude/skills/playwright-cli/`.
+10. **PLAYWRIGHT CLI**: For browser automation, load `/playwright-cli` skill (screenshots, tracing, video, session mgmt, request mocking). Community skill — installed user-scope by `bun run setup` per `cli/install.ts` (`PROJECT_LEVEL_SKILLS`, source `microsoft/playwright-cli`).
 11. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: If MCP fails auth or env var missing (`.mcp.json` uses `${VAR}` — Claude Code fails parse if unset; `opencode.jsonc` uses `{env:VAR}` — OpenCode silently substitutes empty → 401/403 is the signal). DO NOT work around. STOP, tell user the exact env var, point to `.env` / `.env.example`, ask them to fix `.env` and **RESTART AGENT SESSION** (env cached at MCP-spawn time, won't refresh mid-session).
 12. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from this file or any doc — drift kills. Open `package.json` first, then answer.
 
@@ -115,7 +115,9 @@
 
 ## 5. SKILLS + COMMANDS + MCPs REGISTRY
 
-### Skills T1 (committed in `.claude/skills/`, 10)
+### Skills T1 (committed in `.claude/skills/`, 10 — ours only)
+
+> Policy: repo commits ONLY skills WE maintain. Community / third-party skills (e.g. `playwright-cli`, `frontend-design`, `next-*`, `shadcn`) are installed by `bun run setup` from upstream — never committed here.
 
 | Skill | Trigger | Purpose |
 |---|---|---|
@@ -129,7 +131,6 @@
 | `unit-testing` | `/unit-testing` | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`. |
 | `git-flow-master` | (auto on git/PR intents) | End-to-end Git operator. Auto-detects branching strategy. |
 | `acli` | `/acli` | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`. |
-| `playwright-cli` | `/playwright-cli` | Browser CLI: screenshots, tracing, video, session, request mocking. |
 
 > **T2 (gentle-ai, 15 skills)** — SDD bundle (sdd-init/explore/propose/spec/design/tasks/apply/verify/archive/onboard) + skill-registry + judgment-day + cognitive-doc-design + comment-writer. Composed silently by T1 orchestrators per the **Skill Composition Protocol** in `references/skill-composition-strategy.md`. Run `bun run setup` to install.
 >
