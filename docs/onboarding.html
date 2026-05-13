@@ -9,11 +9,787 @@
       name="description"
       content="A 30-minute orientation to the Agentic Dev Boilerplate: how Skills, Commands, Scripts, and the variable substrate cooperate to drive AI-assisted development on Next.js + Supabase + TypeScript."
     />
-    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Agentic Dev Boilerplate — Onboarding stylesheet
+         No external imports, no remote fonts. Dark mode via prefers-color-scheme. */
+
+      :root {
+        --bg: #ffffff;
+        --surface: #f8f9fa;
+        --surface-2: #f3f4f6;
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #1f2937;
+        --text-muted: #6b7280;
+        --text-soft: #4b5563;
+        --accent: #5b21b6;
+        --accent-soft: #ede9fe;
+        --accent-2: #7c3aed;
+        --code-bg: #f3f4f6;
+        --code-text: #1f2937;
+        --callout-info-bg: #eff6ff;
+        --callout-info-bd: #3b82f6;
+        --callout-warn-bg: #fef3c7;
+        --callout-warn-bd: #d97706;
+        --callout-danger-bg: #fee2e2;
+        --callout-danger-bd: #dc2626;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+        --radius-sm: 0.375rem;
+        --radius: 0.5rem;
+        --radius-lg: 0.75rem;
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        --badge-foundation: #0e7490;
+        --badge-foundation-soft: #cffafe;
+        --badge-workflow: #6d28d9;
+        --badge-workflow-soft: #ede9fe;
+        --badge-generator: #b45309;
+        --badge-generator-soft: #fef3c7;
+        --badge-tool: #1d4ed8;
+        --badge-tool-soft: #dbeafe;
+        --badge-reference: #4b5563;
+        --badge-reference-soft: #f3f4f6;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --surface: #1e293b;
+          --surface-2: #1e293b;
+          --border: #334155;
+          --border-strong: #475569;
+          --text: #e2e8f0;
+          --text-muted: #94a3b8;
+          --text-soft: #cbd5e1;
+          --accent: #a78bfa;
+          --accent-soft: #312e81;
+          --accent-2: #c4b5fd;
+          --code-bg: #0b1220;
+          --code-text: #e2e8f0;
+          --callout-info-bg: #1e3a8a;
+          --callout-info-bd: #60a5fa;
+          --callout-warn-bg: #78350f;
+          --callout-warn-bd: #fbbf24;
+          --callout-danger-bg: #7f1d1d;
+          --callout-danger-bd: #f87171;
+          --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+          --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+          --badge-foundation: #67e8f9;
+          --badge-foundation-soft: #164e63;
+          --badge-workflow: #c4b5fd;
+          --badge-workflow-soft: #4c1d95;
+          --badge-generator: #fcd34d;
+          --badge-generator-soft: #78350f;
+          --badge-tool: #93c5fd;
+          --badge-tool-soft: #1e3a8a;
+          --badge-reference: #cbd5e1;
+          --badge-reference-soft: #334155;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 2rem;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Layout */
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 clamp(1rem, 5vw, 2rem);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 3rem;
+        margin-top: 3rem;
+      }
+      .content {
+        max-width: 880px;
+        min-width: 0;
+      }
+      @media (max-width: 1024px) {
+        .layout {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+      }
+
+      /* Hero */
+      .hero {
+        padding: 4rem 0 2.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .hero-eyebrow {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 0.375rem 0.75rem;
+        border-radius: 999px;
+        margin-bottom: 1.25rem;
+      }
+      .hero h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+        font-weight: 700;
+        margin: 0 0 1rem;
+        color: var(--text);
+      }
+      .hero h1 .accent {
+        color: var(--accent);
+      }
+      .hero-sub {
+        font-size: 1.25rem;
+        color: var(--text-soft);
+        margin: 0 0 0.5rem;
+        font-weight: 400;
+      }
+      .hero-tagline {
+        font-size: 1rem;
+        color: var(--text-muted);
+        max-width: 720px;
+        margin: 0 0 2.5rem;
+      }
+      .hero-diagram {
+        margin: 2.5rem 0 3rem;
+        padding: 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+      }
+      .cta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .cta {
+        display: block;
+        padding: 1.25rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        text-decoration: none;
+        transition:
+          border-color 0.15s,
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .cta:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+      .cta-title {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--accent);
+      }
+      .cta-desc {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      /* TOC */
+      .toc {
+        font-size: 0.875rem;
+      }
+      @media (min-width: 1025px) {
+        .toc {
+          position: sticky;
+          top: 2rem;
+          align-self: start;
+          max-height: calc(100vh - 4rem);
+          overflow-y: auto;
+        }
+      }
+      .toc-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin: 0 0 0.75rem;
+        padding: 0;
+      }
+      .toc ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .toc li {
+        margin: 0.125rem 0;
+      }
+      .toc a {
+        display: block;
+        padding: 0.4rem 0.75rem;
+        color: var(--text-soft);
+        text-decoration: none;
+        border-radius: var(--radius-sm);
+        border-left: 2px solid transparent;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .toc a:hover,
+      .toc a.active {
+        color: var(--accent);
+        background: var(--accent-soft);
+        border-left-color: var(--accent);
+      }
+      .toc-mobile {
+        display: none;
+        margin: 1rem 0 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+      }
+      .toc-mobile summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      @media (max-width: 1024px) {
+        .toc {
+          display: none;
+        }
+        .toc-mobile {
+          display: block;
+        }
+        .toc-mobile .toc {
+          display: block;
+          padding-top: 0.75rem;
+        }
+      }
+
+      /* Headings */
+      h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        margin: 4rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+      }
+      h2:first-child {
+        margin-top: 0;
+      }
+      h2 .num {
+        display: inline-block;
+        width: 2rem;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 2rem 0 0.75rem;
+        color: var(--text);
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      h2,
+      h3 {
+        scroll-margin-top: 2rem;
+      }
+
+      /* Code */
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.875em;
+        padding: 0.125em 0.375em;
+        border-radius: var(--radius-sm);
+        background: var(--code-bg);
+        color: var(--code-text);
+      }
+      pre {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        background: var(--code-bg);
+        color: var(--code-text);
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 1rem 0;
+        border: 1px solid var(--border);
+      }
+      pre code {
+        padding: 0;
+        background: transparent;
+        font-size: inherit;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin: 1.25rem 0 1.5rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+      }
+      table th,
+      table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--border);
+      }
+      table th {
+        background: var(--surface);
+        font-weight: 600;
+        color: var(--text);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      table tr:last-child td {
+        border-bottom: none;
+      }
+      table tr:nth-child(even) td {
+        background: var(--surface);
+      }
+      table code {
+        font-size: 0.8rem;
+      }
+
+      /* Callouts */
+      .callout {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        border-left: 4px solid;
+        border-radius: var(--radius);
+        margin: 1.25rem 0;
+      }
+      .callout svg {
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+      }
+      .callout-info {
+        background: var(--callout-info-bg);
+        border-left-color: var(--callout-info-bd);
+      }
+      .callout-warn {
+        background: var(--callout-warn-bg);
+        border-left-color: var(--callout-warn-bd);
+      }
+      .callout-danger {
+        background: var(--callout-danger-bg);
+        border-left-color: var(--callout-danger-bd);
+      }
+      .callout-title {
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+      .callout p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Phase cards (lifecycle) */
+      .phase-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin: 1.5rem 0 2rem;
+      }
+      .phase {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .phase summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        color: var(--text);
+        user-select: none;
+      }
+      .phase summary::-webkit-details-marker {
+        display: none;
+      }
+      .phase summary::after {
+        content: '+';
+        margin-left: auto;
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        font-size: 1.25rem;
+        font-weight: 400;
+      }
+      .phase[open] summary::after {
+        content: '−';
+      }
+      .phase summary:hover {
+        color: var(--accent);
+      }
+      .phase-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .phase-body {
+        padding: 0 1.25rem 1.25rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+      }
+      .phase-body dl {
+        display: grid;
+        grid-template-columns: 9rem 1fr;
+        gap: 0.5rem 1rem;
+        margin: 0.75rem 0 1rem;
+        font-size: 0.92rem;
+      }
+      .phase-body dt {
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding-top: 0.15rem;
+      }
+      .phase-body dd {
+        margin: 0;
+        color: var(--text);
+      }
+      @media (max-width: 600px) {
+        .phase-body dl {
+          grid-template-columns: 1fr;
+          gap: 0.25rem 0;
+        }
+        .phase-body dt {
+          padding-top: 0.5rem;
+        }
+      }
+
+      /* Skill catalog */
+      .skill-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0 2rem;
+      }
+      .skill-card {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        transition:
+          border-color 0.15s,
+          transform 0.15s;
+      }
+      .skill-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .skill-card-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .skill-card-name {
+        font-family: var(--font-mono);
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .skill-card-trigger {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+      }
+      .skill-card-desc {
+        font-size: 0.88rem;
+        color: var(--text-soft);
+        line-height: 1.5;
+        flex: 1;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      .badge-foundation {
+        color: var(--badge-foundation);
+        background: var(--badge-foundation-soft);
+      }
+      .badge-workflow {
+        color: var(--badge-workflow);
+        background: var(--badge-workflow-soft);
+      }
+      .badge-generator {
+        color: var(--badge-generator);
+        background: var(--badge-generator-soft);
+      }
+      .badge-tool {
+        color: var(--badge-tool);
+        background: var(--badge-tool-soft);
+      }
+      .badge-reference {
+        color: var(--badge-reference);
+        background: var(--badge-reference-soft);
+      }
+
+      /* Two-column commands/scripts */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+      }
+      @media (max-width: 768px) {
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+      .two-col h3 {
+        margin-top: 0;
+      }
+
+      .list-plain {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .list-plain li {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        font-size: 0.9rem;
+      }
+      .list-plain li code {
+        font-size: 0.8rem;
+      }
+      .list-plain .muted {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        margin-top: 0.15rem;
+      }
+
+      /* Type-icon row in §2 */
+      .type-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .type-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+      .type-icon svg {
+        width: 1rem;
+        height: 1rem;
+      }
+      .type-name {
+        font-weight: 600;
+        font-family: var(--font-mono);
+      }
+
+      /* Mnemonic block */
+      .mnemonic {
+        background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin: 1.5rem 0;
+        font-size: 1.05rem;
+      }
+      .mnemonic strong {
+        color: var(--accent);
+      }
+
+      /* TL;DR */
+      blockquote.tldr {
+        margin: 2rem 0;
+        padding: 1.5rem 2rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius);
+        font-size: 1.15rem;
+        font-style: italic;
+        color: var(--text-soft);
+      }
+      blockquote.tldr p {
+        margin: 0;
+      }
+      ul.tldr-list {
+        padding-left: 1.25rem;
+        margin: 1rem 0;
+      }
+      ul.tldr-list li {
+        margin-bottom: 0.5rem;
+        color: var(--text-soft);
+      }
+      ul.tldr-list strong {
+        color: var(--text);
+      }
+
+      /* Diagram boxes */
+      .diagram-block {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem 1.25rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+      }
+      .diagram-caption {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 0.75rem;
+        font-style: italic;
+      }
+
+      /* Footer */
+      footer.site-footer {
+        margin-top: 6rem;
+        padding: 3rem 0 2rem;
+        border-top: 1px solid var(--border);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .footer-card {
+        display: block;
+        padding: 1rem 1.25rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        text-decoration: none;
+        transition: border-color 0.15s;
+      }
+      .footer-card:hover {
+        border-color: var(--accent);
+      }
+      .footer-card-title {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.25rem;
+      }
+      .footer-card-desc {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .footer-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+      }
+      .footer-meta code {
+        font-size: 0.78rem;
+      }
+
+      /* Misc */
+      a {
+        color: var(--accent);
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+      }
+      .muted {
+        color: var(--text-muted);
+      }
+      .small {
+        font-size: 0.85rem;
+      }
+      ul,
+      ol {
+        padding-left: 1.5rem;
+      }
+      li {
+        margin-bottom: 0.35rem;
+      }
+      ::selection {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+    </style>
   </head>
   <body>
     <header class="shell hero">
-      <span class="hero-eyebrow">Onboarding · v1.1</span>
+      <span class="hero-eyebrow">Onboarding · v1.2</span>
       <h1>Agentic <span class="accent">Dev</span> Boilerplate</h1>
       <p class="hero-sub">AI-driven development on Next.js + Supabase + TypeScript.</p>
       <p class="hero-tagline">
@@ -170,11 +946,11 @@
           <span class="cta-title">The lifecycle</span>
           <span class="cta-desc">Five phases, from clone to daily dev.</span>
         </a>
-        <a class="cta" href="#section-7">
+        <a class="cta" href="#section-9">
           <span class="cta-title">Skill catalog</span>
           <span class="cta-desc">All 10 workflow skills, what they do, when to call them.</span>
         </a>
-        <a class="cta" href="#section-6">
+        <a class="cta" href="#section-8">
           <span class="cta-title">Cheat sheet</span>
           <span class="cta-desc">"I want X, I run Y" — copy-pasteable.</span>
         </a>
@@ -189,12 +965,17 @@
             <li><a href="#section-1">1. The fundamental idea</a></li>
             <li><a href="#section-2">2. Three categories of moving parts</a></li>
             <li><a href="#section-3">3. The lifecycle</a></li>
-            <li><a href="#section-4">4. The Jira state machine</a></li>
-            <li><a href="#section-5">5. How everything connects</a></li>
-            <li><a href="#section-6">6. Cheat sheet</a></li>
-            <li><a href="#section-7">7. Skills catalog</a></li>
-            <li><a href="#section-8">8. Commands &amp; Scripts</a></li>
-            <li><a href="#section-9">9. TL;DR</a></li>
+            <li><a href="#section-4">4. The two confusing pieces</a></li>
+            <li><a href="#section-5">5. The Jira state machine</a></li>
+            <li><a href="#section-6">6. How everything connects</a></li>
+            <li><a href="#section-7">7. /sprint-development vs /sdd-*</a></li>
+            <li><a href="#section-8">8. Cheat sheet</a></li>
+            <li><a href="#section-9">9. Skills catalog</a></li>
+            <li><a href="#section-10">10. Commands &amp; Scripts</a></li>
+            <li><a href="#section-11">11. Pieces you NEVER invoke directly</a></li>
+            <li><a href="#section-12">12. MCPs available</a></li>
+            <li><a href="#section-13">13. TL;DR</a></li>
+            <li><a href="#section-14">14. Where to go next</a></li>
           </ol>
         </nav>
       </details>
@@ -207,12 +988,17 @@
               <li><a href="#section-1">1. The fundamental idea</a></li>
               <li><a href="#section-2">2. Three moving parts</a></li>
               <li><a href="#section-3">3. The lifecycle</a></li>
-              <li><a href="#section-4">4. Jira state machine</a></li>
-              <li><a href="#section-5">5. How it all connects</a></li>
-              <li><a href="#section-6">6. Cheat sheet</a></li>
-              <li><a href="#section-7">7. Skills catalog</a></li>
-              <li><a href="#section-8">8. Commands &amp; Scripts</a></li>
-              <li><a href="#section-9">9. TL;DR</a></li>
+              <li><a href="#section-4">4. Two confusing pieces</a></li>
+              <li><a href="#section-5">5. Jira state machine</a></li>
+              <li><a href="#section-6">6. How it all connects</a></li>
+              <li><a href="#section-7">7. sprint-development vs sdd-*</a></li>
+              <li><a href="#section-8">8. Cheat sheet</a></li>
+              <li><a href="#section-9">9. Skills catalog</a></li>
+              <li><a href="#section-10">10. Commands &amp; Scripts</a></li>
+              <li><a href="#section-11">11. Never invoke directly</a></li>
+              <li><a href="#section-12">12. MCPs available</a></li>
+              <li><a href="#section-13">13. TL;DR</a></li>
+              <li><a href="#section-14">14. Where to go next</a></li>
             </ol>
           </nav>
         </aside>
@@ -387,7 +1173,7 @@
               <code>.agents/jira.json</code> + <code>.agents/jira-required.yaml</code>). Skills
               resolve <code>{{VAR}}</code> and <code>{{jira.*}}</code> placeholders against it on
               every AI session; commands use the same resolver; scripts read the YAML and write
-              back to it. See <a href="#section-5">§5 Circuit 1</a> for the full resolution flow.
+              back to it. See <a href="#section-6">§6 Circuit 1</a> for the full resolution flow.
             </p>
           </section>
 
@@ -703,9 +1489,10 @@ bun run lint:agents           # validate placeholders</code></pre>
                         <li>
                           <code>/sync-ai-memory</code> — audit + patch the 5 always-included docs
                           (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
-                          <code>docs/agentic-development-engineering.md</code>,
-                          <code>docs/getting-started.md</code>) plus any auto-detected
-                          high-frequency markdown.
+                          <code>INSTALLER.md</code>,
+                          <code>docs/agentic-development-engineering.md</code>) plus the
+                          standalone HTML <code>docs/onboarding.html</code> and any
+                          auto-detected high-frequency markdown.
                         </li>
                         <li>
                           <code>/business-data-map</code>, <code>/business-feature-map</code>,
@@ -744,9 +1531,84 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
           </section>
 
-          <!-- =======================================================  SECTION 4  -->
+          <!-- =======================================================  SECTION 4 (NEW)  -->
           <section id="section-4">
-            <h2><span class="num">4.</span>The Jira state machine</h2>
+            <h2><span class="num">4.</span>The two confusing pieces</h2>
+
+            <p>
+              Two pieces have similar-sounding names and overlapping verbs ("init", "bootstrap").
+              They are NOT interchangeable. Use this table to avoid running the wrong one.
+            </p>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Piece</th>
+                    <th>When you invoke it</th>
+                    <th>What it does</th>
+                    <th>Frequency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong><code>/agentic-dev-core</code></strong> (skill)</td>
+                    <td>
+                      Once, ONLY if the foundation files are missing (à la carte install). If you
+                      cloned the full repo, you NEVER invoke it directly.
+                    </td>
+                    <td>
+                      Generates <code>CLAUDE.md</code>, <code>.agents/project.yaml</code>,
+                      <code>.agents/jira-required.yaml</code>, the foundation scripts
+                      (<code>agents-setup</code>, <code>agents-lint</code>,
+                      <code>sync-jira-fields</code>, <code>check-jira-setup</code>), merges entries
+                      into <code>package.json</code>. Idempotent: existing files are preserved.
+                    </td>
+                    <td>One-time</td>
+                  </tr>
+                  <tr>
+                    <td><strong><code>/project-bootstrap</code></strong> (skill)</td>
+                    <td>Once per project, AFTER <code>/project-foundation</code> finishes.</td>
+                    <td>
+                      Scaffolds the codebase: backend skeleton (DB, API, types, OpenAPI, auth,
+                      env), frontend skeleton (design system from <code>DESIGN.md</code>, routing,
+                      project structure). Modifies THIS repo.
+                    </td>
+                    <td>One-time per project</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p>Mnemonic:</p>
+
+            <div class="mnemonic">
+              <strong>Mnemonic:</strong> <code>agentic-dev-core</code> installs the
+              <strong>agent harness</strong> (so the AI knows the rules).
+              <code>project-bootstrap</code> scaffolds the <strong>codebase</strong> (so there's a
+              real backend and frontend to develop against).
+            </div>
+
+            <h3>A passive role you never invoke</h3>
+
+            <p>
+              <code>agentic-dev-core</code> has a second life beyond its <code>init</code> mode: it
+              <strong>hosts shared references</strong> that workflow skills cite on demand. When
+              <code>/sprint-development</code>, <code>/product-management</code>,
+              <code>/project-foundation</code>, or <code>/project-bootstrap</code> delegates to a
+              subagent, the AI loads
+              <code>agentic-dev-core/references/briefing-template.md</code>,
+              <code>dispatch-patterns.md</code>, and <code>orchestration-doctrine.md</code>
+              automatically. You never type <code>/agentic-dev-core</code> to read those files —
+              they are pulled in as part of orchestration. This passive role is invisible from the
+              user's seat, but it is why <code>agentic-dev-core</code> exists even after Phase 0 is
+              complete.
+            </p>
+          </section>
+
+          <!-- =======================================================  SECTION 5 (was 4)  -->
+          <section id="section-5">
+            <h2><span class="num">5.</span>The Jira state machine</h2>
 
             <p>
               <code>/sprint-development</code> drives the ticket through a four-state Jira workflow. Every
@@ -928,9 +1790,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             </p>
           </section>
 
-          <!-- =======================================================  SECTION 5  -->
-          <section id="section-5">
-            <h2><span class="num">5.</span>How everything connects internally</h2>
+          <!-- =======================================================  SECTION 6 (was 5)  -->
+          <section id="section-6">
+            <h2><span class="num">6.</span>How everything connects internally</h2>
 
             <p>
               Two circuits explain the wiring. Circuit 1 is about variable resolution (the static
@@ -1481,9 +2343,105 @@ bun run lint:agents           # validate placeholders</code></pre>
             </p>
           </section>
 
-          <!-- =======================================================  SECTION 6  -->
-          <section id="section-6">
-            <h2><span class="num">6.</span>Cheat sheet — "I want X, I run Y"</h2>
+          <!-- =======================================================  SECTION 7 (NEW)  -->
+          <section id="section-7">
+            <h2><span class="num">7.</span><code>/sprint-development</code> vs <code>/sdd-*</code> — when to use which</h2>
+
+            <p>
+              The most common point of confusion. Both workflows can drive a feature to merge. They
+              serve different shapes of work.
+            </p>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Skill</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Routine Jira ticket work (most cases)</td>
+                    <td><code>/sprint-development</code> (ticket-driven workflow)</td>
+                  </tr>
+                  <tr>
+                    <td>Large refactor / architectural decision / feature without ticket yet</td>
+                    <td><code>/sdd-*</code> (spec-driven workflow)</td>
+                  </tr>
+                  <tr>
+                    <td>Story with detailed specs you want to trace formally</td>
+                    <td>
+                      Both: <code>/sdd-spec</code> for spec, then <code>/sprint-development</code>
+                      for the cycle
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>When to reach for <code>/sprint-development</code></h3>
+
+            <p>
+              The default choice for normal day-to-day work. You have a Jira ticket, the AC is
+              reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle:
+              precheck the epic, transition the ticket through dev states (<code>Ready For Dev →
+              In Progress → In Review → Ready For QA</code>), plan, code, code review, deploy to
+              staging, optionally deploy to production. Nothing about the change requires a
+              multi-page architectural document — a clear implementation plan is enough.
+            </p>
+
+            <p>
+              Example: "Add empty state to the user list when no results match the filter." Ticket
+              exists, AC is 3 bullets, scope is one component plus one helper.
+              <code>/sprint-development</code> drives the whole thing.
+            </p>
+
+            <h3>When to reach for <code>/sdd-*</code></h3>
+
+            <p>
+              The right choice when the change is shaped more like a research project than a
+              ticket. You're touching architecture, the design space has alternatives worth
+              comparing, the change crosses several modules, or there's no ticket yet because no
+              one has scoped the work. SDD gives you explicit phases (explore → propose → spec →
+              design → tasks → apply → verify → archive) and an artifact trail that survives across
+              sessions via Engram.
+            </p>
+
+            <p>
+              Example: "Replace the auth model — move from session cookies to JWT with refresh
+              rotation." This is a change that benefits from <code>/sdd-explore</code> (investigate
+              the current model), <code>/sdd-propose</code> (compare approaches), and
+              <code>/sdd-design</code> (commit to an architecture) before any code lands.
+            </p>
+
+            <h3>When to combine both</h3>
+
+            <p>
+              You have a ticket but the spec is dense and you want it traced formally. Run
+              <code>/sdd-spec</code> first to lock down the requirements and scenarios as a delta
+              spec, then hand off to <code>/sprint-development</code> for the implementation cycle.
+              The spec gets archived after the ticket merges, leaving a permanent trace for future
+              readers.
+            </p>
+
+            <p>
+              The <code>/sdd-*</code> skills are installed by gentle-ai during
+              <code>bun run setup</code>. If you opted out of gentle-ai, only
+              <code>/sprint-development</code> is available — see
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md"
+                target="_blank"
+                rel="noopener"
+                ><code>INSTALLER.md</code></a
+              >
+              for the opt-out trade-off.
+            </p>
+          </section>
+
+          <!-- =======================================================  SECTION 8 (was 6)  -->
+          <section id="section-8">
+            <h2><span class="num">8.</span>Cheat sheet — "I want X, I run Y"</h2>
 
             <p>
               Every command below exists in <code>.claude/skills/</code>,
@@ -1603,9 +2561,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
           </section>
 
-          <!-- =======================================================  SECTION 7  -->
-          <section id="section-7">
-            <h2><span class="num">7.</span>Skills catalog</h2>
+          <!-- =======================================================  SECTION 9 (was 7)  -->
+          <section id="section-9">
+            <h2><span class="num">9.</span>Skills catalog</h2>
 
             <p>
               Every skill that ships in <code>.claude/skills/</code>. Some you invoke directly;
@@ -1811,9 +2769,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
           </section>
 
-          <!-- =======================================================  SECTION 8  -->
-          <section id="section-8">
-            <h2><span class="num">8.</span>Commands &amp; Scripts</h2>
+          <!-- =======================================================  SECTION 10 (was 8)  -->
+          <section id="section-10">
+            <h2><span class="num">10.</span>Commands &amp; Scripts</h2>
 
             <p>
               One-shot utilities — neither orchestrate long flows like skills nor maintain config
@@ -1833,8 +2791,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <span class="muted"
                       >Audit + patch the 5 always-included docs
                       (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
-                      <code>docs/agentic-development-engineering.md</code>,
-                      <code>docs/getting-started.md</code>) plus auto-detected high-frequency
+                      <code>INSTALLER.md</code>,
+                      <code>docs/agentic-development-engineering.md</code>) plus the standalone
+                      HTML <code>docs/onboarding.html</code> and auto-detected high-frequency
                       markdown. Preserves human-authored structure.</span
                     >
                   </li>
@@ -1969,9 +2928,125 @@ bun run lint:agents           # validate placeholders</code></pre>
             </p>
           </section>
 
-          <!-- =======================================================  SECTION 9  -->
-          <section id="section-9">
-            <h2><span class="num">9.</span>TL;DR mental model</h2>
+          <!-- =======================================================  SECTION 11 (NEW)  -->
+          <section id="section-11">
+            <h2><span class="num">11.</span>Pieces you NEVER invoke directly</h2>
+
+            <p>
+              These are passive loads — the AI pulls them in as part of orchestration, not because
+              you typed a command.
+            </p>
+
+            <ul>
+              <li>
+                <strong>Tool / community skills</strong> (<code>/playwright-cli</code>,
+                <code>/gh-cli</code>, <code>/skill-creator</code>, <code>/find-skills</code>,
+                <code>next-best-practices</code>, <code>tailwind-css-patterns</code>,
+                <code>shadcn</code>, etc.): the AI loads them automatically when a workflow skill
+                needs to talk to a browser, GitHub, or a specific stack. You can force-load them
+                when you genuinely need a one-shot operation, but they are usually invoked by other
+                skills, not by you.
+              </li>
+              <li>
+                <strong><code>agentic-dev-core/references/*</code></strong>
+                (<code>briefing-template.md</code>, <code>dispatch-patterns.md</code>,
+                <code>orchestration-doctrine.md</code>): the AI loads these when a workflow skill
+                delegates to a subagent. They are passive references — the subagent loads them
+                inside its own context to know the canonical briefing format and dispatch decision
+                rules.
+              </li>
+              <li>
+                <strong>Templates inside <code>.claude/skills/agentic-dev-core/templates/</code></strong>
+                (<code>CLAUDE.md.template</code>, <code>project.yaml.template</code>,
+                <code>jira-required.yaml.template</code>, the
+                <code>scripts/*.ts.template</code> files): only consumed by
+                <code>/agentic-dev-core</code> during init. They are byte-equivalent mirrors of the
+                live files at the repo root.
+              </li>
+              <li>
+                <strong>SDD orchestrator + SDD skills</strong> (<code>sdd-init</code>,
+                <code>sdd-explore</code>, <code>sdd-propose</code>, <code>sdd-spec</code>,
+                <code>sdd-design</code>, <code>sdd-tasks</code>, <code>sdd-apply</code>,
+                <code>sdd-verify</code>, <code>sdd-archive</code>, <code>skill-registry</code>):
+                installed by gentle-ai, hosted at the user level (not in this repo). They are
+                invoked directly when you choose the SDD path (see <a href="#section-7">§7</a>),
+                but the orchestrator that coordinates them runs in the background — you talk to it
+                via the <code>/sdd-*</code> triggers, not to its internal phase agents.
+              </li>
+              <li>
+                <strong>Engram (MCP persistent memory)</strong>: not a skill — an MCP server that
+                auto-captures decisions, conventions, and bug fixes across sessions.
+                <code>mem_save</code> / <code>mem_search</code> / <code>mem_context</code> are
+                called by the AI proactively, not by you. The protocol lives in your global
+                <code>CLAUDE.md</code>.
+              </li>
+            </ul>
+          </section>
+
+          <!-- =======================================================  SECTION 12 (NEW)  -->
+          <section id="section-12">
+            <h2><span class="num">12.</span>MCPs available</h2>
+
+            <p>
+              The four canonical MCPs are configured by <code>bun run setup</code>. Each one fills a
+              specific need:
+            </p>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>MCP</th>
+                    <th>Use it for</th>
+                    <th>When NOT to use</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Context7</strong></td>
+                    <td>
+                      Official library / framework docs (React, Next.js, Supabase, Tailwind, etc.)
+                    </td>
+                    <td>"How do I solve X" — that's Tavily territory</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tavily</strong></td>
+                    <td>Web search, community solutions, troubleshooting</td>
+                    <td>Library API syntax — that's Context7</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Supabase</strong></td>
+                    <td>Database queries, schema inspection, migrations, project state</td>
+                    <td>App-level business logic — that's the application code</td>
+                  </tr>
+                  <tr>
+                    <td><strong>n8n</strong></td>
+                    <td>Workflow automation, scheduled triggers, third-party integrations</td>
+                    <td>Synchronous user-facing API logic</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p>
+              Plus the always-available <strong>Engram</strong> MCP (persistent memory, installed
+              by gentle-ai) — not in the table above because you don't invoke it; the AI calls it
+              automatically on every save-worthy event.
+            </p>
+
+            <p>Decision rule for the AI (and for you when deciding which to suggest):</p>
+
+            <ul>
+              <li>Context7 for "how to use X" (official docs)</li>
+              <li>Tavily for "how to solve X" (community solutions)</li>
+              <li>Supabase for database / project state</li>
+              <li>n8n for workflow automation</li>
+            </ul>
+          </section>
+
+          <!-- =======================================================  SECTION 13 (was 9)  -->
+          <section id="section-13">
+            <h2><span class="num">13.</span>TL;DR mental model</h2>
 
             <ul class="tldr-list">
               <li>
@@ -2005,6 +3080,117 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <code>Ready For Dev</code> all the way to <code>Ready For QA</code>.
               </p>
             </blockquote>
+          </section>
+
+          <!-- =======================================================  SECTION 14 (NEW)  -->
+          <section id="section-14">
+            <h2><span class="num">14.</span>Where to go next</h2>
+
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>README.md</code></a
+                >
+                — the GitHub-landing summary, install steps, repository structure, and Skills
+                catalog.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CLAUDE.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>CLAUDE.md</code></a
+                >
+                — the canonical project memory + Tool Resolution table that maps
+                <code>[TAG_TOOL]</code> pseudocode to concrete CLIs / MCPs.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/CONTEXT.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>CONTEXT.md</code></a
+                >
+                — Context Engineering canonical map for this repo: stable file names, the
+                <code>.context/</code> vs <code>.claude/</code> split, architectural decisions, and
+                operational DO/DON'T rules.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>agentic-development-engineering.md</code></a
+                >
+                — methodology deep dive. §6 covers the <strong>why</strong> behind the knowledge
+                layer: token efficiency, progressive loading, the <code>.env</code> vs
+                <code>.agents/project.yaml</code> split, the four variable syntaxes.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>INSTALLER.md</code></a
+                >
+                — what <code>bun run setup</code> configures: gentle-ai (SDD skills, Engram,
+                foundation skills), community skills, MCPs, external CLIs, the hand-off matrix
+                <code>/sprint-development</code> vs <code>/sdd-*</code>, and how to opt out of
+                gentle-ai.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/jira-setup-guide.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>setup/jira-setup-guide.md</code></a
+                >
+                — configuring Jira credentials and the Atlassian MCP.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>setup/README.md</code></a
+                >
+                — index of setup guides in this repo.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>.agents/README.md</code></a
+                >
+                — the full <code>.agents/</code> contract: variable syntaxes, validation scripts,
+                workflows for adding prompts or required Jira fields, troubleshooting.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.claude/skills/agentic-dev-core/SKILL.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>.claude/skills/agentic-dev-core/SKILL.md</code></a
+                >
+                — foundation skill internals (bootstrap order, idempotency rules, source-of-truth
+                contract).
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-qa-boilerplate"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>agentic-qa-boilerplate</code></a
+                >
+                — the companion repo. If you need QA workflows (sprint testing, test documentation,
+                automation, regression), that lives there. Same <code>.agents/</code> system,
+                complementary skill layout.
+              </li>
+            </ul>
           </section>
         </main>
       </div>
@@ -2040,15 +3226,6 @@ bun run lint:agents           # validate placeholders</code></pre>
           >
             <span class="footer-card-title">CONTEXT.md</span>
             <span class="footer-card-desc">Why the knowledge layer is split the way it is.</span>
-          </a>
-          <a
-            class="footer-card"
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/getting-started.md"
-            target="_blank"
-            rel="noopener"
-          >
-            <span class="footer-card-title">getting-started.md</span>
-            <span class="footer-card-desc">The Markdown source this page expands on — fresh-clone walkthrough.</span>
           </a>
           <a
             class="footer-card"
@@ -2106,8 +3283,8 @@ bun run lint:agents           # validate placeholders</code></pre>
           </a>
         </div>
         <p class="footer-meta">
-          <code>agentic-dev-boilerplate</code> · MIT License · Onboarding page v1.1 · Last updated
-          2026-05-11
+          <code>agentic-dev-boilerplate</code> · MIT License · Onboarding page v1.2 · Last updated
+          2026-05-13
         </p>
       </footer>
     </div>

@@ -5,14 +5,14 @@
  * ONBOARDING — Local static server for the boilerplate's onboarding page
  * ============================================================================
  *
- * Serves `docs/onboarding/` over HTTP on a local port and opens the page in
+ * Serves `docs/` over HTTP on a local port and opens `docs/onboarding.html` in
  * the default browser. Designed to be invoked via `bun run onboarding`.
  *
  * Why a tiny custom server instead of `python -m http.server` or similar?
  *   - Zero external dependencies (uses only `Bun.serve` + `node:child_process`).
  *   - Auto-opens the browser on macOS / Linux / Windows.
  *   - No-cache headers so edits to the onboarding HTML/CSS show up on reload.
- *   - Path-traversal guard so we never serve anything outside docs/onboarding/.
+ *   - Path-traversal guard so we never serve anything outside docs/.
  *
  * Companion to:
  *   - `scripts/agents-setup.ts`   (interactive .agents/project.yaml setup)
@@ -35,7 +35,7 @@
  * ============================================================================
  *
  *   0  clean shutdown (SIGINT / SIGTERM, or --help)
- *   1  startup error (missing docs/onboarding/, missing index.html, port in
+ *   1  startup error (missing docs/, missing onboarding.html, port in
  *      use, invalid --port value, or unexpected runtime error)
  *
  * ============================================================================
@@ -50,7 +50,7 @@ import { join, relative, resolve } from 'node:path';
 // ============================================================================
 
 const REPO_ROOT = join(import.meta.dir, '..');
-const ONBOARDING_DIR = join(REPO_ROOT, 'docs', 'onboarding');
+const ONBOARDING_DIR = join(REPO_ROOT, 'docs');
 const ONBOARDING_DIR_ABS = resolve(ONBOARDING_DIR);
 const DEFAULT_PORT = 4321;
 
@@ -140,7 +140,7 @@ function resolveDefaultPort(): number {
 }
 
 function printHelp(): void {
-  out(`onboarding — local static server for docs/onboarding/
+  out(`onboarding — local static server for docs/
 
 USAGE:
   bun run onboarding [flags]
@@ -153,10 +153,10 @@ FLAGS:
   --help, -h     Show this help.
 
 WHAT IT SERVES:
-  Static files under docs/onboarding/. The root path '/' resolves to
-  index.html. Every response carries 'Cache-Control: no-store' so changes to
-  the onboarding HTML/CSS show up on a hard refresh. A path-traversal guard
-  rejects any request that would escape docs/onboarding/.
+  Static files under docs/. The root path '/' resolves to onboarding.html.
+  Every response carries 'Cache-Control: no-store' so changes to the
+  onboarding HTML/CSS show up on a hard refresh. A path-traversal guard
+  rejects any request that would escape docs/.
 
 BROWSER AUTO-OPEN:
   After the server is listening, the script invokes the platform-native opener
@@ -171,7 +171,7 @@ SHUTDOWN:
 
 EXIT CODES:
   0  clean shutdown (SIGINT / SIGTERM, or --help)
-  1  startup error (missing docs/onboarding/, missing index.html, port in
+  1  startup error (missing docs/, missing onboarding.html, port in
      use, invalid --port value, or unexpected runtime error)
 `);
 }
@@ -250,7 +250,7 @@ function mimeFor(path: string): string | undefined {
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
   let pathname = url.pathname;
-  if (pathname === '/' || pathname === '') { pathname = '/index.html'; }
+  if (pathname === '/' || pathname === '') { pathname = '/onboarding.html'; }
 
   // Decode percent-encoded segments before resolving — otherwise `..%2f` style
   // payloads would slip past the traversal guard. URIError on malformed input
@@ -307,13 +307,13 @@ async function main(): Promise<void> {
   }
 
   if (!existsSync(ONBOARDING_DIR)) {
-    log.error(`docs/onboarding/ not found at ${relative(process.cwd(), ONBOARDING_DIR)}`);
+    log.error(`docs/ not found at ${relative(process.cwd(), ONBOARDING_DIR)}`);
     log.dim('Run this command from the repo root, or generate the onboarding page first.');
     process.exit(1);
   }
-  if (!existsSync(join(ONBOARDING_DIR, 'index.html'))) {
-    log.error('docs/onboarding/index.html not found.');
-    log.dim('The onboarding page must include an index.html entry point.');
+  if (!existsSync(join(ONBOARDING_DIR, 'onboarding.html'))) {
+    log.error('docs/onboarding.html not found.');
+    log.dim('The onboarding page must include an onboarding.html entry point.');
     process.exit(1);
   }
 
