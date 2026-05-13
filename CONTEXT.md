@@ -60,11 +60,10 @@ agentic-dev-boilerplate/
 │   └── PBI/                        Per-epic / per-ticket backlog artifacts
 │
 ├── docs/                           Human-facing documentation
+│   ├── onboarding.html             Single-file HTML onboarding artifact (served by `bun run onboarding`)
 │   ├── agentic-development-engineering.md   Methodology deep dive
-│   ├── getting-started.md          Onboarding
 │   ├── architectures/              Stack-specific guides (e.g. supabase-nextjs)
 │   ├── methodology/                IQL, Jira platform, early/mid/late-game testing notes
-│   ├── onboarding.html             Single-file HTML onboarding artifact (served by `bun run onboarding`)
 │   ├── setup/                      MCP, Jira, gentle-ai setup
 │   └── workflows/                  git-flow, environments, OpenAPI sync, template updates
 │
