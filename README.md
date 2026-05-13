@@ -15,7 +15,7 @@
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | **Just install**                                                   | `bun install && bun run setup` (skip the rest)                                            |
 | **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                      |
-| **Methodology / philosophy** (~45 min)                             | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
+| **Methodology / philosophy / extension guide** (~25 min)           | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
 | **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                            |
 | **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map) |
 
