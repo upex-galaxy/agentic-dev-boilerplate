@@ -1,8 +1,6 @@
-# Actualizar Template - Guia de Uso (v4.1)
+# Actualizar Template - Guia de Uso
 
-Esta guia explica como usar el script `update-template.js` (v4.1) para mantener tu proyecto sincronizado con el template `upex-galaxy/ai-driven-project-starter`.
-
-> **Cambio importante v4.1.** El modelo legacy `.prompts/fase-*` y `.books/` fue retirado. El contenido de workflow ahora vive en `.claude/skills/` (skills auto-cargadas por Claude Code) y `.claude/commands/` (slash commands). Los comandos `bun up prompts`, `bun up books` y los flags `--fase` / `--rol` ya no existen.
+Esta guia explica como usar el script `cli/update-boilerplate.ts` (invocado via `bun up`) para mantener tu proyecto sincronizado con el template `upex-galaxy/agentic-dev-boilerplate`. El contenido de workflow vive en `.claude/skills/` (skills auto-cargadas por Claude Code) y `.claude/commands/` (slash commands).
 
 ---
 
@@ -304,18 +302,18 @@ update-template.js actualizado a v4.1
 
 ### Se actualizan (merge)
 
-| Componente       | Contenido                                                              |
-| ---------------- | ---------------------------------------------------------------------- |
-| `.claude/`       | `settings.json` + `skills/` + `commands/` (workflows + slash commands) |
-| `.agents/`       | `project.yaml`, `jira-required.yaml`, `jira-fields.json`, `jira-workflows.json`, framework files     |
-| `scripts/`       | `agents/`, `sync-jira-issues.ts` (solo del framework)                         |
-| `cli/`           | `update-template.js`, `sync-openapi.ts`, `xray/`                       |
-| `docs/`          | `architectures/`, `methodology/`, `setup/`, `workflows/`               |
-| `.context/`      | `system-prompt.md`, `README.md`, archivos de Discovery (genericos)     |
-| `templates/mcp/` | Templates de configuracion MCP                                         |
-| `.vscode/`       | `extensions.json`, `settings.json`                                     |
-| `.husky/`        | Git hooks                                                              |
-| Tooling          | `.editorconfig`, `.prettierrc`, `.prettierignore`                      |
+| Componente       | Contenido                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `.claude/`       | `settings.json` + `skills/` + `commands/` (workflows + slash commands)                           |
+| `.agents/`       | `project.yaml`, `jira-required.yaml`, `jira-fields.json`, `jira-workflows.json`, framework files |
+| `scripts/`       | `agents/`, `sync-jira-issues.ts` (solo del framework)                                            |
+| `cli/`           | `update-template.js`, `sync-openapi.ts`, `xray/`                                                 |
+| `docs/`          | `architectures/`, `methodology/`, `setup/`, `workflows/`                                         |
+| `.context/`      | `system-prompt.md`, `README.md`, archivos de Discovery (genericos)                               |
+| `templates/mcp/` | Templates de configuracion MCP                                                                   |
+| `.vscode/`       | `extensions.json`, `settings.json`                                                               |
+| `.husky/`        | Git hooks                                                                                        |
+| Tooling          | `.editorconfig`, `.prettierrc`, `.prettierignore`                                                |
 
 ### NO se tocan (tu trabajo)
 

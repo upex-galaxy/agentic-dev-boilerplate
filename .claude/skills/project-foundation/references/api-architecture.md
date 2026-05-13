@@ -12,12 +12,6 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture
 - Command output: `.context/business/business-api-map.md` (auth model, critical journeys, architecture-behind-the-API, external integrations).
 - The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
 
-## Naming note (post-refactor)
-
-The legacy output filename was `.context/business/api-architecture.md`. The standalone command writes `.context/business/business-api-map.md` instead, because the new playbook is **business-first** (it explains how the API powers user journeys) rather than a pure endpoint catalog. The endpoint catalog now lives in `business-feature-map.md` and the generated OpenAPI types under `api/schemas/`.
-
-If you have an existing `.context/business/api-architecture.md` from a pre-refactor run, treat it as legacy — `/business-api-map` will create the new file alongside it; you can delete the old one once the new one is reviewed.
-
 ## Inputs the command expects (provided by Phase 4 context)
 
 - OpenAPI spec (`api/openapi.json` or equivalent).

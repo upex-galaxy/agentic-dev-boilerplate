@@ -6,15 +6,12 @@
  * without deleting user-owned files. Skills, commands, .agents/, scripts/, cli/, .vscode/,
  * .husky/, docs/, .context/, templates/mcp/, and tooling files are all in scope.
  *
- * v5.1 — granular `agents-docs` + `claude-config` commands plus framework-gap detection.
- *        - `agents-docs`: syncs only `.agents/README.md`; protects project.yaml, jira-fields.json,
- *          jira-workflows.json, jira-required.yaml.
- *        - `claude-config`: syncs only `.claude/settings.json`; protects settings.local.json.
- *        - `detectMissingFrameworkScripts()`: surfaces missing framework scripts/deps in
- *          consumer's package.json (read-only — never overwrites the file).
- * v5.0 — TypeScript migration. Renamed from update-template.js → update-boilerplate.ts.
- * v4.1 — legacy `.prompts/fase-*` + `.books/` model retired; content now lives in
- * `.claude/skills/` and `.claude/commands/`. Legacy commands map to `claude` with a warning.
+ * Granular commands:
+ *   - `agents-docs`: syncs only `.agents/README.md`; protects project.yaml, jira-fields.json,
+ *     jira-workflows.json, jira-required.yaml.
+ *   - `claude-config`: syncs only `.claude/settings.json`; protects settings.local.json.
+ *   - `detectMissingFrameworkScripts()`: surfaces missing framework scripts/deps in
+ *     consumer's package.json (read-only — never overwrites the file).
  *
  * Requires: gh CLI (authenticated), bun runtime.
  *
@@ -374,8 +371,8 @@ ${colors.bold}USO:${colors.reset}
   bun up <comando> [opciones]   ${colors.dim}# Ejecucion directa${colors.reset}
 
 Sincroniza skills, commands, scripts, .agents/, y archivos de configuracion
-desde el boilerplate upstream. Las skills (.claude/skills/) y commands
-(.claude/commands/) reemplazan al modelo legacy de .prompts/fase-*.
+desde el boilerplate upstream. Las skills viven en .claude/skills/ y los
+slash commands en .claude/commands/.
 
 ${colors.bold}COMANDOS:${colors.reset}
   all           Actualiza todo (merge completo de todos los directorios)
@@ -522,11 +519,11 @@ function parseArgs(args: string[]): ParsedArgs {
       if (arg === '--fase' || arg === '--phase' || arg === '--rol' || arg === '--role') {
         i++;
       }
-      logWarning(`Flag legacy ignorada: ${arg} (el modelo .prompts/fase-* fue retirado en v4.1)`);
+      logWarning(`Flag legacy ignorada: ${arg}`);
     }
     else if (legacyAliases[arg]) {
       const mapped = legacyAliases[arg];
-      logWarning(`Comando legacy '${arg}' mapeado a '${mapped}' (skills + commands reemplazan a .prompts/.books)`);
+      logWarning(`Comando legacy '${arg}' mapeado a '${mapped}'`);
       result.commands.push(mapped);
     }
     else if (validCommands.includes(arg)) {
