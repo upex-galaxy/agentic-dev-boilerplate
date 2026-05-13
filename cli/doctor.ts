@@ -10,10 +10,18 @@
  * Usage:
  *   bun run setup:doctor              # human-readable summary
  *   bun run setup:doctor --json       # machine-readable JSON
+ *   bun run setup:doctor --preflight  # blocker-only gate for `bun run setup`
+ *
+ * --preflight mode: minimal pre-install gate. Checks only the things that
+ * would crash `cli/install.ts` at module-load time (Bun runtime present and
+ * recent enough, `node_modules/@inquirer/prompts` resolvable). Skips env
+ * vars, MCPs, direnv, external CLIs — those are install.ts's job. Uses only
+ * node built-ins so it runs safely before `bun install`. Wired into the
+ * `setup` npm script as `bun cli/doctor.ts --preflight && bun cli/install.ts`.
  *
  * Exit code:
- *   0 if status === "ok"
- *   1 if status === "needs-action"
+ *   0 if status === "ok"     (full mode) or preflight passes
+ *   1 if status === "needs-action"  or preflight blocker hit
  *
  * Side effects: none. This script never edits files or installs anything.
  */
@@ -33,6 +41,11 @@ const ENV_PATH = join(REPO_ROOT, '.env');
 const MCP_PATH = join(REPO_ROOT, '.mcp.json');
 const OPENCODE_PATH = join(REPO_ROOT, 'opencode.jsonc');
 const NODE_MODULES_DOTENV = join(REPO_ROOT, 'node_modules', 'dotenv-cli');
+// --preflight mode resolves install.ts's only third-party import.
+const INQUIRER_MARKER = join(REPO_ROOT, 'node_modules', '@inquirer', 'prompts', 'package.json');
+
+// Minimum Bun version that install.ts is known to work with.
+const MIN_BUN: readonly [number, number, number] = [1, 0, 0];
 
 // Required MCP env vars (mirrors MCP_SERVER_SECRETS in cli/install.ts).
 const REQUIRED_VARS = [
@@ -220,6 +233,19 @@ function shellHookLine(): { line: string, rc: string } {
   return { line: 'eval "$(direnv hook bash)"', rc: '~/.bashrc' };
 }
 
+function parseBunVersion(v: string): [number, number, number] | null {
+  const m = v.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!m) { return null; }
+  return [Number(m[1]), Number(m[2]), Number(m[3])];
+}
+
+function compareVersion(a: readonly number[], b: readonly number[]): number {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b[i]) { return a[i] - b[i]; }
+  }
+  return 0;
+}
+
 // ----------------------------------------------------------------------------
 // Main check
 // ----------------------------------------------------------------------------
@@ -383,8 +409,49 @@ function printHuman(report: DoctorReport): void {
 }
 
 // ----------------------------------------------------------------------------
+// Preflight (blocker-only gate for `bun run setup`)
+// ----------------------------------------------------------------------------
+
+function preflightFail(msg: string, fix: string): never {
+  process.stderr.write(`${COLORS.red}✗ Preflight failed:${COLORS.reset} ${msg}\n`);
+  process.stderr.write(`${COLORS.yellow}  Fix:${COLORS.reset} ${fix}\n`);
+  process.exit(1);
+}
+
+function runPreflight(): never {
+  const bunVersion = process.versions.bun;
+  if (!bunVersion) {
+    preflightFail(
+      'Bun runtime not detected (process.versions.bun is undefined).',
+      'Install Bun from https://bun.sh, then re-run `bun run setup`.',
+    );
+  }
+  const parsed = parseBunVersion(bunVersion);
+  if (!parsed || compareVersion(parsed, MIN_BUN) < 0) {
+    preflightFail(
+      `Bun ${bunVersion} is older than required ${MIN_BUN.join('.')}.`,
+      'Upgrade Bun: `bun upgrade` (or reinstall from https://bun.sh).',
+    );
+  }
+  if (!existsSync(INQUIRER_MARKER)) {
+    preflightFail(
+      'Project dependencies not installed (node_modules/@inquirer/prompts missing).',
+      'Run `bun install` first, then re-run `bun run setup`.',
+    );
+  }
+  process.stdout.write(
+    `${COLORS.green}✓ Preflight OK${COLORS.reset} ${COLORS.dim}(Bun ${bunVersion}, deps installed)${COLORS.reset}\n`,
+  );
+  process.exit(0);
+}
+
+// ----------------------------------------------------------------------------
 // Entry
 // ----------------------------------------------------------------------------
+
+if (process.argv.includes('--preflight')) {
+  runPreflight();
+}
 
 const asJson = process.argv.includes('--json');
 
