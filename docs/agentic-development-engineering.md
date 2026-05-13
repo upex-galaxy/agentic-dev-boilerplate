@@ -3,7 +3,7 @@
 > **Purpose**: The single source of truth for what this repository is and how it works — the strategy, the architecture, the skills, the orchestration model, and the engineering discipline that back every line of code an AI agent commits.
 > **Audience**: Engineers, tech leads, product owners, and technical leaders evaluating or adopting this boilerplate. Read this before you read anything else.
 > **Scope**: Spec-Driven Development, Context Engineering, Claude Code skills and commands, MCP integrations, agent orchestration with human-in-the-loop, the per-story development loop, the design-system contract, and the merge-to-staging quality gate.
-> **Why "agentic"?** This practice is not "AI as a copilot autocompleting lines." It relies on auto-triggering skills, subagents dispatched for focused tasks, live tool use through MCPs and CLIs, persistent memory across sessions, and checkpointed human supervision. Those are the defining traits of *agentic* systems — hence the name.
+> **Why "agentic"?** This practice is not "AI as a copilot autocompleting lines." It relies on auto-triggering skills, subagents dispatched for focused tasks, live tool use through MCPs and CLIs, persistent memory across sessions, and checkpointed human supervision. Those are the defining traits of _agentic_ systems — hence the name.
 
 ---
 
@@ -42,13 +42,13 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
   (Define the product)        (Shape the backlog)            (Ship the code)
 ```
 
-| Tier | Owning skill(s) | Output |
-| ---- | --------------- | ------ |
-| **Bootstrap** (one-time) | `agentic-dev-core` | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json` |
-| **Foundation** (one-time per product) | `project-foundation` → `design-system` → `project-bootstrap` | `.context/idea/`, `.context/PRD/`, `.context/SRS/`, `.context/business/`, `DESIGN.md`, scaffolded backend + frontend |
-| **Management** (continuous) | `product-management` | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots |
-| **Implementation** (per story) | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging |
-| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive |
+| Tier                                                 | Owning skill(s)                                                     | Output                                                                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json`          |
+| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/idea/`, `.context/PRD/`, `.context/SRS/`, `.context/business/`, `DESIGN.md`, scaffolded backend + frontend |
+| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                      |
+| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                               |
+| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                            |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
 
@@ -127,7 +127,7 @@ Workflows live in `.claude/skills/<name>/SKILL.md`, not in copy-paste prompt fil
 - **Composable** — `/unit-testing` runs standalone or mid-flight from `/sprint-development`. `/design-system` runs standalone or from `/project-foundation` Phase 2.5.
 - **Auto-triggered** — Claude Code matches user intent against the skill description and loads the right skill automatically. No `/<name>` typing required for common phrasings.
 
-Compare to the alternative: a `prompts/` directory full of `.md` files that developers copy into their chat window. There is no versioning of *behavior*, no autocomplete, no composition, no way to enforce that a "test plan" prompt is always run before a "test run" prompt.
+Compare to the alternative: a `prompts/` directory full of `.md` files that developers copy into their chat window. There is no versioning of _behavior_, no autocomplete, no composition, no way to enforce that a "test plan" prompt is always run before a "test run" prompt.
 
 ### 3.3 Agentic: orchestrator + subagents, not a single chat
 
@@ -160,28 +160,28 @@ This is the foundational decision behind every architectural choice in this repo
 
 ## 4. Glossary: Terms Used Throughout This Document
 
-| Term                   | Definition                                                                                                                                                       |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Token**              | The unit an AI model reads and writes. Tokens have direct cost and occupy context window space.                                                                  |
-| **Context Window**     | The memory available within a single conversation. Everything the AI can "see" right now.                                                                        |
-| **MCP**                | Model Context Protocol. A standard that lets AI tools talk to live systems — database, browser, web search, official library docs.                               |
-| **Skill**              | A reusable AI capability, stored under `.claude/skills/<name>/`. Auto-triggers when the user's intent matches its description.                                  |
-| **Command**            | A one-shot utility stored under `.claude/commands/<name>.md`. Invoked explicitly with `/<name>`. No auto-triggering.                                              |
-| **Subagent**           | A specialist worker dispatched by the orchestrator for a focused task (reading, writing, verifying, deploying).                                                  |
-| **Orchestrator**       | The main conversation thread that coordinates work. Decides; delegates; synthesises. Does not read or write code inline when delegation makes sense.             |
-| **Engram**             | Persistent memory layer (MCP server) that survives across sessions and compactions. Stores decisions, conventions, bug fixes, discoveries.                       |
-| **PRD**                | Product Requirements Document. Output of `/project-foundation` Phase 2. Defines *what* we are building.                                                          |
-| **SRS**                | Software Requirements Specification. Output of `/project-foundation` Phase 3. Defines *how* the system is structured.                                            |
-| **AC**                 | Acceptance Criterion. The Gherkin-formatted condition a story must satisfy to be considered done. Refined by `/product-management`.                              |
-| **PBI**                | Product Backlog Item. In this repo, the local folder (`.context/PBI/...`) that stores per-epic and per-story knowledge.                                          |
-| **SDD**                | Spec-Driven Development. Meta-skill bloque (`sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`).      |
-| **INVEST**             | Independent, Negotiable, Valuable, Estimable, Small, Testable. Validation criteria for user stories. Enforced by `/product-management`.                          |
-| **Implementation Plan**| The artefact produced by `/sprint-development` Stage 1. The input contract for Stage 2 (coding).                                                                          |
-| **Compact Rules**      | Pre-digested coding standards injected into subagent prompts so they do not have to load and parse a full skill registry on every dispatch.                      |
-| **Briefing Template**  | The 6-component format (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                       |
-| **Dispatch Pattern**   | One of Single / Sequential / Parallel / Background. Picked per stage in each skill's `## Subagent Dispatch Strategy` section.                                     |
-| **Active Environment** | The environment URLs and credentials currently in use (local / staging / production). Resolved from `testing.default_env` in `.agents/project.yaml` or session override. |
-| **Topic Key**          | The stable identifier under which an artefact is saved in engram (e.g. `pbi/{ticket}/impl-plan`). Documented in `agentic-dev-core/references/topic-key-conventions.md`. |
+| Term                    | Definition                                                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Token**               | The unit an AI model reads and writes. Tokens have direct cost and occupy context window space.                                                                          |
+| **Context Window**      | The memory available within a single conversation. Everything the AI can "see" right now.                                                                                |
+| **MCP**                 | Model Context Protocol. A standard that lets AI tools talk to live systems — database, browser, web search, official library docs.                                       |
+| **Skill**               | A reusable AI capability, stored under `.claude/skills/<name>/`. Auto-triggers when the user's intent matches its description.                                           |
+| **Command**             | A one-shot utility stored under `.claude/commands/<name>.md`. Invoked explicitly with `/<name>`. No auto-triggering.                                                     |
+| **Subagent**            | A specialist worker dispatched by the orchestrator for a focused task (reading, writing, verifying, deploying).                                                          |
+| **Orchestrator**        | The main conversation thread that coordinates work. Decides; delegates; synthesises. Does not read or write code inline when delegation makes sense.                     |
+| **Engram**              | Persistent memory layer (MCP server) that survives across sessions and compactions. Stores decisions, conventions, bug fixes, discoveries.                               |
+| **PRD**                 | Product Requirements Document. Output of `/project-foundation` Phase 2. Defines _what_ we are building.                                                                  |
+| **SRS**                 | Software Requirements Specification. Output of `/project-foundation` Phase 3. Defines _how_ the system is structured.                                                    |
+| **AC**                  | Acceptance Criterion. The Gherkin-formatted condition a story must satisfy to be considered done. Refined by `/product-management`.                                      |
+| **PBI**                 | Product Backlog Item. In this repo, the local folder (`.context/PBI/...`) that stores per-epic and per-story knowledge.                                                  |
+| **SDD**                 | Spec-Driven Development. Meta-skill bloque (`sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`).              |
+| **INVEST**              | Independent, Negotiable, Valuable, Estimable, Small, Testable. Validation criteria for user stories. Enforced by `/product-management`.                                  |
+| **Implementation Plan** | The artefact produced by `/sprint-development` Stage 1. The input contract for Stage 2 (coding).                                                                         |
+| **Compact Rules**       | Pre-digested coding standards injected into subagent prompts so they do not have to load and parse a full skill registry on every dispatch.                              |
+| **Briefing Template**   | The 6-component format (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                              |
+| **Dispatch Pattern**    | One of Single / Sequential / Parallel / Background. Picked per stage in each skill's `## Subagent Dispatch Strategy` section.                                            |
+| **Active Environment**  | The environment URLs and credentials currently in use (local / staging / production). Resolved from `testing.default_env` in `.agents/project.yaml` or session override. |
+| **Topic Key**           | The stable identifier under which an artefact is saved in engram (e.g. `pbi/{ticket}/impl-plan`). Documented in `agentic-dev-core/references/topic-key-conventions.md`.  |
 
 ---
 
@@ -235,11 +235,11 @@ The practice is organised in three conceptual tiers:
 
 ### Top tier — the Developer
 
-The human sits on top. The AI never ships anything on its own. Every stage has a checkpoint where a developer reviews, approves, modifies, or rejects the AI's work. Production deploys are *always* human-gated.
+The human sits on top. The AI never ships anything on its own. Every stage has a checkpoint where a developer reviews, approves, modifies, or rejects the AI's work. Production deploys are _always_ human-gated.
 
 ### Middle tier — the AI skills
 
-The skill roster is split by *phase* (declared in each `SKILL.md` frontmatter as `phase:`):
+The skill roster is split by _phase_ (declared in each `SKILL.md` frontmatter as `phase:`):
 
 - **`bootstrap`** — `agentic-dev-core` (one-time foundation install), `agentic-dev-onboard` (guided tour for newcomers).
 - **`foundation`** — `project-foundation` (Constitution + PRD + SRS + Discovery), `design-system` (DESIGN.md), `project-bootstrap` (backend + frontend scaffolding).
@@ -353,15 +353,15 @@ The canonical shape is documented in `.context/README.md`. The strategic reasoni
 
 A second knowledge surface exists outside `.context/`: the `agentic-dev-core/references/*.md` files. They host the briefing template, the dispatch patterns decision guide, the orchestration doctrine, the testing-capabilities cache schema, the topic-key conventions, the model-routing table, and the skill-resolver protocol. Workflow skills cite these files instead of duplicating the content. They are loaded on demand and form part of the practice's knowledge layer even though they live under `.claude/skills/` rather than `.context/`.
 
-| `agentic-dev-core` reference          | Purpose                                                                                                                |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `briefing-template.md`                | The 6-component subagent briefing format with concrete examples per dispatch pattern.                                  |
-| `dispatch-patterns.md`                | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                                    |
-| `orchestration-doctrine.md`           | Cacheable mirror of `CLAUDE.md` §Orchestration Mode (Subagent Strategy).                                               |
-| `model-routing.md`                    | Phase → model alias table (opus for foundation, sonnet for impl, haiku for archive).                                   |
-| `testing-capabilities.md`             | Cache schema + detection algorithm for `.context/_framework/testing-capabilities.json`.                                |
-| `topic-key-conventions.md`            | Stable engram topic keys per artefact (e.g. `pbi/{ticket}/impl-plan`, `sdd/{change}/spec`).                            |
-| `skill-resolver.md`                   | Skill-resolver protocol: how the orchestrator looks up compact rules and injects them into subagent prompts.            |
+| `agentic-dev-core` reference | Purpose                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `briefing-template.md`       | The 6-component subagent briefing format with concrete examples per dispatch pattern.                        |
+| `dispatch-patterns.md`       | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                          |
+| `orchestration-doctrine.md`  | Cacheable mirror of `CLAUDE.md` §Orchestration Mode (Subagent Strategy).                                     |
+| `model-routing.md`           | Phase → model alias table (opus for foundation, sonnet for impl, haiku for archive).                         |
+| `testing-capabilities.md`    | Cache schema + detection algorithm for `.context/_framework/testing-capabilities.json`.                      |
+| `topic-key-conventions.md`   | Stable engram topic keys per artefact (e.g. `pbi/{ticket}/impl-plan`, `sdd/{change}/spec`).                  |
+| `skill-resolver.md`          | Skill-resolver protocol: how the orchestrator looks up compact rules and injects them into subagent prompts. |
 
 ### Project variables vs runtime credentials
 
@@ -369,12 +369,12 @@ Static project values (`{{PROJECT_KEY}}`, `{{WEB_URL}}`, `{{API_URL}}`, `{{JIRA_
 
 Four reference syntaxes coexist across prompts and docs:
 
-| Syntax                         | Purpose                                         | Resolves from                                                                            |
-| ------------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)       | `.agents/project.yaml`                                                                   |
-| `{{environments.<env>.<var>}}` | Explicit cross-env reference                    | `.agents/project.yaml` → `environments.<env>.<var>` directly                              |
-| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`)    | Computed by the calling prompt at runtime. Never declared, never persisted.              |
-| `{{jira.<slug>}}`              | Jira custom field reference                     | `.agents/jira-required.yaml` (manifest) + `.agents/jira-fields.json` (resolved IDs)       |
+| Syntax                         | Purpose                                      | Resolves from                                                                       |
+| ------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)    | `.agents/project.yaml`                                                              |
+| `{{environments.<env>.<var>}}` | Explicit cross-env reference                 | `.agents/project.yaml` → `environments.<env>.<var>` directly                        |
+| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`) | Computed by the calling prompt at runtime. Never declared, never persisted.         |
+| `{{jira.<slug>}}`              | Jira custom field reference                  | `.agents/jira-required.yaml` (manifest) + `.agents/jira-fields.json` (resolved IDs) |
 
 Validated via `bun run lint:agents`, `bun run jira:sync-fields`, and `bun run jira:check`. The full contract lives in `.agents/README.md`.
 
@@ -405,18 +405,18 @@ The knowledge layer is static documentation. Before every meaningful action, the
 
 Each source feeds the AI a specific kind of truth:
 
-| Source                | What it provides                                                  | Access mechanism                              |
-| --------------------- | ----------------------------------------------------------------- | --------------------------------------------- |
-| **Frontend codebase** | Routes, components, state management, API call patterns           | Direct file reads (`apps/web/`, `src/app/`)   |
-| **Backend codebase**  | API routes, handlers, services, DB queries                        | Direct file reads (`apps/api/`, `src/api/`)   |
-| **Knowledge layer**   | Curated product specs, design tokens, discovery docs              | `.context/` files + `DESIGN.md` at root       |
-| **Database schema**   | Live tables, columns, relationships, RLS policies                 | `[DB_TOOL]` — Supabase MCP                    |
-| **API spec**          | Every endpoint, request/response shapes, types                    | `[API_TOOL]` — OpenAPI generated locally      |
-| **Engram memory**     | Decisions, bug fixes, conventions, discoveries from past sessions | `engram` MCP (`mem_search`, `mem_context`)    |
-| **Issue tracker**     | Tickets, ACs, comments, transitions, parent epic                  | `acli` skill (Atlassian CLI)                  |
-| **Library docs**      | Official documentation for libraries, frameworks, SDKs            | `context7` MCP                                |
-| **Web search**        | Community solutions, troubleshooting, recent changes              | `tavily` MCP                                  |
-| **Workflow automation** | Workflow design, integration patterns                           | `n8n` MCP                                     |
+| Source                  | What it provides                                                  | Access mechanism                            |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| **Frontend codebase**   | Routes, components, state management, API call patterns           | Direct file reads (`apps/web/`, `src/app/`) |
+| **Backend codebase**    | API routes, handlers, services, DB queries                        | Direct file reads (`apps/api/`, `src/api/`) |
+| **Knowledge layer**     | Curated product specs, design tokens, discovery docs              | `.context/` files + `DESIGN.md` at root     |
+| **Database schema**     | Live tables, columns, relationships, RLS policies                 | `[DB_TOOL]` — Supabase MCP                  |
+| **API spec**            | Every endpoint, request/response shapes, types                    | `[API_TOOL]` — OpenAPI generated locally    |
+| **Engram memory**       | Decisions, bug fixes, conventions, discoveries from past sessions | `engram` MCP (`mem_search`, `mem_context`)  |
+| **Issue tracker**       | Tickets, ACs, comments, transitions, parent epic                  | `acli` skill (Atlassian CLI)                |
+| **Library docs**        | Official documentation for libraries, frameworks, SDKs            | `context7` MCP                              |
+| **Web search**          | Community solutions, troubleshooting, recent changes              | `tavily` MCP                                |
+| **Workflow automation** | Workflow design, integration patterns                             | `n8n` MCP                                   |
 
 The `[TAG_TOOL]` brackets map to concrete implementations via the **Tool Resolution** table in `CLAUDE.md`. Skills never hard-code a tool name — they call `[DB_TOOL]` and let the table decide whether that means the Supabase MCP, a Postgres MCP, or raw `psql`.
 
@@ -484,16 +484,16 @@ The skill loads its references, opens the PBI folder for the target ticket (or c
 
 The practice runs on this combination of tools. Each is replaceable, but the combination is what the practice expects out of the box:
 
-| Tool                              | Role                                                             |
-| --------------------------------- | ---------------------------------------------------------------- |
-| **AI-native terminal** (Warp, etc.) | Terminal with blocks, smart autocomplete.                       |
-| **Claude Code**                   | The AI CLI that runs on top — dispatches skills, subagents, MCPs.|
-| **VSCode · Cursor · Windsurf**    | Editor — personal preference. Pick one.                          |
-| **Git** + **gh CLI**              | Version control and PR operations.                               |
-| **Bun**                           | Runtime + package manager.                                       |
-| **Vercel**                        | Frontend hosting + preview deploys.                              |
-| **Supabase**                      | Database, auth, storage.                                         |
-| **Jira (via `acli`)**             | Issue tracker — stories, bugs, epics.                            |
+| Tool                                | Role                                                              |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| **AI-native terminal** (Warp, etc.) | Terminal with blocks, smart autocomplete.                         |
+| **Claude Code**                     | The AI CLI that runs on top — dispatches skills, subagents, MCPs. |
+| **VSCode · Cursor · Windsurf**      | Editor — personal preference. Pick one.                           |
+| **Git** + **gh CLI**                | Version control and PR operations.                                |
+| **Bun**                             | Runtime + package manager.                                        |
+| **Vercel**                          | Frontend hosting + preview deploys.                               |
+| **Supabase**                        | Database, auth, storage.                                          |
+| **Jira (via `acli`)**               | Issue tracker — stories, bugs, epics.                             |
 
 Claude Code is the load-bearing piece — it is the orchestrator that triggers skills, dispatches subagents, and accesses MCPs. Everything else is the developer's working surface around it.
 
@@ -535,17 +535,17 @@ This is what gives the practice AI **speed** without losing human **judgment**. 
 
 ### Delegation rules
 
-The orchestrator follows an explicit cost-aware delegation policy. The decision is *"does this inflate my context without need? If yes → delegate."*
+The orchestrator follows an explicit cost-aware delegation policy. The decision is _"does this inflate my context without need? If yes → delegate."_
 
-| Action                                    | Inline | Delegate |
-| ----------------------------------------- | ------ | -------- |
-| Read 1–3 files to decide or verify        | ✅     | —        |
-| Read 4+ files to explore / understand     | —      | ✅       |
-| Read files as preparation for writing     | —      | ✅ (together with the write) |
-| Write one file (mechanical, you know what) | ✅     | —        |
-| Write across multiple files with new logic | —     | ✅       |
-| Bash for state (`git status`, `gh pr list`)| ✅    | —        |
-| Bash for execution (`bun test`, `bun build`)| —    | ✅       |
+| Action                                       | Inline | Delegate                     |
+| -------------------------------------------- | ------ | ---------------------------- |
+| Read 1–3 files to decide or verify           | ✅     | —                            |
+| Read 4+ files to explore / understand        | —      | ✅                           |
+| Read files as preparation for writing        | —      | ✅ (together with the write) |
+| Write one file (mechanical, you know what)   | ✅     | —                            |
+| Write across multiple files with new logic   | —      | ✅                           |
+| Bash for state (`git status`, `gh pr list`)  | ✅     | —                            |
+| Bash for execution (`bun test`, `bun build`) | —      | ✅                           |
 
 `delegate (async)` is the default for delegated work. Synchronous task delegation is used only when the next inline action depends on the result.
 
@@ -572,15 +572,15 @@ When a skill writes `Use the dispatch defined in §Subagent Dispatch Strategy: P
 
 Each skill declares a `phase:` in its `SKILL.md` frontmatter, and the model-routing table in `agentic-dev-core/references/model-routing.md` maps phases to model aliases:
 
-| Phase            | Default model | Reason                                       |
-| ---------------- | ------------- | -------------------------------------------- |
-| orchestrator     | opus          | Coordinates, makes decisions                 |
-| foundation       | opus          | Architectural decisions                      |
-| planning         | sonnet        | Structured writing                           |
-| implementation   | sonnet        | Coding                                       |
-| review           | opus          | Critical analysis                            |
-| archive          | haiku         | Mechanical close-out                         |
-| default          | sonnet        | Non-classified delegation                    |
+| Phase          | Default model | Reason                       |
+| -------------- | ------------- | ---------------------------- |
+| orchestrator   | opus          | Coordinates, makes decisions |
+| foundation     | opus          | Architectural decisions      |
+| planning       | sonnet        | Structured writing           |
+| implementation | sonnet        | Coding                       |
+| review         | opus          | Critical analysis            |
+| archive        | haiku         | Mechanical close-out         |
+| default        | sonnet        | Non-classified delegation    |
 
 The orchestrator reads the table once at session start and routes each delegated subagent to the appropriate model — giving deep reasoning where it matters and cheap tokens where it does not.
 
@@ -668,25 +668,25 @@ Idempotent: never overwrites existing files (except merging `package.json`), nev
 
 ### Tier 1 — Foundation (`/project-foundation`, `/design-system`, `/project-bootstrap`)
 
-**Phase 1: Constitution.** *Why* are we building this? The constitution captures the rationale before any scope decisions are made: the problem worth solving, who it serves, how it monetizes, and the competitive context. Output: `.context/idea/business-model.md` and `.context/idea/market-context.md`.
+**Phase 1: Constitution.** _Why_ are we building this? The constitution captures the rationale before any scope decisions are made: the problem worth solving, who it serves, how it monetizes, and the competitive context. Output: `.context/idea/business-model.md` and `.context/idea/market-context.md`.
 
-**Phase 2: PRD.** *What* are we building? The PRD turns the constitution into a buildable product spec: problem statement, personas, MVP scope, user journeys. Output: `.context/PRD/*.md`.
+**Phase 2: PRD.** _What_ are we building? The PRD turns the constitution into a buildable product spec: problem statement, personas, MVP scope, user journeys. Output: `.context/PRD/*.md`.
 
-**Phase 2.5: Design system.** *What does it look like?* `/design-system` is invoked post-PRD, pre-SRS. Five available paths:
+**Phase 2.5: Design system.** _What does it look like?_ `/design-system` is invoked post-PRD, pre-SRS. Five available paths:
 
-| Path                                 | When                                                                                | Notes              |
-| ------------------------------------ | ----------------------------------------------------------------------------------- | ------------------ |
-| **A — Gallery manual**               | User wants to browse and pick visually.                                             | Free               |
-| **B — `getdesign` + LLM-matcher** ⭐ | PRD exists + you want off-the-shelf with zero manual effort. **Default**.           | Free, automatable  |
-| **C — Open Design app**              | You want to iterate visually before locking tokens.                                 | OSS, requires Docker |
-| **D — Claude Design handoff**        | You have Claude Pro+ and want best-in-class.                                        | Premium            |
-| **E — LLM-authored custom**          | Business is very specific and no off-the-shelf matches.                             | Free               |
+| Path                                 | When                                                                      | Notes                |
+| ------------------------------------ | ------------------------------------------------------------------------- | -------------------- |
+| **A — Gallery manual**               | User wants to browse and pick visually.                                   | Free                 |
+| **B — `getdesign` + LLM-matcher** ⭐ | PRD exists + you want off-the-shelf with zero manual effort. **Default**. | Free, automatable    |
+| **C — Open Design app**              | You want to iterate visually before locking tokens.                       | OSS, requires Docker |
+| **D — Claude Design handoff**        | You have Claude Pro+ and want best-in-class.                              | Premium              |
+| **E — LLM-authored custom**          | Business is very specific and no off-the-shelf matches.                   | Free                 |
 
 Output: `DESIGN.md` at the project root, Apache-2.0 spec from Google Labs, validated with `npx @google/design.md lint`.
 
-**Phase 3: SRS.** *How* is the system structured? The SRS turns the PRD into a technical contract: functional requirements traceable to PRD user stories, non-functional constraints, system architecture decisions, OpenAPI endpoint definitions. Output: `.context/SRS/*.md`.
+**Phase 3: SRS.** _How_ is the system structured? The SRS turns the PRD into a technical contract: functional requirements traceable to PRD user stories, non-functional constraints, system architecture decisions, OpenAPI endpoint definitions. Output: `.context/SRS/*.md`.
 
-**Phase 4: Discovery.** *How does the system map to its world?* Phase 4 orchestrates 4 standalone commands plus 1 embedded reference, producing the docs every later skill loads on session start:
+**Phase 4: Discovery.** _How does the system map to its world?_ Phase 4 orchestrates 4 standalone commands plus 1 embedded reference, producing the docs every later skill loads on session start:
 
 - `business-data-map.md` — entities, relationships, business flows (generated by `/business-data-map`).
 - `business-feature-map.md` — feature catalog by domain, CRUD matrix, flags (generated by `/business-feature-map`).
@@ -709,15 +709,15 @@ Output: `DESIGN.md` at the project root, Apache-2.0 spec from Google Labs, valid
 
 After foundation, the backlog is still empty. `/product-management` is the continuous work that turns PRD epics into Jira stories with refined ACs. Seven workflows:
 
-| Workflow | Purpose | Reference |
-| -------- | ------- | --------- |
-| **A — Backlog seed** | One-time. Generate initial backlog tree (epics + stories) from a fresh PRD. | `product-backlog-seed.md` |
-| **B — Add feature** | Continuous. New feature mid-flight; complexity-routed to single story, full epic, or multi-epic. | `add-feature.md` |
-| **C — Epic creation** | Formal structure for a new epic: naming, scope, decomposition, PRD traceability. | `epic-creation.md` |
-| **D — Story refinement** | Validate INVEST; optional 3-amigos; story slicing; ready-for-dev checklist. | `story-refinement.md` |
-| **E — AC quality refinement** | Turn rough ACs into Gherkin (Scenario / Given–When–Then) with concrete data, error scenarios, and boundary scenarios. | `acceptance-criteria.md` |
-| **F — Edge-case enumeration** | Systematically enumerate failure modes, boundary conditions, integration risks. Decide which become AC vs test-only. | `edge-cases-enumeration.md` |
-| **G — Sprint reporting** | Read-only PM snapshot: epics, stories, PRs grouped by status. No state mutation. | `sprint-report.md` |
+| Workflow                      | Purpose                                                                                                               | Reference                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **A — Backlog seed**          | One-time. Generate initial backlog tree (epics + stories) from a fresh PRD.                                           | `product-backlog-seed.md`   |
+| **B — Add feature**           | Continuous. New feature mid-flight; complexity-routed to single story, full epic, or multi-epic.                      | `add-feature.md`            |
+| **C — Epic creation**         | Formal structure for a new epic: naming, scope, decomposition, PRD traceability.                                      | `epic-creation.md`          |
+| **D — Story refinement**      | Validate INVEST; optional 3-amigos; story slicing; ready-for-dev checklist.                                           | `story-refinement.md`       |
+| **E — AC quality refinement** | Turn rough ACs into Gherkin (Scenario / Given–When–Then) with concrete data, error scenarios, and boundary scenarios. | `acceptance-criteria.md`    |
+| **F — Edge-case enumeration** | Systematically enumerate failure modes, boundary conditions, integration risks. Decide which become AC vs test-only.  | `edge-cases-enumeration.md` |
+| **G — Sprint reporting**      | Read-only PM snapshot: epics, stories, PRs grouped by status. No state mutation.                                      | `sprint-report.md`          |
 
 ### Tier 3 — Implementation (`/sprint-development`, `/unit-testing`, `/git-flow-master`)
 
@@ -802,7 +802,7 @@ A dedicated planner subagent reads the story, the AC, the module context, and th
 
 Jira transition: **Ready For Dev → In Progress**.
 
-The plan is presented to the developer and approved before any code is written. If the developer modifies the plan, the changes are persisted in the file; the file *is* the contract Stage 2 will follow.
+The plan is presented to the developer and approved before any code is written. If the developer modifies the plan, the changes are persisted in the file; the file _is_ the contract Stage 2 will follow.
 
 ### Stage 2 — Implementation (`Sequential` or `Parallel` dispatch)
 
@@ -853,7 +853,7 @@ Jira transition: **In Review → Ready For QA**.
 
 ### Stage 5 — Production Deploy (`gated`)
 
-Production is *always* human-gated. The developer triggers it explicitly after:
+Production is _always_ human-gated. The developer triggers it explicitly after:
 
 1. QA has signed off in the sister `agentic-qa-boilerplate` workflow.
 2. Business stakeholders have approved (if business-critical).
@@ -867,19 +867,19 @@ STOP. Report partial state: which stages completed, what artifacts landed, which
 
 ### Subagent dispatch summary
 
-| Stage / step                              | Pattern                | Subagent role                                                                  |
-| ----------------------------------------- | ---------------------- | ------------------------------------------------------------------------------ |
-| Trigger / context-load (epic precheck)    | inline                 | orchestrator reads epic artifacts + ticket; no subagent yet                    |
-| Stage 1 — Plan creation                   | Single                 | dedicated planner: read story + AC, decompose tasks, output impl-plan.md       |
-| Stage 2 — Implementation (multi-file)     | Sequential or Parallel | impl agent(s); split by file or feature slice                                  |
-| Stage 2 — Verification (lint+types+tests) | Parallel cap=3         | three verifiers in parallel: lint, build/types, unit tests                     |
-| Stage 3 — Code review                     | Single                 | reviewer: static review against AC + code-standards checklist                  |
-| Stage 3 — Fix-and-iterate (if red)        | Sequential             | impl agent picks up review notes; re-runs verification                         |
-| Stage 4 — Deploy to staging               | Single + Background    | deploy agent kicks off; background monitor watches health/smoke                |
-| Pre-prod gate                             | inline                 | orchestrator gates with the user; never auto-promote                           |
-| Stage 5 — Deploy to production            | Single + Background    | same pattern as staging, prod target, plus rollback ready                      |
+| Stage / step                              | Pattern                | Subagent role                                                            |
+| ----------------------------------------- | ---------------------- | ------------------------------------------------------------------------ |
+| Trigger / context-load (epic precheck)    | inline                 | orchestrator reads epic artifacts + ticket; no subagent yet              |
+| Stage 1 — Plan creation                   | Single                 | dedicated planner: read story + AC, decompose tasks, output impl-plan.md |
+| Stage 2 — Implementation (multi-file)     | Sequential or Parallel | impl agent(s); split by file or feature slice                            |
+| Stage 2 — Verification (lint+types+tests) | Parallel cap=3         | three verifiers in parallel: lint, build/types, unit tests               |
+| Stage 3 — Code review                     | Single                 | reviewer: static review against AC + code-standards checklist            |
+| Stage 3 — Fix-and-iterate (if red)        | Sequential             | impl agent picks up review notes; re-runs verification                   |
+| Stage 4 — Deploy to staging               | Single + Background    | deploy agent kicks off; background monitor watches health/smoke          |
+| Pre-prod gate                             | inline                 | orchestrator gates with the user; never auto-promote                     |
+| Stage 5 — Deploy to production            | Single + Background    | same pattern as staging, prod target, plus rollback ready                |
 
-**Sequential, not Parallel, across stages**: each stage feeds the next (Stage 1's plan is read by Stage 2; Stage 2's diff is read by Stage 3; Stage 3's approval gates Stage 4). Parallelism happens *inside* a stage.
+**Sequential, not Parallel, across stages**: each stage feeds the next (Stage 1's plan is read by Stage 2; Stage 2's diff is read by Stage 3; Stage 3's approval gates Stage 4). Parallelism happens _inside_ a stage.
 
 ---
 
@@ -895,35 +895,35 @@ The practice uses three complementary kinds of AI capability:
 
 The 10 project-shipped workflow skills:
 
-| Skill                   | Phase          | When it fires                                                                                                                                |
-| ----------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agentic-dev-core`      | bootstrap      | "initialize the project", "bootstrap framework", "regenerate CLAUDE.md", "install project scripts"                                           |
-| `agentic-dev-onboard`   | bootstrap      | "onboard me", "explain this repo", "first time using this", "primer vez en este repo"                                                        |
-| `project-foundation`    | foundation     | "ideando un nuevo producto", "define el PRD", "construir la constitución", "mapear arquitectura", "MVP scope", "user journeys"               |
-| `design-system`         | foundation     | "definir design system", "crear DESIGN.md", "establecer paleta de colores", "branding del proyecto", "rebrandear el proyecto"                |
-| `project-bootstrap`     | foundation     | "scaffolding del proyecto", "setup del backend", "inicializar el frontend", "configurar OpenAPI", "bearer token authentication"              |
-| `product-management`    | management     | "create epic", "crear épica", "agregar historia al backlog", "refine acceptance criteria", "INVEST", "sprint report"                         |
-| `sprint-development`            | implementation | "implementar esta historia", "trabajar el ticket UPEX-XXX", "plan to code to review to deploy", "fix this bug and merge", "deploy a staging" |
-| `unit-testing`          | implementation | "write unit tests", "TDD this function", "red-green-refactor", "what to mock", "AAA pattern", "coverage target"                              |
-| `git-flow-master`       | implementation | "crear branch", "commit and push", "abrir PR", "fix conflict", "stack of PRs", "qué estrategia de git usamos"                                |
-| `acli`                  | any            | Atlassian CLI for Jira from the terminal — create/edit/transition issues, bulk operations, scripting Jira                                    |
+| Skill                 | Phase          | When it fires                                                                                                                                |
+| --------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agentic-dev-core`    | bootstrap      | "initialize the project", "bootstrap framework", "regenerate CLAUDE.md", "install project scripts"                                           |
+| `agentic-dev-onboard` | bootstrap      | "onboard me", "explain this repo", "first time using this", "primer vez en este repo"                                                        |
+| `project-foundation`  | foundation     | "ideando un nuevo producto", "define el PRD", "construir la constitución", "mapear arquitectura", "MVP scope", "user journeys"               |
+| `design-system`       | foundation     | "definir design system", "crear DESIGN.md", "establecer paleta de colores", "branding del proyecto", "rebrandear el proyecto"                |
+| `project-bootstrap`   | foundation     | "scaffolding del proyecto", "setup del backend", "inicializar el frontend", "configurar OpenAPI", "bearer token authentication"              |
+| `product-management`  | management     | "create epic", "crear épica", "agregar historia al backlog", "refine acceptance criteria", "INVEST", "sprint report"                         |
+| `sprint-development`  | implementation | "implementar esta historia", "trabajar el ticket UPEX-XXX", "plan to code to review to deploy", "fix this bug and merge", "deploy a staging" |
+| `unit-testing`        | implementation | "write unit tests", "TDD this function", "red-green-refactor", "what to mock", "AAA pattern", "coverage target"                              |
+| `git-flow-master`     | implementation | "crear branch", "commit and push", "abrir PR", "fix conflict", "stack of PRs", "qué estrategia de git usamos"                                |
+| `acli`                | any            | Atlassian CLI for Jira from the terminal — create/edit/transition issues, bulk operations, scripting Jira                                    |
 
 ### SDD meta-skills (Spec-Driven Development)
 
 Installed via gentle-ai, used for any substantial change that benefits from formal upfront design:
 
-| Skill         | Phase    | Purpose                                                                            |
-| ------------- | -------- | ---------------------------------------------------------------------------------- |
-| `sdd-init`    | bootstrap| Initialize SDD context — detect stack, bootstrap persistence backend (engram)      |
-| `sdd-explore` | exploration | Investigate an idea, read codebase, compare approaches. No files created.       |
-| `sdd-propose` | proposal | Create a change proposal with intent, scope, and approach                          |
-| `sdd-spec`    | spec     | Write requirements + scenarios (delta specs for changes)                           |
-| `sdd-design`  | design   | Technical design document with architecture decisions                              |
-| `sdd-tasks`   | tasks    | Break the change into a task checklist                                             |
-| `sdd-apply`   | apply    | Implement tasks from the change                                                    |
-| `sdd-verify`  | verify   | Validate implementation matches specs, design, and tasks                           |
-| `sdd-archive` | archive  | Sync delta specs to main specs and archive the completed change                    |
-| `sdd-onboard` | onboard  | Guided end-to-end walkthrough of the SDD workflow using the real codebase          |
+| Skill         | Phase       | Purpose                                                                       |
+| ------------- | ----------- | ----------------------------------------------------------------------------- |
+| `sdd-init`    | bootstrap   | Initialize SDD context — detect stack, bootstrap persistence backend (engram) |
+| `sdd-explore` | exploration | Investigate an idea, read codebase, compare approaches. No files created.     |
+| `sdd-propose` | proposal    | Create a change proposal with intent, scope, and approach                     |
+| `sdd-spec`    | spec        | Write requirements + scenarios (delta specs for changes)                      |
+| `sdd-design`  | design      | Technical design document with architecture decisions                         |
+| `sdd-tasks`   | tasks       | Break the change into a task checklist                                        |
+| `sdd-apply`   | apply       | Implement tasks from the change                                               |
+| `sdd-verify`  | verify      | Validate implementation matches specs, design, and tasks                      |
+| `sdd-archive` | archive     | Sync delta specs to main specs and archive the completed change               |
+| `sdd-onboard` | onboard     | Guided end-to-end walkthrough of the SDD workflow using the real codebase     |
 
 Three meta-commands the orchestrator handles directly (do not appear in autocomplete):
 
@@ -935,13 +935,13 @@ Three meta-commands the orchestrator handles directly (do not appear in autocomp
 
 Commands are deterministic, single-purpose prompts invoked explicitly. Unlike skills, they do not auto-trigger.
 
-| Command                      | Purpose                                                                       |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| `/sync-ai-memory`            | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
-| `/business-data-map`         | Generate or update `.context/business/business-data-map.md`                   |
-| `/business-feature-map`      | Generate or update `.context/business/business-feature-map.md`                |
-| `/business-api-map`          | Generate or update `.context/business/business-api-map.md`                    |
-| `/master-implementation-plan`| Generate or update `.context/master-implementation-plan.md`                   |
+| Command                       | Purpose                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/sync-ai-memory`             | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
+| `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                                       |
+| `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                                    |
+| `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
+| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md`                                       |
 
 All command definitions live under `.claude/commands/<name>.md`.
 
@@ -966,20 +966,20 @@ After `/project-foundation` and `/project-bootstrap` run, `npx autoskills` auto-
 
 MCPs and CLIs are how the AI talks to real systems. Without them, the AI can only reason against text; with them, the AI can query, act, and verify.
 
-| Integration            | Default provider               | Use                                                                          |
-| ---------------------- | ------------------------------ | ---------------------------------------------------------------------------- |
-| `[ISSUE_TRACKER_TOOL]` | `acli` skill (Atlassian CLI)   | Fetch tickets, transitions, comments, links, bulk operations                 |
-| `[DB_TOOL]`            | Supabase MCP                   | Schema exploration, migrations, query, type generation                       |
-| `[API_TOOL]`           | OpenAPI generated locally + `bun run api:sync` | Contract verification, endpoint discovery, type generation       |
-| `[AUTOMATION_TOOL]`    | `playwright-cli` skill         | Browser automation — screenshots, tracing, mocking, multi-tab flows          |
-| `context7` MCP         | Anthropic-ecosystem            | Official library documentation (Next.js, Supabase, Zod, etc.)                |
-| `tavily` MCP           | Anthropic-ecosystem            | Web search for community solutions                                           |
-| `n8n` MCP              | Anthropic-ecosystem            | Workflow automation design and validation                                    |
-| `engram` MCP           | Plugin                         | Persistent memory across sessions and compactions                            |
-| `gh` CLI               | First-party                    | GitHub PR / issue / actions operations                                       |
-| `vercel` CLI           | First-party                    | Deploy preview, promote, rollback                                            |
-| `supabase` CLI         | First-party                    | Local dev stack, migrations, types                                           |
-| `playwright` CLI       | First-party                    | E2E test runner                                                              |
+| Integration            | Default provider                               | Use                                                                 |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| `[ISSUE_TRACKER_TOOL]` | `acli` skill (Atlassian CLI)                   | Fetch tickets, transitions, comments, links, bulk operations        |
+| `[DB_TOOL]`            | Supabase MCP                                   | Schema exploration, migrations, query, type generation              |
+| `[API_TOOL]`           | OpenAPI generated locally + `bun run api:sync` | Contract verification, endpoint discovery, type generation          |
+| `[AUTOMATION_TOOL]`    | `playwright-cli` skill                         | Browser automation — screenshots, tracing, mocking, multi-tab flows |
+| `context7` MCP         | Anthropic-ecosystem                            | Official library documentation (Next.js, Supabase, Zod, etc.)       |
+| `tavily` MCP           | Anthropic-ecosystem                            | Web search for community solutions                                  |
+| `n8n` MCP              | Anthropic-ecosystem                            | Workflow automation design and validation                           |
+| `engram` MCP           | Plugin                                         | Persistent memory across sessions and compactions                   |
+| `gh` CLI               | First-party                                    | GitHub PR / issue / actions operations                              |
+| `vercel` CLI           | First-party                                    | Deploy preview, promote, rollback                                   |
+| `supabase` CLI         | First-party                                    | Local dev stack, migrations, types                                  |
+| `playwright` CLI       | First-party                                    | E2E test runner                                                     |
 
 Each `[TAG_TOOL]` resolves via the Tool Resolution table in `CLAUDE.md`. Swap the row to swap the backend — skills keep calling the same tag.
 
@@ -997,19 +997,19 @@ Authentication tokens for long-lived MCPs expire on their own cadence. Refresh s
 
 Foundation utilities written by `agentic-dev-core`:
 
-| Script                                | Purpose                                                                       |
-| ------------------------------------- | ----------------------------------------------------------------------------- |
-| `agents-setup.ts`                     | Interactive setup that fills `.agents/project.yaml`                           |
-| `agents-lint.ts`                      | Validate every `{{VAR}}` and `{{jira.*}}` reference resolves                  |
-| `sync-jira-fields.ts`                 | Discover Jira custom fields → write `.agents/jira-fields.json`                |
-| `sync-jira-workflows.ts`              | Discover Jira workflows → write `.agents/jira-workflows.json`                 |
-| `sync-jira-issues.ts`                 | Pull Jira issues for offline reasoning                                        |
-| `check-jira-setup.ts`                 | Validate `jira-required.yaml` manifest against the workspace catalogs         |
-| `detect-testing-capabilities.ts`      | Detect test runner, e2e, typecheck, lint, strict-TDD → write cache JSON       |
-| `build-skill-registry.ts`             | Scan `.claude/skills/` and emit compact-rules registry                        |
-| `sync-openapi.ts`                     | Sync OpenAPI spec + generate types                                            |
-| `engram-bridge.ts`                    | Bridge between local context and engram MCP                                   |
-| `onboarding.ts`                       | Interactive installer (gentle-ai + MCPs + CLIs verification)                  |
+| Script                           | Purpose                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `agents-setup.ts`                | Interactive setup that fills `.agents/project.yaml`                     |
+| `agents-lint.ts`                 | Validate every `{{VAR}}` and `{{jira.*}}` reference resolves            |
+| `sync-jira-fields.ts`            | Discover Jira custom fields → write `.agents/jira-fields.json`          |
+| `sync-jira-workflows.ts`         | Discover Jira workflows → write `.agents/jira-workflows.json`           |
+| `sync-jira-issues.ts`            | Pull Jira issues for offline reasoning                                  |
+| `check-jira-setup.ts`            | Validate `jira-required.yaml` manifest against the workspace catalogs   |
+| `detect-testing-capabilities.ts` | Detect test runner, e2e, typecheck, lint, strict-TDD → write cache JSON |
+| `build-skill-registry.ts`        | Scan `.claude/skills/` and emit compact-rules registry                  |
+| `sync-openapi.ts`                | Sync OpenAPI spec + generate types                                      |
+| `engram-bridge.ts`               | Bridge between local context and engram MCP                             |
+| `onboarding.ts`                  | Interactive installer (gentle-ai + MCPs + CLIs verification)            |
 
 ---
 
@@ -1029,13 +1029,13 @@ Every change merged to `staging` (and especially every change promoted to `main`
                                                               prod)
 ```
 
-| Gate     | Command                                    | Owner               | Behavior on red                                |
-| -------- | ------------------------------------------ | ------------------- | ---------------------------------------------- |
-| Lint     | `bun run lint`                             | Stage 2 verifier #1 | Auto-fix attempt, then escalate                |
-| Types    | `bun run build` or `tsc --noEmit`          | Stage 2 verifier #2 | Surface to impl subagent for fix loop          |
-| Tests    | `bun test` (Vitest) + `bun run e2e` (PW)   | Stage 2 verifier #3 | Surface to impl subagent for fix loop          |
-| Review   | Reviewer subagent + developer              | Stage 3             | Fix-and-iterate, max 2 loops, then escalate    |
-| Deploy   | Vercel + Supabase migrations               | Stage 4 + Stage 5   | Rollback playbook ready; prod is human-gated   |
+| Gate   | Command                                  | Owner               | Behavior on red                              |
+| ------ | ---------------------------------------- | ------------------- | -------------------------------------------- |
+| Lint   | `bun run lint`                           | Stage 2 verifier #1 | Auto-fix attempt, then escalate              |
+| Types  | `bun run build` or `tsc --noEmit`        | Stage 2 verifier #2 | Surface to impl subagent for fix loop        |
+| Tests  | `bun test` (Vitest) + `bun run e2e` (PW) | Stage 2 verifier #3 | Surface to impl subagent for fix loop        |
+| Review | Reviewer subagent + developer            | Stage 3             | Fix-and-iterate, max 2 loops, then escalate  |
+| Deploy | Vercel + Supabase migrations             | Stage 4 + Stage 5   | Rollback playbook ready; prod is human-gated |
 
 ### Pre-flight checklist
 
@@ -1111,18 +1111,18 @@ Engram is a persistent memory MCP server. It survives across:
 
 Engram is structured by **topic key** — a stable identifier under which an artefact is saved. Examples:
 
-| Topic key                              | Stored content                                    | Owner                          |
-| -------------------------------------- | ------------------------------------------------- | ------------------------------ |
-| `sdd-init/{project}`                   | Project stack detection, testing capabilities     | `/sdd-init`                    |
-| `pbi/{epic-slug}/epic`                 | Epic spec                                         | `/product-management`          |
-| `pbi/{ticket}/spec`                    | Story spec with refined AC                        | `/product-management`          |
-| `pbi/{ticket}/edge-cases`              | Enumerated edge cases                             | `/product-management`          |
-| `pbi/{ticket}/impl-plan`               | Implementation plan                               | `/sprint-development` Stage 1          |
-| `pbi/{ticket}/review`                  | Review notes                                      | `/sprint-development` Stage 3          |
-| `pbi/{ticket}/compliance-matrix`       | AC → code mapping                                 | `/sprint-development` Stage 3          |
-| `pbi/{ticket}/bug-fix`                 | Root cause + fix                                  | `/sprint-development` bug-fix flow     |
-| `sdd/{change}/explore` … `archive`     | SDD phase artefacts (8 keys per change)           | SDD bloque                     |
-| `architecture/<topic>`                 | Architectural decision (free-form)                | Any proactive save             |
+| Topic key                          | Stored content                                | Owner                              |
+| ---------------------------------- | --------------------------------------------- | ---------------------------------- |
+| `sdd-init/{project}`               | Project stack detection, testing capabilities | `/sdd-init`                        |
+| `pbi/{epic-slug}/epic`             | Epic spec                                     | `/product-management`              |
+| `pbi/{ticket}/spec`                | Story spec with refined AC                    | `/product-management`              |
+| `pbi/{ticket}/edge-cases`          | Enumerated edge cases                         | `/product-management`              |
+| `pbi/{ticket}/impl-plan`           | Implementation plan                           | `/sprint-development` Stage 1      |
+| `pbi/{ticket}/review`              | Review notes                                  | `/sprint-development` Stage 3      |
+| `pbi/{ticket}/compliance-matrix`   | AC → code mapping                             | `/sprint-development` Stage 3      |
+| `pbi/{ticket}/bug-fix`             | Root cause + fix                              | `/sprint-development` bug-fix flow |
+| `sdd/{change}/explore` … `archive` | SDD phase artefacts (8 keys per change)       | SDD bloque                         |
+| `architecture/<topic>`             | Architectural decision (free-form)            | Any proactive save                 |
 
 Full topic-key conventions: `agentic-dev-core/references/topic-key-conventions.md`.
 
@@ -1155,7 +1155,7 @@ To resume a session from anywhere, the developer types `@.context/PBI/{module}/S
 
 ### 15.3 The proactive save rule
 
-Engram saves are *proactive*, not reactive. The orchestrator and every workflow skill call `mem_save` immediately after:
+Engram saves are _proactive_, not reactive. The orchestrator and every workflow skill call `mem_save` immediately after:
 
 - An architecture or design decision is made.
 - A team convention is documented.
@@ -1164,7 +1164,7 @@ Engram saves are *proactive*, not reactive. The orchestrator and every workflow 
 - A pattern is established (naming, structure, convention).
 - A user preference or constraint is learned.
 
-Self-check after every task: *"Did I make a decision, fix a bug, learn something non-obvious, or establish a convention? If yes, call `mem_save` NOW."*
+Self-check after every task: _"Did I make a decision, fix a bug, learn something non-obvious, or establish a convention? If yes, call `mem_save` NOW."_
 
 This is what makes the system feel like it remembers the team's preferences and the project's history — because it actually does.
 
@@ -1204,7 +1204,7 @@ The framework is meant to be extended. The hooks are documented and the conventi
 ```markdown
 ---
 name: <skill-name>
-description: "<what it does, what it triggers on, what NOT to use it for>"
+description: '<what it does, what it triggers on, what NOT to use it for>'
 license: MIT
 compatibility: [claude-code, opencode]
 phase: <bootstrap | foundation | management | implementation | exploration | proposal | spec | design | tasks | apply | verify | archive>
@@ -1310,3 +1310,7 @@ The rest is execution.
 - `.context/README.md` — canonical context layout.
 - `.agents/README.md` — project variable contract and validation scripts.
 - Sister repo: [`agentic-qa-boilerplate`](https://github.com/upex-galaxy/agentic-qa-boilerplate) — the QA half of the practice.
+
+---
+
+> **You are here**: Agentic Development Engineering methodology deep dive. **Read time**: 45 min. **Next**: [`../CONTEXT.md`](../CONTEXT.md) to see how this repo applies the methodology.

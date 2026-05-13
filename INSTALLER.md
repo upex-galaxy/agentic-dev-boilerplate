@@ -38,12 +38,12 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
 
 `pending_actions[].type` is one of: `credential` · `shell_hook` · `system_install` · `shell_command`. The AI iterates the list and picks the right tool per type:
 
-| type | Who handles it | How |
-|---|---|---|
-| `credential` | **User** | AI asks the user for the value in chat (e.g. "paste your Tavily key from https://app.tavily.com"). Then AI writes it to `.env`. |
-| `shell_hook` | **AI** | AI appends the `where` line to the `target` rc file with its Edit/Bash tool. Trivial. |
-| `system_install` | **User** | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password). |
-| `shell_command` | **AI** | AI runs the `target` command via Bash. |
+| type             | Who handles it | How                                                                                                                             |
+| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `credential`     | **User**       | AI asks the user for the value in chat (e.g. "paste your Tavily key from https://app.tavily.com"). Then AI writes it to `.env`. |
+| `shell_hook`     | **AI**         | AI appends the `where` line to the `target` rc file with its Edit/Bash tool. Trivial.                                           |
+| `system_install` | **User**       | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password).                                 |
+| `shell_command`  | **AI**         | AI runs the `target` command via Bash.                                                                                          |
 
 ### What an AI **cannot** do (hard limits)
 
@@ -68,8 +68,8 @@ Then `bun run setup:doctor --json` to confirm.
 
 ### Skip flags (per-step opt-out)
 
-| Env var | Effect |
-|---|---|
+| Env var                 | Effect                           |
+| ----------------------- | -------------------------------- |
 | `INSTALL_SKIP_DIRENV=1` | Skip direnv detection / autoload |
 
 ---
@@ -78,18 +78,18 @@ Then `bun run setup:doctor --json` to confirm.
 
 `bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `JIRA_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
 
-| Method | Platform | One-time setup | Usage |
-|---|---|---|---|
-| **`bun run claude` / `bun run opencode`** (default) | Windows, macOS, Linux | None — `dotenv-cli` is a project devDep | `bun run claude` from the repo root |
-| **direnv autoload** (optional) | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude` or `opencode` from anywhere in the repo |
+| Method                                              | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| **`bun run claude` / `bun run opencode`** (default) | Windows, macOS, Linux                                                                         | None — `dotenv-cli` is a project devDep                                                                                                                 | `bun run claude` from the repo root                   |
+| **direnv autoload** (optional)                      | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude` or `opencode` from anywhere in the repo |
 
 ### direnv hook per shell
 
-| Shell | Line to add | File |
-|---|---|---|
-| bash | `eval "$(direnv hook bash)"` | `~/.bashrc` (also works for Git Bash on Windows) |
-| zsh | `eval "$(direnv hook zsh)"` | `~/.zshrc` |
-| fish | `direnv hook fish \| source` | `~/.config/fish/config.fish` |
+| Shell      | Line to add                               | File                                             |
+| ---------- | ----------------------------------------- | ------------------------------------------------ |
+| bash       | `eval "$(direnv hook bash)"`              | `~/.bashrc` (also works for Git Bash on Windows) |
+| zsh        | `eval "$(direnv hook zsh)"`               | `~/.zshrc`                                       |
+| fish       | `direnv hook fish \| source`              | `~/.config/fish/config.fish`                     |
 | PowerShell | `Invoke-Expression "$(direnv hook pwsh)"` | `$PROFILE` (requires direnv 2.37+, experimental) |
 
 `.mcp.json` (Claude Code) and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}` placeholders. Real values live in `.env` (gitignored). If a server returns 401/403 at first call, the matching env var is missing — see `CLAUDE.md` Critical Reminder #12 (stop, fix `.env`, restart the agent session).
@@ -158,17 +158,17 @@ When `bun run setup` runs the gentle-ai branch (1 engram component + 15 skills, 
 
 Skills that are workflow-specific to this boilerplate live in `.claude/skills/` and are committed to the repo. They install with the clone — no external installer required.
 
-| Skill                 | Trigger                | Why it stays local                                          |
-| --------------------- | ---------------------- | ----------------------------------------------------------- |
-| `agentic-dev-core`        | `/agentic-dev-core`        | One-time bootstrap of `.agents/` + scripts + CLAUDE.md      |
-| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product) |
-| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env) |
-| `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement      |
-| `sprint-development`          | `/sprint-development`          | Per-story dev loop (mega-orchestrator, 12-step workflow)    |
-| `unit-testing`        | `/unit-testing`        | TDD slice — composable mid-flight from `/sprint-development`        |
-| `git-flow-master`     | (auto)                 | Branching/commit/push/PR strategy auto-detected per repo    |
-| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work     |
-| `agentic-dev-onboard` | `/agentic-dev-onboard` | End-to-end onboarding guided tour (pending Phase C)         |
+| Skill                 | Trigger                | Why it stays local                                           |
+| --------------------- | ---------------------- | ------------------------------------------------------------ |
+| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/` + scripts + CLAUDE.md       |
+| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product)  |
+| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env)  |
+| `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement       |
+| `sprint-development`  | `/sprint-development`  | Per-story dev loop (mega-orchestrator, 12-step workflow)     |
+| `unit-testing`        | `/unit-testing`        | TDD slice — composable mid-flight from `/sprint-development` |
+| `git-flow-master`     | (auto)                 | Branching/commit/push/PR strategy auto-detected per repo     |
+| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work      |
+| `agentic-dev-onboard` | `/agentic-dev-onboard` | End-to-end onboarding guided tour (pending Phase C)          |
 
 These skills evolve with the repo and are versioned in git. The split is intentional: gentle-ai owns the **horizontal** ecosystem (apply across all your repos), this repo owns the **vertical** workflow (specific to `agentic-dev-boilerplate`).
 
@@ -178,13 +178,13 @@ These skills evolve with the repo and are versioned in git. The split is intenti
 
 Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it only checks whether each binary is on `PATH` and prints an install hint (and the official docs URL) when missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
 
-| CLI              | Powers in this repo                                                                       | Install hint (when missing)                                                              | Official docs                                                          |
-| ---------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps)   | `npm i -g vercel`                                                                        | <https://vercel.com/docs/cli>                                          |
-| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)              | `brew install supabase/tap/supabase` (or: `npm i -g supabase`)                           | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
-| `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill          | `brew tap atlassian/homebrew-acli && brew install acli`                                  | <https://developer.atlassian.com/cloud/acli/guides/install-macos/>     |
-| `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                     | `bun add -g @playwright/cli@latest` (or: `npm install -g @playwright/cli@latest`)        | <https://playwright.dev/agent-cli/introduction>                        |
-| `resend`         | Send transactional email via Resend (used by features that integrate email notifications) | `npm i -g resend`                                                                        | <https://resend.com/docs/send-with-nodejs>                             |
+| CLI              | Powers in this repo                                                                             | Install hint (when missing)                                                       | Official docs                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps) | `npm i -g vercel`                                                                 | <https://vercel.com/docs/cli>                                            |
+| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)                    | `brew install supabase/tap/supabase` (or: `npm i -g supabase`)                    | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill                | `brew tap atlassian/homebrew-acli && brew install acli`                           | <https://developer.atlassian.com/cloud/acli/guides/install-macos/>       |
+| `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                           | `bun add -g @playwright/cli@latest` (or: `npm install -g @playwright/cli@latest`) | <https://playwright.dev/agent-cli/introduction>                          |
+| `resend`         | Send transactional email via Resend (used by features that integrate email notifications)       | `npm i -g resend`                                                                 | <https://resend.com/docs/send-with-nodejs>                               |
 
 ### `playwright-cli` is NOT `@playwright/test`
 
@@ -210,10 +210,10 @@ Three reasons:
 
 This is the most common point of confusion. Both workflows can drive a feature to merge. They serve different shapes of work.
 
-| When                                                                 | Skill                                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| When                                                                 | Skill                                                                |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Routine Jira ticket work (most cases)                                | `/sprint-development` (ticket-driven workflow)                       |
-| Large refactor / architectural decision / feature without ticket yet | `/sdd-*` (spec-driven workflow)                              |
+| Large refactor / architectural decision / feature without ticket yet | `/sdd-*` (spec-driven workflow)                                      |
 | Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-development` for the cycle |
 
 ### When to reach for `/sprint-development`
@@ -270,3 +270,7 @@ What you keep: every workflow skill committed in this repo (`/sprint-development
 - [CLAUDE.md § Onboarding](./CLAUDE.md) — quick-start entry point for `bun run setup`
 - [README.md](./README.md) — project overview and Quick Start
 - [docs/setup/README.md](./docs/setup/README.md) — index of remaining setup guides (Jira, MCPs)
+
+---
+
+> **You are here**: What `bun run setup` configures. **Read time**: 10 min. **Next**: `bun run setup:doctor` to verify your install, or [`README.md`](README.md) to navigate the rest.

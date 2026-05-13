@@ -9,6 +9,20 @@
 
 ---
 
+## Start here — pick your path
+
+| Goal                                                               | What to read / run                                                                        |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| **Just install**                                                   | `bun install && bun run setup` (skip the rest)                                            |
+| **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                      |
+| **Methodology / philosophy** (~45 min)                             | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
+| **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                            |
+| **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map) |
+
+> First-time clones: `bun run onboarding` is optional but recommended — it serves a single-file HTML with the full repo orientation. Close the browser tab + `Ctrl-C` the server when done, then run `bun run setup` to install.
+
+---
+
 ## What this is
 
 A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Ten workflow skills cover foundation, management, and implementation; five utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — the two repos are designed as a complementary pair.
@@ -22,35 +36,42 @@ A project starter for teams that want AI agents to drive their development workf
 git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git my-new-project
 cd my-new-project
 
-# 2. One-shot interactive setup (recommended):
-#    installs deps, gentle-ai + 15 skills, community skills, wires .env
-#    for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), and
-#    offers direnv autoload.
+# 2. (Optional, recommended for first-timers) Install deps + open the orientation
+bun install
+bun run onboarding   # opens docs/onboarding.html with sidebar nav
+                     # Close the tab + Ctrl-C when done
+
+# 3. Install everything (gentle-ai, skills, MCPs, env)
+#    installs deps if not done already, gentle-ai + 15 skills, community
+#    skills, wires .env for the 5 MCPs (context7, tavily, atlassian,
+#    supabase, n8n), and offers direnv autoload.
 bun run setup
 
-# Or, do it manually:
+# Or, do it manually instead of step 3:
 bun install
 cp .env.example .env   # then fill in the values
 
-# 3. Bootstrap project context (in Claude Code)
+# 4. Bootstrap project context (in Claude Code)
 /agentic-dev-core          # scaffolds .agents/, scripts, CLAUDE.md
 
-# 4. Define what to build (one-time)
+# 5. Define what to build (one-time)
 /project-foundation    # Constitution, PRD, SRS, Discovery
 
-# 4.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
+# 5.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
 /design-system         # DESIGN.md (Google Labs spec) — paleta, tipografía, tokens
 
-# 5. Scaffold the codebase (one-time)
+# 6. Scaffold the codebase (one-time)
 /project-bootstrap     # Backend, frontend, OpenAPI, env, auth (reads DESIGN.md if present)
 
-# 6. Manage the backlog (continuous)
+# 7. Manage the backlog (continuous)
 /product-management    # Seed backlog, refine stories, AC, edge cases
 
-# 7. Implement (per story)
+# 8. Implement (per story)
 /sprint-development            # Plan -> Code -> Review -> Deploy
 /unit-testing          # Composable mid-flight from sprint-development for TDD
 ```
+
+> Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking, so chaining deadlocks. Run them as two separate steps.
 
 ### Launching the agent
 
@@ -84,13 +105,13 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 | Skill                  | Phase          | Purpose                                                                              |
 | ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `/agentic-dev-core`        | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)        |
+| `/agentic-dev-core`    | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)        |
 | `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
 | `/design-system`       | foundation     | DESIGN.md generation (Google Labs spec) before frontend scaffolding — 5 paths        |
 | `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
-| `/sprint-development`          | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
-| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`          |
+| `/sprint-development`  | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
+| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`  |
 | `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning |
 | `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                   |
 | `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills         |
@@ -105,24 +126,24 @@ After running `/project-foundation` and `/project-bootstrap`, you can also run `
 
 The repo classifies every skill into one of four tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
 
-| Tier | What                              | Location                                            | Load behavior                                                 |
-| ---- | --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| T1   | Project-owned (this repo)         | `.claude/skills/`                                   | Silent — load on trigger                                      |
-| T2   | Project dependency (gentle-ai)    | Installed by gentle-ai (SDD bundle, judgment-day…)  | Silent inside T1 orchestrators                                |
-| T3   | Community project-level           | Installed by `install.ts` `PROJECT_LEVEL_SKILLS`    | Silent if matched by category                                 |
-| T4   | Community user-level (global)     | Installed by `install.ts` `USER_LEVEL_SKILLS`       | **ASK** user before load (cross-project, not always wanted)   |
+| Tier | What                           | Location                                           | Load behavior                                               |
+| ---- | ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------- |
+| T1   | Project-owned (this repo)      | `.claude/skills/`                                  | Silent — load on trigger                                    |
+| T2   | Project dependency (gentle-ai) | Installed by gentle-ai (SDD bundle, judgment-day…) | Silent inside T1 orchestrators                              |
+| T3   | Community project-level        | Installed by `install.ts` `PROJECT_LEVEL_SKILLS`   | Silent if matched by category                               |
+| T4   | Community user-level (global)  | Installed by `install.ts` `USER_LEVEL_SKILLS`      | **ASK** user before load (cross-project, not always wanted) |
 
 Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
 
 ### Slash commands (utilities)
 
-| Command                       | Purpose                                                                       |
-| ----------------------------- | ----------------------------------------------------------------------------- |
+| Command                       | Purpose                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
 | `/sync-ai-memory`             | Audit + sync README, CLAUDE.md, CONTEXT.md, docs/, and onboarding HTML against current repo state |
-| `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                   |
-| `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                |
-| `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                    |
-| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md`                   |
+| `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                                       |
+| `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                                    |
+| `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
+| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md`                                       |
 
 ---
 
@@ -157,11 +178,11 @@ DESIGN.md                 # Visual identity spec (Google Labs, generated by /des
 
 The `.agents/` directory hosts a 4-syntax variable system used by every skill and command.
 
-| Syntax                         | Purpose                                      | Resolves from                                        |
-| ------------------------------ | -------------------------------------------- | ---------------------------------------------------- |
-| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)    | `.agents/project.yaml`                               |
-| `{{environments.<env>.<var>}}` | Explicit cross-env reference                 | `.agents/project.yaml` -> `environments.<env>.<var>` |
-| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`) | Computed by the calling prompt at runtime            |
+| Syntax                         | Purpose                                      | Resolves from                                             |
+| ------------------------------ | -------------------------------------------- | --------------------------------------------------------- |
+| `{{VAR_NAME}}`                 | Static project value (flat or env-scoped)    | `.agents/project.yaml`                                    |
+| `{{environments.<env>.<var>}}` | Explicit cross-env reference                 | `.agents/project.yaml` -> `environments.<env>.<var>`      |
+| `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`) | Computed by the calling prompt at runtime                 |
 | `{{jira.<slug>}}`              | Jira custom field reference                  | `.agents/jira-required.yaml` + `.agents/jira-fields.json` |
 
 See `.agents/README.md` for the full contract.
@@ -219,3 +240,7 @@ MIT (or fill in)
 ## Status
 
 Migration from `ai-driven-project-starter` complete. See `.plans/MASTER-PLAN.md` for the migration story.
+
+---
+
+> **You are here**: Project overview for visitors. **Read time**: 5 min. **Next**: `bun run onboarding` for visual orientation, or [`INSTALLER.md`](INSTALLER.md) for installer details.
