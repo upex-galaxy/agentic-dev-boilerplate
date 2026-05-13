@@ -48,6 +48,7 @@ yarn-error.log*
 
 # ===== IDE & Editor =====
 .idea/
+.windsurf/
 *.swp
 *.swo
 *.code-workspace
