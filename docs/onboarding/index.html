@@ -172,7 +172,7 @@
         </a>
         <a class="cta" href="#section-7">
           <span class="cta-title">Skill catalog</span>
-          <span class="cta-desc">All 9 workflow skills, what they do, when to call them.</span>
+          <span class="cta-desc">All 10 workflow skills, what they do, when to call them.</span>
         </a>
         <a class="cta" href="#section-6">
           <span class="cta-title">Cheat sheet</span>
@@ -1666,6 +1666,21 @@ bun run lint:agents           # validate placeholders</code></pre>
 
               <article class="skill-card">
                 <div class="skill-card-head">
+                  <span class="skill-card-name">design-system</span>
+                  <span class="badge badge-generator">Generator</span>
+                </div>
+                <p class="skill-card-trigger">/design-system</p>
+                <p class="skill-card-desc">
+                  Generates <code>DESIGN.md</code> (Google Labs format) before frontend scaffolding.
+                  Five paths: automated brand match via <code>npx getdesign</code>, manual gallery,
+                  Open Design app, Claude Design, or LLM-authored custom. Composed by
+                  <code>/project-foundation</code> (post-PRD) and consumed by
+                  <code>/project-bootstrap</code>.
+                </p>
+              </article>
+
+              <article class="skill-card">
+                <div class="skill-card-head">
                   <span class="skill-card-name">project-bootstrap</span>
                   <span class="badge badge-generator">Generator</span>
                 </div>
@@ -1743,87 +1758,29 @@ bun run lint:agents           # validate placeholders</code></pre>
               </article>
             </div>
 
-            <h3>Reusable knowledge skills</h3>
+            <h3>Reusable community skills (T3 / T4)</h3>
 
             <p>
-              Six knowledge-only skills (no orchestration) that workflow skills load on demand for
-              stack-specific guidance.
+              Stack-specific knowledge and tool skills are <strong>not</strong> committed in this
+              repo — policy is to commit only skills we maintain (T1). Community skills (Anthropic,
+              Vercel Labs, Supabase, shadcn, Microsoft Playwright, etc.) are installed by
+              <code>bun run setup</code> from upstream, either at <strong>project level</strong>
+              (T3, into <code>.claude/skills/</code> on your clone) or at <strong>user level</strong>
+              (T4, into <code>~/.claude/skills/</code> for any project). Examples that get installed:
+              <code>frontend-design</code>, <code>next-best-practices</code>,
+              <code>next-cache-components</code>, <code>next-upgrade</code>,
+              <code>shadcn</code>, <code>react-best-practices</code>,
+              <code>supabase-postgres-best-practices</code>, <code>playwright-cli</code>,
+              <code>skill-creator</code>, <code>find-skills</code>, <code>gh-cli</code>,
+              <code>brainstorming</code>, and more.
             </p>
 
-            <div class="skill-grid">
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">frontend-design</span>
-                  <span class="badge badge-reference">Reference</span>
-                </div>
-                <p class="skill-card-trigger">/frontend-design</p>
-                <p class="skill-card-desc">
-                  Production-grade frontend interfaces with high design quality — distinctive,
-                  polished UI that avoids generic AI aesthetics.
-                </p>
-              </article>
-
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">next-best-practices</span>
-                  <span class="badge badge-reference">Reference</span>
-                </div>
-                <p class="skill-card-trigger">/next-best-practices</p>
-                <p class="skill-card-desc">
-                  Next.js best practices — file conventions, RSC boundaries, data patterns, async
-                  APIs, metadata, error handling, route handlers, image/font optimization.
-                </p>
-              </article>
-
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">next-cache-components</span>
-                  <span class="badge badge-reference">Reference</span>
-                </div>
-                <p class="skill-card-trigger">/next-cache-components</p>
-                <p class="skill-card-desc">
-                  Next.js Cache Components — PPR, the <code>use cache</code> directive,
-                  <code>cacheLife</code>, <code>cacheTag</code>, <code>updateTag</code>.
-                </p>
-              </article>
-
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">next-upgrade</span>
-                  <span class="badge badge-reference">Reference</span>
-                </div>
-                <p class="skill-card-trigger">/next-upgrade</p>
-                <p class="skill-card-desc">
-                  Upgrade Next.js to the latest version following official migration guides and
-                  codemods.
-                </p>
-              </article>
-
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">playwright-cli</span>
-                  <span class="badge badge-tool">Tool</span>
-                </div>
-                <p class="skill-card-trigger">/playwright-cli</p>
-                <p class="skill-card-desc">
-                  Browser automation CLI for AI-driven smoke checks: screenshots, tracing, video
-                  recording, session management, request mocking. Resolves
-                  <code>[AUTOMATION_TOOL]</code> pseudocode.
-                </p>
-              </article>
-
-              <article class="skill-card">
-                <div class="skill-card-head">
-                  <span class="skill-card-name">resend-cli</span>
-                  <span class="badge badge-tool">Tool</span>
-                </div>
-                <p class="skill-card-trigger">/resend-cli</p>
-                <p class="skill-card-desc">
-                  Operate Resend (email service) from the terminal — send emails, manage domains,
-                  contacts, templates, webhooks.
-                </p>
-              </article>
-            </div>
+            <p class="small muted">
+              The exact T3 / T4 catalog lives in
+              <code>cli/install.ts</code> (constants <code>PROJECT_LEVEL_SKILLS</code> and
+              <code>USER_LEVEL_SKILLS</code>) — source of truth, changes faster than this page.
+              See <code>README.md</code> § "Skill tiers (T1–T4)" for the full policy.
+            </p>
 
             <div class="callout callout-info">
               <svg
