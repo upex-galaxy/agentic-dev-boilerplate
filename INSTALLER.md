@@ -141,7 +141,16 @@ When `bun run setup` runs the gentle-ai branch (1 engram component + 15 skills, 
 | `comment-writer`       | Draft warm, direct PR/issue comments and review feedback                    |
 | `issue-creation`       | Issue filing workflow (bug + feature templates, issue-first enforcement)    |
 
-> The installer dispatches one `gentle-ai install --skill <slug> --agent <agent>` per skill, plus `gentle-ai install --component engram --agent <agent>` for Engram. Re-runs are idempotent: already-installed skills are skipped.
+> The installer dispatches a single batched call per agent:
+>
+> ```sh
+> gentle-ai install \
+>   --agent <agent> \
+>   --components engram,sdd,skills \
+>   --skills <comma-separated slug list>
+> ```
+>
+> `gentle-ai install`'s flag parser accepts comma-separated CSV values, so one call per agent installs Engram + the SDD slash commands + every listed skill. Re-runs are idempotent: gentle-ai snapshots existing config files (compressed, deduplicated, last 5 retained) before overwriting them with the current version. There is no `--yes` flag — non-interactive runs inherit a non-TTY stdin, so gentle-ai's internal prompts auto-pick their default answer.
 
 ---
 
@@ -232,7 +241,7 @@ You have a ticket but the spec is dense and you want it traced formally. Run `/s
 - **MCPs not loading at all** — confirm you launched the agent via `bun run claude` / `bun run opencode` (wraps with `dotenv-cli`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). Launching `claude` directly without either path means MCP placeholders never get expanded.
 - **`direnv allow` produced `dotenv_if_exists: command not found`** — this would mean the `.envrc` is using a newer direnv feature than your version supports. The committed `.envrc` uses portable POSIX loading (works on direnv 2.21+), so if you see this, your `.envrc` has been edited locally — restore it from `git checkout .envrc`.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup.
-- **How do I uninstall gentle-ai skills?** — `gentle-ai uninstall --skill <slug> --agent <agent>` removes a single skill. `gentle-ai uninstall --all --agent <agent>` removes everything gentle-ai-managed for that agent. Backups are created automatically before uninstall.
+- **How do I uninstall gentle-ai skills?** — `gentle-ai uninstall --agent <agent> --components skills --yes` removes every gentle-ai-managed skill for that agent (gentle-ai's `uninstall` operates at component granularity, not per-skill). `gentle-ai uninstall --all --yes` removes everything gentle-ai-managed for every supported agent. Backups are created automatically before uninstall.
 
 ---
 
