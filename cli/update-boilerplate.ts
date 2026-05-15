@@ -344,7 +344,7 @@ const COMPONENTS: Component[] = [
   { name: 'cli', type: 'directory', paths: ['cli'] },
   { name: 'docs', type: 'directory', paths: ['docs'] },
   { name: 'context', type: 'directory', paths: ['.context'] },
-  { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['context-engineering.md'] },
+  { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'templates-mcp', type: 'directory', paths: ['templates/mcp'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   { name: 'husky', type: 'directory', paths: ['.husky'] },
@@ -1803,9 +1803,36 @@ function resolveTemplateHeadSha(repoDir: string): string {
 }
 
 /**
+ * Build sparse-checkout patterns from a component registry.
+ *
+ * Gitignore-style patterns (`--no-cone` mode) require explicit filenames for
+ * root-level files. A bare `.` pattern matches nothing useful at root. For
+ * components declared with `paths: ['.']`, expand to each entry in `files`
+ * so root-level files like `.editorconfig` and `CONTEXT.md` actually land in
+ * the partial clone.
+ */
+function buildSparseCheckoutPatterns(components: Component[]): string[] {
+  const patterns = new Set<string>();
+  for (const c of components) {
+    for (const p of c.paths) {
+      if (p === '.') {
+        for (const f of c.files ?? []) {
+          patterns.add(f);
+        }
+      }
+      else {
+        patterns.add(p);
+      }
+    }
+  }
+  return [...patterns];
+}
+
+/**
  * Partial clone of the template repository using sparse-checkout.
  * Replaces legacy cloneTemplate() — wired in M2.
- * When `allowedPaths` is omitted, defaults to the union of all COMPONENTS paths.
+ * When `allowedPaths` is omitted, defaults to patterns derived from COMPONENTS
+ * via `buildSparseCheckoutPatterns` (root-level files expanded from `files`).
  *
  * Steps:
  *   1. Remove existing dest if present
@@ -1815,12 +1842,12 @@ function resolveTemplateHeadSha(repoDir: string): string {
  *   5. git sparse-checkout set <patterns>
  *   6. git checkout
  *
- * Exits process with code 3 on clone failure.
+ * Throws on clone failure so callers can fall back to legacy cloneTemplate().
  */
 async function partialCloneTemplate(
   repoUrl: string,
   dest: string,
-  allowedPaths: string[] = COMPONENTS.flatMap(c => c.paths),
+  allowedPaths: string[] = buildSparseCheckoutPatterns(COMPONENTS),
 ): Promise<void> {
   logStep('Descargando ultima version del template (partial clone)...');
   logInfo(`Repo: ${repoUrl}`);
@@ -2873,8 +2900,14 @@ async function runBootstrapForComponents(
     // Collect all relative paths for this component from the template clone
     const filesToSync: string[] = [];
 
+    // For file-list components, `files` are basenames within `paths[0]` (or
+    // root when `paths[0] === '.'`). Resolve to repo-root-relative paths so
+    // the template lookup hits the actual file location.
     const componentPaths = component.type === 'file-list'
-      ? (component.files ?? [])
+      ? (component.files ?? []).map((f) => {
+          const root = component.paths[0];
+          return root === '.' || root === undefined ? f : path.join(root, f);
+        })
       : component.paths;
 
     for (const componentPath of componentPaths) {
@@ -3571,7 +3604,7 @@ async function main(): Promise<void> {
 
     let bootstrapTemplateDir: string;
     try {
-      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, COMPONENTS.flatMap(c => c.paths));
+      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, buildSparseCheckoutPatterns(COMPONENTS));
       bootstrapTemplateDir = TEMP_DIR;
     }
     catch {
@@ -3670,7 +3703,7 @@ async function main(): Promise<void> {
     // Partial clone template (new delta-driven path)
     let templateDir: string;
     try {
-      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, COMPONENTS.flatMap(c => c.paths));
+      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, buildSparseCheckoutPatterns(COMPONENTS));
       templateDir = TEMP_DIR;
     }
     catch {
@@ -3737,7 +3770,7 @@ async function main(): Promise<void> {
     // Partial clone template (delta-driven path)
     let templateDir: string;
     try {
-      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, COMPONENTS.flatMap(c => c.paths));
+      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, buildSparseCheckoutPatterns(COMPONENTS));
       templateDir = TEMP_DIR;
     }
     catch {
