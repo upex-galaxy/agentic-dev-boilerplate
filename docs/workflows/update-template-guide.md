@@ -359,6 +359,128 @@ cp -r .backups/update-2026-XX-XX-XXXXXX/.context .
 
 ---
 
+## Flujo SHA-tracked (v6)
+
+A partir de CLI v6.0, `bun up` usa seguimiento de SHA por componente en lugar de un bulk `cpSync`. Esta sección describe el nuevo flujo, el schema del archivo de estado, y los modos de operación disponibles.
+
+### Schema `.template-version.json` (v6)
+
+```json
+{
+  "schemaVersion": 6,
+  "lastSync": "2026-05-14T12:00:00.000Z",
+  "templateCommit": "abc1234def567",
+  "cliVersion": "6.0",
+  "syncedComponents": ["claude", "agents", "docs"],
+  "variableSystemVersion": 1,
+  "perComponentCommit": {
+    "claude": "abc1234def567",
+    "agents": "abc1234def567",
+    "docs": "abc1234def567"
+  }
+}
+```
+
+| Campo                   | Descripcion                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `schemaVersion`         | Siempre `6` para este formato. Versiones anteriores se detectan y migran.                                          |
+| `lastSync`              | Fecha y hora ISO-8601 de la ultima sincronizacion exitosa.                                                         |
+| `templateCommit`        | SHA completo del commit del template usado en el ultimo sync.                                                      |
+| `cliVersion`            | Version del CLI que escribio el estado (ej. `"6.0"`).                                                              |
+| `syncedComponents`      | Lista de nombres de componente sincronizados en la ultima corrida.                                                 |
+| `variableSystemVersion` | Numero de version del sistema de variables (por defecto `1` en migraciones desde v5).                              |
+| `perComponentCommit`    | `Record<string, string>` — SHA del template por componente. Los archivos skipped NO avanzan el SHA del componente. |
+
+### Requisito: git ≥ 2.25
+
+El CLI usa partial clone (`--filter=blob:none --no-checkout`) + `git sparse-checkout` para descargar solo las rutas de los componentes necesarios. Esto requiere git 2.25 o superior. Si el binario local reporta una version inferior, el CLI falla con un error fatal antes de cualquier operacion de red.
+
+```bash
+git --version   # debe ser >= 2.25
+```
+
+### Modo `--auto` (CI / no-interactivo)
+
+Se activa con el flag `--auto` o automaticamente cuando `process.env.CI === 'true'` o `!process.stdin.isTTY`.
+
+Comportamiento:
+
+- Aplica archivos clasificados como `clean-fastforward` y `new-upstream`.
+- **Salta** archivos `locally-diverged` y `deleted-upstream` sin preguntar.
+- Nunca borra archivos.
+- Siempre termina con exit 0, incluso si hay archivos diverged.
+- Imprime una tabla de resumen en espanol al final.
+
+```bash
+bun up --auto            # modo auto explicito
+CI=true bun up           # deteccion automatica en pipelines
+```
+
+### Modo `--dry-run` (preview sin escritura)
+
+Simula el sync completo (clasificacion, delta, resolucion) **sin modificar ningun archivo en disco**.
+
+- Funciona en ambos pipelines: `--auto` y el interactivo.
+- El prompt de migracion v5→v6 **si aparece** en dry-run, pero el disco no se toca; se imprime `[dry-run] se migraría a v6 (no se escribirá al disco)`.
+- La preview de archivos DEPRECATED_FILES se muestra pero no se eliminan.
+
+```bash
+bun up --dry-run          # preview interactivo
+bun up --auto --dry-run   # preview en modo CI
+```
+
+### Modo `--rollback` (restaurar backup)
+
+Restaura todos los archivos desde el directorio de backup mas reciente (`".backups/update-{ISO-ts}/"`).
+
+```bash
+bun up --rollback
+```
+
+El directorio de backup se selecciona automaticamente (el mas reciente por timestamp). Cada archivo sobreescrito durante un sync tiene su copia en ese directorio antes de la escritura, junto con un manifiesto `RESTORE.txt`.
+
+### Migracion v5 → v6
+
+Si el CLI detecta un `.template-version.json` con schema anterior (sin campo `schemaVersion: 6`), presenta un prompt al usuario:
+
+```
+Detectado: esquema v5 en .template-version.json.
+Se actualizará al esquema v6 con perComponentCommit tracking.
+¿Migrar ahora? [Y/n]:
+```
+
+- **Si acepta (default Y)**: el estado se migra en memoria y se escribe al disco de forma atomica (tmp + rename) al final del sync exitoso.
+- **Si declina**: se ejecuta el flujo legacy sin modificar el archivo.
+- **En `--dry-run`**: el prompt aparece igualmente, pero la escritura se omite.
+
+El campo `variableSystemVersion` se establece en `1` si no estaba presente en el estado v5.
+
+### Bootstrap (primera corrida sin `.template-version.json`)
+
+Si no existe `.template-version.json`, el CLI muestra un banner de primera corrida y ejecuta un bulk sync de todos los componentes, copiando los archivos del template que faltan o difieren en el repo local. Al final de un sync exitoso escribe el estado v6 inicial con todos los SHAs de componente.
+
+En `--dry-run`: preview de los archivos que se sincronizarian, sin escrituras.
+
+### Archivos skipped
+
+Los archivos que el usuario omite (resolucion `skip`) o que el modo `--auto` salta (clasificados como `locally-diverged`) **no avanzan el SHA del componente** en `perComponentCommit`. La proxima corrida volvera a ofrecer esos archivos.
+
+### Divergencia por whitespace
+
+Antes de clasificar un archivo como `locally-diverged`, el CLI normaliza el contenido (CRLF→LF + elimina espacios en blanco al final de linea). Si la diferencia es solo de whitespace, el archivo se clasifica como `clean-fastforward` y se aplica automaticamente. Los bytes raw del upstream se escriben sin normalizar.
+
+### Limpieza de archivos DEPRECATED
+
+`previewDeprecatedCleanup()` se ejecuta al inicio de cada corrida (antes de cualquier menu). `cleanupDeprecatedFiles()` se ejecuta **despues** del loop de resolucion de archivos y **antes** de escribir el estado v6 en disco. En `--dry-run`, solo se hace preview — ningun archivo se borra.
+
+### Alcance de verificacion
+
+Este flujo **no puede verificarse funcionalmente desde el repo template** — hacerlo sincronizaria el template contra si mismo. La verificacion end-to-end (delta, clasificacion, UI interactiva, `--auto`, `--rollback`, escritura de schema) debe realizarse manualmente en un repo downstream creado a partir del template.
+
+Para referencia de la implementacion, ver handoff original: `.scratch/handoffs/2026-05-14-port-update-boilerplate-from-qa.md`.
+
+---
+
 ## Troubleshooting
 
 ### "gh: command not found"
