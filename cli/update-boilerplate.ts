@@ -2220,6 +2220,225 @@ async function applyResolution(
 }
 
 // ============================================================================
+// DIFF RENDERING
+// ============================================================================
+
+/**
+ * Render a colorized unified diff of template changes: template-old → template-new.
+ * For status=A (no old blob), uses the empty-tree SHA as the old side.
+ */
+function renderTemplateDiff(entry: DeltaEntry, repoDir: string): string {
+  const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+  const oldRef = entry.templateOldSha || EMPTY_TREE;
+  const newRef = entry.templateNewSha || EMPTY_TREE;
+
+  try {
+    return execSync(
+      `git -C "${repoDir}" diff --color=always ${oldRef} ${newRef}`,
+      { stdio: ['pipe', 'pipe', 'pipe'] },
+    ).toString();
+  }
+  catch {
+    return `(could not render template diff for ${entry.path})\n`;
+  }
+}
+
+/**
+ * Render a colorized unified diff of local changes: template-old → local-current.
+ * Writes the template-old blob to a tmp file, then uses `git diff --no-index`.
+ * ALWAYS cleans up the tmp file in a finally block (Design Risk #9).
+ */
+function renderLocalDiff(entry: DeltaEntry, repoDir: string, localRepoRoot: string): string {
+  const localPath = path.join(localRepoRoot, entry.path);
+
+  if (!fs.existsSync(localPath)) {
+    return `(local file does not exist: ${entry.path})\n`;
+  }
+
+  if (!entry.templateOldSha) {
+    // No old blob (e.g. A status with local collision) — diff empty → local
+    return `(no template-old blob available for ${entry.path})\n`;
+  }
+
+  const tmpPath = path.join(os.tmpdir(), `upex-diff-old-${process.pid}-${Date.now()}`);
+
+  try {
+    // Write template-old blob to tmp file
+    const blobBytes = execSync(
+      `git -C "${repoDir}" show ${entry.templateOldSha}`,
+      { stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    fs.writeFileSync(tmpPath, blobBytes);
+
+    try {
+      return execSync(
+        `git diff --no-index --color=always "${tmpPath}" "${localPath}"`,
+        { stdio: ['pipe', 'pipe', 'pipe'] },
+      ).toString();
+    }
+    catch (diffErr) {
+      // git diff --no-index exits non-zero when files differ — that's expected
+      // Extract stdout from the error object
+      const err = diffErr as { stdout?: Buffer | string };
+      if (err.stdout) {
+        return err.stdout.toString();
+      }
+      return `(could not render local diff for ${entry.path})\n`;
+    }
+  }
+  catch {
+    return `(could not retrieve template-old blob for ${entry.path})\n`;
+  }
+  finally {
+    // Always clean up tmp file regardless of success or failure
+    try {
+      fs.rmSync(tmpPath, { force: true });
+    }
+    catch {
+      // Ignore cleanup errors
+    }
+  }
+}
+
+/**
+ * Print both diffs with clear section headers.
+ * Used before the per-file resolution prompt.
+ */
+function printPairedDiffs(entry: DeltaEntry, repoDir: string, localRepoRoot: string): void {
+  console.log('');
+  console.log(`${colors.bold}${colors.cyan}=== Cambios upstream (template-old → template-new) ===${colors.reset}`);
+  const templateDiff = renderTemplateDiff(entry, repoDir);
+  if (templateDiff.trim()) {
+    console.log(templateDiff);
+  }
+  else {
+    console.log(`${colors.dim}  (sin salida de diff)${colors.reset}`);
+  }
+
+  console.log(`${colors.bold}${colors.cyan}=== Tus cambios locales (template-old → local-actual) ===${colors.reset}`);
+  const localDiff = renderLocalDiff(entry, repoDir, localRepoRoot);
+  if (localDiff.trim()) {
+    console.log(localDiff);
+  }
+  else {
+    console.log(`${colors.dim}  (sin salida de diff — los archivos pueden ser idénticos)${colors.reset}`);
+  }
+  console.log('');
+}
+
+// ============================================================================
+// INTERACTIVE SELECTION UI
+// ============================================================================
+
+/**
+ * Present a checkbox menu for user selection of changed files.
+ *
+ * Row format: `[M] path/to/file.ts  +12/-3` or `[M!] path/to/file.ts  +12/-3` for diverged.
+ * [D] rows default to unchecked. All rows default to unchecked.
+ * Group separators are inserted between components for visual segmentation.
+ *
+ * Returns the array of checked DeltaEntry objects.
+ */
+async function selectFilesInteractive(entries: DeltaEntry[]): Promise<DeltaEntry[]> {
+  const { checkbox, Separator } = await import('@inquirer/prompts');
+
+  // Filter: exclude unchanged and binary-skip (binary-skip warned separately upstream)
+  const visible = entries.filter(
+    e => e.classification !== 'unchanged' && e.classification !== 'binary-skip',
+  );
+
+  if (visible.length === 0) {
+    logInfo('No hay archivos para actualizar.');
+    return [];
+  }
+
+  // Build choices with component group separators
+  interface CheckboxChoice { name: string, value: DeltaEntry, checked: boolean }
+  const choices: (CheckboxChoice | InstanceType<typeof Separator>)[] = [];
+
+  let lastComponent = '';
+  for (const entry of visible) {
+    if (entry.component !== lastComponent) {
+      if (lastComponent !== '') {
+        choices.push(new Separator());
+      }
+      choices.push(new Separator(`── ${entry.component} ──`));
+      lastComponent = entry.component;
+    }
+
+    const badge = entry.classification === 'locally-diverged' ? `${entry.status}!` : entry.status;
+    const stats = `  +${entry.added}/-${entry.removed}`;
+    const label = `[${badge}] ${entry.path}${stats}`;
+
+    choices.push({
+      name: label,
+      value: entry,
+      // D rows default unchecked; all others also default unchecked per spec
+      checked: false,
+    });
+  }
+
+  const selected = await checkbox<DeltaEntry>({
+    message: 'Selecciona archivos a sincronizar: (ESPACIO para marcar, ENTER para confirmar)',
+    choices,
+  });
+
+  return selected;
+}
+
+// ============================================================================
+// PER-FILE RESOLUTION
+// ============================================================================
+
+/**
+ * Show paired diffs and prompt the user for a resolution on a locally-diverged file.
+ * Prompt: `[t]heirs / [m]ine / [s]kip (predeterminado: skip): `
+ * Default is skip (per Capability 6 — default action = skip).
+ * Re-prompts on invalid input.
+ */
+async function resolveDivergedFile(
+  entry: DeltaEntry,
+  templateDir: string,
+  localRepoRoot: string,
+): Promise<Resolution> {
+  printPairedDiffs(entry, templateDir, localRepoRoot);
+
+  while (true) {
+    const answer = await nativePrompt(
+      `${colors.bold}${colors.cyan}[t]heirs / [m]ine / [s]kip${colors.reset} (predeterminado: skip): `,
+    );
+
+    if (answer === '' || answer === 's' || answer === 'skip') {
+      return 'skip';
+    }
+    if (answer === 't' || answer === 'theirs') {
+      return 'theirs';
+    }
+    if (answer === 'm' || answer === 'mine') {
+      return 'mine';
+    }
+
+    logWarning(`Entrada inválida '${answer}'. Ingresa t (theirs), m (mine) o s (skip).`);
+  }
+}
+
+/**
+ * Prompt for explicit deletion confirmation on a deleted-upstream file.
+ * Prompt: `¿Eliminar <path> localmente? [y/N]: ` with default N.
+ * Returns 'delete' on y/Y; 'keep' on N/n/Enter.
+ */
+async function confirmDeletion(entry: DeltaEntry): Promise<Resolution> {
+  const answer = await nativePrompt(
+    `${colors.yellow}¿Eliminar ${entry.path} localmente?${colors.reset} [y/N]: `,
+  );
+
+  if (answer === 'y' || answer === 'yes') {
+    return 'delete';
+  }
+  return 'keep';
+}
+
+// ============================================================================
 // AUTO / CI MODE
 // ============================================================================
 
@@ -2358,6 +2577,166 @@ async function runAuto(
   ]);
   const componentsAdvanced = [...allEntryComponents].filter(c => !blockedComponents.has(c));
   const componentsHeldBack = [...blockedComponents];
+
+  return {
+    applied,
+    skipped,
+    failed,
+    newHeadSha: '', // filled in by caller
+    componentsAdvanced,
+    componentsHeldBack,
+  };
+}
+
+// ============================================================================
+// INTERACTIVE PLAN
+// ============================================================================
+
+/**
+ * Orchestrate the full interactive per-file pipeline.
+ *
+ * Steps:
+ *   1. selectFilesInteractive → user picks files
+ *   2. For each selected entry:
+ *      - clean-fastforward / new-upstream → resolution: 'theirs'
+ *      - locally-diverged → resolveDivergedFile()
+ *      - deleted-upstream → confirmDeletion()
+ *   3. Unchecked entries → push to summary.skipped (as DeltaEntry[])
+ *
+ * Returns RunSummary (partial — newHeadSha filled in by caller).
+ *
+ * NOTE: RunSummary.skipped is DeltaEntry[] (dev schema), not AppliedFile[] (QA schema).
+ */
+async function planInteractive(
+  entries: DeltaEntry[],
+  templateDir: string,
+  localRepoRoot: string,
+  backupDir: string,
+  state: SyncStateV6,
+  args: ParsedArgs,
+): Promise<RunSummary> {
+  const selected = await selectFilesInteractive(entries);
+  const selectedPaths = new Set(selected.map(e => e.path));
+
+  const applied: AppliedFile[] = [];
+  const skipped: DeltaEntry[] = [];
+  const failed: FailedFile[] = [];
+
+  // Unchecked entries are skipped
+  for (const entry of entries.filter(
+    e => e.classification !== 'unchanged' && e.classification !== 'binary-skip',
+  )) {
+    if (!selectedPaths.has(entry.path)) {
+      skipped.push(entry);
+    }
+  }
+
+  // For each selected entry, determine resolution and apply
+  for (const entry of selected) {
+    if (entry.classification === 'clean-fastforward' || entry.classification === 'new-upstream') {
+      if (args.dryRun) {
+        logInfo(`[dry-run] aplicaría: ${entry.path}`);
+        applied.push({ entry, resolution: 'theirs' });
+      }
+      else {
+        try {
+          await applyResolution(entry, 'theirs', templateDir, localRepoRoot, backupDir, args.dryRun);
+          applied.push({ entry, resolution: 'theirs' });
+        }
+        catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          logError(`Error aplicando ${entry.path}: ${msg}`);
+          failed.push({ entry, reason: msg });
+        }
+      }
+    }
+    else if (entry.classification === 'locally-diverged') {
+      if (args.dryRun) {
+        // In dry-run, still prompt so user sees the menu — but resolution is advisory only
+        console.log(`${colors.dim}[dry-run] archivo divergente: ${entry.path} — mostrando diff como vista previa...${colors.reset}`);
+        const resolution = await resolveDivergedFile(entry, templateDir, localRepoRoot);
+        console.log(`${colors.dim}[dry-run] resolvería como: ${resolution}${colors.reset}`);
+        applied.push({ entry, resolution });
+      }
+      else {
+        const resolution = await resolveDivergedFile(entry, templateDir, localRepoRoot);
+        if (resolution === 'skip') {
+          skipped.push(entry);
+        }
+        else {
+          try {
+            await applyResolution(entry, resolution, templateDir, localRepoRoot, backupDir, args.dryRun);
+            applied.push({ entry, resolution });
+          }
+          catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            logError(`Error aplicando ${entry.path}: ${msg}`);
+            failed.push({ entry, reason: msg });
+          }
+        }
+      }
+    }
+    else if (entry.classification === 'deleted-upstream') {
+      if (args.dryRun) {
+        console.log(`${colors.dim}[dry-run] eliminado upstream: ${entry.path} — se preguntaría por confirmación${colors.reset}`);
+        applied.push({ entry, resolution: 'delete' });
+      }
+      else {
+        const resolution = await confirmDeletion(entry);
+        if (resolution === 'keep') {
+          skipped.push(entry);
+        }
+        else {
+          try {
+            await applyResolution(entry, 'delete', templateDir, localRepoRoot, backupDir, args.dryRun);
+            applied.push({ entry, resolution: 'delete' });
+          }
+          catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            logError(`Error eliminando ${entry.path}: ${msg}`);
+            failed.push({ entry, reason: msg });
+          }
+        }
+      }
+    }
+  }
+
+  // Print summary table
+  const appliedCount = applied.length;
+  const skippedCount = skipped.length;
+  const failedCount = failed.length;
+
+  console.log('');
+  console.log(`${colors.bold}${colors.cyan}  Resumen de sincronización interactiva${colors.reset}`);
+  console.log(`${colors.dim}  ┌──────────────────┬───────┐${colors.reset}`);
+  console.log(`${colors.dim}  │${colors.reset} ${colors.bold}Estado           ${colors.reset}${colors.dim}│${colors.reset} ${colors.bold}Total${colors.reset}${colors.dim} │${colors.reset}`);
+  console.log(`${colors.dim}  ├──────────────────┼───────┤${colors.reset}`);
+  if (args.dryRun) {
+    console.log(`${colors.dim}  │${colors.reset} ${colors.green}Aplicados (sim.) ${colors.reset}${colors.dim}│${colors.reset}   ${String(appliedCount).padStart(2)}  ${colors.dim}│${colors.reset}`);
+  }
+  else {
+    console.log(`${colors.dim}  │${colors.reset} ${colors.green}Aplicados        ${colors.reset}${colors.dim}│${colors.reset}   ${String(appliedCount).padStart(2)}  ${colors.dim}│${colors.reset}`);
+  }
+  console.log(`${colors.dim}  │${colors.reset} ${colors.yellow}Saltados         ${colors.reset}${colors.dim}│${colors.reset}   ${String(skippedCount).padStart(2)}  ${colors.dim}│${colors.reset}`);
+  console.log(`${colors.dim}  │${colors.reset} ${failedCount > 0 ? colors.red : colors.dim}Con error        ${colors.reset}${colors.dim}│${colors.reset}   ${String(failedCount).padStart(2)}  ${colors.dim}│${colors.reset}`);
+  console.log(`${colors.dim}  └──────────────────┴───────┘${colors.reset}`);
+  console.log('');
+
+  // Determine which components advanced
+  const allEntryComponents = new Set([
+    ...applied.map(a => a.entry.component),
+    ...skipped.map(s => s.component),
+    ...failed.map(f => f.entry.component),
+  ]);
+  const blockedComponents = new Set([
+    ...skipped.map(s => s.component),
+    ...failed.map(f => f.entry.component),
+  ]);
+  const componentsAdvanced = [...allEntryComponents].filter(c => !blockedComponents.has(c));
+  const componentsHeldBack = [...blockedComponents];
+
+  // Unused param (state referenced in future M4 wiring for v5→v6 migration context)
+  void state;
 
   return {
     applied,
@@ -2972,6 +3351,66 @@ async function main(): Promise<void> {
     return;
   }
   // === END NEW DELTA-DRIVEN AUTO PATH (M2) ===
+
+  // === NEW DELTA-DRIVEN INTERACTIVE PATH (M3) ===
+  // Activates when:
+  //   1. NOT non-interactive (no --auto, no CI env, TTY stdin)
+  //   2. A v6 sync state with perComponentCommit entries exists on disk
+  // Falls through to legacy flow if conditions are not met.
+  if (!isNonInteractive(parsed) && isV6WithShas(rawState)) {
+    const v6State = rawState;
+
+    const depsReady = await ensureDependencies();
+    if (!depsReady) { return; }
+
+    await validatePrerequisites();
+
+    // Partial clone template (delta-driven path)
+    let templateDir: string;
+    try {
+      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, COMPONENTS.flatMap(c => c.paths));
+      templateDir = TEMP_DIR;
+    }
+    catch {
+      logWarning('partial clone falló — usando clone shallow legacy');
+      await cloneTemplate();
+      templateDir = TEMP_DIR;
+    }
+
+    const newHeadSha = resolveTemplateHeadSha(templateDir);
+    const entries = computeDelta(templateDir, COMPONENTS, v6State);
+
+    const backupDir = createBackup(COMPONENTS.map(c => c.name));
+
+    if (entries.length > 0) {
+      appendBackupManifest(backupDir, entries, v6State);
+    }
+
+    const summary = await planInteractive(entries, templateDir, repoRoot, backupDir, v6State, parsed);
+    summary.newHeadSha = newHeadSha;
+
+    if (!parsed.dryRun) {
+      const newState = advanceSyncState(v6State, summary, COMPONENTS, newHeadSha);
+      writeSyncState(repoRoot, newState);
+    }
+
+    // Post-sync notices (existing)
+    detectUnfilledVariables();
+    checkMigrationNeeded();
+    if (parsed.commands.includes('agents') || parsed.commands.includes('scripts') || parsed.commands.length === 0) {
+      checkAgentsPackageJsonMigration();
+    }
+    detectMissingFrameworkScripts();
+
+    // Advisory commit message
+    if (!parsed.dryRun && summary.newHeadSha) {
+      logInfo(`Mensaje de commit sugerido: ${suggestCommitMessage(summary)}`);
+    }
+
+    cleanup();
+    return;
+  }
+  // === END NEW DELTA-DRIVEN INTERACTIVE PATH (M3) ===
 
   if (parsed.commands.length === 0) {
     logError('No se especifico ningun comando valido');
