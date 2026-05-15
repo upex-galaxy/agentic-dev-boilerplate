@@ -29,7 +29,7 @@
     "bun"
   ],
   "bin": {
-    "create-agentic-dev": "./dist/cli.js"
+    "create-agentic-dev": "dist/cli.js"
   },
   "files": [
     "README.md",
