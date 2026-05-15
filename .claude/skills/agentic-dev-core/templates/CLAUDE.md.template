@@ -105,6 +105,7 @@ NOT here. Run `/sync-ai-memory` after major doc changes.
 | Foundational definition (PRD/SRS/Discovery) | "define el PRD", "ideando un nuevo producto" | `/project-foundation` | `idea/`, `PRD/`, `SRS/`, business maps | Read + Write |
 | Design system (DESIGN.md) | "definir design system", "rebrandear el proyecto" | `/design-system` | `idea/constitution.md`, `PRD/` | Write |
 | Infra scaffolding (backend/frontend) | "scaffolding del proyecto", "API routes setup" | `/project-bootstrap` | `SRS/infrastructure.md`, `DESIGN.md` | Code edit |
+| QA testability page + credentials artifact | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide` | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]` |
 | Backlog / story refinement | "create epic", "refine acceptance criteria" | `/product-management` | `.context/PBI/{module}/ROADMAP.md`, `PRD/` | `[ISSUE_TRACKER_TOOL]` |
 | Sprint-development ticket | "implementar esta historia", "trabajar [TICKET-PREFIX]-XXX" | `/sprint-development` | `.context/PBI/{module}/{TICKET}-*/` | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
 | TDD slice / unit tests | "write unit tests", "TDD this function" | `/unit-testing` | function under test, existing tests | Code edit |
@@ -129,7 +130,7 @@ NOT here. Run `/sync-ai-memory` after major doc changes.
 
 ## 5. SKILLS + COMMANDS + MCPs REGISTRY
 
-### Skills T1 (committed in `.claude/skills/`, 10 — ours only)
+### Skills T1 (committed in `.claude/skills/`, 11 — ours only)
 
 > Policy: repo commits ONLY skills WE maintain. Community / third-party skills (e.g. `playwright-cli`, `frontend-design`, `next-*`, `shadcn`) are installed by `bun run setup` from upstream — never committed here.
 
@@ -140,6 +141,7 @@ NOT here. Run `/sync-ai-memory` after major doc changes.
 | `project-foundation` | `/project-foundation` | Constitution + Architecture (PRD/SRS) + Discovery (data/api/dev-guide). |
 | `design-system` | `/design-system` | DESIGN.md (Google Labs spec) — 5 paths. Pre-scaffolding visual contract. |
 | `project-bootstrap` | `/project-bootstrap` | Infra scaffolding: backend, frontend, OpenAPI, auth, env, Supabase types. |
+| `testability-guide` | `/testability-guide` | Generates the in-app `/qa` page ("Software Testability Guide for QA") + a tool-agnostic credentials artifact (Jira Epic default / Confluence / Notion / MCP / CLI / manual paste). Idempotent re-runs via snapshot-comment drift detection. |
 | `product-management` | `/product-management` | Backlog seed + epic + INVEST/AC refinement + sprint report. |
 | `sprint-development` | `/sprint-development` | **Mega-orchestrator**. Per-story Plan → Implement → Review → Staging → Prod (gated). Composes SDD bundle on Path B (see §12). |
 | `unit-testing` | `/unit-testing` | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`. |
