@@ -1861,7 +1861,7 @@ async function partialCloneTemplate(
       logInfo('Posibles causas: sin acceso al repo, problemas de red, gh CLI no configurado');
       logInfo(`Verifica: gh repo view ${repoUrl}`);
     }
-    process.exit(3);
+    throw new Error('Error clonando el repositorio template');
   }
 
   try {
@@ -1874,7 +1874,7 @@ async function partialCloneTemplate(
   catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logError(`Fallo en configuracion de sparse-checkout: ${msg}`);
-    process.exit(3);
+    throw new Error(`Fallo en configuracion de sparse-checkout: ${msg}`);
   }
 }
 
