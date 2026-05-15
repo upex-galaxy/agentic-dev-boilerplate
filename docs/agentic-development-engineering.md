@@ -38,13 +38,13 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
   (Define the product)        (Shape the backlog)            (Ship the code)
 ```
 
-| Tier                                                 | Owning skill(s)                                                     | Output                                                                                                               |
-| ---------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json`          |
-| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/idea/`, `.context/PRD/`, `.context/SRS/`, `.context/business/`, `DESIGN.md`, scaffolded backend + frontend |
-| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                      |
-| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                               |
-| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                            |
+| Tier                                                 | Owning skill(s)                                                     | Output                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json` |
+| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend          |
+| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots             |
+| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                      |
+| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                   |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
 
@@ -299,10 +299,6 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 │   ├── skill-registry.md            #   Compact-rules cache    (scripts/build-skill-registry.ts)
 │   └── testing-capabilities.json    #   Testing tooling cache  (scripts/detect-testing-capabilities.ts)
 │
-├── idea/                             # Constitution (/project-foundation Phase 1)
-│   ├── business-model.md            #   Problem, solution, monetization, segments
-│   └── market-context.md            #   Industry, competitors, trends
-│
 ├── PRD/                              # Product Requirements (/project-foundation Phase 2)
 │   ├── executive-summary.md         #   Problem, KPIs, MVP metrics
 │   ├── personas.md                  #   Target users, JTBD
@@ -315,7 +311,10 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 │   ├── architecture.md              #   Stack, data model, deploy topology
 │   └── api-contracts.md             #   OpenAPI endpoint definitions
 │
-├── business/                         # Auto-generated business maps (/project-foundation Phase 4 + slash commands)
+├── business/                         # Single source of business knowledge (Constitution + Maps)
+│   ├── business-model.md            #   Problem, solution, monetization, segments  (/project-foundation Phase 1)
+│   ├── market-context.md            #   Industry, competitors, trends              (/project-foundation Phase 1)
+│   ├── legacy-analysis.md           #   Legacy stack + doc-gap analysis (optional) (/project-foundation Phase 1)
 │   ├── business-data-map.md         #   Entities, flows, state machines  (/business-data-map)
 │   ├── business-feature-map.md      #   Feature inventory + CRUD matrix  (/business-feature-map)
 │   └── business-api-map.md          #   Auth model + critical endpoints  (/business-api-map)

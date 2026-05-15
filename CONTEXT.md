@@ -52,9 +52,13 @@ agentic-dev-boilerplate/
 │   ├── _framework/                 Framework infrastructure (auto-generated)
 │   │   ├── skill-registry.md       Compact-rules cache (auto-generated)
 │   │   └── testing-capabilities.json  Testing tooling cache (auto-generated)
-│   ├── business/                   Output of business-* commands
-│   │   └── business-data-map.md    Generated on demand by /business-data-map
-│   ├── idea/                       /project-foundation Phase 1 — Constitution
+│   ├── business/                   Single source of business knowledge (Constitution + Maps)
+│   │   ├── business-model.md       /project-foundation Phase 1 — Business Model Canvas
+│   │   ├── market-context.md       /project-foundation Phase 1 — Industry, competitors
+│   │   ├── legacy-analysis.md      /project-foundation Phase 1 (optional, legacy projects)
+│   │   ├── business-data-map.md    Generated on demand by /business-data-map
+│   │   ├── business-feature-map.md Generated on demand by /business-feature-map
+│   │   └── business-api-map.md     Generated on demand by /business-api-map
 │   ├── PRD/                        /project-foundation Phase 2 — Product Requirements
 │   ├── SRS/                        /project-foundation Phase 2 — Software Requirements
 │   └── PBI/                        Per-epic / per-ticket backlog artifacts
@@ -206,7 +210,7 @@ The agent should load only what the current step needs. Use this table to decide
 | ----------------------- | -------------------------------------------------------------------------------------------- |
 | **Developer**           | `/sprint-development` (+ optional `/unit-testing`); `.context/business/business-data-map.md` |
 | **Product / PM**        | `/product-management`, `/project-foundation`; `.context/PRD/`, `.context/business/`          |
-| **Architect / Founder** | `/project-foundation`; `.context/idea/`, `.context/PRD/`, `.context/SRS/`                    |
+| **Architect / Founder** | `/project-foundation`; `.context/business/`, `.context/PRD/`, `.context/SRS/`                |
 | **DevOps / Infra**      | `/project-bootstrap`; `bun up --help`, `docs/setup/mcp/`                                     |
 | **New contributor**     | `/agentic-dev-onboard`; `docs/onboarding.html` (via `bun run onboarding`)                    |
 

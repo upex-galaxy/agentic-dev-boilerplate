@@ -159,10 +159,9 @@ Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier
 ├── jira-fields.json      # Workspace-resolved field IDs (regenerated per project)
 ├── jira-workflows.json   # Workspace-resolved workflows / statuses / transitions
 └── README.md             # The .agents/ contract
-.context/                 # Per-project context (PBI, PRD, SRS, idea, business maps)
+.context/                 # Per-project context (PBI, PRD, SRS, business knowledge)
 ├── _framework/           # Auto-generated caches (skill-registry, testing-capabilities)
-├── business/             # Business maps (data-map, feature-map, api-map)
-├── idea/                 # Constitution (business model, market context)
+├── business/             # Constitution (business model, market context) + maps (data, feature, api)
 ├── PRD/                  # Product Requirements
 ├── SRS/                  # Software Requirements
 └── PBI/                  # Per-epic + per-ticket memory

@@ -12,16 +12,17 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 │   ├── skill-registry.md          Compact-rules cache for skills        (scripts/build-skill-registry.ts)
 │   └── testing-capabilities.json  Testing tooling cache                 (scripts/detect-testing-capabilities.ts; gitignored)
 │
-├── business/                      Outputs of /project-foundation Phase 4 + business-* commands
-│   ├── business-data-map.md       Entities, flows, state machines  (/business-data-map)
-│   ├── business-feature-map.md    Feature catalog, CRUD matrix     (/business-feature-map)
-│   ├── business-api-map.md        Auth model, critical journeys    (/business-api-map)
-│   └── project-dev-guide.md       How to build features here       (/project-foundation Phase 4 embedded)
+├── business/                      Single source of business knowledge (Constitution + Maps)
+│   ├── README.md                  Folder index (Constitution + Maps layers)
+│   ├── business-model.md          Business Model Canvas, value prop (/project-foundation Phase 1)
+│   ├── market-context.md          Industry, competitors, positioning (/project-foundation Phase 1)
+│   ├── legacy-analysis.md         Legacy stack + doc-gap analysis    (/project-foundation Phase 1, optional)
+│   ├── business-data-map.md       Entities, flows, state machines    (/business-data-map)
+│   ├── business-feature-map.md    Feature catalog, CRUD matrix       (/business-feature-map)
+│   ├── business-api-map.md        Auth model, critical journeys      (/business-api-map)
+│   └── project-dev-guide.md       How to build features here         (/project-foundation Phase 4 embedded)
 │
 ├── master-implementation-plan.md  High-level dependency-cascaded roadmap (/master-implementation-plan)
-│
-├── idea/                          Output of /project-foundation Phase 1 — Constitution
-│   └── README.md                  Phase placeholder (see file)
 │
 ├── PRD/                           Output of /project-foundation Phase 2 — Product Requirements
 │   └── README.md                  Phase placeholder (see file)
@@ -41,12 +42,14 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
 | `_framework/skill-registry.md`                      | `bun scripts/build-skill-registry.ts`   | Re-run when skills change                              |
 | `_framework/testing-capabilities.json`              | `bun scripts/detect-testing-capabilities.ts` | Re-run during `/agentic-dev-core` bootstrap            |
+| `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
+| `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
+| `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
 | `business/business-data-map.md`                     | `/business-data-map` command            | Invoked by `/project-foundation` Phase 4 Step 1        |
 | `business/business-feature-map.md`                  | `/business-feature-map` command         | Invoked by `/project-foundation` Phase 4 Step 2        |
 | `business/business-api-map.md`                      | `/business-api-map` command             | Invoked by `/project-foundation` Phase 4 Step 3        |
 | `business/project-dev-guide.md`                     | `/project-foundation` (Phase 4 Step 4)  | Embedded skill logic; re-run if architecture changes   |
 | `master-implementation-plan.md`                     | `/master-implementation-plan` command   | Invoked by `/project-foundation` Phase 4 Step 5        |
-| `idea/*.md`                                         | `/project-foundation` (Phase 1)         | Business model + market context                        |
 | `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
 | `PBI/{epic-slug}/epic.md`                           | `/product-management` (epic creation)   | Topic key: `pbi/{epic-slug}/epic`                      |
