@@ -4,9 +4,6 @@ description: 'Foundation skill that hosts shared references cited by other workf
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
-complementary_categories:
-  - doc-generation
-  - meta-skill
 ---
 
 # Agentic Dev Core — Foundation reference host
