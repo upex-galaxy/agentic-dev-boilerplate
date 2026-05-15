@@ -52,6 +52,7 @@ import { join, relative, resolve } from 'node:path';
 const REPO_ROOT = join(import.meta.dir, '..');
 const ONBOARDING_DIR = join(REPO_ROOT, 'docs');
 const ONBOARDING_DIR_ABS = resolve(ONBOARDING_DIR);
+const ONBOARDING_ENTRY = 'onboarding.html';
 const DEFAULT_PORT = 4321;
 
 // ============================================================================
@@ -250,7 +251,7 @@ function mimeFor(path: string): string | undefined {
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
   let pathname = url.pathname;
-  if (pathname === '/' || pathname === '') { pathname = '/onboarding.html'; }
+  if (pathname === '/' || pathname === '') { pathname = `/${ONBOARDING_ENTRY}`; }
 
   // Decode percent-encoded segments before resolving — otherwise `..%2f` style
   // payloads would slip past the traversal guard. URIError on malformed input
@@ -311,9 +312,9 @@ async function main(): Promise<void> {
     log.dim('Run this command from the repo root, or generate the onboarding page first.');
     process.exit(1);
   }
-  if (!existsSync(join(ONBOARDING_DIR, 'onboarding.html'))) {
-    log.error('docs/onboarding.html not found.');
-    log.dim('The onboarding page must include an onboarding.html entry point.');
+  if (!existsSync(join(ONBOARDING_DIR, ONBOARDING_ENTRY))) {
+    log.error(`docs/${ONBOARDING_ENTRY} not found.`);
+    log.dim(`The onboarding page must include an ${ONBOARDING_ENTRY} entry point.`);
     process.exit(1);
   }
 
