@@ -1,6 +1,6 @@
 ---
 name: sprint-development
-description: "Orchestrates the per-story dev loop end-to-end: Planning -> Implementation -> Code Review -> Staging deploy -> (gated) Production deploy. Mega-orchestrator on the dev side, equivalent of sister repo's sprint-testing. Drives the 12-step workflow: epic precheck, Jira transitions (Ready For Dev -> In Progress -> In Review -> Ready For QA), impl plan, code, PR, review, docs, merge, staging deploy, optional production deploy with rollback. Triggers on: implementar esta historia, implement this story, trabajar el ticket UPEX-XXX, plan to code to review to deploy, fix this bug and merge, deploy a staging, code review for PR, production deployment, rollback, continue implementation, story-level dev workflow, sprint-development. Do NOT use for: foundational product definition (use /project-foundation), infrastructure scaffolding (use /project-bootstrap), backlog seeding / AC refinement (use /product-management), unit-testing TDD (use /unit-testing), formal QA testing (out of scope, see agentic-qa-boilerplate)."
+description: "Orchestrates the per-story dev loop end-to-end: Planning -> Implementation -> Code Review -> Staging deploy -> (gated) Production deploy. Mega-orchestrator on the dev side, equivalent of sister repo's sprint-testing. Drives the 12-step workflow: epic precheck, Jira transitions (Ready For Dev -> In Progress -> In Review -> Ready For QA), impl plan, code, PR, review, docs, merge, staging deploy, optional production deploy with rollback. Triggers on: implementar esta historia, implement this story, trabajar el ticket UPEX-XXX, plan to code to review to deploy, fix this bug and merge, deploy a staging, code review for PR, production deployment, rollback, continue implementation, story-level dev workflow, sprint-development, process sprint N, continue sprint, implement sprint N, sprint-file. Do NOT use for: foundational product definition (use /project-foundation), infrastructure scaffolding (use /project-bootstrap), backlog seeding / AC refinement (use /product-management), unit-testing TDD (use /unit-testing), formal QA testing (out of scope, see agentic-qa-boilerplate)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: implementation
@@ -101,6 +101,25 @@ Before Stage 1 starts, the orchestrator:
    - `delivery_strategy_default: ask-on-risk | auto-chain | single-pr | exception-ok`
    - `artifact_backend: file | engram | hybrid` (default: **hybrid**)
 
+### Sprint roadmap checkpoint (batch-sprint mode only — skip in single-ticket mode)
+
+Detect batch mode from the user invocation ("process sprint N", "implement sprint N",
+"continue sprint", a `sprint-file` parameter, or any phrase that implies a sprint loop).
+
+Check whether `.context/reports/SPRINT-{N}-DEVELOPMENT.md` exists for the target sprint.
+
+- **Missing** → generate it before entering the ticket loop. Delegate to
+  `references/sprint-report.md` §Part 1 — Sprint Roadmap Generator.
+- **Present but older than 24h, OR the user explicitly asks for a refresh** →
+  regenerate (warn + confirm overwrite, preserve Session Log entries).
+- **Present and fresh** → proceed.
+
+Single-ticket and bug-only invocations skip this step entirely. The orchestrator reads
+the latest sprint report (if present) at Stage 1 entry for queue/dependency context
+awareness, but does NOT update it. In batch mode, the orchestrator updates the report
+row at each Jira transition (Stage 1 → Stage 4). Stage 5 (production deploy) is
+**always** manual per ticket — batch mode loops Stages 1–4 only.
+
 ### Path selection (at Stage 1 entry)
 
 - **Path A — Story-driven simple**: Jira ticket, ≤400 lines forecast, no architectural decisions, no Strict TDD. No SDD calls. Run Stages 1-5 inline.
@@ -110,13 +129,13 @@ If Path is ambiguous, ASK the user once at Stage 1 entry. Cache the choice for t
 
 ### 5 delegation points (Path B only)
 
-| Sprint-dev stage           | Delegate to    | Trigger                                                    | Data IN                                                  | Data OUT                                              |
-| -------------------------- | -------------- | ---------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------- |
-| Stage 1 — Planning         | `sdd-design`   | Multi-file / new module / architectural decisions needed   | proposal derived from Jira AC, affected paths, context   | `design.md` (architecture, data flow, file changes)   |
-| Stage 1 — Planning         | `sdd-tasks`    | Always when sdd-design was invoked                         | `design.md`                                              | `tasks.md` with Review Workload Forecast + decision   |
-| Stage 2 — Implementation   | `sdd-apply`    | `strict_tdd=true` OR delivery=chained/exception OR Path B  | `design.md`, `tasks.md`, TDD mode, delivery strategy     | `apply-progress` (merged across batches)              |
-| Stage 3 — Code Review      | `sdd-verify`   | Always when `sdd-apply` was invoked. Non-gating by default | spec/AC scenarios, `apply-progress`                      | verdict PASS / PASS WITH WARNINGS / FAIL + matrix     |
-| Post-merge (after Stage 4) | `sdd-archive`  | Always when SDD specs were authored                        | delta specs                                              | main specs synced + archive folder with date          |
+| Sprint-dev stage           | Delegate to   | Trigger                                                    | Data IN                                                | Data OUT                                            |
+| -------------------------- | ------------- | ---------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------- |
+| Stage 1 — Planning         | `sdd-design`  | Multi-file / new module / architectural decisions needed   | proposal derived from Jira AC, affected paths, context | `design.md` (architecture, data flow, file changes) |
+| Stage 1 — Planning         | `sdd-tasks`   | Always when sdd-design was invoked                         | `design.md`                                            | `tasks.md` with Review Workload Forecast + decision |
+| Stage 2 — Implementation   | `sdd-apply`   | `strict_tdd=true` OR delivery=chained/exception OR Path B  | `design.md`, `tasks.md`, TDD mode, delivery strategy   | `apply-progress` (merged across batches)            |
+| Stage 3 — Code Review      | `sdd-verify`  | Always when `sdd-apply` was invoked. Non-gating by default | spec/AC scenarios, `apply-progress`                    | verdict PASS / PASS WITH WARNINGS / FAIL + matrix   |
+| Post-merge (after Stage 4) | `sdd-archive` | Always when SDD specs were authored                        | delta specs                                            | main specs synced + archive folder with date        |
 
 ### What sprint-dev NEVER delegates
 
@@ -229,6 +248,8 @@ Read for guidance:
 
 Output: `implementation-plan.md` per story (or `feature-implementation-plan.md` per feature). Lives alongside the story folder in the project repo. Commit it before Stage 2 starts. Transition Jira `Ready For Dev -> In Progress`.
 
+**Sprint report**: if batch mode is active, update the in-flight row for this ticket: Status PENDING → IN_PROGRESS; fill Owner, Path (A or B), Impl Plan link, Forecast Risk from the Workload Forecast block. See `references/sprint-report.md` §Part 2.
+
 Persistence: story plans persist at `.context/PBI/{ticket}/impl-plan.md` with topic_key `pbi/{ticket}/impl-plan`; macro feature plans use `pbi/{epic-slug}/feature-impl-plan`. Auto-generated, so `capture_prompt: false`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 **Path B (complex stories)**: delegate architecture + tasks to SDD per the **SDD Composition** section above. Sequence: `sdd-design` (architecture decisions, data flow, file changes) → `sdd-tasks` (formal Workload Forecast + delivery strategy decision). Sprint-dev writes its `implementation-plan.md` from the SDD outputs and persists a Jira-linked summary in the custom field. SDD artifacts live in engram topic keys `sdd/{change-name}/{design|tasks}`. The two artifact layers do not overlap.
@@ -274,6 +295,8 @@ If the work needs TDD on a specific function, hand off to `/unit-testing` mid-im
 ### Stage 3: Code Review
 
 Push the feature branch and open the PR via the `/git-flow-master` skill (it auto-detects the project's branching strategy — typically `staging` base for the main+integration pattern — and uses title format `feat({{PROJECT_KEY}}-N): <short>`). Jira automation rule should auto-transition the ticket from `In Progress -> In Review` within ~30s of PR creation; if it doesn't, surface a manual-transition warning.
+
+**Sprint report**: update the row: Status IN_PROGRESS → IN_REVIEW; fill PR (#NNN); set Delivery Strategy from the chain decision recorded in the impl-plan forecast block.
 
 Review checklist (driven by `references/review-pr.md`):
 
@@ -327,6 +350,8 @@ After deploy: post a QA notification comment on the ticket with PR URL, branch n
 
 Sync `staging` locally (`git pull origin staging`) and clean up the merged branch. Wait for the user to indicate the next ticket.
 
+**Sprint report**: Status IN_REVIEW → MERGED once the squash-merge lands, then MERGED → STAGING_DEPLOYED after CI smoke passes. Move the row to "Done — This Sprint" once Jira reaches Ready For QA. Append a Session Log entry with date + ticket + transition.
+
 **Path B post-merge**: if SDD specs were authored (sdd-design + sdd-tasks ran in Stage 1), invoke `sdd-archive` to sync delta specs to main specs and move the change folder to `archive/YYYY-MM-DD-{change-name}/`. Single audit-trail entry per change. Runs once, after merge to `staging`, before clearing the orchestrator state for this ticket.
 
 **Hand-off**: QA verification on staging is **out of scope here**. See `agentic-qa-boilerplate` for the `sprint-testing` skill that picks up from `Ready For QA`.
@@ -342,6 +367,8 @@ Read for guidance:
 - `references/rollback-plan.md` — runbook if KPIs go red post-deploy
 
 Dispatch is **Single + Background**: one subagent runs the deploy, a background monitor watches the health window. The orchestrator stays on the line for at least the rollback decision window before declaring success.
+
+**Sprint report**: on successful prod deploy, Status STAGING_DEPLOYED → PROD_DEPLOYED. On rollback, Status → BLOCKED with a Blocking note pointing to the rollback runbook entry. NOTE: Stage 5 never runs in batch mode — only per-ticket manual invocation.
 
 ---
 
@@ -394,6 +421,7 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 | "pre-deploy-to-prod checklist"                       | `references/pre-deploy-checklist.md`    |
 | "deploy to production"                               | `references/production-deploy.md`       |
 | "rollback production deploy"                         | `references/rollback-plan.md`           |
+| "process sprint N" / "continue sprint"               | `references/sprint-report.md`           |
 
 ---
 
@@ -470,6 +498,9 @@ If any required var is unset, run `/agentic-dev-core` first.
 ## Pre-flight checklist
 
 - [ ] Pre-requisites green (project.yaml, story exists, AC clear, .env populated)
+- [ ] **Batch mode resolved**: if the trigger phrase implies a sprint loop, sprint report (`SPRINT-{N}-DEVELOPMENT.md`) exists or has been generated
+- [ ] Sprint report row updated at each Jira transition (IN_PROGRESS / IN_REVIEW / MERGED / STAGING_DEPLOYED / PROD_DEPLOYED)
+- [ ] Session Log entry appended for any blocking / aborting / sprint-spanning event
 - [ ] **SDD glue layer resolved** (per `## SDD Composition`): `sdd-init` cached for project; `strict_tdd`, `test_command`, `delivery_strategy_default`, `artifact_backend` known
 - [ ] **Path selected** (A or B) at Stage 1 entry; cached for the change
 - [ ] Epic precheck: `feature-plan.md` + `feature-implementation-plan.md` exist or user confirmed proceeding without
