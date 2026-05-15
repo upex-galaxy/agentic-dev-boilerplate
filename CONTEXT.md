@@ -50,8 +50,7 @@ agentic-dev-boilerplate/
 ├── .context/                       Project memory the AI reads
 │   ├── README.md                   Index + generator map (who writes what)
 │   ├── _framework/                 Framework infrastructure (auto-generated)
-│   │   ├── skill-registry.md       Compact-rules cache (auto-generated)
-│   │   └── testing-capabilities.json  Testing tooling cache (auto-generated)
+│   │   └── skill-registry.md       Compact-rules cache (auto-generated)
 │   ├── business/                   Single source of business knowledge (Constitution + Maps)
 │   │   ├── business-model.md       /project-foundation Phase 1 — Business Model Canvas
 │   │   ├── market-context.md       /project-foundation Phase 1 — Industry, competitors

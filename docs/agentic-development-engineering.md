@@ -38,13 +38,13 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
   (Define the product)        (Shape the backlog)            (Ship the code)
 ```
 
-| Tier                                                 | Owning skill(s)                                                     | Output                                                                                                      |
-| ---------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`, `.context/_framework/testing-capabilities.json` |
-| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend          |
-| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots             |
-| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                      |
-| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                   |
+| Tier                                                 | Owning skill(s)                                                     | Output                                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`                                         |
+| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend |
+| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots    |
+| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging             |
+| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                          |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
 
@@ -296,8 +296,7 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 ```
 .context/
 ├── _framework/                       # Framework infrastructure
-│   ├── skill-registry.md            #   Compact-rules cache    (scripts/build-skill-registry.ts)
-│   └── testing-capabilities.json    #   Testing tooling cache  (scripts/detect-testing-capabilities.ts)
+│   └── skill-registry.md            #   Compact-rules cache    (scripts/build-skill-registry.ts)
 │
 ├── PRD/                              # Product Requirements (/project-foundation Phase 2)
 │   ├── executive-summary.md         #   Problem, KPIs, MVP metrics
@@ -346,7 +345,7 @@ The canonical shape is documented in `.context/README.md`. The strategic reasoni
 
 ### Cross-skill references
 
-A second knowledge surface exists outside `.context/`: the `agentic-dev-core/references/*.md` files. They host the briefing template, the dispatch patterns decision guide, the orchestration doctrine, the testing-capabilities cache schema, the topic-key conventions, the model-routing table, and the skill-resolver protocol. Workflow skills cite these files instead of duplicating the content. They are loaded on demand and form part of the practice's knowledge layer even though they live under `.claude/skills/` rather than `.context/`.
+A second knowledge surface exists outside `.context/`: the `agentic-dev-core/references/*.md` files. They host the briefing template, the dispatch patterns decision guide, the orchestration doctrine, the topic-key conventions, the model-routing table, and the skill-resolver protocol. Workflow skills cite these files instead of duplicating the content. They are loaded on demand and form part of the practice's knowledge layer even though they live under `.claude/skills/` rather than `.context/`.
 
 | `agentic-dev-core` reference | Purpose                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -354,7 +353,6 @@ A second knowledge surface exists outside `.context/`: the `agentic-dev-core/ref
 | `dispatch-patterns.md`       | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                          |
 | `orchestration-doctrine.md`  | Cacheable mirror of `CLAUDE.md` §Orchestration Mode (Subagent Strategy).                                     |
 | `model-routing.md`           | Phase → model alias table (opus for foundation, sonnet for impl, haiku for archive).                         |
-| `testing-capabilities.md`    | Cache schema + detection algorithm for `.context/_framework/testing-capabilities.json`.                      |
 | `topic-key-conventions.md`   | Stable engram topic keys per artefact (e.g. `pbi/{ticket}/impl-plan`, `sdd/{change}/spec`).                  |
 | `skill-resolver.md`          | Skill-resolver protocol: how the orchestrator looks up compact rules and injects them into subagent prompts. |
 
@@ -688,7 +686,7 @@ These hooks are documented but not implemented. Reopen when there is concrete de
 
 ### What ships in this repository
 
-- **A foundation skill (`agentic-dev-core`)** — bootstraps `CLAUDE.md`, `.agents/project.yaml`, the `scripts/agents-*.ts` CLIs, and the testing-capabilities cache. Hosts the canonical orchestration doctrine, briefing template, dispatch patterns, model-routing table, topic-key conventions, and skill-resolver protocol cited by every workflow skill.
+- **A foundation skill (`agentic-dev-core`)** — bootstraps `CLAUDE.md`, `.agents/project.yaml`, and the `scripts/agents-*.ts` CLIs. Hosts the canonical orchestration doctrine, briefing template, dispatch patterns, model-routing table, topic-key conventions, and skill-resolver protocol cited by every workflow skill.
 - **A roster of phase-aware AI skills** — auto-triggered by user intent, orchestrated with human-in-the-loop checkpoints. Each tier of the lifecycle has its own skill. The current roster is enumerated in [onboarding.html §9 Skills catalog](onboarding.html).
 - **The SDD meta-skill bloque** — explore → propose → spec → design → tasks → apply → verify → archive for any substantial change.
 - **A library of utility slash commands** — deterministic, single-purpose, invoked with `/<name>`. The current library is enumerated in [onboarding.html §10 Commands & Scripts](onboarding.html).

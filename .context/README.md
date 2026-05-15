@@ -9,8 +9,7 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 ├── README.md                      This file — index + generator map
 │
 ├── _framework/                    Framework infrastructure (auto-generated)
-│   ├── skill-registry.md          Compact-rules cache for skills        (scripts/build-skill-registry.ts)
-│   └── testing-capabilities.json  Testing tooling cache                 (scripts/detect-testing-capabilities.ts; gitignored)
+│   └── skill-registry.md          Compact-rules cache for skills        (scripts/build-skill-registry.ts)
 │
 ├── business/                      Single source of business knowledge (Constitution + Maps)
 │   ├── README.md                  Folder index (Constitution + Maps layers)
@@ -41,7 +40,6 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | File / Pattern                                      | Owner                                   | Notes                                                  |
 | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
 | `_framework/skill-registry.md`                      | `bun scripts/build-skill-registry.ts`   | Re-run when skills change                              |
-| `_framework/testing-capabilities.json`              | `bun scripts/detect-testing-capabilities.ts` | Re-run during `/agentic-dev-core` bootstrap            |
 | `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
 | `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
 | `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
@@ -66,7 +64,7 @@ Full topic-key conventions: `.claude/skills/agentic-dev-core/references/topic-ke
 
 A brand-new project that wants productive AI sessions should produce, in order:
 
-1. `/agentic-dev-core` — bootstraps `.agents/`, scripts, CLAUDE.md, then runs `detect-testing-capabilities`.
+1. `/agentic-dev-core` — bootstraps `.agents/`, scripts, CLAUDE.md.
 2. `/project-foundation` — Constitution → PRD → SRS → Discovery outputs.
 3. `/product-management` — Seed initial backlog (epics + foundational stories) under `PBI/`.
 

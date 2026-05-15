@@ -32,10 +32,10 @@ Without `agentic-dev-core`, every other workflow skill would either silently rel
 
 ## Two roles
 
-| Role                            | Trigger                                                                              | Consumers                                                                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Reference library (passive)** | Other skills loading on-demand                                                       | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> |
-| **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                         |
+| Role                            | Trigger                                                                                  | Consumers                                                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Reference library (passive)** | Other skills loading on-demand                                                           | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> |
+| **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                                 |
 
 Passive role: nobody invokes `agentic-dev-core` directly to read a reference — they just cite `agentic-dev-core/references/<file>.md` and the AI loads it. Active role: only the user invokes it, and only when foundation files are missing.
 
@@ -57,10 +57,10 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category         | Likely matches                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `doc-generation` | `cognitive-doc-design` (T2) — applied when generating CLAUDE.md, README.md, .agents/ docs               |
-| `meta-skill`     | T4 ASK: `skill-creator` (custom skill authoring), `find-skills` (runtime skill discovery)               |
+| Category         | Likely matches                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when generating CLAUDE.md, README.md, .agents/ docs |
+| `meta-skill`     | T4 ASK: `skill-creator` (custom skill authoring), `find-skills` (runtime skill discovery) |
 
 Passive role (file-reference-only) skips this step entirely — no composition needed when another skill just cites a `references/*.md` file.
 
@@ -79,9 +79,8 @@ Bootstrap writes files in **this exact order**. Each step is justified by what d
 5. **`scripts/agents-setup.ts` + `scripts/agents-lint.ts` + `scripts/sync-jira-fields.ts` + `scripts/sync-jira-workflows.ts` + `scripts/check-jira-setup.ts`** — the five CLIs that operate on the four files above. Source files live as `templates/scripts/*.ts.template` (the `.template` suffix keeps them out of this repo's `tsconfig`/`eslint` scope, since they aren't live source code here); strip the `.template` suffix when writing to the destination `scripts/` directory. Order within this group does not matter.
 6. **`package.json`** (penultimate) — merged: declared `dependencies` and `scripts` from `templates/package.json.partial.json` are added to the existing `package.json` if one exists; otherwise the partial is the seed for a fresh `package.json`. **Mandatory step:** without this merge, none of the five scripts written in step 5 are invocable via `bun run …`.
 7. **`CLAUDE.md`** (last). It cites every file written in steps 1-6, so it must be written after all of them. OpenCode reads `CLAUDE.md` as a fallback per its Claude Code compat docs, so a single canonical file covers both supported agents — no symlink needed.
-8. **`.context/_framework/testing-capabilities.json`** (post-bootstrap detection). After CLAUDE.md exist, run `bun scripts/detect-testing-capabilities.ts` to populate the testing-capabilities cache. The script inspects `package.json`, `tsconfig.json`, ESLint configs, plus the strict-TDD priority chain (`<!-- strict_tdd: ... -->` marker in CLAUDE.md → `testing.strict_tdd` in `.agents/project.yaml` → runner-based fallback) and writes `.context/_framework/testing-capabilities.json`. Downstream skills (`unit-testing`, `sprint-development`) read this cache instead of re-detecting on every dispatch. Schema and detection algorithm: `references/testing-capabilities.md`.
 
-Files MUST NOT be reordered. The dependency chain is real: a user who runs the bootstrap halfway and then types `bun run agents:setup` would otherwise hit "missing script" errors. Step 8 must follow step 7 because the strict-TDD priority chain reads `CLAUDE.md`.
+Files MUST NOT be reordered. The dependency chain is real: a user who runs the bootstrap halfway and then types `bun run agents:setup` would otherwise hit "missing script" errors.
 
 **Post-bootstrap order for the user.** After `init` completes, the report should instruct the user to run, in this exact order:
 
@@ -108,12 +107,11 @@ The `init` action never deletes files, never modifies values in existing files (
 
 ## References cited by other skills
 
-| File                                   | Cited by                                                                                                                   | Purpose                                                                                                                     |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `references/briefing-template.md`      | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern.                             |
-| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                            | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                                         |
-| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `CLAUDE.md`                                              | Cacheable mirror of `CLAUDE.md` §"Orchestration Mode (Subagent Strategy)".                                                  |
-| `references/testing-capabilities.md`   | `unit-testing`, `sprint-development`                                                                                               | Cache schema + detection algorithm for `.context/_framework/testing-capabilities.json` (runner / e2e / typecheck / lint / strict_tdd). |
+| File                                   | Cited by                                                                                                                           | Purpose                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `references/briefing-template.md`      | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern. |
+| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                                    | Decision table + heuristic for picking Single / Sequential / Parallel / Background.             |
+| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `CLAUDE.md`                                                      | Cacheable mirror of `CLAUDE.md` §"Orchestration Mode (Subagent Strategy)".                      |
 
 When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `agentic-dev-core` before continuing.
 
