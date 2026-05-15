@@ -58,15 +58,15 @@ Steps:
 
 Expected matches on a Next.js + Supabase project (illustrative — actual list depends on what the user has installed):
 
-| Category            | Likely matches                                                                                  |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `frontend-framework`| `next-best-practices`, `next-cache-components`, `react-best-practices`, `composition-patterns`  |
-| `frontend-ui`       | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
-| `backend-db`        | `supabase-postgres-best-practices`                                                              |
-| `runtime`           | `bun`                                                                                           |
-| `language`          | `typescript-advanced-types`                                                                     |
-| `ci-cd`             | `github-actions-docs`                                                                           |
-| `doc-generation`    | `cognitive-doc-design` (T2)                                                                     |
+| Category             | Likely matches                                                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `frontend-framework` | `next-best-practices`, `next-cache-components`, `react-best-practices`, `composition-patterns`                                                                     |
+| `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
+| `backend-db`         | `supabase-postgres-best-practices`                                                                                                                                 |
+| `runtime`            | `bun`                                                                                                                                                              |
+| `language`           | `typescript-advanced-types`                                                                                                                                        |
+| `ci-cd`              | `github-actions-docs`                                                                                                                                              |
+| `doc-generation`     | `cognitive-doc-design` (T2)                                                                                                                                        |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available (rare; pre-init or non-Claude-Code runtime). When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -156,6 +156,7 @@ After bootstrap completes, the project is ready for:
 - **Backlog seeding** → `/product-management`. Turns the PRD into Jira epics + user stories with acceptance criteria.
 - **Per-story development** → `/sprint-development`. The planning → implementation → review → deploy loop for each user story.
 - **Unit testing setup** → `/unit-testing` (separate concern, can run any time after base scaffolding).
+- **QA testability page + credentials artifact** → `/testability-guide` (optional). Once infra is live, generates the in-app `/qa` page + a tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) so QA testers and AI agents can exercise the app at DB / API / UI layers. Idempotent re-runs on stack drift.
 
 The bootstrap output is **not** ready for production — it is ready for feature work. Production-readiness gates (deployment, CI, observability hardening) are layered on by later skills as the product matures.
 

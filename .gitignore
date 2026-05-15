@@ -96,3 +96,6 @@ dbhub.toml
 
 # ===== Auto-generated framework caches with timestamps =====
 .context/_framework/testing-capabilities.json
+
+# ===== Skill-creator eval workspaces (local iteration artifacts, never committed) =====
+.claude/skills/*-workspace/
