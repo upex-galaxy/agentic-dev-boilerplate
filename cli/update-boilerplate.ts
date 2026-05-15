@@ -34,7 +34,7 @@ import * as readline from 'node:readline';
 // CONFIGURATION
 // ============================================================================
 
-const CLI_VERSION = '5.1';
+const CLI_VERSION = '6.0';
 const TEMPLATE_REPO = 'upex-galaxy/ai-driven-project-starter';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template-version.json';
@@ -136,6 +136,7 @@ interface ParsedArgs {
   help: boolean
   dryRun: boolean
   rollback: boolean
+  auto: boolean
   updateMcpTemplate: McpAgent | null
 }
 
@@ -146,6 +147,137 @@ interface SyncVersion {
   syncedComponents: string[]
   variableSystemVersion: boolean
 }
+
+// writeSyncState uses tmp+rename atomic write. Assumes .template-version.json and its .tmp.<pid>
+// sibling are on the same filesystem (POSIX rename guarantee). Cross-FS writes (e.g. tmpdir on a
+// separate partition) are out of scope.
+
+// v6 — target schema
+interface SyncStateV6 {
+  schemaVersion: 6
+  lastSync: string // ISO-8601 UTC
+  templateCommit: string // last successfully synced HEAD SHA
+  cliVersion: string // CLI_VERSION at sync time (e.g. '6.0')
+  syncedComponents: string[] // component names that have been synced at least once
+  variableSystemVersion: number // forward-compat flag (default 1; v5→v6 migration sets to 1)
+  perComponentCommit: Record<string, string> // component-name → last applied template SHA
+}
+
+// v5 — legacy schema, detection only (still exists in the wild as SyncVersion)
+interface SyncStateV5 {
+  lastSync: string
+  templateCommit: string
+  cliVersion: string
+  syncedComponents: string[]
+  variableSystemVersion: boolean // v5 used boolean; v6 uses number
+  // NOTE: no schemaVersion field, no perComponentCommit
+}
+
+type SyncState = SyncStateV6 | SyncStateV5;
+
+type ComponentKind = 'directory' | 'file-list' | 'mixed';
+
+interface Component {
+  name: string
+  type: ComponentKind
+  paths: string[] // top-level paths inside repo (e.g. ['.claude/skills'])
+  files?: string[] // when type !== 'directory'
+  /**
+   * When true, the component's files are bootstrap-only:
+   *   - if local file EXISTS → classifier forces `unchanged` (never offered as diverged)
+   *   - if local file MISSING → classifier forces `new-upstream` (bootstrap copy)
+   * Used for AGENTS_BOOTSTRAP_FILES (.agents/project.yaml etc.) so user-filled
+   * values are never overwritten by `bun up`.
+   */
+  bootstrapOnly?: boolean
+}
+
+type ChangeStatus = 'M' | 'A' | 'D';
+
+type FileClass
+  = 'clean-fastforward'
+    | 'locally-diverged'
+    | 'new-upstream'
+    | 'deleted-upstream'
+    | 'binary-skip'
+    | 'unchanged';
+
+interface DeltaEntry {
+  component: string // component name from COMPONENTS
+  path: string // repo-relative path
+  status: ChangeStatus
+  fromSha: string // perComponentCommit[component] or empty for new-upstream
+  toSha: string // new HEAD SHA
+  added: number // numstat +N (0 for binary)
+  removed: number // numstat -N (0 for binary)
+  classification: FileClass
+}
+
+type Resolution = 'theirs' | 'mine' | 'skip' | 'delete' | 'keep';
+
+interface AppliedFile {
+  entry: DeltaEntry
+  resolution: Resolution
+}
+
+interface FailedFile {
+  entry: DeltaEntry
+  reason: string
+}
+
+// eslint-disable-next-line unused-imports/no-unused-vars
+interface RunSummary {
+  applied: AppliedFile[]
+  skipped: DeltaEntry[]
+  failed: FailedFile[]
+  newHeadSha: string
+  componentsAdvanced: string[]
+  componentsHeldBack: string[] // components with skipped/failed files — SHA does NOT advance
+}
+
+class CorruptStateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CorruptStateError';
+  }
+}
+
+interface GitVersion {
+  major: number
+  minor: number
+  patch: number
+  raw: string
+}
+
+// ============================================================================
+// COMPONENTS REGISTRY
+// ============================================================================
+
+/**
+ * Canonical component registry for the new per-file delta flow (v6).
+ * Each entry drives sparse-checkout path patterns (via `paths`) and
+ * perComponentCommit key (via `name`). 14 components total.
+ *
+ * The `agents` component covers all of .agents/ in the delta flow.
+ * Bootstrap-only files within it (.agents/project.yaml, .agents/jira-fields.json,
+ * .agents/jira-workflows.json) are handled inside classifyFile via AGENTS_BOOTSTRAP_FILES.
+ */
+const COMPONENTS: Component[] = [
+  { name: 'claude', type: 'directory', paths: ['.claude/skills', '.claude/commands'] },
+  { name: 'claude-config', type: 'file-list', paths: ['.claude'], files: CLAUDE_CONFIG_FILES },
+  { name: 'agents', type: 'mixed', paths: ['.agents'], bootstrapOnly: false },
+  { name: 'agents-docs', type: 'file-list', paths: ['.agents'], files: AGENTS_DOCS_FILES },
+  { name: 'scripts', type: 'file-list', paths: ['scripts'], files: SCRIPTS_FILES },
+  { name: 'cli', type: 'directory', paths: ['cli'] },
+  { name: 'docs', type: 'directory', paths: ['docs'] },
+  { name: 'context', type: 'directory', paths: ['.context'] },
+  { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['context-engineering.md'] },
+  { name: 'templates-mcp', type: 'directory', paths: ['templates/mcp'] },
+  { name: 'vscode', type: 'directory', paths: ['.vscode'] },
+  { name: 'husky', type: 'directory', paths: ['.husky'] },
+  { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
+  { name: 'examples', type: 'file-list', paths: ['.'], files: EXAMPLE_FILES },
+];
 
 // ============================================================================
 // TERMINAL COLORS
@@ -393,6 +525,8 @@ ${colors.bold}COMANDOS:${colors.reset}
   help          Muestra esta ayuda
 
 ${colors.bold}FLAGS GLOBALES:${colors.reset}
+  --auto                          Modo no-interactivo: aplica clean-fastforward + new-upstream,
+                                  omite diverged/deleted. Activa tambien con CI=true o stdin no-TTY.
   --dry-run                       Preview de cambios sin modificar archivos
   --rollback                      Restaura desde el backup mas reciente
   --update-mcp-template <agent>   Refresca templates/mcp/<agent>.template.* desde upstream
@@ -461,6 +595,7 @@ function parseArgs(args: string[]): ParsedArgs {
     help: false,
     dryRun: false,
     rollback: false,
+    auto: false,
     updateMcpTemplate: null,
   };
 
@@ -494,6 +629,9 @@ function parseArgs(args: string[]): ParsedArgs {
 
     if (arg === 'help' || arg === '--help' || arg === '-h') {
       result.help = true;
+    }
+    else if (arg === '--auto') {
+      result.auto = true;
     }
     else if (arg === '--dry-run') {
       result.dryRun = true;
@@ -1393,6 +1531,287 @@ function readSyncVersion(): SyncVersion | null {
 }
 
 // ============================================================================
+// GIT ENVIRONMENT GUARD
+// ============================================================================
+
+/**
+ * Execute `git --version` and parse the result.
+ * Throws Error('GIT_NOT_FOUND') if git binary is not on PATH.
+ * Throws Error('GIT_VERSION_UNPARSEABLE: <raw>') if the version string does not match expected format.
+ */
+function detectGitVersion(): GitVersion {
+  let raw: string;
+  try {
+    raw = execSync('git --version', { stdio: ['pipe', 'pipe', 'pipe'] }).toString().trim();
+  }
+  catch {
+    throw new Error('GIT_NOT_FOUND');
+  }
+
+  const match = /\bgit version (\d+)\.(\d+)\.(\d+)/.exec(raw);
+  if (!match) {
+    throw new Error(`GIT_VERSION_UNPARSEABLE: ${raw}`);
+  }
+
+  return {
+    major: Number.parseInt(match[1], 10),
+    minor: Number.parseInt(match[2], 10),
+    patch: Number.parseInt(match[3], 10),
+    raw,
+  };
+}
+
+/**
+ * Ensure git >= 2.25.0 is available. Exits process with code 2 on any failure.
+ * Called from main() before any clone operation — wired in M2.
+ */
+function ensureGitVersion(): void {
+  let version: GitVersion;
+  try {
+    version = detectGitVersion();
+  }
+  catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === 'GIT_NOT_FOUND') {
+      logError('git no encontrado en PATH. git >= 2.25 es requerido para soporte de sparse-checkout.');
+      logInfo('Instala git:');
+      if (process.platform === 'darwin') {
+        logInfo('  brew install git');
+      }
+      else if (process.platform === 'win32') {
+        logInfo('  winget install Git.Git  (o usa WSL2 con apt install git)');
+      }
+      else {
+        logInfo('  sudo apt install git        # Ubuntu/Debian/WSL');
+        logInfo('  apk add git                 # Alpine');
+      }
+    }
+    else {
+      logError(`No se pudo determinar la version de git: ${msg}`);
+    }
+    process.exit(2);
+  }
+
+  const { major, minor, raw } = version;
+  const meetsReq = major > 2 || (major === 2 && minor >= 25);
+  if (!meetsReq) {
+    logError(`git ${raw} detectado. git >= 2.25.0 es requerido para soporte de sparse-checkout.`);
+    logInfo('Actualiza git:');
+    if (process.platform === 'darwin') {
+      logInfo('  brew upgrade git');
+    }
+    else if (process.platform === 'win32') {
+      logInfo('  winget upgrade Git.Git  (o actualiza via WSL2: sudo apt-get install --only-upgrade git)');
+    }
+    else {
+      logInfo('  sudo apt-get install --only-upgrade git    # Ubuntu/Debian/WSL');
+      logInfo('  apk upgrade git                             # Alpine');
+    }
+    process.exit(2);
+  }
+}
+
+// ============================================================================
+// SYNC STATE I/O
+// ============================================================================
+
+/**
+ * Read .template-version.json and return a typed SyncState.
+ * Returns null when the file is absent (bootstrap path).
+ * Throws CorruptStateError when JSON is invalid or unrecognized.
+ * Discriminates v6 vs v5 by presence of `schemaVersion === 6` and `perComponentCommit`.
+ * Wired in main() in M2 — eslint-disable until then.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+function readSyncState(repoRoot: string): SyncState | null {
+  const filePath = path.join(repoRoot, VERSION_FILE);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  }
+  catch {
+    throw new CorruptStateError(
+      `Corrupt sync state: ${filePath}. Refusing to silently overwrite. Fix or delete the file.`,
+    );
+  }
+
+  if (
+    typeof parsed === 'object'
+    && parsed !== null
+    && 'perComponentCommit' in parsed
+    && (parsed as Record<string, unknown>).schemaVersion === 6
+  ) {
+    return parsed as SyncStateV6;
+  }
+
+  if (
+    typeof parsed === 'object'
+    && parsed !== null
+    && 'templateCommit' in parsed
+  ) {
+    return parsed as SyncStateV5;
+  }
+
+  throw new CorruptStateError(
+    `Corrupt sync state: ${filePath}. Refusing to silently overwrite. Fix or delete the file.`,
+  );
+}
+
+/**
+ * Pure function — no I/O.
+ * Converts a v5 SyncStateV5 to a SyncStateV6 with empty perComponentCommit.
+ * templateCommit and syncedComponents are preserved from the old state.
+ * variableSystemVersion is set to 1 (number, was boolean in v5).
+ * Wired in main() in M4 — eslint-disable until then.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+function migrateSyncState(old: SyncStateV5): SyncStateV6 {
+  return {
+    schemaVersion: 6,
+    lastSync: new Date().toISOString(),
+    templateCommit: old.templateCommit,
+    cliVersion: CLI_VERSION,
+    syncedComponents: old.syncedComponents,
+    variableSystemVersion: 1,
+    perComponentCommit: {}, // empty — every component appears as fresh delta on first v6 run
+  };
+}
+
+/**
+ * Ask the user for consent before migrating v5 → v6.
+ * Returns true on Y/y/Enter (default yes); false on N/n.
+ * No file writes — I/O is deferred to writeSyncState post-sync.
+ * Prompt text is Spanish per project convention.
+ * Wired in main() in M4 — eslint-disable until then.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
+  const answer = await nativePrompt(
+    `${colors.yellow}Detectado .template-version.json schema v5. ¿Migrar a v6? [Y/n]:${colors.reset} `,
+  );
+  return answer === '' || answer === 'y' || answer === 'yes' || answer === 's' || answer === 'si';
+}
+
+/**
+ * Atomic write of SyncStateV6 to .template-version.json.
+ * Writes to a .tmp.<pid> sibling first, then renames to the final path.
+ * Assumes the tmp file and the final path are on the same filesystem (POSIX rename guarantee).
+ * Wired in main() in M2/M4 — eslint-disable until then.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+function writeSyncState(repoRoot: string, state: SyncStateV6): void {
+  const finalPath = path.join(repoRoot, VERSION_FILE);
+  const tmpPath = `${finalPath}.tmp.${process.pid}`;
+  fs.writeFileSync(tmpPath, `${JSON.stringify(state, null, 2)}\n`);
+  // Node's renameSync is POSIX-atomic on same-FS — no half-written JSON risk
+  fs.renameSync(tmpPath, finalPath);
+  logSuccess(`Version registrada en ${VERSION_FILE}`);
+}
+
+// ============================================================================
+// REPOSITORY ACQUISITION
+// ============================================================================
+
+/**
+ * Resolve the HEAD commit SHA of the already-cloned template repo.
+ * Replaces getTemplateCommit() with an explicit repoDir argument.
+ * Wired in main() in M2 — eslint-disable until then.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+function resolveTemplateHeadSha(repoDir: string): string {
+  try {
+    return execSync(`git -C "${repoDir}" rev-parse HEAD`, { stdio: ['pipe', 'pipe', 'pipe'] })
+      .toString()
+      .trim();
+  }
+  catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Partial clone of the template repository using sparse-checkout.
+ * Replaces legacy cloneTemplate() — NOT yet called from main() in M1; wired in M2.
+ * eslint-disable-next-line on async function below until M2 wires it in main().
+ * When `allowedPaths` is omitted, defaults to the union of all COMPONENTS paths.
+ *
+ * Steps:
+ *   1. Remove existing dest if present
+ *   2. gh auth status (preserved from cloneTemplate)
+ *   3. gh repo clone --filter=blob:none --no-checkout
+ *   4. git sparse-checkout init --no-cone
+ *   5. git sparse-checkout set <patterns>
+ *   6. git checkout
+ *
+ * Exits process with code 3 on clone failure.
+ */
+// eslint-disable-next-line unused-imports/no-unused-vars
+async function partialCloneTemplate(
+  repoUrl: string,
+  dest: string,
+  allowedPaths: string[] = COMPONENTS.flatMap(c => c.paths),
+): Promise<void> {
+  logStep('Descargando ultima version del template (partial clone)...');
+  logInfo(`Repo: ${repoUrl}`);
+  logInfo(`Destino temporal: ${dest}`);
+
+  if (fs.existsSync(dest)) {
+    console.log(`${colors.dim}  Limpiando directorio temporal anterior...${colors.reset}`);
+    fs.rmSync(dest, { recursive: true, force: true });
+  }
+
+  console.log(`${colors.dim}  Verificando autenticacion de GitHub CLI...${colors.reset}`);
+  try {
+    execSync('gh auth status', { stdio: 'pipe' });
+    console.log(`${colors.green}  ✓ GitHub CLI autenticado${colors.reset}`);
+  }
+  catch {
+    logError('GitHub CLI no esta autenticado');
+    console.log(`\n${colors.yellow}Ejecuta primero:${colors.reset}`);
+    console.log(`  ${colors.cyan}gh auth login${colors.reset}\n`);
+    process.exit(1);
+  }
+
+  console.log(`${colors.dim}  Clonando repositorio con sparse-checkout (filter=blob:none)...${colors.reset}`);
+
+  try {
+    execSync(
+      `gh repo clone ${repoUrl} "${dest}" -- --filter=blob:none --no-checkout --quiet`,
+      { stdio: ['pipe', 'pipe', 'pipe'], timeout: 60000 },
+    );
+  }
+  catch (error) {
+    const err = error as { killed?: boolean, message?: string };
+    if (err.killed) {
+      logError('Timeout: El clone tardo demasiado (>60s)');
+    }
+    else {
+      logError('Error clonando el repositorio template');
+      logInfo('Posibles causas: sin acceso al repo, problemas de red, gh CLI no configurado');
+      logInfo(`Verifica: gh repo view ${repoUrl}`);
+    }
+    process.exit(3);
+  }
+
+  try {
+    execSync(`git -C "${dest}" sparse-checkout init --no-cone`, { stdio: ['pipe', 'pipe', 'pipe'] });
+    const patterns = allowedPaths.map(p => `"${p}"`).join(' ');
+    execSync(`git -C "${dest}" sparse-checkout set ${patterns}`, { stdio: ['pipe', 'pipe', 'pipe'] });
+    execSync(`git -C "${dest}" checkout`, { stdio: ['pipe', 'pipe', 'pipe'] });
+    logSuccess('Template descargado exitosamente (sparse checkout)');
+  }
+  catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logError(`Fallo en configuracion de sparse-checkout: ${msg}`);
+    process.exit(3);
+  }
+}
+
+// ============================================================================
 // VARIABLE DETECTION
 // ============================================================================
 
@@ -1862,6 +2281,12 @@ async function main(): Promise<void> {
     rollbackFromBackup();
     return;
   }
+
+  // MCP template subsystem — parallel feature, do not route through new flow
+  // (already handled above via early short-circuit)
+
+  // git version guard — required for sparse-checkout (M1). Full new flow wired in M2.
+  ensureGitVersion();
 
   if (parsed.commands.length === 0) {
     logError('No se especifico ningun comando valido');
