@@ -2,8 +2,8 @@ Actúa como Senior Product Manager.
 
 **Input:**
 
-- Business Model: [usar .context/idea/business-model.md]
-- Market Context: [usar .context/idea/market-context.md]
+- Business Model: [usar .context/business/business-model.md]
+- Market Context: [usar .context/business/market-context.md]
 - Tech Stack: Next.js 15, Supabase (PostgreSQL), Vercel, GitHub Actions
 
 **Genera archivo: executive-summary.md**

@@ -39,24 +39,24 @@ Why this path is the bridge: it is the only path that produces DESIGN.md by comp
 
 ### Required (at least one)
 
-| Input | Path | What we extract |
-|-------|------|-----------------|
-| Constitution | `.context/idea/business-model.md` | Industry, target market, value-prop tone |
-| PRD personas | `.context/PRD/personas.md` | Demographic, tech-savviness, aesthetic preferences |
-| PRD executive summary | `.context/PRD/executive-summary.md` | Competitive positioning, must-have visual cues |
-| Direct Q&A | (interactive, fallback) | Industry, tone, target, competitors, keywords, WCAG level |
+| Input                 | Path                                  | What we extract                                           |
+| --------------------- | ------------------------------------- | --------------------------------------------------------- |
+| Constitution          | `.context/business/business-model.md` | Industry, target market, value-prop tone                  |
+| PRD personas          | `.context/PRD/personas.md`            | Demographic, tech-savviness, aesthetic preferences        |
+| PRD executive summary | `.context/PRD/executive-summary.md`   | Competitive positioning, must-have visual cues            |
+| Direct Q&A            | (interactive, fallback)               | Industry, tone, target, competitors, keywords, WCAG level |
 
 If NONE exist (brownfield / first-time-on-this-repo), drop straight to Q&A — see §4.
 
 ### Optional — bridge mode
 
-| Input | Path | Origin path |
-|-------|------|-------------|
-| Open Design artifact | `./.od/artifacts/<timestamp>-<slug>/` | Path C |
-| Open Design slug | (string, e.g. `linear-app-warm-v2`) | Path C |
-| Claude Design bundle | `design/handoff/<slug>.zip` (unzipped) | Path D |
-| Claude Design tokens | `design/handoff/<slug>/tokens.json` | Path D |
-| Claude Design README | `design/handoff/<slug>/README.md` | Path D |
+| Input                | Path                                   | Origin path |
+| -------------------- | -------------------------------------- | ----------- |
+| Open Design artifact | `./.od/artifacts/<timestamp>-<slug>/`  | Path C      |
+| Open Design slug     | (string, e.g. `linear-app-warm-v2`)    | Path C      |
+| Claude Design bundle | `design/handoff/<slug>.zip` (unzipped) | Path D      |
+| Claude Design tokens | `design/handoff/<slug>/tokens.json`    | Path D      |
+| Claude Design README | `design/handoff/<slug>/README.md`      | Path D      |
 
 When bridge inputs exist, treat their tokens as **authoritative** — do not override. The LLM's job is to wrap them in the DESIGN.md structure plus author the rationale prose.
 
@@ -184,11 +184,11 @@ Example minimal component entry:
 ```yaml
 components:
   button:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.background}"
-    borderRadius: "{rounded.md}"
-    paddingX: "{spacing.md}"
-    paddingY: "{spacing.sm}"
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.background}'
+    borderRadius: '{rounded.md}'
+    paddingX: '{spacing.md}'
+    paddingY: '{spacing.sm}'
     fontWeight: 600
 ```
 

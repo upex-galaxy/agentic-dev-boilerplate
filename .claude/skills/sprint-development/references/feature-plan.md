@@ -272,7 +272,7 @@ Si el proyecto usa shadcn/ui, **ANTES** de planificar componentes custom:
 
 1. **Leer contexto de negocio:**
    - `.context/PRD/executive-summary.md` - Propuesta de valor, problema que resuelve
-   - `.context/idea/README.md` - Problema y solución del negocio
+   - `.context/business/README.md` - Problema y solución del negocio
    - `.context/PRD/user-personas.md` - A quién va dirigido
    - `.context/PRD/mvp-scope.md` - Features y vocabulario del dominio
 

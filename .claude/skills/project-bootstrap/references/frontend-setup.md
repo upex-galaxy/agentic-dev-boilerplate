@@ -537,20 +537,20 @@ fi
 
 Cuando se procede via DESIGN.md, los tokens del frontmatter mapean así:
 
-| DESIGN.md frontmatter         | Tailwind config target                       |
-| ----------------------------- | -------------------------------------------- |
-| `colors.primary`              | `theme.colors.primary.DEFAULT`               |
-| `colors.secondary`            | `theme.colors.secondary.DEFAULT`             |
-| `colors.tertiary`             | `theme.colors.accent.DEFAULT`                |
-| `colors.neutral`              | `theme.colors.neutral.DEFAULT`               |
-| `colors.background`           | `theme.colors.background`                    |
-| `colors.text`                 | `theme.colors.foreground`                    |
-| `colors.border`               | `theme.colors.border`                        |
-| `typography.h1.fontFamily`    | `theme.fontFamily.heading`                   |
-| `typography.body.fontFamily`  | `theme.fontFamily.sans`                      |
-| `typography.body.fontSize`    | `theme.fontSize.base[0]`                     |
-| `rounded.sm/md/lg/full`       | `theme.borderRadius.{sm,DEFAULT,lg,full}`    |
-| `spacing.sm/md/lg`            | `theme.spacing.{2,4,8}` (escala base 4px)    |
+| DESIGN.md frontmatter        | Tailwind config target                    |
+| ---------------------------- | ----------------------------------------- |
+| `colors.primary`             | `theme.colors.primary.DEFAULT`            |
+| `colors.secondary`           | `theme.colors.secondary.DEFAULT`          |
+| `colors.tertiary`            | `theme.colors.accent.DEFAULT`             |
+| `colors.neutral`             | `theme.colors.neutral.DEFAULT`            |
+| `colors.background`          | `theme.colors.background`                 |
+| `colors.text`                | `theme.colors.foreground`                 |
+| `colors.border`              | `theme.colors.border`                     |
+| `typography.h1.fontFamily`   | `theme.fontFamily.heading`                |
+| `typography.body.fontFamily` | `theme.fontFamily.sans`                   |
+| `typography.body.fontSize`   | `theme.fontSize.base[0]`                  |
+| `rounded.sm/md/lg/full`      | `theme.borderRadius.{sm,DEFAULT,lg,full}` |
+| `spacing.sm/md/lg`           | `theme.spacing.{2,4,8}` (escala base 4px) |
 
 Por qué este mapeo: respeta la convención Tailwind sin reescribir el theme desde cero, y los semantic-tokens (primary/secondary/accent) coinciden con la nomenclatura de shadcn/ui.
 
@@ -1959,7 +1959,7 @@ Las credenciales demo mostradas en la UI deben coincidir con un usuario real cre
 
 **NO uses texto genérico.** Todo el contenido debe basarse en:
 
-- `.context/idea/` → Problema que resuelve, solución propuesta
+- `.context/business/` → Problema que resuelve, solución propuesta
 - `.context/PRD/executive-summary.md` → Propuesta de valor
 - `.context/PRD/user-personas.md` → A quién va dirigido
 - `.context/PRD/mvp-scope.md` → Features principales
@@ -2003,7 +2003,7 @@ Las credenciales demo mostradas en la UI deben coincidir con un usuario real cre
 **Content Writing:**
 
 1. Lee `.context/PRD/executive-summary.md` - Extrae la propuesta de valor REAL
-2. Lee `.context/idea/README.md` - Entiende el problema y solución
+2. Lee `.context/business/README.md` - Entiende el problema y solución
 3. Lee `.context/PRD/mvp-scope.md` - Identifica las 3-6 features principales
 4. **NO uses frases genéricas** como 'Bienvenido a nuestra plataforma', 'La mejor solución'
 5. **USA el vocabulario del dominio** del proyecto (nombres reales, términos específicos)

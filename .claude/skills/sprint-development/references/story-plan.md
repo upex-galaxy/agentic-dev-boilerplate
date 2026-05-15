@@ -247,7 +247,7 @@ const mockMentors: Mentor[] = [
 
 1. **Leer contexto de negocio:**
    - `.context/PRD/executive-summary.md` - Propuesta de valor, problema que resuelve
-   - `.context/idea/README.md` - Problema y solución del negocio
+   - `.context/business/README.md` - Problema y solución del negocio
    - `.context/PRD/user-personas.md` - A quién va dirigido
 2. **Usar vocabulario del dominio:**
    - Identificar entidades principales del proyecto (del PRD/PBI)

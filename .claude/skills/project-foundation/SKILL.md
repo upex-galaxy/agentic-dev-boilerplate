@@ -53,10 +53,10 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category         | Likely matches                                                                                       |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `doc-generation` | `cognitive-doc-design` (T2) — applied when authoring PRD, SRS, Discovery markdown                    |
-| `creativity`     | T4 ASK: `brainstorming` — useful for persona generation, user journeys, MVP scoping                  |
+| Category         | Likely matches                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when authoring PRD, SRS, Discovery markdown   |
+| `creativity`     | T4 ASK: `brainstorming` — useful for persona generation, user journeys, MVP scoping |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -91,7 +91,7 @@ The constitution captures the rationale for the product before any scope decisio
 - Read `references/constitution-business-model.md` for the canvas template (problem, solution, value prop, customer segments, channels, revenue model, cost structure, key metrics).
 - Read `references/constitution-market-context.md` for industry positioning, competitive analysis, and trends.
 
-Output: `.context/idea/business-model.md` and `.context/idea/market-context.md` (or wherever your project keeps strategic context).
+Output: `.context/business/business-model.md` and `.context/business/market-context.md` (or wherever your project keeps strategic context).
 
 ### 2. Architecture: PRD (Product Requirements Document)
 
@@ -134,27 +134,32 @@ Discovery produces the running-mental-model docs every later skill loads at sess
 Phase 4 is now an **orchestrator** — it delegates to four standalone commands (each invocable on its own from any session) plus the one in-skill reference for the dev guide. Re-running individual commands later (after schema or feature changes) is the supported maintenance flow.
 
 **Step 1 — Business data map** (entities, business flows, state machines, automatic processes, external integrations):
+
 - Invoke the `/business-data-map` command.
 - Pointer: `references/business-data-map.md`.
 - Output: `.context/business/business-data-map.md`.
 
 **Step 2 — Business feature map** (feature inventory by domain, CRUD matrix, endpoint catalog, UI component inventory, third-party integrations, feature flags):
+
 - Invoke the `/business-feature-map` command.
 - Soft gate: Step 1 should be done first (the command will surface a warning if `business-data-map.md` is missing but will not block).
 - Output: `.context/business/business-feature-map.md`.
 
 **Step 3 — Business API map** (auth model, critical user journeys traced through API call chains, architecture behind the API, integrations at the API boundary):
+
 - Invoke the `/business-api-map` command.
 - Pointer: `references/api-architecture.md` (kept under the legacy name for grep-stability; the command writes `business-api-map.md` instead of the legacy `api-architecture.md`).
 - Soft gates: Steps 1 and 2 inform but do not block.
 - Output: `.context/business/business-api-map.md`.
 
 **Step 4 — Project dev guide** (conversational onboarding guide for any developer — human or AI — joining the project):
+
 - Read `references/project-dev-guide.md` and execute it in-skill (this one has no standalone command — its content is unique to the foundation flow).
 - Hard prerequisite: `.context/business/business-data-map.md` from Step 1.
 - Output: `.context/business/project-dev-guide.md`.
 
 **Step 5 — Master implementation plan** (bonus: roadmap of all features to build, dependency-cascaded and value-prioritized — the natural synthesis of Steps 1–3):
+
 - Invoke the `/master-implementation-plan` command.
 - Hard gate: `.context/business/business-data-map.md` (Step 1).
 - Soft gate: `.context/business/business-feature-map.md` (Step 2).
@@ -162,6 +167,7 @@ Phase 4 is now an **orchestrator** — it delegates to four standalone commands 
 - This step is **recommended but optional**. Skip it if the user has not yet defined product scope (e.g. greenfield where only the constitution exists). Re-invoke later, after `/product-management` has seeded the backlog, to align the master plan with the planned epics.
 
 **Final Phase 4 outputs:**
+
 - `.context/business/business-data-map.md`
 - `.context/business/business-feature-map.md`
 - `.context/business/business-api-map.md`
@@ -172,24 +178,24 @@ Phase 4 is now an **orchestrator** — it delegates to four standalone commands 
 
 ## Specific tasks — which reference to read
 
-| User intent                                                  | Read                                        |
-| ------------------------------------------------------------ | ------------------------------------------- |
-| "constitución del proyecto" / "business model canvas"        | `references/constitution-business-model.md` |
-| "análisis de mercado" / "market context" / "competitivo"     | `references/constitution-market-context.md` |
-| "executive summary del PRD" / "problem statement" / "KPIs"   | `references/prd-executive-summary.md`       |
-| "user personas" / "perfiles de usuario" / "target users"     | `references/prd-personas.md`                |
-| "MVP scope" / "epic breakdown" / "must-have stories"         | `references/prd-mvp-scope.md`               |
-| "user journeys" / "happy path" / "edge cases" / "flujos"     | `references/prd-user-journeys.md`           |
-| "design system" / "DESIGN.md" / "paleta" / "branding"        | hand off to `/design-system` (Phase 2.5)    |
-| "functional requirements" / "SRS funcional" / "FR formales"  | `references/srs-functional.md`              |
-| "NFR" / "performance/security/scalability" / "no funcional"  | `references/srs-non-functional.md`          |
-| "system architecture" / "tech stack" / "diagrama de sistema" | `references/srs-architecture.md`            |
-| "API contracts" / "OpenAPI" / "endpoints definition"         | `references/srs-api-contracts.md`           |
-| "business data map" / "entity model" / "mapa de negocio"     | invoke `/business-data-map` (pointer: `references/business-data-map.md`) |
-| "business feature map" / "feature inventory" / "CRUD matrix" | invoke `/business-feature-map`              |
-| "API architecture discovery" / "endpoint catalog" / "auth model" | invoke `/business-api-map` (pointer: `references/api-architecture.md`) |
-| "project dev guide" / "guía de desarrollo" / "onboarding"    | `references/project-dev-guide.md`           |
-| "master implementation plan" / "what to build first" / "roadmap" | invoke `/master-implementation-plan`     |
+| User intent                                                      | Read                                                                     |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| "constitución del proyecto" / "business model canvas"            | `references/constitution-business-model.md`                              |
+| "análisis de mercado" / "market context" / "competitivo"         | `references/constitution-market-context.md`                              |
+| "executive summary del PRD" / "problem statement" / "KPIs"       | `references/prd-executive-summary.md`                                    |
+| "user personas" / "perfiles de usuario" / "target users"         | `references/prd-personas.md`                                             |
+| "MVP scope" / "epic breakdown" / "must-have stories"             | `references/prd-mvp-scope.md`                                            |
+| "user journeys" / "happy path" / "edge cases" / "flujos"         | `references/prd-user-journeys.md`                                        |
+| "design system" / "DESIGN.md" / "paleta" / "branding"            | hand off to `/design-system` (Phase 2.5)                                 |
+| "functional requirements" / "SRS funcional" / "FR formales"      | `references/srs-functional.md`                                           |
+| "NFR" / "performance/security/scalability" / "no funcional"      | `references/srs-non-functional.md`                                       |
+| "system architecture" / "tech stack" / "diagrama de sistema"     | `references/srs-architecture.md`                                         |
+| "API contracts" / "OpenAPI" / "endpoints definition"             | `references/srs-api-contracts.md`                                        |
+| "business data map" / "entity model" / "mapa de negocio"         | invoke `/business-data-map` (pointer: `references/business-data-map.md`) |
+| "business feature map" / "feature inventory" / "CRUD matrix"     | invoke `/business-feature-map`                                           |
+| "API architecture discovery" / "endpoint catalog" / "auth model" | invoke `/business-api-map` (pointer: `references/api-architecture.md`)   |
+| "project dev guide" / "guía de desarrollo" / "onboarding"        | `references/project-dev-guide.md`                                        |
+| "master implementation plan" / "what to build first" / "roadmap" | invoke `/master-implementation-plan`                                     |
 
 If the user intent does not match a row exactly, identify the closest phase (Constitution / PRD / SRS / Discovery) and fall back to the most relevant reference, surfacing in the report that no exact match was found.
 

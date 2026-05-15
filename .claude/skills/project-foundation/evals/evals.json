@@ -3,7 +3,7 @@
     {
       "name": "should-trigger-constitution-ideation",
       "prompt": "Estoy ideando un nuevo producto, ayúdame a construir la constitución del proyecto desde cero.",
-      "expected_behavior": "Activates project-foundation in Constitution mode. Reads phase-1-constitution references (business-model.md, market-context.md, problem-statement.md), walks the user through value proposition, target market, competitive landscape, and success metrics. Produces idea/* artifacts and explicitly stops before architecture (handed to next stage of the same skill).",
+      "expected_behavior": "Activates project-foundation in Constitution mode. Reads phase-1-constitution references (business-model.md, market-context.md, problem-statement.md), walks the user through value proposition, target market, competitive landscape, and success metrics. Produces business/* artifacts (constitution + maps) and explicitly stops before architecture (handed to next stage of the same skill).",
       "category": "positive"
     },
     {

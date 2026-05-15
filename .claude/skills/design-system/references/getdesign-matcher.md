@@ -28,11 +28,11 @@ Why an optional probe: if offline, the catalog fetch in step 3 will fail anyway.
 
 Read the Constitution + PRD signals that inform brand matching. Each file is independent — if some exist and others do not, use what you have.
 
-| File | Extracted signals |
-|------|-------------------|
-| `.context/idea/business-model.md` | industry, value-proposition, key terms, target market |
-| `.context/PRD/personas.md` | target demographic, tone words, persona archetypes |
-| `.context/PRD/executive-summary.md` | positioning, competitive frame, success metrics |
+| File                                  | Extracted signals                                     |
+| ------------------------------------- | ----------------------------------------------------- |
+| `.context/business/business-model.md` | industry, value-proposition, key terms, target market |
+| `.context/PRD/personas.md`            | target demographic, tone words, persona archetypes    |
+| `.context/PRD/executive-summary.md`   | positioning, competitive frame, success metrics       |
 
 Parsing rule: pull keywords and phrases that already exist in the docs. Do not synthesize signals the docs do not state — the matcher trusts inputs blindly, so noise here causes bad matches.
 
@@ -98,11 +98,11 @@ The script expects a `BusinessContext` shaped exactly as documented in plan §5.
 
 ```ts
 type BusinessContext = {
-  industry: string;        // "fintech" | "wellness" | "ecommerce" | ...
-  tone: string[];          // ["serious", "minimal"]
-  target: string;          // "B2B" | "B2C" | "internal"
-  competitors: string[];   // ["Linear", "Vercel", "Notion"]
-  keywords: string[];      // ["dark", "premium", "data-dense"]
+  industry: string; // "fintech" | "wellness" | "ecommerce" | ...
+  tone: string[]; // ["serious", "minimal"]
+  target: string; // "B2B" | "B2C" | "internal"
+  competitors: string[]; // ["Linear", "Vercel", "Notion"]
+  keywords: string[]; // ["dark", "premium", "data-dense"]
 };
 ```
 
@@ -110,9 +110,24 @@ Output shape (stdout, JSON):
 
 ```json
 [
-  { "slug": "linear-app", "name": "Linear", "score": 0.87, "reason": "matched on dark + B2B + Linear competitor" },
-  { "slug": "vercel",     "name": "Vercel", "score": 0.72, "reason": "matched on dark + dev-tools + minimal" },
-  { "slug": "notion",     "name": "Notion", "score": 0.65, "reason": "matched on minimal + productivity tone" }
+  {
+    "slug": "linear-app",
+    "name": "Linear",
+    "score": 0.87,
+    "reason": "matched on dark + B2B + Linear competitor"
+  },
+  {
+    "slug": "vercel",
+    "name": "Vercel",
+    "score": 0.72,
+    "reason": "matched on dark + dev-tools + minimal"
+  },
+  {
+    "slug": "notion",
+    "name": "Notion",
+    "score": 0.65,
+    "reason": "matched on minimal + productivity tone"
+  }
 ]
 ```
 
@@ -137,9 +152,18 @@ Example AskUserQuestion payload sketch:
 {
   "question": "Three candidates matched your context. Pick one to download as DESIGN.md.",
   "options": [
-    { "label": "linear-app — 0.87", "description": "Issue tracking for software teams. Matched on dark + B2B + Linear competitor." },
-    { "label": "vercel — 0.72",     "description": "Develop. Preview. Ship. Matched on dark + dev-tools + minimal." },
-    { "label": "notion — 0.65",     "description": "All-in-one workspace. Matched on minimal + productivity tone." }
+    {
+      "label": "linear-app — 0.87",
+      "description": "Issue tracking for software teams. Matched on dark + B2B + Linear competitor."
+    },
+    {
+      "label": "vercel — 0.72",
+      "description": "Develop. Preview. Ship. Matched on dark + dev-tools + minimal."
+    },
+    {
+      "label": "notion — 0.65",
+      "description": "All-in-one workspace. Matched on minimal + productivity tone."
+    }
   ]
 }
 ```
@@ -209,11 +233,11 @@ Why this format: the report is the only artifact the orchestrator sees after del
 
 ## Troubleshooting
 
-| Symptom | Cause | What to do |
-|---------|-------|------------|
-| `npx getdesign` hangs or 404s | Offline, or registry unreachable | Surface the network error. Offer Path E (LLM-authored) which has no external dependency. |
-| `getdesign list` output is empty or the parser yields `[]` | Package broken upstream, format changed | Pin to a known-good version: `npx --yes getdesign@0.6.17 list`. If still empty after pin, fall back to Path A. |
-| Matcher returns top-3 with score < 0.4 | Business context too narrow, no good catalog match | Offer Path E. The catalog is curated for common patterns; very specific niches (e.g. STEM kids ed) do not match well. |
-| `@google/design.md lint` exits non-zero with parse error | `DESIGN.md` malformed, or schema drift | Re-fetch via `getdesign add <slug> --force`. If still failing, file the lint stdout in the report and ask the user to escalate. |
-| WCAG contrast fails | Brand uses bold palette that does not meet AA | Surface the failing pair. Offer the user: pick another brand, or accept and override via the `--strict false` flag at lint time. |
-| User says "none of these fit" after 2 batches | Catalog exhausted for this context | Drop to Path E (`references/llm-authored.md`) with the same context JSON as input. |
+| Symptom                                                    | Cause                                              | What to do                                                                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `npx getdesign` hangs or 404s                              | Offline, or registry unreachable                   | Surface the network error. Offer Path E (LLM-authored) which has no external dependency.                                         |
+| `getdesign list` output is empty or the parser yields `[]` | Package broken upstream, format changed            | Pin to a known-good version: `npx --yes getdesign@0.6.17 list`. If still empty after pin, fall back to Path A.                   |
+| Matcher returns top-3 with score < 0.4                     | Business context too narrow, no good catalog match | Offer Path E. The catalog is curated for common patterns; very specific niches (e.g. STEM kids ed) do not match well.            |
+| `@google/design.md lint` exits non-zero with parse error   | `DESIGN.md` malformed, or schema drift             | Re-fetch via `getdesign add <slug> --force`. If still failing, file the lint stdout in the report and ask the user to escalate.  |
+| WCAG contrast fails                                        | Brand uses bold palette that does not meet AA      | Surface the failing pair. Offer the user: pick another brand, or accept and override via the `--strict false` flag at lint time. |
+| User says "none of these fit" after 2 batches              | Catalog exhausted for this context                 | Drop to Path E (`references/llm-authored.md`) with the same context JSON as input.                                               |

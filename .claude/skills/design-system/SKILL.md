@@ -36,7 +36,7 @@ Requires `agentic-dev-core`. Loads on demand:
 
 Optionally consumes (informa el matcher y la generación custom):
 
-- `.context/idea/business-model.md` — industria, value-prop, tone implícito.
+- `.context/business/business-model.md` — industria, value-prop, tone implícito.
 - `.context/PRD/personas.md` — target visual, demographic signal.
 - `.context/PRD/executive-summary.md` — positioning, success KPIs.
 
@@ -60,11 +60,11 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category         | Likely matches                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------ |
+| Category         | Likely matches                                                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `frontend-ui`    | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
-| `accessibility`  | `accessibility` (T3); T4 ASK: `accessibility-review`                                 |
-| `doc-generation` | `cognitive-doc-design` (T2)                                                          |
+| `accessibility`  | `accessibility` (T3); T4 ASK: `accessibility-review`                                                                                                               |
+| `doc-generation` | `cognitive-doc-design` (T2)                                                                                                                                        |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -101,13 +101,13 @@ Do NOT use this skill to:
 
 5 paths available. Default automatable: B (`getdesign` + LLM-matcher). The other 4 are opt-in.
 
-| Path | When to pick | Reference |
-|------|--------------|-----------|
-| **A — Gallery manual** | User wants to browse and pick without the AI deciding. Free, no auth. | `references/gallery-manual.md` |
-| **B — `getdesign` + LLM-matcher** ⭐ default | PRD exists + you want something off-the-shelf with good quality and zero manual effort. Free, no auth. | `references/getdesign-matcher.md` |
-| **C — Open Design app** | You want to iterate visually in a local UI before locking tokens. Requires Docker. Free, OSS. | `references/open-design-app.md` |
-| **D — Claude Design** | You have Claude Pro+ and want best-in-class quality. Requires manual action at `claude.ai/design`. Premium. | `references/claude-design-handoff.md` |
-| **E — LLM-authored custom** | Business is very specific and no off-the-shelf matches. Generate from scratch using the Google Labs spec. | `references/llm-authored.md` |
+| Path                                         | When to pick                                                                                                | Reference                             |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **A — Gallery manual**                       | User wants to browse and pick without the AI deciding. Free, no auth.                                       | `references/gallery-manual.md`        |
+| **B — `getdesign` + LLM-matcher** ⭐ default | PRD exists + you want something off-the-shelf with good quality and zero manual effort. Free, no auth.      | `references/getdesign-matcher.md`     |
+| **C — Open Design app**                      | You want to iterate visually in a local UI before locking tokens. Requires Docker. Free, OSS.               | `references/open-design-app.md`       |
+| **D — Claude Design**                        | You have Claude Pro+ and want best-in-class quality. Requires manual action at `claude.ai/design`. Premium. | `references/claude-design-handoff.md` |
+| **E — LLM-authored custom**                  | Business is very specific and no off-the-shelf matches. Generate from scratch using the Google Labs spec.   | `references/llm-authored.md`          |
 
 **How to choose**:
 
@@ -126,7 +126,7 @@ Paths C and D both bridge into Path E for the actual DESIGN.md conversion — th
 Summary — full procedure in `references/getdesign-matcher.md`.
 
 1. **Pre-flight**: verify `npx` is available; warn if not.
-2. **Context load**: read `.context/idea/business-model.md` + `.context/PRD/personas.md` + `.context/PRD/executive-summary.md`. If none exist, fall back to interactive Q&A (industry / tone / target / competitors / keywords).
+2. **Context load**: read `.context/business/business-model.md` + `.context/PRD/personas.md` + `.context/PRD/executive-summary.md`. If none exist, fall back to interactive Q&A (industry / tone / target / competitors / keywords).
 3. **Catalog fetch**: `npx getdesign list --json` → 72 brands with tags and descriptions.
 4. **Matching**: invoke `scripts/match-brand.ts` with the context JSON. Returns top-3 ranked candidates with score and reason.
 5. **User confirmation**: AskUserQuestion with the 3 candidates (name + tagline + preview hint). User picks one — or asks "more options" → next batch of 3.

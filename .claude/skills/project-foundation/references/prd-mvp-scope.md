@@ -4,7 +4,7 @@ Actúa como Product Manager con enfoque en priorización.
 
 - Executive Summary: [usar .context/PRD/executive-summary.md]
 - User Personas: [usar .context/PRD/user-personas.md]
-- Business Model: [usar .context/idea/business-model.md]
+- Business Model: [usar .context/business/business-model.md]
 
 **Genera archivo: mvp-scope.md**
 

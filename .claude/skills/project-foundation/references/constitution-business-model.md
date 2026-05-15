@@ -26,7 +26,7 @@ Necesito definir el modelo de negocio de un MVP para [industria/vertical].
 - **Problem Statement** (2-3 párrafos): Describe el pain point crítico
 - **MVP Hypothesis** (3 hipótesis a validar con el MVP)
 
-**Formato:** Markdown estructurado, listo para copiar a .context/idea/business-model.md
+**Formato:** Markdown estructurado, listo para copiar a .context/business/business-model.md
 
 **Restricciones:**
 
