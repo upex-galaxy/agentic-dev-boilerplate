@@ -1,25 +1,96 @@
 #!/usr/bin/env bun
 /**
- * @fileoverview UPEX Boilerplate Updater — sync a consumer project with the upstream boilerplate.
+ * @fileoverview UPEX Boilerplate Updater v6 — git-SHA-tracked, per-file delta sync
+ * from the upstream boilerplate (`upex-galaxy/ai-driven-project-starter`).
  *
- * Strategy: "intelligent merge" — copies files from upstream over the consumer's tree
- * without deleting user-owned files. Skills, commands, .agents/, scripts/, cli/, .vscode/,
- * .husky/, docs/, .context/, templates/mcp/, and tooling files are all in scope.
+ * ## Overview
  *
- * Granular commands:
- *   - `agents-docs`: syncs only `.agents/README.md`; protects project.yaml, jira-fields.json,
- *     jira-workflows.json, jira-required.yaml.
- *   - `claude-config`: syncs only `.claude/settings.json`; protects settings.local.json.
- *   - `detectMissingFrameworkScripts()`: surfaces missing framework scripts/deps in
- *     consumer's package.json (read-only — never overwrites the file).
+ * v6 replaces bulk `cpSync` with a partial clone + sparse-checkout approach:
+ *   1. Reads `.template-version.json` (schema v6) to determine the last-synced SHA
+ *      per component (`perComponentCommit`).
+ *   2. Runs `git log <lastSha>..HEAD` per component to find changed files.
+ *   3. Classifies each file into one of 5 buckets:
+ *      `clean-fastforward | locally-diverged | new-upstream | deleted-upstream | binary-skip`.
+ *   4. In interactive mode: presents a Spanish checkbox UI; diverged files get a
+ *      paired-diff prompt (`[t]heirs / [m]ine / [s]kip`).
+ *   5. In auto/CI mode (`--auto` or `CI=true` or non-TTY stdin): applies
+ *      `clean-fastforward` and `new-upstream` silently; defers `locally-diverged`.
  *
- * Requires: gh CLI (authenticated), bun runtime.
+ * ## `.template-version.json` schema v6
+ *
+ * ```jsonc
+ * {
+ *   "schemaVersion": 6,
+ *   "lastSync": "<ISO-8601 UTC>",
+ *   "templateCommit": "<last successfully synced HEAD SHA>",
+ *   "cliVersion": "6.0",
+ *   "syncedComponents": ["claude", "agents", ...],
+ *   "variableSystemVersion": 1,
+ *   "perComponentCommit": {
+ *     "claude": "<sha>",
+ *     "agents": "<sha>",
+ *     ...
+ *   }
+ * }
+ * ```
+ *
+ * ## Requirements
+ *
+ * - **git ≥ 2.25** — required for `--filter=blob:none` partial clone and sparse-checkout.
+ * - **gh CLI** — authenticated with `gh auth login` for template repo access.
+ * - **bun runtime** — script executed via `bun cli/update-boilerplate.ts` (or `bun up`).
+ *
+ * ## CLI flags
+ *
+ * - `--auto`                  Force non-interactive / CI mode; skips diverged files silently.
+ * - `--dry-run`               Simulate sync, no writes to disk (includes `.template-version.json`).
+ * - `--rollback`              Restore files from the most recent `.backups/update-{ISO-ts}/`.
+ * - `--update-mcp-template <agent>`
+ *                             Legacy MCP template subsystem — short-circuits before delta flow.
+ *
+ * ## Bootstrap path (first run — missing state file)
+ *
+ * When `.template-version.json` is absent, the CLI performs a one-time bulk sync using
+ * the existing `mergeDirectory()` primitive per component, then writes an initial v6 state
+ * with `perComponentCommit` entries populated from the template HEAD SHA.
+ *
+ * In `--dry-run`, the bootstrap previews synced files without writing to disk.
+ *
+ * ## v5 → v6 migration (prompt-driven)
+ *
+ * When `.template-version.json` has no `schemaVersion: 6`, the CLI prompts the user:
+ *
+ *   ```
+ *   Detectado: esquema v5 en .template-version.json.
+ *   Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).
+ *   ¿Migrar ahora? [Y/n]:
+ *   ```
+ *
+ * - User accepts (default Y): migration happens in-memory; disk write deferred to post-sync.
+ * - User declines: legacy flow executes; `.template-version.json` is untouched.
+ * - `--dry-run`: prompt still fires (user must be informed), disk write skipped.
+ *
+ * ## Backup strategy
+ *
+ * Before every file write, the original is copied to `.backups/update-{ISO-ts}/`.
+ * A `RESTORE.txt` manifest records all backed-up files for `--rollback`.
+ * The backup directory is created once per run via `createBackup()`.
+ *
+ * ## Per-component SHA tracking
+ *
+ * Only files whose component has been fully applied (no skipped/failed entries) advance
+ * the component SHA in `perComponentCommit`. Partial syncs are re-offered on the next run.
+ *
+ * ## UX language
+ *
+ * All user-facing strings are in Spanish. Internal logs, error stacks, and code comments
+ * are in English.
  *
  * @example
- *   bun up                           # interactive menu
- *   bun up all                       # sync everything
- *   bun up claude agents             # subset
- *   bun up all --dry-run             # preview only
+ *   bun up                           # interactive menu (v6 delta if state exists)
+ *   bun up all                       # legacy: sync everything
+ *   bun up --auto                    # non-interactive delta sync
+ *   bun up --auto --dry-run          # preview what would be synced
  *   bun up --rollback                # restore latest backup
  *   bun up --update-mcp-template claude   # refresh templates/mcp/claude.template.json
  */
@@ -1667,9 +1738,7 @@ function readSyncState(repoRoot: string): SyncState | null {
  * Converts a v5 SyncStateV5 to a SyncStateV6 with empty perComponentCommit.
  * templateCommit and syncedComponents are preserved from the old state.
  * variableSystemVersion is set to 1 (number, was boolean in v5).
- * Wired in main() in M4 — eslint-disable until then.
  */
-// eslint-disable-next-line unused-imports/no-unused-vars
 function migrateSyncState(old: SyncStateV5): SyncStateV6 {
   return {
     schemaVersion: 6,
@@ -1687,12 +1756,13 @@ function migrateSyncState(old: SyncStateV5): SyncStateV6 {
  * Returns true on Y/y/Enter (default yes); false on N/n.
  * No file writes — I/O is deferred to writeSyncState post-sync.
  * Prompt text is Spanish per project convention.
- * Wired in main() in M4 — eslint-disable until then.
  */
-// eslint-disable-next-line unused-imports/no-unused-vars
 async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
+  console.log('');
+  logWarning('Detectado: esquema v5 en .template-version.json.');
+  logInfo('Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).');
   const answer = await nativePrompt(
-    `${colors.yellow}Detectado .template-version.json schema v5. ¿Migrar a v6? [Y/n]:${colors.reset} `,
+    `${colors.yellow}¿Migrar ahora? [Y/n]:${colors.reset} `,
   );
   return answer === '' || answer === 'y' || answer === 'yes' || answer === 's' || answer === 'si';
 }
@@ -2749,6 +2819,199 @@ async function planInteractive(
 }
 
 // ============================================================================
+// BOOTSTRAP PATH
+// ============================================================================
+
+/**
+ * First-run bootstrap — called when `.template-version.json` is absent OR when a
+ * component has no `perComponentCommit` entry (i.e. it has never been delta-synced).
+ *
+ * Strategy (Capability 9):
+ *   - For `type: 'directory'` components: delegate to the existing `mergeDirectory()`
+ *     bulk-copy primitive (srcDir → destDir). This is the original "intelligent merge"
+ *     behaviour — it does NOT overwrite bootstrapOnly files because the individual
+ *     file-write guard below filters them before calling applyResolution.
+ *   - For `type: 'file-list'` or `'mixed'` components: iterate `component.files` and
+ *     per-path copy via `applyResolution` with resolution `'theirs'`.
+ *   - `bootstrapOnly` files (or files in `AGENTS_BOOTSTRAP_FILES` for the `agents`
+ *     component): only copy if the local file is MISSING — never overwrite user values.
+ *
+ * After all components are processed, the caller MUST call `advanceSyncState` and
+ * `writeSyncState` to persist the initial v6 state with `perComponentCommit` entries
+ * set to the template HEAD SHA for every successfully bootstrapped component.
+ *
+ * SUBSET INVARIANT: when `components` is a subset of ALL COMPONENTS (e.g. a single
+ * re-bootstrap), only the provided components are touched.
+ *
+ * @param templateDir   Absolute path to the partial-clone temp directory.
+ * @param components    Components to bootstrap (may be a subset of COMPONENTS).
+ * @param localRepoRoot Absolute path to the consumer repo root (process.cwd()).
+ * @param backupDir     Timestamped backup directory created by the caller.
+ * @param dryRun        When true, log what would be copied without writing anything.
+ * @returns             RunSummary with applied/skipped/failed.
+ */
+async function runBootstrapForComponents(
+  templateDir: string,
+  components: Component[],
+  localRepoRoot: string,
+  backupDir: string,
+  dryRun: boolean,
+): Promise<RunSummary> {
+  const applied: AppliedFile[] = [];
+  const skipped: DeltaEntry[] = [];
+  const failed: FailedFile[] = [];
+  const componentsAdvanced: string[] = [];
+  const componentsHeldBack: string[] = [];
+
+  for (const component of components) {
+    logWarning(
+      `Bootstrap para componente "${component.name}": sin historial SHA.\n`
+      + '   Sincronizando todos los archivos. Cambios locales podrían sobrescribirse.\n'
+      + '   Ejecuta `git diff HEAD` para revisar los cambios.',
+    );
+
+    // Collect all relative paths for this component from the template clone
+    const filesToSync: string[] = [];
+
+    const componentPaths = component.type === 'file-list'
+      ? (component.files ?? [])
+      : component.paths;
+
+    for (const componentPath of componentPaths) {
+      const srcPath = path.join(templateDir, componentPath);
+      if (!fs.existsSync(srcPath)) {
+        logWarning(`Bootstrap: ruta "${componentPath}" no encontrada en template — omitiendo.`);
+        continue;
+      }
+
+      const stat = fs.statSync(srcPath);
+      if (stat.isDirectory()) {
+        // Walk directory recursively to collect relative paths
+        const walkDir = (dir: string): void => {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              walkDir(fullPath);
+            }
+            else {
+              // Convert absolute path to repo-relative POSIX path
+              const relPath = fullPath.slice(templateDir.length + 1).replace(/\\/g, '/');
+              filesToSync.push(relPath);
+            }
+          }
+        };
+        walkDir(srcPath);
+      }
+      else {
+        filesToSync.push(componentPath);
+      }
+    }
+
+    if (filesToSync.length === 0) {
+      logInfo(`Bootstrap: no se encontraron archivos para el componente "${component.name}" — omitiendo.`);
+      continue;
+    }
+
+    let componentFailed = false;
+
+    for (const relPath of filesToSync) {
+      // bootstrapOnly guard: skip file if local already exists
+      const isBootstrapFile = component.bootstrapOnly === true
+        || (component.name === 'agents' && AGENTS_BOOTSTRAP_FILES.some(f => relPath.endsWith(f)));
+
+      if (isBootstrapFile) {
+        const localPath = path.join(localRepoRoot, relPath);
+        if (fs.existsSync(localPath)) {
+          // Already present locally — never overwrite user-filled bootstrap values
+          const syntheticSkip: DeltaEntry = {
+            component: component.name,
+            path: relPath,
+            status: 'M',
+            fromSha: '',
+            toSha: '',
+            added: 0,
+            removed: 0,
+            isBinary: false,
+            templateOldSha: null,
+            templateNewSha: null,
+            classification: 'unchanged',
+          };
+          skipped.push(syntheticSkip);
+          continue;
+        }
+        // Local file missing → fall through to copy below (new-upstream)
+      }
+
+      // Resolve the template blob SHA for this file (for perComponentCommit init)
+      let templateNewSha = '';
+      try {
+        const lsOutput = execSync(
+          `git -C "${templateDir}" ls-tree HEAD -- "${relPath}"`,
+          { stdio: ['pipe', 'pipe', 'pipe'] },
+        ).toString().trim();
+        if (lsOutput) {
+          // Format: <mode> blob <sha>\t<path>
+          const parts = lsOutput.split(/\s+/);
+          templateNewSha = parts[2] ?? '';
+        }
+      }
+      catch {
+        // ls-tree failure is non-fatal — we still attempt the copy
+      }
+
+      // Build a synthetic DeltaEntry for applyResolution
+      const syntheticEntry: DeltaEntry = {
+        component: component.name,
+        path: relPath,
+        status: 'A',
+        fromSha: '',
+        toSha: templateNewSha,
+        added: 0,
+        removed: 0,
+        isBinary: false,
+        templateOldSha: null,
+        templateNewSha: templateNewSha || null,
+        classification: 'new-upstream',
+      };
+
+      if (dryRun) {
+        logInfo(`[dry-run bootstrap] se sincronizaría: ${relPath}`);
+        skipped.push(syntheticEntry);
+        continue;
+      }
+
+      try {
+        await applyResolution(syntheticEntry, 'theirs', templateDir, localRepoRoot, backupDir);
+        applied.push({ entry: syntheticEntry, resolution: 'theirs' });
+      }
+      catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logError(`Bootstrap falló al sincronizar ${relPath}: ${msg}`);
+        failed.push({ entry: syntheticEntry, reason: msg });
+        componentFailed = true;
+      }
+    }
+
+    if (!componentFailed && !dryRun) {
+      componentsAdvanced.push(component.name);
+    }
+    else if (componentFailed) {
+      componentsHeldBack.push(component.name);
+    }
+  }
+
+  return {
+    applied,
+    skipped,
+    failed,
+    newHeadSha: '', // filled in by caller
+    componentsAdvanced,
+    componentsHeldBack,
+  };
+}
+
+// ============================================================================
 // SYNC-STATE WRITEBACK
 // ============================================================================
 
@@ -3276,11 +3539,12 @@ async function main(): Promise<void> {
   // git version guard — required for sparse-checkout (M1/M2).
   ensureGitVersion();
 
-  // === NEW DELTA-DRIVEN AUTO PATH (M2) ===
-  // Only activates when:
-  //   1. --auto flag is passed (or CI env / non-TTY stdin makes isNonInteractive true)
-  //   2. A v6 sync state with perComponentCommit entries exists on disk
-  // If either condition is not met, fall through to the existing legacy flow below.
+  // === NEW BOOTSTRAP + MIGRATION PATH (M4) ===
+  // Reads sync state and handles three scenarios BEFORE entering the M2/M3 delta paths:
+  //   (a) NULL (file missing)  → bootstrap path: bulk-sync all components, write initial v6 state.
+  //   (b) v5 schema detected   → prompt user for migration; accept → in-memory v6 state;
+  //                              decline → fall through to legacy flow.
+  //   (c) v6 schema            → proceed to M2/M3 auto/interactive paths below.
   const repoRoot = process.cwd();
   let rawState: SyncState | null = null;
   try {
@@ -3294,12 +3558,110 @@ async function main(): Promise<void> {
     throw err;
   }
 
+  // (a) Bootstrap path: .template-version.json is missing
+  if (rawState === null) {
+    console.log('');
+    logWarning('⚠  Primera ejecución detectada. No se encontró .template-version.json.');
+    logInfo('Inicializando sincronización del boilerplate...');
+
+    // previewDeprecatedCleanup runs even on bootstrap (before any menu or write)
+    previewDeprecatedCleanup(parsed.commands);
+
+    await validatePrerequisites();
+
+    let bootstrapTemplateDir: string;
+    try {
+      await partialCloneTemplate(TEMPLATE_REPO, TEMP_DIR, COMPONENTS.flatMap(c => c.paths));
+      bootstrapTemplateDir = TEMP_DIR;
+    }
+    catch {
+      logWarning('partial clone falló — usando clone shallow legacy');
+      await cloneTemplate();
+      bootstrapTemplateDir = TEMP_DIR;
+    }
+
+    const bootstrapHeadSha = resolveTemplateHeadSha(bootstrapTemplateDir);
+    const bootstrapBackupDir = createBackup(COMPONENTS.map(c => c.name));
+
+    const bootstrapSummary = await runBootstrapForComponents(
+      bootstrapTemplateDir,
+      COMPONENTS,
+      repoRoot,
+      bootstrapBackupDir,
+      parsed.dryRun,
+    );
+    bootstrapSummary.newHeadSha = bootstrapHeadSha;
+
+    if (parsed.dryRun) {
+      logInfo('[dry-run] bootstrap simulado — no se escribirá .template-version.json');
+    }
+    else {
+      const initialState: SyncStateV6 = {
+        schemaVersion: 6,
+        lastSync: new Date().toISOString(),
+        templateCommit: bootstrapHeadSha,
+        cliVersion: CLI_VERSION,
+        syncedComponents: bootstrapSummary.componentsAdvanced,
+        variableSystemVersion: 1,
+        perComponentCommit: {},
+      };
+      const newState = advanceSyncState(initialState, bootstrapSummary, COMPONENTS, bootstrapHeadSha);
+      writeSyncState(repoRoot, newState);
+
+      // Advisory commit message
+      logInfo(`Mensaje de commit sugerido: ${suggestCommitMessage(bootstrapSummary)}`);
+    }
+
+    logSuccess(
+      `Bootstrap completo: ${bootstrapSummary.applied.length} archivos sincronizados${parsed.dryRun ? ' (simulación)' : ''}`,
+    );
+    cleanup();
+    return;
+  }
+
+  // (b) v5 schema: prompt for migration before delta flow
+  const isV5Schema = (s: SyncState): boolean =>
+    !('schemaVersion' in s) || (s as { schemaVersion?: number }).schemaVersion !== 6;
+
+  if (isV5Schema(rawState)) {
+    // previewDeprecatedCleanup runs before any migration decision
+    previewDeprecatedCleanup(parsed.commands);
+
+    const userConsent = await promptForMigration(rawState as SyncStateV5);
+    if (!userConsent) {
+      logWarning('Migración cancelada. El CLI permanece en el flujo v5 hasta nueva ejecución.');
+      process.exit(0);
+    }
+
+    if (parsed.dryRun) {
+      logInfo('[dry-run] se migraría a v6 (no se escribirá al disco)');
+    }
+
+    // Migrate in-memory; disk write deferred to post-sync writeSyncState
+    const migratedState = migrateSyncState(rawState as SyncStateV5);
+
+    // With migration accepted and v6 state in memory, proceed to delta flow.
+    // v6 state has empty perComponentCommit → computeDelta treats all files as new;
+    // fall through to M2/M3 paths by replacing rawState for isV6WithShas check.
+    rawState = migratedState;
+  }
+  else {
+    // (c) v6 schema: preview deprecated cleanup before entering delta flow
+    previewDeprecatedCleanup(parsed.commands);
+  }
+  // === END NEW BOOTSTRAP + MIGRATION PATH (M4) ===
+
   const isV6WithShas = (s: SyncState | null): s is SyncStateV6 =>
     s !== null
     && 'schemaVersion' in s
     && s.schemaVersion === 6
     && Object.keys(s.perComponentCommit).length > 0;
 
+  // === NEW DELTA-DRIVEN AUTO PATH (M2) ===
+  // Only activates when:
+  //   1. --auto flag is passed (or CI env / non-TTY stdin makes isNonInteractive true)
+  //   2. A v6 sync state with perComponentCommit entries exists on disk
+  // If either condition is not met, fall through to the existing legacy flow below.
   if (isNonInteractive(parsed) && isV6WithShas(rawState)) {
     const v6State = rawState;
 
@@ -3328,6 +3690,13 @@ async function main(): Promise<void> {
 
     const summary = await runAuto(entries, templateDir, repoRoot, backupDir, v6State, parsed);
     summary.newHeadSha = newHeadSha;
+
+    // DEPRECATED_FILES cleanup MUST run AFTER applier, BEFORE writeSyncState.
+    // Reason: writeSyncState advances component SHAs; running cleanup AFTER
+    // would mean next run thinks deprecated files are "new upstream".
+    if (!parsed.dryRun) {
+      cleanupDeprecatedFiles(parsed.commands);
+    }
 
     if (!parsed.dryRun) {
       const newState = advanceSyncState(v6State, summary, COMPONENTS, newHeadSha);
@@ -3388,6 +3757,13 @@ async function main(): Promise<void> {
 
     const summary = await planInteractive(entries, templateDir, repoRoot, backupDir, v6State, parsed);
     summary.newHeadSha = newHeadSha;
+
+    // DEPRECATED_FILES cleanup MUST run AFTER applier, BEFORE writeSyncState.
+    // Reason: writeSyncState advances component SHAs; running cleanup AFTER
+    // would mean next run thinks deprecated files are "new upstream".
+    if (!parsed.dryRun) {
+      cleanupDeprecatedFiles(parsed.commands);
+    }
 
     if (!parsed.dryRun) {
       const newState = advanceSyncState(v6State, summary, COMPONENTS, newHeadSha);
