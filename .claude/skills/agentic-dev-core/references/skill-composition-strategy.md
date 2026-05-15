@@ -4,15 +4,18 @@
 >
 > **Home**: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` — meta-doctrine consumed by all T1 skills, sibling to `briefing-template.md`, `dispatch-patterns.md`, `orchestration-doctrine.md`, `skill-resolver.md`.
 >
-> **Status**: v1.3 — community catalog expanded. 4 skills promoted user→project (`playwright-cli`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`), 3 frontend-ui project skills added (`impeccable`, `design-taste-frontend`, `redesign-existing-projects`), 2 user-level utility skills added (`cli-printing-press`, `html-ppt`). New §5.1 categories: `cli-generation`, `presentation`. v1.2 wiring preserved.
+> **Status**: v1.4 — added §4.5 ALLOWED paths, §4.6 FORBIDDEN paths, §4.7 orchestrator pre-flight (path whitelisting for SDD-\* sub-agents fired from sprint-development Path B). §6.2 sub-agent injection template extended with `## SDD Scope` block. v1.3 wiring preserved.
+>
+> **Status (v1.3)**: community catalog expanded. 4 skills promoted user→project (`playwright-cli`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`), 3 frontend-ui project skills added (`impeccable`, `design-taste-frontend`, `redesign-existing-projects`), 2 user-level utility skills added (`cli-printing-press`, `html-ppt`). New §5.1 categories: `cli-generation`, `presentation`. v1.2 wiring preserved.
 >
 > **Companion files**:
+>
 > - `CLAUDE.md` (project memory — top-level rules and skill mentions)
 > - `.claude/skills/*/SKILL.md` (per-skill instructions; reference this doc relatively as `agentic-dev-core/references/skill-composition-strategy.md`)
 > - `cli/install.ts` (installer — declares project-level vs user-level skill installs)
 > - `.claude/skills/agentic-dev-core/references/{briefing-template,dispatch-patterns,orchestration-doctrine,skill-resolver}.md` (sibling meta-doctrine references)
 >
-> **Last updated**: 2026-05-11
+> **Last updated**: 2026-05-15
 
 ---
 
@@ -39,12 +42,12 @@ Gaps:
 
 Four tiers. Different discovery and load rules per tier.
 
-| Tier | Location | Examples | Discovery | Load behavior |
-|--|--|--|--|--|
-| **T1 — Project-owned** | `.claude/skills/` (committed) | `sprint-development`, `design-system`, `git-flow-master`, `product-management`, `project-foundation`, `project-bootstrap`, `agentic-dev-core`, `agentic-dev-onboard`, `acli`, `unit-testing` | Named in CLAUDE.md "Workflow Skills" table | Silent (load on trigger, no ask) |
-| **T2 — Project dependency (gentle-ai)** | `~/.claude/skills/sdd-*`, `judgment-day`, etc | All 15 gentle-ai skills | Named in CLAUDE.md (one section, with phase mapping) | Silent **inside** project-owned orchestrators (sprint-dev can call sdd-apply without asking) |
-| **T3 — Community project-level** | `~/.claude/skills/` (installed by `install.ts:135-152`) | `next-best-practices`, `shadcn`, `tailwind-css-patterns`, `zod`, `supabase-postgres-best-practices`, etc | Named **by category** in CLAUDE.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
-| **T4 — Community user-level** | `~/.claude/skills/` (installed by `install.ts` USER_LEVEL_SKILLS) | `gh-cli`, `github-actions-docs`, `brainstorming`, `skill-creator`, `find-skills`, `cli-printing-press`, `html-ppt` | **NOT named in CLAUDE.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain | **ASK user before load** (may not be installed, or user may not want it for this task) |
+| Tier                                    | Location                                                          | Examples                                                                                                                                                                                     | Discovery                                                                                                     | Load behavior                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **T1 — Project-owned**                  | `.claude/skills/` (committed)                                     | `sprint-development`, `design-system`, `git-flow-master`, `product-management`, `project-foundation`, `project-bootstrap`, `agentic-dev-core`, `agentic-dev-onboard`, `acli`, `unit-testing` | Named in CLAUDE.md "Workflow Skills" table                                                                    | Silent (load on trigger, no ask)                                                             |
+| **T2 — Project dependency (gentle-ai)** | `~/.claude/skills/sdd-*`, `judgment-day`, etc                     | All 15 gentle-ai skills                                                                                                                                                                      | Named in CLAUDE.md (one section, with phase mapping)                                                          | Silent **inside** project-owned orchestrators (sprint-dev can call sdd-apply without asking) |
+| **T3 — Community project-level**        | `~/.claude/skills/` (installed by `install.ts:135-152`)           | `next-best-practices`, `shadcn`, `tailwind-css-patterns`, `zod`, `supabase-postgres-best-practices`, etc                                                                                     | Named **by category** in CLAUDE.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
+| **T4 — Community user-level**           | `~/.claude/skills/` (installed by `install.ts` USER_LEVEL_SKILLS) | `gh-cli`, `github-actions-docs`, `brainstorming`, `skill-creator`, `find-skills`, `cli-printing-press`, `html-ppt`                                                                           | **NOT named in CLAUDE.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain  | **ASK user before load** (may not be installed, or user may not want it for this task)       |
 
 ### Tier decision rule
 
@@ -73,12 +76,12 @@ Before starting any non-trivial task, the orchestrator (and each invoked skill) 
 
 ### 3.2 Threshold rule (silent vs ask)
 
-| Tier | Silent load condition | Ask condition |
-|--|--|--|
-| T1 | always | never |
-| T2 | inside a project-owned orchestrator (sprint-dev, product-management, etc) | when invoked standalone by user outside a host orchestrator |
-| T3 | task domain matches category | task domain only weakly matches |
-| T4 | never silent | always ask before load |
+| Tier | Silent load condition                                                     | Ask condition                                               |
+| ---- | ------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| T1   | always                                                                    | never                                                       |
+| T2   | inside a project-owned orchestrator (sprint-dev, product-management, etc) | when invoked standalone by user outside a host orchestrator |
+| T3   | task domain matches category                                              | task domain only weakly matches                             |
+| T4   | never silent                                                              | always ask before load                                      |
 
 ### 3.3 Sub-agent skill propagation
 
@@ -105,46 +108,46 @@ This is the most-overlapping pair. Both want to own "build a feature". The contr
 
 ### 4.1 Ownership map
 
-| Concern | Owner | Why |
-|--|--|--|
-| Jira lifecycle (Ready For Dev → In Progress → In Review → Ready For QA) | sprint-dev | SDD has zero Jira knowledge |
-| Jira custom field writes (implementation plan, links) | sprint-dev | SDD agnostic |
-| ATP (Acceptance Test Plan) source-of-truth | sprint-dev | Jira comments → custom field → local fallback |
-| Branching strategy + branch naming with Jira keys | sprint-dev (delegates to `git-flow-master`) | SDD has no VCS concept |
-| PR creation + PR title format | sprint-dev (via `git-flow-master`) | same |
-| Spec / design / tasks **artifacts** | sdd-* (when invoked) | SDD is the authoring engine |
-| Apply-progress merge across batches | sdd-apply | resumable batching is SDD's contract |
-| Strict TDD enforcement | sdd-init (resolves) + sdd-apply (enforces) | TDD policy is project-wide, set once by sdd-init |
-| Delivery strategy (single / chained / exception) | sdd-tasks (forecast) + orchestrator (decision) | SDD owns the gate; orchestrator owns user-facing question |
-| Behavioral compliance matrix (test execution proof) | sdd-verify | sprint-dev only does static AC checklist |
-| Adversarial review | judgment-day (when requested) | parallel blind judges, neither sprint-dev nor SDD owns this |
-| Staging deploy + QA handoff | sprint-dev | SDD has no deploy |
-| Production deploy + rollback | sprint-dev | SDD has no deploy |
-| Spec sync to main specs + archive | sdd-archive | sprint-dev has no spec concept |
+| Concern                                                                 | Owner                                          | Why                                                         |
+| ----------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------- |
+| Jira lifecycle (Ready For Dev → In Progress → In Review → Ready For QA) | sprint-dev                                     | SDD has zero Jira knowledge                                 |
+| Jira custom field writes (implementation plan, links)                   | sprint-dev                                     | SDD agnostic                                                |
+| ATP (Acceptance Test Plan) source-of-truth                              | sprint-dev                                     | Jira comments → custom field → local fallback               |
+| Branching strategy + branch naming with Jira keys                       | sprint-dev (delegates to `git-flow-master`)    | SDD has no VCS concept                                      |
+| PR creation + PR title format                                           | sprint-dev (via `git-flow-master`)             | same                                                        |
+| Spec / design / tasks **artifacts**                                     | sdd-\* (when invoked)                          | SDD is the authoring engine                                 |
+| Apply-progress merge across batches                                     | sdd-apply                                      | resumable batching is SDD's contract                        |
+| Strict TDD enforcement                                                  | sdd-init (resolves) + sdd-apply (enforces)     | TDD policy is project-wide, set once by sdd-init            |
+| Delivery strategy (single / chained / exception)                        | sdd-tasks (forecast) + orchestrator (decision) | SDD owns the gate; orchestrator owns user-facing question   |
+| Behavioral compliance matrix (test execution proof)                     | sdd-verify                                     | sprint-dev only does static AC checklist                    |
+| Adversarial review                                                      | judgment-day (when requested)                  | parallel blind judges, neither sprint-dev nor SDD owns this |
+| Staging deploy + QA handoff                                             | sprint-dev                                     | SDD has no deploy                                           |
+| Production deploy + rollback                                            | sprint-dev                                     | SDD has no deploy                                           |
+| Spec sync to main specs + archive                                       | sdd-archive                                    | sprint-dev has no spec concept                              |
 
 ### 4.2 Conflict resolutions (the 7 hard conflicts)
 
-| # | Conflict | Resolution |
-|--|--|--|
-| 1 | Jira lifecycle ownership | Sprint-dev owns transitions. SDD called only as sub-step. Orchestrator never asks SDD about Jira state. |
-| 2 | ATP (Jira) vs Capabilities (SDD proposal) | One source per change. **Default: ATP from Jira.** If the change is large enough to invoke SDD planning, sprint-dev derives a proposal Capabilities section FROM the Jira ATP — they must stay in sync. |
-| 3 | Workload forecast: sprint-dev emits, SDD blocks | Sprint-dev Stage 1 invokes `sdd-tasks` (when complex). Orchestrator resolves delivery strategy from forecast BEFORE entering Stage 2. Decision is passed in the `sdd-apply` prompt. |
-| 4 | Strict TDD mode | Orchestrator pre-flight: `mem_search("sdd-init/{project}")` → if not found, run `sdd-init` silently. Cache `strict_tdd: true/false` for session. Inject into every `sdd-apply` and `sdd-verify` prompt. Sprint-dev Stage 2 respects TDD mode by routing implementation to `sdd-apply` (which loads the strict-tdd module). |
-| 5 | Artifact backend | Per-change decision, made at Stage 1 entry. **Default: hybrid** — sprint-dev keeps `.context/PBI/{ticket}/` files for Jira-linked artifacts (impl-plan.md, review.md, compliance-matrix.md) AND engram topic keys `sdd/{change-name}/*` for SDD artifacts (spec, design, tasks, apply-progress, verify-report, archive-report). The two do not overlap; they describe the same change from different angles. |
-| 6 | Spec Compliance Matrix structure | Sprint-dev keeps its AC-mapped matrix (lines 219-233) as the **gating** matrix for PR merge. `sdd-verify` runs as an **additional** behavioral test that produces a richer matrix — but is non-gating by default. User can promote sdd-verify to gating via project config. |
-| 7 | Test execution environment | Both sprint-dev Stage 2 verification and `sdd-verify` MUST read test command from a single source: `.agents/project.yaml` → `testing.commands` (or equivalent). Same command, same env, idempotent results. |
+| #   | Conflict                                        | Resolution                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Jira lifecycle ownership                        | Sprint-dev owns transitions. SDD called only as sub-step. Orchestrator never asks SDD about Jira state.                                                                                                                                                                                                                                                                                                      |
+| 2   | ATP (Jira) vs Capabilities (SDD proposal)       | One source per change. **Default: ATP from Jira.** If the change is large enough to invoke SDD planning, sprint-dev derives a proposal Capabilities section FROM the Jira ATP — they must stay in sync.                                                                                                                                                                                                      |
+| 3   | Workload forecast: sprint-dev emits, SDD blocks | Sprint-dev Stage 1 invokes `sdd-tasks` (when complex). Orchestrator resolves delivery strategy from forecast BEFORE entering Stage 2. Decision is passed in the `sdd-apply` prompt.                                                                                                                                                                                                                          |
+| 4   | Strict TDD mode                                 | Orchestrator pre-flight: `mem_search("sdd-init/{project}")` → if not found, run `sdd-init` silently. Cache `strict_tdd: true/false` for session. Inject into every `sdd-apply` and `sdd-verify` prompt. Sprint-dev Stage 2 respects TDD mode by routing implementation to `sdd-apply` (which loads the strict-tdd module).                                                                                   |
+| 5   | Artifact backend                                | Per-change decision, made at Stage 1 entry. **Default: hybrid** — sprint-dev keeps `.context/PBI/{ticket}/` files for Jira-linked artifacts (impl-plan.md, review.md, compliance-matrix.md) AND engram topic keys `sdd/{change-name}/*` for SDD artifacts (spec, design, tasks, apply-progress, verify-report, archive-report). The two do not overlap; they describe the same change from different angles. |
+| 6   | Spec Compliance Matrix structure                | Sprint-dev keeps its AC-mapped matrix (lines 219-233) as the **gating** matrix for PR merge. `sdd-verify` runs as an **additional** behavioral test that produces a richer matrix — but is non-gating by default. User can promote sdd-verify to gating via project config.                                                                                                                                  |
+| 7   | Test execution environment                      | Both sprint-dev Stage 2 verification and `sdd-verify` MUST read test command from a single source: `.agents/project.yaml` → `testing.commands` (or equivalent). Same command, same env, idempotent results.                                                                                                                                                                                                  |
 
 ### 4.3 Clean delegation points (5)
 
 When sprint-dev delegates to SDD, exact data contract:
 
-| Sprint-dev phase | Delegate to | Trigger condition | Data IN (from sprint-dev) | Data OUT (to sprint-dev) |
-|--|--|--|--|--|
-| Stage 1 — Planning (architecture) | `sdd-design` | Complex/multi-file/new module/>400 lines forecast | proposal (derived from Jira AC), affected paths, project context | `design.md` (architecture decisions, data flow, file changes, testing strategy) |
-| Stage 1 — Planning (workload guard) | `sdd-tasks` | Always when sdd-design was invoked | `design.md` | `tasks.md` with Review Workload Forecast + decision flag |
-| Stage 2 — Implementation | `sdd-apply` | Strict TDD active OR workload=chained/exception OR sdd-design+sdd-tasks exist | `design.md`, `tasks.md`, TDD mode, delivery strategy | `apply-progress` (merged across batches) |
-| Stage 3 — Code Review (behavioral) | `sdd-verify` | Always when sdd-apply was invoked. Optional standalone for AC-only changes. | `spec.md` (or AC scenarios), `apply-progress` | verdict PASS / PASS WITH WARNINGS / FAIL + compliance matrix |
-| Post-merge | `sdd-archive` | Always when SDD specs were authored | delta specs | main specs merged + archive folder with date |
+| Sprint-dev phase                    | Delegate to   | Trigger condition                                                             | Data IN (from sprint-dev)                                        | Data OUT (to sprint-dev)                                                        |
+| ----------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Stage 1 — Planning (architecture)   | `sdd-design`  | Complex/multi-file/new module/>400 lines forecast                             | proposal (derived from Jira AC), affected paths, project context | `design.md` (architecture decisions, data flow, file changes, testing strategy) |
+| Stage 1 — Planning (workload guard) | `sdd-tasks`   | Always when sdd-design was invoked                                            | `design.md`                                                      | `tasks.md` with Review Workload Forecast + decision flag                        |
+| Stage 2 — Implementation            | `sdd-apply`   | Strict TDD active OR workload=chained/exception OR sdd-design+sdd-tasks exist | `design.md`, `tasks.md`, TDD mode, delivery strategy             | `apply-progress` (merged across batches)                                        |
+| Stage 3 — Code Review (behavioral)  | `sdd-verify`  | Always when sdd-apply was invoked. Optional standalone for AC-only changes.   | `spec.md` (or AC scenarios), `apply-progress`                    | verdict PASS / PASS WITH WARNINGS / FAIL + compliance matrix                    |
+| Post-merge                          | `sdd-archive` | Always when SDD specs were authored                                           | delta specs                                                      | main specs merged + archive folder with date                                    |
 
 **Never delegate to SDD**:
 
@@ -202,6 +205,78 @@ POST-MERGE (orchestrator):
   → sdd-archive (spec sync, audit trail)
 ```
 
+### 4.5 ALLOWED paths (SDD-\* surface inside Path B of sprint-development)
+
+When the SDD chain fires inside sprint-development Path B, sub-agents MAY touch the following path patterns **scoped to the active Jira ticket** (`<<ISSUE_KEY>>` resolved from the current branch or user input at orchestrator pre-flight). Path patterns are dev-side analog of QA §4.3, adapted because dev scope varies per ticket rather than being a fixed framework surface.
+
+| Path pattern                                                          | Scope                                                             | Notes                                                                                                                              |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/**`, `app/**`, `components/**` (feature subtree only)            | Feature code for `<<ISSUE_KEY>>`                                  | Limited to the directory tree owned by the story. Cross-cutting refactors require explicit scope-expansion approval from the user. |
+| `tests/unit/{feature}/**`, `tests/integration/{feature}/**`           | Tests for the feature under work                                  | Includes new TDD specs when `strict_tdd: true`.                                                                                    |
+| `tests/e2e/{feature}/**`                                              | E2E specs scoped to the story                                     | Only when E2E coverage is part of the Jira AC.                                                                                     |
+| `api/routes/{feature}/**`, `api/schemas/{feature}.ts`                 | API surface for the feature                                       | Generated `api/schemas/types.ts` is regenerated via `bun run api:sync`, never hand-edited inside the SDD chain.                    |
+| `db/migrations/{ticket-id}-*.sql`                                     | Story-scoped schema migrations                                    | Migration filename MUST carry the ticket id.                                                                                       |
+| `types/{feature}.ts`                                                  | Feature-local TypeScript types                                    | Cross-feature type changes go through a separate framework slice, not this SDD chain.                                              |
+| `.context/PBI/{ticket-id}/{impl-plan,design,review,verify-report}.md` | Per-ticket SDD + Sprint-dev artifact files                        | Owned by the sprint-dev hybrid backend (§4.2 conflict #5).                                                                         |
+| engram topic keys `sdd/{change-name}/*`                               | SDD spec/design/tasks/apply-progress/verify-report/archive-report | Engram side of the hybrid artifact backend.                                                                                        |
+
+If `<<ISSUE_KEY>>` or `{feature}` cannot be resolved at pre-flight → abort, no SDD chain.
+
+### 4.6 FORBIDDEN paths (SDD-\* MUST never touch from inside sprint-development)
+
+Any target path matching the patterns below routes away from the SDD chain to the owning skill, command, or manual review:
+
+| Path pattern                                                                                           | Owning skill / mechanism                                            | Reason                                                                                                          |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `.env`, `.env.example`, credential files                                                               | Manual edit only                                                    | Critical Rule #1 (credentials) + Critical Rule #11 (MCP creds cached at spawn time).                            |
+| `.agents/project.yaml` **values**, `.agents/jira-required.yaml`, `.agents/jira-fields.json` **values** | Manual edit only                                                    | Structural edits go through `/agentic-dev-core`; value edits are project-config concerns outside the SDD chain. |
+| `.context/PBI/{OTHER_ticket-id}/**`                                                                    | sprint-development (other ticket session)                           | One SDD slice = one ticket. No cross-ticket writes.                                                             |
+| `.context/business/business-data-map.md`                                                               | `/business-data-map`                                                | Refresh command owns the schema.                                                                                |
+| `.context/business/business-feature-map.md`                                                            | `/business-feature-map`                                             | Refresh command owns the schema.                                                                                |
+| `.context/business/business-api-map.md`                                                                | `/business-api-map`                                                 | Refresh command owns the schema.                                                                                |
+| `.context/master-implementation-plan.md`                                                               | `/master-implementation-plan`                                       | Refresh command owns roadmap state.                                                                             |
+| Jira API calls / Jira transitions                                                                      | sprint-development or `/acli` direct                                | SDD has zero Jira knowledge (§4.1 row 1).                                                                       |
+| Git ops, branch ops, PR open/merge                                                                     | `git-flow-master`                                                   | VCS layer is single-owner.                                                                                      |
+| `vercel.json`, `.github/workflows/**`, deploy scripts                                                  | sprint-development Stage 4/5 **only when story scope IS CI/deploy** | Otherwise out of scope for the SDD slice.                                                                       |
+| Production DB writes (Supabase MCP `apply_migration`, `execute_sql` on `production`)                   | Manual via Supabase MCP under explicit user confirmation only       | Critical-blast-radius operation.                                                                                |
+| `cli/**`, `scripts/**` (boilerplate framework surface)                                                 | `/agentic-dev-core` regenerate flow                                 | Framework artifacts evolve via the bootstrap path, not per-ticket SDD.                                          |
+
+### 4.7 Orchestrator pre-flight (mandatory before chaining any SDD skill)
+
+Mirror of QA §4.6 (adapted for dev's "SDD-OK-inside-sprint-dev" model — the gate is path-based, not skill-based):
+
+```
+1. Identify the trigger:
+   - Request from /sprint-development Path B → proceed to step 2.
+   - Request from /product-management, /design-system, /unit-testing,
+     /project-foundation, /project-bootstrap
+       → SDD chain stays optional; default to host skill's own pipeline
+         unless user explicitly opts in.
+   - Direct /sdd-* user invocation
+       → ASK: "Which Jira ticket is this scoped to? Confirm target paths
+         are inside the ticket's feature subtree."
+       → If user names a non-ticket framework concern → redirect to
+         /agentic-dev-core regenerate flow.
+
+2. Run path self-check:
+   - Resolve <<ISSUE_KEY>> from git branch or user input.
+   - List target paths (from Jira AC + sprint-dev impl plan).
+   - For each path:
+       match §4.5 ALLOWED → continue.
+       match §4.6 FORBIDDEN → abort + redirect to owning skill/command.
+       unmatched → ASK user before allowing.
+   - Mixed slice: split into SDD-touchable slice and out-of-band slice;
+     route each separately.
+
+3. Cache from sdd-init (once per session per project):
+   strict_tdd, test_command, delivery_strategy_default, artifact_backend.
+
+4. Inject §4.5 + §4.6 tables verbatim into every SDD sub-agent briefing
+   under a `## SDD Scope` block (see §6.2). FORBIDDEN-path violation by
+   a sub-agent MUST surface as `skill_resolution: scope-violation` in the
+   result envelope; orchestrator aborts the chain on first violation.
+```
+
 ---
 
 ## 5. Category Vocabulary (for community skill auto-match)
@@ -210,29 +285,29 @@ Project-owned and project-dependency skills are named explicitly. Community skil
 
 ### 5.1 Category list (v1)
 
-| Category | Examples of skills that fit (T3/T4) | Used by (T1) |
-|--|--|--|
-| `frontend-ui` | `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `shadcn`, `tailwind-css-patterns`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` | `design-system`, `project-bootstrap` (frontend phase), `sprint-development` (UI work) |
-| `frontend-framework` | `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns` | `project-bootstrap`, `sprint-development` |
-| `forms-validation` | `react-hook-form`, `zod` | `sprint-development` (form work) |
-| `backend-db` | `supabase-postgres-best-practices` | `project-bootstrap` (backend phase), `sprint-development` (DB work) |
-| `runtime` | `bun` | `project-bootstrap`, `sprint-development` |
-| `language` | `typescript-advanced-types` | `sprint-development`, `unit-testing` |
-| `accessibility` | `accessibility`, `accessibility-review` | `design-system`, `sprint-development` (UI work) |
-| `seo` | `seo`, `nextjs-seo` | `sprint-development` (public-page work) |
-| `deploy` | `deploy-to-vercel` | `sprint-development` Stage 4/5 |
-| `testing-e2e` | `playwright-cli`, `playwright-best-practices` | `sprint-development` Stage 3 (when E2E in scope) |
-| `vcs` | `gh-cli` | `git-flow-master`, `sprint-development` |
-| `ci-cd` | `github-actions-docs` | `project-bootstrap` (CI phase), `sprint-development` |
-| `issue-tracker` | (acli is T1) | `sprint-development`, `product-management` |
-| `creativity` | `brainstorming` | `project-foundation`, `product-management` |
-| `meta-skill` | `skill-creator`, `find-skills` | only on user request (find-skills auto-invoked per §8.2 as last-resort) |
-| `automation` | `n8n-skills` | only on user request |
-| `doc-generation` | `cognitive-doc-design` (T2) | `agentic-dev-core`, `sync-ai-memory` |
-| `prose-polishing` | `comment-writer` (T2) | `sprint-development` (Stage 3), `git-flow-master` |
-| `adversarial-review` | `judgment-day` (T2) | `sprint-development` (Stage 3, default per §8.3) |
-| `cli-generation` | `cli-printing-press` | only on user request (generate Go CLIs from external APIs) |
-| `presentation` | `html-ppt`, `presentation-designer` | only on user request (HTML decks, slideshows) |
+| Category             | Examples of skills that fit (T3/T4)                                                                                                                           | Used by (T1)                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `frontend-ui`        | `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `shadcn`, `tailwind-css-patterns`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` | `design-system`, `project-bootstrap` (frontend phase), `sprint-development` (UI work) |
+| `frontend-framework` | `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `composition-patterns`                                                | `project-bootstrap`, `sprint-development`                                             |
+| `forms-validation`   | `react-hook-form`, `zod`                                                                                                                                      | `sprint-development` (form work)                                                      |
+| `backend-db`         | `supabase-postgres-best-practices`                                                                                                                            | `project-bootstrap` (backend phase), `sprint-development` (DB work)                   |
+| `runtime`            | `bun`                                                                                                                                                         | `project-bootstrap`, `sprint-development`                                             |
+| `language`           | `typescript-advanced-types`                                                                                                                                   | `sprint-development`, `unit-testing`                                                  |
+| `accessibility`      | `accessibility`, `accessibility-review`                                                                                                                       | `design-system`, `sprint-development` (UI work)                                       |
+| `seo`                | `seo`, `nextjs-seo`                                                                                                                                           | `sprint-development` (public-page work)                                               |
+| `deploy`             | `deploy-to-vercel`                                                                                                                                            | `sprint-development` Stage 4/5                                                        |
+| `testing-e2e`        | `playwright-cli`, `playwright-best-practices`                                                                                                                 | `sprint-development` Stage 3 (when E2E in scope)                                      |
+| `vcs`                | `gh-cli`                                                                                                                                                      | `git-flow-master`, `sprint-development`                                               |
+| `ci-cd`              | `github-actions-docs`                                                                                                                                         | `project-bootstrap` (CI phase), `sprint-development`                                  |
+| `issue-tracker`      | (acli is T1)                                                                                                                                                  | `sprint-development`, `product-management`                                            |
+| `creativity`         | `brainstorming`                                                                                                                                               | `project-foundation`, `product-management`                                            |
+| `meta-skill`         | `skill-creator`, `find-skills`                                                                                                                                | only on user request (find-skills auto-invoked per §8.2 as last-resort)               |
+| `automation`         | `n8n-skills`                                                                                                                                                  | only on user request                                                                  |
+| `doc-generation`     | `cognitive-doc-design` (T2)                                                                                                                                   | `agentic-dev-core`, `sync-ai-memory`                                                  |
+| `prose-polishing`    | `comment-writer` (T2)                                                                                                                                         | `sprint-development` (Stage 3), `git-flow-master`                                     |
+| `adversarial-review` | `judgment-day` (T2)                                                                                                                                           | `sprint-development` (Stage 3, default per §8.3)                                      |
+| `cli-generation`     | `cli-printing-press`                                                                                                                                          | only on user request (generate Go CLIs from external APIs)                            |
+| `presentation`       | `html-ppt`, `presentation-designer`                                                                                                                           | only on user request (HTML decks, slideshows)                                         |
 
 ### 5.2 Matching rule
 
@@ -287,33 +362,40 @@ Every sub-agent / skill prompt MUST include:
 - Test command: {from project.yaml}
 - Delivery strategy: {single-pr|chained|exception}
 - Artifact backend: {file|engram|hybrid}
+
+## SDD Scope (only when SDD-* are active in this delegation)
+- Active ticket: <<ISSUE_KEY>>
+- ALLOWED paths (resolved from §4.5 against current ticket): [list]
+- FORBIDDEN paths (verbatim §4.6): [list]
+- On scope violation: STOP and return `skill_resolution: scope-violation`
+  with the offending path. Do NOT continue. Orchestrator aborts the chain.
 ```
 
 ### 6.3 Decision points the glue layer owns
 
-| Decision | When | How |
-|--|--|--|
-| Path A vs Path B | Stage 1 entry | Heuristic: forecast lines, file count, architectural impact. Falls back to user question. |
-| Backend per change | First SDD invocation | Default hybrid. Override by user. |
-| Delivery strategy | sdd-tasks forecast | Default `ask-on-risk`. Cached per session. |
-| Gating matrix | Stage 3 | Sprint-dev AC matrix always gates. sdd-verify gates only if project config opts in. |
-| Skill load (T4) | First match per session | Ask user once per skill per session. Cache decision. |
+| Decision           | When                    | How                                                                                       |
+| ------------------ | ----------------------- | ----------------------------------------------------------------------------------------- |
+| Path A vs Path B   | Stage 1 entry           | Heuristic: forecast lines, file count, architectural impact. Falls back to user question. |
+| Backend per change | First SDD invocation    | Default hybrid. Override by user.                                                         |
+| Delivery strategy  | sdd-tasks forecast      | Default `ask-on-risk`. Cached per session.                                                |
+| Gating matrix      | Stage 3                 | Sprint-dev AC matrix always gates. sdd-verify gates only if project config opts in.       |
+| Skill load (T4)    | First match per session | Ask user once per skill per session. Cache decision.                                      |
 
 ---
 
 ## 7. What Lives Where
 
-| Rule | CLAUDE.md | SKILL.md (per-skill) | This doc (`skill-composition-strategy.md`) |
-|--|--|--|--|
-| Skill tier model | Brief mention + link here | — | Authoritative |
-| Skill Composition Protocol | Summary + link | Per-skill `complementary_categories` frontmatter + load behavior | Authoritative full protocol |
-| Category vocabulary | — | — | Authoritative |
-| Sprint-dev ↔ SDD contract | Brief mention + link | Each affected skill (sprint-dev, agentic-dev-onboard) gets a pointer | Authoritative |
-| Glue layer responsibilities | Brief mention + link | — | Authoritative |
-| T1 skill names | Workflow Skills table (named) | — | Reference only |
-| T2 skill names (gentle-ai/SDD) | New "Project dependencies (gentle-ai)" subsection (named, with phase mapping) | sprint-dev SKILL.md references SDD skills by name in delegation points | Reference only |
-| T3 skill names (community project-level) | "Reusable Community Skills (project-level)" — keep mention but remove the literal name list; replace with category description + reference to install.ts as source of truth | — | Reference only |
-| T4 skill names (community user-level) | **REMOVE from CLAUDE.md.** Replace with "Auto-discovered at runtime per `skill-composition-strategy.md`" pointer | — | Reference only — name list only in installer |
+| Rule                                     | CLAUDE.md                                                                                                                                                                   | SKILL.md (per-skill)                                                   | This doc (`skill-composition-strategy.md`)   |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------- |
+| Skill tier model                         | Brief mention + link here                                                                                                                                                   | —                                                                      | Authoritative                                |
+| Skill Composition Protocol               | Summary + link                                                                                                                                                              | Per-skill `complementary_categories` frontmatter + load behavior       | Authoritative full protocol                  |
+| Category vocabulary                      | —                                                                                                                                                                           | —                                                                      | Authoritative                                |
+| Sprint-dev ↔ SDD contract                | Brief mention + link                                                                                                                                                        | Each affected skill (sprint-dev, agentic-dev-onboard) gets a pointer   | Authoritative                                |
+| Glue layer responsibilities              | Brief mention + link                                                                                                                                                        | —                                                                      | Authoritative                                |
+| T1 skill names                           | Workflow Skills table (named)                                                                                                                                               | —                                                                      | Reference only                               |
+| T2 skill names (gentle-ai/SDD)           | New "Project dependencies (gentle-ai)" subsection (named, with phase mapping)                                                                                               | sprint-dev SKILL.md references SDD skills by name in delegation points | Reference only                               |
+| T3 skill names (community project-level) | "Reusable Community Skills (project-level)" — keep mention but remove the literal name list; replace with category description + reference to install.ts as source of truth | —                                                                      | Reference only                               |
+| T4 skill names (community user-level)    | **REMOVE from CLAUDE.md.** Replace with "Auto-discovered at runtime per `skill-composition-strategy.md`" pointer                                                            | —                                                                      | Reference only — name list only in installer |
 
 ---
 
@@ -364,8 +446,12 @@ Every sub-agent / skill prompt MUST include:
 - [x] Verify `cli/install.ts` lists stay authoritative for T3/T4 names (true; no changes needed).
 - [x] Dry-run test on `project-bootstrap`: PASS verdict (read-only sub-agent simulation; no scaffolding artifacts created).
 - [x] Validation script `bun run lint:skills` — scans `.claude/skills/*/SKILL.md` frontmatter, install.ts tier arrays, and strategy doc §5.1; checks orphan categories, stale skill mentions, tier mismatches, missing Composable Skills sections, single-skill fragility, stale `.context/` paths, duplicate-tier conflicts. Source: `scripts/lint-skills.ts`. Wired in `package.json`. Caught the T3/T4 mismatch bug in project-bootstrap before final review.
+- [x] §4.5 + §4.6 ALLOWED / FORBIDDEN path tables added (scoped to sprint-development Path B). Mechanical path whitelist for SDD-\* sub-agents fired from inside the dev orchestrator.
+- [x] §4.7 orchestrator pre-flight (4 steps) added — mirrors QA §4.6 but gates by path, not by skill identity.
+- [x] §6.2 sub-agent injection template extended with `## SDD Scope` block. Resolved ALLOWED list + verbatim FORBIDDEN list are injected into every SDD sub-agent prompt; scope violations surface as `skill_resolution: scope-violation`.
 - [ ] (Optional, deferred) Wire `/sync-ai-memory` to auto-maintain §5.1 (per §8.5 resolution).
 - [ ] (Optional, deferred) Address fragility: categories `runtime` and `language` each map to a single skill in §5.1 — add additional fallback skills, or accept fragility.
+- [ ] (Optional, deferred) Extend `scripts/lint-skills.ts` with §4.5/§4.6 path-pattern audit (detect SDD sub-agent prompts in templates / SKILL.md examples that omit the `## SDD Scope` block).
 
 ---
 
