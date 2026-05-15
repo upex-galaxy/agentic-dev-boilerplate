@@ -28,8 +28,7 @@ docs/
 ├── workflows/                    # Flujos de trabajo
 │   ├── environments.md           # Ambientes dev, staging, prod
 │   ├── git-flow.md               # Flujo Git para desarrollo asistido por AI
-│   ├── sync-openapi-guide.md     # Uso de `bun run api:sync`
-│   └── update-template-guide.md  # Uso de `bun run up`
+│   └── sync-openapi-guide.md     # Uso de `bun run api:sync`
 │
 ├── architectures/                # Guías específicas por stack
 │   └── supabase-nextjs/          # Configuración Supabase + Next.js
@@ -65,12 +64,11 @@ Los templates listos-para-copiar viven en [`./setup/mcp/`](./setup/mcp/).
 
 ## Workflows
 
-| Documento                                                        | Descripción                                       |
-| ---------------------------------------------------------------- | ------------------------------------------------- |
-| [environments.md](./workflows/environments.md)                   | Guía de ambientes de desarrollo                   |
-| [git-flow.md](./workflows/git-flow.md)                           | Flujo Git para desarrollo asistido por AI         |
-| [sync-openapi-guide.md](./workflows/sync-openapi-guide.md)       | `bun run api:sync` — sincronizar OpenAPI + tipos  |
-| [update-template-guide.md](./workflows/update-template-guide.md) | `bun run up` — sincronizar este template upstream |
+| Documento                                                  | Descripción                                      |
+| ---------------------------------------------------------- | ------------------------------------------------ |
+| [environments.md](./workflows/environments.md)             | Guía de ambientes de desarrollo                  |
+| [git-flow.md](./workflows/git-flow.md)                     | Flujo Git para desarrollo asistido por AI        |
+| [sync-openapi-guide.md](./workflows/sync-openapi-guide.md) | `bun run api:sync` — sincronizar OpenAPI + tipos |
 
 ---
 
@@ -100,7 +98,7 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 - [Flujo Git](./workflows/git-flow.md) para control de versiones
 - [Ambientes](./workflows/environments.md) para etapas de deployment
-- [Update Template](./workflows/update-template-guide.md) para mantenerte sincronizado
+- `bun up --help` para sincronizar este boilerplate upstream
 
 ### 4. Usar Skills y Commands de Claude Code
 
@@ -110,13 +108,13 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 
 ## Relación con `.context/` y `.claude/`
 
-| Directorio          | Audiencia | Propósito                                                        |
-| ------------------- | --------- | ---------------------------------------------------------------- |
-| `docs/`             | Humanos   | Aprendizaje, tutoriales, referencia                              |
-| `.context/`         | AI        | Memoria persistente del proyecto (PRD, SRS, business map, PBI)   |
-| `.claude/skills/`   | AI        | Workflows ejecutables (skills auto-cargadas por Claude Code)     |
+| Directorio          | Audiencia | Propósito                                                           |
+| ------------------- | --------- | ------------------------------------------------------------------- |
+| `docs/`             | Humanos   | Aprendizaje, tutoriales, referencia                                 |
+| `.context/`         | AI        | Memoria persistente del proyecto (PRD, SRS, business map, PBI)      |
+| `.claude/skills/`   | AI        | Workflows ejecutables (skills auto-cargadas por Claude Code)        |
 | `.claude/commands/` | AI        | Slash commands de utilidad (`/sync-ai-memory`, `/business-*`, etc.) |
-| `CLAUDE.md`         | AI        | Operational context cargado en cada sesión                       |
+| `CLAUDE.md`         | AI        | Operational context cargado en cada sesión                          |
 
 **Regla general**:
 

@@ -187,4 +187,3 @@ gh api /repos/owner/repo/contents/path/to/openapi.yaml
 **Ver tambien:**
 
 - [MCP Builder Strategy](../setup/mcp/builder-strategy.md)
-- [Update Template Guide](./update-template-guide.md)

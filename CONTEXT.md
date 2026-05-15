@@ -207,7 +207,7 @@ The agent should load only what the current step needs. Use this table to decide
 | **Developer**           | `/sprint-development` (+ optional `/unit-testing`); `.context/business/business-data-map.md` |
 | **Product / PM**        | `/product-management`, `/project-foundation`; `.context/PRD/`, `.context/business/`          |
 | **Architect / Founder** | `/project-foundation`; `.context/idea/`, `.context/PRD/`, `.context/SRS/`                    |
-| **DevOps / Infra**      | `/project-bootstrap`; `docs/workflows/update-template-guide.md`, `docs/setup/mcp/`           |
+| **DevOps / Infra**      | `/project-bootstrap`; `bun up --help`, `docs/setup/mcp/`                                     |
 | **New contributor**     | `/agentic-dev-onboard`; `docs/onboarding.html` (via `bun run onboarding`)                    |
 
 ---
@@ -330,7 +330,6 @@ Use this table to decide what to re-generate after what kind of change.
 | `.context/README.md`                                                                         | Generator map for `.context/` artifacts                                                    |
 | `.agents/README.md`                                                                          | Variable contract: `{{VAR}}`, `{{jira.*}}`, validation scripts                             |
 | `INSTALLER.md`                                                                               | What `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out |
-| `docs/workflows/update-template-guide.md`                                                    | How to sync this template upstream (`bun run up`)                                          |
 | `docs/setup/jira-setup-guide.md`                                                             | Jira workspace setup + custom field configuration                                          |
 | Sister repo: [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) | QA-side workflows (sprint testing, automation, regression)                                 |
 
