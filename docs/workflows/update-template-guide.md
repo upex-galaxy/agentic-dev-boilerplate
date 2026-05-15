@@ -216,7 +216,7 @@ Restaurados 65 archivos desde update-2026-04-13-143022
 
 ## Version Tracking
 
-Despues de cada sincronizacion exitosa, el script registra metadata en `.template-version.json` en la raiz del proyecto.
+Despues de cada sincronizacion exitosa, el script registra metadata en `.boilerplate-version.json` en la raiz del proyecto.
 
 ### Que registra
 
@@ -363,7 +363,7 @@ cp -r .backups/update-2026-XX-XX-XXXXXX/.context .
 
 A partir de CLI v6.0, `bun up` usa seguimiento de SHA por componente en lugar de un bulk `cpSync`. Esta sección describe el nuevo flujo, el schema del archivo de estado, y los modos de operación disponibles.
 
-### Schema `.template-version.json` (v6)
+### Schema `.boilerplate-version.json` (v6)
 
 ```json
 {
@@ -441,10 +441,10 @@ El directorio de backup se selecciona automaticamente (el mas reciente por times
 
 ### Migracion v5 → v6
 
-Si el CLI detecta un `.template-version.json` con schema anterior (sin campo `schemaVersion: 6`), presenta un prompt al usuario:
+Si el CLI detecta un `.boilerplate-version.json` con schema anterior (sin campo `schemaVersion: 6`), presenta un prompt al usuario:
 
 ```
-Detectado: esquema v5 en .template-version.json.
+Detectado: esquema v5 en .boilerplate-version.json.
 Se actualizará al esquema v6 con perComponentCommit tracking.
 ¿Migrar ahora? [Y/n]:
 ```
@@ -455,9 +455,9 @@ Se actualizará al esquema v6 con perComponentCommit tracking.
 
 El campo `variableSystemVersion` se establece en `1` si no estaba presente en el estado v5.
 
-### Bootstrap (primera corrida sin `.template-version.json`)
+### Bootstrap (primera corrida sin `.boilerplate-version.json`)
 
-Si no existe `.template-version.json`, el CLI muestra un banner de primera corrida y ejecuta un bulk sync de todos los componentes, copiando los archivos del template que faltan o difieren en el repo local. Al final de un sync exitoso escribe el estado v6 inicial con todos los SHAs de componente.
+Si no existe `.boilerplate-version.json`, el CLI muestra un banner de primera corrida y ejecuta un bulk sync de todos los componentes, copiando los archivos del template que faltan o difieren en el repo local. Al final de un sync exitoso escribe el estado v6 inicial con todos los SHAs de componente.
 
 En `--dry-run`: preview de los archivos que se sincronizarian, sin escrituras.
 
@@ -523,7 +523,7 @@ Ejecuta `bun up claude` para sincronizar `.claude/skills/` y `.claude/commands/`
 - Usa `bun up help` para ver todas las opciones
 - Usa `--dry-run` antes de actualizar para ver que cambiaria sin riesgo
 - Usa `--rollback` si algo salio mal — restaura el backup mas reciente en un paso
-- Revisa `.template-version.json` para saber cuando fue tu ultima sincronizacion
+- Revisa `.boilerplate-version.json` para saber cuando fue tu ultima sincronizacion
 - Si ves advertencias de variables, completa la tabla en `CLAUDE.md`
 
 ---

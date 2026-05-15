@@ -214,7 +214,7 @@ bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```
 
-`bun up` ahora corre un sync per-archivo con tracking de SHAs por componente vía `.template-version.json` (schema v6). Detecta archivos modificados localmente y prompta resolución (`[t]heirs / [m]ine / [s]kip`). El flag `--auto` aplica cambios seguros y salta los diverged — ideal para CI o flujos no-interactivos (siempre exit 0). El flag `--dry-run` simula el sync completo sin escribir nada; `--rollback` restaura desde el directorio de backup más reciente (`.backups/update-{ISO-ts}/`). Requiere git ≥ 2.25 (partial clone). Primera corrida sin `.template-version.json`: bootstrap automático con bulk sync + escritura inicial del estado v6. Detalle completo: [`docs/workflows/update-template-guide.md`](docs/workflows/update-template-guide.md).
+`bun up` ahora corre un sync per-archivo con tracking de SHAs por componente vía `.boilerplate-version.json` (schema v6). Detecta archivos modificados localmente y prompta resolución (`[t]heirs / [m]ine / [s]kip`). El flag `--auto` aplica cambios seguros y salta los diverged — ideal para CI o flujos no-interactivos (siempre exit 0). El flag `--dry-run` simula el sync completo sin escribir nada; `--rollback` restaura desde el directorio de backup más reciente (`.backups/update-{ISO-ts}/`). Requiere git ≥ 2.25 (partial clone). Primera corrida sin `.boilerplate-version.json`: bootstrap automático con bulk sync + escritura inicial del estado v6. Detalle completo: [`docs/workflows/update-template-guide.md`](docs/workflows/update-template-guide.md).
 
 ---
 

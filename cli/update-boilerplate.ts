@@ -6,7 +6,7 @@
  * ## Overview
  *
  * v6 replaces bulk `cpSync` with a partial clone + sparse-checkout approach:
- *   1. Reads `.template-version.json` (schema v6) to determine the last-synced SHA
+ *   1. Reads `.boilerplate-version.json` (schema v6) to determine the last-synced SHA
  *      per component (`perComponentCommit`).
  *   2. Runs `git log <lastSha>..HEAD` per component to find changed files.
  *   3. Classifies each file into one of 5 buckets:
@@ -16,7 +16,7 @@
  *   5. In auto/CI mode (`--auto` or `CI=true` or non-TTY stdin): applies
  *      `clean-fastforward` and `new-upstream` silently; defers `locally-diverged`.
  *
- * ## `.template-version.json` schema v6
+ * ## `.boilerplate-version.json` schema v6
  *
  * ```jsonc
  * {
@@ -43,14 +43,14 @@
  * ## CLI flags
  *
  * - `--auto`                  Force non-interactive / CI mode; skips diverged files silently.
- * - `--dry-run`               Simulate sync, no writes to disk (includes `.template-version.json`).
+ * - `--dry-run`               Simulate sync, no writes to disk (includes `.boilerplate-version.json`).
  * - `--rollback`              Restore files from the most recent `.backups/update-{ISO-ts}/`.
  * - `--update-mcp-template <agent>`
  *                             Legacy MCP template subsystem — short-circuits before delta flow.
  *
  * ## Bootstrap path (first run — missing state file)
  *
- * When `.template-version.json` is absent, the CLI performs a one-time bulk sync using
+ * When `.boilerplate-version.json` is absent, the CLI performs a one-time bulk sync using
  * the existing `mergeDirectory()` primitive per component, then writes an initial v6 state
  * with `perComponentCommit` entries populated from the template HEAD SHA.
  *
@@ -58,16 +58,16 @@
  *
  * ## v5 → v6 migration (prompt-driven)
  *
- * When `.template-version.json` has no `schemaVersion: 6`, the CLI prompts the user:
+ * When `.boilerplate-version.json` has no `schemaVersion: 6`, the CLI prompts the user:
  *
  *   ```
- *   Detectado: esquema v5 en .template-version.json.
+ *   Detectado: esquema v5 en .boilerplate-version.json.
  *   Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).
  *   ¿Migrar ahora? [Y/n]:
  *   ```
  *
  * - User accepts (default Y): migration happens in-memory; disk write deferred to post-sync.
- * - User declines: legacy flow executes; `.template-version.json` is untouched.
+ * - User declines: legacy flow executes; `.boilerplate-version.json` is untouched.
  * - `--dry-run`: prompt still fires (user must be informed), disk write skipped.
  *
  * ## Backup strategy
@@ -108,7 +108,7 @@ import * as readline from 'node:readline';
 const CLI_VERSION = '6.0';
 const TEMPLATE_REPO = 'upex-galaxy/agentic-dev-boilerplate';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
-const VERSION_FILE = '.template-version.json';
+const VERSION_FILE = '.boilerplate-version.json';
 
 const TOOLING_FILES: string[] = ['.editorconfig', '.prettierrc', '.prettierignore'];
 const EXAMPLE_FILES: string[] = [];
@@ -219,7 +219,7 @@ interface SyncVersion {
   variableSystemVersion: boolean
 }
 
-// writeSyncState uses tmp+rename atomic write. Assumes .template-version.json and its .tmp.<pid>
+// writeSyncState uses tmp+rename atomic write. Assumes .boilerplate-version.json and its .tmp.<pid>
 // sibling are on the same filesystem (POSIX rename guarantee). Cross-FS writes (e.g. tmpdir on a
 // separate partition) are out of scope.
 
@@ -1689,7 +1689,7 @@ function ensureGitVersion(): void {
 // ============================================================================
 
 /**
- * Read .template-version.json and return a typed SyncState.
+ * Read .boilerplate-version.json and return a typed SyncState.
  * Returns null when the file is absent (bootstrap path).
  * Throws CorruptStateError when JSON is invalid or unrecognized.
  * Discriminates v6 vs v5 by presence of `schemaVersion === 6` and `perComponentCommit`.
@@ -1759,7 +1759,7 @@ function migrateSyncState(old: SyncStateV5): SyncStateV6 {
  */
 async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
   console.log('');
-  logWarning('Detectado: esquema v5 en .template-version.json.');
+  logWarning('Detectado: esquema v5 en .boilerplate-version.json.');
   logInfo('Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).');
   const answer = await nativePrompt(
     `${colors.yellow}¿Migrar ahora? [Y/n]:${colors.reset} `,
@@ -1768,7 +1768,7 @@ async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
 }
 
 /**
- * Atomic write of SyncStateV6 to .template-version.json.
+ * Atomic write of SyncStateV6 to .boilerplate-version.json.
  * Writes to a .tmp.<pid> sibling first, then renames to the final path.
  * Assumes the tmp file and the final path are on the same filesystem (POSIX rename guarantee).
  * Wired in main() in M2/M4.
@@ -2188,7 +2188,7 @@ function computeDelta(
 /**
  * Append a RESTORE.txt manifest to the backup directory.
  * Records timestamp, SHAs, and one line per entry with status/classification/resolution/path.
- * Includes the prior .template-version.json as base64 for full rollback.
+ * Includes the prior .boilerplate-version.json as base64 for full rollback.
  */
 function appendBackupManifest(backupDir: string, entries: DeltaEntry[], state: SyncStateV6): void {
   const lines: string[] = [
@@ -2823,7 +2823,7 @@ async function planInteractive(
 // ============================================================================
 
 /**
- * First-run bootstrap — called when `.template-version.json` is absent OR when a
+ * First-run bootstrap — called when `.boilerplate-version.json` is absent OR when a
  * component has no `perComponentCommit` entry (i.e. it has never been delta-synced).
  *
  * Strategy (Capability 9):
@@ -3558,10 +3558,10 @@ async function main(): Promise<void> {
     throw err;
   }
 
-  // (a) Bootstrap path: .template-version.json is missing
+  // (a) Bootstrap path: .boilerplate-version.json is missing
   if (rawState === null) {
     console.log('');
-    logWarning('⚠  Primera ejecución detectada. No se encontró .template-version.json.');
+    logWarning('⚠  Primera ejecución detectada. No se encontró .boilerplate-version.json.');
     logInfo('Inicializando sincronización del boilerplate...');
 
     // previewDeprecatedCleanup runs even on bootstrap (before any menu or write)
@@ -3593,7 +3593,7 @@ async function main(): Promise<void> {
     bootstrapSummary.newHeadSha = bootstrapHeadSha;
 
     if (parsed.dryRun) {
-      logInfo('[dry-run] bootstrap simulado — no se escribirá .template-version.json');
+      logInfo('[dry-run] bootstrap simulado — no se escribirá .boilerplate-version.json');
     }
     else {
       const initialState: SyncStateV6 = {
