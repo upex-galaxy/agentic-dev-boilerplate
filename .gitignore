@@ -5,6 +5,13 @@
 # Dependencies
 node_modules/
 
+# ===== SDD / Framework Caches =====
+# .atl/ holds sdd-init generated registry, regenerated on demand
+.atl/
+# Any directory whose name starts/contains underscore (framework/internal caches like .context/_framework/, .husky/_)
+*_*/
+**/*_*/
+
 # ===== Build Artifacts =====
 dist/
 build/
