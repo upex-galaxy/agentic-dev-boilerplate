@@ -37,7 +37,7 @@ agentic-dev-boilerplate/
 ├── CONTEXT.md                      This file — Context Engineering in this repo
 │
 ├── .claude/
-│   ├── skills/                     10 workflow skills (executable workflows)
+│   ├── skills/                     11 workflow skills (executable workflows)
 │   └── commands/                   5 utility slash commands
 │
 ├── .agents/                        Project variable contract (SOT for project values)
@@ -112,18 +112,19 @@ These files have stable names and locations. Any skill, command, or doc can refe
 
 ### Skill entry points (most-used)
 
-| Skill                  | When to invoke                                                                         |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `/agentic-dev-core`    | One-time: scaffold `.agents/`, scripts, `CLAUDE.md` for a brand-new repo               |
-| `/project-foundation`  | One-time: Constitution → PRD → SRS → Discovery outputs                                 |
-| `/design-system`       | One-time: generate `DESIGN.md` (Google Labs spec) before frontend scaffolding          |
-| `/project-bootstrap`   | One-time: backend + frontend + OpenAPI + auth + env scaffolding                        |
-| `/product-management`  | Continuous: seed backlog, create epics, refine stories (INVEST + AC), sprint reporting |
-| `/sprint-development`  | Per-story: Plan → Code → Review → Staging → (gated) Production                         |
-| `/unit-testing`        | Standalone or composable mid-flight from `/sprint-development` for TDD slices          |
-| `/git-flow-master`     | Any git/PR work — auto-detects branching strategy and adapts                           |
-| `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                               |
-| `/agentic-dev-onboard` | Walk a new user through the repo's dev flow, MCPs, env vars, skills                    |
+| Skill                  | When to invoke                                                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/agentic-dev-core`    | One-time: scaffold `.agents/`, scripts, `CLAUDE.md` for a brand-new repo                                                                           |
+| `/project-foundation`  | One-time: Constitution → PRD → SRS → Discovery outputs                                                                                             |
+| `/design-system`       | One-time: generate `DESIGN.md` (Google Labs spec) before frontend scaffolding                                                                      |
+| `/project-bootstrap`   | One-time: backend + frontend + OpenAPI + auth + env scaffolding                                                                                    |
+| `/testability-guide`   | One-time (re-runs idempotent): in-app `/qa` page + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
+| `/product-management`  | Continuous: seed backlog, create epics, refine stories (INVEST + AC), sprint reporting                                                             |
+| `/sprint-development`  | Per-story: Plan → Code → Review → Staging → (gated) Production                                                                                     |
+| `/unit-testing`        | Standalone or composable mid-flight from `/sprint-development` for TDD slices                                                                      |
+| `/git-flow-master`     | Any git/PR work — auto-detects branching strategy and adapts                                                                                       |
+| `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                                                                                           |
+| `/agentic-dev-onboard` | Walk a new user through the repo's dev flow, MCPs, env vars, skills                                                                                |
 
 ### Utility slash commands
 
@@ -148,6 +149,7 @@ The repo composes work into three layers, in order of how often each runs:
 /project-foundation   → Constitution + PRD + SRS + Discovery outputs
 /design-system        → DESIGN.md (visual identity, before frontend scaffolding)
 /project-bootstrap    → Backend + frontend skeleton + OpenAPI + auth + env
+/testability-guide    → /qa page + credentials artifact (after infra is live; idempotent re-runs)
 ```
 
 **Output:** Populated `.context/` directories, a `DESIGN.md` at the repo root, and a working dev infrastructure.

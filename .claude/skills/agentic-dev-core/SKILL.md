@@ -32,10 +32,10 @@ Without `agentic-dev-core`, every other workflow skill would either silently rel
 
 ## Two roles
 
-| Role                            | Trigger                                                                                  | Consumers                                                                                                                          |
-| ------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Reference library (passive)** | Other skills loading on-demand                                                           | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> |
-| **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                                 |
+| Role                            | Trigger                                                                                  | Consumers                                                                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Reference library (passive)** | Other skills loading on-demand                                                           | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`, `testability-guide` |
+| **Bootstrap (active)**          | `/agentic-dev-core`, `initialize the project`, `bootstrap framework`, `setup foundation` | End users adopting the boilerplate, or repairing a partial install                                                         |
 
 Passive role: nobody invokes `agentic-dev-core` directly to read a reference — they just cite `agentic-dev-core/references/<file>.md` and the AI loads it. Active role: only the user invokes it, and only when foundation files are missing.
 
@@ -107,11 +107,11 @@ The `init` action never deletes files, never modifies values in existing files (
 
 ## References cited by other skills
 
-| File                                   | Cited by                                                                                                                           | Purpose                                                                                         |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `references/briefing-template.md`      | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management` <!-- TODO: future skills --> | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern. |
-| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                                    | Decision table + heuristic for picking Single / Sequential / Parallel / Background.             |
-| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `CLAUDE.md`                                                      | Cacheable mirror of `CLAUDE.md` §"Orchestration Mode (Subagent Strategy)".                      |
+| File                                   | Cited by                                                                                                                   | Purpose                                                                                         |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `references/briefing-template.md`      | `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`, `testability-guide` | The 6-component subagent briefing template, with concrete filled examples per dispatch pattern. |
+| `references/dispatch-patterns.md`      | All workflow skills with a "Subagent Dispatch Strategy" section                                                            | Decision table + heuristic for picking Single / Sequential / Parallel / Background.             |
+| `references/orchestration-doctrine.md` | Subagents that need orchestration rules without pulling the whole `CLAUDE.md`                                              | Cacheable mirror of `CLAUDE.md` §"Orchestration Mode (Subagent Strategy)".                      |
 
 When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `agentic-dev-core` before continuing.
 

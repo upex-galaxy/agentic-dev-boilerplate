@@ -110,18 +110,19 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ### Workflow skills (auto-trigger)
 
-| Skill                  | Phase          | Purpose                                                                              |
-| ---------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `/agentic-dev-core`    | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)        |
-| `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                        |
-| `/design-system`       | foundation     | DESIGN.md generation (Google Labs spec) before frontend scaffolding — 5 paths        |
-| `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                     |
-| `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                    |
-| `/sprint-development`  | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production |
-| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`  |
-| `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning |
-| `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                   |
-| `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills         |
+| Skill                  | Phase          | Purpose                                                                                                                                                                        |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/agentic-dev-core`    | bootstrap      | Bootstrap a new repo with foundation files (`.agents/`, scripts, `CLAUDE.md`)                                                                                                  |
+| `/project-foundation`  | foundation     | Constitution + PRD + SRS + Discovery (one-time at conception)                                                                                                                  |
+| `/design-system`       | foundation     | DESIGN.md generation (Google Labs spec) before frontend scaffolding — 5 paths                                                                                                  |
+| `/project-bootstrap`   | foundation     | Backend / frontend / OpenAPI / auth / env scaffolding (one-time)                                                                                                               |
+| `/testability-guide`   | foundation+    | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste). Idempotent re-runs. |
+| `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                                                                                                              |
+| `/sprint-development`  | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production                                                                                           |
+| `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`                                                                                            |
+| `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning                                                                                           |
+| `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                                                                                                             |
+| `/agentic-dev-onboard` | onboarding     | Walks new users through the repo's dev flow, MCPs, env vars, workflow skills                                                                                                   |
 
 ### Reusable community skills (installed by `bun run setup`)
 
@@ -158,7 +159,7 @@ Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier
 
 ```
 .claude/
-├── skills/         # 10 workflow skills (community skills installed by bun run setup)
+├── skills/         # 11 workflow skills (community skills installed by bun run setup)
 └── commands/       # 5 utility slash commands
 .agents/
 ├── project.yaml          # Per-project variables (template)

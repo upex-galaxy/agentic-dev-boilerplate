@@ -47,9 +47,9 @@ Steps:
 
 Expected matches (illustrative):
 
-| Category         | Likely matches                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `doc-generation` | `cognitive-doc-design` (T2) — applied when refreshing or extending the onboarding narrative   |
+| Category         | Likely matches                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| `doc-generation` | `cognitive-doc-design` (T2) — applied when refreshing or extending the onboarding narrative |
 
 Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline"` plus `missing: [<categories>]` per §3.4.
 
@@ -91,9 +91,9 @@ After setup, fill `.env` with the credentials the rest of the workflow expects (
 
 `/sprint-development` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-development UPEX-123`) and it drives the per-story dev loop end-to-end. Path selection lives in CLAUDE.md §12:
 
-| Path | Gate | Skills invoked |
-| ---- | ---- | -------------- |
-| **A — Simple** | Jira ticket · ≤400 LOC · no new architecture · no Strict TDD | `/sprint-development` only |
+| Path            | Gate                                                              | Skills invoked                                                                                                         |
+| --------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **A — Simple**  | Jira ticket · ≤400 LOC · no new architecture · no Strict TDD      | `/sprint-development` only                                                                                             |
 | **B — Complex** | multi-file refactor OR new architecture OR >400 LOC OR Strict TDD | `sprint-development` orchestrates `sdd-init` → `sdd-design` → `sdd-tasks` → `sdd-apply` → `sdd-verify` → `sdd-archive` |
 
 **Jira state machine:**
@@ -120,11 +120,11 @@ The skill handles Jira transitions, branch creation, commits, PR open, deploy. Y
 
 Hand-off matrix copied from [`INSTALLER.md`](../../../INSTALLER.md):
 
-| When                                                              | Skill                                                         |
-| ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| Routine Jira ticket work (most cases)                             | `/sprint-development` (ticket-driven)                                 |
-| Large refactor, architectural decision, or feature without ticket | `/sdd-*` (spec-driven, explore → propose → spec → design → …) |
-| Story with detailed specs you want traced formally                | Both: `/sdd-spec` first, then `/sprint-development` for the cycle     |
+| When                                                              | Skill                                                             |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Routine Jira ticket work (most cases)                             | `/sprint-development` (ticket-driven)                             |
+| Large refactor, architectural decision, or feature without ticket | `/sdd-*` (spec-driven, explore → propose → spec → design → …)     |
+| Story with detailed specs you want traced formally                | Both: `/sdd-spec` first, then `/sprint-development` for the cycle |
 
 If the change feels like a research project (alternatives to compare, multiple modules touched, no ticket yet), reach for `/sdd-explore` first. Otherwise, stick with `/sprint-development`.
 
@@ -134,12 +134,12 @@ If the change feels like a research project (alternatives to compare, multiple m
 
 Five canonical MCPs ship with the boilerplate:
 
-| MCP       | Use it for                                       |
-| --------- | ------------------------------------------------ |
-| Tavily    | Web search, troubleshooting community Q&A        |
-| Context7  | Official library docs (Next.js, Supabase…)       |
-| Supabase  | DB queries, migrations, type generation          |
-| n8n       | Workflow automation, scheduled jobs              |
+| MCP       | Use it for                                        |
+| --------- | ------------------------------------------------- |
+| Tavily    | Web search, troubleshooting community Q&A         |
+| Context7  | Official library docs (Next.js, Supabase…)        |
+| Supabase  | DB queries, migrations, type generation           |
+| n8n       | Workflow automation, scheduled jobs               |
 | Atlassian | Jira/Confluence fallback when `/acli` unavailable |
 
 **Decision rule:**
@@ -174,18 +174,19 @@ Verify your config by running the linter declared in `package.json` (typically `
 
 > **Policy**: this repo commits ONLY skills WE maintain. Community / third-party skills (`playwright-cli`, `frontend-design`, `next-*`, `shadcn`, `supabase-postgres-best-practices`, etc.) are installed user-scope by `bun run setup` from upstream — never committed.
 
-| Skill                 | Trigger                | Purpose                                                             |
-| --------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                |
-| `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                 |
-| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                |
-| `design-system`       | `/design-system`       | DESIGN.md (Google Labs spec) — visual identity contract              |
-| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                              |
-| `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                |
-| `sprint-development`  | `/sprint-development`  | Per-story dev loop — Path A/B mega-orchestrator (CLAUDE.md §12)     |
-| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`) |
-| `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy |
-| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work             |
+| Skill                 | Trigger                | Purpose                                                                                                                |
+| --------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                                                                   |
+| `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                                                                    |
+| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                                                                   |
+| `design-system`       | `/design-system`       | DESIGN.md (Google Labs spec) — visual identity contract                                                                |
+| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                                                                                 |
+| `testability-guide`   | `/testability-guide`   | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs. |
+| `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                                                                   |
+| `sprint-development`  | `/sprint-development`  | Per-story dev loop — Path A/B mega-orchestrator (CLAUDE.md §12)                                                        |
+| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`)                                              |
+| `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy                                                    |
+| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                |
 
 Browser automation is provided by `/playwright-cli` (community skill from `microsoft/playwright-cli`, installed by setup — see Critical Rule #11 in CLAUDE.md).
 
@@ -250,5 +251,6 @@ If any box is unchecked, fix that first. The downstream skills assume a green fo
 - Refine acceptance criteria → use `/product-management`
 - Define a brand-new product → use `/project-foundation`
 - Scaffold backend / frontend code → use `/project-bootstrap`
+- Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
 
 The onboard tour ends at the moment the user knows which skill to call next. From there, the relevant workflow skill takes over.

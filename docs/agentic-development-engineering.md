@@ -38,13 +38,14 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
   (Define the product)        (Shape the backlog)            (Ship the code)
 ```
 
-| Tier                                                 | Owning skill(s)                                                     | Output                                                                                             |
-| ---------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Bootstrap** (one-time)                             | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`                                         |
-| **Foundation** (one-time per product)                | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend |
-| **Management** (continuous)                          | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots    |
-| **Implementation** (per story)                       | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging             |
-| **Spec-Driven Development** (any substantial change) | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                          |
+| Tier                                                   | Owning skill(s)                                                     | Output                                                                                                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bootstrap** (one-time)                               | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`                                                                                                |
+| **Foundation** (one-time per product)                  | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend                                                        |
+| **Testability bridge** (one-time + idempotent re-runs) | `testability-guide`                                                 | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
+| **Management** (continuous)                            | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                                                           |
+| **Implementation** (per story)                         | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                                                                    |
+| **Spec-Driven Development** (any substantial change)   | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                                                                 |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
 
@@ -239,6 +240,7 @@ The skill roster is split by _phase_ (declared in each `SKILL.md` frontmatter as
 
 - **`bootstrap`** — `agentic-dev-core` (one-time foundation install), `agentic-dev-onboard` (guided tour for newcomers).
 - **`foundation`** — `project-foundation` (Constitution + PRD + SRS + Discovery), `design-system` (DESIGN.md), `project-bootstrap` (backend + frontend scaffolding).
+- **`foundation-extension`** — `testability-guide` (in-app `/qa` page + tool-agnostic credentials artifact for QA testers and AI agents; runs after `project-bootstrap`, idempotent on re-run).
 - **`management`** — `product-management` (backlog seed, epic creation, story refinement, AC quality, edge-case enumeration, sprint reporting).
 - **`implementation`** — `sprint-development` (per-story mega-orchestrator), `unit-testing` (TDD composable slice), `git-flow-master` (branches, commits, PRs, conflicts).
 
