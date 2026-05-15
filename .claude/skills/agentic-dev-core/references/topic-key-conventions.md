@@ -8,7 +8,7 @@ Every artifact a workflow skill produces (spec, impl-plan, review, test-report, 
 
 1. **Idempotent writes (UPSERT).** Re-running a workflow on the same ticket overwrites the previous artifact instead of accumulating duplicates.
 2. **A predictable retrieval path.** Anyone (human or agent) can guess the key from the ticket number and artifact name.
-3. **A bridge to Engram without coupling.** If `engram` is on `PATH`, `scripts/engram-bridge.ts` mirrors the file under the same key. If absent, everything still works file-first; nothing else changes.
+3. **A mirror to Engram without coupling.** The engram MCP (`mem_save` / `mem_search` / `mem_get_observation`) can mirror the file under the same key. If absent, everything still works file-first; nothing else changes.
 
 This document is the **single source of truth** for the key format and storage layout. Skills cite it (`See agentic-dev-core/references/topic-key-conventions.md`) instead of redefining the convention inline.
 
@@ -36,17 +36,17 @@ pbi/{ticket}/{artifact}
 
 The vocabulary is open — pick whatever name the workflow naturally uses — but the table below covers the names most skills emit today. New names should follow the same kebab-case style and be added here when introduced.
 
-| Artifact name       | Producer                                  | What it is                                                  | File path                                       |
-| ------------------- | ----------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
-| `spec`              | `product-management` (AC refinement)      | Refined story spec (Gherkin AC, business rules, scope)      | `.context/PBI/{ticket}/spec.md`                 |
-| `epic`              | `product-management` (epic creation)      | Epic-level scope, child stories, traceability to PRD        | `.context/PBI/{epic-slug}/epic.md`              |
+| Artifact name       | Producer                                          | What it is                                                  | File path                                       |
+| ------------------- | ------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| `spec`              | `product-management` (AC refinement)              | Refined story spec (Gherkin AC, business rules, scope)      | `.context/PBI/{ticket}/spec.md`                 |
+| `epic`              | `product-management` (epic creation)              | Epic-level scope, child stories, traceability to PRD        | `.context/PBI/{epic-slug}/epic.md`              |
 | `impl-plan`         | `sprint-development` Stage 1                      | Story implementation plan (tasks mapped to AC)              | `.context/PBI/{ticket}/impl-plan.md`            |
 | `feature-impl-plan` | `sprint-development` Stage 1 (macro)              | Feature-level implementation plan across multiple stories   | `.context/PBI/{epic-slug}/feature-impl-plan.md` |
 | `review`            | `sprint-development` Stage 3                      | Code-review findings against AC + standards                 | `.context/PBI/{ticket}/review.md`               |
 | `compliance-matrix` | `sprint-development` Stage 3                      | AC-vs-code coverage matrix (which AC each commit closes)    | `.context/PBI/{ticket}/compliance-matrix.md`    |
 | `bug-fix`           | `sprint-development` Stage 2 (`bug-fix-workflow`) | Root-cause + fix plan + regression notes                    | `.context/PBI/{ticket}/bug-fix.md`              |
-| `edge-cases`        | `product-management` (enumeration)        | Cataloged edge cases with criticality + AC-promote decision | `.context/PBI/{ticket}/edge-cases.md`           |
-| `test-report`       | (out of scope here; sister repo)          | QA test execution report — referenced for traceability      | `.context/PBI/{ticket}/test-report.md`          |
+| `edge-cases`        | `product-management` (enumeration)                | Cataloged edge cases with criticality + AC-promote decision | `.context/PBI/{ticket}/edge-cases.md`           |
+| `test-report`       | (out of scope here; sister repo)                  | QA test execution report — referenced for traceability      | `.context/PBI/{ticket}/test-report.md`          |
 
 This list is **not exhaustive**. Skills may emit other artifacts (e.g., `staging-deploy-notes`, `rollback-runbook`); they just need to follow the kebab-case-plus-`pbi/{ticket}/{name}` shape.
 
@@ -82,14 +82,14 @@ Either way, never assume the full content from a search result; always do the se
 
 ## `capture_prompt` rules
 
-The Engram bridge passes a `--capture-prompt` flag through to the underlying CLI when supported. The default per artifact:
+The engram MCP exposes a `capture_prompt` parameter on `mem_save`. The default per artifact:
 
 | Artifact origin                                                         | `capture_prompt` | Why                                                                                                         |
 | ----------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- |
 | Auto-generated by a workflow skill (impl-plan, compliance-matrix, etc.) | `false`          | The artifact is the deterministic output of an automated pipeline; the prompt that triggered it adds noise. |
 | Human-prompted decision (epic scope, story slicing, AC trade-off)       | `true`           | The user's intent matters; capturing it preserves the rationale behind the decision.                        |
 
-When in doubt, prefer `capture_prompt: true`. The bridge defaults to `true` and only flips `false` when the caller explicitly asks for it (e.g., `engram-bridge save --no-capture-prompt`).
+When in doubt, prefer `capture_prompt: true`. Flip to `false` only for auto-generated artifacts (SDD proposal/spec/design/tasks/apply/verify/archive reports, testing-capabilities caches, onboarding/state artifacts, skill-registry output).
 
 ## File-first storage
 
@@ -127,28 +127,6 @@ Notes:
 
   The header is optional; the bridge can also derive the key from the file path. The header is useful when the file is moved or renamed.
 
-## Engram bridge (optional)
-
-When `engram` is on `PATH`, `scripts/engram-bridge.ts` mirrors writes to Engram with the same `topic_key`. When absent, the script no-ops and every workflow continues unchanged.
-
-Behavior:
-
-```bash
-# Save an artifact to Engram (file is the source; Engram is a mirror)
-bun scripts/engram-bridge.ts save UPEX-123 .context/PBI/UPEX-123/impl-plan.md
-# → engram save "pbi/UPEX-123/impl-plan" "<file content>" --topic pbi/UPEX-123/impl-plan --type architecture --scope project
-
-# Search for matching topic_keys
-bun scripts/engram-bridge.ts search "pbi/UPEX-123"
-# → engram search "pbi/UPEX-123" --scope project
-
-# Fetch full content of a specific observation by ID
-bun scripts/engram-bridge.ts get <observation-id>
-# → engram timeline <observation-id> --before 0 --after 0
-```
-
-Workflows do **not** call the bridge directly. They write the file; the bridge is invoked at session boundaries (or on demand) to mirror the latest set of artifacts. Treat it as a publish step, not a step inside the per-artifact write loop.
-
 ## Migration from existing PBI structure
 
 Existing projects that already have `.context/PBI/{ticket}/spec.md`, `.context/PBI/{ticket}/implementation-plan.md`, etc. **need no on-disk migration**. The convention is just a tagging discipline applied going forward:
@@ -165,5 +143,4 @@ The renaming step is **opportunistic** — only do it when you're already editin
 ## Cross-references
 
 - **Producers** (skills that emit artifacts): `product-management/SKILL.md`, `sprint-development/SKILL.md`. Both cite this file from the steps that emit artifacts.
-- **Bridge implementation**: `scripts/engram-bridge.ts`. Auto-detects `engram` on `PATH`; no-ops cleanly when absent.
-- **Engram CLI surface used**: `engram save <title> <content> --topic <key> --type architecture --scope project`, `engram search <query>`, `engram timeline <id>`. We do not depend on the MCP server.
+- **Engram MCP surface used**: `mem_save` (with `topic_key`, `type`, `scope`, optional `capture_prompt`), `mem_search`, `mem_get_observation`. The file remains the source of truth; the MCP mirror is best-effort.
