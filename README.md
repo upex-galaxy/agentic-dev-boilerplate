@@ -51,6 +51,11 @@ bun run setup
 bun install
 cp .env.example .env   # then fill in the values
 
+# 3.5. (Recommended, Claude Code only) Configure the statusline
+#      Run this in a SEPARATE terminal window — ccstatusline is an
+#      interactive TUI configurator and clashes with a running agent.
+bunx -y ccstatusline@latest
+
 # 4. Bootstrap project context (in Claude Code)
 /agentic-dev-core          # scaffolds .agents/, scripts, CLAUDE.md
 
@@ -72,6 +77,8 @@ cp .env.example .env   # then fill in the values
 ```
 
 > Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking, so chaining deadlocks. Run them as two separate steps.
+
+> `bunx -y ccstatusline@latest` (step 3.5) is Claude Code-only and optional — it opens an interactive TUI to pick a statusline preset (model, branch, token usage, etc.). Run it from a plain terminal window with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this step: the equivalent is the `opencode-subagent-statusline` plugin already wired into `opencode.jsonc`.
 
 ### Launching the agent
 

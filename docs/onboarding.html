@@ -1358,10 +1358,23 @@
                   </dl>
                   <pre><code>bun install
 bun run setup                 # interactive: gentle-ai skills + MCPs + CLIs
+bunx -y ccstatusline@latest   # OPTIONAL, Claude Code only — run in a SEPARATE
+                              # terminal window (interactive TUI, conflicts
+                              # with a running agent)
 bun run agents:setup          # interactive walkthrough for project.yaml
 bun run jira:sync-fields      # catalog Jira custom fields
 bun run jira:check            # verify the catalog against the manifest
 bun run lint:agents           # validate placeholders</code></pre>
+                  <p>
+                    <strong>Statusline (cosmetic, recommended):</strong>
+                    <code>bunx -y ccstatusline@latest</code> opens an interactive TUI to
+                    configure the Claude Code statusline (model, branch, token usage,
+                    cost). Run it from a plain terminal with <strong>no agent running</strong> —
+                    two TUIs sharing stdin will fight and the configurator silently
+                    breaks. OpenCode users get the equivalent automatically via the
+                    <code>opencode-subagent-statusline</code> plugin already declared in
+                    <code>opencode.jsonc</code>.
+                  </p>
                 </div>
               </details>
 
