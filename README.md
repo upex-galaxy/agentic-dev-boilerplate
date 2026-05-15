@@ -244,7 +244,7 @@ MIT (or fill in)
 
 ## Status
 
-Migration from `ai-driven-project-starter` complete. See `.plans/MASTER-PLAN.md` for the migration story.
+Project renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. See `.plans/MASTER-PLAN.md` for the migration story.
 
 ---
 

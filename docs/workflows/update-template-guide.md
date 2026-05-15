@@ -36,7 +36,7 @@ Selecciona:
 ### 3. Verificar acceso al template
 
 ```bash
-gh repo view upex-galaxy/ai-driven-project-starter
+gh repo view upex-galaxy/agentic-dev-boilerplate
 ```
 
 Si ves la info del repo, todo listo.
@@ -499,7 +499,7 @@ gh auth login
 
 ### "repository not found"
 
-Verifica que tienes acceso al repositorio `upex-galaxy/ai-driven-project-starter`.
+Verifica que tienes acceso al repositorio `upex-galaxy/agentic-dev-boilerplate`.
 
 ### "Cannot find module '@inquirer/prompts'"
 

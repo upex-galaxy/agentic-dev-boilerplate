@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Project installer for ai-driven-project-starter.
+ * Project installer for agentic-dev-boilerplate.
  *
  * Drives the end-to-end setup flow defined in `.plans/FASE-15-DESIGN.md`:
  *   1. Detect gentle-ai (presence + version)
@@ -103,7 +103,7 @@ const CANONICAL_MCPS = ['context7', 'tavily', 'atlassian', 'supabase', 'n8n'] as
 
 interface CommunitySkill {
   package: string
-  skill?: string  // omit or '*' to install all skills from the package
+  skill?: string // omit or '*' to install all skills from the package
 }
 
 // Community skills installed at PROJECT level (`npx skills add`).
@@ -127,7 +127,7 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'accessibility' },
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'seo' },
   { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
-  { package: 'czlonkowski/n8n-skills' },  // whole repo (n8n MCP toolkit)
+  { package: 'czlonkowski/n8n-skills' }, // whole repo (n8n MCP toolkit)
   { package: 'https://github.com/emilkowalski/skill', skill: 'emil-design-eng' },
   { package: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', skill: 'ui-ux-pro-max' },
   { package: 'https://github.com/pbakaus/impeccable', skill: 'impeccable' },
@@ -287,7 +287,7 @@ async function verifyRepoRoot(): Promise<void> {
   }
   const raw = await readFile(pkgPath, 'utf8');
   const pkg = JSON.parse(raw) as { name?: string };
-  if (pkg.name !== 'ai-driven-project-starter') {
+  if (pkg.name !== 'agentic-dev-boilerplate') {
     const proceed = await confirm({
       message: `package.json name is "${pkg.name ?? '(unknown)'}". Continue anyway?`,
       default: false,
@@ -471,9 +471,12 @@ async function installSkillsViaGentleAi(
 
     const result = runGentleAiInstall([
       'install',
-      '--agent', agent,
-      '--components', componentsCsv,
-      '--skills', skillsCsv,
+      '--agent',
+      agent,
+      '--components',
+      componentsCsv,
+      '--skills',
+      skillsCsv,
     ]);
 
     const slugs = [ENGRAM_COMPONENT, ...SKILL_SLUGS];
@@ -952,7 +955,7 @@ function printClosingSummary(state: InstallState): void {
 // ============================================================================
 
 async function main(): Promise<void> {
-  log.banner('ai-driven-project-starter — installer');
+  log.banner('agentic-dev-boilerplate — installer');
   log.dim('See .plans/FASE-15-DESIGN.md for the spec this implements.');
   if (AUTO_NON_INTERACTIVE) {
     log.warn('No TTY detected — running in --non-interactive mode (prompts will use defaults).');

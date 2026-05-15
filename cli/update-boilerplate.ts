@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * @fileoverview UPEX Boilerplate Updater v6 — git-SHA-tracked, per-file delta sync
- * from the upstream boilerplate (`upex-galaxy/ai-driven-project-starter`).
+ * from the upstream boilerplate (`upex-galaxy/agentic-dev-boilerplate`).
  *
  * ## Overview
  *
@@ -106,7 +106,7 @@ import * as readline from 'node:readline';
 // ============================================================================
 
 const CLI_VERSION = '6.0';
-const TEMPLATE_REPO = 'upex-galaxy/ai-driven-project-starter';
+const TEMPLATE_REPO = 'upex-galaxy/agentic-dev-boilerplate';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template-version.json';
 
