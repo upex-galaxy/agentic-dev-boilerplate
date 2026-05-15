@@ -25,7 +25,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-import { checkbox, confirm, input, password } from '@inquirer/prompts';
+import { checkbox, confirm, input, password, select } from '@inquirer/prompts';
 
 // ============================================================================
 // Types
@@ -51,6 +51,14 @@ interface AgentDetection {
   opencode: boolean
 }
 
+interface GithubRemoteInfo {
+  account: string
+  repo: string
+  visibility: 'private' | 'public' | 'internal'
+  url: string
+  createdAt: string
+}
+
 interface InstallState {
   version: 1
   installedAt: string
@@ -64,6 +72,7 @@ interface InstallState {
   mcps: Record<string, McpStatus>
   externalClis: Record<string, CliStatus>
   pendingEnvVars: string[]
+  github?: GithubRemoteInfo
 }
 
 // ============================================================================
@@ -287,13 +296,32 @@ async function verifyRepoRoot(): Promise<void> {
   }
   const raw = await readFile(pkgPath, 'utf8');
   const pkg = JSON.parse(raw) as { name?: string };
-  if (pkg.name !== 'agentic-dev-boilerplate') {
-    const proceed = await confirm({
-      message: `package.json name is "${pkg.name ?? '(unknown)'}". Continue anyway?`,
-      default: false,
-    });
-    if (!proceed) { process.exit(0); }
+
+  if (pkg.name === 'agentic-dev-boilerplate') {
+    return;
   }
+
+  // Accept projects bootstrapped from this template — they keep a marker file
+  // even though their package.json name is the user-chosen project name.
+  const markerPath = join(REPO_ROOT, '.agents', 'template-marker.json');
+  if (existsSync(markerPath)) {
+    try {
+      const marker = JSON.parse(await readFile(markerPath, 'utf8')) as { template?: string };
+      if (marker.template === 'upex-galaxy/agentic-dev-boilerplate') {
+        log.info(`Bootstrapped project detected: ${pkg.name ?? '(unknown)'}`);
+        return;
+      }
+    }
+    catch {
+      // marker present but unreadable — fall through to confirm
+    }
+  }
+
+  const proceed = await confirm({
+    message: `package.json name is "${pkg.name ?? '(unknown)'}". Continue anyway?`,
+    default: false,
+  });
+  if (!proceed) { process.exit(0); }
 }
 
 // ============================================================================
@@ -871,7 +899,153 @@ function buildInitialState(prior: InstallState | null): InstallState {
 }
 
 // ============================================================================
-// Step 10 — closing summary
+// Step 10 — GitHub remote (optional)
+// ============================================================================
+
+interface GhStatus {
+  found: boolean
+  version?: string
+  authenticated: boolean
+}
+
+function detectGh(): GhStatus {
+  const path = which('gh');
+  if (!path) { return { found: false, authenticated: false }; }
+
+  const versionRes = tryRun('gh', ['--version']);
+  const versionMatch = versionRes.stdout.match(/gh version (\d+\.\d+\.\d+)/);
+  const version = versionMatch ? versionMatch[1] : undefined;
+
+  const authRes = tryRun('gh', ['auth', 'status']);
+  const authenticated = authRes.ok;
+
+  return { found: true, version, authenticated };
+}
+
+function ghApi(args: string[]): { ok: boolean, stdout: string } {
+  const res = tryRun('gh', ['api', ...args]);
+  return { ok: res.ok, stdout: res.stdout.trim() };
+}
+
+function sanitizeRepoName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 100);
+}
+
+async function setupGithubRemote(state: InstallState): Promise<void> {
+  if (NON_INTERACTIVE) {
+    log.dim('Non-interactive mode — skipping GitHub remote creation.');
+    return;
+  }
+
+  const gh = detectGh();
+  if (!gh.found) {
+    log.warn('gh CLI not found. Skipping GitHub repository creation.');
+    log.dim('  Install: https://cli.github.com  (then run `gh auth login`).');
+    log.dim('  To wire a remote later:  gh repo create --source=. --remote=origin --push');
+    return;
+  }
+  if (!gh.authenticated) {
+    log.warn(`gh ${gh.version ?? ''} detected but not authenticated.`);
+    log.dim('  Run `gh auth login`, then re-run this installer to create the remote.');
+    return;
+  }
+  log.success(`gh ${gh.version ?? ''} detected (authenticated).`);
+
+  const wantRepo = await confirm({
+    message: 'Create a GitHub repository for this project now?',
+    default: true,
+  });
+  if (!wantRepo) {
+    log.dim('Skipped. To wire later:  gh repo create --source=. --remote=origin --push');
+    return;
+  }
+
+  // Resolve current package name as default repo name.
+  const pkgPath = join(REPO_ROOT, 'package.json');
+  let defaultRepoName = 'my-app';
+  try {
+    const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as { name?: string };
+    if (pkg.name) { defaultRepoName = sanitizeRepoName(pkg.name); }
+  }
+  catch { /* fall through with default */ }
+
+  // Resolve account choices: personal login + memberships.
+  const userRes = ghApi(['user', '--jq', '.login']);
+  if (!userRes.ok || !userRes.stdout) {
+    log.error('Could not resolve GitHub user via `gh api user`. Skipping.');
+    return;
+  }
+  const userLogin = userRes.stdout;
+
+  const orgsRes = ghApi(['user/orgs', '--jq', '.[].login']);
+  const orgs = orgsRes.ok && orgsRes.stdout.length > 0 ? orgsRes.stdout.split('\n').filter(Boolean) : [];
+
+  const accountChoices: { name: string, value: string }[] = [
+    { name: `${userLogin} (personal)`, value: userLogin },
+    ...orgs.map(o => ({ name: `${o} (organization)`, value: o })),
+  ];
+
+  const account = await select({
+    message: 'Where should the repository live?',
+    choices: accountChoices,
+    default: userLogin,
+  });
+
+  const visibility = await select<'private' | 'public' | 'internal'>({
+    message: 'Repository visibility?',
+    choices: [
+      { name: 'private (default)', value: 'private' },
+      { name: 'public', value: 'public' },
+      { name: 'internal (org only)', value: 'internal' },
+    ],
+    default: 'private',
+  });
+
+  const rawName = await input({
+    message: 'Repository name:',
+    default: defaultRepoName,
+  });
+  const repoName = sanitizeRepoName(rawName);
+  if (!repoName) {
+    log.error('Invalid repository name. Skipping.');
+    return;
+  }
+
+  log.info(`Creating ${account}/${repoName} (${visibility})…`);
+  const createRes = spawnSync('gh', [
+    'repo',
+    'create',
+    `${account}/${repoName}`,
+    `--${visibility}`,
+    '--source=.',
+    '--remote=origin',
+    '--push',
+  ], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
+
+  if (createRes.status !== 0) {
+    log.error(`gh repo create failed (exit ${createRes.status}).`);
+    if (createRes.stderr) { log.dim(`  ${createRes.stderr.trim()}`); }
+    log.dim('  Repo not created. Local files left intact. You can retry later.');
+    return;
+  }
+
+  const url = `https://github.com/${account}/${repoName}`;
+  state.github = {
+    account,
+    repo: repoName,
+    visibility,
+    url,
+    createdAt: new Date().toISOString(),
+  };
+  log.success(`Repository created and pushed: ${url}`);
+}
+
+// ============================================================================
+// Step 11 — closing summary
 // ============================================================================
 
 function printClosingSummary(state: InstallState): void {
@@ -932,6 +1106,40 @@ function printClosingSummary(state: InstallState): void {
   n++;
   process.stdout.write(`  ${n}. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n`);
   process.stdout.write('\n');
+
+  // GitHub repository block — only if step 10 created a remote
+  if (state.github) {
+    process.stdout.write(`${COLORS.bold}GitHub repository:${COLORS.reset}\n`);
+    process.stdout.write(`  URL        : ${state.github.url}\n`);
+    process.stdout.write(`  Visibility : ${state.github.visibility}\n`);
+    process.stdout.write('  Remote     : origin (pushed)\n');
+    process.stdout.write('\n');
+    process.stdout.write(`${COLORS.bold}GitHub follow-ups (manual):${COLORS.reset}\n`);
+    process.stdout.write('  • Add Actions secrets at:\n');
+    process.stdout.write(`      ${state.github.url}/settings/secrets/actions\n`);
+    process.stdout.write('    Recommended secrets (only those you actually use):\n');
+    process.stdout.write('      - TAVILY_API_KEY         (Tavily MCP)\n');
+    process.stdout.write('      - JIRA_API_TOKEN         (Atlassian MCP / acli)\n');
+    process.stdout.write('      - JIRA_URL, JIRA_USERNAME\n');
+    process.stdout.write('      - SUPABASE_ACCESS_TOKEN  (Supabase MCP)\n');
+    process.stdout.write('      - N8N_API_KEY, N8N_API_URL\n');
+    process.stdout.write(`  • Move repository to an org later:  gh repo transfer ${state.github.account}/${state.github.repo} <org>\n`);
+    process.stdout.write('\n');
+  }
+  else {
+    process.stdout.write(`${COLORS.bold}GitHub repository:${COLORS.reset}\n`);
+    process.stdout.write('  Not created during install. To wire later:\n');
+    process.stdout.write('      gh auth login   # if not authenticated\n');
+    process.stdout.write('      gh repo create --source=. --remote=origin --push\n');
+    process.stdout.write('\n');
+  }
+
+  process.stdout.write(`${COLORS.bold}Project metadata follow-ups:${COLORS.reset}\n`);
+  process.stdout.write('  • Jira project key — edit `.agents/project.yaml` → `project.project_key`\n');
+  process.stdout.write('       (leave the placeholder until you have a real workspace + project)\n');
+  process.stdout.write('       After setting, run:  bun run jira:sync-fields && bun run jira:check\n');
+  process.stdout.write('\n');
+
   process.stdout.write(`${COLORS.bold}Warp terminal users — recommended notification plugins:${COLORS.reset}\n`);
   process.stdout.write(`  ${COLORS.dim}Warp + CLI agents is the community's current favorite combo. Surface agent activity${COLORS.reset}\n`);
   process.stdout.write(`  ${COLORS.dim}as native Warp notifications by installing the matching plugin:${COLORS.reset}\n`);
@@ -1054,12 +1262,16 @@ async function main(): Promise<void> {
   log.step(8, 11, 'Verifying external CLIs');
   verifyExternalClis(state);
 
-  // Step 9
-  log.step(9, 11, 'Persisting state');
+  // Step 9 — optional GitHub repo creation
+  log.step(9, 11, 'GitHub repository (optional)');
+  await setupGithubRemote(state);
+
+  // Step 10
+  log.step(10, 11, 'Persisting state');
   await writeInstallState(state);
 
-  // Step 10 (closing summary)
-  log.step(10, 11, 'Closing summary');
+  // Step 11 (closing summary)
+  log.step(11, 11, 'Closing summary');
   printClosingSummary(state);
 }
 
