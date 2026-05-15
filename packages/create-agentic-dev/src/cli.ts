@@ -10,6 +10,7 @@ import { downloadTemplate } from './download.ts';
 import { CliError } from './errors.ts';
 import { log } from './log.ts';
 import {
+  applyTemplateExclude,
   initGitRepo,
   rewritePackageJson,
   rewriteProjectYaml,
@@ -101,6 +102,7 @@ async function main(): Promise<number> {
 
     log.step(2, 4, 'Preparing project (scrub history + rewrite metadata)');
     await scrubGitHistory(projectDir);
+    await applyTemplateExclude(projectDir);
     await rewritePackageJson(projectDir, projectName);
     await rewriteProjectYaml(projectDir, {
       projectName,
