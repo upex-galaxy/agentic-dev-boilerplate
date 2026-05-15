@@ -8,14 +8,14 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "types": ["bun-types", "node"],
+    "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": false,
-    "skipLibCheck": true,
-    "allowImportingTsExtensions": true
+    "skipLibCheck": true
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "packages/*/node_modules", "packages/*/dist"]
