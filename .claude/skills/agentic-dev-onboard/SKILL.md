@@ -3,7 +3,7 @@ name: agentic-dev-onboard
 description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work (Path A simple, Path B complex via SDD bundle), MCPs available (Tavily, Context7, Supabase, n8n, Atlassian), critical env vars, Critical Rule #12 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, opencode]
-phase: bootstrap
+phase: foundation
 complementary_categories:
   - doc-generation
 ---
@@ -174,19 +174,19 @@ Verify your config by running the linter declared in `package.json` (typically `
 
 > **Policy**: this repo commits ONLY skills WE maintain. Community / third-party skills (`playwright-cli`, `frontend-design`, `next-*`, `shadcn`, `supabase-postgres-best-practices`, etc.) are installed user-scope by `bun run setup` from upstream — never committed.
 
-| Skill                 | Trigger                | Purpose                                                                                                                |
-| --------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/`, scripts, CLAUDE.md                                                                   |
-| `agentic-dev-onboard` | `/agentic-dev-onboard` | This skill — first-time orientation                                                                                    |
-| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery                                                                                   |
-| `design-system`       | `/design-system`       | DESIGN.md (Google Labs spec) — visual identity contract                                                                |
-| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features                                                                                 |
-| `testability-guide`   | `/testability-guide`   | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs. |
-| `product-management`  | `/product-management`  | Backlog seeding, epic creation, INVEST/AC refinement                                                                   |
-| `sprint-development`  | `/sprint-development`  | Per-story dev loop — Path A/B mega-orchestrator (CLAUDE.md §12)                                                        |
-| `unit-testing`        | `/unit-testing`        | TDD red-green-refactor (composable mid-flight from `/sprint-development`)                                              |
-| `git-flow-master`     | (auto)                 | Branch / commit / push / PR — adapts to detected branching strategy                                                    |
-| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                |
+| Skill                 | Trigger                       | Purpose                                                                                                                                                                |
+| --------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agentic-dev-core`    | (auto, cited by other skills) | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy). Loaded on demand — not invoked directly. |
+| `agentic-dev-onboard` | `/agentic-dev-onboard`        | This skill — first-time orientation                                                                                                                                    |
+| `project-foundation`  | `/project-foundation`         | Constitution + PRD + SRS + Discovery                                                                                                                                   |
+| `design-system`       | `/design-system`              | DESIGN.md (Google Labs spec) — visual identity contract                                                                                                                |
+| `project-bootstrap`   | `/project-bootstrap`          | Backend + frontend skeleton + features                                                                                                                                 |
+| `testability-guide`   | `/testability-guide`          | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs.                                                 |
+| `product-management`  | `/product-management`         | Backlog seeding, epic creation, INVEST/AC refinement                                                                                                                   |
+| `sprint-development`  | `/sprint-development`         | Per-story dev loop — Path A/B mega-orchestrator (CLAUDE.md §12)                                                                                                        |
+| `unit-testing`        | `/unit-testing`               | TDD red-green-refactor (composable mid-flight from `/sprint-development`)                                                                                              |
+| `git-flow-master`     | (auto)                        | Branch / commit / push / PR — adapts to detected branching strategy                                                                                                    |
+| `acli`                | (auto)                        | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                                                                |
 
 Browser automation is provided by `/playwright-cli` (community skill from `microsoft/playwright-cli`, installed by setup — see Critical Rule #11 in CLAUDE.md).
 

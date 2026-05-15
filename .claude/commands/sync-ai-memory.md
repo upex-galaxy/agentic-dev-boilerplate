@@ -1,6 +1,6 @@
 ---
 name: sync-ai-memory
-description: Audit + sync all AI-consumed documentation in this repo. Detects critical markdown files (README, CLAUDE.md, CONTEXT.md, INSTALLER.md, docs/agentic-development-engineering.md, plus auto-detected high-frequency docs) and patches them in-place. Also patches the hand-maintained onboarding HTML (docs/onboarding.html) directly as a standalone target — no MD source, no auto-rendering. Preserves human-authored structure — never rewrites from scratch. Triggers on 'sync ai memory', 'sync docs', 'sincronizar memoria', 'docs audit', 'realinear documentación con el estado del repo' (canonical), plus back-compat aliases 'refresh memory', 'refresh ai memory', 'actualizar memoria', 'refrescar documentación'. Do NOT use for: writing new docs (use /agentic-dev-core or manual), generating business maps (use /business-data-map etc.), creating CONTEXT.md from scratch (one-time manual creation).
+description: Audit + sync all AI-consumed documentation in this repo. Detects critical markdown files (README, CLAUDE.md, CONTEXT.md, INSTALLER.md, docs/agentic-development-engineering.md, plus auto-detected high-frequency docs) and patches them in-place. Also patches the hand-maintained onboarding HTML (docs/onboarding.html) directly as a standalone target — no MD source, no auto-rendering. Preserves human-authored structure — never rewrites from scratch. Triggers on 'sync ai memory', 'sync docs', 'sincronizar memoria', 'docs audit', 'realinear documentación con el estado del repo' (canonical), plus back-compat aliases 'refresh memory', 'refresh ai memory', 'actualizar memoria', 'refrescar documentación'. Do NOT use for: writing new docs (use /project-foundation or manual), generating business maps (use /business-data-map etc.), creating CONTEXT.md from scratch (one-time manual creation).
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 ---
@@ -22,26 +22,25 @@ Audit every markdown file the AI consumes at session start (or that humans treat
 ## What this does NOT do
 
 - **Does NOT rewrite docs from scratch.** README and CLAUDE.md are the BASE; this command edits them, never regenerates them.
-- **Does NOT generate new documentation files.** Use `/agentic-dev-core`, `/project-foundation`, or manual creation for new docs.
+- **Does NOT generate new documentation files.** Use `/project-foundation`, `/project-bootstrap`, or manual creation for new docs.
 - **Does NOT generate business maps.** Those are owned by `/business-data-map`, `/business-feature-map`, `/business-api-map`, `/master-implementation-plan`.
 - **Does NOT touch generated artifacts.** SKILL.md files (except where listed below), `references/*` caches, and other auto-generated files are skipped.
-- **Does NOT rewrite skill reference files.** `.claude/skills/agentic-dev-core/references/behavioral-layer.md`, `typescript-patterns.md`, and the other 6 references are skill-internal — managed by `/agentic-dev-core`, not this command. Sync validates they exist + cross-doc consistency only.
+- **Does NOT rewrite skill reference files.** `.claude/skills/agentic-dev-core/references/behavioral-layer.md`, `typescript-patterns.md`, and the other 6 references are skill-internal — managed inside the `agentic-dev-core` skill directory, not by this command. Sync validates they exist + cross-doc consistency only.
 
 ---
 
-## The 6 always-included docs (+ 1 standalone HTML target)
+## The 5 always-included docs (+ 1 standalone HTML target)
 
 These are **always** in scope, regardless of what the audit discovers. They are the highest-frequency AI-consumed docs in this repo.
 
-| File                                                           | Role                | Why it's always in scope                                                                                                                                                                 |
-| -------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `README.md`                                                    | `anchor`            | Human-facing entry point; synced from `package.json` scripts + project identity                                                                                                          |
-| `CLAUDE.md` (or detected equivalent)                           | `anchor`            | AI memory file loaded every session                                                                                                                                                      |
-| `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template` | `structural-mirror` | Template mirror of live `CLAUDE.md`. Must match the 13-section structure header-for-header. Sync via Phase 4c (structural diff + placeholder restore).                                   |
-| `CONTEXT.md`                                                   | `anchor`            | Canonical Context Engineering reference for this repo; patched for `.context/` path changes                                                                                              |
-| `INSTALLER.md`                                                 | `supplementary`     | What `bun run setup` configures; patched for installer/MCP/skill drift                                                                                                                   |
-| `docs/agentic-development-engineering.md`                      | `supplementary`     | Vision + lifecycle overview; patched for command/skill/path drift                                                                                                                        |
-| `docs/onboarding.html`                                         | `standalone-html`   | Hand-maintained single-file onboarding HTML (served by `bun run onboarding`). NO MD source — edit HTML directly via Phase 4b (patch-in-place text nodes only; sidebar/JS/CSS preserved). |
+| File                                      | Role              | Why it's always in scope                                                                                                                                                                 |
+| ----------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`                               | `anchor`          | Human-facing entry point; synced from `package.json` scripts + project identity                                                                                                          |
+| `CLAUDE.md` (or detected equivalent)      | `anchor`          | AI memory file loaded every session                                                                                                                                                      |
+| `CONTEXT.md`                              | `anchor`          | Canonical Context Engineering reference for this repo; patched for `.context/` path changes                                                                                              |
+| `INSTALLER.md`                            | `supplementary`   | What `bun run setup` configures; patched for installer/MCP/skill drift                                                                                                                   |
+| `docs/agentic-development-engineering.md` | `supplementary`   | Vision + lifecycle overview; patched for command/skill/path drift                                                                                                                        |
+| `docs/onboarding.html`                    | `standalone-html` | Hand-maintained single-file onboarding HTML (served by `bun run onboarding`). NO MD source — edit HTML directly via Phase 4b (patch-in-place text nodes only; sidebar/JS/CSS preserved). |
 
 The audit (Phase 1) may **add** docs to this list. It never removes a file from the always-included set — files that don't exist on disk are simply marked `skipped (not present)`.
 
@@ -119,8 +118,8 @@ If you make important discoveries, save them to engram via mem_save with project
 After the sub-agent returns:
 
 1. Take the audit result.
-2. Force-add the 6 always-included docs + 1 standalone HTML (skip ones not on disk; mark them `not present`).
-3. Force-promote `README.md`, `CLAUDE.md` (or detected equivalent), `CONTEXT.md`, and the template mirror to `CRITICAL` if they aren't already.
+2. Force-add the 5 always-included docs + 1 standalone HTML (skip ones not on disk; mark them `not present`).
+3. Force-promote `README.md`, `CLAUDE.md` (or detected equivalent), and `CONTEXT.md` to `CRITICAL` if they aren't already.
 4. Deduplicate.
 
 ---
@@ -173,6 +172,8 @@ Auto-detect which AI memory file lives in this repo. Pick the first match:
 | Windsurf         | `.windsurf/rules`                 | Windsurf        |
 
 If none exist, ask the user which AI tool they use and create the directory if missing (e.g. `mkdir -p .cursor`). If multiple exist, ask which one to refresh — do not assume. Whichever file is selected replaces `CLAUDE.md` in the approved scope.
+
+> Do NOT bootstrap from inside `/sync-ai-memory`. Clone the full boilerplate repository — `CLAUDE.md` ships at the repo root and is inseparable from the rest of the foundation (`.agents/`, `scripts/`, `.claude/skills/`). Once `CLAUDE.md` exists, re-run `/sync-ai-memory` to align cross-doc facts.
 
 ---
 
@@ -288,41 +289,6 @@ On any match:
 
 ---
 
-## Phase 4c — Template mirror sync (`.claude/skills/agentic-dev-core/templates/CLAUDE.md.template`)
-
-Run **after** Phase 4 (so the live CLAUDE.md is up to date) and **before** Phase 4b. The template mirror must match the live CLAUDE.md header-for-header, with project-specific values replaced by placeholders.
-
-### Why it exists
-
-`CLAUDE.md` (live, repo root) is consumed by the AI every session in THIS repo. `CLAUDE.md.template` is the structural mirror used by `/agentic-dev-core` init when bootstrapping a NEW project. They diverge over time unless synced — past drift has surfaced as renamed sections appearing in only one file (e.g. live had `Behavioral Layer`, template did not).
-
-### Algorithm
-
-1. **Extract section headings** from the live CLAUDE.md: `grep -E '^## [0-9]+\.' CLAUDE.md` → expect 13 numbered sections.
-2. **Extract section headings** from the template: same grep.
-3. **Diff the heading sequences**. If they differ, sync the template structure to match.
-4. **For each section body** that changed in Phase 4, copy the structural skeleton into the template, then:
-   - Replace project-specific values (project name, environment URLs, Jira URL, `{{TICKET-PREFIX}}-XXX` examples) with `[PLACEHOLDER]` or `{{TEMPLATE_VAR}}` markers.
-   - Re-introduce the `<!-- Add project-specific reminders as #13+ when bootstrapping. -->` slot in §1 if removed.
-   - Preserve the template's `<!-- TEMPLATE — DO NOT EDIT IN PLACE WHEN BOOTSTRAPPING -->` HTML comment header.
-5. **Verify final diff** of section headings is empty: `diff <(grep '^## [0-9]\.' CLAUDE.md) <(grep '^## [0-9]\.' .claude/skills/agentic-dev-core/templates/CLAUDE.md.template)` → expect 0 lines.
-
-### What stays project-specific in the template (always placeholders)
-
-- `[Project-specific reminders]` slot in §1
-- `[TICKET-PREFIX]-XXX` instead of `UPEX-XXX` examples
-- `{{PROJECT_KEY}}`, `{{WEB_URL}}`, `{{API_URL}}` references (the syntax is canonical; values must come from `.agents/project.yaml`)
-
-### Reporting
-
-Emit one row in the Phase 7 report:
-
-```
-.claude/skills/agentic-dev-core/templates/CLAUDE.md.template | structural-mirror | updated | +X / -Y | section headings + body skeletons | placeholders restored
-```
-
----
-
 ## Phase 4b — Standalone HTML sync (patch-in-place, NEVER regenerate)
 
 Run **after** Phase 4 (so MD targets are up to date — facts cross-checked there feed this phase) and **before** Phase 5 (so the consistency check sees the synced HTML state). Process every target tagged `standalone-html`.
@@ -387,7 +353,6 @@ After all individual patches are computed but **before any file is written**, ve
 | Script names                | `README.md`, `INSTALLER.md`, `docs/onboarding.html` (NOT `CLAUDE.md` — Rule #12 forbids inlining scripts there) | Script renamed in `package.json` but not in docs                                                                                                                                                                              |
 | Project identity            | `README.md` only (NOT `CLAUDE.md` — lives in `.agents/project.yaml`)                                            | Name / stack / target repo mismatch                                                                                                                                                                                           |
 | AI memory filename          | `README.md`, `docs/*`                                                                                           | `GEMINI.md` is the active file but docs still say `CLAUDE.md`                                                                                                                                                                 |
-| CLAUDE.md section headings  | `CLAUDE.md` vs `.claude/skills/agentic-dev-core/templates/CLAUDE.md.template`                                   | Live and template diverge on §-count or section names (Phase 4c enforces)                                                                                                                                                     |
 | Reference files exist       | `CLAUDE.md` pointers vs `.claude/skills/agentic-dev-core/references/`                                           | CLAUDE.md §2 points to `behavioral-layer.md`, §10 to `typescript-patterns.md`, §3 to `orchestration-doctrine.md` / `briefing-template.md` / `dispatch-patterns.md` / `skill-composition-strategy.md` — all must exist on disk |
 | MCP table                   | `CLAUDE.md §5` vs `.mcp.json`                                                                                   | MCP listed in one but not the other                                                                                                                                                                                           |
 
@@ -424,16 +389,15 @@ For each file, compute:
 
 **Per-file outcome:**
 
-| File                                                         | Classification  | Outcome | Lines changed | Drifts fixed            | Notes                            |
-| ------------------------------------------------------------ | --------------- | ------- | ------------- | ----------------------- | -------------------------------- |
-| README.md                                                    | CRITICAL        | updated | +12 / -8      | scripts table, env URLs | —                                |
-| CLAUDE.md                                                    | CRITICAL        | updated | +5 / -3       | §5 skill/MCP table      | 13-section structure preserved   |
-| .claude/skills/agentic-dev-core/templates/CLAUDE.md.template | CRITICAL        | updated | +5 / -3       | mirrored §5 table       | placeholders restored (Phase 4c) |
-| CONTEXT.md                                                   | CRITICAL        | updated | +1 / -1       | `.context/` path        | —                                |
-| INSTALLER.md                                                 | HIGH            | updated | +2 / -2       | external-CLI table      | —                                |
-| docs/agentic-development-engineering.md                      | HIGH            | updated | +2 / -2       | command rename          | —                                |
-| docs/onboarding.html                                         | STANDALONE-HTML | updated | +3 / -3       | command names           | sidebar/JS/CSS preserved         |
-| {auto-detected file}                                         | MEDIUM          | updated | +3 / -1       | bun script rename       | —                                |
+| File                                    | Classification  | Outcome | Lines changed | Drifts fixed            | Notes                          |
+| --------------------------------------- | --------------- | ------- | ------------- | ----------------------- | ------------------------------ |
+| README.md                               | CRITICAL        | updated | +12 / -8      | scripts table, env URLs | —                              |
+| CLAUDE.md                               | CRITICAL        | updated | +5 / -3       | §5 skill/MCP table      | 13-section structure preserved |
+| CONTEXT.md                              | CRITICAL        | updated | +1 / -1       | `.context/` path        | —                              |
+| INSTALLER.md                            | HIGH            | updated | +2 / -2       | external-CLI table      | —                              |
+| docs/agentic-development-engineering.md | HIGH            | updated | +2 / -2       | command rename          | —                              |
+| docs/onboarding.html                    | STANDALONE-HTML | updated | +3 / -3       | command names           | sidebar/JS/CSS preserved       |
+| {auto-detected file}                    | MEDIUM          | updated | +3 / -1       | bun script rename       | —                              |
 
 **Cross-doc drift resolved:**
 
@@ -442,7 +406,6 @@ For each file, compute:
 **Sections preserved verbatim:**
 
 - CLAUDE.md: §1 CRITICAL RULES, §2 BEHAVIORAL LAYER, §3 ORCHESTRATION MODE, §4 CONTEXT LOADING MAP, §6 TOOL RESOLUTION, §7 PROJECT VARIABLES, §8 AI BEHAVIOR, §9 LOCAL CONTEXT, §10 STACK QUICK-REFERENCE, §11 GIT WORKFLOW, §12 DELIVERY STRATEGY, §13 PROACTIVE MEMORY TRIGGERS (only §5 SKILLS+COMMANDS+MCPs may be patched for data drift)
-- CLAUDE.md.template: same 13-section structure, with placeholders preserved
 - README.md: Quick Start narrative, top-level section order
 - docs/onboarding.html: `<head>`, `<script>`, `<style>`, sidebar nav, tab structure, footer card layout
 
@@ -496,13 +459,12 @@ If the audit sub-agent surfaces one of these (mistake), drop it before showing t
 ## Final checklist
 
 - [ ] Audit sub-agent dispatched (Phase 1)
-- [ ] Audit list merged with 6 always-included docs + 1 standalone HTML (Phase 1)
+- [ ] Audit list merged with 5 always-included docs + 1 standalone HTML (Phase 1)
 - [ ] User confirmation received via approval gate (Phase 2)
 - [ ] AI memory file detected (Phase 3)
 - [ ] Each approved file read first, then patched in-place (Phase 4)
 - [ ] Preserve-lists applied per file (Phase 4d)
 - [ ] Credential redaction scan run before each Write (Phase 4e)
-- [ ] Template mirror synced (Phase 4c) — section headings diff empty against live CLAUDE.md
 - [ ] Rule #12 enforcement: CLAUDE.md contains 0 inlined `| \`bun run` table rows
 - [ ] Reference files exist + cross-doc consistent (`behavioral-layer.md`, `typescript-patterns.md`, `orchestration-doctrine.md`, `briefing-template.md`, `dispatch-patterns.md`, `skill-composition-strategy.md`)
 - [ ] Standalone HTML targets (`docs/onboarding.html`) synced via text-node patches only — sidebar/JS/CSS preserved (Phase 4b)

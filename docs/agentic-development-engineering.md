@@ -40,7 +40,6 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
 
 | Tier                                                   | Owning skill(s)                                                     | Output                                                                                                                                                    |
 | ------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Bootstrap** (one-time)                               | `agentic-dev-core`                                                  | `CLAUDE.md`, `.agents/project.yaml`, `scripts/agents-*.ts`                                                                                                |
 | **Foundation** (one-time per product)                  | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend                                                        |
 | **Testability bridge** (one-time + idempotent re-runs) | `testability-guide`                                                 | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
 | **Management** (continuous)                            | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                                                           |
@@ -195,10 +194,10 @@ The practice is organised in three conceptual tiers:
 ┌────────────────────────────────┴────────────────────────────────────┐
 │                          AI SKILLS LAYER                            │
 │                                                                     │
-│  Foundation skill                                                   │
+│  Foundation reference host (passive — cited by every workflow)      │
 │  ┌──────────────────┐                                               │
 │  │ agentic-dev-core │  Briefing template · Dispatch patterns ·      │
-│  └──────────────────┘  Orchestration doctrine · Bootstrap CLI       │
+│  └──────────────────┘  Orchestration doctrine · Skill composition   │
 │                                                                     │
 │  Foundation workflow skills (one-time)                              │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                 │
@@ -238,7 +237,8 @@ The human sits on top. The AI never ships anything on its own. Every stage has a
 
 The skill roster is split by _phase_ (declared in each `SKILL.md` frontmatter as `phase:`):
 
-- **`bootstrap`** — `agentic-dev-core` (one-time foundation install), `agentic-dev-onboard` (guided tour for newcomers).
+- **`foundation` (passive reference host)** — `agentic-dev-core` (briefing template, dispatch patterns, orchestration doctrine, skill-composition strategy; loaded on demand by other skills, not invoked directly).
+- **`onboarding`** — `agentic-dev-onboard` (guided tour for newcomers).
 - **`foundation`** — `project-foundation` (Constitution + PRD + SRS + Discovery), `design-system` (DESIGN.md), `project-bootstrap` (backend + frontend scaffolding).
 - **`foundation-extension`** — `testability-guide` (in-app `/qa` page + tool-agnostic credentials artifact for QA testers and AI agents; runs after `project-bootstrap`, idempotent on re-run).
 - **`management`** — `product-management` (backlog seed, epic creation, story refinement, AC quality, edge-case enumeration, sprint reporting).
@@ -628,7 +628,7 @@ name: <skill-name>
 description: '<what it does, what it triggers on, what NOT to use it for>'
 license: MIT
 compatibility: [claude-code, opencode]
-phase: <bootstrap | foundation | management | implementation | exploration | proposal | spec | design | tasks | apply | verify | archive>
+phase: <foundation | onboarding | management | implementation | exploration | proposal | spec | design | tasks | apply | verify | archive>
 ---
 ```
 
@@ -688,7 +688,7 @@ These hooks are documented but not implemented. Reopen when there is concrete de
 
 ### What ships in this repository
 
-- **A foundation skill (`agentic-dev-core`)** — bootstraps `CLAUDE.md`, `.agents/project.yaml`, and the `scripts/agents-*.ts` CLIs. Hosts the canonical orchestration doctrine, briefing template, dispatch patterns, model-routing table, topic-key conventions, and skill-resolver protocol cited by every workflow skill.
+- **A foundation reference host (`agentic-dev-core`)** — passive library that hosts the canonical orchestration doctrine, briefing template, dispatch patterns, model-routing table, topic-key conventions, and skill-resolver protocol cited by every workflow skill. Loaded on demand; not invoked directly. Foundation files (`CLAUDE.md`, `.agents/`, `scripts/`) ship with the cloned repository.
 - **A roster of phase-aware AI skills** — auto-triggered by user intent, orchestrated with human-in-the-loop checkpoints. Each tier of the lifecycle has its own skill. The current roster is enumerated in [onboarding.html §9 Skills catalog](onboarding.html).
 - **The SDD meta-skill bloque** — explore → propose → spec → design → tasks → apply → verify → archive for any substantial change.
 - **A library of utility slash commands** — deterministic, single-purpose, invoked with `/<name>`. The current library is enumerated in [onboarding.html §10 Commands & Scripts](onboarding.html).
@@ -720,7 +720,7 @@ The rest is execution.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.
 - `docs/workflows/` — environments, git-flow, OpenAPI sync, template updates.
 - `INSTALLER.md` — what `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out.
-- `.claude/skills/agentic-dev-core/SKILL.md` — foundation skill internals (bootstrap + shared references).
+- `.claude/skills/agentic-dev-core/SKILL.md` — foundation reference host (passive; shared references cited by other skills).
 - `.claude/skills/agentic-dev-core/references/orchestration-doctrine.md` — canonical orchestration doctrine cited by every workflow skill.
 - `.claude/skills/project-foundation/SKILL.md` — Constitution + PRD + SRS + Discovery skill internals.
 - `.claude/skills/design-system/SKILL.md` — DESIGN.md generation skill internals.

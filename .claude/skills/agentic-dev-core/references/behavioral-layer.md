@@ -47,7 +47,6 @@ Don't add error handling, fallbacks, or validation for scenarios that can't happ
 
 **Scope note** — this rule applies to incidental edits during a task. User-invoked regenerative commands and skill phases are EXEMPT — regeneration IS the task. This includes:
 
-- `/agentic-dev-core` init mode (foundation files)
 - `/project-foundation` (PRD, SRS, Discovery)
 - `/design-system` (DESIGN.md generation, including rebrand)
 - `/project-bootstrap` (backend + frontend scaffolding)

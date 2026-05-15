@@ -244,5 +244,5 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 
 - This skill is **one-time per project**. If scope changes significantly mid-project, re-invoke specific phases (e.g. only `references/prd-mvp-scope.md` to re-cut the MVP).
 - Several reference files are written in Spanish (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
-- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If those are unset, run `/agentic-dev-core` first.
+- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If `.agents/project.yaml` is missing, clone the full boilerplate — foundation files ship with the repo.
 - The discovery step now delegates to four standalone commands (`/business-data-map`, `/business-feature-map`, `/business-api-map`, `/master-implementation-plan`) plus one in-skill reference (`references/project-dev-guide.md`). All are intentionally agnostic of stack and work on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code). Re-invoke an individual command directly when only one artifact needs refreshing — there's no need to re-run the whole foundation.

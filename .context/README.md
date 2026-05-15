@@ -64,7 +64,7 @@ Full topic-key conventions: `.claude/skills/agentic-dev-core/references/topic-ke
 
 A brand-new project that wants productive AI sessions should produce, in order:
 
-1. `/agentic-dev-core` — bootstraps `.agents/`, scripts, CLAUDE.md.
+1. Clone the full boilerplate — `.agents/`, scripts, and `CLAUDE.md` ship at the repo root. No bootstrap step.
 2. `/project-foundation` — Constitution → PRD → SRS → Discovery outputs.
 3. `/product-management` — Seed initial backlog (epics + foundational stories) under `PBI/`.
 

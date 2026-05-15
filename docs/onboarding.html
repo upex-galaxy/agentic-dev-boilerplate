@@ -1336,8 +1336,9 @@
                       <code>bun install</code> → <code>bun run setup</code> (interactive installer
                       for gentle-ai skills + 4 canonical MCPs + external CLIs) →
                       <code>bun run agents:setup</code> → <code>bun run jira:sync-fields</code> →
-                      <code>bun run jira:check</code>. Or, if you cloned skills à la carte, run
-                      <code>/agentic-dev-core</code> first.
+                      <code>bun run jira:check</code>. Foundation files (<code>.agents/</code>,
+                      <code>scripts/</code>, <code>CLAUDE.md</code>) ship with the cloned repo —
+                      à la carte adoption of individual skills is not supported.
                     </dd>
                     <dt>Produces</dt>
                     <dd>
@@ -1546,11 +1547,12 @@ bun run lint:agents           # validate placeholders</code></pre>
 
           <!-- =======================================================  SECTION 4 (NEW)  -->
           <section id="section-4">
-            <h2><span class="num">4.</span>The two confusing pieces</h2>
+            <h2><span class="num">4.</span>Foundation host vs. project scaffolding</h2>
 
             <p>
-              Two pieces have similar-sounding names and overlapping verbs ("init", "bootstrap").
-              They are NOT interchangeable. Use this table to avoid running the wrong one.
+              Two names sound similar but play different roles. <code>agentic-dev-core</code> is
+              a passive doctrine host loaded by other skills. <code>/project-bootstrap</code> is
+              the workflow skill that scaffolds your codebase. They are NOT interchangeable.
             </p>
 
             <div class="table-wrap">
@@ -1565,21 +1567,6 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><strong><code>/agentic-dev-core</code></strong> (skill)</td>
-                    <td>
-                      Once, ONLY if the foundation files are missing (à la carte install). If you
-                      cloned the full repo, you NEVER invoke it directly.
-                    </td>
-                    <td>
-                      Generates <code>CLAUDE.md</code>, <code>.agents/project.yaml</code>,
-                      <code>.agents/jira-required.yaml</code>, the foundation scripts
-                      (<code>agents-setup</code>, <code>agents-lint</code>,
-                      <code>sync-jira-fields</code>, <code>check-jira-setup</code>), merges entries
-                      into <code>package.json</code>. Idempotent: existing files are preserved.
-                    </td>
-                    <td>One-time</td>
-                  </tr>
-                  <tr>
                     <td><strong><code>/project-bootstrap</code></strong> (skill)</td>
                     <td>Once per project, AFTER <code>/project-foundation</code> finishes.</td>
                     <td>
@@ -1593,29 +1580,19 @@ bun run lint:agents           # validate placeholders</code></pre>
               </table>
             </div>
 
-            <p>Mnemonic:</p>
-
-            <div class="mnemonic">
-              <strong>Mnemonic:</strong> <code>agentic-dev-core</code> installs the
-              <strong>agent harness</strong> (so the AI knows the rules).
-              <code>project-bootstrap</code> scaffolds the <strong>codebase</strong> (so there's a
-              real backend and frontend to develop against).
-            </div>
-
-            <h3>A passive role you never invoke</h3>
+            <h3>A passive reference host you never invoke</h3>
 
             <p>
-              <code>agentic-dev-core</code> has a second life beyond its <code>init</code> mode: it
-              <strong>hosts shared references</strong> that workflow skills cite on demand. When
-              <code>/sprint-development</code>, <code>/product-management</code>,
-              <code>/project-foundation</code>, or <code>/project-bootstrap</code> delegates to a
-              subagent, the AI loads
+              <code>agentic-dev-core</code> is a <strong>passive reference host</strong> — it
+              hosts shared doctrine (briefing template, dispatch patterns, orchestration
+              doctrine, skill-composition strategy, behavioral layer, model routing) that
+              workflow skills cite on demand. When <code>/sprint-development</code>,
+              <code>/product-management</code>, <code>/project-foundation</code>, or
+              <code>/project-bootstrap</code> delegates to a subagent, the AI loads
               <code>agentic-dev-core/references/briefing-template.md</code>,
               <code>dispatch-patterns.md</code>, and <code>orchestration-doctrine.md</code>
-              automatically. You never type <code>/agentic-dev-core</code> to read those files —
-              they are pulled in as part of orchestration. This passive role is invisible from the
-              user's seat, but it is why <code>agentic-dev-core</code> exists even after Phase 0 is
-              complete.
+              automatically. You never invoke <code>agentic-dev-core</code> directly — it has no
+              bootstrap action. Foundation files ship with the cloned repo.
             </p>
           </section>
 
@@ -2565,10 +2542,6 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <td>First-time tour of this repo</td>
                     <td><code>/agentic-dev-onboard</code></td>
                   </tr>
-                  <tr>
-                    <td>Bootstrap from scratch (à la carte install)</td>
-                    <td><code>/agentic-dev-core</code></td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -2586,7 +2559,7 @@ bun run lint:agents           # validate placeholders</code></pre>
 
             <p class="small muted">
               Categories — <span class="badge badge-foundation">Foundation</span> hosts shared
-              references and bootstraps the repo ·
+              references cited passively by other skills ·
               <span class="badge badge-workflow">Workflow</span> drives a stage of the pipeline ·
               <span class="badge badge-generator">Generator</span> defines or scaffolds the project
               · <span class="badge badge-tool">Tool</span> wraps a CLI/MCP for I/O ·
@@ -2600,12 +2573,14 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <span class="skill-card-name">agentic-dev-core</span>
                   <span class="badge badge-foundation">Foundation</span>
                 </div>
-                <p class="skill-card-trigger">/agentic-dev-core</p>
+                <p class="skill-card-trigger">(auto, cited by other skills)</p>
                 <p class="skill-card-desc">
-                  Bootstraps the foundation files (<code>CLAUDE.md</code>, <code>.agents/</code>,
-                  scripts, <code>package.json</code> entries) AND hosts shared references (briefing
-                  template, dispatch patterns, orchestration doctrine) that other skills cite on
-                  demand. Two roles, one skill.
+                  Passive reference host for shared doctrine (briefing template, dispatch
+                  patterns, orchestration, skill-composition strategy, behavioral layer, model
+                  routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded
+                  on demand by workflow skills — not invoked directly. Foundation files
+                  (<code>CLAUDE.md</code>, <code>.agents/</code>, <code>scripts/</code>) ship
+                  with the cloned repo.
                 </p>
               </article>
 
@@ -2969,14 +2944,6 @@ bun run lint:agents           # validate placeholders</code></pre>
                 rules.
               </li>
               <li>
-                <strong>Templates inside <code>.claude/skills/agentic-dev-core/templates/</code></strong>
-                (<code>CLAUDE.md.template</code>, <code>project.yaml.template</code>,
-                <code>jira-required.yaml.template</code>, the
-                <code>scripts/*.ts.template</code> files): only consumed by
-                <code>/agentic-dev-core</code> during init. They are byte-equivalent mirrors of the
-                live files at the repo root.
-              </li>
-              <li>
                 <strong>SDD orchestrator + SDD skills</strong> (<code>sdd-init</code>,
                 <code>sdd-explore</code>, <code>sdd-propose</code>, <code>sdd-spec</code>,
                 <code>sdd-design</code>, <code>sdd-tasks</code>, <code>sdd-apply</code>,
@@ -3189,8 +3156,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>.claude/skills/agentic-dev-core/SKILL.md</code></a
                 >
-                — foundation skill internals (bootstrap order, idempotency rules, source-of-truth
-                contract).
+                — foundation reference host internals (passive doctrine library cited by
+                other skills).
               </li>
               <li>
                 <a
@@ -3265,7 +3232,7 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">agentic-dev-core/SKILL.md</span>
-            <span class="footer-card-desc">Foundation skill internals + bootstrap order.</span>
+            <span class="footer-card-desc">Foundation reference host (passive doctrine library).</span>
           </a>
           <a
             class="footer-card"

@@ -928,8 +928,6 @@ function printClosingSummary(state: InstallState): void {
   n++;
   process.stdout.write(`  ${n}. In your agent: /sync-ai-memory (load initial context)\n`);
   n++;
-  process.stdout.write(`  ${n}. In your agent: /agentic-dev-core (bootstrap on this repo)\n`);
-  n++;
   process.stdout.write(`  ${n}. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n`);
   n++;
   process.stdout.write(`  ${n}. After foundation+bootstrap, run: npx autoskills (auto-detect concrete stack and add matching community skills)\n`);

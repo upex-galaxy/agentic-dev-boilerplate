@@ -102,7 +102,7 @@ Then `bun run setup:doctor --json` to confirm.
 
 This repo treats gentle-ai as a **base global "quasi-must-have"**. The recommended onboarding (`bun run setup`) installs it if missing, then layers 15 skills + Engram + the SDD orchestrator on top of your agent. The result is one consistent skillset across every repo on your machine that follows this model.
 
-The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-development`, `/agentic-dev-core`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
+The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-development`, `/project-foundation`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
 
 ---
 
@@ -158,18 +158,18 @@ When `bun run setup` runs the gentle-ai branch (1 engram component + 15 skills, 
 
 Skills that are workflow-specific to this boilerplate live in `.claude/skills/` and are committed to the repo. They install with the clone — no external installer required.
 
-| Skill                 | Trigger                | Why it stays local                                                                                                                    |
-| --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `agentic-dev-core`    | `/agentic-dev-core`    | One-time bootstrap of `.agents/` + scripts + CLAUDE.md                                                                                |
-| `project-foundation`  | `/project-foundation`  | Constitution + PRD + SRS + Discovery (one-time per product)                                                                           |
-| `project-bootstrap`   | `/project-bootstrap`   | Backend + frontend skeleton + features (OpenAPI, auth, env)                                                                           |
-| `testability-guide`   | `/testability-guide`   | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs on stack drift. |
-| `product-management`  | `/product-management`  | Backlog seeding + epic creation + INVEST/AC refinement                                                                                |
-| `sprint-development`  | `/sprint-development`  | Per-story dev loop (mega-orchestrator, 12-step workflow)                                                                              |
-| `unit-testing`        | `/unit-testing`        | TDD slice — composable mid-flight from `/sprint-development`                                                                          |
-| `git-flow-master`     | (auto)                 | Branching/commit/push/PR strategy auto-detected per repo                                                                              |
-| `acli`                | (auto)                 | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                               |
-| `agentic-dev-onboard` | `/agentic-dev-onboard` | End-to-end onboarding guided tour (pending Phase C)                                                                                   |
+| Skill                 | Trigger                       | Why it stays local                                                                                                                                                                        |
+| --------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agentic-dev-core`    | (auto, cited by other skills) | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy). Loaded on demand by workflow skills — not invoked directly. |
+| `project-foundation`  | `/project-foundation`         | Constitution + PRD + SRS + Discovery (one-time per product)                                                                                                                               |
+| `project-bootstrap`   | `/project-bootstrap`          | Backend + frontend skeleton + features (OpenAPI, auth, env)                                                                                                                               |
+| `testability-guide`   | `/testability-guide`          | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs on stack drift.                                                     |
+| `product-management`  | `/product-management`         | Backlog seeding + epic creation + INVEST/AC refinement                                                                                                                                    |
+| `sprint-development`  | `/sprint-development`         | Per-story dev loop (mega-orchestrator, 12-step workflow)                                                                                                                                  |
+| `unit-testing`        | `/unit-testing`               | TDD slice — composable mid-flight from `/sprint-development`                                                                                                                              |
+| `git-flow-master`     | (auto)                        | Branching/commit/push/PR strategy auto-detected per repo                                                                                                                                  |
+| `acli`                | (auto)                        | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                                                                                   |
+| `agentic-dev-onboard` | `/agentic-dev-onboard`        | End-to-end onboarding guided tour (pending Phase C)                                                                                                                                       |
 
 These skills evolve with the repo and are versioned in git. The split is intentional: gentle-ai owns the **horizontal** ecosystem (apply across all your repos), this repo owns the **vertical** workflow (specific to `agentic-dev-boilerplate`).
 
@@ -261,7 +261,7 @@ What you lose:
 - **Cognitive doc design (cognitive-doc-design)** — no skill that explicitly optimizes docs for low cognitive load. You write the docs by feel.
 - **Issue creation (issue-creation)** — no issue-first enforcement helper. You file issues however your team usually does.
 
-What you keep: every workflow skill committed in this repo (`/sprint-development`, `/agentic-dev-core`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
+What you keep: every workflow skill committed in this repo (`/sprint-development`, `/project-foundation`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
 
 ---
 

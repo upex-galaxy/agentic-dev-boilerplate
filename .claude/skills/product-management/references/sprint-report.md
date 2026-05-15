@@ -21,7 +21,7 @@ This is a **read-only PM visibility workflow**. It does not change Jira state, d
 ## Prerequisites
 
 - `[ISSUE_TRACKER_TOOL]` reachable (`acli` preferred — see the `/acli` skill — or MCP Atlassian as fallback). Resolve via the Tool Resolution table in `CLAUDE.md`.
-- `{{PROJECT_KEY}}` available in `.agents/project.yaml` (run `/agentic-dev-core` if missing).
+- `{{PROJECT_KEY}}` available in `.agents/project.yaml` (ships with the cloned boilerplate; clone the full repo if missing).
 - (Optional) `gh` authenticated against the project's GitHub repo if the user wants PR state included.
 
 ---
@@ -71,12 +71,12 @@ Use [ISSUE_TRACKER_TOOL] to search issues:
 
 Relevant types for a dev-oriented report:
 
-| Type            | Description                        | Include in report  |
-| --------------- | ---------------------------------- | ------------------ |
-| **Epic**        | Containers for stories             | ✅ Always          |
-| **Story**       | User-facing functionality          | ✅ Always          |
-| **Improvement** | Tech debt / enhancements           | ✅ If present      |
-| **Task**        | Technical tasks / spikes           | ⚪ Optional        |
+| Type            | Description               | Include in report |
+| --------------- | ------------------------- | ----------------- |
+| **Epic**        | Containers for stories    | ✅ Always         |
+| **Story**       | User-facing functionality | ✅ Always         |
+| **Improvement** | Tech debt / enhancements  | ✅ If present     |
+| **Task**        | Technical tasks / spikes  | ⚪ Optional       |
 
 If the project uses alternate names (`Initiative` for Epic, `Feature` for Story, `Enhancement` for Improvement, `Technical Task` for Task, etc.), substitute throughout the queries below — see "Workflow adaptation" at the bottom.
 
@@ -257,14 +257,14 @@ Render the report in this exact structure (omit sections with zero items unless 
 
 ## 🎯 Key metrics
 
-| Metric                       | Value                              |
-| ---------------------------- | ---------------------------------- |
-| **Blocked items**            | {blocked_count} {⚠️ if > 0}        |
-| **Stories in development**   | {in_progress_count}                |
-| **Open PRs**                 | {open_pr_count}                    |
-| **PRs awaiting review**      | {review_required_count}            |
-| **Stories completed**        | {done_count}                       |
-| **Sprint progress**          | {(done / total_sprint) \* 100}%    |
+| Metric                     | Value                           |
+| -------------------------- | ------------------------------- |
+| **Blocked items**          | {blocked_count} {⚠️ if > 0}     |
+| **Stories in development** | {in_progress_count}             |
+| **Open PRs**               | {open_pr_count}                 |
+| **PRs awaiting review**    | {review_required_count}         |
+| **Stories completed**      | {done_count}                    |
+| **Sprint progress**        | {(done / total_sprint) \* 100}% |
 
 ---
 
@@ -352,12 +352,12 @@ ORDER BY priority DESC
 
 ### Alternate type names per project
 
-| Standard type | Common alternatives                    |
-| ------------- | -------------------------------------- |
-| Epic          | Initiative, Theme                      |
-| Story         | User Story, Historia, Feature          |
-| Improvement   | Enhancement, Technical Debt, Refactor  |
-| Task          | Technical Task, Dev Task, Spike        |
+| Standard type | Common alternatives                   |
+| ------------- | ------------------------------------- |
+| Epic          | Initiative, Theme                     |
+| Story         | User Story, Historia, Feature         |
+| Improvement   | Enhancement, Technical Debt, Refactor |
+| Task          | Technical Task, Dev Task, Spike       |
 
 If unsure which types the project uses, run:
 
@@ -416,8 +416,8 @@ gh pr list --state open --json number,title,headRefName,author,isDraft,reviewDec
 
 ## 🎯 Active epics (2)
 
-| Key       | Epic          | Status      | Stories total | Stories Done | Progress |
-| --------- | ------------- | ----------- | ------------- | ------------ | -------- |
+| Key         | Epic          | Status      | Stories total | Stories Done | Progress |
+| ----------- | ------------- | ----------- | ------------- | ------------ | -------- |
 | 🎯 UPEX-100 | Onboarding    | In Progress | 8             | 3            | 38%      |
 | 🎯 UPEX-150 | Auth refactor | In Progress | 5             | 1            | 20%      |
 
@@ -510,13 +510,13 @@ ORDER BY priority DESC
 ```markdown
 ## 📊 Sprint Status - {{PROJECT_KEY}}
 
-| Metric              | Value |
-| ------------------- | ----- |
-| 🔴 Blocked          | 1 ⚠️  |
-| 📗 Active stories   | 16    |
-| 🔀 Open PRs         | 6     |
-| ✅ Completed        | 9     |
-| 📈 Progress         | 36%   |
+| Metric            | Value |
+| ----------------- | ----- |
+| 🔴 Blocked        | 1 ⚠️  |
+| 📗 Active stories | 16    |
+| 🔀 Open PRs       | 6     |
+| ✅ Completed      | 9     |
+| 📈 Progress       | 36%   |
 ```
 
 ---

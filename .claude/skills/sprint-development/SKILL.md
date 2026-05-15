@@ -53,7 +53,7 @@ Trigger phrases: "implementar esta historia", "implement this story", "trabajar 
 
 ## Pre-requisites
 
-- `.agents/project.yaml` populated. If missing, run `/agentic-dev-core` first.
+- `.agents/project.yaml` populated. If missing, clone the full boilerplate — foundation files ship with the repo.
 - Story exists in the issue tracker with refined Acceptance Criteria. If backlog is empty or AC are unclear, run `/product-management` first.
 - Branch policy clear and CI configured. First-time-only setup lives in `references/setup-linting.md` and `references/ci-cd-setup.md`.
 - Working directory is the **target project repo**. Sprint-dev runs there, not in the boilerplate.
@@ -475,7 +475,7 @@ Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolv
 - `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}` — stack-specific patterns
 - `{{jira.*}}` — story custom fields (acceptance_criteria_gherkin, business_rules, acceptance_test_plan, etc.)
 
-If any required var is unset, run `/agentic-dev-core` first.
+If any required var is unset, ensure `.agents/project.yaml` exists (clone the full boilerplate — foundation files ship with the repo) and run `/project-foundation` to fill in stack values.
 
 ---
 

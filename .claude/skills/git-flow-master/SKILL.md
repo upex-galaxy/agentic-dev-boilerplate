@@ -59,10 +59,10 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category          | Likely matches                                                              |
-| ----------------- | --------------------------------------------------------------------------- |
-| `vcs`             | T4 ASK: `gh-cli` (extends `gh` command coverage during PR / issue ops)      |
-| `prose-polishing` | `comment-writer` (T2) — refines PR descriptions, commit message bodies      |
+| Category          | Likely matches                                                         |
+| ----------------- | ---------------------------------------------------------------------- |
+| `vcs`             | T4 ASK: `gh-cli` (extends `gh` command coverage during PR / issue ops) |
+| `prose-polishing` | `comment-writer` (T2) — refines PR descriptions, commit message bodies |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -329,7 +329,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 
 - `{{PROJECT_KEY}}` — issue prefix for branch naming (e.g. `UPEX-123`). Resolves from `.agents/project.yaml`.
 - `{{JIRA_URL}}` — base URL for the Traceability section in PR bodies. Resolves from `.agents/project.yaml`.
-- Any project that has not run `/agentic-dev-core` yet will not have these. Fall back to a generic `{prefix}/{slug}` and surface a one-line warning suggesting `/agentic-dev-core`.
+- Any project missing `.agents/project.yaml` will lack these. Fall back to a generic `{prefix}/{slug}` and surface a one-line warning: clone the full boilerplate (the foundation files ship with the repo).
 
 ---
 
@@ -338,7 +338,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 | Situation                                              | Hand off to                                 |
 | ------------------------------------------------------ | ------------------------------------------- |
 | Strategic split of a large change                      | Step 4 (inline decision tree in this skill) |
-| Per-story dev loop including code review               | `/sprint-development`                               |
+| Per-story dev loop including code review               | `/sprint-development`                       |
 | TDD inside a feature                                   | `/unit-testing`                             |
 | Atlassian (Jira) operations triggered by a commit / PR | `/acli`                                     |
 | Backlog grooming / story refinement                    | `/product-management`                       |

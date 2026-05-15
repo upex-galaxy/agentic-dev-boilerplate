@@ -40,7 +40,7 @@ The skill is reference-driven: each workflow points to a specific reference file
 ## Pre-requisites
 
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
-- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — run `/agentic-dev-core` if missing
+- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — these ship with the cloned boilerplate; if missing, clone the full repo
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
 
 ## Composable Skills (auto-resolved at skill entry)
@@ -59,12 +59,12 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category          | Likely matches                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `issue-tracker`   | `acli` (T1 sister — silent; primary Jira CLI). Atlassian MCP is the fallback declared above, not a skill                        |
-| `doc-generation`  | `cognitive-doc-design` (T2) — applied when authoring AC docs, sprint report markdown, refinement notes                          |
-| `creativity`      | T4 ASK: `brainstorming` — useful for edge-case enumeration, persona expansion, Three Amigos session prep                        |
-| `prose-polishing` | `comment-writer` (T2) — refines AC Gherkin prose, story descriptions before saving to Jira                                      |
+| Category          | Likely matches                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `issue-tracker`   | `acli` (T1 sister — silent; primary Jira CLI). Atlassian MCP is the fallback declared above, not a skill |
+| `doc-generation`  | `cognitive-doc-design` (T2) — applied when authoring AC docs, sprint report markdown, refinement notes   |
+| `creativity`      | T4 ASK: `brainstorming` — useful for edge-case enumeration, persona expansion, Three Amigos session prep |
+| `prose-polishing` | `comment-writer` (T2) — refines AC Gherkin prose, story descriptions before saving to Jira               |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -128,14 +128,14 @@ Output: a markdown sprint report rendered inline (epics + stories + PRs + status
 
 ## Specific tasks — which reference to read
 
-| User intent                                                                                                                      | Read                                   |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| "create initial backlog from PRD" / "seed the product backlog"                                                                   | `references/product-backlog-seed.md`   |
-| "add new feature" / "agregar feature al backlog" / "incremental story creation"                                                  | `references/add-feature.md`            |
-| "create epic" / "crear épica" / "epic structure" / "epic vs feature flag"                                                        | `references/epic-creation.md`          |
-| "refine this story" / "INVEST" / "ready for development" / "3 amigos" / "story slicing"                                          | `references/story-refinement.md`       |
-| "refine AC" / "acceptance criteria quality" / "Gherkin scenarios" / "AC ambiguities"                                             | `references/acceptance-criteria.md`    |
-| "enumerate edge cases" / "boundary scenarios" / "failure modes" / "what could go wrong"                                          | `references/edge-cases-enumeration.md` |
+| User intent                                                                                                                        | Read                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| "create initial backlog from PRD" / "seed the product backlog"                                                                     | `references/product-backlog-seed.md`   |
+| "add new feature" / "agregar feature al backlog" / "incremental story creation"                                                    | `references/add-feature.md`            |
+| "create epic" / "crear épica" / "epic structure" / "epic vs feature flag"                                                          | `references/epic-creation.md`          |
+| "refine this story" / "INVEST" / "ready for development" / "3 amigos" / "story slicing"                                            | `references/story-refinement.md`       |
+| "refine AC" / "acceptance criteria quality" / "Gherkin scenarios" / "AC ambiguities"                                               | `references/acceptance-criteria.md`    |
+| "enumerate edge cases" / "boundary scenarios" / "failure modes" / "what could go wrong"                                            | `references/edge-cases-enumeration.md` |
 | "sprint report" / "reporte de sprint" / "estado del sprint" / "qué hay en el sprint" / "progress report" / "dashboard del backlog" | `references/sprint-report.md`          |
 
 ## Optional: Delta Specs Pattern
@@ -166,7 +166,7 @@ This skill uses standard `.agents/project.yaml` variables resolved at runtime:
 - `{{ISSUE_TRACKER}}` — issue tracker name (typically `Jira`)
 - `{{JIRA_URL}}` — workspace URL
 
-If unset, run `/agentic-dev-core` first.
+If unset, clone the full boilerplate — these foundation files ship with the repo.
 
 ## Notes
 

@@ -86,7 +86,7 @@ Do NOT use this skill to:
 - Implement an individual user story (planning → code → review → deploy) — that's `/sprint-development`.
 - Set up a unit-test framework — that's `/unit-testing` (and is its own concern).
 
-The infrastructure choices below flow from the SRS architecture decisions made during `/project-foundation`. If `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, or `{{DB_TYPE}}` are unset in `.agents/project.yaml`, run `/agentic-dev-core` and `/project-foundation` first.
+The infrastructure choices below flow from the SRS architecture decisions made during `/project-foundation`. If `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, or `{{DB_TYPE}}` are unset in `.agents/project.yaml`, run `/project-foundation` first (and clone the full boilerplate if `.agents/project.yaml` itself is missing — foundation files ship with the repo).
 
 ---
 
@@ -179,6 +179,6 @@ If any check fails, surface the failure in the report rather than papering over 
 ## Notes
 
 - Each "incremental feature" reference is composable — the project does not need all of them. Pick by need, skip the rest.
-- This skill consumes `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}`, `{{API_URL}}`, `{{WEB_URL}}` from `.agents/project.yaml`. If unset, run `/agentic-dev-core` and `/project-foundation` first.
+- This skill consumes `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}`, `{{API_URL}}`, `{{WEB_URL}}` from `.agents/project.yaml`. If unset, run `/project-foundation` first. If `.agents/project.yaml` itself is missing, clone the full boilerplate — foundation files ship with the repo.
 - For parallel scaffolding (backend + frontend at the same time), dispatch via the briefing template in `agentic-dev-core/references/briefing-template.md`.
 - The references are written in Spanish in some sections (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
