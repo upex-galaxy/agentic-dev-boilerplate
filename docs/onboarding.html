@@ -756,6 +756,83 @@
         font-size: 0.78rem;
       }
 
+      /* Decision gates (§7 Path A vs Path B) */
+      .gate-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0 2rem;
+      }
+      .gate-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        position: relative;
+      }
+      .gate-card-label {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.18rem 0.55rem;
+        border-radius: 999px;
+        margin-bottom: 0.5rem;
+      }
+      .gate-a .gate-card-label {
+        background: var(--badge-workflow-soft);
+        color: var(--badge-workflow);
+      }
+      .gate-b .gate-card-label {
+        background: var(--badge-foundation-soft);
+        color: var(--badge-foundation);
+      }
+      .gate-c .gate-card-label {
+        background: var(--badge-reference-soft);
+        color: var(--badge-reference);
+      }
+      .gate-card-title {
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0 0 0.4rem;
+        font-family: var(--font-mono);
+      }
+      .gate-card-when {
+        font-size: 0.85rem;
+        color: var(--text-soft);
+        margin-bottom: 0.6rem;
+      }
+      .gate-card-checks {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .gate-card-checks li {
+        padding-left: 1.2rem;
+        position: relative;
+        margin-bottom: 0.25rem;
+      }
+      .gate-card-checks li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .gate-card-foot {
+        margin-top: 0.75rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .gate-card-foot code {
+        font-size: 0.75rem;
+      }
+
       /* Onboarding path cards (Getting started) */
       .path-grid {
         display: grid;
@@ -2550,39 +2627,99 @@ bun run lint:agents           # validate placeholders</code></pre>
 
           <!-- =======================================================  SECTION 7 (NEW)  -->
           <section id="section-7">
-            <h2><span class="num">7.</span><code>/sprint-development</code> vs <code>/sdd-*</code> — when to use which</h2>
+            <h2><span class="num">7.</span><code>/sprint-development</code> delivery paths — A vs B vs Standalone SDD</h2>
 
             <p>
-              The most common point of confusion. Both workflows can drive a feature to merge. They
-              serve different shapes of work.
+              <code>/sprint-development</code> is <strong>the</strong> driver for ticket-led work,
+              but it does not always run the same flow inside. The skill internally picks
+              <strong>Path A</strong> (simple) or <strong>Path B</strong> (complex, composes the
+              SDD bundle) based on three gates: lines of code, architectural impact, and Strict TDD
+              status. Standalone <code>/sdd-*</code> is a third mode for exploratory work that has
+              no ticket yet.
             </p>
 
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Skill</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Routine Jira ticket work (most cases)</td>
-                    <td><code>/sprint-development</code> (ticket-driven workflow)</td>
-                  </tr>
-                  <tr>
-                    <td>Large refactor / architectural decision / feature without ticket yet</td>
-                    <td><code>/sdd-*</code> (spec-driven workflow)</td>
-                  </tr>
-                  <tr>
-                    <td>Story with detailed specs you want to trace formally</td>
-                    <td>
-                      Both: <code>/sdd-spec</code> for spec, then <code>/sprint-development</code>
-                      for the cycle
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <h3>Decision gates at a glance</h3>
+
+            <div class="gate-grid">
+              <article class="gate-card gate-a">
+                <span class="gate-card-label">Path A</span>
+                <h4 class="gate-card-title">/sprint-development solo</h4>
+                <p class="gate-card-when">
+                  Standard ticket. Sprint-dev runs the 12-step cycle without SDD overhead.
+                </p>
+                <ul class="gate-card-checks">
+                  <li>Jira ticket exists</li>
+                  <li>≤ 400 LOC changed</li>
+                  <li>No new architecture / cross-cutting concern</li>
+                  <li>Strict TDD mode NOT active</li>
+                </ul>
+                <p class="gate-card-foot">
+                  Skills invoked: <code>/sprint-development</code> only. Optional inline
+                  <code>/unit-testing</code> for TDD slices.
+                </p>
+              </article>
+
+              <article class="gate-card gate-b">
+                <span class="gate-card-label">Path B</span>
+                <h4 class="gate-card-title">/sprint-development + SDD bundle</h4>
+                <p class="gate-card-when">
+                  Complex ticket. Sprint-dev orchestrates the SDD phases silently inside the
+                  cycle, then resumes Jira transitions + deploy.
+                </p>
+                <ul class="gate-card-checks">
+                  <li>Multi-file refactor OR new architecture</li>
+                  <li>&gt; 400 LOC OR review-workload risk flagged</li>
+                  <li>Strict TDD active for the project</li>
+                </ul>
+                <p class="gate-card-foot">
+                  Skills invoked: <code>sdd-init → sdd-design → sdd-tasks → sdd-apply →
+                  sdd-verify → sdd-archive</code>, wrapped by <code>/sprint-development</code>.
+                </p>
+              </article>
+
+              <article class="gate-card gate-c">
+                <span class="gate-card-label">Standalone</span>
+                <h4 class="gate-card-title">/sdd-* without sprint-dev</h4>
+                <p class="gate-card-when">
+                  Exploratory work, no ticket yet. You're researching, comparing approaches, or
+                  defining a spec before any code lands.
+                </p>
+                <ul class="gate-card-checks">
+                  <li>No Jira ticket exists yet</li>
+                  <li>Multiple approaches worth comparing</li>
+                  <li>Need an artifact trail (proposal + spec + design)</li>
+                </ul>
+                <p class="gate-card-foot">
+                  Skills invoked: <code>/sdd-explore</code>, <code>/sdd-propose</code>,
+                  <code>/sdd-spec</code>, <code>/sdd-design</code>. Hand off to
+                  <code>/sprint-development</code> once a ticket is created.
+                </p>
+              </article>
+            </div>
+
+            <div class="callout callout-warn">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <div>
+                <p class="callout-title">Review Workload Guard</p>
+                <p>
+                  After <code>sdd-tasks</code> runs, the orchestrator inspects the Review Workload
+                  Forecast. If estimated changed lines exceed 400 OR <em>"Chained PRs
+                  recommended: Yes"</em> appears, the cached <code>delivery_strategy</code> kicks in
+                  (<code>ask-on-risk</code> · <code>auto-chain</code> · <code>single-pr</code> ·
+                  <code>exception-ok</code>). Path B isn't a free pass to a megaPR.
+                </p>
+              </div>
             </div>
 
             <h3>When to reach for <code>/sprint-development</code></h3>
