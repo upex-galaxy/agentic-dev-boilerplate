@@ -9,7 +9,9 @@
  *   4. Wire `.env` for MCP servers + offer direnv autoload
  *      (`.mcp.json` and `opencode.jsonc` are committed with ${VAR}/{env:VAR}
  *      expansion — installer only ensures `.env` has the required values)
- *   5. Verify external CLIs (vercel, supabase, acli, playwright-cli, resend)
+ *   5. Verify external CLIs (bun, gh, supabase, vercel, resend, acli,
+ *      playwright-cli, jq) — `which`-check only; no auto-install (Rule 4:
+ *      OS-dependent installs are deferred to upstream docs)
  *   6. Persist `.agents/install-state.json` for idempotency
  *
  * Env:
@@ -115,27 +117,26 @@ interface CommunitySkill {
   skill?: string // omit or '*' to install all skills from the package
 }
 
-// Community skills installed at PROJECT level (`npx skills add`).
-// Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn + Supabase + Vercel.
-// Users can run `npx autoskills` later to refine for their concrete stack.
+// Community skills installed at PROJECT level (`bunx skills add`).
+// Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn.
+// CLI-companion skills (gh-cli, supabase, deploy-to-vercel, resend-cli, bun,
+// playwright-cli) live at USER level instead — they're useful across every
+// project the user works on, not just this boilerplate. See USER_LEVEL_SKILLS.
+// Users can run `bunx autoskills` later to refine for their concrete stack.
 const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
   { package: 'https://github.com/vercel-labs/agent-skills', skill: 'react-best-practices' },
   { package: 'https://github.com/vercel-labs/agent-skills', skill: 'composition-patterns' },
-  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-best-practices' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-cache-components' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-upgrade' },
   { package: 'https://github.com/pproenca/dot-skills', skill: 'react-hook-form' },
   { package: 'https://github.com/pproenca/dot-skills', skill: 'zod' },
   { package: 'https://github.com/shadcn/ui', skill: 'shadcn' },
-  { package: 'https://github.com/supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
-  { package: 'https://github.com/midudev/autoskills', skill: 'bun' },
   { package: 'https://github.com/giuseppe-trisciuoglio/developer-kit', skill: 'tailwind-css-patterns' },
   { package: 'https://github.com/wshobson/agents', skill: 'typescript-advanced-types' },
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'accessibility' },
   { package: 'https://github.com/addyosmani/web-quality-skills', skill: 'seo' },
-  { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
   { package: 'czlonkowski/n8n-skills' }, // whole repo (n8n MCP toolkit)
   { package: 'https://github.com/emilkowalski/skill', skill: 'emil-design-eng' },
   { package: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', skill: 'ui-ux-pro-max' },
@@ -144,35 +145,67 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'redesign-existing-projects' },
 ];
 
-// Community skills installed at USER (global) level — useful across most projects.
+// Community skills installed at USER (global) level — useful across most
+// projects. Includes every CLI-companion skill (so `gh`, `supabase`, `vercel`,
+// `resend`, `bun`, `playwright-cli` always have their docs/skill loaded
+// regardless of which repo the user is in).
 const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
   { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
-  { package: 'https://github.com/github/awesome-copilot', skill: 'gh-cli' },
   { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
   // cli-printing-press: full functionality requires Go 1.26.3+ (go install github.com/mvanhorn/cli-printing-press/v4/cmd/printing-press@latest); skill works standalone with degraded features
   { package: 'https://github.com/mvanhorn/cli-printing-press', skill: 'cli-printing-press' },
   { package: 'https://github.com/lewislulu/html-ppt-skill', skill: 'html-ppt' },
+  // CLI-companion skills (mirror EXTERNAL_CLIS) — load whenever user runs the
+  // matching binary, anywhere on their machine.
+  { package: 'https://github.com/github/awesome-copilot', skill: 'gh-cli' },
+  { package: 'supabase/agent-skills', skill: 'supabase' },
+  { package: 'supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
+  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
+  { package: 'resend/resend-cli' },
+  { package: 'https://bun.sh/docs', skill: 'bun' },
+  { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
 ];
 
-const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string, docs: string }> = [
+// External CLIs the boilerplate's skills depend on. Installer NEVER auto-installs
+// these — it only `which`-checks and points the user to the OFFICIAL docs.
+// Rule: any install whose command depends on the user's OS must be deferred to
+// the upstream docs (Rule 4). Single-shot cross-platform commands (e.g.
+// `bun add -g X`) MAY ship as `install`; everything else uses `docs` only.
+const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install?: string, docs: string, purpose: string }> = [
   {
-    name: 'vercel',
-    install: 'npm i -g vercel',
-    docs: 'https://vercel.com/docs/cli',
+    name: 'bun',
+    docs: 'https://bun.com/',
+    purpose: 'general-purpose runtime + package manager (this repo runs on bun)',
+  },
+  {
+    name: 'gh',
+    docs: 'https://github.com/cli/cli#installation',
+    purpose: 'GitHub CLI — repos, PRs, releases, gh api',
   },
   {
     name: 'supabase',
-    install: 'brew install supabase/tap/supabase  (or: npm i -g supabase)',
     docs: 'https://supabase.com/docs/guides/local-development/cli/getting-started',
+    purpose: 'database — migrations, types, local stack',
   },
   {
-    // `acli` is a brew TAP formula, not a cask. The previous string
-    // (`brew install --cask atlassian-cli`) was wrong on both counts.
+    name: 'vercel',
+    install: 'bun add -g vercel',
+    docs: 'https://vercel.com/docs/cli',
+    purpose: 'deploys + project linking',
+  },
+  {
+    name: 'resend',
+    docs: 'https://resend.com/docs/cli',
+    purpose: 'email development + transactional sending',
+  },
+  {
+    // `acli` install command depends on OS (brew tap on macOS, manual binary on
+    // Linux/Windows). Defer to upstream docs.
     name: 'acli',
-    install: 'brew tap atlassian/homebrew-acli && brew install acli',
-    docs: 'https://developer.atlassian.com/cloud/acli/guides/install-macos/',
+    docs: 'https://developer.atlassian.com/cloud/acli/guides/install-acli/',
+    purpose: 'Atlassian (Jira/Confluence) CLI — used by /acli skill',
   },
   {
     // Binary produced by @playwright/cli is `playwright-cli`, used by the
@@ -180,13 +213,14 @@ const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install: string, docs: string
     // runner library producing no global binary — `which playwright` would
     // never find it.
     name: 'playwright-cli',
-    install: 'bun add -g @playwright/cli@latest  (or: npm install -g @playwright/cli@latest)',
+    install: 'bun add -g @playwright/cli@latest',
     docs: 'https://playwright.dev/agent-cli/introduction',
+    purpose: 'browser automation — screenshots, traces, recordings',
   },
   {
-    name: 'resend',
-    install: 'npm i -g resend',
-    docs: 'https://resend.com/docs/send-with-nodejs',
+    name: 'jq',
+    docs: 'https://jqlang.org/',
+    purpose: 'JSON processor — required by /acli skill for parsing acli --json output',
   },
 ];
 
@@ -292,6 +326,7 @@ async function verifyRepoRoot(): Promise<void> {
   const pkgPath = join(REPO_ROOT, 'package.json');
   if (!existsSync(pkgPath)) {
     log.error(`No package.json found at ${pkgPath}. Run this from the repo root.`);
+    log.dim('Re-run from the repo root with: bun run setup');
     process.exit(1);
   }
   const raw = await readFile(pkgPath, 'utf8');
@@ -321,7 +356,10 @@ async function verifyRepoRoot(): Promise<void> {
     message: `package.json name is "${pkg.name ?? '(unknown)'}". Continue anyway?`,
     default: false,
   });
-  if (!proceed) { process.exit(0); }
+  if (!proceed) {
+    log.dim('Aborted. Re-run from the correct repo root with: bun run setup');
+    process.exit(0);
+  }
 }
 
 // ============================================================================
@@ -378,14 +416,17 @@ async function handleMissingGentleAi(): Promise<'show-and-exit' | 'skip'> {
   });
 
   if (choice) {
-    log.banner('Install gentle-ai with one of these commands:');
-    process.stdout.write('  macOS  : brew install gentle-ai\n');
-    process.stdout.write('  Linux  : go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest\n\n');
+    log.banner('Install gentle-ai');
+    process.stdout.write('  Official docs : https://github.com/Gentleman-Programming/gentle-ai\n');
+    process.stdout.write('  Quick install :\n');
+    process.stdout.write('    macOS : brew install gentle-ai\n');
+    process.stdout.write('    Linux : go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest\n\n');
     log.dim('After installing, re-run: bun run setup');
     return 'show-and-exit';
   }
 
   log.warn('Continuing without gentle-ai. Skills + engram will NOT be installed.');
+  log.dim('  To enable later: install gentle-ai (see docs above), then re-run: bun run setup');
   return 'skip';
 }
 
@@ -414,6 +455,9 @@ async function detectAgents(): Promise<AgentDetection> {
 async function promptAgentSelection(detected: AgentDetection): Promise<AgentId[]> {
   if (!detected.claudeCode && !detected.opencode) {
     log.error('No agents detected. Install Claude Code (~/.claude/) or OpenCode (~/.config/opencode/) and rerun.');
+    log.dim('  Claude Code : https://docs.claude.com/claude-code');
+    log.dim('  OpenCode    : https://opencode.ai');
+    log.dim('After installing one (or both), re-run: bun run setup');
     process.exit(1);
   }
 
@@ -520,7 +564,7 @@ async function installSkillsViaGentleAi(
 }
 
 // ============================================================================
-// Step 6.5 — install community skills via npx skills CLI
+// Step 6.5 — install community skills via bunx skills CLI
 // ============================================================================
 
 function describeSkill(item: CommunitySkill): string {
@@ -538,7 +582,7 @@ async function installCommunitySkills(
   const label = level === 'project' ? 'project-level' : 'user-level (global)';
 
   log.banner(`Community skills — ${label}`);
-  log.info(`This will run ${list.length} \`npx skills add\` commands (${label}).`);
+  log.info(`This will run ${list.length} \`bunx skills add\` commands (${label}).`);
 
   const proceed = await confirm({
     message: `Install ${label} community skills?`,
@@ -567,7 +611,7 @@ async function installCommunitySkills(
     }
     if (level === 'global') { args.push('--global'); }
     args.push('--yes');
-    const result = tryRun('npx', args);
+    const result = tryRun('bunx', args);
     if (result.ok) {
       log.success(`  installed: ${slug}`);
       state.skills[key] = 'installed';
@@ -770,6 +814,25 @@ function installHintForPlatform(): string {
   return 'sudo apt install direnv  (or: dnf install direnv  /  pacman -S direnv)';
 }
 
+// OS-aware recommendation surfaced in the closing summary. Used to point users
+// at the right package manager for installing the EXTERNAL_CLIS we DON'T
+// auto-install (Rule 4 — OS-dependent installs are deferred to upstream docs).
+function recommendedPackageManager(): { label: string, url: string, install: string } {
+  if (process.platform === 'win32') {
+    return {
+      label: 'Scoop',
+      url: 'https://scoop.sh',
+      install: 'iwr -useb get.scoop.sh | iex   # PowerShell, one-time',
+    };
+  }
+  // macOS + Linux → Homebrew is cross-platform.
+  return {
+    label: 'Homebrew',
+    url: 'https://brew.sh',
+    install: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+  };
+}
+
 function shellHookHint(info: DirenvInfo): string {
   const shell = (process.env.SHELL ?? '').toLowerCase();
   if (process.platform === 'win32' && shell.length === 0) {
@@ -834,8 +897,9 @@ async function offerDirenvAutoload(): Promise<void> {
 interface CliResult {
   name: string
   status: CliStatus
-  install: string
+  install?: string
   docs: string
+  purpose: string
 }
 
 function verifyExternalClis(state: InstallState): CliResult[] {
@@ -843,20 +907,22 @@ function verifyExternalClis(state: InstallState): CliResult[] {
     const found = which(cli.name) !== null;
     const status: CliStatus = found ? 'found' : 'missing';
     state.externalClis[cli.name] = status;
-    return { name: cli.name, status, install: cli.install, docs: cli.docs };
+    return { name: cli.name, status, install: cli.install, docs: cli.docs, purpose: cli.purpose };
   });
 
   process.stdout.write('\n');
-  process.stdout.write(`${COLORS.bold}CLI              Status      Install (if missing) / Docs${COLORS.reset}\n`);
+  process.stdout.write(`${COLORS.bold}CLI              Status      Purpose${COLORS.reset}\n`);
   process.stdout.write(`${'─'.repeat(80)}\n`);
   for (const r of results) {
     const padName = r.name.padEnd(16);
     const padStatus = r.status === 'found' ? 'found     ' : 'missing   ';
     const statusColor = r.status === 'found' ? COLORS.green : COLORS.yellow;
-    const installCol = r.status === 'found' ? '(skip)' : r.install;
-    process.stdout.write(`${padName} ${statusColor}${padStatus}${COLORS.reset} ${installCol}\n`);
+    process.stdout.write(`${padName} ${statusColor}${padStatus}${COLORS.reset} ${r.purpose}\n`);
     if (r.status === 'missing') {
-      process.stdout.write(`${' '.repeat(28)}${COLORS.dim}docs: ${r.docs}${COLORS.reset}\n`);
+      if (r.install) {
+        process.stdout.write(`${' '.repeat(28)}${COLORS.dim}quick: ${r.install}${COLORS.reset}\n`);
+      }
+      process.stdout.write(`${' '.repeat(28)}${COLORS.dim}docs:  ${r.docs}${COLORS.reset}\n`);
     }
   }
   return results;
@@ -941,16 +1007,27 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
     return;
   }
 
+  // Idempotency: if a prior run already created a repo and the local `origin`
+  // points at the same URL, skip silently. Re-running `gh repo create` for the
+  // same name would fail with `name already exists`.
+  if (state.github) {
+    const originUrl = tryRun('git', ['remote', 'get-url', 'origin']);
+    if (originUrl.ok && originUrl.stdout.trim().includes(`${state.github.account}/${state.github.repo}`)) {
+      log.dim(`GitHub remote already configured: ${state.github.url} — skipping.`);
+      return;
+    }
+  }
+
   const gh = detectGh();
   if (!gh.found) {
     log.warn('gh CLI not found. Skipping GitHub repository creation.');
-    log.dim('  Install: https://cli.github.com  (then run `gh auth login`).');
+    log.dim('  Install: https://github.com/cli/cli#installation  (then run `gh auth login`).');
     log.dim('  To wire a remote later:  gh repo create --source=. --remote=origin --push');
     return;
   }
   if (!gh.authenticated) {
     log.warn(`gh ${gh.version ?? ''} detected but not authenticated.`);
-    log.dim('  Run `gh auth login`, then re-run this installer to create the remote.');
+    log.dim('  Run `gh auth login`, then re-run: bun run setup');
     return;
   }
   log.success(`gh ${gh.version ?? ''} detected (authenticated).`);
@@ -1091,12 +1168,15 @@ function printClosingSummary(state: InstallState): void {
     process.stdout.write(`  ${n}. Fill remaining vars in .env: ${state.pendingEnvVars.join(', ')}\n`);
     n++;
   }
-  process.stdout.write(`  ${n}. Launch your agent:\n`);
-  process.stdout.write('       bun run claude       # Claude Code  (dotenv-cli wraps and loads .env)\n');
-  process.stdout.write('       bun run opencode     # OpenCode     (dotenv-cli wraps and loads .env)\n');
-  log.dim('       (or run `claude` / `opencode` directly if direnv autoload is set up)');
+  process.stdout.write(`  ${n}. Launch your agent (preferred — short + native):\n`);
+  process.stdout.write('       claude               # Claude Code\n');
+  process.stdout.write('       opencode             # OpenCode\n');
+  log.dim('       (requires direnv allow OR a shell that sources .env — e.g. `set -a; . .env; set +a`)');
+  process.stdout.write('     Fallback (works everywhere, no direnv needed):\n');
+  process.stdout.write('       bun run claude       # dotenv-cli wraps and loads .env\n');
+  process.stdout.write('       bun run opencode     # dotenv-cli wraps and loads .env\n');
   n++;
-  process.stdout.write(`  ${n}. Install missing CLIs (see table above)\n`);
+  process.stdout.write(`  ${n}. Install missing CLIs (see table above — use your OS package manager)\n`);
   n++;
   process.stdout.write(`  ${n}. Run: bun run lint:agents (validate config)\n`);
   n++;
@@ -1153,6 +1233,16 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write('  • OpenCode: already wired in opencode.jsonc via the "plugin" field.\n');
   process.stdout.write(`      ${COLORS.dim}Docs: https://docs.warp.dev/agent-platform/cli-agents/opencode/${COLORS.reset}\n`);
   process.stdout.write('\n');
+
+  // OS-aware package-manager recommendation. We never auto-install external
+  // CLIs (Rule 4), so point the user at the canonical pkg manager for their OS.
+  const pm = recommendedPackageManager();
+  process.stdout.write(`${COLORS.bold}Recommended package manager (for installing the external CLIs above):${COLORS.reset}\n`);
+  process.stdout.write(`  ${pm.label}  →  ${pm.url}\n`);
+  process.stdout.write(`  ${COLORS.dim}Install ${pm.label}:  ${pm.install}${COLORS.reset}\n`);
+  process.stdout.write(`  ${COLORS.dim}Then install any missing CLI from the table above using ${pm.label}.${COLORS.reset}\n`);
+  process.stdout.write('\n');
+
   log.dim('Full docs: INSTALLER.md');
 }
 
@@ -1229,6 +1319,7 @@ async function main(): Promise<void> {
   state.agents = agents;
   if (agents.length === 0) {
     log.warn('No agents selected, exiting.');
+    log.dim('Re-run when ready: bun run setup');
     await writeInstallState(state);
     process.exit(0);
   }
@@ -1248,8 +1339,8 @@ async function main(): Promise<void> {
     }
   }
 
-  // Step 6 — community skills via npx skills CLI (independent of gentle-ai)
-  log.step(6, 11, 'Installing community skills via npx skills CLI');
+  // Step 6 — community skills via bunx skills CLI (independent of gentle-ai)
+  log.step(6, 11, 'Installing community skills via bunx skills CLI');
   await installCommunitySkills(state, 'project');
   await installCommunitySkills(state, 'global');
 
@@ -1278,9 +1369,11 @@ async function main(): Promise<void> {
 main().catch((err) => {
   if (err && typeof err === 'object' && 'name' in err && (err as { name: string }).name === 'ExitPromptError') {
     log.warn('Aborted by user.');
+    log.dim('Re-run anytime with: bun run setup');
     process.exit(130);
   }
   log.error(`Fatal: ${(err as Error).message ?? String(err)}`);
   if (err instanceof Error && err.stack) { log.dim(err.stack); }
+  log.dim('After fixing the issue above, re-run: bun run setup  (installer is idempotent — completed steps are skipped)');
   process.exit(1);
 });
