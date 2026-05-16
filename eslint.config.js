@@ -26,6 +26,10 @@ export default antfu({
     '.github/**',
     // Generated files (auto-generated, not manually edited)
     'api/openapi-types.ts',
+    // Skill-internal CLI script — heuristic brand-matcher invoked from /design-system Path B.
+    // Not part of the repo's tsconfig project service; tsconfig.json scopes the project to
+    // root scripts, not skill-embedded scripts.
+    '.claude/skills/design-system/scripts/match-brand.ts',
   ],
 
   // Custom rules
@@ -57,6 +61,11 @@ export default antfu({
     'style/quotes': ['error', 'single'],
     'style/comma-dangle': ['error', 'always-multiline'],
     'style/max-statements-per-line': 'off',
+    // Disabled: conflicts with Prettier YAML formatting (Prettier owns YAML style)
+    'yaml/flow-mapping-curly-spacing': 'off',
+    // Disabled: conflicts with Prettier JSONC formatting (Prettier adds trailing commas
+    // in opencode.jsonc which this rule rejects). Prettier owns JSONC style.
+    'jsonc/comma-dangle': 'off',
 
     // Allow unused vars with underscore prefix
     'unused-imports/no-unused-vars': [
