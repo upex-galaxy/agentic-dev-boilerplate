@@ -304,7 +304,11 @@ async function maybeConfirm(message: string, defaultYes: boolean): Promise<boole
 // ============================================================================
 
 function which(binary: string): string | null {
-  const result = spawnSync('which', [binary], { encoding: 'utf8' });
+  // Cross-platform binary detection — POSIX `which` fails on raw Windows
+  // PowerShell/cmd. Git Bash and WSL ship the MSYS port, but native Windows
+  // shells use `where`. Mirror the scaffolder's helper.
+  const probe = process.platform === 'win32' ? 'where' : 'which';
+  const result = spawnSync(probe, [binary], { encoding: 'utf8' });
   if (result.status !== 0) { return null; }
   const out = result.stdout.trim();
   return out.length > 0 ? out : null;
