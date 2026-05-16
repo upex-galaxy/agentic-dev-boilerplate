@@ -2701,6 +2701,81 @@ bun run lint:agents           # validate placeholders</code></pre>
               commands. This is what keeps the main conversation lean — the heavy reading happens
               inside subagents.
             </p>
+
+            <h3>Circuit 3 — Skill-before-Bash auto-load</h3>
+
+            <p>
+              A third circuit governs shell-out: when Bash is about to run a CLI binary, the AI
+              must load the matching skill <em>first</em>, before the command executes. The skill
+              holds the WHEN/WHAT (auth, flags, error semantics, edge cases); the binary executes
+              the HOW. Skipping the load step means flying blind on syntax.
+            </p>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>CLI</th>
+                    <th>Skill auto-loaded</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>bun</code></td>
+                    <td><code>/bun</code></td>
+                    <td>Runtime + package manager — bun-specific APIs, scripts, lockfile.</td>
+                  </tr>
+                  <tr>
+                    <td><code>gh</code></td>
+                    <td><code>/gh-cli</code>, <code>/git-flow-master</code></td>
+                    <td>Repo ops, PRs, <code>gh api</code> patterns + branch strategy.</td>
+                  </tr>
+                  <tr>
+                    <td><code>git</code></td>
+                    <td><code>/git-flow-master</code></td>
+                    <td>Branching strategy detection, commit conventions, conflict resolution.</td>
+                  </tr>
+                  <tr>
+                    <td><code>supabase</code></td>
+                    <td><code>/supabase</code>, <code>/supabase-postgres-best-practices</code></td>
+                    <td>DB CLI + Postgres patterns + DB scaffold flow.</td>
+                  </tr>
+                  <tr>
+                    <td><code>vercel</code></td>
+                    <td><code>/deploy-to-vercel</code>, <code>/sprint-development</code></td>
+                    <td>Deploy CLI + sprint-dev staging/prod deploy steps.</td>
+                  </tr>
+                  <tr>
+                    <td><code>acli</code></td>
+                    <td><code>/acli</code></td>
+                    <td>Atlassian CLI — Jira/Confluence workflows, slug syntax, custom-field IDs.</td>
+                  </tr>
+                  <tr>
+                    <td><code>playwright-cli</code></td>
+                    <td><code>/playwright-cli</code>, <code>/sprint-development</code></td>
+                    <td>Browser automation — sprint-dev E2E checks + standalone QA capture.</td>
+                  </tr>
+                  <tr>
+                    <td><code>resend</code></td>
+                    <td><code>/resend-cli</code></td>
+                    <td>Transactional email CLI — send, templates, domains.</td>
+                  </tr>
+                  <tr>
+                    <td><code>jq</code></td>
+                    <td><code>/acli</code></td>
+                    <td>JSON processor — required by acli to parse <code>--json</code> output.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p class="small muted">
+              The full mapping is the source of truth in <code>CLAUDE.md</code> § 6.5; the CLI
+              names match exactly the <code>EXTERNAL_CLIS</code> constant in
+              <code>cli/install.ts</code>. Today this is a rule-based gate (system prompt
+              instruction); a future <code>PreToolUse</code> hook can enforce it.
+            </p>
           </section>
 
           <!-- =======================================================  SECTION 7 (NEW)  -->
@@ -3555,12 +3630,56 @@ bun run lint:agents           # validate placeholders</code></pre>
               </li>
               <li>
                 <strong>Engram (MCP persistent memory)</strong>: not a skill — an MCP server that
-                auto-captures decisions, conventions, and bug fixes across sessions.
-                <code>mem_save</code> / <code>mem_search</code> / <code>mem_context</code> are
-                called by the AI proactively, not by you. The protocol lives in your global
-                <code>CLAUDE.md</code>.
+                auto-captures decisions, conventions, and bug fixes across sessions. See the
+                dedicated callout below.
               </li>
             </ul>
+
+            <div class="callout callout-info">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18M3 9h18" />
+              </svg>
+              <div>
+                <p class="callout-title">Engram — cross-session memory the AI manages for you</p>
+                <p>
+                  Engram is an MCP server that persists structured memory across sessions and
+                  compactions. The AI calls <code>mem_save</code> proactively (no user prompt
+                  needed) whenever it makes an architecture decision, fixes a bug, learns a
+                  convention, or hits a non-obvious gotcha. Subsequent sessions recall those
+                  memories via <code>mem_search</code> + <code>mem_get_observation</code>, so
+                  "we decided to use JWT instead of session cookies" survives without you having to
+                  re-explain it.
+                </p>
+                <p>
+                  <strong>What the AI saves automatically:</strong> architecture / design
+                  decisions, conventions, bug root causes, non-obvious discoveries, workflow
+                  changes, user preferences, project-specific gotchas.
+                </p>
+                <p>
+                  <strong>What the AI searches automatically:</strong> any message containing
+                  "remember", "recall", "what did we do", or any reference to past work — in any
+                  language you write in.
+                </p>
+                <p>
+                  <strong>Session close:</strong> before saying "done", the AI calls
+                  <code>mem_session_summary</code> with Goal · Discoveries · Accomplished · Next
+                  Steps · Relevant Files. That summary is the seed for the next session. Skip it
+                  and the next session starts blind.
+                </p>
+                <p class="small muted">
+                  Full protocol: global <code>CLAUDE.md</code> § Engram. Installed by gentle-ai at
+                  user level — not committed in this repo.
+                </p>
+              </div>
+            </div>
           </section>
 
           <!-- =======================================================  SECTION 12 (NEW)  -->
