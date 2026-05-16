@@ -328,7 +328,7 @@ FATAL: too many connections
 
 1. **Auth Tokens:** [auth-tokens.md](./auth-tokens.md) - Autenticación con Supabase
 2. **Troubleshooting:** [troubleshooting.md](./troubleshooting.md) - Problemas comunes
-3. **Generic Connections:** [../../testing/database/connection-db.md](../../testing/database/connection-db.md) - Conceptos genéricos
+3. **Generic Connections:** [../../testing/database/connection-db.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/testing/database/connection-db.md) - Conceptos genéricos
 
 ---
 

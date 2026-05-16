@@ -135,7 +135,7 @@ type UserResponse = paths['/users/{id}']['get']['responses']['200']['content']['
 
 ### Opcion C: Contract testing con Zod
 
-Ver: [OpenAPI + Zod Contract Testing](../testing/api/openapi-contract-testing.md)
+Ver: [OpenAPI + Zod Contract Testing](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/testing/api/openapi-contract-testing.md)
 
 ---
 
@@ -180,10 +180,8 @@ gh api /repos/owner/repo/contents/path/to/openapi.yaml
 | Flujo               | Cuando usarlo                 | Documento                                                                 |
 | ------------------- | ----------------------------- | ------------------------------------------------------------------------- |
 | **sync-openapi.ts** | Backend externo tiene el spec | Este documento                                                            |
-| **Zod-to-OpenAPI**  | Tu defines schemas con Zod    | [openapi-contract-testing.md](../testing/api/openapi-contract-testing.md) |
+| **Zod-to-OpenAPI**  | Tu defines schemas con Zod    | [openapi-contract-testing.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/testing/api/openapi-contract-testing.md) |
 
 ---
 
 **Ver tambien:**
-
-- [MCP Builder Strategy](../setup/mcp/builder-strategy.md)

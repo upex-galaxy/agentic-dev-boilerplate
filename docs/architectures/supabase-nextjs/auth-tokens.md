@@ -411,7 +411,7 @@ VALUES (
 
 1. **Connection Setup:** [connection-setup.md](./connection-setup.md) - Configurar conexión DB
 2. **Troubleshooting:** [troubleshooting.md](./troubleshooting.md) - Problemas comunes
-3. **Generic Auth:** [../../testing/api/authentication.md](../../testing/api/authentication.md) - Conceptos genéricos
+3. **Generic Auth:** [../../testing/api/authentication.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/testing/api/authentication.md) - Conceptos genéricos
 
 ---
 
