@@ -407,7 +407,7 @@ Every sub-agent / skill prompt MUST include:
    1. Scan T1 + T2 (always available).
    2. Scan T3 + T4 already installed (via `skill-registry`).
    3. If a task domain has no match in steps 1-2 AND the task would benefit significantly from a specialized skill → invoke `find-skills` automatically to suggest installable skills. Ask user before installing.
-   - **Do NOT confuse with `npx autoskills`**: that is a one-shot bootstrap step run during `/project-bootstrap` (after `/project-foundation`) to install stack-matched skills. `find-skills` is per-task runtime discovery.
+   - **Do NOT confuse with `bunx autoskills`**: that is a one-shot bootstrap step run during `/project-bootstrap` (after `/project-foundation`) to install stack-matched skills. `find-skills` is per-task runtime discovery.
 
 3. **judgment-day adoption**: ✅ **Default Stage 3 reviewer for `sprint-development`** when no conflicts. Always invokable explicitly via `/judgment-day`. Sprint-dev Stage 3 routing:
    - Default: AC compliance matrix (sprint-dev) → `sdd-verify` (if SDD specs exist) → `judgment-day` (parallel adversarial).

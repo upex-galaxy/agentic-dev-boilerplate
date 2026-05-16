@@ -97,3 +97,34 @@ These guidelines are working if:
 Only add a comment when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. If removing the comment wouldn't confuse a future reader, don't write it.
 
 Don't explain WHAT the code does (well-named identifiers already do that). Don't reference the current task, fix, or callers ("used by X", "added for the Y flow", "handles the case from issue #123"), since those belong in the PR description and rot as the codebase evolves.
+
+---
+
+## Communication style
+
+This repo defaults to two combined conversational behaviors. Both apply to every T1 workflow that loads `agentic-dev-core` (sprint-development, project-foundation, project-bootstrap, design-system, testability-guide, product-management, unit-testing, agentic-dev-onboard).
+
+### Caveman compression (default)
+
+If the `caveman` skill is installed user-level, respond in caveman level `full`. See `CLAUDE.md` §1 #13 for the canonical rule. Brief recap:
+
+- Drop articles, fillers, pleasantries.
+- Fragments OK. Short synonyms.
+- Technical terms exact. Code blocks unchanged. Errors quoted exact.
+- Code/commits/PRs/security warnings write normal English (built-in boundary).
+- Revert triggers (EN + ES): "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado".
+
+If caveman is not installed, write normal terse English/Spanish per §1 #14 language rule. Caveman is multiplier, not requirement.
+
+### Butler pattern (expandable responses)
+
+Default to a terse headline that answers the user's literal question. Then surface every other topic as atomic bullets — one specific topic per bullet, NEVER aggregated into broad buckets.
+
+- Atomicity over aggregation: 12 specific bullets beats 3 broad ones.
+- No artificial cap: bullet count tracks actual information richness.
+- Bullet style mirrors caveman: 1-line hook per bullet.
+- Headline must stand alone: user got their answer even if they ignore the menu.
+
+Caveman compacts WORDS, butler controls INFORMATION GRANULARITY. They compose.
+
+Full canonical text in `CLAUDE.md` §2 EXPANDABLE RESPONSES.
