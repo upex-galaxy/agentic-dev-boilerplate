@@ -1,52 +1,91 @@
-# agentic-dev-boilerplate
+<div align="center">
 
-> AI-driven, skills-first boilerplate for software development. From product
-> ideation to staging deployment, orchestrated by curated Claude Code skills.
+<pre>
+                    :::'###:::::'######:::'########:'##::: ##:'########:'####::'######::
+                    ::'## ##:::'##... ##:: ##.....:: ###:: ##:... ##..::. ##::'##... ##:
+                    :'##:. ##:: ##:::..::: ##::::::: ####: ##:::: ##::::: ##:: ##:::..::
+     ▄███████▄      '##:::. ##: ##::'####: ######::: ## ## ##:::: ##::::: ##:: ##:::::::
+    ██░░░░░░░██      #########: ##::: ##:: ##...:::: ##. ####:::: ##::::: ##:: ##:::::::
+   ██▓░░░░░░░▓██     ##.... ##: ##::: ##:: ##::::::: ##:. ###:::: ##::::: ##:: ##::: ##:
+   █▓▓▓▓▓▓▓▓▓▓▓█     ##:::: ##:. ######::: ########: ##::. ##:::: ##::::'####:. ######::
+   █▓▓▓▓▓▓▓▓▓▓▓█    ..:::::..:::......::::........::..::::..:::::..:::::....:::......:::
+   █▓▓▓▓▓▓▓▓▓▓▓█
+   ██▓▓▓▓▓▓▓▓▓██    '########:'##::: ##::'######:::'####:'##::: ##:'########:'########:'########::
+    ▀█████████▀      ##.....:: ###:: ##:'##... ##::. ##:: ###:: ##: ##.....:: ##.....:: ##.... ##:
+       █████         ##::::::: ####: ##: ##:::..:::: ##:: ####: ##: ##::::::: ##::::::: ##:::: ##:
+      ███████        ######::: ## ## ##: ##::'####:: ##:: ## ## ##: ######::: ######::: ########::
+       ██ ██         ##...:::: ##. ####: ##::: ##::: ##:: ##. ####: ##...:::: ##...:::: ##.. ##:::
+                     ##::::::: ##:. ###: ##::: ##::: ##:: ##:. ###: ##::::::: ##::::::: ##::. ##::
+                     ########: ##::. ##:. ######:::'####: ##::. ##: ########: ########: ##:::. ##:
+                    ........::..::::..:::......::::....::..::::..::........::........::..:::::..::
+</pre>
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-1.0+-black?logo=bun)](https://bun.sh/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<h3>The dev workflow, but AI runs it.</h3>
 
----
+<p><i>From PRD to staging deploy. Skills know each phase. You decide what to build.</i></p>
+
+<br />
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.0+-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-EAB308?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+</div>
+
+<br />
+<br />
+
+<div align="center">
+
+### Get started in one command
+
+<pre><b>bunx create-agentic-dev &lt;your-repo-name&gt;</b></pre>
+
+<sub><b>One command.</b> Downloads · scrubs git history · renames the project · runs <code>bun install</code> · launches the interactive installer.</sub>
+
+</div>
+
+<br />
+<br />
 
 ## Start here — pick your path
 
 | Goal                                                               | What to read / run                                                                        |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev)) |
-| **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Use this template](#use-this-template-github)) |
-| **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Manual clone](#manual-clone-contributors)) |
+| **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
+| **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
 | **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                      |
 | **Methodology / philosophy / extension guide** (~25 min)           | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
 | **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                            |
 | **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map) |
 
-> First-time users should prefer the scaffolder — it handles tarball download, git scrub, project rename, `bun install`, and the interactive installer in one command. The manual-clone path is for contributors hacking on the boilerplate itself.
+> First-timers, use the scaffolder. It handles tarball download, git scrub, rename, `bun install`, and the interactive installer in one shot. The manual clone is for people hacking on the boilerplate itself.
 
----
+<br />
 
 ## What this is
 
-A project starter for teams that want AI agents to drive their development workflow end-to-end — from PRD to staging deploy — using composable skills tagged by phase of the Spec-Driven Development (SDD) lifecycle. Ten workflow skills cover foundation, management, and implementation; five utility slash commands cover the common chores around them. The QA half (sprint testing, test documentation, automation, regression) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — the two repos are designed as a complementary pair.
+A starter for teams that want AI agents driving the dev workflow — not just autocomplete in the editor, but the whole loop. Define the product, scaffold the stack, refine the backlog, ship every story, deploy to staging. Ten workflow skills cover the phases. Five slash commands handle the chores around them. The testing half (sprint testing, regression, automation) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — pair them or use one.
 
----
+<br />
 
 ## Scaffold a new project
 
-The official way to start a project from this boilerplate is the **`create-agentic-dev`** scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev), source in [`packages/create-agentic-dev/`](packages/create-agentic-dev/)):
+`create-agentic-dev` is the official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev), source in [`packages/create-agentic-dev/`](packages/create-agentic-dev/)). One command, full setup:
 
 ```bash
 bunx create-agentic-dev <your-repo-name>
 cd <your-repo-name>
 ```
 
-That single command:
+What it does:
 
 1. Downloads `upex-galaxy/agentic-dev-boilerplate` (latest `main`) as a tarball — no git history.
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to the boilerplate's interactive installer (`bun run setup`) — gentle-ai, 15 skills, community skills, `.env` wiring for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), direnv autoload, optional `gh repo create`.
+5. Hands off to `bun run setup` — gentle-ai, 15 skills, community skills, `.env` wiring for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), direnv autoload, optional `gh repo create`.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -83,15 +122,38 @@ bunx -y ccstatusline@latest
 /unit-testing          # Composable mid-flight from sprint-development for TDD
 ```
 
-> Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking, so chaining deadlocks. Run them as separate steps.
+> Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking and the chain deadlocks. Run them as separate steps.
 
-> `bunx -y ccstatusline@latest` is Claude Code-only and optional. Run it from a plain terminal window with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this step: the equivalent is the `opencode-subagent-statusline` plugin already wired into `opencode.jsonc`.
+> `bunx -y ccstatusline@latest` is Claude Code-only and optional. Run it from a plain terminal with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this: the `opencode-subagent-statusline` plugin is already wired into `opencode.jsonc`.
 
----
+<br />
 
-## Use this template (GitHub)
+## Launching the agent
 
-If you prefer to start your project **on GitHub from day one** (your own repo, your own remote, full history under your account), use GitHub's native template flow:
+`.mcp.json` (Claude Code) and `opencode.jsonc` ship with `${VAR}` / `{env:VAR}` placeholders — real values live in `.env`. Launch the agent via one of these so env vars actually load:
+
+```bash
+# Cross-platform default (uses dotenv-cli, no extra tooling required):
+bun claude            # Claude Code
+bun opencode          # OpenCode
+
+# Optional: direnv autoload (any OS with direnv installed)
+direnv allow          # one-time per repo (the installer offers to run this)
+claude                # direct binary picks up .env from your shell
+```
+
+direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
+
+<br />
+
+<details>
+<summary><b>Other ways to start</b> — GitHub template flow + manual clone for contributors</summary>
+
+<br />
+
+### Use this template (GitHub)
+
+Prefer to start your project **on GitHub from day one** (your own repo, your own remote, full history under your account)? Use GitHub's native template flow:
 
 1. Click [**Use this template → Create a new repository**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) on the boilerplate's GitHub page.
 2. Pick owner + name for your new repo, choose visibility, create.
@@ -107,13 +169,11 @@ If you prefer to start your project **on GitHub from day one** (your own repo, y
    ```
 5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
 
-> **Strongly recommended: use the magic command instead.** `bunx create-agentic-dev <your-repo-name>` does everything the template flow does **plus**: scrubs the upstream git history (so your repo doesn't carry boilerplate commits), auto-rewrites `package.json` name and `.agents/project.yaml` `project.name`, runs `bun install`, runs the interactive installer, and optionally creates the GitHub repo for you via `gh` — all in one command. The template route is a good fit only if you want the GitHub repo created via the web UI before any local work.
+> **The magic command does this better.** `bunx create-agentic-dev <your-repo-name>` does everything the template flow does **plus**: scrubs the upstream git history (so your repo doesn't carry boilerplate commits), auto-rewrites `package.json` name and `.agents/project.yaml` `project.name`, runs `bun install`, runs the interactive installer, and optionally creates the GitHub repo for you via `gh` — all in one command. The template route is a good fit only if you want the GitHub repo created via the web UI before any local work.
 
----
+### Manual clone (contributors)
 
-## Manual clone (contributors)
-
-If you want to hack on the boilerplate **itself** (skills, installer, scripts, docs), clone the repo directly:
+Hacking on the boilerplate **itself** (skills, installer, scripts, docs)? Clone the repo directly:
 
 ```bash
 # 1. Clone the boilerplate
@@ -133,35 +193,21 @@ bun install
 cp .env.example .env   # then fill in the values
 ```
 
-> Foundation files (`.agents/`, `scripts/`, `CLAUDE.md`) ship with the repo — no bootstrap step is needed. À la carte adoption of individual skills is not supported.
+> Foundation files (`.agents/`, `scripts/`, `CLAUDE.md`) ship with the repo — no bootstrap step needed. À la carte adoption of individual skills is not supported.
 
-> End-users building a new project should NOT clone manually — use `bunx create-agentic-dev` (see above) so git history is scrubbed and the project is renamed automatically.
+> End-users building a new project should NOT clone manually — use `bunx create-agentic-dev` so git history is scrubbed and the project is renamed automatically.
 
-### Launching the agent
+</details>
 
-`.mcp.json` (Claude Code) and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}` expansion — real values live in `.env`. Launch the agent via one of these paths so the env vars get loaded:
-
-```bash
-# Cross-platform default (uses dotenv-cli, no extra tooling required):
-bun claude            # Claude Code
-bun opencode          # OpenCode
-
-# Optional: direnv autoload (any OS with direnv installed)
-direnv allow          # one-time per repo (the installer offers to run this)
-claude                # direct binary picks up .env from your shell
-```
-
-direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
-
----
+<br />
 
 ## How it works
 
-Skills auto-trigger from natural-language prompts that match each skill's `description` frontmatter; you can also force-load any of them via the slash trigger in Claude Code (e.g. `/sprint-development`). Each skill is a `SKILL.md` plus a `references/` folder that loads progressively — the agent only reads the files relevant to the current step.
+Skills auto-trigger when your prompt matches their `description` frontmatter — or you force-load with a slash command (`/sprint-development`). Each skill is a `SKILL.md` plus a `references/` folder. The agent only reads what the current step needs, so context stays lean.
 
-Project-specific values (URLs, project key, Jira fields) live in `.agents/project.yaml` and are injected into prompts via a 4-syntax variable system. Workflow skills correspond to phases of the SDD lifecycle: foundation (one-time definition), management (continuous PM work), and implementation (per-story dev loop).
+Project values (URLs, project key, Jira fields) live in `.agents/project.yaml` and get injected into prompts via a 4-syntax variable system. Skills are grouped by phase: foundation (one-time setup), management (continuous PM), implementation (per-story dev). The QA companion repo follows the same pattern.
 
----
+<br />
 
 ## Skills
 
@@ -183,13 +229,13 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ### Reusable community skills (installed by `bun run setup`)
 
-These skills are not committed in this repo; the installer fetches them via `bunx skills add` from upstream community repositories. The exact list lives in `cli/install.ts` (source of truth — it changes faster than this README, so consult the file directly).
+These aren't committed in this repo. The installer fetches them via `bunx skills add` from upstream community repositories. The exact list lives in `cli/install.ts` — source of truth, changes faster than this README, consult the file directly.
 
 After running `/project-foundation` and `/project-bootstrap`, you can also run `bunx autoskills` to auto-detect your concrete stack and add more.
 
 ### Skill tiers (T1–T4)
 
-The repo classifies every skill into one of four tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
+Every skill belongs to one of four tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
 
 | Tier | What                           | Location                                           | Load behavior                                               |
 | ---- | ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------- |
@@ -210,7 +256,7 @@ Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
 | `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md`                                       |
 
----
+<br />
 
 ## Repository structure
 
@@ -241,7 +287,7 @@ DESIGN.md                 # Visual identity spec (Google Labs, generated by /des
 INSTALLER.md              # Contract for `bun run setup` — what each installer layer does
 ```
 
----
+<br />
 
 ## Variables system
 
@@ -264,7 +310,7 @@ bun run jira:sync-fields   # Discover Jira custom fields -> .agents/jira-fields.
 bun run jira:check         # Validate jira-required.yaml against jira-fields.json
 ```
 
----
+<br />
 
 ## Common scripts
 
@@ -285,36 +331,42 @@ bun run jira:check        # Validate Jira manifest vs catalog
 
 `bun up` ahora corre un sync per-archivo con tracking de SHAs por componente vía `.boilerplate-version.json` (schema v6). Detecta archivos modificados localmente y prompta resolución (`[t]heirs / [m]ine / [s]kip`). El flag `--auto` aplica cambios seguros y salta los diverged — ideal para CI o flujos no-interactivos (siempre exit 0). El flag `--dry-run` simula el sync completo sin escribir nada; `--rollback` restaura desde el directorio de backup más reciente (`.backups/update-{ISO-ts}/`). Requiere git ≥ 2.25 (partial clone). Primera corrida sin `.boilerplate-version.json`: bootstrap automático con bulk sync + escritura inicial del estado v6. Detalle del flujo y schema en el JSDoc header de `cli/update-boilerplate.ts` y vía `bun up --help`.
 
----
+<br />
 
 ## Companion repo
 
-Software testing — sprint-testing, test-documentation, test-automation, regression-testing — lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate). The two repos share the same `.agents/` variable system and `agentskills.io` skill layout, so a project can adopt both without duplication.
+The testing side lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — sprint-testing, test-documentation, test-automation, regression-testing. Same `.agents/` variable system, same `agentskills.io` layout. Pair them or use one.
 
----
+<br />
 
 ## Cross-agent compatibility
 
-All skills declare `compatibility: [claude-code, copilot, cursor, codex, opencode]` per the [agentskills.io](https://agentskills.io) spec. Slash triggers are Claude Code specific; in other agents the same `description` triggers cause the skills to auto-activate from natural prompts. The variable system is agent-agnostic.
+Skills declare `compatibility: [claude-code, copilot, cursor, codex, opencode]` per the [agentskills.io](https://agentskills.io) spec. Slash triggers are Claude Code specific; other agents auto-activate from the same `description` field. The variable system is agent-agnostic.
 
----
+<br />
 
 ## Future hooks
 
-The skill architecture leaves room for: per-phase model routing, an explicit skill registry, Engram-style cross-session memory, and CI-validated cross-agent portability. Notes in `CLAUDE.md`.
+Room for per-phase model routing, an explicit skill registry, Engram-style cross-session memory, and CI-validated cross-agent portability. Notes in `CLAUDE.md`.
 
----
+<br />
 
 ## License
 
-MIT (or fill in)
+MIT — see [`LICENSE`](LICENSE) once added to the repo.
 
----
+<br />
 
 ## Status
 
-Project renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. See `.plans/MASTER-PLAN.md` for the migration story.
+Renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. Migration notes in `.plans/MASTER-PLAN.md`.
+
+<br />
 
 ---
 
-> **You are here**: Project overview for visitors. **Read time**: 5 min. **Next**: `bunx create-agentic-dev <your-repo-name>` to bootstrap, `bun run onboarding` for the visual repo tour, or [`INSTALLER.md`](INSTALLER.md) for installer details.
+<div align="center">
+
+<sub><b>You are here</b> — project overview for visitors · <b>Read time</b> ~5 min · <b>Next</b>: <code>bunx create-agentic-dev &lt;your-repo-name&gt;</code> to bootstrap · <code>bun run onboarding</code> for the visual repo tour · <a href="INSTALLER.md"><code>INSTALLER.md</code></a> for installer details.</sub>
+
+</div>
