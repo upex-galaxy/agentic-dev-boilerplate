@@ -127,7 +127,7 @@ const AGENTS_BOOTSTRAP_FILES: string[] = [
 ];
 
 const SCRIPTS_FILES: string[] = [
-  'agents-lint.ts',
+  'lint-vars.ts',
   'agents-setup.ts',
   'check-jira-setup.ts',
   'sync-jira-issues.ts',
@@ -3270,7 +3270,7 @@ function checkAgentsPackageJsonMigration(): void {
   }
 
   const expectedScripts: Record<string, string> = {
-    'lint:agents': 'bun run scripts/agents-lint.ts',
+    'lint:vars': 'bun run scripts/lint-vars.ts',
     'jira:sync-fields': 'bun run scripts/sync-jira-fields.ts',
     'jira:check': 'bun run scripts/check-jira-setup.ts',
   };
@@ -3316,7 +3316,7 @@ especifico del proyecto y nunca se sobrescribe).
   }
 
   console.log(`Despues de actualizar, valida la sincronizacion:
-  ${colors.cyan}bun run lint:agents${colors.reset}     # valida {{VAR}} y {{jira.<slug>}}
+  ${colors.cyan}bun run lint:vars${colors.reset}       # valida {{VAR}} y {{jira.<slug>}}
   ${colors.cyan}bun run jira:check${colors.reset}      # valida manifest de Jira vs catalogo
 
 Mas detalles en: ${colors.cyan}.agents/README.md${colors.reset}

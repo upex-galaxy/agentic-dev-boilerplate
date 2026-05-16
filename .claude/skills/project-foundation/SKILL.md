@@ -234,7 +234,7 @@ After running any phase, confirm:
 - The deliverables for that phase exist at the expected paths under `.context/`.
 - Each document follows the structure specified in the corresponding reference file (sections, headings, tables).
 - Cross-references are wired: PRD personas appear in user journeys; SRS functional requirements trace to PRD epics; API contracts trace to SRS architecture decisions.
-- `bun run lint:agents` does not surface new unresolved `{{VAR}}` references introduced by the new docs.
+- `bun run lint:vars` does not surface new unresolved `{{VAR}}` references introduced by the new docs.
 
 If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e.g. no real user-research data exists), surface it in the report as an open TODO rather than inventing content.
 

@@ -186,7 +186,7 @@ Skills to load: (none)
 Exact instructions:
   1. Read agentic-dev-onboard/SKILL.md.
   2. Insert the Dependencies block (per agentic-dev-core/SKILL.md §"Dependency declaration for downstream skills") immediately after the frontmatter, before the first H1.
-  3. Run: bun run lint:agents (must exit 0).
+  3. Run: bun run lint:vars (must exit 0).
   4. Run: bun run type-check (must exit 0).
 
 Report format:

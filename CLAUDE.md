@@ -195,14 +195,14 @@ Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy
 
 | CLI              | Skills to auto-load                                                    | Rationale                                                                       |
 | ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.    |
-| `gh`             | `/gh-cli`, `/git-flow-master`                                          | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.        |
-| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                   |
-| `vercel`         | `/deploy-to-vercel`, `/sprint-development`                             | Deploy CLI + sprint-dev's staging/prod deploy steps.                             |
-| `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                       |
-| `acli`           | `/acli`                                                                | Atlassian CLI — Jira/Confluence workflows. Owns slug syntax + custom-field IDs.  |
-| `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation — used by sprint-dev E2E checks + standalone QA capture.      |
-| `jq`             | `/acli`                                                                | JSON processor — required by acli skill for parsing `acli ... --json` output.    |
+| `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.   |
+| `gh`             | `/gh-cli`, `/git-flow-master`                                          | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
+| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                  |
+| `vercel`         | `/deploy-to-vercel`, `/sprint-development`                             | Deploy CLI + sprint-dev's staging/prod deploy steps.                            |
+| `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                      |
+| `acli`           | `/acli`                                                                | Atlassian CLI — Jira/Confluence workflows. Owns slug syntax + custom-field IDs. |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation — used by sprint-dev E2E checks + standalone QA capture.     |
+| `jq`             | `/acli`                                                                | JSON processor — required by acli skill for parsing `acli ... --json` output.   |
 
 **Mandatory**: before any `Bash` call that names one of these binaries, check the matching skill is loaded for this session. If not, load it via the Skill tool first. This is a hard gate, not a suggestion.
 
@@ -225,7 +225,7 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 **Active env**: `active_env` defaults to `testing.default_env` in `.agents/project.yaml`. If user says "test against production" → switch `active_env` to `production` for that session, ignore `default_env` until session ends.
 
-**Validation**: `bun run lint:agents` checks every `{{VAR}}` resolves; `bun run jira:check` validates manifest vs catalog.
+**Validation**: `bun run lint:vars` checks every `{{VAR}}` resolves; `bun run jira:check` validates manifest vs catalog.
 
 ---
 

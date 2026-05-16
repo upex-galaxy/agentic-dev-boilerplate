@@ -372,7 +372,7 @@ Four reference syntaxes coexist across prompts and docs:
 | `<<VAR_NAME>>`                 | Session/runtime value (e.g. `<<ISSUE_KEY>>`) | Computed by the calling prompt at runtime. Never declared, never persisted.         |
 | `{{jira.<slug>}}`              | Jira custom field reference                  | `.agents/jira-required.yaml` (manifest) + `.agents/jira-fields.json` (resolved IDs) |
 
-Validated via `bun run lint:agents`, `bun run jira:sync-fields`, and `bun run jira:check`. The full contract lives in `.agents/README.md`.
+Validated via `bun run lint:vars`, `bun run jira:sync-fields`, and `bun run jira:check`. The full contract lives in `.agents/README.md`.
 
 ### Live sources of truth
 
@@ -648,7 +648,7 @@ phase: <foundation | onboarding | management | implementation | exploration | pr
 
 1. Add the key to `.agents/project.yaml` (top-level if static, under `environments.<env>` if env-scoped).
 2. Update `.agents/README.md` if the contract changes.
-3. Run `bun run lint:agents` to confirm every reference still resolves.
+3. Run `bun run lint:vars` to confirm every reference still resolves.
 
 ### 11.4 Adding a Jira custom field
 
@@ -696,7 +696,7 @@ These hooks are documented but not implemented. Reopen when there is concrete de
 - **Live system integrations** — MCPs for the database (Supabase), library docs (context7), web search (tavily), workflow automation (n8n), persistent memory (engram); first-party CLIs for Jira (acli), GitHub (gh), deploys (vercel, supabase), browser automation (playwright).
 - **A structured context layer** — project, module, and story-level knowledge, on disk and version-controlled. Contains product specs, design tokens, discovery docs, per-ticket memory, and team guidelines.
 - **A portable design system (`DESIGN.md`)** — Apache-2.0 Google Labs spec at the project root. Consumed by `/project-bootstrap` and any AI agent reading the repo.
-- **Project variable contract** — `.agents/project.yaml` + `.agents/jira-required.yaml` + auto-generated catalogs, validated by `bun run lint:agents` and `bun run jira:check`.
+- **Project variable contract** — `.agents/project.yaml` + `.agents/jira-required.yaml` + auto-generated catalogs, validated by `bun run lint:vars` and `bun run jira:check`.
 - **Persistent memory (engram + PBI folders)** — sessions resume from the exact point they ended. No context loss between days or developers.
 - **A per-story dev loop** — Planning → Implementation → Code Review → Staging → (gated) Production. Drives Jira state transitions automatically. Production is always human-gated.
 - **A CI / CD pipeline** — Vercel for deploys, GitHub Actions for lint/types/tests on PRs, Supabase migrations on merge to `staging`.

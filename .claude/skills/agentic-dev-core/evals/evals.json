@@ -3,7 +3,7 @@
     {
       "name": "should-trigger-fresh-bootstrap",
       "prompt": "Initialize a new project repo with the boilerplate. I just cloned this and want the foundation files in place.",
-      "expected_behavior": "Activates agentic-dev-core. Runs the 7-step bootstrap: confirms target repo, writes .agents/project.yaml from the template, copies scripts/ (lint-agents, jira-sync-fields, jira-check), writes CLAUDE.md and CLAUDE.md from boilerplate templates, seeds .agents/jira-required.yaml and .agents/jira-fields.json placeholder, updates package.json scripts, runs bun run lint:agents to verify, and reports the file list. Does not touch product or infra concerns.",
+      "expected_behavior": "Activates agentic-dev-core. Runs the 7-step bootstrap: confirms target repo, writes .agents/project.yaml from the template, copies scripts/ (lint-vars, jira-sync-fields, jira-check), writes CLAUDE.md and CLAUDE.md from boilerplate templates, seeds .agents/jira-required.yaml and .agents/jira-fields.json placeholder, updates package.json scripts, runs bun run lint:vars to verify, and reports the file list. Does not touch product or infra concerns.",
       "category": "positive"
     },
     {
@@ -21,7 +21,7 @@
     {
       "name": "should-trigger-clone-orientation",
       "prompt": "Acabo de clonar este repo, qué corro primero para dejarlo listo?",
-      "expected_behavior": "Activates agentic-dev-core as the entry point. Explains the bootstrap flow briefly, then runs the 7-step pathway: project.yaml, scripts/, CLAUDE.md, jira-required.yaml manifest, jira-fields.json placeholder, package.json scripts, lint:agents validation. Suggests /project-foundation and /project-bootstrap as next steps once the foundation is green.",
+      "expected_behavior": "Activates agentic-dev-core as the entry point. Explains the bootstrap flow briefly, then runs the 7-step pathway: project.yaml, scripts/, CLAUDE.md, jira-required.yaml manifest, jira-fields.json placeholder, package.json scripts, lint:vars validation. Suggests /project-foundation and /project-bootstrap as next steps once the foundation is green.",
       "category": "positive"
     },
     {

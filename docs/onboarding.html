@@ -1114,7 +1114,9 @@
               />
               <text x="525" y="62" text-anchor="middle" font-weight="600">Stage 3</text>
               <text x="525" y="79" text-anchor="middle" fill="#888">Code Review</text>
-              <text x="525" y="93" text-anchor="middle" fill="#888" font-size="10">PR · judgment</text>
+              <text x="525" y="93" text-anchor="middle" fill="#888" font-size="10">
+                PR · judgment
+              </text>
             </g>
             <g>
               <rect
@@ -1130,7 +1132,9 @@
               />
               <text x="675" y="62" text-anchor="middle" font-weight="600">Stage 4</text>
               <text x="675" y="79" text-anchor="middle" fill="#888">Staging Deploy</text>
-              <text x="675" y="93" text-anchor="middle" fill="#888" font-size="10">→ Ready For QA</text>
+              <text x="675" y="93" text-anchor="middle" fill="#888" font-size="10">
+                → Ready For QA
+              </text>
             </g>
             <g>
               <rect
@@ -1147,7 +1151,9 @@
               />
               <text x="835" y="62" text-anchor="middle" font-weight="600">Stage 5</text>
               <text x="835" y="79" text-anchor="middle" fill="#888">Production Deploy</text>
-              <text x="835" y="93" text-anchor="middle" fill="#888" font-size="10">gated · rollback</text>
+              <text x="835" y="93" text-anchor="middle" fill="#888" font-size="10">
+                gated · rollback
+              </text>
             </g>
             <!-- arrows -->
             <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#arr)">
@@ -1174,7 +1180,9 @@
       <div class="cta-grid">
         <a class="cta" href="#getting-started">
           <span class="cta-title">Start here →</span>
-          <span class="cta-desc">3 ways to bootstrap a project: magic command, GitHub template, manual clone.</span>
+          <span class="cta-desc"
+            >3 ways to bootstrap a project: magic command, GitHub template, manual clone.</span
+          >
         </a>
         <a class="cta" href="#section-3">
           <span class="cta-title">The lifecycle</span>
@@ -1182,7 +1190,9 @@
         </a>
         <a class="cta" href="#section-9">
           <span class="cta-title">Skill catalog</span>
-          <span class="cta-desc">11 workflow skills + 5 utility commands, what they do, when to call them.</span>
+          <span class="cta-desc"
+            >11 workflow skills + 5 utility commands, what they do, when to call them.</span
+          >
         </a>
         <a class="cta" href="#section-8">
           <span class="cta-title">Cheat sheet</span>
@@ -1196,7 +1206,9 @@
         <summary>Table of contents</summary>
         <nav class="toc">
           <ol>
-            <li><a href="#getting-started"><strong>Start here →</strong> 3 onboarding paths</a></li>
+            <li>
+              <a href="#getting-started"><strong>Start here →</strong> 3 onboarding paths</a>
+            </li>
             <li><a href="#section-1">1. The fundamental idea</a></li>
             <li><a href="#section-2">2. Three categories of moving parts</a></li>
             <li><a href="#section-3">3. The lifecycle</a></li>
@@ -1220,7 +1232,9 @@
           <nav class="toc" aria-label="Table of contents">
             <p class="toc-title">Contents</p>
             <ol>
-              <li><a href="#getting-started"><strong>Start here →</strong></a></li>
+              <li>
+                <a href="#getting-started"><strong>Start here →</strong></a>
+              </li>
               <li><a href="#section-1">1. The fundamental idea</a></li>
               <li><a href="#section-2">2. Three moving parts</a></li>
               <li><a href="#section-3">3. The lifecycle</a></li>
@@ -1360,7 +1374,9 @@
               <article class="path-card">
                 <span class="path-card-eyebrow">GitHub-first</span>
                 <h3 class="path-card-title">"Use this template"</h3>
-                <pre class="path-card-cmd">Click → clone → bun install &amp;&amp; bun run setup</pre>
+                <pre class="path-card-cmd">
+Click → clone → bun install &amp;&amp; bun run setup</pre
+                >
                 <p class="path-card-desc">
                   Create your repo on GitHub from day one. Good when you want the remote first and
                   the local checkout second.
@@ -1384,8 +1400,8 @@
                   </li>
                 </ol>
                 <p class="path-card-foot">
-                  Trade-off: keeps upstream git history; you rename manually. The magic command
-                  does both steps automatically.
+                  Trade-off: keeps upstream git history; you rename manually. The magic command does
+                  both steps automatically.
                 </p>
               </article>
 
@@ -1393,17 +1409,18 @@
               <article class="path-card">
                 <span class="path-card-eyebrow">Contributors only</span>
                 <h3 class="path-card-title">Manual clone</h3>
-                <pre class="path-card-cmd">git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre>
+                <pre class="path-card-cmd">
+git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
+                >
                 <p class="path-card-desc">
-                  For hacking on the boilerplate <em>itself</em> — skills, installer, scripts,
-                  docs. End-users should NOT use this path; the project will keep the upstream
-                  name and full git history.
+                  For hacking on the boilerplate <em>itself</em> — skills, installer, scripts, docs.
+                  End-users should NOT use this path; the project will keep the upstream name and
+                  full git history.
                 </p>
                 <ol class="path-card-steps">
                   <li>
                     <code
-                      >git clone
-                      https://github.com/upex-galaxy/agentic-dev-boilerplate.git</code
+                      >git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git</code
                     >
                   </li>
                   <li><code>cd agentic-dev-boilerplate</code></li>
@@ -1542,8 +1559,8 @@
               <code>.agents/project.yaml</code> (and Jira metadata in
               <code>.agents/jira.json</code> + <code>.agents/jira-required.yaml</code>). Skills
               resolve <code>{{VAR}}</code> and <code>{{jira.*}}</code> placeholders against it on
-              every AI session; commands use the same resolver; scripts read the YAML and write
-              back to it. See <a href="#section-6">§6 Circuit 1</a> for the full resolution flow.
+              every AI session; commands use the same resolver; scripts read the YAML and write back
+              to it. See <a href="#section-6">§6 Circuit 1</a> for the full resolution flow.
             </p>
           </section>
 
@@ -1762,13 +1779,13 @@
                       for gentle-ai skills + 4 canonical MCPs + external CLIs) →
                       <code>bun run agents:setup</code> → <code>bun run jira:sync-fields</code> →
                       <code>bun run jira:check</code>. Foundation files (<code>.agents/</code>,
-                      <code>scripts/</code>, <code>CLAUDE.md</code>) ship with the cloned repo —
-                      à la carte adoption of individual skills is not supported.
+                      <code>scripts/</code>, <code>CLAUDE.md</code>) ship with the cloned repo — à
+                      la carte adoption of individual skills is not supported.
                     </dd>
                     <dt>Produces</dt>
                     <dd>
                       A populated <code>.agents/project.yaml</code>, <code>CLAUDE.md</code>, the
-                      foundation scripts (<code>agents-setup</code>, <code>agents-lint</code>,
+                      foundation scripts (<code>agents-setup</code>, <code>lint-vars</code>,
                       <code>sync-jira-fields</code>, <code>check-jira-setup</code>) wired into
                       <code>package.json</code>, the workspace catalog at
                       <code>.agents/jira.json</code> (custom field IDs), and the
@@ -1777,9 +1794,8 @@
                     <dt>When to repeat</dt>
                     <dd>
                       One time per repo clone. If you cloned the full repo, the foundation is
-                      already in place — only <code>bun install</code>,
-                      <code>bun run setup</code>, and <code>bun run jira:sync-fields</code> are
-                      needed.
+                      already in place — only <code>bun install</code>, <code>bun run setup</code>,
+                      and <code>bun run jira:sync-fields</code> are needed.
                     </dd>
                   </dl>
                   <pre><code>bun install
@@ -1790,14 +1806,14 @@ bunx -y ccstatusline@latest   # OPTIONAL, Claude Code only — run in a SEPARATE
 bun run agents:setup          # interactive walkthrough for project.yaml
 bun run jira:sync-fields      # catalog Jira custom fields
 bun run jira:check            # verify the catalog against the manifest
-bun run lint:agents           # validate placeholders</code></pre>
+bun run lint:vars           # validate placeholders</code></pre>
                   <p>
                     <strong>Statusline (cosmetic, recommended):</strong>
-                    <code>bunx -y ccstatusline@latest</code> opens an interactive TUI to
-                    configure the Claude Code statusline (model, branch, token usage,
-                    cost). Run it from a plain terminal with <strong>no agent running</strong> —
-                    two TUIs sharing stdin will fight and the configurator silently
-                    breaks. OpenCode users get the equivalent automatically via the
+                    <code>bunx -y ccstatusline@latest</code> opens an interactive TUI to configure
+                    the Claude Code statusline (model, branch, token usage, cost). Run it from a
+                    plain terminal with <strong>no agent running</strong> — two TUIs sharing stdin
+                    will fight and the configurator silently breaks. OpenCode users get the
+                    equivalent automatically via the
                     <code>opencode-subagent-statusline</code> plugin already declared in
                     <code>opencode.jsonc</code>.
                   </p>
@@ -1805,9 +1821,7 @@ bun run lint:agents           # validate placeholders</code></pre>
               </details>
 
               <details class="phase">
-                <summary>
-                  <span class="phase-num">1</span> Foundation — define the product
-                </summary>
+                <summary><span class="phase-num">1</span> Foundation — define the product</summary>
                 <div class="phase-body">
                   <dl>
                     <dt>Trigger</dt>
@@ -1819,13 +1833,13 @@ bun run lint:agents           # validate placeholders</code></pre>
                     </dd>
                     <dt>Produces</dt>
                     <dd>
-                      <code>idea/*</code> (constitution), <code>PRD/*</code>,
-                      <code>SRS/*</code>, <code>.context/business/business-data-map.md</code>,
+                      <code>idea/*</code> (constitution), <code>PRD/*</code>, <code>SRS/*</code>,
+                      <code>.context/business/business-data-map.md</code>,
                       <code>.context/business/business-feature-map.md</code>,
                       <code>.context/business/business-api-map.md</code>,
                       <code>.context/business/project-dev-guide.md</code>,
-                      <code>.context/master-implementation-plan.md</code>. The skill orchestrates each
-                      phase with explicit human checkpoints.
+                      <code>.context/master-implementation-plan.md</code>. The skill orchestrates
+                      each phase with explicit human checkpoints.
                     </dd>
                     <dt>When to repeat</dt>
                     <dd>
@@ -1851,9 +1865,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <dt>Produces</dt>
                     <dd>
                       Backend (DB schemas, API base, types, error handling), frontend (design
-                      system, project skeleton, routing), and incremental features (OpenAPI +
-                      Scalar UI, API routes + middleware, bearer-token auth, env vars + URL
-                      builders, Supabase types generation). Two strict sub-phases:
+                      system, project skeleton, routing), and incremental features (OpenAPI + Scalar
+                      UI, API routes + middleware, bearer-token auth, env vars + URL builders,
+                      Supabase types generation). Two strict sub-phases:
                       <strong>Plan</strong> (no writes, presents the diff) → user approval →
                       <strong>Implement</strong> (writes).
                     </dd>
@@ -1868,9 +1882,7 @@ bun run lint:agents           # validate placeholders</code></pre>
               </details>
 
               <details class="phase" open>
-                <summary>
-                  <span class="phase-num">3</span> Daily Dev — the workflow skills
-                </summary>
+                <summary><span class="phase-num">3</span> Daily Dev — the workflow skills</summary>
                 <div class="phase-body">
                   <dl>
                     <dt>Trigger</dt>
@@ -1883,8 +1895,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                         </li>
                         <li>
                           <code>/sprint-development</code> — per-story 12-step loop: planning →
-                          implementation → code review → staging deploy → (gated) production
-                          deploy. The mega-orchestrator.
+                          implementation → code review → staging deploy → (gated) production deploy.
+                          The mega-orchestrator.
                         </li>
                         <li>
                           <code>/unit-testing</code> — TDD red-green-refactor for an isolated unit.
@@ -1929,9 +1941,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                           <code>/sync-ai-memory</code> — audit + patch the 5 always-included docs
                           (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
                           <code>INSTALLER.md</code>,
-                          <code>docs/agentic-development-engineering.md</code>) plus the
-                          standalone HTML <code>docs/onboarding.html</code> and any
-                          auto-detected high-frequency markdown.
+                          <code>docs/agentic-development-engineering.md</code>) plus the standalone
+                          HTML <code>docs/onboarding.html</code> and any auto-detected
+                          high-frequency markdown.
                         </li>
                         <li>
                           <code>/business-data-map</code>, <code>/business-feature-map</code>,
@@ -1944,16 +1956,15 @@ bun run lint:agents           # validate placeholders</code></pre>
                           dependency-cascaded roadmap).
                         </li>
                         <li>
-                          <code>bun run jira:sync-fields</code> — re-catalog Jira custom fields
-                          when a new prompt requires a new field.
+                          <code>bun run jira:sync-fields</code> — re-catalog Jira custom fields when
+                          a new prompt requires a new field.
                         </li>
                         <li>
                           <code>bun run jira:check</code> — verify the Jira workspace still
-                          satisfies <code>jira-required.yaml</code> against
-                          <code>jira.json</code>.
+                          satisfies <code>jira-required.yaml</code> against <code>jira.json</code>.
                         </li>
                         <li>
-                          <code>bun run lint:agents</code> — verify every <code>{{VAR}}</code>,
+                          <code>bun run lint:vars</code> — verify every <code>{{VAR}}</code>,
                           <code>{{jira.&lt;slug&gt;}}</code>, and
                           <code>&lt;&lt;VAR&gt;&gt;</code> placeholder still resolves.
                         </li>
@@ -1975,9 +1986,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h2><span class="num">4.</span>Foundation host vs. project scaffolding</h2>
 
             <p>
-              Two names sound similar but play different roles. <code>agentic-dev-core</code> is
-              a passive doctrine host loaded by other skills. <code>/project-bootstrap</code> is
-              the workflow skill that scaffolds your codebase. They are NOT interchangeable.
+              Two names sound similar but play different roles. <code>agentic-dev-core</code> is a
+              passive doctrine host loaded by other skills. <code>/project-bootstrap</code> is the
+              workflow skill that scaffolds your codebase. They are NOT interchangeable.
             </p>
 
             <div class="table-wrap">
@@ -1992,12 +2003,14 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><strong><code>/project-bootstrap</code></strong> (skill)</td>
+                    <td>
+                      <strong><code>/project-bootstrap</code></strong> (skill)
+                    </td>
                     <td>Once per project, AFTER <code>/project-foundation</code> finishes.</td>
                     <td>
-                      Scaffolds the codebase: backend skeleton (DB, API, types, OpenAPI, auth,
-                      env), frontend skeleton (design system from <code>DESIGN.md</code>, routing,
-                      project structure). Modifies THIS repo.
+                      Scaffolds the codebase: backend skeleton (DB, API, types, OpenAPI, auth, env),
+                      frontend skeleton (design system from <code>DESIGN.md</code>, routing, project
+                      structure). Modifies THIS repo.
                     </td>
                     <td>One-time per project</td>
                   </tr>
@@ -2008,16 +2021,16 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h3>A passive reference host you never invoke</h3>
 
             <p>
-              <code>agentic-dev-core</code> is a <strong>passive reference host</strong> — it
-              hosts shared doctrine (briefing template, dispatch patterns, orchestration
-              doctrine, skill-composition strategy, behavioral layer, model routing) that
-              workflow skills cite on demand. When <code>/sprint-development</code>,
-              <code>/product-management</code>, <code>/project-foundation</code>, or
-              <code>/project-bootstrap</code> delegates to a subagent, the AI loads
-              <code>agentic-dev-core/references/briefing-template.md</code>,
-              <code>dispatch-patterns.md</code>, and <code>orchestration-doctrine.md</code>
-              automatically. You never invoke <code>agentic-dev-core</code> directly — it has no
-              bootstrap action. Foundation files ship with the cloned repo.
+              <code>agentic-dev-core</code> is a <strong>passive reference host</strong> — it hosts
+              shared doctrine (briefing template, dispatch patterns, orchestration doctrine,
+              skill-composition strategy, behavioral layer, model routing) that workflow skills cite
+              on demand. When <code>/sprint-development</code>, <code>/product-management</code>,
+              <code>/project-foundation</code>, or <code>/project-bootstrap</code> delegates to a
+              subagent, the AI loads <code>agentic-dev-core/references/briefing-template.md</code>,
+              <code>dispatch-patterns.md</code>, and
+              <code>orchestration-doctrine.md</code> automatically. You never invoke
+              <code>agentic-dev-core</code> directly — it has no bootstrap action. Foundation files
+              ship with the cloned repo.
             </p>
           </section>
 
@@ -2026,9 +2039,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h2><span class="num">5.</span>The Jira state machine</h2>
 
             <p>
-              <code>/sprint-development</code> drives the ticket through a four-state Jira workflow. Every
-              transition is owned by a specific stage of the sprint loop — the AI does not skip
-              ahead. You confirm at the gates.
+              <code>/sprint-development</code> drives the ticket through a four-state Jira workflow.
+              Every transition is owned by a specific stage of the sprint loop — the AI does not
+              skip ahead. You confirm at the gates.
             </p>
 
             <div class="diagram-block">
@@ -2115,7 +2128,12 @@ bun run lint:agents           # validate placeholders</code></pre>
                       hand-off to QA repo
                     </text>
                   </g>
-                  <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#arrJira)">
+                  <g
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    fill="none"
+                    marker-end="url(#arrJira)"
+                  >
                     <line x1="200" y1="55" x2="238" y2="55" />
                     <line x1="410" y1="55" x2="448" y2="55" />
                     <line x1="620" y1="55" x2="658" y2="55" />
@@ -2132,8 +2150,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </g>
               </svg>
               <p class="diagram-caption">
-                Each transition is owned by a sprint-development stage. The repo never reaches "Done" — QA
-                lives in the sister repo (<code>agentic-qa-boilerplate</code>).
+                Each transition is owned by a sprint-development stage. The repo never reaches
+                "Done" — QA lives in the sister repo (<code>agentic-qa-boilerplate</code>).
               </p>
             </div>
 
@@ -2174,8 +2192,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                     </td>
                     <td>Stage 4 — Staging Deploy</td>
                     <td>
-                      PR merged into <code>staging</code>. Staging deploy green. Smoke check OK.
-                      QA can now pick the ticket up.
+                      PR merged into <code>staging</code>. Staging deploy green. Smoke check OK. QA
+                      can now pick the ticket up.
                     </td>
                   </tr>
                 </tbody>
@@ -2198,10 +2216,10 @@ bun run lint:agents           # validate placeholders</code></pre>
                 target="_blank"
                 rel="noopener"
                 ><code>agentic-qa-boilerplate</code></a
-              >, with its own Jira state machine
-              (<code>Ready For QA → In Testing → Tested / Closed</code>) and its own skill set
-              (<code>/sprint-testing</code>, <code>/test-automation</code>, etc.). Do not invoke
-              QA-side skills from this repo.
+              >, with its own Jira state machine (<code
+                >Ready For QA → In Testing → Tested / Closed</code
+              >) and its own skill set (<code>/sprint-testing</code>, <code>/test-automation</code>,
+              etc.). Do not invoke QA-side skills from this repo.
             </p>
           </section>
 
@@ -2439,8 +2457,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <tr>
                     <th>Purpose</th>
                     <td>
-                      Next.js + Supabase <strong>runtime</strong> secrets and config (also the
-                      MCP credentials Claude reads at session start).
+                      Next.js + Supabase <strong>runtime</strong> secrets and config (also the MCP
+                      credentials Claude reads at session start).
                     </td>
                     <td>
                       AI <strong>context-engineering</strong> variables for
@@ -2451,8 +2469,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <th>Consumers</th>
                     <td>
                       Next.js runtime (<code>next dev</code>, route handlers, server actions),
-                      Supabase client, MCP servers (Tavily, Supabase, n8n), test runners
-                      (Vitest, Playwright), Atlassian CLI (<code>acli</code>).
+                      Supabase client, MCP servers (Tavily, Supabase, n8n), test runners (Vitest,
+                      Playwright), Atlassian CLI (<code>acli</code>).
                     </td>
                     <td>
                       AI agents (Claude Code, OpenCode, Cursor, Codex) when resolving skill /
@@ -2509,16 +2527,16 @@ bun run lint:agents           # validate placeholders</code></pre>
                 regardless of the active one.
               </li>
               <li>
-                <code>&lt;&lt;VAR_NAME&gt;&gt;</code> → session variable, computed at runtime by
-                the calling skill (e.g. <code>&lt;&lt;ISSUE_KEY&gt;&gt;</code> extracted from the
-                git branch). Never persisted.
+                <code>&lt;&lt;VAR_NAME&gt;&gt;</code> → session variable, computed at runtime by the
+                calling skill (e.g. <code>&lt;&lt;ISSUE_KEY&gt;&gt;</code> extracted from the git
+                branch). Never persisted.
               </li>
               <li>
                 <code>{{jira.&lt;slug&gt;}}</code> → portable Jira custom-field reference, resolves
                 through <code>.agents/jira-required.yaml</code> (manifest) +
                 <code>.agents/jira.json</code> (workspace catalog). Used by
-                <code>/sprint-development</code> and <code>/product-management</code> when they need to
-                read or update fields like <code>acceptance_criteria_gherkin</code>.
+                <code>/sprint-development</code> and <code>/product-management</code> when they need
+                to read or update fields like <code>acceptance_criteria_gherkin</code>.
               </li>
             </ul>
 
@@ -2747,8 +2765,8 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
 
             <p>
-              This is the canonical pattern the workflow skills follow. The orchestrator reads
-              its own dispatch strategy, writes a 6-component briefing for each subagent (<em
+              This is the canonical pattern the workflow skills follow. The orchestrator reads its
+              own dispatch strategy, writes a 6-component briefing for each subagent (<em
                 >Goal · Context docs · Skills to load · Exact instructions · Report format ·
                 Rules</em
               >), and the subagent loads tool skills (<code>/acli</code>,
@@ -2760,10 +2778,10 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h3>Circuit 3 — Skill-before-Bash auto-load</h3>
 
             <p>
-              A third circuit governs shell-out: when Bash is about to run a CLI binary, the AI
-              must load the matching skill <em>first</em>, before the command executes. The skill
-              holds the WHEN/WHAT (auth, flags, error semantics, edge cases); the binary executes
-              the HOW. Skipping the load step means flying blind on syntax.
+              A third circuit governs shell-out: when Bash is about to run a CLI binary, the AI must
+              load the matching skill <em>first</em>, before the command executes. The skill holds
+              the WHEN/WHAT (auth, flags, error semantics, edge cases); the binary executes the HOW.
+              Skipping the load step means flying blind on syntax.
             </p>
 
             <div class="table-wrap">
@@ -2804,7 +2822,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <tr>
                     <td><code>acli</code></td>
                     <td><code>/acli</code></td>
-                    <td>Atlassian CLI — Jira/Confluence workflows, slug syntax, custom-field IDs.</td>
+                    <td>
+                      Atlassian CLI — Jira/Confluence workflows, slug syntax, custom-field IDs.
+                    </td>
                   </tr>
                   <tr>
                     <td><code>playwright-cli</code></td>
@@ -2826,22 +2846,25 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
 
             <p class="small muted">
-              The full mapping is the source of truth in <code>CLAUDE.md</code> § 6.5; the CLI
-              names match exactly the <code>EXTERNAL_CLIS</code> constant in
-              <code>cli/install.ts</code>. Today this is a rule-based gate (system prompt
-              instruction); a future <code>PreToolUse</code> hook can enforce it.
+              The full mapping is the source of truth in <code>CLAUDE.md</code> § 6.5; the CLI names
+              match exactly the <code>EXTERNAL_CLIS</code> constant in <code>cli/install.ts</code>.
+              Today this is a rule-based gate (system prompt instruction); a future
+              <code>PreToolUse</code> hook can enforce it.
             </p>
           </section>
 
           <!-- =======================================================  SECTION 7 (NEW)  -->
           <section id="section-7">
-            <h2><span class="num">7.</span><code>/sprint-development</code> delivery paths — A vs B vs Standalone SDD</h2>
+            <h2>
+              <span class="num">7.</span><code>/sprint-development</code> delivery paths — A vs B vs
+              Standalone SDD
+            </h2>
 
             <p>
               <code>/sprint-development</code> is <strong>the</strong> driver for ticket-led work,
               but it does not always run the same flow inside. The skill internally picks
-              <strong>Path A</strong> (simple) or <strong>Path B</strong> (complex, composes the
-              SDD bundle) based on three gates: lines of code, architectural impact, and Strict TDD
+              <strong>Path A</strong> (simple) or <strong>Path B</strong> (complex, composes the SDD
+              bundle) based on three gates: lines of code, architectural impact, and Strict TDD
               status. Standalone <code>/sdd-*</code> is a third mode for exploratory work that has
               no ticket yet.
             </p>
@@ -2871,8 +2894,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <span class="gate-card-label">Path B</span>
                 <h4 class="gate-card-title">/sprint-development + SDD bundle</h4>
                 <p class="gate-card-when">
-                  Complex ticket. Sprint-dev orchestrates the SDD phases silently inside the
-                  cycle, then resumes Jira transitions + deploy.
+                  Complex ticket. Sprint-dev orchestrates the SDD phases silently inside the cycle,
+                  then resumes Jira transitions + deploy.
                 </p>
                 <ul class="gate-card-checks">
                   <li>Multi-file refactor OR new architecture</li>
@@ -2880,8 +2903,10 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <li>Strict TDD active for the project</li>
                 </ul>
                 <p class="gate-card-foot">
-                  Skills invoked: <code>sdd-init → sdd-design → sdd-tasks → sdd-apply →
-                  sdd-verify → sdd-archive</code>, wrapped by <code>/sprint-development</code>.
+                  Skills invoked:
+                  <code
+                    >sdd-init → sdd-design → sdd-tasks → sdd-apply → sdd-verify → sdd-archive</code
+                  >, wrapped by <code>/sprint-development</code>.
                 </p>
               </article>
 
@@ -2914,7 +2939,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <path
+                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                />
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
@@ -2922,10 +2949,11 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p class="callout-title">Review Workload Guard</p>
                 <p>
                   After <code>sdd-tasks</code> runs, the orchestrator inspects the Review Workload
-                  Forecast. If estimated changed lines exceed 400 OR <em>"Chained PRs
-                  recommended: Yes"</em> appears, the cached <code>delivery_strategy</code> kicks in
-                  (<code>ask-on-risk</code> · <code>auto-chain</code> · <code>single-pr</code> ·
-                  <code>exception-ok</code>). Path B isn't a free pass to a megaPR.
+                  Forecast. If estimated changed lines exceed 400 OR
+                  <em>"Chained PRs recommended: Yes"</em> appears, the cached
+                  <code>delivery_strategy</code> kicks in (<code>ask-on-risk</code> ·
+                  <code>auto-chain</code> · <code>single-pr</code> · <code>exception-ok</code>).
+                  Path B isn't a free pass to a megaPR.
                 </p>
               </div>
             </div>
@@ -2935,10 +2963,11 @@ bun run lint:agents           # validate placeholders</code></pre>
             <p>
               The default choice for normal day-to-day work. You have a Jira ticket, the AC is
               reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle:
-              precheck the epic, transition the ticket through dev states (<code>Ready For Dev →
-              In Progress → In Review → Ready For QA</code>), plan, code, code review, deploy to
-              staging, optionally deploy to production. Nothing about the change requires a
-              multi-page architectural document — a clear implementation plan is enough.
+              precheck the epic, transition the ticket through dev states (<code
+                >Ready For Dev → In Progress → In Review → Ready For QA</code
+              >), plan, code, code review, deploy to staging, optionally deploy to production.
+              Nothing about the change requires a multi-page architectural document — a clear
+              implementation plan is enough.
             </p>
 
             <p>
@@ -2950,12 +2979,11 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h3>When to reach for <code>/sdd-*</code></h3>
 
             <p>
-              The right choice when the change is shaped more like a research project than a
-              ticket. You're touching architecture, the design space has alternatives worth
-              comparing, the change crosses several modules, or there's no ticket yet because no
-              one has scoped the work. SDD gives you explicit phases (explore → propose → spec →
-              design → tasks → apply → verify → archive) and an artifact trail that survives across
-              sessions via Engram.
+              The right choice when the change is shaped more like a research project than a ticket.
+              You're touching architecture, the design space has alternatives worth comparing, the
+              change crosses several modules, or there's no ticket yet because no one has scoped the
+              work. SDD gives you explicit phases (explore → propose → spec → design → tasks → apply
+              → verify → archive) and an artifact trail that survives across sessions via Engram.
             </p>
 
             <p>
@@ -3084,7 +3112,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td>Validate <code>{{VAR}}</code> / <code>{{jira.*}}</code> placeholders</td>
-                    <td><code>bun run lint:agents</code></td>
+                    <td><code>bun run lint:vars</code></td>
                   </tr>
                   <tr>
                     <td>Verify the Jira manifest matches the catalog</td>
@@ -3146,12 +3174,11 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </div>
                 <p class="skill-card-trigger">(auto, cited by other skills)</p>
                 <p class="skill-card-desc">
-                  Passive reference host for shared doctrine (briefing template, dispatch
-                  patterns, orchestration, skill-composition strategy, behavioral layer, model
-                  routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded
-                  on demand by workflow skills — not invoked directly. Foundation files
-                  (<code>CLAUDE.md</code>, <code>.agents/</code>, <code>scripts/</code>) ship
-                  with the cloned repo.
+                  Passive reference host for shared doctrine (briefing template, dispatch patterns,
+                  orchestration, skill-composition strategy, behavioral layer, model routing, skill
+                  resolver, topic-key conventions, TypeScript patterns). Loaded on demand by
+                  workflow skills — not invoked directly. Foundation files (<code>CLAUDE.md</code>,
+                  <code>.agents/</code>, <code>scripts/</code>) ship with the cloned repo.
                 </p>
               </article>
 
@@ -3164,8 +3191,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p class="skill-card-trigger">/agentic-dev-onboard</p>
                 <p class="skill-card-desc">
                   Walks new users through this repo's dev flow — stack, Jira workflow, when to use
-                  <code>/sprint-development</code> vs <code>/sdd-*</code>, MCPs, env vars. The tour ends
-                  when the user knows which skill to call next.
+                  <code>/sprint-development</code> vs <code>/sdd-*</code>, MCPs, env vars. The tour
+                  ends when the user knows which skill to call next.
                 </p>
               </article>
 
@@ -3235,8 +3262,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </div>
                 <p class="skill-card-trigger">/sprint-development</p>
                 <p class="skill-card-desc">
-                  Per-story 12-step loop: planning → implementation → code review → staging deploy
-                  → (gated) production deploy. The mega-orchestrator. Drives Jira through
+                  Per-story 12-step loop: planning → implementation → code review → staging deploy →
+                  (gated) production deploy. The mega-orchestrator. Drives Jira through
                   <code>Ready For Dev → In Progress → In Review → Ready For QA</code>.
                 </p>
               </article>
@@ -3265,8 +3292,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p class="skill-card-desc">
                   Generates the in-app <code>/qa</code> page ("Software Testability Guide for QA")
                   plus a tool-agnostic credentials artifact published to Jira Epic / Confluence /
-                  Notion / MCP / CLI / manual paste. Idempotent: re-runs detect host-stack drift
-                  via a snapshot comment and propose surgical patches.
+                  Notion / MCP / CLI / manual paste. Idempotent: re-runs detect host-stack drift via
+                  a snapshot comment and propose surgical patches.
                 </p>
               </article>
 
@@ -3305,12 +3332,12 @@ bun run lint:agents           # validate placeholders</code></pre>
               Stack-specific knowledge and tool skills are <strong>not</strong> committed in this
               repo — policy is to commit only skills we maintain (T1). Community skills (Anthropic,
               Vercel Labs, Supabase, shadcn, Microsoft Playwright, etc.) are installed by
-              <code>bun run setup</code> from upstream, either at <strong>project level</strong>
-              (T3, into <code>.claude/skills/</code> on your clone) or at <strong>user level</strong>
-              (T4, into <code>~/.claude/skills/</code> for any project). Examples that get installed:
-              <code>frontend-design</code>, <code>next-best-practices</code>,
-              <code>next-cache-components</code>, <code>next-upgrade</code>,
-              <code>shadcn</code>, <code>react-best-practices</code>,
+              <code>bun run setup</code> from upstream, either at
+              <strong>project level</strong> (T3, into <code>.claude/skills/</code> on your clone)
+              or at <strong>user level</strong> (T4, into <code>~/.claude/skills/</code> for any
+              project). Examples that get installed: <code>frontend-design</code>,
+              <code>next-best-practices</code>, <code>next-cache-components</code>,
+              <code>next-upgrade</code>, <code>shadcn</code>, <code>react-best-practices</code>,
               <code>supabase-postgres-best-practices</code>, <code>playwright-cli</code>,
               <code>skill-creator</code>, <code>find-skills</code>, <code>gh-cli</code>,
               <code>brainstorming</code>, and more.
@@ -3319,8 +3346,8 @@ bun run lint:agents           # validate placeholders</code></pre>
             <p class="small muted">
               The exact T3 / T4 catalog lives in
               <code>cli/install.ts</code> (constants <code>PROJECT_LEVEL_SKILLS</code> and
-              <code>USER_LEVEL_SKILLS</code>) — source of truth, changes faster than this page.
-              See <code>README.md</code> § "Skill tiers (T1–T4)" for the full policy.
+              <code>USER_LEVEL_SKILLS</code>) — source of truth, changes faster than this page. See
+              <code>README.md</code> § "Skill tiers (T1–T4)" for the full policy.
             </p>
 
             <div class="callout callout-info">
@@ -3364,8 +3391,8 @@ bun run lint:agents           # validate placeholders</code></pre>
               <div class="composition-layer">
                 <span class="composition-layer-num">1</span>
                 <div>
-                  <strong>Workflow skill</strong> (e.g. <code>/sprint-development</code>) — owns
-                  the stage, picks Path A or Path B, transitions Jira, plans the PR.
+                  <strong>Workflow skill</strong> (e.g. <code>/sprint-development</code>) — owns the
+                  stage, picks Path A or Path B, transitions Jira, plans the PR.
                 </div>
               </div>
               <div class="composition-layer">
@@ -3381,8 +3408,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <span class="composition-layer-num">3</span>
                 <div>
                   <strong>Tool skills</strong> (e.g. <code>/git-flow-master</code>,
-                  <code>/acli</code>, <code>/playwright-cli</code>, <code>/gh-cli</code>) —
-                  loaded just-in-time when Bash needs to run <code>git</code>, <code>acli</code>,
+                  <code>/acli</code>, <code>/playwright-cli</code>, <code>/gh-cli</code>) — loaded
+                  just-in-time when Bash needs to run <code>git</code>, <code>acli</code>,
                   <code>playwright</code>, or <code>gh</code>. Hold the syntax + flags + error
                   semantics for their CLI.
                 </div>
@@ -3396,8 +3423,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 </div>
               </div>
               <p class="diagram-caption" style="margin-top: 0.75rem">
-                Read top-to-bottom. Workflow skills compose other workflow skills only when the
-                gate triggers it (Path B). Tool skills sit at the bottom of the food chain.
+                Read top-to-bottom. Workflow skills compose other workflow skills only when the gate
+                triggers it (Path B). Tool skills sit at the bottom of the food chain.
               </p>
             </div>
           </section>
@@ -3422,12 +3449,11 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <li>
                     <code>/sync-ai-memory</code>
                     <span class="muted"
-                      >Audit + patch the 5 always-included docs
-                      (<code>README.md</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
-                      <code>INSTALLER.md</code>,
-                      <code>docs/agentic-development-engineering.md</code>) plus the standalone
-                      HTML <code>docs/onboarding.html</code> and auto-detected high-frequency
-                      markdown. Preserves human-authored structure.</span
+                      >Audit + patch the 5 always-included docs (<code>README.md</code>,
+                      <code>CLAUDE.md</code>, <code>CONTEXT.md</code>, <code>INSTALLER.md</code>,
+                      <code>docs/agentic-development-engineering.md</code>) plus the standalone HTML
+                      <code>docs/onboarding.html</code> and auto-detected high-frequency markdown.
+                      Preserves human-authored structure.</span
                     >
                   </li>
                   <li>
@@ -3472,8 +3498,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <code>bun run setup</code>
                     <span class="muted"
                       >Interactive installer — gentle-ai skills + 4 canonical MCPs (Tavily,
-                      Context7, Supabase, n8n) + external CLI verification (vercel, supabase,
-                      acli, playwright, resend).</span
+                      Context7, Supabase, n8n) + external CLI verification (vercel, supabase, acli,
+                      playwright, resend).</span
                     >
                   </li>
                   <li>
@@ -3483,11 +3509,11 @@ bun run lint:agents           # validate placeholders</code></pre>
                     >
                   </li>
                   <li>
-                    <code>bun run lint:agents</code>
+                    <code>bun run lint:vars</code>
                     <span class="muted"
-                      >Validate every <code>{{VAR}}</code>, <code>{{jira.&lt;slug&gt;}}</code>,
-                      and <code>&lt;&lt;VAR&gt;&gt;</code> reference resolves against the
-                      manifest + catalog.</span
+                      >Validate every <code>{{VAR}}</code>, <code>{{jira.&lt;slug&gt;}}</code>, and
+                      <code>&lt;&lt;VAR&gt;&gt;</code> reference resolves against the manifest +
+                      catalog.</span
                     >
                   </li>
                   <li>
@@ -3547,8 +3573,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                   <li>
                     <code>bun run onboarding</code>
                     <span class="muted"
-                      >Serve this onboarding page on a local port and open it in the
-                      browser.</span
+                      >Serve this onboarding page on a local port and open it in the browser.</span
                     >
                   </li>
                 </ul>
@@ -3563,8 +3588,8 @@ bun run lint:agents           # validate placeholders</code></pre>
             <h3>Artifact refresh cycle</h3>
 
             <p>
-              The five utility commands generate <em>living artifacts</em> — files that drift as
-              the codebase evolves. Re-running them is normal maintenance, not a one-shot. Use this
+              The five utility commands generate <em>living artifacts</em> — files that drift as the
+              codebase evolves. Re-running them is normal maintenance, not a one-shot. Use this
               table to decide when to refresh each artifact.
             </p>
 
@@ -3580,7 +3605,10 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <tbody>
                   <tr>
                     <td><code>/sync-ai-memory</code></td>
-                    <td><code>README</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>, <code>INSTALLER.md</code>, this page</td>
+                    <td>
+                      <code>README</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>,
+                      <code>INSTALLER.md</code>, this page
+                    </td>
                     <td>
                       Major doc drift, new skill added, env/script renamed, repo restructured,
                       onboarding flow changed.
@@ -3598,8 +3626,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                     <td><code>/business-feature-map</code></td>
                     <td><code>.context/business/business-feature-map.md</code></td>
                     <td>
-                      New feature merged, feature flag added/removed, CRUD endpoint added,
-                      domain reshuffled.
+                      New feature merged, feature flag added/removed, CRUD endpoint added, domain
+                      reshuffled.
                     </td>
                   </tr>
                   <tr>
@@ -3679,9 +3707,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <code>sdd-design</code>, <code>sdd-tasks</code>, <code>sdd-apply</code>,
                 <code>sdd-verify</code>, <code>sdd-archive</code>, <code>skill-registry</code>):
                 installed by gentle-ai, hosted at the user level (not in this repo). They are
-                invoked directly when you choose the SDD path (see <a href="#section-7">§7</a>),
-                but the orchestrator that coordinates them runs in the background — you talk to it
-                via the <code>/sdd-*</code> triggers, not to its internal phase agents.
+                invoked directly when you choose the SDD path (see <a href="#section-7">§7</a>), but
+                the orchestrator that coordinates them runs in the background — you talk to it via
+                the <code>/sdd-*</code> triggers, not to its internal phase agents.
               </li>
               <li>
                 <strong>Engram (MCP persistent memory)</strong>: not a skill — an MCP server that
@@ -3709,14 +3737,14 @@ bun run lint:agents           # validate placeholders</code></pre>
                   compactions. The AI calls <code>mem_save</code> proactively (no user prompt
                   needed) whenever it makes an architecture decision, fixes a bug, learns a
                   convention, or hits a non-obvious gotcha. Subsequent sessions recall those
-                  memories via <code>mem_search</code> + <code>mem_get_observation</code>, so
-                  "we decided to use JWT instead of session cookies" survives without you having to
+                  memories via <code>mem_search</code> + <code>mem_get_observation</code>, so "we
+                  decided to use JWT instead of session cookies" survives without you having to
                   re-explain it.
                 </p>
                 <p>
-                  <strong>What the AI saves automatically:</strong> architecture / design
-                  decisions, conventions, bug root causes, non-obvious discoveries, workflow
-                  changes, user preferences, project-specific gotchas.
+                  <strong>What the AI saves automatically:</strong> architecture / design decisions,
+                  conventions, bug root causes, non-obvious discoveries, workflow changes, user
+                  preferences, project-specific gotchas.
                 </p>
                 <p>
                   <strong>What the AI searches automatically:</strong> any message containing
@@ -3726,8 +3754,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                 <p>
                   <strong>Session close:</strong> before saying "done", the AI calls
                   <code>mem_session_summary</code> with Goal · Discoveries · Accomplished · Next
-                  Steps · Relevant Files. That summary is the seed for the next session. Skip it
-                  and the next session starts blind.
+                  Steps · Relevant Files. That summary is the seed for the next session. Skip it and
+                  the next session starts blind.
                 </p>
                 <p class="small muted">
                   Full protocol: global <code>CLAUDE.md</code> § Engram. Installed by gentle-ai at
@@ -3783,8 +3811,8 @@ bun run lint:agents           # validate placeholders</code></pre>
             </div>
 
             <p>
-              Plus the always-available <strong>Engram</strong> MCP (persistent memory, installed
-              by gentle-ai) — not in the table above because you don't invoke it; the AI calls it
+              Plus the always-available <strong>Engram</strong> MCP (persistent memory, installed by
+              gentle-ai) — not in the table above because you don't invoke it; the AI calls it
               automatically on every save-worthy event.
             </p>
 
@@ -3815,8 +3843,7 @@ bun run lint:agents           # validate placeholders</code></pre>
               <li>
                 <strong><code>.context/</code></strong> = what the AI KNOWS about the project
                 (generated by <code>/project-foundation</code> and the
-                <code>/business-*-map</code> commands, kept fresh by
-                <code>/sync-ai-memory</code>).
+                <code>/business-*-map</code> commands, kept fresh by <code>/sync-ai-memory</code>).
               </li>
               <li>
                 <strong>Application code</strong> = the real product, scaffolded by
@@ -3888,8 +3915,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>INSTALLER.md</code></a
                 >
-                — full contract of what <code>bun run setup</code> configures and how to opt out
-                of gentle-ai.
+                — full contract of what <code>bun run setup</code> configures and how to opt out of
+                gentle-ai.
               </li>
               <li>
                 <a
@@ -3922,9 +3949,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>docs/methodology/</code></a
                 >
-                — supporting essays: <code>IQL-methodology.md</code>,
-                <code>jira-platform.md</code>, plus early/mid/late-game testing references mirrored
-                from the QA repo.
+                — supporting essays: <code>IQL-methodology.md</code>, <code>jira-platform.md</code>,
+                plus early/mid/late-game testing references mirrored from the QA repo.
               </li>
             </ul>
 
@@ -4042,8 +4068,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>agentic-qa-boilerplate</code></a
                 >
-                — the QA half. Sprint testing, test documentation, automation, regression.
-                Same <code>.agents/</code> variable system, complementary skill layout.
+                — the QA half. Sprint testing, test documentation, automation, regression. Same
+                <code>.agents/</code> variable system, complementary skill layout.
               </li>
             </ul>
           </section>
@@ -4071,7 +4097,10 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">agentic-development-engineering.md</span>
-            <span class="footer-card-desc">Strategy + 5-stage sprint-development pipeline + Next.js + Supabase architecture.</span>
+            <span class="footer-card-desc"
+              >Strategy + 5-stage sprint-development pipeline + Next.js + Supabase
+              architecture.</span
+            >
           </a>
           <a
             class="footer-card"
@@ -4107,7 +4136,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">agentic-dev-core/SKILL.md</span>
-            <span class="footer-card-desc">Foundation reference host (passive doctrine library).</span>
+            <span class="footer-card-desc"
+              >Foundation reference host (passive doctrine library).</span
+            >
           </a>
           <a
             class="footer-card"
@@ -4125,7 +4156,10 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">INSTALLER.md</span>
-            <span class="footer-card-desc">What <code>bun run setup</code> configures: gentle-ai, community skills, MCPs, external CLIs.</span>
+            <span class="footer-card-desc"
+              >What <code>bun run setup</code> configures: gentle-ai, community skills, MCPs,
+              external CLIs.</span
+            >
           </a>
           <a
             class="footer-card"
@@ -4134,7 +4168,9 @@ bun run lint:agents           # validate placeholders</code></pre>
             rel="noopener"
           >
             <span class="footer-card-title">agentic-qa-boilerplate</span>
-            <span class="footer-card-desc">The sister repo — picks the ticket up at Ready For QA.</span>
+            <span class="footer-card-desc"
+              >The sister repo — picks the ticket up at Ready For QA.</span
+            >
           </a>
         </div>
         <p class="footer-meta">

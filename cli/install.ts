@@ -78,7 +78,7 @@ interface InstallState {
   externalClis: Record<string, CliStatus>
   pendingEnvVars: string[]
   github?: GithubRemoteInfo
-  steps?: Record<string, string>  // step name → ISO timestamp of last successful run; gates re-runs
+  steps?: Record<string, string> // step name → ISO timestamp of last successful run; gates re-runs
 }
 
 // ============================================================================
@@ -1059,7 +1059,7 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
     if (originUrl.ok) {
       const url = originUrl.stdout.trim();
       // Match SSH (git@github.com:owner/repo.git) and HTTPS (https://github.com/owner/repo[.git]).
-      const match = url.match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+      const match = url.match(/github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?$/);
       if (match) {
         const [, account, repo] = match;
         state.github = {
@@ -1239,7 +1239,7 @@ function printClosingSummary(state: InstallState): void {
   n++;
   process.stdout.write(`  ${n}. Install missing CLIs (see table above — use your OS package manager)\n`);
   n++;
-  process.stdout.write(`  ${n}. Run: bun run lint:agents (validate config)\n`);
+  process.stdout.write(`  ${n}. Run: bun run lint:vars (validate config)\n`);
   n++;
   process.stdout.write(`  ${n}. In your agent: /sync-ai-memory (load initial context)\n`);
   n++;

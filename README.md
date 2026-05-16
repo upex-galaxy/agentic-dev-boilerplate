@@ -352,7 +352,7 @@ Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier
 packages/
 └── create-agentic-dev/   # Official npm scaffolder (bunx create-agentic-dev …) — own README + tests
 cli/                      # install.ts, update-boilerplate.ts, doctor, helpers consumed by bun scripts
-scripts/                  # CLI tooling: agents-lint, jira-sync, etc.
+scripts/                  # CLI tooling: lint-vars, jira-sync, etc.
 templates/                # Files copied into bootstrapped projects by /project-bootstrap
 CLAUDE.md                 # Project memory loaded every AI session
 CONTEXT.md                # Context Engineering canonical reference
@@ -378,7 +378,7 @@ See `.agents/README.md` for the full contract.
 **Validation scripts:**
 
 ```bash
-bun run lint:agents        # Every {{VAR}} and {{jira.*}} reference resolves
+bun run lint:vars          # Every {{VAR}} and {{jira.*}} reference resolves
 bun run jira:sync-fields   # Discover Jira custom fields -> .agents/jira-fields.json
 bun run jira:check         # Validate jira-required.yaml against jira-fields.json
 ```
@@ -397,7 +397,7 @@ bun up --auto             # Non-interactive / CI mode (safe changes only, exit 0
 bun up --dry-run          # Preview what would change without writing anything
 bun up --rollback         # Restore from most recent backup
 bun run api:sync          # Sync OpenAPI spec + generate types
-bun run lint:agents       # Validate {{VAR}} and {{jira.*}} references
+bun run lint:vars         # Validate {{VAR}} and {{jira.*}} references
 bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```

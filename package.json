@@ -13,7 +13,7 @@
     "onboarding": "bun scripts/onboarding.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
     "jira:sync-issues": "bun run scripts/sync-jira-issues.ts",
-    "lint:agents": "bun run scripts/agents-lint.ts",
+    "lint:vars": "bun run scripts/lint-vars.ts",
     "lint:skills": "bun run scripts/lint-skills.ts",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
     "jira:check": "bun run scripts/check-jira-setup.ts",
