@@ -177,6 +177,27 @@
 
 ---
 
+## 6.5 CLI → SKILL AUTO-LOAD MAPPING
+
+> Whenever Bash invokes one of these binaries, LOAD the matching skill via the Skill tool BEFORE running the command. The skill holds WHEN/WHAT; the binary executes HOW. Skipping the load step means flying blind on syntax, flags, auth, error semantics.
+
+| CLI              | Skills to auto-load                                                    | Rationale                                                                       |
+| ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.    |
+| `gh`             | `/gh-cli`, `/git-flow-master`                                          | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.        |
+| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                   |
+| `vercel`         | `/deploy-to-vercel`, `/sprint-development`                             | Deploy CLI + sprint-dev's staging/prod deploy steps.                             |
+| `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                       |
+| `acli`           | `/acli`                                                                | Atlassian CLI — Jira/Confluence workflows. Owns slug syntax + custom-field IDs.  |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation — used by sprint-dev E2E checks + standalone QA capture.      |
+| `jq`             | `/acli`                                                                | JSON processor — required by acli skill for parsing `acli ... --json` output.    |
+
+**Mandatory**: before any `Bash` call that names one of these binaries, check the matching skill is loaded for this session. If not, load it via the Skill tool first. This is a hard gate, not a suggestion.
+
+**Enforcement today**: rule-based (system-prompt instruction). No `PreToolUse` hook enforces it yet. If a future hook is added, it will read this table as the source of truth — keep CLI names spelled exactly as they appear in `cli/install.ts` `EXTERNAL_CLIS`.
+
+---
+
 ## 7. PROJECT VARIABLES — POINTER
 
 > ALL variable syntax + Jira field references documented in **`.agents/README.md`**. READ ONCE per session, cache values.
