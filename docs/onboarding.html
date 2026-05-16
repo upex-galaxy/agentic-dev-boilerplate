@@ -756,6 +756,81 @@
         font-size: 0.78rem;
       }
 
+      /* Onboarding path cards (Getting started) */
+      .path-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0 2rem;
+      }
+      .path-card {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        position: relative;
+        transition:
+          border-color 0.15s,
+          transform 0.15s;
+      }
+      .path-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .path-card.recommended {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent-soft);
+      }
+      .path-card-eyebrow {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+      }
+      .path-card.recommended .path-card-eyebrow {
+        color: var(--accent);
+      }
+      .path-card-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0 0 0.5rem;
+      }
+      .path-card-cmd {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        background: var(--accent-soft);
+        color: var(--accent);
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
+        margin: 0.5rem 0 0.75rem;
+        overflow-x: auto;
+      }
+      .path-card-desc {
+        font-size: 0.88rem;
+        color: var(--text-soft);
+        line-height: 1.5;
+        margin-bottom: 0.75rem;
+      }
+      .path-card-steps {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        padding-left: 1.1rem;
+        margin: 0;
+      }
+      .path-card-steps li {
+        margin-bottom: 0.2rem;
+      }
+      .path-card-foot {
+        margin-top: auto;
+        padding-top: 0.75rem;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+
       /* Misc */
       a {
         color: var(--accent);
@@ -789,7 +864,7 @@
   </head>
   <body>
     <header class="shell hero">
-      <span class="hero-eyebrow">Onboarding · v1.2</span>
+      <span class="hero-eyebrow">Onboarding · v1.3</span>
       <h1>Agentic <span class="accent">Dev</span> Boilerplate</h1>
       <p class="hero-sub">AI-driven development on Next.js + Supabase + TypeScript.</p>
       <p class="hero-tagline">
@@ -942,13 +1017,17 @@
       </div>
 
       <div class="cta-grid">
+        <a class="cta" href="#getting-started">
+          <span class="cta-title">Start here →</span>
+          <span class="cta-desc">3 ways to bootstrap a project: magic command, GitHub template, manual clone.</span>
+        </a>
         <a class="cta" href="#section-3">
           <span class="cta-title">The lifecycle</span>
           <span class="cta-desc">Five phases, from clone to daily dev.</span>
         </a>
         <a class="cta" href="#section-9">
           <span class="cta-title">Skill catalog</span>
-          <span class="cta-desc">All 10 workflow skills, what they do, when to call them.</span>
+          <span class="cta-desc">11 workflow skills + 5 utility commands, what they do, when to call them.</span>
         </a>
         <a class="cta" href="#section-8">
           <span class="cta-title">Cheat sheet</span>
@@ -962,6 +1041,7 @@
         <summary>Table of contents</summary>
         <nav class="toc">
           <ol>
+            <li><a href="#getting-started"><strong>Start here →</strong> 3 onboarding paths</a></li>
             <li><a href="#section-1">1. The fundamental idea</a></li>
             <li><a href="#section-2">2. Three categories of moving parts</a></li>
             <li><a href="#section-3">3. The lifecycle</a></li>
@@ -985,6 +1065,7 @@
           <nav class="toc" aria-label="Table of contents">
             <p class="toc-title">Contents</p>
             <ol>
+              <li><a href="#getting-started"><strong>Start here →</strong></a></li>
               <li><a href="#section-1">1. The fundamental idea</a></li>
               <li><a href="#section-2">2. Three moving parts</a></li>
               <li><a href="#section-3">3. The lifecycle</a></li>
