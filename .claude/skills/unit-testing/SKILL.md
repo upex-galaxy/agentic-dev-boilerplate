@@ -60,9 +60,9 @@ Steps:
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
-| Category   | Likely matches                                                                                            |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| `language` | `typescript-advanced-types` (T3) — applied when designing type-aware mocks, generic test utilities        |
+| Category   | Likely matches                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| `language` | `typescript-advanced-types` (T3) — applied when designing type-aware mocks, generic test utilities |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 

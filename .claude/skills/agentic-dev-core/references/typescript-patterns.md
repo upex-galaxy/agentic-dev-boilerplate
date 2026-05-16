@@ -45,10 +45,10 @@ Shared utility modules (`utils/`, `lib/`) MUST NOT import domain types. If a uti
 
 ```ts
 // ❌
-import { UserRepo } from '../../../api/repos/user-repo'
+import { UserRepo } from '../../../api/repos/user-repo';
 
 // ✅
-import { UserRepo } from '@api/repos/user-repo'
+import { UserRepo } from '@api/repos/user-repo';
 ```
 
 Deep relative imports break under refactor and hide module boundaries. Aliases (`@api/`, `@schemas/`, `@utils/`, `@db/`, `@features/`) make the dependency graph readable.
@@ -71,23 +71,23 @@ Keeping types at the top means a reader sees the contract before the implementat
 
 ## Errors — fail fast vs silent fail
 
-| Layer | Style | Why |
-|---|---|---|
-| Public API methods (route handlers, exported functions) | **Fail fast** — throw with a clear message | Caller knows immediately what's wrong; stack trace points to the source |
-| Internal utilities (helpers, parsers, formatters) | **Silent fail** — return `null` or `undefined` | Utility shouldn't decide policy; caller decides whether absence is fatal |
+| Layer                                                   | Style                                          | Why                                                                      |
+| ------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ |
+| Public API methods (route handlers, exported functions) | **Fail fast** — throw with a clear message     | Caller knows immediately what's wrong; stack trace points to the source  |
+| Internal utilities (helpers, parsers, formatters)       | **Silent fail** — return `null` or `undefined` | Utility shouldn't decide policy; caller decides whether absence is fatal |
 
 ```ts
 // ✅ public: throw
 export async function getUser(id: string): Promise<User> {
-  const user = await db.users.find(id)
-  if (!user) throw new NotFoundError(`User ${id} not found`)
-  return user
+  const user = await db.users.find(id);
+  if (!user) throw new NotFoundError(`User ${id} not found`);
+  return user;
 }
 
 // ✅ utility: return null
 export function parseIsoDate(input: string): Date | null {
-  const d = new Date(input)
-  return Number.isNaN(d.getTime()) ? null : d
+  const d = new Date(input);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 ```
 
@@ -103,4 +103,4 @@ Three rules of thumb for where shared code belongs:
 - Shared utilities (`utils/`, `lib/`) — framework-agnostic only. No React, no Next, no Bun-specific APIs.
 - Domain logic stays inside its feature folder (`features/{domain}/`). Move it to `shared/` only when ≥2 features import it AND the abstraction is stable.
 
-Three similar lines is better than a premature abstraction. Don't extract on the second occurrence — wait for the third, and only if the duplicate has the same *reason to change*. Coincidentally-similar code with different reasons to change should stay duplicated.
+Three similar lines is better than a premature abstraction. Don't extract on the second occurrence — wait for the third, and only if the duplicate has the same _reason to change_. Coincidentally-similar code with different reasons to change should stay duplicated.

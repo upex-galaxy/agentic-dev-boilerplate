@@ -25,7 +25,7 @@
     "context7": {
       "type": "local",
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
-      "enabled": true
+      "enabled": true,
     },
     "tavily": {
       "type": "local",
@@ -33,9 +33,9 @@
         "bunx",
         "-y",
         "mcp-remote",
-        "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}"
+        "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
       ],
-      "enabled": true
+      "enabled": true,
     },
     "atlassian": {
       "type": "local",
@@ -44,8 +44,8 @@
       "environment": {
         "JIRA_URL": "{env:JIRA_URL}",
         "JIRA_USERNAME": "{env:JIRA_USERNAME}",
-        "JIRA_API_TOKEN": "{env:JIRA_API_TOKEN}"
-      }
+        "JIRA_API_TOKEN": "{env:JIRA_API_TOKEN}",
+      },
     },
     "supabase": {
       "type": "local",
@@ -54,14 +54,14 @@
         "-y",
         "@supabase/mcp-server-supabase@latest",
         "--access-token",
-        "{env:SUPABASE_ACCESS_TOKEN}"
+        "{env:SUPABASE_ACCESS_TOKEN}",
       ],
       "enabled": true,
       "environment": {
         "SUPABASE_URL": "{env:SUPABASE_URL}",
         "SUPABASE_ANON_KEY": "{env:SUPABASE_ANON_KEY}",
-        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SERVICE_ROLE_KEY}"
-      }
+        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SERVICE_ROLE_KEY}",
+      },
     },
     "n8n": {
       "type": "local",
@@ -72,9 +72,9 @@
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
         "N8N_API_URL": "{env:N8N_API_URL}",
-        "N8N_API_KEY": "{env:N8N_API_KEY}"
-      }
-    }
+        "N8N_API_KEY": "{env:N8N_API_KEY}",
+      },
+    },
   },
 
   // Permissions — mirrors .claude/settings.json 1:1.
@@ -137,7 +137,7 @@
       "truncate *": "deny",
       "shred *": "deny",
       "dd if=*": "deny",
-      "mkfs*": "deny"
-    }
-  }
+      "mkfs*": "deny",
+    },
+  },
 }

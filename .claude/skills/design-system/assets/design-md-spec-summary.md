@@ -19,9 +19,9 @@
 ## 2. Frontmatter shape (verbatim from Google Labs)
 
 ```yaml
-version: <string>          # optional, current: "alpha"
-name: <string>             # required — human-readable system name
-description: <string>      # optional — one-liner pitch
+version: <string> # optional, current: "alpha"
+name: <string> # required — human-readable system name
+description: <string> # optional — one-liner pitch
 colors:
   <token-name>: <Color>
 typography:
@@ -62,23 +62,23 @@ components:
 
 ## 3. Token value types
 
-| Type | Form | Example |
-|------|------|---------|
-| **Color** | hex sRGB string | `"#1A1C1E"` |
-| **Dimension** | number + unit | `48px`, `1rem`, `0.5em`, `-0.02em` |
+| Type                | Form             | Example                                    |
+| ------------------- | ---------------- | ------------------------------------------ |
+| **Color**           | hex sRGB string  | `"#1A1C1E"`                                |
+| **Dimension**       | number + unit    | `48px`, `1rem`, `0.5em`, `-0.02em`         |
 | **Token Reference** | curly-brace path | `{colors.primary}`, `{typography.body-md}` |
-| **Typography** | object | see below |
+| **Typography**      | object           | see below                                  |
 
 ### Typography object — full shape
 
 ```yaml
-fontFamily: <string>          # required
-fontSize: <Dimension>         # required
+fontFamily: <string> # required
+fontSize: <Dimension> # required
 fontWeight: <number | string> # optional (e.g., 400, 700, "bold")
 lineHeight: <Dimension | number>
-letterSpacing: <Dimension>    # e.g., "-0.02em"
-fontFeature: <string>         # OpenType features, e.g., "ss01"
-fontVariation: <string>       # variable-font axes
+letterSpacing: <Dimension> # e.g., "-0.02em"
+fontFeature: <string> # OpenType features, e.g., "ss01"
+fontVariation: <string> # variable-font axes
 ```
 
 Why all fields exist: downstream exporters (Tailwind, DTCG) map each to a CSS / token property. Omitted fields default to browser/exporter defaults.
@@ -110,10 +110,10 @@ Sections use `##` headings. The lint rule `section-order` warns on reorder.
 ---
 name: Heritage
 colors:
-  primary: "#1A1C1E"
-  secondary: "#6C7278"
-  tertiary: "#B8422E"
-  neutral: "#F7F5F2"
+  primary: '#1A1C1E'
+  secondary: '#6C7278'
+  tertiary: '#B8422E'
+  neutral: '#F7F5F2'
 typography:
   h1:
     fontFamily: Public Sans
@@ -155,16 +155,16 @@ Use this example as the structural template when generating new systems. The bre
 
 The linter executes seven rules at fixed severity. Always run after generation.
 
-| Rule | Severity | Purpose |
-|------|----------|---------|
-| `broken-ref` | error | Token references (`{colors.primary}`) that don't resolve |
-| `missing-primary` | warning | Colors defined but no `primary` color exists |
-| `contrast-ratio` | warning | Component `backgroundColor`/`textColor` pairs below WCAG AA (4.5:1) |
-| `orphaned-tokens` | warning | Color tokens defined but never referenced by component |
-| `missing-typography` | warning | Colors defined but no typography tokens exist |
-| `section-order` | warning | Sections out of canonical order |
-| `missing-sections` | info | Optional sections absent when tokens exist |
-| `token-summary` | info | Summary of token counts per section |
+| Rule                 | Severity | Purpose                                                             |
+| -------------------- | -------- | ------------------------------------------------------------------- |
+| `broken-ref`         | error    | Token references (`{colors.primary}`) that don't resolve            |
+| `missing-primary`    | warning  | Colors defined but no `primary` color exists                        |
+| `contrast-ratio`     | warning  | Component `backgroundColor`/`textColor` pairs below WCAG AA (4.5:1) |
+| `orphaned-tokens`    | warning  | Color tokens defined but never referenced by component              |
+| `missing-typography` | warning  | Colors defined but no typography tokens exist                       |
+| `section-order`      | warning  | Sections out of canonical order                                     |
+| `missing-sections`   | info     | Optional sections absent when tokens exist                          |
+| `token-summary`      | info     | Summary of token counts per section                                 |
 
 **Operational rules**:
 
@@ -178,11 +178,11 @@ The linter executes seven rules at fixed severity. Always run after generation.
 
 ## 7. Export targets (`npx @google/design.md export`)
 
-| Target | Output | Use case |
-|--------|--------|----------|
-| `json-tailwind` | JSON `theme.extend` config for Tailwind v3 | Inject into `tailwind.config.js` |
-| `css-tailwind` | CSS `@theme { ... }` block with custom properties for Tailwind v4 | Drop into `globals.css` |
-| `dtcg` | W3C Design Tokens Community Group format JSON | Hand off to Figma / Style Dictionary / any DTCG consumer |
+| Target          | Output                                                            | Use case                                                 |
+| --------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| `json-tailwind` | JSON `theme.extend` config for Tailwind v3                        | Inject into `tailwind.config.js`                         |
+| `css-tailwind`  | CSS `@theme { ... }` block with custom properties for Tailwind v4 | Drop into `globals.css`                                  |
+| `dtcg`          | W3C Design Tokens Community Group format JSON                     | Hand off to Figma / Style Dictionary / any DTCG consumer |
 
 Why three targets: covers the two dominant Tailwind versions plus the cross-tool industry standard. The `/project-bootstrap` skill consumes `json-tailwind` or `css-tailwind` depending on the project's Tailwind version.
 

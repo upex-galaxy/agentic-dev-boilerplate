@@ -16,19 +16,19 @@ This directory contains **pre-configured MCP server templates** for different AI
 
 Templates use `{{VARIABLE}}` as a universal **find-and-replace placeholder** — it's NOT runtime-evaluated syntax. Before using the file, replace every `{{VAR}}` using one of two strategies:
 
-| Strategy                           | Replace `{{VAR}}` with                       | Then                                              | Use when                          |
-| ---------------------------------- | -------------------------------------------- | ------------------------------------------------- | --------------------------------- |
-| **A. Literal value** (legacy)      | The real secret directly                     | Add the config file to `.gitignore`               | Personal-only config              |
-| **B. Native env-var expansion** ⭐ | Tool-native syntax (see table below)         | Store the real value in `.env`, commit the config | Team-shared config (recommended)  |
+| Strategy                           | Replace `{{VAR}}` with               | Then                                              | Use when                         |
+| ---------------------------------- | ------------------------------------ | ------------------------------------------------- | -------------------------------- |
+| **A. Literal value** (legacy)      | The real secret directly             | Add the config file to `.gitignore`               | Personal-only config             |
+| **B. Native env-var expansion** ⭐ | Tool-native syntax (see table below) | Store the real value in `.env`, commit the config | Team-shared config (recommended) |
 
 ### Native env-var syntax (for strategy B)
 
-| Tool        | Syntax                       | Example          | Missing-var behavior                 |
-| ----------- | ---------------------------- | ---------------- | ------------------------------------ |
-| Claude Code | `${VAR}` / `${VAR:-default}` | `${API_TOKEN}`   | **Fails to parse the config** (safe) |
-| OpenCode    | `{env:VAR}`                  | `{env:API_TOKEN}`| Substitutes empty string (footgun)   |
-| Codex CLI   | `${VAR}`                     | `${API_TOKEN}`   | Depends on field                     |
-| Gemini CLI  | `$VAR` / `${VAR}`            | `$API_TOKEN`     | Depends on field                     |
+| Tool        | Syntax                       | Example           | Missing-var behavior                 |
+| ----------- | ---------------------------- | ----------------- | ------------------------------------ |
+| Claude Code | `${VAR}` / `${VAR:-default}` | `${API_TOKEN}`    | **Fails to parse the config** (safe) |
+| OpenCode    | `{env:VAR}`                  | `{env:API_TOKEN}` | Substitutes empty string (footgun)   |
+| Codex CLI   | `${VAR}`                     | `${API_TOKEN}`    | Depends on field                     |
+| Gemini CLI  | `$VAR` / `${VAR}`            | `$API_TOKEN`      | Depends on field                     |
 
 For strategy B, also need a `.env` loader so the agent process has the vars at spawn time:
 

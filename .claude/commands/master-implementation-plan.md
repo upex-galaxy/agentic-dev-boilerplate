@@ -18,6 +18,7 @@ Generate or update `.context/master-implementation-plan.md` — a business-deriv
 A conversational, senior-engineer-voice document that sits **on top of** `business-data-map.md` and `business-feature-map.md` and converts them into a ranked implementation strategy.
 
 The output contains:
+
 - Executive value/priority map (top features, ranked by user-value × urgency × blocking factor)
 - Per-wave implementation rationale (what unlocks revenue, what unlocks other features, what unlocks user trust)
 - Features / state machines that block others (foundational work)
@@ -35,14 +36,14 @@ This is **NOT** a story-level implementation plan (→ `/sprint-development` Pla
 
 ## Sources (use ALL available)
 
-| Source | Status | What to extract | Tool |
-|--------|--------|----------------|------|
-| `.context/business/business-data-map.md` | **HARD REQUIREMENT** | Critical flows, state machines, automatic processes, integrations, business rules — every feature inherits one of these | Read file |
-| `.context/business/business-feature-map.md` | Optional — warn if missing | Feature catalog, CRUD matrix, feature flags, dependency tags, MVP-relevance matrix | Read file |
-| Existing context | If available | PRD priorities, SRS architecture, user journeys, domain glossary | `.context/PRD/`, `.context/SRS/` |
-| Git history | If signals needed | Already-shipped modules (skip), recently-touched modules (in-flight) | `git log --oneline -90 --stat` |
-| PBI epics | If available | Existing epic/story breakdowns to align the plan with current backlog | `.context/PBI/{module}/ROADMAP.md` |
-| Issue tracker | If helpful | Already-prioritized backlog signals from product | `[ISSUE_TRACKER_TOOL]` |
+| Source                                      | Status                     | What to extract                                                                                                         | Tool                               |
+| ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `.context/business/business-data-map.md`    | **HARD REQUIREMENT**       | Critical flows, state machines, automatic processes, integrations, business rules — every feature inherits one of these | Read file                          |
+| `.context/business/business-feature-map.md` | Optional — warn if missing | Feature catalog, CRUD matrix, feature flags, dependency tags, MVP-relevance matrix                                      | Read file                          |
+| Existing context                            | If available               | PRD priorities, SRS architecture, user journeys, domain glossary                                                        | `.context/PRD/`, `.context/SRS/`   |
+| Git history                                 | If signals needed          | Already-shipped modules (skip), recently-touched modules (in-flight)                                                    | `git log --oneline -90 --stat`     |
+| PBI epics                                   | If available               | Existing epic/story breakdowns to align the plan with current backlog                                                   | `.context/PBI/{module}/ROADMAP.md` |
+| Issue tracker                               | If helpful                 | Already-prioritized backlog signals from product                                                                        | `[ISSUE_TRACKER_TOOL]`             |
 
 **Golden rule**: ground every priority claim in evidence from the maps. "This feature is Wave 0 because…" must cite either a data-map flow (revenue / legal / blocker), a feature-map MVP-relevance row, a named external dependency, or an explicit user-journey reference. No hand-wave prioritization.
 
@@ -93,13 +94,14 @@ From git log: modules already touched (filter out as "in flight" or "shipped") s
 
 Apply this rubric to every flow / feature / automatic process. The rubric is **internal** — the output document shows conclusions, not the scoring table.
 
-| Factor | H (3) | M (2) | L (1) |
-|--------|-------|-------|-------|
-| **User Value** | Core revenue path, primary user job, persona-critical | Secondary job, supports retention | Polish, nice-to-have |
-| **Blocking Factor** | Many downstream features depend on this (auth, data model, schema) | One or two downstream features depend on it | Isolated, nothing else waits on it |
-| **Urgency / Risk** | Required for MVP, contract / legal deadline, external integration with long lead time | Should ship soon, but not MVP-blocking | Can wait without business impact |
+| Factor              | H (3)                                                                                 | M (2)                                       | L (1)                              |
+| ------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------- |
+| **User Value**      | Core revenue path, primary user job, persona-critical                                 | Secondary job, supports retention           | Polish, nice-to-have               |
+| **Blocking Factor** | Many downstream features depend on this (auth, data model, schema)                    | One or two downstream features depend on it | Isolated, nothing else waits on it |
+| **Urgency / Risk**  | Required for MVP, contract / legal deadline, external integration with long lead time | Should ship soon, but not MVP-blocking      | Can wait without business impact   |
 
 Composite score = product of the three. Map:
+
 - `≥ 18` → **Wave 0** (foundational — must ship first; unblocks the rest)
 - `8–17` → **Wave 1** (core MVP — main value delivery)
 - `3–7` → **Wave 2** (post-MVP enhancement)
@@ -150,12 +152,12 @@ ASCII box with project name + one-line intent ("What to implement in this system
 Narrative paragraph (3–5 sentences) framing the system's biggest value-unlock features and the foundational work they sit on top of, followed by:
 
 ```markdown
-| Priority | Feature                          | Why it matters                            | Unlocks / Depends on                   |
-|----------|----------------------------------|-------------------------------------------|-----------------------------------------|
-| Wave 0   | Auth & account model             | Every gated feature waits on this         | Unlocks: checkout, profile, billing     |
-| Wave 0   | Catalog / domain core entities   | Schema for the main domain object         | Unlocks: search, listing, checkout      |
-| Wave 1   | Checkout & payment               | Primary revenue path                      | Depends on: auth, catalog, payments API |
-| Wave 1   | Notifications (email)            | Closes the loop on every transactional flow | Depends on: auth, checkout              |
+| Priority | Feature                        | Why it matters                              | Unlocks / Depends on                    |
+| -------- | ------------------------------ | ------------------------------------------- | --------------------------------------- |
+| Wave 0   | Auth & account model           | Every gated feature waits on this           | Unlocks: checkout, profile, billing     |
+| Wave 0   | Catalog / domain core entities | Schema for the main domain object           | Unlocks: search, listing, checkout      |
+| Wave 1   | Checkout & payment             | Primary revenue path                        | Depends on: auth, catalog, payments API |
+| Wave 1   | Notifications (email)          | Closes the loop on every transactional flow | Depends on: auth, checkout              |
 ```
 
 Cap at 7–10 rows. Anything below Wave 1 goes to §10 as a short list or §11 if it needs a spike first.
@@ -163,6 +165,7 @@ Cap at 7–10 rows. Anything below Wave 1 goes to §10 as a short list or §11 i
 ### 3. What to implement first and why
 
 One subsection per Wave 0 / Wave 1 feature. For each:
+
 - **Why it matters** — user/business value + what is blocked if it does not exist (product-facing wording, not technical)
 - **What it unblocks** — concrete downstream features that become possible (or pointless) once this ships
 - **Dependencies** — what must already exist before this can start (entities, integrations, architectural decisions)
@@ -179,6 +182,7 @@ This section gives the reader the **shape of the roadmap** without committing to
 ### 5. Features / state machines that block others
 
 Only the items where shipping them unblocks ≥ 2 other features, or shipping them late actively rots downstream work. Per item:
+
 - Why the dependency is real (technical reason, not preference)
 - Which downstream features will rework if this lands wrong
 - Smallest version of this item that still unblocks the rest (do not gold-plate a Wave 0 feature)
@@ -189,6 +193,7 @@ This is usually where the most leverage hides — a tight Wave 0 ships the rest 
 ### 6. Hidden dependencies
 
 Features that share an entity, a state machine, an external integration, or a business rule but live in different epics. Per coupling:
+
 - The shared element (entity / machine / integration / rule)
 - The features on each side of the coupling
 - What goes wrong if they are designed in isolation (schema rework, double-source-of-truth, permission drift, eventual-consistency races)
@@ -199,6 +204,7 @@ This section is the section that saves the most rework cost. Be specific.
 ### 7. External integrations roadmap
 
 Per third-party service (Stripe, SendGrid, Auth0, Twilio, etc.):
+
 - Which feature first requires it
 - What it unlocks once integrated (often more than the feature that triggered it)
 - Lead-time concerns (account approval, KYC, sandbox-vs-prod drift, rate limits)
@@ -222,6 +228,7 @@ Point is: shipping a Wave 1 feature in isolation is fine for the demo, but the *
 ### 9. Edge implementation cases
 
 Features with ambiguous scope, pending technical decisions, or competing approaches. Grouped by theme, not by feature:
+
 - **Pending architectural decisions** (sync vs async, sql vs nosql for a sub-domain, in-process vs queue, monolith vs split)
 - **Scope-ambiguous features** (admin UI vs API-only, multi-tenant vs single-tenant per-feature, hard delete vs soft delete)
 - **Competing approaches** (build vs buy, framework primitive vs custom, polling vs webhooks)
@@ -264,6 +271,7 @@ Finish §11 with a short "Deferred / won't-do" subsection listing anything expli
 ### 12. Implementation gaps
 
 MANDATORY. List anything you could not ground in evidence — these are spike candidates, not unknowns to ignore:
+
 - Features mentioned in the PRD but missing from `business-data-map.md` (no entity / flow yet)
 - Integrations without a documented provider choice
 - Architectural decisions implied but never recorded (sync vs async, transport, deployment unit)

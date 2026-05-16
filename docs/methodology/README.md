@@ -7,8 +7,8 @@
 
 ## Contenido
 
-| Documento                                                       | Descripción                                         |
-| --------------------------------------------------------------- | --------------------------------------------------- |
+| Documento                                                                                                                       | Descripción                                         |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | [IQL-methodology.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/methodology/IQL-methodology.md)       | Integrated Quality Lifecycle - Metodología completa |
 | [early-game-testing.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/methodology/early-game-testing.md) | IQL Fase 1: Prevención y planificación              |
 | [mid-game-testing.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/methodology/mid-game-testing.md)     | IQL Fase 2: Detección y automatización              |

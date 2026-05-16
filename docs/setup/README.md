@@ -7,9 +7,9 @@
 
 ## Contenido
 
-| Documento                                    | Descripción                                            |
-| -------------------------------------------- | ------------------------------------------------------ |
-| [jira-setup-guide.md](./jira-setup-guide.md) | Configuración de Jira + Xray como TMS                  |
+| Documento                                    | Descripción                           |
+| -------------------------------------------- | ------------------------------------- |
+| [jira-setup-guide.md](./jira-setup-guide.md) | Configuración de Jira + Xray como TMS |
 
 ---
 

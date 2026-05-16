@@ -319,13 +319,11 @@ work_types:
         description: Restore an aborted story back to ready_for_dev
 
     used_by:
-      [
-        acli,
-        sprint-development,
-        agentic-qa-boilerplate (sprint-testing,
-        test-documentation,
-        project-discovery),
-      ]
+      - acli
+      - sprint-development
+      - agentic-qa-boilerplate (sprint-testing
+      - test-documentation
+      - project-discovery)
 
   bug:
     jira_issue_type: Bug

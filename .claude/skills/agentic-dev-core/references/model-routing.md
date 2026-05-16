@@ -81,11 +81,11 @@ The metadata block is identical in all six skills, but each skill spends most of
 
 | Skill                | Primary phases                                    | Notes                                                                                       |
 | -------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `agentic-dev-core`       | `foundation`                                      | One-time setup. All five keys present for completeness; `foundation` is the active one.     |
+| `agentic-dev-core`   | `foundation`                                      | One-time setup. All five keys present for completeness; `foundation` is the active one.     |
 | `project-foundation` | `foundation`, `planning`                          | All five keys; `foundation` (Constitution) and `planning` (PRD / SRS) are the active ones.  |
 | `project-bootstrap`  | `foundation`, `implementation`                    | Bootstrap decisions are foundation-y; scaffolding is implementation-y.                      |
 | `product-management` | `planning`, `review`                              | Backlog work is planning + reviewing AC quality and INVEST.                                 |
-| `sprint-development`         | `planning`, `implementation`, `review`, `archive` | The per-story loop hits all four phases sequentially (plan -> code -> review -> close-out). |
+| `sprint-development` | `planning`, `implementation`, `review`, `archive` | The per-story loop hits all four phases sequentially (plan -> code -> review -> close-out). |
 | `unit-testing`       | `implementation`                                  | TDD is implementation-phase. `planning` is light (test design lives inside the impl loop).  |
 
 A dispatcher that wants to be smart can use this table to pre-cache the right model before each stage of `sprint-development`, for example.

@@ -32,6 +32,7 @@ Why el path convencional `design/handoff/`: estandariza dónde la skill busca el
 Una vez impresas las instrucciones, la skill **bloquea** esperando al user con AskUserQuestion:
 
 > ¿Ya exportaste el bundle de Claude Design a `design/handoff/`?
+>
 > - **yes** — ya está, procedé al ingest.
 > - **not yet** — sigo en el browser, esperá.
 > - **abort** — cancelar este path y volver al menú de selección.
@@ -85,11 +86,11 @@ Claude Design consume los rate limits del plan del user (Pro / Max / Team / Ente
 
 ## Troubleshooting
 
-| Síntoma | Causa probable | Fix |
-|---------|----------------|-----|
-| `design/handoff/<slug>/` no existe después de export | El user eligió otro path en "Save as folder" | Preguntar al user el path real, ajustar y re-ingest |
-| `tokens.json` no está en el bundle | Claude Design cambió el schema del export | Surface el error claramente; fallback: re-correr Path E **from scratch** ignorando el bundle, usando solo Constitution+PRD como input |
-| `README.md` tiene implementation hints que conflictúan con el spec Google Labs | Claude Design escribe el README pensando en Claude Code, no en DESIGN.md | Preserve los token values del `tokens.json` (canónicos), ignorá el prose de implementación del README, usá solo la parte "visual rationale" como input al prose del DESIGN.md |
-| Export falla en `claude.ai/design` con "Contact administrator" | Org Enterprise con Claude Design deshabilitado | No hay workaround técnico — el user debe pedirle al admin que active el feature en Organization Settings, o caer a Path B/C/E |
-| Bundle pesa mucho (>50MB) por screenshots/assets | Normal — Claude Design exporta state snapshots completos | OK, no problem; la skill solo lee `tokens.json` + `README.md`, ignora el resto |
-| Re-export necesario porque el user cambió de opinión | El user puede re-iterar en `claude.ai/design` y re-exportar a `design/handoff/<slug-v2>/` | La skill detecta múltiples slugs en `design/handoff/` y pregunta cuál es el canónico antes del ingest |
+| Síntoma                                                                        | Causa probable                                                                            | Fix                                                                                                                                                                           |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `design/handoff/<slug>/` no existe después de export                           | El user eligió otro path en "Save as folder"                                              | Preguntar al user el path real, ajustar y re-ingest                                                                                                                           |
+| `tokens.json` no está en el bundle                                             | Claude Design cambió el schema del export                                                 | Surface el error claramente; fallback: re-correr Path E **from scratch** ignorando el bundle, usando solo Constitution+PRD como input                                         |
+| `README.md` tiene implementation hints que conflictúan con el spec Google Labs | Claude Design escribe el README pensando en Claude Code, no en DESIGN.md                  | Preserve los token values del `tokens.json` (canónicos), ignorá el prose de implementación del README, usá solo la parte "visual rationale" como input al prose del DESIGN.md |
+| Export falla en `claude.ai/design` con "Contact administrator"                 | Org Enterprise con Claude Design deshabilitado                                            | No hay workaround técnico — el user debe pedirle al admin que active el feature en Organization Settings, o caer a Path B/C/E                                                 |
+| Bundle pesa mucho (>50MB) por screenshots/assets                               | Normal — Claude Design exporta state snapshots completos                                  | OK, no problem; la skill solo lee `tokens.json` + `README.md`, ignora el resto                                                                                                |
+| Re-export necesario porque el user cambió de opinión                           | El user puede re-iterar en `claude.ai/design` y re-exportar a `design/handoff/<slug-v2>/` | La skill detecta múltiples slugs en `design/handoff/` y pregunta cuál es el canónico antes del ingest                                                                         |

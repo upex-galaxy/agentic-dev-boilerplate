@@ -99,10 +99,10 @@ Preguntale al user si querés conservar el volume (`docker compose down -v` lo b
 
 ## Troubleshooting
 
-| Síntoma | Causa probable | Fix |
-|---------|----------------|-----|
-| `docker compose up` falla con `port already allocated` | 7456 ocupado por otro servicio | `export OPEN_DESIGN_PORT=7800 && docker compose up -d`, abrir `localhost:7800` |
-| UI dice "No coding agent detected" | Open Design no encontró Claude Code / Cursor / etc. en PATH | Settings → BYOK → meter Anthropic API key, o instalar el CLI faltante y reload |
-| `./.od/artifacts/` está vacío después de la iteración | Open Design no completó el render (timeout o agent CLI murió) | Re-correr el brief desde la UI; revisar logs en `docker compose logs -f` |
-| El artifact final no representa lo que el user vio en pantalla | Cache de browser stale | Hard reload (Cmd+Shift+R / Ctrl+Shift+R), re-exportar |
-| Path E genera un `DESIGN.md` que no se parece a lo iterado | El bridge no pasó los artifacts correctamente | Verificar que la delegación a Path E incluya los paths exactos de los HTML y el slug; re-correr con inputs explícitos |
+| Síntoma                                                        | Causa probable                                                | Fix                                                                                                                   |
+| -------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `docker compose up` falla con `port already allocated`         | 7456 ocupado por otro servicio                                | `export OPEN_DESIGN_PORT=7800 && docker compose up -d`, abrir `localhost:7800`                                        |
+| UI dice "No coding agent detected"                             | Open Design no encontró Claude Code / Cursor / etc. en PATH   | Settings → BYOK → meter Anthropic API key, o instalar el CLI faltante y reload                                        |
+| `./.od/artifacts/` está vacío después de la iteración          | Open Design no completó el render (timeout o agent CLI murió) | Re-correr el brief desde la UI; revisar logs en `docker compose logs -f`                                              |
+| El artifact final no representa lo que el user vio en pantalla | Cache de browser stale                                        | Hard reload (Cmd+Shift+R / Ctrl+Shift+R), re-exportar                                                                 |
+| Path E genera un `DESIGN.md` que no se parece a lo iterado     | El bridge no pasó los artifacts correctamente                 | Verificar que la delegación a Path E incluya los paths exactos de los HTML y el slug; re-correr con inputs explícitos |

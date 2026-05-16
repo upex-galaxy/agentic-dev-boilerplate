@@ -6,10 +6,10 @@ User-driven exploration. The skill does not match or rank — the user browses t
 
 ## Two gallery sources
 
-| Source | Brands | License surface | Auth | Best for |
-|--------|--------|-----------------|------|----------|
-| **`getdesign` catalog** | 72 (curated) | MIT (all) | None | Quality-vetted picks, deterministic slugs |
-| **`designmd.ai` community** | 278 (community) | MIT / CC0 / CC-BY / CC-BY-SA | Free API key `DESIGNMD_API_KEY` | Variety, niche styles, recent uploads |
+| Source                      | Brands          | License surface              | Auth                            | Best for                                  |
+| --------------------------- | --------------- | ---------------------------- | ------------------------------- | ----------------------------------------- |
+| **`getdesign` catalog**     | 72 (curated)    | MIT (all)                    | None                            | Quality-vetted picks, deterministic slugs |
+| **`designmd.ai` community** | 278 (community) | MIT / CC0 / CC-BY / CC-BY-SA | Free API key `DESIGNMD_API_KEY` | Variety, niche styles, recent uploads     |
 
 Why two: the `getdesign` set is small but every entry has been hand-tuned and is licensed MIT. `designmd.ai` is roughly 4x larger but quality and license vary per entry. Surface both — let the user pick.
 

@@ -6,11 +6,7 @@
     },
     "tavily": {
       "command": "bunx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"
-      ]
+      "args": ["-y", "mcp-remote", "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}"]
     },
     "atlassian": {
       "command": "uvx",

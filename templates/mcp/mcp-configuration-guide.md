@@ -45,10 +45,10 @@ Esta guía explica cómo configurar MCP (Model Context Protocol) servers para di
 
 ### Dos Estrategias Posibles
 
-| Estrategia                          | Cómo                                                                                                          | Cuándo usar                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **A. Replace + gitignore (legacy)** | Reemplazás `{{VAR}}` con el valor literal en el config y agregás el archivo al `.gitignore`                   | Configs personales que nunca se compartirán                            |
-| **B. Env-var expansion + commit**   | Reemplazás `{{VAR}}` con la sintaxis nativa de env vars de la herramienta y guardás el valor real en `.env`   | **Recomendado** para configs compartidos con el equipo (ver más abajo) |
+| Estrategia                          | Cómo                                                                                                        | Cuándo usar                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **A. Replace + gitignore (legacy)** | Reemplazás `{{VAR}}` con el valor literal en el config y agregás el archivo al `.gitignore`                 | Configs personales que nunca se compartirán                            |
+| **B. Env-var expansion + commit**   | Reemplazás `{{VAR}}` con la sintaxis nativa de env vars de la herramienta y guardás el valor real en `.env` | **Recomendado** para configs compartidos con el equipo (ver más abajo) |
 
 ### Formato Universal en Templates: `{{VAR}}`
 
@@ -56,12 +56,12 @@ Los archivos en este directorio usan `{{VARIABLE}}` solo como marcador de "busca
 
 ### Formato Nativo por Herramienta (para estrategia B)
 
-| Herramienta | Formato Nativo                | Ejemplo                                | Si la var no existe                  |
-| ----------- | ----------------------------- | -------------------------------------- | ------------------------------------ |
-| Claude Code | `${VAR}` o `${VAR:-default}`  | `${API_TOKEN}` / `${HOST:-localhost}`  | **Falla al parsear el config** (safe) |
-| OpenCode    | `{env:VAR}`                   | `{env:API_TOKEN}`                      | Sustituye string vacío (footgun)     |
-| Codex CLI   | `${VAR}` / `bearer_token_env_var = "NAME"` | `${API_TOKEN}`            | Depende del campo                    |
-| Gemini CLI  | `$VAR` o `${VAR}`             | `$API_TOKEN`                           | Depende del campo                    |
+| Herramienta | Formato Nativo                             | Ejemplo                               | Si la var no existe                   |
+| ----------- | ------------------------------------------ | ------------------------------------- | ------------------------------------- |
+| Claude Code | `${VAR}` o `${VAR:-default}`               | `${API_TOKEN}` / `${HOST:-localhost}` | **Falla al parsear el config** (safe) |
+| OpenCode    | `{env:VAR}`                                | `{env:API_TOKEN}`                     | Sustituye string vacío (footgun)      |
+| Codex CLI   | `${VAR}` / `bearer_token_env_var = "NAME"` | `${API_TOKEN}`                        | Depende del campo                     |
+| Gemini CLI  | `$VAR` o `${VAR}`                          | `$API_TOKEN`                          | Depende del campo                     |
 
 **Campos donde la expansión funciona (Claude Code):** `command`, `args`, `env`, `url`, `headers`.
 **Campos donde la expansión funciona (OpenCode):** `headers`, `oauth`, y en la práctica también `command`, `environment`, `url` cuando se prueba.

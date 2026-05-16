@@ -177,9 +177,9 @@ gh api /repos/owner/repo/contents/path/to/openapi.yaml
 
 ## Flujos relacionados
 
-| Flujo               | Cuando usarlo                 | Documento                                                                 |
-| ------------------- | ----------------------------- | ------------------------------------------------------------------------- |
-| **sync-openapi.ts** | Backend externo tiene el spec | Este documento                                                            |
+| Flujo               | Cuando usarlo                 | Documento                                                                                                                                   |
+| ------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **sync-openapi.ts** | Backend externo tiene el spec | Este documento                                                                                                                              |
 | **Zod-to-OpenAPI**  | Tu defines schemas con Zod    | [openapi-contract-testing.md](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/testing/api/openapi-contract-testing.md) |
 
 ---

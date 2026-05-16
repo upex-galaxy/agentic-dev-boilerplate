@@ -15,12 +15,12 @@ Generate or update `.context/business/business-data-map.md` — a **visual and n
 
 ## When to use
 
-| Use this command for | Use a different tool for |
-|----------------------|--------------------------|
-| Mapping/refreshing the domain model and business flows | API endpoint inventory → `/business-api-map` |
-| Documenting state machines and automatic processes | Feature inventory → `/business-feature-map` |
-| Synthesizing DB + backend + frontend into one map | Implementation roadmap → `/master-implementation-plan` |
-| Producing the canonical reference for downstream planning | QA test planning (out of scope, see sister repo) |
+| Use this command for                                      | Use a different tool for                               |
+| --------------------------------------------------------- | ------------------------------------------------------ |
+| Mapping/refreshing the domain model and business flows    | API endpoint inventory → `/business-api-map`           |
+| Documenting state machines and automatic processes        | Feature inventory → `/business-feature-map`            |
+| Synthesizing DB + backend + frontend into one map         | Implementation roadmap → `/master-implementation-plan` |
+| Producing the canonical reference for downstream planning | QA test planning (out of scope, see sister repo)       |
 
 The output feeds `/master-implementation-plan` and informs every `/sprint-development` cycle. Treat this as the **most valuable context file in the repo** for developers.
 
@@ -56,11 +56,11 @@ This command is **invocable standalone** — you do NOT have to run `/project-fo
 
 `$ARGUMENTS` accepts:
 
-| Value | Behavior |
-|-------|----------|
-| Empty | Map the entire system |
-| `module=<name>` | Scope discovery to a single module/epic (e.g. `module=billing`) — produce a narrower map |
-| `<absolute-path>` | Treat the path as the project root (for adapting another repo) |
+| Value             | Behavior                                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| Empty             | Map the entire system                                                                    |
+| `module=<name>`   | Scope discovery to a single module/epic (e.g. `module=billing`) — produce a narrower map |
+| `<absolute-path>` | Treat the path as the project root (for adapting another repo)                           |
 
 ---
 
@@ -68,16 +68,16 @@ This command is **invocable standalone** — you do NOT have to run `/project-fo
 
 Exhaust every source before writing. Cite paths/files for every claim.
 
-| Source | What to extract | How to access |
-|--------|-----------------|---------------|
-| **Database schema** | Tables, columns, relationships, constraints, enums, RLS policies, triggers | Supabase MCP — `mcp__claude_ai_Supabase__list_tables`, `execute_sql` against `{{DB_MCP}}` (active env). Use it to **understand**, not to dump `information_schema`. |
-| **Backend codebase** | Services, controllers, models, validation rules, business logic, schemas | Read files under the backend tree (e.g. `api/`, `src/server/`, `app/api/`). Focus on services and controllers, not boilerplate. |
-| **Frontend codebase** | Pages, routes, forms, user flows, state management, client schemas | Read files under the frontend tree (e.g. `src/app/`, `src/pages/`, `src/routes/`). Focus on user-facing flows. |
-| **API surface** | Routes, methods, payloads, auth levels | Read `api/openapi.json` if it exists; otherwise read route files directly. Cross-check with `bun run api:sync` output. |
-| **Existing context** | PRD, SRS, domain glossary, prior maps | `.context/PRD/`, `.context/SRS/`, `.context/business/` |
-| **Package dependencies** | External integrations (Stripe, SendGrid, Auth0, Resend, etc.) | `package.json`, `requirements.txt`, `Gemfile`, etc. — match names against known SaaS services. |
-| **Library docs (when needed)** | Confirm how an external SDK shapes data flow | Context7 MCP for library docs; Tavily MCP for community patterns. |
-| **Workflow automation** | n8n flows that touch the domain | n8n MCP (only if relevant — most projects will not have it). |
+| Source                         | What to extract                                                            | How to access                                                                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database schema**            | Tables, columns, relationships, constraints, enums, RLS policies, triggers | Supabase MCP — `mcp__claude_ai_Supabase__list_tables`, `execute_sql` against `{{DB_MCP}}` (active env). Use it to **understand**, not to dump `information_schema`. |
+| **Backend codebase**           | Services, controllers, models, validation rules, business logic, schemas   | Read files under the backend tree (e.g. `api/`, `src/server/`, `app/api/`). Focus on services and controllers, not boilerplate.                                     |
+| **Frontend codebase**          | Pages, routes, forms, user flows, state management, client schemas         | Read files under the frontend tree (e.g. `src/app/`, `src/pages/`, `src/routes/`). Focus on user-facing flows.                                                      |
+| **API surface**                | Routes, methods, payloads, auth levels                                     | Read `api/openapi.json` if it exists; otherwise read route files directly. Cross-check with `bun run api:sync` output.                                              |
+| **Existing context**           | PRD, SRS, domain glossary, prior maps                                      | `.context/PRD/`, `.context/SRS/`, `.context/business/`                                                                                                              |
+| **Package dependencies**       | External integrations (Stripe, SendGrid, Auth0, Resend, etc.)              | `package.json`, `requirements.txt`, `Gemfile`, etc. — match names against known SaaS services.                                                                      |
+| **Library docs (when needed)** | Confirm how an external SDK shapes data flow                               | Context7 MCP for library docs; Tavily MCP for community patterns.                                                                                                   |
+| **Workflow automation**        | n8n flows that touch the domain                                            | n8n MCP (only if relevant — most projects will not have it).                                                                                                        |
 
 **Golden rule**: synthesize, don't extract. The DB MCP gives you schema on demand at any time — your job here is to write the layer that connects schema + code + business intent into a story a developer can act on.
 
@@ -198,8 +198,8 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 # Business Data Map: <Project Name>
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║ <PROJECT NAME> — BUSINESS DATA MAP                                           ║
-║ <one-line tagline>                                                           ║
+║ <PROJECT NAME> — BUSINESS DATA MAP ║
+║ <one-line tagline> ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 ---
@@ -212,8 +212,8 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 
 ### Main Actors
 
-| Actor | Description |
-|-------|-------------|
+| Actor     | Description                  |
+| --------- | ---------------------------- |
 | <Actor 1> | <what they do in the system> |
 
 ### Value Proposition
@@ -228,8 +228,8 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 
 ### Entities and Their Business Role
 
-| Entity | Business Role | Why It Exists |
-|--------|---------------|---------------|
+| Entity | Business Role        | Why It Exists       |
+| ------ | -------------------- | ------------------- |
 | <name> | <what it represents> | <problem it solves> |
 
 ### Key Relationships
@@ -272,9 +272,9 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 
 **Transitions:**
 
-| From | To | Triggering Event | Effects |
-|------|----|------------------|---------|
-| <A>  | <B>| <what causes it> | <what happens> |
+| From | To  | Triggering Event | Effects        |
+| ---- | --- | ---------------- | -------------- |
+| <A>  | <B> | <what causes it> | <what happens> |
 
 **Business Rules:**
 
@@ -287,17 +287,17 @@ The generated file must follow this exact skeleton. Use ASCII diagrams extensive
 ### Database Triggers
 
 | Trigger | When It Executes | What It Does | Why It Exists |
-|---------|------------------|--------------|---------------|
+| ------- | ---------------- | ------------ | ------------- |
 
 ### Cron Jobs / Scheduled Tasks
 
 | Job | Frequency | What It Does | Why It Exists |
-|-----|-----------|--------------|---------------|
+| --- | --------- | ------------ | ------------- |
 
 ### Async Workers / Incoming Webhooks
 
 | Worker / Webhook | Source / Trigger | What It Processes | System Effects |
-|------------------|------------------|-------------------|----------------|
+| ---------------- | ---------------- | ----------------- | -------------- |
 
 ---
 
@@ -371,6 +371,7 @@ After generation, print a short report:
 **Scope**: <full-system | module=<name>>
 
 ## Documented
+
 - Entities: <N>
 - Business flows: <N>
 - State machines: <N>
@@ -378,9 +379,11 @@ After generation, print a short report:
 - External integrations: <N>
 
 ## Discovery Gaps
+
 - <list, or "None">
 
 ## Suggested next steps
+
 - <e.g. `/master-implementation-plan` to schedule the work>
 - <e.g. `/project-foundation` if PRD/SRS were missing>
 ```

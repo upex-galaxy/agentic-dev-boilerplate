@@ -57,16 +57,16 @@ The agent regenerating this file MUST preserve this header on every update.
 
 Exhaust every source. Do not rely on code alone — cross-reference with DB, API, and existing docs.
 
-| Source                       | What to extract                                                                | Tool                                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| API routes / endpoints       | Features exposed via HTTP — each endpoint is a developer-visible capability    | Read route files; if OpenAPI exists, parse `api/openapi.json`; use `[API_TOOL]` if available      |
-| Frontend routes + pages      | User-facing features — each page/form/modal is a user operation                | Read `{{FRONTEND_REPO}}/{{FRONTEND_ENTRY}}` — focus on routes, pages, forms, modals, dashboards   |
-| Database schema              | Entities that back features — CRUD capabilities per entity                     | `[DB_TOOL]` (Supabase MCP) — read-only queries for table structure and FK relationships           |
-| Backend services             | Business logic, validation, processing, background jobs                        | Read `{{BACKEND_REPO}}/{{BACKEND_ENTRY}}` — focus on services, controllers, handlers, workers     |
-| Package dependencies         | Third-party integrations (payments, email, auth, analytics, monitoring)        | Read `package.json`, `requirements.txt`, `Gemfile`, etc.                                          |
-| Feature flags / env vars     | Disabled, experimental, or beta features                                       | Grep for `FEATURE_`, `ENABLE_`, `BETA_`, `isEnabled`, `feature.*flag` in codebase + `.env.example` |
-| Existing context             | PRD, SRS, business-data-map, domain glossary                                   | `.context/PRD/`, `.context/SRS/`, `.context/business/business-data-map.md`                        |
-| Git history (recent)         | Recently added, in-progress, or deprecated features                            | `git log --oneline -30` plus `git branch -a` for active feature branches                          |
+| Source                   | What to extract                                                             | Tool                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| API routes / endpoints   | Features exposed via HTTP — each endpoint is a developer-visible capability | Read route files; if OpenAPI exists, parse `api/openapi.json`; use `[API_TOOL]` if available       |
+| Frontend routes + pages  | User-facing features — each page/form/modal is a user operation             | Read `{{FRONTEND_REPO}}/{{FRONTEND_ENTRY}}` — focus on routes, pages, forms, modals, dashboards    |
+| Database schema          | Entities that back features — CRUD capabilities per entity                  | `[DB_TOOL]` (Supabase MCP) — read-only queries for table structure and FK relationships            |
+| Backend services         | Business logic, validation, processing, background jobs                     | Read `{{BACKEND_REPO}}/{{BACKEND_ENTRY}}` — focus on services, controllers, handlers, workers      |
+| Package dependencies     | Third-party integrations (payments, email, auth, analytics, monitoring)     | Read `package.json`, `requirements.txt`, `Gemfile`, etc.                                           |
+| Feature flags / env vars | Disabled, experimental, or beta features                                    | Grep for `FEATURE_`, `ENABLE_`, `BETA_`, `isEnabled`, `feature.*flag` in codebase + `.env.example` |
+| Existing context         | PRD, SRS, business-data-map, domain glossary                                | `.context/PRD/`, `.context/SRS/`, `.context/business/business-data-map.md`                         |
+| Git history (recent)     | Recently added, in-progress, or deprecated features                         | `git log --oneline -30` plus `git branch -a` for active feature branches                           |
 
 **Golden rule**: a feature is any **capability the system offers** — API endpoints, UI actions, background processes, integrations. If a user or system can DO it, it's a feature.
 
@@ -218,8 +218,8 @@ One section per domain. Each feature:
 ### 3. CRUD matrix
 
 ```markdown
-| Entity | Create | Read | Update | Delete  | Evidence    |
-| ------ | ------ | ---- | ------ | ------- | ----------- |
+| Entity | Create | Read | Update | Delete  | Evidence   |
+| ------ | ------ | ---- | ------ | ------- | ---------- |
 | User   | ✅     | ✅   | ✅     | ⚠️ Soft | api/users/ |
 ```
 
@@ -251,10 +251,10 @@ Three sub-tables:
 
 **WIP signals (from git + grep):**
 
-| Signal                 | Evidence                  | Estimated status |
-| ---------------------- | ------------------------- | ---------------- |
+| Signal                 | Evidence                            | Estimated status |
+| ---------------------- | ----------------------------------- | ---------------- |
 | `feature/UPEX-XYZ-...` | Active branch, last push N days ago | WIP              |
-| `TODO: implement X`    | path:line                 | Planned          |
+| `TODO: implement X`    | path:line                           | Planned          |
 
 ### 8. Discovery gaps
 
