@@ -330,5 +330,5 @@ Este template usa: Local → Staging → Production (simplificado para aprendiza
 ## Navegación
 
 - [Git Flow](./git-flow.md) - Flujo de trabajo con Git
-- [TMLC](./test-manual-lifecycle.md) - Ciclo de vida del testing manual
-- [TALC](./test-automation-lifecycle.md) - Ciclo de vida de la automatización
+- [TMLC](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/workflows/test-manual-lifecycle.md) - Ciclo de vida del testing manual
+- [TALC](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/workflows/test-automation-lifecycle.md) - Ciclo de vida de la automatización

@@ -225,5 +225,5 @@ Sin GitHub MCP configurado, el flujo funciona pero pierdes automatización en la
 ## Navegación
 
 - [Ambientes](./environments.md) - Entender dev, staging, production
-- [TMLC](./test-manual-lifecycle.md) - Ciclo de vida del testing manual
-- [TALC](./test-automation-lifecycle.md) - Ciclo de vida de la automatización
+- [TMLC](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/workflows/test-manual-lifecycle.md) - Ciclo de vida del testing manual
+- [TALC](https://github.com/upex-galaxy/agentic-qa-boilerplate/blob/main/docs/workflows/test-automation-lifecycle.md) - Ciclo de vida de la automatización
