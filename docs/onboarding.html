@@ -3429,6 +3429,91 @@ bun run lint:agents           # validate placeholders</code></pre>
               Run <code>bun &lt;script&gt; --help</code> on any script for usage. The Vitest binary
               is installed locally — no global install needed.
             </p>
+
+            <h3>Artifact refresh cycle</h3>
+
+            <p>
+              The five utility commands generate <em>living artifacts</em> — files that drift as
+              the codebase evolves. Re-running them is normal maintenance, not a one-shot. Use this
+              table to decide when to refresh each artifact.
+            </p>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Command</th>
+                    <th>Artifact</th>
+                    <th>Refresh when…</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>/sync-ai-memory</code></td>
+                    <td><code>README</code>, <code>CLAUDE.md</code>, <code>CONTEXT.md</code>, <code>INSTALLER.md</code>, this page</td>
+                    <td>
+                      Major doc drift, new skill added, env/script renamed, repo restructured,
+                      onboarding flow changed.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>/business-data-map</code></td>
+                    <td><code>.context/business/business-data-map.md</code></td>
+                    <td>
+                      Schema migration shipped, new entity, state machine changed, external
+                      integration added.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>/business-feature-map</code></td>
+                    <td><code>.context/business/business-feature-map.md</code></td>
+                    <td>
+                      New feature merged, feature flag added/removed, CRUD endpoint added,
+                      domain reshuffled.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>/business-api-map</code></td>
+                    <td><code>.context/business/business-api-map.md</code></td>
+                    <td>
+                      Auth model changed, critical journey added, API architecture decision made,
+                      new external service consumed.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>/master-implementation-plan</code></td>
+                    <td><code>.context/master-implementation-plan.md</code></td>
+                    <td>
+                      Backlog reshaped, dependency cascade changed, roadmap pivot, sprint plan
+                      diverged from reality.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="callout callout-info">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <div>
+                <p class="callout-title">Rule of thumb</p>
+                <p>
+                  If a teammate (or your future self) would read the artifact and reach a wrong
+                  conclusion, it is stale — re-run. Otherwise, leave it. These commands are
+                  idempotent: re-running them with no drift produces a no-op diff.
+                </p>
+              </div>
+            </div>
           </section>
 
           <!-- =======================================================  SECTION 11 (NEW)  -->
