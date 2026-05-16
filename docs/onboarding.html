@@ -1152,6 +1152,140 @@
             </p>
           </section>
 
+          <!-- =======================================================  GETTING STARTED  -->
+          <section id="getting-started">
+            <h2>Getting started — 3 paths to bootstrap</h2>
+
+            <p>
+              Pick the entry point that matches your goal. The <strong>magic command</strong> is the
+              fastest and what 90% of users want; the other two paths exist for specific cases
+              (GitHub-first workflows, or contributing to the boilerplate itself).
+            </p>
+
+            <div class="path-grid">
+              <!-- Path 1 — Magic command (recommended) -->
+              <article class="path-card recommended">
+                <span class="path-card-eyebrow">Recommended · npm scaffolder</span>
+                <h3 class="path-card-title">Magic command</h3>
+                <pre class="path-card-cmd">bunx create-agentic-dev &lt;your-repo-name&gt;</pre>
+                <p class="path-card-desc">
+                  One command downloads the boilerplate as a tarball (no git history), renames your
+                  project, runs <code>bun install</code>, and hands off to the interactive
+                  installer.
+                </p>
+                <ol class="path-card-steps">
+                  <li>Tarball download (latest <code>main</code>)</li>
+                  <li>Rewrite <code>package.json</code> + <code>.agents/project.yaml</code></li>
+                  <li>Fresh <code>git init -b main</code> + initial commit</li>
+                  <li><code>bun install</code></li>
+                  <li>
+                    <code>bun run setup</code> — gentle-ai, 15 skills, MCPs, <code>.env</code>,
+                    optional <code>gh repo create</code>
+                  </li>
+                </ol>
+                <p class="path-card-foot">
+                  Details:
+                  <a
+                    href="https://www.npmjs.com/package/create-agentic-dev"
+                    target="_blank"
+                    rel="noopener"
+                    >npm package</a
+                  >
+                  ·
+                  <a
+                    href="https://github.com/upex-galaxy/agentic-dev-boilerplate/tree/main/packages/create-agentic-dev"
+                    target="_blank"
+                    rel="noopener"
+                    >source + flags</a
+                  >
+                </p>
+              </article>
+
+              <!-- Path 2 — GitHub "Use this template" -->
+              <article class="path-card">
+                <span class="path-card-eyebrow">GitHub-first</span>
+                <h3 class="path-card-title">"Use this template"</h3>
+                <pre class="path-card-cmd">Click → clone → bun install &amp;&amp; bun run setup</pre>
+                <p class="path-card-desc">
+                  Create your repo on GitHub from day one. Good when you want the remote first and
+                  the local checkout second.
+                </p>
+                <ol class="path-card-steps">
+                  <li>
+                    Click
+                    <a
+                      href="https://github.com/upex-galaxy/agentic-dev-boilerplate/generate"
+                      target="_blank"
+                      rel="noopener"
+                      ><strong>Use this template → Create a new repository</strong></a
+                    >
+                  </li>
+                  <li>Pick owner, name, visibility</li>
+                  <li>Clone YOUR new repo locally</li>
+                  <li><code>bun install &amp;&amp; bun run setup</code></li>
+                  <li>
+                    Manually edit <code>package.json</code> <code>name</code> +
+                    <code>.agents/project.yaml</code> <code>project.name</code>
+                  </li>
+                </ol>
+                <p class="path-card-foot">
+                  Trade-off: keeps upstream git history; you rename manually. The magic command
+                  does both steps automatically.
+                </p>
+              </article>
+
+              <!-- Path 3 — Manual clone (contributors) -->
+              <article class="path-card">
+                <span class="path-card-eyebrow">Contributors only</span>
+                <h3 class="path-card-title">Manual clone</h3>
+                <pre class="path-card-cmd">git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre>
+                <p class="path-card-desc">
+                  For hacking on the boilerplate <em>itself</em> — skills, installer, scripts,
+                  docs. End-users should NOT use this path; the project will keep the upstream
+                  name and full git history.
+                </p>
+                <ol class="path-card-steps">
+                  <li>
+                    <code
+                      >git clone
+                      https://github.com/upex-galaxy/agentic-dev-boilerplate.git</code
+                    >
+                  </li>
+                  <li><code>cd agentic-dev-boilerplate</code></li>
+                  <li><code>bun install</code></li>
+                  <li><code>bun run setup</code></li>
+                </ol>
+                <p class="path-card-foot">
+                  Use this only if you intend to send PRs against the boilerplate itself.
+                </p>
+              </article>
+            </div>
+
+            <div class="callout callout-info">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <div>
+                <p class="callout-title">Why the magic command is the default</p>
+                <p>
+                  The boilerplate ships with upstream commit history and a generic project name. The
+                  scaffolder scrubs that history and rewrites the name in two files so your repo
+                  looks like <em>your</em> project from commit #1. Both other paths require you to
+                  do those steps by hand.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <!-- =======================================================  SECTION 2  -->
           <section id="section-2">
             <h2><span class="num">2.</span>Three categories of moving parts</h2>
