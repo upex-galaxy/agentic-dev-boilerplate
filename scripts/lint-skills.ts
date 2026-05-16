@@ -47,10 +47,10 @@ const SPRINT_DEV_EXEMPT = 'sprint-development'; // uses "## SDD Composition" ins
 
 type Severity = 'ERROR' | 'WARN' | 'INFO';
 interface Finding {
-  severity: Severity;
-  code: string;
-  scope: string;
-  message: string;
+  severity: Severity
+  code: string
+  scope: string
+  message: string
 }
 
 const findings: Finding[] = [];
@@ -64,32 +64,38 @@ function record(severity: Severity, code: string, scope: string, message: string
 // -----------------------------------------------------------------------------
 
 interface SkillMeta {
-  name: string;
-  path: string;
-  body: string;
-  complementaryCategories: string[];
-  hasComposableSection: boolean;
-  expectedMatchesSkills: string[]; // skills mentioned in the "Expected matches" table
-  expectedMatchesTierAnnotations: Map<string, string>; // skill → annotated tier (e.g. "T2", "T3", "T4 ASK")
+  name: string
+  path: string
+  body: string
+  complementaryCategories: string[]
+  hasComposableSection: boolean
+  expectedMatchesSkills: string[] // skills mentioned in the "Expected matches" table
+  expectedMatchesTierAnnotations: Map<string, string> // skill → annotated tier (e.g. "T2", "T3", "T4 ASK")
 }
 
-function parseFrontmatter(raw: string): { meta: any; body: string } {
-  if (!raw.startsWith('---\n')) return { meta: {}, body: raw };
+interface Frontmatter {
+  complementary_categories?: string[]
+}
+
+function parseFrontmatter(raw: string): { meta: Frontmatter, body: string } {
+  if (!raw.startsWith('---\n')) { return { meta: {}, body: raw }; }
   const end = raw.indexOf('\n---', 4);
-  if (end === -1) return { meta: {}, body: raw };
+  if (end === -1) { return { meta: {}, body: raw }; }
   const yamlText = raw.slice(4, end);
   const body = raw.slice(end + 4);
   try {
-    return { meta: parseYaml(yamlText) ?? {}, body };
-  } catch (e: any) {
-    record('ERROR', 'BAD-FRONTMATTER', 'unknown', `YAML parse error: ${e.message}`);
+    return { meta: (parseYaml(yamlText) ?? {}) as Frontmatter, body };
+  }
+  catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    record('ERROR', 'BAD-FRONTMATTER', 'unknown', `YAML parse error: ${message}`);
     return { meta: {}, body };
   }
 }
 
 function extractExpectedMatches(body: string): {
-  skills: string[];
-  tierAnnotations: Map<string, string>;
+  skills: string[]
+  tierAnnotations: Map<string, string>
 } {
   // Find the section starting with "## Composable Skills" or "## SDD Composition"
   // Look at "Expected matches" table inside it.
@@ -101,7 +107,7 @@ function extractExpectedMatches(body: string): {
     const idx = body.indexOf(h);
     if (idx !== -1) { sectionStart = idx; break; }
   }
-  if (sectionStart === -1) return { skills, tierAnnotations };
+  if (sectionStart === -1) { return { skills, tierAnnotations }; }
   // Section ends at next "## " heading (not ###)
   const restAfterStart = body.slice(sectionStart);
   const nextH2 = restAfterStart.slice(2).search(/\n## /);
@@ -111,18 +117,18 @@ function extractExpectedMatches(body: string): {
   for (const row of rows) {
     // Split into cells. First cell is category, second+ are skill listings.
     const cells = row.split('|').map(c => c.trim()).filter(c => c.length > 0);
-    if (cells.length < 2) continue;
+    if (cells.length < 2) { continue; }
     const skillsCells = cells.slice(1).join(' | '); // join cell[1..n] for matches
     const skillMatches = skillsCells.matchAll(/`([a-z][a-z0-9-]+(?:\/[a-z0-9-]+)?)`/g);
     for (const m of skillMatches) {
       const name = m[1];
       // Filter non-skill tokens (tier markers, status words, common CLI tools)
-      if (/^(T[1-4]|silent|ASK|none|hybrid|engram|file|strict|standard|off)$/i.test(name)) continue;
-      if (/^(gh|git|npm|pnpm|yarn|npx)$/.test(name)) continue;
+      if (/^(?:T[1-4]|silent|ASK|none|hybrid|engram|file|strict|standard|off)$/i.test(name)) { continue; }
+      if (/^(?:gh|git|npm|pnpm|yarn|npx)$/.test(name)) { continue; }
       skills.push(name);
       // Tier annotation: "(T2)", "(T3)", "(T4)" right after the backtick
       const tierMatch = skillsCells.match(new RegExp(`\`${name}\`\\s*\\((T[1-4])\\)`));
-      if (tierMatch) tierAnnotations.set(name, tierMatch[1]);
+      if (tierMatch) { tierAnnotations.set(name, tierMatch[1]); }
       // "T4 ASK:" prefix marks subsequent skills in that segment as T4
       const beforeName = skillsCells.slice(0, skillsCells.indexOf(`\`${name}\``));
       const lastT4Ask = beforeName.lastIndexOf('T4 ASK');
@@ -138,7 +144,8 @@ function extractExpectedMatches(body: string): {
 function loadSkill(name: string): SkillMeta | null {
   const path = join(SKILLS_DIR, name, 'SKILL.md');
   let raw: string;
-  try { raw = readFileSync(path, 'utf8'); } catch { return null; }
+  try { raw = readFileSync(path, 'utf8'); }
+  catch { return null; }
   const { meta, body } = parseFrontmatter(raw);
   const cats = Array.isArray(meta.complementary_categories) ? meta.complementary_categories : [];
   const hasSection = body.includes('## Composable Skills') || body.includes('## SDD Composition');
@@ -158,7 +165,7 @@ function loadSkill(name: string): SkillMeta | null {
 // install.ts parsing — extract T2 / T3 / T4 skill names
 // -----------------------------------------------------------------------------
 
-function extractInstallTsSkills(): { t2: Set<string>; t3: Set<string>; t4: Set<string> } {
+function extractInstallTsSkills(): { t2: Set<string>, t3: Set<string>, t4: Set<string> } {
   const src = readFileSync(INSTALL_TS, 'utf8');
   const t2 = new Set<string>();
   const t3 = new Set<string>();
@@ -167,22 +174,22 @@ function extractInstallTsSkills(): { t2: Set<string>; t3: Set<string>; t4: Set<s
   // SKILL_SLUGS — array of string literals
   const slugsMatch = src.match(/const SKILL_SLUGS = \[([^\]]+)\]/);
   if (slugsMatch) {
-    for (const m of slugsMatch[1].matchAll(/['"]([a-z][a-z0-9-]+)['"]/g)) t2.add(m[1]);
+    for (const m of slugsMatch[1].matchAll(/['"]([a-z][a-z0-9-]+)['"]/g)) { t2.add(m[1]); }
   }
 
   // PROJECT_LEVEL_SKILLS / USER_LEVEL_SKILLS — array of object literals { skill: '...' }
   const projMatch = src.match(/const PROJECT_LEVEL_SKILLS[^=]*=\s*\[([\s\S]*?)\];/);
   if (projMatch) {
-    for (const m of projMatch[1].matchAll(/skill:\s*['"]([a-z][a-z0-9-]+)['"]/g)) t3.add(m[1]);
+    for (const m of projMatch[1].matchAll(/skill:\s*['"]([a-z][a-z0-9-]+)['"]/g)) { t3.add(m[1]); }
   }
   const userMatch = src.match(/const USER_LEVEL_SKILLS[^=]*=\s*\[([\s\S]*?)\];/);
   if (userMatch) {
-    for (const m of userMatch[1].matchAll(/skill:\s*['"]([a-z][a-z0-9-]+)['"]/g)) t4.add(m[1]);
+    for (const m of userMatch[1].matchAll(/skill:\s*['"]([a-z][a-z0-9-]+)['"]/g)) { t4.add(m[1]); }
     // also catch entries with only `package` (whole-repo installs like n8n-skills)
-    for (const m of userMatch[1].matchAll(/package:\s*['"]([^'"]*?)['"]\s*\}/g)) {
+    for (const m of userMatch[1].matchAll(/package:\s*['"]([^'"]*)['"]\s*\}/g)) {
       const pkg = m[1];
       const last = pkg.split('/').pop()?.replace(/\.git$/, '');
-      if (last) t4.add(last);
+      if (last) { t4.add(last); }
     }
   }
 
@@ -206,13 +213,13 @@ function extractCategoryVocab(): Map<string, string[]> {
   const section = src.slice(start, end);
   const vocab = new Map<string, string[]>();
   for (const line of section.split('\n')) {
-    if (!line.trim().startsWith('|')) continue;
-    if (line.includes('---')) continue;
-    if (line.includes('Category')) continue;
+    if (!line.trim().startsWith('|')) { continue; }
+    if (line.includes('---')) { continue; }
+    if (line.includes('Category')) { continue; }
     const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-    if (cells.length < 2) continue;
+    if (cells.length < 2) { continue; }
     const catMatch = cells[0].match(/^`([a-z][a-z0-9-]+)`$/);
-    if (!catMatch) continue;
+    if (!catMatch) { continue; }
     const category = catMatch[1];
     const skillCell = cells[1];
     const skills = [...skillCell.matchAll(/`([a-z][a-z0-9-]+)`/g)].map(m => m[1]);
@@ -227,13 +234,15 @@ function extractCategoryVocab(): Map<string, string[]> {
 
 function walk(dir: string, files: string[] = []): string[] {
   let entries;
-  try { entries = readdirSync(dir); } catch { return files; }
+  try { entries = readdirSync(dir); }
+  catch { return files; }
   for (const e of entries) {
     const full = join(dir, e);
     let s;
-    try { s = statSync(full); } catch { continue; }
-    if (s.isDirectory()) walk(full, files);
-    else if (e.endsWith('.md')) files.push(full);
+    try { s = statSync(full); }
+    catch { continue; }
+    if (s.isDirectory()) { walk(full, files); }
+    else if (e.endsWith('.md')) { files.push(full); }
   }
   return files;
 }
@@ -243,18 +252,18 @@ function scanForStalePath() {
   for (const t of SCAN_FOR_STALE_PATH) {
     const full = join(REPO_ROOT, t);
     let s;
-    try { s = statSync(full); } catch { continue; }
-    if (s.isDirectory()) targets.push(...walk(full));
-    else targets.push(full);
+    try { s = statSync(full); }
+    catch { continue; }
+    if (s.isDirectory()) { targets.push(...walk(full)); }
+    else { targets.push(full); }
   }
   for (const f of targets) {
     const text = readFileSync(f, 'utf8');
     const idx = text.indexOf(STALE_PATH_LITERAL);
-    if (idx === -1) continue;
+    if (idx === -1) { continue; }
     // Strip leading prefix to compute line number
     const line = text.slice(0, idx).split('\n').length;
-    record('ERROR', 'STALE-PATH', f.replace(REPO_ROOT + '/', ''),
-      `line ${line}: stale ref to '.context/skill-composition-strategy.md' (canonical: '.claude/skills/agentic-dev-core/references/skill-composition-strategy.md')`);
+    record('ERROR', 'STALE-PATH', f.replace(`${REPO_ROOT}/`, ''), `line ${line}: stale ref to '.context/skill-composition-strategy.md' (canonical: '.claude/skills/agentic-dev-core/references/skill-composition-strategy.md')`);
   }
 }
 
@@ -263,10 +272,10 @@ function scanForStalePath() {
 // -----------------------------------------------------------------------------
 
 function tierOf(skillName: string, t1: Set<string>, t2: Set<string>, t3: Set<string>, t4: Set<string>): string | null {
-  if (t1.has(skillName)) return 'T1';
-  if (t2.has(skillName)) return 'T2';
-  if (t3.has(skillName)) return 'T3';
-  if (t4.has(skillName)) return 'T4';
+  if (t1.has(skillName)) { return 'T1'; }
+  if (t2.has(skillName)) { return 'T2'; }
+  if (t3.has(skillName)) { return 'T3'; }
+  if (t4.has(skillName)) { return 'T4'; }
   return null;
 }
 
@@ -275,7 +284,8 @@ function main() {
   const t1 = new Set<string>();
   for (const e of readdirSync(SKILLS_DIR)) {
     const skillFile = join(SKILLS_DIR, e, 'SKILL.md');
-    try { if (statSync(skillFile).isFile()) t1.add(e); } catch { /* skip */ }
+    try { if (statSync(skillFile).isFile()) { t1.add(e); } }
+    catch { /* skip */ }
   }
 
   const { t2, t3, t4 } = extractInstallTsSkills();
@@ -283,9 +293,9 @@ function main() {
 
   // Check 8: duplicate across tiers
   const seen = new Map<string, string[]>();
-  for (const s of t2) (seen.get(s) ?? seen.set(s, []).get(s)!).push('T2');
-  for (const s of t3) (seen.get(s) ?? seen.set(s, []).get(s)!).push('T3');
-  for (const s of t4) (seen.get(s) ?? seen.set(s, []).get(s)!).push('T4');
+  for (const s of t2) { (seen.get(s) ?? seen.set(s, []).get(s)!).push('T2'); }
+  for (const s of t3) { (seen.get(s) ?? seen.set(s, []).get(s)!).push('T3'); }
+  for (const s of t4) { (seen.get(s) ?? seen.set(s, []).get(s)!).push('T4'); }
   for (const [skill, tiers] of seen) {
     if (tiers.length > 1) {
       record('ERROR', 'DUPLICATE-TIER', `install.ts:${skill}`, `appears in multiple tiers: ${tiers.join(', ')}`);
@@ -327,7 +337,7 @@ function main() {
     // Check 2: stale skill mentions
     // Lenient: accept if known in install.ts (any tier) OR mentioned anywhere in §5.1 vocab.
     const vocabSkillSet = new Set<string>();
-    for (const skills of vocab.values()) for (const s of skills) vocabSkillSet.add(s);
+    for (const skills of vocab.values()) { for (const s of skills) { vocabSkillSet.add(s); } }
     for (const mentioned of skill.expectedMatchesSkills) {
       const tier = tierOf(mentioned, t1, t2, t3, t4);
       if (!tier && !vocabSkillSet.has(mentioned)) {
@@ -349,7 +359,7 @@ function main() {
 
   // Report
   const counts = { ERROR: 0, WARN: 0, INFO: 0 };
-  for (const f of findings) counts[f.severity]++;
+  for (const f of findings) { counts[f.severity]++; }
 
   // Group by severity, then scope
   const byScope = new Map<string, Finding[]>();
@@ -361,8 +371,8 @@ function main() {
 
   const t1Sorted = [...t1].sort();
   console.log('\nlint-skills — skill composition system audit');
-  console.log(`Scanning ${SKILLS_DIR.replace(REPO_ROOT + '/', '')} ... ${t1.size} T1 skills`);
-  console.log(`Reading ${STRATEGY_DOC.replace(REPO_ROOT + '/', '')} §5.1 ... ${vocab.size} categories`);
+  console.log(`Scanning ${SKILLS_DIR.replace(`${REPO_ROOT}/`, '')} ... ${t1.size} T1 skills`);
+  console.log(`Reading ${STRATEGY_DOC.replace(`${REPO_ROOT}/`, '')} §5.1 ... ${vocab.size} categories`);
   console.log(`Reading cli/install.ts ... ${t2.size} T2, ${t3.size} T3, ${t4.size} T4\n`);
 
   for (const skill of t1Sorted) {
