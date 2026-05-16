@@ -94,6 +94,9 @@ dbhub.toml
 # ===== Installer state (local dev tracker, not project state) =====
 .agents/install-state.json
 
+# ===== Refcheck local config (per-dev tuning, not committed) =====
+.refcheckrc.toml
+
 # ===== Planning artifacts (local context only, not part of boilerplate) =====
 .plans/
 
