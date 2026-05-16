@@ -6,7 +6,6 @@
   "author": "",
   "license": "ISC",
   "keywords": [],
-  "main": "index.js",
   "scripts": {
     "setup": "bun cli/doctor.ts --preflight && bun cli/install.ts",
     "setup:doctor": "bun cli/doctor.ts",

@@ -21,7 +21,7 @@ This is the largest surface in `acli`. Every Jira ticket operation routes throug
 13. [watcher (list / remove)](#watcher)
 14. [Custom fields](#custom-fields)
 
-## The three-selector pattern
+## <a id="the-three-selector-pattern"></a>The three-selector pattern
 
 Every mutating command on `workitem` (except `create`, `view`) accepts **exactly one** of:
 
