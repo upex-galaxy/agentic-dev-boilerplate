@@ -6,6 +6,71 @@
 
 This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — gentle-ai (~30%), community skills via `bunx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step and the opt-out path.
 
+## Before you run setup — prerequisites
+
+`bun run setup` assumes a few tools already exist on `PATH` and that you've already installed **at least one** AI agent CLI (Claude Code or OpenCode). The unified front-of-house checklist lives in [README → Prerequisites](README.md#prerequisites); this is the same list with installer-flavored detail (exact check location, exact failure message, exact code reference).
+
+### Hard blockers — installer exits 1 if missing
+
+| What                                 | Min version | Checked at                                                                                                                                      | Failure message                                                                                     |
+| ------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Bun**                              | `>= 1.0.0`  | `cli/doctor.ts --preflight` — runs before `cli/install.ts` loads, because install.ts uses Bun built-ins (`runPreflight()`, `doctor.ts:421-446`) | `✗ Preflight failed: Bun X.Y.Z is older than required 1.0.0`                                        |
+| **`node_modules/@inquirer/prompts`** | present     | `cli/doctor.ts --preflight` (`INQUIRER_MARKER`, `doctor.ts:45`)                                                                                 | `✗ Preflight failed: Project dependencies not installed (node_modules/@inquirer/prompts missing).`  |
+| **Claude Code or OpenCode**          | any         | `cli/install.ts` Step 4 — `stat ~/.claude` and `stat ~/.config/opencode` (`detectAgents()`, `install.ts:444-460`)                               | `No agents detected. Install Claude Code (~/.claude/) or OpenCode (~/.config/opencode/) and rerun.` |
+| **`git` + `tar`**                    | any         | Scaffolder upfront (`packages/create-agentic-dev/src/runners.ts:13-31` for `bun`/`git`; `download.ts:25` for `tar`)                             | `ENVIRONMENT: git is required but not found on PATH.` / `GNU/BSD tar not found on PATH.`            |
+
+### Quasi-required — installer warns and offers install commands
+
+| What          | Min version | Checked at                                                                               | Behavior when missing                                                                                                                                                                                                       |
+| ------------- | ----------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **gentle-ai** | `>= 1.26.5` | `cli/install.ts` Step 2 — `which gentle-ai` + `gentle-ai version` (`install.ts:385-410`) | `log.warn` + interactive prompt offering to print install commands (`brew install gentle-ai` / `go install …@latest`) and exit. Decline → continues without it. Too old → warns and continues with `gentle-ai update` hint. |
+
+### Per-skill CLIs — lazy-required, non-blocking at setup
+
+`cli/install.ts` Step 11 (`verifyExternalClis()`, `install.ts:929-953`) does a **PATH probe only** — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check. For each missing entry the installer prints:
+
+- `quick:` line — a cross-platform install command (only when one exists, e.g. `bun add -g vercel` or `bun add -g @playwright/cli@latest`).
+- `docs:` line — the upstream install guide URL.
+
+Each entry is required by one or more skills; install them as you need them.
+
+| Tool             | Required by                                                                                                                     | Source-of-truth                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `gh`             | `/git-flow-master`, `/gh-cli`, `/sprint-development` (PR ops, deploy hand-off), optional `gh repo create` step in the installer | <https://github.com/cli/cli#installation>                                |
+| `acli`           | `/acli`, `/sprint-development`, `/product-management` (Jira / Confluence from terminal)                                         | <https://developer.atlassian.com/cloud/acli/guides/install-acli/>        |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development` (agent-driven browser automation, E2E checks)                                          | <https://playwright.dev/agent-cli/introduction>                          |
+| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap`                                                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `vercel`         | `/deploy-to-vercel`, `/sprint-development` (staging + production deploys)                                                       | <https://vercel.com/docs/cli>                                            |
+| `resend`         | `/resend-cli`                                                                                                                   | <https://resend.com/docs/cli>                                            |
+| `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                            | <https://jqlang.org/>                                                    |
+
+### Convenience opt-ins — never required
+
+| Tool     | What it buys you                                                                                                                                                                                                                                         | Check                                                                     |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `direnv` | Bare `claude` / `opencode` see MCP credentials automatically when you `cd` into the repo. Without it, use the `bun claude` / `bun opencode` wrappers (cross-platform, no setup). The installer offers `direnv allow` and a shell hook — safe to decline. | `cli/install.ts` Step 10 (`detectDirenv()` + offer; `install.ts:880-913`) |
+
+> **Windows users**: skip direnv. PowerShell support is experimental and needs direnv 2.37+; Git Bash works but the `bun claude` wrapper is simpler everywhere. Decline the installer's direnv prompt — the wrappers already load `.env`.
+
+### MCP credentials — 10 env vars filled into `.env`
+
+`.mcp.json` (Claude Code) and `opencode.jsonc` (OpenCode) ship with `${VAR}` / `{env:VAR}` placeholders. The installer resolves required vars by scanning the committed configs (`discoverRequiredEnvVars()`, `install.ts:743-749`) — current list backs the 5 canonical MCPs (context7 needs none):
+
+```
+TAVILY_API_KEY
+JIRA_URL · JIRA_USERNAME · JIRA_API_TOKEN
+SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
+N8N_API_URL · N8N_API_KEY
+```
+
+Generation is interactive (web logins + 2FA), so the installer cannot do it for you. `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — every pending credential carries a `where` URL (Tavily dashboard, Atlassian token page, Supabase project settings, n8n API panel).
+
+### Where to verify your status
+
+`bun run setup:doctor` re-runs every check above (read-only) plus 10 MCP `.env` vars + direnv state. Use it after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
+
+---
+
 ## Running setup from an AI agent
 
 Most users today ask an AI (Claude Code, OpenCode, Cursor, …) to drive the setup instead of running it by hand. The installer is built for both flows; the AI path uses a few specific entry points:
@@ -78,10 +143,10 @@ Then `bun run setup:doctor --json` to confirm.
 
 `bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `JIRA_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
 
-| Method                                              | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                 |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Method                                      | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                 |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | **`bun claude` / `bun opencode`** (default) | Windows, macOS, Linux                                                                         | None — `dotenv-cli` is a project devDep                                                                                                                 | `bun claude` from the repo root                       |
-| **direnv autoload** (optional)                      | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude` or `opencode` from anywhere in the repo |
+| **direnv autoload** (optional)              | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude` or `opencode` from anywhere in the repo |
 
 ### direnv hook per shell
 
@@ -223,7 +288,7 @@ These skills evolve with the repo and are versioned in git. The split is intenti
 
 ## External CLIs (verified, not auto-installed)
 
-Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it only checks whether each binary is on `PATH` and prints an install hint (and the official docs URL) when missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
+Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it does a **PATH probe only** (`which <name>` on POSIX, `where <name>` on Windows — presence only, no version check) and prints an install hint (`quick:` line when a cross-platform command exists) plus the official docs URL when something is missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
 
 | CLI              | Powers in this repo                                                                             | Quick install (cross-platform only — else use docs) | Official docs                                                            |
 | ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |

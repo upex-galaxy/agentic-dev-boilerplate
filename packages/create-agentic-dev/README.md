@@ -52,15 +52,36 @@ stage entirely, and jumps straight to the installer.
 
 ## Requirements
 
-| Tool  | Required for                                       |
-| ----- | -------------------------------------------------- |
-| `bun` | Running `bun install` + `bun run setup`            |
-| `tar` | Extracting the template tarball                    |
-| `git` | `git init` + initial commit                        |
-| `gh`  | (optional) Creating a GitHub repository at the end |
+The scaffolder itself only needs three binaries. Everything else is checked by
+the boilerplate's `bun run setup` (the last stage of this CLI) and surfaced
+through its own install hints. The split below mirrors the responsibility
+boundary, so a missing `gentle-ai` is not an error of `create-agentic-dev` — it's
+something `bun run setup` will point you at.
 
-The CLI checks for these up front and prints actionable install hints if any
-are missing.
+### For the scaffolder itself (checked upfront, exits on missing)
+
+| Tool          | Required for                                                 | Install                                                                                |
+| ------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `bun` ≥ 1.0.0 | Running this CLI, `bun install`, and `bun run setup`         | `curl -fsSL https://bun.sh/install \| bash` · [docs](https://bun.sh/docs/installation) |
+| `tar`         | Extracting the GitHub template tarball                       | Ships with macOS/Linux. Windows: use Git Bash or WSL                                   |
+| `git`         | `git init` + initial commit (skipped if you pass `--no-git`) | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
+
+### For `bun run setup` downstream (the boilerplate installer will tell you about these)
+
+| Tier                   | Tool                                                                 | What it does                                                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hard blocker**       | Claude Code **or** OpenCode                                          | The agent the installer configures. `bun run setup` Step 4 aborts if neither is found. Install [Claude Code](https://docs.claude.com/claude-code) or [OpenCode](https://opencode.ai).          |
+| **Quasi-required**     | `gentle-ai` ≥ 1.26.5                                                 | Installs the 15-skill ecosystem + Engram + SDD orchestrator. Missing → installer prints commands and asks exit-or-continue (degraded mode if you continue).                                    |
+| **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 11 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
+| **Convenience opt-in** | `direnv`                                                             | Auto-loads `.env` so the bare `claude` / `opencode` binaries see MCP credentials. Without it, use the cross-platform `bun claude` / `bun opencode` wrappers. **Windows users should skip it.** |
+
+This CLI checks `bun`, `git`, and `tar` up front with a `where` / `which` probe
+(POSIX uses `which`, Windows uses `where`) and prints actionable install hints
+if any are missing. The boilerplate's installer (invoked as the last stage)
+checks everything else. See the unified
+[Prerequisites](https://github.com/upex-galaxy/agentic-dev-boilerplate#prerequisites)
+section in the boilerplate README for the full list with URLs, per-skill
+mapping, and the order in which each layer surfaces what's missing.
 
 ## Exit codes
 

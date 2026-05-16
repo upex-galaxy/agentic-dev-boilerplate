@@ -51,17 +51,87 @@ bunx create-agentic-dev <your-repo-name>
 <br />
 <br />
 
+## Prerequisites
+
+Before running `bunx create-agentic-dev` or `bun install && bun run setup`, install the **hard blockers**. The installer detects everything else and prints exact install URLs when something is missing — but front-loading these saves a fail-and-retry loop.
+
+### Hard blockers (installer exits 1 if missing)
+
+| Tool                                                                                                      | Min version | Why                                                                                                                 | Install                                                                                |
+| --------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Bun**                                                                                                   | `>= 1.0.0`  | Runtime for every script (`bun install`, `bun run setup`, `bun cli/doctor.ts`, every `bun run …` in `package.json`) | `curl -fsSL https://bun.sh/install \| bash` · [docs](https://bun.sh/docs/installation) |
+| **Agent CLI** — [Claude Code](https://docs.claude.com/claude-code) **or** [OpenCode](https://opencode.ai) | latest      | `bun run setup` Step 4 probes `~/.claude/` or `~/.config/opencode/`; exits 1 if neither directory exists            | Claude Code: see official docs · OpenCode: see official docs                           |
+| `git`                                                                                                     | any         | Scaffolder runs `git init`; pre-commit hooks (Husky) require git; `/git-flow-master` skill depends on it            | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
+| `tar`                                                                                                     | any         | Scaffolder extracts the template tarball                                                                            | Ships with macOS/Linux. Windows: use Git Bash or WSL                                   |
+
+### Quasi-required (installer warns + offers install)
+
+| Tool          | Min version | Why                                                                                                                                                                                                  | Install                                                                                                                                                                                              |
+| ------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **gentle-ai** | `>= 1.26.5` | Installs 15 universal skills (Engram persistent memory + 10 SDD-\* + skill-registry + judgment-day + 2 helpers). Framework still runs without it, but SDD planning and cross-session memory are off. | macOS: `brew install gentle-ai` · Linux: `go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest` (needs Go ≥ 1.22) · [repo](https://github.com/Gentleman-Programming/gentle-ai) |
+
+### Per-skill CLIs (lazy-required — needed when the skill runs, not at setup)
+
+These are **not optional** for the workflow — each one is required by a specific skill. They are non-blocking at setup time because the installer cannot guess which skills you will actually use. Install them up front if you plan to use the whole stack, or lazily when the skill that uses them surfaces a missing-binary error.
+
+| Tool             | Required by                                                                                                                     | Install                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `gh`             | `/git-flow-master`, `/gh-cli`, `/sprint-development` (PR ops, deploy hand-off), optional `gh repo create` step in the installer | [cli.github.com](https://cli.github.com/)                                                                                                |
+| `acli`           | `/acli`, `/sprint-development`, `/product-management` (Jira / Confluence from terminal)                                         | [Atlassian docs](https://developer.atlassian.com/cloud/acli/guides/install-acli/)                                                        |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development` (agent-driven browser automation, E2E checks)                                          | `bun add -g @playwright/cli@latest`                                                                                                      |
+| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` (local stack, migrations, type gen)                      | [supabase.com/docs/guides/local-development/cli/getting-started](https://supabase.com/docs/guides/local-development/cli/getting-started) |
+| `vercel`         | `/deploy-to-vercel`, `/sprint-development` (staging + production deploys)                                                       | `bun add -g vercel`                                                                                                                      |
+| `resend`         | `/resend-cli` (transactional email development + sending)                                                                       | [resend.com/docs/cli](https://resend.com/docs/cli)                                                                                       |
+| `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                            | [jqlang.org](https://jqlang.org/)                                                                                                        |
+
+### Convenience opt-ins (pure UX, never required)
+
+| Tool     | What it buys you                                                                                                                                                                                                                                                              | Install                                                                                       |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `direnv` | Loads `.env` automatically when you `cd` into the repo, so the bare `claude` / `opencode` binaries see MCP credentials. Without it the project ships `bun claude` / `bun opencode` wrappers (via `dotenv-cli`) that do the same thing — direnv just removes the `bun` prefix. | macOS/Linux: `brew install direnv` / `apt install direnv` · [direnv.net](https://direnv.net/) |
+
+> **Windows users**: skip direnv. The `bun claude` / `bun opencode` wrappers already load `.env` cross-platform with zero setup. direnv on PowerShell needs version 2.37+ and is officially experimental; Git Bash works but at that point the wrapper is simpler. The installer will offer the direnv hook; just decline it.
+
+### MCP credentials (`.env` keys)
+
+`.mcp.json` (Claude Code) and `opencode.jsonc` ship with `${VAR}` / `{env:VAR}` placeholders that read from `.env`. Ten keys back the 5 canonical MCPs (context7 needs none):
+
+```
+TAVILY_API_KEY
+JIRA_URL · JIRA_USERNAME · JIRA_API_TOKEN
+SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
+N8N_API_URL · N8N_API_KEY
+```
+
+`.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — it prints `pending_actions[].where` URLs for every credential.
+
+### When the installer tells you something is wrong
+
+| Stage                    | Check depth                                                                                                                       | Behavior                                                                                                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Preflight (Step 0)       | Version compare — reads `process.versions.bun`, parses semver, requires `>= 1.0.0`. Also checks `node_modules/@inquirer/prompts`. | Hard exit 1 with explicit `Fix:` command before any other step.                                                                                                                                   |
+| Step 2 — gentle-ai       | Version compare — runs `gentle-ai version`, parses semver, requires `>= 1.26.5`.                                                  | Missing: prints brew + go install commands + docs URL, asks exit-or-continue. Too old: warns and continues with `gentle-ai update` hint.                                                          |
+| Step 4 — agents          | Path probe — checks if `~/.claude/` or `~/.config/opencode/` directory exists.                                                    | Neither found: prints both docs URLs, hard exit 1.                                                                                                                                                |
+| Step 11 — per-skill CLIs | PATH probe — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check.                            | Prints `found` / `missing` table; for missing entries adds `quick:` install command (when cross-platform — e.g. `bun add -g vercel`) + `docs:` URL. Non-blocking.                                 |
+| direnv (optional)        | Presence + `.envrc` allow status + shell-rc hook line.                                                                            | Pure convenience nudge — `bun claude` / `bun opencode` wrappers already work without it. If absent, lists `system_install` action with install command; safe to decline (recommended on Windows). |
+| `bun run setup:doctor`   | Re-runs everything above + 10 MCP `.env` vars + direnv state.                                                                     | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup.                                                                    |
+
+> **TL;DR**: install **Bun** + **Claude Code (or OpenCode)** before you run setup. Everything else, the installer points you at when you hit it.
+
+<br />
+<br />
+
 ## Start here — pick your path
 
-| Goal                                                               | What to read / run                                                                        |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev)) |
+| Goal                                                               | What to read / run                                                                                                                                                                                      |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev))                                                                              |
 | **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
-| **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
-| **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                      |
-| **Methodology / philosophy / extension guide** (~25 min)           | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
-| **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                            |
-| **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map) |
+| **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start))                                                                                                     |
+| **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                                                                                                                                    |
+| **Methodology / philosophy / extension guide** (~25 min)           | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)                                                                                                                    |
+| **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                                                                                                                                          |
+| **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map)                                                                                                               |
 
 > First-timers, use the scaffolder. It handles tarball download, git scrub, rename, `bun install`, and the interactive installer in one shot. The manual clone is for people hacking on the boilerplate itself.
 
@@ -92,14 +162,14 @@ What it does:
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
-| Flag                           | Effect                                                                                  |
-| ------------------------------ | --------------------------------------------------------------------------------------- |
-| `--here`                       | Bootstrap into the current directory instead of a new one.                              |
-| `--template <ref>`             | Pin to a branch / tag / SHA instead of `main`.                                          |
-| `--template-repo <owner/repo>` | Use a fork instead of `upex-galaxy/agentic-dev-boilerplate`.                            |
-| `--project-key UPEX`           | Pre-fill the Jira project key (otherwise prompted).                                     |
-| `--no-install` / `--no-setup`  | Skip `bun install` or the interactive installer.                                        |
-| `--non-interactive`            | Auto-pick defaults (also auto-detected when no TTY is present).                         |
+| Flag                           | Effect                                                          |
+| ------------------------------ | --------------------------------------------------------------- |
+| `--here`                       | Bootstrap into the current directory instead of a new one.      |
+| `--template <ref>`             | Pin to a branch / tag / SHA instead of `main`.                  |
+| `--template-repo <owner/repo>` | Use a fork instead of `upex-galaxy/agentic-dev-boilerplate`.    |
+| `--project-key UPEX`           | Pre-fill the Jira project key (otherwise prompted).             |
+| `--no-install` / `--no-setup`  | Skip `bun install` or the interactive installer.                |
+| `--non-interactive`            | Auto-pick defaults (also auto-detected when no TTY is present). |
 
 Then continue with the per-project workflow:
 
