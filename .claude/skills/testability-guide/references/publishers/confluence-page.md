@@ -19,10 +19,11 @@
 ## Pre-publish checks
 
 1. Confirm `/acli` is authenticated AND has Confluence access (`acli confluence space list` succeeds).
-2. Confirm the target Confluence space key (ask the user — do not guess).
-3. Confirm a parent page exists (or accept root-of-space).
+2. Ask the user for the Confluence space key. STOP and wait for the answer; do NOT guess or read from any config. Use it inline as `<SPACE_KEY>`.
+3. Ask the user for the parent page ID (or accept root-of-space if the user says so). STOP and wait. Use it inline as `<PARENT_PAGE_ID>`.
 4. Run `security-rules.md` checklist.
 5. Check the snapshot's `credentials-source` for a previous page URL. If yes → UPDATE that page.
+6. Update flow only: if the snapshot's `credentials-source` did not capture the page ID, ask the user for it. STOP and wait. Use it inline as `<PAGE_ID>`.
 
 ---
 
@@ -33,9 +34,9 @@
 
 ```bash
 acli confluence page create \
-  --space "{{CONFLUENCE_SPACE_KEY}}" \
+  --space "<SPACE_KEY>" \
   --title "{{PROJECT_NAME}} — Credenciales de Acceso para Testing (DB / API / UI)" \
-  --parent "{{PARENT_PAGE_ID}}" \
+  --parent "<PARENT_PAGE_ID>" \
   --body-file /tmp/qa-credentials-body.confluence
 ```
 
@@ -51,7 +52,7 @@ acli confluence page create \
 3. Update:
 
 ```bash
-acli confluence page update "{{PAGE_ID}}" \
+acli confluence page update "<PAGE_ID>" \
   --body-file /tmp/qa-credentials-body.confluence \
   --bump-version
 ```

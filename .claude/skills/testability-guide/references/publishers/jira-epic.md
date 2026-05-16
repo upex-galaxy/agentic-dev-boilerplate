@@ -53,13 +53,15 @@ acli jira issue create \
 
 ## Update flow (Epic already exists per snapshot)
 
+**Before running the update commands**: the Epic key MUST come from the snapshot's `credentials-source`. If the snapshot is missing or stale, ask the user for the Epic key directly. STOP and wait for the answer; do NOT guess or derive it. Use it inline as `<EPIC_KEY>`.
+
 1. Build the new body.
 2. Compute the `content-hash`.
 3. Read the existing snapshot's `content-hash`. If identical → skip publish, report `re-publish skipped (content-hash unchanged)`.
 4. If different:
 
 ```bash
-acli jira issue update "{{EPIC_KEY}}" \
+acli jira issue update "<EPIC_KEY>" \
   --description-file /tmp/qa-credentials-body.wiki
 ```
 
@@ -82,7 +84,7 @@ acli jira issue update "{{EPIC_KEY}}" \
 
 ## After publish
 
-1. Set the snapshot's `credentials-source` field to the Epic URL: `https://<atlassian-domain>/browse/{{EPIC_KEY}}`.
+1. Set the snapshot's `credentials-source` field to the Epic URL: `https://<atlassian-domain>/browse/<EPIC_KEY>`.
 2. Update the `/qa` page's credentials CTA `href` to this URL.
 3. Re-run §verification.
 
