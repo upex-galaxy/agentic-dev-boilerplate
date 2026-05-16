@@ -4,7 +4,7 @@
 > **Read time**: 10 minutes.
 > **Status**: stable as of 2026-05-11.
 
-This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — gentle-ai (~30%), community skills via `npx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step and the opt-out path.
+This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — gentle-ai (~30%), community skills via `bunx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step and the opt-out path.
 
 ## Running setup from an AI agent
 
@@ -179,13 +179,23 @@ These skills evolve with the repo and are versioned in git. The split is intenti
 
 Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it only checks whether each binary is on `PATH` and prints an install hint (and the official docs URL) when missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
 
-| CLI              | Powers in this repo                                                                             | Install hint (when missing)                                                       | Official docs                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps) | `npm i -g vercel`                                                                 | <https://vercel.com/docs/cli>                                            |
-| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)                    | `brew install supabase/tap/supabase` (or: `npm i -g supabase`)                    | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
-| `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill                | `brew tap atlassian/homebrew-acli && brew install acli`                           | <https://developer.atlassian.com/cloud/acli/guides/install-macos/>       |
-| `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                           | `bun add -g @playwright/cli@latest` (or: `npm install -g @playwright/cli@latest`) | <https://playwright.dev/agent-cli/introduction>                          |
-| `resend`         | Send transactional email via Resend (used by features that integrate email notifications)       | `npm i -g resend`                                                                 | <https://resend.com/docs/send-with-nodejs>                               |
+| CLI              | Powers in this repo                                                                             | Quick install (cross-platform only — else use docs) | Official docs                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `bun`            | General-purpose runtime + package manager — this repo runs on bun (scripts, install.ts, dev)    | — (OS-specific — see docs)                          | <https://bun.com/>                                                       |
+| `gh`             | GitHub CLI — `gh repo create`, PR ops, `gh api`. Powers Step 9 of the installer                 | — (OS-specific — see docs)                          | <https://github.com/cli/cli#installation>                                |
+| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)                    | — (OS-specific — see docs)                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps) | `bun add -g vercel`                                 | <https://vercel.com/docs/cli>                                            |
+| `resend`         | Send transactional email via Resend (used by features that integrate email notifications)       | — (OS-specific — see docs)                          | <https://resend.com/docs/cli>                                            |
+| `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill                | — (OS-specific — see docs)                          | <https://developer.atlassian.com/cloud/acli/guides/install-acli/>        |
+| `playwright-cli` | Agent-driven browser automation — used by the `/playwright-cli` skill                           | `bun add -g @playwright/cli@latest`                 | <https://playwright.dev/agent-cli/introduction>                          |
+| `jq`             | JSON processor — required by `/acli` skill for parsing `acli ... --json` output                 | — (OS-specific — see docs)                          | <https://jqlang.org/>                                                    |
+
+**Cross-platform package-manager recommendation** (the installer prints the OS-matched one):
+
+- **macOS / Linux** → Homebrew: <https://brew.sh>
+- **Windows** → Scoop: <https://scoop.sh>
+
+Once installed, use it to install any missing CLI from the table above. The installer NEVER auto-installs OS-specific tools (Rule 4).
 
 ### `playwright-cli` is NOT `@playwright/test`
 

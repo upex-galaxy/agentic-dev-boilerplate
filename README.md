@@ -125,9 +125,9 @@ Project-specific values (URLs, project key, Jira fields) live in `.agents/projec
 
 ### Reusable community skills (installed by `bun run setup`)
 
-These skills are not committed in this repo; the installer fetches them via `npx skills add` from upstream community repositories. The exact list lives in `cli/install.ts` (source of truth — it changes faster than this README, so consult the file directly).
+These skills are not committed in this repo; the installer fetches them via `bunx skills add` from upstream community repositories. The exact list lives in `cli/install.ts` (source of truth — it changes faster than this README, so consult the file directly).
 
-After running `/project-foundation` and `/project-bootstrap`, you can also run `npx autoskills` to auto-detect your concrete stack and add more.
+After running `/project-foundation` and `/project-bootstrap`, you can also run `bunx autoskills` to auto-detect your concrete stack and add more.
 
 ### Skill tiers (T1–T4)
 

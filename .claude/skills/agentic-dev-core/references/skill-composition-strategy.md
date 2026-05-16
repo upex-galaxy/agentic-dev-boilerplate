@@ -98,7 +98,7 @@ When a referenced skill is not in the available list (deprecated, uninstalled, v
 1. Continue with project-owned alternative if exists.
 2. If no alternative, do the work inline with degraded capability.
 3. Flag in result envelope: `skill_resolution: "fallback-inline" + missing: [list]`.
-4. Suggest reinstall via `bun run setup` or `npx skills add <name>` in the user-facing summary.
+4. Suggest reinstall via `bun run setup` or `bunx skills add <name>` in the user-facing summary.
 
 ---
 
