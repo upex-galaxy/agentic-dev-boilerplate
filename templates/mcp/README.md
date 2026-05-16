@@ -32,7 +32,7 @@ Templates use `{{VARIABLE}}` as a universal **find-and-replace placeholder** —
 
 For strategy B, also need a `.env` loader so the agent process has the vars at spawn time:
 
-- Cross-platform: `bun run claude` / `bun run opencode` (`dotenv-cli` wrapper in `package.json`)
+- Cross-platform: `bun claude` / `bun opencode` (`dotenv-cli` wrapper in `package.json`)
 - Mac/Linux optional: a `.envrc` with `dotenv_if_exists .env` + `direnv allow`
 
 **Working example**: see `.mcp.json`, `opencode.jsonc`, and `.env.example` in this repo's root.

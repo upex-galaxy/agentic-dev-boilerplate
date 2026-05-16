@@ -85,8 +85,8 @@ bunx -y ccstatusline@latest
 
 ```bash
 # Cross-platform default (uses dotenv-cli, no extra tooling required):
-bun run claude        # Claude Code
-bun run opencode      # OpenCode
+bun claude            # Claude Code
+bun opencode          # OpenCode
 
 # Optional: direnv autoload (any OS with direnv installed)
 direnv allow          # one-time per repo (the installer offers to run this)

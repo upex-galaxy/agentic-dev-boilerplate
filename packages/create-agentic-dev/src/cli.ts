@@ -141,7 +141,7 @@ async function main(): Promise<number> {
 
   log.success(`Done. Project ready at: ${projectDir}`);
   if (!args.here && !args.noSetup) {
-    log.dim(`Next:  cd ${args.projectName} && bun run claude`);
+    log.dim(`Next:  cd ${args.projectName} && bun claude`);
   }
   return 0;
 }

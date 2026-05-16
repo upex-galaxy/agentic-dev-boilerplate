@@ -298,7 +298,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun install',
-      hint: 'Install project dependencies including dotenv-cli (needed for `bun run claude`).',
+      hint: 'Install project dependencies including dotenv-cli (needed for `bun claude`).',
     });
   }
 
@@ -308,7 +308,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'system_install',
       target: 'direnv',
-      hint: 'Optional. Without direnv, launch with `bun run claude` / `bun run opencode` (wrapper). Install if you want `claude` to work directly via shell autoload.',
+      hint: 'Optional. Without direnv, launch with `bun claude` / `bun opencode` (wrapper). Install if you want `claude` to work directly via shell autoload.',
       where: installCommandForPlatform(),
     });
   }
@@ -404,7 +404,7 @@ function printHuman(report: DoctorReport): void {
     process.stdout.write(`\n${COLORS.dim}For AI agents: bun run setup:doctor --json  (machine-readable)${COLORS.reset}\n`);
   }
   else {
-    process.stdout.write(`\n${COLORS.green}All green.${COLORS.reset} Launch agent: bun run claude  /  bun run opencode\n`);
+    process.stdout.write(`\n${COLORS.green}All green.${COLORS.reset} Launch agent: bun claude  /  bun opencode\n`);
   }
 }
 

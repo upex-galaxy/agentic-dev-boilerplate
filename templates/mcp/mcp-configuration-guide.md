@@ -76,7 +76,7 @@ Para configs compartidos con el equipo (NO commitear credenciales pero SÍ commi
    - OpenCode: `{{TAVILY_API_KEY}}` → `{env:TAVILY_API_KEY}`
 3. Guardá los valores reales en un archivo `.env` (gitignored)
 4. Cargá `.env` antes de lanzar el agente:
-   - Cross-platform: `bun run claude` / `bun run opencode` (wrapper con `dotenv-cli`)
+   - Cross-platform: `bun claude` / `bun opencode` (wrapper con `dotenv-cli`)
    - Mac/Linux opcional: `.envrc` con `dotenv_if_exists .env` + `direnv`
 5. Commiteá el `.mcp.json` / `opencode.jsonc` resultantes — sin secretos, listos para el equipo
 
