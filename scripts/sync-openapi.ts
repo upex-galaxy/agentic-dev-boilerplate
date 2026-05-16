@@ -113,7 +113,7 @@ async function downloadFromUrl(url: string, outputPath: string): Promise<{ succe
     let endpointCount = 0;
 
     if (contentType.includes('json')) {
-      const spec: OpenAPISpec = await response.json();
+      const spec = (await response.json()) as OpenAPISpec;
       endpointCount = Object.keys(spec.paths ?? {}).length;
       content = JSON.stringify(spec, null, 2);
     }
