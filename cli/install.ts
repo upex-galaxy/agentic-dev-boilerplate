@@ -15,7 +15,10 @@
  *   6. Persist `.agents/install-state.json` for idempotency
  *
  * Env:
- *   INSTALL_SKIP_DIRENV=1   Skip direnv autoload sub-step
+ *   INSTALL_SKIP_DIRENV=1             Skip direnv autoload sub-step
+ *   INSTALL_FORCE_AGENTS_SETUP=1      Force re-run of gentle-ai skill install (Step 5)
+ *   INSTALL_FORCE_COMMUNITY_SKILLS=1  Force re-run of community skills install (Step 6)
+ *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup (Step 9)
  *
  * Usage:
  *   bun run setup
@@ -56,7 +59,7 @@ interface AgentDetection {
 interface GithubRemoteInfo {
   account: string
   repo: string
-  visibility: 'private' | 'public' | 'internal'
+  visibility: 'private' | 'public' | 'internal' | 'unknown'
   url: string
   createdAt: string
 }
@@ -75,6 +78,7 @@ interface InstallState {
   externalClis: Record<string, CliStatus>
   pendingEnvVars: string[]
   github?: GithubRemoteInfo
+  steps?: Record<string, string>  // step name → ISO timestamp of last successful run; gates re-runs
 }
 
 // ============================================================================
@@ -257,6 +261,9 @@ const NON_INTERACTIVE
 const AUTO_NON_INTERACTIVE
   = !process.argv.includes('--non-interactive') && !process.stdin.isTTY;
 const SKIP_DIRENV = process.env.INSTALL_SKIP_DIRENV === '1';
+const FORCE_AGENTS_SETUP = process.env.INSTALL_FORCE_AGENTS_SETUP === '1';
+const FORCE_COMMUNITY_SKILLS = process.env.INSTALL_FORCE_COMMUNITY_SKILLS === '1';
+const FORCE_GITHUB_REMOTE = process.env.INSTALL_FORCE_GITHUB_REMOTE === '1';
 
 // ============================================================================
 // Logger
@@ -514,6 +521,12 @@ async function installSkillsViaGentleAi(
     return;
   }
 
+  if (state.steps?.agentsSetupRanAt && !FORCE_AGENTS_SETUP) {
+    log.dim(`  Skipping — gentle-ai skills already installed at ${state.steps.agentsSetupRanAt}.`);
+    log.dim('  Force re-run with: INSTALL_FORCE_AGENTS_SETUP=1 bun run setup');
+    return;
+  }
+
   // One batched call per agent: engram + sdd + skills (filtered by --skills).
   // gentle-ai re-applies components idempotently (existing files get backed up
   // via the built-in snapshot system, then overwritten with the current
@@ -561,6 +574,8 @@ async function installSkillsViaGentleAi(
       for (const slug of slugs) { state.skills[`${slug}::${agent}`] = 'failed'; }
     }
   }
+  state.steps = state.steps ?? {};
+  state.steps.agentsSetupRanAt = new Date().toISOString();
 }
 
 // ============================================================================
@@ -583,6 +598,13 @@ async function installCommunitySkills(
 
   log.banner(`Community skills — ${label}`);
   log.info(`This will run ${list.length} \`bunx skills add\` commands (${label}).`);
+
+  const stepKey = `communitySkills${level === 'project' ? 'Project' : 'Global'}RanAt`;
+  if (state.steps?.[stepKey] && !FORCE_COMMUNITY_SKILLS) {
+    log.dim(`  Skipping — ${label} community skills already installed at ${state.steps[stepKey]}.`);
+    log.dim('  Force re-run with: INSTALL_FORCE_COMMUNITY_SKILLS=1 bun run setup');
+    return;
+  }
 
   const proceed = await confirm({
     message: `Install ${label} community skills?`,
@@ -621,6 +643,8 @@ async function installCommunitySkills(
       state.skills[key] = 'failed';
     }
   }
+  state.steps = state.steps ?? {};
+  state.steps[stepKey] = new Date().toISOString();
 }
 
 // ============================================================================
@@ -862,7 +886,7 @@ async function offerDirenvAutoload(): Promise<void> {
 
   if (!info.installed) {
     log.info('direnv not installed (optional).');
-    log.dim('  Launch agents with: bun run claude  /  bun run opencode  (dotenv-cli loads .env automatically).');
+    log.dim('  Launch agents with: bun claude  /  bun opencode  (dotenv-cli loads .env automatically).');
     log.dim(`  Or install direnv for shell autoload: ${installHintForPlatform()}`);
     return;
   }
@@ -876,7 +900,7 @@ async function offerDirenvAutoload(): Promise<void> {
     true,
   );
   if (!proceed) {
-    log.dim('  Skipped. Launch agents with: bun run claude  /  bun run opencode.');
+    log.dim('  Skipped. Launch agents with: bun claude  /  bun opencode.');
     return;
   }
   const result = tryRun('direnv', ['allow', REPO_ROOT]);
@@ -885,7 +909,7 @@ async function offerDirenvAutoload(): Promise<void> {
     log.dim(`  Reminder: add this to your shell rc if not already done: ${shellHookHint(info)}`);
   }
   else {
-    log.warn('direnv allow failed. Launch agents with: bun run claude  /  bun run opencode.');
+    log.warn('direnv allow failed. Launch agents with: bun claude  /  bun opencode.');
     log.dim(`  ${(result.stderr || result.stdout).trim().slice(0, 200)}`);
   }
 }
@@ -951,7 +975,10 @@ async function writeInstallState(state: InstallState): Promise<void> {
 }
 
 function buildInitialState(prior: InstallState | null): InstallState {
-  if (prior && prior.version === 1) { return prior; }
+  if (prior && prior.version === 1) {
+    prior.steps ??= {};
+    return prior;
+  }
   return {
     version: 1,
     installedAt: new Date().toISOString(),
@@ -961,6 +988,7 @@ function buildInitialState(prior: InstallState | null): InstallState {
     mcps: {},
     externalClis: {},
     pendingEnvVars: [],
+    steps: {},
   };
 }
 
@@ -1010,11 +1038,38 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
   // Idempotency: if a prior run already created a repo and the local `origin`
   // points at the same URL, skip silently. Re-running `gh repo create` for the
   // same name would fail with `name already exists`.
-  if (state.github) {
+  if (state.github && !FORCE_GITHUB_REMOTE) {
     const originUrl = tryRun('git', ['remote', 'get-url', 'origin']);
     if (originUrl.ok && originUrl.stdout.trim().includes(`${state.github.account}/${state.github.repo}`)) {
-      log.dim(`GitHub remote already configured: ${state.github.url} — skipping.`);
+      log.dim(`GitHub remote already configured: ${state.github.url} — skipping. (Force: INSTALL_FORCE_GITHUB_REMOTE=1)`);
       return;
+    }
+  }
+
+  // Hidrate state.github from an existing `origin` remote when state has no
+  // record of it (e.g. user manually ran `gh repo create` between installer
+  // runs, or cloned a repo that already had origin set). Parsing the URL
+  // populates the closing-summary GitHub block without re-creating the repo.
+  if (!state.github) {
+    const originUrl = tryRun('git', ['remote', 'get-url', 'origin']);
+    if (originUrl.ok) {
+      const url = originUrl.stdout.trim();
+      // Match SSH (git@github.com:owner/repo.git) and HTTPS (https://github.com/owner/repo[.git]).
+      const match = url.match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+      if (match) {
+        const [, account, repo] = match;
+        state.github = {
+          account,
+          repo,
+          visibility: 'unknown',
+          url: `https://github.com/${account}/${repo}`,
+          createdAt: 'pre-existing',
+        };
+        log.dim(`Detected existing GitHub remote: ${state.github.url} — hidrating state, skipping create.`);
+        state.steps = state.steps ?? {};
+        state.steps.githubRemoteRanAt = new Date().toISOString();
+        return;
+      }
     }
   }
 
@@ -1119,6 +1174,8 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
     createdAt: new Date().toISOString(),
   };
   log.success(`Repository created and pushed: ${url}`);
+  state.steps = state.steps ?? {};
+  state.steps.githubRemoteRanAt = new Date().toISOString();
 }
 
 // ============================================================================
@@ -1173,8 +1230,8 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write('       opencode             # OpenCode\n');
   log.dim('       (requires direnv allow OR a shell that sources .env — e.g. `set -a; . .env; set +a`)');
   process.stdout.write('     Fallback (works everywhere, no direnv needed):\n');
-  process.stdout.write('       bun run claude       # dotenv-cli wraps and loads .env\n');
-  process.stdout.write('       bun run opencode     # dotenv-cli wraps and loads .env\n');
+  process.stdout.write('       bun claude           # dotenv-cli wraps and loads .env\n');
+  process.stdout.write('       bun opencode         # dotenv-cli wraps and loads .env\n');
   n++;
   process.stdout.write(`  ${n}. Install missing CLIs (see table above — use your OS package manager)\n`);
   n++;
