@@ -467,7 +467,6 @@ Search: "mcp"
 
 - **Documentación Oficial**: https://code.visualstudio.com/docs/copilot/customization/mcp-servers
 - **Conceptos MCP**: [MCP - Guía General](./README.md)
-- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

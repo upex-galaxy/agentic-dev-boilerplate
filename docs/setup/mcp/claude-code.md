@@ -426,7 +426,6 @@ claude mcp registry
 
 - **Documentación Oficial**: https://docs.claude.com/en/docs/claude-code
 - **Conceptos MCP**: [MCP - Guía General](./README.md)
-- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

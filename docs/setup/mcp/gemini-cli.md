@@ -471,7 +471,6 @@ gemini mcp list
 
 - **Documentación Oficial**: https://github.com/google-gemini/gemini-cli
 - **Conceptos MCP**: [MCP - Guía General](./README.md)
-- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 

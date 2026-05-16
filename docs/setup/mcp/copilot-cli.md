@@ -484,7 +484,6 @@ Copilot: [usa github-mcp] "Issue #123 creado"
 
 - **Documentación Oficial**: https://github.com/github/copilot-cli
 - **Conceptos MCP**: [MCP - Guía General](./README.md)
-- **MCP Builder Strategy**: [MCP Builder](./builder-strategy.md)
 
 ---
 
