@@ -186,7 +186,7 @@ Triggered when sprint-dev transitions Jira `Ready For Dev → In Progress`.
 Triggered when sprint-dev opens the PR via `/git-flow-master` and Jira auto-transitions `In Progress → In Review`.
 
 - **Status**: `IN_PROGRESS` → `IN_REVIEW`.
-- **PR**: fill `#NNN` (link target `{{REPO_URL}}/pull/NNN`).
+- **PR**: fill `#NNN`. Construct the link as `<repo-url>/pull/NNN`, where `<repo-url>` is obtained at runtime via `git remote get-url origin` (strip a trailing `.git` if present). Do NOT hardcode the repo URL or read it from `.agents/project.yaml`.
 - **Delivery Strategy**: read from the chain decision recorded in the impl-plan forecast block (`stacked-to-main` / `feature-branch-chain` / `single-pr` / `size-exception`). Normalize to `stacked` / `chain` / `single` / `exception` for the column.
 - **Session Log**: append `### {date} — {ticket} IN_REVIEW` with PR number + delivery strategy.
 
