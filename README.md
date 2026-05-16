@@ -13,13 +13,15 @@
 
 | Goal                                                               | What to read / run                                                                        |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| **Just install**                                                   | `bun install && bun run setup` (skip the rest)                                            |
+| **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev)) |
+| **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Use this template](#use-this-template-github)) |
+| **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Manual clone](#manual-clone-contributors)) |
 | **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                      |
 | **Methodology / philosophy / extension guide** (~25 min)           | [`docs/agentic-development-engineering.md`](docs/agentic-development-engineering.md)      |
 | **Troubleshooting the installer**                                  | [`INSTALLER.md`](INSTALLER.md)                                                            |
 | **You're an AI agent**                                             | [`CLAUDE.md`](CLAUDE.md) (operational rules) + [`CONTEXT.md`](CONTEXT.md) (knowledge map) |
 
-> First-time clones: `bun run onboarding` is optional but recommended — it serves a single-file HTML with the full repo orientation. Close the browser tab + `Ctrl-C` the server when done, then run `bun run setup` to install.
+> First-time users should prefer the scaffolder — it handles tarball download, git scrub, project rename, `bun install`, and the interactive installer in one command. The manual-clone path is for contributors hacking on the boilerplate itself.
 
 ---
 
@@ -29,55 +31,111 @@ A project starter for teams that want AI agents to drive their development workf
 
 ---
 
-## Quick start
+## Scaffold a new project
+
+The official way to start a project from this boilerplate is the **`create-agentic-dev`** scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev), source in [`packages/create-agentic-dev/`](packages/create-agentic-dev/)):
+
+```bash
+bunx create-agentic-dev <your-repo-name>
+cd <your-repo-name>
+```
+
+That single command:
+
+1. Downloads `upex-galaxy/agentic-dev-boilerplate` (latest `main`) as a tarball — no git history.
+2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
+3. Initializes a fresh `git init -b main` with an initial commit.
+4. Runs `bun install`.
+5. Hands off to the boilerplate's interactive installer (`bun run setup`) — gentle-ai, 15 skills, community skills, `.env` wiring for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), direnv autoload, optional `gh repo create`.
+
+Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
+
+| Flag                           | Effect                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `--here`                       | Bootstrap into the current directory instead of a new one.                              |
+| `--template <ref>`             | Pin to a branch / tag / SHA instead of `main`.                                          |
+| `--template-repo <owner/repo>` | Use a fork instead of `upex-galaxy/agentic-dev-boilerplate`.                            |
+| `--project-key UPEX`           | Pre-fill the Jira project key (otherwise prompted).                                     |
+| `--no-install` / `--no-setup`  | Skip `bun install` or the interactive installer.                                        |
+| `--non-interactive`            | Auto-pick defaults (also auto-detected when no TTY is present).                         |
+
+Then continue with the per-project workflow:
+
+```bash
+# Optional: open the orientation HTML (~30 min repo tour, single file)
+bun run onboarding
+
+# Optional, Claude Code only: configure the statusline in a SEPARATE terminal
+bunx -y ccstatusline@latest
+
+# Define what to build (one-time)
+/project-foundation    # Constitution, PRD, SRS, Discovery
+/design-system         # DESIGN.md (optional — Google Labs spec; paleta, tipografía, tokens)
+
+# Scaffold the codebase (one-time)
+/project-bootstrap     # Backend, frontend, OpenAPI, env, auth (reads DESIGN.md if present)
+
+# Manage the backlog (continuous)
+/product-management    # Seed backlog, refine stories, AC, edge cases
+
+# Implement (per story)
+/sprint-development    # Plan -> Code -> Review -> Deploy
+/unit-testing          # Composable mid-flight from sprint-development for TDD
+```
+
+> Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking, so chaining deadlocks. Run them as separate steps.
+
+> `bunx -y ccstatusline@latest` is Claude Code-only and optional. Run it from a plain terminal window with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this step: the equivalent is the `opencode-subagent-statusline` plugin already wired into `opencode.jsonc`.
+
+---
+
+## Use this template (GitHub)
+
+If you prefer to start your project **on GitHub from day one** (your own repo, your own remote, full history under your account), use GitHub's native template flow:
+
+1. Click [**Use this template → Create a new repository**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) on the boilerplate's GitHub page.
+2. Pick owner + name for your new repo, choose visibility, create.
+3. Clone YOUR new repo locally:
+   ```bash
+   git clone https://github.com/<your-org>/<your-repo>.git
+   cd <your-repo>
+   ```
+4. Install + configure:
+   ```bash
+   bun install
+   bun run setup        # gentle-ai, 15 skills, community skills, .env wiring, MCPs
+   ```
+5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
+
+> **Strongly recommended: use the magic command instead.** `bunx create-agentic-dev <your-repo-name>` does everything the template flow does **plus**: scrubs the upstream git history (so your repo doesn't carry boilerplate commits), auto-rewrites `package.json` name and `.agents/project.yaml` `project.name`, runs `bun install`, runs the interactive installer, and optionally creates the GitHub repo for you via `gh` — all in one command. The template route is a good fit only if you want the GitHub repo created via the web UI before any local work.
+
+---
+
+## Manual clone (contributors)
+
+If you want to hack on the boilerplate **itself** (skills, installer, scripts, docs), clone the repo directly:
 
 ```bash
 # 1. Clone the boilerplate
-git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git my-new-project
-cd my-new-project
+git clone https://github.com/upex-galaxy/agentic-dev-boilerplate.git
+cd agentic-dev-boilerplate
 
-# 2. (Optional, recommended for first-timers) Install deps + open the orientation
+# 2. (Optional) Install deps + open the orientation
 bun install
 bun run onboarding   # opens docs/onboarding.html with sidebar nav
                      # Close the tab + Ctrl-C when done
 
 # 3. Install everything (gentle-ai, skills, MCPs, env)
-#    installs deps if not done already, gentle-ai + 15 skills, community
-#    skills, wires .env for the 5 MCPs (context7, tavily, atlassian,
-#    supabase, n8n), and offers direnv autoload.
 bun run setup
 
 # Or, do it manually instead of step 3:
 bun install
 cp .env.example .env   # then fill in the values
-
-# 3.5. (Recommended, Claude Code only) Configure the statusline
-#      Run this in a SEPARATE terminal window — ccstatusline is an
-#      interactive TUI configurator and clashes with a running agent.
-bunx -y ccstatusline@latest
-
-# 4. Define what to build (one-time)
-/project-foundation    # Constitution, PRD, SRS, Discovery
-
-# 4.5. Define visual identity (one-time, optional — invoked from foundation Phase 2.5)
-/design-system         # DESIGN.md (Google Labs spec) — paleta, tipografía, tokens
-
-# 5. Scaffold the codebase (one-time)
-/project-bootstrap     # Backend, frontend, OpenAPI, env, auth (reads DESIGN.md if present)
-
-# 6. Manage the backlog (continuous)
-/product-management    # Seed backlog, refine stories, AC, edge cases
-
-# 7. Implement (per story)
-/sprint-development            # Plan -> Code -> Review -> Deploy
-/unit-testing          # Composable mid-flight from sprint-development for TDD
 ```
 
-> Foundation files (`.agents/`, `scripts/`, `CLAUDE.md`) ship with the repo — no bootstrap step is needed. Clone the full boilerplate; à la carte adoption of individual skills is not supported.
+> Foundation files (`.agents/`, `scripts/`, `CLAUDE.md`) ship with the repo — no bootstrap step is needed. À la carte adoption of individual skills is not supported.
 
-> Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking, so chaining deadlocks. Run them as two separate steps.
-
-> `bunx -y ccstatusline@latest` (step 3.5) is Claude Code-only and optional — it opens an interactive TUI to pick a statusline preset (model, branch, token usage, etc.). Run it from a plain terminal window with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this step: the equivalent is the `opencode-subagent-statusline` plugin already wired into `opencode.jsonc`.
+> End-users building a new project should NOT clone manually — use `bunx create-agentic-dev` (see above) so git history is scrubbed and the project is renamed automatically.
 
 ### Launching the agent
 
@@ -172,10 +230,15 @@ Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier
 ├── PRD/                  # Product Requirements
 ├── SRS/                  # Software Requirements
 └── PBI/                  # Per-epic + per-ticket memory
+packages/
+└── create-agentic-dev/   # Official npm scaffolder (bunx create-agentic-dev …) — own README + tests
+cli/                      # install.ts, update-boilerplate.ts, doctor, helpers consumed by bun scripts
 scripts/                  # CLI tooling: agents-lint, jira-sync, etc.
+templates/                # Files copied into bootstrapped projects by /project-bootstrap
 CLAUDE.md                 # Project memory loaded every AI session
 CONTEXT.md                # Context Engineering canonical reference
 DESIGN.md                 # Visual identity spec (Google Labs, generated by /design-system)
+INSTALLER.md              # Contract for `bun run setup` — what each installer layer does
 ```
 
 ---
@@ -254,4 +317,4 @@ Project renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. S
 
 ---
 
-> **You are here**: Project overview for visitors. **Read time**: 5 min. **Next**: `bun run onboarding` for visual orientation, or [`INSTALLER.md`](INSTALLER.md) for installer details.
+> **You are here**: Project overview for visitors. **Read time**: 5 min. **Next**: `bunx create-agentic-dev <your-repo-name>` to bootstrap, `bun run onboarding` for the visual repo tour, or [`INSTALLER.md`](INSTALLER.md) for installer details.
