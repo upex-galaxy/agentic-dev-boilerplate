@@ -8,9 +8,12 @@ node_modules/
 # ===== SDD / Framework Caches =====
 # .atl/ holds sdd-init generated registry, regenerated on demand
 .atl/
-# Any directory whose name starts/contains underscore (framework/internal caches like .context/_framework/, .husky/_)
-*_*/
-**/*_*/
+# Known underscore-prefixed caches. Listed explicitly because a blanket
+# `*_*/` rule would also swallow skill subfolders like
+# `.claude/skills/<skill>/references/_shared/`, which we DO want to commit
+# (this repo is a boilerplate — skills must ship).
+.context/_framework/
+.husky/_/
 
 # ===== Build Artifacts =====
 dist/
