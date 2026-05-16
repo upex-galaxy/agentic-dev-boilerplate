@@ -96,6 +96,52 @@ Then `bun run setup:doctor --json` to confirm.
 
 ---
 
+## Optional UX upgrades
+
+Two community tools that the closing summary recommends. Both are **user-level** (not installed by `bun run setup`) because they modify your global environment, not this repo. They are recommended, not required.
+
+### caveman — token compression skill
+
+What it does: rewrites how the agent talks. Drops articles, fillers, and pleasantries; keeps technical terms exact; code blocks, errors, and security warnings stay in normal English. Net effect on this repo's defaults: ~65–75% fewer output tokens per turn with no loss of substance.
+
+Why we recommend it: every workflow in this repo (`/sprint-development`, `/project-foundation`, `/design-system`, etc.) emits long status reports. Caveman compresses the conversational part without touching the actionable part.
+
+Install (one-time, user-level, ~30s, requires Node ≥ 18):
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+
+# Windows PowerShell
+irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex
+```
+
+Levels: `lite` (light trim), **`full`** (this repo's default), `ultra` (max compression), `wenyan` (classical Chinese register). Switch with `/caveman lite|full|ultra|wenyan`.
+
+Revert triggers (EN + ES): `"normal mode"`, `"habla normal"`, `"stop caveman"`, `"speak normally"`, `"be verbose"`, `"más detallado"`. Caveman boundaries are built-in — code, commits, PRs, and security warnings always render in normal English.
+
+Docs: <https://github.com/JuliusBrussee/caveman>
+
+If caveman is **not** installed, `CLAUDE.md` §1 #13 becomes a no-op and the agent writes normal terse output. No errors, no degraded behavior.
+
+### ccstatusline — Claude Code statusline configurator
+
+What it does: a TUI configurator for the Claude Code bottom statusline. Lets you surface model name, token usage, current git branch, context-window utilization, and similar metadata at a glance.
+
+> ⚠️ **Run in a SEPARATE terminal with NO agent active.** ccstatusline is a TUI that grabs stdin. If you launch it while Claude Code or OpenCode is running in the same terminal, the two will fight over input and one will hang. Open a fresh terminal, run the command, configure, exit. Then start the agent.
+
+Install + configure (run anywhere, one-time, ~1 min):
+
+```bash
+bunx -y ccstatusline@latest
+```
+
+Docs: <https://github.com/sirmalloc/ccstatusline>
+
+Cosmetic upgrade — does not change agent behavior. Skip if you prefer the default statusline.
+
+---
+
 ## What is gentle-ai and why this repo uses it
 
 [gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) is a user-level installer that configures AI agents (Claude Code, OpenCode, Cursor, etc.) with a curated set of skills, an MCP-based persistent memory layer (Engram), and an SDD (Spec-Driven Development) orchestrator. It does not install agents themselves — it tunes the agents you already have.
