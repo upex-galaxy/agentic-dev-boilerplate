@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * agents-lint.ts — validates the agentic variable system in this repo.
+ * lint-vars.ts — validates the agentic variable system in this repo.
  *
  * Four variable syntaxes coexist:
  *   1. {{VAR_NAME}}   (UPPER_SNAKE_CASE) — project variable; MUST be declared in
@@ -97,6 +97,10 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['VARIABLES', 'skill-registry.md'],
   ['VAR_NAME', 'skill-registry.md'],
   ['PROJECT_VARIABLE', 'skill-registry.md'],
+  // CLAUDE.md §Pseudocode value types: documents {{PROJECT_VAR}} as syntax meta-marker
+  ['PROJECT_VAR', 'CLAUDE.md'],
+  // testability-guide credentials-content-template.md: documents {{VAR_NAME}} / {{environments.<env>.<var>}} syntax for publishers
+  ['VAR_NAME', 'credentials-content-template.md'],
 ];
 
 // -----------------------------------------------------------------------------
@@ -197,6 +201,57 @@ function loadManifestSlugs(yamlPath: string): { all: Set<string>, required: numb
   const optional = (root.optional ?? {}) as Record<string, unknown>;
   const all = new Set<string>([...Object.keys(required), ...Object.keys(optional)]);
   return { all, required: Object.keys(required).length, optional: Object.keys(optional).length };
+}
+
+/**
+ * Load the `external_consumers:` allowlist from project.yaml.
+ * Each entry MUST have an inline `# ...` comment on its source line
+ * explaining where the variable is consumed. Entries without a comment
+ * are reported as undocumented errors so the allowlist cannot rot silently.
+ *
+ * Returns the set of UPPER_SNAKE_CASE names that should be skipped from
+ * DECLARED_BUT_UNUSED, plus the list of undocumented entries.
+ */
+function loadExternalConsumers(yamlPath: string): {
+  allowlist: Set<string>
+  undocumented: Array<{ name: string, line: number }>
+} {
+  const rawText = readFileSync(yamlPath, 'utf-8');
+  const parsed = parseYaml(rawText);
+  const allowlist = new Set<string>();
+  const undocumented: Array<{ name: string, line: number }> = [];
+
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const externalRaw = (parsed as Record<string, unknown>).external_consumers;
+    if (Array.isArray(externalRaw)) {
+      // Find the start of `external_consumers:` in raw text to scan per-entry comments.
+      const lines = rawText.split('\n');
+      let inBlock = false;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/^external_consumers:\s*$/.test(line)) { inBlock = true; continue; }
+        if (inBlock) {
+          // Stop when we hit a non-indented non-comment non-empty line.
+          if (line.length > 0 && !line.startsWith(' ') && !line.startsWith('#') && !line.startsWith('-')) {
+            inBlock = false;
+            continue;
+          }
+          // List entry: `  - <name>` optionally followed by `# comment`.
+          const entryMatch = line.match(/^\s*-\s+([a-z_]\w*)\s*(#.*)?$/i);
+          if (entryMatch) {
+            const name = entryMatch[1];
+            const hasComment = Boolean(entryMatch[2]) && entryMatch[2].trim().length > 1; // `#` + at least one char
+            allowlist.add(name.toUpperCase());
+            if (!hasComment) {
+              undocumented.push({ name, line: i + 1 });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return { allowlist, undocumented };
 }
 
 // -----------------------------------------------------------------------------
@@ -373,6 +428,7 @@ function scanFiles(files: string[]): ScanResult {
 function main(): void {
   const declared = loadDeclaredVariables(PROJECT_YAML);
   const manifest = loadManifestSlugs(JIRA_REQUIRED_YAML);
+  const external = loadExternalConsumers(PROJECT_YAML);
   const files = collectFiles();
   const result = scanFiles(files);
 
@@ -407,8 +463,9 @@ function main(): void {
   );
   const allDeclared = new Set<string>([...declared.flat, ...declared.envScoped]);
   const declaredButUnused = [...allDeclared]
-    .filter(d => !usedNames.has(d) && !explicitlyUsedEnvScoped.has(d))
+    .filter(d => !usedNames.has(d) && !explicitlyUsedEnvScoped.has(d) && !external.allowlist.has(d))
     .sort();
+  const externalSkippedCount = [...allDeclared].filter(d => external.allowlist.has(d)).length;
 
   // Jira slug validation: every {{jira.<slug>}} must be declared in the manifest.
   const invalidJiraHits = result.jiraSlugHits.filter(h => !manifest.all.has(h.slug));
@@ -416,7 +473,7 @@ function main(): void {
 
   const filesWithProjectHits = new Set(result.projectVarHits.map(h => h.file)).size;
 
-  const totalErrors = undeclared.length + invalidExplicitEnv.length + invalidJiraHits.length;
+  const totalErrors = undeclared.length + invalidExplicitEnv.length + invalidJiraHits.length + external.undocumented.length;
 
   // ----- output -----
   const envList = [...declared.envNames].sort().join(', ') || '(none)';
@@ -452,6 +509,9 @@ function main(): void {
       const rel = relative(REPO_ROOT, hit.file);
       console.log(`  - UNDECLARED: {{jira.${hit.slug}}} at ${rel}:${hit.line}`);
     }
+    for (const entry of external.undocumented) {
+      console.log(`  - EXTERNAL_CONSUMER_UNDOCUMENTED: ${entry.name} at .agents/project.yaml:${entry.line}  (missing inline '# ...' comment explaining where it's consumed)`);
+    }
   }
   console.log('');
 
@@ -472,6 +532,7 @@ function main(): void {
   console.log(`  - ${result.sessionVarNames.size} distinct <<VAR>> session variables (${result.sessionVarOccurrences} occurrences)`);
   console.log(`  - ${validJiraCount} valid {{jira.*}} references; ${invalidJiraHits.length} invalid (errors above)`);
   console.log(`  - ${result.metaSkippedCount} documentation meta-references skipped (allowlisted)`);
+  console.log(`  - ${externalSkippedCount} external_consumers entries skipped (declared in .agents/project.yaml allowlist)`);
 
   process.exit(totalErrors > 0 ? 1 : 0);
 }
