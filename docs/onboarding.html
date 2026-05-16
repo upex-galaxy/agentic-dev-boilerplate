@@ -1557,6 +1557,61 @@
               <em>Maintenance</em> whenever documentation drifts from reality.
             </p>
 
+            <h3>Cadence at a glance</h3>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Phase</th>
+                    <th>Cadence</th>
+                    <th>Typical duration</th>
+                    <th>Re-run trigger</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>0 · Bootstrap</strong></td>
+                    <td>One-time per clone</td>
+                    <td>15-30 min</td>
+                    <td>Fresh clone or env reset</td>
+                  </tr>
+                  <tr>
+                    <td><strong>1 · Foundation</strong></td>
+                    <td>One-time per product</td>
+                    <td>2-4 hours</td>
+                    <td>Major product pivot or architectural rewrite</td>
+                  </tr>
+                  <tr>
+                    <td><strong>2 · Scaffold</strong></td>
+                    <td>One-time post-Foundation</td>
+                    <td>1-2 hours</td>
+                    <td>Brand-new project; not re-run during normal life</td>
+                  </tr>
+                  <tr>
+                    <td><strong>3 · Backlog</strong></td>
+                    <td>Continuous (weekly+)</td>
+                    <td>30-60 min per refinement</td>
+                    <td>New epic, story refinement, AC/Gherkin updates</td>
+                  </tr>
+                  <tr>
+                    <td><strong>4 · Sprint</strong></td>
+                    <td>Per ticket</td>
+                    <td>1-8 hours</td>
+                    <td>Every Jira ticket you implement</td>
+                  </tr>
+                  <tr>
+                    <td><strong>5 · Maintenance</strong></td>
+                    <td>On drift</td>
+                    <td>15-60 min</td>
+                    <td>Doc drift, business-map drift, skill changes</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Lifecycle pipeline</h3>
+
             <div class="diagram-block">
               <svg viewBox="0 0 880 130" width="100%" role="img" aria-label="Five-phase lifecycle">
                 <defs>
@@ -3785,6 +3840,16 @@ bun run lint:agents           # validate placeholders</code></pre>
           <section id="section-14">
             <h2><span class="num">14.</span>Where to go next</h2>
 
+            <p>
+              The repo splits documentation into <strong>core memory</strong> (loaded every AI
+              session), <strong>methodology</strong> (why we do things this way),
+              <strong>setup</strong> (one-time configuration recipes),
+              <strong>workflows</strong> (recurring operational guides),
+              <strong>architectures</strong> (stack-specific scaffolding), and the
+              <strong>companion repo</strong> for QA work.
+            </p>
+
+            <h3>Core memory</h3>
             <ul>
               <li>
                 <a
@@ -3793,8 +3858,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>README.md</code></a
                 >
-                — the GitHub-landing summary, install steps, repository structure, and Skills
-                catalog.
+                — GitHub landing: install paths, scaffolder, repository structure, Skills catalog.
               </li>
               <li>
                 <a
@@ -3803,7 +3867,7 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>CLAUDE.md</code></a
                 >
-                — the canonical project memory + Tool Resolution table that maps
+                — canonical project memory + Tool Resolution table mapping
                 <code>[TAG_TOOL]</code> pseudocode to concrete CLIs / MCPs.
               </li>
               <li>
@@ -3813,20 +3877,9 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>CONTEXT.md</code></a
                 >
-                — Context Engineering canonical map for this repo: stable file names, the
-                <code>.context/</code> vs <code>.claude/</code> split, architectural decisions, and
+                — Context Engineering canonical map: stable file names, the
+                <code>.context/</code> vs <code>.claude/</code> split, architectural decisions,
                 operational DO/DON'T rules.
-              </li>
-              <li>
-                <a
-                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
-                  target="_blank"
-                  rel="noopener"
-                  ><code>agentic-development-engineering.md</code></a
-                >
-                — methodology deep dive. §6 covers the <strong>why</strong> behind the knowledge
-                layer: token efficiency, progressive loading, the <code>.env</code> vs
-                <code>.agents/project.yaml</code> split, the four variable syntaxes.
               </li>
               <li>
                 <a
@@ -3835,28 +3888,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>INSTALLER.md</code></a
                 >
-                — what <code>bun run setup</code> configures: gentle-ai (SDD skills, Engram,
-                foundation skills), community skills, MCPs, external CLIs, the hand-off matrix
-                <code>/sprint-development</code> vs <code>/sdd-*</code>, and how to opt out of
-                gentle-ai.
-              </li>
-              <li>
-                <a
-                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/jira-setup-guide.md"
-                  target="_blank"
-                  rel="noopener"
-                  ><code>setup/jira-setup-guide.md</code></a
-                >
-                — configuring Jira credentials and the Atlassian MCP.
-              </li>
-              <li>
-                <a
-                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/README.md"
-                  target="_blank"
-                  rel="noopener"
-                  ><code>setup/README.md</code></a
-                >
-                — index of setup guides in this repo.
+                — full contract of what <code>bun run setup</code> configures and how to opt out
+                of gentle-ai.
               </li>
               <li>
                 <a
@@ -3865,8 +3898,128 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>.agents/README.md</code></a
                 >
-                — the full <code>.agents/</code> contract: variable syntaxes, validation scripts,
-                workflows for adding prompts or required Jira fields, troubleshooting.
+                — variable system contract, validation scripts, workflows for adding required Jira
+                fields.
+              </li>
+            </ul>
+
+            <h3>Methodology — why we do this</h3>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/agentic-development-engineering.md</code></a
+                >
+                — the canonical methodology deep dive (token efficiency, progressive loading,
+                variable systems).
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/methodology/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/methodology/</code></a
+                >
+                — supporting essays: <code>IQL-methodology.md</code>,
+                <code>jira-platform.md</code>, plus early/mid/late-game testing references mirrored
+                from the QA repo.
+              </li>
+            </ul>
+
+            <h3>Setup — one-time recipes</h3>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/setup/README.md</code></a
+                >
+                — index of setup guides.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/setup/jira-setup-guide.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/setup/jira-setup-guide.md</code></a
+                >
+                — Jira credentials + Atlassian MCP wiring.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/tree/main/docs/setup/mcp"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/setup/mcp/</code></a
+                >
+                — per-MCP setup notes (Context7, Tavily, Supabase, n8n).
+              </li>
+            </ul>
+
+            <h3>Workflows — recurring ops</h3>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/workflows/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/workflows/README.md</code></a
+                >
+                — index of operational guides.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/workflows/git-flow.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/workflows/git-flow.md</code></a
+                >
+                — branching strategy options consumed by <code>/git-flow-master</code>.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/workflows/environments.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/workflows/environments.md</code></a
+                >
+                — env-scoping conventions for <code>{{WEB_URL}}</code>, <code>{{API_URL}}</code>,
+                <code>{{DB_MCP}}</code>, and friends.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/workflows/sync-openapi-guide.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/workflows/sync-openapi-guide.md</code></a
+                >
+                — operating the OpenAPI <code>bun run api:sync</code> pipeline.
+              </li>
+            </ul>
+
+            <h3>Architectures — stack scaffolding</h3>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/architectures/README.md"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/architectures/README.md</code></a
+                >
+                — overview of supported stacks.
+              </li>
+              <li>
+                <a
+                  href="https://github.com/upex-galaxy/agentic-dev-boilerplate/tree/main/docs/architectures/supabase-nextjs"
+                  target="_blank"
+                  rel="noopener"
+                  ><code>docs/architectures/supabase-nextjs/</code></a
+                >
+                — the default Next.js + Supabase scaffold produced by
+                <code>/project-bootstrap</code>.
               </li>
               <li>
                 <a
@@ -3875,9 +4028,13 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>.claude/skills/agentic-dev-core/SKILL.md</code></a
                 >
-                — foundation reference host internals (passive doctrine library cited by
-                other skills).
+                — foundation reference host internals (passive doctrine library cited by other
+                skills).
               </li>
+            </ul>
+
+            <h3>Companion repo</h3>
+            <ul>
               <li>
                 <a
                   href="https://github.com/upex-galaxy/agentic-qa-boilerplate"
@@ -3885,9 +4042,8 @@ bun run lint:agents           # validate placeholders</code></pre>
                   rel="noopener"
                   ><code>agentic-qa-boilerplate</code></a
                 >
-                — the companion repo. If you need QA workflows (sprint testing, test documentation,
-                automation, regression), that lives there. Same <code>.agents/</code> system,
-                complementary skill layout.
+                — the QA half. Sprint testing, test documentation, automation, regression.
+                Same <code>.agents/</code> variable system, complementary skill layout.
               </li>
             </ul>
           </section>
