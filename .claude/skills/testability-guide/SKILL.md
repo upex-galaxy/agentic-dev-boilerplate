@@ -9,7 +9,6 @@ complementary_categories:
   - frontend-ui
   - issue-tracker
   - testing-e2e
-  - vcs
   - doc-generation
 ---
 
@@ -64,7 +63,6 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`       |
 | `issue-tracker`      | `acli` (T1) — used by the Jira Epic + Confluence publishers                                    |
 | `testing-e2e`        | `playwright-cli` — used during §verification                                                   |
-| `vcs`                | `git-flow-master` (T1) — owns branch + commit + PR                                             |
 | `doc-generation`     | `cognitive-doc-design` (T2) — optional, polishes the credentials markdown body                 |
 
 Skip only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).

@@ -5,7 +5,6 @@ license: MIT
 compatibility: [claude-code, opencode]
 phase: implementation
 complementary_categories:
-  - vcs
   - prose-polishing
 ---
 
@@ -49,7 +48,7 @@ Run once when this skill is invoked, before any operation below. Follows the con
 
 Steps:
 
-1. Read `complementary_categories` from this skill's frontmatter (`vcs`, `prose-polishing`).
+1. Read `complementary_categories` from this skill's frontmatter (`prose-polishing`).
 2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
 3. For each matched skill, classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
@@ -61,7 +60,6 @@ Expected matches (illustrative — actual list depends on what the user has inst
 
 | Category          | Likely matches                                                         |
 | ----------------- | ---------------------------------------------------------------------- |
-| `vcs`             | T4 ASK: `gh-cli` (extends `gh` command coverage during PR / issue ops) |
 | `prose-polishing` | `comment-writer` (T2) — refines PR descriptions, commit message bodies |
 
 Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).

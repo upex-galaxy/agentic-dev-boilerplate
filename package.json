@@ -15,6 +15,7 @@
     "jira:sync-issues": "bun run scripts/sync-jira-issues.ts",
     "vars:check": "bun run scripts/lint-vars.ts",
     "skills:check": "bun run scripts/lint-skills.ts",
+    "skills:validate": "bun cli/install.ts --validate-skills",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
     "jira:check": "bun run scripts/check-jira-setup.ts",
     "agents:setup": "bun run scripts/agents-setup.ts",

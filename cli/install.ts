@@ -123,7 +123,7 @@ interface CommunitySkill {
 
 // Community skills installed at PROJECT level (`bunx skills add`).
 // Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn.
-// CLI-companion skills (gh-cli, supabase, deploy-to-vercel, resend-cli, bun,
+// CLI-companion skills (supabase, deploy-to-vercel, resend-cli, bun,
 // playwright-cli) live at USER level instead — they're useful across every
 // project the user works on, not just this boilerplate. See USER_LEVEL_SKILLS.
 // Users can run `bunx autoskills` later to refine for their concrete stack.
@@ -158,12 +158,9 @@ const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
   { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
-  // cli-printing-press: full functionality requires Go 1.26.3+ (go install github.com/mvanhorn/cli-printing-press/v4/cmd/printing-press@latest); skill works standalone with degraded features
-  { package: 'https://github.com/mvanhorn/cli-printing-press', skill: 'cli-printing-press' },
   { package: 'https://github.com/lewislulu/html-ppt-skill', skill: 'html-ppt' },
   // CLI-companion skills (mirror EXTERNAL_CLIS) — load whenever user runs the
   // matching binary, anywhere on their machine.
-  { package: 'https://github.com/github/awesome-copilot', skill: 'gh-cli' },
   { package: 'supabase/agent-skills', skill: 'supabase' },
   { package: 'supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
   { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
@@ -1335,10 +1332,101 @@ function printClosingSummary(state: InstallState): void {
 }
 
 // ============================================================================
+// Skill URL validation (--validate-skills)
+// ============================================================================
+//
+// Smoke-test mode: probes every entry in PROJECT_LEVEL_SKILLS + USER_LEVEL_SKILLS
+// against the skills.sh registry via a HEAD request. Does NOT install anything.
+// Exits 0 if every entry is reachable, 1 otherwise.
+
+function normalizeOwnerRepo(pkg: string): { owner: string, repo: string } | null {
+  // Accept `https://github.com/owner/repo[.git]` or shorthand `owner/repo`.
+  // Skip non-github sources (e.g. https://bun.sh/docs) — those can't be probed
+  // against skills.sh and are treated as 'skip'.
+  const ghMatch = pkg.match(/github\.com\/([^/]+)\/([^/.]+)/);
+  if (ghMatch) { return { owner: ghMatch[1], repo: ghMatch[2] }; }
+  const shortMatch = pkg.match(/^([\w.-]+)\/([\w.-]+)$/);
+  if (shortMatch) { return { owner: shortMatch[1], repo: shortMatch[2] }; }
+  return null;
+}
+
+async function probeSkillsRegistry(pkg: string, skill?: string): Promise<{ status: 'ok' | 'fail' | 'skip', detail: string }> {
+  const norm = normalizeOwnerRepo(pkg);
+  if (!norm) { return { status: 'skip', detail: 'non-github source — not on skills.sh' }; }
+  const path = skill && skill !== '*'
+    ? `${norm.owner}/${norm.repo}/${skill}`
+    : `${norm.owner}/${norm.repo}`;
+  const url = `https://skills.sh/${path}`;
+  try {
+    const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    if (res.ok) { return { status: 'ok', detail: `HTTP ${res.status}` }; }
+    return { status: 'fail', detail: `HTTP ${res.status} at ${url}` };
+  }
+  catch (err: unknown) {
+    return { status: 'fail', detail: `network error: ${(err as Error).message}` };
+  }
+}
+
+async function validateSkills(): Promise<number> {
+  log.banner('Skill URL validation (smoke test)');
+  log.dim('  Probes skills.sh registry for every entry. No install, no side effects.');
+  process.stdout.write('\n');
+
+  const all: Array<{ level: 'project' | 'user', item: CommunitySkill }> = [
+    ...PROJECT_LEVEL_SKILLS.map(item => ({ level: 'project' as const, item })),
+    ...USER_LEVEL_SKILLS.map(item => ({ level: 'user' as const, item })),
+  ];
+
+  let okCount = 0;
+  let failCount = 0;
+  let skipCount = 0;
+  const failures: string[] = [];
+
+  for (const { level, item } of all) {
+    const slug = describeSkill(item);
+    const result = await probeSkillsRegistry(item.package, item.skill);
+    const tag = `[${level}]`.padEnd(10);
+    if (result.status === 'ok') {
+      log.success(`  ${tag} ${slug}`);
+      okCount++;
+    }
+    else if (result.status === 'skip') {
+      log.dim(`  ${tag} ${slug} — skipped (${result.detail})`);
+      skipCount++;
+    }
+    else {
+      log.error(`  ${tag} ${slug} — ${result.detail}`);
+      failures.push(`${level}:${slug}`);
+      failCount++;
+    }
+  }
+
+  process.stdout.write('\n');
+  log.banner('Validation summary');
+  process.stdout.write(`  ${COLORS.green}OK${COLORS.reset}      : ${okCount}\n`);
+  process.stdout.write(`  ${COLORS.yellow}SKIPPED${COLORS.reset} : ${skipCount}  ${COLORS.dim}(non-github sources)${COLORS.reset}\n`);
+  process.stdout.write(`  ${COLORS.red}FAILED${COLORS.reset}  : ${failCount}\n`);
+  if (failures.length > 0) {
+    process.stdout.write('\n');
+    process.stdout.write(`${COLORS.bold}Broken entries (fix cli/install.ts before next publish):${COLORS.reset}\n`);
+    for (const f of failures) { process.stdout.write(`  - ${f}\n`); }
+  }
+  process.stdout.write('\n');
+  return failCount > 0 ? 1 : 0;
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
 async function main(): Promise<void> {
+  // --validate-skills: smoke-test mode. Probes skills.sh for every entry and
+  // exits — no install, no prompts.
+  if (process.argv.includes('--validate-skills')) {
+    const code = await validateSkills();
+    process.exit(code);
+  }
+
   log.banner('agentic-dev-boilerplate — installer');
   log.dim('See .plans/FASE-15-DESIGN.md for the spec this implements.');
   if (AUTO_NON_INTERACTIVE) {

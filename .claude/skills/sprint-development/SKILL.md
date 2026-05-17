@@ -12,7 +12,6 @@ complementary_categories:
   - testing-e2e
   - accessibility
   - seo
-  - vcs
   - ci-cd
   - prose-polishing
   - adversarial-review

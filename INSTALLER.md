@@ -34,15 +34,15 @@ This doc is the **contract that `cli/install.ts` implements**. It covers the fou
 
 Each entry is required by one or more skills; install them as you need them.
 
-| Tool             | Required by                                                                                                                     | Source-of-truth                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `gh`             | `/git-flow-master`, `/gh-cli`, `/sprint-development` (PR ops, deploy hand-off), optional `gh repo create` step in the installer | <https://github.com/cli/cli#installation>                                |
-| `acli`           | `/acli`, `/sprint-development`, `/product-management` (Jira / Confluence from terminal)                                         | <https://developer.atlassian.com/cloud/acli/guides/install-acli/>        |
-| `playwright-cli` | `/playwright-cli`, `/sprint-development` (agent-driven browser automation, E2E checks)                                          | <https://playwright.dev/agent-cli/introduction>                          |
-| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap`                                                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
-| `vercel`         | `/deploy-to-vercel`, `/sprint-development` (staging + production deploys)                                                       | <https://vercel.com/docs/cli>                                            |
-| `resend`         | `/resend-cli`                                                                                                                   | <https://resend.com/docs/cli>                                            |
-| `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                            | <https://jqlang.org/>                                                    |
+| Tool             | Required by                                                                                                          | Source-of-truth                                                          |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `gh`             | `/git-flow-master`, `/sprint-development` (PR ops, deploy hand-off), optional `gh repo create` step in the installer | <https://github.com/cli/cli#installation>                                |
+| `acli`           | `/acli`, `/sprint-development`, `/product-management` (Jira / Confluence from terminal)                              | <https://developer.atlassian.com/cloud/acli/guides/install-acli/>        |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development` (agent-driven browser automation, E2E checks)                               | <https://playwright.dev/agent-cli/introduction>                          |
+| `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap`                                               | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `vercel`         | `/deploy-to-vercel`, `/sprint-development` (staging + production deploys)                                            | <https://vercel.com/docs/cli>                                            |
+| `resend`         | `/resend-cli`                                                                                                        | <https://resend.com/docs/cli>                                            |
+| `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                 | <https://jqlang.org/>                                                    |
 
 ### Convenience opt-ins — never required
 

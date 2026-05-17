@@ -220,7 +220,7 @@ Example (same work, different register):
 | CLI              | Skills to auto-load                                                    | Rationale                                                                       |
 | ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.   |
-| `gh`             | `/gh-cli`, `/git-flow-master`                                          | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
+| `gh`             | `/git-flow-master`                                                     | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
 | `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                  |
 | `vercel`         | `/deploy-to-vercel`, `/sprint-development`                             | Deploy CLI + sprint-dev's staging/prod deploy steps.                            |
 | `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                      |
