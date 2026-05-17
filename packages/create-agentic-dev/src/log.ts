@@ -1,3 +1,4 @@
+// DEPRECATED — use ./tui.ts. Kept only for prepare.ts/download.ts/rollback.ts back-compat.
 const isTTY = process.stdout.isTTY;
 
 const C = {

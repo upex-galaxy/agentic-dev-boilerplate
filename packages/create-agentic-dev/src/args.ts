@@ -1,4 +1,7 @@
+import pc from 'picocolors';
+
 import { CliError } from './errors.ts';
+import { headline } from './tui.ts';
 
 export interface Args {
   projectName?: string
@@ -12,6 +15,8 @@ export interface Args {
   nonInteractive: boolean
   help: boolean
   version: boolean
+  menu: boolean
+  noBanner: boolean
 }
 
 const DEFAULTS: Args = {
@@ -24,6 +29,8 @@ const DEFAULTS: Args = {
   nonInteractive: !process.stdin.isTTY,
   help: false,
   version: false,
+  menu: false,
+  noBanner: false,
 };
 
 export function parseArgs(argv: readonly string[]): Args {
@@ -57,6 +64,12 @@ export function parseArgs(argv: readonly string[]): Args {
       case '--non-interactive':
         out.nonInteractive = true;
         break;
+      case '--menu':
+        out.menu = true;
+        break;
+      case '--no-banner':
+        out.noBanner = true;
+        break;
       case '--template':
         out.template = requireValue(argv, ++i, '--template');
         break;
@@ -81,7 +94,10 @@ export function parseArgs(argv: readonly string[]): Args {
     out.projectName = positionals[0];
   }
 
-  if (!out.projectName && !out.here && !out.help && !out.version) {
+  // Only throw in non-interactive mode (piped / CI); in a TTY the menu handles
+  // missing project names interactively. `isTTY` is undefined when there is no
+  // TTY at all (CI), so use !isTTY to catch both false and undefined.
+  if (!out.projectName && !out.here && !out.help && !out.version && !process.stdin.isTTY) {
     throw new CliError(
       'USAGE',
       'missing required project name.',
@@ -101,30 +117,37 @@ function requireValue(argv: readonly string[], idx: number, flag: string): strin
 }
 
 export function printHelp(): void {
-  process.stdout.write(`create-agentic-dev — scaffolder for the Agentic Dev ecosystem
+  process.stdout.write(`${headline('create-agentic-dev')}\n`);
+  process.stdout.write('scaffolder for the Agentic Dev ecosystem\n\n');
 
-Usage:
-  bunx create-agentic-dev <project-name> [flags]
-  bunx create-agentic-dev --here                  # use current directory
+  process.stdout.write(pc.bold('Usage:\n'));
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev <project-name> [flags]')}\n`);
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev --here')}                  # use current directory\n\n`);
 
-Flags:
-  --here                          Bootstrap into the current directory, or run
-                                  setup if already inside a bootstrapped project.
-  --template <ref>                Branch/tag/SHA of the template (default: main).
-  --template-repo <owner/repo>    Override template upstream
-                                  (default: upex-galaxy/agentic-dev-boilerplate).
-  --project-key <KEY>             Jira project key (optional; prompted if omitted).
-  --no-install                    Skip "bun install".
-  --no-setup                      Skip "bun run setup".
-  --no-git                        Skip git init + initial commit.
-  --non-interactive               Use safe defaults; no prompts.
-  --help, -h                      Print this help.
-  --version, -v                   Print CLI version.
+  process.stdout.write(pc.bold('Flags:\n'));
+  const flags = [
+    ['--here', 'Bootstrap into the current directory, or run setup if already bootstrapped.'],
+    ['--template <ref>', 'Branch/tag/SHA of the template (default: main).'],
+    ['--template-repo <owner/repo>', 'Override template upstream (default: upex-galaxy/agentic-dev-boilerplate).'],
+    ['--project-key <KEY>', 'Jira project key (optional; prompted if omitted).'],
+    ['--no-install', 'Skip "bun install".'],
+    ['--no-setup', 'Skip "bun run setup".'],
+    ['--no-git', 'Skip git init + initial commit.'],
+    ['--non-interactive', 'Use safe defaults; no prompts.'],
+    ['--menu', 'Force the interactive menu even when args are provided.'],
+    ['--no-banner', 'Suppress the logo (useful for CI / piped output).'],
+    ['--help, -h', 'Print this help.'],
+    ['--version, -v', 'Print CLI version.'],
+  ];
+  const maxFlag = flags.reduce((m, [f]) => Math.max(m, f.length), 0);
+  for (const [flag, desc] of flags) {
+    process.stdout.write(`  ${pc.cyan(flag.padEnd(maxFlag))}  ${desc}\n`);
+  }
 
-Examples:
-  bunx create-agentic-dev my-app
-  bunx create-agentic-dev my-app --project-key ACME
-  bunx create-agentic-dev --here
-  bunx create-agentic-dev fork --template-repo my-fork/agentic-dev-boilerplate
-`);
+  process.stdout.write(`\n${pc.bold('Examples:\n')}`);
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev my-app')}\n`);
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev my-app --project-key ACME')}\n`);
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev --here')}\n`);
+  process.stdout.write(`  ${pc.cyan('bunx create-agentic-dev fork --template-repo my-fork/agentic-dev-boilerplate')}\n`);
+  process.stdout.write('\n');
 }
