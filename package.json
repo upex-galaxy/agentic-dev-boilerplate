@@ -17,6 +17,7 @@
     "skills:check": "bun run scripts/lint-skills.ts",
     "skills:validate": "bun cli/install.ts --validate-skills",
     "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
+    "jira:sync-workflows": "bun run scripts/sync-jira-workflows.ts",
     "jira:check": "bun run scripts/check-jira-setup.ts",
     "agents:setup": "bun run scripts/agents-setup.ts",
     "format:fix": "prettier --write .",
@@ -32,7 +33,12 @@
     "opencode": "dotenv -e .env -- opencode"
   },
   "dependencies": {
+    "@clack/prompts": "^1.4.0",
     "@inquirer/prompts": "^8.1.0",
+    "boxen": "^8.0.1",
+    "cli-table3": "^0.6.5",
+    "figures": "^6.1.0",
+    "picocolors": "^1.1.1",
     "yaml": "^2.8.2"
   },
   "devDependencies": {

@@ -32,6 +32,8 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
+import * as tui from './lib/tui.ts';
+
 // ----------------------------------------------------------------------------
 // Constants
 // ----------------------------------------------------------------------------
@@ -48,11 +50,13 @@ const INQUIRER_MARKER = join(REPO_ROOT, 'node_modules', '@inquirer', 'prompts', 
 const MIN_BUN: readonly [number, number, number] = [1, 0, 0];
 
 // Required MCP env vars (mirrors MCP_SERVER_SECRETS in cli/install.ts).
+// ATLASSIAN_* are the canonical user-facing vars; JIRA_* are auto-derived by
+// the installer and validated as optional (warn but don't fail when missing).
 const REQUIRED_VARS = [
   'TAVILY_API_KEY',
-  'JIRA_URL',
-  'JIRA_USERNAME',
-  'JIRA_API_TOKEN',
+  'ATLASSIAN_URL',
+  'ATLASSIAN_EMAIL',
+  'ATLASSIAN_API_TOKEN',
   'SUPABASE_ACCESS_TOKEN',
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
@@ -61,22 +65,42 @@ const REQUIRED_VARS = [
   'N8N_API_KEY',
 ] as const;
 
+// JIRA_* vars are auto-derived from ATLASSIAN_* by the installer; listed here
+// so the doctor can report their status without failing when they're absent.
+const OPTIONAL_VARS = [
+  'JIRA_URL',
+  'JIRA_USERNAME',
+  'JIRA_API_TOKEN',
+] as const;
+
 const VAR_HINTS: Record<string, { hint: string, where: string }> = {
   TAVILY_API_KEY: {
     hint: 'Tavily web-search MCP API key',
     where: 'https://app.tavily.com/  →  account  →  API keys',
   },
-  JIRA_URL: {
-    hint: 'Atlassian / Jira workspace URL',
+  ATLASSIAN_URL: {
+    hint: 'Atlassian credentials (canonical) — see .env.example',
     where: 'e.g. https://yourorg.atlassian.net',
   },
-  JIRA_USERNAME: {
-    hint: 'Email used to log in to Atlassian',
+  ATLASSIAN_EMAIL: {
+    hint: 'Atlassian credentials (canonical) — see .env.example',
     where: 'Your Atlassian account email',
   },
-  JIRA_API_TOKEN: {
-    hint: 'Atlassian API token for acli / MCP',
+  ATLASSIAN_API_TOKEN: {
+    hint: 'Atlassian credentials (canonical) — see .env.example',
     where: 'https://id.atlassian.com/manage-profile/security/api-tokens',
+  },
+  JIRA_URL: {
+    hint: 'Auto-derived from ATLASSIAN_URL by installer (override only if needed)',
+    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
+  },
+  JIRA_USERNAME: {
+    hint: 'Auto-derived from ATLASSIAN_EMAIL by installer (override only if needed)',
+    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
+  },
+  JIRA_API_TOKEN: {
+    hint: 'Auto-derived from ATLASSIAN_API_TOKEN by installer (override only if needed)',
+    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
   },
   SUPABASE_ACCESS_TOKEN: {
     hint: 'Supabase personal access token (PAT) for the Supabase MCP server',
@@ -133,6 +157,8 @@ interface DoctorReport {
   is_tty: boolean
   env_file_exists: boolean
   env_vars: Record<string, 'set' | 'missing'>
+  optional_vars: Record<string, 'set' | 'missing'>
+  atlassian_divergences: string[]
   mcp_json_exists: boolean
   opencode_jsonc_exists: boolean
   deps_installed: boolean
@@ -259,6 +285,8 @@ async function runDoctor(): Promise<DoctorReport> {
     is_tty: Boolean(process.stdin.isTTY),
     env_file_exists: existsSync(ENV_PATH),
     env_vars: {},
+    optional_vars: {},
+    atlassian_divergences: [],
     mcp_json_exists: existsSync(MCP_PATH),
     opencode_jsonc_exists: existsSync(OPENCODE_PATH),
     deps_installed: existsSync(NODE_MODULES_DOTENV),
@@ -292,6 +320,38 @@ async function runDoctor(): Promise<DoctorReport> {
       });
     }
   }
+
+  // optional vars (JIRA_* — auto-derived by installer, warn but don't fail)
+  for (const v of OPTIONAL_VARS) {
+    const value = envValues[v];
+    const isSet = value !== undefined && value.trim().length > 0;
+    report.optional_vars[v] = isSet ? 'set' : 'missing';
+  }
+
+  // divergence check: warn when ATLASSIAN_* and JIRA_* are both set but differ
+  const divergences: string[] = [];
+  if (
+    envValues.ATLASSIAN_URL
+    && envValues.JIRA_URL
+    && envValues.ATLASSIAN_URL !== envValues.JIRA_URL
+  ) {
+    divergences.push('ATLASSIAN_URL ≠ JIRA_URL (MCP server will use JIRA_URL override)');
+  }
+  if (
+    envValues.ATLASSIAN_EMAIL
+    && envValues.JIRA_USERNAME
+    && envValues.ATLASSIAN_EMAIL !== envValues.JIRA_USERNAME
+  ) {
+    divergences.push('ATLASSIAN_EMAIL ≠ JIRA_USERNAME (MCP server will use JIRA_USERNAME override)');
+  }
+  if (
+    envValues.ATLASSIAN_API_TOKEN
+    && envValues.JIRA_API_TOKEN
+    && envValues.ATLASSIAN_API_TOKEN !== envValues.JIRA_API_TOKEN
+  ) {
+    divergences.push('ATLASSIAN_API_TOKEN ≠ JIRA_API_TOKEN (MCP server will use JIRA_API_TOKEN override)');
+  }
+  report.atlassian_divergences = divergences;
 
   // node_modules / dotenv-cli
   if (!report.deps_installed) {
@@ -367,44 +427,73 @@ const COLORS = {
 };
 
 function printHuman(report: DoctorReport): void {
-  const tick = (ok: boolean) => (ok ? `${COLORS.green}✓${COLORS.reset}` : `${COLORS.red}✗${COLORS.reset}`);
-  const headerColor = report.status === 'ok' ? COLORS.green : COLORS.yellow;
-  const headerLabel = report.status === 'ok' ? '✓ OK' : '⚠ needs action';
+  const statusLabel = report.status === 'ok' ? 'OK' : 'needs action';
 
-  process.stdout.write(`\n${COLORS.bold}Setup doctor — ${headerColor}${headerLabel}${COLORS.reset}\n\n`);
-  process.stdout.write(`Platform         ${report.platform}\n`);
-  process.stdout.write(`Shell            ${report.shell || '(unset)'}\n`);
-  process.stdout.write(`TTY              ${report.is_tty ? 'yes' : 'no (running non-interactive)'}\n`);
+  tui.section(`Setup doctor — ${statusLabel}`);
+
+  tui.kv([
+    { k: 'Platform', v: report.platform },
+    { k: 'Shell', v: report.shell || '(unset)' },
+    { k: 'TTY', v: report.is_tty ? 'yes' : 'no (running non-interactive)' },
+  ]);
+
   process.stdout.write('\n');
-  process.stdout.write(`.env file        ${tick(report.env_file_exists)}\n`);
-  process.stdout.write(`.mcp.json        ${tick(report.mcp_json_exists)}\n`);
-  process.stdout.write(`opencode.jsonc   ${tick(report.opencode_jsonc_exists)}\n`);
-  process.stdout.write(`node_modules     ${tick(report.deps_installed)}\n`);
-  process.stdout.write(`direnv binary    ${tick(report.direnv.installed)}${report.direnv.version ? ` (${report.direnv.version})` : ''}\n`);
-  if (report.direnv.installed) {
-    process.stdout.write(`  .envrc allowed ${tick(Boolean(report.direnv.envrc_allowed))}\n`);
-    process.stdout.write(`  shell hook     ${tick(Boolean(report.direnv.hook_in_rc))}${report.direnv.rc_file ? ` (in ${report.direnv.rc_file})` : ''}\n`);
-  }
 
-  process.stdout.write('\nEnv vars:\n');
-  for (const [k, v] of Object.entries(report.env_vars)) {
-    const mark = v === 'set' ? `${COLORS.green}✓ set${COLORS.reset}` : `${COLORS.red}✗ missing${COLORS.reset}`;
-    process.stdout.write(`  ${k.padEnd(28)} ${mark}\n`);
+  // File + dep checks as a table
+  const checks: string[][] = [
+    ['.env file', report.env_file_exists ? tui.statusIcon('ok') : tui.statusIcon('fail')],
+    ['.mcp.json', report.mcp_json_exists ? tui.statusIcon('ok') : tui.statusIcon('fail')],
+    ['opencode.jsonc', report.opencode_jsonc_exists ? tui.statusIcon('ok') : tui.statusIcon('fail')],
+    ['node_modules', report.deps_installed ? tui.statusIcon('ok') : tui.statusIcon('fail')],
+    [`direnv binary${report.direnv.version ? ` (${report.direnv.version})` : ''}`, report.direnv.installed ? tui.statusIcon('ok') : tui.statusIcon('warn')],
+  ];
+  if (report.direnv.installed) {
+    checks.push(['  .envrc allowed', report.direnv.envrc_allowed ? tui.statusIcon('ok') : tui.statusIcon('fail')]);
+    checks.push([`  shell hook${report.direnv.rc_file ? ` (in ${report.direnv.rc_file})` : ''}`, report.direnv.hook_in_rc ? tui.statusIcon('ok') : tui.statusIcon('warn')]);
+  }
+  process.stdout.write(`${tui.table(['Check', 'Status'], checks)}\n`);
+
+  // Env vars as a table
+  tui.section('Env vars');
+  const envRows = Object.entries(report.env_vars).map(([k, v]) => [
+    k,
+    v === 'set' ? tui.statusIcon('ok') : tui.statusIcon('fail'),
+    v === 'set' ? 'set' : 'missing',
+  ]);
+  process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
+
+  // Optional vars (JIRA_* — auto-derived)
+  tui.section('Optional vars (auto-derived from ATLASSIAN_*)');
+  const optRows = Object.entries(report.optional_vars).map(([k, v]) => [
+    k,
+    v === 'set' ? tui.statusIcon('ok') : tui.statusIcon('warn'),
+    v === 'set' ? 'set' : 'not set (will be written by installer)',
+  ]);
+  process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], optRows)}\n`);
+
+  // Divergence warnings
+  if (report.atlassian_divergences.length > 0) {
+    tui.section('Atlassian credential divergences');
+    for (const msg of report.atlassian_divergences) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${msg}\n`);
+    }
+    process.stdout.write('\n');
   }
 
   if (report.pending_actions.length > 0) {
-    process.stdout.write(`\n${COLORS.bold}Pending actions:${COLORS.reset}\n`);
+    tui.section('Pending actions');
     for (const action of report.pending_actions) {
       process.stdout.write(`  ${COLORS.yellow}[${action.type}]${COLORS.reset} ${action.target}\n`);
       process.stdout.write(`    ${action.hint}\n`);
       if (action.where) {
-        process.stdout.write(`    ${COLORS.dim}→ ${action.where}${COLORS.reset}\n`);
+        process.stdout.write(`    ${COLORS.dim}-> ${action.where}${COLORS.reset}\n`);
       }
     }
     process.stdout.write(`\n${COLORS.dim}For AI agents: bun run setup:doctor --json  (machine-readable)${COLORS.reset}\n`);
   }
   else {
-    process.stdout.write(`\n${COLORS.green}All green.${COLORS.reset} Launch agent: bun claude  /  bun opencode\n`);
+    process.stdout.write('\n');
+    process.stdout.write(`${tui.successBox(['All green. Launch agent: bun claude  /  bun opencode'])}\n`);
   }
 }
 
@@ -413,12 +502,15 @@ function printHuman(report: DoctorReport): void {
 // ----------------------------------------------------------------------------
 
 function preflightFail(msg: string, fix: string): never {
-  process.stderr.write(`${COLORS.red}✗ Preflight failed:${COLORS.reset} ${msg}\n`);
-  process.stderr.write(`${COLORS.yellow}  Fix:${COLORS.reset} ${fix}\n`);
+  tui.log.error(`Preflight failed: ${msg}`);
+  tui.log.warn(`Fix: ${fix}`);
   process.exit(1);
 }
 
 function runPreflight(): never {
+  // Print a minimal header for preflight — no full logo, just the section banner
+  tui.section('Preflight check');
+
   const bunVersion = process.versions.bun;
   if (!bunVersion) {
     preflightFail(
@@ -439,9 +531,7 @@ function runPreflight(): never {
       'Run `bun install` first, then re-run `bun run setup`.',
     );
   }
-  process.stdout.write(
-    `${COLORS.green}✓ Preflight OK${COLORS.reset} ${COLORS.dim}(Bun ${bunVersion}, deps installed)${COLORS.reset}\n`,
-  );
+  tui.log.success(`Preflight OK (Bun ${bunVersion}, deps installed)`);
   process.exit(0);
 }
 
