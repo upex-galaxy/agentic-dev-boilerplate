@@ -39,12 +39,12 @@
 </div>
 
 ```bash
-bunx create-agentic-dev <your-repo-name>
+bunx create-agentic-dev@latest <your-repo-name>
 ```
 
 <div align="center">
 
-<sub><b>One command.</b> Downloads · scrubs git history · renames the project · runs <code>bun install</code> · launches the interactive installer.</sub>
+<sub><b>One command.</b> Downloads · scrubs git history · renames the project · runs <code>bun install</code> · launches the interactive installer. <code>@latest</code> is explicit but optional — <code>bunx</code> resolves the <code>latest</code> dist-tag by default.</sub>
 
 </div>
 
@@ -53,7 +53,7 @@ bunx create-agentic-dev <your-repo-name>
 
 ## Prerequisites
 
-Before running `bunx create-agentic-dev` or `bun install && bun run setup`, install the **hard blockers**. The installer detects everything else and prints exact install URLs when something is missing — but front-loading these saves a fail-and-retry loop.
+Before running `bunx create-agentic-dev@latest` or `bun install && bun run setup`, install the **hard blockers**. The installer detects everything else and prints exact install URLs when something is missing — but front-loading these saves a fail-and-retry loop.
 
 ### Hard blockers (installer exits 1 if missing)
 
@@ -125,7 +125,7 @@ N8N_API_URL · N8N_API_KEY
 
 | Goal                                                               | What to read / run                                                                                                                                                                                      |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev))                                                                              |
+| **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev@latest <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev))                                                                       |
 | **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
 | **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start))                                                                                                     |
 | **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav                                                                                                                                    |
@@ -148,9 +148,11 @@ A starter for teams that want AI agents driving the dev workflow — not just au
 `create-agentic-dev` is the official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev), source in [`packages/create-agentic-dev/`](packages/create-agentic-dev/)). One command, full setup:
 
 ```bash
-bunx create-agentic-dev <your-repo-name>
+bunx create-agentic-dev@latest <your-repo-name>
 cd <your-repo-name>
 ```
+
+> `@latest` pins the resolution to the npm `latest` dist-tag. `bunx` already defaults to `latest` when no tag is specified, so `bunx create-agentic-dev <your-repo-name>` works identically — `@latest` is just explicit. To pin a specific version, use `bunx create-agentic-dev@1.2.3 <your-repo-name>`.
 
 What it does:
 
@@ -242,7 +244,7 @@ Prefer to start your project **on GitHub from day one** (your own repo, your own
    ```
 5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
 
-> **The magic command does this better.** `bunx create-agentic-dev <your-repo-name>` does everything the template flow does **plus**: scrubs the upstream git history (so your repo doesn't carry boilerplate commits), auto-rewrites `package.json` name and `.agents/project.yaml` `project.name`, runs `bun install`, runs the interactive installer, and optionally creates the GitHub repo for you via `gh` — all in one command. The template route is a good fit only if you want the GitHub repo created via the web UI before any local work.
+> **The magic command does this better.** `bunx create-agentic-dev@latest <your-repo-name>` does everything the template flow does **plus**: scrubs the upstream git history (so your repo doesn't carry boilerplate commits), auto-rewrites `package.json` name and `.agents/project.yaml` `project.name`, runs `bun install`, runs the interactive installer, and optionally creates the GitHub repo for you via `gh` — all in one command. The template route is a good fit only if you want the GitHub repo created via the web UI before any local work.
 
 ### Manual clone (contributors)
 
@@ -268,7 +270,7 @@ cp .env.example .env   # then fill in the values
 
 > Foundation files (`.agents/`, `scripts/`, `CLAUDE.md`) ship with the repo — no bootstrap step needed. À la carte adoption of individual skills is not supported.
 
-> End-users building a new project should NOT clone manually — use `bunx create-agentic-dev` so git history is scrubbed and the project is renamed automatically.
+> End-users building a new project should NOT clone manually — use `bunx create-agentic-dev@latest` so git history is scrubbed and the project is renamed automatically.
 
 </details>
 
@@ -440,6 +442,6 @@ Renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. Migration
 
 <div align="center">
 
-<sub><b>You are here</b> — project overview for visitors · <b>Read time</b> ~5 min · <b>Next</b>: <code>bunx create-agentic-dev &lt;your-repo-name&gt;</code> to bootstrap · <code>bun run onboarding</code> for the visual repo tour · <a href="INSTALLER.md"><code>INSTALLER.md</code></a> for installer details.</sub>
+<sub><b>You are here</b> — project overview for visitors · <b>Read time</b> ~5 min · <b>Next</b>: <code>bunx create-agentic-dev@latest &lt;your-repo-name&gt;</code> to bootstrap · <code>bun run onboarding</code> for the visual repo tour · <a href="INSTALLER.md"><code>INSTALLER.md</code></a> for installer details.</sub>
 
 </div>
