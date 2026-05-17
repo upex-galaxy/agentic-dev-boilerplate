@@ -4,6 +4,8 @@ description: 'Foundation skill that hosts shared references cited by other workf
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
+complementary_categories:
+  - language
 ---
 
 # Agentic Dev Core — Foundation reference host
@@ -48,6 +50,32 @@ Requires `agentic-dev-core`. Loads on demand:
 ```
 
 The block is documentation — the AI reads it and pulls the cited files. There is no automated wiring: skills are markdown, not code.
+
+---
+
+## Composable Skills (auto-resolved when this reference host is consulted)
+
+`agentic-dev-core` is a passive reference host — it is not invoked directly. The composition contract below applies when **a downstream workflow skill** (`sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, etc.) cites one of this skill's references and the cited reference touches a community-skill category.
+
+Contract follows `references/skill-composition-strategy.md`.
+
+Steps (executed by the consuming workflow skill, not by `agentic-dev-core` itself):
+
+1. Read `complementary_categories` from this skill's frontmatter (`language`).
+2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+3. For each matched skill, classify tier per strategy doc §2.
+4. Apply threshold rule per strategy doc §3.2:
+   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply when consulting agentic-dev-core/references/typescript-patterns.md? Y/N"`. Cache the answer for the session.
+5. When dispatching sub-agents that consume `references/typescript-patterns.md`, inject a `## Composable Skills` block per strategy doc §6.2.
+
+Expected matches (illustrative — actual list depends on what the user has installed):
+
+| Category   | Likely matches                                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `language` | `typescript-advanced-types` (T3) — augments `references/typescript-patterns.md` when authoring TS in workflow skills |
+
+Skip the resolution step only if neither `skill-registry` nor a session-start skill list is available. When skipped, the consuming workflow skill logs `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in its result envelope (per strategy doc §3.4).
 
 ---
 
