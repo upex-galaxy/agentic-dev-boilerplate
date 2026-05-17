@@ -302,7 +302,7 @@ bun run typecheck
 **Paso 4.2: Lint check**
 
 ```bash
-bun run lint
+bun run lint:check
 ```
 
 **Paso 4.3: Test manual (opcional)**
@@ -338,7 +338,7 @@ curl "http://localhost:3000/api/[endpoint]" \
 ### Validación:
 
 - [ ] `bun run typecheck` pasa
-- [ ] `bun run lint` pasa sin nuevos errores
+- [ ] `bun run lint:check` pasa sin nuevos errores
 - [ ] Endpoints siguen funcionando con cookies (browser)
 - [ ] Endpoints funcionan con Bearer token (Postman)
 

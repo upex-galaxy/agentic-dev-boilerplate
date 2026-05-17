@@ -40,7 +40,7 @@ Configurar GitHub Actions workflow que automatice linting, testing, build, y dep
 **Qué identificar:**
 
 1. **Scripts npm disponibles:**
-   - ¿Existe `npm run lint`?
+   - ¿Existe `npm run lint:check`?
    - ¿Existe `npm run test`?
    - ¿Existe `npm run build`?
 
@@ -233,7 +233,7 @@ Leer `package.json` completo
 
 ### Scripts npm disponibles:
 
-- ✅ `npm run lint` - ESLint configured
+- ✅ `npm run lint:check` - ESLint configured
 - ✅ `npm run test` - Jest configured
 - ✅ `npm run build` - Next.js build
 
@@ -291,7 +291,7 @@ jobs:
       - checkout código
       - setup Node.js (versión del proyecto)
       - install dependencies
-      - run lint
+      - run lint:check
 
   # Job 2: Testing (needs: lint)
   test:
@@ -362,7 +362,7 @@ jobs:
         run: npm ci
 
       - name: Run linter
-        run: npm run lint
+        run: npm run lint:check
 
   test:
     name: 🧪 Test
@@ -545,7 +545,7 @@ git push origin develop
 
 **Lint fails:**
 
-- Ejecuta `npm run lint` localmente
+- Ejecuta `npm run lint:check` localmente
 - Corrige los errores
 - Push nuevamente
 

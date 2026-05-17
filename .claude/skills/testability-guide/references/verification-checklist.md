@@ -43,7 +43,7 @@ If `build` is gated behind environment variables not set in the dev shell → fa
 ## 3. Lint
 
 ```bash
-bun run lint
+bun run lint:check
 ```
 
 Expected: clean, OR only pre-existing warnings on files this run did not touch.

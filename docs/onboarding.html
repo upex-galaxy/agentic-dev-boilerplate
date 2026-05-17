@@ -1210,6 +1210,9 @@
               <a href="#getting-started"><strong>Start here →</strong> 3 onboarding paths</a>
             </li>
             <li><a href="#section-1">1. The fundamental idea</a></li>
+            <li>
+              <a href="#personality"><strong>Who you're talking to →</strong> AI personality</a>
+            </li>
             <li><a href="#section-2">2. Three categories of moving parts</a></li>
             <li><a href="#section-3">3. The lifecycle</a></li>
             <li><a href="#section-4">4. The two confusing pieces</a></li>
@@ -1236,6 +1239,9 @@
                 <a href="#getting-started"><strong>Start here →</strong></a>
               </li>
               <li><a href="#section-1">1. The fundamental idea</a></li>
+              <li>
+                <a href="#personality"><strong>Who you're talking to</strong></a>
+              </li>
               <li><a href="#section-2">2. Three moving parts</a></li>
               <li><a href="#section-3">3. The lifecycle</a></li>
               <li><a href="#section-4">4. Two confusing pieces</a></li>
@@ -1455,6 +1461,124 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
                   do those steps by hand.
                 </p>
               </div>
+            </div>
+          </section>
+
+          <!-- =======================================================  WHO YOU'RE TALKING TO  -->
+          <section id="personality" class="getting-started">
+            <h2 style="margin-top: 0">Who you're talking to — AI personality</h2>
+
+            <p>
+              Before you fire your first command, know who is on the other side of the conversation.
+              The AI in this repo has an opinionated, intentional personality — a deliberate mix of
+              speech style, register, and behavioural defaults — so that what you read feels
+              consistent across sessions, agents, and skills.
+            </p>
+
+            <div class="callout callout-info">
+              <strong>Short answer:</strong> a senior software engineer who reports to a Project
+              Manager. Competent, parsimonious with words, allergic to theatre, biased toward
+              planning over improvisation, and disciplined about translating technical work into
+              business value when speaking to you.
+            </div>
+
+            <h3 style="margin-top: 1.5rem">The five strategies you'll notice</h3>
+
+            <div class="skill-grid">
+              <article class="skill-card">
+                <div class="skill-card-head">
+                  <span class="skill-card-name">Caveman mode</span>
+                </div>
+                <p class="skill-card-trigger">Word compression</p>
+                <p class="skill-card-desc">
+                  Drops articles, fillers, and pleasantries. Fragments OK. Cuts roughly 75% of
+                  tokens without losing accuracy. Code blocks stay fully written. Toggle with
+                  <code>/caveman lite|full|ultra</code> or disable with <code>stop caveman</code>.
+                </p>
+              </article>
+              <article class="skill-card">
+                <div class="skill-card-head">
+                  <span class="skill-card-name">Butler Pattern</span>
+                </div>
+                <p class="skill-card-trigger">Information granularity</p>
+                <p class="skill-card-desc">
+                  Headline first (one line that resolves your literal question), then an atomic
+                  bullet menu of related topics. You pull the thread that matters. No paragraphs
+                  buried in walls of text.
+                </p>
+              </article>
+              <article class="skill-card">
+                <div class="skill-card-head">
+                  <span class="skill-card-name">PM Voice</span>
+                  <span class="badge badge-foundation">Default</span>
+                </div>
+                <p class="skill-card-trigger">Vocabulary register</p>
+                <p class="skill-card-desc">
+                  Headlines report user/business value, not technical action. Technical detail lives
+                  in a collapsed bullet section underneath. Auto-suspends when you mention a file,
+                  command, or library by name.
+                </p>
+              </article>
+              <article class="skill-card">
+                <div class="skill-card-head">
+                  <span class="skill-card-name">Background-narrator</span>
+                </div>
+                <p class="skill-card-trigger">Lifecycle signaling</p>
+                <p class="skill-card-desc">
+                  When running as a background job, emits lifecycle signals (<code>result:</code>,
+                  <code>needs input:</code>, <code>failed:</code>) so a classifier can track
+                  progress without watching live.
+                </p>
+              </article>
+              <article class="skill-card">
+                <div class="skill-card-head">
+                  <span class="skill-card-name">Language mirror</span>
+                </div>
+                <p class="skill-card-trigger">Locale</p>
+                <p class="skill-card-desc">
+                  Detects your language and replies in it. Repo artifacts (code, commits, PRs,
+                  branch names, Jira issues) stay in English regardless of conversational language.
+                </p>
+              </article>
+            </div>
+
+            <h3 style="margin-top: 2rem">How to talk to it</h3>
+
+            <ul>
+              <li>
+                <strong>Speak naturally in your own language.</strong> The AI mirrors you — no need
+                to switch to English.
+              </li>
+              <li>
+                <strong>Drop a file path, command, or library name</strong> in your message if you
+                want a technical reply that turn (PM Voice auto-suspends).
+              </li>
+              <li>
+                <strong>State your goal, not your implementation idea</strong> if you want the AI to
+                push back when there's a simpler path.
+              </li>
+              <li>
+                <strong>Say <code>modo técnico</code> / <code>speak technically</code></strong> to
+                force a technical reply for the rest of the session, or
+                <strong><code>modo PM</code> / <code>PM Voice</code></strong> to restore the
+                default.
+              </li>
+              <li>
+                <strong>Say <code>stop caveman</code> / <code>normal mode</code></strong> to disable
+                token compression and read full-form prose.
+              </li>
+            </ul>
+
+            <div class="callout callout-warn">
+              <strong>Read the full guide before you start.</strong> The personality is layered:
+              traits, strategies, override phrases, suspension triggers, and how to evolve it over
+              time. Full reference (with all toggles, examples, and edge cases) lives in
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/ai-personality.md"
+                target="_blank"
+                rel="noopener"
+                ><code>docs/ai-personality.md</code></a
+              >. It mirrors the runtime contract defined in <code>CLAUDE.md</code> sections 1–3.
             </div>
           </section>
 
@@ -1806,7 +1930,7 @@ bunx -y ccstatusline@latest   # OPTIONAL, Claude Code only — run in a SEPARATE
 bun run agents:setup          # interactive walkthrough for project.yaml
 bun run jira:sync-fields      # catalog Jira custom fields
 bun run jira:check            # verify the catalog against the manifest
-bun run lint:vars           # validate placeholders</code></pre>
+bun run vars:check           # validate placeholders</code></pre>
                   <p>
                     <strong>Statusline (cosmetic, recommended):</strong>
                     <code>bunx -y ccstatusline@latest</code> opens an interactive TUI to configure
@@ -1964,7 +2088,7 @@ bun run lint:vars           # validate placeholders</code></pre>
                           satisfies <code>jira-required.yaml</code> against <code>jira.json</code>.
                         </li>
                         <li>
-                          <code>bun run lint:vars</code> — verify every <code>{{VAR}}</code>,
+                          <code>bun run vars:check</code> — verify every <code>{{VAR}}</code>,
                           <code>{{jira.&lt;slug&gt;}}</code>, and
                           <code>&lt;&lt;VAR&gt;&gt;</code> placeholder still resolves.
                         </li>
@@ -3112,7 +3236,7 @@ bun run lint:vars           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td>Validate <code>{{VAR}}</code> / <code>{{jira.*}}</code> placeholders</td>
-                    <td><code>bun run lint:vars</code></td>
+                    <td><code>bun run vars:check</code></td>
                   </tr>
                   <tr>
                     <td>Verify the Jira manifest matches the catalog</td>
@@ -3509,7 +3633,7 @@ bun run lint:vars           # validate placeholders</code></pre>
                     >
                   </li>
                   <li>
-                    <code>bun run lint:vars</code>
+                    <code>bun run vars:check</code>
                     <span class="muted"
                       >Validate every <code>{{VAR}}</code>, <code>{{jira.&lt;slug&gt;}}</code>, and
                       <code>&lt;&lt;VAR&gt;&gt;</code> reference resolves against the manifest +
@@ -3553,19 +3677,19 @@ bun run lint:vars           # validate placeholders</code></pre>
                     >
                   </li>
                   <li>
-                    <code>bun run lint</code> / <code>lint:fix</code>
+                    <code>bun run lint:check</code> / <code>lint:fix</code>
                     <span class="muted"
                       >Lint the codebase with ESLint. <code>lint:fix</code> auto-fixes.</span
                     >
                   </li>
                   <li>
-                    <code>bun run format</code> / <code>format:check</code>
+                    <code>bun run format:fix</code> / <code>format:check</code>
                     <span class="muted"
                       >Format with Prettier. <code>format:check</code> only verifies.</span
                     >
                   </li>
                   <li>
-                    <code>bun run type-check</code>
+                    <code>bun run types:check</code>
                     <span class="muted"
                       >Run <code>tsc --noEmit</code> against the whole project.</span
                     >
@@ -4119,6 +4243,17 @@ bun run lint:vars           # validate placeholders</code></pre>
           >
             <span class="footer-card-title">CLAUDE.md</span>
             <span class="footer-card-desc">Canonical project memory + Tool Resolution table.</span>
+          </a>
+          <a
+            class="footer-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/ai-personality.md"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="footer-card-title">ai-personality.md</span>
+            <span class="footer-card-desc"
+              >Who you're talking to: personality, speech style, override phrases.</span
+            >
           </a>
           <a
             class="footer-card"

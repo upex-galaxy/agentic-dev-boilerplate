@@ -166,7 +166,7 @@ Place these in `.env` before running anything that talks to a real environment:
 
 `.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code) or `{env:VAR}` (OpenCode). The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
-Verify your config by running the linter declared in `package.json` (typically `bun run lint:vars`). Always check `package.json` for the canonical script name — Critical Rule #12.
+Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #12.
 
 ---
 
@@ -236,7 +236,7 @@ Run through this checklist before you reach for your first ticket:
 
 - [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
-- [ ] Does the agents linter (`bun run lint:vars` per `package.json`) exit clean (0 errors)?
+- [ ] Does the agents linter (`bun run vars:check` per `package.json`) exit clean (0 errors)?
 - [ ] Do the gentle-ai skills appear in autocomplete (restart your agent if not)?
 - [ ] Ready for your first ticket: `/sprint-development <UPEX-XXX>`
 

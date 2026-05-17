@@ -37,7 +37,7 @@ testing:
 
 # Variables declared above that are consumed OUTSIDE the {{TEMPLATE}} system
 # (env vars in scripts/, shell `yq` reads embedded in skill docs, etc.).
-# `bun run lint:vars` skips DECLARED_BUT_UNUSED warnings for these.
+# `bun run vars:check` skips DECLARED_BUT_UNUSED warnings for these.
 # Each entry MUST include an inline `#` comment explaining WHERE the variable
 # is consumed — if the comment is missing, the linter fails with
 # EXTERNAL_CONSUMER_UNDOCUMENTED so the allowlist cannot rot silently.

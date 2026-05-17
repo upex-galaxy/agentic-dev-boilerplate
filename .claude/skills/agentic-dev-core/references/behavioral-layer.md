@@ -76,7 +76,7 @@ For multi-step tasks, state a brief plan with explicit checks:
 3. [Step] → verify: [observable check]
 ```
 
-`verify` = an observable signal that the step actually landed (test passes, file exists, command exits 0, type-check clean). This format **complements** the 6-component subagent briefing in `references/briefing-template.md` — it does **not** replace it. Use this format for thinking-out-loud during execution; use the briefing for delegation.
+`verify` = an observable signal that the step actually landed (test passes, file exists, command exits 0, types:check clean). This format **complements** the 6-component subagent briefing in `references/briefing-template.md` — it does **not** replace it. Use this format for thinking-out-loud during execution; use the briefing for delegation.
 
 ---
 

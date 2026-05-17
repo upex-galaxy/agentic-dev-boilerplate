@@ -100,7 +100,7 @@ references/data-testid-standards.md
 **Ejecutar (si es posible):**
 
 ```bash
-npm run lint    # o: bun run lint
+npm run lint:check    # o: bun run lint:check
 npm run build   # o: bun run build
 ```
 

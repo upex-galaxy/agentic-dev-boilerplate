@@ -284,7 +284,7 @@ Curated, repo-specific. The full list of generic rules lives in `CLAUDE.md` — 
 
 ### DO
 
-1. **Run `bun run lint:vars` after touching any prompt or skill** — validates every `{{VAR}}` and `{{jira.*}}` reference resolves against config.
+1. **Run `bun run vars:check` after touching any prompt or skill** — validates every `{{VAR}}` and `{{jira.*}}` reference resolves against config.
 2. **Read `.context/business/business-data-map.md` before planning a feature** — it's the cheapest way to avoid misunderstanding the domain.
 3. **Reference values via `{{VAR_NAME}}` in prompts**, never hardcode URLs/keys/paths.
 4. **Treat skills as the workflow source of truth** — if a workflow lives in a doc but not a skill, the doc is wrong.

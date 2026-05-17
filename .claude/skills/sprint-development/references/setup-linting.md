@@ -220,7 +220,7 @@ package-lock.json
 ### 5.1 Probar linting
 
 ```bash
-[npm/pnpm/bun] run lint
+[npm/pnpm/bun] run lint:check
 ```
 
 **Resultado esperado:**
@@ -241,7 +241,7 @@ package-lock.json
 ### 5.3 Probar Prettier
 
 ```bash
-[npm/pnpm/bun] run format
+[npm/pnpm/bun] run format:fix
 ```
 
 **Resultado esperado:**
@@ -297,20 +297,20 @@ package-lock.json
 
 ### Scripts agregados a `package.json`:
 
-- `npm run lint` - Ejecutar linting
+- `npm run lint:check` - Ejecutar linting
 - `npm run lint:fix` - Fix automático
-- `npm run format` - Formatear código
+- `npm run format:fix` - Formatear código
 
 ### ✅ Validación:
 
-- ✅ `npm run lint` ejecuta sin errores de configuración
-- ✅ `npm run format` formatea archivos
+- ✅ `npm run lint:check` ejecuta sin errores de configuración
+- ✅ `npm run format:fix` formatea archivos
 
 ### 📋 Próximos Pasos:
 
 1. **Ejecutar linting en código existente:**
    ```bash
-   npm run lint
+   npm run lint:check
    ```
 ````
 
@@ -321,7 +321,7 @@ package-lock.json
 
    ```bash
    npm run lint:fix
-   npm run format
+   npm run format:fix
    ```
 
 3. **Configurar editor:**
@@ -352,7 +352,7 @@ Configura ESLint y Prettier para este proyecto Next.js.
 2. Instala dependencias necesarias
 3. Crea archivos de configuración manualmente (NO scripts interactivos)
 4. Agrega scripts a package.json
-5. Valida que funciona (npm run lint)
+5. Valida que funciona (npm run lint:check)
 
 **Importante:**
 - Usa Context7 MCP para consultar configuración oficial de Next.js

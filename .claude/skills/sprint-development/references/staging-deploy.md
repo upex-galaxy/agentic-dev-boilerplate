@@ -140,7 +140,7 @@ git pull origin [feature-branch]
 
 ```bash
 # Lint
-npm run lint
+npm run lint:check
 
 # Tests
 npm run test
@@ -235,7 +235,7 @@ git push origin develop
 
 **Lint fails:**
 
-- Ejecuta `npm run lint -- --fix` localmente
+- Ejecuta `npm run lint:check -- --fix` localmente
 - Commit fix
 - Push → CI re-ejecuta
 
@@ -507,7 +507,7 @@ Lista para QA y exploratory testing.
 
 ```bash
 # Antes de merge/deploy:
-npm run lint && npm run test && npm run build
+npm run lint:check && npm run test && npm run build
 ```
 
 ### **2. Merge via Pull Request**

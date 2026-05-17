@@ -203,7 +203,7 @@ npx --yes @google/design.md lint <path>
 
 Capture stdout and exit code. Parse stdout for:
 
-- **Errors** — surface verbatim and stop. Offer the user: retry with a different brand, run lint with `--strict false`, or hand-edit.
+- **Errors** — surface verbatim and stop. Offer the user: retry with a different brand, run lint:check with `--strict false`, or hand-edit.
 - **WCAG warnings** — surface as a separate section in the final report. Do not block on them; the user may accept them, but they need to see them.
 
 If the lint exits 0 with no warnings, proceed silently to step 8.

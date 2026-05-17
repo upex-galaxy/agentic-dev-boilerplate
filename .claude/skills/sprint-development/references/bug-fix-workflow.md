@@ -602,7 +602,7 @@ git checkout -b hotfix/[ISSUE_KEY]/[short-description]
 npm run typecheck  # or: bun run typecheck
 
 # Linting
-npm run lint  # or: bun run lint
+npm run lint:check  # or: bun run lint:check
 
 # Build
 npm run build  # or: bun run build
@@ -1570,12 +1570,12 @@ Use [ISSUE_TRACKER_TOOL] to transition issue:
 
 ## Quick Reference: Code Quality Commands
 
-| Check      | Command (npm)       | Command (bun)       |
-| ---------- | ------------------- | ------------------- |
-| TypeScript | `npm run typecheck` | `bun run typecheck` |
-| Lint       | `npm run lint`      | `bun run lint`      |
-| Build      | `npm run build`     | `bun run build`     |
-| Test       | `npm run test`      | `bun run test`      |
+| Check      | Command (npm)        | Command (bun)        |
+| ---------- | -------------------- | -------------------- |
+| TypeScript | `npm run typecheck`  | `bun run typecheck`  |
+| Lint       | `npm run lint:check` | `bun run lint:check` |
+| Build      | `npm run build`      | `bun run build`      |
+| Test       | `npm run test`       | `bun run test`       |
 
 ---
 

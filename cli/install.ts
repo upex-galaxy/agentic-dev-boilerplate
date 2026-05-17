@@ -1239,13 +1239,15 @@ function printClosingSummary(state: InstallState): void {
   n++;
   process.stdout.write(`  ${n}. Install missing CLIs (see table above — use your OS package manager)\n`);
   n++;
-  process.stdout.write(`  ${n}. Run: bun run lint:vars (validate config)\n`);
+  process.stdout.write(`  ${n}. Run: bun run vars:check (validate config)\n`);
   n++;
   process.stdout.write(`  ${n}. In your agent: /sync-ai-memory (load initial context)\n`);
   n++;
   process.stdout.write(`  ${n}. In your agent: /project-foundation, then /project-bootstrap (define + scaffold)\n`);
   n++;
   process.stdout.write(`  ${n}. After foundation+bootstrap, run: bunx autoskills (auto-detect concrete stack and add matching community skills)\n`);
+  n++;
+  process.stdout.write(`  ${n}. Curious who you're talking to? Read docs/ai-personality.md to learn the AI's personality, speech style, and how to interact with it\n`);
   process.stdout.write('\n');
 
   // GitHub repository block — only if step 10 created a remote

@@ -317,7 +317,7 @@ Every skill belongs to one of four tiers. Each tier has different discovery and 
 | T3   | Community project-level        | Installed by `install.ts` `PROJECT_LEVEL_SKILLS`   | Silent if matched by category                               |
 | T4   | Community user-level (global)  | Installed by `install.ts` `USER_LEVEL_SKILLS`      | **ASK** user before load (cross-project, not always wanted) |
 
-Validation: `bun run lint:skills` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
+Validation: `bun run skills:check` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
 
 ### Slash commands (utilities)
 
@@ -378,7 +378,7 @@ See `.agents/README.md` for the full contract.
 **Validation scripts:**
 
 ```bash
-bun run lint:vars          # Every {{VAR}} and {{jira.*}} reference resolves
+bun run vars:check          # Every {{VAR}} and {{jira.*}} reference resolves
 bun run jira:sync-fields   # Discover Jira custom fields -> .agents/jira-fields.json
 bun run jira:check         # Validate jira-required.yaml against jira-fields.json
 ```
@@ -388,16 +388,16 @@ bun run jira:check         # Validate jira-required.yaml against jira-fields.jso
 ## Common scripts
 
 ```bash
-bun run lint              # Lint codebase
+bun run lint:check              # Lint codebase
 bun run lint:fix          # Auto-fix lint issues
-bun run format            # Format with Prettier
+bun run format:fix            # Format with Prettier
 bun run format:check      # Check formatting
 bun up                    # Update template from upstream (interactive)
 bun up --auto             # Non-interactive / CI mode (safe changes only, exit 0 always)
 bun up --dry-run          # Preview what would change without writing anything
 bun up --rollback         # Restore from most recent backup
 bun run api:sync          # Sync OpenAPI spec + generate types
-bun run lint:vars         # Validate {{VAR}} and {{jira.*}} references
+bun run vars:check         # Validate {{VAR}} and {{jira.*}} references
 bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira-fields.json
 bun run jira:check        # Validate Jira manifest vs catalog
 ```

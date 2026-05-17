@@ -177,7 +177,7 @@ After generating `DESIGN.md`, confirm:
 - The 8 prescribed sections are present in the prose (Overview, Colors, Typography, Layout, Elevation, Shapes, Components, Do's/Don'ts).
 - WCAG AA contrast passes for the primary/text pairs reported by the lint output.
 
-If any check fails, surface the failure in the report rather than papering over. Do not invent fixes — ask the user how to proceed (retry with a different brand, run lint with `--strict false`, or edit by hand).
+If any check fails, surface the failure in the report rather than papering over. Do not invent fixes — ask the user how to proceed (retry with a different brand, run lint:check with `--strict false`, or edit by hand).
 
 ---
 
