@@ -5,6 +5,7 @@ import * as tui from './tui.ts';
 
 export type MenuResult
   = | { kind: 'doctor' }
+    | { kind: 'inspect' }
     | { kind: 'scaffold', projectName: string }
     | { kind: 'quit' };
 
@@ -14,11 +15,12 @@ export async function runMenu(): Promise<MenuResult> {
 
   tui.intro(pc.bgCyan(' AGENTIC DEV '));
 
-  const choice = await tui.select<'doctor' | 'scaffold' | 'quit'>({
+  const choice = await tui.select<'doctor' | 'inspect' | 'scaffold' | 'quit'>({
     message: 'What would you like to do?',
     options: [
       { value: 'scaffold', label: 'Create a new project' },
       { value: 'doctor', label: 'Check prerequisites' },
+      { value: 'inspect', label: 'What will this install?' },
       { value: 'quit', label: 'Quit' },
     ],
   });
@@ -33,6 +35,10 @@ export async function runMenu(): Promise<MenuResult> {
 
   if (choice === 'doctor') {
     return { kind: 'doctor' };
+  }
+
+  if (choice === 'inspect') {
+    return { kind: 'inspect' };
   }
 
   // scaffold — prompt for project name

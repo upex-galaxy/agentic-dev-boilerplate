@@ -12,6 +12,7 @@ import { isAgenticDevRepo, isDirectoryEmpty } from './detect.ts';
 import { runDoctor } from './doctor.ts';
 import { downloadTemplate } from './download.ts';
 import { CliError } from './errors.ts';
+import { runInspect } from './inspect.ts';
 import { log } from './log.ts';
 import { runMenu } from './menu.ts';
 import {
@@ -62,6 +63,13 @@ async function main(): Promise<number> {
 
       if (result.kind === 'doctor') {
         await runDoctor();
+        tui.breathe();
+        // Loop back to menu
+        continue;
+      }
+
+      if (result.kind === 'inspect') {
+        await runInspect();
         tui.breathe();
         // Loop back to menu
         continue;

@@ -1,0 +1,437 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-18T10:00:42.472Z",
+  "sourceRef": "main",
+  "prerequisites": [
+    {
+      "name": "bun",
+      "required": true,
+      "purpose": "JavaScript runtime and package manager used by every script and the installer itself.",
+      "installHint": "https://bun.sh/docs/installation",
+      "binaryName": "bun"
+    },
+    {
+      "name": "git",
+      "required": true,
+      "purpose": "Required to clone the template and track your project's history.",
+      "installHint": "https://git-scm.com/downloads",
+      "binaryName": "git"
+    },
+    {
+      "name": "node >= 18",
+      "required": true,
+      "purpose": "Used by the npx wrapper that runs create-agentic-dev. Must be v18 or newer.",
+      "installHint": "https://nodejs.org/en/download",
+      "binaryName": "node"
+    },
+    {
+      "name": "gh (GitHub CLI)",
+      "required": false,
+      "purpose": "Optional. Needed only if you want the installer to auto-create a GitHub repo (Phase 4 Step 9).",
+      "installHint": "https://cli.github.com",
+      "binaryName": "gh"
+    },
+    {
+      "name": "internet access",
+      "required": true,
+      "purpose": "The scaffolder downloads the boilerplate template from GitHub and gentle-ai skills from their registries.",
+      "installHint": "https://api.github.com"
+    },
+    {
+      "name": "disk space (200 MB+)",
+      "required": false,
+      "purpose": "The template, node_modules, and installed skills require at least 200 MB of free disk space.",
+      "installHint": "https://bun.sh/docs"
+    },
+    {
+      "name": "API keys (.env)",
+      "required": false,
+      "purpose": "MCP servers (Tavily, Atlassian, Supabase, n8n) require API keys set in .env before they can connect.",
+      "installHint": "See .env.example in the project root after scaffolding."
+    }
+  ],
+  "willInstall": {
+    "gentleAiSkills": {
+      "count": 16,
+      "items": [
+        {
+          "name": "engram",
+          "purpose": "Persistent memory across sessions.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-init",
+          "purpose": "Initialize Spec-Driven Development context for a project.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-explore",
+          "purpose": "Explore a codebase to gather context before planning.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-propose",
+          "purpose": "Generate a structured change proposal from exploration.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-spec",
+          "purpose": "Write a detailed specification from a proposal.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-design",
+          "purpose": "Produce an architecture design from a proposal.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-tasks",
+          "purpose": "Break a spec and design into implementable tasks.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-apply",
+          "purpose": "Implement tasks from a spec in batches.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-verify",
+          "purpose": "Validate an implementation against its spec.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-archive",
+          "purpose": "Archive a completed change and close the SDD cycle.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "sdd-onboard",
+          "purpose": "Guided end-to-end SDD walkthrough for new users.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "skill-registry",
+          "purpose": "Registry of all installed skills and their trigger rules.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "judgment-day",
+          "purpose": "Resolve conflicting or ambiguous AI decisions with structured judgment.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "cognitive-doc-design",
+          "purpose": "Design documentation that reduces cognitive load.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "comment-writer",
+          "purpose": "Write high-quality, context-aware code comments.",
+          "source": "gentle-ai"
+        },
+        {
+          "name": "issue-creation",
+          "purpose": "Create well-structured GitHub or Jira issues from context.",
+          "source": "gentle-ai"
+        }
+      ]
+    },
+    "communityProjectSkills": {
+      "count": 19,
+      "items": [
+        {
+          "name": "frontend-design",
+          "purpose": "Frontend design patterns and component architecture.",
+          "source": "https://github.com/anthropics/skills"
+        },
+        {
+          "name": "react-best-practices",
+          "purpose": "React best practices curated by Vercel.",
+          "source": "https://github.com/vercel-labs/agent-skills"
+        },
+        {
+          "name": "composition-patterns",
+          "purpose": "Component composition patterns for React.",
+          "source": "https://github.com/vercel-labs/agent-skills"
+        },
+        {
+          "name": "next-best-practices",
+          "purpose": "Next.js best practices and idiomatic patterns.",
+          "source": "https://github.com/vercel-labs/next-skills"
+        },
+        {
+          "name": "next-cache-components",
+          "purpose": "Next.js caching strategies for Server and Client Components.",
+          "source": "https://github.com/vercel-labs/next-skills"
+        },
+        {
+          "name": "next-upgrade",
+          "purpose": "Guided upgrade path for Next.js major versions.",
+          "source": "https://github.com/vercel-labs/next-skills"
+        },
+        {
+          "name": "react-hook-form",
+          "purpose": "Form state management with react-hook-form.",
+          "source": "https://github.com/pproenca/dot-skills"
+        },
+        {
+          "name": "zod",
+          "purpose": "Schema validation with Zod.",
+          "source": "https://github.com/pproenca/dot-skills"
+        },
+        {
+          "name": "shadcn",
+          "purpose": "shadcn/ui component library patterns and usage.",
+          "source": "https://github.com/shadcn/ui"
+        },
+        {
+          "name": "tailwind-css-patterns",
+          "purpose": "Tailwind CSS utility patterns and design tokens.",
+          "source": "https://github.com/giuseppe-trisciuoglio/developer-kit"
+        },
+        {
+          "name": "typescript-advanced-types",
+          "purpose": "Advanced TypeScript type patterns.",
+          "source": "https://github.com/wshobson/agents"
+        },
+        {
+          "name": "accessibility",
+          "purpose": "Web accessibility (a11y) best practices and auditing.",
+          "source": "https://github.com/addyosmani/web-quality-skills"
+        },
+        {
+          "name": "seo",
+          "purpose": "SEO best practices for Next.js and web apps.",
+          "source": "https://github.com/addyosmani/web-quality-skills"
+        },
+        {
+          "name": "n8n-skills (full package)",
+          "purpose": "n8n workflow automation MCP toolkit.",
+          "source": "czlonkowski/n8n-skills"
+        },
+        {
+          "name": "emil-design-eng",
+          "purpose": "Design engineering patterns from Emil Kowalski.",
+          "source": "https://github.com/emilkowalski/skill"
+        },
+        {
+          "name": "ui-ux-pro-max",
+          "purpose": "UI/UX design intelligence across 10 stacks and 50+ styles.",
+          "source": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
+        },
+        {
+          "name": "impeccable",
+          "purpose": "Code quality and craftsmanship review.",
+          "source": "https://github.com/pbakaus/impeccable"
+        },
+        {
+          "name": "design-taste-frontend",
+          "purpose": "Frontend design taste and visual quality review.",
+          "source": "https://github.com/Leonxlnx/taste-skill"
+        },
+        {
+          "name": "redesign-existing-projects",
+          "purpose": "Systematic redesign of existing UI projects.",
+          "source": "https://github.com/Leonxlnx/taste-skill"
+        }
+      ]
+    },
+    "communityUserSkills": {
+      "count": 11,
+      "items": [
+        {
+          "name": "skill-creator",
+          "purpose": "Create, modify, and evaluate Claude Code skills.",
+          "source": "https://github.com/anthropics/skills"
+        },
+        {
+          "name": "find-skills",
+          "purpose": "Discover and search available skills.",
+          "source": "https://github.com/vercel-labs/skills"
+        },
+        {
+          "name": "github-actions-docs",
+          "purpose": "GitHub Actions documentation and workflow patterns.",
+          "source": "https://github.com/xixu-me/skills"
+        },
+        {
+          "name": "brainstorming",
+          "purpose": "Structured brainstorming and ideation techniques.",
+          "source": "https://github.com/obra/superpowers"
+        },
+        {
+          "name": "html-ppt",
+          "purpose": "Create HTML-based presentations.",
+          "source": "https://github.com/lewislulu/html-ppt-skill"
+        },
+        {
+          "name": "supabase",
+          "purpose": "Supabase MCP — direct DB queries, schema introspection, project state.",
+          "source": "supabase/agent-skills"
+        },
+        {
+          "name": "supabase-postgres-best-practices",
+          "purpose": "PostgreSQL and Supabase database best practices.",
+          "source": "supabase/agent-skills"
+        },
+        {
+          "name": "deploy-to-vercel",
+          "purpose": "Vercel deployment CLI and project linking.",
+          "source": "https://github.com/vercel-labs/agent-skills"
+        },
+        {
+          "name": "resend-cli (full package)",
+          "purpose": "Transactional email development with Resend.",
+          "source": "resend/resend-cli"
+        },
+        {
+          "name": "bun",
+          "purpose": "Bun runtime and package manager documentation.",
+          "source": "https://bun.sh/docs"
+        },
+        {
+          "name": "playwright-cli",
+          "purpose": "Browser automation — screenshots, traces, recordings.",
+          "source": "https://github.com/microsoft/playwright-cli"
+        }
+      ]
+    }
+  },
+  "willConfigure": {
+    "mcps": [
+      {
+        "name": "context7",
+        "envVars": [],
+        "purpose": "Library documentation MCP — fetches official current docs for any library."
+      },
+      {
+        "name": "tavily",
+        "envVars": ["TAVILY_API_KEY"],
+        "purpose": "Web search MCP — used by skills that need fresh community / docs lookups."
+      },
+      {
+        "name": "atlassian",
+        "envVars": ["ATLASSIAN_URL", "ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN"],
+        "purpose": "Jira / Confluence MCP — story and page operations from the agent."
+      },
+      {
+        "name": "supabase",
+        "envVars": [
+          "SUPABASE_ACCESS_TOKEN",
+          "SUPABASE_URL",
+          "SUPABASE_ANON_KEY",
+          "SUPABASE_SERVICE_ROLE_KEY"
+        ],
+        "purpose": "Supabase MCP — direct DB queries, schema introspection, project state."
+      },
+      {
+        "name": "n8n",
+        "envVars": ["N8N_API_URL", "N8N_API_KEY"],
+        "purpose": "n8n automation MCP — workflow and integration management."
+      }
+    ],
+    "envFiles": [
+      {
+        "path": ".env",
+        "what": "Created from .env.example. Stores all API keys and secrets (gitignored)."
+      },
+      {
+        "path": ".envrc",
+        "what": "direnv autoload file — loads .env into the shell on cd (optional, offered interactively)."
+      },
+      {
+        "path": ".mcp.json",
+        "what": "Already committed. Uses ${VAR} placeholders — installer ensures .env has the values."
+      },
+      {
+        "path": "opencode.jsonc",
+        "what": "Already committed. Uses {env:VAR} placeholders — installer ensures .env has the values."
+      },
+      {
+        "path": ".template/installer.state.json",
+        "what": "Installer idempotency state (gitignored). Tracks which steps completed."
+      }
+    ],
+    "auth": [
+      {
+        "service": "acli (Atlassian CLI)",
+        "method": "One-time interactive login — credentials stored in ~/.config/acli/",
+        "credsFrom": ["ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN", "ATLASSIAN_URL"]
+      },
+      {
+        "service": "Jira (HTTP basic auth via MCP)",
+        "method": "Env vars read at MCP startup — no interactive login needed",
+        "credsFrom": ["JIRA_URL", "JIRA_USERNAME", "JIRA_API_TOKEN"]
+      }
+    ],
+    "postInstallSteps": [
+      {
+        "step": "agents:setup",
+        "what": "Runs bun run scripts/agents-setup.ts — wires .agents/project.yaml with project name, key, and URLs.",
+        "interactive": true
+      },
+      {
+        "step": "acli auth",
+        "what": "Runs acli login — authenticates the Atlassian CLI for Jira/Confluence operations.",
+        "interactive": true
+      },
+      {
+        "step": "jira:sync-fields",
+        "what": "Fetches custom field metadata from Jira and writes .agents/jira-fields.json.",
+        "interactive": false
+      },
+      {
+        "step": "jira:sync-workflows",
+        "what": "Fetches workflow transitions from Jira and writes .agents/jira-workflows.json.",
+        "interactive": false
+      },
+      {
+        "step": "jira:check",
+        "what": "Validates the Jira setup manifest against the fetched field catalog.",
+        "interactive": false
+      }
+    ]
+  },
+  "willNotInstall": [
+    {
+      "name": "bun",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://bun.com/"
+    },
+    {
+      "name": "gh",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://github.com/cli/cli#installation"
+    },
+    {
+      "name": "supabase",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://supabase.com/docs/guides/local-development/cli/getting-started"
+    },
+    {
+      "name": "vercel",
+      "reason": "Must be installed manually. Run: bun add -g vercel",
+      "installHint": "https://vercel.com/docs/cli"
+    },
+    {
+      "name": "resend",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://resend.com/docs/cli"
+    },
+    {
+      "name": "acli",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://developer.atlassian.com/cloud/acli/guides/install-acli/"
+    },
+    {
+      "name": "playwright-cli",
+      "reason": "Must be installed manually. Run: bun add -g @playwright/cli@latest",
+      "installHint": "https://playwright.dev/agent-cli/introduction"
+    },
+    {
+      "name": "jq",
+      "reason": "Must be installed manually using your OS package manager.",
+      "installHint": "https://jqlang.org/"
+    }
+  ]
+}
