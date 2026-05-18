@@ -41,7 +41,7 @@ Common `{{VAR}}` placeholders found in templates:
 
 - `{{API_BEARER_TOKEN}}` — your API bearer token
 - `{{POSTMAN_API_KEY}}` — your Postman API key
-- `{{JIRA_API_TOKEN}}` — your Jira API token
+- `{{ATLASSIAN_URL}}` / `{{ATLASSIAN_EMAIL}}` / `{{ATLASSIAN_API_TOKEN}}` — Atlassian credentials (single family for Jira + Confluence + acli)
 - `{{TAVILY_API_KEY}}`, `{{SUPABASE_ACCESS_TOKEN}}`, `{{GEMINI_API_KEY}}`, `{{SLACK_MCP_XOXP_TOKEN}}`, `{{DB_USER}}`, `{{DB_PASSWORD}}`
 
 Non-sensitive values (URLs, paths) use real examples from the SoloQ project.

@@ -160,7 +160,7 @@ Place these in `.env` before running anything that talks to a real environment:
 | ---------------------------------------------- | -------------------------------------- |
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (Playwright, Supabase) |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
-| `ATLASSIAN_SITE` / `ATLASSIAN_EMAIL` / token   | `acli` Jira CLI                        |
+| `ATLASSIAN_URL` / `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* |
 | `TAVILY_API_KEY`                               | Tavily MCP                             |
 | `SUPABASE_URL` / `SUPABASE_*_KEY`              | Supabase MCP + runtime                 |
 

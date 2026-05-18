@@ -353,11 +353,15 @@ curl -H "Authorization: Bearer YOUR_PAT" \
 Create or update your `.env` file:
 
 ```bash
-# Jira + Xray Configuration
-JIRA_BASE_URL=https://your-company.atlassian.net
-JIRA_PROJECT_KEY=PROJ
+# Atlassian credentials — single source of truth for Jira + acli + MCP atlassian
+ATLASSIAN_URL=https://your-company.atlassian.net
+ATLASSIAN_EMAIL=your.email@example.com
+ATLASSIAN_API_TOKEN=your_api_token
 
-# Cloud Authentication
+# Operational params (NOT credentials)
+JIRA_PROJECT=PROJ
+
+# Xray Cloud Authentication
 XRAY_CLIENT_ID=your_client_id
 XRAY_CLIENT_SECRET=your_client_secret
 

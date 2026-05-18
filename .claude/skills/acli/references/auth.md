@@ -68,6 +68,8 @@ echo "$ATLASSIAN_ADMIN_API_KEY" | acli admin auth login \
   --token
 ```
 
+> **Naming note**: `ATLASSIAN_ADMIN_API_KEY` is **not** part of this boilerplate's `.env`. It is an organisation-scoped admin key, distinct from the regular per-user `ATLASSIAN_API_TOKEN`, and is only needed for ad-hoc org-admin sessions. Generate and export it for the one shell that runs `acli admin` commands; do not commit it.
+
 The API key path is independent of `jira auth`. A session authenticated as a Jira user cannot run `admin user activate`.
 
 ## Confluence (`acli confluence auth`)
@@ -155,15 +157,18 @@ Three rules for CI:
 
 - name: Authenticate to Jira
   env:
-    ATLASSIAN_BOT_EMAIL: ${{ vars.ATLASSIAN_BOT_EMAIL }}
-    ATLASSIAN_BOT_TOKEN: ${{ secrets.ATLASSIAN_BOT_TOKEN }}
-    ATLASSIAN_SITE: ${{ vars.ATLASSIAN_SITE }}
+    ATLASSIAN_URL: ${{ vars.ATLASSIAN_URL }}
+    ATLASSIAN_EMAIL: ${{ vars.ATLASSIAN_EMAIL }}
+    ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
   run: |
-    echo "$ATLASSIAN_BOT_TOKEN" | acli jira auth login \
-      --site "$ATLASSIAN_SITE" \
-      --email "$ATLASSIAN_BOT_EMAIL" \
+    SITE="${ATLASSIAN_URL#https://}"
+    echo "$ATLASSIAN_API_TOKEN" | acli jira auth login \
+      --site "$SITE" \
+      --email "$ATLASSIAN_EMAIL" \
       --token
 ```
+
+Same env-var family as `.env` — no bot-prefixed names, no separate `ATLASSIAN_SITE` variable. The site slug is derived from `ATLASSIAN_URL` (strip the `https://` prefix).
 
 Pin the version in the URL (`1.3.18/` instead of `latest/`) — unpinned installs have caused same-day mass failures in the past.
 

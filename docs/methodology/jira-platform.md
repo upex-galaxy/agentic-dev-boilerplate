@@ -561,8 +561,8 @@ The TMS works alongside the Automation Framework's reporting:
 | `XRAY_CLIENT_ID`     | API client ID (Cloud)             | Yes (Cloud)  |
 | `XRAY_CLIENT_SECRET` | API client secret (Cloud)         | Yes (Cloud)  |
 | `XRAY_TOKEN`         | Personal Access Token (Server/DC) | Yes (Server) |
-| `JIRA_BASE_URL`      | Jira instance URL                 | Yes          |
-| `JIRA_PROJECT_KEY`   | Default project key               | Optional     |
+| `ATLASSIAN_URL`      | Atlassian instance URL            | Yes          |
+| `JIRA_PROJECT`       | Default project key               | Optional     |
 | `XRAY_TEST_PLAN_KEY` | Default test plan                 | Optional     |
 | `XRAY_ENVIRONMENT`   | Default test environment          | Optional     |
 
@@ -611,7 +611,7 @@ jobs:
         if: always()
         run: |
           curl -X POST \
-            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${{ vars.JIRA_PROJECT_KEY }}&testPlanKey=${{ vars.XRAY_TEST_PLAN_KEY }}" \
+            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${{ vars.JIRA_PROJECT }}&testPlanKey=${{ vars.XRAY_TEST_PLAN_KEY }}" \
             -H "Authorization: Bearer ${{ steps.xray-auth.outputs.token }}" \
             -H "Content-Type: application/xml" \
             --data-binary @test-results/junit.xml

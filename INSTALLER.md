@@ -58,7 +58,7 @@ Each entry is required by one or more skills; install them as you need them.
 
 ```
 TAVILY_API_KEY
-JIRA_URL · JIRA_USERNAME · JIRA_API_TOKEN
+ATLASSIAN_URL · ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
 SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
 N8N_API_URL · N8N_API_KEY
 ```
@@ -122,9 +122,9 @@ The installer auto-detects no-TTY (an agent invoking it without a terminal) and 
 
 ```bash
 TAVILY_API_KEY=tvly-... \
-  JIRA_URL=... \
-  JIRA_USERNAME=... \
-  JIRA_API_TOKEN=... \
+  ATLASSIAN_URL=... \
+  ATLASSIAN_EMAIL=... \
+  ATLASSIAN_API_TOKEN=... \
   SUPABASE_ACCESS_TOKEN=... \
   bun run setup --non-interactive
 ```
@@ -141,7 +141,7 @@ Then `bun run setup:doctor --json` to confirm.
 
 ## Launching the agent after setup
 
-`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `JIRA_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
+`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
 
 | Method                                      | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                 |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
