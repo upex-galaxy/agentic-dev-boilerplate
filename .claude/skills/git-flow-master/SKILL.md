@@ -204,7 +204,7 @@ Group changes by responsibility, not by file type:
 | Tests       | `tests/`, `__tests__/`, `*.test.*`, `*.spec.*`                                |
 | Generated   | `api/schemas/`, codegen output, OpenAPI types                                 |
 | Config      | `package.json`, `tsconfig.json`, lint/format configs, CI workflows            |
-| Docs        | `README.md`, `CLAUDE.md`, `docs/`, `.claude/skills/`, `.plans/`               |
+| Docs        | `README.md`, `CLAUDE.md`, `docs/`, `.claude/skills/`                          |
 
 **Tests stay with the behaviour they verify.** If a feature commit ships its own tests, they belong in the same commit, not in a separate `test:` commit.
 

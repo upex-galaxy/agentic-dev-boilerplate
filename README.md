@@ -428,13 +428,13 @@ Room for per-phase model routing, an explicit skill registry, Engram-style cross
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE) once added to the repo.
+MIT — see [`LICENSE`](LICENSE).
 
 <br />
 
 ## Status
 
-Renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`. Migration notes in `.plans/MASTER-PLAN.md`.
+Renamed from `ai-driven-project-starter` to `agentic-dev-boilerplate`.
 
 <br />
 

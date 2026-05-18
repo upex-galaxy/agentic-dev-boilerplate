@@ -21,9 +21,11 @@ docs/
 │   ├── late-game-testing.md     # Fase de regresión
 │   └── jira-platform.md          # Uso de Jira en el flujo
 │
-├── setup/                        # Guías de configuración (MCPs, Jira)
+├── setup/                        # Guías de configuración
 │   ├── jira-setup-guide.md       # Configurar Jira/Atlassian
-│   └── mcp/                      # Templates de configuración MCP
+│   └── mcp/                      # Guías per-cliente MCP (claude-code, gemini-cli, …)
+│
+├── mcp/                          # Templates copy-pasteables de MCP (.mcp.json, opencode.json, …)
 │
 ├── workflows/                    # Flujos de trabajo
 │   ├── environments.md           # Ambientes dev, staging, prod
@@ -54,11 +56,11 @@ La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)*
 
 ## Guías de Configuración
 
-| Documento                                          | Descripción                                     |
-| -------------------------------------------------- | ----------------------------------------------- |
-| [jira-setup-guide.md](./setup/jira-setup-guide.md) | Configurar credenciales y MCP de Atlassian/Jira |
-
-Los templates listos-para-copiar viven en [`./setup/mcp/`](./setup/mcp/).
+| Documento                                          | Descripción                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------- |
+| [jira-setup-guide.md](./setup/jira-setup-guide.md) | Configurar credenciales y MCP de Atlassian/Jira                  |
+| [setup/mcp/](./setup/mcp/)                         | Guías per-cliente (claude-code, gemini-cli, copilot-cli, vscode) |
+| [mcp/](./mcp/)                                     | Templates copy-pasteables (`cp docs/mcp/*.template.* …`)         |
 
 ---
 
