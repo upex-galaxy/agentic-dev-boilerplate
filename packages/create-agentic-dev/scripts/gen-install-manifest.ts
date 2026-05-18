@@ -2,12 +2,23 @@
 /**
  * gen-install-manifest.ts
  *
- * Regenerates packages/create-agentic-dev/src/install-manifest.json from the
- * authoritative data in cli/install.ts so the two files stay in sync.
+ * Lives inside the `create-agentic-dev` package because it generates the
+ * package's own `src/install-manifest.json` — the catalogue rendered by
+ * `bunx create-agentic-dev --inspect`. Reads the authoritative skill / MCP /
+ * CLI declarations from the boilerplate's `cli/install.ts` (two levels up)
+ * so the published CLI stays in sync with what `bun run setup` actually
+ * installs.
  *
- * Usage:
- *   bun run gen:manifest          # write (overwrite) the JSON file
- *   bun run check:manifest        # compare only; exit 1 if drift detected
+ * Why it does NOT live in the boilerplate's root `scripts/`:
+ *   The boilerplate's `scripts/` is copied verbatim into every bootstrapped
+ *   consumer project. This generator is dev-tooling for the scaffolder
+ *   itself — consumers never run it. Putting it under `packages/` (which
+ *   `TEMPLATE_EXCLUDES` prunes during bootstrap) keeps consumer projects
+ *   free of dead code.
+ *
+ * Usage (from the boilerplate root):
+ *   bun --cwd packages/create-agentic-dev run gen:manifest    # write JSON
+ *   bun --cwd packages/create-agentic-dev run check:manifest  # drift check
  *
  * How it works:
  *   1. Reads cli/install.ts as plain text.
@@ -23,8 +34,8 @@
  * Maintenance note:
  *   Purpose strings for skills / MCPs / CLIs live in PURPOSES below.
  *   When you add a new skill / MCP / CLI to cli/install.ts, also add its
- *   purpose string here. `bun run check:manifest` (wired into repo:check) will
- *   catch drift between the two files.
+ *   purpose string here. `check:manifest` (wired into the package's CI /
+ *   pre-publish flow) catches drift between the two files.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -35,12 +46,11 @@ import { resolve } from 'node:path';
 // Paths
 // ============================================================================
 
-const REPO_ROOT = resolve(import.meta.dir, '..');
+// import.meta.dir = packages/create-agentic-dev/scripts/
+// ../../..        = boilerplate root
+const REPO_ROOT = resolve(import.meta.dir, '../../..');
 const INSTALL_TS = resolve(REPO_ROOT, 'cli/install.ts');
-const MANIFEST_PATH = resolve(
-  REPO_ROOT,
-  'packages/create-agentic-dev/src/install-manifest.json',
-);
+const MANIFEST_PATH = resolve(import.meta.dir, '../src/install-manifest.json');
 
 // ============================================================================
 // Static purpose strings
