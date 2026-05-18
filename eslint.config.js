@@ -26,10 +26,13 @@ export default antfu({
     '.github/**',
     // Generated files (auto-generated, not manually edited)
     'api/openapi-types.ts',
-    // Skill-internal CLI script — heuristic brand-matcher invoked from /design-system Path B.
-    // Not part of the repo's tsconfig project service; tsconfig.json scopes the project to
-    // root scripts, not skill-embedded scripts.
-    '.claude/skills/design-system/scripts/match-brand.ts',
+    // Skill directories — never lint.
+    // T1 skills (.claude/skills/) and community T3/T4 skills (.agents/skills/,
+    // installed at scaffold-time by `bunx skills add`) ship their .md/.json/.ts
+    // as-is. ESLint must not touch them: their schemas, frontmatter, fenced
+    // code blocks, and example snippets rely on exact formatting we don't own.
+    '.claude/skills/**',
+    '.agents/skills/**',
   ],
 
   // Custom rules

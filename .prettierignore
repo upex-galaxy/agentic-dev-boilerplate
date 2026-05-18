@@ -48,3 +48,12 @@ Thumbs.db
 .context/
 .prompts/
 .books/
+
+# ===========================================
+# Skill directories - never format
+# ===========================================
+# Skills (T1 in .claude/skills/, T3/T4 community in .agents/skills/) ship as-is.
+# Prettier must NOT touch their .md / .json / .yaml — frontmatter, fenced code,
+# and example blocks rely on exact whitespace that Prettier would normalize.
+.claude/skills/
+.agents/skills/
