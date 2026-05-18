@@ -408,7 +408,6 @@ function buildManifest(src: string): object {
 
   return {
     version: 1,
-    generatedAt: new Date().toISOString(),
     sourceRef: 'main',
     prerequisites: [
       {
@@ -556,13 +555,10 @@ function main(): void {
       process.exit(1);
     }
     const existing = readFileSync(MANIFEST_PATH, 'utf8');
-    // Compare semantic content only (ignore formatting and timestamp).
-    // Parse both to objects, strip generatedAt, then canonical-JSON compare.
-    const canonicalize = (s: string): string => {
-      const obj = JSON.parse(s) as Record<string, unknown>;
-      delete obj.generatedAt;
-      return JSON.stringify(obj);
-    };
+    // Compare semantic content (formatting-insensitive). The manifest is now
+    // deterministic — no per-run timestamp — so a parse + stringify roundtrip
+    // is enough to canonicalise both sides before comparing.
+    const canonicalize = (s: string): string => JSON.stringify(JSON.parse(s));
     try {
       if (canonicalize(existing) === canonicalize(generated)) {
         process.stdout.write('check:manifest — OK (no drift)\n');

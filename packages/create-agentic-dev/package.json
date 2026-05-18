@@ -45,7 +45,7 @@
     "types:check": "tsc --noEmit",
     "gen:manifest": "bun run scripts/gen-install-manifest.ts",
     "check:manifest": "bun run scripts/gen-install-manifest.ts --check",
-    "prepublishOnly": "bun run gen:manifest && bun run build"
+    "prepublishOnly": "bun run check:manifest && bun run build"
   },
   "dependencies": {
     "@clack/prompts": "^1.4.0",
