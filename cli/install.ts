@@ -5,7 +5,7 @@
  * Drives the end-to-end setup flow:
  *   1. Detect gentle-ai (presence + version)
  *   2. Detect agents (Claude Code / OpenCode) and prompt selection
- *   3. Optionally install 15 skills + engram via gentle-ai
+ *   3. Optionally install Engram persistent memory via gentle-ai (--preset minimal)
  *   4. Wire `.env` for MCP servers + offer direnv autoload
  *      (`.mcp.json` and `opencode.jsonc` are committed with ${VAR}/{env:VAR}
  *      expansion — installer only ensures `.env` has the required values)
@@ -104,24 +104,6 @@ const ENV_EXAMPLE_PATH = join(REPO_ROOT, '.env.example');
 const MIN_GENTLE_AI_VERSION = [1, 26, 5] as const;
 
 const ENGRAM_COMPONENT = 'engram';
-
-const SKILL_SLUGS = [
-  'sdd-init',
-  'sdd-explore',
-  'sdd-propose',
-  'sdd-spec',
-  'sdd-design',
-  'sdd-tasks',
-  'sdd-apply',
-  'sdd-verify',
-  'sdd-archive',
-  'sdd-onboard',
-  'skill-registry',
-  'judgment-day',
-  'cognitive-doc-design',
-  'comment-writer',
-  'issue-creation',
-] as const;
 
 const CANONICAL_MCPS = ['context7', 'tavily', 'atlassian', 'supabase', 'n8n'] as const;
 
@@ -425,7 +407,7 @@ function detectGentleAi(): GentleAiInfo {
 
 async function handleMissingGentleAi(): Promise<'show-and-exit' | 'skip'> {
   log.warn('gentle-ai not detected on PATH.');
-  log.info('gentle-ai installs the 15 skills + engram + SDD orchestrator into your agent.');
+  log.info('gentle-ai installs Engram persistent memory (--preset minimal) into your agent.');
   process.stdout.write('\n');
 
   const choiceRaw = await tui.confirm({
@@ -508,11 +490,10 @@ async function promptAgentSelection(detected: AgentDetection): Promise<AgentId[]
 // Step 5/6 — install skills via gentle-ai
 // ============================================================================
 
-// Components installed in the batched gentle-ai call:
-//   - engram → persistent memory (MCP + plugin)
-//   - sdd    → SDD slash-commands + orchestrator config
-//   - skills → skill files filtered by --skills list
-const GENTLE_AI_COMPONENTS = ['engram', 'sdd', 'skills'] as const;
+// We install only Engram (persistent memory) via gentle-ai's `--preset minimal`.
+// The SDD bundle and foundation skills are intentionally NOT installed — this
+// repo's own skills (sprint-development, project-foundation, etc.) own the
+// dev workflow; SDD would duplicate or conflict with them.
 
 function runGentleAiInstall(args: string[]): { ok: boolean, reason?: string } {
   // gentle-ai uses Go's `flag` package with a fixed schema (see source
@@ -537,58 +518,52 @@ async function installSkillsViaGentleAi(
   }
 
   if (state.steps?.agentsSetupRanAt && !FORCE_AGENTS_SETUP) {
-    log.dim(`  Skipping — gentle-ai skills already installed at ${state.steps.agentsSetupRanAt}.`);
+    log.dim(`  Skipping — Engram already installed at ${state.steps.agentsSetupRanAt}.`);
     log.dim('  Force re-run with: INSTALL_FORCE_AGENTS_SETUP=1 bun run setup');
     return;
   }
 
-  // One batched call per agent: engram + sdd + skills (filtered by --skills).
-  // gentle-ai re-applies components idempotently (existing files get backed up
-  // via the built-in snapshot system, then overwritten with the current
-  // version), so re-runs are safe.
+  // One call per agent: `gentle-ai install --preset minimal` installs only the
+  // Engram component (persistent memory + MCP wiring). The SDD bundle and
+  // foundation skills are deliberately skipped — this repo's own skills own
+  // the dev workflow. gentle-ai re-applies components idempotently, so re-runs
+  // are safe.
   const totalCalls = agents.length;
-  log.info(`This will run ${totalCalls} gentle-ai install command(s) — one batched call per agent.`);
-  log.dim(`  Each call installs: components=${GENTLE_AI_COMPONENTS.join(',')}; skills=${SKILL_SLUGS.length}`);
+  log.info(`This will run ${totalCalls} gentle-ai install command(s) — one call per agent.`);
+  log.dim('  Each call: gentle-ai install --agent <agent> --preset minimal (installs Engram only)');
 
-  const proceedRaw = await tui.confirm({ message: 'Continue with skill installation?', initialValue: true });
+  const proceedRaw = await tui.confirm({ message: 'Continue with Engram installation?', initialValue: true });
   if (tui.isCancel(proceedRaw)) { throw Object.assign(new Error('Aborted by user.'), { name: 'ExitPromptError' }); }
   const proceed = proceedRaw;
   if (!proceed) {
-    log.warn('Skipping skill installation.');
+    log.warn('Skipping Engram installation.');
     for (const agent of agents) {
-      for (const slug of [ENGRAM_COMPONENT, ...SKILL_SLUGS]) {
-        const key = `${slug}::${agent}`;
-        if (!state.skills[key]) { state.skills[key] = 'skipped'; }
-      }
+      const key = `${ENGRAM_COMPONENT}::${agent}`;
+      if (!state.skills[key]) { state.skills[key] = 'skipped'; }
     }
     return;
   }
 
-  const skillsCsv = SKILL_SLUGS.join(',');
-  const componentsCsv = GENTLE_AI_COMPONENTS.join(',');
-
   for (const agent of agents) {
     log.banner(`Installing for: ${agent}`);
-    log.dim(`  gentle-ai install --agent ${agent} --components ${componentsCsv} --skills ${skillsCsv}`);
+    log.dim(`  gentle-ai install --agent ${agent} --preset minimal`);
 
     const result = runGentleAiInstall([
       'install',
       '--agent',
       agent,
-      '--components',
-      componentsCsv,
-      '--skills',
-      skillsCsv,
+      '--preset',
+      'minimal',
     ]);
 
-    const slugs = [ENGRAM_COMPONENT, ...SKILL_SLUGS];
+    const key = `${ENGRAM_COMPONENT}::${agent}`;
     if (result.ok) {
-      log.success(`  installed: engram + ${SKILL_SLUGS.length} skills (${agent})`);
-      for (const slug of slugs) { state.skills[`${slug}::${agent}`] = 'installed'; }
+      log.success(`  installed: Engram (${agent})`);
+      state.skills[key] = 'installed';
     }
     else {
-      log.error(`  failed: batched install for ${agent} — ${result.reason}`);
-      for (const slug of slugs) { state.skills[`${slug}::${agent}`] = 'failed'; }
+      log.error(`  failed: Engram install for ${agent} — ${result.reason}`);
+      state.skills[key] = 'failed';
     }
   }
   state.steps = state.steps ?? {};
@@ -1638,7 +1613,7 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write(tui.table(
     ['Category', 'Installed', 'Total', 'Status'],
     [
-      ['gentle-ai skills', `${gentleInstalled}`, `${gentleSkills.length}`, statusFor(gentleInstalled, gentleSkills.length)],
+      ['Engram (gentle-ai)', `${gentleInstalled}`, `${gentleSkills.length}`, statusFor(gentleInstalled, gentleSkills.length)],
       ['Project skills', `${projectInstalled}`, `${projectCommunity.length}`, statusFor(projectInstalled, projectCommunity.length)],
       ['User skills', `${userInstalled}`, `${userCommunity.length}`, statusFor(userInstalled, userCommunity.length)],
       ['MCPs configured', `${mcpConfigured}`, `${mcpTotal}`, mcpStatus],
@@ -1962,20 +1937,18 @@ async function main(): Promise<void> {
 
   // Step 5
   if (runSkillInstall) {
-    tui.section('Step 5: Installing gentle-ai skills (engram + SDD + foundation)');
+    tui.section('Step 5: Installing Engram persistent memory (gentle-ai --preset minimal)');
     const s = tui.spinner();
-    s.start('Installing gentle-ai skills…');
+    s.start('Preparing Engram install…');
     // installSkillsViaGentleAi has its own confirm inside; stop spinner first so it doesn't conflict
-    s.stop('Ready to install gentle-ai skills.');
+    s.stop('Ready to install Engram.');
     await installSkillsViaGentleAi(agents, state);
   }
   else {
-    tui.section('Step 5: Skipping gentle-ai skill install (no compatible gentle-ai)');
-    for (const slug of [ENGRAM_COMPONENT, ...SKILL_SLUGS]) {
-      for (const agent of agents) {
-        const key = `${slug}::${agent}`;
-        if (!state.skills[key]) { state.skills[key] = 'skipped'; }
-      }
+    tui.section('Step 5: Skipping Engram install (no compatible gentle-ai)');
+    for (const agent of agents) {
+      const key = `${ENGRAM_COMPONENT}::${agent}`;
+      if (!state.skills[key]) { state.skills[key] = 'skipped'; }
     }
   }
 
