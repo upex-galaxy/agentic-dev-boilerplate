@@ -9,7 +9,6 @@ complementary_categories:
   - frontend-ui
   - issue-tracker
   - testing-e2e
-  - doc-generation
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -48,10 +47,10 @@ Requires `agentic-dev-core`. Loads on demand from its references:
 Run once when this skill is invoked, before any phase. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md` §3.
 
 1. Read `complementary_categories` from this skill's frontmatter.
-2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. Classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
-   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T1 / T3** matches → load silently. Cache for the session.
    - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this run? Y/N"`. Cache the answer.
 5. Inject a `## Composable Skills` block per strategy doc §6.2 into every sub-agent prompt.
 
@@ -63,9 +62,8 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`       |
 | `issue-tracker`      | `acli` (T1) — used by the Jira Epic + Confluence publishers                                    |
 | `testing-e2e`        | `playwright-cli` — used during §verification                                                   |
-| `doc-generation`     | `cognitive-doc-design` (T2) — optional, polishes the credentials markdown body                 |
 
-Skip only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
+Skip only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 

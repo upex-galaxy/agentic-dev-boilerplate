@@ -28,13 +28,13 @@ The body below covers the core that applies to almost every DEV session. The `re
 
 ## Composable Skills (auto-resolved at skill entry)
 
-`acli` is itself the canonical issue-tracker skill — there are no T2/T3 skills that overlap its category in `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §5.1. Composition is therefore minimal and exists for protocol consistency only.
+`acli` is itself the canonical issue-tracker skill — there are no T3 skills that overlap its category in `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md` §5.1. Composition is therefore minimal and exists for protocol consistency only.
 
 Steps:
 
 1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`).
-2. Resolve via `skill-registry`. Fallback: scan the session-start `system-reminder` skill list.
-3. Apply threshold rule per strategy doc §3.2 (T1/T2/T3 silent; T4 ASK).
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
+3. Apply threshold rule per strategy doc §3.2 (T1/T3 silent; T4 ASK).
 4. The Atlassian MCP fallback documented in the next section is NOT a skill — it is an MCP server. Do not treat it as a Composable Skills match.
 
 Expected matches: typically none. If the user has installed a future T4 skill in the `issue-tracker` category (e.g. an `acli` extension authored by a third party), it would surface here under the ASK rule.

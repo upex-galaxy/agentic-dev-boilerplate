@@ -4,8 +4,7 @@ description: "End-to-end Git operator for any branching strategy. Auto-detects t
 license: MIT
 compatibility: [claude-code, opencode]
 phase: implementation
-complementary_categories:
-  - prose-polishing
+complementary_categories: []
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -48,21 +47,15 @@ Run once when this skill is invoked, before any operation below. Follows the con
 
 Steps:
 
-1. Read `complementary_categories` from this skill's frontmatter (`prose-polishing`).
-2. Resolve available skills via `skill-registry` (gentle-ai T2). Fallback: scan the session-start `system-reminder` skill list.
+1. Read `complementary_categories` from this skill's frontmatter.
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. For each matched skill, classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
-   - **T1 / T2 / T3** matches → load silently. Cache for the session.
+   - **T1 / T3** matches → load silently. Cache for the session.
    - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for these Git operations? Y/N"`. Cache the answer for the session.
 5. When dispatching sub-agents (PR creation, conflict resolution, chained-PR planning), inject a `## Composable Skills` block per strategy doc §6.2.
 
-Expected matches (illustrative — actual list depends on what the user has installed):
-
-| Category          | Likely matches                                                         |
-| ----------------- | ---------------------------------------------------------------------- |
-| `prose-polishing` | `comment-writer` (T2) — refines PR descriptions, commit message bodies |
-
-Skip step only if neither `skill-registry` nor a session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
+Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 

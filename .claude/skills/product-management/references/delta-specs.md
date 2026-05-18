@@ -13,7 +13,7 @@ The pattern uses two well-known constructs to keep deltas verifiable:
 - **RFC 2119 keywords** (`MUST`, `MUST NOT`, `SHOULD`, `SHOULD NOT`, `MAY`) for normative language
 - **Gherkin scenarios** (`Given` / `When` / `Then` / `And`) for behavior that can be turned directly into tests
 
-Inspired by `gentle-ai/sdd-spec`, adapted to our PBI-centric layout (every change is keyed by a Jira ticket, not a free-form change name).
+Adapted to our PBI-centric layout (every change is keyed by a Jira ticket, not a free-form change name).
 
 ---
 

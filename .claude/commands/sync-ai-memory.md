@@ -234,8 +234,7 @@ Different docs have different stable sections. Apply the appropriate list:
 - §9 LOCAL CONTEXT (PBI) — directory tree
 - §10 STACK QUICK-REFERENCE (TS Patterns + DRY — full conventions in `references/typescript-patterns.md`)
 - §11 GIT WORKFLOW — POINTERS (branch table + pointer to `/git-flow-master`)
-- §12 DELIVERY STRATEGY — Path A vs Path B
-- §13 PROACTIVE MEMORY TRIGGERS
+- §12 PROACTIVE MEMORY TRIGGERS
 
 Sections that may be **patched** (data drift only): §5 SKILLS + COMMANDS + MCPs REGISTRY (T1 skill table, slash commands table, MCP table — verify against `.claude/skills/`, `.claude/commands/`, `.mcp.json`).
 

@@ -51,8 +51,8 @@ If the file already exists, warn and ask before overwriting. On regenerate, the 
 
 3. **Detect carryovers** if `previous_sprint_file` was provided. Scan it for tickets whose status is NOT `PROD_DEPLOYED` / `ABORTED`. For each, check whether it appears in the current sprint; if yes, mark as carryover with prior context; if no, note as "dropped from sprint" and inform the user.
 4. **Build Board Summary** counts (Ready For Dev / In Progress / In Review / Ready For QA / Deployed to Prod / Blocked / Total).
-5. **Build In-Flight table** with the 12-column shape below (`#`, Ticket, Type, Title, Priority, Owner, Path, Impl Plan, PR, Delivery Strategy, Forecast Risk, Status). Status column is the canonical state machine value, not the Jira label.
-6. **Populate Stats** section from the counts (in-flight, merged, staging-deployed, prod-deployed, blocked, cancelled, carryovers, estimated total LOC from impl-plan forecasts, Path A vs Path B split).
+5. **Build In-Flight table** with the 11-column shape below (`#`, Ticket, Type, Title, Priority, Owner, Impl Plan, PR, Delivery Strategy, Forecast Risk, Status). Status column is the canonical state machine value, not the Jira label.
+6. **Populate Stats** section from the counts (in-flight, merged, staging-deployed, prod-deployed, blocked, cancelled, carryovers, estimated total LOC from impl-plan forecasts).
 7. **Write the file** using the framework structure below.
 8. **Append Session Log entry** for the setup pass — date, totals, in-flight IDs, assigned/unassigned counts, carryover IDs, "Created SPRINT-{N}-DEVELOPMENT.md tracker".
 9. **Report** a short board summary back to the user: totals, in-flight count, carryovers.
@@ -83,13 +83,13 @@ If the file already exists, warn and ask before overwriting. On regenerate, the 
 
 > Tickets currently in `In Progress` or `In Review`.
 
-| #   | Ticket | Type               | Title   | Priority   | Owner | Path   | Impl Plan | PR        | Delivery Strategy                   | Forecast Risk    | Status                                |
-| --- | ------ | ------------------ | ------- | ---------- | ----- | ------ | --------- | --------- | ----------------------------------- | ---------------- | ------------------------------------- |
-| 1   | {ID}   | {Story\|Bug\|Task} | {title} | {priority} | {dev} | {A\|B} | {link\|-} | {#NNN\|-} | {stacked\|chain\|single\|exception} | {Low\|Med\|High} | {IN_PROGRESS\|IN_REVIEW\|MERGED\|...} |
+| #   | Ticket | Type               | Title   | Priority   | Owner | Impl Plan | PR        | Delivery Strategy                   | Forecast Risk    | Status                                |
+| --- | ------ | ------------------ | ------- | ---------- | ----- | --------- | --------- | ----------------------------------- | ---------------- | ------------------------------------- |
+| 1   | {ID}   | {Story\|Bug\|Task} | {title} | {priority} | {dev} | {link\|-} | {#NNN\|-} | {stacked\|chain\|single\|exception} | {Low\|Med\|High} | {IN_PROGRESS\|IN_REVIEW\|MERGED\|...} |
 
 #### In-Flight Notes
 
-- {Ticket ID}: {context, blockers, impl-plan highlights, SDD bundle status if Path B}
+- {Ticket ID}: {context, blockers, impl-plan highlights}
 
 #### Dependencies
 
@@ -97,8 +97,8 @@ If the file already exists, warn and ask before overwriting. On regenerate, the 
 
 ### Queue — Ready For Dev
 
-| Ticket | Type | Title | Priority | Owner | Path forecast | Notes |
-| ------ | ---- | ----- | -------- | ----- | ------------- | ----- |
+| Ticket | Type | Title | Priority | Owner | Notes |
+| ------ | ---- | ----- | -------- | ----- | ----- |
 
 ### Pipeline — Pending Refinement
 
@@ -138,7 +138,6 @@ If the file already exists, warn and ask before overwriting. On regenerate, the 
 | Cancelled                           | {count}                        |
 | Carryovers from Sprint {N-1}        | {count or 0}                   |
 | Estimated total LOC delivered       | {sum from impl-plan forecasts} |
-| Path A vs Path B split              | {n_A} / {n_B}                  |
 
 ## Session Log
 
@@ -159,10 +158,9 @@ If the file already exists, warn and ask before overwriting. On regenerate, the 
 
 1. **Dates**: ISO 8601 (`YYYY-MM-DD`). Last Updated is bumped on every write.
 2. **Status column** (In-Flight table): one of `PENDING` / `IN_PROGRESS` / `IN_REVIEW` / `MERGED` / `STAGING_DEPLOYED` / `PROD_DEPLOYED` / `BLOCKED` / `ABORTED`. State machine details below.
-3. **Path column**: `A` (story-driven simple) or `B` (story-driven complex with SDD bundle). Defaults to `A` for tickets not yet planned; updated at Stage 1 entry.
-4. **Impl Plan / PR / Delivery Strategy / Forecast Risk columns**: initialized as `-`; filled at the matching stage (see Part 2). Never delete the row even when the ticket becomes irrelevant — move it to `Done — This Sprint` or `Cancelled (Aborted)` instead.
-5. **Priority order** inside In-Flight: the `#` column drives queue ordering — pick the lowest-numbered non-terminal ticket when the user asks "next".
-6. **Session Log**: every state-changing event appends an entry. Entries are NEVER deleted on regenerate (append-only). The Roadmap Generator only adds new entries; it never rewrites historical ones.
+3. **Impl Plan / PR / Delivery Strategy / Forecast Risk columns**: initialized as `-`; filled at the matching stage (see Part 2). Never delete the row even when the ticket becomes irrelevant — move it to `Done — This Sprint` or `Cancelled (Aborted)` instead.
+4. **Priority order** inside In-Flight: the `#` column drives queue ordering — pick the lowest-numbered non-terminal ticket when the user asks "next".
+5. **Session Log**: every state-changing event appends an entry. Entries are NEVER deleted on regenerate (append-only). The Roadmap Generator only adds new entries; it never rewrites historical ones.
 
 ---
 
@@ -176,10 +174,9 @@ Triggered when sprint-dev transitions Jira `Ready For Dev → In Progress`.
 
 - **Status**: `PENDING` → `IN_PROGRESS`.
 - **Owner**: fill with the dev driving the ticket (defaults to `git config user.name`).
-- **Path**: `A` or `B`, decided per `## SDD Composition` rules in `SKILL.md`.
 - **Impl Plan**: link to `.context/PBI/{ticket}/impl-plan.md` (or topic key `pbi/{ticket}/impl-plan`).
 - **Forecast Risk**: `Low` / `Medium` / `High`, read from the Workload Forecast block in the impl-plan.
-- **Session Log**: append `### {date} — {ticket} IN_PROGRESS` with a one-line note (Path + forecast risk + any salient context).
+- **Session Log**: append `### {date} — {ticket} IN_PROGRESS` with a one-line note (forecast risk + any salient context).
 
 ### Stage 3 — Code Review (PR open)
 
@@ -221,7 +218,7 @@ State definitions:
 
 - **`PENDING`** — Ticket is in the sprint and queued; not yet pulled. Default state for Queue rows.
 - **`IN_PROGRESS`** — Sprint-dev Stage 1 entered; impl-plan being authored or code being written.
-- **`IN_REVIEW`** — PR opened; reviewer / `judgment-day` running.
+- **`IN_REVIEW`** — PR opened; reviewer running.
 - **`MERGED`** — PR squash-merged into `staging`; CI not yet green.
 - **`STAGING_DEPLOYED`** — Staging CI smoke passed; staging environment auto-deployed; Jira at `Ready For QA`.
 - **`PROD_DEPLOYED`** — Stage 5 succeeded; production live.
@@ -280,7 +277,7 @@ This keeps the report a sprint-scoped artifact owned by batch mode and avoids st
 - **Loop runs Stage 1 → Stage 4 only.** After Stage 4 completes for a ticket, the orchestrator presents a per-ticket summary + remaining queue and **waits for the user OK** before pulling the next ticket.
 - **Stage 5 (production deploy) is NEVER chained in batch mode.** Production promotion is a separate, per-ticket manual invocation. Even if every ticket in the sprint is `STAGING_DEPLOYED`, prod requires explicit per-ticket dispatch.
 - **Auto-skip on red signal**: if a ticket lands in `BLOCKED` mid-stage, append a Session Log entry, surface the blocker to the user, and DO NOT auto-advance to the next ticket. Wait for instructions.
-- **Strict TDD** is honored per-ticket per the standard `sdd-apply` path; batch mode does not override Strict TDD enforcement.
+- **TDD on a function** is handed off per-ticket to `/unit-testing`; batch mode does not override TDD decisions.
 
 ---
 
