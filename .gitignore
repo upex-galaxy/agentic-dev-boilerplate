@@ -59,6 +59,7 @@ yarn-error.log*
 # ===== IDE & Editor =====
 .idea/
 .windsurf/
+.cursor/
 *.swp
 *.swo
 *.code-workspace
@@ -76,8 +77,6 @@ Thumbs.db
 .claude/settings.local.json
 .playwright-mcp
 .backups/
-.context/mcp/outputs
-.scratch/
 
 # ===== MCP Configuration =====
 # .mcp.json and opencode.jsonc are COMMITTED — they reference secrets via
@@ -85,20 +84,21 @@ Thumbs.db
 # Local per-developer overrides go in *.local.* files (ignored below).
 .mcp.local.json
 opencode.local.jsonc
-opencode.json
-.mcp.catalog.json
-*.catalog.json
-.mcpservers.json
 dbhub.toml
 
-# ===== Installer state (local dev tracker, not project state) =====
-.agents/install-state.json
+# Planning / audit scaffolding (working notes, plan drafts, audit
+# reports, session handoffs). Kept on local disk only — never pushed.
+.scratch/
+
+# ===== Installer lock + state =====
+# `.template/installer.lock.json` is TRACKED (small, immutable sentinel that
+# pins the bootstrapped template — written once by the scaffolder / installer).
+# `.template/installer.state.json` is GITIGNORED (per-dev runtime idempotency
+# cache — tracks which `bun setup` steps already completed).
+.template/installer.state.json
 
 # ===== Refcheck local config (per-dev tuning, not committed) =====
 .refcheckrc.toml
-
-# ===== Planning artifacts (local context only, not part of boilerplate) =====
-.plans/
 
 # ===== Auto-generated framework caches with timestamps =====
 .context/_framework/testing-capabilities.json
