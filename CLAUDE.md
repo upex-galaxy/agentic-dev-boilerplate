@@ -7,7 +7,7 @@
 ## 1. CRITICAL RULES — ALWAYS APPLY
 
 1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts — use correct base URLs").
-2. **PLAN BEFORE CODING**: Produce impl plan (`spec.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review.
+2. **PLAN BEFORE CODING**: Produce impl plan (`implementation-plan.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review.
 3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude" in commits. Commits look human-authored.
 4. **CONFIRM BEFORE PUSH TO MAIN**: NEVER push to `main` without explicit user confirmation.
 5. **GIT HISTORY**: NEVER rewrite pushed history (rebase/amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. ALWAYS add forward (new commits, not rewrite). ALWAYS preserve merge history.
@@ -56,7 +56,7 @@ Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy
   - user message contains file paths, shell commands, literal errors / stack traces, function / class / library names
   - user explicitly requests technical detail (in whatever phrasing)
   - topic touches security, secrets, auth, RLS, migrations, rollback, irreversible actions, or prod deploy
-  - active skill is `/sprint-development`, `/sdd-*`, or output is commit message / PR body / code block
+  - active skill is `/sprint-development` or output is commit message / PR body / code block
 - **Always-technical scopes (PM Voice never applies)**: code blocks, commit messages, PR titles + bodies, branch names, file names, security warnings, irreversible-action confirmations.
 - **Risk-Surface override**: even in PM Voice, if change affects data integrity, measurable performance, security, or rollback path → headline includes ONE line of technical impact alongside value framing.
 - **Mirrors language**: PM Voice — including punch phrase and menu-orientation question — adopts whatever language user is writing in. Repo artifacts stay English per Critical Rule #12.
@@ -163,12 +163,12 @@ Example (same work, different register):
 | `project-bootstrap`   | `/project-bootstrap`          | Infra scaffolding: backend, frontend, OpenAPI, auth, env, Supabase types.                                                                                                                                                                                                              |
 | `testability-guide`   | `/testability-guide`          | Generates in-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic default / Confluence / Notion / MCP / CLI / manual paste). Idempotent re-runs via snapshot-comment drift detection.                                                  |
 | `product-management`  | `/product-management`         | Backlog seed + epic + INVEST/AC refinement + sprint report.                                                                                                                                                                                                                            |
-| `sprint-development`  | `/sprint-development`         | **Mega-orchestrator**. Per-story Plan → Implement → Review → Staging → Prod (gated). Composes SDD bundle on Path B (see §12).                                                                                                                                                          |
+| `sprint-development`  | `/sprint-development`         | **Mega-orchestrator**. Per-story Plan → Implement → Review → Staging → Prod (gated).                                                                                                                                                                                                   |
 | `unit-testing`        | `/unit-testing`               | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`.                                                                                                                                                                                                      |
 | `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy.                                                                                                                                                                                                                              |
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
 
-> **T2 (gentle-ai, 15 skills)** — SDD bundle (sdd-init/explore/propose/spec/design/tasks/apply/verify/archive/onboard) + skill-registry + judgment-day + cognitive-doc-design + comment-writer. Composed silently by T1 orchestrators per **Skill Composition Protocol** in `references/skill-composition-strategy.md`. Run `bun run setup` to install.
+> **Persistent memory** — `bun run setup` installs Engram via `gentle-ai install --preset minimal`. Active across sessions and compactions per §12 (proactive memory triggers). No other gentle-ai skills are installed.
 >
 > **T3 (community project-level)** — frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`.
 >
@@ -331,20 +331,7 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 
 ---
 
-## 12. DELIVERY STRATEGY — Path A vs Path B
-
-`/sprint-development` selects path based on story complexity. Pick right path at session start to avoid wasted SDD overhead on simple stories or insufficient rigor on complex ones.
-
-| Path            | Gate                                                                     | Skills invoked                                                                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **A — Simple**  | Jira ticket · ≤400 LOC · no new architecture · no Strict TDD             | `/sprint-development` only. No SDD calls.                                                                                                                                                              |
-| **B — Complex** | multi-file refactor OR new architecture OR >400 LOC OR Strict TDD active | `sprint-development` orchestrates: `sdd-init` → `sdd-design` → `sdd-tasks` (delivery-strategy gate) → `sdd-apply` → `sdd-verify` → `sdd-archive`. Sprint-dev keeps Jira transitions, deploy, rollback. |
-
-Full contract: `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
-
----
-
-## 13. PROACTIVE MEMORY TRIGGERS
+## 12. PROACTIVE MEMORY TRIGGERS
 
 Engram MCP configured. Call `mem_save` IMMEDIATELY (no user prompt needed) after ANY of:
 
