@@ -44,7 +44,7 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
 | **Testability bridge** (one-time + idempotent re-runs) | `testability-guide`                                                 | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
 | **Management** (continuous)                            | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                                                           |
 | **Implementation** (per story)                         | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                                                                    |
-| **Spec-Driven Development** (any substantial change)   | `sdd-*` skill bloque                                                | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                                                                 |
+| **Spec-Driven Development** (any substantial change)   | `sdd-*` skill bloque (not auto-installed; see §3.1 note)            | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                                                                 |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
 
@@ -84,6 +84,8 @@ The rest of this document describes the engineering reasoning behind those choic
 The practice rests on three load-bearing strategic choices.
 
 ### 3.1 Spec-Driven Development (SDD) before code
+
+> **Note**: SDD slash commands (`/sdd-*`) are no longer auto-installed. The boilerplate now installs only Engram via `gentle-ai install --preset minimal`. To use SDD, install the bundle manually: `gentle-ai install --agent <agent> --components sdd,skills`.
 
 Code is the last artefact produced, not the first. Before any line of TypeScript is written, the AI walks the project through:
 
@@ -248,7 +250,7 @@ On top of the project-shipped skills, the boilerplate composes with **two extern
 
 - **Reusable community skills** (installed via `bunx skills add` from community repositories): stack-aware skills like `next-best-practices`, `next-cache-components`, `next-upgrade`, `react-best-practices`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `accessibility`, `seo`, `frontend-design`. These ship the canonical "how to do X in framework Y" knowledge so the project-shipped skills can stay stack-agnostic.
 - **User-level skills installed via `bunx skills add`** (cross-cutting, repo-agnostic): `skill-creator`, `find-skills`, `github-actions-docs`, `brainstorming`, `html-ppt`, plus every CLI-companion skill (`supabase`, `supabase-postgres-best-practices`, `deploy-to-vercel`, `resend-cli`, `bun`, `playwright-cli`). These follow the user across every project.
-- **Gentle-AI skills** (installed by `gentle-ai install`): the **SDD bloque** (`sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`, `sdd-onboard`), `skill-registry`, `judgment-day`, `cognitive-doc-design`, `comment-writer`, `issue-creation`, plus the `engram` MCP for persistent memory.
+- **Gentle-AI skills** (installed by `gentle-ai install --preset minimal`): the `engram` MCP for persistent memory.
 
 All skills share the **Knowledge Layer** (the `.context/` directory and the engram MCP): product specs, design tokens, discovery docs, per-ticket memory.
 
@@ -666,7 +668,7 @@ phase: <foundation | onboarding | management | implementation | exploration | pr
 
 ### 11.6 Adopting Spec-Driven Development (SDD)
 
-The SDD bloque (`sdd-*` skills) is installed via gentle-ai (`bun run setup`). Once installed:
+The SDD bloque (`sdd-*` skills) is not auto-installed by `bun run setup` (see §3.1 note). Install manually first: `gentle-ai install --agent <agent> --components sdd,skills`. Once installed:
 
 1. Run `/sdd-init` to detect the stack and bootstrap the persistence backend (engram by default).
 2. For any substantial change, use `/sdd-new <change-name>` to start the full lifecycle: explore → propose → spec → design → tasks → apply → verify → archive.

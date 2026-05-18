@@ -209,17 +209,17 @@ Cosmetic upgrade — does not change agent behavior. Skip if you prefer the defa
 
 ## What is gentle-ai and why this repo uses it
 
-[gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) is a user-level installer that configures AI agents (Claude Code, OpenCode, Cursor, etc.) with a curated set of skills, an MCP-based persistent memory layer (Engram), and an SDD (Spec-Driven Development) orchestrator. It does not install agents themselves — it tunes the agents you already have.
+[gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) is a user-level installer that configures AI agents (Claude Code, OpenCode, Cursor, etc.) with curated capabilities. It does not install agents themselves — it tunes the agents you already have.
 
-This repo treats gentle-ai as a **base global "quasi-must-have"**. The recommended onboarding (`bun run setup`) installs it if missing, then layers 15 skills + Engram + the SDD orchestrator on top of your agent. The result is one consistent skillset across every repo on your machine that follows this model.
+This repo treats gentle-ai as the install vehicle for **Engram**, the MCP-based persistent memory layer that survives across sessions and compactions. The `bun run setup` invocation uses `gentle-ai install --preset minimal`, which installs **only** Engram — no SDD bundle, no extra skills.
 
-The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-development`, `/project-foundation`, etc.) keep functioning, and the 4 canonical MCPs are still configured. What you lose is the SDD spec-driven loop, persistent cross-session memory, adversarial review, and a few documentation/communication helpers. Section "How to opt out" below details the trade-off.
+The integration is **not strict**. If you choose to skip gentle-ai, the repo still works: workflow skills committed locally (`/sprint-development`, `/project-foundation`, etc.) keep functioning, and the canonical MCPs are still configured. What you lose is persistent cross-session memory. Section "How to opt out" below details the trade-off.
 
 ---
 
 ## What gets installed via gentle-ai
 
-When `bun run setup` runs the gentle-ai branch (1 engram component + 15 skills, repeated per agent):
+When `bun run setup` runs the gentle-ai branch (Engram only, repeated per agent):
 
 ### Engram (MCP component, not a skill)
 
@@ -227,41 +227,13 @@ When `bun run setup` runs the gentle-ai branch (1 engram component + 15 skills, 
 | -------- | --------- | ----------------------------------------------------------------------------------------------------------- |
 | `engram` | Component | Persistent memory across sessions. Auto-saves decisions, bugs, conventions; auto-recalls on session resume. |
 
-### SDD skills (11)
-
-| Slug             | Brief description                                                                |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `sdd-init`       | Bootstrap SDD context, detect stack, activate Strict TDD if testing is available |
-| `sdd-explore`    | Investigate codebase before committing to a change                               |
-| `sdd-propose`    | Create a change proposal (intent, scope, approach)                               |
-| `sdd-spec`       | Write requirements + scenarios as delta specs                                    |
-| `sdd-design`     | Technical design (architecture decisions, component boundaries)                  |
-| `sdd-tasks`      | Break a change into reviewable implementation tasks                              |
-| `sdd-apply`      | Implement tasks following specs and design                                       |
-| `sdd-verify`     | Validate implementation against specs (tests, edge cases, perf)                  |
-| `sdd-archive`    | Sync delta specs into main specs and close the change                            |
-| `sdd-onboard`    | Guided end-to-end SDD walkthrough on a real codebase                             |
-| `skill-registry` | Build the compact project-standards registry from installed skills               |
-
-### Foundation skills (4)
-
-| Slug                   | Brief description                                                           |
-| ---------------------- | --------------------------------------------------------------------------- |
-| `judgment-day`         | Adversarial parallel review — 2 independent judges review the same target   |
-| `cognitive-doc-design` | Write docs that reduce cognitive load (progressive disclosure, signposting) |
-| `comment-writer`       | Draft warm, direct PR/issue comments and review feedback                    |
-| `issue-creation`       | Issue filing workflow (bug + feature templates, issue-first enforcement)    |
-
-> The installer dispatches a single batched call per agent:
+> The installer dispatches a single call per agent:
 >
 > ```sh
-> gentle-ai install \
->   --agent <agent> \
->   --components engram,sdd,skills \
->   --skills <comma-separated slug list>
+> gentle-ai install --agent <agent> --preset minimal
 > ```
 >
-> `gentle-ai install`'s flag parser accepts comma-separated CSV values, so one call per agent installs Engram + the SDD slash commands + every listed skill. Re-runs are idempotent: gentle-ai snapshots existing config files (compressed, deduplicated, last 5 retained) before overwriting them with the current version. There is no `--yes` flag — non-interactive runs inherit a non-TTY stdin, so gentle-ai's internal prompts auto-pick their default answer.
+> `--preset minimal` resolves to the `engram` component only (per gentle-ai's `componentsForPreset(PresetMinimal)` source). Re-runs are idempotent: gentle-ai snapshots existing config files (compressed, deduplicated, last 5 retained) before overwriting them with the current version. There is no `--yes` flag — non-interactive runs inherit a non-TTY stdin, so gentle-ai's internal prompts auto-pick their default answer.
 
 ---
 
@@ -328,34 +300,6 @@ Three reasons:
 
 ---
 
-## Hand-off matrix — `/sprint-development` vs `/sdd-*`
-
-This is the most common point of confusion. Both workflows can drive a feature to merge. They serve different shapes of work.
-
-| When                                                                 | Skill                                                                |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Routine Jira ticket work (most cases)                                | `/sprint-development` (ticket-driven workflow)                       |
-| Large refactor / architectural decision / feature without ticket yet | `/sdd-*` (spec-driven workflow)                                      |
-| Story with detailed specs you want to trace formally                 | Both: `/sdd-spec` for spec, then `/sprint-development` for the cycle |
-
-### When to reach for `/sprint-development`
-
-The default choice for normal day-to-day work. You have a Jira ticket, the AC is reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle: precheck the epic, transition the ticket through dev states, plan, code, code review, deploy to staging, optionally deploy to production. Nothing about the change requires a multi-page architectural document — a clear implementation plan is enough.
-
-Example: "Add empty state to the user list when no results match the filter." Ticket exists, AC is 3 bullets, scope is one component plus one helper. `/sprint-development` drives the whole thing.
-
-### When to reach for `/sdd-*`
-
-The right choice when the change is shaped more like a research project than a ticket. You're touching architecture, the design space has alternatives worth comparing, the change crosses several modules, or there's no ticket yet because no one has scoped the work. SDD gives you explicit phases (explore → propose → spec → design → tasks → apply → verify → archive) and an artifact trail that survives across sessions via Engram.
-
-Example: "Replace the auth model — move from session cookies to JWT with refresh rotation." This is a change that benefits from `/sdd-explore` (investigate the current model), `/sdd-propose` (compare approaches), and `/sdd-design` (commit to an architecture) before any code lands.
-
-### When to combine both
-
-You have a ticket but the spec is dense and you want it traced formally. Run `/sdd-spec` first to lock down the requirements and scenarios as a delta spec, then hand off to `/sprint-development` for the implementation cycle. The spec gets archived after the ticket merges, leaving a permanent trace for future readers.
-
----
-
 ## Troubleshooting
 
 - **gentle-ai not detected after install** — re-run `bun run setup`. The detector probes `which gentle-ai` plus `gentle-ai version`; if either fails the installer falls back to "skip gentle-ai" branch. Confirm the binary is on PATH (`which gentle-ai` should return a path under `/usr/local/bin/`, `~/bin/`, `~/go/bin/`, or a Homebrew prefix).
@@ -363,7 +307,7 @@ You have a ticket but the spec is dense and you want it traced formally. Run `/s
 - **MCPs not loading at all** — confirm you launched the agent via `bun claude` / `bun opencode` (wraps with `dotenv-cli`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). Launching `claude` directly without either path means MCP placeholders never get expanded.
 - **`direnv allow` produced `dotenv_if_exists: command not found`** — this would mean the `.envrc` is using a newer direnv feature than your version supports. The committed `.envrc` uses portable POSIX loading (works on direnv 2.21+), so if you see this, your `.envrc` has been edited locally — restore it from `git checkout .envrc`.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup.
-- **How do I uninstall gentle-ai skills?** — `gentle-ai uninstall --agent <agent> --components skills --yes` removes every gentle-ai-managed skill for that agent (gentle-ai's `uninstall` operates at component granularity, not per-skill). `gentle-ai uninstall --all --yes` removes everything gentle-ai-managed for every supported agent. Backups are created automatically before uninstall.
+- **How do I uninstall Engram?** — `gentle-ai uninstall --agent <agent> --components engram --yes` removes Engram for that agent. `gentle-ai uninstall --all --yes` removes everything gentle-ai-managed for every supported agent. Backups are created automatically before uninstall.
 
 ---
 
@@ -372,17 +316,13 @@ You have a ticket but the spec is dense and you want it traced formally. Run `/s
 If you prefer not to use gentle-ai, the installer accepts a "skip" choice. To make it permanent:
 
 1. Edit `.template/installer.state.json` and set `"gentleAi": { "status": "skipped" }`.
-2. Re-run `bun run setup`. The installer detects the skipped state and only configures the 4 canonical MCPs.
+2. Re-run `bun run setup`. The installer detects the skipped state and only configures the canonical MCPs.
 
 What you lose:
 
-- **SDD spec-driven loop** — `/sdd-*` skills are not installed. Large refactors fall back to ad-hoc planning.
 - **Persistent memory (Engram)** — no cross-session recall, no `mem_save` / `mem_search`. Each session starts blind.
-- **Adversarial review (judgment-day)** — no parallel-judges review for high-stakes PRs. Code review reverts to single-perspective.
-- **Cognitive doc design (cognitive-doc-design)** — no skill that explicitly optimizes docs for low cognitive load. You write the docs by feel.
-- **Issue creation (issue-creation)** — no issue-first enforcement helper. You file issues however your team usually does.
 
-What you keep: every workflow skill committed in this repo (`/sprint-development`, `/project-foundation`, etc.) and the 4 canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
+What you keep: every workflow skill committed in this repo (`/sprint-development`, `/project-foundation`, etc.) and the canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
 
 ---
 

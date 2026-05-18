@@ -834,7 +834,7 @@
         font-size: 0.78rem;
       }
 
-      /* Decision gates (§7 Path A vs Path B) */
+      /* Section 7 cards */
       .gate-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1218,7 +1218,7 @@
             <li><a href="#section-4">4. The two confusing pieces</a></li>
             <li><a href="#section-5">5. The Jira state machine</a></li>
             <li><a href="#section-6">6. How everything connects</a></li>
-            <li><a href="#section-7">7. /sprint-development vs /sdd-*</a></li>
+            <li><a href="#section-7">7. /sprint-development workflow</a></li>
             <li><a href="#section-8">8. Cheat sheet</a></li>
             <li><a href="#section-9">9. Skills catalog</a></li>
             <li><a href="#section-10">10. Commands &amp; Scripts</a></li>
@@ -1247,7 +1247,7 @@
               <li><a href="#section-4">4. Two confusing pieces</a></li>
               <li><a href="#section-5">5. Jira state machine</a></li>
               <li><a href="#section-6">6. How it all connects</a></li>
-              <li><a href="#section-7">7. sprint-development vs sdd-*</a></li>
+              <li><a href="#section-7">7. sprint-development workflow</a></li>
               <li><a href="#section-8">8. Cheat sheet</a></li>
               <li><a href="#section-9">9. Skills catalog</a></li>
               <li><a href="#section-10">10. Commands &amp; Scripts</a></li>
@@ -1356,7 +1356,7 @@ bunx create-agentic-dev@latest &lt;your-repo-name&gt;</pre
                   <li>Fresh <code>git init -b main</code> + initial commit</li>
                   <li><code>bun install</code></li>
                   <li>
-                    <code>bun run setup</code> — gentle-ai, 15 skills, MCPs, <code>.env</code>,
+                    <code>bun run setup</code> — gentle-ai (Engram only), MCPs, <code>.env</code>,
                     optional <code>gh repo create</code>
                   </li>
                 </ol>
@@ -1917,7 +1917,7 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
                     <dt>Trigger</dt>
                     <dd>
                       <code>bun install</code> → <code>bun run setup</code> (interactive installer
-                      for gentle-ai skills + 4 canonical MCPs + external CLIs) →
+                      for gentle-ai (Engram) + 4 canonical MCPs + external CLIs) →
                       <code>bun run agents:setup</code> → <code>bun run jira:sync-fields</code> →
                       <code>bun run jira:check</code>. Foundation files (<code>.agents/</code>,
                       <code>scripts/</code>, <code>CLAUDE.md</code>) ship with the cloned repo — à
@@ -1940,7 +1940,7 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
                     </dd>
                   </dl>
                   <pre><code>bun install
-bun run setup                 # interactive: gentle-ai skills + MCPs + CLIs
+bun run setup                 # interactive: gentle-ai (Engram) + MCPs + CLIs
 bunx -y ccstatusline@latest   # OPTIONAL, Claude Code only — run in a SEPARATE
                               # terminal window (interactive TUI, conflicts
                               # with a running agent)
@@ -2323,8 +2323,7 @@ bun run vars:check           # validate placeholders</code></pre>
                     <td>Stage 3 — Code Review</td>
                     <td>
                       All commits pushed. PR opened against <code>staging</code>. Review run
-                      (single-perspective; escalate to <code>/judgment-day</code> for sensitive
-                      paths).
+                      (single-perspective).
                     </td>
                   </tr>
                   <tr>
@@ -2994,121 +2993,16 @@ bun run vars:check           # validate placeholders</code></pre>
             </p>
           </section>
 
-          <!-- =======================================================  SECTION 7 (NEW)  -->
+          <!-- =======================================================  SECTION 7  -->
           <section id="section-7">
-            <h2>
-              <span class="num">7.</span><code>/sprint-development</code> delivery paths — A vs B vs
-              Standalone SDD
-            </h2>
+            <h2><span class="num">7.</span><code>/sprint-development</code> workflow</h2>
 
             <p>
-              <code>/sprint-development</code> is <strong>the</strong> driver for ticket-led work,
-              but it does not always run the same flow inside. The skill internally picks
-              <strong>Path A</strong> (simple) or <strong>Path B</strong> (complex, composes the SDD
-              bundle) based on three gates: lines of code, architectural impact, and Strict TDD
-              status. Standalone <code>/sdd-*</code> is a third mode for exploratory work that has
-              no ticket yet.
-            </p>
-
-            <h3>Decision gates at a glance</h3>
-
-            <div class="gate-grid">
-              <article class="gate-card gate-a">
-                <span class="gate-card-label">Path A</span>
-                <h4 class="gate-card-title">/sprint-development solo</h4>
-                <p class="gate-card-when">
-                  Standard ticket. Sprint-dev runs the 12-step cycle without SDD overhead.
-                </p>
-                <ul class="gate-card-checks">
-                  <li>Jira ticket exists</li>
-                  <li>≤ 400 LOC changed</li>
-                  <li>No new architecture / cross-cutting concern</li>
-                  <li>Strict TDD mode NOT active</li>
-                </ul>
-                <p class="gate-card-foot">
-                  Skills invoked: <code>/sprint-development</code> only. Optional inline
-                  <code>/unit-testing</code> for TDD slices.
-                </p>
-              </article>
-
-              <article class="gate-card gate-b">
-                <span class="gate-card-label">Path B</span>
-                <h4 class="gate-card-title">/sprint-development + SDD bundle</h4>
-                <p class="gate-card-when">
-                  Complex ticket. Sprint-dev orchestrates the SDD phases silently inside the cycle,
-                  then resumes Jira transitions + deploy.
-                </p>
-                <ul class="gate-card-checks">
-                  <li>Multi-file refactor OR new architecture</li>
-                  <li>&gt; 400 LOC OR review-workload risk flagged</li>
-                  <li>Strict TDD active for the project</li>
-                </ul>
-                <p class="gate-card-foot">
-                  Skills invoked:
-                  <code
-                    >sdd-init → sdd-design → sdd-tasks → sdd-apply → sdd-verify → sdd-archive</code
-                  >, wrapped by <code>/sprint-development</code>.
-                </p>
-              </article>
-
-              <article class="gate-card gate-c">
-                <span class="gate-card-label">Standalone</span>
-                <h4 class="gate-card-title">/sdd-* without sprint-dev</h4>
-                <p class="gate-card-when">
-                  Exploratory work, no ticket yet. You're researching, comparing approaches, or
-                  defining a spec before any code lands.
-                </p>
-                <ul class="gate-card-checks">
-                  <li>No Jira ticket exists yet</li>
-                  <li>Multiple approaches worth comparing</li>
-                  <li>Need an artifact trail (proposal + spec + design)</li>
-                </ul>
-                <p class="gate-card-foot">
-                  Skills invoked: <code>/sdd-explore</code>, <code>/sdd-propose</code>,
-                  <code>/sdd-spec</code>, <code>/sdd-design</code>. Hand off to
-                  <code>/sprint-development</code> once a ticket is created.
-                </p>
-              </article>
-            </div>
-
-            <div class="callout callout-warn">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <div>
-                <p class="callout-title">Review Workload Guard</p>
-                <p>
-                  After <code>sdd-tasks</code> runs, the orchestrator inspects the Review Workload
-                  Forecast. If estimated changed lines exceed 400 OR
-                  <em>"Chained PRs recommended: Yes"</em> appears, the cached
-                  <code>delivery_strategy</code> kicks in (<code>ask-on-risk</code> ·
-                  <code>auto-chain</code> · <code>single-pr</code> · <code>exception-ok</code>).
-                  Path B isn't a free pass to a megaPR.
-                </p>
-              </div>
-            </div>
-
-            <h3>When to reach for <code>/sprint-development</code></h3>
-
-            <p>
-              The default choice for normal day-to-day work. You have a Jira ticket, the AC is
-              reasonably clear, the change is bounded (1-3 PRs), and you want the standard cycle:
-              precheck the epic, transition the ticket through dev states (<code
-                >Ready For Dev → In Progress → In Review → Ready For QA</code
-              >), plan, code, code review, deploy to staging, optionally deploy to production.
-              Nothing about the change requires a multi-page architectural document — a clear
-              implementation plan is enough.
+              <code>/sprint-development</code> is <strong>the</strong> driver for ticket-led work.
+              It runs the standard 12-step cycle: precheck the epic, transition the Jira ticket
+              through dev states (<code>Ready For Dev → In Progress → In Review → Ready For QA</code
+              >), plan, code, code review, deploy to staging, optionally deploy to production. For
+              TDD slices it composes with <code>/unit-testing</code> mid-flight.
             </p>
 
             <p>
@@ -3117,45 +3011,20 @@ bun run vars:check           # validate placeholders</code></pre>
               <code>/sprint-development</code> drives the whole thing.
             </p>
 
-            <h3>When to reach for <code>/sdd-*</code></h3>
-
-            <p>
-              The right choice when the change is shaped more like a research project than a ticket.
-              You're touching architecture, the design space has alternatives worth comparing, the
-              change crosses several modules, or there's no ticket yet because no one has scoped the
-              work. SDD gives you explicit phases (explore → propose → spec → design → tasks → apply
-              → verify → archive) and an artifact trail that survives across sessions via Engram.
-            </p>
-
-            <p>
-              Example: "Replace the auth model — move from session cookies to JWT with refresh
-              rotation." This is a change that benefits from <code>/sdd-explore</code> (investigate
-              the current model), <code>/sdd-propose</code> (compare approaches), and
-              <code>/sdd-design</code> (commit to an architecture) before any code lands.
-            </p>
-
-            <h3>When to combine both</h3>
-
-            <p>
-              You have a ticket but the spec is dense and you want it traced formally. Run
-              <code>/sdd-spec</code> first to lock down the requirements and scenarios as a delta
-              spec, then hand off to <code>/sprint-development</code> for the implementation cycle.
-              The spec gets archived after the ticket merges, leaving a permanent trace for future
-              readers.
-            </p>
-
-            <p>
-              The <code>/sdd-*</code> skills are installed by gentle-ai during
-              <code>bun run setup</code>. If you opted out of gentle-ai, only
-              <code>/sprint-development</code> is available — see
-              <a
-                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md"
-                target="_blank"
-                rel="noopener"
-                ><code>INSTALLER.md</code></a
-              >
-              for the opt-out trade-off.
-            </p>
+            <div class="callout">
+              <div>
+                <p class="callout-title">SDD bundle is no longer auto-installed</p>
+                <p>
+                  Earlier versions of this boilerplate auto-installed the
+                  <code>/sdd-*</code> bundle and let <code>/sprint-development</code> compose it for
+                  complex tickets. The installer has been switched to
+                  <code>gentle-ai install --preset minimal</code>, which installs only Engram
+                  (persistent memory). To use SDD, install the bundle manually with
+                  <code>gentle-ai install --agent &lt;agent&gt; --components sdd,skills</code> —
+                  then drive it standalone, outside <code>/sprint-development</code>.
+                </p>
+              </div>
+            </div>
           </section>
 
           <!-- =======================================================  SECTION 8 (was 6)  -->
@@ -3214,10 +3083,6 @@ bun run vars:check           # validate placeholders</code></pre>
                   <tr>
                     <td>Resolve a merge or rebase conflict</td>
                     <td><code>/git-flow-master</code></td>
-                  </tr>
-                  <tr>
-                    <td>Run an adversarial review on the PR</td>
-                    <td><code>/judgment-day</code> (gentle-ai)</td>
                   </tr>
                   <tr>
                     <td>Audit + sync all AI-consumed docs after drift</td>
@@ -3298,10 +3163,9 @@ bun run vars:check           # validate placeholders</code></pre>
             <p class="small muted">
               <strong>Tier</strong> (where it lives, how installed):
               <span class="badge badge-tier-t1">T1</span> committed in this repo (project-owned) ·
-              <span class="badge badge-tier-t2">T2</span> installed by gentle-ai during
-              <code>bun run setup</code> (SDD bundle + judgment-day + engram) ·
-              <span class="badge badge-tier-t3">T3</span> community skills installed project-level
-              by the installer (auto-matched by stack) ·
+              Persistent memory installed by gentle-ai during <code>bun run setup</code> (Engram
+              only) · <span class="badge badge-tier-t3">T3</span> community skills installed
+              project-level by the installer (auto-matched by stack) ·
               <span class="badge badge-tier-t4">T4</span> community skills installed user-level (ask
               before load).
             </p>
@@ -3331,9 +3195,9 @@ bun run vars:check           # validate placeholders</code></pre>
                 </div>
                 <p class="skill-card-trigger">/agentic-dev-onboard</p>
                 <p class="skill-card-desc">
-                  Walks new users through this repo's dev flow — stack, Jira workflow, when to use
-                  <code>/sprint-development</code> vs <code>/sdd-*</code>, MCPs, env vars. The tour
-                  ends when the user knows which skill to call next.
+                  Walks new users through this repo's dev flow — stack, Jira workflow,
+                  <code>/sprint-development</code>, MCPs, env vars. The tour ends when the user
+                  knows which skill to call next.
                 </p>
               </article>
 
@@ -3507,14 +3371,8 @@ bun run vars:check           # validate placeholders</code></pre>
               <div>
                 <p class="callout-title">Skills installed via gentle-ai (user-level)</p>
                 <p>
-                  Run <code>bun run setup</code> once to install the SDD orchestrator
-                  (<code>/sdd-init</code>, <code>/sdd-explore</code>, <code>/sdd-propose</code>,
-                  <code>/sdd-spec</code>, <code>/sdd-design</code>, <code>/sdd-tasks</code>,
-                  <code>/sdd-apply</code>, <code>/sdd-verify</code>, <code>/sdd-archive</code>,
-                  <code>/sdd-onboard</code>) plus <code>/judgment-day</code>,
-                  <code>/cognitive-doc-design</code>, <code>/comment-writer</code>,
-                  <code>/issue-creation</code>, and <code>engram</code> (persistent memory). They
-                  live at user level and are not committed in this repo.
+                  Engram (persistent memory MCP) — auto-saves decisions, bugs, conventions;
+                  auto-recalls across sessions.
                 </p>
               </div>
             </div>
@@ -3533,20 +3391,11 @@ bun run vars:check           # validate placeholders</code></pre>
                 <span class="composition-layer-num">1</span>
                 <div>
                   <strong>Workflow skill</strong> (e.g. <code>/sprint-development</code>) — owns the
-                  stage, picks Path A or Path B, transitions Jira, plans the PR.
+                  stage, transitions Jira, plans the PR.
                 </div>
               </div>
               <div class="composition-layer">
                 <span class="composition-layer-num">2</span>
-                <div>
-                  <strong>Composed workflow skills</strong> (only on Path B) — silently invokes
-                  <code>/sdd-design</code>, <code>/sdd-tasks</code>, <code>/sdd-apply</code>,
-                  <code>/sdd-verify</code>. The user still sees one
-                  <code>/sprint-development</code> session.
-                </div>
-              </div>
-              <div class="composition-layer">
-                <span class="composition-layer-num">3</span>
                 <div>
                   <strong>Tool skills</strong> (e.g. <code>/git-flow-master</code>,
                   <code>/acli</code>, <code>/playwright-cli</code>, <code>/gh-cli</code>) — loaded
@@ -3556,7 +3405,7 @@ bun run vars:check           # validate placeholders</code></pre>
                 </div>
               </div>
               <div class="composition-layer">
-                <span class="composition-layer-num">4</span>
+                <span class="composition-layer-num">3</span>
                 <div>
                   <strong>Foundation reference host</strong> (<code>agentic-dev-core</code>) —
                   passively cited by every workflow skill for shared doctrine (briefing template,
@@ -3564,8 +3413,7 @@ bun run vars:check           # validate placeholders</code></pre>
                 </div>
               </div>
               <p class="diagram-caption" style="margin-top: 0.75rem">
-                Read top-to-bottom. Workflow skills compose other workflow skills only when the gate
-                triggers it (Path B). Tool skills sit at the bottom of the food chain.
+                Read top-to-bottom. Tool skills sit at the bottom of the food chain.
               </p>
             </div>
           </section>
@@ -3843,14 +3691,8 @@ bun run vars:check           # validate placeholders</code></pre>
                 rules.
               </li>
               <li>
-                <strong>SDD orchestrator + SDD skills</strong> (<code>sdd-init</code>,
-                <code>sdd-explore</code>, <code>sdd-propose</code>, <code>sdd-spec</code>,
-                <code>sdd-design</code>, <code>sdd-tasks</code>, <code>sdd-apply</code>,
-                <code>sdd-verify</code>, <code>sdd-archive</code>, <code>skill-registry</code>):
-                installed by gentle-ai, hosted at the user level (not in this repo). They are
-                invoked directly when you choose the SDD path (see <a href="#section-7">§7</a>), but
-                the orchestrator that coordinates them runs in the background — you talk to it via
-                the <code>/sdd-*</code> triggers, not to its internal phase agents.
+                <strong>Engram</strong> (persistent memory) — installed by gentle-ai, used
+                proactively per CLAUDE.md §12.
               </li>
               <li>
                 <strong>Engram (MCP persistent memory)</strong>: not a skill — an MCP server that

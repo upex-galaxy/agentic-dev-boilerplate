@@ -3,7 +3,7 @@
  * lint-skills.ts — validates the skill composition system.
  *
  * Checks:
- *   1. ORPHAN-CATEGORY (ERROR) — SKILL.md frontmatter declares a category not in §5.1.
+ *   1. ORPHAN-CATEGORY (ERROR) — SKILL.md frontmatter declares a category not in §4.1.
  *   2. STALE-MENTION   (WARN)  — Expected matches table cites a skill name that is
  *                                not in install.ts (any tier) and not in skill-registry slugs.
  *   3. TIER-MISMATCH   (ERROR) — Expected matches table annotates a skill as `(T2)`
@@ -11,7 +11,7 @@
  *   4. MISSING-SECTION (ERROR) — Skill declares `complementary_categories` but has
  *                                no `## Composable Skills` heading (sprint-development
  *                                is exempt — uses `## SDD Composition`).
- *   5. SINGLE-SKILL    (WARN)  — §5.1 row maps a category to only one skill (fragile
+ *   5. SINGLE-SKILL    (WARN)  — §4.1 row maps a category to only one skill (fragile
  *                                if that skill is not installed).
  *   6. STALE-PATH      (ERROR) — Any file references the old `.context/skill-composition-strategy.md`
  *                                path instead of the canonical
@@ -197,17 +197,17 @@ function extractInstallTsSkills(): { t2: Set<string>, t3: Set<string>, t4: Set<s
 }
 
 // -----------------------------------------------------------------------------
-// Strategy doc §5.1 parsing — category → skills lookup
+// Strategy doc §4.1 parsing — category → skills lookup
 // -----------------------------------------------------------------------------
 
 function extractCategoryVocab(): Map<string, string[]> {
   const src = readFileSync(STRATEGY_DOC, 'utf8');
-  const startMarker = '### 5.1 Category list';
-  const endMarker = '### 5.2';
+  const startMarker = '### 4.1 Category list';
+  const endMarker = '### 4.2';
   const start = src.indexOf(startMarker);
   const end = src.indexOf(endMarker, start);
   if (start === -1 || end === -1) {
-    record('ERROR', 'BAD-STRATEGY-DOC', 'strategy', '§5.1 or §5.2 heading missing');
+    record('ERROR', 'BAD-STRATEGY-DOC', 'strategy', '§4.1 or §4.2 heading missing');
     return new Map();
   }
   const section = src.slice(start, end);
@@ -305,7 +305,7 @@ function main() {
   // Check 5: single-skill category fragility
   for (const [cat, skills] of vocab) {
     if (skills.length === 1) {
-      record('WARN', 'SINGLE-SKILL', `§5.1:${cat}`, `category maps to only 1 skill (${skills[0]}) — fragile if not installed`);
+      record('WARN', 'SINGLE-SKILL', `§4.1:${cat}`, `category maps to only 1 skill (${skills[0]}) — fragile if not installed`);
     }
   }
 
@@ -330,18 +330,18 @@ function main() {
     // Check 1: orphan category
     for (const cat of skill.complementaryCategories) {
       if (!vocab.has(cat)) {
-        record('ERROR', 'ORPHAN-CATEGORY', skillName, `category '${cat}' not in strategy doc §5.1`);
+        record('ERROR', 'ORPHAN-CATEGORY', skillName, `category '${cat}' not in strategy doc §4.1`);
       }
     }
 
     // Check 2: stale skill mentions
-    // Lenient: accept if known in install.ts (any tier) OR mentioned anywhere in §5.1 vocab.
+    // Lenient: accept if known in install.ts (any tier) OR mentioned anywhere in §4.1 vocab.
     const vocabSkillSet = new Set<string>();
     for (const skills of vocab.values()) { for (const s of skills) { vocabSkillSet.add(s); } }
     for (const mentioned of skill.expectedMatchesSkills) {
       const tier = tierOf(mentioned, t1, t2, t3, t4);
       if (!tier && !vocabSkillSet.has(mentioned)) {
-        record('WARN', 'STALE-MENTION', skillName, `Expected matches cites '${mentioned}' which is not in any tier (T1/T2/T3/T4) nor in §5.1 vocab`);
+        record('WARN', 'STALE-MENTION', skillName, `Expected matches cites '${mentioned}' which is not in any tier (T1/T2/T3/T4) nor in §4.1 vocab`);
       }
     }
 
@@ -372,7 +372,7 @@ function main() {
   const t1Sorted = [...t1].sort();
   console.log('\nlint-skills — skill composition system audit');
   console.log(`Scanning ${SKILLS_DIR.replace(`${REPO_ROOT}/`, '')} ... ${t1.size} T1 skills`);
-  console.log(`Reading ${STRATEGY_DOC.replace(`${REPO_ROOT}/`, '')} §5.1 ... ${vocab.size} categories`);
+  console.log(`Reading ${STRATEGY_DOC.replace(`${REPO_ROOT}/`, '')} §4.1 ... ${vocab.size} categories`);
   console.log(`Reading cli/install.ts ... ${t2.size} T2, ${t3.size} T3, ${t4.size} T4\n`);
 
   for (const skill of t1Sorted) {

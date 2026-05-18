@@ -66,9 +66,9 @@ Before running `bunx create-agentic-dev@latest` or `bun install && bun run setup
 
 ### Quasi-required (installer warns + offers install)
 
-| Tool          | Min version | Why                                                                                                                                                                                                  | Install                                                                                                                                                                                              |
-| ------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **gentle-ai** | `>= 1.26.5` | Installs 15 universal skills (Engram persistent memory + 10 SDD-\* + skill-registry + judgment-day + 2 helpers). Framework still runs without it, but SDD planning and cross-session memory are off. | macOS: `brew install gentle-ai` · Linux: `go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest` (needs Go ≥ 1.22) · [repo](https://github.com/Gentleman-Programming/gentle-ai) |
+| Tool          | Min version | Why                                                                                                                              | Install                                                                                                                                                                                              |
+| ------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **gentle-ai** | `>= 1.26.5` | Installs Engram (MCP-based persistent memory across sessions). Framework still runs without it, but cross-session memory is off. | macOS: `brew install gentle-ai` · Linux: `go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest` (needs Go ≥ 1.22) · [repo](https://github.com/Gentleman-Programming/gentle-ai) |
 
 ### Per-skill CLIs (lazy-required — needed when the skill runs, not at setup)
 
@@ -160,7 +160,7 @@ What it does:
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to `bun run setup` — gentle-ai, 15 skills, community skills, `.env` wiring for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), direnv autoload, optional `gh repo create`.
+5. Hands off to `bun run setup` — gentle-ai (Engram only), community skills, `.env` wiring for the 5 MCPs (context7, tavily, atlassian, supabase, n8n), direnv autoload, optional `gh repo create`.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -240,7 +240,7 @@ Prefer to start your project **on GitHub from day one** (your own repo, your own
 4. Install + configure:
    ```bash
    bun install
-   bun run setup        # gentle-ai, 15 skills, community skills, .env wiring, MCPs
+   bun run setup        # gentle-ai (Engram only), community skills, .env wiring, MCPs
    ```
 5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
 
@@ -260,7 +260,7 @@ bun install
 bun run onboarding   # opens docs/onboarding.html with sidebar nav
                      # Close the tab + Ctrl-C when done
 
-# 3. Install everything (gentle-ai, skills, MCPs, env)
+# 3. Install everything (gentle-ai Engram, community skills, MCPs, env)
 bun run setup
 
 # Or, do it manually instead of step 3:
@@ -310,14 +310,13 @@ After running `/project-foundation` and `/project-bootstrap`, you can also run `
 
 ### Skill tiers (T1–T4)
 
-Every skill belongs to one of four tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
+Every skill belongs to one of three tiers. Each tier has different discovery and load rules. Full contract: [`.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`](.claude/skills/agentic-dev-core/references/skill-composition-strategy.md).
 
-| Tier | What                           | Location                                           | Load behavior                                               |
-| ---- | ------------------------------ | -------------------------------------------------- | ----------------------------------------------------------- |
-| T1   | Project-owned (this repo)      | `.claude/skills/`                                  | Silent — load on trigger                                    |
-| T2   | Project dependency (gentle-ai) | Installed by gentle-ai (SDD bundle, judgment-day…) | Silent inside T1 orchestrators                              |
-| T3   | Community project-level        | Installed by `install.ts` `PROJECT_LEVEL_SKILLS`   | Silent if matched by category                               |
-| T4   | Community user-level (global)  | Installed by `install.ts` `USER_LEVEL_SKILLS`      | **ASK** user before load (cross-project, not always wanted) |
+| Tier | What                          | Location                                         | Load behavior                                               |
+| ---- | ----------------------------- | ------------------------------------------------ | ----------------------------------------------------------- |
+| T1   | Project-owned (this repo)     | `.claude/skills/`                                | Silent — load on trigger                                    |
+| T3   | Community project-level       | Installed by `install.ts` `PROJECT_LEVEL_SKILLS` | Silent if matched by category                               |
+| T4   | Community user-level (global) | Installed by `install.ts` `USER_LEVEL_SKILLS`    | **ASK** user before load (cross-project, not always wanted) |
 
 Validation: `bun run skills:check` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
 
