@@ -50,8 +50,9 @@ const INQUIRER_MARKER = join(REPO_ROOT, 'node_modules', '@inquirer', 'prompts', 
 const MIN_BUN: readonly [number, number, number] = [1, 0, 0];
 
 // Required MCP env vars (mirrors MCP_SERVER_SECRETS in cli/install.ts).
-// ATLASSIAN_* are the canonical user-facing vars; JIRA_* are auto-derived by
-// the installer and validated as optional (warn but don't fail when missing).
+// ATLASSIAN_* are the single source of truth for Atlassian credentials. The
+// mcp-atlassian server receives them mapped to its internal JIRA_* keys inside
+// `.mcp.json`; we never expose those JIRA_* keys to the user's `.env`.
 const REQUIRED_VARS = [
   'TAVILY_API_KEY',
   'ATLASSIAN_URL',
@@ -65,9 +66,10 @@ const REQUIRED_VARS = [
   'N8N_API_KEY',
 ] as const;
 
-// JIRA_* vars are auto-derived from ATLASSIAN_* by the installer; listed here
-// so the doctor can report their status without failing when they're absent.
-const OPTIONAL_VARS = [
+// Legacy credential keys some users may still have in `.env` from before the
+// DRY rename. Detected so doctor can emit a migration hint — they're harmless
+// (nothing reads them anymore) but signal a stale .env.
+const LEGACY_JIRA_CRED_KEYS = [
   'JIRA_URL',
   'JIRA_USERNAME',
   'JIRA_API_TOKEN',
@@ -89,18 +91,6 @@ const VAR_HINTS: Record<string, { hint: string, where: string }> = {
   ATLASSIAN_API_TOKEN: {
     hint: 'Atlassian credentials (canonical) — see .env.example',
     where: 'https://id.atlassian.com/manage-profile/security/api-tokens',
-  },
-  JIRA_URL: {
-    hint: 'Auto-derived from ATLASSIAN_URL by installer (override only if needed)',
-    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
-  },
-  JIRA_USERNAME: {
-    hint: 'Auto-derived from ATLASSIAN_EMAIL by installer (override only if needed)',
-    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
-  },
-  JIRA_API_TOKEN: {
-    hint: 'Auto-derived from ATLASSIAN_API_TOKEN by installer (override only if needed)',
-    where: 'Set by `bun run setup`; leave blank unless you need a different MCP account',
   },
   SUPABASE_ACCESS_TOKEN: {
     hint: 'Supabase personal access token (PAT) for the Supabase MCP server',
@@ -157,8 +147,7 @@ interface DoctorReport {
   is_tty: boolean
   env_file_exists: boolean
   env_vars: Record<string, 'set' | 'missing'>
-  optional_vars: Record<string, 'set' | 'missing'>
-  atlassian_divergences: string[]
+  legacy_jira_cred_keys: string[]
   mcp_json_exists: boolean
   opencode_jsonc_exists: boolean
   deps_installed: boolean
@@ -285,8 +274,7 @@ async function runDoctor(): Promise<DoctorReport> {
     is_tty: Boolean(process.stdin.isTTY),
     env_file_exists: existsSync(ENV_PATH),
     env_vars: {},
-    optional_vars: {},
-    atlassian_divergences: [],
+    legacy_jira_cred_keys: [],
     mcp_json_exists: existsSync(MCP_PATH),
     opencode_jsonc_exists: existsSync(OPENCODE_PATH),
     deps_installed: existsSync(NODE_MODULES_DOTENV),
@@ -321,37 +309,23 @@ async function runDoctor(): Promise<DoctorReport> {
     }
   }
 
-  // optional vars (JIRA_* — auto-derived by installer, warn but don't fail)
-  for (const v of OPTIONAL_VARS) {
-    const value = envValues[v];
-    const isSet = value !== undefined && value.trim().length > 0;
-    report.optional_vars[v] = isSet ? 'set' : 'missing';
+  // Legacy detection: ATLASSIAN_* is now the single credential family. Any
+  // JIRA_URL / JIRA_USERNAME / JIRA_API_TOKEN still in `.env` is leftover from
+  // before the DRY rename and should be removed. Nothing reads them anymore;
+  // .mcp.json maps ${ATLASSIAN_*} into the server's internal JIRA_* keys.
+  for (const key of LEGACY_JIRA_CRED_KEYS) {
+    const value = envValues[key];
+    if (value !== undefined && value.trim().length > 0) {
+      report.legacy_jira_cred_keys.push(key);
+    }
   }
-
-  // divergence check: warn when ATLASSIAN_* and JIRA_* are both set but differ
-  const divergences: string[] = [];
-  if (
-    envValues.ATLASSIAN_URL
-    && envValues.JIRA_URL
-    && envValues.ATLASSIAN_URL !== envValues.JIRA_URL
-  ) {
-    divergences.push('ATLASSIAN_URL ≠ JIRA_URL (MCP server will use JIRA_URL override)');
+  if (report.legacy_jira_cred_keys.length > 0) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: '.env cleanup',
+      hint: `Remove legacy credential keys from .env: ${report.legacy_jira_cred_keys.join(', ')}. ATLASSIAN_URL / ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN are now the single source — .mcp.json forwards them to the mcp-atlassian server internally.`,
+    });
   }
-  if (
-    envValues.ATLASSIAN_EMAIL
-    && envValues.JIRA_USERNAME
-    && envValues.ATLASSIAN_EMAIL !== envValues.JIRA_USERNAME
-  ) {
-    divergences.push('ATLASSIAN_EMAIL ≠ JIRA_USERNAME (MCP server will use JIRA_USERNAME override)');
-  }
-  if (
-    envValues.ATLASSIAN_API_TOKEN
-    && envValues.JIRA_API_TOKEN
-    && envValues.ATLASSIAN_API_TOKEN !== envValues.JIRA_API_TOKEN
-  ) {
-    divergences.push('ATLASSIAN_API_TOKEN ≠ JIRA_API_TOKEN (MCP server will use JIRA_API_TOKEN override)');
-  }
-  report.atlassian_divergences = divergences;
 
   // node_modules / dotenv-cli
   if (!report.deps_installed) {
@@ -462,22 +436,13 @@ function printHuman(report: DoctorReport): void {
   ]);
   process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
 
-  // Optional vars (JIRA_* — auto-derived)
-  tui.section('Optional vars (auto-derived from ATLASSIAN_*)');
-  const optRows = Object.entries(report.optional_vars).map(([k, v]) => [
-    k,
-    v === 'set' ? tui.statusIcon('ok') : tui.statusIcon('warn'),
-    v === 'set' ? 'set' : 'not set (will be written by installer)',
-  ]);
-  process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], optRows)}\n`);
-
-  // Divergence warnings
-  if (report.atlassian_divergences.length > 0) {
-    tui.section('Atlassian credential divergences');
-    for (const msg of report.atlassian_divergences) {
-      process.stdout.write(`  ${tui.statusIcon('warn')} ${msg}\n`);
+  // Legacy JIRA_* credential keys (pre-DRY .env leftover)
+  if (report.legacy_jira_cred_keys.length > 0) {
+    tui.section('Legacy JIRA_* credential keys in .env');
+    for (const key of report.legacy_jira_cred_keys) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${key} — remove (replaced by ATLASSIAN_* family)\n`);
     }
-    process.stdout.write('\n');
+    process.stdout.write(`  ${COLORS.dim}.mcp.json now reads ATLASSIAN_* and maps them to mcp-atlassian's internal JIRA_* keys.${COLORS.reset}\n\n`);
   }
 
   if (report.pending_actions.length > 0) {

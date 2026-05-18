@@ -786,49 +786,12 @@ async function configureMcps(agents: AgentId[], state: InstallState): Promise<vo
     log.warn(`Pending (fill in .env manually): ${stillPending.join(', ')}`);
   }
 
-  // Derive JIRA_* from ATLASSIAN_* for the mcp-atlassian server.
-  // Only written when the corresponding JIRA_* key is not already present in
-  // the existing .env (treat a pre-set value as an explicit user override).
-  const allEnvSoFar = { ...envValues, ...newValues };
-  const derived: Record<string, string> = {};
-  const jiraOverrides: string[] = [];
-  if (allEnvSoFar.ATLASSIAN_URL) {
-    if (!envValues.JIRA_URL) {
-      derived.JIRA_URL = allEnvSoFar.ATLASSIAN_URL;
-    }
-    else if (envValues.JIRA_URL !== allEnvSoFar.ATLASSIAN_URL) {
-      jiraOverrides.push('JIRA_URL');
-    }
-  }
-  if (allEnvSoFar.ATLASSIAN_EMAIL) {
-    if (!envValues.JIRA_USERNAME) {
-      derived.JIRA_USERNAME = allEnvSoFar.ATLASSIAN_EMAIL;
-    }
-    else if (envValues.JIRA_USERNAME !== allEnvSoFar.ATLASSIAN_EMAIL) {
-      jiraOverrides.push('JIRA_USERNAME');
-    }
-  }
-  if (allEnvSoFar.ATLASSIAN_API_TOKEN) {
-    if (!envValues.JIRA_API_TOKEN) {
-      derived.JIRA_API_TOKEN = allEnvSoFar.ATLASSIAN_API_TOKEN;
-    }
-    else if (envValues.JIRA_API_TOKEN !== allEnvSoFar.ATLASSIAN_API_TOKEN) {
-      jiraOverrides.push('JIRA_API_TOKEN');
-    }
-  }
-  if (Object.keys(derived).length > 0) {
-    await appendVarsToEnv(derived);
-    log.info('Derived JIRA_URL / JIRA_USERNAME / JIRA_API_TOKEN from ATLASSIAN_* for MCP atlassian server.');
-  }
-  if (jiraOverrides.length > 0) {
-    log.warn(`Kept existing JIRA_* overrides (differ from ATLASSIAN_*): ${jiraOverrides.join(', ')}`);
-  }
-
   state.pendingEnvVars = stillPending;
 
   // Per-server status — placeholder if any of its required vars are still pending.
-  // For atlassian, check the derived JIRA_* keys (what the MCP server reads).
-  const merged = { ...envValues, ...newValues, ...derived };
+  // For atlassian, .mcp.json maps ${ATLASSIAN_*} → internal JIRA_* at server
+  // startup; no derivation written to .env (DRY: one family of credentials).
+  const merged = { ...envValues, ...newValues };
   for (const [server, secrets] of Object.entries(MCP_SERVER_SECRETS)) {
     if (secrets.length === 0) {
       state.mcps[server] = 'configured-no-key';
@@ -1301,21 +1264,14 @@ function reloadDotEnv(): void {
  * ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN) and probes /rest/api/3/myself.
  * Up to 5 attempts; lets the user skip at any time.
  *
- * Atlassian / Jira credentials are split across two env-var families ON PURPOSE:
- *
- *   - ATLASSIAN_URL / ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN
- *       Used by:  scripts/sync-jira-*.ts  AND  acli auth login (passed via stdin)
- *       These are read directly by Node + bash code at install time.
- *
- *   - JIRA_URL / JIRA_USERNAME / JIRA_API_TOKEN
- *       Used by:  .mcp.json + opencode.jsonc (MCP atlassian server)
- *       These are forwarded to the mcp-atlassian subprocess at agent runtime.
- *
- * Both families point at the SAME workspace + token, but the names are different
- * because Atlassian's own SDKs / MCP server / acli expect different keys.
- *
- * This loop checks ATLASSIAN_* because that's what jira:sync-fields and
- * jira:sync-workflows actually read.
+ * Single credential family across every consumer (DRY):
+ *   - scripts/sync-jira-*.ts          read ATLASSIAN_* directly
+ *   - acli auth login                 reads ATLASSIAN_* (token piped via stdin)
+ *   - .mcp.json mcp-atlassian server  receives ATLASSIAN_* mapped to its
+ *                                     internal JIRA_URL / JIRA_USERNAME /
+ *                                     JIRA_API_TOKEN keys (translation hidden
+ *                                     inside `.mcp.json`, never exposed to
+ *                                     the user's `.env`).
  *
  * Returns 'authenticated' when the probe succeeds, or 'skipped' when the user
  * chooses to skip or max attempts are exhausted.
