@@ -29,7 +29,7 @@ database:
 issue_tracker:
   issue_tracker: null # TODO: fill per project — Issue tracking tool (e.g. Jira)
   issue_tracker_cli: null # TODO: fill per project — CLI command to query tickets (e.g. acli (Jira) / gh issue (GitHub))
-  jira_url: null # TODO: fill per project — Jira instance base URL (e.g. https://company.atlassian.net)
+  atlassian_url: null # TODO: fill per project — Atlassian instance base URL (e.g. https://company.atlassian.net)
   atlassian_site: null # TODO: fill per project — Atlassian site slug used by `acli` (the subdomain before .atlassian.net, e.g. `mycompany`)
 
 testing:

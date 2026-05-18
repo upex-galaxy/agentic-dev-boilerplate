@@ -469,7 +469,7 @@ Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolv
 
 ## Variables consumed
 
-- `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — issue tracker
+- `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — issue tracker
 - `{{WEB_URL}}`, `{{API_URL}}` — env-scoped, active env from `.agents/project.yaml`
 - `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}` — stack-specific patterns
 - `{{jira.*}}` — story custom fields (acceptance_criteria_gherkin, business_rules, acceptance_test_plan, etc.)

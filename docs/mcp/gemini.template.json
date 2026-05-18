@@ -69,9 +69,9 @@
       "command": "uvx",
       "args": ["mcp-atlassian"],
       "env": {
-        "JIRA_URL": "https://ejemplo.atlassian.net",
-        "JIRA_USERNAME": "tu.email@ejemplo.com",
-        "JIRA_API_TOKEN": "{{JIRA_API_TOKEN}}"
+        "JIRA_URL": "{{ATLASSIAN_URL}}",
+        "JIRA_USERNAME": "{{ATLASSIAN_EMAIL}}",
+        "JIRA_API_TOKEN": "{{ATLASSIAN_API_TOKEN}}"
       }
     },
     "nanobanana": {

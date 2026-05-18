@@ -40,7 +40,7 @@ The skill is reference-driven: each workflow points to a specific reference file
 ## Pre-requisites
 
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
-- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{JIRA_URL}}` — these ship with the cloned boilerplate; if missing, clone the full repo
+- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — these ship with the cloned boilerplate; if missing, clone the full repo
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
 
 ## Composable Skills (auto-resolved at skill entry)
@@ -164,7 +164,7 @@ This skill uses standard `.agents/project.yaml` variables resolved at runtime:
 
 - `{{PROJECT_KEY}}` — Jira project key (e.g., `MYM`, `UPEX`)
 - `{{ISSUE_TRACKER}}` — issue tracker name (typically `Jira`)
-- `{{JIRA_URL}}` — workspace URL
+- `{{ATLASSIAN_URL}}` — workspace URL
 
 If unset, clone the full boilerplate — these foundation files ship with the repo.
 

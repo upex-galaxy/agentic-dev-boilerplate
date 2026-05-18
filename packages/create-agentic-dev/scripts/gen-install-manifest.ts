@@ -476,12 +476,12 @@ function buildManifest(src: string): object {
         {
           service: 'acli (Atlassian CLI)',
           method: 'One-time interactive login — credentials stored in ~/.config/acli/',
-          credsFrom: ['ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN', 'ATLASSIAN_URL'],
+          credsFrom: ['ATLASSIAN_URL', 'ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN'],
         },
         {
           service: 'Jira (HTTP basic auth via MCP)',
-          method: 'Env vars read at MCP startup — no interactive login needed',
-          credsFrom: ['JIRA_URL', 'JIRA_USERNAME', 'JIRA_API_TOKEN'],
+          method: 'Env vars read at MCP startup — .mcp.json maps ATLASSIAN_* into the server\'s internal JIRA_* keys',
+          credsFrom: ['ATLASSIAN_URL', 'ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN'],
         },
       ],
       postInstallSteps: [
