@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { parseArgs } from '../src/args.ts';
 import { CliError } from '../src/errors.ts';
-import { applyTemplateExclude, sanitizeProjectName } from '../src/prepare.ts';
+import { pruneBootstrapExcludes, sanitizeProjectName } from '../src/prepare.ts';
 
 describe('parseArgs', () => {
   test('accepts a project name as positional', () => {
@@ -67,7 +67,7 @@ describe('sanitizeProjectName', () => {
   });
 });
 
-describe('applyTemplateExclude', () => {
+describe('pruneBootstrapExcludes', () => {
   let dir: string;
 
   beforeEach(() => {
@@ -78,45 +78,32 @@ describe('applyTemplateExclude', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  test('removes paths listed in manifest', async () => {
-    mkdirSync(join(dir, '.template'), { recursive: true });
+  test('removes hardcoded paths and preserves unrelated files', async () => {
+    // `packages` is one of TEMPLATE_EXCLUDES — it must be pruned.
     mkdirSync(join(dir, 'packages', 'foo'), { recursive: true });
     writeFileSync(join(dir, 'packages', 'foo', 'a.ts'), '// a');
     writeFileSync(join(dir, 'keep.txt'), 'keep me');
-    writeFileSync(
-      join(dir, '.template', 'manifest.json'),
-      JSON.stringify({ exclude: ['packages'] }),
-    );
 
-    await applyTemplateExclude(dir);
+    await pruneBootstrapExcludes(dir);
 
     expect(existsSync(join(dir, 'packages'))).toBe(false);
     expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
   });
 
-  test('is a no-op when manifest is missing', async () => {
+  test('is a no-op when none of the excluded paths exist', async () => {
     writeFileSync(join(dir, 'keep.txt'), 'keep me');
-    await applyTemplateExclude(dir);
+    await pruneBootstrapExcludes(dir);
     expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
   });
 
-  test('rejects absolute paths and `..` traversal', async () => {
-    mkdirSync(join(dir, '.template'), { recursive: true });
-    writeFileSync(join(dir, 'keep.txt'), 'keep me');
-    writeFileSync(
-      join(dir, '.template', 'manifest.json'),
-      JSON.stringify({ exclude: ['/etc/passwd', '../escape', 'normal-but-missing'] }),
-    );
-    await applyTemplateExclude(dir);
-    // Unsafe entries do not blow up; safe entries simply find nothing to delete.
-    expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
-  });
+  test('removes business map files when present', async () => {
+    mkdirSync(join(dir, '.context', 'business'), { recursive: true });
+    writeFileSync(join(dir, '.context', 'business', 'business-data-map.md'), '# map');
+    writeFileSync(join(dir, '.context', 'business', 'keep-me.md'), '# keep');
 
-  test('ignores malformed manifest', async () => {
-    mkdirSync(join(dir, '.template'), { recursive: true });
-    writeFileSync(join(dir, '.template', 'manifest.json'), '{not json');
-    writeFileSync(join(dir, 'keep.txt'), 'keep me');
-    await applyTemplateExclude(dir);
-    expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
+    await pruneBootstrapExcludes(dir);
+
+    expect(existsSync(join(dir, '.context', 'business', 'business-data-map.md'))).toBe(false);
+    expect(existsSync(join(dir, '.context', 'business', 'keep-me.md'))).toBe(true);
   });
 });

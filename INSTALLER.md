@@ -371,7 +371,7 @@ You have a ticket but the spec is dense and you want it traced formally. Run `/s
 
 If you prefer not to use gentle-ai, the installer accepts a "skip" choice. To make it permanent:
 
-1. Edit `.agents/install-state.json` and set `"gentleAi": { "status": "skipped" }`.
+1. Edit `.template/installer.state.json` and set `"gentleAi": { "status": "skipped" }`.
 2. Re-run `bun run setup`. The installer detects the skipped state and only configures the 4 canonical MCPs.
 
 What you lose:

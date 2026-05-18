@@ -72,33 +72,33 @@ Non-sensitive values (URLs, paths) use real examples from the SoloQ project.
 **For Claude Code**:
 
 ```bash
-cp templates/mcp/claude.template.json .mcp.json
+cp docs/mcp/claude.template.json .mcp.json
 ```
 
 **For OpenCode**:
 
 ```bash
-cp templates/mcp/opencode.template.json opencode.json
+cp docs/mcp/opencode.template.json opencode.json
 ```
 
 **For Codex CLI**:
 
 ```bash
 mkdir -p ~/.codex
-cp templates/mcp/codex.template.toml ~/.codex/config.toml
+cp docs/mcp/codex.template.toml ~/.codex/config.toml
 ```
 
 **For Gemini CLI**:
 
 ```bash
 mkdir -p ~/.gemini
-cp templates/mcp/gemini.template.json ~/.gemini/settings.json
+cp docs/mcp/gemini.template.json ~/.gemini/settings.json
 ```
 
 ### 2. Create DBHub Config (for SQL testing)
 
 ```bash
-cp templates/mcp/dbhub.example.toml dbhub.toml
+cp docs/mcp/dbhub.example.toml dbhub.toml
 # Edit with your database credentials
 ```
 

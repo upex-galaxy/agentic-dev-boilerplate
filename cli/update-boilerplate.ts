@@ -6,7 +6,7 @@
  * ## Overview
  *
  * v6 replaces bulk `cpSync` with a partial clone + sparse-checkout approach:
- *   1. Reads `.boilerplate-version.json` (schema v6) to determine the last-synced SHA
+ *   1. Reads `.template/boilerplate.lock.json` (schema v6) to determine the last-synced SHA
  *      per component (`perComponentCommit`).
  *   2. Runs `git log <lastSha>..HEAD` per component to find changed files.
  *   3. Classifies each file into one of 5 buckets:
@@ -16,7 +16,7 @@
  *   5. In auto/CI mode (`--auto` or `CI=true` or non-TTY stdin): applies
  *      `clean-fastforward` and `new-upstream` silently; defers `locally-diverged`.
  *
- * ## `.boilerplate-version.json` schema v6
+ * ## `.template/boilerplate.lock.json` schema v6
  *
  * ```jsonc
  * {
@@ -43,14 +43,14 @@
  * ## CLI flags
  *
  * - `--auto`                  Force non-interactive / CI mode; skips diverged files silently.
- * - `--dry-run`               Simulate sync, no writes to disk (includes `.boilerplate-version.json`).
+ * - `--dry-run`               Simulate sync, no writes to disk (includes `.template/boilerplate.lock.json`).
  * - `--rollback`              Restore files from the most recent `.backups/update-{ISO-ts}/`.
  * - `--update-mcp-template <agent>`
  *                             Legacy MCP template subsystem — short-circuits before delta flow.
  *
  * ## Bootstrap path (first run — missing state file)
  *
- * When `.boilerplate-version.json` is absent, the CLI performs a one-time bulk sync using
+ * When `.template/boilerplate.lock.json` is absent, the CLI performs a one-time bulk sync using
  * the existing `mergeDirectory()` primitive per component, then writes an initial v6 state
  * with `perComponentCommit` entries populated from the template HEAD SHA.
  *
@@ -58,16 +58,16 @@
  *
  * ## v5 → v6 migration (prompt-driven)
  *
- * When `.boilerplate-version.json` has no `schemaVersion: 6`, the CLI prompts the user:
+ * When `.template/boilerplate.lock.json` has no `schemaVersion: 6`, the CLI prompts the user:
  *
  *   ```
- *   Detectado: esquema v5 en .boilerplate-version.json.
+ *   Detectado: esquema v5 en .template/boilerplate.lock.json.
  *   Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).
  *   ¿Migrar ahora? [Y/n]:
  *   ```
  *
  * - User accepts (default Y): migration happens in-memory; disk write deferred to post-sync.
- * - User declines: legacy flow executes; `.boilerplate-version.json` is untouched.
+ * - User declines: legacy flow executes; `.template/boilerplate.lock.json` is untouched.
  * - `--dry-run`: prompt still fires (user must be informed), disk write skipped.
  *
  * ## Backup strategy
@@ -92,7 +92,7 @@
  *   bun up --auto                    # non-interactive delta sync
  *   bun up --auto --dry-run          # preview what would be synced
  *   bun up --rollback                # restore latest backup
- *   bun up --update-mcp-template claude   # refresh templates/mcp/claude.template.json
+ *   bun up --update-mcp-template claude   # refresh docs/mcp/claude.template.json
  */
 
 import { execSync } from 'node:child_process';
@@ -108,7 +108,7 @@ import * as readline from 'node:readline';
 const CLI_VERSION = '6.0';
 const TEMPLATE_REPO = 'upex-galaxy/agentic-dev-boilerplate';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
-const VERSION_FILE = '.boilerplate-version.json';
+const VERSION_FILE = '.template/boilerplate.lock.json';
 
 const TOOLING_FILES: string[] = ['.editorconfig', '.prettierrc', '.prettierignore'];
 const EXAMPLE_FILES: string[] = [];
@@ -164,7 +164,7 @@ const CLAUDE_CONFIG_FILES: string[] = [
   'settings.json',
 ];
 
-// Supported MCP template agents. Keep in sync with `templates/mcp/`.
+// Supported MCP template agents. Keep in sync with `docs/mcp/`.
 const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex', 'gemini'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
 
@@ -219,7 +219,7 @@ interface SyncVersion {
   variableSystemVersion: boolean
 }
 
-// writeSyncState uses tmp+rename atomic write. Assumes .boilerplate-version.json and its .tmp.<pid>
+// writeSyncState uses tmp+rename atomic write. Assumes .template/boilerplate.lock.json and its .tmp.<pid>
 // sibling are on the same filesystem (POSIX rename guarantee). Cross-FS writes (e.g. tmpdir on a
 // separate partition) are out of scope.
 
@@ -345,7 +345,7 @@ const COMPONENTS: Component[] = [
   { name: 'docs', type: 'directory', paths: ['docs'] },
   { name: 'context', type: 'directory', paths: ['.context'] },
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
-  { name: 'templates-mcp', type: 'directory', paths: ['templates/mcp'] },
+  { name: 'docs-mcp', type: 'directory', paths: ['docs/mcp'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   { name: 'husky', type: 'directory', paths: ['.husky'] },
   { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
@@ -583,7 +583,7 @@ ${colors.bold}COMANDOS:${colors.reset}
   all           Actualiza todo (merge completo de todos los directorios)
   docs          Actualiza docs/ (merge completo del directorio)
   context       Actualiza .context/ (merge completo del directorio)
-  templates     Actualiza templates/mcp/ (merge completo del directorio)
+  docs-mcp      Actualiza docs/mcp/ (merge completo del directorio)
   scripts       Actualiza scripts/ (solo framework: agents + jira)
   cli           Actualiza cli/ (Xray CLI y otras herramientas)
   agents        Actualiza .agents/ (framework + bootstrap protegido)
@@ -602,7 +602,7 @@ ${colors.bold}FLAGS GLOBALES:${colors.reset}
                                   omite diverged/deleted. Activa tambien con CI=true o stdin no-TTY.
   --dry-run                       Preview de cambios sin modificar archivos
   --rollback                      Restaura desde el backup mas reciente
-  --update-mcp-template <agent>   Refresca templates/mcp/<agent>.template.* desde upstream
+  --update-mcp-template <agent>   Refresca docs/mcp/<agent>.template.* desde upstream
                                   (agents soportados: ${MCP_TEMPLATE_AGENTS.join(', ')})
   --help, -h                      Muestra esta ayuda
 
@@ -645,7 +645,7 @@ async function showMainMenu(): Promise<string[]> {
       { name: 'CLI Tools (cli/) - Xray CLI y otras herramientas', value: 'cli' },
       { name: 'Documentacion (docs/)', value: 'docs' },
       { name: 'Context (.context/)', value: 'context' },
-      { name: 'Templates MCP (templates/mcp/)', value: 'templates' },
+      { name: 'Docs MCP (docs/mcp/)', value: 'docs-mcp' },
       { name: 'VS Code (.vscode/)', value: 'vscode' },
       { name: 'Husky (.husky/) - Git hooks', value: 'husky' },
       { name: 'Tooling - Archivos de configuracion', value: 'tooling' },
@@ -677,7 +677,7 @@ function parseArgs(args: string[]): ParsedArgs {
     'docs',
     'context',
     'guidelines',
-    'templates',
+    'docs-mcp',
     'scripts',
     'cli',
     'agents',
@@ -803,15 +803,15 @@ function createBackup(components: string[]): string {
   fs.mkdirSync(backupDir, { recursive: true });
 
   const backupMap: Record<string, { src: string, dest: string }> = {
-    docs: { src: 'docs', dest: 'docs' },
-    context: { src: '.context', dest: '.context' },
-    templates: { src: 'templates/mcp', dest: 'templates/mcp' },
-    scripts: { src: 'scripts', dest: 'scripts' },
-    cli: { src: 'cli', dest: 'cli' },
-    agents: { src: '.agents', dest: '.agents' },
-    claude: { src: '.claude', dest: '.claude' },
-    vscode: { src: '.vscode', dest: '.vscode' },
-    husky: { src: '.husky', dest: '.husky' },
+    'docs': { src: 'docs', dest: 'docs' },
+    'context': { src: '.context', dest: '.context' },
+    'docs-mcp': { src: 'docs/mcp', dest: 'docs/mcp' },
+    'scripts': { src: 'scripts', dest: 'scripts' },
+    'cli': { src: 'cli', dest: 'cli' },
+    'agents': { src: '.agents', dest: '.agents' },
+    'claude': { src: '.claude', dest: '.claude' },
+    'vscode': { src: '.vscode', dest: '.vscode' },
+    'husky': { src: '.husky', dest: '.husky' },
   };
 
   for (const comp of components) {
@@ -968,8 +968,8 @@ function executeDryRun(commands: string[], allMode: boolean): void {
   if (commands.includes('docs') || allMode) {
     components.push({ name: 'Documentation (docs/)', dir: path.join(TEMP_DIR, 'docs') });
   }
-  if (commands.includes('templates') || allMode) {
-    components.push({ name: 'Templates MCP (templates/mcp/)', dir: path.join(TEMP_DIR, 'templates', 'mcp') });
+  if (commands.includes('docs-mcp') || allMode) {
+    components.push({ name: 'Docs MCP (docs/mcp/)', dir: path.join(TEMP_DIR, 'docs', 'mcp') });
   }
   if (commands.includes('scripts') || allMode) {
     const scriptsCount = SCRIPTS_FILES.filter(f => fs.existsSync(path.join(TEMP_DIR, 'scripts', f))).length;
@@ -1111,16 +1111,16 @@ function updateContext(): MergeResult {
   return mergeDirectory(contextPath, '.context');
 }
 
-function updateTemplates(): MergeResult {
-  logStep('Actualizando templates/mcp/ (merge)...');
+function updateDocsMcp(): MergeResult {
+  logStep('Actualizando docs/mcp/ (merge)...');
 
-  const templatesPath = path.join(TEMP_DIR, 'templates', 'mcp');
-  if (!fs.existsSync(templatesPath)) {
-    logWarning('No se encontro directorio templates/mcp en el template');
+  const docsMcpPath = path.join(TEMP_DIR, 'docs', 'mcp');
+  if (!fs.existsSync(docsMcpPath)) {
+    logWarning('No se encontro directorio docs/mcp en el template');
     return { success: 0, errors: 0 };
   }
 
-  return mergeDirectory(templatesPath, 'templates/mcp');
+  return mergeDirectory(docsMcpPath, 'docs/mcp');
 }
 
 function updateScripts(): MergeResult {
@@ -1508,12 +1508,12 @@ function updateContextEngineering(): MergeResult {
 }
 
 /**
- * Refresh a single MCP template file (templates/mcp/<agent>.template.*) from
+ * Refresh a single MCP template file (docs/mcp/<agent>.template.*) from
  * upstream while leaving every other template untouched.
  *
- * Why: per D12 in FASE-15-DESIGN, templates/mcp/ is user-managed (the user
- * fills placeholders), but the updater can opt-in refresh a specific agent's
- * template when upstream adds new MCP servers or fixes structure.
+ * Why: docs/mcp/ is user-managed (the user fills placeholders), but the updater
+ * can opt-in refresh a specific agent's template when upstream adds new MCP
+ * servers or fixes structure.
  */
 async function updateMcpTemplateForAgent(agent: McpAgent): Promise<MergeResult> {
   logHeader(`📦 UPEX Boilerplate Updater v${CLI_VERSION} — MCP template refresh`);
@@ -1523,11 +1523,11 @@ async function updateMcpTemplateForAgent(agent: McpAgent): Promise<MergeResult> 
   await cloneTemplate();
 
   const fileName = MCP_TEMPLATE_FILE[agent];
-  const srcPath = path.join(TEMP_DIR, 'templates', 'mcp', fileName);
-  const destPath = path.join('templates', 'mcp', fileName);
+  const srcPath = path.join(TEMP_DIR, 'docs', 'mcp', fileName);
+  const destPath = path.join('docs', 'mcp', fileName);
 
   if (!fs.existsSync(srcPath)) {
-    logError(`Upstream no contiene templates/mcp/${fileName}`);
+    logError(`Upstream no contiene docs/mcp/${fileName}`);
     cleanup();
     return { success: 0, errors: 1 };
   }
@@ -1538,24 +1538,24 @@ async function updateMcpTemplateForAgent(agent: McpAgent): Promise<MergeResult> 
     const localContent = fs.readFileSync(destPath, 'utf-8');
     const upstreamContent = fs.readFileSync(srcPath, 'utf-8');
     if (localContent === upstreamContent) {
-      logInfo(`Sin cambios — tu templates/mcp/${fileName} ya esta sincronizado.`);
+      logInfo(`Sin cambios — tu docs/mcp/${fileName} ya esta sincronizado.`);
       cleanup();
       return { success: 0, errors: 0 };
     }
-    logWarning(`Tu archivo local templates/mcp/${fileName} sera sobrescrito.`);
+    logWarning(`Tu archivo local docs/mcp/${fileName} sera sobrescrito.`);
     logInfo('Tip: ejecuta "bun up --rollback" si necesitas revertir.');
   }
 
   try {
-    const componentBackup = createBackup(['templates']);
+    const componentBackup = createBackup(['docs-mcp']);
     fs.cpSync(srcPath, destPath);
-    logSuccess(`templates/mcp/${fileName} actualizado desde upstream`);
+    logSuccess(`docs/mcp/${fileName} actualizado desde upstream`);
     logInfo(`Backup disponible en: ${componentBackup}`);
     cleanup();
     return { success: 1, errors: 0 };
   }
   catch (err) {
-    logError(`No se pudo actualizar templates/mcp/${fileName}: ${errorMessage(err)}`);
+    logError(`No se pudo actualizar docs/mcp/${fileName}: ${errorMessage(err)}`);
     cleanup();
     return { success: 0, errors: 1 };
   }
@@ -1589,6 +1589,7 @@ function recordSyncVersion(syncedComponents: string[]): void {
     variableSystemVersion: true,
   };
 
+  fs.mkdirSync(path.dirname(VERSION_FILE), { recursive: true });
   fs.writeFileSync(VERSION_FILE, `${JSON.stringify(version, null, 2)}\n`);
   logSuccess(`Version registrada en ${VERSION_FILE}`);
 }
@@ -1689,7 +1690,7 @@ function ensureGitVersion(): void {
 // ============================================================================
 
 /**
- * Read .boilerplate-version.json and return a typed SyncState.
+ * Read .template/boilerplate.lock.json and return a typed SyncState.
  * Returns null when the file is absent (bootstrap path).
  * Throws CorruptStateError when JSON is invalid or unrecognized.
  * Discriminates v6 vs v5 by presence of `schemaVersion === 6` and `perComponentCommit`.
@@ -1759,7 +1760,7 @@ function migrateSyncState(old: SyncStateV5): SyncStateV6 {
  */
 async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
   console.log('');
-  logWarning('Detectado: esquema v5 en .boilerplate-version.json.');
+  logWarning('Detectado: esquema v5 en .template/boilerplate.lock.json.');
   logInfo('Se actualizará al esquema v6 (rastreo per-component SHA, --auto, --rollback).');
   const answer = await nativePrompt(
     `${colors.yellow}¿Migrar ahora? [Y/n]:${colors.reset} `,
@@ -1768,7 +1769,7 @@ async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
 }
 
 /**
- * Atomic write of SyncStateV6 to .boilerplate-version.json.
+ * Atomic write of SyncStateV6 to .template/boilerplate.lock.json.
  * Writes to a .tmp.<pid> sibling first, then renames to the final path.
  * Assumes the tmp file and the final path are on the same filesystem (POSIX rename guarantee).
  * Wired in main() in M2/M4.
@@ -1776,6 +1777,7 @@ async function promptForMigration(_old: SyncStateV5): Promise<boolean> {
 function writeSyncState(repoRoot: string, state: SyncStateV6): void {
   const finalPath = path.join(repoRoot, VERSION_FILE);
   const tmpPath = `${finalPath}.tmp.${process.pid}`;
+  fs.mkdirSync(path.dirname(finalPath), { recursive: true });
   fs.writeFileSync(tmpPath, `${JSON.stringify(state, null, 2)}\n`);
   // Node's renameSync is POSIX-atomic on same-FS — no half-written JSON risk
   fs.renameSync(tmpPath, finalPath);
@@ -2215,7 +2217,7 @@ function computeDelta(
 /**
  * Append a RESTORE.txt manifest to the backup directory.
  * Records timestamp, SHAs, and one line per entry with status/classification/resolution/path.
- * Includes the prior .boilerplate-version.json as base64 for full rollback.
+ * Includes the prior .template/boilerplate.lock.json as base64 for full rollback.
  */
 function appendBackupManifest(backupDir: string, entries: DeltaEntry[], state: SyncStateV6): void {
   const lines: string[] = [
@@ -2850,7 +2852,7 @@ async function planInteractive(
 // ============================================================================
 
 /**
- * First-run bootstrap — called when `.boilerplate-version.json` is absent OR when a
+ * First-run bootstrap — called when `.template/boilerplate.lock.json` is absent OR when a
  * component has no `perComponentCommit` entry (i.e. it has never been delta-synced).
  *
  * Strategy (Capability 9):
@@ -3473,7 +3475,7 @@ async function main(): Promise<void> {
     await validatePrerequisites();
 
     const components = selected.includes('all')
-      ? ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
+      ? ['docs', 'context', 'docs-mcp', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples']
       : selected;
 
     createBackup(components);
@@ -3485,7 +3487,7 @@ async function main(): Promise<void> {
     if (selected.includes('all')) {
       addResult(updateDocs());
       addResult(updateContext());
-      addResult(updateTemplates());
+      addResult(updateDocsMcp());
       addResult(updateScripts());
       addResult(updateCli());
       addResult(updateAgents());
@@ -3504,8 +3506,8 @@ async function main(): Promise<void> {
         else if (cmd === 'context') {
           addResult(updateContext());
         }
-        else if (cmd === 'templates') {
-          addResult(updateTemplates());
+        else if (cmd === 'docs-mcp') {
+          addResult(updateDocsMcp());
         }
         else if (cmd === 'scripts') {
           addResult(updateScripts());
@@ -3591,10 +3593,10 @@ async function main(): Promise<void> {
     throw err;
   }
 
-  // (a) Bootstrap path: .boilerplate-version.json is missing
+  // (a) Bootstrap path: .template/boilerplate.lock.json is missing
   if (rawState === null) {
     console.log('');
-    logWarning('⚠  Primera ejecución detectada. No se encontró .boilerplate-version.json.');
+    logWarning('⚠  Primera ejecución detectada. No se encontró .template/boilerplate.lock.json.');
     logInfo('Inicializando sincronización del boilerplate...');
 
     // previewDeprecatedCleanup runs even on bootstrap (before any menu or write)
@@ -3626,7 +3628,7 @@ async function main(): Promise<void> {
     bootstrapSummary.newHeadSha = bootstrapHeadSha;
 
     if (parsed.dryRun) {
-      logInfo('[dry-run] bootstrap simulado — no se escribirá .boilerplate-version.json');
+      logInfo('[dry-run] bootstrap simulado — no se escribirá .template/boilerplate.lock.json');
     }
     else {
       const initialState: SyncStateV6 = {
@@ -3831,7 +3833,7 @@ async function main(): Promise<void> {
 
   let allMode = false;
   if (parsed.commands.includes('all')) {
-    parsed.commands = ['docs', 'context', 'templates', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
+    parsed.commands = ['docs', 'context', 'docs-mcp', 'scripts', 'cli', 'agents', 'claude', 'vscode', 'husky', 'tooling', 'examples'];
     allMode = true;
   }
 
@@ -3858,8 +3860,8 @@ async function main(): Promise<void> {
       case 'context':
         addResult(updateContext());
         break;
-      case 'templates':
-        addResult(updateTemplates());
+      case 'docs-mcp':
+        addResult(updateDocsMcp());
         break;
       case 'scripts':
         addResult(updateScripts());

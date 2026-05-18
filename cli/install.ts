@@ -2,7 +2,7 @@
 /**
  * Project installer for agentic-dev-boilerplate.
  *
- * Drives the end-to-end setup flow defined in `.plans/FASE-15-DESIGN.md`:
+ * Drives the end-to-end setup flow:
  *   1. Detect gentle-ai (presence + version)
  *   2. Detect agents (Claude Code / OpenCode) and prompt selection
  *   3. Optionally install 15 skills + engram via gentle-ai
@@ -12,7 +12,7 @@
  *   5. Verify external CLIs (bun, gh, supabase, vercel, resend, acli,
  *      playwright-cli, jq) — `which`-check only; no auto-install (Rule 4:
  *      OS-dependent installs are deferred to upstream docs)
- *   6. Persist `.agents/install-state.json` for idempotency
+ *   6. Persist `.template/installer.state.json` for idempotency (gitignored)
  *
  * Env:
  *   INSTALL_SKIP_DIRENV=1             Skip direnv autoload sub-step
@@ -94,7 +94,8 @@ interface InstallState {
 // ============================================================================
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
-const STATE_PATH = join(REPO_ROOT, '.agents', 'install-state.json');
+const STATE_PATH = join(REPO_ROOT, '.template', 'installer.state.json');
+const MARKER_PATH = join(REPO_ROOT, '.template', 'installer.lock.json');
 const CLAUDE_MCP_PATH = join(REPO_ROOT, '.mcp.json');
 const OPENCODE_CONFIG_PATH = join(REPO_ROOT, 'opencode.jsonc');
 const ENV_PATH = join(REPO_ROOT, '.env');
@@ -353,12 +354,12 @@ async function verifyRepoRoot(): Promise<void> {
     return;
   }
 
-  // Accept projects bootstrapped from this template — they keep a marker file
-  // even though their package.json name is the user-chosen project name.
-  const markerPath = join(REPO_ROOT, '.agents', 'template-marker.json');
-  if (existsSync(markerPath)) {
+  // Accept projects bootstrapped from this template — installer.lock.json
+  // carries the `template` sentinel even when the consumer renames
+  // package.json.name to their project name.
+  if (existsSync(MARKER_PATH)) {
     try {
-      const marker = JSON.parse(await readFile(markerPath, 'utf8')) as { template?: string };
+      const marker = JSON.parse(await readFile(MARKER_PATH, 'utf8')) as { template?: string };
       if (marker.template === 'upex-galaxy/agentic-dev-boilerplate') {
         log.info(`Bootstrapped project detected: ${pkg.name ?? '(unknown)'}`);
         return;
@@ -1274,6 +1275,20 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
   log.success(`Repository created and pushed: ${url}`);
   state.steps = state.steps ?? {};
   state.steps.githubRemoteRanAt = new Date().toISOString();
+
+  // Write installer.lock.json sentinel so re-runs of verifyRepoRoot() accept
+  // the renamed package.json (consumer projects rename their pkg name post-bootstrap).
+  if (!existsSync(MARKER_PATH)) {
+    try {
+      await mkdir(dirname(MARKER_PATH), { recursive: true });
+      await writeFile(
+        MARKER_PATH,
+        `${JSON.stringify({ template: 'upex-galaxy/agentic-dev-boilerplate' }, null, 2)}\n`,
+        'utf8',
+      );
+    }
+    catch { /* best-effort */ }
+  }
 }
 
 // ============================================================================
@@ -1871,7 +1886,6 @@ async function main(): Promise<void> {
   // Logo + headline (printed once at the top)
   process.stdout.write(`${tui.logo()}\n\n`);
   process.stdout.write(`${tui.headline('agentic-dev-boilerplate — installer')}\n\n`);
-  log.dim('See .plans/FASE-15-DESIGN.md for the spec this implements.');
   if (AUTO_NON_INTERACTIVE) {
     log.warn('No TTY detected — running in --non-interactive mode (prompts will use defaults).');
     log.dim('  AI agents: parse pending vars from the closing summary, or run `bun run setup:doctor --json`.');

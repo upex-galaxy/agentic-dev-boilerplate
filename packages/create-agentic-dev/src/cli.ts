@@ -15,8 +15,8 @@ import { CliError } from './errors.ts';
 import { log } from './log.ts';
 import { runMenu } from './menu.ts';
 import {
-  applyTemplateExclude,
   initGitRepo,
+  pruneBootstrapExcludes,
   rewritePackageJson,
   rewriteProjectYaml,
   sanitizeProjectName,
@@ -151,7 +151,7 @@ async function main(): Promise<number> {
     s2.start('Preparing project (scrub history + rewrite metadata)…');
     try {
       await scrubGitHistory(projectDir);
-      await applyTemplateExclude(projectDir);
+      await pruneBootstrapExcludes(projectDir);
       await rewritePackageJson(projectDir, projectName);
       await rewriteProjectYaml(projectDir, {
         projectName,

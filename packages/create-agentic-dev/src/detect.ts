@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-interface TemplateMarker {
+interface InstallerLock {
   template?: string
   templateBranch?: string
   minCliVersion?: string
@@ -10,17 +10,17 @@ interface TemplateMarker {
 /**
  * Returns true iff the given directory is already a bootstrapped agentic-dev
  * project. Detection is based on:
- *   1. .agents/template-marker.json present + matching the expected template.
+ *   1. .template/installer.lock.json present + matching the expected template.
  *   2. package.json present + has `scripts.setup`.
  *   3. cli/install.ts present.
  */
 export function isAgenticDevRepo(dir: string, expectedTemplate: string): boolean {
-  const markerPath = join(dir, '.agents', 'template-marker.json');
-  if (!existsSync(markerPath)) { return false; }
+  const lockPath = join(dir, '.template', 'installer.lock.json');
+  if (!existsSync(lockPath)) { return false; }
 
   try {
-    const marker = JSON.parse(readFileSync(markerPath, 'utf8')) as TemplateMarker;
-    if (marker.template !== expectedTemplate) { return false; }
+    const lock = JSON.parse(readFileSync(lockPath, 'utf8')) as InstallerLock;
+    if (lock.template !== expectedTemplate) { return false; }
   }
   catch {
     return false;

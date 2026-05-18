@@ -125,52 +125,33 @@ export function initGitRepo(projectDir: string): void {
   log.dim('  git init + initial commit done.');
 }
 
-interface ScaffoldManifest {
-  version?: number
-  exclude?: string[]
-}
+/**
+ * Paths that exist in the boilerplate repo but MUST NOT land in a freshly
+ * bootstrapped consumer project. Examples: this CLI's own source under
+ * `packages/`, and business/data maps specific to the template's own product.
+ *
+ * Updating the list requires republishing `create-agentic-dev`. That's the
+ * intended cost: the scaffolder owns its own exclusion contract, no separate
+ * `.template/manifest.json` to drift out of sync.
+ */
+const TEMPLATE_EXCLUDES: readonly string[] = [
+  'packages',
+  '.context/business/business-data-map.md',
+  '.context/business/business-feature-map.md',
+  '.context/business/business-api-map.md',
+  '.context/master-implementation-plan.md',
+];
 
 /**
- * Read `.template/manifest.json` from the freshly extracted project and delete
- * every path listed under `exclude`. This is how the template repo declares
- * "files committed to main that should NOT end up in a freshly bootstrapped
- * project" — e.g. the CLI's own source under `packages/`, or business maps
- * that are specific to the template's own product.
- *
- * Living in the template repo (not bundled into the CLI) means new exclusions
- * can be added by editing `.template/manifest.json` and pushing to `main` —
- * no CLI republish required.
- *
- * Security: paths are restricted to project-relative (no absolute paths, no
- * `..` traversal). Unsafe entries are skipped with a warning.
+ * Delete every path in TEMPLATE_EXCLUDES from the freshly extracted
+ * project. Security: paths are restricted to project-relative (no absolute
+ * paths, no `..` traversal). Unsafe entries are skipped with a warning.
  */
-export async function applyTemplateExclude(projectDir: string): Promise<void> {
-  const manifestPath = join(projectDir, '.template', 'manifest.json');
-  if (!existsSync(manifestPath)) {
-    log.dim('  No .template/manifest.json — keeping all extracted files.');
-    return;
-  }
-
-  let manifest: ScaffoldManifest;
-  try {
-    manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as ScaffoldManifest;
-  }
-  catch (err) {
-    log.warn(`  .template/manifest.json unreadable, skipping: ${(err as Error).message}`);
-    return;
-  }
-
-  const paths = Array.isArray(manifest.exclude) ? manifest.exclude : [];
-  if (paths.length === 0) {
-    log.dim('  .template/manifest.json has no `exclude` entries.');
-    return;
-  }
-
+export async function pruneBootstrapExcludes(projectDir: string): Promise<void> {
   let pruned = 0;
-  for (const rel of paths) {
-    if (typeof rel !== 'string' || rel.length === 0) { continue; }
+  for (const rel of TEMPLATE_EXCLUDES) {
     if (rel.startsWith('/') || rel.split(/[\\/]/).includes('..')) {
-      log.warn(`  Skipped unsafe path in manifest: ${rel}`);
+      log.warn(`  Skipped unsafe exclude path: ${rel}`);
       continue;
     }
     const abs = join(projectDir, rel);
@@ -179,5 +160,5 @@ export async function applyTemplateExclude(projectDir: string): Promise<void> {
       pruned++;
     }
   }
-  log.dim(`  Pruned ${pruned} template artifact path(s) per manifest.`);
+  log.dim(`  Pruned ${pruned} bootstrap-only path(s) from extracted project.`);
 }
