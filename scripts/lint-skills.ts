@@ -11,14 +11,17 @@
  *   4. MISSING-SECTION (ERROR) — Skill declares `complementary_categories` but has
  *                                no `## Composable Skills` heading (sprint-development
  *                                is exempt — uses `## SDD Composition`).
- *   5. SINGLE-SKILL    (WARN)  — §4.1 row maps a category to only one skill (fragile
- *                                if that skill is not installed).
+ *   5. EMPTY-CATEGORY  (ERROR) — §4.1 row declares a category but maps it to zero
+ *                                skills (the category is unreachable).
  *   6. STALE-PATH      (ERROR) — Any file references the old `.context/skill-composition-strategy.md`
  *                                path instead of the canonical
  *                                `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
- *   7. EMPTY-CATS      (INFO)  — Frontmatter has `complementary_categories: []`.
- *   8. DUPLICATE-TIER  (ERROR) — Same skill name appears in both SKILL_SLUGS (T2)
+ *   7. DUPLICATE-TIER  (ERROR) — Same skill name appears in both SKILL_SLUGS (T2)
  *                                and PROJECT_LEVEL_SKILLS (T3) — install.ts conflict.
+ *
+ * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
+ * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
+ * like git-flow-master, acli) simply omit the field — no warning, no info.
  *
  * Exit codes:
  *   0 — no errors (warnings/info OK)
@@ -200,7 +203,17 @@ function extractInstallTsSkills(): { t2: Set<string>, t3: Set<string>, t4: Set<s
 // Strategy doc §4.1 parsing — category → skills lookup
 // -----------------------------------------------------------------------------
 
-function extractCategoryVocab(): Map<string, string[]> {
+interface CategoryEntry {
+  skills: string[]
+  /**
+   * True when §4.1 cell explicitly marks the category as T1-only (no community
+   * skills exist — e.g. `issue-tracker` is covered solely by the project-owned
+   * `acli` skill). EMPTY-CATEGORY does not fire for these.
+   */
+  t1Only: boolean
+}
+
+function extractCategoryVocab(): Map<string, CategoryEntry> {
   const src = readFileSync(STRATEGY_DOC, 'utf8');
   const startMarker = '### 4.1 Category list';
   const endMarker = '### 4.2';
@@ -211,7 +224,7 @@ function extractCategoryVocab(): Map<string, string[]> {
     return new Map();
   }
   const section = src.slice(start, end);
-  const vocab = new Map<string, string[]>();
+  const vocab = new Map<string, CategoryEntry>();
   for (const line of section.split('\n')) {
     if (!line.trim().startsWith('|')) { continue; }
     if (line.includes('---')) { continue; }
@@ -223,7 +236,10 @@ function extractCategoryVocab(): Map<string, string[]> {
     const category = catMatch[1];
     const skillCell = cells[1];
     const skills = [...skillCell.matchAll(/`([a-z][a-z0-9-]+)`/g)].map(m => m[1]);
-    vocab.set(category, skills);
+    // Detect intentional T1-only marker (e.g. "(acli is T1)") so EMPTY-CATEGORY
+    // is suppressed for documented project-owned-only domains.
+    const t1Only = /\bis\s+T1\b/i.test(skillCell);
+    vocab.set(category, { skills, t1Only });
   }
   return vocab;
 }
@@ -302,10 +318,15 @@ function main() {
     }
   }
 
-  // Check 5: single-skill category fragility
-  for (const [cat, skills] of vocab) {
-    if (skills.length === 1) {
-      record('WARN', 'SINGLE-SKILL', `§4.1:${cat}`, `category maps to only 1 skill (${skills[0]}) — fragile if not installed`);
+  // Check 5: empty-category — §4.1 row maps a category to zero skills.
+  // A category with one or more skills is healthy (single-skill is fine — if
+  // the lone skill disappears the installer surfaces it; categories are not
+  // forced to be redundant). Categories marked as T1-only (e.g. `issue-tracker`,
+  // covered exclusively by the project-owned `acli` skill) are intentionally
+  // empty and exempt.
+  for (const [cat, entry] of vocab) {
+    if (entry.skills.length === 0 && !entry.t1Only) {
+      record('ERROR', 'EMPTY-CATEGORY', `§4.1:${cat}`, 'category declared in §4.1 but maps to zero skills (unreachable)');
     }
   }
 
@@ -315,11 +336,6 @@ function main() {
     if (!skill) {
       record('ERROR', 'UNREADABLE', skillName, 'SKILL.md missing or unreadable');
       continue;
-    }
-
-    // Check 7: empty complementary_categories
-    if (skill.complementaryCategories.length === 0) {
-      record('INFO', 'EMPTY-CATS', skillName, 'no complementary_categories declared (skill cannot borrow community skills)');
     }
 
     // Check 4: missing Composable Skills section
@@ -337,7 +353,7 @@ function main() {
     // Check 2: stale skill mentions
     // Lenient: accept if known in install.ts (any tier) OR mentioned anywhere in §4.1 vocab.
     const vocabSkillSet = new Set<string>();
-    for (const skills of vocab.values()) { for (const s of skills) { vocabSkillSet.add(s); } }
+    for (const entry of vocab.values()) { for (const s of entry.skills) { vocabSkillSet.add(s); } }
     for (const mentioned of skill.expectedMatchesSkills) {
       const tier = tierOf(mentioned, t1, t2, t3, t4);
       if (!tier && !vocabSkillSet.has(mentioned)) {
