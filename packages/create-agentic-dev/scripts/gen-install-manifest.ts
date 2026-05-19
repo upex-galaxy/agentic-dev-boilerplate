@@ -57,20 +57,28 @@ const MANIFEST_PATH = resolve(import.meta.dir, '../src/install-manifest.json');
 // Keep these in sync when skills/MCPs/CLIs are added to cli/install.ts.
 // ============================================================================
 
-const PURPOSES: Record<string, string> = {
+// MCP purposes — keyed by canonical MCP name. Kept separate from SKILL_PURPOSES
+// because some names collide (e.g. `supabase` is both an MCP and a community
+// skill, with different one-line descriptions).
+const MCP_PURPOSES: Record<string, string> = {
+  context7: 'Library documentation MCP — fetches official current docs for any library.',
+  tavily: 'Web search MCP — used by skills that need fresh community / docs lookups.',
+  atlassian: 'Jira / Confluence MCP — story and page operations from the agent.',
+  supabase: 'Supabase MCP — direct DB queries, schema introspection, project state.',
+  n8n: 'n8n automation MCP — workflow and integration management.',
+};
+
+// Skill purposes — keyed by skill slug. Covers gentle-ai component (engram),
+// project-level skills (PROJECT_LEVEL_SKILLS), and user-level skills
+// (USER_LEVEL_SKILLS) in one map. Tier is determined at build time by which
+// array in cli/install.ts the skill appears in.
+//
+// gentle-ai installs only Engram via `--preset minimal` (see installSkillsViaGentleAi
+// in cli/install.ts). The SDD bundle and foundation skills are intentionally
+// skipped — this repo's own skills own the dev workflow.
+const SKILL_PURPOSES: Record<string, string> = {
   // gentle-ai component
   'engram': 'Persistent memory across sessions.',
-
-  // gentle-ai installs only Engram via `--preset minimal` (see installSkillsViaGentleAi
-  // in cli/install.ts). The SDD bundle and foundation skills are intentionally
-  // skipped — this repo's own skills own the dev workflow.
-
-  // MCPs (CANONICAL_MCPS)
-  'context7': 'Library documentation MCP — fetches official current docs for any library.',
-  'tavily': 'Web search MCP — used by skills that need fresh community / docs lookups.',
-  'atlassian': 'Jira / Confluence MCP — story and page operations from the agent.',
-  'supabase': 'Supabase MCP — direct DB queries, schema introspection, project state.',
-  'n8n': 'n8n automation MCP — workflow and integration management.',
 
   // Community project-level skills (PROJECT_LEVEL_SKILLS)
   'frontend-design': 'Frontend design patterns and component architecture.',
@@ -92,6 +100,10 @@ const PURPOSES: Record<string, string> = {
   'impeccable': 'Code quality and craftsmanship review.',
   'design-taste-frontend': 'Frontend design taste and visual quality review.',
   'redesign-existing-projects': 'Systematic redesign of existing UI projects.',
+  'supabase': 'Supabase CLI companion skill — local stack, migrations, type gen.',
+  'supabase-postgres-best-practices': 'PostgreSQL and Supabase database best practices.',
+  'deploy-to-vercel': 'Vercel deployment CLI and project linking.',
+  'resend-cli': 'Transactional email development with Resend.',
 
   // Community user-level skills (USER_LEVEL_SKILLS)
   'skill-creator': 'Create, modify, and evaluate Claude Code skills.',
@@ -99,15 +111,16 @@ const PURPOSES: Record<string, string> = {
   'github-actions-docs': 'GitHub Actions documentation and workflow patterns.',
   'brainstorming': 'Structured brainstorming and ideation techniques.',
   'html-ppt': 'Create HTML-based presentations.',
-  'supabase-postgres-best-practices': 'PostgreSQL and Supabase database best practices.',
-  'deploy-to-vercel': 'Vercel deployment CLI and project linking.',
-  'resend-cli': 'Transactional email development with Resend.',
   'bun': 'Bun runtime and package manager documentation.',
   'playwright-cli': 'Browser automation — screenshots, traces, recordings.',
 };
 
-function purposeOr(name: string, fallback = `Community skill: ${name}`): string {
-  return PURPOSES[name] ?? fallback;
+function mcpPurposeOr(name: string): string {
+  return MCP_PURPOSES[name] ?? `MCP server: ${name}`;
+}
+
+function skillPurposeOr(name: string): string {
+  return SKILL_PURPOSES[name] ?? `Community skill: ${name}`;
 }
 
 // ============================================================================
@@ -355,20 +368,20 @@ function buildManifest(src: string): object {
   // gentle-ai installs only Engram via `--preset minimal`. The SDD bundle is
   // not included — see installSkillsViaGentleAi in cli/install.ts.
   const gentleAiItems: ManifestEntry[] = [
-    { name: 'engram', purpose: purposeOr('engram'), source: 'gentle-ai' },
+    { name: 'engram', purpose: skillPurposeOr('engram'), source: 'gentle-ai' },
   ];
 
   // community project skills
   const projectItems: ManifestEntry[] = projectSkills.map(s => ({
     name: skillDisplayName(s),
-    purpose: purposeOr(s.skill ?? skillDisplayName(s).replace(' (full package)', '')),
+    purpose: skillPurposeOr(s.skill ?? skillDisplayName(s).replace(' (full package)', '')),
     source: skillSource(s.package),
   }));
 
   // community user skills
   const userItems: ManifestEntry[] = userSkills.map(s => ({
     name: skillDisplayName(s),
-    purpose: purposeOr(s.skill ?? skillDisplayName(s).replace(' (full package)', '')),
+    purpose: skillPurposeOr(s.skill ?? skillDisplayName(s).replace(' (full package)', '')),
     source: skillSource(s.package),
   }));
 
@@ -376,7 +389,7 @@ function buildManifest(src: string): object {
   const mcpEntries = canonicalMcps.map(name => ({
     name,
     envVars: mcpSecrets[name] ?? [],
-    purpose: purposeOr(name, `MCP server: ${name}`),
+    purpose: mcpPurposeOr(name),
   }));
 
   // willNotInstall — derived from EXTERNAL_CLIS

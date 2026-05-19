@@ -61,7 +61,7 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 19,
+      "count": 23,
       "items": [
         {
           "name": "frontend-design",
@@ -157,11 +157,31 @@
           "name": "redesign-existing-projects",
           "purpose": "Systematic redesign of existing UI projects.",
           "source": "https://github.com/Leonxlnx/taste-skill"
+        },
+        {
+          "name": "supabase",
+          "purpose": "Supabase CLI companion skill — local stack, migrations, type gen.",
+          "source": "supabase/agent-skills"
+        },
+        {
+          "name": "supabase-postgres-best-practices",
+          "purpose": "PostgreSQL and Supabase database best practices.",
+          "source": "supabase/agent-skills"
+        },
+        {
+          "name": "deploy-to-vercel",
+          "purpose": "Vercel deployment CLI and project linking.",
+          "source": "https://github.com/vercel-labs/agent-skills"
+        },
+        {
+          "name": "resend-cli (full package)",
+          "purpose": "Transactional email development with Resend.",
+          "source": "resend/resend-cli"
         }
       ]
     },
     "communityUserSkills": {
-      "count": 11,
+      "count": 7,
       "items": [
         {
           "name": "skill-creator",
@@ -187,26 +207,6 @@
           "name": "html-ppt",
           "purpose": "Create HTML-based presentations.",
           "source": "https://github.com/lewislulu/html-ppt-skill"
-        },
-        {
-          "name": "supabase",
-          "purpose": "Supabase MCP — direct DB queries, schema introspection, project state.",
-          "source": "supabase/agent-skills"
-        },
-        {
-          "name": "supabase-postgres-best-practices",
-          "purpose": "PostgreSQL and Supabase database best practices.",
-          "source": "supabase/agent-skills"
-        },
-        {
-          "name": "deploy-to-vercel",
-          "purpose": "Vercel deployment CLI and project linking.",
-          "source": "https://github.com/vercel-labs/agent-skills"
-        },
-        {
-          "name": "resend-cli (full package)",
-          "purpose": "Transactional email development with Resend.",
-          "source": "resend/resend-cli"
         },
         {
           "name": "bun",

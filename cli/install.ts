@@ -113,10 +113,13 @@ interface CommunitySkill {
 }
 
 // Community skills installed at PROJECT level (`bunx skills add`).
-// Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn.
-// CLI-companion skills (supabase, deploy-to-vercel, resend-cli, bun,
-// playwright-cli) live at USER level instead — they're useful across every
-// project the user works on, not just this boilerplate. See USER_LEVEL_SKILLS.
+// Stack-aware defaults — tuned for Next.js + React + Tailwind + shadcn +
+// Supabase + Vercel + Resend.
+// Stack-specific CLI-companion skills (supabase, supabase-postgres-best-practices,
+// deploy-to-vercel, resend-cli) live here because the underlying infrastructure
+// choice (DB / deploy target / email provider) is per-project, not per-user.
+// Truly universal CLI-companion skills (bun, playwright-cli) live at USER level
+// instead — see USER_LEVEL_SKILLS.
 // Users can run `bunx autoskills` later to refine for their concrete stack.
 const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
@@ -138,24 +141,26 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/pbakaus/impeccable', skill: 'impeccable' },
   { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'design-taste-frontend' },
   { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'redesign-existing-projects' },
+  // Stack-specific CLI-companion skills — pinned to project because the
+  // underlying infrastructure choice (DB / deploy target / email provider)
+  // varies per project.
+  { package: 'supabase/agent-skills', skill: 'supabase' },
+  { package: 'supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
+  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
+  { package: 'resend/resend-cli' },
 ];
 
-// Community skills installed at USER (global) level — useful across most
-// projects. Includes every CLI-companion skill (so `gh`, `supabase`, `vercel`,
-// `resend`, `bun`, `playwright-cli` always have their docs/skill loaded
-// regardless of which repo the user is in).
+// Community skills installed at USER (global) level — universal across every
+// project the user works on (meta-tooling, runtime, browser automation, CI
+// docs, brainstorming, presentation authoring).
 const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
   { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
   { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },
   { package: 'https://github.com/lewislulu/html-ppt-skill', skill: 'html-ppt' },
-  // CLI-companion skills (mirror EXTERNAL_CLIS) — load whenever user runs the
-  // matching binary, anywhere on their machine.
-  { package: 'supabase/agent-skills', skill: 'supabase' },
-  { package: 'supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
-  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
-  { package: 'resend/resend-cli' },
+  // Universal CLI-companion skills — `bun` and `playwright-cli` apply across
+  // any project the user touches, regardless of stack.
   { package: 'https://bun.sh/docs', skill: 'bun' },
   { package: 'https://github.com/microsoft/playwright-cli', skill: 'playwright-cli' },
 ];
