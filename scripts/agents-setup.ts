@@ -56,7 +56,7 @@
  *     FRONTEND_REPO, FRONTEND_STACK, FRONTEND_ENTRY
  *     DB_TYPE
  *     ISSUE_TRACKER, ISSUE_TRACKER_CLI, ATLASSIAN_URL
- *     DEFAULT_ENV, TMS_CLI
+ *     DEFAULT_ENV
  *
  *   ENV-SCOPED — pattern <KEY>_<ENV>, where KEY is the env-scoped leaf and
  *   ENV is the upper-cased environment name. The CLI scans process.env for
@@ -286,7 +286,7 @@ ENV-VAR MAPPING (--non-interactive):
     FRONTEND_REPO, FRONTEND_STACK, FRONTEND_ENTRY
     DB_TYPE
     ISSUE_TRACKER, ISSUE_TRACKER_CLI, ATLASSIAN_URL
-    DEFAULT_ENV, TMS_CLI
+    DEFAULT_ENV
 
   ENV-SCOPED — pattern <KEY>_<ENV>:
     WEB_URL_LOCAL, WEB_URL_STAGING, …       -> environments.<env>.web_url
