@@ -1698,10 +1698,11 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
             <p>
               The three categories share the same fuel: the variable substrate in
               <code>.agents/project.yaml</code> (and Jira metadata in
-              <code>.agents/jira.json</code> + <code>.agents/jira-required.yaml</code>). Skills
-              resolve <code>{{VAR}}</code> and <code>{{jira.*}}</code> placeholders against it on
-              every AI session; commands use the same resolver; scripts read the YAML and write back
-              to it. See <a href="#section-6">§6 Circuit 1</a> for the full resolution flow.
+              <code>.agents/jira-fields.json</code> + <code>.agents/jira-required.yaml</code>).
+              Skills resolve <code>{{VAR}}</code> and <code>{{jira.*}}</code> placeholders against
+              it on every AI session; commands use the same resolver; scripts read the YAML and
+              write back to it. See <a href="#section-6">§6 Circuit 1</a> for the full resolution
+              flow.
             </p>
           </section>
 
@@ -1917,7 +1918,7 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
                     <dt>Trigger</dt>
                     <dd>
                       <code>bun install</code> → <code>bun run setup</code> (interactive installer
-                      for gentle-ai (Engram) + 4 canonical MCPs + external CLIs) →
+                      for gentle-ai (Engram) + 5 canonical MCPs + external CLIs) →
                       <code>bun run agents:setup</code> → <code>bun run jira:sync-fields</code> →
                       <code>bun run jira:check</code>. Foundation files (<code>.agents/</code>,
                       <code>scripts/</code>, <code>CLAUDE.md</code>) ship with the cloned repo — à
@@ -1929,8 +1930,9 @@ git clone … &amp;&amp; bun install &amp;&amp; bun run setup</pre
                       foundation scripts (<code>agents-setup</code>, <code>lint-vars</code>,
                       <code>sync-jira-fields</code>, <code>check-jira-setup</code>) wired into
                       <code>package.json</code>, the workspace catalog at
-                      <code>.agents/jira.json</code> (custom field IDs), and the
-                      <code>.mcp.json</code> with credentials for Tavily, Context7, Supabase, n8n.
+                      <code>.agents/jira-fields.json</code> (custom field IDs), and the
+                      <code>.mcp.json</code> with credentials for Tavily, Context7, Supabase, n8n,
+                      Atlassian.
                     </dd>
                     <dt>When to repeat</dt>
                     <dd>
@@ -2102,7 +2104,8 @@ bun run vars:check           # validate placeholders</code></pre>
                         </li>
                         <li>
                           <code>bun run jira:check</code> — verify the Jira workspace still
-                          satisfies <code>jira-required.yaml</code> against <code>jira.json</code>.
+                          satisfies <code>jira-required.yaml</code> against
+                          <code>jira-fields.json</code>.
                         </li>
                         <li>
                           <code>bun run vars:check</code> — verify every <code>{{VAR}}</code>,
@@ -2674,7 +2677,7 @@ bun run vars:check           # validate placeholders</code></pre>
               <li>
                 <code>{{jira.&lt;slug&gt;}}</code> → portable Jira custom-field reference, resolves
                 through <code>.agents/jira-required.yaml</code> (manifest) +
-                <code>.agents/jira.json</code> (workspace catalog). Used by
+                <code>.agents/jira-fields.json</code> (workspace catalog). Used by
                 <code>/sprint-development</code> and <code>/product-management</code> when they need
                 to read or update fields like <code>acceptance_criteria_gherkin</code>.
               </li>
@@ -3486,9 +3489,9 @@ bun run vars:check           # validate placeholders</code></pre>
                   <li>
                     <code>bun run setup</code>
                     <span class="muted"
-                      >Interactive installer — gentle-ai skills + 4 canonical MCPs (Tavily,
-                      Context7, Supabase, n8n) + external CLI verification (vercel, supabase, acli,
-                      playwright, resend).</span
+                      >Interactive installer — gentle-ai (Engram via --preset minimal) + 5 canonical
+                      MCPs (Tavily, Context7, Supabase, n8n, Atlassian) + external CLI verification
+                      (vercel, supabase, acli, playwright, resend).</span
                     >
                   </li>
                   <li>
@@ -3509,7 +3512,7 @@ bun run vars:check           # validate placeholders</code></pre>
                     <code>bun run jira:sync-fields</code>
                     <span class="muted"
                       >Catalog all custom fields from the live Jira workspace into
-                      <code>.agents/jira.json</code>.</span
+                      <code>.agents/jira-fields.json</code>.</span
                     >
                   </li>
                   <li>

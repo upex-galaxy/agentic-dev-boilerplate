@@ -1,6 +1,6 @@
 # CONTEXT.md — Context Engineering in This Repo
 
-> **Last update**: 2026-05-11
+> **Last update**: 2026-05-19
 > **Purpose**: Canonical, operational explanation of how `agentic-dev-boilerplate` structures context so AI agents work effectively against it.
 > **Audience**: Humans onboarding the repo, and AI agents that need to understand "where things live and why".
 > **Companion files**: `README.md` (overview for humans), `CLAUDE.md` (operational rules loaded each session), `docs/agentic-development-engineering.md` (methodology deep dive).
@@ -169,7 +169,7 @@ The repo composes work into three layers, in order of how often each runs:
 
 ### Meta-SDD (Spec-Driven Development) — for substantial changes
 
-When a change is big enough that you'd want a written spec before coding, use the SDD bloque (installed at user-level via gentle-ai, not committed here):
+When a change is big enough that you'd want a written spec before coding, you can opt into the SDD bloque. **Not installed by `bun run setup`** — that runs `gentle-ai install --preset minimal` which provisions Engram only. To use SDD, install it separately at user-level (e.g. `gentle-ai install sdd` or via the agent's skill manager). Once installed, the `/sdd-*` commands become available:
 
 ```
 /sdd-init       → Detect stack, bootstrap persistence backend

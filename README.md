@@ -345,7 +345,6 @@ Validation: `bun run skills:check` checks tier coherence (orphan categories, tie
 ├── jira-workflows.json   # Workspace-resolved workflows / statuses / transitions
 └── README.md             # The .agents/ contract
 .context/                 # Per-project context (PBI, PRD, SRS, business knowledge)
-├── _framework/           # Auto-generated caches (skill-registry)
 ├── business/             # Constitution (business model, market context) + maps (data, feature, api)
 ├── PRD/                  # Product Requirements
 ├── SRS/                  # Software Requirements
