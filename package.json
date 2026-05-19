@@ -9,24 +9,25 @@
   "scripts": {
     "setup": "bun cli/doctor.ts --preflight && bun cli/install.ts",
     "setup:doctor": "bun cli/doctor.ts",
+    "agents:setup": "bun scripts/agents-setup.ts",
     "up": "bun cli/update-boilerplate.ts",
     "onboarding": "bun scripts/onboarding.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
-    "jira:sync-issues": "bun run scripts/sync-jira-issues.ts",
-    "vars:check": "bun run scripts/lint-vars.ts",
-    "skills:check": "bun run scripts/lint-skills.ts",
-    "skills:validate": "bun cli/install.ts --validate-skills",
-    "jira:sync-fields": "bun run scripts/sync-jira-fields.ts",
-    "jira:sync-workflows": "bun run scripts/sync-jira-workflows.ts",
-    "jira:check": "bun run scripts/check-jira-setup.ts",
-    "agents:setup": "bun run scripts/agents-setup.ts",
-    "format:fix": "prettier --write .",
-    "format:check": "prettier --check .",
+    "vars:check": "bun scripts/lint-vars.ts",
+    "skills:check": "bun scripts/lint-skills.ts",
+    "skills:registry": "bun scripts/build-skill-registry.ts",
+    "skills:registry:check": "bun scripts/build-skill-registry.ts --check",
+    "jira:sync-fields": "bun scripts/sync-jira-fields.ts",
+    "jira:sync-workflows": "bun scripts/sync-jira-workflows.ts",
+    "jira:sync-issues": "bun scripts/sync-jira-issues.ts",
+    "jira:check": "bun scripts/check-jira-setup.ts",
+    "format:fix": "prettier --write '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
+    "format:check": "prettier --check '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "lint:check": "eslint .",
     "lint:fix": "eslint --fix .",
     "types:check": "tsc --noEmit",
-    "repo:check": "bun run format:check && bun run lint:check && bun run types:check && bun run vars:check && bun run skills:check",
-    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run skills:check",
+    "repo:check": "bun run format:check && bun run lint:check && bun run types:check && bun run vars:check && bun run skills:check && bun run skills:registry:check",
+    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run skills:check && bun run skills:registry:check",
     "clean": "rm -rf node_modules dist",
     "prepare": "husky",
     "claude": "dotenv -e .env -- claude",
@@ -56,8 +57,8 @@
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
     ],
-    "*.{json,md,yml,yaml}": [
-      "prettier --write"
+    "*.{json,yml,yaml,css,scss,html}": [
+      "prettier --write --ignore-path .prettierignore"
     ]
   }
 }
