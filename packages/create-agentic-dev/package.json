@@ -1,7 +1,7 @@
 {
   "name": "create-agentic-dev",
   "type": "module",
-  "version": "0.3.1",
+  "version": "1.0.0",
   "description": "Official scaffolder for the Agentic Dev ecosystem — bootstraps a project from agentic-dev-boilerplate and runs its interactive installer.",
   "publishConfig": {
     "access": "public"
