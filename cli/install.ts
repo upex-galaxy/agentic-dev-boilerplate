@@ -123,8 +123,6 @@ interface CommunitySkill {
 // Users can run `bunx autoskills` later to refine for their concrete stack.
 const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
-  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'react-best-practices' },
-  { package: 'https://github.com/vercel-labs/agent-skills', skill: 'composition-patterns' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-best-practices' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-cache-components' },
   { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-upgrade' },
@@ -645,6 +643,11 @@ async function installCommunitySkills(
       log.dim(`  skipping ${slug} (already installed)`);
       continue;
     }
+    // Community skills install to `.agents/skills/<slug>/` by default (no `--agent`
+    // flag passed). This is INTENTIONAL: T1 repo-owned skills live in
+    // `.claude/skills/`, T3/T4 community skills live in `.agents/skills/`. Keeping
+    // them separate prevents visual confusion and ensures community installs are
+    // gitignored independently of T1 skill commits.
     const args = ['skills', 'add', item.package];
     if (item.skill && item.skill !== '*') {
       args.push('--skill', item.skill);
@@ -1222,6 +1225,7 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
   }
 
   log.info(`Creating ${account}/${repoName} (${visibility})…`);
+  // Step 1: create remote (no push)
   const createRes = spawnSync('gh', [
     'repo',
     'create',
@@ -1229,15 +1233,30 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
     `--${visibility}`,
     '--source=.',
     '--remote=origin',
-    '--push',
   ], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
 
   if (createRes.status !== 0) {
     log.error(`gh repo create failed (exit ${createRes.status}).`);
     if (createRes.stderr) { log.dim(`  ${createRes.stderr.trim()}`); }
-    log.dim('  Repo not created. Local files left intact. You can retry later.');
+    log.dim('  Remote was NOT created. Local files left intact. You can retry later.');
     return;
   }
+  log.success(`Remote created: ${account}/${repoName}`);
+
+  // Step 2: push (separate so we can distinguish failure modes)
+  const pushRes = spawnSync('git', ['push', '-u', 'origin', 'main'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8',
+  });
+  if (pushRes.status !== 0) {
+    log.warn(`Remote was created but local push failed (exit ${pushRes.status}).`);
+    if (pushRes.stderr) { log.dim(`  ${pushRes.stderr.trim()}`); }
+    log.dim('  This usually means pre-push hooks rejected the push.');
+    log.dim('  Fix the hook errors then retry:');
+    log.dim('    git push -u origin main');
+    return;
+  }
+  log.success('Initial push succeeded.');
 
   const url = `https://github.com/${account}/${repoName}`;
   state.github = {
@@ -1571,7 +1590,13 @@ async function runPostInstallSteps(state: InstallState): Promise<void> {
       process.stdout.write(`${tui.statusIcon('warn')} Skipped by user. Re-run via: bun run jira:sync-fields\n`);
     }
     else {
-      const res = spawnSync('bun', ['run', 'jira:sync-fields'], { stdio: 'inherit' });
+      // We're here only when jiraSyncFields is not 'completed' (early-exit
+      // upstream returns when it is). That means this is a first-run pass, so
+      // we always force-overwrite the template's stale jira-fields.json. The
+      // script's safety check still protects user edits in later sessions
+      // because the early-exit guard above short-circuits subsequent runs.
+      const syncArgs = ['run', 'jira:sync-fields', '--', '--force'];
+      const res = spawnSync('bun', syncArgs, { stdio: 'inherit' });
       state.postInstall.jiraSyncFields = res.status === 0 ? 'completed' : 'failed';
       if (res.status === 0) {
         process.stdout.write(`${tui.statusIcon('ok')} jira:sync-fields completed\n`);
@@ -2038,7 +2063,7 @@ async function main(): Promise<void> {
   await offerDirenvAutoload();
 
   // Step 9 — optional GitHub repo creation
-  tui.section('Step 9: GitHub repository (optional)');
+  tui.section('Step 7b: GitHub repository (optional)');
   await setupGithubRemote(state);
 
   // ── PHASE 4 — VERIFICATION ───────────────────────────────────────────────

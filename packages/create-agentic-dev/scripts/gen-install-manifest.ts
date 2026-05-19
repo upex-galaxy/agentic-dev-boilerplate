@@ -82,8 +82,6 @@ const SKILL_PURPOSES: Record<string, string> = {
 
   // Community project-level skills (PROJECT_LEVEL_SKILLS)
   'frontend-design': 'Frontend design patterns and component architecture.',
-  'react-best-practices': 'React best practices curated by Vercel.',
-  'composition-patterns': 'Component composition patterns for React.',
   'next-best-practices': 'Next.js best practices and idiomatic patterns.',
   'next-cache-components': 'Next.js caching strategies for Server and Client Components.',
   'next-upgrade': 'Guided upgrade path for Next.js major versions.',

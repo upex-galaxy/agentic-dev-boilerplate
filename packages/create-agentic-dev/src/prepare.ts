@@ -140,6 +140,13 @@ const TEMPLATE_EXCLUDES: readonly string[] = [
   '.context/business/business-feature-map.md',
   '.context/business/business-api-map.md',
   '.context/master-implementation-plan.md',
+  // Jira catalogs are cached from the boilerplate's source workspace and must
+  // not travel to a new project (otherwise `jira:sync-fields` errors with
+  // "already populated" on first install).
+  '.agents/jira-fields.json',
+  '.agents/jira-workflows.json',
+  // Stale installer state from the boilerplate's own setup runs.
+  '.template/installer.state.json',
 ];
 
 /**

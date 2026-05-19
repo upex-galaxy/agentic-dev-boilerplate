@@ -61,22 +61,12 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 23,
+      "count": 21,
       "items": [
         {
           "name": "frontend-design",
           "purpose": "Frontend design patterns and component architecture.",
           "source": "https://github.com/anthropics/skills"
-        },
-        {
-          "name": "react-best-practices",
-          "purpose": "React best practices curated by Vercel.",
-          "source": "https://github.com/vercel-labs/agent-skills"
-        },
-        {
-          "name": "composition-patterns",
-          "purpose": "Component composition patterns for React.",
-          "source": "https://github.com/vercel-labs/agent-skills"
         },
         {
           "name": "next-best-practices",
