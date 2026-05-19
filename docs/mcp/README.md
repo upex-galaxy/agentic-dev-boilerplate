@@ -162,6 +162,19 @@ Run your agent and verify with:
 - **Catalog files** (your copies) = NOT in git, contain real API keys
 - All `*.catalog.json` and `dbhub.toml` are in `.gitignore`
 
+## Atlassian MCP (opt-in)
+
+The Atlassian MCP server is **not enabled by default**. By default the boilerplate uses `acli` (Atlassian CLI) for all Jira/Confluence work. If you need MCP-level access to Atlassian (e.g. for tools that aren't exposed by acli), enable it manually:
+
+1. Open the matching template under this directory:
+   - Claude Code: `claude.template.json`
+   - OpenCode: `opencode.template.json`
+   - Gemini CLI: `gemini.template.json`
+   - Codex CLI: `codex.template.toml`
+2. Copy the `atlassian` block into your active config (`.mcp.json` for Claude Code, `opencode.jsonc` for OpenCode, etc.).
+3. Confirm `ATLASSIAN_URL`, `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN` are set in `.env` (the installer already collects these during `bun run setup`).
+4. Restart your agent so the new MCP server is picked up.
+
 ## Documentation
 
 For complete setup guide, see: [`mcp-configuration-guide.md`](./mcp-configuration-guide.md)

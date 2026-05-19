@@ -50,9 +50,11 @@ const INQUIRER_MARKER = join(REPO_ROOT, 'node_modules', '@inquirer', 'prompts', 
 const MIN_BUN: readonly [number, number, number] = [1, 0, 0];
 
 // Required MCP env vars (mirrors MCP_SERVER_SECRETS in cli/install.ts).
-// ATLASSIAN_* are the single source of truth for Atlassian credentials. The
-// mcp-atlassian server receives them mapped to its internal JIRA_* keys inside
-// `.mcp.json`; we never expose those JIRA_* keys to the user's `.env`.
+// ATLASSIAN_* are the canonical credentials consumed by acli and
+// scripts/sync-jira-*.ts. The Atlassian MCP server is opt-in only — see
+// docs/mcp/ for the templates to enable it manually. No JIRA_* credential
+// overrides; the JIRA_* prefix is reserved for operational params (project
+// key, output dir, custom field IDs).
 const REQUIRED_VARS = [
   'TAVILY_API_KEY',
   'ATLASSIAN_URL',
@@ -312,7 +314,8 @@ async function runDoctor(): Promise<DoctorReport> {
   // Legacy detection: ATLASSIAN_* is now the single credential family. Any
   // JIRA_URL / JIRA_USERNAME / JIRA_API_TOKEN still in `.env` is leftover from
   // before the DRY rename and should be removed. Nothing reads them anymore;
-  // .mcp.json maps ${ATLASSIAN_*} into the server's internal JIRA_* keys.
+  // acli and the sync scripts read ATLASSIAN_* directly, and the Atlassian
+  // MCP server is opt-in via docs/mcp/.
   for (const key of LEGACY_JIRA_CRED_KEYS) {
     const value = envValues[key];
     if (value !== undefined && value.trim().length > 0) {
@@ -323,7 +326,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'shell_command',
       target: '.env cleanup',
-      hint: `Remove legacy credential keys from .env: ${report.legacy_jira_cred_keys.join(', ')}. ATLASSIAN_URL / ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN are now the single source — .mcp.json forwards them to the mcp-atlassian server internally.`,
+      hint: `Remove legacy credential keys from .env: ${report.legacy_jira_cred_keys.join(', ')}. ATLASSIAN_URL / ATLASSIAN_EMAIL / ATLASSIAN_API_TOKEN are now the single source — acli and the sync scripts read ATLASSIAN_* directly; the Atlassian MCP server is opt-in via docs/mcp/.`,
     });
   }
 
@@ -442,7 +445,7 @@ function printHuman(report: DoctorReport): void {
     for (const key of report.legacy_jira_cred_keys) {
       process.stdout.write(`  ${tui.statusIcon('warn')} ${key} — remove (replaced by ATLASSIAN_* family)\n`);
     }
-    process.stdout.write(`  ${COLORS.dim}.mcp.json now reads ATLASSIAN_* and maps them to mcp-atlassian's internal JIRA_* keys.${COLORS.reset}\n\n`);
+    process.stdout.write(`  ${COLORS.dim}acli and the sync scripts read ATLASSIAN_* directly; the Atlassian MCP server is opt-in via docs/mcp/.${COLORS.reset}\n\n`);
   }
 
   if (report.pending_actions.length > 0) {

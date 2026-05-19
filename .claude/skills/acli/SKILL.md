@@ -10,7 +10,7 @@ complementary_categories:
 
 # Atlassian CLI (`acli`)
 
-`acli` is Atlassian's official command-line tool for Jira Cloud, Confluence Cloud, and org admin operations. In this DEV boilerplate it serves as the primary `[ISSUE_TRACKER_TOOL]` — see `CLAUDE.md` Tool Resolution table. The Atlassian MCP server is the documented fallback when `acli` is not installed or authenticated.
+`acli` is Atlassian's official command-line tool for Jira Cloud, Confluence Cloud, and org admin operations. In this DEV boilerplate it serves as the primary `[ISSUE_TRACKER_TOOL]` — see `CLAUDE.md` Tool Resolution table. The Atlassian MCP server is OPT-IN (not enabled by default) and documented as a fallback in docs/mcp/ for users who choose to install it manually.
 
 This skill teaches how to drive `acli` for any DEV intent: fetching story details for an implementation plan, transitioning a ticket through the Ready For Dev → In Progress → In Review → Ready For QA workflow, creating bugs from inside `/sprint-development`, linking PRs to stories, and scripted/CI Jira automation.
 
@@ -35,13 +35,15 @@ Steps:
 1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`).
 2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.claude/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. Apply threshold rule per strategy doc §3.2 (T1/T3 silent; T4 ASK).
-4. The Atlassian MCP fallback documented in the next section is NOT a skill — it is an MCP server. Do not treat it as a Composable Skills match.
+4. The Atlassian MCP fallback documented below is OPT-IN, not a skill — enable manually via docs/mcp/.
 
 Expected matches: typically none. If the user has installed a future T4 skill in the `issue-tracker` category (e.g. an `acli` extension authored by a third party), it would surface here under the ASK rule.
 
 Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline"` plus `missing: [<categories>]` per §3.4.
 
 ## Fallback: Atlassian MCP
+
+> **Opt-in only**: this MCP is NOT enabled in the default boilerplate. To use it, copy the atlassian block from `docs/mcp/<agent>.template.*` into `.mcp.json` / `opencode.jsonc`, ensure `ATLASSIAN_*` in `.env` are set, and restart the agent. Behavior below applies only after opt-in.
 
 If `acli` is not installed or authenticated, fall back to the Atlassian MCP server (MCP tool namespace: `mcp__atlassian__*` or similar — check the MCP tool list for the exact prefix in the current environment).
 

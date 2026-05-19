@@ -186,13 +186,12 @@ Example (same work, different register):
 
 ### MCPs (configured in `.mcp.json`)
 
-| MCP       | Use for                                         | Rule                                    |
-| --------- | ----------------------------------------------- | --------------------------------------- |
-| Tavily    | Web search, troubleshooting community solutions | `[WEB_SEARCH_TOOL]`                     |
-| Context7  | Library official docs ("how to use X")          | Prefer over web search for library APIs |
-| Supabase  | DB queries, schema, project state               | `[DB_TOOL]` primary                     |
-| n8n       | Workflow automation, integrations               | `[AUTOMATION_FLOWS_TOOL]`               |
-| Atlassian | Jira/Confluence fallback                        | Use only when `/acli` unavailable       |
+| MCP      | Use for                                         | Rule                                    |
+| -------- | ----------------------------------------------- | --------------------------------------- |
+| Tavily   | Web search, troubleshooting community solutions | `[WEB_SEARCH_TOOL]`                     |
+| Context7 | Library official docs ("how to use X")          | Prefer over web search for library APIs |
+| Supabase | DB queries, schema, project state               | `[DB_TOOL]` primary                     |
+| n8n      | Workflow automation, integrations               | `[AUTOMATION_FLOWS_TOOL]`               |
 
 ---
 
@@ -202,7 +201,7 @@ Example (same work, different register):
 
 | Tag                    | Domain                      | Primary                                   | Fallback                 |
 | ---------------------- | --------------------------- | ----------------------------------------- | ------------------------ |
-| `[ISSUE_TRACKER_TOOL]` | Jira Cloud (story/bug/epic) | `/acli`                                   | MCP Atlassian            |
+| `[ISSUE_TRACKER_TOOL]` | Jira Cloud (story/bug/epic) | `/acli`                                   | MCP Atlassian (opt-in — see docs/mcp/) |
 | `[AUTOMATION_TOOL]`    | Browser automation          | `/playwright-cli`                         | MCP Playwright           |
 | `[DB_TOOL]`            | Database                    | Supabase MCP                              | raw SQL via Supabase CLI |
 | `[API_TOOL]`           | API exploration             | curl + OpenAPI types (`bun run api:sync`) | Postman manual           |
