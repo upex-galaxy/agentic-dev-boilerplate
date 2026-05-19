@@ -4,3 +4,14 @@ bunx lint-staged
 bun run types:check
 bun run vars:check
 bun run skills:check
+
+# skill-registry freshness gate — only runs when staged files affect it.
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+if echo "$STAGED" | grep -qE '^(\.claude/skills/.+/SKILL\.md$|scripts/build-skill-registry\.ts$|\.claude/skills/REGISTRY\.md$)'; then
+  bun run skills:registry:check || {
+    echo ""
+    echo "❌ .claude/skills/REGISTRY.md is stale. Fix:"
+    echo "   bun run skills:registry && git add .claude/skills/REGISTRY.md"
+    exit 1
+  }
+fi

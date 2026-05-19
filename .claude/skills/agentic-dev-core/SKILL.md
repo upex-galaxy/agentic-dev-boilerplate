@@ -62,7 +62,7 @@ Contract follows `references/skill-composition-strategy.md`.
 Steps (executed by the consuming workflow skill, not by `agentic-dev-core` itself):
 
 1. Read `complementary_categories` from this skill's frontmatter (`language`).
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.claude/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. For each matched skill, classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
    - **T1 / T3** matches → load silently. Cache for the session.

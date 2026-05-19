@@ -47,7 +47,7 @@ Requires `agentic-dev-core`. Loads on demand from its references:
 Run once when this skill is invoked, before any phase. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md` §3.
 
 1. Read `complementary_categories` from this skill's frontmatter.
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.claude/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. Classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
    - **T1 / T3** matches → load silently. Cache for the session.

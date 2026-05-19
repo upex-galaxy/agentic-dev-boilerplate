@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * build-skill-registry.ts — emits `.context/_framework/skill-registry.md`.
+ * build-skill-registry.ts — emits `.claude/skills/REGISTRY.md`.
  *
  * Token-saving cache for the Skill Resolver protocol. Scans
  * `.claude/skills/*\/SKILL.md`, extracts a 5-15-line "Compact Rules" block per
@@ -45,8 +45,8 @@ import { parse as parseYaml } from 'yaml';
 
 const REPO_ROOT = process.cwd();
 const SKILLS_DIR = join(REPO_ROOT, '.claude', 'skills');
-const CACHE_DIR = join(REPO_ROOT, '.context', '_framework');
-const CACHE_FILE = join(CACHE_DIR, 'skill-registry.md');
+const CACHE_DIR = SKILLS_DIR;
+const CACHE_FILE = join(CACHE_DIR, 'REGISTRY.md');
 
 const MAX_RULES = 15;
 const _MIN_RULES = 5; // informational; Strategy B may emit fewer.
@@ -79,24 +79,28 @@ interface SkillEntry {
 // -----------------------------------------------------------------------------
 
 function printHelp(): void {
-  console.log(`Usage: bun scripts/build-skill-registry.ts [--dry-run] [--verbose] [--help]
+  console.log(`Usage: bun scripts/build-skill-registry.ts [--check] [--dry-run] [--verbose] [--help]
 
 Builds the per-session skill registry consumed by the Skill Resolver protocol.
 Scans .claude/skills/*/SKILL.md, extracts compact rules per skill, and writes
-.context/_framework/skill-registry.md.
+.claude/skills/REGISTRY.md.
 
 Flags:
+  --check      Verify REGISTRY.md is in sync with current SKILL.md content.
+               Exit 1 with a fix hint if stale; do not write. Volatile fields
+               (the generated-at timestamp) are stripped before comparison.
   --dry-run    Print would-be output to stdout; do not write the file.
   --verbose    Log each skill processed and which extraction strategy applied.
   -h, --help   Show this help.
 
 Exit code:
-  0 — registry written successfully
-  1 — fatal error
+  0 — registry written successfully (or --check passes)
+  1 — fatal error / --check found stale registry
 `);
 }
 
 interface CliFlags {
+  check: boolean
   dryRun: boolean
   verbose: boolean
 }
@@ -107,6 +111,7 @@ function parseArgs(argv: string[]): CliFlags {
     process.exit(0);
   }
   return {
+    check: argv.includes('--check') || argv.includes('-c'),
     dryRun: argv.includes('--dry-run'),
     verbose: argv.includes('--verbose') || argv.includes('-v'),
   };
@@ -368,6 +373,31 @@ function renderRegistry(entries: SkillEntry[]): string {
 // Main
 // -----------------------------------------------------------------------------
 
+/**
+ * Strip the volatile `Generated:` timestamp line so byte-level comparison in
+ * `--check` mode ignores cosmetic drift from re-runs.
+ */
+function stripVolatile(text: string): string {
+  return text.replace(/^> Generated: `[^`]+`\n/m, '> Generated: `<stripped>`\n');
+}
+
+function checkRegistry(freshOutput: string): number {
+  const relPath = relative(REPO_ROOT, CACHE_FILE);
+  if (!existsSync(CACHE_FILE)) {
+    console.error(`❌ ${relPath} missing.`);
+    console.error(`   Run: bun run skills:registry && git add ${relPath}`);
+    return 1;
+  }
+  const existing = readFileSync(CACHE_FILE, 'utf8');
+  if (stripVolatile(freshOutput) === stripVolatile(existing)) {
+    console.log(`✅ ${relPath} is up to date.`);
+    return 0;
+  }
+  console.error(`❌ ${relPath} is stale.`);
+  console.error(`   Run: bun run skills:registry && git add ${relPath}`);
+  return 1;
+}
+
 function main(): void {
   const flags = parseArgs(process.argv.slice(2));
   VERBOSE = flags.verbose;
@@ -389,6 +419,10 @@ function main(): void {
     `No rules:   ${entries.filter(e => e.strategy === 'none').length}`,
     `Truncated:  ${entries.filter(e => e.truncated).length}`,
   ].join(' · ');
+
+  if (flags.check) {
+    process.exit(checkRegistry(output));
+  }
 
   if (flags.dryRun) {
     console.log(`[dry-run] would write: ${relative(REPO_ROOT, CACHE_FILE)}`);

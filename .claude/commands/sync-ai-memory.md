@@ -461,7 +461,7 @@ If caveman is not installed, write normal terse content. caveman-compress is enh
 - `.context/business/business-feature-map.md` — owned by `/business-feature-map`
 - `.context/business/business-api-map.md` — owned by `/business-api-map`
 - `.context/master-implementation-plan.md` — owned by `/master-implementation-plan`
-- Auto-generated caches under `.context/_framework/`
+- `.claude/skills/REGISTRY.md` — owned by `bun run skills:registry`
 - `node_modules/`, `.git/`, `dist/`, `build/`, `.next/`, `.scratch/`, `coverage/`
 
 If the audit sub-agent surfaces one of these (mistake), drop it before showing the approval gate.

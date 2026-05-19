@@ -39,7 +39,6 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 
 | File / Pattern                                      | Owner                                   | Notes                                                  |
 | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
-| `_framework/skill-registry.md`                      | `bun scripts/build-skill-registry.ts`   | Re-run when skills change                              |
 | `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
 | `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
 | `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
@@ -74,5 +73,5 @@ After that, `/sprint-development` operates per ticket and fills in `PBI/{ticket}
 
 - Repo architecture: `CONTEXT.md` (root) — canonical Context Engineering map
 - Project memory: `CLAUDE.md` (root) — generated/synced via `/sync-ai-memory`
-- Skill cookbook: `.claude/skills/*/SKILL.md` (also indexed in `_framework/skill-registry.md`)
+- Skill cookbook: `.claude/skills/*/SKILL.md` (also indexed in `.claude/skills/REGISTRY.md`)
 - Topic keys for engram: `.claude/skills/agentic-dev-core/references/topic-key-conventions.md`

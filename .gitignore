@@ -12,7 +12,6 @@ node_modules/
 # `*_*/` rule would also swallow skill subfolders like
 # `.claude/skills/<skill>/references/_shared/`, which we DO want to commit
 # (this repo is a boilerplate — skills must ship).
-.context/_framework/
 .husky/_/
 
 # ===== Build Artifacts =====
@@ -99,9 +98,6 @@ dbhub.toml
 
 # ===== Refcheck local config (per-dev tuning, not committed) =====
 .refcheckrc.toml
-
-# ===== Auto-generated framework caches with timestamps =====
-.context/_framework/testing-capabilities.json
 
 # ===== Skill-creator eval workspaces (local iteration artifacts, never committed) =====
 .claude/skills/*-workspace/

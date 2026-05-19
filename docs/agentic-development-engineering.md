@@ -638,7 +638,7 @@ phase: <foundation | onboarding | management | implementation | exploration | pr
 2. Document `## When to use`, `## Pre-requisites`, `## Subagent Dispatch Strategy`, `## Main workflow`, and `## Hand-offs`.
 3. Cite `agentic-dev-core/references/*.md` in a `## Dependencies` block (do not duplicate the orchestration doctrine, briefing template, or dispatch patterns inline).
 4. Put long-form procedures under `.claude/skills/<name>/references/`. Keep `SKILL.md` itself as a router; the references are the meat.
-5. Run `bun scripts/build-skill-registry.ts` to update `.context/_framework/skill-registry.md` with the new skill's compact rules.
+5. Run `bun run skills:registry` to update `.claude/skills/REGISTRY.md` with the new skill's compact rules.
 
 ### 11.2 Adding a slash command
 

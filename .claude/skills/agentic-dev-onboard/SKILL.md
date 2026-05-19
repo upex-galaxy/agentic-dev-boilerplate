@@ -40,7 +40,7 @@ This skill is mostly a static walkthrough — it rarely dispatches sub-agents, s
 Steps:
 
 1. Read `complementary_categories` from this skill's frontmatter.
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.context/_framework/skill-registry.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.claude/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. Apply threshold rule per strategy doc §3.2 (T1/T3 silent; T4 ASK).
 4. Inject a `## Composable Skills` block per strategy doc §6.2 only when (rarely) dispatching a sub-agent.
 

@@ -60,7 +60,7 @@ ELSE → T4 (unknown community)
 
 Before starting any non-trivial task, the orchestrator (and each invoked skill) MUST:
 
-1. **Scan available skills** — read the local skill-registry cache (`.context/_framework/skill-registry.md`, built by `scripts/build-skill-registry.ts`). Fallback: scan the `system-reminder` skill list that ships at session start.
+1. **Scan available skills** — read the local skill-registry cache (`.claude/skills/REGISTRY.md`, built by `scripts/build-skill-registry.ts`). Fallback: scan the `system-reminder` skill list that ships at session start.
 2. **Match by domain category** (see vocabulary §5) — not by literal skill name.
 3. **Resolve tier per match**:
    - T1 / T3 → load silently when task domain matches.
@@ -155,7 +155,7 @@ The orchestrator (top-level conversation) owns the glue layer. Cannot be inside 
 
 1. Read `.agents/project.yaml` for project standards (test command, env, stack).
 2. Cache for session: `test_command`, `delivery_strategy_default`, `complementary_skill_resolutions`.
-3. Build / verify the local skill-registry cache (`scripts/build-skill-registry.ts` → `.context/_framework/skill-registry.md`).
+3. Build / verify the local skill-registry cache (`scripts/build-skill-registry.ts` → `.claude/skills/REGISTRY.md`).
 
 ### 5.2 Per-delegation injection
 
@@ -183,7 +183,7 @@ Every sub-agent / skill prompt MUST include:
 
 ## 6. Resolved Decisions
 
-1. **Skill registry tooling**: ✅ **Local script.** `scripts/build-skill-registry.ts` scans `.claude/skills/*/SKILL.md`, extracts compact rules, writes `.context/_framework/skill-registry.md`. Project-owned skills and orchestrator call it instead of ad-hoc scanning of the system-reminder list. Fallback to system-reminder scan only if the cache is unavailable.
+1. **Skill registry tooling**: ✅ **Local script.** `scripts/build-skill-registry.ts` scans `.claude/skills/*/SKILL.md`, extracts compact rules, writes `.claude/skills/REGISTRY.md`. Project-owned skills and orchestrator call it instead of ad-hoc scanning of the system-reminder list. Fallback to system-reminder scan only if the cache is unavailable.
 
 2. **find-skills meta-skill**: ✅ **Automatic, but only as last resort.** Invocation order:
    1. Scan T1 (always available).
