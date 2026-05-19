@@ -170,51 +170,67 @@ const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
 // Rule: any install whose command depends on the user's OS must be deferred to
 // the upstream docs (Rule 4). Single-shot cross-platform commands (e.g.
 // `bun add -g X`) MAY ship as `install`; everything else uses `docs` only.
+//
+// ── Cross-repo sentinel ───────────────────────────────────────────────────
+// This repo (agentic-dev-boilerplate) declares CLIs for a Next.js + Supabase
+// development stack. Sister repo agentic-qa-boilerplate declares a narrower
+// set for QA test automation. Per-CLI scope is tagged inline below as one of:
+//   `[shared]`     — declared in BOTH dev + qa, same purpose
+//   `[dev-only]`   — declared only in dev (stack-specific to dev workflow)
+//   `[qa-only]`    — declared only in qa (would NOT appear here)
+// When changing this list, update the sister repo's EXTERNAL_CLIS too if the
+// CLI is intended to be `[shared]`, or extend the scope tag if scope shifts.
 const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install?: string, docs: string, purpose: string }> = [
   {
+    // [shared] — runtime + package manager in both repos.
     name: 'bun',
     docs: 'https://bun.com/',
     purpose: 'general-purpose runtime + package manager (this repo runs on bun)',
   },
   {
+    // [shared] — GitHub flow in both repos.
     name: 'gh',
     docs: 'https://github.com/cli/cli#installation',
     purpose: 'GitHub CLI — repos, PRs, releases, gh api',
   },
   {
+    // [dev-only] — dev uses Supabase as primary DB. qa does not.
     name: 'supabase',
     docs: 'https://supabase.com/docs/guides/local-development/cli/getting-started',
     purpose: 'database — migrations, types, local stack',
   },
   {
+    // [dev-only] — dev deploys to Vercel. qa deploys nothing (test-only repo).
     name: 'vercel',
     install: 'bun add -g vercel',
     docs: 'https://vercel.com/docs/cli',
     purpose: 'deploys + project linking',
   },
   {
+    // [shared] — transactional email used in both (dev: app email; qa: test fixtures).
     name: 'resend',
     docs: 'https://resend.com/docs/cli',
     purpose: 'email development + transactional sending',
   },
   {
-    // `acli` install command depends on OS (brew tap on macOS, manual binary on
-    // Linux/Windows). Defer to upstream docs.
+    // [shared] — Jira/Confluence CLI in both. Install depends on OS (brew tap
+    // on macOS, manual binary on Linux/Windows). Defer to upstream docs.
     name: 'acli',
     docs: 'https://developer.atlassian.com/cloud/acli/guides/install-acli/',
     purpose: 'Atlassian (Jira/Confluence) CLI — used by /acli skill',
   },
   {
-    // Binary produced by @playwright/cli is `playwright-cli`, used by the
-    // /playwright-cli skill. NOT @playwright/test, which is a devDep test
+    // [shared] — agent-driven browser automation CLI. Binary produced by
+    // @playwright/cli is `playwright-cli`, NOT @playwright/test (devDep test
     // runner library producing no global binary — `which playwright` would
-    // never find it.
+    // never find it).
     name: 'playwright-cli',
     install: 'bun add -g @playwright/cli@latest',
     docs: 'https://playwright.dev/agent-cli/introduction',
     purpose: 'browser automation — screenshots, traces, recordings',
   },
   {
+    // [shared] — JSON processor required by /acli skill.
     name: 'jq',
     docs: 'https://jqlang.org/',
     purpose: 'JSON processor — required by /acli skill for parsing acli --json output',
