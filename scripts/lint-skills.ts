@@ -28,7 +28,7 @@
  *   1 — at least one ERROR found
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
@@ -284,6 +284,37 @@ function scanForStalePath() {
 }
 
 // -----------------------------------------------------------------------------
+// Inline-code STALE-PATH scan (per-skill, body-scoped)
+// -----------------------------------------------------------------------------
+
+function stripFencedCodeBlocks(md: string): string {
+  return md.replace(/```[\s\S]*?```/g, '');
+}
+
+const INLINE_CODE_PATH
+  = /`((?:\.claude\/skills|scripts|cli|\.agents|tests|api)\/[\w./-]+)`/g;
+
+function checkInlineStalePaths(
+  skillSlug: string,
+  skillDir: string,
+  body: string,
+  repoRoot: string,
+): void {
+  const stripped = stripFencedCodeBlocks(body);
+  INLINE_CODE_PATH.lastIndex = 0;
+  for (const match of stripped.matchAll(INLINE_CODE_PATH)) {
+    const path = match[1];
+    if (path.startsWith('/')) { continue; }
+    if (path.endsWith('/')) { continue; } // directory-shape illustration, not a file ref
+    // Skill-dir-first resolution: shorthand like `scripts/foo.ts` inside a skill
+    // body resolves against the skill's own directory; fall back to repo root.
+    if (existsSync(join(skillDir, path))) { continue; }
+    if (existsSync(join(repoRoot, path))) { continue; }
+    record('ERROR', 'STALE-PATH', skillSlug, `\`${path}\` referenced in SKILL.md body does not exist on disk`);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
@@ -368,6 +399,10 @@ function main() {
         record('ERROR', 'TIER-MISMATCH', skillName, `'${skillName2}' annotated as ${annotatedTier} but install.ts says ${actualTier}`);
       }
     }
+
+    // Inline-code STALE-PATH: path-like literals in backtick spans of SKILL.md
+    // body must resolve relative to the skill dir or repo root.
+    checkInlineStalePaths(skillName, join(SKILLS_DIR, skillName), skill.body, REPO_ROOT);
   }
 
   // Check 6: stale path scan
