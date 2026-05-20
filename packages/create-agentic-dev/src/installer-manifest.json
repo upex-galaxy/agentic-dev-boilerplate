@@ -224,11 +224,6 @@
         "purpose": "Web search MCP — used by skills that need fresh community / docs lookups."
       },
       {
-        "name": "atlassian",
-        "envVars": ["ATLASSIAN_URL", "ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN"],
-        "purpose": "Jira / Confluence MCP — story and page operations from the agent."
-      },
-      {
         "name": "supabase",
         "envVars": [
           "SUPABASE_ACCESS_TOKEN",
