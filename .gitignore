@@ -89,6 +89,12 @@ dbhub.toml
 # reports, session handoffs). Kept on local disk only — never pushed.
 .scratch/
 
+# Session-management state for long workflow skills (per
+# .claude/skills/agentic-dev-core/references/session-management.md).
+# Contains per-skill plan.md / progress.md and archived sessions.
+# Local-only — canonical artifacts are committed under .context/.
+.session/
+
 # ===== Installer lock + state =====
 # `.template/installer.lock.json` is TRACKED (small, immutable sentinel that
 # pins the bootstrapped template — written once by the scaffolder / installer).

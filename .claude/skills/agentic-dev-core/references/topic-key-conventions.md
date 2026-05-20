@@ -1,6 +1,6 @@
-# Topic-Key Conventions for PBI Artifacts
+# Topic-Key Conventions for PBI and Session Artifacts
 
-> Cited by: `product-management`, `sprint-development`. Loaded on demand whenever an artifact (spec, implementation plan, code review, compliance matrix, etc.) is created or retrieved, so persistence is deterministic and the optional Engram bridge can mirror without coupling.
+> Cited by: `product-management`, `sprint-development`, and every retrofitted workflow skill that uses `./session-management.md` (via the `session/...` prefix). Loaded on demand whenever an artifact (spec, implementation plan, code review, compliance matrix, session plan, session progress, etc.) is created or retrieved, so persistence is deterministic and the optional Engram bridge can mirror without coupling.
 
 ## Purpose
 
@@ -14,15 +14,31 @@ This document is the **single source of truth** for the key format and storage l
 
 ## Convention
 
+Two registered top-level prefixes:
+
 ```
-pbi/{ticket}/{artifact}
+pbi/{ticket}/{artifact}                         # ticket-scoped artifacts (specs, impl plans, reviews)
+session/{skill-slug}/{scope}/{phase-or-name}    # skill-session state (per ./session-management.md)
 ```
+
+### `pbi/...` — PBI artifacts
 
 | Segment      | Meaning                                                       | Example                             |
 | ------------ | ------------------------------------------------------------- | ----------------------------------- |
 | `pbi`        | Fixed prefix. Distinguishes PBI artifacts from other domains. | (always literal `pbi`)              |
 | `{ticket}`   | Issue-tracker key, uppercase, hyphen-separated.               | `UPEX-123`, `MYM-7`                 |
 | `{artifact}` | Artifact name, kebab-case, open vocabulary.                   | `spec`, `impl-plan`, `bug-fix-plan` |
+
+### `session/...` — long-skill session state
+
+| Segment             | Meaning                                                                                  | Example                              |
+| ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------ |
+| `session`           | Fixed prefix. Distinguishes session state from PBI artifacts.                            | (always literal `session`)           |
+| `{skill-slug}`      | Slug of the skill emitting the state. Matches the directory under `.claude/skills/`.     | `project-bootstrap`, `test-automation` |
+| `{scope}`           | Invocation scope per the skill's rule in `./session-management.md` §9.                   | `UPEX-123`, `staging-2026-05-20`, `project` |
+| `{phase-or-name}`   | `plan`, `progress`, or `phase-<N>` for per-phase checkpoints.                            | `plan`, `progress`, `phase-3`        |
+
+Session-state keys mirror the file layout under `.session/<skill-slug>/<scope>/{plan.md, progress.md}` and the per-phase `mem_save` checkpoints documented in `./session-management.md` §11. The file remains canonical; Engram is a best-effort mirror.
 
 **Examples:**
 
