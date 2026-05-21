@@ -207,8 +207,12 @@ export function buildSparseCheckoutPatterns(components: Component[]): string[] {
  * Returns null when the file is absent (bootstrap path).
  * Throws CorruptStateError when JSON is invalid or the shape is unrecognized.
  *
- * Discriminates v6 vs v5 by presence of `schemaVersion === 6` and `perComponentCommit`.
- * Phase A does NOT yet read v7 — that's added in Phase B alongside the schema bump prompt.
+ * Recognizes three v6 shapes plus v5 fallback:
+ *   - dev shape:   { schemaVersion: 6, lastSync, perComponentCommit, ... }
+ *   - qa  shape:   { schema: 6, lastSyncedAt, perComponentCommit, ... }
+ *     (normalized in-memory to dev shape; downstream sees `schemaVersion: 6`)
+ *   - v7 shape is parsed by isV7State at the call site, since it also carries
+ *     `schemaVersion` and goes through the same code path here.
  */
 export function readSyncState(repoRoot: string, versionFile: string): SyncState | null {
   const filePath = path.join(repoRoot, versionFile);
@@ -233,6 +237,26 @@ export function readSyncState(repoRoot: string, versionFile: string): SyncState 
     && (parsed as Record<string, unknown>).schemaVersion === 6
   ) {
     return parsed as SyncStateV6;
+  }
+
+  if (
+    typeof parsed === 'object'
+    && parsed !== null
+    && 'perComponentCommit' in parsed
+    && (parsed as Record<string, unknown>).schema === 6
+  ) {
+    const p = parsed as Record<string, unknown> & { perComponentCommit: Record<string, string> };
+    return {
+      schemaVersion: 6,
+      lastSync: typeof p.lastSyncedAt === 'string' ? p.lastSyncedAt : new Date().toISOString(),
+      templateCommit: typeof p.templateCommit === 'string' ? p.templateCommit : '',
+      cliVersion: typeof p.cliVersion === 'string' ? p.cliVersion : '',
+      syncedComponents: Array.isArray(p.syncedComponents)
+        ? (p.syncedComponents as string[])
+        : Object.keys(p.perComponentCommit),
+      variableSystemVersion: 1,
+      perComponentCommit: p.perComponentCommit,
+    } satisfies SyncStateV6;
   }
 
   if (
