@@ -64,6 +64,54 @@ Expected matches (illustrative — actual list depends on what the user has inst
 
 Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
+## Session & Dispatch
+
+> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 1 (plan write) are NOT optional.
+
+Session management applies **only to workflows A, B, C** below. Short, single-actor, non-interruptible workflows opt out:
+
+| Workflow                          | Session-managed?           |
+| --------------------------------- | -------------------------- |
+| A — Initial backlog seed          | Yes — scope `seed`         |
+| B — Incremental feature           | Yes — scope `<epic-slug>`  |
+| C — Epic creation                 | Yes — scope `<epic-slug>`  |
+| D — Story refinement              | No (short, non-interruptible) |
+| E — AC quality refinement         | No                         |
+| F — Edge-case enumeration         | No                         |
+| G — Sprint reporting              | No (read-only)             |
+
+When the user invokes any of D / E / F / G, do NOT create a `.session/product-management/` directory and do NOT run Phase 0. Skill the carve-out is documented here so users don't expect a session directory for those workflows.
+
+## Phase 0 — Resume check (MANDATORY for A / B / C only, inline)
+
+Before dispatching any subagent or invoking workflow A / B / C below, run the resume contract from `agentic-dev-core/references/session-management.md` §4:
+
+1. Resolve `<scope>` for this invocation:
+   - Workflow A → `<scope>` = `seed`
+   - Workflows B / C → `<scope>` = `<epic-slug>` (kebab-case epic identifier resolved from user input)
+2. Check whether `.session/product-management/<scope>/progress.md` exists.
+3. If it does NOT exist → proceed to Phase 1 (write `plan.md`).
+4. If it DOES exist:
+   1. Read `.session/product-management/<scope>/plan.md` in full.
+   2. Read the tail of `.session/product-management/<scope>/progress.md` (last ~3 phase entries).
+   3. Surface to the user: plan Goal (one sentence), last completed phase + timestamp, next planned phase, any blocking notes.
+   4. Offer three options and WAIT for input: **resume** / **restart** (archive current dir to `.session/.archive/<YYYY-MM-DD>-product-management-<scope>-aborted/`) / **abort**.
+
+Phase 0 is inline — no subagent dispatch.
+
+## Phase 1 — Write `plan.md` (A / B / C only)
+
+After Phase 0 confirms no prior session exists, write `.session/product-management/<scope>/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6:
+
+- Frontmatter: `topic_key: session/product-management/<scope>/plan`, `skill: product-management`, `scope: <scope>`, `status: draft`, `capture_prompt: true`.
+- Body sections (fixed H2 order): `## Goal` · `## Inputs` (PRD / SRS paths, Jira project key, existing epic list when applicable) · `## Approach` · `## Phase breakdown` (per workflow — A enumerates epics-to-seed; B routes single-story / full-epic / multi-epic; C decomposes epic into stories) · `## Risks & open questions` · `## Verification checklist` · `## Cross-references` (cite `.context/PBI/<scope>/` epic + story files).
+
+Dispatch: inline draft for B / C when scope is one epic; Single planner subagent for A when the PRD has 5+ epics to seed.
+
+After `plan.md` is written and the user approves, transition `status: draft → approved` and proceed to the workflow's first execution phase.
+
+> **Progress checkpoint**: per-epic-created (A), per-story-added (B), per-section-of-epic decomposed (C). The orchestrator appends an entry to `.session/product-management/<scope>/progress.md` per `agentic-dev-core/references/session-management.md` §7 at each checkpoint.
+
 ## Main workflows
 
 ### A. Initial backlog seeding (one-time, from PRD)
@@ -121,6 +169,10 @@ When the user wants a development-oriented view of the current sprint and backlo
 Read `references/sprint-report.md`.
 
 Output: a markdown sprint report rendered inline (epics + stories + PRs + status summary + per-epic progress + alerts). Not persisted by default — persist only if the user explicitly asks.
+
+## Archive (A / B / C only)
+
+On successful completion of workflow A / B / C (Verification checklist from the workflow's `plan.md` passes), the orchestrator runs Archive per `agentic-dev-core/references/session-management.md` §8 — moves `.session/product-management/<scope>/` to `.session/.archive/<YYYY-MM-DD>-product-management-<scope>/` and calls `mem_session_summary` with the archive path included so future `mem_search` calls can navigate back. Workflows D / E / F / G never write `.session/` directories and therefore have nothing to archive.
 
 ## Specific tasks — which reference to read
 

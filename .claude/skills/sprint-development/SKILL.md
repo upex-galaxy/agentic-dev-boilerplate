@@ -62,6 +62,10 @@ If any of the above is missing, fast-fail and hand off to the appropriate setup 
 
 ## Subagent Dispatch Strategy
 
+> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) is NOT optional. Phase 1 plan is delegated to the canonical artifact at `.context/PBI/<JIRA-KEY>/impl-plan.md`; this skill writes only `progress.md`.
+
+This skill is **per-ticket scope**: `<scope>` = `<JIRA-KEY>` (e.g. `UPEX-123`), resolved from the invocation trigger. Session state lives at `.session/sprint-development/<JIRA-KEY>/progress.md` per `agentic-dev-core/references/session-management.md` §3 + §9. This skill adopts the **progress-only variant** (§5 special cases + §13) — no `plan.md` is written under `.session/`; the canonical plan stays committed at `.context/PBI/<JIRA-KEY>/impl-plan.md`.
+
 This skill is compliant with the doctrine in `agentic-dev-core/references/orchestration-doctrine.md`. Every dispatch follows the 6-component briefing format defined in `agentic-dev-core/references/briefing-template.md`, and the pattern selected per stage matches the decision guide in `agentic-dev-core/references/dispatch-patterns.md`.
 
 | Stage / step                              | Pattern                | Subagent role                                                                                 |
@@ -180,6 +184,25 @@ When delegating to a sub-agent, inject a `## Composable Skills` block into the s
 
 ---
 
+## Phase 0 — Resume check (MANDATORY, inline)
+
+Before Epic precheck and Stage 1 — Planning, run the resume contract from `agentic-dev-core/references/session-management.md` §4:
+
+1. Resolve `<scope>` for this invocation: `<JIRA-KEY>` from the trigger (e.g. `UPEX-123`).
+2. Check whether `.session/sprint-development/<JIRA-KEY>/progress.md` exists.
+3. If it does NOT exist → proceed to Epic precheck and Stage 1. The orchestrator creates the directory and writes the first `progress.md` entry once Stage 1 begins. **No `plan.md` is written under `.session/`** — `.context/PBI/<JIRA-KEY>/impl-plan.md` remains canonical.
+4. If it DOES exist:
+   1. Read `.session/sprint-development/<JIRA-KEY>/progress.md` in full (tail of last ~3 entries minimum).
+   2. Read the cross-referenced `.context/PBI/<JIRA-KEY>/impl-plan.md` (canonical plan).
+   3. Surface to the user: ticket Goal (from impl-plan), last completed stage + timestamp, next planned stage, any blocking notes (e.g. "PR opened but CI red — last review note unresolved").
+   4. Offer three options and WAIT for input: **resume** (jump to the next planned stage — Stage 2 chunk, Stage 3 fix-iterate, etc.) / **restart** (archive current dir to `.session/.archive/<YYYY-MM-DD>-sprint-development-<JIRA-KEY>-aborted/`, then re-enter Epic precheck) / **abort**.
+
+Phase 0 is inline — no subagent dispatch. The check fires even on first invocation so resume-vs-fresh is deterministic.
+
+**`progress.md` Cross-references contract**: when the orchestrator writes the first entry, the file's `## Cross-references` section MUST cite both `.context/PBI/<JIRA-KEY>/impl-plan.md` (canonical plan) and `.context/reports/SPRINT-<N>-DEVELOPMENT.md` (cross-ticket sprint tracker, when batch mode is active). These two pointers replace the `plan.md` that the full variant would write.
+
+> **Progress checkpoint**: the orchestrator appends a `progress.md` entry per `agentic-dev-core/references/session-management.md` §7 at each of: Stage 1 done (impl-plan committed + Jira → In Progress), every Stage 2 implementation chunk completed (multi-file edit pass + verification cap=3 green), each Stage 3 review iteration (review pass red → fix-issues loop → re-review), Stage 4 staging merged (Jira → Ready For QA), Stage 5 prod deployed (or rollback). Failed phases emit `status: failed` entries; retries emit fresh entries (append-only mandate, never rewrite).
+
 ## Stage walkthroughs
 
 ### Epic precheck (inline, before Stage 1)
@@ -294,6 +317,8 @@ Sync `staging` locally (`git pull origin staging`) and clean up the merged branc
 **Sprint report**: Status IN_REVIEW → MERGED once the squash-merge lands, then MERGED → STAGING_DEPLOYED after CI smoke passes. Move the row to "Done — This Sprint" once Jira reaches Ready For QA. Append a Session Log entry with date + ticket + transition.
 
 **Hand-off**: QA verification on staging is **out of scope here**. See `agentic-qa-boilerplate` for the `sprint-testing` skill that picks up from `Ready For QA`.
+
+On successful completion of Stage 4 (Jira reaches `Ready For QA` and staging smoke passes), the orchestrator runs Archive per `agentic-dev-core/references/session-management.md` §8 — moves `.session/sprint-development/<JIRA-KEY>/` to `.session/.archive/<YYYY-MM-DD>-sprint-development-<JIRA-KEY>/` and calls `mem_session_summary` with the archive path included (so future `mem_search "session sprint-development <JIRA-KEY>"` finds it). Stage 5 (optional production deploy) is a separate event — when invoked later, Phase 0 reopens the archived session by recreating `.session/sprint-development/<JIRA-KEY>/progress.md` and appends the Stage 5 entries on top of the archived progress (or the user can start fresh and link forward).
 
 ### Stage 5: Production Deploy (optional, gated)
 
