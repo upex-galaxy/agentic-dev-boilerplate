@@ -1,6 +1,6 @@
 ---
 name: product-management
-description: "Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refinement (INVEST + 3-amigos), AC quality refinement (Gherkin), edge-case enumeration, and sprint reporting (PM visibility snapshot). Triggers on: 'create epic', 'crear épica', 'agregar historia al backlog', 'add feature', 'refine acceptance criteria', 'enumerar edge cases', 'INVEST a esta historia', '3 amigos', 'story refinement', 'product backlog seed', 'epic creation', 'ready for development checklist', 'sprint report', 'reporte de sprint', 'estado del sprint', 'reporte de épicas y stories', 'qué hay en el sprint', 'progress report', 'dashboard del backlog', 'in-flight stories snapshot'. Do NOT use for: foundational product definition (use `/project-foundation`), infrastructure scaffolding (use `/project-bootstrap`), per-story implementation (use `/sprint-development`), unit testing (use `/unit-testing`), or formal QA test cases / TMS workflows (out of scope, see `agentic-qa-boilerplate`)."
+description: "Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refinement (INVEST + 3-amigos), AC quality refinement (Gherkin), edge-case enumeration, and sprint reporting (PM visibility snapshot). Triggers on: 'create epic', 'crear épica', 'agregar historia al backlog', 'add feature', 'refine acceptance criteria', 'enumerar edge cases', 'INVEST a esta historia', '3 amigos', 'story refinement', 'product backlog seed', 'epic creation', 'ready for development checklist', 'sprint report', 'reporte de sprint', 'estado del sprint', 'reporte de épicas y stories', 'qué hay en el sprint', 'progress report', 'dashboard del backlog', 'in-flight stories snapshot'. Do NOT use for: foundational product definition (use `/project-foundation`), infrastructure scaffolding (use `/project-bootstrap`), per-story implementation (use `/sprint-development`), unit testing (use `/unit-testing`), or formal QA test cases / TMS workflows (out of scope here)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: management
@@ -204,7 +204,7 @@ When PM artifacts are ready, the natural downstream skills are:
 
 - **Per-story implementation** → `/sprint-development` (planning → code → review → deploy loop)
 - **TDD on a single function** → `/unit-testing` (composable inside `/sprint-development`)
-- **Formal QA test cases, exploratory testing, automation, regression** → out of scope here; see the sister boilerplate `agentic-qa-boilerplate` for `sprint-testing`, `test-documentation`, `test-automation`, and related QA workflows
+- **Formal QA test cases, exploratory testing, automation, regression** → out of scope here; handled by a separate QA workflow
 
 ## Variables consumed
 
@@ -220,5 +220,5 @@ If unset, clone the full boilerplate — these foundation files ship with the re
 
 - Refinement is a **continuous activity**, not a one-time gate. Re-invoke this skill any time AC questions emerge, edge cases surface during design, or a story is found to violate INVEST mid-sprint.
 - The 3-amigos protocol is **optional** in story refinement — recommended for stories larger than ~5 SP, integration-heavy stories, or anything touching unfamiliar areas of the system.
-- Edge cases that don't make it into AC are not lost — they live in QA test cases (out of scope here; documented in `agentic-qa-boilerplate`).
+- Edge cases that don't make it into AC are not lost — they live in QA test cases (out of scope here).
 - Orchestration: for parallel research tasks (e.g., competitive analysis on a feature, prior-art review, persona impact study), dispatch via the briefing template at `.claude/skills/agentic-dev-core/references/briefing-template.md`.

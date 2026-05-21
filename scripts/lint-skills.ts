@@ -24,9 +24,6 @@
  *                                (or Phase -1) section, or that section omits `.session/`.
  *  10. SESSION-SCOPE-INVALID  (WARN)  — A `.session/<skill>/<scope>/` directory
  *                                does not match the per-skill scope regex.
- *  11. SESSION-DOCTRINE-DRIFT (ERROR) — The body of session-management.md
- *                                differs between this repo and its sister repo.
- *                                INFO (skipped) if sister repo not detectable.
  *
  * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
  * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
@@ -90,12 +87,6 @@ const SESSION_BANNER_PREFIX = '> **Orchestration & Session contracts**: this ski
  * test-documentation to avoid a numeric collision with its existing Phase 0.
  */
 const PHASE_0_HEADING = /^## Phase (?:0(?:\.0)?|-1|−1)(?:\s|$)/m;
-
-const SESSION_DOCTRINE_PATH = join(SKILLS_DIR, 'agentic-dev-core/references/session-management.md');
-const SISTER_DOCTRINE_REL = '.claude/skills/agentic-qa-core/references/session-management.md';
-const SISTER_REPO_SIBLING_REL = '../agentic-qa-boilerplate';
-const DOCTRINE_BODY_START = '## 1. Purpose & scope';
-const DOCTRINE_BODY_END = '## Cross-references';
 
 // -----------------------------------------------------------------------------
 // Findings collector
@@ -371,28 +362,6 @@ function checkInlineStalePaths(
 // Session-management checks (per agentic-dev-core/references/session-management.md §14)
 // -----------------------------------------------------------------------------
 
-function extractDoctrineBody(raw: string): string | null {
-  const start = raw.indexOf(DOCTRINE_BODY_START);
-  if (start === -1) { return null; }
-  const end = raw.indexOf(DOCTRINE_BODY_END, start);
-  if (end === -1) { return null; }
-  const slice = raw.slice(start, end);
-  // Normalize trailing whitespace per line for comparison tolerance.
-  return slice.split('\n').map(l => l.replace(/[ \t]+$/, '')).join('\n');
-}
-
-function locateSisterRepo(): string | null {
-  const envPath = process.env.SESSION_DOCTRINE_SISTER_REPO;
-  if (envPath && existsSync(join(envPath, SISTER_DOCTRINE_REL))) {
-    return envPath;
-  }
-  const sibling = join(REPO_ROOT, SISTER_REPO_SIBLING_REL);
-  if (existsSync(join(sibling, SISTER_DOCTRINE_REL))) {
-    return sibling;
-  }
-  return null;
-}
-
 function checkSessionBanner(skill: SkillMeta): void {
   if (!(skill.name in SESSION_RETROFITTED_SKILLS)) { return; }
   if (!skill.body.includes(SESSION_BANNER_PREFIX)) {
@@ -442,37 +411,6 @@ function checkSessionScopes(): void {
         }
       }
     }
-  }
-}
-
-function checkDoctrineDrift(): void {
-  if (!existsSync(SESSION_DOCTRINE_PATH)) {
-    record('INFO', 'SESSION-DOCTRINE-DRIFT', 'doctrine', 'local session-management.md not found; skipping byte-equality check');
-    return;
-  }
-  const sister = locateSisterRepo();
-  if (!sister) {
-    record('INFO', 'SESSION-DOCTRINE-DRIFT', 'doctrine', 'sibling repo not detectable; skipping cross-repo doctrine byte-equality check');
-    return;
-  }
-  const sisterDoctrinePath = join(sister, SISTER_DOCTRINE_REL);
-  const localBody = extractDoctrineBody(readFileSync(SESSION_DOCTRINE_PATH, 'utf8'));
-  const sisterBody = extractDoctrineBody(readFileSync(sisterDoctrinePath, 'utf8'));
-  if (localBody === null || sisterBody === null) {
-    record('ERROR', 'SESSION-DOCTRINE-DRIFT', 'doctrine', `could not extract body between '${DOCTRINE_BODY_START}' and '${DOCTRINE_BODY_END}' anchors`);
-    return;
-  }
-  if (localBody !== sisterBody) {
-    const localLines = localBody.split('\n');
-    const sisterLines = sisterBody.split('\n');
-    let firstDiff = -1;
-    const max = Math.max(localLines.length, sisterLines.length);
-    for (let i = 0; i < max; i++) {
-      if (localLines[i] !== sisterLines[i]) { firstDiff = i; break; }
-    }
-    const localLine = JSON.stringify(localLines[firstDiff] ?? '<EOF>').slice(0, 80);
-    const sisterLine = JSON.stringify(sisterLines[firstDiff] ?? '<EOF>').slice(0, 80);
-    record('ERROR', 'SESSION-DOCTRINE-DRIFT', 'doctrine', `body differs from sister repo. First diff at line ${firstDiff + 1}: local=${localLine} sister=${sisterLine}`);
   }
 }
 
@@ -576,7 +514,6 @@ function main() {
 
   // Session-management checks (global).
   checkSessionScopes();
-  checkDoctrineDrift();
 
   // Report
   const counts = { ERROR: 0, WARN: 0, INFO: 0 };

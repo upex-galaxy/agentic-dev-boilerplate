@@ -62,7 +62,7 @@ The vocabulary is open — pick whatever name the workflow naturally uses — bu
 | `compliance-matrix` | `sprint-development` Stage 3                      | AC-vs-code coverage matrix (which AC each commit closes)    | `.context/PBI/{ticket}/compliance-matrix.md`    |
 | `bug-fix`           | `sprint-development` Stage 2 (`bug-fix-workflow`) | Root-cause + fix plan + regression notes                    | `.context/PBI/{ticket}/bug-fix.md`              |
 | `edge-cases`        | `product-management` (enumeration)                | Cataloged edge cases with criticality + AC-promote decision | `.context/PBI/{ticket}/edge-cases.md`           |
-| `test-report`       | (out of scope here; sister repo)                  | QA test execution report — referenced for traceability      | `.context/PBI/{ticket}/test-report.md`          |
+| `test-report`       | (out of scope here)                               | QA test execution report — referenced for traceability      | `.context/PBI/{ticket}/test-report.md`          |
 
 This list is **not exhaustive**. Skills may emit other artifacts (e.g., `staging-deploy-notes`, `rollback-runbook`); they just need to follow the kebab-case-plus-`pbi/{ticket}/{name}` shape.
 

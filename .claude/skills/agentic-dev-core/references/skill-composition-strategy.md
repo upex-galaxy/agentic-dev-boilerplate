@@ -205,5 +205,5 @@ This doc does NOT:
 
 - Replace any skill's internal workflow. Each skill stays in charge of its own steps.
 - Merge project-owned skills into one mega-skill. They stay separate; the orchestrator composes them.
-- Define the QA-side composition. QA workflows live in the sister repo `agentic-qa-boilerplate` and follow their own composition strategy.
+- Define the QA-side composition. QA workflows are out of scope here and follow their own composition strategy.
 - Specify exact prompt text for the `## Composable Skills` injection block. That belongs in the orchestrator template, drafted later.

@@ -1,6 +1,6 @@
 ---
 name: testability-guide
-description: 'Generates a public in-app `/qa` page ("Software Testability Guide for QA") + a tool-agnostic credentials artifact (markdown body) the user publishes to Jira Epic (default), Confluence, Notion, any MCP/CLI-reachable tool, or via manual paste. Idempotent — re-runs detect host-stack drift via a snapshot comment in the generated page and propose surgical patches instead of rewriting. Invoke whenever the user asks to create, update, regenerate, or publish a QA testing guide, testability guide, /qa page, credentials Epic, or says "guía de testeabilidad", "credenciales para testing", "publish credentials artifact", "/testability-guide". Do NOT use for: PRD definition (`/project-foundation`), infrastructure scaffolding (`/project-bootstrap`), per-story implementation (`/sprint-development`), unit testing (`/unit-testing`), or formal QA test cases / TMS workflows (sister repo `agentic-qa-boilerplate`).'
+description: 'Generates a public in-app `/qa` page ("Software Testability Guide for QA") + a tool-agnostic credentials artifact (markdown body) the user publishes to Jira Epic (default), Confluence, Notion, any MCP/CLI-reachable tool, or via manual paste. Idempotent — re-runs detect host-stack drift via a snapshot comment in the generated page and propose surgical patches instead of rewriting. Invoke whenever the user asks to create, update, regenerate, or publish a QA testing guide, testability guide, /qa page, credentials Epic, or says "guía de testeabilidad", "credenciales para testing", "publish credentials artifact", "/testability-guide". Do NOT use for: PRD definition (`/project-foundation`), infrastructure scaffolding (`/project-bootstrap`), per-story implementation (`/sprint-development`), unit testing (`/unit-testing`), or formal QA test cases / TMS workflows (out of scope here).'
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation-extension
@@ -84,7 +84,7 @@ Do NOT use this skill for:
 - Setting up the backend, frontend, OpenAPI, auth, or env scaffolding — that is `/project-bootstrap`. This skill MAY run AFTER `/project-bootstrap` completes.
 - Implementing an individual user story — that is `/sprint-development`.
 - Writing unit tests — that is `/unit-testing`.
-- Authoring formal QA test cases or wiring a test-management system — out of scope here, lives in sister repo `agentic-qa-boilerplate`.
+- Authoring formal QA test cases or wiring a test-management system — out of scope here.
 
 If the project still lacks a backend / frontend / auth scaffolding, surface that to the user before continuing — the `/qa` page describes a real app, and there is little value in generating it against a hollow scaffold.
 
