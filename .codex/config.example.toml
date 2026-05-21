@@ -1,0 +1,34 @@
+# ============================================
+# CONFIGURACIÓN MCP PARA CODEX CLI (EJEMPLO)
+# ============================================
+#
+# UBICACIÓN:
+# - Copia este archivo a ~/.codex/config.toml para tener estas herramientas globales.
+# - O cópialo a .codex/config.toml en tu proyecto SOLO si es un "trusted project".
+#
+# SEGURIDAD:
+# Este es un archivo de plantilla. NO contiene secretos ni debe contenerlos.
+# Las credenciales se inyectan a través de variables de entorno de tu sistema
+# (ej. utilizando bearer_token_env_var).
+#
+# ============================================
+
+# 1. Context7 (Documentación)
+# Servidor local (stdio) para consulta de documentación.
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+# 2. Playwright (Testing E2E)
+# Servidor local (stdio) para automatización de navegadores.
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+
+# 3. Postman (API)
+# Servidor remoto (HTTP).
+# La clave "bearer_token_env_var" instruye a Codex CLI a leer la variable de entorno
+# local "POSTMAN_API_KEY" e inyectarla de forma segura como Bearer Token al hacer requests.
+[mcp_servers.postman]
+url = "https://mcp.postman.com/mcp"
+bearer_token_env_var = "POSTMAN_API_KEY"

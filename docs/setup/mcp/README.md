@@ -364,6 +364,7 @@ Para configuraciones especificas por herramienta, consulta:
 
 - [Claude Code](./claude-code.md)
 - [Gemini CLI](./gemini-cli.md)
+- [Codex CLI](./codex-cli.md)
 - [GitHub Copilot CLI](./copilot-cli.md)
 - [VS Code con GitHub Copilot](./vscode.md)
 
