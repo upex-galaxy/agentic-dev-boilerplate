@@ -18,6 +18,15 @@
  *                                `.claude/skills/agentic-dev-core/references/skill-composition-strategy.md`.
  *   7. DUPLICATE-TIER  (ERROR) — Same skill name appears in both SKILL_SLUGS (T2)
  *                                and PROJECT_LEVEL_SKILLS (T3) — install.ts conflict.
+ *   8. SESSION-BANNER-MISSING (ERROR) — A retrofitted SKILL.md does not contain
+ *                                the verbatim session-management banner prefix.
+ *   9. SESSION-PHASE-0-MISSING (ERROR) — A retrofitted SKILL.md has no Phase 0
+ *                                (or Phase -1) section, or that section omits `.session/`.
+ *  10. SESSION-SCOPE-INVALID  (WARN)  — A `.session/<skill>/<scope>/` directory
+ *                                does not match the per-skill scope regex.
+ *  11. SESSION-DOCTRINE-DRIFT (ERROR) — The body of session-management.md
+ *                                differs between this repo and its sister repo.
+ *                                INFO (skipped) if sister repo not detectable.
  *
  * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
  * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
@@ -43,6 +52,50 @@ const INSTALL_TS = join(REPO_ROOT, 'cli/install.ts');
 const STALE_PATH_LITERAL = '.context/skill-composition-strategy.md';
 const SCAN_FOR_STALE_PATH = ['CLAUDE.md', '.claude/skills', '.context'];
 const SPRINT_DEV_EXEMPT = 'sprint-development'; // uses "## SDD Composition" instead
+
+// -----------------------------------------------------------------------------
+// Session-management contract (per agentic-dev-core/references/session-management.md §14)
+// -----------------------------------------------------------------------------
+
+/**
+ * Skills that adopted the session-management contract. Each maps to the regex
+ * that the immediate child directory under `.session/<skill>/` must satisfy,
+ * or `null` if the skill stores state directly under `.session/<skill>/` with
+ * no `<scope>` segment. Skills NOT in this map are exempt from BANNER, PHASE-0,
+ * and SCOPE-INVALID checks.
+ */
+const SESSION_RETROFITTED_SKILLS: Record<string, RegExp | null> = {
+  'project-foundation': null,
+  'project-bootstrap': null,
+  // `seed` (curation root) is a strict subset of `[a-z0-9][a-z0-9-]*`
+  // (kebab-case epic slug); no separate literal branch is needed.
+  'product-management': /^[a-z0-9][a-z0-9-]*$/,
+  'design-system': null,
+  'testability-guide': null,
+  'sprint-development': /^[A-Z]+-\d+$/,
+};
+
+/**
+ * Invariant prefix of the orchestration + session banner that every retrofitted
+ * SKILL.md must contain verbatim. Continues differently in the progress-only
+ * variant (sprint-development) but the prefix up to "archive on completion)."
+ * is identical in both forms. Contains an em-dash (U+2014) between "dispatch"
+ * and "main thread" — copy-paste from project-foundation/SKILL.md; do not retype.
+ */
+const SESSION_BANNER_PREFIX = '> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion).';
+
+/**
+ * Matches `## Phase 0`, `## Phase 0.0`, `## Phase -1` (ASCII hyphen-minus), or
+ * `## Phase −1` (U+2212 minus). The session-resume Phase 0 is named `-1` in
+ * test-documentation to avoid a numeric collision with its existing Phase 0.
+ */
+const PHASE_0_HEADING = /^## Phase (?:0(?:\.0)?|-1|−1)(?:\s|$)/m;
+
+const SESSION_DOCTRINE_PATH = join(SKILLS_DIR, 'agentic-dev-core/references/session-management.md');
+const SISTER_DOCTRINE_REL = '.claude/skills/agentic-qa-core/references/session-management.md';
+const SISTER_REPO_SIBLING_REL = '../agentic-qa-boilerplate';
+const DOCTRINE_BODY_START = '## 1. Purpose & scope';
+const DOCTRINE_BODY_END = '## Cross-references';
 
 // -----------------------------------------------------------------------------
 // Findings collector
@@ -315,6 +368,115 @@ function checkInlineStalePaths(
 }
 
 // -----------------------------------------------------------------------------
+// Session-management checks (per agentic-dev-core/references/session-management.md §14)
+// -----------------------------------------------------------------------------
+
+function extractDoctrineBody(raw: string): string | null {
+  const start = raw.indexOf(DOCTRINE_BODY_START);
+  if (start === -1) { return null; }
+  const end = raw.indexOf(DOCTRINE_BODY_END, start);
+  if (end === -1) { return null; }
+  const slice = raw.slice(start, end);
+  // Normalize trailing whitespace per line for comparison tolerance.
+  return slice.split('\n').map(l => l.replace(/[ \t]+$/, '')).join('\n');
+}
+
+function locateSisterRepo(): string | null {
+  const envPath = process.env.SESSION_DOCTRINE_SISTER_REPO;
+  if (envPath && existsSync(join(envPath, SISTER_DOCTRINE_REL))) {
+    return envPath;
+  }
+  const sibling = join(REPO_ROOT, SISTER_REPO_SIBLING_REL);
+  if (existsSync(join(sibling, SISTER_DOCTRINE_REL))) {
+    return sibling;
+  }
+  return null;
+}
+
+function checkSessionBanner(skill: SkillMeta): void {
+  if (!(skill.name in SESSION_RETROFITTED_SKILLS)) { return; }
+  if (!skill.body.includes(SESSION_BANNER_PREFIX)) {
+    record('ERROR', 'SESSION-BANNER-MISSING', skill.name, 'SKILL.md body missing the verbatim session-management banner prefix (see session-management.md §3)');
+  }
+}
+
+function checkSessionPhase0(skill: SkillMeta): void {
+  if (!(skill.name in SESSION_RETROFITTED_SKILLS)) { return; }
+  const match = PHASE_0_HEADING.exec(skill.body);
+  if (!match) {
+    record('ERROR', 'SESSION-PHASE-0-MISSING', skill.name, 'SKILL.md has no `## Phase 0` (or `## Phase -1`) heading');
+    return;
+  }
+  const headingIdx = match.index;
+  const restAfter = skill.body.slice(headingIdx + match[0].length);
+  const nextH2 = restAfter.search(/\n## /);
+  const sectionBody = nextH2 === -1 ? restAfter : restAfter.slice(0, nextH2);
+  if (!sectionBody.includes('.session/')) {
+    record('ERROR', 'SESSION-PHASE-0-MISSING', skill.name, 'Phase 0 section does not mention `.session/` — must reference session-management resume path');
+  }
+}
+
+function checkSessionScopes(): void {
+  const sessionRoot = join(REPO_ROOT, '.session');
+  if (!existsSync(sessionRoot)) { return; }
+  for (const [skillSlug, scopeRegex] of Object.entries(SESSION_RETROFITTED_SKILLS)) {
+    const skillSessionDir = join(sessionRoot, skillSlug);
+    if (!existsSync(skillSessionDir)) { continue; }
+    let entries: string[];
+    try { entries = readdirSync(skillSessionDir); }
+    catch { continue; }
+    for (const e of entries) {
+      const full = join(skillSessionDir, e);
+      let s;
+      try { s = statSync(full); }
+      catch { continue; }
+      if (scopeRegex === null) {
+        if (s.isDirectory()) {
+          record('WARN', 'SESSION-SCOPE-INVALID', skillSlug, `.session/${skillSlug}/${e}/ exists but ${skillSlug} stores state directly under .session/${skillSlug}/ (no <scope> segment expected)`);
+        }
+      }
+      else {
+        if (!s.isDirectory()) { continue; }
+        if (!scopeRegex.test(e)) {
+          record('WARN', 'SESSION-SCOPE-INVALID', skillSlug, `.session/${skillSlug}/${e}/ does not match expected scope shape ${scopeRegex}`);
+        }
+      }
+    }
+  }
+}
+
+function checkDoctrineDrift(): void {
+  if (!existsSync(SESSION_DOCTRINE_PATH)) {
+    record('INFO', 'SESSION-DOCTRINE-DRIFT', 'doctrine', 'local session-management.md not found; skipping byte-equality check');
+    return;
+  }
+  const sister = locateSisterRepo();
+  if (!sister) {
+    record('INFO', 'SESSION-DOCTRINE-DRIFT', 'doctrine', 'sibling repo not detectable; skipping cross-repo doctrine byte-equality check');
+    return;
+  }
+  const sisterDoctrinePath = join(sister, SISTER_DOCTRINE_REL);
+  const localBody = extractDoctrineBody(readFileSync(SESSION_DOCTRINE_PATH, 'utf8'));
+  const sisterBody = extractDoctrineBody(readFileSync(sisterDoctrinePath, 'utf8'));
+  if (localBody === null || sisterBody === null) {
+    record('ERROR', 'SESSION-DOCTRINE-DRIFT', 'doctrine', `could not extract body between '${DOCTRINE_BODY_START}' and '${DOCTRINE_BODY_END}' anchors`);
+    return;
+  }
+  if (localBody !== sisterBody) {
+    const localLines = localBody.split('\n');
+    const sisterLines = sisterBody.split('\n');
+    let firstDiff = -1;
+    const max = Math.max(localLines.length, sisterLines.length);
+    for (let i = 0; i < max; i++) {
+      if (localLines[i] !== sisterLines[i]) { firstDiff = i; break; }
+    }
+    const localLine = JSON.stringify(localLines[firstDiff] ?? '<EOF>').slice(0, 80);
+    const sisterLine = JSON.stringify(sisterLines[firstDiff] ?? '<EOF>').slice(0, 80);
+    record('ERROR', 'SESSION-DOCTRINE-DRIFT', 'doctrine', `body differs from sister repo. First diff at line ${firstDiff + 1}: local=${localLine} sister=${sisterLine}`);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
@@ -403,10 +565,18 @@ function main() {
     // Inline-code STALE-PATH: path-like literals in backtick spans of SKILL.md
     // body must resolve relative to the skill dir or repo root.
     checkInlineStalePaths(skillName, join(SKILLS_DIR, skillName), skill.body, REPO_ROOT);
+
+    // Session-management checks (per-skill).
+    checkSessionBanner(skill);
+    checkSessionPhase0(skill);
   }
 
   // Check 6: stale path scan
   scanForStalePath();
+
+  // Session-management checks (global).
+  checkSessionScopes();
+  checkDoctrineDrift();
 
   // Report
   const counts = { ERROR: 0, WARN: 0, INFO: 0 };
