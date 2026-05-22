@@ -153,7 +153,7 @@ Example: `--fields "*navigable,-comment"` — everything navigable except the co
 
 Default view fields: `key,issuetype,summary,status,assignee,description`.
 
-> The actual `customfield_NNNNN` IDs in the example above are illustrative — your real IDs come from `.agents/jira-fields.json` after `bun run jira:sync-fields`. Reference them by slug via `{{jira.<slug>}}` in prompts and skill bodies (e.g. `{{jira.acceptance_criteria_gherkin}}`).
+> The actual `customfield_NNNNN` IDs in the example above are illustrative — your real IDs come from `.agents/jira-fields.json` after `bun run jira:sync-fields`. Reference them by slug via `{{jira.<slug>}}` in prompts and skill bodies (e.g. `{{jira.acceptance_criteria}}`).
 
 ## <a id="search"></a>search
 
@@ -580,7 +580,7 @@ curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
 
 In this boilerplate, `bun run jira:sync-fields` writes the canonical map to `.agents/jira-fields.json`. Reference fields by slug via `{{jira.<slug>}}` instead of hardcoding numeric IDs. The DEV slugs you'll touch most often:
 
-- `{{jira.acceptance_criteria_gherkin}}` — Gherkin ACs on a Story
+- `{{jira.acceptance_criteria}}` — Gherkin ACs on a Story
 - `{{jira.business_rules_specification}}` — story-level business rules
 - `{{jira.scope}}` — in-scope / out-of-scope notes
 - `{{jira.mockup}}` — design mockup link

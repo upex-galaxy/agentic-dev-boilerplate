@@ -201,12 +201,13 @@ Example (same work, different register):
 
 > Skills use `[TAG_TOOL]` pseudocode. Resolve via this table. **PRIORITY**: CLI tools first (fewer tokens). MCP = fallback only.
 
-| Tag                    | Domain                      | Primary                                   | Fallback                 |
-| ---------------------- | --------------------------- | ----------------------------------------- | ------------------------ |
-| `[ISSUE_TRACKER_TOOL]` | Jira Cloud (story/bug/epic) | `/acli`                                   | MCP Atlassian (opt-in — see docs/mcp/) |
-| `[AUTOMATION_TOOL]`    | Browser automation          | `/playwright-cli`                         | MCP Playwright           |
-| `[DB_TOOL]`            | Database                    | Supabase MCP                              | raw SQL via Supabase CLI |
-| `[API_TOOL]`           | API exploration             | curl + OpenAPI types (`bun run api:sync`) | Postman manual           |
+| Tag                     | Domain                            | Primary                                   | Fallback                               |
+| ----------------------- | --------------------------------- | ----------------------------------------- | -------------------------------------- |
+| `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in — see docs/mcp/) |
+| `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in — see docs/mcp/) |
+| `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | MCP Playwright                         |
+| `[DB_TOOL]`             | Database                          | Supabase MCP                              | raw SQL via Supabase CLI               |
+| `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
 
 **MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside owning skill's `references/`.
 

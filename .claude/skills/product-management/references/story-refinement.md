@@ -103,7 +103,7 @@ Common failures and fixes:
 
 > Adapted from the `story.md` template in `product-backlog-seed.md`. The full template lives there; this section focuses on the parts that get refined.
 >
-> **No content duplication**: the body of `story.md` carries narrative + DoD only. Acceptance Criteria, Scope, and Out-of-Scope live exclusively in their dedicated Jira custom fields (`{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`). See `references/description-custom-field-dedup.md` for the full single-source-of-truth rule and audit procedure.
+> **No content duplication**: the body of `story.md` carries narrative + DoD only. Acceptance Criteria, Scope, and Out-of-Scope live exclusively in their dedicated Jira custom fields (`{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`). See `references/description-custom-field-dedup.md` for the full single-source-of-truth rule and audit procedure.
 
 **In-file `story.md` body template** — locked shape:
 
@@ -129,7 +129,7 @@ Common failures and fixes:
 - [ ] [Project-standard DoD items]
 
 <!-- AC / Scope / Out-of-Scope live exclusively in their dedicated custom fields
-     (`{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`).
+     (`{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`).
      See `references/description-custom-field-dedup.md`. -->
 ```
 
@@ -141,7 +141,7 @@ Refinement rules for the User Story line:
 
 **Scope (In / Out) — custom-field only.** Be explicit. Out-of-scope items are the team's defense against scope creep mid-sprint. Write In-Scope bullets to `{{jira.scope}}` and Out-of-Scope bullets to `{{jira.out_of_scope}}` via `[ISSUE_TRACKER_TOOL]`. Do NOT duplicate into the description body. When writing these rich-text fields, follow `references/jira-publishing-gotchas.md` (per-field-per-call when batching ADF; no inline `code` inside `**bold**`).
 
-**Acceptance Criteria — custom-field only.** Gherkin Scenario format, **minimum 3 scenarios**, written to `{{jira.acceptance_criteria_gherkin}}` via `[ISSUE_TRACKER_TOOL]`. Pattern per scenario:
+**Acceptance Criteria — custom-field only.** Gherkin Scenario format, **minimum 3 scenarios**, written to `{{jira.acceptance_criteria}}` via `[ISSUE_TRACKER_TOOL]`. Pattern per scenario:
 
 ```gherkin
 Scenario: [Descriptive name]
@@ -204,8 +204,8 @@ A story is Ready when **all** of these are true:
 - [ ] **Source spec line** present as the first body line (`**Source spec:** FR-XXX`) when an FR motivates the story, otherwise omitted
 - [ ] **Scope** explicitly populated in `{{jira.scope}}` (in-scope) and `{{jira.out_of_scope}}` (exclusions) — never in the description body
 - [ ] **INVEST** — all six criteria pass
-- [ ] **Acceptance Criteria** — minimum 3 Gherkin Scenarios (happy + error + edge) in `{{jira.acceptance_criteria_gherkin}}`
-- [ ] **Deduplication audit passed** — run the dedup audit per `references/description-custom-field-dedup.md`. Confirm the description body excludes AC / Scope / OOS H2 sections and that those contents live in `{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}` respectively. If a duplicate is found, strip from the description and keep the custom field as canonical.
+- [ ] **Acceptance Criteria** — minimum 3 Gherkin Scenarios (happy + error + edge) in `{{jira.acceptance_criteria}}`
+- [ ] **Deduplication audit passed** — run the dedup audit per `references/description-custom-field-dedup.md`. Confirm the description body excludes AC / Scope / OOS H2 sections and that those contents live in `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}` respectively. If a duplicate is found, strip from the description and keep the custom field as canonical.
 - [ ] **Story Points** estimated (1, 2, 3, 5, 8) and ≤8
 - [ ] **Dependencies declared locally** — Blocked By / Blocks / Related sections present in `story.md`
 - [ ] **Dependencies published to Jira** — see the "Dependency-link verification" step below
@@ -372,7 +372,7 @@ Scenario: Discount code applies before tax calculation
 
 When a story passes the Ready checklist:
 
-1. Hand off to **`acceptance-criteria.md`** for deep AC refinement (refine each Scenario, add negative paths, boundary conditions, equivalence partitions). Mind `references/jira-publishing-gotchas.md` when writing the deepened AC back to `{{jira.acceptance_criteria_gherkin}}`.
+1. Hand off to **`acceptance-criteria.md`** for deep AC refinement (refine each Scenario, add negative paths, boundary conditions, equivalence partitions). Mind `references/jira-publishing-gotchas.md` when writing the deepened AC back to `{{jira.acceptance_criteria}}`.
 2. Hand off to **`edge-cases-enumeration.md`** for systematic edge-case discovery.
 3. Confirm the Status transition step has executed (story sits at `{{jira.statuses.story_default}}`).
 4. Confirm the Dependency-link verification step has executed (Jira issue links match local declarations).

@@ -32,7 +32,7 @@ Anything not listed above does not belong in the description body.
 
 | Forbidden section | Canonical home |
 |---|---|
-| `## Acceptance criteria` | `{{jira.acceptance_criteria_gherkin}}` |
+| `## Acceptance criteria` | `{{jira.acceptance_criteria}}` |
 | `## Scope` | `{{jira.scope}}` |
 | `## Out of scope` | `{{jira.out_of_scope}}` |
 
@@ -50,7 +50,7 @@ If you see any of these H2 headings in a description body, the story has a dupli
 
 Called from `story-refinement.md` ready-for-dev gate. Returns a structured report to the user.
 
-1. Fetch the story via `[ISSUE_TRACKER_TOOL]`. Include the description body AND the three dedicated custom fields: `{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`.
+1. Fetch the story via `[ISSUE_TRACKER_TOOL]`. Include the description body AND the three dedicated custom fields: `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`.
 2. Parse the description body. Detect any of the forbidden H2 sections: `## Acceptance criteria`, `## Scope`, `## Out of scope`. Case-insensitive match; variants like `## ACs` or `## Acceptance Criteria` all count.
 3. For each forbidden section found:
    - Read the section content.

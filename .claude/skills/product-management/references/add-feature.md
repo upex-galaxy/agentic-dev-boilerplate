@@ -40,18 +40,18 @@ Las IDs numéricas de Jira (`customfield_NNNNN`) varían por workspace y NO vive
 
 **Slugs que este workflow escribe** (semántica de cada campo):
 
-- `{{jira.acceptance_criteria_gherkin}}` — escenarios Given/When/Then. Fuente única de verdad para AC.
+- `{{jira.acceptance_criteria}}` — escenarios Given/When/Then. Fuente única de verdad para AC.
 - `{{jira.business_rules_specification}}` — reglas de negocio específicas de la story (validaciones, invariantes de dominio).
 - `{{jira.scope}}` — in-scope únicamente. Lo excluido va a `out_of_scope`.
 - `{{jira.out_of_scope}}` — exclusiones explícitas y complementarias a `scope` (no cross-pollination entre ambos).
 - `{{jira.mockup}}` — URLs de Figma / wireframes / referencias visuales.
 - `{{jira.workflow}}` — descripción del flujo de trabajo cuando es complejo.
-- `{{jira.weblink_url}}` — URL de la app/feature. Llenar SOLO si el dominio se conoce con certeza; en duda, omitir.
+- `{{jira.weblink}}` — URL de la app/feature. Llenar SOLO si el dominio se conoce con certeza; en duda, omitir.
 - `{{jira.story_points}}` — estimación en Fibonacci (1, 2, 3, 5, 8, 13).
 
 **Operación → tool layer.** Toda escritura/lectura contra Jira se expresa como `[ISSUE_TRACKER_TOOL]` pseudo-código. El skill consumidor (AI runtime) resuelve la herramienta vía la tabla `CLAUDE.md` §6 (primary `/acli`, fallback Atlassian MCP, last resort REST). Para la matriz operación → capa de herramienta, ver `references/jira-operations.md`. Para gotchas de publicación a campos rich-text (ADF), ver `references/jira-publishing-gotchas.md`.
 
-> **Nota sobre `{{jira.weblink_url}}`.** Es opcional y solo debe llenarse si: (a) la IA conoce con certeza el dominio de la app bajo prueba (sistema prompt o contexto explícito del proyecto), o (b) el usuario proporcionó la URL. En duda → NO llenar.
+> **Nota sobre `{{jira.weblink}}`.** Es opcional y solo debe llenarse si: (a) la IA conoce con certeza el dominio de la app bajo prueba (sistema prompt o contexto explícito del proyecto), o (b) el usuario proporcionó la URL. En duda → NO llenar.
 
 ---
 
@@ -242,14 +242,14 @@ Antes de clasificar, pregúntate:
 
 | Slug                                       | Contenido                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `{{jira.acceptance_criteria_gherkin}}`     | Escenarios Given/When/Then (mínimo 3: 1 happy + 2 error/edge)                      |
+| `{{jira.acceptance_criteria}}`     | Escenarios Given/When/Then (mínimo 3: 1 happy + 2 error/edge)                      |
 | `{{jira.scope}}`                           | In-scope únicamente (lista de bullets)                                              |
 | `{{jira.out_of_scope}}`                    | Exclusiones explícitas (complementario a `scope`, sin cross-pollination)            |
 | `{{jira.story_points}}`                    | Fibonacci: 1, 2, 3, 5, 8, 13                                                        |
 | `{{jira.business_rules_specification}}`    | Reglas de negocio (opcional)                                                        |
 | `{{jira.mockup}}`                          | URLs de Figma / diseños (opcional)                                                  |
 | `{{jira.workflow}}`                        | Descripción del flujo si es complejo (opcional)                                     |
-| `{{jira.weblink_url}}`                     | URL de la app SOLO si se conoce con certeza (condicional, ver nota en sección de slugs) |
+| `{{jira.weblink}}`                     | URL de la app SOLO si se conoce con certeza (condicional, ver nota en sección de slugs) |
 
 **Procedimiento:**
 
@@ -607,14 +607,14 @@ Incluye todas las secciones:
 
 | Slug                                       | Contenido                                                                          |
 | ------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `{{jira.acceptance_criteria_gherkin}}`     | Escenarios Given/When/Then                                                          |
+| `{{jira.acceptance_criteria}}`     | Escenarios Given/When/Then                                                          |
 | `{{jira.scope}}`                           | In-scope únicamente                                                                 |
 | `{{jira.out_of_scope}}`                    | Exclusiones explícitas                                                              |
 | `{{jira.story_points}}`                    | Fibonacci                                                                           |
 | `{{jira.business_rules_specification}}`    | Reglas de negocio (opcional)                                                        |
 | `{{jira.mockup}}`                          | URLs de diseños (opcional)                                                          |
 | `{{jira.workflow}}`                        | Flujo si es complejo (opcional)                                                     |
-| `{{jira.weblink_url}}`                     | URL de la app (condicional, omitir en duda)                                         |
+| `{{jira.weblink}}`                     | URL de la app (condicional, omitir en duda)                                         |
 
 **Procedimiento:**
 

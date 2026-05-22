@@ -36,13 +36,13 @@ Custom-field IDs vary per workspace (`customfield_10201` in one tenant, `customf
 
 Slugs written by this workflow:
 
-- `{{jira.acceptance_criteria_gherkin}}` — Gherkin-formatted scenarios (Given / When / Then).
+- `{{jira.acceptance_criteria}}` — Gherkin-formatted scenarios (Given / When / Then).
 - `{{jira.business_rules_specification}}` — domain rules and validations.
 - `{{jira.scope}}` — in-scope bullets only (no out-of-scope mixed in).
 - `{{jira.out_of_scope}}` — explicit exclusions; complementary to `scope`.
 - `{{jira.mockup}}` — design references (Figma URLs etc.).
 - `{{jira.workflow}}` — narrative description of a non-trivial flow.
-- `{{jira.weblink_url}}` — app URL for the story (conditional — only when known with certainty).
+- `{{jira.weblink}}` — app URL for the story (conditional — only when known with certainty).
 - `{{jira.story_points}}` — Fibonacci estimate (1, 2, 3, 5, 8, 13).
 
 Field reads/writes route through `[ISSUE_TRACKER_TOOL]`; the owning tool skill resolves the slug → numeric ID before issuing the call. See `references/jira-operations.md` for the routing decision table.
@@ -67,7 +67,7 @@ Epic summaries follow the same rule: no `FR-` or `EPIC-` prefix in the summary t
 
 ## No content duplication
 
-The story description body and the dedicated custom fields hold **disjoint** content. Acceptance Criteria, Scope, and Out-of-Scope live **exclusively** in their custom fields (`{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`); they never appear as H2/H3 sections inside the description.
+The story description body and the dedicated custom fields hold **disjoint** content. Acceptance Criteria, Scope, and Out-of-Scope live **exclusively** in their custom fields (`{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`); they never appear as H2/H3 sections inside the description.
 
 Canonical description body sections:
 
@@ -84,7 +84,7 @@ Full rationale + audit procedure → `references/description-custom-field-dedup.
 
 ## Rich-text gotchas
 
-Every step in this workflow that writes to a Jira rich-text field (description, `{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`, `{{jira.business_rules_specification}}`, `{{jira.workflow}}`) is subject to ADF-conversion bugs documented in `references/jira-publishing-gotchas.md`. Read that reference once before the first write; cite it from every step below that publishes rich text.
+Every step in this workflow that writes to a Jira rich-text field (description, `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`, `{{jira.business_rules_specification}}`, `{{jira.workflow}}`) is subject to ADF-conversion bugs documented in `references/jira-publishing-gotchas.md`. Read that reference once before the first write; cite it from every step below that publishes rich text.
 
 ---
 
@@ -400,16 +400,16 @@ If any criterion fails, split or rewrite the story before creating it. Never pus
 - Priority: `High | Medium | Low`.
 - Labels: `mvp` (plus project-specific).
 - Custom fields (slug-resolved at the tool layer):
-  - `{{jira.acceptance_criteria_gherkin}}` — minimum 3 Gherkin scenarios (1 happy path + 2 edge / error cases).
+  - `{{jira.acceptance_criteria}}` — minimum 3 Gherkin scenarios (1 happy path + 2 edge / error cases).
   - `{{jira.scope}}` — in-scope bullets only.
   - `{{jira.out_of_scope}}` — explicit exclusions.
   - `{{jira.story_points}}` — Fibonacci value (1, 2, 3, 5, 8, 13). 13 is a smell — split.
   - `{{jira.business_rules_specification}}` — optional.
   - `{{jira.mockup}}` — optional.
   - `{{jira.workflow}}` — optional.
-  - `{{jira.weblink_url}}` — conditional; only when the app URL is known with certainty (from `.agents/project.yaml` or explicit user input). When in doubt, leave empty.
+  - `{{jira.weblink}}` — conditional; only when the app URL is known with certainty (from `.agents/project.yaml` or explicit user input). When in doubt, leave empty.
 
-**Rich-text caveat**: every custom field above is an ADF rich-text field except `{{jira.story_points}}` (number) and `{{jira.weblink_url}}` (URL string). Apply `references/jira-publishing-gotchas.md` rules — split the update into one call per ADF field if your tool layer requires it.
+**Rich-text caveat**: every custom field above is an ADF rich-text field except `{{jira.story_points}}` (number) and `{{jira.weblink}}` (URL string). Apply `references/jira-publishing-gotchas.md` rules — split the update into one call per ADF field if your tool layer requires it.
 
 **No-invent rule**: AC, Scope, Out-of-Scope, and Business Rules must derive from observable evidence (PRD, SRS, business maps, user journeys, explicit user input). If a field has no source, mark the gap in working memory and leave the slug empty rather than fabricating content.
 
@@ -526,7 +526,7 @@ Use this section ONLY when the flow description does not fit in `{{jira.workflow
 - [ ] Documentation updated (README, API docs).
 - [ ] Deployed to staging.
 - [ ] QA testing passed.
-- [ ] Acceptance criteria validated against `{{jira.acceptance_criteria_gherkin}}`.
+- [ ] Acceptance criteria validated against `{{jira.acceptance_criteria}}`.
 - [ ] No critical / high bugs open.
 
 ---
@@ -551,7 +551,7 @@ See: refined ACs + edge cases for the story — `acceptance-criteria.md` and `ed
 - **API contracts:** `.context/SRS/api-contracts.yaml`
 ```
 
-> Acceptance Criteria, Scope, and Out-of-Scope are deliberately absent from this template. They live in the Jira custom fields (`{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`) populated in 2.4. Cross-link: `references/description-custom-field-dedup.md`.
+> Acceptance Criteria, Scope, and Out-of-Scope are deliberately absent from this template. They live in the Jira custom fields (`{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`) populated in 2.4. Cross-link: `references/description-custom-field-dedup.md`.
 
 ---
 
