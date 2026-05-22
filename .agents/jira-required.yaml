@@ -28,13 +28,13 @@
 
 required:
   # ---- Story / User-story fields (consumed by scripts/sync-jira-issues.ts) ----
-  acceptance_criteria_gherkin:
+  acceptance_criteria:
     name: ✅ Acceptance Criteria (Gherkin)
     type: string
     description: Gherkin-formatted acceptance criteria attached to user stories.
     used_by: [sync-jira-issues, sprint-development]
 
-  acceptance_test_results_atr:
+  acceptance_test_results:
     name: 🧪 Acceptance Test Results (ATR)
     type: string
     description: |
@@ -84,16 +84,42 @@ required:
     description: Agile estimate for the story (planning poker).
     used_by: [sync-jira-issues]
 
-  weblink_url:
+  weblink:
     name: Weblink (URL) 🌍️
     type: string
     description: External reference URL attached to the story.
     used_by: [sync-jira-issues]
 
+  # ---- Dev-side planning fields (Epic + Story level) ----
+  # Consumed by sprint-development/references/{feature-plan,story-plan,implement-story}.md
+  # — the dev-side workflow stores its planning artifacts on Jira so the loop
+  # survives session resets (Jira is the source of truth, local files are caches).
+  feature_implementation_plan:
+    name: Feature Implementation Plan (Dev)🛠️
+    type: string
+    description: |
+      Epic-level technical implementation plan authored by sprint-development's
+      planning stage. Mirrors the body of `.context/PBI/{module}/{EPIC}-*/feature-plan.md`
+      onto the Epic in Jira so the plan survives local-context loss.
+    used_by:
+      - sprint-development/references/feature-plan.md
+
+  spec_implementation_plan:
+    name: Spec Implementation Plan (Dev)🛠️
+    type: string
+    description: |
+      Story-level technical implementation plan authored by sprint-development's
+      planning stage (per-story slice of the parent feature plan). Mirrors the
+      body of `.context/PBI/{module}/{STORY}-*/implementation-plan.md` onto the
+      Story in Jira so the plan survives local-context loss.
+    used_by:
+      - sprint-development/references/story-plan.md
+      - sprint-development/references/implement-story.md
+
   # ---- Bug / Defect fields ----
   # Consumed by scripts/sync-jira-issues.ts + sprint-development/references/bug-fix-workflow.md
   # (dev side) and the agentic-qa-boilerplate sister repo (sprint-testing/bug-report).
-  actual_result_comportamiento:
+  actual_result:
     name: 🐞 Actual Result (Comportamiento)
     type: string
     description: Observed behavior captured during bug repro.
@@ -102,7 +128,7 @@ required:
       - sprint-development/references/bug-fix-workflow.md
       - agentic-qa-boilerplate (sprint-testing)
 
-  expected_result_output:
+  expected_result:
     name: ✅ Expected Result (Output)
     type: string
     description: 'Expected behavior per acceptance criteria, contrasted against the bug.'
@@ -152,7 +178,7 @@ required:
       - integration_error
       - requirement_error
       - third_party_error
-      - working_as_designed_wad
+      - working_as_designed
     description: 'Post-mortem cause classification, set after the fix.'
     used_by:
       - sync-jira-issues
@@ -189,7 +215,7 @@ required:
 
   # ---- TMS Modality B fields (Jira-native, no Xray) ----
   # QA-side fields kept here so a single Jira workspace can serve both repos.
-  acceptance_test_plan_atp:
+  acceptance_test_plan:
     name: 🧪 Acceptance Test Plan (ATP)
     type: string
     description: |
@@ -207,7 +233,7 @@ required:
 
 optional:
   # Fields that enhance the workflow but won't break it if missing.
-  to_be_automated_qa:
+  to_be_automated:
     name: To Be Automated (QA)🧪
     type: option
     options: [yes, no]
