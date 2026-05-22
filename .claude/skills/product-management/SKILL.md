@@ -278,7 +278,7 @@ This skill uses standard `.agents/project.yaml` variables resolved at runtime:
 
 In addition, every Jira-side identifier (custom field, status, link type) is resolved via slug indirection. `.agents/jira-required.yaml` is the canonical slug catalog:
 
-- `{{jira.<slug>}}` — custom-field IDs resolved via `.agents/jira-required.yaml` + `.agents/jira-fields.json`. Examples: `{{jira.acceptance_criteria_gherkin}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`, `{{jira.business_rules_specification}}`, `{{jira.workflow}}`, `{{jira.weblink_url}}`, `{{jira.mockup}}`.
+- `{{jira.<slug>}}` — custom-field IDs resolved via `.agents/jira-required.yaml` + `.agents/jira-fields.json`. Examples: `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`, `{{jira.business_rules_specification}}`, `{{jira.workflow}}`, `{{jira.weblink}}`, `{{jira.mockup}}`.
 - `{{jira.statuses.<slug>}}` — default statuses for newly-created items. Examples: `{{jira.statuses.epic_default}}` (default literal `Planning`), `{{jira.statuses.story_default}}` (default literal `Shift-Left QA`).
 - `{{jira.link_types.<slug>}}` — link-type names resolved via `.agents/jira-link-types.json`. Sub-fields: `.outward`, `.inward`, `.fallback`. Examples: `{{jira.link_types.dependencies}}`, `{{jira.link_types.dependencies.outward}}` (`depends on`), `{{jira.link_types.dependencies.inward}}` (`is dependency for`), `{{jira.link_types.dependencies.fallback}}` (`relates`).
 

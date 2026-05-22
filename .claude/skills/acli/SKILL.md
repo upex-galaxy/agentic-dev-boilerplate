@@ -383,6 +383,18 @@ done
 - One workflow covers every rich-text surface uniformly: descriptions, comments, custom fields, all the same three steps.
 - Identifier-heavy prose (snake_case, kebab-case) survives the conversion because the italic detection has word-boundary guards.
 
+## Anti-patterns — NEVER do these
+
+These are formal companions to the gotchas section below. Gotchas describe *surprising behavior to remember*; anti-patterns describe *actions to refuse outright*. Both apply.
+
+- **A1.** NEVER run a `bun run jira:sync-*` script without a fresh `acli jira auth login` — stale or expired auth produces silent partial-data syncs that poison `.agents/jira-fields.json` / `jira-workflows.json` / `jira-link-types.json` downstream.
+- **A2.** NEVER hardcode Jira `customfield_NNNNN` IDs in prompts, skills, or scripts. Resolve via the slug catalog (`{{jira.<slug>}}` against `.agents/jira-required.yaml` + `.agents/jira-fields.json`). IDs differ per workspace; slugs travel.
+- **A3.** NEVER assume `acli jira workitem edit` accepts custom-field input. It hard-rejects every shape (`additionalAttributes`, `fields`, flat `customfield_X`) with exit 1. Use the REST `PUT /rest/api/3/issue/{KEY}` workaround documented above — there is no acli-native path.
+- **A4.** NEVER hand-author raw ADF JSON for rich-text fields. Use `scripts/md-to-adf.ts` — deterministic, diffable, snake_case-safe, and avoids the combined-marks bug (inline `code` co-occurring with `strong`/`em` causes HTTP 400).
+- **A5.** NEVER use `acli` against a production Jira workspace from a developer workstation without an explicit per-operation confirmation step. Transitions, deletions, and bulk edits are irreversible — `--yes` in CI is fine, `--yes` ad-hoc against prod is not.
+- **A6.** NEVER batch transitions or mutations with quiet flags in CI without capturing the full per-item response (HTTP code, trace ID, JSON). Failures hide otherwise, and trace IDs are the only debug signal Atlassian Support accepts.
+- **A7.** NEVER assume teammates run the same `acli` version. Pin a minimum version in CI and document it in `docs/`. Subcommand surfaces (e.g. `workitem` vs legacy `issue`) and flag shapes have shifted across minor releases.
+
 ## Five gotchas to keep in mind always
 
 1. **`--paginate` is opt-in.** Default limit is server-side (30–50 depending on command). No warning on truncation. If you are counting, iterating, or making decisions based on the result, pass `--paginate`.
