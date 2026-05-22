@@ -431,12 +431,20 @@ interface LinkTypeReport {
   fallbackSlug?: string
 }
 
-function loadLinkTypesCatalog(): Record<string, { name: string }> | null {
+interface LinkTypeCatalogEntry {
+  id?: string
+  name?: string
+  outward?: string
+  inward?: string
+  exists_in_workspace?: boolean
+}
+
+function loadLinkTypesCatalog(): Record<string, LinkTypeCatalogEntry> | null {
   if (!existsSync(LINK_TYPES_PATH)) { return null; }
   try {
     const parsed = JSON.parse(readFileSync(LINK_TYPES_PATH, 'utf8')) as unknown;
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as Record<string, { name: string }>;
+      return parsed as Record<string, LinkTypeCatalogEntry>;
     }
   }
   catch {
@@ -445,9 +453,20 @@ function loadLinkTypesCatalog(): Record<string, { name: string }> | null {
   return null;
 }
 
+/**
+ * A slug counts as "resolved in workspace" only when its catalog entry exists
+ * AND its `exists_in_workspace` flag is not explicitly false. The sync script
+ * keeps declared-but-missing slugs in the catalog as stubs with
+ * `exists_in_workspace: false` — those must NOT pass validation.
+ */
+function isWorkspaceResolved(entry: LinkTypeCatalogEntry | undefined): boolean {
+  if (!entry) { return false; }
+  return entry.exists_in_workspace !== false;
+}
+
 function checkLinkTypes(
   manifest: Manifest,
-  catalog: Record<string, { name: string }> | null,
+  catalog: Record<string, LinkTypeCatalogEntry> | null,
 ): { results: LinkTypeReport[], deferred: boolean } {
   const results: LinkTypeReport[] = [];
   const deferred = catalog === null;
@@ -457,12 +476,12 @@ function checkLinkTypes(
       results.push({ slug, scope: 'required', severity: 'deferred', expected: entry });
       continue;
     }
-    if (catalog[slug]) {
+    if (isWorkspaceResolved(catalog[slug])) {
       results.push({ slug, scope: 'required', severity: 'ok', expected: entry });
       continue;
     }
     const fb = entry.fallback ?? null;
-    if (fb && (catalog[fb] || manifest.linkTypesOptional[fb])) {
+    if (fb && isWorkspaceResolved(catalog[fb])) {
       results.push({
         slug,
         scope: 'required',
@@ -480,7 +499,7 @@ function checkLinkTypes(
       results.push({ slug, scope: 'optional', severity: 'deferred', expected: entry });
       continue;
     }
-    const present = Boolean(catalog[slug]);
+    const present = isWorkspaceResolved(catalog[slug]);
     results.push({
       slug,
       scope: 'optional',
