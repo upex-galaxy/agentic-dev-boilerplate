@@ -389,9 +389,13 @@ async function fetchWorkspaceLinkTypes(config: Config): Promise<WorkspaceLinkTyp
 /**
  * Slugify a Jira link-type name into a stable lowercase identifier. Identical
  * rules to `sync-jira-fields.ts:slugify` so e.g. "Dependencies" → `dependencies`.
+ *
+ * Parenthetical decorators are stripped (see sync-jira-fields.ts header for
+ * rationale).
  */
 function slugify(name: string): string {
-  let s = name.toLowerCase();
+  let s = name.replace(/\s*\([^)]*\)\s*/g, ' ');
+  s = s.toLowerCase();
   s = s.normalize('NFD').replace(/\p{M}/gu, '');
   s = s.replace(/\p{Extended_Pictographic}/gu, '');
   s = s.replace(/\u{200D}/gu, '');

@@ -540,14 +540,23 @@ async function fetchChildOptions(
  *   6. trim leading/trailing `_`
  *
  * Examples:
- *   "🔥 Severity (Bug)"        → "severity_bug"
+ *   "🔥 Severity (Bug)"        → "severity"
  *   "Plan de Aceptación"       → "plan_de_aceptacion"
  *   "Acceptance Test Plan"     → "acceptance_test_plan"
- *   "Story Points (Numeric)"   → "story_points_numeric"
+ *   "Story Points (Numeric)"   → "story_points"
+ *
+ * Parenthetical decorators ("(Dev)", "(QA)", "(Bug)", etc.) are STRIPPED
+ * before slugify. Workspaces use parens to disambiguate field names visually;
+ * the methodology slug stays semantic and the decoration is workspace cosmetic.
+ * If two real fields differ only by paren content, the `--allow-collisions`
+ * flag suffixes the second with `_2`, `_3`, ...
  */
 function slugify(name: string): string {
+  // 0. strip parenthetical decorators — see header doc.
+  let s = name.replace(/\s*\([^)]*\)\s*/g, ' ');
+
   // 1. lowercase
-  let s = name.toLowerCase();
+  s = s.toLowerCase();
 
   // 2. strip diacritics — NFD splits "á" into "a" + U+0301; the property
   // class `\p{M}` matches every combining mark, so we drop them all.
@@ -713,6 +722,14 @@ async function buildFieldsOutput(
   }> = [];
 
   for (const field of fields) {
+    // Skip `(migrated …)` plugin-debris fields. These are snapshots left behind
+    // by a Jira plugin migration (e.g. the Jira Cloud Service Desk migrator)
+    // and are not real methodology surface. Including them causes spurious
+    // slug collisions with the live field of the same name once parenthetical
+    // decorators are stripped from slugify (see `slugify()` header).
+    if (/\(\s*migrated\b[^)]*\)/i.test(field.name)) {
+      continue;
+    }
     const baseSlug = slugify(field.name);
     if (!baseSlug) {
       log.warn(`Field "${field.name}" (${field.id}) slugified to empty string — skipping.`);
