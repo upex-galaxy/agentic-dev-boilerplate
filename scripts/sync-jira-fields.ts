@@ -600,6 +600,26 @@ function slugify(name: string): string {
 const USER_MANAGED_PREFIX = 'com.atlassian.jira.plugin.system.customfieldtypes:';
 
 /**
+ * Plugin-managed (system) fields from these providers are always kept in the
+ * sync output even when not declared in `jira-required.yaml`. These are
+ * Jira-built-in essentials that methodology may consume implicitly through
+ * issue APIs without going through a `{{jira.<slug>}}` reference:
+ *
+ *   - `com.pyxis.greenhopper.jira` — Jira Software: Epic Link, Epic Name,
+ *     Epic Status, Epic Color, Sprint, Rank, Issue color, Flagged.
+ *   - `com.atlassian.jpo` — Advanced Roadmaps: Parent Link, Target start,
+ *     Target end.
+ *
+ * Everything else that is plugin-managed (servicedesk, jira-development-
+ * integration-plugin, proforma, charting, sentiment, approvals, ...) gets
+ * skipped unless explicitly named in the manifest. See `shouldSkipField()`.
+ */
+const ALWAYS_KEEP_PLUGIN_PROVIDERS = new Set<string>([
+  'com.pyxis.greenhopper.jira',
+  'com.atlassian.jpo',
+]);
+
+/**
  * Classify a Jira custom field as user-managed (created in the Jira admin UI,
  * renameable, deletable) or system-managed (provided by a plugin such as
  * Jira Software / Service Management / Advanced Roadmaps; cannot be renamed
@@ -721,6 +741,7 @@ async function buildFieldsOutput(
     provider: string
   }> = [];
 
+  let skippedPluginDebris = 0;
   for (const field of fields) {
     // Skip `(migrated …)` plugin-debris fields. These are snapshots left behind
     // by a Jira plugin migration (e.g. the Jira Cloud Service Desk migrator)
@@ -735,12 +756,28 @@ async function buildFieldsOutput(
       log.warn(`Field "${field.name}" (${field.id}) slugified to empty string — skipping.`);
       continue;
     }
-    const occurrences = (slugCounts.get(baseSlug) ?? 0) + 1;
-    slugCounts.set(baseSlug, occurrences);
-    const slug = occurrences === 1 ? baseSlug : `${baseSlug}_${occurrences}`;
     const { type, hasOptions } = detectFieldType(field);
     const userManaged = isUserManaged(field);
     const provider = extractProvider(field);
+
+    // Skip plugin-managed (LOCKED in Jira UI) fields that are NOT in the always-
+    // keep provider allowlist AND are NOT declared in jira-required.yaml.
+    // Methodology consumes user-managed fields explicitly via slugs and a
+    // small set of Jira-built-in essentials (Epic Link, Sprint, Rank, Parent
+    // Link). Everything else from servicedesk, jira-development-integration-
+    // plugin, proforma, charting, sentiment, approvals, etc. is plugin debris
+    // for our purposes — keeping it inflates the cache and clutters the Jira
+    // admin UI with no methodology benefit.
+    if (!userManaged
+      && !ALWAYS_KEEP_PLUGIN_PROVIDERS.has(provider)
+      && !declaredSlugs.has(baseSlug)) {
+      skippedPluginDebris++;
+      continue;
+    }
+
+    const occurrences = (slugCounts.get(baseSlug) ?? 0) + 1;
+    slugCounts.set(baseSlug, occurrences);
+    const slug = occurrences === 1 ? baseSlug : `${baseSlug}_${occurrences}`;
 
     if (occurrences > 1) {
       // First-time we see a collision for this base slug, retroactively grab
@@ -932,6 +969,10 @@ async function buildFieldsOutput(
   const sortedOutput: JiraFieldsOutput = {};
   for (const k of Object.keys(output).sort()) {
     sortedOutput[k] = output[k]!;
+  }
+
+  if (skippedPluginDebris > 0) {
+    log.info(`Skipped ${skippedPluginDebris} plugin-managed field(s) not declared in jira-required.yaml (see ALWAYS_KEEP_PLUGIN_PROVIDERS for which plugin providers stay sync'd).`);
   }
 
   return { output: sortedOutput, stats, totalOptions, collisions: collisionGroups };

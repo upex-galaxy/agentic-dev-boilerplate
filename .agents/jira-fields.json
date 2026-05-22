@@ -24,13 +24,6 @@
     "type": "string",
     "name": "Affected hardware"
   },
-  "approvals": {
-    "id": "customfield_10025",
-    "type": "sd-approvals",
-    "name": "Approvals",
-    "system": true,
-    "provider": "com.atlassian.servicedesk.approvals-plugin"
-  },
   "approver_groups": {
     "id": "customfield_10193",
     "type": "array",
@@ -57,13 +50,6 @@
     "name": "Category",
     "options": {}
   },
-  "chart_time_in_status": {
-    "id": "customfield_10350",
-    "type": "any",
-    "name": "[CHART] Time in Status",
-    "system": true,
-    "provider": "com.atlassian.jira.ext.charting"
-  },
   "checklist_completed": {
     "id": "customfield_10149",
     "type": "string",
@@ -88,27 +74,6 @@
     "id": "customfield_10196",
     "type": "string",
     "name": "DESCRIPCIÓN DEL BUG"
-  },
-  "design": {
-    "id": "customfield_10038",
-    "type": "array",
-    "name": "Design",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.jira-development-integration-plugin"
-  },
-  "design_2": {
-    "id": "customfield_10033",
-    "type": "array",
-    "name": "Design",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.jira-development-integration-plugin"
-  },
-  "development": {
-    "id": "customfield_10000",
-    "type": "any",
-    "name": "Development",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.jira-development-integration-plugin"
   },
   "end_date": {
     "id": "customfield_10102",
@@ -247,37 +212,16 @@
     "system": true,
     "provider": "com.pyxis.greenhopper.jira"
   },
-  "locked_forms": {
-    "id": "customfield_10031",
-    "type": "number",
-    "name": "Locked forms",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.proforma-managed-fields"
-  },
   "mockup": {
     "id": "customfield_10186",
     "type": "string",
     "name": "Mockup 🎴"
-  },
-  "open_forms": {
-    "id": "customfield_10029",
-    "type": "number",
-    "name": "Open forms",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.proforma-managed-fields"
   },
   "operational_categorization": {
     "id": "customfield_10194",
     "type": "option-with-child",
     "name": "Operational categorization",
     "options": {}
-  },
-  "organizations": {
-    "id": "customfield_10002",
-    "type": "array",
-    "name": "Organizations",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
   },
   "out_of_scope": {
     "id": "customfield_10135",
@@ -333,20 +277,6 @@
     "type": "atlas-project",
     "name": "Project"
   },
-  "project_overview_key": {
-    "id": "customfield_10039",
-    "type": "string",
-    "name": "Project overview key",
-    "system": true,
-    "provider": "read-only-string-issue-field"
-  },
-  "project_overview_status": {
-    "id": "customfield_10040",
-    "type": "string",
-    "name": "Project overview status",
-    "system": true,
-    "provider": "read-only-string-issue-field"
-  },
   "qa_framework": {
     "id": "customfield_10124",
     "type": "option",
@@ -377,20 +307,6 @@
     "type": "string",
     "name": "Repro Steps (Input)"
   },
-  "request_participants": {
-    "id": "customfield_10210",
-    "type": "array",
-    "name": "Request participants",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
-  "request_type": {
-    "id": "customfield_10010",
-    "type": "sd-customerrequesttype",
-    "name": "Request Type",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
   "reviewer": {
     "id": "customfield_10130",
     "type": "user",
@@ -416,20 +332,6 @@
       "working_as_designed": "10237"
     }
   },
-  "satisfaction": {
-    "id": "customfield_10182",
-    "type": "sd-feedback",
-    "name": "Satisfaction",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
-  "satisfaction_date": {
-    "id": "customfield_10116",
-    "type": "datetime",
-    "name": "Satisfaction date",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
   "scenario": {
     "id": "customfield_10147",
     "type": "option",
@@ -443,13 +345,6 @@
     "id": "customfield_10142",
     "type": "string",
     "name": "Scope ⛳"
-  },
-  "sentiment": {
-    "id": "customfield_10024",
-    "type": "array",
-    "name": "Sentiment",
-    "system": true,
-    "provider": "com.atlassian.servicedesk.sentiment"
   },
   "severity": {
     "id": "customfield_10177",
@@ -524,13 +419,6 @@
       "21": "10232"
     }
   },
-  "submitted_forms": {
-    "id": "customfield_10030",
-    "type": "number",
-    "name": "Submitted forms",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.proforma-managed-fields"
-  },
   "target_end": {
     "id": "customfield_10023",
     "type": "date",
@@ -603,34 +491,6 @@
     "type": "string",
     "name": "🧪 Test Strategy"
   },
-  "time_to_close_after_resolution": {
-    "id": "customfield_10185",
-    "type": "sd-servicelevelagreement",
-    "name": "Time to close after resolution",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
-  "time_to_first_response": {
-    "id": "customfield_10184",
-    "type": "sd-servicelevelagreement",
-    "name": "Time to first response",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
-  "time_to_resolution": {
-    "id": "customfield_10106",
-    "type": "sd-servicelevelagreement",
-    "name": "Time to resolution",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
-  "time_to_review_normal_change": {
-    "id": "customfield_10168",
-    "type": "sd-servicelevelagreement",
-    "name": "Time to review normal change",
-    "system": true,
-    "provider": "com.atlassian.servicedesk"
-  },
   "to_be_automated": {
     "id": "customfield_10104",
     "type": "option",
@@ -639,13 +499,6 @@
       "no": "10269",
       "yes": "10268"
     }
-  },
-  "total_forms": {
-    "id": "customfield_10032",
-    "type": "number",
-    "name": "Total forms",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.proforma-managed-fields"
   },
   "upex_level": {
     "id": "customfield_10251",
@@ -669,6 +522,11 @@
       "medium": "10272"
     }
   },
+  "url_de_web": {
+    "id": "customfield_10215",
+    "type": "string",
+    "name": "URL de Web (Weblink)"
+  },
   "vcr_estimation": {
     "id": "customfield_10152",
     "type": "string",
@@ -679,29 +537,10 @@
     "type": "string",
     "name": "VERSIÓN DEL SISTEMA"
   },
-  "vulnerability": {
-    "id": "customfield_10034",
-    "type": "any",
-    "name": "Vulnerability",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.jira-development-integration-plugin"
-  },
-  "vulnerability_2": {
-    "id": "customfield_10037",
-    "type": "any",
-    "name": "Vulnerability",
-    "system": true,
-    "provider": "com.atlassian.jira.plugins.jira-development-integration-plugin"
-  },
   "weblink": {
     "id": "customfield_10159",
     "type": "string",
-    "name": "Weblink (URL) 🌍️"
-  },
-  "weblink_url": {
-    "id": "customfield_10215",
-    "type": "string",
-    "name": "Weblink URL (preview)"
+    "name": "Weblink (URL)"
   },
   "workaround": {
     "id": "customfield_10109",
