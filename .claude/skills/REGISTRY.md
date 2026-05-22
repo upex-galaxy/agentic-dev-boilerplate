@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-05-21T00:51:28.404Z`
+> Generated: `2026-05-22T05:22:31.488Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -164,13 +164,13 @@ Skills indexed: 11
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
 - `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — these ship with the cloned boilerplate; if missing, clone the full repo
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
-- Read `complementary_categories` from this skill's frontmatter (`issue-tracker`, `creativity`).
-- Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.claude/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
-- For each matched skill, classify tier per strategy doc §2.
-- Apply threshold rule per strategy doc §3.2:
-- **T1 / T3** matches → load silently. Cache for the session.
-- **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this PM workflow? Y/N"`. Cache the answer for the session.
-- When dispatching sub-agents (backlog seeding, story refinement, AC enumeration, sprint reporting), inject a `## Composable Skills` block per strategy doc §6.2.
+- `.agents/project.yaml` — project identity, env URLs, project key, MCP names.
+- `.agents/jira-required.yaml` — canonical slug catalog (fields + statuses + link types).
+- `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping.
+- `.agents/jira-workflows.json` — workflow + transition catalog.
+- `.agents/jira-link-types.json` — slug → workspace link-type mapping (when present).
+- `.context/master-implementation-plan.md` — Master Sprint roadmap.
+- `.context/PRD/mvp-scope.md` — what's in vs out of the MVP.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
