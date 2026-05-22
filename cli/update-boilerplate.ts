@@ -402,6 +402,7 @@ async function main(): Promise<void> {
     deprecatedFiles: DEPRECATED_FILES,
     bootstrapOnlyPaths: AGENTS_BOOTSTRAP_FILES.map(f => `.agents/${f}`),
     agentsFrameworkFiles: AGENTS_FRAMEWORK_FILES,
+    selfUpdateComponent: 'cli',
   };
 
   tui.intro(tui.headline(`UPEX Boilerplate Updater v${CLI_VERSION}`));
