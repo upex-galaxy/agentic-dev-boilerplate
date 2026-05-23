@@ -24,9 +24,8 @@ const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template/boilerplate.lock.json';
 
 const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore'];
-const EXAMPLE_FILES: string[] = [];
 const AGENTS_FRAMEWORK_FILES = ['README.md', 'jira-required.yaml'];
-const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json'];
+const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json', 'jira-link-types.json'];
 const SCRIPTS_FILES = ['lint-vars.ts', 'agents-setup.ts', 'check-jira-setup.ts', 'sync-jira-issues.ts', 'sync-jira-fields.ts', 'sync-jira-workflows.ts'];
 const AGENTS_DOCS_FILES = ['README.md'];
 const CLAUDE_CONFIG_FILES = ['settings.json'];
@@ -53,13 +52,12 @@ const COMPONENTS: Component[] = [
   { name: 'scripts', type: 'file-list', paths: ['scripts'], files: SCRIPTS_FILES },
   { name: 'cli', type: 'directory', paths: ['cli'] },
   { name: 'docs', type: 'directory', paths: ['docs'] },
-  { name: 'context', type: 'directory', paths: ['.context'] },
+  { name: 'context', type: 'directory', paths: ['.context'], bootstrapOnly: true, frameworkFiles: ['README.md'] },
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'docs-mcp', type: 'directory', paths: ['docs/mcp'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   { name: 'husky', type: 'directory', paths: ['.husky'] },
   { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
-  { name: 'examples', type: 'file-list', paths: ['.'], files: EXAMPLE_FILES },
 ];
 
 // --- ARG PARSE ---
