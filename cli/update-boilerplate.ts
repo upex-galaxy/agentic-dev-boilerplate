@@ -397,6 +397,9 @@ async function main(): Promise<void> {
     versionFile: VERSION_FILE,
     components,
     ignoreFiles: ['.gitignore', '.prettierignore'].map(p => ({ path: p, sentinel: '# ===== Synced from boilerplate' })),
+    packageJsonSpecs: [
+      { path: 'package.json', sections: ['scripts', 'devDependencies'] },
+    ],
     deprecatedFiles: DEPRECATED_FILES,
     bootstrapOnlyPaths: AGENTS_BOOTSTRAP_FILES.map(f => `.agents/${f}`),
     agentsFrameworkFiles: AGENTS_FRAMEWORK_FILES,
