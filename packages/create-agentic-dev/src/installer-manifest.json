@@ -227,9 +227,9 @@
         "name": "supabase",
         "envVars": [
           "SUPABASE_ACCESS_TOKEN",
-          "SUPABASE_URL",
-          "SUPABASE_ANON_KEY",
-          "SUPABASE_SERVICE_ROLE_KEY"
+          "NEXT_PUBLIC_SUPABASE_URL",
+          "SUPABASE_PUBLISHABLE_KEY",
+          "SUPABASE_SECRET_KEY"
         ],
         "purpose": "Supabase MCP — direct DB queries, schema introspection, project state."
       },
