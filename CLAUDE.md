@@ -167,6 +167,7 @@ Example (same work, different register):
 | `unit-testing`        | `/unit-testing`               | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`.                                                                                                                                                                                                      |
 | `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy.                                                                                                                                                                                                                              |
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
+| `vercel-cli`          | (auto on `vercel` Bash calls) | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env var sync (`.env` ↔ Preview/Production scopes), build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel`.                                          |
 
 > **Persistent memory** — `bun run setup` installs Engram via `gentle-ai install --preset minimal`. Active across sessions and compactions per §12 (proactive memory triggers). No other gentle-ai skills are installed.
 >
@@ -228,7 +229,7 @@ Example (same work, different register):
 | `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.   |
 | `gh`             | `/git-flow-master`                                                     | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
 | `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                  |
-| `vercel`         | `/deploy-to-vercel`, `/sprint-development`                             | Deploy CLI + sprint-dev's staging/prod deploy steps.                            |
+| `vercel`         | `/vercel-cli`, `/deploy-to-vercel`, `/sprint-development`              | Vercel CLI cookbook (verification, env, debug, rollback) + community deploy workflow + sprint deploy stages. |
 | `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                      |
 | `acli`           | `/acli`                                                                | Atlassian CLI — Jira/Confluence workflows. Owns slug syntax + custom-field IDs. |
 | `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation — used by sprint-dev E2E checks + standalone QA capture.     |
