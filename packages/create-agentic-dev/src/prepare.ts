@@ -145,8 +145,6 @@ const TEMPLATE_EXCLUDES: readonly string[] = [
   // "already populated" on first install).
   '.agents/jira-fields.json',
   '.agents/jira-workflows.json',
-  // Stale installer state from the boilerplate's own setup runs.
-  '.template/installer.state.json',
 ];
 
 /**
