@@ -556,8 +556,17 @@ function scanLines(
     try { text = readFileSync(file, 'utf8'); }
     catch { continue; }
     const lines = text.split('\n');
+    // Track fenced code blocks so structural rules (e.g. SKILL-DESC-HEADER)
+    // ignore template content that sits INSIDE ```fences``` — those lines are
+    // illustrative markdown samples, not real document structure.
+    let inFence = false;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        continue;
+      }
+      if (inFence) { continue; }
       pattern.lastIndex = 0;
       const m = pattern.exec(line);
       if (m === null) { continue; }
