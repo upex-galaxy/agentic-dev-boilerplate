@@ -190,8 +190,8 @@ Example (same work, different register):
 
 | MCP      | Use for                                         | Rule                                    |
 | -------- | ----------------------------------------------- | --------------------------------------- |
-| Tavily   | Web search, troubleshooting community solutions | `[WEB_SEARCH_TOOL]`                     |
-| Context7 | Library official docs ("how to use X")          | Prefer over web search for library APIs |
+| Tavily   | Web search, troubleshooting community solutions, non-doc research | `[WEB_SEARCH_TOOL]` primary. **MANDATORY** for any general web search — community fixes, error message lookups, "how to solve X". PREFER OVER built-in `WebSearch` / `WebFetch` — Tavily returns ranked + summarized results; built-in is shallower. |
+| Context7 | Library / framework / SDK / API / CLI official docs ("how to use X") | `[DOCS_TOOL]` primary. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup (React, Next, Prisma, Tailwind, Express, etc.). PREFER OVER built-in `WebSearch` / `WebFetch` — Context7 returns current versioned docs; built-in returns stale blog posts. |
 | Supabase | DB queries, schema, project state               | `[DB_TOOL]` primary                     |
 | n8n      | Workflow automation, integrations               | `[AUTOMATION_FLOWS_TOOL]`               |
 
@@ -208,8 +208,12 @@ Example (same work, different register):
 | `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | MCP Playwright                         |
 | `[DB_TOOL]`             | Database                          | Supabase MCP                              | raw SQL via Supabase CLI               |
 | `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
+| `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | Context7 MCP (`mcp__context7__resolve-library-id` → `mcp__context7__query-docs`) | built-in `WebSearch` / `WebFetch` (last resort only) |
+| `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | Tavily MCP (`mcp__tavily__tavily_search` / `tavily_extract` / `tavily_research`) | built-in `WebSearch` / `WebFetch` (last resort only) |
 
 **MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside owning skill's `references/`.
+
+**MCP-only tags** (`[DOCS_TOOL]`, `[WEB_SEARCH_TOOL]`): no skill load required — MCPs self-document via tool descriptions. But **NEVER** substitute these with built-in `WebSearch` / `WebFetch` when MCP available — Context7 and Tavily return higher-quality, current, ranked results. Built-ins are stale-blog-post traps for library docs.
 
 **Pseudocode value types**: `Literal` (fixed domain) · `{per convention}` (consult skill ref) · `{{PROJECT_VAR}}` (from `.agents/project.yaml`) · `{from analysis}` (runtime-derived).
 
