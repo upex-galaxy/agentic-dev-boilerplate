@@ -399,9 +399,15 @@ bun up --dry-run          # Preview what would change without writing anything
 bun up --rollback         # Restore from most recent backup
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run vars:check         # Validate {{VAR}} and {{jira.*}} references
-bun run jira:sync-fields  # Sync Jira custom fields -> .agents/jira-fields.json
+bun run jira:sync-fields            # Sync Jira custom fields (REQUIRES Jira Administer permission)
+bun run jira:sync-workflows         # Sync Jira workflows (REQUIRES Jira Administer permission)
+bun run jira:sync-link-types        # Sync issue-link types (USER-OK; no admin needed; manual-only)
+bun run jira:sync-fields --upex     # Download UPEX-standard JSON from upstream (no admin, no Jira API)
+bun run jira:sync-workflows --upex  # Same — bypasses Jira entirely, fetches upex-galaxy/agentic-dev-boilerplate@main
 bun run jira:check        # Validate Jira manifest vs catalog
 ```
+
+> **`--upex` flag** — every `jira:sync-*` script accepts `--upex` to download the UPEX-standard reference JSON from `upex-galaxy/agentic-dev-boilerplate@main` instead of hitting Jira. Use when you don't have admin access on your Jira workspace, when you want a working catalog without setting up auth, or when you want the canonical UPEX standard as a reference. Non-admin users running the regular `jira:sync-fields` / `jira:sync-workflows` get a pre-flight permission check + friendly skip pointing at `--upex` as the fallback.
 
 `bun up` ahora corre un sync per-archivo con tracking de SHAs por componente vía `.template/boilerplate.lock.json` (schema v6). Detecta archivos modificados localmente y prompta resolución (`[t]heirs / [m]ine / [s]kip`). El flag `--auto` aplica cambios seguros y salta los diverged — ideal para CI o flujos no-interactivos (siempre exit 0). El flag `--dry-run` simula el sync completo sin escribir nada; `--rollback` restaura desde el directorio de backup más reciente (`.backups/update-{ISO-ts}/`). Requiere git ≥ 2.25 (partial clone). Primera corrida sin `.template/boilerplate.lock.json`: bootstrap automático con bulk sync + escritura inicial del estado v6. Detalle del flujo y schema en el JSDoc header de `cli/update-boilerplate.ts` y vía `bun up --help`.
 
