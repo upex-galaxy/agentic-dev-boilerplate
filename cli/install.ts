@@ -1434,8 +1434,14 @@ function reloadDotEnv(): void {
       const eq = line.indexOf('=');
       if (eq < 0) { continue; }
       const k = line.slice(0, eq).trim();
-      const v = line.slice(eq + 1).trim().replace(/^['"]|['"]$/g, '');
-      if (k) { process.env[k] = v; }
+      let v = line.slice(eq + 1).trim();
+      // Strip only a *matched* surrounding quote pair — a lone quote is part of
+      // the value (e.g. a password) and must not be mangled.
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith('\'') && v.endsWith('\''))) {
+        v = v.slice(1, -1);
+      }
+      // Don't overwrite an already-populated value with an empty one from .env.
+      if (k && (v !== '' || !process.env[k])) { process.env[k] = v; }
     }
   }
   catch {
@@ -1622,6 +1628,7 @@ async function runPostInstallSteps(state: InstallState): Promise<void> {
       state.postInstall.acliAuth = 'skipped-non-interactive';
       process.stdout.write(`${tui.statusIcon('fail')} Missing ${missing.join(', ')} in environment / .env. Cannot authenticate acli non-interactively.\n`);
       process.stdout.write(`  Re-run manually: ${acliManualHint}\n`);
+      await writeInstallState(state);
       process.exit(1);
     }
     const probe = acliProbe();
@@ -1643,6 +1650,7 @@ async function runPostInstallSteps(state: InstallState): Promise<void> {
         state.postInstall.acliAuth = 'failed';
         process.stdout.write(`${tui.statusIcon('fail')} acli auth login failed (exit ${loginRes.status}).\n`);
         process.stdout.write(`  Re-run manually: ${acliManualHint}\n`);
+        await writeInstallState(state);
         process.exit(1);
       }
     }
@@ -1711,6 +1719,7 @@ async function runPostInstallSteps(state: InstallState): Promise<void> {
         state.postInstall.acliAuth = 'failed';
         process.stdout.write(`${tui.statusIcon('fail')} acli authentication failed after 3 attempts.\n`);
         process.stdout.write(`  Re-run manually: ${acliManualHint}\n`);
+        await writeInstallState(state);
         process.exit(1);
       }
     }
