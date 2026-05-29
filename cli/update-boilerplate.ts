@@ -23,7 +23,7 @@ const TEMPLATE_REPO = 'upex-galaxy/agentic-dev-boilerplate';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template/boilerplate.lock.json';
 
-const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore'];
+const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.prettierignore', '.gitattributes'];
 const AGENTS_FRAMEWORK_FILES = ['README.md', 'jira-required.yaml'];
 const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json', 'jira-link-types.json'];
 const SCRIPTS_FILES = ['lint-vars.ts', 'agents-setup.ts', 'check-jira-setup.ts', 'sync-jira-issues.ts', 'sync-jira-fields.ts', 'sync-jira-workflows.ts'];
