@@ -319,7 +319,9 @@ function which(binary: string): string | null {
   const result = spawnSync(probe, [binary], { encoding: 'utf8' });
   if (result.status !== 0) { return null; }
   const out = result.stdout.trim();
-  return out.length > 0 ? out : null;
+  // `where` prints one match per line; take the first.
+  const first = out.split(/\r?\n/)[0]?.trim() ?? '';
+  return first.length > 0 ? first : null;
 }
 
 function tryRun(binary: string, args: string[]): { ok: boolean, stdout: string, stderr: string } {
