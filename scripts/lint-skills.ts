@@ -495,9 +495,14 @@ const MASTER_PLAN_DOCS = [
  * sits outside any skill (e.g. a master-implementation-plan command doc).
  */
 function skillSlugForFile(file: string): string | null {
-  const prefix = `${SKILLS_DIR}/`;
-  if (!file.startsWith(prefix)) { return null; }
-  const rest = file.slice(prefix.length);
+  // Normalize separators before comparing. `SKILLS_DIR` and `file` are built with
+  // path.join (backslashes on Windows), but the prefix is forward-slash-suffixed.
+  // Without normalization every startsWith() fails on Windows, so no file maps to a
+  // skill slug and every tool-owner skill loses its SKILL-LITERAL-TOOL/CFID exemption.
+  const normFile = file.replace(/\\/g, '/');
+  const prefix = `${SKILLS_DIR.replace(/\\/g, '/')}/`;
+  if (!normFile.startsWith(prefix)) { return null; }
+  const rest = normFile.slice(prefix.length);
   const slash = rest.indexOf('/');
   return slash === -1 ? rest : rest.slice(0, slash);
 }
