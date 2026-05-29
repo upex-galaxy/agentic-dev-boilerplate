@@ -64,13 +64,14 @@ interface ParsedArgs {
   dryRun: boolean
   rollback: boolean
   auto: boolean
+  force: boolean
   updateMcpTemplate: McpAgent | null
 }
 
 const isMcpAgent = (v: string): v is McpAgent => (MCP_TEMPLATE_AGENTS as readonly string[]).includes(v);
 
 function parseArgs(args: string[]): ParsedArgs {
-  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, updateMcpTemplate: null };
+  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, updateMcpTemplate: null };
   const valid = new Set(COMPONENTS.map(c => c.name).concat(['all', 'help', 'rollback']));
   const aliases: Record<string, string> = { prompts: 'claude', books: 'claude', guidelines: 'context' };
   for (let i = 0; i < args.length; i++) {
@@ -79,6 +80,7 @@ function parseArgs(args: string[]): ParsedArgs {
     else if (a === '--auto') { out.auto = true; }
     else if (a === '--dry-run') { out.dryRun = true; }
     else if (a === '--rollback' || a === 'rollback') { out.rollback = true; }
+    else if (a === '--force') { out.force = true; }
     else if (a === '--update-mcp-template') {
       const n = args[i + 1];
       if (!n || !isMcpAgent(n)) {
@@ -409,6 +411,7 @@ async function main(): Promise<void> {
     auto: parsed.auto,
     dryRun: parsed.dryRun,
     rollback: false,
+    force: parsed.force,
   });
 
   process.stdout.write(`${tui.successBox([
