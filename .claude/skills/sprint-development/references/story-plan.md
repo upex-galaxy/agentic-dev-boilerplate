@@ -18,9 +18,9 @@ Las IDs numéricas de Jira (`customfield_NNNNN`) varían por workspace y NO vive
 **Input:**
 
 - Story: [usar .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md]
-- **Acceptance Test Plan (artefacto de la fase de planning):** Es una lectura DETALLADA (custom field + comentarios), así que SIEMPRE se materializa primero vía sync, nunca se lee el custom field por `view`:
-  1. **Sincroniza la Story** (preferido): `bun run jira:sync-issues get <STORY_KEY> --include-comments` materializa el campo `{{jira.acceptance_test_plan}}` y los comentarios bajo `.context/PBI/`.
-  2. **Lee los archivos materializados**: `.context/PBI/epics/.../stories/.../acceptance-test-plan.md` (del campo `{{jira.acceptance_test_plan}}`; si el campo está ausente la sync emite un stub apuntando al comentario fallback per `.agents/jira-required.yaml`) y `comments.md` (para comentarios con "Test Case", "TC-", "Scenario:", o tablas de test cases).
+- **Acceptance Test Plan (artefacto de la fase de planning):** Es una lectura DETALLADA, así que SIEMPRE se materializa primero vía sync, nunca se lee por `view`. Ramifica por modalidad (resuelta en planning):
+  1. **Modality jira-native** — ATP vive en el campo `{{jira.acceptance_test_plan}}` de la Story: `bun run jira:sync-issues get <STORY_KEY> --include-comments` materializa el campo + comentarios; lee `.context/PBI/epics/.../stories/.../acceptance-test-plan.md` (si el campo está ausente la sync emite un stub apuntando al comentario fallback) y `comments.md` (para "Test Case", "TC-", "Scenario:", o tablas de test cases).
+  2. **Modality jira-xray** — ATP vive en un issue `Test Plan` enlazado a la Story (su `description` contiene el cuerpo del ATP): `bun run jira:sync-issues get <ATP_KEY>` materializa `.context/PBI/test-plans/TESTPLAN-<ATP_KEY>-<slug>.md`; léelo. El `<ATP_KEY>` sale del enlace "tests" / "is tested by" de la Story (visible en `story.md` / `comments.md`). NUNCA uses `get <STORY_KEY>` para leer un ATP de Xray.
   3. **Fallback final**: `comments.md` / la descripción de la issue — ahí cae el comentario fallback `## Acceptance Test Plan` cuando el custom field está ausente (per `.agents/jira-required.yaml`).
 - Feature Implementation Plan: [usar .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/feature-implementation-plan.md — materializado por la sync desde el campo `{{jira.feature_implementation_plan}}` del Epic]
 - SRS relevante: [usar secciones relacionadas de .context/SRS/]
