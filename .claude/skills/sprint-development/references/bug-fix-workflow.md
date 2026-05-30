@@ -58,7 +58,7 @@ Analyze, triage, and fix bugs/defects reported during exploratory testing or pro
 
 This workflow splits Jira access two ways — they resolve to **different tools**:
 
-- **Detailed READS** (bug custom fields: `actual_result`, `expected_result`, `error_type`, `severity`, `test_environment`, `root_cause`, `fix`; description; comments for context) → **`bun run jira:sync-issues get <BUG-KEY> --include-comments`**, then read the materialized `.md` under `.context/PBI/`. The sync resolves every slug and converts ADF→Markdown; `[ISSUE_TRACKER_TOOL]` `view` returns `null` for `customfield_*` and MUST NOT be used to read these.
+- **Detailed READS** (bug custom fields: `actual_result`, `expected_result`, `error_type`, `severity`, `test_environment`, `root_cause`, `fix`; description; comments for context) → **`bun run jira:sync-issues get <BUG-KEY> --include-comments`**, then read the materialized `.md` files under `.context/PBI/`. The sync materializes the FULL synced bug folder (every per-field `.md` + `comments.md`); to fix a bug you MUST read the whole synced bug folder + comments — never omit custom fields, description, or comment context. The sync resolves every slug and converts ADF→Markdown; `[ISSUE_TRACKER_TOOL]` `view` returns `null` for `customfield_*` and MUST NOT be used to read these.
 - **WRITES** (transition issue status, add documentation comment, set bug custom fields) → `[ISSUE_TRACKER_TOOL]` (primary `/acli`, fallback Atlassian MCP per `CLAUDE.md` §6).
 
 **Check before starting:**

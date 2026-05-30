@@ -21,7 +21,7 @@ Las IDs numéricas de Jira (`customfield_NNNNN`) varían por workspace y NO vive
 - **Acceptance Test Plan (artefacto de la fase de planning):** Es una lectura DETALLADA (custom field + comentarios), así que SIEMPRE se materializa primero vía sync, nunca se lee el custom field por `view`:
   1. **Sincroniza la Story** (preferido): `bun run jira:sync-issues get <STORY_KEY> --include-comments` materializa el campo `{{jira.acceptance_test_plan}}` y los comentarios bajo `.context/PBI/`.
   2. **Lee los archivos materializados**: `.context/PBI/epics/.../stories/.../acceptance-test-plan.md` (del campo `{{jira.acceptance_test_plan}}`; si el campo está ausente la sync emite un stub apuntando al comentario fallback per `.agents/jira-required.yaml`) y `comments.md` (para comentarios con "Test Case", "TC-", "Scenario:", o tablas de test cases).
-  3. **Archivo Local** (fallback final): `.context/PBI/epics/.../stories/.../test-cases.md` (hand-protected, único `.md` que la sync no sobrescribe).
+  3. **Fallback final**: `comments.md` / la descripción de la issue — ahí cae el comentario fallback `## Acceptance Test Plan` cuando el custom field está ausente (per `.agents/jira-required.yaml`).
 - Feature Implementation Plan: [usar .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/feature-implementation-plan.md — materializado por la sync desde el campo `{{jira.feature_implementation_plan}}` del Epic]
 - SRS relevante: [usar secciones relacionadas de .context/SRS/]
 - **Design System:** [usar .context/design-system.md - para decisiones de UI/UX]
@@ -436,7 +436,7 @@ Textos que reflejan el contexto específico del proyecto, usando vocabulario del
   - [ ] [Componente específico 2]
 - [ ] Tests de integración pasando
   - [ ] [Escenario específico]
-- [ ] Tests E2E pasando (referencia: Acceptance Test Plan de Jira o test-cases.md)
+- [ ] Tests E2E pasando (referencia: Acceptance Test Plan de Jira — `acceptance-test-plan.md` sincronizado, o el `comments.md` / descripción fallback)
   - [ ] TC-001: [nombre]
   - [ ] TC-002: [nombre]
   - [ ] ...

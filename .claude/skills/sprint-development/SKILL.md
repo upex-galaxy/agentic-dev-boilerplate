@@ -233,7 +233,12 @@ Confirm the parent epic has the macro artifacts: `feature-test-plan.md` (from pr
 
 When to do macro feature plan vs micro story plan: a feature spanning 3+ stories merits a macro `feature-plan.md` first; otherwise jump straight to `story-plan.md`.
 
-The story-level plan must map every Acceptance Test Plan test case to an implementation step. **Detailed read of the ATP** = `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` (and `comments.md` for inline "Test Case" / "TC-" / "Scenario:" notes). Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. Local `test-cases.md` is the final fallback only (hand-protected; sync never overwrites it).
+The story-level plan must map every Acceptance Test Plan test case to an implementation step. **Detailed read of the ATP** is **modality-aware**:
+
+- **jira-native**: ATP = the Story field `{{jira.acceptance_test_plan}}` → `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` (and `comments.md` for inline "Test Case" / "TC-" / "Scenario:" notes).
+- **jira-xray**: ATP = the **Test Plan** issue `description` → `bun run jira:sync-issues get <ATP_KEY>` (the sync now supports Test Plan / Test Execution issue types), then read the synced `.context/PBI/.../test-plans/TESTPLAN-<KEY>-<slug>.md`; per-TC run results come via xray-cli.
+
+Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. ATP discovery order: sync get `<STORY>`/`<ATP_KEY>` → synced `acceptance-test-plan.md` (or `test-plans/TESTPLAN-<KEY>-<slug>.md`) → final fallback = `comments.md` / the issue description (where the `## Acceptance Test Plan` fallback comment lands when the custom field is absent).
 
 Read for guidance:
 
@@ -461,7 +466,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 5. **Confirm before push to main**: never push to `main`/`master` without explicit user confirmation. PR flow targets `staging`; production promotions are a separate gated event (Stage 5).
 6. **Docs travel with the PR**: status-report and release-notes updates go in the feature branch, not pushed direct to `staging`.
 7. **Jira automation verification**: after PR open and after merge, wait ~30s and verify the auto-transition fired. If not, transition manually and surface the gap.
-8. **ATP source-of-truth**: detailed read = `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `acceptance-test-plan.md` + `comments.md`. Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. Local `test-cases.md` is the final fallback only — never assume it is authoritative.
+8. **ATP source-of-truth** (modality-aware): jira-native detailed read = `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `acceptance-test-plan.md`; jira-xray detailed read = `bun run jira:sync-issues get <ATP_KEY>` (Test Plan issue `description`), then read the synced `test-plans/TESTPLAN-<KEY>-<slug>.md`. Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. Final fallback = `comments.md` / the issue description (where the `## Acceptance Test Plan` fallback comment lands when the custom field is absent).
 9. **Verification cap=3**: lint + types + unit tests in parallel; do not balloon to 5+ verifiers.
 10. **No automation tests in this skill**: E2E / integration test automation is out of scope. Unit tests live in Stage 2 via `/unit-testing`. Anything QA-side is out of scope here.
 11. **Language**: artifacts, code, and commit messages in English. Mirror the user's language only in conversation.
@@ -476,7 +481,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 - [ ] Session Log entry appended for any blocking / aborting / sprint-spanning event
 - [ ] Epic precheck: `feature-plan.md` + `feature-implementation-plan.md` exist or user confirmed proceeding without
 - [ ] Stage 1 plan pushed to Jira `spec_implementation_plan` (or fallback comment), synced, and read back as `implementation-plan.md`; Jira transitioned to `In Progress`
-- [ ] ATP read via `bun run jira:sync-issues get <STORY_KEY> --include-comments` (synced `acceptance-test-plan.md` + `comments.md`; local `test-cases.md` fallback only) and mapped into the plan
+- [ ] ATP read via sync (jira-native: synced `acceptance-test-plan.md`; jira-xray: synced `test-plans/TESTPLAN-<KEY>-<slug>.md`; final fallback = `comments.md` / issue description) and mapped into the plan
 - [ ] Stage 2 verification (lint + types + tests) green; commits atomic
 - [ ] Stage 3 PR opened via `/git-flow-master`; Jira auto-transition to `In Review` verified
 - [ ] Stage 3 docs (status-report + release-notes) updated in the PR branch
@@ -499,7 +504,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 - **S9.** NEVER mark a story `Ready For QA` without verifying the staging deploy succeeded (CI green + smoke passed). A premature transition burns QA cycles.
 - **S10.** NEVER suppress failing pre-commit / pre-push hooks with `--no-verify`. If a hook is wrong, fix the hook in a separate commit; never silence it to ship.
 - **S11.** NEVER hardcode `customfield_NNNNN` IDs in plans, references, or AI output. Resolve every Jira field via `{{jira.<slug>}}` against `.agents/jira-required.yaml`.
-- **S12.** NEVER read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`, and NEVER assume the local `test-cases.md` is authoritative. ATP detailed read = `bun run jira:sync-issues get <STORY_KEY> --include-comments` → synced `acceptance-test-plan.md` + `comments.md`; local `test-cases.md` is the final fallback only.
+- **S12.** NEVER read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. ATP detailed read is modality-aware: jira-native → `bun run jira:sync-issues get <STORY_KEY> --include-comments` → synced `acceptance-test-plan.md`; jira-xray → `bun run jira:sync-issues get <ATP_KEY>` → synced `test-plans/TESTPLAN-<KEY>-<slug>.md`. Final fallback = `comments.md` / the issue description (where the `## Acceptance Test Plan` fallback comment lands when the custom field is absent).
 
 ---
 

@@ -96,11 +96,13 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/implementation-plan.md
 ```
 
-**Acceptance Test Plan (Test Cases):** El ATP es un campo custom + comentarios — lectura DETALLADA, así que SIEMPRE se materializa primero vía sync, nunca se lee un custom field por `view`:
+**Lectura COMPLETA de la carpeta sincronizada:** la sync (`bun run jira:sync-issues get <STORY_KEY> --include-comments`) materializa la carpeta COMPLETA de la Story bajo `.context/PBI/` — cada archivo per-field (`story.md`, `acceptance-criteria.md`, `scope.md`, custom fields, etc.) + `comments.md`. Para implementar la story DEBES leer TODA la carpeta: nunca omitas ACs / scope / custom fields / comentarios.
 
-1. **Sincroniza la Story** (preferido): `bun run jira:sync-issues get <STORY_KEY> --include-comments` materializa todos los custom fields + comentarios bajo `.context/PBI/`. Esto cubre tanto los comentarios con "Test Case" / "TC-" / "Scenario:" como el campo `{{jira.acceptance_test_plan}}`.
-2. **Lee el archivo materializado**: `.context/.../stories/.../acceptance-test-plan.md` (generado por la sync desde el campo `{{jira.acceptance_test_plan}}`; si el campo está ausente, la sync emite un stub apuntando al comentario fallback per `.agents/jira-required.yaml`).
-3. **Archivo Local** (fallback final): `.context/.../stories/.../test-cases.md` (hand-protected, único `.md` que la sync no sobrescribe).
+**Acceptance Test Plan (Test Cases):** lectura DETALLADA, **modality-aware**, siempre materializada vía sync, nunca leída por `view`:
+
+1. **jira-native**: ATP = el campo `{{jira.acceptance_test_plan}}` de la Story → `bun run jira:sync-issues get <STORY_KEY> --include-comments`, luego lee `.context/.../stories/.../acceptance-test-plan.md` (cubre también comentarios con "Test Case" / "TC-" / "Scenario:" en `comments.md`).
+2. **jira-xray**: ATP = la `description` de la issue **Test Plan** → `bun run jira:sync-issues get <ATP_KEY>` (la sync soporta ahora Test Plan / Test Execution), luego lee `.context/.../test-plans/TESTPLAN-<KEY>-<slug>.md`; los resultados de run por-TC vienen vía xray-cli.
+3. **Fallback final**: `comments.md` / la descripción de la issue — ahí cae el comentario fallback `## Acceptance Test Plan` cuando el custom field está ausente (per `.agents/jira-required.yaml`).
 
 **Propósito:**
 
@@ -167,7 +169,7 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
    - Entiende el "por qué"
 
 3. **Revisa los Test Cases (Acceptance Test Plan)**
-   - Usar orden de descubrimiento: sync (`bun run jira:sync-issues get <STORY_KEY> --include-comments`) → leer `acceptance-test-plan.md` materializado → `test-cases.md` local (fallback)
+   - Orden de descubrimiento (modality-aware): sync get `<STORY>`/`<ATP_KEY>` → `acceptance-test-plan.md` (jira-native) o `test-plans/TESTPLAN-<KEY>-<slug>.md` (jira-xray) materializado → fallback final = `comments.md` / la descripción de la issue
    - Entiende qué se espera que funcione
    - Identifica edge cases a considerar
    - Usa los test cases como checklist durante la implementación
