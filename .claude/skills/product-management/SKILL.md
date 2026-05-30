@@ -212,11 +212,11 @@ After the write, before moving to the next field/story:
 
 ### A. Initial backlog seeding (one-time, from PRD)
 
-When you have a fresh PRD/SRS and zero issues in Jira, generate the initial backlog tree (epics + their foundational stories) and persist it both in Jira and under `.context/PBI/`.
+When you have a fresh PRD/SRS and zero issues in Jira, generate the initial backlog tree (epics + their foundational stories) by creating the issues in Jira, then materialize the local read-only cache under `.context/PBI/` via the sync script.
 
 Read `references/product-backlog-seed.md`.
 
-Output: `.context/PBI/epic-tree.md` + per-epic folders + initial stories created in Jira under `{{PROJECT_KEY}}`. Each epic file persists with topic_key `pbi/{epic-slug}/epic`; per-story files use `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
+Output: epics + foundational stories created in Jira under `{{PROJECT_KEY}}`, then `bun run jira:sync-issues pull` materializes `.context/PBI/epic-tree.md` + the canonical `.context/PBI/epics/EPIC-<KEY>-<slug>/` tree (epic + per-story folders). Local `.md` is a read-only cache — never hand-written. Topic_key for memory notes: per-epic `pbi/{epic-slug}/epic`; per-story `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### B. Incremental feature addition (continuous)
 
@@ -232,7 +232,7 @@ When you need to formally structure a new epic — naming, scope boundaries, dec
 
 Read `references/epic-creation.md`.
 
-Output: epic folder under `.context/PBI/{epic-slug}/` + `epic.md` + decomposed child stories. Topic_key: `pbi/{epic-slug}/epic` (UPSERT semantics; see `agentic-dev-core/references/topic-key-conventions.md`).
+Output: Epic created in Jira (with child stories) under `{{PROJECT_KEY}}`, then `bun run jira:sync-issues pull --epic <KEY>` materializes the canonical `.context/PBI/epics/EPIC-<KEY>-<slug>/epic.md` + decomposed child-story folders as a read-only cache. Topic_key for memory notes: `pbi/{epic-slug}/epic` (UPSERT semantics; see `agentic-dev-core/references/topic-key-conventions.md`).
 
 ### D. Story refinement (per story)
 

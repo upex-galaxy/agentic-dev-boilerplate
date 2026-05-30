@@ -129,8 +129,8 @@ Example (same work, different register):
 | Design system (DESIGN.md)                   | "definir design system", "rebrandear el proyecto"                                               | `/design-system`                                   | `business/business-model.md`, `PRD/`                            | Write                                        |
 | Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/infrastructure.md`, `DESIGN.md`                            | Code edit                                    |
 | QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
-| Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/{module}/ROADMAP.md`, `PRD/`                      | `[ISSUE_TRACKER_TOOL]`                       |
-| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/{module}/{TICKET}-*/`                             | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
+| Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epics/EPIC-*/ROADMAP.md`, `PRD/`                  | `[ISSUE_TRACKER_TOOL]`                       |
+| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`                    | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
 | TDD slice / unit tests                      | "write unit tests", "TDD this function"                                                         | `/unit-testing`                                    | function under test, existing tests                             | Code edit                                    |
 | Sync AI memory                              | "sync memory", `/sync-ai-memory`                                                                | `/sync-ai-memory`                                  | `README.md`, this file, `.context/`, `package.json`             | Edit                                         |
 | Business map refresh                        | "refresh data map", `/business-*-map`                                                           | `/business-data-map` / `-feature-map` / `-api-map` | Supabase schema, backend code, PRD                              | Read + Write                                 |
@@ -143,8 +143,8 @@ Example (same work, different register):
 - `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — system maps (refresh via `/business-*-map`)
 - `.context/master-implementation-plan.md` — prioritized roadmap
 - `.context/reports/SPRINT-{N}-DEVELOPMENT.md` — cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
-- `.context/PBI/{module}/` — module-level (ROADMAP, PROGRESS, SESSION-PROMPT)
-- `.context/PBI/{module}/{TICKET}-{title}/` — story-level (context.md, implementation-plan.md, evidence/)
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/` — epic-level (epic.md [SYNC], ROADMAP, PROGRESS, SESSION-PROMPT)
+- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/` — story-level (story.md + per-field [SYNC], context.md, evidence/)
 - `.agents/project.yaml` — `{{VAR}}` source-of-truth (load ONCE per session, cache)
 - `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml` — Jira catalogs
 
@@ -272,27 +272,40 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 ## 9. LOCAL CONTEXT (PBI)
 
-Every story being developed → maintain local docs under `.context/PBI/`:
+> **`.context/PBI/` layout is OWNED by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file — author the plan/content, push it to the Jira field (or fallback), then run the sync. Dev-authored NON-Jira files live INSIDE the same folders.
+
+**Canonical tree** (Epic-centric; `<KEY>` = Jira key, `<slug>` from summary):
 
 ```
-.context/PBI/{module-name}/
-  module-context.md          # Module overview + shared context
-  ROADMAP.md                 # All stories + dev status
-  PROGRESS.md                # Current progress tracker
-  SESSION-PROMPT.md          # @-loadable session resume prompt
-  {TICKET-ID}-{brief-title}/
-    context.md               # ACs, data, session notes, open questions
-    implementation-plan.md   # Plan produced by /sprint-development
-    evidence/                # Screenshots, traces, logs (gitignored)
+.context/PBI/
+  epic-tree.md                                   [SYNC] master index
+  epics/EPIC-<KEY>-<slug>/
+    epic.md                                       [SYNC]
+    feature-implementation-plan.md                [SYNC ← Jira field / stub]
+    feature-test-plan.md                          [SYNC ← Jira field / stub]
+    module-context.md  ROADMAP.md  PROGRESS.md  SESSION-PROMPT.md   [dev — non-Jira, OK]
+    stories/STORY-<KEY>-<slug>/
+      story.md                                    [SYNC]
+      acceptance-criteria.md  scope.md  out-of-scope.md  business-rules.md  workflow.md
+      implementation-plan.md                      [SYNC ← Jira `spec_implementation_plan` / stub]
+      comments.md                                 [SYNC, --include-comments]
+      context.md  progress.md  evidence/          [dev — non-Jira, OK]
+  bugs/ defects/ improvements/ tests/             [SYNC — standalone issue types]
 ```
 
-Variables: `{module-name}` = kebab-case module (`user-management`). `{TICKET-ID}` = issue tracker id (`UPEX-277`). `{brief-title}` = max ~5 words kebab-case AI-generated.
+**`[SYNC]` files = forbidden to hand-write** (overwritten on next sync; only `test-cases.md` is hard-protected). The dev/feature implementation plan is authored, **pushed to its Jira field** (`spec_implementation_plan` / `feature_implementation_plan`), then read back from the synced `implementation-plan.md` / `feature-implementation-plan.md`. **Rule of thumb**: file mirrors a Jira field → read the synced copy, never author it locally. File holds info NOT in Jira (session notes, progress, roadmaps, evidence) → author locally as usual.
 
 > Sprint-level cross-ticket aggregate → `.context/reports/SPRINT-{N}-DEVELOPMENT.md` (generated by `/sprint-development` batch). Lifecycle → `.context/reports/README.md`.
 
-**ENTRY POINT**: invoke `/sprint-development` — fetches ticket, explains story, loads context, drives plan → code → review → deploy.
+**DETAILED READS via the script** (replaces `acli view` for custom fields — `acli view` returns null for custom fields):
+- `bun run jira:sync-issues get <KEY> --include-comments` → one issue, ALL custom fields + comments → read the generated `.md`.
+- `bun run jira:sync-issues jql "<query>"` → batch. `pull --epic <KEY>` / `--story <KEY>` → scoped.
 
-**RESUME SESSION**: `@.context/PBI/{module}/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
+**FALLBACK**: if a custom field a prompt must fill is absent from the instance, write the content as a structured Jira comment (`## <label>`) per `.agents/jira-required.yaml` → `fallback:`. The sync then emits a pointer stub for that field's `.md`. Never block on a missing field.
+
+**ENTRY POINT**: invoke `/sprint-development` — syncs the ticket (`jira:sync-issues get`), explains story, loads the synced PBI, drives plan → code → review → deploy.
+
+**RESUME SESSION**: `@.context/PBI/epics/EPIC-<KEY>-<slug>/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
 
 ---
 

@@ -54,26 +54,27 @@ Analyze, triage, and fix bugs/defects reported during exploratory testing or pro
 
 **BEFORE starting, verify available tools:**
 
-### Required: Atlassian MCP
+### Required: Jira reads (sync script) + writes (`[ISSUE_TRACKER_TOOL]`)
 
-**Check if available:** [Verify access to `[ISSUE_TRACKER_TOOL]`]
+This workflow splits Jira access two ways — they resolve to **different tools**:
 
-**If NOT available:**
+- **Detailed READS** (bug custom fields: `actual_result`, `expected_result`, `error_type`, `severity`, `test_environment`, `root_cause`, `fix`; description; comments for context) → **`bun run jira:sync-issues get <BUG-KEY> --include-comments`**, then read the materialized `.md` under `.context/PBI/`. The sync resolves every slug and converts ADF→Markdown; `[ISSUE_TRACKER_TOOL]` `view` returns `null` for `customfield_*` and MUST NOT be used to read these.
+- **WRITES** (transition issue status, add documentation comment, set bug custom fields) → `[ISSUE_TRACKER_TOOL]` (primary `/acli`, fallback Atlassian MCP per `CLAUDE.md` §6).
+
+**Check before starting:**
+
+- `bun run jira:sync-issues get <BUG-KEY> --include-comments` succeeds (auth fresh — run `[ISSUE_TRACKER_TOOL]` auth login first if the sync errors).
+- `[ISSUE_TRACKER_TOOL]` resolves (for transitions + comments).
 
 ```
-⚠️ Atlassian MCP Required
+⚠️ Jira access required
 
-This workflow requires Jira integration to:
-- Read bug details and custom fields
-- Read comments for context
-- Transition issue status
-- Add documentation comments
+This workflow needs:
+- READ bug details + custom fields + comments → bun run jira:sync-issues get <BUG-KEY> --include-comments
+- WRITE status transitions + documentation comments → [ISSUE_TRACKER_TOOL]
 
-**How to connect:**
-1. Add Atlassian MCP to your configuration
-2. Restart the chat session
-
-**Cannot proceed without Atlassian MCP.**
+If the sync errors with an auth failure, authenticate via [ISSUE_TRACKER_TOOL] and re-run.
+Cannot proceed without Jira read (sync) + write ([ISSUE_TRACKER_TOOL]) access.
 ```
 
 ### Required: GitHub CLI (gh)
