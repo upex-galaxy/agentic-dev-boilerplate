@@ -72,3 +72,11 @@ docs/mcp/
 # .template/installer.state.json is regenerated between every installer step,
 # so prettier --check races against the writes. Skip the whole dir.
 .template/
+
+# ===========================================
+# Git worktrees - another branch's checkout, not this tree
+# ===========================================
+# A git worktree placed under .claude/worktrees/ is a separate branch's full
+# checkout. Prettier (which honors only .prettierignore, not .git metadata)
+# would otherwise recurse into it and flag formatting on files we don't own here.
+.claude/worktrees/
