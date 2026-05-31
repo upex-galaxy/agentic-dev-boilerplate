@@ -721,8 +721,6 @@ Fixes [ISSUE_KEY]: [Bug summary from Jira]
 ---
 
 Fixes: [ISSUE_KEY]
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )" \
   --base staging
