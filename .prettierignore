@@ -74,6 +74,15 @@ docs/mcp/
 .template/
 
 # ===========================================
+# MCP browser snapshots - generated, gitignored
+# ===========================================
+# .playwright-mcp/page-*.yml are transient page snapshots emitted by the
+# Playwright MCP server on every browser navigation. They are already gitignored
+# but Prettier honors only .prettierignore (not .gitignore), so without this glob
+# format:check fails on dozens of machine-generated .yml files.
+.playwright-mcp/
+
+# ===========================================
 # Git worktrees - another branch's checkout, not this tree
 # ===========================================
 # A git worktree placed under .claude/worktrees/ is a separate branch's full
