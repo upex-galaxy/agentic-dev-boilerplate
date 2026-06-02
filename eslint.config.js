@@ -26,6 +26,10 @@ export default antfu({
     '.github/**',
     // Generated files (auto-generated, not manually edited)
     'api/openapi-types.ts',
+    // Supabase Database types written by `supabase gen types typescript`
+    // (project-bootstrap). Large machine-generated snake_case file — linting it
+    // produces noise and `eslint --fix` would diverge it from the generator.
+    'src/types/supabase.ts',
     // Git worktrees placed under .claude/worktrees/ are another branch's full
     // checkout — never lint another tree from this one.
     '.claude/worktrees/**',
