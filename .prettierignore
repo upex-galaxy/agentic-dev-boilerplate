@@ -94,6 +94,14 @@ docs/mcp/
 .playwright-mcp/
 
 # ===========================================
+# Backup artifacts - generated, gitignored
+# ===========================================
+# .backups/ holds machine-generated backup dumps and key-mapping files (already
+# gitignored). Prettier honors only .prettierignore (not .gitignore), so without
+# this glob format:check would fail on those non-hand-authored files.
+.backups/
+
+# ===========================================
 # Git worktrees - another branch's checkout, not this tree
 # ===========================================
 # A git worktree placed under .claude/worktrees/ is a separate branch's full
