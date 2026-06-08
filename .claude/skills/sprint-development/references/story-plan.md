@@ -361,6 +361,8 @@ Textos que reflejan el contexto específico del proyecto, usando vocabulario del
 
 ## Technical Decisions (Story-specific)
 
+> **Regla de promoción a ADR.** Las decisiones de esta sección son **story-local** y viven acá (qué hook, qué componente, un trade-off de un archivo). Si una decisión pasa el **doble filtro** — es **arquitectónica** Y **difícil de revertir** (toca muchos archivos, migra datos, o impone un invariante cross-cutting) — NO la dejes acá: promovela a un `ADR-NNNN-<slug>.md` en `.context/ADR/` y dejá un backlink de una línea (`See ADR-NNNN`). Detección + procedimiento: `agentic-dev-core/references/adr-doctrine.md`; template + lifecycle: `.context/ADR/README.md`. La IA redacta como `Proposed`; el humano aprueba.
+
 ### Decision 1: [Nombre de decisión específica de esta story]
 
 **Chosen:** [Decisión]

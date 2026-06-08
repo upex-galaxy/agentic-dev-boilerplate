@@ -29,6 +29,10 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 ├── SRS/                           Output of /project-foundation Phase 2 — Software Requirements
 │   └── README.md                  Phase placeholder (see file)
 │
+├── ADR/                           Architecture Decision Records — important, hard-to-reverse decisions
+│   ├── README.md                  When to write one + status lifecycle + index
+│   └── ADR-NNNN-template.md       Copy → ADR-NNNN-<slug>.md per decision (append-only; superseded, never deleted)
+│
 └── PBI/                           Outputs of /product-management + /sprint-development (per epic / per ticket)
     └── README.md                  Backlog layout (see file)
 ```
@@ -49,6 +53,7 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `master-implementation-plan.md`                     | `/master-implementation-plan` command   | Invoked by `/project-foundation` Phase 4 Step 5        |
 | `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
+| `ADR/ADR-NNNN-<slug>.md`                            | Human architect, or `/project-foundation` (SRS) / `/sprint-development` (Stage 1) — AI drafts for human approval | **Exception: append-only, never regenerated.** Superseded by a newer ADR, never overwritten or hand-re-run. See `ADR/README.md`. |
 | `PBI/epics/EPIC-<KEY>-<slug>/epic.md`               | `/product-management` (epic creation)   | Topic key: `pbi/{epic-slug}/epic`                      |
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/spec.md`            | `/product-management` (AC refinement)   | Topic key: `pbi/{ticket}/spec`                         |
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` | `/sprint-development` Stage 1                   | Topic key: `pbi/{ticket}/impl-plan`                    |
