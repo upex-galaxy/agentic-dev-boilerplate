@@ -29,7 +29,7 @@ Las IDs numéricas de Jira (`customfield_NNNNN`) varían por workspace y NO vive
 **⚠️ IMPORTANTE - Jira es la fuente de verdad para el Acceptance Test Plan:**
 Los escenarios del Acceptance Test Plan (definidos durante la fase de planning) son los que la implementación DEBE cubrir. Cada escenario debe mapearse a un step de implementación para garantizar cobertura completa. NO omitir ninguno.
 
-**Autor del plan → Jira → sync → lee.** NO escribas a mano `implementation-plan.md`. Es un archivo `[SYNC]` (read-only cache): redacta el plan en sesión, publícalo al campo `{{jira.spec_implementation_plan}}` de la Story (o comentario fallback per `.agents/jira-required.yaml`), corre `bun run jira:sync-issues get <STORY_KEY> --include-comments`, y lee el `implementation-plan.md` materializado en `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/`. El cuerpo del plan sigue la estructura de abajo.
+**Autor del plan → Jira → sync → lee.** NO escribas a mano `implementation-plan.md`. Es un archivo `[SYNC]` (read-only cache): redacta el plan en sesión, publícalo al campo `{{jira.spec_implementation_plan}}` de la Story (o comentario fallback per `.agents/jira-required.yaml`), corre `bun run jira:sync-issues get <STORY_KEY> --include-comments`, y lee el `implementation-plan.md` materializado en `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/`. El cuerpo del plan sigue la estructura de abajo. **Formato ADF**: estructura el cuerpo per `../../acli/references/adf-authoring-style.md` — headings por sección, tabla para trade-offs de opciones / matrices de decisión, panel `[!WARNING]` para riesgos. Richness con propósito, no decoración.
 
 ---
 
