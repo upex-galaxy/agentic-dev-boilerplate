@@ -18,6 +18,11 @@
  *   - Bold: **text** or __text__
  *   - Italic: *text* or _text_ (snake_case-safe — will not mangle identifiers)
  *   - Strikethrough: ~~text~~
+ *   - Emoji (Jira-native): :short_name: → ADF emoji node (Jira resolves the name)
+ *   - Status lozenge: {status:color|TEXT} → ADF status pill
+ *     (color: neutral | purple | blue | red | yellow | green)
+ *   - Mention: @[Display Name](accountId) → ADF mention node (accountId is the
+ *     opaque Atlassian id, resolved out-of-band — a bare @name cannot mention)
  *   - Links: [label](url)
  *   - Blockquotes: > line
  *   - Horizontal rule: ---
@@ -55,6 +60,21 @@ type ADFNode = {
   content?: ADFNode[];
   text?: string;
   marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
+};
+
+// Curated Unicode fallback for the most useful Jira-native emoji shortNames.
+// Jira resolves the shortName on its own; the `text` fallback only helps where
+// the shortName is unknown to a renderer. Unlisted `:short_names:` still convert
+// (shortName-only) — this map exists so the common status marks carry a glyph.
+const EMOJI_TEXT: Record<string, string> = {
+  ":white_check_mark:": "✅",
+  ":heavy_check_mark:": "✔️",
+  ":x:": "❌",
+  ":warning:": "⚠️",
+  ":hourglass_flowing_sand:": "⏳",
+  ":white_circle:": "⚪",
+  ":no_entry:": "⛔",
+  ":information_source:": "ℹ️",
 };
 
 // ---------- inline parser ----------
@@ -193,11 +213,56 @@ function parseInline(input: string): ADFNode[] {
       }
     }
 
+    // Jira mention: @[Display Name](accountId) → mention node. The accountId must
+    // be supplied explicitly — a bare @name cannot mention (Jira needs the opaque
+    // Atlassian accountId, resolved out-of-band; see references/adf-authoring-style.md).
+    if (input[i] === "@" && input[i + 1] === "[") {
+      const m = /^@\[([^\]]+)\]\(([^)]+)\)/.exec(input.slice(i));
+      if (m) {
+        nodes.push({
+          type: "mention",
+          attrs: { id: m[2].trim(), text: `@${m[1].trim()}` },
+        });
+        i += m[0].length;
+        continue;
+      }
+    }
+
+    // Jira-native emoji: :short_name: → emoji node (Jira resolves the shortName).
+    // Pattern is the GitHub/Slack shortname shape; inline code is parsed earlier,
+    // so a colon inside `code` never reaches here.
+    if (input[i] === ":") {
+      const m = /^:([a-z0-9][a-z0-9_+-]*):/.exec(input.slice(i));
+      if (m) {
+        const shortName = `:${m[1]}:`;
+        const attrs: Record<string, unknown> = { shortName };
+        if (EMOJI_TEXT[shortName]) attrs.text = EMOJI_TEXT[shortName];
+        nodes.push({ type: "emoji", attrs });
+        i += m[0].length;
+        continue;
+      }
+    }
+
+    // Jira status lozenge: {status:color|TEXT} → status node (the coloured pill).
+    if (input[i] === "{") {
+      const m = /^\{status:(neutral|purple|blue|red|yellow|green)\|([^}]+)\}/i.exec(
+        input.slice(i),
+      );
+      if (m) {
+        nodes.push({
+          type: "status",
+          attrs: { text: m[2].trim(), color: m[1].toLowerCase() },
+        });
+        i += m[0].length;
+        continue;
+      }
+    }
+
     // Default: accumulate plain text until the next special char
     let chunkEnd = i;
     while (chunkEnd < input.length) {
       const c = input[chunkEnd];
-      if (c === "`" || c === "[" || c === "*" || c === "_" || c === "~") {
+      if (c === "`" || c === "[" || c === "*" || c === "_" || c === "~" || c === ":" || c === "{" || c === "@") {
         break;
       }
       chunkEnd++;
@@ -525,16 +590,20 @@ const NODE_RULES: Record<
   tableRow: { kind: "block", children: ["tableCell", "tableHeader"] },
   tableCell: { kind: "block", children: "block" },
   tableHeader: { kind: "block", children: "block" },
+  mediaSingle: { kind: "block", children: ["media"] },
+  media: { kind: "block", children: "none", requiredAttrs: ["type", "id"] },
   text: { kind: "inline", children: "none" },
   hardBreak: { kind: "inline", children: "none" },
-  emoji: { kind: "inline", children: "none" },
-  mention: { kind: "inline", children: "none" },
+  emoji: { kind: "inline", children: "none", requiredAttrs: ["shortName"] },
+  mention: { kind: "inline", children: "none", requiredAttrs: ["id"] },
   date: { kind: "inline", children: "none" },
-  status: { kind: "inline", children: "none" },
+  status: { kind: "inline", children: "none", requiredAttrs: ["text", "color"] },
   inlineCard: { kind: "inline", children: "none" },
 };
 
 const VALID_PANEL_TYPES = new Set(["info", "note", "success", "warning", "error"]);
+
+const VALID_STATUS_COLORS = new Set(["neutral", "purple", "blue", "red", "yellow", "green"]);
 
 const VALID_MARKS = new Set([
   "code",
@@ -642,6 +711,16 @@ function validateNode(
       errors.push({
         path,
         message: `panel panelType must be one of ${Array.from(VALID_PANEL_TYPES).join(" | ")}, got ${JSON.stringify(pt)}`,
+      });
+    }
+  }
+
+  if (node.type === "status" && node.attrs && node.attrs.color !== undefined) {
+    const color = node.attrs.color;
+    if (typeof color !== "string" || !VALID_STATUS_COLORS.has(color)) {
+      errors.push({
+        path,
+        message: `status color must be one of ${Array.from(VALID_STATUS_COLORS).join(" | ")}, got ${JSON.stringify(color)}`,
       });
     }
   }
