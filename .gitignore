@@ -74,6 +74,9 @@ Thumbs.db
 .serena
 .gemini/
 .claude/settings.local.json
+# Claude Code scheduler runtime lock (sessionId + pid) — written by
+# ScheduleWakeup / scheduled tasks. Per-session, never committed.
+.claude/scheduled_tasks.lock
 .playwright-mcp
 .backups/
 
