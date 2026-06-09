@@ -72,9 +72,10 @@ Canonical reading order for any AI starting cold on a sprint-development workflo
 6. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — story-level context (dev-authored, non-Jira): session notes, open questions.
 7. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` — canonical story-level technical plan, synced from the Jira `spec_implementation_plan` field (read-only cache; read before Stage 2 resume).
 8. `.context/SRS/` architecture-specs and `.context/ADR/` — only when the story touches a cross-cutting concern (auth, data model, infra). Read existing ADRs so the plan honors a settled architectural decision instead of silently violating it.
-9. `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — impact assessment when the story touches multiple domains.
+9. `DESIGN.md` (+ `.context/design/master-design-plan.md` when the project keeps per-screen specs) — **mandatory whenever the story has UI**. `DESIGN.md` is the token + component-system contract; a master design plan, when present, adds per-screen fidelity specs and a US→Screen map. Find the story's screen, build against that screen + the frozen tokens, and don't invent UI on the fly. Ratify any deliberate departure from the agreed design before coding.
+10. `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — impact assessment when the story touches multiple domains.
 
-**Optional inputs.** Business maps (9) frequently arrive after `/business-*-map` runs and may be absent. Proceed without them when missing; surface a `missing_input` note in the Stage 1 plan so a later pass can fill the gap.
+**Optional inputs.** Business maps (10) frequently arrive after `/business-*-map` runs and may be absent. Proceed without them when missing; surface a `missing_input` note in the Stage 1 plan so a later pass can fill the gap.
 
 ---
 
@@ -301,7 +302,7 @@ Review checklist (driven by `references/review-pr.md`):
 - Lint + build green; types clean
 - Code-standards conformance (imports via aliases, no relative paths, parameter limits, etc.)
 - Security checks (no secrets in diff, auth handled, input validation)
-- UI/UX adherence to design system (where applicable)
+- UI/UX fidelity (where applicable): matches the story's screen — `DESIGN.md` tokens plus the per-screen spec in `.context/design/master-design-plan.md` when the project maintains one; unratified divergence from the agreed design/mockup is a defect
 
 Review notes are dev-authored (non-Jira) and persist at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/review.md` with topic_key `pbi/{ticket}/review`. Auto-generated review summaries use `capture_prompt: false`; human-prompted architectural decisions use `capture_prompt: true`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
