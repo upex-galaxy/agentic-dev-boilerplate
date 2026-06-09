@@ -9,7 +9,7 @@
 
 project:
   project_name: null # TODO: fill per project — Project name (e.g. MyProject)
-  project_key: null # TODO: fill per project — Project key in issue tracker (e.g. PROJ, OB, UPEX)
+  project_key: BK # TODO: fill per project — Project key in issue tracker (e.g. PROJ, OB, UPEX)
   webapp_domain: null # TODO: fill per project — Domain of the web application under test (e.g. myproject.com)
 
 backend:
