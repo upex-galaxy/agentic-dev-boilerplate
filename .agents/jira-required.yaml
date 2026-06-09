@@ -421,6 +421,10 @@ work_types:
   story:
     jira_issue_type: Story
     description: User story / feature work item
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: default
+    coverable: true
+    content: split
     required_statuses:
       backlog: { description: Initial state for a freshly created story }
       shift_left_qa: { description: Story under early QA review (shift-left quality check) }
@@ -525,6 +529,11 @@ work_types:
   bug:
     jira_issue_type: Bug
     description: Defect / bug work item
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: default
+    coverable: false
+    content: single
+    local_dir: bugs
     required_statuses:
       open: { description: Newly reported bug awaiting triage }
       in_progress: { description: Developer actively fixing }
@@ -580,6 +589,10 @@ work_types:
   test_case:
     jira_issue_type: Test
     description: Test case (TC) work item (QA-side; included so a single Jira workspace serves both repos)
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: optional
+    content: single
+    local_dir: tests
     required_statuses:
       draft: { description: 'Just created, not yet designed' }
       in_design: { description: Test scenario being authored }
@@ -658,6 +671,11 @@ work_types:
   epic:
     jira_issue_type: Epic
     description: Epic / feature container (UPEX Epic Workflow)
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: default
+    container: true
+    content: split
+    local_dir: epics
     required_statuses:
       backlog: { description: Newly created epic awaiting planning }
       planning: { description: Epic being planned / scoped (default landing state after creation) }
@@ -675,6 +693,11 @@ work_types:
   defect:
     jira_issue_type: Defect
     description: Defect work item (UPEX Bug/Defect lifecycle — identical workflow to `bug`)
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: discovery
+    coverable: true
+    content: single
+    local_dir: defects
     required_statuses:
       open: { description: Newly reported defect awaiting triage }
       in_progress: { description: Developer actively fixing }
@@ -726,6 +749,11 @@ work_types:
   improvement:
     jira_issue_type: Improvement
     description: Improvement / enhancement work item (UPEX Bug/Defect lifecycle — identical workflow to `bug`)
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    sync: optional
+    recommended: true
+    content: single
+    local_dir: improvements
     required_statuses:
       open: { description: Newly reported improvement awaiting triage }
       in_progress: { description: Developer actively working }
@@ -784,6 +812,13 @@ work_types:
       NOTE: the `🚀` status (id 10021) and the `✅` / `Auto-Deploy` transitions
       slugify to empty and are NOT addressable as canonical slugs — the sync
       captures them only as discovered entries. Do not declare them as required.
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    # content: auto → generic description capture (no dedicated dev renderer yet).
+    sync: optional
+    recommended: true
+    coverable: true
+    content: auto
+    local_dir: tech-stories
     required_statuses:
       to_do: { description: Newly created tech story awaiting pickup }
       in_progress: { description: Developer actively working }
@@ -821,6 +856,13 @@ work_types:
       NOTE: the `🚀` status (id 10021) and the `✅` / `Auto-Deploy` transitions
       slugify to empty and are NOT addressable as canonical slugs — the sync
       captures them only as discovered entries. Do not declare them as required.
+    # ---- Sync routing (consumed by scripts/sync-jira-issues.ts work-type registry) ----
+    # content: auto → generic description capture (no dedicated dev renderer yet).
+    sync: optional
+    recommended: true
+    coverable: true
+    content: auto
+    local_dir: tech-debts
     required_statuses:
       to_do: { description: Newly created tech debt item awaiting pickup }
       in_progress: { description: Developer actively working }
