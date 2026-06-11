@@ -130,8 +130,8 @@ Example (same work, different register):
 | Design system (DESIGN.md)                   | "definir design system", "rebrandear el proyecto"                                               | `/design-system`                                   | `business/business-model.md`, `PRD/`                            | Write                                        |
 | Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/infrastructure.md`, `DESIGN.md`                            | Code edit                                    |
 | QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
-| Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epics/EPIC-*/ROADMAP.md`, `PRD/`                  | `[ISSUE_TRACKER_TOOL]`                       |
-| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`                    | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
+| Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epic-tree.md`, `PRD/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]`                       |
+| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
 | TDD slice / unit tests                      | "write unit tests", "TDD this function"                                                         | `/unit-testing`                                    | function under test, existing tests                             | Code edit                                    |
 | Sync AI memory                              | "sync memory", `/sync-ai-memory`                                                                | `/sync-ai-memory`                                  | `README.md`, this file, `.context/`, `package.json`             | Edit                                         |
 | Business map refresh                        | "refresh data map", `/business-*-map`                                                           | `/business-data-map` / `-feature-map` / `-api-map` | Supabase schema, backend code, PRD                              | Read + Write                                 |
@@ -142,10 +142,11 @@ Example (same work, different register):
 **Key paths**:
 
 - `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — system maps (refresh via `/business-*-map`)
+- `.context/business/domain-glossary.md` — canonical domain terminology. Hand-maintained, append-only (like ADRs); created by `/project-foundation` Phase 4 Step 6; consulted before planning/AC writing (`/sprint-development`, `/product-management`); anti-glossary lists banned terms. Never regenerated.
 - `.context/master-implementation-plan.md` — prioritized roadmap
 - `.context/ADR/` — Architecture Decision Records (append-only). Any important, hard-to-reverse architecture decision (auth model, error/data-access/tenancy model, framework lock-in, cross-cutting invariant) → record as `ADR-NNNN-<slug>.md`; supersede, never delete. When-to-write + template → `.context/ADR/README.md`; AI detection/authoring → `.claude/skills/agentic-dev-core/references/adr-doctrine.md`. Seeded by `/project-foundation` (SRS) + `/sprint-development` (Stage 1). NOT for bug fixes, local refactors, or naming tweaks.
 - `.context/reports/SPRINT-{N}-DEVELOPMENT.md` — cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
-- `.context/PBI/epics/EPIC-<KEY>-<slug>/` — epic-level (epic.md [SYNC], ROADMAP, PROGRESS, SESSION-PROMPT)
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/` — epic-level (epic.md [SYNC], feature-implementation-plan.md / feature-test-plan.md [SYNC], stories/)
 - `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/` — story-level (story.md + per-field [SYNC], context.md, evidence/)
 - `.agents/project.yaml` — `{{VAR}}` source-of-truth (load ONCE per session, cache)
 - `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml` — Jira catalogs
@@ -285,7 +286,6 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
     epic.md                                       [SYNC]
     feature-implementation-plan.md                [SYNC ← Jira field / stub]
     feature-test-plan.md                          [SYNC ← Jira field / stub]
-    module-context.md  ROADMAP.md  PROGRESS.md  SESSION-PROMPT.md   [dev — non-Jira, OK]
     stories/STORY-<KEY>-<slug>/
       story.md                                    [SYNC]
       acceptance-criteria.md  scope.md  out-of-scope.md  business-rules.md  workflow.md
@@ -308,7 +308,7 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 **ENTRY POINT**: invoke `/sprint-development` — syncs the ticket (`jira:sync-issues get`), explains story, loads the synced PBI, drives plan → code → review → deploy.
 
-**RESUME SESSION**: `@.context/PBI/epics/EPIC-<KEY>-<slug>/SESSION-PROMPT.md` — @-loadable, restores full context without copy-paste.
+**RESUME SESSION**: `/sprint-development` Phase 0 resume contract — reads `.session/sprint-development/<JIRA-KEY>/progress.md` (per `.claude/skills/agentic-dev-core/references/session-management.md`), surfaces last completed phase, offers resume / restart / abort; the synced story folder + engram supply the content context.
 
 ---
 
