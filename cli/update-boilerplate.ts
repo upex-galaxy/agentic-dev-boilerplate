@@ -51,7 +51,7 @@ const COMPONENTS: Component[] = [
   { name: 'scripts', type: 'directory', paths: ['scripts'] },
   { name: 'cli', type: 'directory', paths: ['cli'] },
   { name: 'docs', type: 'directory', paths: ['docs'] },
-  { name: 'context', type: 'directory', paths: ['.context'], bootstrapOnly: true, frameworkFiles: ['README.md'] },
+  { name: 'context', type: 'directory', paths: ['.context'], bootstrapOnly: true, frameworkFiles: ['README.md'], frameworkFilesExcept: ['.context/ADR/README.md'] },
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   { name: 'husky', type: 'directory', paths: ['.husky'] },
