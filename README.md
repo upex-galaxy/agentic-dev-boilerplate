@@ -335,7 +335,8 @@ Validation: `bun run skills:check` checks tier coherence (orphan categories, tie
 | `/business-data-map`          | Generate or update `.context/business/business-data-map.md`                                       |
 | `/business-feature-map`       | Generate or update `.context/business/business-feature-map.md`                                    |
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
-| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md`                                       |
+| `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md` (EPIC/strategy roadmap)               |
+| `/dev-roadmap`                | Generate or update `.context/dev-roadmap.md` (TICKET/sequence: dependency edges + execution sprints + mockup-gates; subsumes `sprint-sequence.md`) |
 
 <br />
 

@@ -68,7 +68,7 @@ Canonical reading order for any AI starting cold on a sprint-development workflo
 2. `.agents/jira-required.yaml` — canonical slug catalog (custom fields, statuses, link types) for the active workspace.
 3. `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping for `{{jira.<slug>}}` resolution.
 4. `.agents/jira-workflows.json` — workflow + transition catalog (resolves Ready For Dev → In Progress → In Review → Ready For QA).
-5. `.context/master-implementation-plan.md` — Master Sprint roadmap for the parent feature (priority + dependency context).
+5. `.context/master-implementation-plan.md` (EPIC/strategy) **and** `.context/dev-roadmap.md` (TICKET/sequence) — the roadmap stack for the parent feature. The master plan gives Master Sprint priority; **`dev-roadmap.md` gives the dependency edges, execution-sprint order, and mockup-gates** — consult it as the canonical "what's next + what blocks this ticket" source (it subsumes the former `.context/PBI/sprint-sequence.md`). If it is missing, Phase 0 bootstraps it via `/dev-roadmap`.
 6. `.context/business/domain-glossary.md` — canonical domain terminology; consult BEFORE planning so the impl plan, code identifiers, PR prose, and Jira comments use canonical terms and avoid anti-glossary banned terms.
 7. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — story-level context (dev-authored, non-Jira): session notes, open questions.
 8. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` — canonical story-level technical plan, synced from the Jira `spec_implementation_plan` field (read-only cache; read before Stage 2 resume).
@@ -220,6 +220,22 @@ Before Epic precheck and Stage 1 — Planning, run the resume contract from `age
    4. Offer three options and WAIT for input: **resume** (jump to the next planned stage — Stage 2 chunk, Stage 3 fix-iterate, etc.) / **restart** (archive current dir to `.session/.archive/<YYYY-MM-DD>-sprint-development-<JIRA-KEY>-aborted/`, then re-enter Epic precheck) / **abort**.
 
 Phase 0 is inline — no subagent dispatch. The check fires even on first invocation so resume-vs-fresh is deterministic.
+
+### Phase 0b — Dev-roadmap consult (MANDATORY, inline)
+
+Immediately after the resume check, before Epic precheck, consult `.context/dev-roadmap.md` — the canonical ticket-level "what's next + what blocks this ticket" source (it subsumes the former `.context/PBI/sprint-sequence.md`).
+
+1. **Bootstrap-if-missing.** If `.context/dev-roadmap.md` is absent or still the placeholder stub → invoke `/dev-roadmap` to generate it (do NOT re-derive the sort inline — delegate to the owner so there is a single implementation). Then proceed.
+2. **Consult (always).** Read the §3 dependency graph + §4 execution sprints + §5 mockup-gate registry for `<JIRA-KEY>`:
+   - Confirm every **hard blocker** of this ticket is already dev-done. If a hard blocker is NOT dev-done → STOP and surface it to the user before planning ("BK-X depends on BK-Y which is not dev-done — proceed anyway, switch tickets, or abort?").
+   - Confirm this ticket is not 🔒 mockup-gated in §5 (if it is and the mockup is absent, route per the Stage-1 missing-row gate / Critical Rule #15 before coding).
+   - Surface this ticket's Execution Sprint + any §6 per-story pre-dev blocker so the plan accounts for it.
+3. **Cheap inline flips (surgical — NOT a regen).** Keep the durable layers fresh as work lands, without re-running the whole sort:
+   - When this ticket reaches dev-done in this run (Stage 4 — staging merged / Jira → Ready For QA), flip its gate marker in §3/§4 and clear any §5 mockup-gate it satisfied.
+   - If this ticket is new and absent from §3, add its edge (cite the real Jira link / data-map / design source) or, if unclear, log it to the §6 edge-mapping TODO.
+   - **NEVER write live status** into the doc — status stays a §6 query recipe. **NEVER regenerate §4 inline** — a structural re-sort is `/dev-roadmap`'s job; if many edges changed, recommend re-running `/dev-roadmap` instead of hand-editing.
+
+Phase 0b is inline. It reads on every invocation; it writes only the narrow flips above (and only when this run actually changed the ticket's state).
 
 **`progress.md` Cross-references contract**: when the orchestrator writes the first entry, the file's `## Cross-references` section MUST cite both `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` (canonical plan, synced from Jira) and `.context/reports/SPRINT-<N>-DEVELOPMENT.md` (cross-ticket sprint tracker, when batch mode is active). These two pointers replace the `plan.md` that the full variant would write.
 
