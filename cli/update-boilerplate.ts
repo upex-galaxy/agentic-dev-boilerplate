@@ -303,6 +303,123 @@ async function detectEnvVarDrift(
   }
 }
 
+// --- GIT_STRATEGY UPSERT (afterApply hook) ---
+//
+// The `git_strategy:` block in `.agents/project.yaml` (git workflow definition,
+// read by the git-flow-master skill) was added to the boilerplate AFTER some
+// projects were already scaffolded. `.agents/project.yaml` is bootstrapOnly, so
+// the regular sync NEVER overwrites it — a pre-feature project would silently
+// stay without the block. This hook back-fills it ONCE, APPEND-ONLY.
+//
+// HARD CONSTRAINT: append-only. It NEVER edits, reorders, or deletes any
+// existing line in the consumer's project.yaml — it only appends the missing
+// block at EOF. This preserves every user-set value verbatim.
+//
+// Like detectEnvVarDrift, the upstream clone still sits in `tempDir` (cleanup
+// happens after afterApply). We lift the `git_strategy:` block (with its leading
+// comment header) out of the upstream copy and append it to the consumer's file.
+
+/**
+ * Extract the `git_strategy:` block from an upstream `.agents/project.yaml`,
+ * INCLUDING the contiguous comment header immediately preceding it.
+ *
+ * Strategy: find the `git_strategy:` line, walk BACKWARDS over contiguous
+ * leading `#` comment lines to capture the header, then walk FORWARDS over all
+ * indented (space-prefixed) lines until the next top-level key or top-level
+ * comment introducing another section. Returns the block as a trimmed string,
+ * or null if no `git_strategy:` key exists upstream.
+ */
+function extractUpstreamGitStrategyBlock(upstreamYaml: string): string | null {
+  const lines = upstreamYaml.split('\n');
+  const keyIdx = lines.findIndex(l => l.startsWith('git_strategy:'));
+  if (keyIdx === -1) { return null; }
+
+  // Walk backwards over the contiguous comment header (stop at blank/non-comment).
+  let start = keyIdx;
+  while (start - 1 >= 0 && /^\s*#/.test(lines[start - 1])) { start -= 1; }
+
+  // Walk forwards over indented body lines (block scalars, nested keys, lists).
+  let end = keyIdx; // inclusive index of last block line
+  for (let i = keyIdx + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (line.trim() === '') { continue; } // blank lines inside the block are tolerated
+    if (/^\s/.test(line)) { end = i; continue; } // indented → still part of the block
+    break; // top-level key or top-level comment → block ended
+  }
+
+  return lines.slice(start, end + 1).join('\n').trimEnd();
+}
+
+/**
+ * Back-fill a missing `git_strategy:` block into the consumer's
+ * `.agents/project.yaml`. Mirrors detectEnvVarDrift's signature (tempDir, sink,
+ * nonInteractive). Append-only; never modifies existing lines.
+ */
+async function upsertGitStrategyBlock(
+  templateDir: string,
+  sink: ReportSink,
+  nonInteractive: boolean,
+): Promise<void> {
+  const consumerYaml = path.join(process.cwd(), '.agents', 'project.yaml');
+  if (!fs.existsSync(consumerYaml)) { return; }
+
+  let consumerContent: string;
+  try {
+    consumerContent = fs.readFileSync(consumerYaml, 'utf8');
+  }
+  catch {
+    return; // unreadable consumer file — nothing to do.
+  }
+
+  // Already has a top-level git_strategy block → NO-OP. Never touch it.
+  if (/^git_strategy:/m.test(consumerContent)) { return; }
+
+  // Absent → pre-feature project. Lift the block from the upstream clone.
+  const upstreamYaml = path.join(templateDir, '.agents', 'project.yaml');
+  if (!fs.existsSync(upstreamYaml)) { return; }
+
+  let block: string | null;
+  try {
+    block = extractUpstreamGitStrategyBlock(fs.readFileSync(upstreamYaml, 'utf8'));
+  }
+  catch {
+    return; // unreadable upstream — skip.
+  }
+  if (!block) { return; }
+
+  // CI / non-interactive: never modify the file — just flag it.
+  if (nonInteractive) {
+    sink.warn('Tu `.agents/project.yaml` no tiene el bloque `git_strategy` (definición del flujo de git).');
+    sink.step('Modo --auto: ejecuta el updater de forma interactiva para agregarlo (o añádelo manualmente).');
+    return;
+  }
+
+  // Interactive: OFFER to append (append-only — existing values untouched).
+  const proceed = await sink.confirm(
+    'Tu `.agents/project.yaml` no tiene el nuevo bloque `git_strategy` (definición del flujo de git). ¿Agregarlo ahora? (append-only — tus valores existentes nunca se modifican)',
+    false,
+  );
+  if (!proceed) {
+    sink.step('Omitido. Puedes agregar el bloque `git_strategy` más tarde.');
+    return;
+  }
+
+  // APPEND ONLY — preserve the existing file verbatim, and prepend exactly one
+  // blank line before the block regardless of the file's trailing-newline state:
+  //  - ends with "\n"  → add "\n" (a blank line) then the block.
+  //  - no trailing "\n" → add "\n\n" (close the last line + a blank line).
+  const sep = consumerContent.endsWith('\n') ? '\n' : '\n\n';
+  try {
+    fs.appendFileSync(consumerYaml, `${sep}${block}\n`);
+  }
+  catch (err) {
+    sink.warn(`No se pudo agregar el bloque \`git_strategy\`: ${err instanceof Error ? err.message : String(err)}`);
+    return;
+  }
+  sink.step('Bloque `git_strategy` agregado al final de `.agents/project.yaml` (append-only).');
+  sink.step('Revisa la estrategia o ejecuta "set up our git strategy" en Claude (git-flow-master) para definir la tuya.');
+}
+
 // --- SINK ---
 function abortOnCancel<T>(v: T | symbol): T {
   if (tui.isCancel(v)) {
@@ -535,6 +652,7 @@ async function main(): Promise<void> {
           }
         }
         await detectEnvVarDrift(TEMP_DIR, sink, parsed.auto);
+        await upsertGitStrategyBlock(TEMP_DIR, sink, parsed.auto);
       },
     },
   };
@@ -554,6 +672,7 @@ async function main(): Promise<void> {
     `Con error:    ${summary.failed.length}`,
     `Avanzados:    ${summary.componentsAdvanced.join(', ') || '(ninguno)'}`,
     `Retenidos:    ${summary.componentsHeldBack.join(', ') || '(ninguno)'}`,
+    'Git: si tu `git_strategy` está sin definir o es heredado, ejecuta "set up our git strategy" en Claude (git-flow-master).',
   ])}\n`);
 
   tui.outro(parsed.dryRun ? 'Dry-run completado.' : 'Sincronizacion completada.');
