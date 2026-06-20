@@ -341,6 +341,8 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills/git-flow-master/` + `docs/workflows/git-flow.md` if present.
 
+> **Active strategy + branch policy = the `git_strategy:` block in `.agents/project.yaml`** (source of truth). This repo operates as `solo-main`.
+
 **Protected branches**:
 
 | Branch      | Role                                                               |
@@ -361,11 +363,11 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 
 ## Git Strategy
 
-<!-- No strategy resolved yet. This boilerplate ships WITHOUT a git-flow-master:strategy marker by design (template-trap guard). -->
+> **Source of truth: the `git_strategy:` block in `.agents/project.yaml`.** `git-flow-master` reads it before any git/gh operation and adapts every branch / commit / push / PR / conflict-fix to the strategy declared there. NEVER define branch policy in this CLAUDE.md — edit the `git_strategy:` block.
+>
+> If `git_strategy.strategy` is **null** (the shipped template value), the strategy is UNSET: `git-flow-master` OFFERS "Strategy Setup" on the first git intent and fills the block (it never auto-picks). `.agents/project.yaml` ships as a per-project template (all `null`) and is frozen by `bun run update` (updater `bootstrapOnlyPaths`), so every project keeps its own strategy.
 
-This project has not run Strategy Setup yet. The branching strategy (solo-main / main-integration / enterprise / trunk-based / gitflow / github-flow / gitlab-flow) is undecided.
-
-To configure: ask git-flow-master to "set up our git strategy" (or "bootstrap branching"). Strategy Setup will pick the flow, create only the branches that flow needs (never forcing anything), capture the merge + hotfix decisions, and replace this placeholder with the full runbook + markers. Until then, git-flow-master detects the strategy per-invocation and operates without a persisted runbook.
+This repository (the boilerplate itself) ships `git_strategy.strategy: null`; with a single `main` branch, `git-flow-master` operates as **`solo-main`** (single maintainer, commit + push directly to `main`). To pin it explicitly: ask git-flow-master to "set up our git strategy".
 
 ---
 
