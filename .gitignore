@@ -106,7 +106,11 @@ dbhub.local.toml
 # pins the bootstrapped template — written once by the scaffolder / installer).
 # `.template/installer.state.json` is GITIGNORED (per-dev runtime idempotency
 # cache — tracks which `bun setup` steps already completed).
+# `.template/claude-md.upstream.sha` is GITIGNORED (per-dev runtime marker —
+# records the last upstream CLAUDE.md the updater advised about, so the merge
+# nudge fires once per upstream change, not every `bun up`).
 .template/installer.state.json
+.template/claude-md.upstream.sha
 
 # ===== Refcheck local config (per-dev tuning, not committed) =====
 .refcheckrc.toml
