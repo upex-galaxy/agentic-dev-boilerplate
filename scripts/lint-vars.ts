@@ -110,6 +110,15 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['PROJECT_VAR', 'CLAUDE.md'],
   // testability-guide credentials-content-template.md: documents {{VAR_NAME}} / {{environments.<env>.<var>}} syntax for publishers
   ['VAR_NAME', 'credentials-content-template.md'],
+  // resend-cli (vendored community skill) reference docs use Resend's own
+  // Handlebars-style triple-mustache {{{VAR_NAME}}} email-template placeholders —
+  // third-party syntax unrelated to this repo's {{VAR}} project convention.
+  // PROJECT_RE matches the inner {{VAR_NAME}} substring of {{{VAR_NAME}}}.
+  // Only bites when `bunx skills add` copies the skill into .claude/skills/
+  // (symlink installs are skipped by the walker).
+  ['VAR_NAME', 'resend-cli/references/templates.md'],
+  ['NAME', 'resend-cli/references/workflows.md'],
+  ['PLAN', 'resend-cli/references/workflows.md'],
 ];
 
 // -----------------------------------------------------------------------------
