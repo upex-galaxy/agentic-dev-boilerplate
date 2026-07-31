@@ -1,0 +1,2467 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Del plano al producto — flujo de mockups con IA</title>
+    <meta
+      name="description"
+      content="Cómo agentic-dev-boilerplate lleva un mockup, historia por historia, desde una herramienta de diseño hasta el master-design-plan.md que guía /sprint-development."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck — cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos" — ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection) — the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '—';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#modelo">Modelo</a>
+        <a href="#bucle">Bucle</a>
+        <a href="#handoff">Handoff</a>
+        <a href="#claude">Claude Design</a>
+        <a href="#open">Open Design</a>
+        <a href="#otras">Otras vías</a>
+        <a href="#comandos">Comandos</a>
+        <a href="#empezar">Empezar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> — el plano antes de la obra</div>
+        <h1>Del <em>plano</em> al <span class="sig">producto</span>, con la IA de por medio.</h1>
+        <p class="lede">
+          Antes de que una sola línea de código se escriba, cada pantalla se dibuja como un
+          <b>mockup</b> — el plano. Esta guía muestra la maniobra completa de
+          <span class="mono">/design-system</span>: cómo, historia por historia, se produce ese
+          plano con una herramienta de diseño, se entrega a la IA, y se convierte en el contrato
+          visual que <b>guía <span class="mono">/sprint-development</span></b
+          >.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para <b>quien arma la historia</b>, no solo quien la
+            codea</span
+          >
+          <span class="chip"
+            ><span class="dot"></span> herramientas:
+            <b>Claude Design · Open Design · Figma · HTML manual</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> motor: <b>Claude Code / OpenCode + skills</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Intención</div>
+            <h3>Historia de usuario</h3>
+            <p>Qué debe hacer el usuario en esa pantalla.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Plano</div>
+            <h3>Mockup</h3>
+            <p>Se dibuja en una herramienta externa. La IA no lo inventa.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Contrato</div>
+            <h3>Master design plan</h3>
+            <p>La IA mapea el mockup a la historia.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Obra</div>
+            <h3>Sprint dev</h3>
+            <p>Se construye contra el plano, no a ciegas.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 MODELO MENTAL ============ -->
+    <section class="band" id="modelo">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> — modelo mental</div>
+          <h2>Dos planos que nunca se confunden</h2>
+          <p class="sub">
+            El error más común es mezclar el <em>sistema de diseño</em> con el
+            <em>diseño de pantallas</em>. Son dos artefactos, con dos dueños y dos consumidores
+            distintos — y de hecho, dos "drop zones" físicas distintas en el repo.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Sistema — se define una vez</div>
+            <h3>DESIGN.md</h3>
+            <span class="path">./DESIGN.md</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              Los <b>tokens</b>: paleta, tipografía, espaciado, radios, componentes. La "voz visual"
+              del producto entero.
+            </p>
+            <ul>
+              <li>
+                Lo genera la skill <b>/design-system</b>, uno de 5 caminos (A–E: gallery manual,
+                <span class="mono">getdesign</span>+matcher, Open Design, Claude Design, o custom).
+              </li>
+              <li>Formato abierto (Google Labs), lo lee cualquier agente.</li>
+              <li>Lo consume <b>/project-bootstrap</b> al montar el frontend.</li>
+              <li>
+                Su drop zone de bundle es
+                <span class="mono">design/handoff/&lt;slug&gt;/</span> (raíz del repo) —
+                <b>no</b> confundir con la de pantallas.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Pantallas — se hace por feature</div>
+            <h3>master-design-plan.md</h3>
+            <span class="path">.context/design/master-design-plan.md</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              La <b>spec por pantalla</b> (§4) + el mapa <b>Historia → Pantalla</b> (§8). Dice qué
+              pantalla renderiza cada historia y cómo debe verse.
+            </p>
+            <ul>
+              <li>
+                Lo arma <b>/design-system</b> (fase opt-in, siempre pregunta) desde
+                <b>tus mockups</b>.
+              </li>
+              <li>La IA <b>no</b> dibuja las pantallas — orquesta el handoff.</li>
+              <li>
+                Lo consume <b>/sprint-development</b> en cada historia de UI (Regla 14 del repo).
+              </li>
+              <li>
+                Su drop zone de mockups crudos es
+                <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> — plural
+                "designs", distinto de "design" singular del plan.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Regla de oro:</b> DESIGN.md manda sobre <em>tokens</em>; el master design plan manda
+          sobre <em>pantallas</em>. Nunca se duplican valores: el plan de pantallas apunta a
+          DESIGN.md como autoridad de color/tipografía. Y ojo con los nombres de carpeta:
+          <span class="mono">design/handoff/</span> (bundle de tokens) vs.
+          <span class="mono">.context/designs/</span> (mockups de pantalla) vs.
+          <span class="mono">.context/design/</span> (el plan ya armado) — tres carpetas, tres
+          cargas distintas.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 EL BUCLE POR HISTORIA ============ -->
+    <section class="band" id="bucle">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> — el bucle</div>
+          <h2>Un mockup por historia, justo antes de construirla</h2>
+          <p class="sub">
+            No se diseñan todas las pantallas de golpe al inicio. Se diseña <em>just-in-time</em>:
+            las pantallas de un feature se dibujan justo antes de su sprint. Así el plano llega
+            fresco y ya alineado con la UI viva.
+          </p>
+        </div>
+
+        <div class="r" style="margin-bottom: 26px">
+          <p class="lead-in" style="max-width: 66ch">
+            Cada historia de usuario nueva que renderiza interfaz
+            <b>debería tener su propio mockup</b> — siempre que sea posible. Las historias puramente
+            de backend no tienen pantalla (se marcan con <span class="mono">—</span> en el mapa).
+            Cuando <span class="mono">/sprint-development</span> topa una historia de UI sin fila en
+            §8, te <b>frena y te manda</b> a diseñar ese mockup primero — es literalmente la Regla
+            14 (UI Fidelity Contract) del repo.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>La historia entra al sprint</h3>
+            <p>
+              Tomás una historia de UI. <span class="mono">/sprint-development</span> la busca en el
+              mapa <b>Historia → Pantalla</b> (§8 del master design plan).
+            </p>
+          </div>
+          <div class="step">
+            <h3>¿Tiene mockup? Si no, se diseña ahora</h3>
+            <p>
+              Sin fila en §8 → el flujo se detiene. Volvés a
+              <span class="mono">/design-system</span> para producir el mockup de <em>ese</em> lote
+              de pantallas. Es el patrón universal de handoff (siguiente sección).
+            </p>
+          </div>
+          <div class="step">
+            <h3>El mockup se convierte en contrato</h3>
+            <p>
+              La IA lee el mockup, escribe la spec de pantalla (§4) y agrega la fila al mapa (§8).
+              Te muestra la lista de pantallas para que la <b>confirmes</b> antes de guardar.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Se construye contra el plano</h3>
+            <p>
+              Recién ahí <span class="mono">/sprint-development</span> implementa la historia —
+              abriendo la spec de §4 y respetando los tokens de DESIGN.md. Fidelidad al mockup, sin
+              refactors de backend.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Live-UI-first:</b> el mockup es <em>inspiración</em>, no evangelio. La UI viva actual
+          es la fuente de verdad de fidelidad — se reutilizan los componentes que ya existen y el
+          mockup se adapta a ellos, no al revés. Si el mockup trae algo genuinamente bueno que la UI
+          viva no tiene, no se fuerza en la historia actual: se archiva como tech-story futura.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 EL PATRÓN UNIVERSAL DE HANDOFF ============ -->
+    <section class="band" id="handoff">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> — el patrón universal</div>
+          <h2>Cómo se entrega un mockup a la IA</h2>
+          <p class="sub">
+            Este handoff es <em>idéntico</em> en su forma para todas las herramientas — lo que
+            cambia es <em>dónde</em> dibujás las pantallas (paso 2) y, para Open Design,
+            <em>quién</em> hace el paso 3 y 4 (vos, o la IA sola vía MCP — ver §05).
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Das el opt-in</h3>
+            <p>
+              Corrés <span class="mono">/design-system</span>. La fase de screen-mapping
+              <b>siempre pregunta</b>, nunca corre sola — vía
+              <span class="mono">AskUserQuestion</span>, con tres opciones: sí tengo/voy a producir
+              mockups, no (los tokens alcanzan), o todavía no.
+            </p>
+            <span class="say"
+              ><span class="who">vos →</span> "sí, voy a producir mockups para estas
+              historias"</span
+            >
+          </div>
+          <div class="step">
+            <h3>La IA te entrega un BRIEF</h3>
+            <p>
+              La IA escribe <span class="mono">BRIEF.md</span> sembrado con los tokens de DESIGN.md
+              (valores reales inline) + las historias y comportamientos visibles. Es el prompt
+              portable que vas a pegar en la herramienta — o que la IA misma va a usar si el camino
+              es MCP-driven.
+            </p>
+            <p class="mono" style="font-size: 0.8rem; color: var(--blue)">
+              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/BRIEF.md
+            </p>
+          </div>
+          <div class="step">
+            <h3>Diseñás en la herramienta externa (o la IA lo hace por MCP)</h3>
+            <p>
+              Pegás el brief en Claude Design / Open Design / la que sea, iterás las pantallas
+              conversando, y <b>exportás</b> el resultado. En el camino manual, este paso lo hacés
+              vos. En Open Design con MCP conectado, la IA puede disparar y pollear el run sola —
+              ver Modo A en §05.
+            </p>
+          </div>
+          <div class="step">
+            <h3>El bundle cae en la "drop zone"</h3>
+            <p>
+              Los archivos exportados quedan en la misma carpeta del brief. Esa es la
+              <em>zona de entrega</em> que la IA vigila (o que ella misma llena, en Modo A).
+            </p>
+            <p class="mono" style="font-size: 0.8rem; color: var(--blue)">
+              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/
+            </p>
+          </div>
+          <div class="step">
+            <h3>La IA arma el contrato</h3>
+            <p>
+              Le avisás que ya está (o ella misma lo detecta al terminar su run). La IA lee los
+              mockups, enumera pantallas, escribe §4 + §8, y te muestra el mapa para revisar. Listo
+              para el sprint.
+            </p>
+            <span class="say"
+              ><span class="who">vos →</span> "ya dejé los mockups en la carpeta, armá el master
+              design plan"</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Resume-safe:</b> mientras diseñás (Modo B manual), la IA deja un checkpoint y
+          <em>pausa</em>. Podés cerrar la sesión: al volver retoma exactamente donde estaba,
+          esperando tu bundle. No inventa pantallas para "seguir".
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 CLAUDE DESIGN ============ -->
+    <section class="band" id="claude">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> — herramienta A</div>
+          <h2>Claude Design</h2>
+          <p class="sub">
+            La herramienta de Anthropic (<span class="mono">claude.ai/design</span>). Convertís
+            texto en prototipos <em>interactivos</em> HTML/CSS/JS que refinás conversando. Es Path D
+            de las cinco vías de DESIGN.md, y también sirve para screen mockups pegando el BRIEF.md.
+          </p>
+        </div>
+
+        <div class="facts r" style="margin-bottom: 34px">
+          <div class="fact">
+            <div class="big">Pro+</div>
+            <div class="lbl">
+              Requiere plan Pro, Max, Team o Enterprise. En Enterprise, el admin debe habilitarlo
+              (default OFF).
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">Opus 4.7</div>
+            <div class="lbl">
+              Modelo de visión que lo impulsa. Research preview, lanzado 2026-04-17.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">HTML</div>
+            <div class="lbl">
+              El medio son prototipos vivos <span class="mono">.dc.html</span>, no PNGs ni Figma.
+            </div>
+          </div>
+        </div>
+
+        <div class="figwrap r">
+          <div class="win">
+            <div class="win-bar">
+              <div class="win-dots"><i></i><i></i><i></i></div>
+              <div class="win-url">claude.ai/design — flujo de login</div>
+              <div class="win-btn">Import</div>
+              <div class="win-btn exp">Export ▼</div>
+            </div>
+            <div class="win-body two">
+              <div class="pane chat">
+                <div class="pane-label">Chat</div>
+                <div class="bub ai">Aquí tenés una primera versión del login. ¿Ajustamos algo?</div>
+                <div class="bub me">Hacé el botón primario más grande y agregá estado de error</div>
+                <div class="bub tool">✓ Editing · Login.dc.html</div>
+                <div class="bub tool">✓ Done</div>
+                <div class="promptbox">
+                  <span>Describí un cambio…</span><span class="send">▲</span>
+                </div>
+              </div>
+              <div class="pane canvas">
+                <div class="pane-label">Canvas · preview vivo</div>
+                <div class="mini">
+                  <div class="mtop"><i></i><i class="sm"></i></div>
+                  <div class="mbody">
+                    <div class="line w1"></div>
+                    <div class="line"></div>
+                    <div class="line w2"></div>
+                    <div class="btn"></div>
+                  </div>
+                  <div class="pin">2</div>
+                  <div class="sliders">
+                    <div class="sl a"></div>
+                    <div class="sl b"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="figcap">
+            Esquema aproximado — no es fiel al producto. Chat a la izquierda · canvas vivo a la
+            derecha · Export arriba a la derecha.
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow">
+            <span class="num">04·b</span> — paso a paso, para screen mockups
+          </div>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Abrís un proyecto y pegás el BRIEF</h3>
+            <p>
+              Creás un proyecto (hereda el design system de tu org). Le enchufás contexto: repo de
+              GitHub o directorio local, assets existentes. <b>Pegás el BRIEF.md</b> completo como
+              primer mensaje del chat.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Iterás de cuatro formas</h3>
+            <p>
+              <b>Chat</b> para cambios grandes · <b>comentarios inline</b> (clic en un elemento del
+              canvas) · <b>edición directa</b> (arrastrar / redimensionar / alinear) ·
+              <b>sliders</b> que Claude genera para espaciado, color y layout.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cubrís los estados y varias pantallas</h3>
+            <p>
+              Un proyecto sostiene el <b>flujo completo</b> (varias pantallas conectadas con
+              navegación). Generá los estados borde — vacío, cargando, error — <em>antes</em> del
+              handoff.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Exportás — dos rutas</h3>
+            <p>
+              Botón <b>Export</b> (arriba a la derecha): <b>"Send to local coding agent"</b> empuja
+              el bundle directo a tu Claude Code local corriendo en el repo, o
+              <b>"Save as folder"</b> lo descarga como ZIP/carpeta para que vos lo muevas a mano.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Confirmás el destino</h3>
+            <p>
+              Con "Save as folder": descomprimís en
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span>. Con "Send
+              to local coding agent": le decís al agente esa misma ruta de destino — el scope de
+              este drop zone es <b>screen mockups</b>, no el bundle de DESIGN.md (ese usa
+              <span class="mono">design/handoff/</span>).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 OPEN DESIGN ============ -->
+    <section class="band" id="open">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> — herramienta B</div>
+          <h2>Open Design</h2>
+          <p class="sub">
+            La alternativa <em>open source</em> y gratuita a Claude Design (<span class="mono"
+              >nexu-io/open-design</span
+            >, Apache-2.0). Hoy es una <b>desktop app</b> (no Docker) que usa
+            <em>tu propio</em> agente de código como motor — y puede operarse <b>sola</b> vía MCP.
+          </p>
+        </div>
+
+        <div class="facts r" style="margin-bottom: 34px">
+          <div class="fact">
+            <div class="big">v0.16.1</div>
+            <div class="lbl">
+              Desktop app Electron, firmada y notarizada. Puerto <b>dinámico</b>, no fijo — 3
+              procesos locales por sesión.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">BYOK</div>
+            <div class="lbl">
+              Trae tu CLI (Claude Code, Codex, OpenCode…) o tus API keys. Gratis.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">18 tools</div>
+            <div class="lbl">
+              MCP <span class="mono">mcp__open-design__*</span> — la IA puede operar la app sin que
+              abras la ventana.
+            </div>
+          </div>
+        </div>
+
+        <div class="figwrap r">
+          <div class="win">
+            <div class="win-bar">
+              <div class="win-dots"><i></i><i></i><i></i></div>
+              <div class="win-url">Open Design · Studio (desktop app, puerto dinámico)</div>
+            </div>
+            <div class="win-nav">
+              <span>Home</span><span class="on">Studio</span><span>Automation</span
+              ><span>Design System</span><span>Plugin</span><span class="gear">⚙</span>
+            </div>
+            <div class="win-body three">
+              <div class="pane chat">
+                <div class="pane-label">Chat / MCP</div>
+                <div class="bub me">Onboarding: bienvenida, selector de plan, confirmación</div>
+                <div class="bub mcp">▌ start_run vía MCP…</div>
+                <div class="bub tool">✓ get_run → succeeded</div>
+                <div class="promptbox"><span>Instrucción…</span><span class="send">Send</span></div>
+              </div>
+              <div class="pane">
+                <div class="pane-label">Design files</div>
+                <div class="tree">
+                  <div class="mut">▾ onboarding/</div>
+                  <div class="f">&nbsp;&nbsp;welcome.html <span class="verpill">v3</span></div>
+                  <div class="on">&nbsp;&nbsp;plans.html <span class="verpill">v5</span></div>
+                  <div class="f">&nbsp;&nbsp;confirm.html <span class="verpill">v2</span></div>
+                  <div class="mut">▸ history</div>
+                </div>
+              </div>
+              <div class="pane preview">
+                <div class="pane-label">Preview</div>
+                <div class="exp-fab">cp → repo</div>
+                <div class="mini" style="width: 88%">
+                  <div class="mtop"><i></i><i class="sm"></i></div>
+                  <div class="mbody">
+                    <div class="line w1"></div>
+                    <div class="cards"><i></i><i></i><i></i></div>
+                    <div class="btn"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="figcap">
+            Esquema aproximado — no es fiel al producto. En Modo A no hay botón Export que tocar: la
+            IA ubica el resultado con <span class="mono">get_artifact</span>/<span class="mono"
+              >list_files</span
+            >
+            y lo copia (<span class="mono">cp</span>) al repo — el MCP no escribe fuera de su propio
+            directorio de datos.
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">05·b</span> — dos modos, mismo destino</div>
+        </div>
+        <div class="planes r" style="margin-bottom: 30px">
+          <div class="plane agent">
+            <div class="tag">Modo A — preferido</div>
+            <h3>MCP-driven</h3>
+            <span class="path">mcp__open-design__*</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              Con el daemon de Open Design conectado como MCP server, la IA misma llama
+              <span class="mono">create_project</span> + <span class="mono">start_run</span> con el
+              contenido del BRIEF.md, pollea <span class="mono">get_run</span> cada 30–60s en un
+              loop foreground, y al ver <span class="mono">status: succeeded</span> ubica el
+              resultado con <span class="mono">get_artifact</span> /
+              <span class="mono">list_files</span> y lo copia (<span class="mono">cp</span>) desde
+              el data root de Open Design a la drop zone del repo — sin que vos toques la ventana.
+            </p>
+          </div>
+          <div class="plane">
+            <div class="tag">Modo B — fallback</div>
+            <h3>Manual + PAUSE</h3>
+            <span class="path">handoff manual</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              Si el MCP no está conectado: la IA deja el BRIEF.md y <b>pausa</b>. Abrís la desktop
+              app vos, pegás el brief en <b>Studio → New Project</b> (skill/template + DESIGN.md +
+              brief), iterás, y copiás el archivo final desde la carpeta de datos del proyecto (o
+              corrés <span class="mono">od export</span>) a la drop zone, y avisás cuando esté.
+            </p>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 34px 0 18px 0">
+          <div class="eyebrow"><span class="num">05·c</span> — instalar y conectar el motor</div>
+        </div>
+        <div class="r" style="margin-bottom: 22px">
+          <div class="code">
+            <span class="c"># Vía recomendada — sin Docker, binario firmado</span> Descargá el
+            instalador de <span class="k">nexu-io/open-design</span> releases (macOS/Win/Linux) y
+            abrí la app. No hace falta puerto fijo ni
+            <span class="mono">host.docker.internal</span>.
+
+            <span class="c"># Docker sigue existiendo, pero ya no es el camino recomendado —</span>
+            <span class="c"># solo si ya vivís en containers o necesitás acceso remoto.</span>
+          </div>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Configurás el motor</h3>
+            <p>
+              En <b>Settings</b> elegís cómo genera: apuntando a tu CLI ya autenticado (Claude Code
+              / Codex / OpenCode — <em>sin</em> key extra) o cargando una API key de cualquier
+              endpoint compatible con la API de OpenAI (BYOK).
+            </p>
+          </div>
+          <div class="step">
+            <h3>Conectás el MCP a tu agente</h3>
+            <p>
+              Registrás el daemon de Open Design como MCP server en tu coding agent (Claude Code,
+              etc.). Una vez conectado, los 18 tools
+              <span class="mono">mcp__open-design__*</span> quedan disponibles y el Modo A se vuelve
+              el camino por defecto.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Elegís los 3 inputs y disparás</h3>
+            <p>
+              Skill de OD (para pantallas de aplicación usá
+              <span class="mono">frontend-design</span>; a 0.16.x no existen
+              <span class="mono">web-prototype</span> ni <span class="mono">dashboard</span> como
+              skill — no los cites) + design system (tu <span class="mono">DESIGN.md</span> real) +
+              brief en lenguaje natural (el BRIEF.md). <b>Send</b> — a mano en Studio, o vía
+              <span class="mono">start_run</span> si es la IA quien dispara.
+            </p>
+          </div>
+          <div class="step">
+            <h3>El artifact se streamea en vivo</h3>
+            <p>
+              El agente interno de Open Design emite un HTML completo y auto-contenido; el panel
+              derecho lo <b>streamea</b> como prototipo navegable — botones, tabs y modales
+              funcionan. Cada follow-up crea una <b>nueva versión</b>, las anteriores quedan en el
+              historial.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cierra el handoff</h3>
+            <p>
+              Modo A: la IA ubica el archivo con <span class="mono">get_artifact</span> y lo copia
+              (<span class="mono">cp</span>) a la drop zone — el MCP no escribe fuera de su propio
+              data root. Modo B: copiás el archivo (o corrés <span class="mono">od export</span>) a
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> y avisás.
+            </p>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 40px 0 18px 0">
+          <div class="eyebrow">
+            <span class="num">05·d</span> — gotchas verificados en producción
+          </div>
+          <p class="sub" style="font-size: 1rem">
+            Si vas a operar Open Design vía MCP (Modo A), estas cuatro señales confunden si no las
+            conocés de antemano.
+          </p>
+        </div>
+        <div class="gotchas r">
+          <div class="g">
+            <b>El mensaje del agente miente antes que el archivo</b
+            ><span
+              >El self-report (<span class="mono">agentMessage</span>) puede reportar el idioma o
+              resultado equivocado aunque el HTML generado esté correcto. El archivo en disco es el
+              ground truth — grepealo, no reacciones al mensaje.</span
+            >
+          </div>
+          <div class="g">
+            <b>"produced no files" puede ser un hint falso</b
+            ><span
+              >Con <span class="mono">artifactCount: 1</span> y el archivo ya escrito, el hint de
+              <span class="mono">get_run</span> a veces dice lo contrario. El filesystem
+              manda.</span
+            >
+          </div>
+          <div class="g">
+            <b><span class="mono">updatedAt</span> se congela durante extended thinking</b
+            ><span
+              >Minutos sin movimiento en el timestamp del run no son un hang — es el modelo
+              pensando. Verificá liveness real contra el último evento de
+              <span class="mono">events.jsonl</span>.</span
+            >
+          </div>
+          <div class="g">
+            <b>Poll solo foreground, nunca sleep desnudo en background</b
+            ><span
+              >Un subagente que espera un run con <span class="mono">sleep</span> largo en
+              background se estanca a sí mismo. Patrón probado: un loop foreground con timeout y
+              <span class="mono">sleep</span> corto adentro — nunca un
+              <span class="mono">sleep</span> suelto.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Detalle clave:</b> Open Design <em>consume</em> DESIGN.md, no lo reemplaza — pero no es
+          automático. Primero hay que instalar el design system del repo como paquete de usuario
+          (<span class="mono">user:&lt;slug&gt;</span>) y <b>publicarlo</b> (arranca en
+          <span class="mono">draft</span>, los proyectos no pueden usarlo hasta publicarse). Sin
+          eso, las pantallas pueden salir con valores inventados en vez de tu paleta y tipografía
+          reales.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 OTRAS VÍAS ============ -->
+    <section class="band" id="otras">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> — otras vías</div>
+          <h2>Cualquier prototipador sirve</h2>
+          <p class="sub">
+            El repo trata como fuente de pantallas <em>cualquier cosa</em> que caiga en la drop
+            zone. Claude Design y Open Design son las recomendadas, pero el patrón universal (§03)
+            también acepta:
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <h3>Figma</h3>
+            <div class="kk">export estático</div>
+            <p>
+              Diseñás en Figma como siempre y <b>exportás las pantallas</b> (imágenes / HTML /
+              specs) a la drop zone. La IA las lee como referencia visual. Ideal si tu equipo ya
+              vive en Figma. La contra: no son prototipos vivos HTML, así que la IA infiere layout
+              desde la imagen + tu brief.
+            </p>
+          </div>
+          <div class="alt">
+            <h3>HTML manual</h3>
+            <div class="kk">sin herramienta visual</div>
+            <p>
+              Lo escribís vos — a mano, o pegando el output de un chat de IA cualquiera que uses
+              como bloc de notas, en <b>otra sesión</b>, sin conexión con la que está corriendo
+              <span class="mono">/design-system</span>. Rápido y sin salir de la terminal. La
+              contra: sin canvas visual para iterar cómodo, el refinamiento es por chat en esa otra
+              sesión y revisando el HTML renderizado.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Regla dura — delegar, no generar:</b> la sesión que corre
+          <span class="mono">/design-system</span> <b>nunca</b> escribe el mockup ella misma (nada
+          de <span class="mono">Write</span> / <span class="mono">write_file</span> sobre HTML de
+          diseño — anti-patrones S1 de <span class="mono">screen-design-mapping.md</span>, D7 del
+          <span class="mono">SKILL.md</span>, B4 de
+          <span class="mono">screen-design-brief.md</span>). Si el HTML nace de una IA, es de
+          <b>otra sesión</b>, tratada exactamente como un export de Figma: un archivo externo que
+          vos soltás en la drop zone — nunca algo que la sesión orquestadora escribe "mientras
+          espera".
+        </div>
+
+        <div class="sec-head r" style="margin: 40px 0 22px 0">
+          <div class="eyebrow"><span class="num">06·b</span> — la vía manual, paso a paso</div>
+          <p class="sub" style="font-size: 1rem">
+            La opción más rápida cuando no querés levantar ninguna app. Sirve bien para pantallas
+            simples y para iterar rápido antes de pulir en una herramienta visual — siempre que el
+            archivo lo produzcas y lo muevas vos, no la sesión de
+            <span class="mono">/design-system</span>.
+          </p>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Producís la primera pantalla, aparte</h3>
+            <p>
+              En otra ventana o sesión (o a mano), un prompt que ancla tres cosas: qué pantalla, qué
+              historia, y que use los tokens de <span class="mono">DESIGN.md</span>. Pedís un
+              archivo autocontenido (abrible en el navegador de una).
+            </p>
+            <span class="say"
+              ><span class="who">vos, en esa otra sesión →</span> "Generá un mockup HTML
+              autocontenido de la pantalla de login para la historia BK-14. Usá los tokens de
+              DESIGN.md. Un solo archivo."</span
+            >
+          </div>
+          <div class="step">
+            <h3>Lo guardás vos en la drop zone</h3>
+            <p>
+              Copiás el <span class="mono">.html</span> resultante a
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/login.html</span> —
+              acción tuya, igual que descomprimir un zip de Claude Design. Lo abrís y lo mirás en el
+              navegador: ese render es tu canvas.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Iterás en esa otra sesión</h3>
+            <p>
+              Describís el cambio en palabras allá; esa sesión reescribe el archivo; vos volvés a
+              copiarlo a la drop zone y refrescás el navegador. Repetís hasta que quede.
+            </p>
+            <span class="say"
+              ><span class="who">vos, en esa otra sesión →</span> "el botón primario más grande,
+              agregá el estado de error y un enlace de recuperar contraseña"</span
+            >
+          </div>
+          <div class="step">
+            <h3>Cubrís los estados borde</h3>
+            <p>
+              Pedí explícitamente vacío, cargando y error — no se agregan solos. Son parte del
+              contrato de pantalla.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Volvés a la sesión de /design-system y cerrás el handoff</h3>
+            <p>
+              El archivo ya está en la drop zone (lo pusiste vos en el paso 2). Le pedís a
+              <span class="mono">/design-system</span> que arme el plan. Mismo final que Claude
+              Design u Open Design.
+            </p>
+            <span class="say"
+              ><span class="who">vos →</span> "listo el mockup, armá el master design plan para
+              BK-14"</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>El principio no cambia:</b> venga de donde venga el mockup, termina en
+          <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> puesto ahí por
+          vos, y la IA lo convierte en spec de pantalla + fila en el mapa Historia→Pantalla. La
+          herramienta es intercambiable; quién lo produce puede variar; el contrato — y quién lo
+          mueve a la drop zone — es siempre el mismo.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 COMPARACIÓN ============ -->
+    <section class="band" id="comparacion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> — comparación</div>
+          <h2>Cuál elegir</h2>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>Claude Design</th>
+                <th>Open Design</th>
+                <th>Figma</th>
+                <th>HTML manual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Costo / acceso</th>
+                <td><span class="badge paid">Pro+</span> plan de pago</td>
+                <td>
+                  <span class="badge free">gratis</span> <span class="badge local">local</span>
+                </td>
+                <td><span class="badge free">free/pago</span></td>
+                <td><span class="badge free">incluido</span></td>
+              </tr>
+              <tr>
+                <th>Dónde corre</th>
+                <td>Web (claude.ai/design)</td>
+                <td>Tu máquina (desktop app, puerto dinámico)</td>
+                <td>Web / desktop</td>
+                <td>Otra sesión, aparte del repo</td>
+              </tr>
+              <tr>
+                <th>Medio</th>
+                <td>Prototipo vivo HTML/CSS/JS</td>
+                <td>Prototipo vivo HTML</td>
+                <td>Diseño vectorial → export</td>
+                <td>HTML plano</td>
+              </tr>
+              <tr>
+                <th>Iteración</th>
+                <td>Chat · inline · drag · sliders</td>
+                <td>Chat + versiones · <span class="badge mcp">MCP</span> Modo A autónomo</td>
+                <td>Manual (vos diseñás)</td>
+                <td>Chat aparte + vos copiás el render</td>
+              </tr>
+              <tr>
+                <th>Usa DESIGN.md</th>
+                <td>Vía design system de la org</td>
+                <td>Sí, lo consume directo</td>
+                <td>Manual (tokens a mano)</td>
+                <td>Sí, se lo pasás</td>
+              </tr>
+              <tr>
+                <th>Mejor para</th>
+                <td>Refinamiento visual rico y rápido</td>
+                <td>Todo local, sin costo, y automatizable end-to-end</td>
+                <td>Equipos ya en Figma</td>
+                <td>Pantallas simples, sin fricción</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap" style="text-align: left; margin-top: 14px">
+          Rutas, drop zones, comandos MCP y versión verificados contra
+          <span class="mono">.claude/skills/design-system/</span> de este repo a 2026-07-30 (Open
+          Design v0.16.1, release 2026-07-23). Los mecanismos de interacción de Claude Design (chat
+          / inline / drag / sliders) son conocimiento general de producto, no están documentados en
+          la skill. Features en evolución rápida — confirmá antes de una demo importante.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §08 COMANDOS ============ -->
+    <section class="band" id="comandos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> — qué le decís a la IA</div>
+          <h2>Los comandos exactos</h2>
+          <p class="sub">
+            Toda la maniobra, del lado tuyo, se reduce a unas pocas frases. Esto es lo que tipeás en
+            Claude Code / OpenCode.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Arrancás la fase de diseño</h3>
+            <span class="say"><span class="who">vos →</span> /design-system</span>
+            <p style="margin-top: 10px">
+              Y cuando pregunte por el mapeo de pantallas:
+              <em>"sí, voy a producir los mockups"</em>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Recibís el brief, diseñás afuera (o dejás que la IA opere Open Design)</h3>
+            <p>
+              La IA deja <span class="mono">BRIEF.md</span> en la carpeta del lote. Modo B: lo pegás
+              en Claude Design u Open Design, iterás, exportás el bundle a esa misma carpeta. Modo A
+              (Open Design + MCP): no hace falta que hagas nada más, la IA dispara y pollea sola.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cerrás el handoff</h3>
+            <span class="say"
+              ><span class="who">vos →</span> "ya dejé los mockups en
+              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/, armá el master design plan"</span
+            >
+            <p style="margin-top: 10px">
+              La IA lee, escribe §4 + §8 y te muestra el mapa Historia→Pantalla para que lo
+              confirmes.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Construís la historia</h3>
+            <span class="say"
+              ><span class="who">vos →</span> "implementar la historia BK-XX" &nbsp;·&nbsp;
+              /sprint-development</span
+            >
+            <p style="margin-top: 10px">
+              Si esa historia no tenía mockup, el propio flujo te devuelve al paso 1 con un brief
+              solo para ese lote de pantallas.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>En una frase:</b> <span class="mono">/design-system</span> (opt-in) → BRIEF.md →
+          diseñás afuera o la IA opera Open Design por MCP → el bundle cae en la drop zone → la IA
+          arma el plan → <span class="mono">/sprint-development</span> construye contra él.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CHECKLIST / CIERRE ============ -->
+    <section class="band">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> — antes de arrancar</div>
+          <h2>Precondiciones, en una lista</h2>
+          <p class="sub">Antes de empezar a producir mockups, tené esto listo:</p>
+        </div>
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>DESIGN.md existe.</b> Los mockups se siembran con sus tokens congelados. Sin él no
+              hay contrato visual — corré <span class="mono">/design-system</span> primero.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Backlog con historias de usuario.</b> Se necesitan para sembrar el brief y armar
+              el mapa Historia→Pantalla.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Herramienta elegida y lista.</b> Claude Design (plan Pro+) · Open Design (desktop
+              app instalada, MCP conectado si querés Modo A) · Figma · o la propia IA.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Opt-in dado.</b> La fase de pantallas siempre se pide explícito; nunca corre
+              sola.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Drop zone clara.</b> Sabés en qué
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> va a caer el
+              bundle — y que no es la misma carpeta que
+              <span class="mono">design/handoff/</span>.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 EMPEZAR ============ -->
+    <section class="band" id="empezar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> — empezá ahora</div>
+          <h2>Arrancar de cero</h2>
+          <p class="sub">
+            Runbook literal. Dos caminos según cuánto quieras montar. Los dos parten de abrir Claude
+            Code u OpenCode en la raíz del repo — las skills viven en
+            <span class="mono">.claude/skills/</span> y ambas terminales las leen igual, así que
+            <span class="mono">/design-system</span> y
+            <span class="mono">/sprint-development</span> están disponibles en cualquiera de las
+            dos.
+          </p>
+        </div>
+
+        <div class="planes r" style="margin-bottom: 30px">
+          <div class="plane">
+            <div class="tag">Camino A — flujo completo con la skill</div>
+            <h3>Con herramienta visual</h3>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
+              Cuando vas a diseñar en Claude Design u Open Design y querés el BRIEF sembrado con tus
+              tokens.
+            </p>
+            <div class="code" style="font-size: 0.78rem">
+              <span class="c"># raíz del repo</span> claude <span class="c"># o: opencode</span>
+
+              <span class="c"># dentro de la sesión:</span>
+              <span class="k">/design-system</span>
+              <span class="c"># responder al opt-in de pantallas:</span>
+              <span class="s">"sí, voy a producir los mockups"</span>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
+              La IA deja el <span class="mono">BRIEF.md</span>, lo pegás en tu herramienta, exportás
+              el bundle a la drop zone, y cerrás con <em>"armá el master design plan"</em>.
+            </p>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Camino B — HTML manual, sin app externa</div>
+            <h3>Vos producís el HTML, aparte</h3>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
+              El más rápido para arrancar hoy. No levantás nada — pero el archivo lo generás y lo
+              movés vos, en una sesión <b>distinta</b> a la que corre
+              <span class="mono">/design-system</span>.
+            </p>
+            <div class="code" style="font-size: 0.78rem">
+              <span class="c"># en OTRA ventana/sesión — no la del repo con /design-system</span>
+              claude <span class="c"># o: opencode, o cualquier chat de IA</span>
+
+              <span class="c"># prompt semilla (ajustá pantalla + historia):</span>
+              <span class="s"
+                >"Generá un mockup HTML autocontenido de la pantalla &lt;X&gt; para la historia
+                BK-XX. Usá los tokens de DESIGN.md. Incluí los estados vacío, cargando y error. Un
+                solo archivo."</span
+              >
+
+              <span class="c"># vos copiás el resultado a la drop zone:</span>
+              <span class="k">cp</span> pantalla.html
+              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/&lt;X&gt;.html
+            </div>
+            <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
+              Abrís el <span class="mono">.html</span> en el navegador, iterás por chat en esa otra
+              sesión, y recién ahí volvés a la sesión de <span class="mono">/design-system</span> y
+              cerrás con <em>"armá el master design plan para BK-XX"</em>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Regla para el prompt:</b> anclá siempre <em>pantalla</em> + <em>historia (BK-XX)</em> +
+          <em>"usá los tokens de DESIGN.md"</em>. Con esas anclas el mockup sale alineado — vos sos
+          quien lo lleva a la drop zone para el resto del flujo, nunca la sesión orquestadora.
+        </div>
+
+        <div class="callout agent r">
+          <b>Cuándo cada camino:</b> Camino B para pantallas simples y para probar rápido antes de
+          comprometerte. Camino A cuando la pantalla es rica y querés el refinamiento visual
+          (canvas, sliders, comentarios) de Claude Design, o el automatismo end-to-end de Open
+          Design en Modo A. Podés empezar en B y migrar a A sin perder nada: el mismo
+          <span class="mono">BRIEF.md</span> sirve para las dos.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> El mockup es el plano; la IA es quien
+            traduce el plano en obra sin perder la intención. Vos no dibujás pixeles en la terminal
+            ni escribís código: producís el plano en la herramienta que más te guste, lo dejás en su
+            carpeta, y la IA hace el resto — mapearlo a la historia y construirlo con fidelidad.
+            Historia por historia, plano por plano.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            >Deck 1 de
+            <a
+              href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/packages/decks/ROADMAP.md"
+              >packages/decks/ROADMAP.md</a
+            ></span
+          >
+          <span>·</span>
+          <span
+            >Verificado contra <span class="mono">.claude/skills/design-system/</span> —
+            2026-07-30</span
+          >
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>

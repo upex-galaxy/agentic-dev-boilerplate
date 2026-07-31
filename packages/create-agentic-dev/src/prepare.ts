@@ -136,6 +136,10 @@ export function initGitRepo(projectDir: string): void {
  */
 const TEMPLATE_EXCLUDES: readonly string[] = [
   'packages',
+  // Boilerplate-only docs-hub workflow: publishes the "Planos" deck site
+  // (homepage + decks under packages/, already excluded above) to
+  // gh-pages. A consumer project has none of that content.
+  '.github/workflows/pages.yml',
   '.context/business/business-data-map.md',
   '.context/business/business-feature-map.md',
   '.context/business/business-api-map.md',

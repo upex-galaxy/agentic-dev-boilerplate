@@ -1,0 +1,61 @@
+name: GitHub Pages — Docs Hub
+
+# Publishes the "Planos" docs hub to gh-pages:
+#   /            -> homepage dashboard (packages/pages-home)
+#   /decks/      -> self-contained HTML decks from packages/decks/
+#
+# Boilerplate-only workflow: packages/ is pruned wholesale from every
+# consumer project by create-agentic-dev (TEMPLATE_EXCLUDES), and this
+# file's own path is excluded alongside it so it never travels either.
+# See packages/decks/README.md for the authoring convention.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/pages-home/**'
+      - 'packages/decks/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-docs-hub
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    name: Build & Deploy Docs Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble Site
+        run: |
+          mkdir -p _site/decks
+          touch _site/.nojekyll
+
+          # Homepage dashboard
+          cp packages/pages-home/index.html _site/index.html
+
+          # Decks: every HTML deck in packages/decks/<skill>/ -> /decks/<skill>/
+          cp -R packages/decks/. _site/decks/
+          rm -f _site/decks/README.md _site/decks/ROADMAP.md
+
+          echo "Site tree:"
+          find _site -maxdepth 2 -type d | sort
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: _site
+
+      - name: Post Site URL
+        run: |
+          echo "## Docs Hub" >> $GITHUB_STEP_SUMMARY
+          echo "Homepage: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
