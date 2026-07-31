@@ -63,10 +63,12 @@ Thumbs.db
 # and example blocks rely on exact whitespace that Prettier would normalize.
 .claude/skills/
 .agents/skills/
-# Published deck HTMLs (copies of the skill decks; single-file artifacts whose
-# embedded HTML prettier cannot always parse — same rationale as .claude/skills/).
-# Scoped to packages/decks/, NOT all of packages/ — the other package sources are
-# hand-authored and must stay formatted. Mirrors agentic-qa-boilerplate.
+# Published deck HTMLs (single-file artifacts whose embedded markup prettier
+# cannot always parse — same rationale as .claude/skills/). Boilerplate-only:
+# `packages/` is pruned by the scaffolder, so in a consumer project this line is
+# inert, and harmless if that project ever adds its own decks. Scoped to
+# packages/decks/, NOT all of packages/ — other package sources are hand-authored
+# and must stay formatted. Mirrors agentic-qa-boilerplate.
 packages/decks/
 # Per-developer local Claude Code settings — gitignored, harness-written. Prettier
 # honors only .prettierignore (not .gitignore), so without this it scans the local

@@ -121,7 +121,9 @@ gh api "repos/{owner}/{repo}/branches/{branch}/protection" 2>/dev/null
 gh api "repos/{owner}/{repo}/rules/branches/{branch}" 2>/dev/null
 ```
 
-**A `404` from (1) does NOT mean the branch is unprotected.** Repositories configured with rulesets return `404` on the classic endpoint while enforcing PR requirements, required approvals, signed commits, and non-fast-forward bans through (2). Observed in this very repository: classic protection `404`, ruleset requiring a pull request with 1 approving review plus code-owner review. A reconciliation that stopped at (1) would have stamped `verified` on a reading that was exactly wrong.
+**A `404` from (1) does NOT mean the branch is unprotected.** A repository configured with rulesets returns `404` on the classic endpoint while enforcing PR requirements, required approvals, signed commits, and non-fast-forward bans through (2). Stopping at (1) therefore produces a confident "unprotected" reading on a branch that requires a reviewed pull request — a wrong `verified` stamp, which is worse than never verifying.
+
+Both outcomes are normal and neither is the default: plenty of projects run with no protection at all, plenty enforce rulesets, some still use classic protection. Report what THIS repository returns; never carry an expectation over from another project.
 
 Read from (1): required approving review count, whether reviews are required, required status checks, `enforce_admins`, restrictions. Read from (2): each entry's `type` (`pull_request`, `required_signatures`, `non_fast_forward`, `deletion`, `creation`, `required_status_checks`) and, for `pull_request`, its `parameters.required_approving_review_count`, `require_code_owner_review`, `require_last_push_approval`, `allowed_merge_methods`. Compare the union against `require_pr_reviews`, `direct_push_to_protected`, `admin_bypass`, and the `protected:` list.
 

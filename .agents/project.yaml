@@ -84,17 +84,8 @@ git_strategy:
   meta:
     setup_version: 1
     created: 2026-06-20 # YYYY-MM-DD stamped by Strategy Setup
-    policy_verified: 2026-07-30 # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified
-    policy_source: verified # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
-    # DRIFT (reported, NOT auto-corrected — the fields above still record team intent):
-    #   classic branch protection on `main`: none (gh api .../protection → 404)
-    #   ruleset on `main` (id 16809536): pull_request required, 1 approving review,
-    #     code-owner review, last-push approval, thread resolution; plus
-    #     required_signatures, non_fast_forward, no creation/deletion
-    #   → enforced ≈ require_pr_reviews: 1 + direct_push_to_protected: forbidden,
-    #     vs declared 0 / allowed. Direct pushes currently succeed only via admin
-    #     bypass of the ruleset. Resolve by aligning this block, changing the
-    #     ruleset, or leaving the divergence recorded here.
+    policy_verified: null # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified. Per-project — this file is a template; a fresh project starts unverified
+    policy_source: declared # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
 
 # Variables declared above that are consumed OUTSIDE the {{TEMPLATE}} system
 # (env vars in scripts/, shell `yq` reads embedded in skill docs, etc.).
