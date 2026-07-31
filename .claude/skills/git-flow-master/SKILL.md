@@ -138,8 +138,10 @@ Branch-protection drift on `{branch}`:
   require_pr_reviews:        declared 0   ·  enforced 1
   direct_push_to_protected:  declared allowed  ·  enforced blocked (protection active)
 Options: (a) update .agents/project.yaml to match the host, (b) change the host
-configuration, (c) accept the divergence for this session with a note.
+configuration, (c) accept the divergence and record WHY.
 ```
+
+**Option (c) needs a durable home, or it re-litigates itself every session.** Record an accepted divergence in the project's own `CLAUDE.md` → `## Git Strategy` section — per-project, never synced from any template — stating what diverges and why it is intended. A later session reads it and stops re-raising the same drift. Legitimate reasons exist and are project-specific: a template / boilerplate repository whose maintainer is the only committer and for whom the review requirement is ceremony; a repo whose ruleset is inherited from an org policy nobody local can change. What is NOT legitimate is inferring the exception: the skill never decides on its own that a bypass is fine, and never treats "the push went through" as the reason. The user states the exception once, in writing, and it holds until they change it.
 
 Editing `.agents/project.yaml` requires the user's choice, exactly like Strategy Setup. Once verified, stamp the outcome so later runs know how much the block can be trusted:
 

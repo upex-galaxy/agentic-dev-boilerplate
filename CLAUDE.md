@@ -380,6 +380,10 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 
 This repository (the boilerplate itself) ships `git_strategy.strategy: null`; with a single `main` branch, `git-flow-master` operates as **`solo-main`** (single maintainer, commit + push directly to `main`). To pin it explicitly: ask git-flow-master to "set up our git strategy".
 
+**Accepted policy divergence (this repo only)** — `git-flow-master` Step 1b reconciles the declared `git_strategy.policy` against the host and will find a mismatch here: a GitHub **ruleset** on `main` requires a pull request with an approving review (the classic `branches/main/protection` endpoint returns `404`, so only the `rules/branches/main` endpoint reveals it), while the declared policy says `require_pr_reviews: 0` / `direct_push_to_protected: allowed`. **This divergence is intended and stays as-is.** This repo is the template origin: single maintainer, no second reviewer, and every push to `main` is a release of the template, so the review requirement would be ceremony. Direct pushes here go through the maintainer's ruleset bypass, deliberately.
+
+This exception belongs to THIS repository and travels nowhere: `CLAUDE.md` is never synced by `bun run update` (the updater only nudges about upstream drift), and `.agents/project.yaml` ships as a template with `policy_verified: null` / `policy_source: declared`. **A project scaffolded from this boilerplate defines its own answer during setup** — no approvals, one, two, protections or none — and `git-flow-master` reports what THAT host enforces. Never carry this repo's exception into a downstream project, and never infer a bypass is acceptable from the fact that a push succeeded.
+
 ---
 
 ## 12. PROACTIVE MEMORY TRIGGERS
