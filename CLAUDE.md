@@ -117,6 +117,14 @@ Example (same work, different register):
 | Background | Long-running      | Test suite + plan next ticket |
 | Single     | Simple task       | One file edit + verification  |
 
+**RULE REACHABILITY**: subagent sees ONLY briefing + `REGISTRY.md` compact rules + files briefing names. It does NOT walk `references/`. Rule that must BIND executor (prohibition, fail-closed gate, credential contract, cleanup duty) MUST land in all three: owning `references/*.md` (full text) + owning `SKILL.md` `## Compact Rules` (so registry propagates it) + briefing component 6. Rule only in reference file = documentation, NOT constraint.
+
+**EPHEMERAL-ARTIFACT CONTRACT (secret hygiene)**: subagent materializing auth/session material to disk (cookie jar, `storageState.json`, token file, `.har` with `Authorization`/`Cookie`, session-bearing logs, DB dump) MUST: write ONLY to session scratch dir (never repo tree, not even ignored paths) → delete BEFORE reporting → disclose `secrets_materialized: none|<kinds>` + `cleaned: yes|no (<reason>)` in report. `cleaned: no` = BLOCKER surfaced to user. NEVER echo material into report/plan/commit/PR/tracker comment.
+
+**GATE DESIGN — FAIL-CLOSED**: gate keyed on value the gated agent itself writes is fail-open (agent disables own gate by emitting plausible value). Every gate MUST: require citation of decision procedure alongside value + treat missing/malformed citation AS the blocking value + name who may fill it (when decision belongs to another skill, gated agent may emit blocking value only).
+
+**VALUE PROVENANCE**: Rule #10 generalizes to ALL config. Any claim about project config cites file it was read from, same turn. NEVER quote skill reference / template / worked example as project state — reference values are illustrative and routinely differ.
+
 **ERROR PROTOCOL**: Subagent error → STOP, report full context, NO fix without approval, offer retry/skip/abort.
 
 **DEEP DETAIL** (subagent-cacheable) → `.claude/skills/agentic-dev-core/references/` (briefing-template, dispatch-patterns, orchestration-doctrine, skill-composition-strategy).

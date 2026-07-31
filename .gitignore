@@ -31,6 +31,18 @@ next-env.d.ts
 # ===== Auth Storage (Session State) =====
 /.auth/
 
+# ===== Ephemeral session material (defence in depth) =====
+# Per the ephemeral-artifact contract in
+# .claude/skills/agentic-dev-core/references/orchestration-doctrine.md, session
+# material NEVER lands in the repo tree — it belongs in the session scratch dir
+# and is deleted before the subagent reports. These patterns exist so a slip
+# cannot become a committed secret.
+*storage-state*.json
+*storageState*.json
+*.cookies
+cookies.txt
+*.har
+
 # ===== Allure Reports =====
 /allure-results/
 /allure-report/

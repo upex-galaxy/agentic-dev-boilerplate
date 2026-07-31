@@ -33,6 +33,24 @@ issue_tracker:
 
 testing:
   default_env: null # TODO: fill per project — Default working environment — must match a key under `environments:` (e.g. staging)
+  # Identity used by ANY automation that drives the running app as a user:
+  # live-UI validation, smoke checks, authenticated HTTP probes.
+  # Skills read VARIABLE NAMES from here and resolve the values from `.env` at
+  # runtime — never put a credential value in this file (it is committed).
+  # FAIL-CLOSED: if `email_var` / `password_var` are null, /sprint-development
+  # STOPS before any live-UI run instead of improvising a login.
+  # Contract + prohibitions: .claude/skills/sprint-development/references/live-ui-identity.md
+  automation_identity:
+    email_var: null # TODO: fill per project — env var NAME holding the automation account email (e.g. QA_E2E_USER_EMAIL)
+    password_var: null # TODO: fill per project — env var NAME holding its password (e.g. QA_E2E_USER_PASSWORD)
+    scope: null # TODO: fill per project — dedicated-non-production-account | shared-demo-account. Anything else (a real user, an admin, a staff account) is NOT a valid automation identity.
+    # OPTIONAL per-environment overrides. Omit when one identity serves every env.
+    # Keys must match `environments:` below. Example:
+    # per_env:
+    #   staging:
+    #     email_var: STAGING_QA_USER_EMAIL
+    #     password_var: STAGING_QA_USER_PASSWORD
+    per_env: {}
 
 # Git workflow for THIS project — the SOURCE OF TRUTH read by the git-flow-master skill
 # before any git/gh operation. Ships `null` (template): on the first git intent git-flow-master
@@ -66,6 +84,8 @@ git_strategy:
   meta:
     setup_version: 1
     created: 2026-06-20 # YYYY-MM-DD stamped by Strategy Setup
+    policy_verified: 2026-07-30 # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified. This repo: `main` has no host protection rule (gh api → 404), consistent with the declared policy
+    policy_source: verified # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
 
 # Variables declared above that are consumed OUTSIDE the {{TEMPLATE}} system
 # (env vars in scripts/, shell `yq` reads embedded in skill docs, etc.).
@@ -74,6 +94,7 @@ git_strategy:
 # is consumed — if the comment is missing, the linter fails with
 # EXTERNAL_CONSUMER_UNDOCUMENTED so the allowlist cannot rot silently.
 external_consumers:
+  - automation_identity # read DIRECTLY (not as a {{VAR}}) by .claude/skills/sprint-development/references/live-ui-identity.md + live-ui-validation.md — its leaves hold env-var NAMES, resolved from .env at runtime
   - default_env # consumed implicitly by the AI variable resolver (sets active env for {{WEB_URL}} / {{API_URL}} / ...) AND by scripts/agents-setup.ts via process.env.DEFAULT_ENV in --non-interactive mode
   - design_md_path # read by `yq '.design_md_path'` inside bash code fences of .claude/skills/{design-system/references/getdesign-matcher.md, project-bootstrap/references/frontend-setup.md}
 
