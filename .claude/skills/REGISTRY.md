@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-07-30T23:56:15.708Z`
+> Generated: `2026-07-31T00:03:37.568Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -131,6 +131,7 @@ Skills indexed: 12
 - **Read the repo state first (Step 1).** Never assume branch, upstream, or cleanliness.
 - **The strategy comes from `.agents/project.yaml` → `git_strategy`**, read per invocation. Never infer it from a skill example or from another project.
 - **`policy:` records INTENT, not enforcement.** Reconcile it against the host once per session at the first push / PR / merge intent (Step 1b), then stamp `meta.policy_verified` / `meta.policy_source`. Never state what the remote requires from a `declared` reading — say "declared, not verified".
+- **Query BOTH GitHub protection mechanisms.** `branches/{b}/protection` (classic) AND `rules/branches/{b}` (rulesets). A `404` on the classic endpoint does NOT mean unprotected — rulesets enforce PR requirements invisibly to it. A push that succeeds is not proof a rule is absent: admins bypass rulesets while the rule still binds everyone else.
 - **Report drift, never auto-correct it.** A mismatch between `policy:` and host protection is surfaced with both values and three options; editing `.agents/project.yaml` needs the user's choice.
 - **Config examples in `references/` are examples.** Quoting one as a project's real configuration is a defect. Open the project's own file and cite it.
 - **The chained-PR decision travels with its trace.** Return `Chain strategy` + `Decision trace` (verbatim tree answers, each with the reason from this change) + `Decided by`. Callers reject a bare label. This skill is the ONLY authority that may fill those lines.

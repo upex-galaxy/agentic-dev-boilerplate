@@ -48,6 +48,7 @@ If the user is asking about feature implementation, test design, product backlog
 - **Read the repo state first (Step 1).** Never assume branch, upstream, or cleanliness.
 - **The strategy comes from `.agents/project.yaml` → `git_strategy`**, read per invocation. Never infer it from a skill example or from another project.
 - **`policy:` records INTENT, not enforcement.** Reconcile it against the host once per session at the first push / PR / merge intent (Step 1b), then stamp `meta.policy_verified` / `meta.policy_source`. Never state what the remote requires from a `declared` reading — say "declared, not verified".
+- **Query BOTH GitHub protection mechanisms.** `branches/{b}/protection` (classic) AND `rules/branches/{b}` (rulesets). A `404` on the classic endpoint does NOT mean unprotected — rulesets enforce PR requirements invisibly to it. A push that succeeds is not proof a rule is absent: admins bypass rulesets while the rule still binds everyone else.
 - **Report drift, never auto-correct it.** A mismatch between `policy:` and host protection is surfaced with both values and three options; editing `.agents/project.yaml` needs the user's choice.
 - **Config examples in `references/` are examples.** Quoting one as a project's real configuration is a defect. Open the project's own file and cite it.
 - **The chained-PR decision travels with its trace.** Return `Chain strategy` + `Decision trace` (verbatim tree answers, each with the reason from this change) + `Decided by`. Callers reject a bare label. This skill is the ONLY authority that may fill those lines.
@@ -109,14 +110,24 @@ This summary is cheap, prevents 90% of mistakes, and is the input to every subse
 
 Run this ONCE per session, at the first push / PR / merge intent (not on read-only operations), and cache the result for the rest of the session.
 
+GitHub has **two independent** protection mechanisms, and querying only one produces a false "unprotected" reading. Check BOTH, per protected branch named in `git_strategy.branches` / `protected`:
+
 ```bash
-# GitHub — per protected branch named in git_strategy.branches / protected
+# (1) Classic branch protection — legacy, per-branch
 gh api "repos/{owner}/{repo}/branches/{branch}/protection" 2>/dev/null
+
+# (2) Rulesets — the modern mechanism. Returns the rules that actually apply
+#     to this branch, whatever ruleset they came from. NEVER skip this one.
+gh api "repos/{owner}/{repo}/rules/branches/{branch}" 2>/dev/null
 ```
 
-Read from the response: required approving review count, whether reviews are required at all, required status checks, whether admins are included (`enforce_admins`), and restrictions. Compare against `require_pr_reviews`, `direct_push_to_protected`, `admin_bypass`, and the `protected:` list.
+**A `404` from (1) does NOT mean the branch is unprotected.** Repositories configured with rulesets return `404` on the classic endpoint while enforcing PR requirements, required approvals, signed commits, and non-fast-forward bans through (2). Observed in this very repository: classic protection `404`, ruleset requiring a pull request with 1 approving review plus code-owner review. A reconciliation that stopped at (1) would have stamped `verified` on a reading that was exactly wrong.
 
-**Host adapters.** The check is host-shaped, not GitHub-only. Other hosts expose the same facts elsewhere (GitLab protected-branches API, Bitbucket branch restrictions). When no host CLI is available, or the call returns `404` (no protection configured) versus `403` (insufficient token scope), record which case applies and continue — never block a git operation because verification was impossible.
+Read from (1): required approving review count, whether reviews are required, required status checks, `enforce_admins`, restrictions. Read from (2): each entry's `type` (`pull_request`, `required_signatures`, `non_fast_forward`, `deletion`, `creation`, `required_status_checks`) and, for `pull_request`, its `parameters.required_approving_review_count`, `require_code_owner_review`, `require_last_push_approval`, `allowed_merge_methods`. Compare the union against `require_pr_reviews`, `direct_push_to_protected`, `admin_bypass`, and the `protected:` list.
+
+**A push that succeeds is not evidence of an absent rule.** Org owners and users covered by a ruleset bypass list push through while the rule still applies to everyone else. When a push prints a remote message such as `Changes must be made through a pull request`, the operation was a BYPASS: report it as drift, never as permission.
+
+**Host adapters.** The check is host-shaped, not GitHub-only. Other hosts expose the same facts elsewhere (GitLab protected-branches API, Bitbucket branch restrictions). When no host CLI is available, or a call returns `404` (nothing configured through THAT mechanism) versus `403` (insufficient token scope), record which case applies and continue — never block a git operation because verification was impossible. Record `verified` only when every mechanism the host offers was actually queried.
 
 **On drift, report — never auto-correct:**
 
