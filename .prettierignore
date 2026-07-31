@@ -63,6 +63,11 @@ Thumbs.db
 # and example blocks rely on exact whitespace that Prettier would normalize.
 .claude/skills/
 .agents/skills/
+# Published deck HTMLs (copies of the skill decks; single-file artifacts whose
+# embedded HTML prettier cannot always parse — same rationale as .claude/skills/).
+# Scoped to packages/decks/, NOT all of packages/ — the other package sources are
+# hand-authored and must stay formatted. Mirrors agentic-qa-boilerplate.
+packages/decks/
 # Per-developer local Claude Code settings — gitignored, harness-written. Prettier
 # honors only .prettierignore (not .gitignore), so without this it scans the local
 # file. Exact path, NOT `.claude/*.json` — that would swallow the tracked official
