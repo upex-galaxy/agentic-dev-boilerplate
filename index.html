@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Planos — agentic-dev-boilerplate docs hub</title>
+    <meta
+      name="description"
+      content="Decks HTML sobre cómo agentic-dev-boilerplate orquesta el desarrollo de software con IA: skills, doctrina de orquestación y flujos, de la fundación del producto al deploy."
+    />
+    <style>
+      /* ============================================================
+     Self-contained homepage — cero requests externos.
+     Tokens: "Planos" — fuente única en packages/decks/README.md.
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI — see packages/decks/README.md. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1180px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(56px, 11vh, 120px) 0 clamp(40px, 7vh, 76px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.3rem, 6vw, 4.6rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero h1 .agent {
+        color: var(--agent);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.04rem, 1.9vw, 1.26rem);
+        color: var(--ink-soft);
+        max-width: 62ch;
+        margin-top: 26px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 32px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+      .chip.blue .dot {
+        background: var(--blue);
+      }
+
+      .pipe {
+        margin-top: 48px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 20px 18px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.08rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.83rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 20px;
+      }
+      @media (max-width: 760px) {
+        .facts {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+        margin-top: 3px;
+      }
+
+      section.band {
+        padding: clamp(48px, 8vh, 88px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 68ch;
+        margin-bottom: 34px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.7rem, 3.6vw, 2.5rem);
+        letter-spacing: -0.012em;
+        margin-top: 14px;
+      }
+      .sec-head p.sub {
+        font-size: 1.04rem;
+        color: var(--ink-soft);
+        margin-top: 14px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      /* ============ DECK CARDS ============ */
+      .decks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .deck-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface-2);
+        padding: 20px 22px 18px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          border-color 0.18s ease;
+      }
+      .deck-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      a.deck-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--blue);
+      }
+      .deck-card.soon {
+        background: var(--surface);
+        box-shadow: none;
+        opacity: 0.68;
+      }
+      .deck-card.soon::before {
+        background: var(--line);
+      }
+      .deck-card.soon:hover {
+        transform: none;
+      }
+      .dc-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .dc-tag {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .dc-prio {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.05em;
+        padding: 1px 6px;
+        border-radius: 4px;
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .deck-card h3 {
+        font-size: 1.12rem;
+        margin: 2px 0 0;
+      }
+      .deck-card p {
+        font-size: 0.87rem;
+        color: var(--ink-soft);
+        margin: 0;
+        flex: 1;
+      }
+      .dc-status {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.02em;
+        margin-top: 6px;
+      }
+      .dc-status.live {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .dc-status.soon {
+        color: var(--ink-faint);
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 24px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      footer {
+        padding: 50px 0 70px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 22px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+      footer .sig a {
+        color: var(--ink-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="#top"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#nucleo">Núcleo</a>
+        <a href="#ciclo">Ciclo de vida</a>
+        <a href="#operacion">Operación</a>
+        <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate">GitHub ↗</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero" id="top">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">◐</span> — docs hub</div>
+        <h1>
+          Los <em>planos</em> de cómo este repo <span class="agent">construye software</span> con
+          IA.
+        </h1>
+        <p class="lede">
+          Este repo defiende una regla antes que cualquier otra: <b>plan antes de código</b>. Cada
+          skill produce un plano por escrito antes de escribir una sola línea — un PRD, un
+          <span class="mono">DESIGN.md</span>, un mockup, un impl plan, un epic. Este hub es la
+          versión legible de esos planos: cómo piensa cada skill, qué archivo espera de vos, y qué
+          te devuelve.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip blue"
+            ><span class="dot"></span> para <b>quien recién llega al repo</b></span
+          >
+          <span class="chip"
+            ><span class="dot"></span> un deck = <b>una skill o una pieza de doctrina</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> generados con <b>html-ppt · self-contained</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Fundación</div>
+            <h3>project-foundation</h3>
+            <p>Constitución, PRD, SRS — el porqué del producto.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Diseño</div>
+            <h3>design-system</h3>
+            <p>DESIGN.md + mockups por historia.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Sprint</div>
+            <h3>sprint-development</h3>
+            <p>Plan → código → review, historia por historia.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Entrega</div>
+            <h3>staging → prod</h3>
+            <p>Deploy gateado, con rollback.</p>
+          </div>
+        </div>
+
+        <div class="facts r">
+          <div class="fact">
+            <div class="big">1 / 16</div>
+            <div class="lbl">decks publicados hoy</div>
+          </div>
+          <div class="fact">
+            <div class="big">11</div>
+            <div class="lbl">skills mapeadas en el roadmap</div>
+          </div>
+          <div class="fact">
+            <div class="big">P0</div>
+            <div class="lbl">próximos: product-management + sprint-development</div>
+          </div>
+          <div class="fact">
+            <div class="big">2026-07-30</div>
+            <div class="lbl">última actualización del hub</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ NÚCLEO ============ -->
+    <section class="band" id="nucleo">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> — núcleo</div>
+          <h2>Cómo piensa el repo, antes de cualquier skill</h2>
+          <p class="sub">
+            Doctrina transversal: cómo el agente principal orquesta subagentes, cómo decide su
+            registro de comunicación, y cómo encadenan las skills entre sí. Vale la pena leer esto
+            antes que cualquier "cómo funciona" puntual.
+          </p>
+        </div>
+        <div class="decks-grid r">
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">agentic-dev-core</span><span class="dc-prio">P1</span>
+            </div>
+            <h3>El comando y sus ejecutores</h3>
+            <p>
+              Orchestration mode: la conversación principal como centro de mando, subagentes como
+              ejecutores, el briefing de 6 componentes.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">agentic-dev-core</span><span class="dc-prio">P1</span>
+            </div>
+            <h3>La capa comportamental</h3>
+            <p>
+              Butler Pattern, PM Voice, Visual Mapping Bias — por qué el repo responde como
+              responde, no solo qué hace.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">agentic-dev-core</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>Cómo encadenan las skills</h3>
+            <p>
+              El mapa completo: de <span class="mono">/project-foundation</span> a producción, qué
+              skill le entrega qué a la siguiente.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CICLO DE VIDA ============ -->
+    <section class="band" id="ciclo">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> — ciclo de vida del desarrollo</div>
+          <h2>De la idea al sprint, en el orden real</h2>
+          <p class="sub">
+            Las skills en el orden en que un producto nuevo realmente las atraviesa. No todas tienen
+            deck todavía — <span class="mono">product-management</span> y
+            <span class="mono">sprint-development</span> son los siguientes en la lista.
+          </p>
+        </div>
+        <div class="decks-grid r">
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">project-foundation</span><span class="dc-prio">P1</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>Constitución del negocio, PRD, SRS y discovery — el porqué antes del qué.</p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <a class="deck-card" href="./decks/design-system/flujo-mockups.es.html">
+            <div class="dc-top"><span class="dc-tag">design-system</span></div>
+            <h3>Del plano al producto</h3>
+            <p>
+              Flujo de mockups con IA: BRIEF.md, drop zones, Claude Design y Open Design (Modo A/B
+              por MCP).
+            </p>
+            <span class="dc-status live">Disponible →</span>
+          </a>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">design-system</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>DESIGN.md · los 5 caminos</h3>
+            <p>
+              Gallery manual, getdesign + matcher, Open Design, Claude Design, o custom — cuándo
+              usar cada uno.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">project-bootstrap</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>
+              Scaffolding de backend, frontend, OpenAPI, auth y env vars sobre el DESIGN.md ya
+              definido.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">product-management</span><span class="dc-prio">P0</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>Backlog seed, épicas, INVEST + 3 amigos, AC en Gherkin, reporte de sprint.</p>
+            <span class="dc-status soon">Próximamente — siguiente en la lista</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">sprint-development</span><span class="dc-prio">P0</span>
+            </div>
+            <h3>Cómo funciona — las 12 etapas</h3>
+            <p>
+              El mega-orquestador: plan → código → review → staging → producción gateada, historia
+              por historia.
+            </p>
+            <span class="dc-status soon">Próximamente — siguiente en la lista</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">sprint-development</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>El contrato de fidelidad UI</h3>
+            <p>
+              Regla 14 en profundidad: Live-UI-first, cuándo un mockup se archiva como tech-story en
+              vez de forzarse.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">unit-testing</span><span class="dc-prio">P1</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>TDD red-green-refactor, qué mockear y qué no, cobertura de línea vs. de rama.</p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OPERACIÓN ============ -->
+    <section class="band" id="operacion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> — operación y entrega</div>
+          <h2>Lo que sostiene todo lo anterior</h2>
+          <p class="sub">
+            Git, QA, Jira/Confluence y deploy — las skills que se usan todos los días una vez que el
+            ciclo de vida principal ya está rodando.
+          </p>
+        </div>
+        <div class="decks-grid r">
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">git-flow-master</span><span class="dc-prio">P1</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>
+              Auto-detección de estrategia, commits, branches, PRs y resolución de conflictos, para
+              cualquier flujo de git.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">git-flow-master</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>Estrategias de git</h3>
+            <p>
+              <span class="mono">solo-main</span> vs. multi-branch enterprise vs. trunk-based — cómo
+              elegir y cómo se materializa cada una.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">testability-guide</span><span class="dc-prio">P2</span>
+            </div>
+            <h3>Cómo funciona</h3>
+            <p>
+              La página <span class="mono">/qa</span> in-app y el artefacto de credenciales,
+              publicado donde QA ya vive (Jira, Confluence, etc.).
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">acli</span><span class="dc-prio">P3</span>
+            </div>
+            <h3>Cookbook de Jira/Confluence</h3>
+            <p>
+              Issues, transiciones, bulk-ops y Confluence desde la terminal, sin salir del flujo de
+              <span class="mono">/sprint-development</span>.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+          <div class="deck-card soon">
+            <div class="dc-top">
+              <span class="dc-tag">vercel-cli</span><span class="dc-prio">P3</span>
+            </div>
+            <h3>Cookbook de deploy</h3>
+            <p>
+              Verificación por SHA, sync de env vars, logs de build y rollback — la caja de
+              herramientas de las etapas 9 y 12.
+            </p>
+            <span class="dc-status soon">Próximamente</span>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>¿Por qué tantas cards "Próximamente"?</b> Este hub se construye deck por deck, no de
+          una — cada uno se re-verifica contra la skill real antes de publicarse (ver
+          <span class="mono">packages/decks/README.md</span>). El orden de construcción está en
+          <span class="mono">packages/decks/ROADMAP.md</span>: los dos
+          <span class="mono">P0</span> pendientes son los siguientes.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">Sobre este hub.</b> Vive en
+            <span class="mono">packages/pages-home/</span> y
+            <span class="mono">packages/decks/</span> del propio repo — carpetas boilerplate-only,
+            podadas por el scaffolder (<span class="mono">create-agentic-dev</span>) antes de llegar
+            a un proyecto consumidor. Cada deck es un HTML autocontenido, sin build, sin requests
+            externos. Publicado por <span class="mono">.github/workflows/pages.yml</span> en cada
+            push a <span class="mono">main</span>.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            ><a href="https://github.com/upex-galaxy/agentic-dev-boilerplate"
+              >Repositorio ↗</a
+            ></span
+          >
+          <span>·</span>
+          <span
+            ><a
+              href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/packages/decks/ROADMAP.md"
+              >Roadmap de decks ↗</a
+            ></span
+          >
+          <span>·</span>
+          <span
+            ><a
+              href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/packages/decks/README.md"
+              >Cómo agregar un deck ↗</a
+            ></span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
