@@ -191,6 +191,16 @@ grep -rn "customfield_" --include="*.ts" --include="*.md" --include="*.yaml" . \
 
 Expected: nothing. A literal ID in a script, skill, or doc is a latent bug — it must resolve by slug against `.agents/jira-fields.json`. Report any hit; do not silently rewrite it.
 
+**Also sweep the override channel.** Projects often expose an env var or config constant that PINS a field ID, as an escape hatch over the catalog (`*_FIELD`, `*_FIELD_ID`, `*_CUSTOM_FIELD`). A pinned value survives the catalog regeneration untouched and keeps pointing at the old instance — the exact silent-write bug this command exists to prevent, reintroduced through the back door:
+
+```bash
+grep -rniE '(FIELD|CUSTOMFIELD)(_ID)?\s*[=:]\s*.?customfield_' \
+  --include="*.ts" --include="*.js" --include="*.env*" --include="*.yaml" --include="*.md" . \
+  | grep -v node_modules
+```
+
+Every hit is either re-pointed at the new ID or, better, changed to resolve from the catalog by slug and left empty as an override.
+
 ---
 
 ## Phase 5 — Commit
