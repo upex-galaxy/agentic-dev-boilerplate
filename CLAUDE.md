@@ -195,7 +195,7 @@ Example (same work, different register):
 >
 > Layout convention: T1 repo skills → `.claude/skills/<slug>/` (committed source). T3/T4 community skills installed via `bunx skills add` → `.agents/skills/<slug>/` (gitignored, default CLI behavior).
 
-### Slash commands (utilities, 6)
+### Slash commands (utilities, 7)
 
 | Command                       | Purpose                                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -205,6 +205,7 @@ Example (same work, different register):
 | `/business-api-map`           | Refresh `.context/business/business-api-map.md` (auth model, endpoints, architecture).         |
 | `/master-implementation-plan` | Refresh `.context/master-implementation-plan.md` (prioritized feature roadmap — EPIC/strategy).|
 | `/dev-roadmap`                | Refresh `.context/dev-roadmap.md` (ticket-level dependency execution roadmap — TICKET/sequence; subsumes the Kahn execution-sprint sort). |
+| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + machine-global `acli` session) and regenerate the `.agents/` catalogs the migration invalidated. Takes source + target instance as arguments; asks for whatever is missing. |
 
 ### MCPs (configured in `.mcp.json`)
 
