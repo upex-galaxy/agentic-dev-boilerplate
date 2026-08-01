@@ -123,6 +123,12 @@ dbhub.local.toml
 # nudge fires once per upstream change, not every `bun up`).
 .template/installer.state.json
 .template/claude-md.upstream.sha
+# `.template/upstream-sha/` is the same idea generalized: one marker per entry
+# of PROTECTED_WATCHLIST, written by the protected-file drift hook.
+.template/upstream-sha/
+
+# ===== Auto-generated AI prompts (single-use, written by bun run update) =====
+/.agents/prompts/
 
 # ===== Refcheck local config (per-dev tuning, not committed) =====
 .refcheckrc.toml
