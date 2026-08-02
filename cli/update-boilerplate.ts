@@ -28,8 +28,11 @@ const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
 const VERSION_FILE = '.template/boilerplate.lock.json';
 
 const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes'];
-const AGENTS_FRAMEWORK_FILES = ['README.md', 'jira-required.yaml'];
-const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json', 'jira-link-types.json'];
+// `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
+// component: a basename listed here is synced even when the path also matches
+// a bootstrap-only entry. Keep it to files the boilerplate genuinely owns.
+const AGENTS_FRAMEWORK_FILES = ['README.md'];
+const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json', 'jira-link-types.json', 'jira-required.yaml'];
 const CLAUDE_CONFIG_FILES = ['settings.json'];
 
 const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex', 'gemini'] as const;
@@ -556,6 +559,7 @@ async function upsertAutomationIdentityBlock(
 const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   { path: 'CLAUDE.md', reason: 'per-project AI memory (identity, env URLs, custom rules)', markerPath: '.template/claude-md.upstream.sha' },
   { path: '.agents/project.yaml', reason: 'per-project identity + env map, but upstream keeps ADDING structural blocks (e.g. git_strategy). A project scaffolded before a block existed never learns it should have one.' },
+  { path: '.agents/jira-required.yaml', reason: 'methodology manifest: upstream owns the baseline work_types + field slugs, the project owns its fallbacks and omissions. It is the INPUT to jira:sync-workflows, which catalogs only the work_types declared in it — a stale manifest silently regenerates a truncated jira-workflows.json and still exits 0.' },
   { path: 'tsconfig.json', reason: 'path aliases are the contract every synced file imports through — a new upstream alias breaks synced code in a project whose tsconfig never learned it.' },
   { path: 'eslint.config.js', reason: 'lint rules evolve upstream and .husky/pre-commit (which IS synced) runs eslint against this local config.' },
   { path: '.mcp.json', reason: 'MCP registry with project-specific servers/vars' },
@@ -564,12 +568,6 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
 
 // NOT on the watchlist, deliberately — do not "fix" this asymmetry:
 //
-//  - `.agents/jira-required.yaml` is declared in AGENTS_FRAMEWORK_FILES, i.e.
-//    this repo treats it as boilerplate-owned and SYNCS it. Watching a synced
-//    file is a no-op (the hook short-circuits when local already matches
-//    upstream). Note the sibling QA boilerplate made the OPPOSITE call and
-//    treats it as project-owned + bootstrap-only; that fork is unresolved and
-//    is a real decision, not an accident on either side.
 //  - `.agents/jira-fields.json` / `jira-workflows.json` / `jira-link-types.json`
 //    are pure per-INSTANCE data. The upstream copies describe the boilerplate
 //    authors' own Jira workspace. Advising a downstream project to merge them
@@ -784,8 +782,15 @@ async function main(): Promise<void> {
     versionFile: VERSION_FILE,
     components,
     ignoreFiles: ['.gitignore', '.prettierignore'].map(p => ({ path: p, sentinel: '# ===== Synced from boilerplate' })),
+    // Append-only per section: upstream-only keys are added, same-key/
+    // different-value is reported FYI and NEVER overwritten. `dependencies` is
+    // here because the `cli` component is synced wholesale and imports
+    // packages declared only there — syncing the code without the package
+    // leaves `bun run up` crashing on import. `lint-staged` is here because
+    // `.husky/pre-commit` is synced and shells out to `bunx lint-staged`,
+    // which reads its config from this file.
     packageJsonSpecs: [
-      { path: 'package.json', sections: ['scripts', 'devDependencies'] },
+      { path: 'package.json', sections: ['scripts', 'devDependencies', 'dependencies', 'lint-staged'] },
     ],
     deprecatedFiles: DEPRECATED_FILES,
     bootstrapOnlyPaths: AGENTS_BOOTSTRAP_FILES.map(f => `.agents/${f}`),
