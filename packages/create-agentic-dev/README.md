@@ -62,9 +62,19 @@ something `bun run setup` will point you at.
 
 | Tool          | Required for                                                 | Install                                                                                |
 | ------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `bun` ≥ 1.0.0 | Running this CLI, `bun install`, and `bun run setup`         | `curl -fsSL https://bun.sh/install \| bash` · [docs](https://bun.sh/docs/installation) |
-| `tar`         | Extracting the GitHub template tarball                       | Ships with macOS/Linux. Windows: use Git Bash or WSL                                   |
-| `git`         | `git init` + initial commit (skipped if you pass `--no-git`) | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
+| `bun` ≥ 1.0.0 | Running this CLI, `bun install`, and `bun run setup`         | macOS/Linux/WSL: `curl -fsSL https://bun.sh/install \| bash` · Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"` |
+| `tar`         | Extracting the GitHub template tarball. GNU tar or bsdtar, either works | Ships with macOS, Linux, and Windows 10 1803+ / Windows 11 (`C:\Windows\System32\tar.exe`) |
+| `git`         | `git init` + initial commit on `main` (skipped if you pass `--no-git`) | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
+| `node` ≥ 18   | Running this CLI under `npx`                                 | [nodejs.org](https://nodejs.org)                                                       |
+
+**Windows**: PowerShell and cmd are supported; WSL and Git Bash work but are not
+required. Install Bun via the PowerShell one-liner rather than `npm i -g bun` —
+the npm route writes only a `bun.cmd` shim, which this CLI then has to launch
+through `cmd.exe`. `tar` needs no install.
+
+**WSL**: scaffold onto the Linux filesystem (`~/projects/...`). On a `/mnt/c`
+path Bun cannot create its bin shims, and `bun install` fails with
+`could not open bin metadata file`.
 
 ### For `bun run setup` downstream (the boilerplate installer will tell you about these)
 
@@ -116,6 +126,79 @@ To run directly from source without building:
 
 ```bash
 bun run src/cli.ts test-app
+```
+
+## Releasing a new version to npm
+
+Publishing is manual — there is no release workflow in `.github/workflows/`.
+The package is owned by a single npm account, so whoever publishes needs to be
+logged in as an owner (`npm owner ls create-agentic-dev` lists them).
+
+### The ordering that matters
+
+This package and the template it downloads ship **separately**, and the
+scaffolder fetches the template from GitHub `main` at runtime rather than
+bundling it. So a change to the boilerplate itself (`package.json` scripts,
+`cli/`, skills, docs) reaches users the moment it lands on `main` — no publish
+involved. Only changes under `packages/create-agentic-dev/` need npm.
+
+When one release touches both, **push the template first**. Publishing a
+scaffolder that expects template changes which are not yet on `main` breaks
+every scaffold until the push lands.
+
+### Steps
+
+```bash
+# 1. From the repo root — the whole suite must be green before you publish.
+bun run repo:check
+
+# 2. Package-level gates.
+cd packages/create-agentic-dev
+bun test
+bun run types:check
+bun run check:manifest      # installer-manifest.json must not have drifted
+
+# 3. Bump the version. Semver against the PUBLISHED version, not the file:
+#    npm view create-agentic-dev version
+#    patch = bug fix · minor = new flag or behaviour · major = breaking CLI change
+npm version patch --no-git-tag-version
+
+# 4. Record the change in the root CHANGELOG.md (move the relevant
+#    "Unreleased" entries under the new version heading).
+
+# 5. Commit, then push the TEMPLATE side first if this release depends on it.
+git add -A
+git commit -m "chore(create-agentic-dev): bump to X.Y.Z"
+git push origin main
+
+# 6. Publish. `prepublishOnly` runs `check:manifest` + `build` for you.
+npm login                   # if `npm whoami` errors with 401
+npm publish
+
+# 7. Tag the release.
+git tag -m "create-agentic-dev X.Y.Z" create-cli-vX.Y.Z
+git push origin create-cli-vX.Y.Z
+
+# 8. Verify what actually went out.
+npm view create-agentic-dev version
+cd "$(mktemp -d)" && bunx create-agentic-dev@latest smoke-test --no-setup
+```
+
+### What ends up in the tarball
+
+`files` is `["README.md", "dist"]`, so the published package is exactly three
+entries — `README.md`, `dist/cli.js`, `package.json`. Nothing under `src/`,
+`tests/` or `scripts/` ships; `dist/cli.js` is the bundled build of all of them.
+
+### Gotcha: `npm pack --dry-run` does not rebuild
+
+`prepublishOnly` is what regenerates `dist/cli.js`, and only `npm publish` runs
+it. `npm pack --dry-run` packs whatever `dist/cli.js` is already on disk — which
+is gitignored, so it can be weeks stale and predate the very fix you are
+shipping. To inspect the real contents before publishing, build first:
+
+```bash
+bun run build && npm pack --dry-run
 ```
 
 ## License

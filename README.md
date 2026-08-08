@@ -59,10 +59,14 @@ Before running `bunx create-agentic-dev@latest` or `bun install && bun run setup
 
 | Tool                                                                                                      | Min version | Why                                                                                                                 | Install                                                                                |
 | --------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **Bun**                                                                                                   | `>= 1.0.0`  | Runtime for every script (`bun install`, `bun run setup`, `bun cli/doctor.ts`, every `bun run …` in `package.json`) | `curl -fsSL https://bun.sh/install \| bash` · [docs](https://bun.sh/docs/installation) |
+| **Bun**                                                                                                   | `>= 1.0.0`  | Runtime for every script (`bun install`, `bun run setup`, `bun cli/doctor.ts`, every `bun run …` in `package.json`) | macOS/Linux/WSL: `curl -fsSL https://bun.sh/install \| bash` · Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"` · [docs](https://bun.sh/docs/installation) |
 | **Agent CLI** — [Claude Code](https://docs.claude.com/claude-code) **or** [OpenCode](https://opencode.ai) | latest      | `bun run setup` Step 4 probes `~/.claude/` or `~/.config/opencode/`; exits 1 if neither directory exists            | Claude Code: see official docs · OpenCode: see official docs                           |
 | `git`                                                                                                     | any         | Scaffolder runs `git init`; pre-commit hooks (Husky) require git; `/git-flow-master` skill depends on it            | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
-| `tar`                                                                                                     | any         | Scaffolder extracts the template tarball                                                                            | Ships with macOS/Linux. Windows: use Git Bash or WSL                                   |
+| `tar`                                                                                                     | any         | Scaffolder extracts the template tarball. Either flavour works — GNU tar (Linux, WSL, Git Bash) or bsdtar           | Ships with macOS, Linux, and Windows 10 1803+ / Windows 11 (`C:\Windows\System32\tar.exe`) |
+
+> **Windows**: PowerShell and cmd are supported — no WSL or Git Bash required. Install Bun with the PowerShell one-liner above rather than `npm i -g bun`, which writes only a `bun.cmd` shim.
+>
+> **WSL**: keep the project on the Linux filesystem (`~/projects/...`). On a `/mnt/c` path Bun cannot create its bin shims and `bun install` fails with `could not open bin metadata file`.
 
 ### Quasi-required (installer warns + offers install)
 
@@ -217,11 +221,21 @@ direnv allow          # one-time per repo (the installer offers to run this)
 claude                # direct binary picks up .env from your shell
 
 # Or load .env into your CURRENT shell once, then run any binary directly:
-set -a; source .env; set +a   # exports every .env key into this terminal session
+set -a; source .env; set +a   # bash/zsh only — exports every .env key into this session
 claude                        # now claude / opencode / acli all see the vars
 ```
 
-> The `set -a; source .env; set +a` snippet is saved as the `env` script for reference. Run it **inline** (or `source` it) — `bun run env` executes in a child subshell, so the exports would not survive back to your terminal. Run it directly and every agent/CLI launched in that same shell inherits `.env` with no wrapper.
+PowerShell equivalent of that last block:
+
+```powershell
+Get-Content .env | Where-Object { $_ -match '^\s*[^#].*=' } | ForEach-Object {
+  $k, $v = $_ -split '=', 2
+  Set-Item -Path "Env:$($k.Trim())" -Value $v.Trim()
+}
+claude
+```
+
+> Run the snippet **inline** in the shell you are already in. Wrapping it in a script would export into a child process that exits immediately, leaving your terminal untouched — which is why there is no `bun run env` script.
 
 direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
 
