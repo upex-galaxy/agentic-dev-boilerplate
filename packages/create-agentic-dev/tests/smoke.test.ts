@@ -1,12 +1,92 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { parseArgs } from '../src/args.ts';
+import { buildTarArgs } from '../src/download.ts';
 import { CliError } from '../src/errors.ts';
-import { pruneBootstrapExcludes, sanitizeProjectName } from '../src/prepare.ts';
+import { pruneBootstrapExcludes, rewriteProjectYaml, sanitizeProjectName } from '../src/prepare.ts';
+
+describe('buildTarArgs', () => {
+  // `--force-local` is GNU-only; bsdtar (macOS, and C:\Windows\System32\tar.exe
+  // on Windows 10 1803+ / 11) aborts with "Option --force-local is not supported".
+  test('never passes --force-local, on any platform', () => {
+    expect(buildTarArgs('/tmp/target')).not.toContain('--force-local');
+  });
+
+  test('passes the tarball as a bare relative name (no drive colon for GNU tar)', () => {
+    const args = buildTarArgs('/tmp/target');
+    const file = args[args.indexOf('-xzf') + 1];
+    expect(file).toBe('template.tar.gz');
+    expect(file).not.toContain(':');
+    expect(file).not.toContain('/');
+  });
+
+  test('strips the GitHub wrapper directory', () => {
+    expect(buildTarArgs('/tmp/target')).toContain('--strip-components=1');
+  });
+
+  test('passes the target directory to -C', () => {
+    const args = buildTarArgs('/tmp/target');
+    expect(args[args.indexOf('-C') + 1]).toBe('/tmp/target');
+  });
+});
+
+describe('rewriteProjectYaml', () => {
+  let dir: string;
+
+  // Mirrors the real .agents/project.yaml shape: the field is `project_name`,
+  // NOT `name`. Targeting the wrong key used to no-op silently on every scaffold.
+  const TEMPLATE_YAML = [
+    'project:',
+    '  project_name: null # TODO: fill per project',
+    '  project_key: null # TODO: fill per project',
+    '  other: keep-me',
+    '',
+  ].join('\n');
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'cad-yaml-'));
+    mkdirSync(join(dir, '.agents'), { recursive: true });
+    writeFileSync(join(dir, '.agents', 'project.yaml'), TEMPLATE_YAML);
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function readYaml(): string {
+    return readFileSync(join(dir, '.agents', 'project.yaml'), 'utf8');
+  }
+
+  test('writes project_name, the field the template actually declares', async () => {
+    await rewriteProjectYaml(dir, { projectName: 'my-app' });
+
+    expect(readYaml()).toContain('  project_name: my-app');
+    expect(readYaml()).not.toContain('project_name: null');
+  });
+
+  test('writes project_key only when one is provided', async () => {
+    await rewriteProjectYaml(dir, { projectName: 'my-app' });
+    expect(readYaml()).toContain('  project_key: null');
+
+    await rewriteProjectYaml(dir, { projectName: 'my-app', projectKey: 'ACME' });
+    expect(readYaml()).toContain('  project_key: ACME');
+  });
+
+  test('leaves unrelated fields untouched', async () => {
+    await rewriteProjectYaml(dir, { projectName: 'my-app', projectKey: 'ACME' });
+    expect(readYaml()).toContain('  other: keep-me');
+  });
+
+  test('does not throw when the field is absent', async () => {
+    writeFileSync(join(dir, '.agents', 'project.yaml'), 'project:\n  unrelated: x\n');
+    await rewriteProjectYaml(dir, { projectName: 'my-app' });
+    expect(readYaml()).toContain('  unrelated: x');
+  });
+});
 
 describe('parseArgs', () => {
   test('accepts a project name as positional', () => {
@@ -94,6 +174,17 @@ describe('pruneBootstrapExcludes', () => {
     writeFileSync(join(dir, 'keep.txt'), 'keep me');
     await pruneBootstrapExcludes(dir);
     expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
+  });
+
+  // The boilerplate's own release history must not travel to a consumer project.
+  test('removes the boilerplate CHANGELOG', async () => {
+    writeFileSync(join(dir, 'CHANGELOG.md'), '# Changelog');
+    writeFileSync(join(dir, 'README.md'), '# Keep me');
+
+    await pruneBootstrapExcludes(dir);
+
+    expect(existsSync(join(dir, 'CHANGELOG.md'))).toBe(false);
+    expect(existsSync(join(dir, 'README.md'))).toBe(true);
   });
 
   test('removes business map files when present', async () => {

@@ -171,7 +171,7 @@
       ]
     },
     "communityUserSkills": {
-      "count": 7,
+      "count": 8,
       "items": [
         {
           "name": "skill-creator",
@@ -207,6 +207,11 @@
           "name": "playwright-cli",
           "purpose": "Browser automation — screenshots, traces, recordings.",
           "source": "https://github.com/microsoft/playwright-cli"
+        },
+        {
+          "name": "wokitoki",
+          "purpose": "Community skill: wokitoki",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]
     }

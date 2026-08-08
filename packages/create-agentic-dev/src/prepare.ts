@@ -60,8 +60,13 @@ export async function rewritePackageJson(projectDir: string, projectName: string
  * than full YAML parsing to keep this package zero-dep and to preserve comments.
  *
  * Updates supported:
- *   - project.name        (always set if found)
- *   - project.project_key (only if projectKey provided)
+ *   - project.project_name (always set if found)
+ *   - project.project_key  (only if projectKey provided)
+ *
+ * Field names must match `.agents/project.yaml` exactly. A miss is reported,
+ * never swallowed: this function used to target a field called `name`, which
+ * the template does not have, so every scaffold left `project_name: null`
+ * while the CLI logged that it had written the name.
  */
 export async function rewriteProjectYaml(projectDir: string, opts: {
   projectName: string
@@ -76,21 +81,41 @@ export async function rewriteProjectYaml(projectDir: string, opts: {
   }
 
   let content = await readFile(yamlPath, 'utf8');
-  content = replaceYamlField(content, 'name', opts.projectName);
-  if (opts.projectKey) {
-    content = replaceYamlField(content, 'project_key', opts.projectKey);
+  const written: string[] = [];
+  const missed: string[] = [];
+
+  for (const [field, value] of [
+    ['project_name', opts.projectName],
+    ...(opts.projectKey ? [['project_key', opts.projectKey]] : []),
+  ] as Array<[string, string]>) {
+    const next = replaceYamlField(content, field, value);
+    if (next === null) { missed.push(field); }
+    else {
+      content = next;
+      written.push(`${field}=${value}`);
+    }
   }
+
   await writeFile(yamlPath, content, 'utf8');
-  log.dim(`  Wrote .agents/project.yaml (name=${opts.projectName}${opts.projectKey ? `, project_key=${opts.projectKey}` : ''}).`);
+
+  if (written.length > 0) {
+    log.dim(`  Wrote .agents/project.yaml (${written.join(', ')}).`);
+  }
+  for (const field of missed) {
+    log.warn(`  .agents/project.yaml has no \`${field}:\` field — left unset. Fill it in manually.`);
+  }
 }
 
 /**
  * Replace the value of a top-level field inside the `project:` map of the YAML.
  * Matches the first occurrence of `^  <field>: <anything>$`.
+ *
+ * Returns `null` when the field is absent, so the caller can report the miss
+ * rather than silently reporting success.
  */
-function replaceYamlField(content: string, field: string, value: string): string {
+function replaceYamlField(content: string, field: string, value: string): string | null {
   const pattern = new RegExp(`^(\\s{2}${escapeReg(field)}:)\\s*.*$`, 'm');
-  if (!pattern.test(content)) { return content; }
+  if (!pattern.test(content)) { return null; }
   return content.replace(pattern, `$1 ${value}`);
 }
 
@@ -99,9 +124,25 @@ function escapeReg(s: string): string {
 }
 
 export function initGitRepo(projectDir: string): void {
-  const initRes = spawnSync('git', ['init', '-b', 'main'], { cwd: projectDir, stdio: ['ignore', 'pipe', 'pipe'] });
+  // `git init -b <branch>` needs git >= 2.28 (Jul 2020). Ubuntu 20.04 ships
+  // 2.25, Debian 10 ships 2.20, Catalina's CLT ship 2.24 — on those it exits
+  // with "unknown switch `b`" and the caller's rollback deletes the whole
+  // freshly scaffolded project over a branch name. Init plain, then point HEAD
+  // at main via symbolic-ref, which every git version understands.
+  const initRes = spawnSync('git', ['init'], { cwd: projectDir, stdio: ['ignore', 'pipe', 'pipe'] });
   if (initRes.status !== 0) {
     throw new CliError('BOOTSTRAP', 'git init failed.', initRes.stderr.toString());
+  }
+
+  // Before the first commit HEAD is an unborn ref, so this just renames the
+  // branch the initial commit will land on. Non-fatal: a repo on `master` is
+  // still a working repo.
+  const headRes = spawnSync('git', ['symbolic-ref', 'HEAD', 'refs/heads/main'], {
+    cwd: projectDir,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (headRes.status !== 0) {
+    log.warn('  Could not set the default branch to main; continuing on git\'s default.');
   }
 
   const addRes = spawnSync('git', ['add', '.'], { cwd: projectDir, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -136,6 +177,10 @@ export function initGitRepo(projectDir: string): void {
  */
 const TEMPLATE_EXCLUDES: readonly string[] = [
   'packages',
+  // The boilerplate's own release history, versioned against the boilerplate
+  // and the create-agentic-dev npm package. A fresh consumer project starts its
+  // own history at 0.1.0 and would only be confused by ours.
+  'CHANGELOG.md',
   // Boilerplate-only docs-hub workflow: publishes the "Planos" deck site
   // (homepage + decks under packages/, already excluded above) to
   // gh-pages. A consumer project has none of that content.
