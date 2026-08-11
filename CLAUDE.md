@@ -275,6 +275,8 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 **Validation**: `bun run vars:check` checks every `{{VAR}}` resolves; `bun run jira:check` validates manifest vs catalog.
 
+**INSTANCE-IDENTITY ANCHOR (binding)**: any script resolving the Atlassian host MUST read `.agents/project.yaml` → `issue_tracker.atlassian_url` FIRST and treat `ATLASSIAN_URL` as fallback only; on disagreement the yaml wins AND a warning naming both values is printed. Canonical resolver: `cli/lib/atlassian-instance.ts` — never re-read `process.env.ATLASSIAN_URL` directly in a new script. **Deliberate inversion vs. `project_key`**, where the env var wins: a project key is a legitimate per-run override, the host is project identity that changes on site migrations — the exact value that goes stale. Credentials (`ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN`) stay env-only and are NEVER mirrored into the versioned yaml. Class-wide guard: `bun run vars:env:check` fails on ANY manifest var whose process value differs from `.env` (a process value silently wins over the file under both `bun`'s autoload and `dotenv-cli`, and survives an app restart); it is warn-only in `.husky/pre-push` so a machine-local condition never blocks an unrelated push. Applies the test: **does a stale value here corrupt data in silence, or fail loudly?** Silent corruption → anchoring to the versioned file is not optional.
+
 ---
 
 ## 8. AI BEHAVIOR DURING DEVELOPMENT
