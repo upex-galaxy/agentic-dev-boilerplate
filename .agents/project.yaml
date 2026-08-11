@@ -29,6 +29,13 @@ database:
 issue_tracker:
   issue_tracker: null # TODO: fill per project — Issue tracking tool (e.g. Jira)
   issue_tracker_cli: null # TODO: fill per project — CLI command to query tickets (e.g. acli (Jira) / gh issue (GitHub))
+  # SOURCE OF TRUTH for the Atlassian instance. Every jira:sync-* script resolves the
+  # host from HERE first and uses .env's ATLASSIAN_URL only as a fallback (see
+  # cli/lib/atlassian-instance.ts). Inverse of project_key, on purpose: the host is
+  # project identity, not a per-developer override, and it is the value that goes stale
+  # after a site migration — a stale host silently overwrites .context/PBI/ and the
+  # .agents/*.json catalogs with another site's content. Keep it identical to .env's
+  # ATLASSIAN_URL; when they disagree the yaml wins and the scripts print a warning.
   atlassian_url: null # TODO: fill per project — Atlassian instance base URL (e.g. https://company.atlassian.net). The acli `--site` slug is derived from this (strip `https://`); no separate ATLASSIAN_SITE variable.
 
 testing:
