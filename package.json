@@ -9,7 +9,7 @@
   "scripts": {
     "agents:setup": "bun scripts/agents-setup.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
-    "claude": "dotenv -e .env -- claude",
+    "claude": "dotenv -o -e .env -- claude",
     "format:check": "prettier --check '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "format:fix": "prettier --write '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "jira:check": "bun scripts/check-jira-setup.ts",
@@ -20,7 +20,7 @@
     "lint:check": "eslint .",
     "lint:fix": "eslint --fix .",
     "onboarding": "bun scripts/onboarding.ts",
-    "opencode": "dotenv -e .env -- opencode",
+    "opencode": "dotenv -o -e .env -- opencode",
     "prepare": "husky",
     "repo:check": "bun run format:check && bun run lint:check && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check",
     "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check",
