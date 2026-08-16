@@ -305,6 +305,50 @@ against whatever branch is actually current.
 **Check.** Check it out under a different local name tracking the same remote:
 `git checkout -B <local-name> origin/<branch>`. Pushes still land on the remote branch.
 
+
+### 5.10 A scheduler-assigned worktree cannot be closed by this session's own tools
+
+**Trigger.** The scheduling app's own "Worktree" option is checked, so the session starts already inside a
+worktree the scheduler created — not one this session entered itself.
+**Symptom.** `ExitWorktree` is a documented no-op here: it only tracks worktrees entered via `EnterWorktree`
+by this session. The run finishes, the branch is pushed, and the worktree it ran in is still on disk with no
+tool this session has left to remove it — indistinguishable, from the run's own vantage point, from having
+closed cleanly.
+**Check.** Leave the scheduler's "Worktree" option **unchecked**. The run calls `EnterWorktree` itself in
+Phase 0a and `ExitWorktree(remove)` itself in Phase 4 — the only sequence that gives this session a worktree
+it is actually allowed to close.
+
+### 5.11 A fresh `EnterWorktree` branches from the wrong branch entirely, not merely a stale one
+
+**Trigger.** `EnterWorktree`'s default base-ref behavior (`fresh`) branches from `origin/<the repo's default
+branch>`. A repo's default branch (what `origin/HEAD` points to) and its **integration** branch
+(`git_strategy.branches.integration`) are not always the same ref — in a `main-integration` strategy the
+default branch is typically `main` (production) while work is meant to branch from `staging`.
+**Symptom.** Distinct from 5.1 (a stale but correctly-chosen base): here the base is the WRONG branch outright,
+not an old commit on the right one. Every commit this run makes lands on top of `main` instead of `staging`,
+which either fails to merge cleanly against the real integration branch or, worse, opens a pull request
+against the wrong target without anyone noticing until review.
+**Check.** Immediately after `EnterWorktree` returns, before any other work:
+`git fetch origin && git merge-base --is-ancestor origin/<integration-branch> HEAD`. If that reports the base
+is wrong, realign with `git checkout -B <this-worktree-branch> origin/<integration-branch>` — safe because
+nothing has been committed on the brand-new branch yet. **Not `git reset --hard`**: Critical Rule #13 forbids
+repo-wide destructive git commands (a shared working tree may hold another session's uncommitted work), and a
+project that enforces it will have the call denied by the permission layer, stalling the run instead of
+realigning it. Never assume `fresh` means "based on the branch I actually work against."
+
+### 5.12 A dispatched agent's worktree is never auto-removed once it holds changes
+
+**Trigger.** The Agent tool's own contract: a worktree with zero changes is cleaned up automatically: one
+that holds ANY commit is deliberately left on disk, so a still-useful worktree survives for a possible
+follow-up message to that agent.
+**Symptom.** Every dispatched agent that committed anything (which, in a bug or story run, is most of them)
+leaves a worktree behind. Across a 3-bug run, that is three worktrees sitting on disk indefinitely unless the
+orchestrator explicitly removes each one — nothing in the Agent tool itself will ever do it.
+**Check.** Immediately after a dispatched agent reports back — merged, escalated-with-push, or
+gate-stopped-with-push — rescue anything in its `.session/` tree, then `git worktree remove <path>` (not
+`ExitWorktree`, which does not track worktrees the Agent tool created). Do this per ticket, in Phase 3.5,
+never batched at the end of the run.
+
 ---
 
 ## 6. Host, permissions, and merge mechanics

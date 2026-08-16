@@ -87,18 +87,25 @@ autonomous_delivery:
   caps:
     story: 1 # HARD. Raising this is a measured mistake, not a tuning knob.
     bug: 3 # sequential; each fully closed before the next starts.
-    discovery: 0 # proposals only — the cap is on CODE, and it is zero.
+    discovery: 0 # application CODE cap — always zero, discovery never writes code.
+    discovery_definitions: 2 # NEW user stories drafted + created per run — gated on synchronous chat approval.
   lock_staleness_minutes: 90 # older than this -> abandoned, reclaimable with a logged note.
-  migrations: confirm # confirm | autonomous. See "Migration gate".
+  automation_gh_account: null # gh identity this run asserts before every push and merge. See Phase 0b step 3.
+  migrations: confirm # confirm | autonomous | unrestricted. See "Migration gate".
   isolation: worktree # worktree | in-place. worktree is strongly preferred.
   context_budget:
     handoff_checkpoint: every-phase # every-phase | every-slice. Never "at-end".
     stop_at_remaining_pct: 20 # begin the clean-stop sequence at this much budget left.
-  report_channel: null # null | tracker:<ISSUE-KEY> | file:<path>. Where Phase 4 posts the summary.
+  report_channel: null # null | tracker:<ISSUE-KEY> | file:<path>. A plain summary log for all three modes —
+    # NOT a mailbox. Discovery's proposal approval is synchronous, in that routine's own chat, never a reply here.
+  escalation_channel: null # null | slack:<CHANNEL-ID> | <any channel the harness can post to>.
+    # ESCALATIONS ONLY — never summaries; those go to report_channel above.
   escalation_log: .session/autonomous-delivery/escalation-log.md # append-only, shared across modes.
 ```
 
 **Config claims cite the file they came from.** Read the block; never quote a default from this document as project state (`agentic-dev-core/references/orchestration-doctrine.md` -> "Value provenance").
+
+**On `isolation: worktree` and the scheduling app's own "Worktree" option.** Leave the Routine/schedule's own "Worktree" checkbox **unchecked**. This skill self-manages its isolation via the `EnterWorktree` / `ExitWorktree` tools (Phase 0a entry, Phase 4 exit) instead of relying on the scheduler's implicit assignment — that is what makes Phase 4 able to actually close the run's own worktree rather than leaving it on disk for a human to remove. If the scheduler's Worktree option is left checked, the session already starts inside a worktree that `ExitWorktree` cannot see or remove (it only tracks worktrees this session entered itself) — see Hazard 5.10.
 
 ---
 
@@ -131,13 +138,15 @@ autonomous_delivery:
 
 | Phase / step | Pattern | Subagent role |
 | --- | --- | --- |
+| Phase 0 — Enter isolation | inline | orchestrator only; `EnterWorktree` for the run's OWN session, before config/lock work touches anything |
 | Phase 0 — Lock + resume resolution | inline | orchestrator only; a lock decision delegated is a lock decision raced |
 | Phase 1 — Audit | Parallel | one verifier per evidence source: git ancestry, open pull requests + unmerged branches, tracker status, queue/board + claim files |
 | Phase 2 — Select | inline | orchestrator reasons over Phase 1's report; planning is never delegated |
 | Phase 2 — scored judge panel (only when a call is genuinely novel) | Parallel | 3-5 independent lenses per `decision-protocol.md` §4 |
 | Phase 3 — Execute | Single, in an isolated worktree | the owning pipeline skill runs its own stages; this skill does not decompose them |
 | Phase 3 — context checkpoint | inline | orchestrator writes handoff + progress between slices |
-| Phase 4 — Close and report | Sequential | close-out per the owning skill, then rescue session records, then release lock, then report |
+| Phase 3.5 — Per-ticket cleanup | inline | orchestrator only; rescue that ticket's session artifacts, then `git worktree remove` its worktree — immediately, not batched |
+| Phase 4 — Close and report | Sequential | close-out per the owning skill, rescue session records, release lock, report, then `ExitWorktree` on the run's OWN worktree |
 
 > **Phase 1's parallelism is the point.** Four evidence sources that disagree is the normal case, and the orchestrator can only notice the disagreement if it sees all four independently. Collapsing them into one agent produces a single reconciled narrative with the contradiction already smoothed away.
 
@@ -198,13 +207,41 @@ autonomous_delivery:
 
 ---
 
-## Phase 0 — Lock
+## Phase 0 — Enter isolation, then lock
 
-Concurrent routines must not collide, and the collision they must not have is two runs implementing the same ticket into two branches.
+Concurrent routines must not collide, and the collision they must not have is two runs implementing the same ticket into two branches. Before any of that: `story` and `bug` runs need their OWN worktree, entered explicitly, so it can be closed explicitly — a scheduler-assigned worktree cannot be (see the Configuration note on the scheduler's "Worktree" option). `discovery` needs no worktree at all — see §0a.
 
-1. **Read the config.** `enabled: false`, or a mode absent from `modes`, ends the run here with a one-line report. This is not a failure.
+### 0a. Enter isolation (before touching config, lock, or git state) — `story` / `bug` ONLY
+
+**`discovery` mode skips this whole subsection.** It never writes application code and never creates a git branch — the only things it produces are tracker content via `/product-management`. A worktree buys it nothing and costs it the one thing its approval gate depends on: `.session/discovery/pending-decision.md` (and the mode lock, and the shared escalation log) must be the SAME file the next fire reads, not a copy made inside a worktree that gets removed before anyone reads it back. `discovery` operates directly in the plain checkout, start to finish. Go straight to §0b.
+
+For `story` and `bug`:
+
+1. **Note the home checkout path** — `pwd` right now, before anything else. This is where `.session/` and reports get rescued back to at Phase 4, and it is NOT recoverable once you've moved (worktree-relative paths only from here on; see Hazard 5.3).
+2. **Read `autonomous_delivery.isolation`** from `.agents/project.yaml` (tracked, present in the plain checkout — no worktree needed yet to read it). If `in-place`, skip to §0b.
+3. **Check whether you are already inside a worktree** (`pwd` under `.claude/worktrees/`, or the equivalent for this environment). If so, the scheduler's own "Worktree" option was left checked despite the Configuration note above — `EnterWorktree` errors when called from inside an existing worktree session, so do NOT call it. Instead: proceed in-place in this already-assigned worktree, note in the run report that the scheduler's Worktree checkbox needs to be unchecked for this routine, and flag that `ExitWorktree` will NOT be able to close this worktree at Phase 4 (Hazard 5.10) — a human will need to `git worktree remove` it manually afterward. This is a degraded-but-functional path, not a hard failure.
+4. **Otherwise, `EnterWorktree`** with no fixed `name` (let it auto-generate — a fixed per-mode name risks a collision with a stale worktree from a crashed prior run; the mode-lock already prevents same-mode overlap, so collision-avoidance here is pure hygiene, not a race guard).
+5. **Copy in what a fresh worktree does not carry**: `.env`, and the **whole `.session/` tree** from the home checkout (not just this mode's subfolder — `escalation-log.md` is shared across modes, and Phase 0b's resume table plus decision-protocol's "search the record first" both need it). Without this, the lock/progress/escalation history from every prior run is invisible and Phase 0b's resume table sees a false "fresh run" every single time. This copy is a point-in-time READ snapshot — `story` and `bug` runs may legitimately overlap (locks are per-mode), so treat anything outside your own mode's subfolder as read-only reference, not a value to write back verbatim (see Phase 4 step 3 for why).
+6. **Verify the base branch, and realign it if it is wrong.** `EnterWorktree`'s default (`fresh`) branches from `origin/<the repo's default branch>` — whatever `refs/remotes/origin/HEAD` currently points at. That is not guaranteed to be the branch this project actually works against: read `git_strategy.branches.integration` from `.agents/project.yaml` and compare. In a `main-integration` strategy the default branch is typically `main` while work belongs on the integration branch. **Check it, do not assume it in either direction** — the host's default branch can be flipped at any time, which is exactly why this is a check rather than a fixed instruction.
+
+   ```bash
+   git fetch origin
+   git merge-base --is-ancestor origin/<integration-branch> HEAD && echo "base OK" || echo "REALIGN NEEDED"
+   ```
+
+   If realignment IS needed:
+
+   ```bash
+   git checkout -B <this-worktree-branch> origin/<integration-branch>
+   ```
+
+   **Do NOT use `git reset --hard` here.** Critical Rule #13 forbids repo-wide destructive git commands because multiple agent sessions may share a working tree, and in a project that enforces it the call is DENIED by the permission layer — a run that reaches for it stalls at Phase 0a instead of realigning. `git checkout -B` reaches the same state without a destructive discard, and is safe on a brand-new branch precisely because nothing has been committed on it yet. See Hazard 5.11.
+
+### 0b. Lock
+
+1. **Read the rest of the config.** `enabled: false`, or a mode absent from `modes`, ends the run here with a one-line report — copy `.session/` back to the home checkout first if anything in it changed (it shouldn't have, this early), then `ExitWorktree(remove)`. This is not a failure.
 2. **Validate the mode** against the three literals `story`, `bug`, `discovery`. Anything else is a fast-fail — never fall back to a default mode.
-3. **Verify push identity before anything else.** A multi-account CLI with the wrong cached identity reads and fetches fine and fails only at the first push, hours later, with a permission error that looks like branch protection. Confirm the active account has write scope now.
+3. **Assert push identity before anything else, and re-assert it at every point of no return.** A multi-account CLI with the wrong cached identity reads and fetches fine and fails only at the first push or merge, hours later, with a permission error that looks like branch protection. Observing the identity once is not enough: an account with write scope can be active at Phase 0 and a read-only one active by the time the run reaches `gh pr merge`, with every step in between succeeding silently because `git push` uses a separate keychain credential that never drifted. Check `gh auth status` against `autonomous_delivery.automation_gh_account` (`.agents/project.yaml`); if the active account is wrong, `gh auth switch --user <account>` before proceeding. **Re-run this exact check again immediately before the FIRST push of the run, and again immediately before ANY merge** — not just here at Phase 0. See Hazard H20.
 4. **Take the lock** at `.session/autonomous-delivery/<mode>/lock.json`:
 
 ```json
@@ -212,7 +249,8 @@ Concurrent routines must not collide, and the collision they must not have is tw
   "mode": "story",
   "owner": "<session id or pid — whatever this harness makes stable and observable>",
   "host": "<machine identifier>",
-  "worktree": "<absolute path of the worktree this run will use>",
+  "worktree": "<absolute path of the worktree this run entered via EnterWorktree>",
+  "home_checkout": "<absolute path noted in §0a step 1 — where .session/ gets rescued back to>",
   "started_at": "<ISO-8601 UTC>",
   "heartbeat_at": "<ISO-8601 UTC, refreshed at every phase boundary>"
 }
@@ -220,8 +258,8 @@ Concurrent routines must not collide, and the collision they must not have is tw
 
 5. **Lock arbitration**, in this order:
    - **No lock file** -> write it, proceed.
-   - **Lock exists, `heartbeat_at` newer than `lock_staleness_minutes`** -> a live run owns this mode. **Exit cleanly with a report naming the owner and its start time.** Do not queue. Do not sleep and retry. Do not proceed anyway. The next scheduled fire is the retry.
-   - **Lock exists, `heartbeat_at` older than `lock_staleness_minutes`** -> treat as abandoned. Reclaim it, and append a note to the escalation log recording whose lock was reclaimed, its age, and what the resume table then decided. A silent reclamation loses the only evidence that a prior run died.
+   - **Lock exists, `heartbeat_at` newer than `lock_staleness_minutes`** -> a live run owns this mode. **Exit cleanly with a report naming the owner and its start time.** Do not queue. Do not sleep and retry. Do not proceed anyway. The next scheduled fire is the retry. Close YOUR OWN worktree (nothing was claimed in it) before ending.
+   - **Lock exists, `heartbeat_at` older than `lock_staleness_minutes`** -> treat as abandoned. Reclaim it, and append a note to the escalation log recording whose lock was reclaimed, its age, and what the resume table then decided. A silent reclamation loses the only evidence that a prior run died. Note: the dead run's own worktree is a separate, likely-orphaned directory under `.claude/worktrees/` — it is not this run's `worktree` path in the reclaimed lock; if it's still on disk, note its path in the escalation log for a human to inspect and remove (do not remove another run's worktree yourself — see Anti-pattern A20).
    - **Lock exists and names THIS session** -> a prior phase of this same run; continue.
 6. **Resolve resume** per the table in "Session & Dispatch". Refresh `heartbeat_at` at every phase boundary from here on; a run that stops refreshing is exactly what the staleness window is for.
 
@@ -308,6 +346,19 @@ Three worktree consequences the dispatch briefing must state, because they are i
 - **An absolute path inside a worktree silently reads and writes the MAIN checkout.** There is no error. Reads return another branch's content, writes land on the wrong branch and report success. Use paths relative to the worktree for anything that should reflect your branch. If a write succeeds but a later search in the same session cannot find it, suspect the path before suspecting the tool.
 - **Session files written inside a worktree are gitignored and die with it.** Rescue them in Phase 4 **before** the worktree is removed.
 
+### Phase 3.5 — Per-ticket cleanup (do this immediately, not batched at Phase 4)
+
+The Agent tool does **not** remove a dispatched agent's worktree once it holds any changes — that is deliberate on its part (so a still-useful worktree survives for follow-up), but it means the orchestrator must close it explicitly, per ticket, the moment that ticket's work is done. "Done" means one of: merged, escalated with its branch pushed, or stopped at the migration-apply gate with its branch pushed. In every one of those cases there is nothing left to lose by removing the local copy — the remote branch already has it.
+
+Immediately after a dispatched agent reports back, before selecting or dispatching the next ticket:
+
+1. **Confirm the branch is pushed** (or that the agent made zero commits — nothing to lose either way). Never remove a worktree holding unpushed work; if that happens, something upstream failed to push-first and this is now itself an escalation, not a cleanup step.
+2. **Rescue anything in that worktree's `.session/` tree** that this run's own progress log doesn't already capture (the dispatched agent may have written its own nested-skill progress files, e.g. `/sprint-development`'s `.session/sprint-development/<KEY>/`) into the home checkout.
+3. **`git worktree remove <path>`.** Not `ExitWorktree` — that tool only tracks worktrees entered via `EnterWorktree` by name/path from THIS session, and a dispatched Agent's `isolation: worktree` worktree was created by the Agent tool, not by an `EnterWorktree` call this session made. Plain `git worktree remove` is the correct tool here. Two edge cases: it refuses on modified tracked files without `--force` (should not happen if step 1's push-confirmation held — treat a refusal as a sign something was missed, not a reason to force through it); and it errors "not a working tree" if the Agent tool already auto-removed a zero-change worktree before you get here — check the path exists first, and treat "already gone" as success, not a failure to retry.
+4. **Log the removal** in `progress.md` — one line, alongside that ticket's outcome — so a reader can tell the worktree was closed deliberately, not simply forgotten.
+
+Never defer this to Phase 4. A run processing three bugs that waits until the end to clean up has three dangling worktrees sitting on disk for the entire remaining run for no reason, and a mid-run context exhaustion means they never get cleaned at all.
+
 ### Migration gate
 
 Applying a schema migration to a shared database is irreversible and affects every concurrent agent. It has already happened out-of-band on a shared instance, and a **different** ticket's type regeneration silently absorbed the resulting schema into its own diff.
@@ -318,13 +369,16 @@ Writing the migration file is ordinary technical work and is always autonomous. 
 | --- | --- | --- |
 | `confirm` (default) | **Pause and request approval**, stating the target instance, exactly what the migration does, and that it is additive. | **Pause and request approval**, stating target, what it does, and that it is destructive. Offer a real second option (defer to a fast-follow), not a yes/no. |
 | `autonomous` | Proceed. Take the number from the live ledger immediately before writing the file. | **Still stops.** `autonomous` never covers dropping, renaming, or rewriting a live object. |
+| `unrestricted` | Proceed. Take the number from the live ledger immediately before writing the file. | **Proceed.** Every class applies unattended, including drop / rename / `CREATE OR REPLACE` rewrites of an existing live object. Take the number from the live ledger immediately before writing the file, same as additive. |
 
-Two rules regardless of setting:
+`unrestricted` is opt-in and deliberately unsafe-by-choice: it exists for a project whose database has no production data to lose (a greenfield build, a disposable environment) and whose operator has decided that stopping the run is more expensive than a bad migration. Never make it the default, and never infer it from a project that merely set `autonomous`.
+
+Two rules regardless of setting, `unrestricted` included:
 
 - **Never apply a migration merely to clear a local error.** If a local failure seems to need a live schema change, that is a finding, not a step.
 - **Re-read the live definition after every apply** — including re-applies where you believe nothing changed — and diff it against the committed file. Hand-retyping SQL into an apply call has dropped a clause by fat-finger, caught only by the habit of diffing afterwards.
 
-A `CREATE OR REPLACE` that changes an existing live object's **output** is a rewrite, not an additive change, even when the fix is narrow, confirmed, and unambiguous. Do not pattern-match a bug-fix precedent onto it.
+A `CREATE OR REPLACE` that changes an existing live object's **output** is a rewrite, not an additive change, even when the fix is narrow, confirmed, and unambiguous. Do not pattern-match a bug-fix precedent onto it. Under `unrestricted` this classification no longer changes whether the apply proceeds (both columns proceed), but it still matters for the run report: log it as destructive, not additive, so the record stays honest about what actually happened.
 
 ### Verification that actually verifies
 
@@ -389,7 +443,39 @@ For an unattended run, three amplifications:
 - **Escalating is expensive here in a way it is not interactively.** There is nobody to answer. An escalation ends the run's forward progress until the next human touch, so an over-stop on a technical call costs a whole scheduled slot. The escalate-only categories are exhaustive: product and business decisions, a genuinely NEW security posture (applying an already-ratified pattern is implementation), irreversible or destructive actions, and anything the operator explicitly reserved.
 - **Record every autonomous decision where the next run's Phase 1 will find it** — the escalation log, at the moment the decision is made. A decision that is not recorded did not happen, and the next run will re-derive it and land somewhere else.
 
-**Escalation, when it does fire, is a clean stop, not a hang.** Write the escalation entry (what happened, why it is this category, what the human needs to decide, what the downstream cost of waiting is), push anything unpushed, release the lock, and end the run. Never park a scheduled session waiting on an answer that cannot arrive.
+**Escalation, when it does fire, is a clean stop, not a hang.** Write the escalation entry (what happened, why it is this category, what the human needs to decide, what the downstream cost of waiting is), push anything unpushed, release the lock, **notify** if `escalation_channel` is configured (see below), and end the run. Never park a scheduled session waiting on an answer that cannot arrive.
+
+### Notifying an escalation
+
+An escalation nobody is told about is indistinguishable from a run that silently died. When `autonomous_delivery.escalation_channel` is set (it is `null` by default, and `null` means "the run report is the notification"), the clean-stop sequence gains a notify step, after the lock is released and before the run ends:
+
+1. **Post to `escalation_channel`** — the primary path, because an external channel persists, leaves a record, and does not depend on any agent client being connected. Name the ticket key, what is blocking it, and what specifically the operator must decide. It is a message a human reads on a phone, so keep it short and lead with the ticket key.
+2. **Send a push notification second**, if the harness offers one — one line, under 200 characters, no markdown, ticket key first, then the actual decision needed (not "run stopped").
+
+A failure to deliver either one never becomes a second failure that swallows the first: record the send failure in the run report and end cleanly anyway.
+
+**`escalation_channel` carries escalations only.** A run that finishes cleanly does not post there, and neither does an empty run with nothing eligible — both are correct outcomes that belong in the run report. Everything landing in that channel must be something the operator has to act on; diluting it with routine traffic is what turns a channel worth reading into one that gets muted. Routine summaries go to `report_channel`, which is a different setting.
+
+### Exception — Discovery's synchronous approval gate
+
+This exception is scoped to `discovery`'s approval gate alone. Story and bug escalations are untouched: they remain a clean stop, push-and-end, never a wait.
+
+Every discovery-mode recommendation is a product decision (`decision-protocol.md` §5 category 1) and always escalates. What differs is how PATIENT that escalation is allowed to be. A project may configure discovery to end its turn on an open question and sit there — rather than abandoning and reporting like every other escalation — when the operator has confirmed they will check that routine's own chat session later to answer.
+
+This is exactly why `discovery` skips worktree isolation entirely (Phase 0a): `pending-decision.md` must be the one real file the next fire reads, not a copy trapped inside a worktree that gets removed before that fire ever sees it.
+
+**Mechanics**, once a recommendation is settled:
+
+1. Write the recommendation to `.session/autonomous-delivery/discovery/pending-decision.md` — the proposal, the rationale, what it depends on — with `status: awaiting_reply`.
+2. Release the `discovery` mode lock immediately. The operator may not answer today, and the lock must not block tomorrow's fire from re-surfacing the same question — a discovery run sitting on an unanswered question is not "in progress" in the sense the lock exists to protect.
+3. Ask the question directly in that session's chat, plainly, and end the turn there. Do not create anything yet.
+
+**On a later fire of discovery mode**: read `pending-decision.md` FIRST, before any fresh analysis.
+
+- `status: awaiting_reply` -> re-state the EXACT same recommendation, ask again, end the turn again. Never regenerate a new proposal on top of one still pending — that is precisely the backlog-flooding this exception exists to avoid, and it is why the file, not a fresh tracker comment, is the source of truth here.
+- `status: resolved` (or the file absent) -> proceed with a normal fresh analysis.
+
+**If the operator answers within the same open session**, resume immediately: dispatch `/product-management` to create what was approved, mark `pending-decision.md` `resolved` with a one-line note of what got created, and continue to Phase 4 as normal.
 
 ---
 
@@ -403,6 +489,7 @@ Sequential, and the order matters because each step can be lost by the one befor
 4. **Write the run report** to `.session/autonomous-delivery/<mode>/run-report.md` per `references/run-report-format.md` §1. Include the empty-run case: what was considered, what was dropped, why.
 5. **Post the summary** to `report_channel` when one is configured. `null` means the file is the report — do not improvise a destination.
 6. **Archive** the session directory per `session-management.md` §8 and call the memory session summary with the archive path included.
+7. **`ExitWorktree(remove)` on the run's OWN worktree** — the one entered in Phase 0a, and only that one. Dispatched agents' worktrees were already closed per ticket in Phase 3.5, and another run's worktree is never yours to remove (A20). This is the last step for a reason: everything above reads or writes paths that stop existing the moment it runs. If the run is in the degraded path from Phase 0a step 3 (a scheduler-assigned worktree), `ExitWorktree` is a no-op here — say so in the report and name the path a human needs to `git worktree remove`.
 
 Every discrepancy Phase 1 found, every autonomous decision made, and every check the run could not perform is named explicitly in the report. Nothing evaporates silently: what an unattended run could not verify becomes an explicit flag for the humans who can.
 
@@ -429,6 +516,11 @@ Every item below has been observed. Each is a check the run performs, not a caut
 | H13 | Per-slice review passing is not evidence the assembled chain is sound | Budget the assembled-diff review as seriously as any slice's |
 | H14 | A tracker status flips to ready-for-dev with blocking refinement questions still open | Read the refinement trail in Phase 2, not the status field |
 | H15 | Session records die with the worktree that held them | Rescue before removal, Phase 4 step 2 |
+| H16 | The scheduler's own "Worktree" option assigns a worktree `ExitWorktree` cannot see or close (it only tracks worktrees THIS session entered via `EnterWorktree`) | Leave that option unchecked; the run enters and exits its own isolation explicitly, Phase 0a / Phase 4 |
+| H17 | A fresh `EnterWorktree` branches from the repo's default branch, which is not guaranteed to be the integration branch the project works against | Fetch + `git merge-base --is-ancestor` check after entry; realign with `git checkout -B`, NEVER `git reset --hard` (Rule #13 denies it), Phase 0a step 6 |
+| H18 | A dispatched agent's worktree is never auto-removed once it holds changes — that is deliberate on the Agent tool's part | Explicit `git worktree remove` per ticket, immediately, Phase 3.5 |
+| H19 | `discovery`'s synchronous approval gate re-proposes on top of an already-pending, unanswered recommendation, flooding the backlog | Read `pending-decision.md` FIRST; `awaiting_reply` re-surfaces the same recommendation verbatim, never a new one |
+| H20 | A multi-account `gh` CLI's active identity silently flips between Phase 0 and merge time — `git push` keeps working under a separate keychain credential, so the failure surfaces only at `gh pr merge` with a permission error that looks like branch protection | Assert `autonomous_delivery.automation_gh_account`, `gh auth switch --user <account>` if wrong — at Phase 0, again before the first push, and again before any merge |
 
 ---
 
@@ -451,7 +543,7 @@ Every item below has been observed. Each is a check the run performs, not a caut
 - **A15.** NEVER manufacture a non-empty run. If nothing is genuinely unblocked, report that.
 - **A16.** NEVER re-ask a settled question, and never treat an answer obtained without the prior ruling in front of the human as a supersession. It is an uninformed re-ask and it overrides nothing.
 - **A17.** NEVER escalate a technical call this run is equipped to settle. There is nobody to answer, and the stop costs a whole scheduled slot.
-- **A18.** NEVER leave an escalation parked waiting for a reply. Write the entry, push, release the lock, end the run.
+- **A18.** NEVER leave an escalation parked waiting for a reply, for `story` or `bug` mode. Write the entry, push, release the lock, notify `escalation_channel` if one is configured, end the run. (`discovery`'s approval gate is the one explicit, scoped exception — see Autonomy § "Discovery's synchronous approval gate". Do not read that exception as license to park anywhere else.)
 - **A19.** NEVER remove a worktree before rescuing the session records inside it.
 - **A20.** NEVER edit another run's board row (except to claim an unclaimed one per protocol), branch, or worktree.
 - **A21.** NEVER include AI-attribution lines in commits, pull request bodies, or tracker comments.
