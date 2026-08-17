@@ -149,6 +149,41 @@ Four categories, and they are exhaustive. Everything outside them is yours.
 scoring if you ran a panel, and your recommendation. Never ask a bare open question — that is how a human
 gets pulled into re-deciding something they already decided.
 
+### 5.1 Category 1 is configurable — but only by explicit opt-in
+
+Everything above is the default and is correct for any project with a human product owner. **Read
+`decision_authority.product` in `.agents/project.yaml`. If it is absent or `escalate`, §5 applies exactly
+as written and you can stop reading this subsection.**
+
+A project may set `decision_authority.product: decide`. That declares there is **no human PO in the loop**
+— the product is specified and built end to end by AI — and it replaces category 1 only. Categories 2, 3
+and 4 still escalate, unchanged. Under `decide`:
+
+- An open product, business, functional, scope, UX-copy or design-intent question on a ticket is **work to
+  do, not a blocker**. It never waits for a human by default.
+- Search the record first, exactly as §2 requires. A published ruling that already governs the question is
+  followed and cited, never re-derived.
+- If it is genuinely unsettled, **dispatch a decision subagent** rather than escalating. Two profiles;
+  dispatch the one that fits, or both when the call is joint:
+
+  | Profile | Owns | Must read before deciding |
+  | --- | --- | --- |
+  | `AI Product Owner / Business Analyst` | product, business, functional, scope, UX copy, design intent | the product-definition context (PRD / SRS / business docs, domain glossary), the design plan, the epic's sibling tickets, the ticket's own folder |
+  | `AI Tech Lead` | schema, index, API contract, auth model, performance, migration shape, integration architecture | the relevant ADRs, existing migrations, and the live code precedent |
+
+- The subagent runs the **same scored method as §4** — 2 to 4 concrete candidate answers, scored against
+  explicit criteria, highest scorer wins, reasoning written out. A bare opinion is not a decision.
+- **Publish the ruling to the ticket under a heading that names the deciding profile**, e.g.
+  `## AI Product Owner — Decision: <question>`, then resync the tracker cache. Never style an AI ruling as
+  human sign-off and never leave one unattributed: a future run must be able to tell at a glance that the
+  answer came from the AI team, not from an undisclosed human.
+- **A published ruling that names concrete follow-on work is executed, not re-escalated.** Materializing a
+  decision someone already made is data entry against a settled question; asking who should do it is the
+  same failure as re-asking the question.
+
+The wider grant is only safe because the rest of this file still applies in full: search first, score the
+alternatives, write it down. Do not read `decide` as permission to skip any of those.
+
 ---
 
 ## 6. Step 5 — write every decision down
