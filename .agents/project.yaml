@@ -94,6 +94,16 @@ git_strategy:
     policy_verified: null # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified. Per-project — this file is a template; a fresh project starts unverified
     policy_source: declared # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
 
+# WHO decides what, when a question has no settled answer. Read by every skill that
+# routes a decision, via agentic-dev-core/references/decision-protocol.md §5.1.
+# `escalate` is the default and is correct for any project with a human product owner.
+# Set `decide` ONLY for a project specified and built end-to-end by AI with no human PO
+# in the loop — it replaces escalation category 1 with a scored, attributed decision
+# subagent. Categories 2-4 (novel security posture, irreversible actions, anything the
+# operator reserved) still escalate under BOTH settings.
+decision_authority:
+  product: escalate # escalate | decide. See decision-protocol.md §5.1 before changing.
+
 # Scheduled / unattended delivery runs. Read by the `autonomous-delivery` skill at
 # Phase 0 — that skill ships with the boilerplate, so the slot ships with it too.
 # Every default here is the SAFE end of its axis: the master switch is off, and a
@@ -126,6 +136,8 @@ autonomous_delivery:
 # EXTERNAL_CONSUMER_UNDOCUMENTED so the allowlist cannot rot silently.
 external_consumers:
   - automation_identity # read DIRECTLY (not as a {{VAR}}) by .claude/skills/sprint-development/references/live-ui-identity.md + live-ui-validation.md — its leaves hold env-var NAMES, resolved from .env at runtime
+  - decision_authority # key of the structured `decision_authority:` block, read directly by .claude/skills/agentic-dev-core/references/decision-protocol.md §5.1 — never resolved through {{VAR}} templating
+  - product # key of the structured `decision_authority:` block, read directly by .claude/skills/agentic-dev-core/references/decision-protocol.md §5.1 — never resolved through {{VAR}} templating
   - autonomous_delivery # key of the structured `autonomous_delivery:` block, read directly by .claude/skills/autonomous-delivery/SKILL.md §Configuration — never resolved through {{VAR}} templating
   - enabled # key of the structured `autonomous_delivery:` block, read directly by .claude/skills/autonomous-delivery/SKILL.md §Configuration — never resolved through {{VAR}} templating
   - modes # key of the structured `autonomous_delivery:` block, read directly by .claude/skills/autonomous-delivery/SKILL.md §Configuration — never resolved through {{VAR}} templating
