@@ -2187,11 +2187,19 @@ function printClosingSummary(state: InstallState): void {
     process.stdout.write('\n');
   }
 
+  // `--no-hooks` is deliberate. The installer defaults to `--all`, which installs
+  // the Claude Code plugin AND writes a second copy of the same two hooks into
+  // ~/.claude/settings.json — both fire every turn, injecting caveman twice per
+  // prompt. The flag keeps the plugin (it registers those hooks in its own
+  // plugin.json), the multi-agent coverage this repo needs for OpenCode, and the
+  // caveman-shrink MCP proxy. On Windows `irm | iex` cannot receive arguments
+  // (caveman #565), so we call the Node installer the script delegates to anyway.
   const caveman = process.platform === 'win32'
-    ? 'irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex'
-    : 'curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash';
+    ? 'npx -y github:JuliusBrussee/caveman --no-hooks'
+    : 'curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash -s -- --no-hooks';
   process.stdout.write('→  Install caveman skill (token compression, ~30s):\n');
   process.stdout.write(`     ${COLORS.cyan}${caveman}${COLORS.reset}\n`);
+  process.stdout.write(`     ${COLORS.dim}--no-hooks avoids a duplicate hook registration — see INSTALLER.md.${COLORS.reset}\n`);
 
   process.stdout.write('→  Warp terminal users — install Claude Code plugin:\n');
   process.stdout.write(`     ${COLORS.cyan}/plugin install warp@claude-code-warp${COLORS.reset}\n`);

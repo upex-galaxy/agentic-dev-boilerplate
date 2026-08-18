@@ -175,11 +175,17 @@ Install (one-time, user-level, ~30s, requires Node ≥ 18):
 
 ```bash
 # macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash -s -- --no-hooks
 
 # Windows PowerShell
-irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex
+npx -y github:JuliusBrussee/caveman --no-hooks
 ```
+
+> **Why `--no-hooks`.** The installer defaults to `--all`, which installs the Claude Code plugin **and** writes a second copy of the same two hooks into `~/.claude/settings.json`. Both copies then fire on every turn, so caveman is injected twice per prompt for no benefit. `--no-hooks` keeps the plugin (which registers those hooks itself, in its own `plugin.json`), the multi-agent coverage that matters here because this repo also runs on OpenCode, and the `caveman-shrink` MCP proxy. It only skips the duplicate registration.
+>
+> Already installed without the flag? Delete the `hooks` block from `~/.claude/settings.json`. Nothing else needs to change, and no files are removed: the scripts under `~/.claude/hooks/` simply stop being registered.
+>
+> On Windows the one-liner cannot take flags (`irm | iex` gets no arguments, see caveman issue #565), so the command above calls the same Node installer the script would have delegated to.
 
 Levels: `lite` (light trim), **`full`** (this repo's default), `ultra` (max compression), `wenyan` (classical Chinese register). Switch with `/caveman lite|full|ultra|wenyan`.
 
@@ -187,7 +193,7 @@ Revert triggers (EN + ES): `"normal mode"`, `"habla normal"`, `"stop caveman"`, 
 
 Docs: <https://github.com/JuliusBrussee/caveman>
 
-If caveman is **not** installed, `CLAUDE.md` §1 #13 becomes a no-op and the agent writes normal terse output. No errors, no degraded behavior.
+If caveman is **not** installed, `CLAUDE.md` §1 #11 becomes a no-op and the agent writes normal terse output. No errors, no degraded behavior.
 
 ### ccstatusline — Claude Code statusline configurator
 

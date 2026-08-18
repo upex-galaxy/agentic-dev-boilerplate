@@ -18,7 +18,7 @@ No es un roadmap de producto: es la lista de qué doctrina/skill de este repo to
 | #   | Deck                                                      | Archivo                                        | Prioridad | Estado |
 | --- | --------------------------------------------------------- | ---------------------------------------------- | --------- | ------ |
 | 1   | El comando y sus ejecutores                               | `agentic-dev-core/orquestacion.es.html`        | P1        | todo   |
-| 2   | La capa comportamental (Butler, PM Voice, Visual Mapping) | `agentic-dev-core/capa-comportamental.es.html` | P1        | todo   |
+| 2   | La capa comportamental (Butler, PM Voice, Visual Mapping) | `agentic-dev-core/capa-comportamental.es.html` | —         | **hecho** |
 | 3   | Cómo encadenan las skills, de cero a producción           | `agentic-dev-core/flujo-de-skills.es.html`     | P2        | todo   |
 
 ### Ciclo de vida del desarrollo (orden de ejecución real)

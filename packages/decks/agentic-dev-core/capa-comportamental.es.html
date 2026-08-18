@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>La capa comportamental — Butler, PM Voice, Visual Mapping</title>
+    <meta
+      name="description"
+      content="Por qué agentic-dev-boilerplate responde como responde: las tres capas que gobiernan cada mensaje, cuál manda sobre cuál, y la misma sesión de desarrollo renderizada en los dos estilos."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck — cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos" — ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia,
+          serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        line-height: 1.62;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 26px 110px;
+      }
+
+      /* hero */
+      header.hero {
+        padding: 76px 0 40px;
+        border-bottom: 1px solid var(--line);
+      }
+      .kick {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin: 0 0 16px;
+        font-weight: 600;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: clamp(32px, 5vw, 54px);
+        line-height: 1.08;
+        margin: 0 0 20px;
+        font-weight: 600;
+      }
+      .lede {
+        font-size: clamp(16px, 1.6vw, 20px);
+        color: var(--ink-soft);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 26px;
+      }
+      .tag {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        padding: 4px 10px;
+        border-radius: 5px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--ink-faint);
+      }
+
+      section {
+        margin-top: 58px;
+      }
+      h2 {
+        font-family: var(--font-display);
+        font-size: clamp(23px, 3vw, 33px);
+        line-height: 1.15;
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.5em;
+        color: var(--ink-faint);
+        margin-right: 12px;
+        font-weight: 600;
+      }
+      .sub {
+        color: var(--ink-soft);
+        max-width: 76ch;
+        margin: 0 0 24px;
+      }
+
+      table.plain {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 14.5px;
+      }
+      table.plain th {
+        text-align: left;
+        padding: 13px 17px;
+        background: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--line);
+      }
+      table.plain td {
+        padding: 14px 17px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+      table.plain tr:last-child td {
+        border-bottom: none;
+      }
+      table.plain td:first-child {
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.87em;
+        background: var(--blue-wash);
+        color: var(--blue);
+        padding: 1.5px 6px;
+        border-radius: 4px;
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 999px;
+        margin-left: 8px;
+        background: var(--blue-solid);
+        color: #fff;
+      }
+
+      .callout {
+        display: flex;
+        gap: 13px;
+        margin-top: 18px;
+        padding: 15px 18px;
+        border-radius: 9px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--blue);
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .callout.warn {
+        border-left-color: var(--signal);
+      }
+      .callout .ic {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--blue);
+        padding-top: 3px;
+      }
+      .callout.warn .ic {
+        color: var(--signal);
+      }
+      .callout strong {
+        color: var(--ink);
+      }
+
+      /* toggle */
+      .switcher {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 0 0 20px;
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 4px;
+        gap: 4px;
+      }
+      .seg button {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 9px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        background: transparent;
+        color: var(--ink-faint);
+        transition: all 0.2s ease;
+      }
+      .seg button.on[data-mode='before'] {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+      .seg button.on[data-mode='after'] {
+        background: var(--blue-solid);
+        color: #fff;
+      }
+      .hint {
+        font-size: 13.5px;
+        color: var(--ink-faint);
+      }
+      .hint kbd {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 2px 7px;
+      }
+
+      /* terminal */
+      .term {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        overflow: hidden;
+      }
+      .term-bar {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+      .term-title {
+        margin-left: 8px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--ink-faint);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .term-badge {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 999px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .term-badge.before {
+        background: var(--signal-solid);
+      }
+      .term-badge.after {
+        background: var(--blue-solid);
+      }
+      .term-body {
+        padding: 24px 26px 28px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .uline {
+        display: flex;
+        gap: 10px;
+        margin: 28px 0 18px;
+      }
+      .uline:first-child {
+        margin-top: 0;
+      }
+      .uline .caret {
+        color: var(--blue);
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .uline .txt {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .reply {
+        border-left: 2px solid var(--line);
+        padding-left: 19px;
+      }
+      .reply.after-mode {
+        border-left-color: var(--blue);
+      }
+      .reply.before-mode {
+        border-left-color: var(--signal);
+      }
+      .reply p {
+        margin: 0 0 13px;
+        color: var(--ink-soft);
+      }
+      .reply p.head {
+        color: var(--ink);
+        margin-bottom: 15px;
+      }
+      .reply strong {
+        color: var(--ink);
+      }
+      .reply .punch {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .reply .dash {
+        color: #fff;
+        background: var(--signal-solid);
+        border-radius: 3px;
+        padding: 0 4px;
+        font-weight: 700;
+      }
+      .reply ul {
+        list-style: none;
+        margin: 0 0 14px;
+        padding: 0;
+      }
+      .reply li {
+        position: relative;
+        padding-left: 18px;
+        margin-bottom: 7px;
+        color: var(--ink-soft);
+      }
+      .reply li::before {
+        content: '·';
+        position: absolute;
+        left: 3px;
+        color: var(--blue);
+        font-weight: 700;
+      }
+      .reply .q {
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 12px;
+      }
+      .reply table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 4px 0 15px;
+        font-size: 12px;
+      }
+      .reply th {
+        text-align: left;
+        padding: 7px 11px;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .reply td {
+        padding: 7px 11px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+      .reply pre {
+        background: var(--paper-2);
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        padding: 13px 15px;
+        overflow-x: auto;
+        font-size: 11.5px;
+        line-height: 1.6;
+        margin: 4px 0 14px;
+        color: var(--ink-soft);
+      }
+      .reply pre .c {
+        color: var(--ink-faint);
+      }
+      .reply pre .k {
+        color: var(--agent);
+        font-weight: 600;
+      }
+      .reply code {
+        background: var(--blue-wash);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        gap: 15px;
+      }
+      .card {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--blue);
+        border-radius: 10px;
+        padding: 19px 21px;
+      }
+      .card.sig {
+        border-top-color: var(--signal);
+      }
+      .card.agt {
+        border-top-color: var(--agent);
+      }
+      .card h4 {
+        margin: 0 0 8px;
+        font-size: 15.5px;
+        font-family: var(--font-display);
+        font-weight: 600;
+      }
+      .card p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .card .n {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 74px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      footer code {
+        background: none;
+        color: var(--ink-faint);
+      }
+
+      @media (max-width: 760px) {
+        .wrap {
+          padding: 0 16px 70px;
+        }
+        .term-body {
+          padding: 18px 15px 22px;
+          font-size: 12px;
+        }
+        .reply {
+          padding-left: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <p class="kick">agentic-dev-core · contrato de personalidad</p>
+        <h1>La capa comportamental</h1>
+        <p class="lede">
+          Butler Pattern, PM Voice y Visual Mapping explican por qué el repo responde como responde.
+          Pero encima de las tres hay una pregunta anterior: cuando dos capas opinan sobre lo mismo,
+          ¿cuál gana? Hasta agosto de 2026 la respuesta era "la que se repite más veces por turno",
+          y eso no lo había decidido nadie.
+        </p>
+        <div class="meta">
+          <span class="tag">CLAUDE.md §2</span>
+          <span class="tag">~/.claude/CLAUDE.md → OUTPUT STYLE</span>
+          <span class="tag">caveman@caveman · full</span>
+          <span class="tag">docs/ai-personality.md</span>
+        </div>
+      </header>
+
+      <section>
+        <h2><span class="num">01</span>Tres capas, tres dimensiones</h2>
+        <p class="sub">
+          Cada capa manda sobre una sola dimensión. Ese es el diseño entero: si dos reclaman la
+          misma, se contradicen, y el desempate acaba siendo mecánico en lugar de deliberado.
+        </p>
+        <table class="plain">
+          <thead>
+            <tr>
+              <th>Capa</th>
+              <th>Dimensión</th>
+              <th>Dónde vive</th>
+              <th>Frecuencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>caveman</td>
+              <td>cuántas <strong>palabras</strong></td>
+              <td><code>caveman@caveman</code>, nivel <code>full</code></td>
+              <td>cada turno, vía hook</td>
+            </tr>
+            <tr>
+              <td>CLAUDE.md §2<span class="badge">manda</span></td>
+              <td><strong>qué</strong> se dice, granularidad y registro</td>
+              <td>Butler + PM Voice + Visual Mapping</td>
+              <td>cada turno, vía hook nuevo</td>
+            </tr>
+            <tr>
+              <td>OUTPUT STYLE</td>
+              <td>cómo se <strong>ve</strong> y qué <strong>textura</strong> tiene</td>
+              <td><code>~/.claude/CLAUDE.md</code></td>
+              <td>al arrancar sesión</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <span class="ic">Regla</span>
+          <div>
+            <strong>§2 gana siempre sobre contenido.</strong> OUTPUT STYLE solo decide el render
+            (títulos, anclas en negrita, <code>backticks</code>, tablas, espaciado) y la textura de
+            las frases (sin guión largo, longitud variable, sin recap final). Si una regla de ahí
+            cambiara <em>qué</em> se dice, está mal puesta y pertenece a §2.
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ic">El fallo</span>
+          <div>
+            El desempate era <strong>mecánico, no editorial</strong>. El plugin de caveman se
+            reinyecta en cada <code>UserPromptSubmit</code>, mientras §2 se lee una vez al arrancar y
+            se diluye conforme crece el contexto. Ganaba la capa más repetida, no la que tenía razón.
+            Por eso PM Voice se evaporaba en sesiones largas y caveman nunca.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>La misma sesión, los dos estilos</h2>
+        <p class="sub">
+          Ticket ficticio <code>APEX-233</code>, checkout con pago dividido entre dos tarjetas. Mismo
+          trabajo, misma información. Solo cambia cómo llega.
+        </p>
+
+        <div class="switcher">
+          <div class="seg">
+            <button data-mode="before" class="on">Antes</button>
+            <button data-mode="after">Ahora</button>
+          </div>
+          <span class="hint">Pulsa para alternar, o usa <kbd>←</kbd> <kbd>→</kbd></span>
+        </div>
+
+        <div class="term">
+          <div class="term-bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="term-title">claude · ~/projects/agentic-dev-boilerplate</span>
+            <span class="term-badge before" id="badge">estilo anterior</span>
+          </div>
+          <div class="term-body" id="termBody"></div>
+        </div>
+
+        <div class="callout warn" id="verdict"></div>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>Qué cambió, y por qué</h2>
+        <p class="sub">
+          Ocho ajustes. Ninguno inventa una estrategia nueva: todos eliminan una contradicción que ya
+          estaba escrita en dos sitios a la vez.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <span class="n">01</span>
+            <h4>Reparto de capas declarado</h4>
+            <p>
+              §2 abre con la tabla vinculante de arriba. Antes ninguna de las tres fuentes decía cuál
+              mandaba, así que la pregunta no tenía respuesta escrita.
+            </p>
+          </div>
+          <div class="card sig">
+            <span class="n">02</span>
+            <h4>Viñeta Butler sin guión largo</h4>
+            <p>
+              De <code>topic — fragment</code> a <code>topic: fragment</code>. La instrucción
+              <em>mandaba</em> usar el carácter que la regla global prohibía, y ninguna corrección
+              gana contra su propio ejemplo canónico.
+            </p>
+          </div>
+          <div class="card sig">
+            <span class="n">03</span>
+            <h4>143 guiones largos barridos</h4>
+            <p>
+              101 en <code>CLAUDE.md</code> y 42 en <code>docs/ai-personality.md</code>. El modelo
+              imita la densidad tipográfica que ve en sus propias instrucciones.
+            </p>
+          </div>
+          <div class="card">
+            <span class="n">04</span>
+            <h4>Fuera el headline punch</h4>
+            <p>
+              Obligaba a abrir cada respuesta con una frase de enganche distinta. Teatro fabricado,
+              y contradecía el rasgo anti-theatre que la propia doc de personalidad reclamaba.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">05</span>
+            <h4>Hook de reinyección</h4>
+            <p>
+              <code>.claude/hooks/personality-reinject.js</code> devuelve el contrato de §2 en cada
+              turno por unos 30 tokens. Arregla la asimetría mecánica, no la redacción.
+            </p>
+          </div>
+          <div class="card">
+            <span class="n">06</span>
+            <h4>Estos ficheros no son modelo de estilo</h4>
+            <p>
+              Nota explícita en §2: <code>CLAUDE.md</code> y los <code>SKILL.md</code> son prosa
+              densa para parseo automático. No se imita su tipografía en el chat.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">07</span>
+            <h4>El instalador deja de duplicar caveman</h4>
+            <p>
+              El one-liner corre en modo <code>--all</code>, que instala el plugin <em>y encima</em>
+              registra hooks propios. Ahora se recomienda <code>--no-hooks</code>.
+            </p>
+          </div>
+          <div class="card">
+            <span class="n">08</span>
+            <h4>ai-personality.md resincronizado</h4>
+            <p>
+              Rutas inexistentes de caveman y de los hooks, y una descripción del fichero global que
+              listaba preferencias que nunca contuvo. Nueva sección 3.7 para la capa OUTPUT STYLE.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>Verificado contra el repo — 2026-08-18</span>
+        <span><code>packages/decks/agentic-dev-core/capa-comportamental.es.html</code></span>
+      </footer>
+    </div>
+
+    <script>
+      var SESSION = {
+        before: [
+          {
+            user: '¿cómo quedó lo del checkout con pago dividido?',
+            html: '<p class="head"><span class="punch">Resumen</span>: se completó la implementación de la funcionalidad de pago dividido <span class="dash">—</span> ticket APEX-233 <span class="dash">—</span> y los detalles se exponen a continuación.</p><p>La funcionalidad permite que el importe total de una compra sea repartido entre dos tarjetas distintas, generando dos autorizaciones independientes que únicamente son capturadas de forma conjunta, de manera que si la segunda tarjeta resultara rechazada la primera autorización sería anulada antes de proceder a cobro alguno, garantizando así que en ningún escenario se produzca un cobro parcial no deseado sobre el usuario final. La totalidad de la funcionalidad se encuentra protegida tras un feature flag denominado checkout.split_payment, actualmente activado exclusivamente en el entorno de staging y desactivado en el entorno de producción, dado que la funcionalidad afecta directamente a datos de pago.</p><p>Desde el punto de vista de la persistencia, se ha introducido una migración que incorpora una tabla nueva denominada order_payments así como una columna adicional payment_mode sobre la tabla orders, tratándose en ambos casos de cambios estrictamente aditivos que no requieren reescritura de las filas existentes. Desde el punto de vista del rendimiento, las dos capturas se ejecutan de forma paralela, lo cual reduce el percentil noventa y cinco del checkout desde mil novecientos milisegundos hasta mil cien milisegundos aproximadamente.</p><p>Cabe mencionar que existe una limitación conocida y asumida deliberadamente: en el supuesto de que la primera captura se complete satisfactoriamente y la segunda falle con posterioridad, no se ejecuta ningún reembolso automático, quedando el caso derivado a una cola de tratamiento manual.</p><p>Espero que este resumen resulte de utilidad y quedo a la espera de tus indicaciones.</p>',
+          },
+          {
+            user: 'espera, ¿y la migración? ¿tocaste el schema de orders?',
+            html: '<p class="head"><span class="punch">Detalle</span>: la migración 0042_split_payment.sql <span class="dash">—</span> aditiva pura <span class="dash">—</span> no modifica columnas existentes.</p><p>Sobre la tabla orders se ha añadido una columna payment_mode de tipo enumerado con valores single y split y un valor por defecto single no volátil, lo cual implica que en PostgreSQL quince las cuatro millones doscientas mil filas existentes no son reescritas, habiéndose ejecutado la sentencia en ochenta y cuatro milisegundos en el entorno de staging. Adicionalmente se ha creado una tabla order_payments que almacena entre una y dos filas por pedido, incorporando la referencia del proveedor, el slot, el importe y el estado, junto con un índice sobre order_id y una restricción de unicidad sobre la pareja order_id y slot.</p><p>La validación de que la suma de los importes coincide con el total del pedido se realiza en la capa de aplicación y no mediante un trigger de base de datos, decisión tomada deliberadamente con el fin de no penalizar el rendimiento de la inserción de pedidos ordinarios que no utilizan pago dividido. La reversibilidad queda garantizada mediante el fichero descendente correspondiente, si bien únicamente resulta seguro mientras el feature flag permanezca desactivado.</p>',
+          },
+          {
+            user: 'vale, ¿qué falta antes de mergear?',
+            html: '<p class="head"><span class="punch">Estado</span>: restan cinco elementos antes de proceder al merge.</p><p>En primer lugar, la pull request número ochocientos doce se encuentra pendiente de aprobación por parte de los propietarios del módulo de pagos, dado que la tabla introducida pertenece a su ámbito de responsabilidad. En segundo lugar, resta ejecutar en el entorno de staging la verificación del escenario de rechazo de la segunda tarjeta con el objeto de confirmar que la primera autorización queda efectivamente anulada. En tercer lugar, se considera conveniente aplicar la migración en el entorno de producción con carácter previo al merge y no de forma simultánea. En cuarto lugar, no se ha configurado todavía ninguna alerta que notifique la existencia de capturas huérfanas. Y en quinto lugar, queda pendiente una decisión de negocio relativa a la asignación de responsabilidad sobre la cola de reconciliación manual.</p><p>En conclusión, la funcionalidad se encuentra completa desde el punto de vista del desarrollo, restando únicamente las tareas de verificación y coordinación anteriormente enumeradas.</p>',
+          },
+        ],
+        after: [
+          {
+            user: '¿cómo quedó lo del checkout con pago dividido?',
+            html: '<p class="head"><strong>Checkout</strong> ya cobra una compra repartida entre dos tarjetas, con flag apagado en producción.</p><p>El importe se divide en dos autorizaciones y solo se capturan las dos juntas: si la segunda tarjeta rechaza, la primera se anula antes de cobrar nada. Toca datos de pago, así que va detrás de <code>checkout.split_payment</code>, encendido solo en <code>staging</code>.</p><p class="q">¿Qué hilo quieres tirar?</p><ul><li>flag: <code>checkout.split_payment</code>, off en <code>production</code>, on en <code>staging</code> desde ayer</li><li>migración: tabla nueva <code>order_payments</code> más columna <code>orders.payment_mode</code>, aditiva, sin reescritura</li><li>perf: las dos capturas van en paralelo, p95 del checkout baja de 1.9s a 1.1s</li><li>UI: segundo campo de tarjeta aparece al marcar "dividir pago", nada cambia para quien paga con una sola</li><li>reparto: el usuario elige el monto de la primera tarjeta, el resto va a la segunda, mínimo 1 euro por lado</li><li>3DS: soportado en ambas tarjetas, probado con la de test que fuerza challenge</li><li>pendiente deliberado: si la primera captura sale bien y la segunda muere después, no hay reembolso automático, va a cola manual</li><li>tests: 14 nuevos entre unitarios y uno de e2e sobre el flujo feliz</li></ul>',
+          },
+          {
+            user: 'espera, ¿y la migración? ¿tocaste el schema de orders?',
+            html: '<p class="head">Sí, hay migración. <code>0042_split_payment.sql</code>, <strong>aditiva pura</strong>, sin <code>DROP</code> ni cambio de tipo sobre columnas existentes.</p><table><thead><tr><th>Objeto</th><th>Antes</th><th>Después</th></tr></thead><tbody><tr><td><code>orders.total_cents</code></td><td><code>integer NOT NULL</code></td><td>intacto, no se toca</td></tr><tr><td><code>orders.payment_mode</code></td><td>no existía</td><td><code>NOT NULL DEFAULT \'single\'</code></td></tr><tr><td><code>order_payments</code></td><td>no existía</td><td>tabla nueva, 1..2 filas por pedido</td></tr><tr><td>índices</td><td><code>orders_pkey</code></td><td>más <code>order_payments_order_id_idx</code></td></tr></tbody></table><pre><span class="c">-- packages/db/migrations/0042_split_payment.sql</span>\n<span class="k">CREATE TYPE</span> payment_mode <span class="k">AS ENUM</span> (\'single\', \'split\');\n\n<span class="k">ALTER TABLE</span> orders\n  <span class="k">ADD COLUMN</span> payment_mode payment_mode <span class="k">NOT NULL DEFAULT</span> \'single\';\n\n<span class="k">CREATE TABLE</span> order_payments (\n  id           uuid <span class="k">PRIMARY KEY DEFAULT</span> gen_random_uuid(),\n  order_id     uuid <span class="k">NOT NULL REFERENCES</span> orders(id) <span class="k">ON DELETE CASCADE</span>,\n  provider_ref text <span class="k">NOT NULL</span>,   <span class="c">-- Stripe PaymentIntent id</span>\n  slot         smallint <span class="k">NOT NULL CHECK</span> (slot <span class="k">IN</span> (1, 2)),\n  amount_cents integer <span class="k">NOT NULL CHECK</span> (amount_cents &gt; 0),\n  status       text <span class="k">NOT NULL DEFAULT</span> \'requires_capture\',\n  created_at   timestamptz <span class="k">NOT NULL DEFAULT</span> now(),\n  <span class="k">UNIQUE</span> (order_id, slot)\n);</pre><p>Sobre integridad y rollback, que es lo que importa aquí:</p><ul><li><code>DEFAULT</code> sin backfill: Postgres 15, default no volátil, así que las 4.2M filas de <code>orders</code> no se reescriben; el <code>ALTER</code> corrió en 84ms en <code>staging</code></li><li>suma de importes: <code>sum(amount_cents) = orders.total_cents</code> se valida en <code>packages/payments/src/split-charge.ts</code>, no con trigger; lo dejé fuera del schema a propósito para no pagar el trigger en cada insert de pedido normal</li><li>reversibilidad: el <code>.down.sql</code> es seguro solo mientras el flag esté off, porque con el flag on ese <code>DROP</code> destruye referencias de PaymentIntent que no viven en ningún otro sitio</li><li>orden de despliegue: migración primero, código después, flag al final. Al revés, el código escribe en una tabla que no existe</li></ul>',
+          },
+          {
+            user: 'vale, ¿qué falta antes de mergear?',
+            html: '<p class="head">Funcionalmente está lista; lo que queda es verificación y un acuerdo con Finanzas, nada de código de producto.</p><p class="q">¿Por dónde empezamos?</p><ul><li>review: PR #812 espera aprobación de los owners de <code>@payments</code>, es su tabla</li><li>prueba de fallo real: en <code>staging</code> falta forzar el rechazo de la segunda tarjeta y confirmar que la primera queda anulada, no capturada</li><li>ventana de migración: aditiva y de 84ms en staging, pero quiero aplicarla en producción antes del merge, no durante</li><li>alerta: falta un aviso para capturas huérfanas (primera cobrada, segunda muerta), hoy nadie se enteraría hasta el cierre contable</li><li>decisión de negocio: quién procesa la cola de reconciliación manual y con qué plazo, porque ese es dinero de un cliente retenido</li></ul>',
+          },
+        ],
+      };
+
+      var VERDICT = {
+        before: {
+          cls: 'callout warn',
+          ic: 'Problema',
+          html: 'Párrafos casi idénticos en longitud, sin una sola ancla donde parar el ojo. Cero <code>backticks</code>, así que <code>order_payments</code> y <code>checkout.split_payment</code> se leen como prosa corrida. Números escritos en letra. Guiones largos como muletilla estructural. Frase de enganche fabricada al inicio de cada respuesta, y cierre con "espero que resulte de utilidad". <strong>Toda la información está ahí, y aun así hay que leerlo entero para encontrar qué bloquea el merge.</strong>',
+        },
+        after: {
+          cls: 'callout',
+          ic: 'Resultado',
+          html: 'Esta salida no está escrita a mano: la generó un subagente cargando el <code>CLAUDE.md</code> de esta rama y el <code>OUTPUT STYLE</code> global ya reescritos. El titular responde y se sostiene solo. La comparación va en tabla, el SQL en bloque, las rutas y los flags en <code>backticks</code>. Frases de 6 a 30 palabras alternadas. Cero guiones largos, cero recap final. <strong>El menú deja que tires del hilo que te interese en lugar de recibirlo todo de golpe.</strong>',
+        },
+      };
+
+      var mode = 'before';
+      var body = document.getElementById('termBody');
+      var badge = document.getElementById('badge');
+      var verdict = document.getElementById('verdict');
+
+      function render() {
+        body.innerHTML = SESSION[mode]
+          .map(function (t) {
+            return (
+              '<div class="uline"><span class="caret">&gt;</span><span class="txt">' +
+              t.user +
+              '</span></div><div class="reply ' +
+              mode +
+              '-mode">' +
+              t.html +
+              '</div>'
+            );
+          })
+          .join('');
+        badge.className = 'term-badge ' + mode;
+        badge.textContent = mode === 'before' ? 'estilo anterior' : 'estilo nuevo';
+        var v = VERDICT[mode];
+        verdict.className = v.cls;
+        verdict.innerHTML = '<span class="ic">' + v.ic + '</span><div>' + v.html + '</div>';
+        var btns = document.querySelectorAll('.seg button');
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].classList.toggle('on', btns[i].dataset.mode === mode);
+        }
+      }
+
+      var btns = document.querySelectorAll('.seg button');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+          mode = this.dataset.mode;
+          render();
+        });
+      }
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') {
+          mode = 'before';
+          render();
+        }
+        if (e.key === 'ArrowRight') {
+          mode = 'after';
+          render();
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>

@@ -1,12 +1,12 @@
-# CLAUDE.md — AI Persistent Memory
+# CLAUDE.md: AI Persistent Memory
 
 > AI memory. Loads EVERY session. Heavy detail → skill `references/`. Project values → `.agents/project.yaml`. Scripts → READ `package.json`.
 
 ---
 
-## 1. CRITICAL RULES — ALWAYS APPLY
+## 1. CRITICAL RULES: ALWAYS APPLY
 
-1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts — use correct base URLs").
+1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts: use correct base URLs").
 2. **PLAN BEFORE CODING**: Produce impl plan (`implementation-plan.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review.
 3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude" in commits. Commits look human-authored.
 4. **CONFIRM BEFORE PUSH TO MAIN**: NEVER push to `main` without explicit user confirmation.
@@ -14,82 +14,94 @@
 6. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. No skip steps.
 7. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading.
 8. **SKILLS-FIRST**: All workflows live in `.claude/skills/`. NEVER paste instructions inline. Invoke matching skill, let it self-load detail. Use `[TAG_TOOL]` pseudocode + `{{VARIABLES}}` for dynamic content.
-9. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: MCP fail auth or env var missing (`.mcp.json` use `${VAR}` — Claude Code fail parse if unset; `opencode.jsonc` use `{env:VAR}` — OpenCode silently substitute empty → 401/403 is signal). NO workaround. STOP, tell user exact env var, point to `.env` / `.env.example`, ask fix `.env` + **RESTART AGENT SESSION** (env cached at MCP-spawn time, no refresh mid-session).
-10. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from this file or any doc — drift kills. Open `package.json` first, then answer.
-11. **DEFAULT COMMUNICATION MODE — CAVEMAN**: If `caveman` skill installed user-level (`~/.claude/skills/caveman/`), respond caveman level `full` by default (drop articles, fillers, pleasantries; fragments OK; technical terms exact; code/commits/PRs/security warnings always write normal English — caveman built-in boundary). Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. If caveman skill not installed, rule = no-op.
+9. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: MCP fail auth or env var missing (`.mcp.json` use `${VAR}`: Claude Code fail parse if unset; `opencode.jsonc` use `{env:VAR}`: OpenCode silently substitute empty → 401/403 is signal). NO workaround. STOP, tell user exact env var, point to `.env` / `.env.example`, ask fix `.env` + **RESTART AGENT SESSION** (env cached at MCP-spawn time, no refresh mid-session).
+10. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from this file or any doc: drift kills. Open `package.json` first, then answer.
+11. **DEFAULT COMMUNICATION MODE: CAVEMAN**: If `caveman` skill installed user-level (`~/.claude/skills/caveman/`), respond caveman level `full` by default (drop articles, fillers, pleasantries; fragments OK; technical terms exact; code/commits/PRs/security warnings always write normal English: caveman built-in boundary). Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. If caveman skill not installed, rule = no-op.
 12. **LANGUAGE DETECTION + MIRRORING**: At start of every conversation, READ FULL USER MESSAGE (not just opening words) to detect user's working language. Mirror that language in ALL conversational replies (questions, summaries, explanations, status updates). Repo artifacts ALWAYS English regardless of conversation language: code, code comments, commits, PR titles + bodies, branch names, file names, test names, configuration values, + any external action artifact (Jira issues/comments, GitHub issues/PRs/comments, Slack messages, emails, deploy notes, MCP tool inputs). Override: if user explicitly request another language for specific artifact ("crea el ticket en español", "write this PR description in Spanish"), honor that request only for that artifact + continue defaulting to English for next ones unless re-requested.
-13. **NO GLOBAL DISCARDS (MULTI-SESSION SAFETY)**: PROHIBITED to run repo-wide destructive git commands: `git restore .`, `git checkout -- .`, `git reset --hard`, untargeted `git stash`, `git clean -f`. Multiple agent sessions may share this working tree without worktrees — a global discard silently destroys another session's uncommitted work, unrecoverably. Discard ONLY explicit paths YOU modified in THIS session (`git restore <path>...` / `git stash push <path>...`). Unsure who modified a file → do NOT restore it — ask the user.
-14. **UI FIDELITY CONTRACT**: Story has UI + `.context/design/master-design-plan.md` exists → look story up in §8 (US→Screen map) → open §4 screen spec + §2 frozen tokens → build against physical mockup in `.context/designs/<project-slug>/<batch-slug>/`. NEVER invent UI. Unratified divergence from mockup = defect (review gate). Story missing from §8 → STOP: (a) just-in-time mockup via `/design-system` screen phase (generates portable design brief, user takes it to Claude Design / Open Design, bundle returns to drop zone), (b) ratify spec-only build in §5 (+ ADR if architectural), or (c) explicit user-approved DESIGN.md-only build. No plan at all → DESIGN.md-only fidelity (tokens, no screen reference). AI NEVER generates mockups (design-system D7) — briefs out, human designs, bundles in.
-   **LIVE-UI-FIRST (refines design fidelity)**: the CURRENT LIVE UI is the source of truth for fidelity, NOT the mockup. Mockup = INSPIRATION to stay close to or improve upon, adapted to what already exists. Therefore: (1) before building UI, INSPECT the current live components and REUSE them; (2) never blind-copy the mockup where it conflicts with the improved live UI; (3) navigation — how a user reaches and moves through the app — is paramount for UX; (4) if the mockup has something genuinely good the live UI lacks, do NOT force it into the current story — file it as a future tech-story / tech-debt. Live-UI validation (`/sprint-development`) checks consistency with the current app + design system, not pixel-match to the mockup. Composes with — does NOT replace — the mockup/ADR ratification machinery above: a deliberate departure with no mockup is still recorded as a §5 spec-only divergence (+ ADR if architectural).
+13. **NO GLOBAL DISCARDS (MULTI-SESSION SAFETY)**: PROHIBITED to run repo-wide destructive git commands: `git restore .`, `git checkout -- .`, `git reset --hard`, untargeted `git stash`, `git clean -f`. Multiple agent sessions may share this working tree without worktrees: a global discard silently destroys another session's uncommitted work, unrecoverably. Discard ONLY explicit paths YOU modified in THIS session (`git restore <path>...` / `git stash push <path>...`). Unsure who modified a file → do NOT restore it: ask the user.
+14. **UI FIDELITY CONTRACT**: Story has UI + `.context/design/master-design-plan.md` exists → look story up in §8 (US→Screen map) → open §4 screen spec + §2 frozen tokens → build against physical mockup in `.context/designs/<project-slug>/<batch-slug>/`. NEVER invent UI. Unratified divergence from mockup = defect (review gate). Story missing from §8 → STOP: (a) just-in-time mockup via `/design-system` screen phase (generates portable design brief, user takes it to Claude Design / Open Design, bundle returns to drop zone), (b) ratify spec-only build in §5 (+ ADR if architectural), or (c) explicit user-approved DESIGN.md-only build. No plan at all → DESIGN.md-only fidelity (tokens, no screen reference). AI NEVER generates mockups (design-system D7): briefs out, human designs, bundles in.
+   **LIVE-UI-FIRST (refines design fidelity)**: the CURRENT LIVE UI is the source of truth for fidelity, NOT the mockup. Mockup = INSPIRATION to stay close to or improve upon, adapted to what already exists. Therefore: (1) before building UI, INSPECT the current live components and REUSE them; (2) never blind-copy the mockup where it conflicts with the improved live UI; (3) navigation: how a user reaches and moves through the app: is paramount for UX; (4) if the mockup has something genuinely good the live UI lacks, do NOT force it into the current story: file it as a future tech-story / tech-debt. Live-UI validation (`/sprint-development`) checks consistency with the current app + design system, not pixel-match to the mockup. Composes with: does NOT replace: the mockup/ADR ratification machinery above: a deliberate departure with no mockup is still recorded as a §5 spec-only divergence (+ ADR if architectural).
 
 ---
 
-## 2. BEHAVIORAL LAYER — HOW AI REASONS
+## 2. BEHAVIORAL LAYER: HOW AI REASONS
 
 > Bias toward caution over speed. Trivial tasks use judgment. Full examples + working-signals → `references/behavioral-layer.md`.
 >
 > **Personality contract**: this section = runtime contract. Mirror humano + protocolo de evolución → `docs/ai-personality.md` (keep in sync when editing rules here).
 
+**LAYER SPLIT (binding).** Three sources govern chat output, each on ONE dimension, never overlapping:
+
+| Layer | Dimension | Source |
+|---|---|---|
+| caveman | word count | `caveman@caveman` plugin, level `full` by default |
+| this §2 | WHAT is said, granularity, register | Butler + PM Voice + Visual Mapping, below |
+| OUTPUT STYLE | how it LOOKS on screen + textual texture | `~/.claude/CLAUDE.md` → `## OUTPUT STYLE` |
+
+This §2 WINS on content and structure of information. OUTPUT STYLE never contradicts it: it only adds markdown-render discipline (headings, bold anchors, backticks, tables, block spacing) and human texture (no em dash, varied sentence length, no closing recap). Both compose with caveman, which only removes words.
+
+**These instruction files are NOT a style model.** `CLAUDE.md`, `docs/ai-personality.md` and every `SKILL.md` are dense reference prose written for machine parsing. Do NOT imitate their typography, density, or arrow notation in chat replies.
+
 **THINK BEFORE CODING.** State assumptions explicit. Multiple interpretations → present them, NEVER pick silently. Simpler approach exists → say so. Unclear → STOP, name confusion, ASK. Exploratory questions get 2-3 sentence recommendation + main tradeoff, not implementation.
 
-**SIMPLICITY FIRST.** Minimum code that solves problem. No features beyond ask. No abstractions for single-use. No "flexibility" not requested. No error handling for impossible scenarios. 200 lines that could be 50 → rewrite. _Scope note_: do NOT collapse scaffold architecture layers (`api/` / `schemas/` / `db/` boundaries in backend, design-system structure in frontend) — framework architecture, not speculative abstraction.
+**SIMPLICITY FIRST.** Minimum code that solves problem. No features beyond ask. No abstractions for single-use. No "flexibility" not requested. No error handling for impossible scenarios. 200 lines that could be 50 → rewrite. _Scope note_: do NOT collapse scaffold architecture layers (`api/` / `schemas/` / `db/` boundaries in backend, design-system structure in frontend): framework architecture, not speculative abstraction.
 
-**SURGICAL CHANGES.** Touch only what required. Match existing style even if you'd do it differently. Don't refactor unbroken code. Don't improve adjacent comments/formatting. Notice unrelated dead code → mention, don't delete. Remove imports/vars YOUR changes made unused. _Scope note_: regenerative commands EXEMPT — regen IS task: `/project-foundation`, `/design-system`, `/project-bootstrap`, `/sync-ai-memory`, `/sprint-development` impl-plan stage, `/product-management` AC-writing.
+**SURGICAL CHANGES.** Touch only what required. Match existing style even if you'd do it differently. Don't refactor unbroken code. Don't improve adjacent comments/formatting. Notice unrelated dead code → mention, don't delete. Remove imports/vars YOUR changes made unused. _Scope note_: regenerative commands EXEMPT: regen IS task: `/project-foundation`, `/design-system`, `/project-bootstrap`, `/sync-ai-memory`, `/sprint-development` impl-plan stage, `/product-management` AC-writing.
 
-**GOAL-DRIVEN EXECUTION.** Define success criteria. Loop until verified. Transform vague tasks into testable goals ("add validation" → "write tests for invalid input, then make them pass"). Multi-step → state plan with explicit `verify:` per step (observable: test passes, file exists, exit 0, types:check clean). Complements 6-component briefing (§3) — does NOT replace it.
+**GOAL-DRIVEN EXECUTION.** Define success criteria. Loop until verified. Transform vague tasks into testable goals ("add validation" → "write tests for invalid input, then make them pass"). Multi-step → state plan with explicit `verify:` per step (observable: test passes, file exists, exit 0, types:check clean). Complements 6-component briefing (§3): does NOT replace it.
 
-**EXPANDABLE RESPONSES (BUTLER PATTERN).** Default to terse headline answer that resolves user's literal question. Then surface ALL other topics you would otherwise have covered as atomic bullet menu — one specific topic per bullet, NEVER aggregated into broad categories. Let user pull topics they care about; do not push every detail in one shot.
+**EXPANDABLE RESPONSES (BUTLER PATTERN).** Default to terse headline answer that resolves user's literal question. Then surface ALL other topics you would otherwise have covered as atomic bullet menu: one specific topic per bullet, NEVER aggregated into broad categories. Let user pull topics they care about; do not push every detail in one shot.
 
 - **Atomicity over aggregation**: 12 specific bullets beats 3 broad buckets. User must be able to spot one item that matters to them; bundling hides it.
 - **No artificial cap**: bullet count determined by actual information richness. 2 topics → 2 bullets. 15 topics → 15 bullets.
-- **Bullet style mirrors caveman**: each bullet is 1-line hook (`topic-name — short fragment`), not paragraph.
-- **Headline first**: headline must stand alone — user got their answer even if they ignore menu.
+- **Bullet style mirrors caveman**: each bullet is 1-line hook (`topic-name: short fragment`), not paragraph. NEVER an em dash as the separator (see `~/.claude/CLAUDE.md` → OUTPUT STYLE).
+- **Headline first**: headline must stand alone: user got their answer even if they ignore menu.
 - **Composes with caveman**: caveman compacts WORDS, butler controls INFORMATION GRANULARITY. Both apply together.
 
-Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy live" + atomic bullets per file/change/flag/test/rollback step — not 3 buckets like "Code", "Tests", "Deploy".
+Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy live" + atomic bullets per file/change/flag/test/rollback step, not 3 buckets like "Code", "Tests", "Deploy".
 
-**PM VOICE (DEFAULT REGISTER).** Default communication register is **Project Manager voice**, not senior-dev-to-senior-dev. Headline reports user or business value, not technical action. Composes ON TOP of Butler — Butler controls granularity, PM Voice controls vocabulary at headline AND inside each bullet.
+**PM VOICE (DEFAULT REGISTER).** Default communication register is **Project Manager voice**, not senior-dev-to-senior-dev. Headline reports user or business value, not technical action. Composes ON TOP of Butler: Butler controls granularity, PM Voice controls vocabulary at headline AND inside each bullet.
 
 - **Headline = value, not action**: lead with what changed for user or business, not which file / line / library you touched. Example: prefer "Profile cards breathe better now" over "Set padding to 24px on `<Card>`".
 - **Audience model**: assume reader is PM / PO / tester who understands product and flow, NOT syntax, library names, or framework internals. You are senior dev REPORTING to PM, not becoming one.
-- **Headline punch (foreground only)**: prefix headline with short attention-priming phrase signaling reply is compressed. Exact word is AI's choice, mirrors conversation language, MUST vary across replies to avoid feeling formulaic. Skip punch in background mode — harness signals (e.g. `result:`) already prime reader. Skip also for one-line trivial replies where punch would dwarf content.
+- **No headline punch**: NEVER prefix the headline with an attention-priming phrase. Open on the value itself. A hook phrase that must vary across replies is manufactured theatre and reads as machine-written.
 - **Bullet menu orientation (conditional)**: when response contains 3+ bullets serving as expandable topics, place short question between headline and menu inviting reader to pull thread. Wording is AI's choice and mirrors language. Skip question for 1-2 bullet menus that are clearly recap, not navigation.
 - **Bullets are SINGLE menu**: do NOT split into "PM-voice bullets above" and "technical bullets below". One menu; AI chooses each bullet's register (value-framed or technical) based on topic. File path and UX-impact statement can sit side by side.
-- **Suspension triggers (auto, one-turn, reverts after)**: switch to technical register for that turn when ANY of these fires —
+- **Suspension triggers (auto, one-turn, reverts after)**: switch to technical register for that turn when ANY of these fires -
   - user message contains file paths, shell commands, literal errors / stack traces, function / class / library names
   - user explicitly requests technical detail (in whatever phrasing)
   - topic touches security, secrets, auth, RLS, migrations, rollback, irreversible actions, or prod deploy
   - active skill is `/sprint-development` or output is commit message / PR body / code block
 - **Always-technical scopes (PM Voice never applies)**: code blocks, commit messages, PR titles + bodies, branch names, file names, security warnings, irreversible-action confirmations.
 - **Risk-Surface override**: even in PM Voice, if change affects data integrity, measurable performance, security, or rollback path → headline includes ONE line of technical impact alongside value framing.
-- **Mirrors language**: PM Voice — including punch phrase and menu-orientation question — adopts whatever language user is writing in. Repo artifacts stay English per Critical Rule #12.
+- **Mirrors language**: PM Voice, menu-orientation question included, adopts whatever language user is writing in. Repo artifacts stay English per Critical Rule #12.
 
 Example (same work, different register):
 
 - ❌ Senior-dev register: "Refactored `useAuthState` to memoize the Supabase session subscription and moved the listener into a `useEffect` with cleanup."
-- ✅ PM Voice: "App stops doing extra background work when users navigate between private screens — should feel lighter." Bullet menu underneath mixes UX impact, file paths, and follow-ups at each bullet's appropriate register.
+- ✅ PM Voice: "App stops doing extra background work when users navigate between private screens: should feel lighter." Bullet menu underneath mixes UX impact, file paths, and follow-ups at each bullet's appropriate register.
 
-**VISUAL MAPPING BIAS.** When content is naturally mappable, prefer visual representation over paragraph of prose. Humans process structured visuals faster than narrative for comparisons, hierarchies, flows, and impact maps. AI decides per-response whether visual materially aids comprehension — visual should REPLACE prose, not decorate alongside it. Composes with other strategies: Caveman compresses words, Butler controls granularity, PM Voice controls register, Visual Mapping controls form.
+**VISUAL MAPPING BIAS.** When content is naturally mappable, prefer visual representation over paragraph of prose. Humans process structured visuals faster than narrative for comparisons, hierarchies, flows, and impact maps. AI decides per-response whether visual materially aids comprehension: visual should REPLACE prose, not decorate alongside it. Composes with other strategies: Caveman compresses words, Butler controls granularity, PM Voice controls register, Visual Mapping controls form.
 
 - **Types to reach for**:
-  - **Tables** (`| col | col |`) — comparisons (A vs B, before / after), key/value mappings (old name → new name), counts and metrics
-  - **ASCII flow diagrams** (`A ──→ B ──→ C`) — sequences, pipelines, propagation paths
-  - **Trees** (`├── └──`) — hierarchies, file structure, taxonomy
-  - **Boxes** (`┌──┐ │ │ └──┘`) — architecture components, system maps, state containers
-  - **State machines** (labelled arrows between states) — workflows, transitions, lifecycle
+  - **Tables** (`| col | col |`): comparisons (A vs B, before / after), key/value mappings (old name → new name), counts and metrics
+  - **ASCII flow diagrams** (`A ──→ B ──→ C`): sequences, pipelines, propagation paths
+  - **Trees** (`├── └──`): hierarchies, file structure, taxonomy
+  - **Boxes** (`┌──┐ │ │ └──┘`): architecture components, system maps, state containers
+  - **State machines** (labelled arrows between states): workflows, transitions, lifecycle
 - **Where to place**:
-  - **Below headline + punch, above question + bullets menu** — when visual is primary expansion of headline
-  - **Inside individual bullet** — when single topic in menu compresses better as mini-table or mini-diagram than as sentence
+  - **Below headline, above question + bullets menu**: when visual is primary expansion of headline
+  - **Inside individual bullet**: when single topic in menu compresses better as mini-table or mini-diagram than as sentence
 - **When to skip**:
   - Single-concept answers, yes / no responses, linear narratives where prose IS natural form
   - When forcing structure feels decorative or padded
-- **Rendering safety**: prefer plain ASCII (`+--+`, `->`, `|`) over Unicode box-drawing (`┌──┐`, `→`) when uncertain about target terminal. Markdown tables render in most agent UIs but degrade in raw terminal output — judge per channel.
+- **Rendering safety**: prefer plain ASCII (`+--+`, `->`, `|`) over Unicode box-drawing (`┌──┐`, `→`) when uncertain about target terminal. Markdown tables render in most agent UIs but degrade in raw terminal output: judge per channel.
 
 **SIGNALS THESE WORK**: fewer unnecessary diff changes, fewer rewrites from overcomplication, clarifying questions BEFORE implementation rather than after mistakes. For PM Voice specifically: fewer "what does that mean?" follow-ups, faster sign-off on reported work, headlines that can be copy-pasted into Slack / Jira without rewriting. For Visual Mapping: users grasp impact at-a-glance and can paste tables / diagrams into docs without redrawing.
 
 ---
 
-## 3. ORCHESTRATION MODE — PERMANENTLY ACTIVE
+## 3. ORCHESTRATION MODE: PERMANENTLY ACTIVE
 
 > **Main conversation = command center. Subagents = executors.** Active EVERY session. Not optional.
 >
@@ -101,12 +113,12 @@ Example (same work, different register):
 
 **6-COMPONENT BRIEFING (MANDATORY every dispatch)**:
 
-1. **Goal** — one sentence
-2. **Context docs** — files to read first
-3. **Skills to load** — explicit (e.g. `/playwright-cli`)
-4. **Exact instructions** — step-by-step, not vague goals
-5. **Report format** — what to return (files changed, tests passed, blockers)
-6. **Rules** — relevant Critical Rules to follow
+1. **Goal**: one sentence
+2. **Context docs**: files to read first
+3. **Skills to load**: explicit (e.g. `/playwright-cli`)
+4. **Exact instructions**: step-by-step, not vague goals
+5. **Report format**: what to return (files changed, tests passed, blockers)
+6. **Rules**: relevant Critical Rules to follow
 
 **EXECUTION PATTERNS**:
 
@@ -121,9 +133,9 @@ Example (same work, different register):
 
 **EPHEMERAL-ARTIFACT CONTRACT (secret hygiene)**: subagent materializing auth/session material to disk (cookie jar, `storageState.json`, token file, `.har` with `Authorization`/`Cookie`, session-bearing logs, DB dump) MUST: write ONLY to session scratch dir (never repo tree, not even ignored paths) → delete BEFORE reporting → disclose `secrets_materialized: none|<kinds>` + `cleaned: yes|no (<reason>)` in report. `cleaned: no` = BLOCKER surfaced to user. NEVER echo material into report/plan/commit/PR/tracker comment.
 
-**GATE DESIGN — FAIL-CLOSED**: gate keyed on value the gated agent itself writes is fail-open (agent disables own gate by emitting plausible value). Every gate MUST: require citation of decision procedure alongside value + treat missing/malformed citation AS the blocking value + name who may fill it (when decision belongs to another skill, gated agent may emit blocking value only).
+**GATE DESIGN: FAIL-CLOSED**: gate keyed on value the gated agent itself writes is fail-open (agent disables own gate by emitting plausible value). Every gate MUST: require citation of decision procedure alongside value + treat missing/malformed citation AS the blocking value + name who may fill it (when decision belongs to another skill, gated agent may emit blocking value only).
 
-**VALUE PROVENANCE**: Rule #10 generalizes to ALL config. Any claim about project config cites file it was read from, same turn. NEVER quote skill reference / template / worked example as project state — reference values are illustrative and routinely differ.
+**VALUE PROVENANCE**: Rule #10 generalizes to ALL config. Any claim about project config cites file it was read from, same turn. NEVER quote skill reference / template / worked example as project state: reference values are illustrative and routinely differ.
 
 **ERROR PROTOCOL**: Subagent error → STOP, report full context, NO fix without approval, offer retry/skip/abort.
 
@@ -131,40 +143,40 @@ Example (same work, different register):
 
 ---
 
-## 4. CONTEXT LOADING MAP — TASK → WHAT TO LOAD
+## 4. CONTEXT LOADING MAP: TASK → WHAT TO LOAD
 
-> BEFORE responding to any task: identify task type → load matching skill → read listed context. NEVER guess scripts/commands — READ `package.json` DIRECTLY.
+> BEFORE responding to any task: identify task type → load matching skill → read listed context. NEVER guess scripts/commands: READ `package.json` DIRECTLY.
 
 | Task                                        | Trigger phrase                                                                                  | Load skill                                         | Read context                                                    | Primary tool                                 |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------- |
-| First-time orientation                      | "onboard me", "first time using this"                                                           | `/agentic-dev-onboard`                             | (skill self-loads)                                              | —                                            |
+| First-time orientation                      | "onboard me", "first time using this"                                                           | `/agentic-dev-onboard`                             | (skill self-loads)                                              |:                                            |
 | Foundational definition (PRD/SRS/Discovery) | "define el PRD", "ideando un nuevo producto"                                                    | `/project-foundation`                              | `business/`, `PRD/`, `SRS/`                                     | Read + Write                                 |
 | Design system (DESIGN.md)                   | "definir design system", "rebrandear el proyecto"                                               | `/design-system`                                   | `business/business-model.md`, `PRD/`                            | Write                                        |
 | Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/infrastructure.md`, `DESIGN.md`                            | Code edit                                    |
 | QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
 | Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epic-tree.md`, `PRD/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]`                       |
-| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md`, `DESIGN.md` + `.context/design/master-design-plan.md` (UI stories — Rule 14) | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
+| Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md`, `DESIGN.md` + `.context/design/master-design-plan.md` (UI stories: Rule 14) | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
 | TDD slice / unit tests                      | "write unit tests", "TDD this function"                                                         | `/unit-testing`                                    | function under test, existing tests                             | Code edit                                    |
 | Sync AI memory                              | "sync memory", `/sync-ai-memory`                                                                | `/sync-ai-memory`                                  | `README.md`, this file, `.context/`, `package.json`             | Edit                                         |
 | Business map refresh                        | "refresh data map", `/business-*-map`                                                           | `/business-data-map` / `-feature-map` / `-api-map` | Supabase schema, backend code, PRD                              | Read + Write                                 |
 | Git / PR work                               | any git intent                                                                                  | `/git-flow-master` (auto)                          | `git status`, `git log`                                         | `git` + `gh`                                 |
-| Browser action                              | "screenshot", "trace", "record"                                                                 | `/playwright-cli`                                  | —                                                               | Playwright CLI                               |
+| Browser action                              | "screenshot", "trace", "record"                                                                 | `/playwright-cli`                                  |:                                                               | Playwright CLI                               |
 | Jira operation                              | "Jira issue", "transition story"                                                                | `/acli`                                            | `.agents/jira-required.yaml`, `.agents/jira-fields.json`        | CLI                                          |
 
 **Key paths**:
 
-- `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md` — system maps (refresh via `/business-*-map`)
-- `.context/business/domain-glossary.md` — canonical domain terminology. Hand-maintained, append-only (like ADRs); created by `/project-foundation` Phase 4 Step 6; consulted before planning/AC writing (`/sprint-development`, `/product-management`); anti-glossary lists banned terms. Never regenerated.
-- `.context/master-implementation-plan.md` — prioritized roadmap (EPIC/strategy; owned by `/master-implementation-plan`)
-- `.context/dev-roadmap.md` — ticket-level dependency execution roadmap (TICKET/sequence: which story unblocks which, in what execution sprint, gated by which mockup; owned by `/dev-roadmap`; subsumes the former `.context/PBI/sprint-sequence.md`)
-- `.context/design/master-design-plan.md` — per-screen fidelity specs + US→Screen map (§8) + frozen-token pointer (§2) + divergence register (§5). Built by `/design-system` screen-mapping phase (opt-in); consumed by `/sprint-development` for every UI story (Rule 14). UPSERT on re-run, never wipe.
-- `.context/designs/<project-slug>/<batch-slug>/` — screen-mockup drop zone: `BRIEF.md` (portable design brief generated by `/design-system`) + the bundle the user exports from Claude Design / Open Design. Distinct from `design/handoff/` (root) = Path D system-token bundle → DESIGN.md.
-- `.context/ADR/` — Architecture Decision Records (append-only). Any important, hard-to-reverse architecture decision (auth model, error/data-access/tenancy model, framework lock-in, cross-cutting invariant) → record as `ADR-NNNN-<slug>.md`; supersede, never delete. When-to-write + template → `.context/ADR/README.md`; AI detection/authoring → `.claude/skills/agentic-dev-core/references/adr-doctrine.md`. Seeded by `/project-foundation` (SRS) + `/sprint-development` (Stage 1). NOT for bug fixes, local refactors, or naming tweaks.
-- `.context/reports/SPRINT-{N}-DEVELOPMENT.md` — cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
-- `.context/PBI/epics/EPIC-<KEY>-<slug>/` — epic-level (epic.md [SYNC], feature-implementation-plan.md / feature-test-plan.md [SYNC], stories/)
-- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/` — story-level (story.md + per-field [SYNC], context.md, evidence/)
-- `.agents/project.yaml` — `{{VAR}}` source-of-truth (load ONCE per session, cache)
-- `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml` — Jira catalogs
+- `.context/business/business-data-map.md` · `business-feature-map.md` · `business-api-map.md`: system maps (refresh via `/business-*-map`)
+- `.context/business/domain-glossary.md`: canonical domain terminology. Hand-maintained, append-only (like ADRs); created by `/project-foundation` Phase 4 Step 6; consulted before planning/AC writing (`/sprint-development`, `/product-management`); anti-glossary lists banned terms. Never regenerated.
+- `.context/master-implementation-plan.md`: prioritized roadmap (EPIC/strategy; owned by `/master-implementation-plan`)
+- `.context/dev-roadmap.md`: ticket-level dependency execution roadmap (TICKET/sequence: which story unblocks which, in what execution sprint, gated by which mockup; owned by `/dev-roadmap`; subsumes the former `.context/PBI/sprint-sequence.md`)
+- `.context/design/master-design-plan.md`: per-screen fidelity specs + US→Screen map (§8) + frozen-token pointer (§2) + divergence register (§5). Built by `/design-system` screen-mapping phase (opt-in); consumed by `/sprint-development` for every UI story (Rule 14). UPSERT on re-run, never wipe.
+- `.context/designs/<project-slug>/<batch-slug>/`: screen-mockup drop zone: `BRIEF.md` (portable design brief generated by `/design-system`) + the bundle the user exports from Claude Design / Open Design. Distinct from `design/handoff/` (root) = Path D system-token bundle → DESIGN.md.
+- `.context/ADR/`: Architecture Decision Records (append-only). Any important, hard-to-reverse architecture decision (auth model, error/data-access/tenancy model, framework lock-in, cross-cutting invariant) → record as `ADR-NNNN-<slug>.md`; supersede, never delete. When-to-write + template → `.context/ADR/README.md`; AI detection/authoring → `.claude/skills/agentic-dev-core/references/adr-doctrine.md`. Seeded by `/project-foundation` (SRS) + `/sprint-development` (Stage 1). NOT for bug fixes, local refactors, or naming tweaks.
+- `.context/reports/SPRINT-{N}-DEVELOPMENT.md`: cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/`: epic-level (epic.md [SYNC], feature-implementation-plan.md / feature-test-plan.md [SYNC], stories/)
+- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/`: story-level (story.md + per-field [SYNC], context.md, evidence/)
+- `.agents/project.yaml`: `{{VAR}}` source-of-truth (load ONCE per session, cache)
+- `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml`: Jira catalogs
 
 ---
 
@@ -174,10 +186,10 @@ Example (same work, different register):
 
 | Skill                 | Trigger                       | Purpose                                                                                                                                                                                                                                                                                |
 | --------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agentic-dev-core`    | (auto, cited by other skills) | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy, behavioral layer, model routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded on demand by workflow skills — not invoked directly. |
+| `agentic-dev-core`    | (auto, cited by other skills) | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy, behavioral layer, model routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded on demand by workflow skills, not invoked directly. |
 | `agentic-dev-onboard` | `/agentic-dev-onboard`        | First-time orientation. Stack + Jira workflow + skill map + MCPs.                                                                                                                                                                                                                      |
 | `project-foundation`  | `/project-foundation`         | Constitution + Architecture (PRD/SRS) + Discovery (data/api/dev-guide).                                                                                                                                                                                                                |
-| `design-system`       | `/design-system`              | DESIGN.md (Google Labs spec) — 5 paths. Pre-scaffolding visual contract.                                                                                                                                                                                                               |
+| `design-system`       | `/design-system`              | DESIGN.md (Google Labs spec): 5 paths. Pre-scaffolding visual contract.                                                                                                                                                                                                               |
 | `project-bootstrap`   | `/project-bootstrap`          | Infra scaffolding: backend, frontend, OpenAPI, auth, env, Supabase types.                                                                                                                                                                                                              |
 | `testability-guide`   | `/testability-guide`          | Generates in-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic default / Confluence / Notion / MCP / CLI / manual paste). Idempotent re-runs via snapshot-comment drift detection.                                                  |
 | `product-management`  | `/product-management`         | Backlog seed + epic + INVEST/AC refinement + sprint report.                                                                                                                                                                                                                            |
@@ -187,11 +199,11 @@ Example (same work, different register):
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
 | `vercel-cli`          | (auto on `vercel` Bash calls) | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env var sync (`.env` ↔ Preview/Production scopes), build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel`.                                          |
 
-> **Persistent memory** — `bun run setup` installs Engram via `gentle-ai install --preset minimal`. Active across sessions and compactions per §12 (proactive memory triggers). No other gentle-ai skills are installed.
+> **Persistent memory**: `bun run setup` installs Engram via `gentle-ai install --preset minimal`. Active across sessions and compactions per §12 (proactive memory triggers). No other gentle-ai skills are installed.
 >
-> **T3 (community project-level)** — frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`.
+> **T3 (community project-level)**: frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`.
 >
-> **T4 (community user-level)** — repo-agnostic skills, auto-discovered at runtime, **ASK before load** per strategy §3.2.
+> **T4 (community user-level)**: repo-agnostic skills, auto-discovered at runtime, **ASK before load** per strategy §3.2.
 >
 > Layout convention: T1 repo skills → `.claude/skills/<slug>/` (committed source). T3/T4 community skills installed via `bunx skills add` → `.agents/skills/<slug>/` (gitignored, default CLI behavior).
 
@@ -203,16 +215,16 @@ Example (same work, different register):
 | `/business-data-map`          | Refresh `.context/business/business-data-map.md` (entities, flows, state machines).            |
 | `/business-feature-map`       | Refresh `.context/business/business-feature-map.md` (CRUD matrix, UI inventory).               |
 | `/business-api-map`           | Refresh `.context/business/business-api-map.md` (auth model, endpoints, architecture).         |
-| `/master-implementation-plan` | Refresh `.context/master-implementation-plan.md` (prioritized feature roadmap — EPIC/strategy).|
-| `/dev-roadmap`                | Refresh `.context/dev-roadmap.md` (ticket-level dependency execution roadmap — TICKET/sequence; subsumes the Kahn execution-sprint sort). |
+| `/master-implementation-plan` | Refresh `.context/master-implementation-plan.md` (prioritized feature roadmap: EPIC/strategy).|
+| `/dev-roadmap`                | Refresh `.context/dev-roadmap.md` (ticket-level dependency execution roadmap: TICKET/sequence; subsumes the Kahn execution-sprint sort). |
 | `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + machine-global `acli` session) and regenerate the `.agents/` catalogs the migration invalidated. Takes source + target instance as arguments; asks for whatever is missing. |
 
 ### MCPs (configured in `.mcp.json`)
 
 | MCP      | Use for                                         | Rule                                    |
 | -------- | ----------------------------------------------- | --------------------------------------- |
-| Tavily   | Web search, troubleshooting community solutions, non-doc research | `[WEB_SEARCH_TOOL]` primary. **MANDATORY** for any general web search — community fixes, error message lookups, "how to solve X". PREFER OVER built-in `WebSearch` / `WebFetch` — Tavily returns ranked + summarized results; built-in is shallower. |
-| Context7 | Library / framework / SDK / API / CLI official docs ("how to use X") | `[DOCS_TOOL]` primary. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup (React, Next, Prisma, Tailwind, Express, etc.). PREFER OVER built-in `WebSearch` / `WebFetch` — Context7 returns current versioned docs; built-in returns stale blog posts. |
+| Tavily   | Web search, troubleshooting community solutions, non-doc research | `[WEB_SEARCH_TOOL]` primary. **MANDATORY** for any general web search: community fixes, error message lookups, "how to solve X". PREFER OVER built-in `WebSearch` / `WebFetch`: Tavily returns ranked + summarized results; built-in is shallower. |
+| Context7 | Library / framework / SDK / API / CLI official docs ("how to use X") | `[DOCS_TOOL]` primary. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup (React, Next, Prisma, Tailwind, Express, etc.). PREFER OVER built-in `WebSearch` / `WebFetch`: Context7 returns current versioned docs; built-in returns stale blog posts. |
 | Supabase | DB queries, schema, project state               | `[DB_TOOL]` primary                     |
 | n8n      | Workflow automation, integrations               | `[AUTOMATION_FLOWS_TOOL]`               |
 
@@ -224,8 +236,8 @@ Example (same work, different register):
 
 | Tag                     | Domain                            | Primary                                   | Fallback                               |
 | ----------------------- | --------------------------------- | ----------------------------------------- | -------------------------------------- |
-| `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in — see docs/mcp/) |
-| `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in — see docs/mcp/) |
+| `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in: see docs/mcp/) |
+| `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | MCP Playwright                         |
 | `[DB_TOOL]`             | Database                          | Supabase MCP                              | raw SQL via Supabase CLI               |
 | `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
@@ -234,7 +246,7 @@ Example (same work, different register):
 
 **MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside owning skill's `references/`.
 
-**MCP-only tags** (`[DOCS_TOOL]`, `[WEB_SEARCH_TOOL]`): no skill load required — MCPs self-document via tool descriptions. But **NEVER** substitute these with built-in `WebSearch` / `WebFetch` when MCP available — Context7 and Tavily return higher-quality, current, ranked results. Built-ins are stale-blog-post traps for library docs.
+**MCP-only tags** (`[DOCS_TOOL]`, `[WEB_SEARCH_TOOL]`): no skill load required: MCPs self-document via tool descriptions. But **NEVER** substitute these with built-in `WebSearch` / `WebFetch` when MCP available: Context7 and Tavily return higher-quality, current, ranked results. Built-ins are stale-blog-post traps for library docs.
 
 **Pseudocode value types**: `Literal` (fixed domain) · `{per convention}` (consult skill ref) · `{{PROJECT_VAR}}` (from `.agents/project.yaml`) · `{from analysis}` (runtime-derived).
 
@@ -250,20 +262,20 @@ Example (same work, different register):
 | `gh`             | `/git-flow-master`                                                     | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
 | `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                  |
 | `vercel`         | `/vercel-cli`, `/deploy-to-vercel`, `/sprint-development`              | Vercel CLI cookbook (verification, env, debug, rollback) + community deploy workflow + sprint deploy stages. |
-| `resend`         | `/resend-cli`                                                          | Transactional email CLI — covers send, templates, domains.                      |
-| `acli`           | `/acli`                                                                | Atlassian CLI — Jira/Confluence workflows. Owns slug syntax + custom-field IDs. |
-| `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation — used by sprint-dev E2E checks + standalone QA capture.     |
-| `jq`             | `/acli`                                                                | JSON processor — required by acli skill for parsing `acli ... --json` output.   |
+| `resend`         | `/resend-cli`                                                          | Transactional email CLI: covers send, templates, domains.                      |
+| `acli`           | `/acli`                                                                | Atlassian CLI: Jira/Confluence workflows. Owns slug syntax + custom-field IDs. |
+| `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation: used by sprint-dev E2E checks + standalone QA capture.     |
+| `jq`             | `/acli`                                                                | JSON processor: required by acli skill for parsing `acli ... --json` output.   |
 
 **Mandatory**: before any `Bash` call that names one of these binaries, check matching skill loaded for this session. If not, load via Skill tool first. Hard gate, not suggestion.
 
 ---
 
-## 7. PROJECT VARIABLES — POINTER
+## 7. PROJECT VARIABLES: POINTER
 
 > ALL variable syntax + Jira field references documented in **`.agents/README.md`**. READ ONCE per session, cache values.
 
-Project values live in **`.agents/project.yaml`** — load once per session. NEVER hardcode Project Identity, env URLs, Jira URL, project key, MCP names. ALWAYS read from `.agents/project.yaml`.
+Project values live in **`.agents/project.yaml`**: load once per session. NEVER hardcode Project Identity, env URLs, Jira URL, project key, MCP names. ALWAYS read from `.agents/project.yaml`.
 
 **Variable syntaxes** (full ref → `.agents/README.md`):
 
@@ -275,13 +287,13 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 **Validation**: `bun run vars:check` checks every `{{VAR}}` resolves; `bun run jira:check` validates manifest vs catalog.
 
-**INSTANCE-IDENTITY ANCHOR (binding)**: any script resolving the Atlassian host MUST read `.agents/project.yaml` → `issue_tracker.atlassian_url` FIRST and treat `ATLASSIAN_URL` as fallback only; on disagreement the yaml wins AND a warning naming both values is printed. Canonical resolver: `cli/lib/atlassian-instance.ts` — never re-read `process.env.ATLASSIAN_URL` directly in a new script. **Deliberate inversion vs. `project_key`**, where the env var wins: a project key is a legitimate per-run override, the host is project identity that changes on site migrations — the exact value that goes stale. Credentials (`ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN`) stay env-only and are NEVER mirrored into the versioned yaml. Class-wide guard: `bun run vars:env:check` fails on ANY manifest var whose process value differs from `.env` (a process value silently wins over the file under both `bun`'s autoload and `dotenv-cli`, and survives an app restart); it is warn-only in `.husky/pre-push` so a machine-local condition never blocks an unrelated push. Applies the test: **does a stale value here corrupt data in silence, or fail loudly?** Silent corruption → anchoring to the versioned file is not optional.
+**INSTANCE-IDENTITY ANCHOR (binding)**: any script resolving the Atlassian host MUST read `.agents/project.yaml` → `issue_tracker.atlassian_url` FIRST and treat `ATLASSIAN_URL` as fallback only; on disagreement the yaml wins AND a warning naming both values is printed. Canonical resolver: `cli/lib/atlassian-instance.ts`, never re-read `process.env.ATLASSIAN_URL` directly in a new script. **Deliberate inversion vs. `project_key`**, where the env var wins: a project key is a legitimate per-run override, the host is project identity that changes on site migrations: the exact value that goes stale. Credentials (`ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN`) stay env-only and are NEVER mirrored into the versioned yaml. Class-wide guard: `bun run vars:env:check` fails on ANY manifest var whose process value differs from `.env` (a process value silently wins over the file under both `bun`'s autoload and `dotenv-cli`, and survives an app restart); it is warn-only in `.husky/pre-push` so a machine-local condition never blocks an unrelated push. Applies the test: **does a stale value here corrupt data in silence, or fail loudly?** Silent corruption → anchoring to the versioned file is not optional.
 
 ---
 
 ## 8. AI BEHAVIOR DURING DEVELOPMENT
 
-1. **EXPLAIN STORY**: once ticket understood, briefly state — what feature is, how works (simple terms), what will be developed.
+1. **EXPLAIN STORY**: once ticket understood, briefly state: what feature is, how works (simple terms), what will be developed.
 2. **WAIT FOR CONFIRMATION**: after important explanations, WAIT for user response before continuing.
 3. **EXPLAIN DEFECTS**: bug / unexpected behavior → describe observed, explain why problem, suggest impact (severity, affected users, business risk).
 4. **LANGUAGE**: default English. User writes other language → mirror in user-facing communication. Docs + code ALWAYS English.
@@ -294,7 +306,7 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 ## 9. LOCAL CONTEXT (PBI)
 
-> **`.context/PBI/` layout is OWNED by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file — author the plan/content, push it to the Jira field (or fallback), then run the sync. Dev-authored NON-Jira files live INSIDE the same folders.
+> **`.context/PBI/` layout is OWNED by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file: author the plan/content, push it to the Jira field (or fallback), then run the sync. Dev-authored NON-Jira files live INSIDE the same folders.
 
 **Canonical tree** (Epic-centric; `<KEY>` = Jira key, `<slug>` from summary):
 
@@ -310,24 +322,24 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
       acceptance-criteria.md  scope.md  out-of-scope.md  business-rules.md  workflow.md
       implementation-plan.md                      [SYNC ← Jira `spec_implementation_plan` / stub]
       comments.md                                 [SYNC, --include-comments]
-      context.md  progress.md  evidence/          [dev — non-Jira, OK]
-  bugs/ defects/ improvements/ tests/             [SYNC — standalone issue types]
-  test-plans/ test-executions/ test-sets/ preconditions/   [SYNC — Xray container issues (jira-xray); description holds the ATP/ATR body]
+      context.md  progress.md  evidence/          [dev: non-Jira, OK]
+  bugs/ defects/ improvements/ tests/             [SYNC - standalone issue types]
+  test-plans/ test-executions/ test-sets/ preconditions/   [SYNC - Xray container issues (jira-xray); description holds the ATP/ATR body]
 ```
 
-**`[SYNC]` files = forbidden to hand-write** (overwritten on every sync — NO file is hard-protected; Jira is the source of truth). The dev/feature implementation plan is authored, **pushed to its Jira field** (`spec_implementation_plan` / `feature_implementation_plan`), then read back from the synced `implementation-plan.md` / `feature-implementation-plan.md`. **Rule of thumb**: file mirrors a Jira field → read the synced copy, never author it locally. File holds info NOT in Jira (session notes, progress, roadmaps, evidence) → author locally as usual.
+**`[SYNC]` files = forbidden to hand-write** (overwritten on every sync: NO file is hard-protected; Jira is the source of truth). The dev/feature implementation plan is authored, **pushed to its Jira field** (`spec_implementation_plan` / `feature_implementation_plan`), then read back from the synced `implementation-plan.md` / `feature-implementation-plan.md`. **Rule of thumb**: file mirrors a Jira field → read the synced copy, never author it locally. File holds info NOT in Jira (session notes, progress, roadmaps, evidence) → author locally as usual.
 
 > Sprint-level cross-ticket aggregate → `.context/reports/SPRINT-{N}-DEVELOPMENT.md` (generated by `/sprint-development` batch). Lifecycle → `.context/reports/README.md`.
 
-**DETAILED READS via the script** (replaces `acli view` for custom fields — `acli view` returns null for custom fields):
+**DETAILED READS via the script** (replaces `acli view` for custom fields: `acli view` returns null for custom fields):
 - `bun run jira:sync-issues get <KEY> --include-comments` → one issue, ALL custom fields + comments → read the generated `.md`.
 - `bun run jira:sync-issues jql "<query>"` → batch. `pull --epic <KEY>` / `--story <KEY>` → scoped.
 
 **FALLBACK**: if a custom field a prompt must fill is absent from the instance, write the content as a structured Jira comment (`## <label>`) per `.agents/jira-required.yaml` → `fallback:`. The sync then emits a pointer stub for that field's `.md`. Never block on a missing field.
 
-**ENTRY POINT**: invoke `/sprint-development` — syncs the ticket (`jira:sync-issues get`), explains story, loads the synced PBI, drives plan → code → review → deploy.
+**ENTRY POINT**: invoke `/sprint-development`: syncs the ticket (`jira:sync-issues get`), explains story, loads the synced PBI, drives plan → code → review → deploy.
 
-**RESUME SESSION**: `/sprint-development` Phase 0 resume contract — reads `.session/sprint-development/<JIRA-KEY>/progress.md` (per `.claude/skills/agentic-dev-core/references/session-management.md`), surfaces last completed phase, offers resume / restart / abort; the synced story folder + engram supply the content context.
+**RESUME SESSION**: `/sprint-development` Phase 0 resume contract: reads `.session/sprint-development/<JIRA-KEY>/progress.md` (per `.claude/skills/agentic-dev-core/references/session-management.md`), surfaces last completed phase, offers resume / restart / abort; the synced story folder + engram supply the content context.
 
 ---
 
@@ -338,12 +350,12 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 | Pattern        | Rule                                                                       |
 | -------------- | -------------------------------------------------------------------------- |
 | **Parameters** | Max 2 positional. 3+ → object param                                        |
-| **Utilities**  | Agnostic only — no domain coupling in shared modules                       |
+| **Utilities**  | Agnostic only, no domain coupling in shared modules                       |
 | **Imports**    | Always aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
 | **Types**      | Declare interfaces at top of file, after imports                           |
 | **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)    |
 
-**DRY — context matters**:
+**DRY: context matters**:
 
 - `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`). Single source of truth.
 - Shared utilities = framework-agnostic only. No React, no Next, no Bun-specific APIs.
@@ -351,7 +363,7 @@ Project values live in **`.agents/project.yaml`** — load once per session. NEV
 
 ---
 
-## 11. GIT WORKFLOW — POINTERS
+## 11. GIT WORKFLOW: POINTERS
 
 Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills/git-flow-master/` + `docs/workflows/git-flow.md` if present.
 
@@ -378,15 +390,15 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 
 ## Git Strategy
 
-> **Source of truth: the `git_strategy:` block in `.agents/project.yaml`.** `git-flow-master` reads it before any git/gh operation and adapts every branch / commit / push / PR / conflict-fix to the strategy declared there. NEVER define branch policy in this CLAUDE.md — edit the `git_strategy:` block.
+> **Source of truth: the `git_strategy:` block in `.agents/project.yaml`.** `git-flow-master` reads it before any git/gh operation and adapts every branch / commit / push / PR / conflict-fix to the strategy declared there. NEVER define branch policy in this CLAUDE.md: edit the `git_strategy:` block.
 >
 > If `git_strategy.strategy` is **null** (the shipped template value), the strategy is UNSET: `git-flow-master` OFFERS "Strategy Setup" on the first git intent and fills the block (it never auto-picks). `.agents/project.yaml` ships as a per-project template (all `null`) and is frozen by `bun run update` (updater `bootstrapOnlyPaths`), so every project keeps its own strategy.
 
 This repository (the boilerplate itself) ships `git_strategy.strategy: null`; with a single `main` branch, `git-flow-master` operates as **`solo-main`** (single maintainer, commit + push directly to `main`). To pin it explicitly: ask git-flow-master to "set up our git strategy".
 
-**Accepted policy divergence (this repo only)** — `git-flow-master` Step 1b reconciles the declared `git_strategy.policy` against the host and will find a mismatch here: a GitHub **ruleset** on `main` requires a pull request with an approving review (the classic `branches/main/protection` endpoint returns `404`, so only the `rules/branches/main` endpoint reveals it), while the declared policy says `require_pr_reviews: 0` / `direct_push_to_protected: allowed`. **This divergence is intended and stays as-is.** This repo is the template origin: single maintainer, no second reviewer, and every push to `main` is a release of the template, so the review requirement would be ceremony. Direct pushes here go through the maintainer's ruleset bypass, deliberately.
+**Accepted policy divergence (this repo only)**: `git-flow-master` Step 1b reconciles the declared `git_strategy.policy` against the host and will find a mismatch here: a GitHub **ruleset** on `main` requires a pull request with an approving review (the classic `branches/main/protection` endpoint returns `404`, so only the `rules/branches/main` endpoint reveals it), while the declared policy says `require_pr_reviews: 0` / `direct_push_to_protected: allowed`. **This divergence is intended and stays as-is.** This repo is the template origin: single maintainer, no second reviewer, and every push to `main` is a release of the template, so the review requirement would be ceremony. Direct pushes here go through the maintainer's ruleset bypass, deliberately.
 
-This exception belongs to THIS repository and travels nowhere: `CLAUDE.md` is never synced by `bun run update` (the updater only nudges about upstream drift), and `.agents/project.yaml` ships as a template with `policy_verified: null` / `policy_source: declared`. **A project scaffolded from this boilerplate defines its own answer during setup** — no approvals, one, two, protections or none — and `git-flow-master` reports what THAT host enforces. Never carry this repo's exception into a downstream project, and never infer a bypass is acceptable from the fact that a push succeeded.
+This exception belongs to THIS repository and travels nowhere: `CLAUDE.md` is never synced by `bun run update` (the updater only nudges about upstream drift), and `.agents/project.yaml` ships as a template with `policy_verified: null` / `policy_source: declared`. **A project scaffolded from this boilerplate defines its own answer during setup**, no approvals, one, two, protections or none: and `git-flow-master` reports what THAT host enforces. Never carry this repo's exception into a downstream project, and never infer a bypass is acceptable from the fact that a push succeeded.
 
 ---
 
@@ -396,8 +408,8 @@ Engram MCP configured. Call `mem_save` IMMEDIATELY (no user prompt needed) after
 
 - **Architecture / design decision made** (tradeoffs chosen, alternative rejected).
 - **Convention or workflow established** (naming, structure, lint rule, branch policy).
-- **Bug fix completed** — include root cause, not just fix.
+- **Bug fix completed**: include root cause, not just fix.
 - **Non-obvious discovery, gotcha, or edge case** found.
-- **Session close** — MANDATORY `mem_session_summary` before saying "done" / "listo".
+- **Session close**: MANDATORY `mem_session_summary` before saying "done" / "listo".
 
 Self-check after every task: _did I make decision, fix bug, learn something non-obvious, or establish convention? If yes → `mem_save` NOW._
