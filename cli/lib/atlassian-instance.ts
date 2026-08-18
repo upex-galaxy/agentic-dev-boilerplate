@@ -307,7 +307,7 @@ export function writeAtlassianUrlToYaml(
       if (body.startsWith('TODO:')) { body = body.slice('TODO:'.length).trim(); }
       comment = ` # ${body}`;
     }
-    lines[i] = `${head[1]}${head[2] || ' '}${normalized}${comment}`;
+    lines[i] = `${head[1]}${head[2] || ' '}${formatYamlScalar(normalized)}${comment}`;
     written = true;
     break;
   }
@@ -321,6 +321,27 @@ export function writeAtlassianUrlToYaml(
 
   writeFileSync(yamlPath, lines.join('\n'), 'utf8');
   return normalized;
+}
+
+/**
+ * Quote a scalar the way `scripts/agents-setup.ts:formatYamlValue` would.
+ *
+ * A URL contains `:`, so that writer always quotes it. Emitting it bare here
+ * would be equally valid YAML but would make every subsequent `bun run
+ * agents:setup` rewrite the line — churn in a versioned file that reviewers
+ * then have to read past. Same input, same bytes.
+ */
+function formatYamlScalar(v: string): string {
+  const needsQuote = (
+    v === ''
+    || /^(?:null|true|false|yes|no|on|off|~)$/i.test(v)
+    || /^-?\d/.test(v)
+    || /[:#&*!|>'"%@`]/.test(v)
+    || /^\s/.test(v)
+    || /\s$/.test(v)
+  );
+  if (!needsQuote) { return v; }
+  return `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
 /**
