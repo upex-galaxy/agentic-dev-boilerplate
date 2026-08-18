@@ -58,10 +58,12 @@ Each entry is required by one or more skills; install them as you need them.
 
 ```
 TAVILY_API_KEY
-ATLASSIAN_URL · ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
+ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
 SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
 N8N_API_URL · N8N_API_KEY
 ```
+
+The Atlassian **site host** is deliberately not in that list. The installer prompts for it at day-0 and writes it to `.agents/project.yaml` -> `issue_tracker.atlassian_url`, not to `.env` — a hostname is not a secret, it is project identity, and while it sat in `.env` a stale copy inherited from the parent shell shadowed the file in silence. Read it back with `bun run --silent jira:url`.
 
 Generation is interactive (web logins + 2FA), so the installer cannot do it for you. `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — every pending credential carries a `where` URL (Tavily dashboard, Atlassian token page, Supabase project settings, n8n API panel).
 
@@ -122,14 +124,20 @@ The installer auto-detects no-TTY (an agent invoking it without a terminal) and 
 
 ```bash
 TAVILY_API_KEY=tvly-... \
-  ATLASSIAN_URL=... \
   ATLASSIAN_EMAIL=... \
   ATLASSIAN_API_TOKEN=... \
   SUPABASE_ACCESS_TOKEN=... \
   bun run setup --non-interactive
 ```
 
-Then `bun run setup:doctor --json` to confirm.
+The Atlassian host cannot be passed this way, by design: `agents:setup` refuses to seed `issue_tracker.atlassian_url` from the environment, so a stale inherited value can never overwrite the versioned one on an unattended run. Set it once, interactively:
+
+```bash
+bun run agents:setup          # fills .agents/project.yaml
+bun run --silent jira:url     # confirm what the tooling resolves
+```
+
+Then `bun run setup:doctor --json` to confirm the rest.
 
 ### Skip flags (per-step opt-out)
 

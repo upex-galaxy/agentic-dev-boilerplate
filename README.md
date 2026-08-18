@@ -102,12 +102,14 @@ These are **not optional** for the workflow — each one is required by a specif
 
 ```
 TAVILY_API_KEY
-ATLASSIAN_URL · ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
+ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
 SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
 N8N_API_URL · N8N_API_KEY
 ```
 
-`.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — it prints `pending_actions[].where` URLs for every credential.
+**The Atlassian site host is not one of them.** It lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url` and is read with `bun run --silent jira:url` (`--slug` for the bare host `acli --site` wants). It was pulled out of `.env` because a stale copy inherited from the parent shell silently shadowed the file — `jira:sync-issues` rebuilt the local PBI cache from a dead Jira site and exited 0. A hostname is not a secret, and it is project identity, so it belongs in a versioned file that shows up in a diff.
+
+`.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — it prints `pending_actions[].where` URLs for every credential, and reports the resolved Atlassian host by value.
 
 ### When the installer tells you something is wrong
 
