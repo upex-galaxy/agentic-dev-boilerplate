@@ -17,6 +17,7 @@
     "jira:sync-issues": "bun scripts/sync-jira-issues.ts",
     "jira:sync-link-types": "bun scripts/sync-jira-link-types.ts",
     "jira:sync-workflows": "bun scripts/sync-jira-workflows.ts",
+    "jira:url": "bun scripts/atlassian-url.ts",
     "lint:check": "eslint .",
     "lint:fix": "eslint --fix .",
     "onboarding": "bun scripts/onboarding.ts",
