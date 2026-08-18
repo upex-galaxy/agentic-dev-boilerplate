@@ -183,7 +183,7 @@ Example (same work, different register):
 | `product-management`  | `/product-management`         | Backlog seed + epic + INVEST/AC refinement + sprint report.                                                                                                                                                                                                                            |
 | `sprint-development`  | `/sprint-development`         | **Mega-orchestrator**. Per-story Plan → Implement → Review → Staging → Prod (gated).                                                                                                                                                                                                   |
 | `unit-testing`        | `/unit-testing`               | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`.                                                                                                                                                                                                      |
-| `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy.                                                                                                                                                                                                                              |
+| `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy, and keeps it in parity with the host ruleset via `bun run git:policy` (verify / apply).                                                                                                                                       |
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
 | `vercel-cli`          | (auto on `vercel` Bash calls) | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env var sync (`.env` ↔ Preview/Production scopes), build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel`.                                          |
 
@@ -371,6 +371,7 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 - Semantic prefixes: `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`
 - One commit = one responsibility. Clear messages.
 - Branch + commit + push + PR + conflict-fix + chained-PR planning all in `/git-flow-master`.
+- Branch-protection parity: `bun run git:policy verify` reconciles `git_strategy` against the host ruleset; `apply` writes it (dry run until `--yes`). See `git-flow-master/references/ruleset-parity.md`.
 - See §1 #3-#5 for NO-AI-attribution + push-to-main confirmation + git-history rules.
 
 ---
