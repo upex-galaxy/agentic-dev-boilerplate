@@ -68,9 +68,12 @@ git_strategy:
   strategy: solo-main # null until Strategy Setup runs; then one of: solo-main | main-integration | enterprise | trunk-based | gitflow | github-flow | gitlab-flow
   description: >
     Single long-lived branch (main); single maintainer (this repo is the boilerplate
-    template itself). Work is committed and pushed directly to main (PRs optional).
-    Every push to main is effectively a release of the template. No integration branch,
-    no promotion path, no hotfix ceremony.
+    template itself). No integration branch, no promotion path, no hotfix ceremony.
+    Every push to main is effectively a release of the template to every downstream
+    project that runs `bun run up`, which is why main is protected despite the
+    single-branch shape: work lands through a pull request, and the ruleset asks for
+    one approving review. Org admins can bypass that, but a bypass is a bypass and the
+    host records it as one.
   branches:
     production: main # release / default branch
     integration: null # long-lived integration branch name (e.g. staging), or null
@@ -81,9 +84,9 @@ git_strategy:
     feature_merge: n/a # merge-commit | squash | rebase-merge | n/a
     hotfix_policy: n/a # branch-off-prod-backmerge | via-integration | none | n/a
   policy: # how strictly protected branches are guarded (set by Strategy Setup Q4; defaults are safe)
-    direct_push_to_protected: allowed # forbidden | confirm | allowed (solo-main = allowed)
-    admin_bypass: true # team POLICY: may a repo admin bypass PR/protection for urgent changes? actual capability still depends on the GitHub user's role — the skill re-confirms at runtime
-    require_pr_reviews: 0 # null | 0 | N — min approvals before merge to a protected branch (informational)
+    direct_push_to_protected: confirm # forbidden | confirm | allowed. VERIFIED against the host: a `pull_request` rule covers main, so a direct push is refused for anyone not in the ruleset's bypass list. Org admins ARE in it, hence `confirm` (policy on top of a real capability) rather than `allowed` or `forbidden`.
+    admin_bypass: true # VERIFIED: ruleset 16809536 bypass_actors = OrganizationAdmin (always) + one named User (always). An admin merge therefore SUCCEEDS and is reported by the host as "Bypassed rule violations".
+    require_pr_reviews: 1 # VERIFIED: required_approving_review_count = 1, AND require_code_owner_review = true with no CODEOWNERS file in the repo. A non-bypass contributor cannot satisfy the code-owner half at all.
   branch_prefixes:
     precedence: [feat, fix, refactor, test, docs, chore]
     naming_with_key: '{prefix}/{ISSUE-KEY}-{kebab-slug}'
@@ -91,8 +94,8 @@ git_strategy:
   meta:
     setup_version: 1
     created: 2026-06-20 # YYYY-MM-DD stamped by Strategy Setup
-    policy_verified: null # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified. Per-project — this file is a template; a fresh project starts unverified
-    policy_source: declared # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
+    policy_verified: 2026-08-18 # YYYY-MM-DD of the last reconciliation of `policy:` against the host (git-flow-master Step 1b). null = never verified. Per-project — this file is a template; a fresh project starts unverified
+    policy_source: verified # verified | declared — `declared` means `policy:` records team INTENT and has never been checked against the remote. Never state what the remote requires from a `declared` reading
 
 # WHO decides what, when a question has no settled answer. Read by every skill that
 # routes a decision, via agentic-dev-core/references/decision-protocol.md §5.1.
