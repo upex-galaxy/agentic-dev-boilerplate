@@ -8,7 +8,7 @@
 
 1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts: use correct base URLs").
 2. **PLAN BEFORE CODING**: Produce impl plan (`implementation-plan.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review.
-3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude" in commits. Commits look human-authored.
+3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", or any equivalent authorship/advertising line in commits. Commits look human-authored. ONE scoped exception: a `Claude-Session: <session-id>` trailer (trailer position ONLY, never subject or body) on commits actually written by an AI session — a forensic pointer to the session transcript (`~/.claude/projects/<cwd-slug>/<session-id>.jsonl`) for root-cause investigation, NOT attribution: names no product, claims no authorship. Human-authored commits omit it entirely. Full contract: `.claude/skills/git-flow-master/references/conventional-commits.md` § Hard rules. The ban stands in full outside this exception.
 4. **CONFIRM BEFORE PUSH TO MAIN**: NEVER push to `main` without explicit user confirmation.
 5. **GIT HISTORY**: NEVER rewrite pushed history (rebase/amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. ALWAYS add forward (new commits, not rewrite). ALWAYS preserve merge history.
 6. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. No skip steps.
