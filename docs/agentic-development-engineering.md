@@ -219,7 +219,11 @@ The practice is organised in three conceptual tiers:
 │  sdd-tasks · sdd-apply · sdd-verify · sdd-archive                   │
 │                                                                     │
 │  Tool / utility skills                                              │
-│  acli (Jira CLI) · agentic-dev-onboard (tour)                       │
+│  acli (Jira CLI) · vercel-cli (deploy ops) · agentic-dev-onboard    │
+│  (tour) · testability-guide (/qa page)                              │
+│                                                                     │
+│  Unattended delivery                                                │
+│  autonomous-delivery (scheduled runs: audit → select → dispatch)    │
 │                                                                     │
 │  Shared Knowledge Layer                                             │
 │  Product specs · Design tokens · Discovery docs · Per-ticket memory │

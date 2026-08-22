@@ -33,6 +33,8 @@ The `/design-system` skill offers five generation paths. Pick whichever matches 
 
 Run `/design-system` and the skill will walk you through the path selection.
 
+> **Second phase (separate moment)**: after this file exists, `/design-system` also owns the per-story **screen phase** — just-in-time mockups commissioned when development picks a UI story up (standalone or routed from `/sprint-development`'s design gate). Its output lives in `.context/design/master-design-plan.md` (per-screen specs + US→Screen map), not here. This file covers tokens only.
+
 ---
 
 ## When to regenerate
