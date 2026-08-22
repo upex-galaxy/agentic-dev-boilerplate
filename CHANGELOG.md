@@ -5,6 +5,37 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-08-22 — PBI-as-Jira-cache port (PR #22)
+
+Port of the sibling `agentic-qa-boilerplate` release of the same model: the
+local PBI tree becomes a disposable cache of Jira, and the toolchain around it
+is hardened accordingly.
+
+### Changed
+
+- `.context/PBI/` is now a **gitignored cache**: only `README.md` and
+  `templates/` are committed. Jira is the source of truth; `bun run
+  context:hydrate` rebuilds the whole `[SYNC]` tree from scratch, so a fresh
+  clone starting with an almost-empty `PBI/` is the intended state.
+- Skill registry generation is now **frontmatter-first**: `compact_rules` are
+  read verbatim and uncapped from each `SKILL.md` frontmatter.
+- `import.meta.dir` usage in the two shared runtime libs made portable.
+
+### Added
+
+- Defensive filters in the Jira issue sync for the shared Jira workspace.
+- Minimal boilerplate-only CI quality gate, plus `context:hydrate` and a root
+  test target.
+
+### Fixed
+
+- Updater hardening: `repoOnlyPaths`, atomic gitignore groups, and a PBI
+  migration hook for repos cloned before the cache model.
+- Scaffolder (`create-agentic-dev`) resets git-strategy provenance on
+  scaffold, so a new project never inherits the template's verified state.
+- Stale git-strategy claims in `CLAUDE.md` corrected; docs, skills and decks
+  swept for alignment with the cache model.
+
 ## [Unreleased]
 
 ### Fixed

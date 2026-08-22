@@ -52,14 +52,14 @@ Each entry is required by one or more skills; install them as you need them.
 
 > **Windows users**: skip direnv. PowerShell support is experimental and needs direnv 2.37+; Git Bash works but the `bun claude` wrapper is simpler everywhere. Decline the installer's direnv prompt — the wrappers already load `.env`.
 
-### MCP credentials — 10 env vars filled into `.env`
+### MCP credentials — 9 env vars filled into `.env`
 
-`.mcp.json` (Claude Code) and `opencode.jsonc` (OpenCode) ship with `${VAR}` / `{env:VAR}` placeholders. The installer resolves required vars by scanning the committed configs (`discoverRequiredEnvVars()`, `install.ts:743-749`) — current list backs the 5 canonical MCPs (context7 needs none):
+`.mcp.json` (Claude Code) and `opencode.jsonc` (OpenCode) ship with `${VAR}` / `{env:VAR}` placeholders. The installer resolves required vars by scanning the committed configs (`discoverRequiredEnvVars()`, `install.ts:743-749`) — current list backs the 4 canonical MCPs and the Atlassian CLI (context7 needs none):
 
 ```
 TAVILY_API_KEY
 ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
-SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_ACCESS_TOKEN · NEXT_PUBLIC_SUPABASE_URL · SUPABASE_PUBLISHABLE_KEY · SUPABASE_SECRET_KEY
 N8N_API_URL · N8N_API_KEY
 ```
 
@@ -69,7 +69,7 @@ Generation is interactive (web logins + 2FA), so the installer cannot do it for 
 
 ### Where to verify your status
 
-`bun run setup:doctor` re-runs every check above (read-only) plus 10 MCP `.env` vars + direnv state. Use it after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
+`bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars + direnv state. Use it after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
 
 ---
 
@@ -269,11 +269,13 @@ Skills that are workflow-specific to this boilerplate live in `.claude/skills/` 
 | --------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `agentic-dev-core`    | (auto, cited by other skills) | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy). Loaded on demand by workflow skills — not invoked directly. |
 | `project-foundation`  | `/project-foundation`         | Constitution + PRD + SRS + Discovery (one-time per product)                                                                                                                               |
+| `design-system`       | `/design-system`              | DESIGN.md (Google Labs spec, 5 paths) pre-scaffolding + opt-in per-story screen-mapping phase (design briefs → `master-design-plan.md`)                                                   |
 | `project-bootstrap`   | `/project-bootstrap`          | Backend + frontend skeleton + features (OpenAPI, auth, env)                                                                                                                               |
 | `testability-guide`   | `/testability-guide`          | `/qa` page + tool-agnostic credentials artifact (Jira / Confluence / Notion / MCP / CLI / manual). Idempotent re-runs on stack drift.                                                     |
 | `product-management`  | `/product-management`         | Backlog seeding + epic creation + INVEST/AC refinement                                                                                                                                    |
 | `sprint-development`  | `/sprint-development`         | Per-story dev loop (mega-orchestrator, 12-step workflow)                                                                                                                                  |
 | `unit-testing`        | `/unit-testing`               | TDD slice — composable mid-flight from `/sprint-development`                                                                                                                              |
+| `autonomous-delivery` | `/autonomous-delivery`        | Scheduled / unattended delivery runs: audit real state, select genuinely unblocked work, dispatch the owning pipeline skill, report (`story` / `bug` / `discovery` modes)                 |
 | `git-flow-master`     | (auto)                        | Branching/commit/push/PR strategy auto-detected per repo                                                                                                                                  |
 | `acli`                | (auto)                        | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                                                                                   |
 | `vercel-cli`          | (auto on `vercel`)            | Vercel CLI cookbook — deployment verification (poll commit SHA + `inspect --wait`), env var sync, build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel` |
@@ -311,7 +313,7 @@ A subtle bit of confusion lives in the Playwright ecosystem. There are **three d
 
 1. **`@playwright/test`** — a devDep test runner library, installed per-project. It produces no global binary. `which playwright` finds nothing even when this package is installed.
 2. **`@playwright/cli`** — a global agent-driven CLI. Installs as the binary `playwright-cli`. This is what powers the `/playwright-cli` skill in this repo.
-3. **`/playwright-cli`** — the local workflow skill in `.claude/skills/playwright-cli/`. It calls the `playwright-cli` binary from `@playwright/cli`.
+3. **`/playwright-cli`** — the community skill installed user-level by `bun run setup` (via `bunx skills add`, `cli/install.ts` `USER_LEVEL_SKILLS`). It calls the `playwright-cli` binary from `@playwright/cli`.
 
 The installer verifies (2). If you need the test runner (1) for E2E suites, add it per-project: `bun add -D @playwright/test`.
 

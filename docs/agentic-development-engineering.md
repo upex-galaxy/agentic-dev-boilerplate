@@ -44,6 +44,7 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
 | **Testability bridge** (one-time + idempotent re-runs) | `testability-guide`                                                 | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
 | **Management** (continuous)                            | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                                                           |
 | **Implementation** (per story)                         | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged to staging                                                                    |
+| **Autonomous delivery** (scheduled / unattended runs)  | `autonomous-delivery` (wraps the pipeline skills)                   | Audit of real state (git is truth, the tracker is a hint), selection of genuinely unblocked work, dispatch to the owning pipeline skill, run report        |
 | **Spec-Driven Development** (any substantial change)   | `sdd-*` skill bloque (not auto-installed; see §3.1 note)            | Exploration → Proposal → Spec → Design → Tasks → Apply → Verify → Archive                                                                                 |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
@@ -218,7 +219,11 @@ The practice is organised in three conceptual tiers:
 │  sdd-tasks · sdd-apply · sdd-verify · sdd-archive                   │
 │                                                                     │
 │  Tool / utility skills                                              │
-│  acli (Jira CLI) · agentic-dev-onboard (tour)                       │
+│  acli (Jira CLI) · vercel-cli (deploy ops) · agentic-dev-onboard    │
+│  (tour) · testability-guide (/qa page)                              │
+│                                                                     │
+│  Unattended delivery                                                │
+│  autonomous-delivery (scheduled runs: audit → select → dispatch)    │
 │                                                                     │
 │  Shared Knowledge Layer                                             │
 │  Product specs · Design tokens · Discovery docs · Per-ticket memory │
@@ -244,7 +249,7 @@ The skill roster is split by _phase_ (declared in each `SKILL.md` frontmatter as
 - **`foundation`** — `project-foundation` (Constitution + PRD + SRS + Discovery), `design-system` (DESIGN.md + opt-in screen-mapping: design briefs for Claude Design / Open Design → `master-design-plan.md`), `project-bootstrap` (backend + frontend scaffolding).
 - **`foundation-extension`** — `testability-guide` (in-app `/qa` page + tool-agnostic credentials artifact for QA testers and AI agents; runs after `project-bootstrap`, idempotent on re-run).
 - **`management`** — `product-management` (backlog seed, epic creation, story refinement, AC quality, edge-case enumeration, sprint reporting).
-- **`implementation`** — `sprint-development` (per-story mega-orchestrator), `unit-testing` (TDD composable slice), `git-flow-master` (branches, commits, PRs, conflicts).
+- **`implementation`** — `sprint-development` (per-story mega-orchestrator), `unit-testing` (TDD composable slice), `git-flow-master` (branches, commits, PRs, conflicts), `autonomous-delivery` (scheduled / unattended entry point: audits real state — git is truth, the tracker is a hint — selects work whose dependencies are genuinely satisfied, dispatches the owning pipeline skill, closes out and reports; modes `story` / `bug` / `discovery`).
 
 On top of the project-shipped skills, the boilerplate composes with **two external skill catalogs** installed via `bun run setup`:
 

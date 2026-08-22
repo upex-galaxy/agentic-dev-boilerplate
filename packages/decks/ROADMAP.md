@@ -20,6 +20,7 @@ No es un roadmap de producto: es la lista de qué doctrina/skill de este repo to
 | 1   | El comando y sus ejecutores                               | `agentic-dev-core/orquestacion.es.html`        | P1        | todo   |
 | 2   | La capa comportamental (Butler, PM Voice, Visual Mapping) | `agentic-dev-core/capa-comportamental.es.html` | —         | **hecho** |
 | 3   | Cómo encadenan las skills, de cero a producción           | `agentic-dev-core/flujo-de-skills.es.html`     | P2        | todo   |
+| 17  | El backlog no se commitea — PBI como caché de Jira        | `agentic-dev-core/pbi-jira-cache.es.html`      | —         | **hecho** |
 
 ### Ciclo de vida del desarrollo (orden de ejecución real)
 
