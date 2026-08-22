@@ -288,7 +288,7 @@ Immediately after the resume check, before Epic precheck, consult `.context/dev-
    - Confirm this ticket is not 🔒 mockup-gated in §5 (if it is and the mockup is absent, route per the Stage-1 missing-row gate / Critical Rule #15 before coding).
    - Surface this ticket's Execution Sprint + any §6 per-story pre-dev blocker so the plan accounts for it.
 3. **Live status query (MANDATORY, before recommending or planning any ticket).** The roadmap doc is authoritative for edges, NEVER for status. Run the §6 query recipe against `[ISSUE_TRACKER_TOOL]` for **this ticket plus its direct hard blockers** in one call (e.g. a single JQL `key in (<CANDIDATE>, <BLOCKER-1>, <BLOCKER-2>)` returning status), then:
-   - Every hard blocker must be dev-done **according to the live query**. Not dev-done → STOP and surface it ("BK-X depends on BK-Y, live status `In Progress` — proceed anyway, switch tickets, or abort?").
+   - Every hard blocker must be dev-done **according to the live query**. Not dev-done → STOP and surface it ("TICKET-X depends on TICKET-Y, live status `In Progress` — proceed anyway, switch tickets, or abort?").
    - If the candidate itself is already past dev (e.g. `Ready For QA` / `Done`), STOP and say so before planning anything.
    - **Live wins over prose, always.** When the query contradicts the doc, act on the query and flag the stale line so it gets corrected on the next `/dev-roadmap` run.
    - **A recent timestamp on `dev-roadmap.md` is not evidence of current status.** That file's dates track when edges and mockup gates were refreshed, which is a different axis from a ticket's status today. Never skip the query because the doc "looks fresh". Never recommend a next ticket on prose alone.

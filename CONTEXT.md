@@ -328,7 +328,7 @@ Use this table to decide what to re-generate after what kind of change.
 | Feature surface changes                   | `.context/business/business-feature-map.md`         | `/business-feature-map`                       |
 | API auth or topology changes              | `.context/business/business-api-map.md`             | `/business-api-map`                           |
 | Hard-to-reverse architecture decision     | `.context/ADR/ADR-NNNN-<slug>.md` (new file; supersede, never edit)   | Author per `.context/ADR/README.md` (human, or `/project-foundation` SRS / `/sprint-development` Stage 1) |
-| New epic / story refinement               | `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/*` (or `.context/PBI/epics/EPIC-<KEY>-<slug>/*` for epic-level) | `/product-management`                         |
+| New epic / story refinement               | `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/*` (or `.context/PBI/epics/EPIC-<KEY>-<slug>/*` for epic-level) | `/product-management` (authors content in Jira) + `bun run context:hydrate` (pulls the gitignored local cache) |
 | Major rebrand / new visual identity       | `DESIGN.md` at repo root                            | `/design-system`                              |
 | New UI screens need mockups (per feature) | `.context/designs/<project>/<batch>/` (brief + bundle) + `.context/design/master-design-plan.md` (UPSERT) | `/design-system` screen-mapping phase (opt-in) |
 | This file (`CONTEXT.md`) drifts from repo | Update sections that no longer match the filesystem | Edit manually or `/sync-ai-memory` if covered |
