@@ -27,7 +27,7 @@ The `/design-system` skill offers five generation paths. Pick whichever matches 
 
 1. **Default automatable** — `npx getdesign` + an LLM-matcher picks 1 of 72 curated brands based on Constitution + PRD. Fastest path; good when you trust the matcher.
 2. **Manual gallery** — Browse https://designmd.ai/explore and pick a brand manually. Use this when you want to inspect alternatives visually before committing.
-3. **Open Design (local)** — Run the local Open Design app via Docker (https://github.com/nexu-io/open-design). Use this when you want full offline control and inspection.
+3. **Open Design (local)** — Run the local Open Design desktop app (https://github.com/nexu-io/open-design; Docker is an alternative, not a requirement). Use this when you want full offline control and inspection.
 4. **Claude Design (premium)** — Hand off to https://claude.ai/design (Anthropic Labs research preview). Use this when you want a premium, AI-curated design pass.
 5. **LLM-authored custom** — Have the AI author the design system from scratch, grounded in Constitution + PRD + brand intent. Use this when none of the existing brands fit and you want a bespoke system.
 

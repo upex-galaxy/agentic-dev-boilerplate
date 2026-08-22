@@ -2,7 +2,7 @@
 
 > **Purpose**: Complete reference for Jira/Xray integration in QA Automation (IQL-Aligned)
 > **Last Updated**: February 2026
-> **Methodology**: Integrated Quality Lifecycle (IQL) - see `test-management-system.md`
+> **Methodology**: Integrated Quality Lifecycle (IQL) - see `IQL-methodology.md`
 > **Related**: `cli/xray.ts` (CLI tool), `tests/utils/jiraSync.ts` (Sync utility)
 
 ---
@@ -673,7 +673,7 @@ For Xray to match test results to Test issues:
 - `tests/utils/jiraSync.ts` - Sync utility for test results
 - `config/variables.ts` - Environment configuration
 - `.env` - Environment variables (XRAY_CLIENT_ID, etc.)
-- `.context/test-management-system.md` - IQL methodology reference
+- `docs/methodology/IQL-methodology.md` - IQL methodology reference
 
 ---
 

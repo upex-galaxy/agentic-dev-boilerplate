@@ -37,8 +37,8 @@ agentic-dev-boilerplate/
 ├── CONTEXT.md                      This file — Context Engineering in this repo
 │
 ├── .claude/
-│   ├── skills/                     11 workflow skills (executable workflows)
-│   └── commands/                   5 utility slash commands
+│   ├── skills/                     13 workflow skills (executable workflows)
+│   └── commands/                   7 utility slash commands
 │
 ├── .agents/                        Project variable contract (SOT for project values)
 │   ├── project.yaml                {{VAR_NAME}} resolution
@@ -126,6 +126,7 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `/product-management`  | Continuous: seed backlog, create epics, refine stories (INVEST + AC), sprint reporting                                                             |
 | `/sprint-development`  | Per-story: Plan → Code → Review → Staging → (gated) Production                                                                                     |
 | `/unit-testing`        | Standalone or composable mid-flight from `/sprint-development` for TDD slices                                                                      |
+| `/autonomous-delivery` | Scheduled / unattended: audits real state (git is truth), selects genuinely unblocked work, dispatches the owning pipeline skill, reports. Modes: `story` (1 per run), `bug` (up to 3), `discovery` (no code) |
 | `/git-flow-master`     | Any git/PR work — auto-detects branching strategy and adapts                                                                                       |
 | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                                                                                           |
 | `/vercel-cli`          | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env sync, debug, rollback. Auto-loads on `vercel` Bash calls    |
@@ -141,6 +142,7 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `/business-api-map`           | Generate/update `.context/business/business-api-map.md`                                                      |
 | `/master-implementation-plan` | Generate/update `.context/master-implementation-plan.md` (EPIC/strategy roadmap)                             |
 | `/dev-roadmap`                | Generate/update `.context/dev-roadmap.md` (TICKET/sequence roadmap — dependency edges, execution sprints, mockup-gates; subsumes `sprint-sequence.md`) |
+| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + `acli` session) and regenerate the `.agents/` catalogs                 |
 
 ---
 

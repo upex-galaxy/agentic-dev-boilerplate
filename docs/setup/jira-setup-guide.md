@@ -1,7 +1,7 @@
 # Jira + Xray TMS Setup Guide
 
 > **Purpose**: Step-by-step guide to configure Jira with Xray as a Test Management System (TMS) aligned with IQL methodology.
-> **Prerequisite**: Read `jira-platform.md` and `test-management-system.md` first.
+> **Prerequisite**: Read `docs/methodology/jira-platform.md` and `docs/methodology/IQL-methodology.md` first.
 > **Time Estimate**: 2-4 hours for complete setup.
 
 ---

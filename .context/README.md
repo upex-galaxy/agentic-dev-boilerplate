@@ -22,6 +22,9 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 ├── master-implementation-plan.md  High-level dependency-cascaded roadmap — EPIC/strategy (/master-implementation-plan)
 ├── dev-roadmap.md                 Ticket-level dependency execution roadmap — TICKET/sequence (/dev-roadmap; subsumes PBI/sprint-sequence.md)
 │
+├── reports/                       Sprint-level cross-ticket dev trackers (/sprint-development batch)
+│   └── README.md                  Lifecycle rules for SPRINT-{N}-DEVELOPMENT.md
+│
 ├── PRD/                           Output of /project-foundation Phase 2 — Product Requirements
 │   └── README.md                  Phase placeholder (see file)
 │
@@ -55,6 +58,7 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
 | `ADR/ADR-NNNN-<slug>.md`                            | Human architect, or `/project-foundation` (SRS) / `/sprint-development` (Stage 1) — AI drafts for human approval | **Exception: append-only, never regenerated.** Superseded by a newer ADR, never overwritten or hand-re-run. See `ADR/README.md`. |
+| `reports/SPRINT-{N}-DEVELOPMENT.md`                 | `/sprint-development` (batch mode)      | Cross-ticket sprint tracker; lifecycle → `reports/README.md` |
 | `PBI/epic-tree.md`, `PBI/epics/EPIC-<KEY>-<slug>/epic.md`               | **[SYNC]** — content authored in Jira by `/product-management` (epic creation), materialized by `bun run context:hydrate`   | Gitignored cache, not committed. Topic key: `pbi/{epic-slug}/epic`                      |
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/story.md`, `acceptance-criteria.md`, `scope.md`, `out-of-scope.md`, `business-rules.md`, `workflow.md`            | **[SYNC]** — content authored in Jira by `/product-management` (AC refinement), materialized by `bun run context:hydrate`   | Gitignored cache, not committed. Topic key: `pbi/{ticket}/spec`                         |
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` | **[SYNC]** — pushed to Jira `spec_implementation_plan` field by `/sprint-development` Stage 1, materialized by `bun run context:hydrate`                  | Gitignored cache, not committed. Topic key: `pbi/{ticket}/impl-plan`                    |

@@ -98,12 +98,12 @@ These are **not optional** for the workflow — each one is required by a specif
 
 ### MCP credentials (`.env` keys)
 
-`.mcp.json` (Claude Code) and `opencode.jsonc` ship with `${VAR}` / `{env:VAR}` placeholders that read from `.env`. Ten keys back the 5 canonical MCPs (context7 needs none):
+`.mcp.json` (Claude Code) and `opencode.jsonc` ship with `${VAR}` / `{env:VAR}` placeholders that read from `.env`. Nine keys back the 4 canonical MCPs and the Atlassian CLI (context7 needs none):
 
 ```
 TAVILY_API_KEY
 ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
-SUPABASE_ACCESS_TOKEN · SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_ACCESS_TOKEN · NEXT_PUBLIC_SUPABASE_URL · SUPABASE_PUBLISHABLE_KEY · SUPABASE_SECRET_KEY
 N8N_API_URL · N8N_API_KEY
 ```
 
@@ -120,7 +120,7 @@ N8N_API_URL · N8N_API_KEY
 | Step 4 — agents          | Path probe — checks if `~/.claude/` or `~/.config/opencode/` directory exists.                                                    | Neither found: prints both docs URLs, hard exit 1.                                                                                                                                                |
 | Step 11 — per-skill CLIs | PATH probe — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check.                            | Prints `found` / `missing` table; for missing entries adds `quick:` install command (when cross-platform — e.g. `bun add -g vercel`) + `docs:` URL. Non-blocking.                                 |
 | direnv (optional)        | Presence + `.envrc` allow status + shell-rc hook line.                                                                            | Pure convenience nudge — `bun claude` / `bun opencode` wrappers already work without it. If absent, lists `system_install` action with install command; safe to decline (recommended on Windows). |
-| `bun run setup:doctor`   | Re-runs everything above + 10 MCP `.env` vars + direnv state.                                                                     | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup.                                                                    |
+| `bun run setup:doctor`   | Re-runs everything above + the MCP `.env` vars + direnv state.                                                                     | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup.                                                                    |
 
 > **TL;DR**: install **Bun** + **Claude Code (or OpenCode)** before you run setup. Everything else, the installer points you at when you hit it.
 
@@ -145,7 +145,7 @@ N8N_API_URL · N8N_API_KEY
 
 ## What this is
 
-A starter for teams that want AI agents driving the dev workflow — not just autocomplete in the editor, but the whole loop. Define the product, scaffold the stack, refine the backlog, ship every story, deploy to staging. Ten workflow skills cover the phases. Five slash commands handle the chores around them. The testing half (sprint testing, regression, automation) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — pair them or use one.
+A starter for teams that want AI agents driving the dev workflow — not just autocomplete in the editor, but the whole loop. Define the product, scaffold the stack, refine the backlog, ship every story, deploy to staging. Thirteen workflow skills cover the phases. Seven slash commands handle the chores around them. The testing half (sprint testing, regression, automation) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — pair them or use one.
 
 <br />
 
@@ -320,6 +320,7 @@ Project values (URLs, project key, Jira fields) live in `.agents/project.yaml` a
 | `/product-management`  | management     | Backlog seed, story refinement (INVEST), AC (Gherkin), edge cases                                                                                                                         |
 | `/sprint-development`  | implementation | Per-story mega-orchestrator: Plan -> Code -> Review -> Staging -> (gated) Production                                                                                                      |
 | `/unit-testing`        | implementation | TDD, test naming, mocking patterns, coverage. Composable from `/sprint-development`                                                                                                       |
+| `/autonomous-delivery` | implementation | Scheduled / unattended delivery runs: audits real state (git is truth, tracker is a hint), selects genuinely unblocked work, dispatches the owning pipeline skill, reports. Modes: `story` (1 per run), `bug` (up to 3), `discovery` (backlog only, no code) |
 | `/git-flow-master`     | git            | End-to-end Git operator: branches, commits, push, PR, conflicts, chained-PR planning                                                                                                      |
 | `/acli`                | tooling        | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud workflows                                                                                                                        |
 | `/vercel-cli`          | tooling        | Vercel CLI cookbook: deployment verification, env var sync (`.env` ↔ Preview/Production), debug, rollback. Companion to community `/deploy-to-vercel`. Auto-loads on `vercel` Bash calls   |
@@ -353,6 +354,7 @@ Validation: `bun run skills:check` checks tier coherence (orphan categories, tie
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
 | `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md` (EPIC/strategy roadmap)               |
 | `/dev-roadmap`                | Generate or update `.context/dev-roadmap.md` (TICKET/sequence: dependency edges + execution sprints + mockup-gates; subsumes `sprint-sequence.md`) |
+| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + `acli` session) and regenerate the `.agents/` catalogs             |
 
 <br />
 
@@ -360,8 +362,8 @@ Validation: `bun run skills:check` checks tier coherence (orphan categories, tie
 
 ```
 .claude/
-├── skills/         # 11 workflow skills (community skills installed by bun run setup)
-└── commands/       # 5 utility slash commands
+├── skills/         # 13 workflow skills (community skills installed by bun run setup)
+└── commands/       # 7 utility slash commands
 .agents/
 ├── project.yaml          # Per-project variables (template)
 ├── jira-required.yaml    # Custom field + work_type manifest
