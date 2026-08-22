@@ -2124,8 +2124,6 @@ function loadLinkTypeNames(slugs: string[]): Set<string> {
 // behavior (any linked Plan / Execution counts) for backward compatibility.
 // ---------------------------------------------------------------------------
 
-/** Story-altitude Test Plan title (`ATP: {US_ID}: ...`). */
-const STORY_ATP_PREFIX = /^ATP:/i;
 /** Story-altitude Test Set title (`ATS: {US_ID}: ...`). */
 const STORY_ATS_PREFIX = /^ATS:/i;
 /**

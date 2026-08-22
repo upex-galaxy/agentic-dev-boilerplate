@@ -70,7 +70,7 @@ Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline
 | Language    | TypeScript (strict mode)              |
 | Runtime     | bun                                   |
 | Lint/format | ESLint + Prettier (pre-commit hooks)  |
-| Tests       | Vitest (unit) + Playwright (E2E)      |
+| Tests       | Vitest (unit) + Playwright (E2E) — scaffolded app stack; this repo's own suite runs on Bun's test runner |
 | AI agent    | Claude Code (primary), OpenCode (alt) |
 
 The stack is intentionally locked. If your project needs a different stack, this boilerplate is not the right starting point.

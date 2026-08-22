@@ -174,7 +174,7 @@ Example (same work, different register):
 - `.context/ADR/`: Architecture Decision Records (append-only). Any important, hard-to-reverse architecture decision (auth model, error/data-access/tenancy model, framework lock-in, cross-cutting invariant) → record as `ADR-NNNN-<slug>.md`; supersede, never delete. When-to-write + template → `.context/ADR/README.md`; AI detection/authoring → `.claude/skills/agentic-dev-core/references/adr-doctrine.md`. Seeded by `/project-foundation` (SRS) + `/sprint-development` (Stage 1). NOT for bug fixes, local refactors, or naming tweaks.
 - `.context/reports/SPRINT-{N}-DEVELOPMENT.md`: cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
 - `.context/PBI/epics/EPIC-<KEY>-<slug>/`: epic-level (epic.md [SYNC], feature-implementation-plan.md / feature-test-plan.md [SYNC], stories/)
-- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/`: story-level (story.md + per-field [SYNC], context.md, evidence/)
+- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/`: story-level (story.md + per-field [SYNC], context.md / progress.md / evidence/ [LOCAL])
 - `.agents/project.yaml`: `{{VAR}}` source-of-truth (load ONCE per session, cache)
 - `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml`: Jira catalogs
 

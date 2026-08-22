@@ -19,7 +19,7 @@
  * The failure mode is silent, not loud. `scripts/sync-jira-issues.ts` OVERWRITES
  * `.context/PBI/` with whatever the host returns, so a stale host rewrites the
  * local cache with another site's content and reports success. This actually
- * happened (upex-bunkai-tms, 2026-08-10): a story folder was rewritten with
+ * happened (a sister QA project, 2026-08-10): a story folder was rewritten with
  * pre-migration content from the old instance.
  *
  * THE ANCHOR
