@@ -209,8 +209,8 @@
           "source": "https://github.com/microsoft/playwright-cli"
         },
         {
-          "name": "wokitoki",
-          "purpose": "Community skill: wokitoki",
+          "name": "mkd",
+          "purpose": "Community skill: mkd",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]
