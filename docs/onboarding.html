@@ -3643,8 +3643,10 @@ bun run vars:check           # validate placeholders</code></pre>
             </div>
 
             <p class="small muted">
-              Run <code>bun &lt;script&gt; --help</code> on any script for usage. The Vitest binary
-              is installed locally — no global install needed.
+              Run <code>bun &lt;script&gt; --help</code> on any script for usage.
+              <code>bun run test</code> runs Bun's built-in test runner against
+              <code>cli/lib/</code>, <code>scripts/</code>, and the <code>acli</code> skill scripts
+              — no separate test runner install needed.
             </p>
 
             <h3>Artifact refresh cycle</h3>

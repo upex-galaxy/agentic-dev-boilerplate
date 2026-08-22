@@ -450,7 +450,7 @@ Skills declare `compatibility: [claude-code, copilot, cursor, codex, opencode]` 
 
 ## Future hooks
 
-Room for per-phase model routing, an explicit skill registry, Engram-style cross-session memory, and CI-validated cross-agent portability. Notes in `CLAUDE.md`.
+Room for per-phase model routing and CI-validated cross-agent portability. The skill registry (`.claude/skills/REGISTRY.md`, `bun run skills:registry`) and Engram cross-session memory are already shipped, not future work. Notes in `CLAUDE.md`.
 
 <br />
 

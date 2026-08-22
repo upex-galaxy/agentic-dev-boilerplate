@@ -60,8 +60,10 @@ testing:
     per_env: {}
 
 # Git workflow for THIS project — the SOURCE OF TRUTH read by the git-flow-master skill
-# before any git/gh operation. Ships `null` (template): on the first git intent git-flow-master
-# OFFERS "Strategy Setup" and fills these fields (it never auto-picks). Tracked + frozen by the
+# before any git/gh operation. Ships `solo-main` as a DEFAULT — `meta.strategy_source` says
+# whether anyone chose it (`inherited` = scaffolder-reset placeholder; `chosen` = Strategy Setup
+# ran). On `inherited` (or a null strategy) git-flow-master OFFERS "Strategy Setup" on the
+# first git intent and fills these fields (it never auto-picks). Tracked + frozen by the
 # updater (bootstrapOnly), so each project keeps its own. Filled by git-flow-master, NOT by
 # `agents:setup`. These leaves are read directly (not {{VAR}} template vars) → skipped by vars:check.
 git_strategy:

@@ -1,0 +1,43 @@
+name: CI
+
+# Minimal quality gate for the boilerplate itself: repo checks (format, lint,
+# types, vars, skills), the root test suite, and the scaffolder's own tests.
+#
+# Boilerplate-only workflow: packages/ is pruned wholesale from every
+# consumer project by create-agentic-dev (TEMPLATE_EXCLUDES), and this
+# file's own path is excluded alongside it so it never travels either.
+# Not marked as a required check anywhere — informational gate.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  quality-gate:
+    name: Repo Checks & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Repo checks
+        run: bun run repo:check
+
+      - name: Tests
+        run: bun run test
+
+      - name: Scaffolder tests
+        run: bun run --cwd packages/create-agentic-dev test
+
+      - name: Scaffolder manifest check
+        run: bun run --cwd packages/create-agentic-dev check:manifest

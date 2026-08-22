@@ -175,7 +175,7 @@ Example (same work, different register):
 - `.context/ADR/`: Architecture Decision Records (append-only). Any important, hard-to-reverse architecture decision (auth model, error/data-access/tenancy model, framework lock-in, cross-cutting invariant) → record as `ADR-NNNN-<slug>.md`; supersede, never delete. When-to-write + template → `.context/ADR/README.md`; AI detection/authoring → `.claude/skills/agentic-dev-core/references/adr-doctrine.md`. Seeded by `/project-foundation` (SRS) + `/sprint-development` (Stage 1). NOT for bug fixes, local refactors, or naming tweaks.
 - `.context/reports/SPRINT-{N}-DEVELOPMENT.md`: cross-ticket dev tracker per sprint (generated/updated by `/sprint-development` batch mode)
 - `.context/PBI/epics/EPIC-<KEY>-<slug>/`: epic-level (epic.md [SYNC], feature-implementation-plan.md / feature-test-plan.md [SYNC], stories/)
-- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/`: story-level (story.md + per-field [SYNC], context.md, evidence/)
+- `.context/PBI/epics/EPIC-*/stories/STORY-<KEY>-<slug>/`: story-level (story.md + per-field [SYNC], context.md / progress.md / evidence/ [LOCAL])
 - `.agents/project.yaml`: `{{VAR}}` source-of-truth (load ONCE per session, cache)
 - `.agents/jira-fields.json` · `jira-workflows.json` · `jira-required.yaml`: Jira catalogs
 
@@ -307,12 +307,28 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 ## 9. LOCAL CONTEXT (PBI)
 
-> **`.context/PBI/` layout is OWNED by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file: author the plan/content, push it to the Jira field (or fallback), then run the sync. Dev-authored NON-Jira files live INSIDE the same folders.
+> **`.context/PBI/` is a GITIGNORED CACHE of Jira, owned by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file: author the plan/content, push it to the Jira field (or fallback), then run the sync. Rebuild the whole tree with `bun run context:hydrate`.
+>
+> **WHY NOT COMMITTED**: synced content regenerates. Two sessions re-syncing at different times produce conflicting commits of the same generated text; a 3-way merge over a full-file rewrite is meaningless. Jira already IS the versioned, shared, cloud-hosted copy — committing the cache duplicates the database into git and buys nothing.
+
+**THREE TIERS** — every path under `.context/PBI/` is exactly one of these. Check before creating any file:
+
+| Tier | Source of truth | In git? | Recovered by |
+|---|---|---|---|
+| `[SYNC]` | Jira | No | `bun run context:hydrate` |
+| `[COMMIT]` | This repo | **Yes** | `git checkout` |
+| `[LOCAL]` | Nothing durable | No | Not recovered — disposable by design |
+
+`[LOCAL]` files (`context.md`, `progress.md`, `evidence/`) MAY be hand-written, but **NOTHING downstream may depend on one existing**: they live only on the machine that made them. Durable session state → `.session/sprint-development/<KEY>/progress.md` (the resume contract already reads it, NOT the PBI copy); durable evidence → Jira (attachment / comment).
+
+**GITIGNORE LADDER** (in `.gitignore`): `.context/PBI/*` → `!.context/PBI/README.md` → `!.context/PBI/templates/`. NEVER collapse it to a plain `.context/PBI/` — git cannot re-include a file whose parent dir is excluded, so a collapse silently drops the committed exceptions. Verify any change with `git check-ignore -v` on `README.md` (must NOT be ignored) and on a `stories/.../story.md` (must be ignored).
 
 **Canonical tree** (Epic-centric; `<KEY>` = Jira key, `<slug>` from summary):
 
 ```
 .context/PBI/
+  README.md                                      [COMMIT] tier rules + gitignore ladder
+  templates/                                     [COMMIT] skeletons
   epic-tree.md                                   [SYNC] master index
   epics/EPIC-<KEY>-<slug>/
     epic.md                                       [SYNC]
@@ -323,12 +339,14 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
       acceptance-criteria.md  scope.md  out-of-scope.md  business-rules.md  workflow.md
       implementation-plan.md                      [SYNC ← Jira `spec_implementation_plan` / stub]
       comments.md                                 [SYNC, --include-comments]
-      context.md  progress.md  evidence/          [dev: non-Jira, OK]
+      context.md  progress.md  evidence/          [LOCAL] machine-local, disposable
   bugs/ defects/ improvements/ tests/             [SYNC - standalone issue types]
   test-plans/ test-executions/ test-sets/ preconditions/   [SYNC - Xray container issues (jira-xray); description holds the ATP/ATR body]
 ```
 
-**`[SYNC]` files = forbidden to hand-write** (overwritten on every sync: NO file is hard-protected; Jira is the source of truth). The dev/feature implementation plan is authored, **pushed to its Jira field** (`spec_implementation_plan` / `feature_implementation_plan`), then read back from the synced `implementation-plan.md` / `feature-implementation-plan.md`. **Rule of thumb**: file mirrors a Jira field → read the synced copy, never author it locally. File holds info NOT in Jira (session notes, progress, roadmaps, evidence) → author locally as usual.
+**`[SYNC]` files = forbidden to hand-write** (overwritten on every sync: NO file is hard-protected; Jira is the source of truth). The dev/feature implementation plan is authored, **pushed to its Jira field** (`spec_implementation_plan` / `feature_implementation_plan`), then read back from the synced `implementation-plan.md` / `feature-implementation-plan.md`. **Rule of thumb**: file mirrors a Jira field → read the synced copy, never author it locally. File holds info NOT in Jira → decide its tier: another machine or a later session needs it → it does NOT belong here (Jira field/comment, or `.session/`); only this machine, this work → `[LOCAL]`.
+
+**COLD CLONE**: a fresh clone has an almost-empty `.context/PBI/` (this README + `templates/`) — the intended state, not a broken checkout. `bun run context:hydrate` (= `jira:sync-issues pull --include-comments`) rebuilds the cache. Requires `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` in `.env`; host from `.agents/project.yaml` → `issue_tracker.atlassian_url` (§7).
 
 > Sprint-level cross-ticket aggregate → `.context/reports/SPRINT-{N}-DEVELOPMENT.md` (generated by `/sprint-development` batch). Lifecycle → `.context/reports/README.md`.
 
@@ -393,13 +411,13 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.claude/skills
 
 > **Source of truth: the `git_strategy:` block in `.agents/project.yaml`.** `git-flow-master` reads it before any git/gh operation and adapts every branch / commit / push / PR / conflict-fix to the strategy declared there. NEVER define branch policy in this CLAUDE.md: edit the `git_strategy:` block.
 >
-> If `git_strategy.strategy` is **null** (the shipped template value), the strategy is UNSET: `git-flow-master` OFFERS "Strategy Setup" on the first git intent and fills the block (it never auto-picks). `.agents/project.yaml` ships as a per-project template (all `null`) and is frozen by `bun run update` (updater `bootstrapOnlyPaths`), so every project keeps its own strategy.
+> The block ships **filled** (`strategy: solo-main`) as a sane default — `meta.strategy_source` says whether anyone actually chose it: `inherited` = shipped placeholder (the scaffolder resets a fresh project to `inherited` + `policy_source: declared` + `policy_verified: null` and strips `accepted_divergences` — `packages/create-agentic-dev/src/prepare.ts` → `resetGitStrategyMeta`); `chosen` = Strategy Setup actually ran. On `inherited` (or a `null` strategy), `git-flow-master` OFFERS "Strategy Setup" on the first git intent and fills the block (it never auto-picks). `project.yaml` is frozen by `bun run update` (updater `bootstrapOnlyPaths`), so every project keeps its own strategy.
 
-This repository (the boilerplate itself) ships `git_strategy.strategy: null`; with a single `main` branch, `git-flow-master` operates as **`solo-main`** (single maintainer, commit + push directly to `main`). To pin it explicitly: ask git-flow-master to "set up our git strategy".
+This repository (the boilerplate itself) runs `git_strategy.strategy: solo-main` with `meta.strategy_source: chosen` (2026-08-21): single maintainer, commit + push directly to `main` under standing authorization — see the block's `description` in `.agents/project.yaml`.
 
-**Accepted policy divergence (this repo only)**: `git-flow-master` Step 1b reconciles the declared `git_strategy.policy` against the host and will find a mismatch here: a GitHub **ruleset** on `main` requires a pull request with an approving review (the classic `branches/main/protection` endpoint returns `404`, so only the `rules/branches/main` endpoint reveals it), while the declared policy says `require_pr_reviews: 0` / `direct_push_to_protected: allowed`. **This divergence is intended and stays as-is.** This repo is the template origin: single maintainer, no second reviewer, and every push to `main` is a release of the template, so the review requirement would be ceremony. Direct pushes here go through the maintainer's ruleset bypass, deliberately.
+**Accepted policy divergence (this repo only)**: a GitHub **ruleset** on `main` requires a pull request with 1 approving review (`policy.require_pr_reviews: 1`, VERIFIED 2026-08-21 against ruleset 16809536; the classic `branches/main/protection` endpoint returns `404`, so only the `rules/branches/main` endpoint reveals it), while `policy.direct_push_to_protected: allowed` describes how work actually lands: the maintainer's admin credential is on the ruleset's bypass list and pushes `main` directly — every push here is a release of the template, so PR ceremony would protect nothing. **Both sides are correct on purpose**: the divergence is formally recorded in `policy.accepted_divergences` (`main.direct_push_to_protected`, accepted 2026-08-21) with `meta.policy_source: accepted` / `meta.policy_verified: 2026-08-21`, and `bun run git:policy verify` treats a listed divergence as ACCEPTED, not drift.
 
-This exception belongs to THIS repository and travels nowhere: `CLAUDE.md` is never synced by `bun run update` (the updater only nudges about upstream drift), and `.agents/project.yaml` ships as a template with `policy_verified: null` / `policy_source: declared`. **A project scaffolded from this boilerplate defines its own answer during setup**, no approvals, one, two, protections or none: and `git-flow-master` reports what THAT host enforces. Never carry this repo's exception into a downstream project, and never infer a bypass is acceptable from the fact that a push succeeded.
+This exception belongs to THIS repository and travels nowhere: `CLAUDE.md` is never synced by `bun run update` (the updater only nudges about upstream drift), and the scaffolder resets every provenance stamp in a fresh project (above). **A project scaffolded from this boilerplate defines its own answer during setup**, no approvals, one, two, protections or none: and `git-flow-master` reports what THAT host enforces. Never carry this repo's exception into a downstream project, and never infer a bypass is acceptable from the fact that a push succeeded.
 
 ---
 

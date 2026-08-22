@@ -149,3 +149,17 @@ dbhub.local.toml
 # matches it, but this guards against future blanket *.lock or skills.* rules.
 !skills.lock.json
 !**/skills.lock.json
+
+# ===== PBI: Jira-backed cache (Jira is the source of truth) =====
+# `.context/PBI/` mirrors Jira. `bun run context:hydrate` rebuilds it from
+# scratch, so committing it only produces merge conflicts between sessions that
+# re-synced at different times. Ignore the whole tree, then re-include the two
+# things Jira does NOT own (README + templates).
+#
+# Git cannot re-include a file whose parent directory is excluded, so the tree
+# is excluded with `/*` (contents, not the directory itself) and the keepers are
+# negated right after. Story-level context.md / progress.md / evidence/ are
+# deliberately [LOCAL] and NOT negated — they stay on local disk only.
+.context/PBI/*
+!.context/PBI/README.md
+!.context/PBI/templates/
