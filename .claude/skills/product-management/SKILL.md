@@ -39,6 +39,17 @@ Use this skill whenever you are doing backlog or refinement work after the found
 
 The skill is reference-driven: each workflow points to a specific reference file with the exact protocol.
 
+**This skill does NOT own design, and must not wait for one.** A story is written, refined and made
+ready without any mockup existing. Screens are produced later, per story, at the moment development
+picks the story up — `/sprint-development`'s design gate routes to `/design-system`'s screen phase
+then. Do not defer, block or downgrade a story because its screen has not been drawn.
+
+What a UI-touching story DOES owe at creation, where the host project keeps a master design plan, is
+its **§8 US→Screen row** — one line naming which screen the story renders into, or naming explicitly
+that no mockup covers it yet (`🔒 mockup-gated`). That row is cheap, it is what the design gate reads
+later, and a story created without one arrives at development already out of compliance. The row is
+not a mockup and writing it is not designing.
+
 ## Pre-requisites
 
 - `/project-foundation` should have produced `.context/PRD/` and `.context/SRS/` (required for the initial backlog-seed workflow; useful context for all others)
