@@ -169,6 +169,16 @@ Then `bun run setup:doctor --json` to confirm the rest.
 
 ---
 
+## Git strategy setup (agent-driven, before your first push)
+
+The scaffold ships a **default** git strategy (`solo-main`) with `meta.strategy_source: inherited` in `.agents/project.yaml` — a placeholder nobody chose for YOUR project (`packages/create-agentic-dev/src/prepare.ts` resets the provenance stamps on scaffold). Defining it is an explicit step, not an inherited fact: once your project identity is filled in, ask your AI agent:
+
+> **"set up our git strategy"**
+
+That runs git-flow-master's Strategy Setup: it resolves your branching flow (solo-main / main-integration / trunk-based / others), asks the merge + hotfix + protection-policy questions, materializes any long-lived branches, and writes the `git_strategy:` block with `strategy_source: chosen`. Until you do this, the agent will OFFER Strategy Setup on your first git intent — that offer is the signal that this setup is pending, not a bug. At any point, `bun run git:policy verify` reconciles the declared policy against the host's actual branch ruleset (and `apply` writes it — dry run until `--yes`).
+
+---
+
 ## Optional UX upgrades
 
 Two community tools that the closing summary recommends. Both are **user-level** (not installed by `bun run setup`) because they modify your global environment, not this repo. They are recommended, not required.
