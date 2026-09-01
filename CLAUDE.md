@@ -163,6 +163,7 @@ Example (same work, different register):
 | Git / PR work                               | any git intent                                                                                  | `/git-flow-master` (auto)                          | `git status`, `git log`                                         | `git` + `gh`                                 |
 | Browser action                              | "screenshot", "trace", "record"                                                                 | `/playwright-cli`                                  |:                                                               | Playwright CLI                               |
 | Jira operation                              | "Jira issue", "transition story"                                                                | `/acli`                                            | `.agents/jira-required.yaml`, `.agents/jira-fields.json`        | CLI                                          |
+| Jira admin (components / instance move)     | "sync jira components", "cambió la URL de Jira", "repoint jira"                                | `/jira-administration` (one mode per run)          | `.agents/project.yaml`, `.agents/jira-required.yaml`, `.agents/jira-*.json` | `scripts/sync-jira-components.ts` + `jira:sync-*` |
 
 **Key paths**:
 
@@ -198,6 +199,7 @@ Example (same work, different register):
 | `unit-testing`        | `/unit-testing`               | TDD red-green-refactor, mocking, coverage. Composable with `/sprint-development`.                                                                                                                                                                                                      |
 | `autonomous-delivery` | `/autonomous-delivery`        | Scheduled / unattended delivery runs (no human on the line). Phases: Lock → Audit (git is truth, tracker is a hint) → Select genuinely unblocked work → Execute via owning pipeline skill → Close + report. Modes: `story` (1 per run), `bug` (up to 3, sequential), `discovery` (backlog only, never writes code). |
 | `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy, and keeps it in parity with the host ruleset via `bun run git:policy` (verify / apply).                                                                                                                                       |
+| `jira-administration` | `/jira-components` · `/jira-instance-migration` | Bounded Jira ADMIN workflows, one mode per run: `components` (reconcile a project's Components against the app's real modules, plan-first) or `instance-migration` (repoint the Atlassian host + regenerate the `.agents/` catalogs). Both sealed behind read-first analysis and explicit approval before any Jira / credential-session / repo mutation. |
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
 | `vercel-cli`          | (auto on `vercel` Bash calls) | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env var sync (`.env` ↔ Preview/Production scopes), build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel`.                                          |
 
@@ -209,7 +211,7 @@ Example (same work, different register):
 >
 > Layout convention: T1 repo skills → `.claude/skills/<slug>/` (committed source). T3/T4 community skills installed via `bunx skills add` → `.agents/skills/<slug>/` (gitignored, default CLI behavior).
 
-### Slash commands (utilities, 7)
+### Slash commands (utilities, 8)
 
 | Command                       | Purpose                                                                                        |
 | ----------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -219,7 +221,8 @@ Example (same work, different register):
 | `/business-api-map`           | Refresh `.context/business/business-api-map.md` (auth model, endpoints, architecture).         |
 | `/master-implementation-plan` | Refresh `.context/master-implementation-plan.md` (prioritized feature roadmap: EPIC/strategy).|
 | `/dev-roadmap`                | Refresh `.context/dev-roadmap.md` (ticket-level dependency execution roadmap: TICKET/sequence; subsumes the Kahn execution-sprint sort). |
-| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + machine-global `acli` session) and regenerate the `.agents/` catalogs the migration invalidated. Takes source + target instance as arguments; asks for whatever is missing. |
+| `/jira-instance-migration`    | Thin shim → skill `jira-administration` mode `instance-migration`. Repoint the repo at a new Atlassian instance (`.agents/project.yaml` + machine-global `acli` session) and regenerate the `.agents/` catalogs the migration invalidated. Takes source + target instance as arguments; asks for whatever is missing. |
+| `/jira-components`            | Thin shim → skill `jira-administration` mode `components`. Reconcile a Jira project's Components against the app's real functional modules, plan-first (`scripts/sync-jira-components.ts`, dry run by default, `--apply` only after explicit approval). |
 
 ### MCPs (configured in `.mcp.json`)
 

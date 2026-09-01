@@ -354,7 +354,8 @@ Validation: `bun run skills:check` checks tier coherence (orphan categories, tie
 | `/business-api-map`           | Generate or update `.context/business/business-api-map.md`                                        |
 | `/master-implementation-plan` | Generate or update `.context/master-implementation-plan.md` (EPIC/strategy roadmap)               |
 | `/dev-roadmap`                | Generate or update `.context/dev-roadmap.md` (TICKET/sequence: dependency edges + execution sprints + mockup-gates; subsumes `sprint-sequence.md`) |
-| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.env` + `.agents/project.yaml` + `acli` session) and regenerate the `.agents/` catalogs             |
+| `/jira-instance-migration`    | Repoint the repo at a new Atlassian instance (`.agents/project.yaml` + `acli` session) and regenerate the `.agents/` catalogs                      |
+| `/jira-components`            | Reconcile a Jira project's Components against the app's real functional modules, plan-first with explicit approval                                  |
 
 <br />
 
