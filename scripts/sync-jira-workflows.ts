@@ -105,12 +105,21 @@ const PROJECT_YAML_PATH = join(REPO_ROOT, '.agents', 'project.yaml');
  * theirs. The local project_key + jira-required.yaml are bypassed when --upex
  * is set (the upstream JSON has already been filtered by the reference repo).
  *
- * Hardcoded per-repo (QA vs DEV) so the update path is trivial:
- * `bun up` re-syncs this script from upstream and the URL travels with it.
+ * Points at agentic-qa-boilerplate, NOT at this repo. The workflow catalog
+ * describes the shared Jira instance, and both boilerplates declare the same
+ * 14 work types with the same slugs, so there is exactly one correct file and
+ * it should have exactly one home. Sourcing it per-repo is what let this repo
+ * ship 71-era status ids for a day after the QA side had already been
+ * corrected: two copies of one truth drift the moment only one of them is
+ * refreshed. The QA side owns it because that is where the catalogs are
+ * verified (`jira:check --live`, which this repo does not have yet).
+ *
+ * `jira-link-types.json` is deliberately NOT sourced this way — see the
+ * constant in sync-jira-link-types.ts.
  *
  * Pinned to `main` so `--upex` always means "current UPEX standard".
  */
-const UPEX_UPSTREAM_URL = 'https://raw.githubusercontent.com/upex-galaxy/agentic-dev-boilerplate/main/.agents/jira-workflows.json';
+const UPEX_UPSTREAM_URL = 'https://raw.githubusercontent.com/upex-galaxy/agentic-qa-boilerplate/main/.agents/jira-workflows.json';
 
 /**
  * Stderr marker the installer (`cli/install.ts` Phase 5) parses to register
