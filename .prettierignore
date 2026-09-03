@@ -58,13 +58,14 @@ Thumbs.db
 # ===========================================
 # Skill directories - never format
 # ===========================================
-# Skills (T1 in .claude/skills/, T3/T4 community in .agents/skills/) ship as-is.
-# Prettier must NOT touch their .md / .json / .yaml — frontmatter, fenced code,
-# and example blocks rely on exact whitespace that Prettier would normalize.
-.claude/skills/
+# Skills (T1 + T3 in the canonical .agents/skills/ store) ship as-is. Prettier
+# must NOT touch their .md / .json / .yaml — frontmatter, fenced code, and
+# example blocks rely on exact whitespace that Prettier would normalize.
+# `.claude/skills` needs no entry of its own: it is a generated symlink/junction
+# onto this same tree, and prettier does not follow it.
 .agents/skills/
 # Published deck HTMLs (single-file artifacts whose embedded markup prettier
-# cannot always parse — same rationale as .claude/skills/). Boilerplate-only:
+# cannot always parse — same rationale as .agents/skills/). Boilerplate-only:
 # `packages/` is pruned by the scaffolder, so in a consumer project this line is
 # inert, and harmless if that project ever adds its own decks. Scoped to
 # packages/decks/, NOT all of packages/ — other package sources are hand-authored

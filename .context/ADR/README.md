@@ -53,7 +53,7 @@ Proposed ──→ Accepted ──→ Superseded   (by ADR-NNNN, which links bac
 3. Add a row to the **Index** below.
 4. If it supersedes an existing ADR, wire both directions (`Supersedes` / `Superseded by`) and flip the old one's `Status`.
 
-Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes both gates). Either way, the human approves before `Status: Accepted`. The detection + authoring procedure for AI workflows lives in `.claude/skills/agentic-dev-core/references/adr-doctrine.md`.
+Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes both gates). Either way, the human approves before `Status: Accepted`. The detection + authoring procedure for AI workflows lives in `.agents/skills/agentic-dev-core/references/adr-doctrine.md`.
 
 ---
 
@@ -61,15 +61,17 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 
 | ADR | Title | Status | Supersedes | Superseded by |
 | --- | ----- | ------ | ---------- | ------------- |
-| _— none yet —_ | The first ADR is usually seeded during `/project-foundation` (SRS architecture) or the first `/sprint-development` story that forces a hard-to-reverse decision. | | | |
+| [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted | — | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
+>
+> ADR-0002 is a decision about the boilerplate itself, numbered to match the sibling `agentic-qa-boilerplate` record of the same decision; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
 
 ---
 
 ## References
 
 - Template: [`ADR-NNNN-template.md`](./ADR-NNNN-template.md)
-- AI detection + authoring doctrine: `.claude/skills/agentic-dev-core/references/adr-doctrine.md`
+- AI detection + authoring doctrine: `.agents/skills/agentic-dev-core/references/adr-doctrine.md`
 - Where this folder sits in the bigger map: `.context/README.md` and root `CONTEXT.md` §6
 - Decisions about _the framework itself_ (why the repo is structured this way) live in `CONTEXT.md` §6, not here. This folder is for decisions about **the product you are building** with the boilerplate.

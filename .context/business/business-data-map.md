@@ -10,4 +10,4 @@ This file is the canonical **visual + narrative map** of the system under develo
 
 Once generated, this file replaces the placeholder with the full structure: executive summary, entity map, business flows, state machines, automatic processes (DB triggers / cron / webhooks), and external integrations. Treat the populated version as the **most valuable context file in the repo** for downstream planning.
 
-See `.claude/commands/business-data-map.md` for the exact output contract.
+See `.agents/skills/project-context/references/data.md` for the exact output contract.

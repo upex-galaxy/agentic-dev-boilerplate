@@ -10,4 +10,4 @@ This file is the canonical **feature-centric inventory** of the system — every
 
 Once generated, this file replaces the placeholder with: feature identification + status/maturity (Stable / Beta / Planned / WIP / Deprecated), CRUD matrix per entity, API endpoint inventory grouped by domain, UI component / page inventory, third-party integrations, feature flags + WIP signals, and discovery gaps.
 
-See `.claude/commands/business-feature-map.md` for the exact output contract.
+See `.agents/skills/project-context/references/features.md` for the exact output contract.

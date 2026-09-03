@@ -38,8 +38,8 @@ jobs:
           mkdir -p _site/decks
           touch _site/.nojekyll
 
-          # Homepage dashboard
-          cp packages/pages-home/index.html _site/index.html
+          # Homepage dashboard + standalone pages (multi-harness walkthrough)
+          cp packages/pages-home/*.html _site/
 
           # Decks: every HTML deck in packages/decks/<skill>/ -> /decks/<skill>/
           cp -R packages/decks/. _site/decks/

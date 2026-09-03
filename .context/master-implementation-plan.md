@@ -11,4 +11,4 @@ This file is the canonical high-level dev roadmap for this repo — the macro vi
 
 Once generated, this file replaces the placeholder with the full structure: Executive value/priority map, per-Master-Sprint implementation rationale, feature dependency cascade, hidden feature → feature couplings, external integrations roadmap, edge implementation cases, pre-ship checklist, out-of-scope boundaries, and implementation gaps.
 
-See `.claude/commands/master-implementation-plan.md` for the exact output contract and the prioritization heuristics (user value × urgency × blocking factor).
+See `.agents/skills/project-context/references/master-plan.md` for the exact output contract and the prioritization heuristics (user value × urgency × blocking factor).

@@ -10,4 +10,4 @@ This file is the canonical **ticket-level dependency execution roadmap** for thi
 
 Once generated, this file replaces the placeholder with the full structure: authority split (§1), epic backbone (§2), story dependency graph (§3), execution sprints (§4 — Kahn topological sort), mockup-gate registry (§5), a live-status query recipe (§6 — status is never frozen here), and the maintenance protocol (§7).
 
-See `.claude/commands/dev-roadmap.md` for the exact output contract, the surgical-merge UPDATE rules (regenerate §4, preserve hand-authored §2/§3/§5/§6), and the subsumption note for `sprint-sequence.md`.
+See `.agents/skills/project-context/references/dev-roadmap.md` for the exact output contract, the surgical-merge UPDATE rules (regenerate §4, preserve hand-authored §2/§3/§5/§6), and the subsumption note for `sprint-sequence.md`.
