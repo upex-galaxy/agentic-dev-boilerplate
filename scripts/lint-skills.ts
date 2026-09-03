@@ -487,14 +487,14 @@ function checkSessionScopes(): void {
 
 const PRODUCT_MANAGEMENT_DIR = join(SKILLS_DIR, 'product-management');
 const MASTER_PLAN_DOCS = [
-  join(REPO_ROOT, '.claude/commands/master-implementation-plan.md'),
+  join(SKILLS_DIR, 'project-context/references/master-plan.md'),
   join(REPO_ROOT, '.context/master-implementation-plan.md'),
 ];
 
 /**
  * Resolves a file path under `.agents/skills/` to its owning skill slug
  * (immediate child directory of SKILLS_DIR). Returns null when the file
- * sits outside any skill (e.g. a master-implementation-plan command doc).
+ * sits outside any skill (e.g. `.context/master-implementation-plan.md`).
  */
 function skillSlugForFile(file: string): string | null {
   // Normalize separators before comparing. `SKILLS_DIR` and `file` are built with

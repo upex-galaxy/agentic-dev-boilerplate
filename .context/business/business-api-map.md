@@ -10,4 +10,4 @@ This file is the canonical **business-first map of how the API powers user journ
 
 Once generated, this file replaces the placeholder with: permission and auth model (tiers, token flow, where enforcement lives), critical business journeys traced as API call chains, the architecture behind the API (services, persistence, boundaries), and external integrations at the API boundary.
 
-See `.claude/commands/business-api-map.md` for the exact output contract.
+See `.agents/skills/project-context/references/api.md` for the exact output contract.

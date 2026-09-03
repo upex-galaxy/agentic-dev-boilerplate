@@ -8,7 +8,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture
 
 ## How `project-foundation` uses this
 
-- Skill orchestrator hands off to the `/business-api-map` command (see `.claude/commands/business-api-map.md`).
+- Skill orchestrator hands off to skill `project-context` mode `api` (alias `/business-api-map`; see `.agents/skills/project-context/references/api.md`).
 - Command output: `.context/business/business-api-map.md` (auth model, critical journeys, architecture-behind-the-API, external integrations).
 - The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
 
@@ -26,4 +26,4 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture
 
 ---
 
-**Full playbook**: `.claude/commands/business-api-map.md`
+**Full playbook**: `.agents/skills/project-context/references/api.md`

@@ -8,7 +8,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-ma
 
 ## How `project-foundation` uses this
 
-- Skill orchestrator hands off to the `/business-data-map` command (see `.claude/commands/business-data-map.md`).
+- Skill orchestrator hands off to skill `project-context` mode `data` (alias `/business-data-map`; see `.agents/skills/project-context/references/data.md`).
 - Command output: `.context/business/business-data-map.md` (entities, business flows, state machines, automatic processes, external integrations).
 - The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
 
@@ -25,7 +25,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-ma
 
 ## Why this is a pointer, not the playbook
 
-Keeping the playbook in one place (`.claude/commands/business-data-map.md`) means:
+Keeping the playbook in one place (`.agents/skills/project-context/references/data.md`) means:
 
 - `/sprint-development`, `/sync-ai-memory`, and ad-hoc discovery all share the same generator.
 - Changes to entity-mapping heuristics happen in one file.
@@ -33,4 +33,4 @@ Keeping the playbook in one place (`.claude/commands/business-data-map.md`) mean
 
 ---
 
-**Full playbook**: `.claude/commands/business-data-map.md`
+**Full playbook**: `.agents/skills/project-context/references/data.md`
