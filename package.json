@@ -7,6 +7,8 @@
   "license": "ISC",
   "keywords": [],
   "scripts": {
+    "agents:compat": "bun scripts/agent-compatibility.ts",
+    "agents:compat:check": "bun scripts/agent-compatibility.ts --check",
     "agents:setup": "bun scripts/agents-setup.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
     "claude": "dotenv -o -e .env -- claude",
@@ -32,7 +34,7 @@
     "skills:check": "bun scripts/lint-skills.ts",
     "skills:registry:check": "bun scripts/build-skill-registry.ts --check",
     "skills:registry": "bun scripts/build-skill-registry.ts",
-    "test": "bun test cli/lib/ scripts/ && bun test --cwd .claude/skills/acli/scripts",
+    "test": "bun test cli/lib/ scripts/ && bun test --cwd .agents/skills/acli/scripts",
     "types:check": "tsc --noEmit",
     "up": "bun cli/update-boilerplate.ts",
     "vars:check": "bun scripts/lint-vars.ts",

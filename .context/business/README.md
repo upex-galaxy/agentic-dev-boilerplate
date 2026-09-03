@@ -27,6 +27,6 @@ All "understand the business" outputs live here. Two layers in one folder:
 
 ## Skill references that drive generation
 
-- `.claude/skills/project-foundation/references/constitution-business-model.md`
-- `.claude/skills/project-foundation/references/constitution-market-context.md`
+- `.agents/skills/project-foundation/references/constitution-business-model.md`
+- `.agents/skills/project-foundation/references/constitution-market-context.md`
 - `.claude/commands/business-data-map.md` · `business-feature-map.md` · `business-api-map.md`

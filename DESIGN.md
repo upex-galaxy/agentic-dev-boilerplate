@@ -64,4 +64,4 @@ If DESIGN.md is still a stub when one of these consumers runs, they should promp
 - `CLAUDE.md` — operational AI memory and skill registry.
 - `CONTEXT.md` — Context Engineering applied in this repo (root-level canonical reference).
 - `.context/` — Context Engineering hierarchy (PRD, SRS, business maps, PBI).
-- `.claude/skills/design-system/SKILL.md` — the skill that regenerates this file.
+- `.agents/skills/design-system/SKILL.md` — the skill that regenerates this file.
