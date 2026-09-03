@@ -29,4 +29,4 @@ All "understand the business" outputs live here. Two layers in one folder:
 
 - `.agents/skills/project-foundation/references/constitution-business-model.md`
 - `.agents/skills/project-foundation/references/constitution-market-context.md`
-- `.claude/commands/business-data-map.md` · `business-feature-map.md` · `business-api-map.md`
+- `.agents/skills/project-context/references/data.md` · `features.md` · `api.md` (modes of the `project-context` skill, invoked through the `/business-*-map` aliases)

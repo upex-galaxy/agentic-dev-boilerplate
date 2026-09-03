@@ -10,7 +10,7 @@ shape (same README structure, same publish mechanism). This repo's decks are a
 QA repo's dark GitHub theme. See `ROADMAP.md` in this same directory for the
 backlog of decks still to write.
 
-## Why here and not in `.claude/skills/`?
+## Why here and not in `.agents/skills/`?
 
 `packages/` is boilerplate-only: `packages/create-agentic-dev` prunes it wholesale
 (`TEMPLATE_EXCLUDES` in `packages/create-agentic-dev/src/prepare.ts`, entry

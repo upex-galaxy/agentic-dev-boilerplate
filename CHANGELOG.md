@@ -38,6 +38,103 @@ is hardened accordingly.
 
 ## [Unreleased]
 
+### Breaking
+
+**One source, three harnesses** (`refactor(agents)!`, 2026-09-03). The
+boilerplate now runs on Claude Code, OpenCode and Codex (CLI + Desktop) from
+exactly one copy of every instruction and every skill, mirroring the model the
+sibling `agentic-qa-boilerplate` shipped. Decision record:
+`.context/ADR/ADR-0002-multi-harness-single-source.md`.
+
+- **BREAKING: `AGENTS.md` is the canonical AI memory.** `CLAUDE.md` is now a
+  generated one-line shim (`@AGENTS.md` plus a newline) and never holds prose;
+  the compatibility check enforces it byte-for-byte. Every reference to
+  `CLAUDE.md` as the instruction body has been rewritten.
+- **BREAKING: the skill store moved from `.claude/skills/` to
+  `.agents/skills/`.** OpenCode and Codex read it natively; Claude Code reaches
+  it through a generated, gitignored `.claude/skills` alias (POSIX symlink,
+  Windows junction). Project-level community skills (`bunx skills add`) install
+  into the same store. `scripts/lint-skills.ts`, `scripts/build-skill-registry.ts`,
+  the `test` script and the husky globs follow the new path.
+- **BREAKING: slash commands are generated transport aliases.** The six
+  commands that carried a workflow body (`business-data-map`,
+  `business-feature-map`, `business-api-map`, `master-implementation-plan`,
+  `dev-roadmap`, `sync-ai-memory`) now live as skill modes: new skill
+  `project-context` (modes `data`, `features`, `api`, `master-plan`,
+  `dev-roadmap`, `refresh-all`) and new skill `sync-ai-memory`. All eight
+  wrappers under `.claude/commands/` and `.opencode/commands/` are generated
+  from `.agents/compatibility/command-aliases.json`; a wrapper that grows a
+  body fails the check as `contains workflow prose`. Codex has no wrapper layer
+  and invokes the skill plus mode directly.
+- The personality hook is one emitter, `.agents/hooks/personality-reinject.mjs`,
+  with three adapters: `.claude/settings.json` (`UserPromptSubmit`),
+  `.codex/hooks.json` (`UserPromptSubmit`, POSIX + PowerShell command) and
+  `.opencode/plugins/personality-reinject.js`. The former
+  `.claude/hooks/personality-reinject.js` is gone.
+- New Codex adapter `.codex/config.toml` with the same four MCP servers as
+  `.mcp.json` and `opencode.jsonc`. Parity across the three formats is checked
+  semantically on the `.env` variables each server depends on. Codex cannot
+  expand `${VAR}` in `args`, so it reaches `tavily` over HTTP with
+  `bearer_token_env_var` and passes `supabase` env-only auth. `docs/mcp/*.template.*`
+  remain opt-in templates for Gemini CLI and Cursor (no runtime adapter).
+- Commit provenance (Critical Rule #3): the harness session trailer
+  (`Claude-Session:`) is emitted only when the running harness exposes a
+  transcript pointer; OpenCode and Codex sessions omit it. The AI-attribution
+  ban is unchanged on every harness.
+
+### Added
+
+- `bun run agents:compat` regenerates every derived harness artifact (shim,
+  alias, both wrapper sets) and then checks; `bun run agents:compat:check`
+  validates the whole contract (shim bytes, alias target, wrappers byte-for-byte
+  against the manifest, hook adapters, MCP parity). It runs in `repo:check`,
+  unconditionally in pre-push, and in pre-commit when a harness surface is
+  staged. Engine: `cli/lib/agent-compatibility.ts` +
+  `cli/lib/agent-compatibility-contracts.ts`; CLI: `scripts/agent-compatibility.ts`.
+- `bun run codex` dotenv wrapper next to `bun run claude` / `bun run opencode`.
+- Installer: detects Claude Code, OpenCode and Codex (config directory, binary
+  on PATH, or `.codex/config.toml` in the repo), multi-select prompt,
+  `INSTALL_AGENTS=claude-code,opencode,codex` override, hard exit with three
+  docs URLs when none is found, and a compatibility repair (alias + wrappers +
+  verify) at the end of every run.
+- Doctor: reports instructions, alias, wrapper counts per host, the three hook
+  adapters, MCP parity across the three configs, and Codex repository trust as
+  WARN (runtime state no file read can verify).
+- `AGENTS.md` §5.5 "Multi-harness" and Critical Rule #15 ("harness surfaces are
+  generated"); README, CONTEXT, INSTALLER and `docs/README.md` describe the
+  model; Spanish visual walkthrough published at
+  <https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html>
+  (source `packages/pages-home/harnesses.es.html`).
+
+### Changed
+
+- `bun run up` runs a migration preflight before any component sync on a
+  project created before this change: promotes `CLAUDE.md` to `AGENTS.md` and
+  leaves the shim, moves every `.claude/skills/*` skill (project-authored ones
+  included) into `.agents/skills/`, archives name collisions under
+  `.template/pre-agents-migration/`, never deletes, and is idempotent. A shim
+  found without `AGENTS.md` is reported as an orphaned shim with a recovery
+  command. Updater components renamed: `claude` becomes `agent-compatibility`
+  (`.agents/skills`, `.agents/hooks`, `.agents/compatibility`); new
+  `codex-config` (`.codex/`), `commands` (`.claude/commands`,
+  `.opencode/commands`), `agent-root-config` (`.claude/settings.json`,
+  `.opencode/plugins`). `AGENTS.md` joins the never-synced watchlist.
+- Scaffolder `create-agentic-dev` stays harness-neutral; the manifest documents
+  `AGENTS.md`, `.codex/` and `.opencode/`, and `bun run setup` generates the
+  alias after scaffold (nothing generated ships in the tarball).
+
+### Migration — for downstream repos cloned before this change
+
+1. `bun run up` (the preflight above migrates instructions and skills; nothing
+   is deleted).
+2. `bun run agents:compat:check`, then `bun run setup:doctor` to see the
+   per-harness rows.
+3. If you had hand-written a `.claude/commands/*.md` with a body, move that body
+   into a skill under `.agents/skills/` and declare the alias in
+   `.agents/compatibility/command-aliases.json`.
+4. Codex users: mark the repository trusted in Codex, or `.codex/` config and
+   hooks will not load.
+
 ### Fixed
 
 Cross-platform defects across the whole bootstrap path, found by an audit run
