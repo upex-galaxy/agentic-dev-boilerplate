@@ -9,6 +9,11 @@
  * the six files fails `bun run agents:compat:check` instead of surfacing as a
  * harness that silently lost a server or a hook.
  *
+ * The MCP server SET is project-declared: whatever `.mcp.json` lists is what
+ * the other two hosts must list (see PARITY RULE). Only the per-host SHAPE of
+ * the four servers this boilerplate ships is pinned here (`KNOWN_MCP_IDS`), so
+ * a downstream project that drops `n8n` or adds `playwright` still passes.
+ *
  * Import-closed: only Node builtins and `cli/lib` siblings (see the header of
  * `agent-compatibility.ts` for why `cli/` must never import a sibling
  * top-level directory).
@@ -17,7 +22,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
-export const CANONICAL_MCP_IDS = [
+/**
+ * Servers whose per-host shape this boilerplate pins (`EXPECTED_MCP`). The
+ * strict shape check applies to one of these ONLY when the project's
+ * `.mcp.json` declares it; the project may declare any other server, which
+ * then gets the generic cross-host check alone.
+ */
+export const KNOWN_MCP_IDS = [
   'context7',
   'tavily',
   'supabase',
@@ -28,7 +39,7 @@ export const CLAUDE_HOOK_COMMAND = 'node "$CLAUDE_PROJECT_DIR/.agents/hooks/pers
 export const CODEX_HOOK_COMMAND = 'root="$(git rev-parse --show-toplevel)" && node "$root/.agents/hooks/personality-reinject.mjs"';
 export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$root = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node (Join-Path $root \'.agents/hooks/personality-reinject.mjs\')"';
 
-export type McpId = (typeof CANONICAL_MCP_IDS)[number];
+export type KnownMcpId = (typeof KNOWN_MCP_IDS)[number];
 export type McpHost = 'claude' | 'opencode' | 'codex';
 type Transport = 'stdio' | 'http';
 
@@ -63,11 +74,19 @@ interface JsonObject {
 }
 
 /**
- * PARITY RULE. Every host must declare exactly the canonical server set, and
- * for every server the three hosts must agree on `dependsOn` and `literalEnv`
- * (what the server needs from `.env`, what it is told to do). `transport`,
- * `command` and `args` are allowed to differ per host and are pinned per host
- * below, because Codex cannot expand `${VAR}` inside `args`:
+ * PARITY RULE. The canonical server set is whatever the project's `.mcp.json`
+ * declares. `opencode.jsonc` and `.codex/config.toml` must declare exactly that
+ * set (a server missing from one host, or present in one host only, is an
+ * error naming the server and the host), and for every declared server the
+ * three hosts must agree on `dependsOn` and `literalEnv` (what the server needs
+ * from `.env`, what it is told to do). That generic check applies to every
+ * server, known to this boilerplate or not.
+ *
+ * `transport`, `command` and `args` are NOT compared generically, because Codex
+ * cannot expand `${VAR}` inside `args` and a host may legitimately reach the
+ * same server another way. For the four servers this boilerplate ships they
+ * are pinned per host in `EXPECTED_MCP` instead, and that strict shape check
+ * runs only when the project declares the server:
  *
  *   - `tavily`: Claude/OpenCode tunnel through `mcp-remote` with the key in
  *     the URL; Codex connects to the streamable-HTTP endpoint directly with
@@ -122,7 +141,7 @@ function canonical(shape: Pick<NormalizedMcpServer, 'transport'> & Partial<Norma
 
 const server = canonical;
 
-const CLAUDE_AND_OPENCODE: Record<McpId, NormalizedMcpServer> = {
+const CLAUDE_AND_OPENCODE: Record<KnownMcpId, NormalizedMcpServer> = {
   context7: server({ transport: 'stdio', command: 'bunx', args: ['-y', '@upstash/context7-mcp'] }),
   tavily: server({
     transport: 'stdio',
@@ -145,7 +164,7 @@ const CLAUDE_AND_OPENCODE: Record<McpId, NormalizedMcpServer> = {
   }),
 };
 
-export const EXPECTED_MCP: Record<McpHost, Record<McpId, NormalizedMcpServer>> = {
+export const EXPECTED_MCP: Record<McpHost, Record<KnownMcpId, NormalizedMcpServer>> = {
   claude: CLAUDE_AND_OPENCODE,
   opencode: CLAUDE_AND_OPENCODE,
   codex: {
@@ -438,32 +457,64 @@ function describeContract(server: NormalizedMcpServer): string {
   return JSON.stringify({ dependsOn: server.dependsOn, literalEnv: server.literalEnv });
 }
 
+const MCP_CONFIG_FILE: Record<McpHost, string> = {
+  claude: '.mcp.json',
+  opencode: 'opencode.jsonc',
+  codex: '.codex/config.toml',
+};
+
+function isKnownMcpId(id: string): id is KnownMcpId {
+  return (KNOWN_MCP_IDS as readonly string[]).includes(id);
+}
+
+/**
+ * The project's canonical MCP server set: the `mcpServers` keys of `.mcp.json`,
+ * sorted. Throws when the file is missing or malformed; `validateMcpParity`
+ * reports that same failure as an error string.
+ */
+export function declaredMcpIds(root = process.cwd()): string[] {
+  const servers = object(parseJson(join(resolve(root), '.mcp.json')).mcpServers, '.mcp.json mcpServers');
+  return Object.keys(servers).sort();
+}
+
 export function validateMcpParity(root = process.cwd()): string[] {
   const resolvedRoot = resolve(root);
   const errors: string[] = [];
   let configs: Record<McpHost, NormalizedMcpConfig>;
   try {
     configs = {
-      claude: normalizeClaude(parseJson(join(resolvedRoot, '.mcp.json'))),
-      opencode: normalizeOpenCode(parseJsonc(join(resolvedRoot, 'opencode.jsonc'))),
-      codex: normalizeCodex(parseToml(join(resolvedRoot, '.codex', 'config.toml'))),
+      claude: normalizeClaude(parseJson(join(resolvedRoot, MCP_CONFIG_FILE.claude))),
+      opencode: normalizeOpenCode(parseJsonc(join(resolvedRoot, MCP_CONFIG_FILE.opencode))),
+      codex: normalizeCodex(parseToml(join(resolvedRoot, MCP_CONFIG_FILE.codex))),
     };
   }
   catch (error) {
     return [error instanceof Error ? error.message : String(error)];
   }
 
-  const expectedIds = [...CANONICAL_MCP_IDS].sort();
-  const completeHosts: McpHost[] = [];
-  for (const [host, config] of Object.entries(configs) as Array<[McpHost, NormalizedMcpConfig]>) {
-    const actualIds = Object.keys(config).sort();
-    if (JSON.stringify(actualIds) !== JSON.stringify(expectedIds)) {
-      errors.push(`${host} MCP IDs must be exactly: ${CANONICAL_MCP_IDS.join(', ')}; found: ${actualIds.join(', ')}`);
-      continue;
+  // The declaring host defines the set; the other two must match it exactly.
+  const declared = Object.keys(configs.claude).sort();
+  const adapters: McpHost[] = ['opencode', 'codex'];
+  for (const host of adapters) {
+    const actual = new Set(Object.keys(configs[host]));
+    for (const id of declared) {
+      if (!actual.has(id)) {
+        errors.push(`MCP ${id} missing from ${host}: declared in ${MCP_CONFIG_FILE.claude}, absent from ${MCP_CONFIG_FILE[host]}`);
+      }
     }
-    completeHosts.push(host);
-    for (const id of CANONICAL_MCP_IDS) {
+    for (const id of [...actual].sort()) {
+      if (!declared.includes(id)) {
+        errors.push(`MCP ${id} present in ${host} only: declare it in ${MCP_CONFIG_FILE.claude} or remove it from ${MCP_CONFIG_FILE[host]}`);
+      }
+    }
+  }
+
+  // Strict per-host shape, only for the servers this boilerplate knows AND the
+  // project declares (see PARITY RULE).
+  for (const [host, config] of Object.entries(configs) as Array<[McpHost, NormalizedMcpConfig]>) {
+    for (const id of declared) {
       const actual = config[id];
+      if (!actual || !isKnownMcpId(id)) { continue; }
       const expected = EXPECTED_MCP[host][id];
       if (!sameServer(actual, expected)) {
         errors.push(`${host} MCP ${id} mismatch: expected ${describeServer(expected)}, found ${describeServer(actual)}`);
@@ -471,17 +522,16 @@ export function validateMcpParity(root = process.cwd()): string[] {
     }
   }
 
-  // Cross-host contract: same `.env` dependencies and same literal settings per
-  // server, whatever the transport or command each host uses (see PARITY RULE).
-  const [reference, ...others] = completeHosts;
-  if (reference) {
-    for (const id of CANONICAL_MCP_IDS) {
-      const baseline = describeContract(configs[reference][id]);
-      for (const host of others) {
-        const contract = describeContract(configs[host][id]);
-        if (contract !== baseline) {
-          errors.push(`MCP ${id} env contract differs between ${reference} and ${host}: ${baseline} vs ${contract}`);
-        }
+  // Cross-host contract for EVERY declared server: same `.env` dependencies and
+  // same literal settings, whatever the transport or command each host uses.
+  for (const id of declared) {
+    const baseline = describeContract(configs.claude[id]);
+    for (const host of adapters) {
+      const server = configs[host][id];
+      if (!server) { continue; }
+      const contract = describeContract(server);
+      if (contract !== baseline) {
+        errors.push(`MCP ${id} env contract differs between claude and ${host}: ${baseline} vs ${contract}`);
       }
     }
   }

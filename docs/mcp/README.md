@@ -12,7 +12,7 @@ The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/
 | OpenCode            | `opencode.jsonc`     | `{env:VAR}` inside command / environment values     | `bun run opencode`            |
 | Codex CLI + Desktop | `.codex/config.toml` | `env_vars = ["VAR"]` / `bearer_token_env_var` by name | `bun run codex`               |
 
-`bun run agents:compat:check` normalizes the three files into one shape (transport, command, args, url, env vars, enabled) and compares them: a server present in one host only, or depending on a different set of `.env` variables, fails the check (it runs inside `repo:check` and the pre-push hook). Gemini CLI and Cursor have no runtime adapter: they stay template-only below. `.codex/config.toml` is read only in a repository Codex trusts; `bun run setup:doctor` warns about that.
+`bun run agents:compat:check` normalizes the three files into one shape (transport, command, args, url, env vars, enabled) and compares them. The canonical set is whatever `.mcp.json` declares: a server missing from another host, present in one host only, or depending on a different set of `.env` variables, fails the check (it runs inside `repo:check` and the pre-push hook). The four servers above additionally get a strict per-host shape check when declared; a project that declares a different set (say `playwright` instead of `n8n`) passes on the generic check alone. Gemini CLI and Cursor have no runtime adapter: they stay template-only below. `.codex/config.toml` is read only in a repository Codex trusts; `bun run setup:doctor` warns about that.
 
 ## Available Templates
 

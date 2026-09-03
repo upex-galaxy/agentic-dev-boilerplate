@@ -41,7 +41,7 @@ import { homedir } from 'node:os';
 
 import { join, resolve } from 'node:path';
 import {
-  CANONICAL_MCP_IDS,
+  declaredMcpIds,
   validateHookCompatibility,
   validateMcpParity,
 } from './lib/agent-compatibility-contracts.ts';
@@ -429,6 +429,9 @@ export function diagnoseAgentCompatibility(
   let wrappers = { expected: 0, claude: 0, opencode: 0 };
   try { wrappers = commandWrapperCounts(root); }
   catch { /* compatibility.errors already carries the manifest diagnostics */ }
+  let expectedServers = 0;
+  try { expectedServers = declaredMcpIds(root).length; }
+  catch { /* mcpErrors already carries the .mcp.json diagnostics */ }
 
   const hasHookError = (needle: string): boolean => hookErrors.some(error => error.includes(needle));
   const hasMcpError = (needle: string): boolean => mcpErrors.some(error => error.includes(needle));
@@ -460,7 +463,7 @@ export function diagnoseAgentCompatibility(
       ok: hookErrors.length === 0,
     },
     mcp: {
-      expected_servers: CANONICAL_MCP_IDS.length,
+      expected_servers: expectedServers,
       claude: !hasMcpError('.mcp.json'),
       opencode: !hasMcpError('opencode.jsonc'),
       codex: codexConfigExists && !hasMcpError('.codex/config.toml'),

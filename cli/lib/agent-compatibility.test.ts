@@ -8,11 +8,12 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
 import { PersonalityReinject } from '../../.opencode/plugins/personality-reinject.js';
 import {
-  CANONICAL_MCP_IDS,
   CLAUDE_HOOK_COMMAND,
   CODEX_HOOK_COMMAND,
   CODEX_HOOK_COMMAND_WINDOWS,
+  declaredMcpIds,
   EXPECTED_MCP,
+  KNOWN_MCP_IDS,
   stripJsonComments,
   validateHookCompatibility,
   validateMcpParity,
@@ -60,53 +61,56 @@ function copyFromRepo(root: string, relativePath: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Inline fixtures: the SAME four servers this repo ships, spelled per host.
-// Written here rather than copied so the tests describe the contract on their
-// own, whatever the real repo looks like at the moment they run.
+// Inline fixtures: the four servers this repo ships plus `playwright` (a
+// downstream server the contract does not know), spelled per host. Written
+// here rather than copied so the tests describe the contract on their own,
+// whatever the real repo looks like at the moment they run. Each host file is
+// composed from the ids a test declares, so one fixture describes both this
+// boilerplate and a downstream project with a different server set.
 // ---------------------------------------------------------------------------
 
-const MCP_JSON = {
-  mcpServers: {
-    context7: { command: 'bunx', args: ['-y', '@upstash/context7-mcp'] },
-    tavily: {
-      command: 'bunx',
-      args: ['-y', 'mcp-remote', 'https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}'],
-    },
-    supabase: {
-      command: 'bunx',
-      args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', '${SUPABASE_ACCESS_TOKEN}'],
-      env: {
-        SUPABASE_URL: '${NEXT_PUBLIC_SUPABASE_URL}',
-        SUPABASE_ANON_KEY: '${SUPABASE_PUBLISHABLE_KEY}',
-        SUPABASE_SERVICE_ROLE_KEY: '${SUPABASE_SECRET_KEY}',
-      },
-    },
-    n8n: {
-      command: 'npx',
-      args: ['-y', 'n8n-mcp'],
-      env: {
-        MCP_MODE: 'stdio',
-        LOG_LEVEL: 'error',
-        DISABLE_CONSOLE_OUTPUT: 'true',
-        N8N_API_URL: '${N8N_API_URL}',
-        N8N_API_KEY: '${N8N_API_KEY}',
-      },
+/** The set this boilerplate ships (and the strict per-host shapes cover). */
+const BOILERPLATE_IDS = ['context7', 'tavily', 'supabase', 'n8n'];
+/** A downstream set: no `n8n`, plus a server the contract has no shape for. */
+const PROJECT_IDS = ['context7', 'tavily', 'supabase', 'playwright'];
+
+const MCP_SERVERS: Record<string, unknown> = {
+  context7: { command: 'bunx', args: ['-y', '@upstash/context7-mcp'] },
+  tavily: {
+    command: 'bunx',
+    args: ['-y', 'mcp-remote', 'https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}'],
+  },
+  supabase: {
+    command: 'bunx',
+    args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', '${SUPABASE_ACCESS_TOKEN}'],
+    env: {
+      SUPABASE_URL: '${NEXT_PUBLIC_SUPABASE_URL}',
+      SUPABASE_ANON_KEY: '${SUPABASE_PUBLISHABLE_KEY}',
+      SUPABASE_SERVICE_ROLE_KEY: '${SUPABASE_SECRET_KEY}',
     },
   },
+  n8n: {
+    command: 'npx',
+    args: ['-y', 'n8n-mcp'],
+    env: {
+      MCP_MODE: 'stdio',
+      LOG_LEVEL: 'error',
+      DISABLE_CONSOLE_OUTPUT: 'true',
+      N8N_API_URL: '${N8N_API_URL}',
+      N8N_API_KEY: '${N8N_API_KEY}',
+    },
+  },
+  playwright: { command: 'bunx', args: ['@playwright/mcp@latest', '--extension'] },
 };
 
 // Comments and trailing commas on purpose: this is what Prettier writes.
-const OPENCODE_JSONC = `{
-  // OpenCode shared team config
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@warp-dot-dev/opencode-warp"],
-  "mcp": {
-    "context7": {
+const OPENCODE_SERVERS: Record<string, string> = {
+  context7: `    "context7": {
       "type": "local",
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
       "enabled": true,
-    },
-    "tavily": {
+    },`,
+  tavily: `    "tavily": {
       "type": "local",
       "command": [
         "bunx",
@@ -115,8 +119,8 @@ const OPENCODE_JSONC = `{
         "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
       ],
       "enabled": true,
-    },
-    "supabase": {
+    },`,
+  supabase: `    "supabase": {
       "type": "local",
       "command": [
         "bunx",
@@ -131,8 +135,8 @@ const OPENCODE_JSONC = `{
         "SUPABASE_ANON_KEY": "{env:SUPABASE_PUBLISHABLE_KEY}",
         "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SECRET_KEY}",
       },
-    },
-    "n8n": {
+    },`,
+  n8n: `    "n8n": {
       "type": "local",
       "command": ["npx", "-y", "n8n-mcp"],
       "enabled": true,
@@ -143,31 +147,32 @@ const OPENCODE_JSONC = `{
         "N8N_API_URL": "{env:N8N_API_URL}",
         "N8N_API_KEY": "{env:N8N_API_KEY}",
       },
-    },
-  },
-}
-`;
+    },`,
+  playwright: `    "playwright": {
+      "type": "local",
+      "command": ["bunx", "@playwright/mcp@latest", "--extension"],
+      "enabled": true,
+    },`,
+};
 
-const CODEX_TOML = `[shell_environment_policy]
-inherit = "core"
-
-[mcp_servers.context7]
+const CODEX_SERVERS: Record<string, string> = {
+  context7: `[mcp_servers.context7]
 command = "bunx"
 enabled = true
 args = ["-y", "@upstash/context7-mcp"]
-
-[mcp_servers.tavily]
+`,
+  tavily: `[mcp_servers.tavily]
 url = "https://mcp.tavily.com/mcp/"
 bearer_token_env_var = "TAVILY_API_KEY"
 enabled = true
-
-[mcp_servers.supabase]
+`,
+  supabase: `[mcp_servers.supabase]
 command = "bunx"
 enabled = true
 args = ["-y", "@supabase/mcp-server-supabase@latest"]
 env_vars = ["SUPABASE_ACCESS_TOKEN", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]
-
-[mcp_servers.n8n]
+`,
+  n8n: `[mcp_servers.n8n]
 command = "npx"
 enabled = true
 args = ["-y", "n8n-mcp"]
@@ -177,7 +182,37 @@ env_vars = ["N8N_API_URL", "N8N_API_KEY"]
 MCP_MODE = "stdio"
 LOG_LEVEL = "error"
 DISABLE_CONSOLE_OUTPUT = "true"
+`,
+  playwright: `[mcp_servers.playwright]
+command = "bunx"
+enabled = true
+args = ["@playwright/mcp@latest", "--extension"]
+`,
+};
+
+function mcpJson(ids: string[]): string {
+  const mcpServers = Object.fromEntries(ids.map(id => [id, MCP_SERVERS[id]]));
+  return `${JSON.stringify({ mcpServers }, null, 2)}\n`;
+}
+
+function opencodeJsonc(ids: string[]): string {
+  return `{
+  // OpenCode shared team config
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@warp-dot-dev/opencode-warp"],
+  "mcp": {
+${ids.map(id => OPENCODE_SERVERS[id]).join('\n')}
+  },
+}
 `;
+}
+
+function codexToml(ids: string[]): string {
+  return `[shell_environment_policy]
+inherit = "core"
+
+${ids.map(id => CODEX_SERVERS[id]).join('\n')}`;
+}
 
 function hookSettings(command: string, windows?: string): string {
   const hook: Record<string, unknown> = { type: 'command', command, timeout: 5 };
@@ -185,16 +220,16 @@ function hookSettings(command: string, windows?: string): string {
   return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }] } }, null, 2)}\n`;
 }
 
-/** Hook adapters + MCP configs, nothing else. */
-function contractFixture(prefix?: string): string {
+/** Hook adapters + MCP configs (the same `ids` on every host), nothing else. */
+function contractFixture(prefix?: string, ids = BOILERPLATE_IDS): string {
   const root = temporaryRoot(prefix);
   copyFromRepo(root, '.agents/hooks/personality-reinject.mjs');
   copyFromRepo(root, '.opencode/plugins/personality-reinject.js');
   write(root, '.claude/settings.json', hookSettings(CLAUDE_HOOK_COMMAND));
   write(root, '.codex/hooks.json', hookSettings(CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS));
-  write(root, '.mcp.json', `${JSON.stringify(MCP_JSON, null, 2)}\n`);
-  write(root, 'opencode.jsonc', OPENCODE_JSONC);
-  write(root, '.codex/config.toml', CODEX_TOML);
+  write(root, '.mcp.json', mcpJson(ids));
+  write(root, 'opencode.jsonc', opencodeJsonc(ids));
+  write(root, '.codex/config.toml', codexToml(ids));
   return root;
 }
 
@@ -346,18 +381,19 @@ describe('hook adapters', () => {
 
 describe('MCP semantic parity', () => {
   test('the contract itself agrees on .env dependencies across hosts', () => {
-    for (const id of CANONICAL_MCP_IDS) {
+    for (const id of KNOWN_MCP_IDS) {
       expect(EXPECTED_MCP.opencode[id].dependsOn).toEqual(EXPECTED_MCP.claude[id].dependsOn);
       expect(EXPECTED_MCP.codex[id].dependsOn).toEqual(EXPECTED_MCP.claude[id].dependsOn);
       expect(EXPECTED_MCP.codex[id].literalEnv).toEqual(EXPECTED_MCP.claude[id].literalEnv);
     }
   });
 
-  test('accepts the four canonical servers across all harnesses', () => {
+  test('accepts the four boilerplate servers across all harnesses', () => {
     expect(validateMcpParity(contractFixture())).toEqual([]);
   });
 
-  test('the real repository declares the same four servers on every host', () => {
+  test('the real repository declares the same servers on every host', () => {
+    expect(declaredMcpIds(REPO_ROOT)).toEqual([...KNOWN_MCP_IDS].sort());
     expect(validateMcpParity(REPO_ROOT)).toEqual([]);
   });
 
@@ -389,10 +425,12 @@ describe('MCP semantic parity', () => {
     );
     writeFileSync(configPath, config);
 
-    expect(validateMcpParity(root).some(error => error.includes('codex MCP IDs') && error.includes('tavily'))).toBe(true);
+    expect(validateMcpParity(root)).toEqual([
+      'MCP tavily missing from codex: declared in .mcp.json, absent from .codex/config.toml',
+    ]);
   });
 
-  test('reports an MCP ID mismatch', () => {
+  test('reports an MCP ID mismatch on both sides', () => {
     const root = contractFixture();
     const configPath = join(root, '.mcp.json');
     const config = JSON.parse(readFileSync(configPath, 'utf8'));
@@ -400,7 +438,11 @@ describe('MCP semantic parity', () => {
     delete config.mcpServers.context7;
     writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
-    expect(validateMcpParity(root).some(error => error.includes('claude MCP IDs') && error.includes('context8'))).toBe(true);
+    const errors = validateMcpParity(root);
+    expect(errors).toContain('MCP context8 missing from opencode: declared in .mcp.json, absent from opencode.jsonc');
+    expect(errors).toContain('MCP context8 missing from codex: declared in .mcp.json, absent from .codex/config.toml');
+    expect(errors).toContain('MCP context7 present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc');
+    expect(errors).toContain('MCP context7 present in codex only: declare it in .mcp.json or remove it from .codex/config.toml');
   });
 
   test('reports an environment-variable mismatch', () => {
@@ -428,6 +470,67 @@ describe('MCP semantic parity', () => {
     expect(validateMcpParity(root)).toEqual([
       '.codex/config.toml n8n.env cannot reference N8N_API_KEY: Codex does not expand placeholders. Forward the variable through env_vars instead.',
     ]);
+  });
+});
+
+describe('project-declared MCP set', () => {
+  // A downstream project (no `n8n`, plus `playwright`) is the canonical set
+  // for ITS three configs: `.mcp.json` declares, the other two must match.
+
+  test('accepts a project whose set differs from the boilerplate on every host', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    expect(declaredMcpIds(root)).toEqual([...PROJECT_IDS].sort());
+    expect(validateMcpParity(root)).toEqual([]);
+  });
+
+  test('reports a declared server that Codex does not carry', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    write(root, '.codex/config.toml', codexToml(PROJECT_IDS.filter(id => id !== 'playwright')));
+
+    expect(validateMcpParity(root)).toEqual([
+      'MCP playwright missing from codex: declared in .mcp.json, absent from .codex/config.toml',
+    ]);
+  });
+
+  test('reports a server that only OpenCode carries', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    write(root, 'opencode.jsonc', opencodeJsonc([...PROJECT_IDS, 'n8n']));
+
+    expect(validateMcpParity(root)).toEqual([
+      'MCP n8n present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc',
+    ]);
+  });
+
+  test('still pins the per-host shape of a known server the project declares', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    const configPath = join(root, '.codex/config.toml');
+    // Same .env dependencies, different command shape: only the strict check sees it.
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('args = ["-y", "@supabase/mcp-server-supabase@latest"]', 'args = ["-y", "@supabase/mcp-server-supabase@latest", "--read-only"]'));
+
+    const errors = validateMcpParity(root);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toStartWith('codex MCP supabase mismatch: expected ');
+    expect(errors[0]).toContain('--read-only');
+  });
+
+  test('compares the .env contract of an unknown server across hosts', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, `${readFileSync(configPath, 'utf8')}env_vars = ["PLAYWRIGHT_BROWSERS_PATH"]\n`);
+
+    expect(validateMcpParity(root)).toEqual([
+      'MCP playwright env contract differs between claude and codex: {"dependsOn":[],"literalEnv":{}} vs {"dependsOn":["PLAYWRIGHT_BROWSERS_PATH"],"literalEnv":{}}',
+    ]);
+  });
+
+  test('leaves an unknown server alone when its shape differs but its contract matches', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('args = ["@playwright/mcp@latest", "--extension"]', 'args = ["@playwright/mcp@latest"]'));
+
+    expect(validateMcpParity(root)).toEqual([]);
   });
 });
 
