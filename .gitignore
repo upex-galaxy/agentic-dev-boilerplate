@@ -135,6 +135,12 @@ dbhub.local.toml
 # `.template/upstream-sha/` is the same idea generalized: one marker per entry
 # of PROTECTED_WATCHLIST, written by the protected-file drift hook.
 .template/upstream-sha/
+# `.template/pre-agents-migration/` is GITIGNORED (per-dev safety copy written
+# once by the cross-harness preflight in `bun run up`: the project's original
+# CLAUDE.md, the legacy .claude/hooks/ copy, plus any legacy skill whose name
+# .agents/skills already owned. Local recovery material, never repo content:
+# review it, then delete it).
+.template/pre-agents-migration/
 
 # ===== Auto-generated AI prompts (single-use, written by bun run update) =====
 /.agents/prompts/
