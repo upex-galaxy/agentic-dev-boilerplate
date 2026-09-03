@@ -27,7 +27,7 @@ import {
   PROJECT_SKILL_DESTINATION,
   repairRepositoryCompatibility,
 } from './install.ts';
-import { CANONICAL_MCP_IDS } from './lib/agent-compatibility-contracts.ts';
+import { declaredMcpIds } from './lib/agent-compatibility-contracts.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM, claudeSkillsAliasPlan, repairClaudeSkillsAlias } from './lib/agent-compatibility.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
@@ -301,7 +301,7 @@ describe('doctor diagnosis', () => {
     });
     expect(diagnostic.hooks).toEqual({ claude: true, opencode: true, codex: true, ok: true });
     expect(diagnostic.mcp).toEqual({
-      expected_servers: CANONICAL_MCP_IDS.length,
+      expected_servers: declaredMcpIds(root).length,
       claude: true,
       opencode: true,
       codex: true,
