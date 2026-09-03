@@ -2,7 +2,7 @@
   "name": "agentic-dev-boilerplate",
   "type": "module",
   "version": "1.0.0",
-  "description": "",
+  "description": "Agentic development boilerplate built on Next.js + Supabase + Vercel + TypeScript. Skills-based AI workflows for the full delivery lifecycle: product foundation, design system, bootstrap, backlog, sprint development, and delivery. One instruction body and one skill store, consumed by Claude Code, OpenCode, and Codex.",
   "author": "",
   "license": "ISC",
   "keywords": [],
