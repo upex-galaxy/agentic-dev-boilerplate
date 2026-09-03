@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Una fuente, tres harnesses</title>
+    <meta
+      name="description"
+      content="Cómo agentic-dev-boilerplate corre en Claude Code, OpenCode y Codex desde una sola fuente, qué se implementó en este release y qué paridad tiene con agentic-qa-boilerplate."
+    />
+    <style>
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --surface-2: #1c2230;
+        --text-1: #e6edf3;
+        --text-2: #9aa6b2;
+        --text-3: #6e7681;
+        --border: rgba(139, 148, 158, 0.22);
+        --border-strong: rgba(139, 148, 158, 0.44);
+        --good: #3fb950;
+        --good-bg: rgba(63, 185, 80, 0.12);
+        --warn: #d29922;
+        --warn-bg: rgba(210, 153, 34, 0.12);
+        --bad: #ff7b72;
+        --bad-bg: rgba(255, 123, 114, 0.12);
+        --info: #79c0ff;
+        --info-bg: rgba(121, 192, 255, 0.12);
+        --claude: #ffa657;
+        --opencode: #d2a8ff;
+        --codex: #79c0ff;
+        --qa: #56d364;
+        --grad: linear-gradient(120deg, var(--claude), var(--opencode) 52%, var(--codex));
+        --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+        --radius: 14px;
+        color-scheme: dark;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text-1);
+        font-family: var(--font-ui);
+        line-height: 1.62;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--claude);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.84em;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.08em 0.4em;
+        white-space: nowrap;
+      }
+      pre {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        line-height: 1.55;
+        margin: 14px 0;
+      }
+      pre code {
+        background: none;
+        border: 0;
+        padding: 0;
+        white-space: pre;
+        font-size: inherit;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(13, 17, 23, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 0 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .brand strong {
+        font-weight: 800;
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        white-space: nowrap;
+      }
+      .brand span {
+        color: var(--text-3);
+        font-size: 0.78rem;
+        white-space: nowrap;
+      }
+      .header-links {
+        display: flex;
+        gap: 14px;
+      }
+      .header-links a {
+        color: var(--text-2);
+        text-decoration: none;
+        font-size: 0.83rem;
+      }
+      .surfnav {
+        overflow-x: auto;
+        border-top: 1px solid var(--border);
+        scrollbar-width: thin;
+      }
+      .surfnav ul {
+        display: flex;
+        gap: 2px;
+        list-style: none;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      .surfnav a {
+        display: block;
+        white-space: nowrap;
+        text-decoration: none;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        padding: 9px 10px;
+        border-bottom: 2px solid transparent;
+      }
+      .surfnav a:hover {
+        color: var(--text-1);
+      }
+      .hero {
+        padding: 60px 0 34px;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--claude);
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 4px 12px;
+        margin-bottom: 20px;
+      }
+      .hero h1 {
+        font-size: clamp(1.75rem, 5vw, 2.85rem);
+        font-weight: 800;
+        letter-spacing: -0.022em;
+        line-height: 1.12;
+        max-width: 22ch;
+        text-wrap: balance;
+        margin-bottom: 18px;
+      }
+      .hero h1 em {
+        font-style: normal;
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        color: var(--text-2);
+        max-width: 68ch;
+        font-size: 1.02rem;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 28px;
+      }
+      @media (max-width: 900px) {
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 12px;
+      }
+      .stat b {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .stat span {
+        color: var(--text-3);
+        font-size: 0.74rem;
+        font-family: var(--font-mono);
+        letter-spacing: 0.04em;
+      }
+      section {
+        padding: 44px 0;
+        border-top: 1px solid var(--border);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: clamp(1.35rem, 3vw, 1.75rem);
+        font-weight: 800;
+        letter-spacing: -0.018em;
+        line-height: 1.2;
+        margin-bottom: 12px;
+        text-wrap: balance;
+      }
+      h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 26px 0 8px;
+      }
+      p {
+        color: var(--text-2);
+        max-width: 72ch;
+        margin-bottom: 12px;
+      }
+      p strong,
+      li strong {
+        color: var(--text-1);
+      }
+      ul.bullets {
+        list-style: none;
+        margin: 10px 0 16px;
+        max-width: 78ch;
+      }
+      ul.bullets li {
+        color: var(--text-2);
+        padding-left: 18px;
+        position: relative;
+        margin-bottom: 7px;
+      }
+      ul.bullets li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.7em;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--claude);
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        margin: 16px 0 22px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+        min-width: 620px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        background: var(--surface-2);
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td {
+        color: var(--text-2);
+      }
+      td:first-child {
+        color: var(--text-1);
+        font-weight: 600;
+      }
+      .h-claude {
+        color: var(--claude);
+      }
+      .h-opencode {
+        color: var(--opencode);
+      }
+      .h-codex {
+        color: var(--codex);
+      }
+      .h-qa {
+        color: var(--qa);
+      }
+      .pill {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+        border: 1px solid transparent;
+      }
+      .pill.same {
+        color: var(--good);
+        background: var(--good-bg);
+        border-color: rgba(63, 185, 80, 0.35);
+      }
+      .pill.adapted {
+        color: var(--info);
+        background: var(--info-bg);
+        border-color: rgba(121, 192, 255, 0.35);
+      }
+      .pill.diff {
+        color: var(--warn);
+        background: var(--warn-bg);
+        border-color: rgba(210, 153, 34, 0.35);
+      }
+      .pill.gen {
+        color: var(--opencode);
+        background: rgba(210, 168, 255, 0.12);
+        border-color: rgba(210, 168, 255, 0.35);
+      }
+      .pill.ok {
+        color: var(--good);
+        background: var(--good-bg);
+      }
+      .pill.warn {
+        color: var(--warn);
+        background: var(--warn-bg);
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin: 16px 0 8px;
+      }
+      @media (max-width: 800px) {
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 16px 14px;
+      }
+      .card h4 {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+      }
+      .card p,
+      .card li {
+        font-size: 0.86rem;
+        margin-bottom: 6px;
+      }
+      .card ul {
+        list-style: none;
+      }
+      .card li {
+        color: var(--text-2);
+      }
+      .card li code {
+        font-size: 0.78em;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: 1.1fr auto 1fr;
+        gap: 14px;
+        align-items: center;
+        margin: 18px 0;
+      }
+      @media (max-width: 760px) {
+        .flow {
+          grid-template-columns: 1fr;
+        }
+        .flow .arrow {
+          transform: rotate(90deg);
+        }
+      }
+      .flow .arrow {
+        font-family: var(--font-mono);
+        color: var(--text-3);
+        font-size: 1.4rem;
+        text-align: center;
+      }
+      .box {
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        padding: 14px;
+      }
+      .box .t {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 8px;
+      }
+      .box ul {
+        list-style: none;
+      }
+      .box li {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-1);
+        padding: 3px 0;
+      }
+      .box li small {
+        color: var(--text-3);
+        font-family: var(--font-ui);
+        font-size: 0.78rem;
+        margin-left: 6px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 8px 0 14px;
+        font-size: 0.82rem;
+        color: var(--text-2);
+      }
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 30px 0 50px;
+        color: var(--text-3);
+        font-size: 0.82rem;
+      }
+      footer p {
+        color: var(--text-3);
+      }
+      .callout {
+        border-left: 3px solid var(--claude);
+        background: var(--surface);
+        border-radius: 0 10px 10px 0;
+        padding: 12px 16px;
+        margin: 14px 0 18px;
+        max-width: 78ch;
+      }
+      .callout p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap header-row">
+        <a class="brand" href="./index.html">
+          <strong>agentic-dev-boilerplate</strong>
+          <span>multi-harness release</span>
+        </a>
+        <nav class="header-links">
+          <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate">GitHub</a>
+          <a href="https://upex-galaxy.github.io/agentic-qa-boilerplate/harnesses.es.html"
+            >Versión QA</a
+          >
+        </nav>
+      </div>
+      <nav class="surfnav" aria-label="Secciones">
+        <ul>
+          <li><a href="#resumen">Resumen</a></li>
+          <li><a href="#superficies">Superficies</a></li>
+          <li><a href="#generado">Generado</a></li>
+          <li><a href="#comandos">Comandos</a></li>
+          <li><a href="#hook">Hook</a></li>
+          <li><a href="#mcp">MCP</a></li>
+          <li><a href="#ciclo">Setup y update</a></li>
+          <li><a href="#paridad">Paridad con QA</a></li>
+          <li><a href="#verificacion">Verificación</a></li>
+          <li><a href="#limites">Límites</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <div class="wrap hero">
+        <div class="tag">Release · rama saiotest/harness-compatibility</div>
+        <h1>Una fuente de verdad, <em>tres harnesses</em> que la consumen</h1>
+        <p class="lead">
+          Hasta este release el boilerplate de desarrollo solo sabía hablar con Claude Code: las
+          instrucciones vivían en <code>CLAUDE.md</code>, las skills en
+          <code>.claude/skills/</code> y seis slash commands cargaban su workflow entero adentro.
+          Ahora hay exactamente una copia de cada instrucción y de cada skill, y Claude Code,
+          OpenCode y Codex (CLI y Desktop) la leen desde adaptadores delgados que se generan y se
+          verifican. Es el mismo modelo que <span class="h-qa">agentic-qa-boilerplate</span> ya
+          tiene en producción, adaptado a un flujo de desarrollo.
+        </p>
+        <div class="stats">
+          <div class="stat"><b>3</b><span>harnesses</span></div>
+          <div class="stat"><b>1</b><span>cuerpo de instrucciones</span></div>
+          <div class="stat"><b>16</b><span>skills en .agents/skills</span></div>
+          <div class="stat"><b>8 + 8</b><span>wrappers generados</span></div>
+          <div class="stat"><b>4 × 3</b><span>MCP × formatos</span></div>
+          <div class="stat"><b>9</b><span>commits en el PR</span></div>
+        </div>
+      </div>
+
+      <section id="resumen">
+        <div class="wrap">
+          <div class="eyebrow">01 · qué se implementó</div>
+          <h2>Nueve fases, un solo invariante: lo generado nunca se edita a mano</h2>
+          <p>
+            El plan se ejecutó en el orden en que el repo de QA lo hizo: primero el motor de
+            verificación, después la fuente canónica, luego los adaptadores, y al final el updater
+            que migra proyectos viejos y la documentación. Cada fase es un commit convencional en la
+            rama, sin atribución de IA en el mensaje.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fase</th>
+                  <th>Entregable</th>
+                  <th>Archivos clave</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1 + 2 · Fuente canónica</td>
+                  <td>
+                    <code>AGENTS.md</code> es el único cuerpo de instrucciones;
+                    <code>CLAUDE.md</code>
+                    queda en 11 bytes (<code>@AGENTS.md</code>). Las 14 skills se mueven a
+                    <code>.agents/skills/</code>; <code>.claude/skills</code> pasa a ser un alias
+                    generado e ignorado por git. Regla crítica #15 nueva.
+                  </td>
+                  <td>
+                    <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>.agents/skills/</code>,
+                    <code>.gitignore</code>, <code>scripts/lint-skills.ts</code>,
+                    <code>scripts/build-skill-registry.ts</code>, <code>.agents/project.yaml</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>0 · Motor de compatibilidad</td>
+                  <td>
+                    <code>bun run agents:compat</code> repara el alias y regenera wrappers;
+                    <code>--check</code> valida alias, wrappers byte a byte, tres adaptadores de
+                    hook y paridad MCP. Importación cerrada dentro de <code>cli/lib</code>, guardada
+                    por ESLint.
+                  </td>
+                  <td>
+                    <code>cli/lib/agent-compatibility.ts</code>,
+                    <code>cli/lib/agent-compatibility-contracts.ts</code>,
+                    <code>scripts/agent-compatibility.ts</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>4 · Hook</td>
+                  <td>
+                    Un emisor del OUTPUT CONTRACT en <code>.agents/hooks/</code>; Claude y Codex lo
+                    corren como command hook, OpenCode importa la constante desde un plugin.
+                  </td>
+                  <td>
+                    <code>.agents/hooks/personality-reinject.mjs</code>,
+                    <code>.claude/settings.json</code>, <code>.codex/hooks.json</code>,
+                    <code>.opencode/plugins/personality-reinject.js</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>5 · MCP</td>
+                  <td>
+                    <code>.codex/config.toml</code> declara los mismos cuatro servidores que
+                    <code>.mcp.json</code> y <code>opencode.jsonc</code>. La paridad se compara por
+                    las variables de <code>.env</code> de las que depende cada servidor, no por el
+                    texto.
+                  </td>
+                  <td><code>.codex/config.toml</code>, contratos en <code>cli/lib</code></td>
+                </tr>
+                <tr>
+                  <td>3 · Comandos</td>
+                  <td>
+                    Seis cuerpos inline (1.900 líneas) pasan a dos skills nuevas:
+                    <code>project-context</code> (cinco modos) y <code>sync-ai-memory</code>. Los
+                    ocho comandos quedan como aliases de 7 líneas generados desde un manifest.
+                  </td>
+                  <td>
+                    <code>.agents/compatibility/command-aliases.json</code>,
+                    <code>.claude/commands/</code>, <code>.opencode/commands/</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>6 · Installer, doctor, gates</td>
+                  <td>
+                    <code>bun run setup</code> detecta los tres harnesses (<code
+                      >INSTALL_AGENTS</code
+                    >
+                    para forzar); <code>setup:doctor</code> reporta cada superficie y la confianza
+                    del repo en Codex como WARN; <code>agents:compat:check</code> entra en
+                    <code>repo:check</code>, pre-push y pre-commit condicional. Nuevo wrapper
+                    <code>bun run codex</code>.
+                  </td>
+                  <td>
+                    <code>cli/install.ts</code>, <code>cli/doctor.ts</code>,
+                    <code>package.json</code>,
+                    <code>.husky/</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>7 · Updater y scaffolder</td>
+                  <td>
+                    <code>bun run up</code> corre un preflight que promueve <code>CLAUDE.md</code>,
+                    mueve skills legacy, archiva colisiones en
+                    <code>.template/pre-agents-migration/</code> y nunca borra. Componentes
+                    renombrados para el layout nuevo.
+                  </td>
+                  <td>
+                    <code>cli/lib/updater-harness-migration.ts</code>,
+                    <code>cli/update-boilerplate.ts</code>,
+                    <code>packages/create-agentic-dev/</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>8 · Documentación</td>
+                  <td>
+                    README, CONTEXT, INSTALLER, CHANGELOG, <code>docs/**</code>, onboarding y decks
+                    reescritos para el modelo; ADR-0002 registra la decisión; esta página cierra el
+                    release.
+                  </td>
+                  <td><code>.context/ADR/ADR-0002-multi-harness-single-source.md</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="superficies">
+        <div class="wrap">
+          <div class="eyebrow">02 · qué consume cada harness</div>
+          <h2>Cinco superficies, un adaptador por diferencia real</h2>
+          <p>
+            Donde los tres harnesses coinciden no hay adaptador: OpenCode y Codex leen
+            <code>AGENTS.md</code> y <code>.agents/skills/</code> nativamente. Donde difieren de
+            verdad (formato de MCP, API de hooks, si existen slash commands) cada uno mantiene un
+            archivo fino, versionado o generado.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Superficie</th>
+                  <th class="h-claude">Claude Code</th>
+                  <th class="h-opencode">OpenCode</th>
+                  <th class="h-codex">Codex CLI + Desktop</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Instrucciones</td>
+                  <td>
+                    <code>CLAUDE.md</code> → <code>@AGENTS.md</code>
+                    <span class="pill gen">generado</span>
+                  </td>
+                  <td><code>AGENTS.md</code> nativo</td>
+                  <td><code>AGENTS.md</code> nativo</td>
+                </tr>
+                <tr>
+                  <td>Skills</td>
+                  <td><code>.claude/skills</code> alias <span class="pill gen">generado</span></td>
+                  <td><code>.agents/skills/</code> nativo</td>
+                  <td><code>.agents/skills/</code> nativo</td>
+                </tr>
+                <tr>
+                  <td>Comandos</td>
+                  <td><code>.claude/commands/*.md</code> <span class="pill gen">generado</span></td>
+                  <td>
+                    <code>.opencode/commands/*.md</code> <span class="pill gen">generado</span>
+                  </td>
+                  <td>ninguno: se invoca skill + modo</td>
+                </tr>
+                <tr>
+                  <td>Hook</td>
+                  <td><code>.claude/settings.json</code> → UserPromptSubmit</td>
+                  <td><code>.opencode/plugins/personality-reinject.js</code></td>
+                  <td><code>.codex/hooks.json</code> → UserPromptSubmit</td>
+                </tr>
+                <tr>
+                  <td>MCP</td>
+                  <td><code>.mcp.json</code></td>
+                  <td><code>opencode.jsonc</code></td>
+                  <td><code>.codex/config.toml</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <p>
+              <strong>Por qué <code>CLAUDE.md</code> es un include y no un symlink.</strong> Un
+              symlink no sobrevive un checkout en Windows sin permisos de developer. Un archivo de
+              11 bytes sí. El alias de skills, en cambio, es un symlink POSIX o una junction de
+              Windows porque Claude Code no ofrece otra forma de apuntar su descubrimiento de skills
+              a otra carpeta.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="generado">
+        <div class="wrap">
+          <div class="eyebrow">03 · generado contra versionado</div>
+          <h2>Se edita la fuente, se regenera el resto</h2>
+          <div class="flow">
+            <div class="box">
+              <div class="t">Fuente (commiteada)</div>
+              <ul>
+                <li>AGENTS.md</li>
+                <li>.agents/skills/ <small>16 skills + REGISTRY.md</small></li>
+                <li>.agents/compatibility/command-aliases.json</li>
+                <li>.agents/hooks/personality-reinject.mjs</li>
+                <li>.mcp.json · opencode.jsonc · .codex/config.toml</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="box">
+              <div class="t">Salida de bun run agents:compat</div>
+              <ul>
+                <li>CLAUDE.md <small>shim, commiteado</small></li>
+                <li>.claude/skills <small>alias, gitignored</small></li>
+                <li>.claude/commands/*.md <small>8, commiteados</small></li>
+                <li>.opencode/commands/*.md <small>8, commiteados</small></li>
+              </ul>
+            </div>
+          </div>
+          <p>
+            <code>bun run agents:compat:check</code> compara los wrappers byte a byte contra el
+            manifest, exige que <code>CLAUDE.md</code> sea exactamente el shim, verifica que el
+            alias resuelva a la tienda canónica, que los tres adaptadores de hook tengan el comando
+            exacto y que los cuatro MCP existan en los tres formatos. Un wrapper al que alguien le
+            agregue un párrafo falla como <code>contains workflow prose</code>.
+          </p>
+        </div>
+      </section>
+
+      <section id="comandos">
+        <div class="wrap">
+          <div class="eyebrow">04 · comandos</div>
+          <h2>Los slash commands son transporte, no workflow</h2>
+          <p>
+            Antes, cinco comandos de contexto y <code>sync-ai-memory</code> tenían el procedimiento
+            completo adentro del archivo de comando, invisible para cualquier harness que no fuera
+            Claude Code. Ahora el workflow vive en la skill y el comando solo nombra skill, modo y
+            reenvía <code>$ARGUMENTS</code>.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Alias</th>
+                  <th>Skill / modo</th>
+                  <th>Escribe</th>
+                  <th>Mutabilidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>business-data-map</td>
+                  <td><code>project-context</code> / <code>data</code></td>
+                  <td><code>.context/business/business-data-map.md</code></td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>business-feature-map</td>
+                  <td><code>project-context</code> / <code>features</code></td>
+                  <td><code>.context/business/business-feature-map.md</code></td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>business-api-map</td>
+                  <td><code>project-context</code> / <code>api</code></td>
+                  <td><code>.context/business/business-api-map.md</code></td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>master-implementation-plan</td>
+                  <td><code>project-context</code> / <code>master-plan</code></td>
+                  <td><code>.context/master-implementation-plan.md</code></td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>dev-roadmap</td>
+                  <td><code>project-context</code> / <code>dev-roadmap</code></td>
+                  <td><code>.context/dev-roadmap.md</code></td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>sync-ai-memory</td>
+                  <td><code>sync-ai-memory</code> / <code>sync</code></td>
+                  <td>AGENTS.md, README, CONTEXT, INSTALLER, docs/**</td>
+                  <td>local, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>jira-components</td>
+                  <td><code>jira-administration</code> / <code>components</code></td>
+                  <td>Jira</td>
+                  <td>externa, con aprobación</td>
+                </tr>
+                <tr>
+                  <td>jira-instance-migration</td>
+                  <td><code>jira-administration</code> / <code>instance-migration</code></td>
+                  <td>Jira + <code>.agents/</code></td>
+                  <td>externa y local, con aprobación</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <pre><code>---
+description: Generate or refresh the business data and flow map.
+argument-hint: [project-path]
+---
+
+Invoke skill `project-context` in mode `data`.
+Forward `$ARGUMENTS` unchanged.</code></pre>
+          <p>
+            Ese es un wrapper completo. En Codex no existe la capa: el usuario pide "load skill
+            project-context, mode data" y llega al mismo reference.
+          </p>
+        </div>
+      </section>
+
+      <section id="hook">
+        <div class="wrap">
+          <div class="eyebrow">05 · hook</div>
+          <h2>Un emisor, tres adaptadores</h2>
+          <p>
+            El OUTPUT CONTRACT (PM Voice, markdown, bullets butler, sin em dash) se reinyecta en
+            cada prompt como contrapeso al plugin caveman. El texto existe una sola vez en
+            <code>.agents/hooks/personality-reinject.mjs</code>, que exporta la constante y la
+            imprime cuando se ejecuta directo.
+          </p>
+          <div class="grid-3">
+            <div class="card">
+              <h4 class="h-claude">Claude Code</h4>
+              <ul>
+                <li><code>.claude/settings.json</code></li>
+                <li>
+                  UserPromptSubmit →
+                  <code>node "$CLAUDE_PROJECT_DIR/.agents/hooks/personality-reinject.mjs"</code>
+                </li>
+                <li><code>attribution</code> en blanco: el harness no agrega su propio trailer</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 class="h-opencode">OpenCode</h4>
+              <ul>
+                <li><code>.opencode/plugins/personality-reinject.js</code></li>
+                <li>
+                  importa <code>PERSONALITY_CONTRACT</code> y lo agrega a <code>output.system</code>
+                </li>
+                <li>el check falla si el plugin reasigna el system prompt</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 class="h-codex">Codex</h4>
+              <ul>
+                <li><code>.codex/hooks.json</code></li>
+                <li>
+                  UserPromptSubmit con <code>git rev-parse --show-toplevel</code> y variante
+                  <code>commandWindows</code>
+                </li>
+                <li>solo carga en un repo marcado como confiable</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="mcp">
+        <div class="wrap">
+          <div class="eyebrow">06 · mcp</div>
+          <h2>Cuatro servidores, tres formatos, paridad semántica</h2>
+          <p>
+            <code>context7</code>, <code>tavily</code>, <code>supabase</code> y
+            <code>n8n</code> existen en los tres archivos. La comparación normaliza JSON, JSONC y
+            TOML a una forma común y verifica que cada servidor dependa de las mismas variables de
+            <code>.env</code> en cada host. Agregar un servidor a un solo host es un fallo del
+            check.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Servidor</th>
+                  <th class="h-claude">.mcp.json</th>
+                  <th class="h-opencode">opencode.jsonc</th>
+                  <th class="h-codex">.codex/config.toml</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>context7</td>
+                  <td><code>bunx @upstash/context7-mcp</code></td>
+                  <td>igual, <code>command: []</code></td>
+                  <td>igual</td>
+                </tr>
+                <tr>
+                  <td>tavily</td>
+                  <td><code>mcp-remote</code> con <code>${TAVILY_API_KEY}</code> en la URL</td>
+                  <td>igual con <code>{env:TAVILY_API_KEY}</code></td>
+                  <td>HTTP directo + <code>bearer_token_env_var</code></td>
+                </tr>
+                <tr>
+                  <td>supabase</td>
+                  <td><code>--access-token ${SUPABASE_ACCESS_TOKEN}</code> + 3 env</td>
+                  <td>igual</td>
+                  <td>
+                    sin flag: <code>env_vars</code> reenvía <code>SUPABASE_ACCESS_TOKEN</code> y las
+                    3 claves por nombre
+                  </td>
+                </tr>
+                <tr>
+                  <td>n8n</td>
+                  <td><code>npx n8n-mcp</code> + env</td>
+                  <td>igual</td>
+                  <td><code>env_vars</code> + tabla <code>env</code> literal</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <p>
+              <strong>Codex no expande <code>${VAR}</code> dentro de <code>args</code>.</strong> Por
+              eso tavily cambia de transporte y supabase pasa a autenticación por entorno, que es la
+              variable requerida que el paquete registra oficialmente. El contrato codifica esa
+              regla: se compara la dependencia, no el texto del comando, y un placeholder dentro de
+              la tabla <code>env</code> de Codex es un error explícito.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="ciclo">
+        <div class="wrap">
+          <div class="eyebrow">07 · instalación y actualización</div>
+          <h2>Setup, doctor y un updater que no destruye lo anterior</h2>
+          <div class="grid-3">
+            <div class="card">
+              <h4>bun run setup</h4>
+              <ul>
+                <li>
+                  Detecta Claude Code (<code>~/.claude</code>), OpenCode
+                  (<code>~/.config/opencode</code>) y Codex (binario o
+                  <code>.codex/config.toml</code>)
+                </li>
+                <li>
+                  <code>INSTALL_AGENTS=claude-code,opencode,codex</code> para runs no interactivos
+                </li>
+                <li>Termina reparando alias y wrappers</li>
+                <li>
+                  Wrappers <code>bun run claude | opencode | codex</code> cargan <code>.env</code>
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>bun run setup:doctor</h4>
+              <ul>
+                <li>
+                  Filas por superficie: instrucciones, alias, wrappers por host, tres hooks, paridad
+                  MCP × 3
+                </li>
+                <li>Codex: CLI en PATH, config presente</li>
+                <li>
+                  Confianza del repositorio en Codex: WARN, es estado de runtime que ningún archivo
+                  puede probar
+                </li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>bun run up</h4>
+              <ul>
+                <li>Preflight antes de sincronizar cualquier componente</li>
+                <li>
+                  <code>CLAUDE.md</code> real → se promueve a <code>AGENTS.md</code>; shim huérfano
+                  → bloqueo con comando de recuperación
+                </li>
+                <li>
+                  Skills legacy se mueven; colisiones se archivan en
+                  <code>.template/pre-agents-migration/</code>
+                </li>
+                <li>Idempotente; nunca borra</li>
+              </ul>
+            </div>
+          </div>
+          <pre><code>bun run agents:compat         # regenera alias + wrappers, luego verifica
+bun run agents:compat:check   # solo verifica (repo:check, pre-push, pre-commit condicional)
+bun run setup:doctor          # estado por superficie, incluida la confianza en Codex
+bun run up                    # migra un proyecto creado antes de este release</code></pre>
+        </div>
+      </section>
+
+      <section id="paridad">
+        <div class="wrap">
+          <div class="eyebrow">08 · paridad con agentic-qa-boilerplate</div>
+          <h2>Qué es igual, qué se adaptó y qué es distinto a propósito</h2>
+          <p>
+            Los dos boilerplates comparten el modelo y gran parte del código del motor. Difieren
+            donde el flujo de trabajo difiere: QA testea, dev construye. La tabla marca cada
+            preocupación con su estado real después de este release.
+          </p>
+          <div class="legend">
+            <span
+              ><span class="pill same">igual</span> mismo mecanismo y mismo código o contrato</span
+            >
+            <span
+              ><span class="pill adapted">adaptado</span> mismo mecanismo, contenido propio del
+              dev</span
+            >
+            <span><span class="pill diff">distinto</span> decisión deliberada distinta</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Preocupación</th>
+                  <th class="h-qa">agentic-qa-boilerplate</th>
+                  <th>agentic-dev-boilerplate</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Cuerpo de instrucciones</td>
+                  <td><code>AGENTS.md</code> + shim <code>@AGENTS.md</code></td>
+                  <td>idéntico; el cuerpo tiene reglas propias (UI fidelity, orquestación dev)</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Tienda de skills</td>
+                  <td><code>.agents/skills/</code>, 19 skills, alias generado</td>
+                  <td><code>.agents/skills/</code>, 16 skills, alias generado</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Motor <code>agents:compat</code></td>
+                  <td><code>cli/lib/agent-compatibility.ts</code></td>
+                  <td>mismo archivo, byte a byte</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Contratos de hook</td>
+                  <td>tres comandos exactos, sin rutas personales, sin duplicados</td>
+                  <td>idénticos</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Manifest de comandos</td>
+                  <td>10 aliases, hosts claude + opencode</td>
+                  <td>8 aliases, mismos hosts y mismo vocabulario de mutabilidad</td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Skill contenedora de contexto</td>
+                  <td><code>project-context</code>: data, features, api, test-plan</td>
+                  <td>
+                    <code>project-context</code>: data, features, api, master-plan, dev-roadmap
+                  </td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Skill de sincronización de docs</td>
+                  <td><code>sync-ai-context</code></td>
+                  <td>
+                    <code>sync-ai-memory</code> (nombre histórico del comando) con el mismo shim
+                    guard
+                  </td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Servidores MCP</td>
+                  <td>6: context7, tavily, playwright, dbhub, openapi, postman</td>
+                  <td>4: context7, tavily, supabase, n8n</td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Contrato de paridad MCP</td>
+                  <td>una forma esperada por servidor, igual en los tres hosts</td>
+                  <td>
+                    forma esperada por host; compara variables de <code>.env</code> dependientes;
+                    rechaza placeholders en la tabla <code>env</code> de Codex
+                  </td>
+                  <td><span class="pill diff">distinto</span></td>
+                </tr>
+                <tr>
+                  <td>Parser JSONC</td>
+                  <td>quita comentarios</td>
+                  <td>quita comentarios y comas finales (Prettier las escribe aquí)</td>
+                  <td><span class="pill diff">distinto</span></td>
+                </tr>
+                <tr>
+                  <td>Adaptadores de hook</td>
+                  <td><code>.mjs</code> + settings + <code>hooks.json</code> + plugin</td>
+                  <td>copiados verbatim; el contrato cita <code>AGENTS.md §2</code></td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Instalador</td>
+                  <td>detecta 3, <code>INSTALL_AGENTS</code>, repara compat al final</td>
+                  <td>
+                    mismo flujo; los avisos de caveman y engram siguen siendo Claude-only y lo dicen
+                  </td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Doctor</td>
+                  <td><code>diagnoseAgentCompatibility</code> + trust de Codex en WARN</td>
+                  <td>mismo diagnóstico</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Migración del updater</td>
+                  <td>preflight: promover, mover, archivar, nunca borrar</td>
+                  <td>
+                    mismo preflight; además archiva el hook legacy de <code>.claude/hooks/</code>
+                  </td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Gates</td>
+                  <td><code>repo:check</code>, pre-push, pre-commit condicional; kata manifest</td>
+                  <td>
+                    mismos tres puntos; sin kata (aquí hay <code>git:policy verify</code> y
+                    <code>vars:env:check</code>)
+                  </td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Trailer de sesión en commits</td>
+                  <td>ninguno: cero atribución, punto</td>
+                  <td>
+                    <code>Claude-Session:</code> solo cuando el harness expone un transcript;
+                    OpenCode y Codex lo omiten
+                  </td>
+                  <td><span class="pill diff">distinto</span></td>
+                </tr>
+                <tr>
+                  <td>Tests del motor</td>
+                  <td>contratos en <code>cli/lib</code>, ciclo de vida en <code>cli/</code></td>
+                  <td>
+                    motor + contratos en <code>cli/lib/agent-compatibility.test.ts</code> con
+                    fixtures temporales; ciclo de vida y migración en <code>cli/</code>
+                  </td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+                <tr>
+                  <td>Scaffolder</td>
+                  <td><code>create-agentic-qa</code> neutral; el alias lo genera setup</td>
+                  <td>
+                    <code>create-agentic-dev</code> igual; manifest menciona <code>AGENTS.md</code>,
+                    <code>.codex/</code>, <code>.opencode/</code>
+                  </td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Gemini y Cursor</td>
+                  <td>
+                    solo templates en <code>docs/mcp/</code> y <code>compatibility:</code> declarada
+                  </td>
+                  <td>lo mismo</td>
+                  <td><span class="pill same">igual</span></td>
+                </tr>
+                <tr>
+                  <td>Página publicada</td>
+                  <td><code>harnesses.es.html</code> en gh-pages</td>
+                  <td>esta página, misma ruta, con la sección de paridad</td>
+                  <td><span class="pill adapted">adaptado</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Resumen honesto: el mecanismo es el mismo en todas las filas. Las diferencias son de
+            contenido (qué skills, qué MCPs, qué comandos) y dos decisiones deliberadas: el contrato
+            MCP por host, que el dev necesita porque supabase y tavily no se expresan igual en
+            Codex, y el trailer de sesión, que el dev conserva como puntero forense.
+          </p>
+        </div>
+      </section>
+
+      <section id="verificacion">
+        <div class="wrap">
+          <div class="eyebrow">09 · verificación</div>
+          <h2>Lo que se corrió antes de abrir el PR</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Check</th>
+                  <th>Comando</th>
+                  <th>Resultado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Suite completa</td>
+                  <td><code>bun run test</code></td>
+                  <td>
+                    <span class="pill ok">137 + 37 tests, 0 fallos</span> (motor, contratos, ciclo
+                    de vida, migración, scripts, acli)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Gates del repo</td>
+                  <td><code>bun run repo:check</code></td>
+                  <td>
+                    <span class="pill ok">exit 0</span> format, lint, types, vars, vars:env, skills,
+                    registry, agents:compat
+                  </td>
+                </tr>
+                <tr>
+                  <td>Contrato multi-harness</td>
+                  <td><code>bun run agents:compat:check</code></td>
+                  <td><span class="pill ok">OK</span> alias, 8 + 8 wrappers, 3 hooks, 4 × 3 MCP</td>
+                </tr>
+                <tr>
+                  <td>Doctor</td>
+                  <td><code>bun run setup:doctor</code></td>
+                  <td>
+                    <span class="pill ok">7 filas OK</span> +
+                    <span class="pill warn">2 WARN</span> (Codex CLI no está en PATH en esta
+                    máquina; confianza del repo no verificable)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Migración de un proyecto Claude-era</td>
+                  <td>clon en <code>0295587</code> + preflight del updater</td>
+                  <td>
+                    <span class="pill ok"
+                      >14 skills movidas, AGENTS.md promovido, nada borrado, segunda corrida
+                      no-op</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Lint de skills y registro</td>
+                  <td><code>bun run skills:check</code> · <code>skills:registry:check</code></td>
+                  <td><span class="pill ok">16 skills, 0 errores, registro al día</span></td>
+                </tr>
+                <tr>
+                  <td>Sesión real en OpenCode y Codex</td>
+                  <td><code>bun run opencode</code> · <code>bun run codex</code></td>
+                  <td>
+                    <span class="pill warn">manual</span> pendiente de correr en una máquina con los
+                    binarios instalados
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="limites">
+        <div class="wrap">
+          <div class="eyebrow">10 · límites conocidos</div>
+          <h2>Lo que todavía no está cerrado</h2>
+          <ul class="bullets">
+            <li>
+              <strong>Confianza del repo en Codex.</strong> Codex solo carga <code>.codex/</code> en
+              un repositorio marcado como confiable. Es estado de runtime: el doctor lo reporta como
+              WARN y no puede verificarlo.
+            </li>
+            <li>
+              <strong>Windows.</strong> La junction para <code>.claude/skills</code> está
+              implementada (misma rama de código que QA) pero no hay runner de Windows en CI; queda
+              como verificación manual.
+            </li>
+            <li>
+              <strong>Supabase en Codex.</strong> La autenticación solo por entorno se basa en la
+              variable requerida que registra el paquete oficial; no se ejecutó una sesión real de
+              Codex contra Supabase en este release.
+            </li>
+            <li>
+              <strong>Skills de usuario (T4).</strong> Siguen siendo por harness (<code
+                >~/.claude/skills/</code
+              >
+              y el equivalente de cada host); solo las de proyecto comparten tienda.
+            </li>
+            <li>
+              <strong>Gemini CLI y Cursor.</strong> Templates de MCP y <code>compatibility:</code>
+              declarada, sin adaptador de runtime. Igual que en QA.
+            </li>
+            <li>
+              <strong>Rama <code>feat/codex-cli-support</code>.</strong> Un commit de mayo, solo
+              docs, queda superseded por este release; borrarla es una acción que se confirma
+              aparte.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          agentic-dev-boilerplate · release multi-harness · 2026-09-03 · fuente en
+          <code>packages/pages-home/harnesses.es.html</code>. Referencia:
+          <a href="https://upex-galaxy.github.io/agentic-qa-boilerplate/harnesses.es.html"
+            >la página equivalente del boilerplate de QA</a
+          >.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
