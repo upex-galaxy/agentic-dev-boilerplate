@@ -389,7 +389,7 @@ export function normalizeWhitespace(s: string): string {
  *  10. else → 'locally-diverged'
  *
  * Repo-specific config flows through `components` (for `bootstrapOnly`) and
- * `agentsBootstrapFiles` (for the `agents` component's basename allowlist).
+ * `agentsBootstrapFiles` (bootstrap-only paths; see `isBootstrapOnlyFile`).
  */
 /**
  * Match a delta path against a component's file-list whitelist.
@@ -438,6 +438,40 @@ export function isFrameworkExemptPath(
   return true;
 }
 
+/**
+ * True when `relPath` is bootstrap-only: delivered once when missing, then
+ * project-owned and never overwritten. Three ways in:
+ *
+ *  1. the whole component is `bootstrapOnly`, except its framework-exempt
+ *     files (`frameworkFiles` minus `frameworkFilesExcept`), which flow through;
+ *  2. the repo-relative path is listed in `bootstrapOnlyPaths`, whatever
+ *     component owns it (`.agents/compatibility/command-aliases.project.json`
+ *     belongs to `agent-compatibility`, not `agents`);
+ *  3. legacy `agents` contract: a basename listed there (`project.yaml`,
+ *     `jira-*.json`) is bootstrap-only for the `agents` root file-list, unless
+ *     `agentsFrameworkFiles` names it as boilerplate-owned (`README.md`).
+ *
+ * Single source of truth for `classifyFile`, `reconcileComponentsByContent`
+ * and the fresh-install bootstrap walk: they MUST agree.
+ */
+export function isBootstrapOnlyFile(
+  relPath: string,
+  component: Component | undefined,
+  bootstrapOnlyPaths: readonly string[],
+  agentsFrameworkFiles: readonly string[] = [],
+): boolean {
+  if (isFrameworkExemptPath(component, relPath)) { return false; }
+  if (component?.bootstrapOnly === true) { return true; }
+  const rel = relPath.replace(/\\/g, '/');
+  const basename = path.basename(rel);
+  const isAgentsRoot = component?.name === 'agents';
+  if (isAgentsRoot && agentsFrameworkFiles.includes(basename)) { return false; }
+  return bootstrapOnlyPaths.some((raw) => {
+    const p = raw.replace(/\\/g, '/');
+    return p === rel || (isAgentsRoot && path.basename(p) === basename);
+  });
+}
+
 export function classifyFile(
   entry: Omit<DeltaEntry, 'classification'>,
   templateDir: string,
@@ -461,12 +495,7 @@ export function classifyFile(
 
   // 4. Bootstrap-aware override
   const component = components.find(c => c.name === entry.component);
-  const basename = path.basename(entry.path);
-  const isFrameworkExempt = isFrameworkExemptPath(component, entry.path);
-  const isBootstrapFile = !isFrameworkExempt && (
-    (component?.bootstrapOnly === true)
-    || (entry.component === 'agents' && agentsBootstrapFiles.includes(basename))
-  );
+  const isBootstrapFile = isBootstrapOnlyFile(entry.path, component, agentsBootstrapFiles);
   if (isBootstrapFile) {
     return localExists ? 'unchanged' : 'new-upstream';
   }
@@ -826,12 +855,7 @@ export function reconcileComponentsByContent(
       const ext = path.extname(relPath).toLowerCase();
       if (BINARY_EXTENSIONS.has(ext)) { continue; } // mirror classifyFile rule 1
 
-      const basename = path.basename(relPath);
-      const isFrameworkExempt = isFrameworkExemptPath(component, relPath);
-      const isBootstrapFile = !isFrameworkExempt && (
-        component.bootstrapOnly === true
-        || (component.name === 'agents' && agentsBootstrapFiles.includes(basename))
-      );
+      const isBootstrapFile = isBootstrapOnlyFile(relPath, component, agentsBootstrapFiles);
 
       const localExists = fs.existsSync(path.join(localRepoRoot, relPath));
       if (isBootstrapFile) {
@@ -943,6 +967,89 @@ function dedupeDeltaByPath(
  * Used by `dedupeDeltaByPath` to pick the most-specific owner when two
  * components both match a file.
  */
+// ============================================================================
+// DIRTY-TREE GUARD HELPERS (pure; exported for tests)
+// ============================================================================
+
+/**
+ * Env var through which the parent process tells its self-update re-exec child
+ * which repo-relative paths the updater ITSELF dirtied before spawning it
+ * (cross-harness migration output, the refreshed CLI files). Newline-separated.
+ */
+export const UPDATER_OWNED_PATHS_ENV = 'UPEX_UPDATER_OWNED_PATHS';
+
+/**
+ * Paths named by `git status --porcelain` output. Renames (`R  old -> new`)
+ * report BOTH sides: either one being foreign is reason enough to stop.
+ * Quoted paths (spaces, unicode) lose their quotes. Tolerates a line whose
+ * leading status column was trimmed away (` D path` -> `D path`).
+ */
+export function parsePorcelainPaths(porcelain: string): string[] {
+  const out: string[] = [];
+  for (const raw of porcelain.split('\n')) {
+    if (raw.trim() === '') { continue; }
+    // `XY <path>`: two status columns, one space, then the path. A line whose
+    // leading column was trimmed away (`D path`) has one column, then a space.
+    let rest: string;
+    if (raw.length > 3 && raw[2] === ' ') { rest = raw.slice(3); }
+    else if (raw.length > 2 && raw[1] === ' ') { rest = raw.slice(2); }
+    else { rest = raw.trim(); }
+    for (const side of rest.split(' -> ')) {
+      const unquoted = side.trim().replace(/^"(.*)"$/, '$1');
+      if (unquoted !== '') { out.push(unquoted.replace(/\\/g, '/')); }
+    }
+  }
+  return out;
+}
+
+/**
+ * Dirty paths that are NOT confined to `exemptPrefixes` (exact path or
+ * directory prefix at a segment boundary). These are the ones the guard must
+ * still refuse: work the user has not committed. Everything under an exempt
+ * prefix was produced by the updater itself.
+ */
+export function foreignDirtyPaths(porcelain: string, exemptPrefixes: string[]): string[] {
+  return parsePorcelainPaths(porcelain).filter(p => !isRepoOnlyPath(p, exemptPrefixes));
+}
+
+/** Repo-relative paths a component owns: file-list literals or directory trees. */
+export function componentOwnedPaths(component: Component): string[] {
+  const claim = componentClaims(component);
+  return [...claim.literals, ...claim.trees].map(p => p.replace(/\\/g, '/'));
+}
+
+/**
+ * Paths whose dirtiness the guard ignores because the updater wrote them:
+ *
+ *  - the lock file and `.backups/`, always: both are updater-owned, and a lock
+ *    left uncommitted by the previous run is not the user's work;
+ *  - whatever the wrapper reports as its own preflight output
+ *    (`opts.updaterOwnedPaths`, e.g. the cross-harness migration), plus the
+ *    same list handed down by a parent process through UPDATER_OWNED_PATHS_ENV;
+ *  - in the self-update re-exec child ONLY (`UPEX_UPDATER_REEXEC=1`): the
+ *    self-update component's own paths. The parent refreshed those files
+ *    moments ago and re-launched us on purpose; refusing to continue over them
+ *    is what forced downstream projects to reach for `--force` after every CLI
+ *    release.
+ *
+ * Never exempts anything else: a genuinely uncommitted user file still aborts.
+ */
+export function dirtyTreeExemptions(
+  cfg: Pick<UpdaterConfig, 'components' | 'selfUpdateComponent' | 'versionFile'>,
+  opts: { updaterOwnedPaths?: string[] },
+  env: NodeJS.ProcessEnv = process.env,
+): string[] {
+  const exempt = new Set<string>([cfg.versionFile, '.backups', ...(opts.updaterOwnedPaths ?? [])]);
+  for (const p of (env[UPDATER_OWNED_PATHS_ENV] ?? '').split('\n')) {
+    if (p.trim() !== '') { exempt.add(p.trim()); }
+  }
+  if (env.UPEX_UPDATER_REEXEC === '1' && cfg.selfUpdateComponent) {
+    const selfComp = cfg.components.find(c => c.name === cfg.selfUpdateComponent);
+    if (selfComp) { for (const p of componentOwnedPaths(selfComp)) { exempt.add(p); } }
+  }
+  return [...exempt];
+}
+
 // ============================================================================
 // COMPONENT REGISTRY VALIDATION (Level 3 — fatal at startup)
 // ============================================================================
@@ -1335,6 +1442,12 @@ export function planAuto(
  *
  * `deferredEntries` (deleted-upstream files held back in auto-mode) also block advancement
  * because the delete hasn't been confirmed yet.
+ *
+ * `bootstrappedComponents` are the components this run bootstrapped (no lock
+ * cursor yet). One of them with NO entry at all had nothing to deliver, e.g. a
+ * bootstrap-only file the project already owns (`.claude/settings.json`,
+ * `.codex/config.toml`): it advances too, or the lock never learns it and
+ * every later run repeats "bootstrap parcial" for it.
  */
 export function computeComponentAdvancement(
   summary: {
@@ -1343,6 +1456,7 @@ export function computeComponentAdvancement(
     failed: FailedFile[]
   },
   deferredEntries: DeltaEntry[] = [],
+  bootstrappedComponents: readonly string[] = [],
 ): { componentsAdvanced: string[], componentsHeldBack: string[] } {
   const allEntryComponents = new Set([
     ...summary.applied.map(a => a.entry.component),
@@ -1354,8 +1468,9 @@ export function computeComponentAdvancement(
     ...summary.skipped.map(s => s.component),
     ...summary.failed.map(f => f.entry.component),
   ]);
+  const settled = bootstrappedComponents.filter(c => !allEntryComponents.has(c));
   return {
-    componentsAdvanced: [...allEntryComponents].filter(c => !blockedComponents.has(c)),
+    componentsAdvanced: [...allEntryComponents, ...settled].filter(c => !blockedComponents.has(c)),
     componentsHeldBack: [...blockedComponents],
   };
 }
@@ -1499,6 +1614,33 @@ export function writeSyncStateV7(
   logger.success(`Version registrada en ${versionFile}`);
 }
 
+/** JSON with keys sorted at every level, so two states compare by content, not by key order. */
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) { return `[${value.map(stableJson).join(',')}]`; }
+  if (typeof value === 'object' && value !== null) {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${stableJson(v)}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * True when `next` carries something the lock on disk (`existing`, its raw
+ * text, or null when absent) does not, `lastSyncedAt` excluded. A run that
+ * applied nothing must leave the tree byte-identical: rewriting the lock only
+ * to bump the timestamp dirties `git status` for no information.
+ */
+export function syncStateWriteNeeded(existing: string | null, next: SyncStateV7): boolean {
+  if (existing === null) { return true; }
+  let prior: unknown;
+  try { prior = JSON.parse(existing); }
+  catch { return true; }
+  if (typeof prior !== 'object' || prior === null) { return true; }
+  const withoutStamp = (o: object): Record<string, unknown> =>
+    Object.fromEntries(Object.entries(o).filter(([k]) => k !== 'lastSyncedAt'));
+  return stableJson(withoutStamp(prior)) !== stableJson(withoutStamp(next));
+}
+
 /**
  * Advance perComponentCommit SHAs for a v7 state — mirror of `advanceSyncState`
  * but preserves the v7-only `ignoreFileSync` block.
@@ -1553,26 +1695,7 @@ export async function partialCloneTemplate(
     fs.rmSync(dest, { recursive: true, force: true });
   }
 
-  // Verify gh auth (the wrapper has already done a pre-flight check, but the
-  // window between that check and this clone can be long; re-check is cheap).
-  try {
-    execSync('gh auth status', { stdio: 'pipe' });
-  }
-  catch {
-    throw new Error('GH_AUTH_MISSING');
-  }
-
-  try {
-    execSync(
-      `gh repo clone ${templateRepo} "${dest}" -- --filter=blob:none --no-checkout --quiet`,
-      { stdio: ['pipe', 'pipe', 'pipe'], timeout: 60000 },
-    );
-  }
-  catch (error) {
-    const err = error as { killed?: boolean };
-    if (err.killed) { throw new Error('CLONE_TIMEOUT'); }
-    throw new Error('CLONE_FAILED');
-  }
+  cloneTemplate(templateRepo, dest, ['--no-checkout'], !isLocalTemplateSource(templateRepo));
 
   try {
     execSync(`git -C "${dest}" sparse-checkout init --no-cone`, { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -1593,17 +1716,47 @@ export async function shallowCloneTemplate(templateRepo: string, dest: string): 
   if (fs.existsSync(dest)) {
     fs.rmSync(dest, { recursive: true, force: true });
   }
-  try {
-    execSync('gh auth status', { stdio: 'pipe' });
+  cloneTemplate(templateRepo, dest, ['--depth', '1'], !isLocalTemplateSource(templateRepo));
+}
+
+/**
+ * True when `templateRepo` names a LOCAL git repository (absolute or relative
+ * path, or a `file://` URL) instead of a GitHub `OWNER/REPO` handle. Local
+ * sources are cloned with plain `git clone` and need no `gh` session: this is
+ * how the updater is exercised against an unpublished branch of the
+ * boilerplate (`UPEX_TEMPLATE_REPO=/path/to/clone bun run up`).
+ */
+export function isLocalTemplateSource(templateRepo: string): boolean {
+  return templateRepo.startsWith('file://')
+    || path.isAbsolute(templateRepo)
+    || /^[A-Z]:[\\/]/i.test(templateRepo)
+    || /^\.{1,2}[\\/]/.test(templateRepo);
+}
+
+/**
+ * Shared clone step for both acquisition strategies. GitHub handles go through
+ * `gh repo clone` (which resolves the URL and reuses the `gh` credential);
+ * local sources go straight to `git clone`. Partial-clone filters are only
+ * requested from GitHub: a local clone hardlinks objects anyway and git prints
+ * a warning for a filter the local transport ignores.
+ */
+function cloneTemplate(templateRepo: string, dest: string, gitArgs: string[], viaGh: boolean): void {
+  if (viaGh) {
+    // Verify gh auth (the wrapper has already done a pre-flight check, but the
+    // window between that check and this clone can be long; re-check is cheap).
+    try {
+      execSync('gh auth status', { stdio: 'pipe' });
+    }
+    catch {
+      throw new Error('GH_AUTH_MISSING');
+    }
   }
-  catch {
-    throw new Error('GH_AUTH_MISSING');
-  }
+  const filter = viaGh && gitArgs.includes('--no-checkout') ? ['--filter=blob:none'] : [];
+  const command = viaGh
+    ? `gh repo clone ${templateRepo} "${dest}" -- ${[...filter, ...gitArgs, '--quiet'].join(' ')}`
+    : `git clone ${[...gitArgs, '--quiet'].join(' ')} "${templateRepo.replace(/^file:\/\//, '')}" "${dest}"`;
   try {
-    execSync(
-      `gh repo clone ${templateRepo} "${dest}" -- --depth 1 --quiet`,
-      { stdio: ['pipe', 'pipe', 'pipe'], timeout: 60000 },
-    );
+    execSync(command, { stdio: ['pipe', 'pipe', 'pipe'], timeout: 60000 });
   }
   catch (error) {
     const err = error as { killed?: boolean };
@@ -1798,7 +1951,7 @@ export function cleanupDeprecated(
 export async function runUpdate(
   cfg: UpdaterConfig,
   sink: ReportSink,
-  opts: { auto: boolean, dryRun: boolean, rollback: boolean, force?: boolean },
+  opts: { auto: boolean, dryRun: boolean, rollback: boolean, force?: boolean, updaterOwnedPaths?: string[] },
 ): Promise<RunSummary> {
   if (opts.rollback) {
     // Wrapper handles rollback; reaching runUpdate with rollback=true is a contract error.
@@ -1828,29 +1981,44 @@ export async function runUpdate(
     componentsAdvanced: [],
     componentsHeldBack: [],
   };
+  // A preflight refusal: the wrapper prints `Abortado.` and exits 1 on it.
+  const abortedSummary: RunSummary = { ...emptySummary, aborted: true };
 
   // --- DIRTY WORKING TREE GUARD (data-loss safety, pre-fetch) ---
   // Pre-write backups live in .backups/, which is gitignored — so an
   // uncommitted user who proceeds and later runs `git clean` / `git stash` can
   // lose both the working copy and the backup. Refuse on a dirty tree unless
   // --force; interactive mode offers an explicit override.
+  //
+  // Dirtiness the updater produced itself (cross-harness migration output, the
+  // CLI files a parent process refreshed before re-exec'ing us) is exempt: see
+  // `dirtyTreeExemptions`. A clean tree before `bun run up --auto` must never
+  // abort because of the updater's own writes.
   if (!opts.dryRun && !opts.force) {
     let dirty = '';
     try {
-      dirty = execSync(`git -C "${repoRoot}" status --porcelain`, { encoding: 'utf8' }).trim();
+      // `-uall` lists untracked FILES, not a collapsed `?? dir/` entry, so a
+      // directory the updater created can be matched file by file against the
+      // exemptions instead of hiding (or exposing) everything beneath it.
+      dirty = execSync(`git -C "${repoRoot}" status --porcelain --untracked-files=all`, { encoding: 'utf8' }).trimEnd();
     }
     catch {
       dirty = ''; // not a git repo / git unavailable — nothing to guard against
     }
-    if (dirty) {
-      sink.warn('El árbol de trabajo tiene cambios sin commitear. Los backups del updater van a .backups/ (gitignored); un `git clean` posterior podría perderlos. Commitea o haz stash antes de actualizar.');
+    const foreign = dirty.trim() ? foreignDirtyPaths(dirty, dirtyTreeExemptions(cfg, opts)) : [];
+    if (dirty.trim() && foreign.length === 0) {
+      sink.step('Árbol de trabajo con cambios propios del updater (migración / self-update); el guard los ignora.');
+    }
+    if (foreign.length > 0) {
+      const shown = foreign.slice(0, 5).join(', ') + (foreign.length > 5 ? ` (+${foreign.length - 5} más)` : '');
+      sink.warn(`El árbol de trabajo tiene cambios sin commitear (${shown}). Los backups del updater van a .backups/ (gitignored); un \`git clean\` posterior podría perderlos. Commitea o haz stash antes de actualizar.`);
       if (opts.auto) {
         sink.error('Abortado: árbol sucio en modo --auto. Re-ejecuta con --force para forzar.');
-        return emptySummary;
+        return abortedSummary;
       }
       const proceed = await sink.confirm('¿Continuar de todas formas pese a los cambios sin commitear?', false);
       if (!proceed) {
-        return emptySummary;
+        return abortedSummary;
       }
     }
   }
@@ -1863,7 +2031,7 @@ export async function runUpdate(
   catch (err) {
     if (err instanceof CorruptStateError) {
       sink.error(err.message);
-      return emptySummary;
+      return abortedSummary;
     }
     throw err;
   }
@@ -1881,7 +2049,7 @@ export async function runUpdate(
       : await sink.confirm(`Migrar esquema ${sourceLabel} → v7 (rastreo per-component SHA + ignore-files + flags ampliados)?`, true);
     if (!ok) {
       sink.warn('Migración cancelada. Ejecuta de nuevo cuando quieras migrar.');
-      return emptySummary;
+      return abortedSummary;
     }
     const v6 = fromV5 ? migrateSyncState(rawState as SyncStateV5, cfg.cliVersion) : (rawState as SyncStateV6);
     v7State = migrateV6ToV7(v6, cfg.templateRepo, cfg.cliVersion);
@@ -1936,7 +2104,7 @@ export async function runUpdate(
       // Surface the first error too for diagnostics
       const firstMsg = firstErr instanceof Error ? firstErr.message : String(firstErr);
       sink.error(`Causa partial-clone: ${firstMsg}`);
-      return emptySummary;
+      return abortedSummary;
     }
   }
 
@@ -1991,7 +2159,7 @@ export async function runUpdate(
           if (!okSelf) {
             sink.warn('Self-update cancelado. Re-ejecuta cuando quieras actualizar el CLI.');
             cleanupTempDir(cfg.tempDir);
-            return emptySummary;
+            return abortedSummary;
           }
         }
         // Pre-write backup contract: mirror each existing local file into a
@@ -2013,9 +2181,13 @@ export async function runUpdate(
         }
         sink.step(`Backup en ${path.relative(repoRoot, selfBackupDir)}`);
         sink.step('Re-ejecutando con código actualizado…');
+        // The child inherits what WE dirtied (preflight output + the CLI files
+        // just written) so its own dirty-tree guard can tell it apart from
+        // uncommitted user work; see `dirtyTreeExemptions`.
+        const ownedPaths = dirtyTreeExemptions(cfg, opts).concat(stale);
         const child = spawnSync(process.execPath, [process.argv[1], ...process.argv.slice(2)], {
           stdio: 'inherit',
-          env: { ...process.env, UPEX_UPDATER_REEXEC: '1' },
+          env: { ...process.env, UPEX_UPDATER_REEXEC: '1', [UPDATER_OWNED_PATHS_ENV]: ownedPaths.join('\n') },
         });
         cleanupTempDir(cfg.tempDir);
         if (child.error) {
@@ -2050,10 +2222,7 @@ export async function runUpdate(
     for (const component of comps) {
       const relPaths = collectComponentRelPaths(component, templateDir);
       for (const relPath of relPaths) {
-        const basename = path.basename(relPath);
-        const isBootstrapFile = component.bootstrapOnly === true
-          || (component.name === 'agents' && (cfg.agentsFrameworkFiles ?? []).includes(basename) === false
-            && cfg.bootstrapOnlyPaths.some(p => relPath === p || relPath.endsWith(`/${basename}`)));
+        const isBootstrapFile = isBootstrapOnlyFile(relPath, component, cfg.bootstrapOnlyPaths, cfg.agentsFrameworkFiles);
         const localPath = path.join(repoRoot, relPath);
         if (isBootstrapFile && fs.existsSync(localPath)) {
           continue;
@@ -2093,9 +2262,9 @@ export async function runUpdate(
         variableSystemVersion: v7State!.variableSystemVersion,
         perComponentCommit: v7State!.perComponentCommit,
       };
-      const agentsBootstrapBasenames = cfg.bootstrapOnlyPaths
-        .filter(p => p.startsWith('.agents/'))
-        .map(p => path.basename(p));
+      // Full repo-relative paths: `isBootstrapOnlyFile` matches them exactly
+      // for any component, and by basename for the legacy `agents` root list.
+      const bootstrapOnlyPaths = cfg.bootstrapOnlyPaths;
 
       // Content reconcile (Profundidad B) is the authoritative source for
       // new + diverged files: it walks the FULL upstream tree and compares by
@@ -2105,7 +2274,7 @@ export async function runUpdate(
         templateDir,
         deltaComponents,
         repoRoot,
-        agentsBootstrapBasenames,
+        bootstrapOnlyPaths,
       );
 
       // computeDelta is still run, but ONLY its deleted-upstream entries are
@@ -2117,7 +2286,7 @@ export async function runUpdate(
         deltaComponents,
         v6Shape,
         repoRoot,
-        agentsBootstrapBasenames,
+        bootstrapOnlyPaths,
         makeCoreLoggerFromSink(sink),
       );
       const deletes = deltaEntries.filter(e => e.classification === 'deleted-upstream');
@@ -2196,7 +2365,10 @@ export async function runUpdate(
     }
   }
 
-  if (visible.length === 0 && ignoreDeltasPre.length === 0 && pkgJsonDeltasPre.length === 0) {
+  // A bootstrapped component with nothing to deliver still needs its lock
+  // cursor recorded (see computeComponentAdvancement), so it is not a no-op.
+  const settledBootstrap = bootstrapComponents.filter(c => !entries.some(e => e.component === c.name)).map(c => c.name);
+  if (visible.length === 0 && ignoreDeltasPre.length === 0 && pkgJsonDeltasPre.length === 0 && settledBootstrap.length === 0) {
     sink.step('Sin cambios detectados respecto al upstream. Nada que sincronizar.');
     return emptySummary;
   }
@@ -2717,6 +2889,7 @@ export async function runUpdate(
     // Deferred-deletes are already represented in `skipped`, so no separate
     // deferred list is passed (the old `bootstrapMode ? [] : []` was a no-op).
     [],
+    bootstrapComponents.map(c => c.name),
   );
 
   const summary: RunSummary = {
@@ -2743,7 +2916,17 @@ export async function runUpdate(
       variableSystemVersion: 1,
     };
     const nextState = advanceSyncStateV7(baseV7, summary, cfg.components, newHeadSha, cfg.cliVersion);
-    writeSyncStateV7(repoRoot, cfg.versionFile, nextState, makeCoreLoggerFromSink(sink));
+    // The lock is updater-owned and gets committed with the sync: a run that
+    // changed nothing in it must not dirty it just to bump the timestamp.
+    let existingLock: string | null = null;
+    try { existingLock = fs.readFileSync(path.join(repoRoot, cfg.versionFile), 'utf8'); }
+    catch { existingLock = null; }
+    if (syncStateWriteNeeded(existingLock, nextState)) {
+      writeSyncStateV7(repoRoot, cfg.versionFile, nextState, makeCoreLoggerFromSink(sink));
+    }
+    else {
+      sink.step(`Lock sin cambios (${cfg.versionFile} intacto).`);
+    }
   }
 
   // After-apply hook (DEV uses for MCP template refresh, etc.)
