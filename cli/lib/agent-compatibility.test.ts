@@ -1,5 +1,5 @@
 /* eslint-disable no-template-curly-in-string -- the fixtures below mirror .mcp.json verbatim, `${VAR}` included */
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -23,11 +23,17 @@ import {
   CLAUDE_INSTRUCTIONS_SHIM,
   claudeSkillsAliasPlan,
   COMMAND_ALIAS_MANIFEST,
+  COMMAND_ALIAS_PROJECT_MANIFEST,
   commandWrapperCounts,
   isInside,
+  mergedCommandAliases,
   POSIX_CLAUDE_SKILLS_TARGET,
+  repairAgentSurfaces,
   repairClaudeSkillsAlias,
   repairCommandWrappers,
+  SKILLS_ALIAS_DEFERRED_MARKER,
+  SKILLS_ALIAS_MISSING_ERROR,
+  undeclaredCommandWrappers,
   validateCanonicalSources,
   validateCommandAliases,
 } from './agent-compatibility.ts';
@@ -393,7 +399,11 @@ describe('MCP semantic parity', () => {
   });
 
   test('the real repository declares the same servers on every host', () => {
-    expect(declaredMcpIds(REPO_ROOT)).toEqual([...KNOWN_MCP_IDS].sort());
+    // Asserts the DECLARED set, never the literal boilerplate four: a downstream
+    // project with six servers (or three) must pass this test unchanged.
+    const declared = declaredMcpIds(REPO_ROOT);
+    expect(declared.length).toBeGreaterThan(0);
+    expect(declared).toEqual([...declared].sort());
     expect(validateMcpParity(REPO_ROOT)).toEqual([]);
   });
 
@@ -681,6 +691,112 @@ describe('command alias wrappers', () => {
     expect(errors).toContain('Command alias target skill missing: ghost -> nowhere');
     expect(errors).toContain('Invalid command alias: Bad Alias');
   });
+
+  test('reports a wrapper file that no manifest produced, by name, without deleting it', () => {
+    const root = repositoryFixture();
+    write(root, '.claude/commands/hand-made.md', '---\ndescription: mine\n---\n\nDo things.\n');
+    write(root, '.opencode/commands/.DS_Store', '');
+
+    expect(undeclaredCommandWrappers(root)).toEqual(['.claude/commands/hand-made.md']);
+    expect(validateCommandAliases(root)).toEqual([
+      `Command wrapper not declared in any manifest: .claude/commands/hand-made.md; add it to ${COMMAND_ALIAS_PROJECT_MANIFEST} or delete it`,
+    ]);
+    expect(repairCommandWrappers(root)).toBe(0);
+    expect(readFileSync(join(root, '.claude/commands/hand-made.md'), 'utf8')).toContain('Do things.');
+  });
+});
+
+describe('project command alias overlay', () => {
+  function overlay(aliases: Array<{ alias: string, skill: string, mode: string, description?: string }>): string {
+    return `${JSON.stringify({
+      version: 1,
+      aliases: aliases.map(alias => ({
+        alias: alias.alias,
+        skill: alias.skill,
+        mode: alias.mode,
+        description: alias.description ?? `Project-owned ${alias.alias}`,
+        argumentHint: '[args]',
+        forwardArguments: true,
+        mutability: 'read-only',
+      })),
+    }, null, 2)}\n`;
+  }
+
+  test('without an overlay the upstream manifest is the whole contract', () => {
+    const root = repositoryFixture();
+    const merged = mergedCommandAliases(root);
+    expect(merged.overlayPresent).toBe(false);
+    expect(merged.aliases.map(alias => alias.alias)).toEqual(ALIASES.map(alias => alias.alias));
+    expect(merged.aliases.every(alias => alias.source === 'upstream')).toBe(true);
+    expect(commandWrapperCounts(root)).toEqual({ expected: 3, claude: 3, opencode: 3 });
+  });
+
+  test('an overlay alias is added, rendered on both hosts and counted as expected', () => {
+    const root = repositoryFixture();
+    write(root, '.agents/skills/project-context/SKILL.md', '---\nname: project-context\n---\n\nModes: `dev-roadmap`, `data`, `api`.\n');
+    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, overlay([{ alias: 'business-api-map', skill: 'project-context', mode: 'api' }]));
+
+    // Before the repair the new wrapper is missing on both hosts.
+    expect(commandWrapperCounts(root)).toEqual({ expected: 4, claude: 3, opencode: 3 });
+    expect(validateCommandAliases(root)).toEqual([
+      'claude command wrapper missing: .claude/commands/business-api-map.md',
+      'opencode command wrapper missing: .opencode/commands/business-api-map.md',
+    ]);
+
+    expect(repairCommandWrappers(root)).toBe(2);
+    expect(commandWrapperCounts(root)).toEqual({ expected: 4, claude: 4, opencode: 4 });
+    expect(validateCommandAliases(root)).toEqual([]);
+    expect(undeclaredCommandWrappers(root)).toEqual([]);
+
+    const merged = mergedCommandAliases(root);
+    expect(merged.overlayPresent).toBe(true);
+    expect(merged.aliases.at(-1)).toMatchObject({ alias: 'business-api-map', source: 'project' });
+    expect(readFileSync(join(root, '.opencode/commands/business-api-map.md'), 'utf8'))
+      .toContain('Invoke skill `project-context` in mode `api`.');
+  });
+
+  test('an overlay entry overrides the upstream alias of the same name in place', () => {
+    const root = repositoryFixture();
+    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, overlay([
+      { alias: 'dev-roadmap', skill: 'project-context', mode: 'dev-roadmap', description: 'Roadmap the way THIS project runs it' },
+    ]));
+
+    const merged = mergedCommandAliases(root);
+    expect(merged.aliases).toHaveLength(ALIASES.length);
+    expect(merged.aliases[0]).toMatchObject({ alias: 'dev-roadmap', source: 'project', description: 'Roadmap the way THIS project runs it' });
+    expect(merged.wrapperHosts).toEqual(['claude', 'opencode']);
+
+    // The previously generated upstream wrapper is now stale; repair rewrites it on both hosts.
+    expect(validateCommandAliases(root)).toEqual([
+      'claude command wrapper is stale: .claude/commands/dev-roadmap.md',
+      'opencode command wrapper is stale: .opencode/commands/dev-roadmap.md',
+    ]);
+    expect(repairCommandWrappers(root)).toBe(2);
+    expect(readFileSync(join(root, '.claude/commands/dev-roadmap.md'), 'utf8')).toContain('description: Roadmap the way THIS project runs it');
+    expect(validateCommandAliases(root)).toEqual([]);
+  });
+
+  test('the overlay never changes wrapperHosts and an overlay alias still needs a real skill and mode', () => {
+    const root = repositoryFixture();
+    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, `${JSON.stringify({
+      version: 1,
+      wrapperHosts: ['claude'],
+      aliases: [{ alias: 'ghost', skill: 'nowhere', mode: 'x', description: 'd', argumentHint: '[a]', forwardArguments: true, mutability: 'read-only' }],
+    }, null, 2)}\n`);
+
+    expect(mergedCommandAliases(root).wrapperHosts).toEqual(['claude', 'opencode']);
+    expect(validateCommandAliases(root)).toEqual(['Command alias target skill missing: ghost -> nowhere']);
+  });
+
+  test('a malformed overlay is reported as one error and stops the wrapper check', () => {
+    const root = repositoryFixture();
+    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, '{ "version": 2, "aliases": {} }\n');
+
+    expect(validateCommandAliases(root)).toEqual([
+      `Project command alias overlay must have version 1 and an aliases array: ${COMMAND_ALIAS_PROJECT_MANIFEST}`,
+    ]);
+    expect(() => commandWrapperCounts(root)).toThrow('Project command alias overlay');
+  });
 });
 
 describe('checkAgentCompatibility', () => {
@@ -709,5 +825,51 @@ describe('checkAgentCompatibility', () => {
     const result = checkAgentCompatibility(root, 'linux');
     expect(result.alias.status).toBe('invalid');
     expect(result.errors).toContain('Refusing compatibility state: .claude/skills exists but is not a generated symlink or junction.');
+  });
+});
+
+describe('repairAgentSurfaces', () => {
+  test('creates the alias, renders the wrappers and passes the check', () => {
+    const root = repositoryFixture();
+    rmSync(join(root, '.claude/commands/dev-roadmap.md'));
+
+    const repair = repairAgentSurfaces(root, {}, 'linux');
+    expect(repair.aliasDeferred).toBe(false);
+    expect(repair.alias?.status).toBe('created');
+    expect(readlinkSync(join(root, '.claude/skills'))).toBe(POSIX_CLAUDE_SKILLS_TARGET);
+    expect(repair.wrappersWritten).toBe(1);
+    expect(repair.check).toMatchObject({ ok: true, errors: [] });
+  });
+
+  test('with the migration just applied, the alias waits for the commit and the check does not count it', () => {
+    const root = repositoryFixture();
+
+    const repair = repairAgentSurfaces(root, { deferSkillsAlias: true }, 'linux');
+    expect(repair.aliasDeferred).toBe(true);
+    expect(repair.alias).toBeNull();
+    expect(existsSync(join(root, '.claude/skills'))).toBe(false);
+    expect(existsSync(join(root, SKILLS_ALIAS_DEFERRED_MARKER))).toBe(true);
+    expect(repair.check).toMatchObject({ ok: true, errors: [], alias: { status: 'deferred' } });
+    // The pre-commit gate runs the same check and must pass on the migration commit.
+    expect(checkAgentCompatibility(root, 'linux')).toMatchObject({ ok: true, alias: { status: 'deferred' } });
+    // Everything else is still enforced.
+    rmSync(join(root, '.codex/hooks.json'));
+    const broken = repairAgentSurfaces(root, { deferSkillsAlias: true }, 'linux');
+    expect(broken.check.ok).toBe(false);
+    expect(broken.check.errors).toEqual(['Hook compatibility file missing: .codex/hooks.json']);
+    // And `bun run agents:compat` afterwards creates it as usual and ends the deferral.
+    expect(repairAgentSurfaces(root, {}, 'linux').alias?.status).toBe('created');
+    expect(existsSync(join(root, SKILLS_ALIAS_DEFERRED_MARKER))).toBe(false);
+    // Without the marker, a missing alias is the error it always was.
+    rmSync(join(root, '.claude/skills'));
+    expect(checkAgentCompatibility(root, 'linux').errors).toContain(SKILLS_ALIAS_MISSING_ERROR);
+  });
+
+  test('without the manifest the wrappers are skipped, not invented', () => {
+    const root = repositoryFixture();
+    rmSync(join(root, COMMAND_ALIAS_MANIFEST));
+    const repair = repairAgentSurfaces(root, {}, 'linux');
+    expect(repair.wrappersWritten).toBeNull();
+    expect(repair.check.errors).toContain(`Command alias manifest missing: ${COMMAND_ALIAS_MANIFEST}`);
   });
 });
