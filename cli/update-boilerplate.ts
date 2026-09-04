@@ -11,6 +11,7 @@ import type { CompatibilityCheck } from './lib/agent-compatibility.ts';
 import type { ProtectedWatchEntry } from './lib/updater-drift';
 import type { HarnessMigrationResult } from './lib/updater-harness-migration.ts';
 import type { GateResult, HeldBackComponent, ParityFinding, ParityReport } from './lib/updater-parity';
+import type { PbiCacheFact } from './lib/updater-pbi';
 import type { Component, DeprecatedFile, ReportSink, RunSummary, UpdaterConfig } from './lib/updater-types';
 import { execSync, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
@@ -32,7 +33,7 @@ import {
   suggestCommitMessage,
   UPDATER_UPSTREAM_DIR_ENV,
 } from './lib/updater-core';
-import { detectProtectedDrift, mergeProtectedWatchlist, persistMarkers, readProjectProtectedPaths } from './lib/updater-drift';
+import { detectProtectedDrift, mergeProtectedWatchlist, persistMarkers, readProjectProtectedPaths, splitFirstProjectAdvice } from './lib/updater-drift';
 import {
   applyHarnessMigration,
   describeHarnessMigration,
@@ -57,7 +58,7 @@ import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifes
 // --- CONFIGURATION ---
 // Not tied to the lock schema (`schemaVersion: 7` stays): it stamps the lock's
 // `cliVersion` and the ignore-file sentinel header, which is matched by prefix.
-const CLI_VERSION = '8.2';
+const CLI_VERSION = '8.3';
 // `UPEX_TEMPLATE_REPO` points the updater at another source: a fork, or a LOCAL
 // clone (absolute path / file:// URL, cloned with plain git, no gh session) to
 // exercise an unpublished boilerplate branch against a consumer repo.
@@ -439,9 +440,11 @@ interface RunFacts {
   gates: GateResult[]
   /** A no-op run left the previous run's prompt file untouched. */
   promptKept: boolean
+  /** `.context/PBI/` paths still tracked in git, and where the migration recipe was saved. */
+  pbiCache: PbiCacheFact | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], promptKept: false, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], promptKept: false, pbiCache: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -834,7 +837,8 @@ export function resolveProtectedWatchlist(cwd: string, warn: (message: string) =
 //  - `CONTEXT.md` is a synced component (`context-engineering`), so it needs no
 //    advisory — it arrives on its own.
 
-const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-migration-prompt.md');
+/** The PBI cache migration recipe (gitignored, single-use); the parity table carries one row pointing here. */
+const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-migration.md');
 
 // --- REPO-ONLY PATHS ---
 //
@@ -1090,10 +1094,16 @@ export function summarizeGates(gates: readonly GateResult[]): string | null {
 function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean, watchlist: readonly ProtectedWatchEntry[]): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     const cwd = process.cwd();
-    const drifted = detectProtectedDrift(watchlist, UPSTREAM_DIR, cwd);
+    // A freshly declared `updater.protected_paths` entry gets its marker
+    // seeded and no row (the project just merged it by hand); the row comes
+    // with the next upstream change.
+    const { advised: drifted, seeded } = splitFirstProjectAdvice(detectProtectedDrift(watchlist, UPSTREAM_DIR, cwd));
     // Markers FIRST: one nudge per upstream change even if the user ignores
     // it. A dry-run persists nothing: the real run will nudge.
-    if (!dryRun) { persistMarkers(drifted, cwd); }
+    if (!dryRun) { persistMarkers([...drifted, ...seeded], cwd); }
+    if (seeded.length > 0) {
+      sink.step(`${seeded.length} ruta(s) recién protegidas en updater.protected_paths sin fila esta vez (${seeded.map(s => s.path).join(', ')}); la fila llega con el próximo cambio upstream.`);
+    }
 
     const lock = readLock(cwd);
     const heldBack: HeldBackComponent[] = summary.componentsHeldBack.map(component => ({
@@ -1133,6 +1143,7 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       })),
       packageJsonKept: summary.packageJsonKept ?? [],
       gates: runFacts.gates,
+      pbiCache: runFacts.pbiCache,
     });
     const report = renderParityReport(findings, {
       templateRepo: TEMPLATE_REPO,
@@ -1567,6 +1578,8 @@ async function main(): Promise<void> {
         ? composeHooks(
             sink,
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
+            // Read-only detection so the preview's table matches the real run's.
+            makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH), dryRun: true }, sink, (fact) => { runFacts.pbiCache = fact; }),
             makeParityHook(sink, priorLockSha, true, watchlist),
           )
         : composeHooks(
@@ -1579,9 +1592,10 @@ async function main(): Promise<void> {
             async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),
-            // Legacy git-tracked PBI cache detection: advisory + agent prompt
-            // only — the hook NEVER mutates the git index.
-            makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH) }, sink),
+            // Legacy git-tracked PBI cache detection: the recipe goes to its
+            // file, one parity row points at it; the hook NEVER mutates the
+            // git index.
+            makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH) }, sink, (fact) => { runFacts.pbiCache = fact; }),
             // LAST: folds the watchlist drift (one nudge per upstream change;
             // AGENTS.md keeps the legacy CLAUDE.md marker), the compat check,
             // the gates, the migration archive and the rest into the single
