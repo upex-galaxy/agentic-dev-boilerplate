@@ -38,6 +38,40 @@ is hardened accordingly.
 
 ## [Unreleased]
 
+### Fixed (updater 8.2, after the second live run)
+
+`CLI_VERSION` 8.1 -> 8.2. Three findings from re-running `bun run up --auto`
+on the same downstream repo after its parity decisions were committed.
+
+- **Project-customized synced files converge.** `.husky/pre-commit` and
+  `.husky/pre-push` join the protected watchlist (`project gates live here`):
+  delivered once when missing, never overwritten (`--auto` and `--force`
+  included), one drift row per upstream change with the hunks as evidence.
+  Before, every run force-applied upstream's copy over a committed merge and
+  re-raised the identical "project edit overwritten" row. The `_/` helpers
+  under `.husky/` keep syncing.
+- **`updater.protected_paths` in `.agents/project.yaml`.** A project lists
+  any other synced file it merged by hand (repo-relative file paths; shipped
+  empty, documented in `.agents/README.md`, allowlisted for `vars:check`).
+  Listed paths join the watchlist at runtime with the same semantics and the
+  sparse checkout. A path outside the repo, under `.git`, a directory or a
+  non-string is reported (`entrada ignorada "...": <reason>`) and ignored.
+  The overwritten-edit row now ends with `add the path to
+  updater.protected_paths in .agents/project.yaml so the next sync keeps your
+  merge`, and the saved prompt repeats the fix under the row as YAML.
+- **Cost signal on config rows.** A watched file with keys (JSON / JSONC /
+  TOML / YAML) or headings (markdown) never suggests a bare `merge`:
+  `port upstream additions only: <keys>; keep project-only key(s): <keys>`
+  when both sides have something of their own, `keep project` when only the
+  project has extra keys, `take upstream` only when upstream added keys and
+  nothing else differs, and shared keys whose values differ are named.
+  `tsconfig.json` in a Next.js host now says what to port and that `jsx`,
+  `lib` and `paths` stay.
+- **Identity files compare structure only.** `.agents/project.yaml` and
+  `.agents/jira-required.yaml` (bootstrap-only, project-owned) fire an
+  `informational` row listing the keys upstream added (`merge = add the new
+  keys`), and no row at all for value-only differences.
+
 ### Fixed (updater 8.1, after the first live run against a Next.js project)
 
 `CLI_VERSION` 8.0 -> 8.1. Every item below comes from
