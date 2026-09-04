@@ -10,7 +10,7 @@
 import type { CompatibilityCheck } from './lib/agent-compatibility.ts';
 import type { ProtectedWatchEntry } from './lib/updater-drift';
 import type { HarnessMigrationResult } from './lib/updater-harness-migration.ts';
-import type { HeldBackComponent, ParityFinding, ParityReport } from './lib/updater-parity';
+import type { GateResult, HeldBackComponent, ParityFinding, ParityReport } from './lib/updater-parity';
 import type { Component, DeprecatedFile, ReportSink, RunSummary, UpdaterConfig } from './lib/updater-types';
 import { execSync, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
@@ -19,16 +19,18 @@ import * as path from 'node:path';
 
 import pc from 'picocolors';
 import { parseEnvFile } from './install';
-import { COMMAND_ALIAS_MANIFEST, repairAgentSurfaces } from './lib/agent-compatibility.ts';
+import { checkAgentCompatibility, COMMAND_ALIAS_MANIFEST, repairAgentSurfaces, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import * as tui from './lib/tui';
 import {
   cleanupTempDir,
   detectGitVersion,
   gitVersionMeetsMin,
   isLocalTemplateSource,
+  LAST_APPLY_FILE,
   readSyncState,
   runUpdate,
   suggestCommitMessage,
+  UPDATER_UPSTREAM_DIR_ENV,
 } from './lib/updater-core';
 import { detectProtectedDrift, persistMarkers } from './lib/updater-drift';
 import {
@@ -55,13 +57,20 @@ import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifes
 // --- CONFIGURATION ---
 // Not tied to the lock schema (`schemaVersion: 7` stays): it stamps the lock's
 // `cliVersion` and the ignore-file sentinel header, which is matched by prefix.
-const CLI_VERSION = '8.0';
+const CLI_VERSION = '8.1';
 // `UPEX_TEMPLATE_REPO` points the updater at another source: a fork, or a LOCAL
 // clone (absolute path / file:// URL, cloned with plain git, no gh session) to
 // exercise an unpublished boilerplate branch against a consumer repo.
 const TEMPLATE_REPO = process.env.UPEX_TEMPLATE_REPO || 'upex-galaxy/agentic-dev-boilerplate';
 const TEMP_DIR = path.join(os.tmpdir(), 'aicode-template-update');
+// Where the upstream clone sits while the afterApply hooks read it: our own
+// temp dir, or the clone a parent process handed down for the --dry-run
+// preview of a pending self-update (see UPDATER_UPSTREAM_DIR_ENV).
+const UPSTREAM_DIR = process.env[UPDATER_UPSTREAM_DIR_ENV] || TEMP_DIR;
 const VERSION_FILE = '.template/boilerplate.lock.json';
+/** Post-apply gates: each gets this long, then it is skipped with a note. */
+const GATE_TIMEOUT_MS = 120_000;
+const GATE_SCRIPTS = ['types:check', 'lint:check'] as const;
 
 const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes'];
 // `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
@@ -153,13 +162,17 @@ interface ParsedArgs {
   force: boolean
   /** Exit 1 on a blocking parity finding (failed compatibility contract). Default: warn, exit 0. */
   strict: boolean
+  /** Skip the post-apply quality gates (`types:check`, `lint:check`). */
+  noGates: boolean
+  /** Keep the prompts even when stdin is not a TTY (the default there is `--auto`). */
+  interactive: boolean
   updateMcpTemplate: McpAgent | null
 }
 
 const isMcpAgent = (v: string): v is McpAgent => (MCP_TEMPLATE_AGENTS as readonly string[]).includes(v);
 
-function parseArgs(args: string[]): ParsedArgs {
-  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, updateMcpTemplate: null };
+export function parseArgs(args: string[]): ParsedArgs {
+  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, noGates: false, interactive: false, updateMcpTemplate: null };
   const valid = new Set(COMPONENTS.map(c => c.name).concat(['all', 'help', 'rollback']));
   // Pre-cross-harness component names still typed from muscle memory.
   const aliases: Record<string, string> = {
@@ -176,6 +189,8 @@ function parseArgs(args: string[]): ParsedArgs {
     else if (a === '--rollback' || a === 'rollback') { out.rollback = true; }
     else if (a === '--force') { out.force = true; }
     else if (a === '--strict') { out.strict = true; }
+    else if (a === '--no-gates') { out.noGates = true; }
+    else if (a === '--interactive') { out.interactive = true; }
     else if (a === '--update-mcp-template') {
       const n = args[i + 1];
       if (!n || !isMcpAgent(n)) {
@@ -219,19 +234,51 @@ SUPERFICIES GENERADAS (nunca se sincronizan ni se reportan como drift):
   .claude/commands/*.md y .opencode/commands/*.md (wrappers). Tras cada sync se
   regeneran con la misma logica de \`bun run agents:compat\`.
 
-REPORTE DE PARIDAD (al final de cada sync real):
-  Una tabla "Estado por superficie" (8 filas: instrucciones y config, skills,
-  comandos, hooks, MCP, env, componentes, git) y UN prompt para tu IA con cada
-  diferencia frente a upstream (archivo + evidencia: secciones, claves,
-  servidores, hunks) para que decidas fila por fila: keep project | take
-  upstream | merge. Se guarda en ${PARITY_PROMPT_PATH} (gitignored, un solo
-  uso). Los archivos protegidos (AGENTS.md, .agents/project.yaml, .mcp.json,
-  .claude/settings.json, …) nunca se sobrescriben: solo aparecen en ese
-  reporte. .claude/settings.json y .codex/ se entregan UNA vez si faltan.
+REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
+  Una tabla "Estado por superficie" (10 filas: instrucciones y config, skills,
+  comandos, hooks, MCP, env, componentes, package.json, git, verificacion) y UN
+  prompt para tu IA con cada diferencia frente a upstream (archivo + evidencia:
+  secciones, claves, servidores, hunks) para que decidas fila por fila: keep
+  project | take upstream | merge. Se guarda en ${PARITY_PROMPT_PATH}
+  (gitignored, un solo uso; con --dry-run no se guarda). "take upstream" solo
+  se sugiere cuando al proyecto le falta ese contenido por completo: una fila
+  con servidores, claves, secciones o ediciones que solo tiene el proyecto
+  sugiere "merge", nunca un reemplazo. Los archivos protegidos (AGENTS.md,
+  .agents/project.yaml, .mcp.json, .claude/settings.json, …) nunca se
+  sobrescriben: solo aparecen en ese reporte. .claude/settings.json y .codex/
+  se entregan UNA vez si faltan. Un archivo sincronizado que el proyecto habia
+  editado y la corrida sobrescribio gana una fila (backup en .backups/). Las
+  claves de package.json que se mantienen locales ganan una fila cada una.
   Una corrida que no aplica nada deja el arbol byte-identico (el lock no se
   reescribe solo para cambiar la fecha). Un abort (arbol sucio, lock corrupto,
   clone fallido, migracion o self-update rechazados) termina en "Abortado." y
   exit 1, nunca en "Sincronizacion completada".
+
+VERIFICACION POST-SYNC (gates):
+  Tras aplicar archivos, corre \`types:check\` y \`lint:check\` de tu
+  package.json (120 s cada uno; un gate que no termina se omite). Un gate roto
+  NO bloquea: aparece como fila "Verificacion" (codigo de salida, primeras
+  lineas de error, que archivos aplicados esta corrida nombra) y como linea
+  "Gates:" en el resumen. --no-gates lo desactiva.
+
+RE-EJECUCION SEGURA:
+  El sync deja sus archivos sin commitear a proposito (primero se revisa el
+  prompt). La corrida registra lo que escribio en ${LAST_APPLY_FILE}
+  (gitignored, con hash), y el guard del arbol sucio reconoce esas rutas
+  mientras conserven el hash: volver a correr sin commitear NO aborta. Una
+  ruta ajena, o una sincronizada que editaste despues, sigue abortando (con el
+  commit sugerido y la ruta del prompt).
+
+--dry-run CON SELF-UPDATE PENDIENTE:
+  Si upstream trae un updater mas nuevo, --dry-run no escribe cli/: ejecuta el
+  updater nuevo directamente desde el clon upstream contra este proyecto, asi
+  el preview muestra lo que hara la corrida real (plan de migracion,
+  componentes, tabla de paridad) y no la opinion del codigo viejo.
+
+SIN TTY:
+  Si stdin no es una terminal y no pasaste --auto ni --interactive, la corrida
+  asume --auto y lo avisa en una linea, en vez de quedarse esperando en el
+  multi-select de la Fase 3.
 
 FLAGS:
   --auto                          Modo no-interactivo: sincroniza TODO el
@@ -242,12 +289,15 @@ FLAGS:
   --force                         Como --auto pero TAMBIÉN borra archivos que el
                                   upstream eliminó. Hay backup + --rollback de
                                   respaldo.
-  --dry-run                       Preview, sin escribir
+  --dry-run                       Preview, sin escribir (tabla de paridad
+                                  incluida; el prompt no se guarda)
   --strict                        Sale con codigo 1 si el sync termina con un
                                   hallazgo BLOQUEANTE de paridad (contrato de
                                   compatibilidad roto: alias, wrappers, hooks,
                                   MCP). Por defecto solo avisa y sale 0. El
                                   drift de archivos protegidos nunca bloquea.
+  --no-gates                      No corre types:check / lint:check tras aplicar
+  --interactive                   Mantiene los prompts aunque stdin no sea TTY
   --rollback                      Restaura backup mas reciente
   --update-mcp-template <agent>   Refresca docs/mcp/<agent>.template.*
                                   (agentes: ${MCP_TEMPLATE_AGENTS.join(', ')})
@@ -266,8 +316,9 @@ EJEMPLOS:
   bun up codex-config                       # Solo el adaptador de Codex
   bun up --auto                             # CI mode (seguro, preserva lo tuyo)
   bun up --force                            # Forzar todo del upstream (sin preguntar)
-  bun up --dry-run                          # Preview
+  bun up --dry-run                          # Preview (con el updater nuevo si hay self-update)
   bun up --auto --strict                    # CI: falla si queda un contrato roto
+  bun up --auto --no-gates                  # Sin types:check / lint:check al final
   bun up --rollback                         # Restaurar backup
   bun up --update-mcp-template claude       # Refrescar MCP template
 `;
@@ -369,11 +420,17 @@ interface RunFacts {
   envNewKeys: string[]
   /** Applied this invocation: by this process, or by the parent that re-exec'd us. */
   migration: HarnessMigrationResult | null
+  /** --dry-run only: the preflight would migrate (so the compat check is not meaningful yet). */
+  migrationPlanned: boolean
   /** The compat hook left `.claude/skills` for `bun run agents:compat` after the migration commit. */
   aliasDeferred: boolean
+  /** Post-apply quality gates (`types:check`, `lint:check`); empty when skipped. */
+  gates: GateResult[]
+  /** A no-op run left the previous run's prompt file untouched. */
+  promptKept: boolean
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, aliasDeferred: false, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], promptKept: false, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -388,13 +445,13 @@ const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, alia
  * and the `--variables` flow itself stays gated. In non-interactive / CI mode it
  * prints the warning only (no prompt, no remote action).
  */
-async function detectEnvVarDrift(
-  templateDir: string,
-  sink: ReportSink,
-  nonInteractive: boolean,
-): Promise<void> {
+/**
+ * Keys upstream `.env.example` documents that the target's `.env` and
+ * `.env.example` both lack. Read-only; the dry-run parity table uses it too.
+ */
+function computeEnvNewKeys(templateDir: string): string[] {
   const upstreamExample = path.join(templateDir, '.env.example');
-  if (!fs.existsSync(upstreamExample)) { return; }
+  if (!fs.existsSync(upstreamExample)) { return []; }
 
   // Upstream documents these keys (active or commented).
   const upstreamKeys = parseDotEnvExampleKeys(upstreamExample);
@@ -412,11 +469,21 @@ async function detectEnvVarDrift(
   if (fs.existsSync(localExamplePath)) {
     for (const k of parseDotEnvExampleKeys(localExamplePath)) { localEnvKeys.add(k); }
   }
+  return upstreamKeys.filter(k => !localEnvKeys.has(k));
+}
 
-  const newKeys = upstreamKeys.filter(k => !localEnvKeys.has(k));
+async function detectEnvVarDrift(
+  templateDir: string,
+  sink: ReportSink,
+  nonInteractive: boolean,
+): Promise<void> {
+  if (!fs.existsSync(path.join(templateDir, '.env.example'))) { return; }
+
+  const newKeys = computeEnvNewKeys(templateDir);
   runFacts.envNewKeys = newKeys; // the parity report lists them as an `env` finding
 
   // Deprecated keys still lingering as ACTIVE entries in the local `.env`.
+  const localEnvPath = path.join(process.cwd(), '.env');
   const activeEnvKeys = fs.existsSync(localEnvPath)
     ? new Set(Object.keys(parseEnvFile(fs.readFileSync(localEnvPath, 'utf-8'))))
     : new Set<string>();
@@ -825,9 +892,25 @@ function makeSkillsRegistryHook(sink: ReportSink): (summary: RunSummary) => Prom
 // here and in the closing box; `bun run agents:compat` creates it afterwards.
 const ALIAS_DEFERRED_NEXT_STEP = 'Siguiente: commit de la migración, luego bun run agents:compat (crea el alias .claude/skills)';
 
+/**
+ * True while the cross-harness migration commit is still pending: the deferral
+ * marker is there and the index still carries the unindexed `.claude/skills/*`
+ * entries. A re-run over that tree (allowed since 8.1) must keep deferring the
+ * alias, or the migration commit hits `is beyond a symbolic link`.
+ */
+function migrationCommitPending(cwd: string): boolean {
+  if (!fs.existsSync(path.join(cwd, SKILLS_ALIAS_DEFERRED_MARKER))) { return false; }
+  try {
+    return execSync(`git -C "${cwd}" status --porcelain -- .claude/skills`, { encoding: 'utf8' }).trim() !== '';
+  }
+  catch {
+    return false;
+  }
+}
+
 function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
-    const deferSkillsAlias = runFacts.migration?.applied === true;
+    const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());
     sink.step(deferSkillsAlias
       ? 'Regenerando wrappers de comandos (el alias .claude/skills espera al commit de la migración)…'
       : 'Regenerando superficies de Claude/OpenCode (alias .claude/skills, wrappers de comandos)…');
@@ -873,12 +956,108 @@ function readLock(cwd: string): { templateCommit: string, perComponentCommit: Re
   }
 }
 
-function makeParityHook(sink: ReportSink, priorLockSha: string): (summary: RunSummary) => Promise<void> {
+// --- POST-APPLY GATES (afterApply hook) ---
+//
+// A synced file can land cleanly and still break the project's type-check
+// (Bunkai: `cli/**/*.test.ts` under a Next.js host whose `ProcessEnv` requires
+// `NODE_ENV`). A diff-based parity row cannot see that; running the project's
+// own gates right after the apply can. Informational only: a failed gate is
+// a `gates` row in the parity table plus a `Gates:` line in the closing box,
+// never an abort and never blocking. Each gate is timeboxed; one that does not
+// finish is skipped with a note. `--no-gates` turns the hook off.
+
+function packageScripts(cwd: string): Record<string, string> {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(cwd, 'package.json'), 'utf8')) as { scripts?: Record<string, string> };
+    return pkg.scripts ?? {};
+  }
+  catch {
+    return {};
+  }
+}
+
+/** Lines that read as errors: `tsc` (`error TSxxxx`), eslint (`  12:3  error`), or a bare `error` prefix. */
+function gateErrorLines(output: string): string[] {
+  return output.split('\n').map(l => l.trimEnd()).filter(l => /(?:^|\s)error(?:\s|:|\b)/i.test(l) && !/\d+ problems? \(/.test(l));
+}
+
+/** Repo-relative paths named in the output that this run applied. */
+function failingAppliedPaths(output: string, applied: readonly string[]): string[] {
+  const set = new Set(applied);
+  const hits = new Set<string>();
+  for (const p of set) {
+    if (output.includes(p)) { hits.add(p); }
+  }
+  return [...hits].sort();
+}
+
+export function runGate(script: string, cwd: string, applied: readonly string[], timeoutMs = GATE_TIMEOUT_MS): GateResult {
+  const started = Date.now();
+  const res = spawnSync('bun', ['run', '--silent', script], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: timeoutMs });
+  const seconds = (Date.now() - started) / 1000;
+  const output = `${res.stdout ?? ''}${res.stderr ?? ''}`;
+  const timedOut = res.error !== undefined && 'code' in res.error && (res.error as { code?: string }).code === 'ETIMEDOUT';
+  if (timedOut) {
+    return { script, status: 'timeout', exitCode: null, seconds, errorCount: 0, firstErrors: [], failingApplied: [], output };
+  }
+  if (res.error) {
+    return { script, status: 'error', exitCode: res.status, seconds, errorCount: 0, firstErrors: [res.error.message], failingApplied: [], output };
+  }
+  if (res.status === 0) {
+    return { script, status: 'pass', exitCode: 0, seconds, errorCount: 0, firstErrors: [], failingApplied: [], output };
+  }
+  const errors = gateErrorLines(output);
+  return {
+    script,
+    status: 'fail',
+    exitCode: res.status,
+    seconds,
+    errorCount: errors.length,
+    firstErrors: errors.slice(0, 3).map(l => (l.length > 160 ? `${l.slice(0, 157)}...` : l)),
+    failingApplied: failingAppliedPaths(output, applied),
+    output,
+  };
+}
+
+function makeGatesHook(sink: ReportSink, enabled: boolean): (summary: RunSummary) => Promise<void> {
+  return async (summary: RunSummary): Promise<void> => {
+    if (!enabled || summary.applied.length === 0) { return; }
+    const cwd = process.cwd();
+    const scripts = packageScripts(cwd);
+    const applied = summary.applied.map(a => a.entry.path);
+    for (const script of GATE_SCRIPTS) {
+      if (!scripts[script]) { continue; }
+      const spin = sink.spinner();
+      spin.start(`Gate ${script} (máx. ${GATE_TIMEOUT_MS / 1000} s)…`);
+      const result = runGate(script, cwd, applied);
+      runFacts.gates.push(result);
+      const took = `${Math.round(result.seconds)} s`;
+      if (result.status === 'pass') { spin.stop(`Gate ${script}: OK (${took})`); }
+      else if (result.status === 'timeout') { spin.stop(`Gate ${script}: omitido, sin veredicto en ${took}`); }
+      else if (result.status === 'error') { spin.stop(`Gate ${script}: no se pudo ejecutar`); }
+      else { spin.stop(`Gate ${script}: FAIL (${result.errorCount} error(es), ${took}); detalle en la fila "Verificación" de la tabla de paridad`); }
+    }
+  };
+}
+
+/** The one-line `Gates:` verdict for the closing box, or null when no gate ran. */
+export function summarizeGates(gates: readonly GateResult[]): string | null {
+  if (gates.length === 0) { return null; }
+  return gates.map((g) => {
+    if (g.status === 'pass') { return `${g.script} OK`; }
+    if (g.status === 'timeout') { return `${g.script} omitido (>${Math.round(g.seconds)} s)`; }
+    if (g.status === 'error') { return `${g.script} no ejecutado`; }
+    return `${g.script} FAIL (${g.errorCount} error${g.errorCount === 1 ? '' : 'es'})`;
+  }).join('; ');
+}
+
+function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     const cwd = process.cwd();
-    const drifted = detectProtectedDrift(PROTECTED_WATCHLIST, TEMP_DIR, cwd);
-    // Markers FIRST: one nudge per upstream change even if the user ignores it.
-    persistMarkers(drifted, cwd);
+    const drifted = detectProtectedDrift(PROTECTED_WATCHLIST, UPSTREAM_DIR, cwd);
+    // Markers FIRST: one nudge per upstream change even if the user ignores
+    // it. A dry-run persists nothing: the real run will nudge.
+    if (!dryRun) { persistMarkers(drifted, cwd); }
 
     const lock = readLock(cwd);
     const heldBack: HeldBackComponent[] = summary.componentsHeldBack.map(component => ({
@@ -889,16 +1068,35 @@ function makeParityHook(sink: ReportSink, priorLockSha: string): (summary: RunSu
     // handed to the re-exec child) plus any archive entry never reported.
     const archivedSkillsDir = path.join(cwd, MIGRATION_BACKUP_DIR, 'skills');
     const archivedSkills = archivedSkillsToReport(cwd, archivedSkillsDir, runFacts.migration?.archivedSkills ?? []);
-    persistArchivedSkillMarkers(cwd, archivedSkills);
+    if (!dryRun) { persistArchivedSkillMarkers(cwd, archivedSkills); }
+    // Compat errors: the repair hook's check on a real run. On a dry-run the
+    // read-only check stands in, unless the preflight would migrate first
+    // (then every contract is expectedly broken and the check says nothing).
+    let compatErrors = runFacts.compat?.errors ?? [];
+    if (dryRun && !runFacts.compat) {
+      if (runFacts.migrationPlanned) {
+        sink.step('[dry-run] Comprobación de compatibilidad omitida: la corrida real migra primero y la evalúa después.');
+      }
+      else {
+        try { compatErrors = checkAgentCompatibility(cwd).errors; }
+        catch (err) { compatErrors = [err instanceof Error ? err.message : String(err)]; }
+      }
+    }
     const findings = collectParityFindings({
       root: cwd,
-      upstreamDir: TEMP_DIR,
+      upstreamDir: UPSTREAM_DIR,
       drift: drifted.map(d => ({ path: d.path, reason: d.reason })),
-      compatErrors: runFacts.compat?.errors ?? [],
+      compatErrors,
       archivedSkills,
       archivedSkillsDir,
       heldBack,
       envNewKeys: runFacts.envNewKeys,
+      localEdits: (summary.localEditsOverwritten ?? []).map(edit => ({
+        ...edit,
+        backupPath: summary.backupDir ? path.join(summary.backupDir, edit.path) : null,
+      })),
+      packageJsonKept: summary.packageJsonKept ?? [],
+      gates: runFacts.gates,
     });
     const report = renderParityReport(findings, {
       templateRepo: TEMPLATE_REPO,
@@ -907,12 +1105,21 @@ function makeParityHook(sink: ReportSink, priorLockSha: string): (summary: RunSu
       promptFile: PARITY_PROMPT_PATH,
     });
     runFacts.parity = { findings, report };
-    if (findings.length === 0) { return; }
+    if (findings.length === 0 || dryRun) { return; }
 
     const out = path.join(cwd, PARITY_PROMPT_PATH);
+    // A run that applied nothing keeps the previous run's prompt: the watched
+    // files nudged then are not nudged again (markers), so overwriting would
+    // drop rows the user may not have read yet.
+    if (summary.applied.length === 0 && fs.existsSync(out)) {
+      runFacts.promptKept = true;
+      summary.promptSaved = true;
+      return;
+    }
     try {
       fs.mkdirSync(path.dirname(out), { recursive: true });
       fs.writeFileSync(out, report.fileBody);
+      summary.promptSaved = true;
     }
     catch (err) {
       sink.warn(`No se pudo guardar ${PARITY_PROMPT_PATH}: ${err instanceof Error ? err.message : String(err)}`);
@@ -933,7 +1140,15 @@ function printEndOfRun(summary: RunSummary, dryRun: boolean): void {
     else {
       const blocking = parity.findings.filter(f => f.blocking).length;
       tui.log.info(`${parity.findings.length} hallazgo(s) de paridad${blocking > 0 ? ` (${blocking} bloqueante(s))` : ''}. Nada fue modificado en archivos protegidos.`);
-      tui.log.info(`Prompt guardado en ${pc.cyan(PARITY_PROMPT_PATH)} (auto-generado, un solo uso; incluye los diffs completos).`);
+      if (dryRun) {
+        tui.log.info('[dry-run] prompt not saved (la corrida real lo escribe en '.concat(pc.cyan(PARITY_PROMPT_PATH), ' con los diffs completos).'));
+      }
+      else if (runFacts.promptKept) {
+        tui.log.info(`Prompt de la corrida anterior conservado en ${pc.cyan(PARITY_PROMPT_PATH)} (esta corrida no aplicó nada; puede tener más filas que la tabla de arriba).`);
+      }
+      else {
+        tui.log.info(`Prompt guardado en ${pc.cyan(PARITY_PROMPT_PATH)} (auto-generado, un solo uso; incluye los diffs completos).`);
+      }
       // Plain stdout (no log-prefix bullets) so the block copy-pastes cleanly.
       process.stdout.write(`\n${pc.dim('────────  COPY PROMPT BELOW  ────────')}\n${parity.report.prompt}\n${pc.dim('────────  COPY PROMPT ABOVE  ────────')}\n\n`);
     }
@@ -946,7 +1161,11 @@ function printEndOfRun(summary: RunSummary, dryRun: boolean): void {
     `Avanzados:    ${summary.componentsAdvanced.join(', ') || '(ninguno)'}`,
     `Retenidos:    ${summary.componentsHeldBack.join(', ') || '(ninguno)'}`,
   ];
-  if (!dryRun && summary.newHeadSha) {
+  const gates = summarizeGates(runFacts.gates);
+  if (gates) { lines.push(`Gates:        ${gates}`); }
+  // A no-op run over a clean tree has nothing to commit; a no-op over the
+  // previous sync's uncommitted output still does.
+  if (!dryRun && summary.newHeadSha && (summary.applied.length > 0 || (summary.lastApplyPaths ?? 0) > 0)) {
     lines.push(`Commit sugerido: ${suggestCommitMessage(summary)}`);
   }
   if (runFacts.aliasDeferred) {
@@ -977,6 +1196,7 @@ function runHarnessMigration(sink: ReportSink, dryRun: boolean): HarnessMigratio
       tui.log.warn(`Bloqueantes que detendrían la migración:\n  - ${plan.blockers.join('\n  - ')}`);
     }
     tui.log.message('  (--dry-run: nada de lo anterior se aplicó. La corrida real lo hace ANTES de sincronizar.)');
+    runFacts.migrationPlanned = plan.needed;
     return null;
   }
 
@@ -1220,6 +1440,13 @@ async function main(): Promise<void> {
   ensureGitVersion();
   await validatePrerequisites();
 
+  // No terminal on stdin (CI, a pipe, an agent's shell) and no explicit mode:
+  // the Phase 3 multi-select would hang forever. Default to --auto and say so.
+  if (!parsed.auto && !parsed.force && !parsed.interactive && !process.stdin.isTTY) {
+    parsed.auto = true;
+    tui.log.info('stdin no es una terminal: se asume --auto (pasa --interactive para conservar los prompts).');
+  }
+
   // Filter components if sub-commands passed (e.g. `bun run up scripts`).
   let components = COMPONENTS;
   if (parsed.commands.length > 0 && !parsed.commands.includes('all')) {
@@ -1281,30 +1508,37 @@ async function main(): Promise<void> {
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: PROTECTED_WATCHLIST.map(e => e.path),
     selfUpdateComponent: 'cli',
+    promptFile: PARITY_PROMPT_PATH,
     hooks: {
       // Runs after files land but before tempDir cleanup → upstream `.env.example`
-      // is still on disk for the diff. Skipped entirely on dry-run (no files
-      // were written, so there is nothing to regenerate or act on). Each hook
-      // is isolated by composeHooks: one failure warns, never aborts the rest.
+      // is still on disk for the diff. On dry-run only the read-only pieces
+      // run (env keys, the parity table), nothing is regenerated or saved.
+      // Each hook is isolated by composeHooks: one failure warns, never
+      // aborts the rest.
       afterApply: parsed.dryRun
-        ? undefined
+        ? composeHooks(
+            sink,
+            async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
+            makeParityHook(sink, priorLockSha, true),
+          )
         : composeHooks(
             sink,
             // Alias + wrappers first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
             makeSkillsRegistryHook(sink),
-            async () => detectEnvVarDrift(TEMP_DIR, sink, parsed.auto),
-            async () => upsertGitStrategyBlock(TEMP_DIR, sink, parsed.auto),
-            async () => upsertAutomationIdentityBlock(TEMP_DIR, sink, parsed.auto),
+            makeGatesHook(sink, !parsed.noGates),
+            async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
+            async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
+            async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),
             // Legacy git-tracked PBI cache detection: advisory + agent prompt
             // only — the hook NEVER mutates the git index.
             makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH) }, sink),
             // LAST: folds the watchlist drift (one nudge per upstream change;
             // AGENTS.md keeps the legacy CLAUDE.md marker), the compat check,
-            // the migration archive and the rest into the single parity
-            // report main() prints after runUpdate returns.
-            makeParityHook(sink, priorLockSha),
+            // the gates, the migration archive and the rest into the single
+            // parity report main() prints after runUpdate returns.
+            makeParityHook(sink, priorLockSha, false),
           ),
     },
   };

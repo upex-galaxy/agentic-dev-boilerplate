@@ -208,6 +208,22 @@ export interface FailedFile {
   reason: string
 }
 
+/** A synced file the project had edited (3-way: local differed from the upstream copy at the lock cursor) that this run overwrote. */
+export interface LocalEditOverwritten {
+  path: string
+  component: string
+}
+
+/** A `package.json` key kept at the project's value although upstream differs (Phase 4.5b, `skip` or `mine`). */
+export interface PackageJsonKeptKey {
+  file: string
+  section: string
+  key: string
+  localValue: string
+  upstreamValue: string
+  resolution: 'skip' | 'mine'
+}
+
 export interface RunSummary {
   applied: AppliedFile[]
   skipped: DeltaEntry[]
@@ -222,6 +238,16 @@ export interface RunSummary {
    * is NOT aborted.
    */
   aborted?: boolean
+  /** Absolute path of this run's pre-write backup directory (`.backups/update-<ts>/`), when one was created. */
+  backupDir?: string | null
+  /** Files overwritten this run whose local copy carried a project edit; each has a copy under `backupDir`. */
+  localEditsOverwritten?: LocalEditOverwritten[]
+  /** `package.json` keys kept at the project's value this run (upstream differs). */
+  packageJsonKept?: PackageJsonKeptKey[]
+  /** Paths recorded in `.template/last-apply.json`: the updater's own uncommitted output, exempt from the next dirty-tree guard. */
+  lastApplyPaths?: number
+  /** Set by the wrapper's parity hook when it saved the prompt file (`UpdaterConfig.promptFile`). */
+  promptSaved?: boolean
 }
 
 export interface MergeResult {
@@ -517,6 +543,12 @@ export interface UpdaterConfig {
    * child sets `UPEX_UPDATER_REEXEC=1` to prevent infinite re-exec loops.
    */
   selfUpdateComponent?: string
+  /**
+   * Repo-relative path of the parity prompt the wrapper saves. Named by the
+   * dirty-tree guard when it refuses a tree that still holds the previous
+   * run's uncommitted output plus user edits, next to the suggested commit.
+   */
+  promptFile?: string
   hooks?: {
     afterApply?: (summary: RunSummary) => Promise<void>
     skillsResolver?: (templateDir: string) => string[]

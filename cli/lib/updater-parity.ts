@@ -27,19 +27,26 @@
  * never in rule numbers. Full diffs go to the saved file, never to the terminal.
  */
 
+import type { CompatibilityErrorGroup } from './agent-compatibility.ts';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
-import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, undeclaredCommandWrappers } from './agent-compatibility.ts';
+import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, compatibilityErrorGroup, undeclaredCommandWrappers } from './agent-compatibility.ts';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type ParitySurface = 'instructions' | 'skills' | 'commands' | 'hooks' | 'mcp' | 'env' | 'components' | 'git';
+export type ParitySurface = 'instructions' | 'skills' | 'commands' | 'hooks' | 'mcp' | 'env' | 'components' | 'package' | 'git' | 'gates';
 
+/**
+ * `take upstream` is reserved for content the project lacks entirely. A row
+ * whose evidence names something only the project has (a server, a key, a
+ * heading, an edit) suggests `merge`: following `take upstream` literally
+ * there would delete it.
+ */
 export type ParitySuggestion
   = 'keep project' | 'take upstream' | 'merge' | 'add to overlay' | 'run agents:compat' | 'decide';
 
@@ -54,6 +61,40 @@ export interface ParityFinding {
   blocking: boolean
   /** Full paired diff, written to the saved file under the finding's heading. */
   diff?: string
+  /** Plain-text detail (gate output, the two package.json values), written to the saved file when there is no diff. */
+  detail?: string
+}
+
+/** A synced file the project had edited that this run overwrote (`RunSummary.localEditsOverwritten`). */
+export interface LocalEditInput {
+  path: string
+  component: string
+  /** Absolute path of the pre-write backup copy, or null when none was written. */
+  backupPath: string | null
+}
+
+export interface PackageJsonKeptInput {
+  file: string
+  section: string
+  key: string
+  localValue: string
+  upstreamValue: string
+}
+
+/** Outcome of one quality gate the wrapper ran after the apply (`types:check`, `lint:check`). */
+export interface GateResult {
+  script: string
+  status: 'pass' | 'fail' | 'timeout' | 'error'
+  exitCode: number | null
+  /** Seconds the gate took. */
+  seconds: number
+  errorCount: number
+  /** The first error lines of the output, already trimmed. */
+  firstErrors: string[]
+  /** Repo-relative paths named by the errors that THIS run applied. */
+  failingApplied: string[]
+  /** Complete combined output, for the saved file. */
+  output: string
 }
 
 export interface ParityDriftInput {
@@ -82,6 +123,12 @@ export interface ParityInput {
   heldBack: HeldBackComponent[]
   /** Keys upstream `.env.example` documents that the project's `.env` / `.env.example` lack. */
   envNewKeys: string[]
+  /** Project-edited synced files this run overwrote. */
+  localEdits?: LocalEditInput[]
+  /** `package.json` keys kept at the project's value while upstream differs. */
+  packageJsonKept?: PackageJsonKeptInput[]
+  /** Quality gates run after the apply; only failed / timed-out ones become rows. */
+  gates?: GateResult[]
 }
 
 export interface ParityMeta {
@@ -124,7 +171,7 @@ const MCP_HOST_FILE: Record<string, string> = {
 };
 
 /** Order of the surfaces in every table. */
-export const SURFACE_ORDER: ParitySurface[] = ['instructions', 'skills', 'commands', 'hooks', 'mcp', 'env', 'components', 'git'];
+export const SURFACE_ORDER: ParitySurface[] = ['instructions', 'skills', 'commands', 'hooks', 'mcp', 'env', 'components', 'package', 'git', 'gates'];
 
 /** English labels for the prompt (the AI reads it). */
 const SURFACE_LABEL_EN: Record<ParitySurface, string> = {
@@ -135,7 +182,9 @@ const SURFACE_LABEL_EN: Record<ParitySurface, string> = {
   mcp: 'MCP',
   env: 'Env',
   components: 'Components',
+  package: 'package.json',
   git: 'Git',
+  gates: 'Gates',
 };
 
 /** Spanish labels for the terminal table (the human reads it). */
@@ -147,8 +196,15 @@ const SURFACE_LABEL_ES: Record<ParitySurface, string> = {
   mcp: 'MCP',
   env: 'Env',
   components: 'Componentes',
+  package: 'package.json',
   git: 'Git',
+  gates: 'Verificación',
 };
+
+/** The other two MCP registries a host's project-only server must be declared in. */
+function otherMcpHostFiles(host: string): string {
+  return Object.entries(MCP_HOST_FILE).filter(([id]) => id !== host).map(([, file]) => file).join(' and ');
+}
 
 const MAX_NAMES = 3;
 
@@ -309,15 +365,22 @@ export function configKeyDelta(projectKeys: string[], upstreamKeys: string[]): K
   };
 }
 
-/** One evidence sentence for a watched file, from its two copies plus the diff. */
-export function describeWatchedFile(filePath: string, project: string, upstream: string, diff: string): string {
+export interface WatchedFileEvidence {
+  evidence: string
+  /** The project has headings or keys upstream lacks: `take upstream` would delete them. */
+  projectOnly: boolean
+}
+
+/** Evidence for a watched file, from its two copies plus the diff. */
+export function watchedFileEvidence(filePath: string, project: string, upstream: string, diff: string): WatchedFileEvidence {
   const stats = formatStats(diffStats(diff));
   const parts: string[] = [];
+  let projectOnly = false;
   if (path.extname(filePath).toLowerCase() === '.md') {
     const delta = markdownSectionDelta(project, upstream);
     if (delta.added.length > 0) { parts.push(`upstream added ${delta.added.length} heading(s): ${listNames(delta.added)}`); }
     if (delta.changed.length > 0) { parts.push(`changed ${delta.changed.length}: ${listNames(delta.changed)}`); }
-    if (delta.removed.length > 0) { parts.push(`project-only ${delta.removed.length}: ${listNames(delta.removed)}`); }
+    if (delta.removed.length > 0) { parts.push(`project-only ${delta.removed.length}: ${listNames(delta.removed)}`); projectOnly = true; }
     if (parts.length === 0) { parts.push('same headings, body differs'); }
   }
   else {
@@ -326,14 +389,19 @@ export function describeWatchedFile(filePath: string, project: string, upstream:
     if (mine && theirs) {
       const delta = configKeyDelta(mine, theirs);
       if (delta.added.length > 0) { parts.push(`upstream added key(s): ${listNames(delta.added)}`); }
-      if (delta.projectOnly.length > 0) { parts.push(`project-only key(s): ${listNames(delta.projectOnly)}`); }
+      if (delta.projectOnly.length > 0) { parts.push(`project-only key(s): ${listNames(delta.projectOnly)}`); projectOnly = true; }
       if (parts.length === 0) { parts.push('same keys, values differ'); }
     }
     else {
       parts.push('content differs');
     }
   }
-  return `${parts.join('; ')}; ${stats}`;
+  return { evidence: `${parts.join('; ')}; ${stats}`, projectOnly };
+}
+
+/** One evidence sentence for a watched file, from its two copies plus the diff. */
+export function describeWatchedFile(filePath: string, project: string, upstream: string, diff: string): string {
+  return watchedFileEvidence(filePath, project, upstream, diff).evidence;
 }
 
 // ============================================================================
@@ -345,12 +413,17 @@ const MCP_EXTRA_RE = /^MCP (\S+) present in (\w+) only:/;
 /** `validateCommandAliases` names a wrapper file no manifest produced. */
 const WRAPPER_UNDECLARED_RE = /^Command wrapper not declared in any manifest: (\S+?);/;
 
+const COMPAT_GROUP_SURFACE: Record<CompatibilityErrorGroup, ParitySurface> = {
+  instructions: 'instructions',
+  alias: 'skills',
+  wrappers: 'commands',
+  hooks: 'hooks',
+  mcp: 'mcp',
+};
+
+/** Same classifier `bun run agents:compat` groups its output by. */
 export function compatErrorSurface(message: string): ParitySurface {
-  if (/\bMCP\b/.test(message)) { return 'mcp'; }
-  if (/command wrapper|command alias/i.test(message)) { return 'commands'; }
-  if (/skills alias|\.claude\/skills|skill/i.test(message)) { return 'skills'; }
-  if (/hook/i.test(message)) { return 'hooks'; }
-  return 'instructions';
+  return COMPAT_GROUP_SURFACE[compatibilityErrorGroup(message)];
 }
 
 /**
@@ -460,19 +533,21 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
   // 1. Watched files that drifted: section-level evidence, full diff for the
   //    file. Kept aside until the compat errors are known: a compat error on
   //    the same path folds the drift into its (blocking) row.
-  const drifted = new Map<string, Omit<ParityFinding, 'id'>>();
+  const drifted = new Map<string, Omit<ParityFinding, 'id'> & { projectOnly: boolean }>();
   for (const entry of input.drift) {
     const project = readIfExists(path.join(input.root, entry.path));
     const upstream = readIfExists(path.join(input.upstreamDir, entry.path));
     if (project === null || upstream === null) { continue; }
     const diff = diffNoIndex(path.join(input.root, entry.path), path.join(input.upstreamDir, entry.path));
+    const { evidence, projectOnly } = watchedFileEvidence(entry.path, project, upstream, diff);
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path),
       path: entry.path,
-      evidence: describeWatchedFile(entry.path, project, upstream, diff),
+      evidence,
       suggested: 'merge',
       blocking: false,
       diff,
+      projectOnly,
     });
   }
 
@@ -480,17 +555,21 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
   //    no manifest declares is one row per path; the rest stay one finding
   //    each. All of them block: the contract failed. A drifted watched file on
   //    the same path folds in: compat evidence first, drift evidence appended,
-  //    the full diff kept for the saved file, and upstream's shape suggested.
+  //    the full diff kept for the saved file. Upstream's shape is suggested
+  //    only when the project holds nothing of its own there; a project-only
+  //    server, key or heading turns the suggestion into `merge` (still
+  //    blocking: the contract is still broken).
   const compat: Omit<ParityFinding, 'id'>[] = [];
   const pushCompat = (finding: Omit<ParityFinding, 'id'>): void => {
     const drift = drifted.get(finding.path);
     if (!drift) { compat.push(finding); return; }
     drifted.delete(finding.path);
+    const { projectOnly, ...driftFinding } = drift;
     compat.push({
       ...finding,
-      evidence: `${finding.evidence}; ${drift.evidence}`,
-      suggested: 'take upstream',
-      diff: drift.diff,
+      evidence: `${finding.evidence}; ${driftFinding.evidence}`,
+      suggested: finding.suggested === 'take upstream' && !projectOnly ? 'take upstream' : 'merge',
+      diff: driftFinding.diff,
     });
   };
   const wrappersReported = new Set<string>();
@@ -523,16 +602,19 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
   for (const [host, sets] of mcpByHost) {
     const parts: string[] = [];
     if (sets.missing.length > 0) { parts.push(`missing: ${sets.missing.join(', ')} (declared in .mcp.json)`); }
-    if (sets.extra.length > 0) { parts.push(`only here: ${sets.extra.join(', ')} (not in .mcp.json)`); }
+    // Servers only this host has are the project's integrations: the fix is to
+    // declare them everywhere or drop them deliberately, never to overwrite
+    // the file with upstream's copy.
+    if (sets.extra.length > 0) { parts.push(`only here: ${sets.extra.join(', ')} (not in .mcp.json): declare them in ${otherMcpHostFiles(host)}, or remove them`); }
     pushCompat({
       surface: 'mcp',
       path: MCP_HOST_FILE[host] ?? host,
       evidence: parts.join('; '),
-      suggested: sets.extra.length === 0 ? 'take upstream' : 'decide',
+      suggested: sets.extra.length === 0 ? 'take upstream' : 'merge',
       blocking: true,
     });
   }
-  findings.push(...drifted.values(), ...compat);
+  findings.push(...[...drifted.values()].map(({ projectOnly: _projectOnly, ...finding }) => finding), ...compat);
 
   // 3. Archived skills: the migration kept the legacy copy because upstream owns the name.
   for (const skill of input.archivedSkills) {
@@ -588,7 +670,65 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     });
   }
 
-  // 7. Git strategy provenance: a shipped default nobody chose is a pending decision.
+  // 7. Synced files the project had edited and this run overwrote: the edit
+  //    lives in the backup; the row says where, and how far the two are apart.
+  for (const edit of input.localEdits ?? []) {
+    const current = path.join(input.root, edit.path);
+    const backupRel = edit.backupPath ? path.relative(input.root, edit.backupPath).replace(/\\/g, '/') : null;
+    const diff = edit.backupPath && fs.existsSync(edit.backupPath) && fs.existsSync(current)
+      ? diffNoIndex(edit.backupPath, current, { a: 'project-edit', b: 'applied' })
+      : '';
+    const stats = diffStats(diff);
+    findings.push({
+      surface: edit.path.startsWith('.agents/skills/') ? 'skills' : 'components',
+      path: edit.path,
+      evidence: `project edit overwritten; backup: ${backupRel ?? 'none'}; ${diff ? `${formatStats(stats)} vs applied` : 'backup unavailable'}`,
+      suggested: 'merge',
+      blocking: false,
+      diff: diff || undefined,
+    });
+  }
+
+  // 8. package.json keys kept at the project's value: the terminal FYI is
+  //    lost on a non-interactive run; the row survives, the values go to the file.
+  for (const kept of input.packageJsonKept ?? []) {
+    findings.push({
+      surface: 'package',
+      path: kept.file,
+      evidence: `${kept.section}.${kept.key}: project value kept; upstream differs`,
+      suggested: 'decide',
+      blocking: false,
+      detail: `project (kept):\n  ${kept.localValue}\nupstream:\n  ${kept.upstreamValue}`,
+    });
+  }
+
+  // 9. Quality gates that failed after the apply. Informational (never
+  //    blocking): a type or lint break the diff-based rows cannot see.
+  for (const gate of input.gates ?? []) {
+    if (gate.status === 'pass') { continue; }
+    const head = gate.status === 'timeout'
+      ? `skipped: no verdict within ${Math.round(gate.seconds)} s`
+      : gate.status === 'error'
+        ? `could not run (exit ${gate.exitCode ?? 'signal'})`
+        : `exit ${gate.exitCode ?? 'signal'}; ${gate.errorCount} error(s)`;
+    const parts = [head];
+    if (gate.firstErrors.length > 0) { parts.push(`first: ${gate.firstErrors.join(' | ')}`); }
+    if (gate.status === 'fail') {
+      parts.push(gate.failingApplied.length > 0
+        ? `applied this run: ${gate.failingApplied.join(', ')}`
+        : 'none of the failing files was applied this run');
+    }
+    findings.push({
+      surface: 'gates',
+      path: gate.script,
+      evidence: parts.join('; '),
+      suggested: 'decide',
+      blocking: false,
+      detail: gate.output.trim() || undefined,
+    });
+  }
+
+  // 10. Git strategy provenance: a shipped default nobody chose is a pending decision.
   const stamp = readGitStrategyStamp(readIfExists(path.join(input.root, '.agents', 'project.yaml')));
   if (fs.existsSync(path.join(input.root, '.agents', 'project.yaml'))) {
     if (!stamp.present) {
@@ -649,6 +789,7 @@ export function buildParityPrompt(findings: ParityFinding[], meta: ParityMeta): 
     'run tests -> types -> lint, and report.',
     `Full diffs per row live in ${meta.promptFile}${copies}.`,
     'Rows marked BLOCKING failed a compatibility contract and must be resolved for `bun run agents:compat:check` to pass.',
+    '`take upstream` is suggested only where the project lacks the content entirely; a row naming project-only servers, keys, headings or edits suggests `merge` (its backup or values are in the saved file).',
     '',
     '| # | Surface | File | What differs (evidence) | Suggested |',
     '|---|---|---|---|---|',
@@ -660,13 +801,13 @@ export function buildParityPrompt(findings: ParityFinding[], meta: ParityMeta): 
 
 export function buildParityFileBody(findings: ParityFinding[], meta: ParityMeta): string {
   const today = new Date().toISOString().slice(0, 10);
-  const evidence = findings.filter(f => f.diff).flatMap(f => [
+  const evidence = findings.filter(f => f.diff || f.detail).flatMap(f => [
     `### ${f.id}. ${f.path}`,
     '',
     f.evidence,
     '',
-    '```diff',
-    f.diff!.trimEnd(),
+    f.diff ? '```diff' : '```text',
+    (f.diff ?? f.detail ?? '').trimEnd(),
     '```',
     '',
   ]);
@@ -681,7 +822,7 @@ export function buildParityFileBody(findings: ParityFinding[], meta: ParityMeta)
     buildParityPrompt(findings, meta),
     '```',
     '',
-    ...(evidence.length > 0 ? ['## Evidence (full diffs: `+` is what upstream has, `-` is what the project has)', '', ...evidence] : []),
+    ...(evidence.length > 0 ? ['## Evidence (full diffs: `+` is what upstream has, `-` is what the project has; for an overwritten edit, `-` is the project edit and `+` what was applied)', '', ...evidence] : []),
   ].join('\n');
 }
 

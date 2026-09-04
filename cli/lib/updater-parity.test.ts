@@ -220,8 +220,10 @@ describe('collectParityFindings', () => {
     const codex = byPath('.codex/config.toml');
     expect(codex.surface).toBe('mcp');
     expect(codex.blocking).toBe(true);
-    expect(codex.evidence).toMatch(/^missing: n8n \(declared in \.mcp\.json\); only here: acme \(not in \.mcp\.json\); upstream added key\(s\): "mcp_servers\.n8n"; project-only key\(s\): "mcp_servers\.acme"; \d+ hunks? \(\+\d+\/-\d+\)$/);
-    expect(codex.suggested).toBe('take upstream');
+    expect(codex.evidence).toMatch(/^missing: n8n \(declared in \.mcp\.json\); only here: acme \(not in \.mcp\.json\): declare them in \.mcp\.json and opencode\.jsonc, or remove them; upstream added key\(s\): "mcp_servers\.n8n"; project-only key\(s\): "mcp_servers\.acme"; \d+ hunks? \(\+\d+\/-\d+\)$/);
+    // Following `take upstream` literally would delete `acme`, the project's own
+    // server: a row naming project-only content always suggests `merge`.
+    expect(codex.suggested).toBe('merge');
     expect(codex.diff).toContain('+[mcp_servers.n8n]');
     expect(findings.filter(f => f.path === '.codex/config.toml')).toHaveLength(1);
     expect(findings.filter(f => f.surface === 'mcp')).toHaveLength(1);
@@ -342,9 +344,11 @@ describe('renderParityReport', () => {
       mcp: 'blocked',
       env: 'warn',
       components: 'warn',
+      package: 'ok',
       git: 'warn',
+      gates: 'ok',
     });
-    expect(report.surfaces.map(r => r.label)).toEqual(['Instrucciones y config', 'Skills', 'Comandos', 'Hooks', 'MCP', 'Env', 'Componentes', 'Git']);
+    expect(report.surfaces.map(r => r.label)).toEqual(['Instrucciones y config', 'Skills', 'Comandos', 'Hooks', 'MCP', 'Env', 'Componentes', 'package.json', 'Git', 'Verificación']);
     expect(report.surfaces.find(r => r.surface === 'mcp')?.cell).toBe('1 hallazgo: .codex/config.toml');
 
     const prompt = report.prompt;
@@ -353,7 +357,8 @@ describe('renderParityReport', () => {
     expect(prompt).toContain('(keep project | take upstream | merge) BEFORE editing anything');
     expect(prompt).toContain('| # | Surface | File | What differs (evidence) | Suggested |');
     expect(prompt).toContain('| 1 | Instructions | AGENTS.md | upstream added 1 heading(s): "5.5 MULTI-HARNESS"');
-    expect(prompt).toMatch(/\| MCP \| \.codex\/config\.toml \| missing: n8n \(declared in \.mcp\.json\); only here: acme \(not in \.mcp\.json\); upstream added key\(s\): "mcp_servers\.n8n"[^|]* \| take upstream \(BLOCKING\) \|/);
+    expect(prompt).toMatch(/\| MCP \| \.codex\/config\.toml \| missing: n8n \(declared in \.mcp\.json\); only here: acme \(not in \.mcp\.json\): declare them in \.mcp\.json and opencode\.jsonc, or remove them; upstream added key\(s\): "mcp_servers\.n8n"[^|]* \| merge \(BLOCKING\) \|/);
+    expect(prompt).toContain('`take upstream` is suggested only where the project lacks the content entirely');
     expect(prompt.trimEnd().endsWith('Post-merge: bun run agents:compat && bun run agents:compat:check && bun run repo:check')).toBe(true);
     // Scannable: never the diff itself, never rule numbers.
     expect(prompt).not.toContain('@@');
@@ -428,5 +433,140 @@ describe('strictVerdict', () => {
     expect(strict.reason).toContain('--strict');
     expect(strict.outro).toBe('Sincronizacion completada con contratos rotos (--strict).');
     expect(runVerdict({ aborted: false, dryRun: false, strict: true }, [drift]).exitCode).toBe(0);
+  });
+});
+
+describe('never a destructive default for project-only content', () => {
+  // Live finding (Bunkai): row 8 said `take upstream (BLOCKING)` for an
+  // opencode.jsonc holding four working project servers; applied literally it
+  // would have deleted them. `take upstream` is only for content the project
+  // lacks entirely.
+  function base(root: string, upstream: string): ParityInput {
+    return { root, upstreamDir: upstream, drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, 'x'), heldBack: [], envNewKeys: [] };
+  }
+
+  test('an MCP host with project-only servers suggests merge and names the other two registries; missing-only still takes upstream', () => {
+    const root = temporaryRoot();
+    const findings = collectParityFindings({
+      ...base(root, temporaryRoot()),
+      compatErrors: [
+        'MCP n8n missing from codex: declared in .mcp.json, absent from .codex/config.toml',
+        'MCP dbhub present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc',
+        'MCP postman present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc',
+      ],
+    });
+    const codex = findings.find(f => f.path === '.codex/config.toml')!;
+    expect(codex.suggested).toBe('take upstream');
+    expect(codex.blocking).toBe(true);
+    const opencode = findings.find(f => f.path === 'opencode.jsonc')!;
+    expect(opencode.suggested).toBe('merge');
+    expect(opencode.blocking).toBe(true);
+    expect(opencode.evidence).toBe('only here: dbhub, postman (not in .mcp.json): declare them in .mcp.json and .codex/config.toml, or remove them');
+  });
+
+  test('a watched file folded into a compat row keeps take upstream only when the project has nothing of its own there', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    // Same keys, upstream added one: nothing project-only.
+    write(root, '.codex/config.toml', '[mcp_servers.context7]\ncommand = "x"\n');
+    write(upstream, '.codex/config.toml', '[mcp_servers.context7]\ncommand = "x"\n\n[mcp_servers.n8n]\ncommand = "z"\n');
+    // Project-only key next to the upstream addition.
+    write(root, 'opencode.jsonc', '{"mcp":{"context7":{},"dbhub":{}}}');
+    write(upstream, 'opencode.jsonc', '{"mcp":{"context7":{},"n8n":{}}}');
+    const findings = collectParityFindings({
+      ...base(root, upstream),
+      drift: [{ path: '.codex/config.toml', reason: 'r' }, { path: 'opencode.jsonc', reason: 'r' }],
+      compatErrors: [
+        'MCP n8n missing from codex: declared in .mcp.json, absent from .codex/config.toml',
+        'MCP n8n missing from opencode: declared in .mcp.json, absent from opencode.jsonc',
+      ],
+    });
+    expect(findings.find(f => f.path === '.codex/config.toml')?.suggested).toBe('take upstream');
+    const opencode = findings.find(f => f.path === 'opencode.jsonc')!;
+    expect(opencode.suggested).toBe('merge');
+    expect(opencode.evidence).toContain('project-only key(s): "mcp.dbhub"');
+    expect(opencode.blocking).toBe(true);
+    // Any other compat contract still takes upstream's shape (no project content involved).
+    expect(collectParityFindings({ ...base(root, upstream), compatErrors: ['claude hook command must be exactly: node x'] })[0].suggested).toBe('take upstream');
+    expect(findings.every(f => f.suggested !== 'decide' || f.surface === 'git')).toBe(true);
+  });
+});
+
+describe('rows the diff-based table could not see before', () => {
+  function base(root: string, upstream: string): ParityInput {
+    return { root, upstreamDir: upstream, drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, 'x'), heldBack: [], envNewKeys: [] };
+  }
+
+  test('an overwritten project edit: one row on skills or components, backup named, hunks vs applied, full diff in the file', () => {
+    const root = temporaryRoot();
+    write(root, '.agents/skills/acli/SKILL.md', 'upstream body\n');
+    write(root, '.backups/update-1/.agents/skills/acli/SKILL.md', 'project body\n');
+    write(root, 'scripts/x.ts', 'upstream\n');
+    write(root, '.backups/update-1/scripts/x.ts', 'ours\n');
+    write(root, 'docs/gone.md', 'upstream\n');
+    const findings = collectParityFindings({
+      ...base(root, temporaryRoot()),
+      localEdits: [
+        { path: '.agents/skills/acli/SKILL.md', component: 'agent-compatibility', backupPath: join(root, '.backups/update-1/.agents/skills/acli/SKILL.md') },
+        { path: 'scripts/x.ts', component: 'scripts', backupPath: join(root, '.backups/update-1/scripts/x.ts') },
+        { path: 'docs/gone.md', component: 'docs', backupPath: null },
+      ],
+    });
+    const skill = findings.find(f => f.path === '.agents/skills/acli/SKILL.md')!;
+    expect(skill.surface).toBe('skills');
+    expect(skill.suggested).toBe('merge');
+    expect(skill.blocking).toBe(false);
+    expect(skill.evidence).toBe('project edit overwritten; backup: .backups/update-1/.agents/skills/acli/SKILL.md; 1 hunk (+1/-1) vs applied');
+    expect(skill.diff).toContain('-project body');
+    expect(skill.diff).toContain('+upstream body');
+    expect(findings.find(f => f.path === 'scripts/x.ts')?.surface).toBe('components');
+    expect(findings.find(f => f.path === 'docs/gone.md')?.evidence).toBe('project edit overwritten; backup: none; backup unavailable');
+    const body = buildParityFileBody(findings, META);
+    expect(body).toContain('### 1. .agents/skills/acli/SKILL.md');
+    expect(body).toContain('-project body');
+  });
+
+  test('a package.json key kept at the project value: one row per key, both values in the file body only', () => {
+    const root = temporaryRoot();
+    const findings = collectParityFindings({
+      ...base(root, temporaryRoot()),
+      packageJsonKept: [
+        { file: 'package.json', section: 'scripts', key: 'repo:check', localValue: 'bun run a', upstreamValue: 'bun run a && bun run b' },
+        { file: 'package.json', section: 'devDependencies', key: 'eslint', localValue: '^9.0.0', upstreamValue: '^9.30.0' },
+      ],
+    });
+    expect(findings.map(f => [f.surface, f.path, f.evidence, f.suggested, f.blocking])).toEqual([
+      ['package', 'package.json', 'scripts.repo:check: project value kept; upstream differs', 'decide', false],
+      ['package', 'package.json', 'devDependencies.eslint: project value kept; upstream differs', 'decide', false],
+    ]);
+    const report = renderParityReport(findings, META);
+    expect(report.surfaces.find(r => r.surface === 'package')).toMatchObject({ state: 'warn', cell: '2 hallazgos: package.json' });
+    expect(report.prompt).not.toContain('bun run a && bun run b');
+    expect(report.fileBody).toContain('```text\nproject (kept):\n  bun run a\nupstream:\n  bun run a && bun run b\n```');
+  });
+
+  test('a failed gate: informational row with exit code, first errors and the applied files it names; a passing gate is no row', () => {
+    const root = temporaryRoot();
+    const output = 'cli/lib/updater-core.test.ts(84,19): error TS2352: Conversion of type X may be a mistake.\ncli/other.ts(1,1): error TS1000: nope\n';
+    const findings = collectParityFindings({
+      ...base(root, temporaryRoot()),
+      gates: [
+        { script: 'types:check', status: 'fail', exitCode: 2, seconds: 9.4, errorCount: 2, firstErrors: output.trim().split('\n'), failingApplied: ['cli/lib/updater-core.test.ts'], output },
+        { script: 'lint:check', status: 'pass', exitCode: 0, seconds: 3, errorCount: 0, firstErrors: [], failingApplied: [], output: '' },
+        { script: 'test', status: 'timeout', exitCode: null, seconds: 120, errorCount: 0, firstErrors: [], failingApplied: [], output: '' },
+      ],
+    });
+    expect(findings.map(f => [f.surface, f.path, f.suggested, f.blocking])).toEqual([
+      ['gates', 'types:check', 'decide', false],
+      ['gates', 'test', 'decide', false],
+    ]);
+    expect(findings[0].evidence).toBe(`exit 2; 2 error(s); first: ${output.trim().split('\n').join(' | ')}; applied this run: cli/lib/updater-core.test.ts`);
+    expect(findings[1].evidence).toBe('skipped: no verdict within 120 s');
+    const report = renderParityReport(findings, META);
+    expect(report.surfaces.find(r => r.surface === 'gates')).toMatchObject({ label: 'Verificación', state: 'warn' });
+    expect(report.fileBody).toContain('### 1. types:check');
+    expect(report.fileBody).toContain('```text\ncli/lib/updater-core.test.ts(84,19)');
+    // Never blocking: --strict does not fail on a gate.
+    expect(strictVerdict(true, findings).exitCode).toBe(0);
   });
 });

@@ -38,6 +38,57 @@ is hardened accordingly.
 
 ## [Unreleased]
 
+### Fixed (updater 8.1, after the first live run against a Next.js project)
+
+`CLI_VERSION` 8.0 -> 8.1. Every item below comes from
+`bun run up` v8 running against a real downstream repo (upex-bunkai-tms).
+
+- **Never a destructive suggestion for project-only content.** The parity
+  table suggests `take upstream` only where the project lacks the content
+  entirely. An MCP host holding servers that exist only in the project
+  (`only here: dbhub, postman (not in .mcp.json): declare them in .mcp.json
+  and .codex/config.toml, or remove them`) and a watched file with
+  project-only keys or headings now suggest `merge`, still BLOCKING when a
+  compat contract is broken. Applying the old row literally would have
+  deleted four working integrations.
+- **`--dry-run` previews with the NEW updater.** With a self-update pending,
+  the preview no longer runs the old code's opinion: `cli/` stays untouched,
+  the fetched updater runs from the upstream clone against the project
+  (`UPEX_UPDATER_UPSTREAM_DIR` hands the clone to the child) and shows its
+  migration plan, component preview and parity table; nothing is written and
+  the prompt is not saved (`[dry-run] prompt not saved`).
+- **Non-TTY defaults to `--auto`.** Without a terminal on stdin and without
+  `--auto` or the new `--interactive`, the run assumes `--auto` and prints one
+  notice instead of hanging on the Phase 3 multi-select.
+- **Post-sync gates.** After the apply, the project's `types:check` and
+  `lint:check` run (120 s each, `--no-gates` to skip). A failure is a
+  "Verificación" row (exit code, first error lines, which of the failing
+  files this run applied) plus a `Gates:` line in the closing box; never an
+  abort, never blocking.
+- **`package.json` rows.** Each key kept at the project's value while
+  upstream differs is one `package.json` row (`scripts.repo:check: project
+  value kept; upstream differs`), both values in the saved file.
+- **Overwritten project edits get a row.** A synced file the project had
+  edited (3-way against the lock cursor) and the run overwrote is a `merge`
+  row on Skills or Componentes: `project edit overwritten; backup:
+  .backups/update-<ts>/<path>; N hunks vs applied`, full diff in the file.
+- **Re-run after an uncommitted sync no longer aborts.** The run records
+  what it wrote in `.template/last-apply.json` (gitignored, sha256 per path);
+  the dirty-tree guard exempts a recorded path whose hash still matches. An
+  unrelated file, or a synced file edited by hand since, still aborts and
+  names `Commit sugerido` plus the prompt path. A re-run before the migration
+  commit keeps the `.claude/skills` alias deferred, and a no-op re-run keeps
+  the previous prompt file.
+- **Alias status independent of the verdict.** `bun run agents:compat:check`
+  and `setup:doctor` always print the alias line (created / OK / deferred
+  until the migration commit / missing) and group errors per surface
+  (instructions, alias, wrappers, hooks, MCP).
+- **Host-agnostic synced tests.** `cli/lib/updater-core.test.ts` and
+  `cli/updater-harness-migration.test.ts` no longer cast plain objects to
+  `NodeJS.ProcessEnv` (TS2352 under Next.js, whose `ProcessEnv` requires
+  `NODE_ENV`); `cli/updater-host-types.test.ts` compiles `cli/**` with that
+  augmentation on every `bun test`.
+
 ### Breaking
 
 **One source, three harnesses** (`refactor(agents)!`, 2026-09-03). The

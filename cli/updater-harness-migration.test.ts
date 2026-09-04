@@ -37,6 +37,16 @@ function write(root: string, relativePath: string, contents: string): void {
 }
 
 /**
+ * Cast through `unknown`, never straight to `NodeJS.ProcessEnv`: this file is
+ * synced into downstream projects, and a Next.js host makes `NODE_ENV` a
+ * REQUIRED `ProcessEnv` property, under which the direct cast fails `tsc`
+ * (TS2352). Guarded by `cli/updater-host-types.test.ts`.
+ */
+function fakeEnv(vars: Record<string, string> = {}): NodeJS.ProcessEnv {
+  return vars as unknown as NodeJS.ProcessEnv;
+}
+
+/**
  * A repo scaffolded before the cross-harness move: project memory in CLAUDE.md,
  * skills committed under `.claude/skills/` next to the generated REGISTRY.md, the
  * personality hook under `.claude/hooks/`, no AGENTS.md, no `.agents/skills/`.
@@ -406,13 +416,13 @@ describe('settings hook repoint + touched paths', () => {
     const result = applyHarnessMigration(root);
     expect(result.archivedSkills).toEqual(['sprint-development']);
 
-    const env = { [HARNESS_MIGRATION_RESULT_ENV]: JSON.stringify(result) } as NodeJS.ProcessEnv;
+    const env = fakeEnv({ [HARNESS_MIGRATION_RESULT_ENV]: JSON.stringify(result) });
     expect(readHarnessMigrationResultFromEnv(env)).toEqual(result);
     // The child's own guard exemptions come from the same result.
     expect(harnessMigrationTouchedPaths(readHarnessMigrationResultFromEnv(env)!)).toEqual(harnessMigrationTouchedPaths(result));
 
-    expect(readHarnessMigrationResultFromEnv({} as NodeJS.ProcessEnv)).toBeNull();
-    expect(readHarnessMigrationResultFromEnv({ [HARNESS_MIGRATION_RESULT_ENV]: '{not json' } as NodeJS.ProcessEnv)).toBeNull();
-    expect(readHarnessMigrationResultFromEnv({ [HARNESS_MIGRATION_RESULT_ENV]: '{"applied":"yes"}' } as NodeJS.ProcessEnv)).toBeNull();
+    expect(readHarnessMigrationResultFromEnv(fakeEnv())).toBeNull();
+    expect(readHarnessMigrationResultFromEnv(fakeEnv({ [HARNESS_MIGRATION_RESULT_ENV]: '{not json' }))).toBeNull();
+    expect(readHarnessMigrationResultFromEnv(fakeEnv({ [HARNESS_MIGRATION_RESULT_ENV]: '{"applied":"yes"}' }))).toBeNull();
   });
 });
