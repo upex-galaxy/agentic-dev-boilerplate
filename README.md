@@ -166,7 +166,7 @@ What it does:
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, gentle-ai (Engram only), community skills, `.env` wiring for the 4 MCPs (context7, tavily, supabase, n8n) plus the Atlassian CLI, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`.claude/skills` alias, command wrappers) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
+5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, gentle-ai (Engram only), community skills, `.env` wiring for every MCP server declared in `.mcp.json` (context7, tavily, supabase and n8n out of the box) plus the Atlassian CLI, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`.claude/skills` alias, command wrappers) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -438,6 +438,7 @@ bun run format:check      # Check formatting
 bun up                    # Update template from upstream (interactive)
 bun up --auto             # Non-interactive / CI mode (safe changes only, exit 0 always)
 bun up --dry-run          # Preview what would change without writing anything
+bun up --strict           # Exit 1 on compat errors or blocking parity findings (CI gate)
 bun up --rollback         # Restore from most recent backup
 bun run api:sync          # Sync OpenAPI spec + generate types
 bun run vars:check         # Validate {{VAR}} and {{jira.*}} references
@@ -452,6 +453,8 @@ bun run jira:check        # Validate Jira manifest vs catalog
 > **`--upex` flag** — every `jira:sync-*` script accepts `--upex` to download the UPEX-standard reference JSON from `upex-galaxy/agentic-dev-boilerplate@main` instead of hitting Jira. Use when you don't have admin access on your Jira workspace, when you want a working catalog without setting up auth, or when you want the canonical UPEX standard as a reference. Non-admin users running the regular `jira:sync-fields` / `jira:sync-workflows` get a pre-flight permission check + friendly skip pointing at `--upex` as the fallback.
 
 `bun up` ahora corre un sync per-archivo con tracking de SHAs por componente vía `.template/boilerplate.lock.json` (schema v6). Detecta archivos modificados localmente y prompta resolución (`[t]heirs / [m]ine / [s]kip`). El flag `--auto` aplica cambios seguros y salta los diverged — ideal para CI o flujos no-interactivos (siempre exit 0). El flag `--dry-run` simula el sync completo sin escribir nada; `--rollback` restaura desde el directorio de backup más reciente (`.backups/update-{ISO-ts}/`). Requiere git ≥ 2.25 (partial clone). Primera corrida sin `.template/boilerplate.lock.json`: bootstrap automático con bulk sync + escritura inicial del estado v6. Detalle del flujo y schema en el JSDoc header de `cli/update-boilerplate.ts` y vía `bun up --help`.
+
+**What a run leaves behind.** Every `bun up` ends with one "Estado por superficie" table (8 rows: Instrucciones y config / Skills / Comandos / Hooks / MCP / Env / Componentes / Git, one ok or warn glyph per row) followed by ONE parity prompt, also saved to `.agents/prompts/parity-plan.md` (gitignored, single-use). The prompt lists every difference between the project and upstream as a numbered row with concrete evidence (headings added or removed in `AGENTS.md`, hunk counts, server ids missing from a host, wrapper files no manifest produced, archived skill collisions) and asks the AI to present the table and WAIT for a per-row decision, `keep project | take upstream | merge`, before editing anything. One row per path: a stray wrapper is a single `add to overlay` row, and a watched file that also fails a compat contract (say `.codex/config.toml` missing a server) is one blocking row carrying both the contract evidence and the drift evidence. `--strict` turns compat errors or blocking findings into exit 1 for CI; the default stays warn and exit 0. `.claude/settings.json` is delivered once when the project lacks it (bootstrap-only, like `.codex/`) and then sits on the protected watchlist next to `AGENTS.md`, `.mcp.json` and `opencode.jsonc`: never overwritten, project permissions survive, drift shows up in the prompt. Project-owned slash commands go in `.agents/compatibility/command-aliases.project.json` (see [Multi-harness architecture](#multi-harness-architecture-one-source-three-consumers)); the updater never touches that file. The self-update no longer trips its own dirty-tree guard, so `--auto` works without `--force` after `cli/` refreshes itself; the lock file and `.backups/` are updater-owned and never count as user dirt. A run that applies nothing leaves the tree byte-identical (the lock is not rewritten just to bump its timestamp), and an aborted run (dirty tree, corrupt lock, failed clone, declined migration or self-update) ends with `Abortado.` and exit 1, never with a success line. On the run that migrates a Claude-era project, the `.claude/skills` alias is deliberately NOT created (git cannot rewrite the staged `.claude/skills/*` deletions behind a symlink, so the pre-commit hook would fail): commit the migration, then `bun run agents:compat` creates it; the closing box says so.
 
 <br />
 
@@ -492,14 +495,16 @@ Bold `[generated]` cells above are output. Edit the source, then regenerate:
 | --------------------------------------------------- | -------------------------------------------- | ----------------------- |
 | `CLAUDE.md` (one-line `@AGENTS.md` shim)            | `AGENTS.md`                                  | `bun run agents:compat` |
 | `.claude/skills` (POSIX symlink / Windows junction) | `.agents/skills/`                            | `bun run agents:compat` |
-| 8 Claude + 8 OpenCode command wrappers              | `.agents/compatibility/command-aliases.json` | `bun run agents:compat` |
+| One Claude + one OpenCode wrapper per alias (8 upstream, plus any project-declared) | `.agents/compatibility/command-aliases.json`, overlaid by the optional `command-aliases.project.json` | `bun run agents:compat` |
 
 ```bash
 bun run agents:compat         # regenerate every derived harness artifact, then check
 bun run agents:compat:check   # validate the whole contract (also runs in repo:check + pre-push)
 ```
 
-`agents:compat:check` covers the shim bytes, the alias target, both wrapper sets byte-for-byte against the manifest, the hook adapters, and MCP parity. It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit whenever a harness surface is staged. `bun run setup:doctor` reports the same surfaces plus **Codex repository trust**: project `.codex/` config and hooks load only in a trusted repo, and that is runtime state no file read can verify, so the doctor reports it as WARN.
+**Project-owned slash commands** live in `.agents/compatibility/command-aliases.project.json` (same schema as the upstream manifest, optional, never synced by `bun run up`). Upstream aliases are read first; an overlay entry with the same `alias` replaces it, a new `alias` is added, and `wrapperHosts` always come from the upstream manifest. A wrapper file under `.claude/commands/` or `.opencode/commands/` that neither manifest produced fails the check by name (`Command wrapper not declared in any manifest: <path>`); declare it in the overlay or delete it, the repair never deletes for you.
+
+`agents:compat:check` covers the shim bytes, the alias target, both wrapper sets byte-for-byte against the merged manifest, the hook adapters, and MCP parity. It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit whenever a harness surface is staged. `bun run setup:doctor` reports the same surfaces plus **Codex repository trust**: project `.codex/` config and hooks load only in a trusted repo, and that is runtime state no file read can verify, so the doctor reports it as WARN.
 
 **Updating a project created before this change.** The first `bun run up` on a Claude-era project runs a migration preflight before any component sync: it promotes `CLAUDE.md` to `AGENTS.md` and leaves the shim behind, moves every skill under `.claude/skills/` into `.agents/skills/` (project-authored ones included), and archives any name collision under `.template/pre-agents-migration/` instead of overwriting. Nothing is deleted, and a second run is a no-op. Details in [`INSTALLER.md`](INSTALLER.md#multi-harness-layout-one-source-three-consumers) and [ADR-0002](.context/ADR/ADR-0002-multi-harness-single-source.md).
 

@@ -215,6 +215,13 @@ export interface RunSummary {
   newHeadSha: string
   componentsAdvanced: string[]
   componentsHeldBack: string[]
+  /**
+   * True when a preflight refusal ended the run before any sync (dirty tree,
+   * corrupt lock, clone failure, a declined migration or self-update). The
+   * wrapper must not report success on it. A run that found nothing to sync
+   * is NOT aborted.
+   */
+  aborted?: boolean
 }
 
 export interface MergeResult {
@@ -514,20 +521,4 @@ export interface UpdaterConfig {
     afterApply?: (summary: RunSummary) => Promise<void>
     skillsResolver?: (templateDir: string) => string[]
   }
-}
-
-// ============================================================================
-// PARSED CLI ARGS — kept exported so the wrapper's parseArgs can return it.
-// Repo-specific commands stay union-typed via plain string[] to avoid pinning
-// updater-core to a particular repo's command vocabulary.
-// ============================================================================
-
-export interface ParsedArgs {
-  commands: string[]
-  help: boolean
-  dryRun: boolean
-  rollback: boolean
-  auto: boolean
-  /** Repo-specific subcommand value (e.g. DEV's MCP agent). Typed loosely on purpose. */
-  updateMcpTemplate: string | null
 }

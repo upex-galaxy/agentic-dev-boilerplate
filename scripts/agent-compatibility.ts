@@ -19,6 +19,10 @@ import {
 export * from '../cli/lib/agent-compatibility.ts';
 
 function printCheck(result: CompatibilityCheck): void {
+  if (result.ok && result.alias.status === 'deferred') {
+    console.log('Agent compatibility OK (Claude skills alias deferred until the migration commit; `bun run agents:compat` creates it).');
+    return;
+  }
   if (result.ok) {
     console.log(`Agent compatibility OK: ${result.alias.path} -> ${result.alias.target} (${result.alias.type})`);
     return;

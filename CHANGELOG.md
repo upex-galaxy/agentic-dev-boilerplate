@@ -84,6 +84,43 @@ sibling `agentic-qa-boilerplate` shipped. Decision record:
 
 ### Added
 
+- `bun run up` ends with one "Estado por superficie" table (8 rows:
+  Instrucciones y config / Skills / Comandos / Hooks / MCP / Env / Componentes
+  / Git, ok or warn per row) and ONE parity prompt, printed and saved to
+  `.agents/prompts/parity-plan.md` (gitignored, single-use). Every row cites a
+  surface, a file and concrete evidence (headings added or removed plus hunk
+  counts, a server missing from a host, a wrapper no manifest produced, an
+  archived skill collision, a held-back component, a drifted env key) and
+  awaits a per-row decision, `keep project | take upstream | merge`, before the
+  AI edits anything. One row per path: a stray wrapper is a single blocking
+  `add to overlay` row, and a watched file that also fails a compat contract
+  (`.codex/config.toml` missing a declared server) is one blocking row that
+  carries the contract evidence first and the drift evidence after it,
+  suggestion `take upstream`. Archived skills nudge once: what this run
+  archived (the migration result travels to the self-update re-exec child
+  through `UPEX_UPDATER_MIGRATION_RESULT`) plus any archive entry never
+  reported, each with a one-nudge marker under `.template/upstream-sha/`. The
+  commit suggestion is part of the closing box.
+- An aborted run is reported as one. When a preflight refuses (dirty tree,
+  corrupt lock, failed clone, declined migration or self-update) `runUpdate`
+  returns `aborted: true`, the closing line is `Abortado.` and the exit code
+  is 1 in every mode; Ctrl-C on a prompt keeps exit 130. `CLI_VERSION` is
+  `8.0` (it stamps the lock's `cliVersion` and the ignore-file sentinel, which
+  is matched by prefix; the lock schema stays at 7).
+- `bun run up --strict`: exit 1 when the compat check fails or a blocking
+  parity finding is present. Default stays warn and exit 0. Documented in
+  `--help`.
+- Project overlay for slash commands:
+  `.agents/compatibility/command-aliases.project.json` (same schema as the
+  upstream manifest, optional, bootstrap-only so `bun run up` never overwrites
+  it). Upstream aliases are read first; an overlay entry overrides by `alias`
+  name or adds a new one; `wrapperHosts` always come from upstream.
+  `validateCommandAliases`, `repairCommandWrappers`, `commandWrapperCounts`
+  and the doctor wrapper row use the merged list. A wrapper file under
+  `.claude/commands/` or `.opencode/commands/` that no manifest produced now
+  fails by name (`Command wrapper not declared in any manifest: <path>; add it
+  to .agents/compatibility/command-aliases.project.json or delete it`) instead
+  of being ignored; the repair never deletes it.
 - `bun run agents:compat` regenerates every derived harness artifact (shim,
   alias, both wrapper sets) and then checks; `bun run agents:compat:check`
   validates the whole contract (shim bytes, alias target, wrappers byte-for-byte
@@ -108,6 +145,35 @@ sibling `agentic-qa-boilerplate` shipped. Decision record:
 
 ### Changed
 
+- `.claude/settings.json` joins the protected watchlist: the updater never
+  overwrites it, project permissions and hook edits survive, and drift from
+  upstream shows up as a row in the parity prompt (a stale hook command is
+  still caught by `agents:compat:check`). Component `agent-root-config`
+  delivers it ONCE when the project lacks it (bootstrap-only, the same rule as
+  `.codex/`) and never touches it afterwards.
+- On the run that applies the cross-harness migration the `.claude/skills`
+  alias is NOT created: the migration unindexes the committed
+  `.claude/skills/*` tree and git refuses to rewrite index entries behind a
+  symlink, so the alias would break `lint-staged` on the migration commit
+  itself (`'.claude/skills/REGISTRY.md' is beyond a symbolic link`). The run
+  prints the next step and repeats it in the closing box (`Siguiente: commit
+  de la migración, luego bun run agents:compat (crea el alias .claude/skills)`);
+  the compat check (and the pre-commit gate that runs it) treats the missing
+  alias as expected while the marker
+  `.template/upstream-sha/claude-skills-alias.deferred` exists, and the self-update
+  re-exec child learns about the migration through the same env var as the
+  archived skills. `repairAgentSurfaces` in `cli/lib/agent-compatibility.ts`
+  is the shared repair with that switch; `repairClaudeSkillsAlias` removes the
+  marker once the alias exists.
+- Real-repo tests in `cli/lib/agent-compatibility.test.ts` assert the server
+  set `.mcp.json` declares and the merged alias list, never the literal
+  boilerplate four or the literal count of eight wrappers, so a downstream
+  project with a different set passes them unchanged. Docs (`README`,
+  `INSTALLER`, `CONTEXT`, `AGENTS.md` §5.5,
+  ADR-0002, `docs/mcp/*`, `docs/setup/mcp/*`, `docs/onboarding.html`) describe
+  the same project-neutral rule: the canonical set is whatever `.mcp.json`
+  declares; the four boilerplate-known ids get an extra strict shape check
+  only when present.
 - `bun run up` runs a migration preflight before any component sync on a
   project created before this change: promotes `CLAUDE.md` to `AGENTS.md` and
   leaves the shim, moves every `.claude/skills/*` skill (project-authored ones
@@ -126,8 +192,10 @@ sibling `agentic-qa-boilerplate` shipped. Decision record:
 ### Migration — for downstream repos cloned before this change
 
 1. `bun run up` (the preflight above migrates instructions and skills; nothing
-   is deleted).
-2. `bun run agents:compat:check`, then `bun run setup:doctor` to see the
+   is deleted). Commit what it staged: the pre-commit hook passes because the
+   `.claude/skills` alias does not exist yet on purpose.
+2. `bun run agents:compat` (creates the alias), then
+   `bun run agents:compat:check` and `bun run setup:doctor` to see the
    per-harness rows.
 3. If you had hand-written a `.claude/commands/*.md` with a body, move that body
    into a skill under `.agents/skills/` and declare the alias in
@@ -136,6 +204,35 @@ sibling `agentic-qa-boilerplate` shipped. Decision record:
    hooks will not load.
 
 ### Fixed
+
+- Self-update vs dirty-tree guard: `bun run up --auto` aborted on the dirty
+  `cli/` tree the self-update itself had just produced and needed `--force`
+  to continue. The re-exec child now ignores paths inside the self-update
+  component, and the parent no longer leaves the tree in a state the child
+  rejects. The lock file (`.template/boilerplate.lock.json`) and `.backups/`
+  are updater-owned in the parent too, so a lock left uncommitted by the
+  previous run never aborts the next one.
+- A run that applied nothing rewrote the lock only to bump `lastSyncedAt`,
+  leaving `git status` dirty after a no-op sync. The lock is now written only
+  when its content (timestamp excluded) changed, so a second run on a synced
+  tree is byte-identical.
+- A bootstrapped component with nothing to deliver (its only file is
+  bootstrap-only and the project already owns it, e.g. `agent-root-config`
+  with `.claude/settings.json`, or `codex-config` on a repo that already had
+  `.codex/`) never got a lock cursor, so every later run repeated
+  "Componentes sin sincronizar previamente: ... bootstrap parcial". It now
+  advances like any component that skipped nothing.
+- Windows: the `project/` and `upstream/` relabel of the saved diffs matched
+  the backslash caller paths against git's forward-slash headers and left the
+  temp-dir paths in the file. Both forms are normalized before the relabel.
+- `scripts/lint-skills.ts` raised `TIER-MISMATCH` on community skills committed
+  as real directories inside `.agents/skills/` (downstream projects commit
+  their `bunx skills add` output; one repo hit five errors). A skill that
+  `cli/install.ts` lists as T2 / T3 / T4 keeps that tier even when present in
+  the store and is no longer reclassified as T1. The scan line reports how
+  many committed community skills were seen. Regression fixture in
+  `scripts/lint-skills.test.ts` (`LINT_SKILLS_ROOT` override for fixture
+  repos).
 
 Cross-platform defects across the whole bootstrap path, found by an audit run
 against the sibling `agentic-qa-boilerplate` after the same defects were fixed
