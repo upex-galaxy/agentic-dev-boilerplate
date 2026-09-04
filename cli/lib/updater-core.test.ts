@@ -1,6 +1,6 @@
-import type { Component, SyncStateV7 } from './updater-types.ts';
+import type { Component, SyncStateV6, SyncStateV7 } from './updater-types.ts';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
@@ -10,14 +10,22 @@ import {
   classifyFile,
   componentOwnedPaths,
   computeComponentAdvancement,
+  computeDelta,
+  detectLocalEdits,
   dirtyTreeExemptions,
   foreignDirtyPaths,
   isBootstrapOnlyFile,
   isLocalTemplateSource,
+  LAST_APPLY_FILE,
   parsePorcelainPaths,
+  prefetchedUpstreamDir,
+  readLastApply,
   reconcileComponentsByContent,
+  splitByLastApply,
   syncStateWriteNeeded,
   UPDATER_OWNED_PATHS_ENV,
+  UPDATER_UPSTREAM_DIR_ENV,
+  writeLastApply,
 } from './updater-core.ts';
 
 const temporaryRoots: string[] = [];
@@ -38,6 +46,17 @@ function write(root: string, relativePath: string, contents: string): void {
   const destination = join(root, relativePath);
   mkdirSync(dirname(destination), { recursive: true });
   writeFileSync(destination, contents);
+}
+
+/**
+ * An env object for the pure helpers. Cast through `unknown`, never straight
+ * to `NodeJS.ProcessEnv`: this file is synced into downstream projects, and a
+ * Next.js host augments `ProcessEnv` with a REQUIRED `NODE_ENV`, under which a
+ * direct `{ X: '1' } as NodeJS.ProcessEnv` fails `tsc` with TS2352 (seen on
+ * the first live sync). `cli/updater-host-types.test.ts` guards this.
+ */
+function fakeEnv(vars: Record<string, string> = {}): NodeJS.ProcessEnv {
+  return vars as unknown as NodeJS.ProcessEnv;
 }
 
 /** A committed consumer repo: the CLI, the memory file, the lock, a `.backups/` ignore rule. */
@@ -81,11 +100,11 @@ describe('dirty-tree guard: self-update re-exec', () => {
     const porcelain = git(root, ['status', '--porcelain']);
     expect(porcelain).toContain('cli/update-boilerplate.ts');
 
-    const child = { UPEX_UPDATER_REEXEC: '1' } as NodeJS.ProcessEnv;
+    const child = fakeEnv({ UPEX_UPDATER_REEXEC: '1' });
     expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, child))).toEqual([]);
 
     // A parent process (no REEXEC) has no such exemption: that dirt is foreign to it.
-    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, {} as NodeJS.ProcessEnv)).sort())
+    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, fakeEnv())).sort())
       .toEqual(['cli/lib/updater-parity.ts', 'cli/update-boilerplate.ts']);
 
     // Genuine uncommitted work next to the self-update still aborts the child.
@@ -101,7 +120,7 @@ describe('dirty-tree guard: self-update re-exec', () => {
     const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all']);
     expect(porcelain).toContain('.template/boilerplate.lock.json');
 
-    const parent = {} as NodeJS.ProcessEnv;
+    const parent = fakeEnv();
     expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, parent))).toEqual([]);
     // Ignored by git anyway (.gitignore has .backups/), but exempt even when it is not.
     expect(foreignDirtyPaths('?? .backups/update-2/x.ts\n M .template/boilerplate.lock.json', dirtyTreeExemptions(CFG, {}, parent))).toEqual([]);
@@ -120,12 +139,12 @@ describe('dirty-tree guard: self-update re-exec', () => {
 
     const owned = ['CLAUDE.md', '.gitignore', '.claude/skills'];
     // Parent: the wrapper passes what the migration touched.
-    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, { updaterOwnedPaths: owned }, {} as NodeJS.ProcessEnv))).toEqual([]);
+    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, { updaterOwnedPaths: owned }, fakeEnv()))).toEqual([]);
     // Child: same list arrives through the env var the parent set on spawn.
-    const env = { UPEX_UPDATER_REEXEC: '1', [UPDATER_OWNED_PATHS_ENV]: owned.join('\n') } as NodeJS.ProcessEnv;
+    const env = fakeEnv({ UPEX_UPDATER_REEXEC: '1', [UPDATER_OWNED_PATHS_ENV]: owned.join('\n') });
     expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, env))).toEqual([]);
     // Without either, the same dirt is refused.
-    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, {} as NodeJS.ProcessEnv)).sort()).toEqual(['.gitignore', 'CLAUDE.md']);
+    expect(foreignDirtyPaths(porcelain, dirtyTreeExemptions(CFG, {}, fakeEnv())).sort()).toEqual(['.gitignore', 'CLAUDE.md']);
   });
 
   test('porcelain parsing handles renames, quoted paths and both status columns', () => {
@@ -275,5 +294,124 @@ describe('isBootstrapOnlyFile', () => {
     expect(isBootstrapOnlyFile('.context/PRD/README.md', context, [])).toBe(false);
     expect(isBootstrapOnlyFile('.context/ADR/README.md', context, [])).toBe(true);
     expect(isBootstrapOnlyFile('.context/PRD/prd.md', context, [])).toBe(true);
+  });
+});
+
+describe('re-run over an uncommitted sync (last-apply record)', () => {
+  // Live finding (Bunkai): the first `--auto` left 283 files uncommitted by
+  // design (the parity prompt is reviewed first) and the second `--auto`
+  // aborted on them as a dirty tree. The record makes the guard tell the
+  // updater's own output from the user's work by hash.
+
+  test('recorded paths stay exempt while their hash holds; an edited or unrelated path is still the user\'s', () => {
+    const root = committedConsumer();
+    write(root, 'cli/update-boilerplate.ts', 'new cli\n');
+    write(root, 'docs/new.md', 'delivered by the sync\n');
+    const record = writeLastApply(root, ['cli/update-boilerplate.ts', 'docs/new.md'], {
+      upstreamSha: 'abcdef1234567',
+      suggestedCommit: 'chore(boilerplate): sync to abcdef1',
+      promptFile: '.agents/prompts/parity-plan.md',
+    });
+    expect(record).not.toBeNull();
+    expect(existsSync(join(root, LAST_APPLY_FILE))).toBe(true);
+    expect(readLastApply(root)).toEqual(record);
+    expect(Object.keys(record!.files).sort()).toEqual(['cli/update-boilerplate.ts', 'docs/new.md']);
+
+    const foreignOf = (): string[] => foreignDirtyPaths(git(root, ['status', '--porcelain', '--untracked-files=all']), dirtyTreeExemptions(CFG, {}, fakeEnv()));
+    // Same content as recorded: the updater's, not the user's.
+    expect(splitByLastApply(foreignOf(), readLastApply(root), root)).toEqual({ recorded: ['cli/update-boilerplate.ts', 'docs/new.md'], userOwned: [] });
+    // Without a record, the plain guard applies.
+    expect(splitByLastApply(foreignOf(), null, root)).toEqual({ recorded: [], userOwned: ['cli/update-boilerplate.ts', 'docs/new.md'] });
+
+    // The user edits one synced file and adds an unrelated one.
+    write(root, 'docs/new.md', 'edited by hand after the sync\n');
+    write(root, 'README.md', 'unrelated work\n');
+    const split = splitByLastApply(foreignOf(), readLastApply(root), root);
+    expect(split.recorded).toEqual(['cli/update-boilerplate.ts']);
+    expect(split.userOwned.sort()).toEqual(['README.md', 'docs/new.md']);
+  });
+
+  test('a path the sync deleted or unindexed is recorded as null and stays exempt while absent', () => {
+    const root = committedConsumer();
+    git(root, ['rm', '--quiet', 'AGENTS.md']);
+    const record = writeLastApply(root, ['AGENTS.md'], { upstreamSha: 'a', suggestedCommit: 'c', promptFile: null });
+    expect(record?.files).toEqual({ 'AGENTS.md': null });
+    const foreign = foreignDirtyPaths(git(root, ['status', '--porcelain', '--untracked-files=all']), dirtyTreeExemptions(CFG, {}, fakeEnv()));
+    expect(foreign).toEqual(['AGENTS.md']);
+    expect(splitByLastApply(foreign, record, root)).toEqual({ recorded: ['AGENTS.md'], userOwned: [] });
+    // Recreated by the user: no longer what was recorded.
+    write(root, 'AGENTS.md', '# back\n');
+    expect(splitByLastApply(['AGENTS.md'], record, root).userOwned).toEqual(['AGENTS.md']);
+  });
+
+  test('a malformed record is ignored', () => {
+    const root = committedConsumer();
+    write(root, LAST_APPLY_FILE, '{not json');
+    expect(readLastApply(root)).toBeNull();
+    write(root, LAST_APPLY_FILE, '{"files": "nope"}');
+    expect(readLastApply(root)).toBeNull();
+  });
+});
+
+describe('prefetched upstream (dry-run preview through the fetched updater)', () => {
+  test('only a directory holding a git clone counts', () => {
+    const clone = temporaryRoot();
+    expect(prefetchedUpstreamDir(fakeEnv())).toBeNull();
+    expect(prefetchedUpstreamDir(fakeEnv({ [UPDATER_UPSTREAM_DIR_ENV]: clone }))).toBeNull();
+    git(clone, ['init', '--quiet']);
+    expect(prefetchedUpstreamDir(fakeEnv({ [UPDATER_UPSTREAM_DIR_ENV]: clone }))).toBe(clone);
+    expect(prefetchedUpstreamDir(fakeEnv({ [UPDATER_UPSTREAM_DIR_ENV]: join(clone, 'missing') }))).toBeNull();
+  });
+});
+
+describe('detectLocalEdits (3-way: local vs the upstream copy at the lock cursor)', () => {
+  const SKILLS: Component = { name: 'agent-compatibility', type: 'directory', paths: ['.agents/skills'] };
+
+  /** Template repo with two commits: the lock cursor, then HEAD. */
+  function templateRepo(): { template: string, lock: string } {
+    const template = temporaryRoot();
+    git(template, ['init', '--quiet', '--initial-branch=main']);
+    git(template, ['config', 'user.email', 'test@example.com']);
+    git(template, ['config', 'user.name', 'test']);
+    write(template, '.agents/skills/a/SKILL.md', 'a v1\n');
+    write(template, '.agents/skills/b/SKILL.md', 'b v1\n');
+    write(template, '.agents/skills/c/SKILL.md', 'c v1\n');
+    git(template, ['add', '-A']);
+    git(template, ['commit', '--quiet', '-m', 'lock']);
+    const lock = git(template, ['rev-parse', 'HEAD']).trim();
+    write(template, '.agents/skills/a/SKILL.md', 'a v2\n');
+    write(template, '.agents/skills/c/SKILL.md', 'c v2\n');
+    git(template, ['add', '-A']);
+    git(template, ['commit', '--quiet', '-m', 'head']);
+    return { template, lock };
+  }
+
+  function stateAt(lock: string): SyncStateV6 {
+    return { schemaVersion: 6, lastSync: '', templateCommit: lock, cliVersion: '8.1', syncedComponents: [], variableSystemVersion: 1, perComponentCommit: { 'agent-compatibility': lock } };
+  }
+
+  test('a skill the project edited is an edit; one that merely lags upstream is not', () => {
+    const { template, lock } = templateRepo();
+    const local = temporaryRoot();
+    write(local, '.agents/skills/a/SKILL.md', 'a v1\n'); // lags upstream: fast-forward
+    write(local, '.agents/skills/b/SKILL.md', 'b v1, project edit\n'); // upstream unchanged since the lock
+    write(local, '.agents/skills/c/SKILL.md', 'c v1, project edit\n'); // upstream changed AND the project edited
+
+    const reconciled = reconcileComponentsByContent(template, [SKILLS], local, []);
+    expect(reconciled.map(e => e.path).sort()).toEqual(['.agents/skills/a/SKILL.md', '.agents/skills/b/SKILL.md', '.agents/skills/c/SKILL.md']);
+    expect(reconciled.every(e => e.classification === 'locally-diverged')).toBe(true);
+    const delta = computeDelta(template, [SKILLS], stateAt(lock), local, []);
+
+    const edits = detectLocalEdits(template, [SKILLS], stateAt(lock).perComponentCommit, delta, reconciled, local);
+    expect([...edits].sort()).toEqual(['.agents/skills/b/SKILL.md', '.agents/skills/c/SKILL.md']);
+  });
+
+  test('an unreachable cursor or a component without one reports nothing (unknown is never an edit)', () => {
+    const { template } = templateRepo();
+    const local = temporaryRoot();
+    write(local, '.agents/skills/b/SKILL.md', 'b edited\n');
+    const reconciled = reconcileComponentsByContent(template, [SKILLS], local, []);
+    expect(detectLocalEdits(template, [SKILLS], { 'agent-compatibility': 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }, [], reconciled, local).size).toBe(0);
+    expect(detectLocalEdits(template, [SKILLS], {}, [], reconciled, local).size).toBe(0);
   });
 });
