@@ -160,6 +160,17 @@ autonomous_delivery:
   escalation_channel: null # null | slack:<CHANNEL-ID>. ESCALATIONS ONLY — never summaries.
   escalation_log: .session/autonomous-delivery/escalation-log.md # append-only, shared across modes.
 
+# Files `bun run up` must keep as THIS project's own. Read by `cli/update-boilerplate.ts`
+# at the start of every run and merged into the protected watchlist (AGENTS.md,
+# .agents/project.yaml, .mcp.json, .claude/settings.json, .husky/pre-commit,
+# .husky/pre-push, ...): a listed path is never overwritten, is delivered once from
+# upstream when missing, and shows a drift row with hunk evidence when upstream's
+# copy changes. List a SYNCED file you merged by hand (the parity row "project edit
+# overwritten" names the path to add); repo-relative FILE paths only, no directories,
+# nothing under .git. An invalid entry is reported and ignored. Empty by default.
+updater:
+  protected_paths: [] # e.g. [scripts/lint-vars.ts, .agents/skills/acli/SKILL.md]
+
 # Variables declared above that are consumed OUTSIDE the {{TEMPLATE}} system
 # (env vars in scripts/, shell `yq` reads embedded in skill docs, etc.).
 # `bun run vars:check` skips DECLARED_BUT_UNUSED warnings for these.
@@ -182,6 +193,8 @@ external_consumers:
   - report_channel # key of the structured `autonomous_delivery:` block, read directly by .agents/skills/autonomous-delivery/SKILL.md §Configuration — never resolved through {{VAR}} templating
   - escalation_channel # key of the structured `autonomous_delivery:` block, read directly by .agents/skills/autonomous-delivery/SKILL.md Autonomy §Notifying an escalation — never resolved through {{VAR}} templating
   - escalation_log # key of the structured `autonomous_delivery:` block, read directly by .agents/skills/autonomous-delivery/SKILL.md §Configuration — never resolved through {{VAR}} templating
+  - updater # key of the structured `updater:` block, read directly by cli/update-boilerplate.ts (resolveProtectedWatchlist) at the start of every `bun run up`, never resolved through {{VAR}} templating
+  - protected_paths # key of the structured `updater:` block, read directly by cli/lib/updater-drift.ts (projectProtectedPaths), never resolved through {{VAR}} templating
   - strategy_source # key of the structured `git_strategy.meta:` block, read directly by .agents/skills/git-flow-master (bootstrap trigger + Strategy Setup persist) — never resolved through {{VAR}} templating
   - default_env # consumed implicitly by the AI variable resolver (sets active env for {{WEB_URL}} / {{API_URL}} / ...) AND by scripts/agents-setup.ts via process.env.DEFAULT_ENV in --non-interactive mode
   - design_md_path # read by `yq '.design_md_path'` inside bash code fences of .agents/skills/{design-system/references/getdesign-matcher.md, project-bootstrap/references/frontend-setup.md}
