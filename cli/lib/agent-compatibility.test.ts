@@ -25,6 +25,10 @@ import {
   COMMAND_ALIAS_MANIFEST,
   COMMAND_ALIAS_PROJECT_MANIFEST,
   commandWrapperCounts,
+  COMPATIBILITY_GROUP_LABEL,
+  COMPATIBILITY_GROUP_ORDER,
+  describeAliasStatus,
+  groupCompatibilityErrors,
   isInside,
   mergedCommandAliases,
   POSIX_CLAUDE_SKILLS_TARGET,
@@ -871,5 +875,33 @@ describe('repairAgentSurfaces', () => {
     const repair = repairAgentSurfaces(root, {}, 'linux');
     expect(repair.wrappersWritten).toBeNull();
     expect(repair.check.errors).toContain(`Command alias manifest missing: ${COMMAND_ALIAS_MANIFEST}`);
+  });
+});
+
+describe('compatibility report grouping', () => {
+  // Live finding (Bunkai): with pre-existing MCP drift, `agents:compat:check`
+  // printed a flat error list and the "alias deferred" message never appeared,
+  // so "alias pending commit" and "real drift" were indistinguishable.
+  test('errors bucket per surface in a fixed order, empty groups omitted', () => {
+    const groups = groupCompatibilityErrors([
+      'MCP n8n missing from codex: declared in .mcp.json, absent from .codex/config.toml',
+      'claude command wrapper is stale: .claude/commands/x.md',
+      'Claude skills alias missing: .claude/skills',
+      'codex hook command must be exactly: node x',
+      'CLAUDE.md must contain exactly `@AGENTS.md` followed by one newline.',
+      'MCP tavily present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc',
+    ]);
+    expect(groups.map(g => [g.group, g.errors.length])).toEqual([['instructions', 1], ['alias', 1], ['wrappers', 1], ['hooks', 1], ['mcp', 2]]);
+    expect(groups.map(g => g.label)).toEqual(COMPATIBILITY_GROUP_ORDER.map(g => COMPATIBILITY_GROUP_LABEL[g]));
+    expect(groupCompatibilityErrors([])).toEqual([]);
+  });
+
+  test('the alias line reads the same whatever the verdict, and says deferred when the marker is set', () => {
+    const alias = { path: '/repo/.claude/skills', target: '../.agents/skills', type: 'symlink' as const };
+    expect(describeAliasStatus({ ...alias, status: 'deferred' })).toContain('deferred until the migration commit');
+    expect(describeAliasStatus({ ...alias, status: 'created' })).toBe('Claude skills alias created: /repo/.claude/skills -> ../.agents/skills (symlink)');
+    expect(describeAliasStatus({ ...alias, status: 'valid' })).toContain('OK');
+    expect(describeAliasStatus({ ...alias, status: 'missing' })).toContain('bun run agents:compat');
+    expect(describeAliasStatus({ ...alias, status: 'invalid' })).toContain('not the generated symlink');
   });
 });

@@ -114,6 +114,57 @@ export interface CompatibilityCheck {
   alias: Omit<AliasStatus, 'status'> & { status: 'missing' | 'invalid' | 'valid' | 'deferred' }
 }
 
+/** The surface a compatibility error belongs to, so a report can group them. */
+export type CompatibilityErrorGroup = 'alias' | 'wrappers' | 'hooks' | 'mcp' | 'instructions';
+
+export const COMPATIBILITY_GROUP_ORDER: CompatibilityErrorGroup[] = ['instructions', 'alias', 'wrappers', 'hooks', 'mcp'];
+
+export const COMPATIBILITY_GROUP_LABEL: Record<CompatibilityErrorGroup, string> = {
+  instructions: 'Instructions (AGENTS.md + CLAUDE.md shim, canonical skills)',
+  alias: 'Claude skills alias (.claude/skills)',
+  wrappers: 'Command wrappers (.claude/commands, .opencode/commands)',
+  hooks: 'Hook adapters',
+  mcp: 'MCP parity (.mcp.json, opencode.jsonc, .codex/config.toml)',
+};
+
+/** Classify one error message by its wording (the messages are ours). */
+export function compatibilityErrorGroup(message: string): CompatibilityErrorGroup {
+  if (/\bMCP\b/.test(message)) { return 'mcp'; }
+  if (/command wrapper|command alias/i.test(message)) { return 'wrappers'; }
+  if (/skills alias|\.claude\/skills/i.test(message)) { return 'alias'; }
+  if (/hook/i.test(message)) { return 'hooks'; }
+  return 'instructions';
+}
+
+/** Errors bucketed per surface, in `COMPATIBILITY_GROUP_ORDER`; empty groups omitted. */
+export function groupCompatibilityErrors(errors: readonly string[]): Array<{ group: CompatibilityErrorGroup, label: string, errors: string[] }> {
+  const buckets = new Map<CompatibilityErrorGroup, string[]>();
+  for (const error of errors) {
+    const group = compatibilityErrorGroup(error);
+    buckets.set(group, [...(buckets.get(group) ?? []), error]);
+  }
+  return COMPATIBILITY_GROUP_ORDER
+    .filter(group => buckets.has(group))
+    .map(group => ({ group, label: COMPATIBILITY_GROUP_LABEL[group], errors: buckets.get(group)! }));
+}
+
+/**
+ * One line about the alias, printed whatever the overall verdict: "alias
+ * pending the migration commit" and "MCP drift" must never collapse into one
+ * flat failure.
+ */
+export function describeAliasStatus(alias: CompatibilityCheck['alias'] | AliasStatus): string {
+  const where = `${alias.path} -> ${alias.target} (${alias.type})`;
+  switch (alias.status) {
+    case 'created': return `Claude skills alias created: ${where}`;
+    case 'repaired': return `Claude skills alias repaired: ${where}`;
+    case 'valid': return `Claude skills alias OK: ${where}`;
+    case 'deferred': return 'Claude skills alias deferred until the migration commit (`bun run agents:compat` creates it afterwards).';
+    case 'missing': return `Claude skills alias missing: ${alias.path} (run \`bun run agents:compat\`).`;
+    case 'invalid': return `Claude skills alias invalid: ${alias.path} is not the generated ${alias.type} to ${alias.target}.`;
+  }
+}
+
 export function compatibilityPaths(root = process.cwd()): CompatibilityPaths {
   const resolvedRoot = resolve(root);
   return {
