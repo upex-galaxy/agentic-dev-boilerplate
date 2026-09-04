@@ -16,14 +16,17 @@ import {
   foreignDirtyPaths,
   isBootstrapOnlyFile,
   isLocalTemplateSource,
+  isWithinWriteSurface,
   LAST_APPLY_FILE,
   parsePorcelainPaths,
   prefetchedUpstreamDir,
   readLastApply,
   reconcileComponentsByContent,
+  selfUpdatedComponents,
   splitByLastApply,
   syncStateWriteNeeded,
   UPDATER_OWNED_PATHS_ENV,
+  UPDATER_SELF_UPDATED_ENV,
   UPDATER_UPSTREAM_DIR_ENV,
   writeLastApply,
 } from './updater-core.ts';
@@ -381,6 +384,7 @@ describe('detectLocalEdits (3-way: local vs the upstream copy at the lock cursor
     const lock = git(template, ['rev-parse', 'HEAD']).trim();
     write(template, '.agents/skills/a/SKILL.md', 'a v2\n');
     write(template, '.agents/skills/c/SKILL.md', 'c v2\n');
+    write(template, '.agents/skills/d/SKILL.md', 'd, added upstream after the lock\n');
     git(template, ['add', '-A']);
     git(template, ['commit', '--quiet', '-m', 'head']);
     return { template, lock };
@@ -396,9 +400,13 @@ describe('detectLocalEdits (3-way: local vs the upstream copy at the lock cursor
     write(local, '.agents/skills/a/SKILL.md', 'a v1\n'); // lags upstream: fast-forward
     write(local, '.agents/skills/b/SKILL.md', 'b v1, project edit\n'); // upstream unchanged since the lock
     write(local, '.agents/skills/c/SKILL.md', 'c v1, project edit\n'); // upstream changed AND the project edited
+    // No base copy at the lock: the migration moved it here from `.claude/skills/`.
+    // Live finding (Bunkai, 8.2 port): every moved skill came back as a
+    // "project edit overwritten" row.
+    write(local, '.agents/skills/d/SKILL.md', 'd, older copy the preflight moved\n');
 
     const reconciled = reconcileComponentsByContent(template, [SKILLS], local, []);
-    expect(reconciled.map(e => e.path).sort()).toEqual(['.agents/skills/a/SKILL.md', '.agents/skills/b/SKILL.md', '.agents/skills/c/SKILL.md']);
+    expect(reconciled.map(e => e.path).sort()).toEqual(['.agents/skills/a/SKILL.md', '.agents/skills/b/SKILL.md', '.agents/skills/c/SKILL.md', '.agents/skills/d/SKILL.md']);
     expect(reconciled.every(e => e.classification === 'locally-diverged')).toBe(true);
     const delta = computeDelta(template, [SKILLS], stateAt(lock), local, []);
 
@@ -413,6 +421,77 @@ describe('detectLocalEdits (3-way: local vs the upstream copy at the lock cursor
     const reconciled = reconcileComponentsByContent(template, [SKILLS], local, []);
     expect(detectLocalEdits(template, [SKILLS], { 'agent-compatibility': 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }, [], reconciled, local).size).toBe(0);
     expect(detectLocalEdits(template, [SKILLS], {}, [], reconciled, local).size).toBe(0);
+  });
+});
+
+describe('isWithinWriteSurface (the dirty-tree guard blocks only on paths the sync writes)', () => {
+  // Uncommitted work in project code or a protected file is never overwritten
+  // by the sync, so it must never abort the run: it is listed as "fuera de lo
+  // que este updater escribe; no bloquean".
+  const cfg: Parameters<typeof isWithinWriteSurface>[0] = {
+    components: [
+      { name: 'skills', type: 'directory', paths: ['.agents/skills'] },
+      { name: 'husky', type: 'directory', paths: ['.husky'] },
+      { name: 'codex-config', type: 'directory', paths: ['.codex'], bootstrapOnly: true },
+      { name: 'tooling', type: 'file-list', paths: ['.'], files: ['.editorconfig'] },
+    ],
+    ignoreFiles: [{ path: '.gitignore', sentinel: '#' }],
+    packageJsonSpecs: [{ path: 'package.json', sections: ['scripts'] }],
+    deprecatedFiles: [],
+    excludePaths: ['.agents/skills/REGISTRY.md'],
+    repoOnlyPaths: ['.context/business/business-data-map.md'],
+    bootstrapOnlyPaths: ['.husky/pre-push', '.agents/project.yaml', 'scripts/lint-skills.ts'],
+  };
+
+  test('synced component files, ignore files and package.json are inside', () => {
+    expect(isWithinWriteSurface(cfg, '.agents/skills/acli/SKILL.md')).toBe(true);
+    expect(isWithinWriteSurface(cfg, '.husky/_/husky.sh')).toBe(true);
+    expect(isWithinWriteSurface(cfg, '.editorconfig')).toBe(true);
+    expect(isWithinWriteSurface(cfg, '.gitignore')).toBe(true);
+    expect(isWithinWriteSurface(cfg, 'package.json')).toBe(true);
+    expect(isWithinWriteSurface(cfg, '.agents\\skills\\acli\\SKILL.md')).toBe(true);
+  });
+
+  test('project code, protected paths, bootstrap-only components, excluded and repo-only paths are outside', () => {
+    expect(isWithinWriteSurface(cfg, 'tests/e2e/login.spec.ts')).toBe(false);
+    expect(isWithinWriteSurface(cfg, 'app/page.tsx')).toBe(false);
+    expect(isWithinWriteSurface(cfg, 'AGENTS.md')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.husky/pre-push')).toBe(false);
+    expect(isWithinWriteSurface(cfg, 'scripts/lint-skills.ts')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.agents/project.yaml')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.codex/config.toml')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.agents/skills/REGISTRY.md')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.context/business/business-data-map.md')).toBe(false);
+    // Segment-aware: `.husky` never swallows `.husky-old`.
+    expect(isWithinWriteSurface(cfg, '.husky-old/pre-push')).toBe(false);
+  });
+});
+
+describe('cli lock cursor after a self-update', () => {
+  // Live finding: the re-exec child found `cli/` identical to upstream (the
+  // parent had just written it), walked no entry for the component and never
+  // advanced its cursor, so the lock kept `cli@<scaffold sha>` forever.
+  const cfg = { selfUpdateComponent: 'cli' };
+  const head = 'a'.repeat(40);
+
+  test('the component the parent refreshed to this very sha is settled without an entry', () => {
+    expect(selfUpdatedComponents(cfg, head, fakeEnv({ [UPDATER_SELF_UPDATED_ENV]: head }))).toEqual(['cli']);
+    // No self-update, an upstream that moved since the parent's fetch, or no self-update component: nothing.
+    expect(selfUpdatedComponents(cfg, head, fakeEnv())).toEqual([]);
+    expect(selfUpdatedComponents(cfg, head, fakeEnv({ [UPDATER_SELF_UPDATED_ENV]: 'b'.repeat(40) }))).toEqual([]);
+    expect(selfUpdatedComponents({}, head, fakeEnv({ [UPDATER_SELF_UPDATED_ENV]: head }))).toEqual([]);
+  });
+
+  test('a settled component advances next to the ones with entries; one with a skipped entry is still held back', () => {
+    const entry = { component: 'docs', path: 'docs/a.md', status: 'M' as const, fromSha: '', toSha: 'x', added: 1, removed: 0, isBinary: false, templateOldSha: 'y', templateNewSha: 'x', classification: 'clean-fastforward' as const };
+    const advanced = computeComponentAdvancement({ applied: [{ entry, resolution: 'theirs' }], skipped: [], failed: [] }, [], ['cli']);
+    expect(advanced.componentsAdvanced.sort()).toEqual(['cli', 'docs']);
+    expect(advanced.componentsHeldBack).toEqual([]);
+    // Settled alone (a no-op run after the self-update): the cursor still moves.
+    expect(computeComponentAdvancement({ applied: [], skipped: [], failed: [] }, [], ['cli'])).toEqual({ componentsAdvanced: ['cli'], componentsHeldBack: [] });
+    // A component with a skipped entry of its own is never settled by the list.
+    const cliEntry = { ...entry, component: 'cli', path: 'cli/x.ts' };
+    expect(computeComponentAdvancement({ applied: [], skipped: [cliEntry], failed: [] }, [], ['cli'])).toEqual({ componentsAdvanced: [], componentsHeldBack: ['cli'] });
   });
 });
 
