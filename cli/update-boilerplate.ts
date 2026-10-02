@@ -156,8 +156,11 @@ export const COMPONENTS: Component[] = [
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   // `.husky/pre-commit`, `.husky/pre-push` and `.husky/commit-msg` are on
-  // PROTECTED_WATCHLIST (the project's gates live there): delivered once when
-  // missing, never overwritten. Anything else under `.husky/` (the `_/` helpers) keeps syncing.
+  // PROTECTED_WATCHLIST (the project's gates and their ordering live there):
+  // delivered once when missing, never overwritten. Everything else under
+  // `.husky/` keeps syncing, which is exactly how `framework-gates.sh` reaches
+  // a project scaffolded earlier: the gates upstream owns sit in that synced
+  // file, and each hook sources it.
   { name: 'husky', type: 'directory', paths: ['.husky'] },
   { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
   // .env.example carries no secrets (every value is empty / placeholder) so it
@@ -827,12 +830,15 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   // 8.2 every run force-applied upstream's copy over a committed merge and
   // re-raised the same row forever. Same delivery as `.claude/settings.json`:
   // once when missing (bootstrapOnlyPaths below), then project-owned.
-  { path: '.husky/pre-commit', reason: 'project gates live here' },
-  { path: '.husky/pre-push', reason: 'project gates live here' },
+  // The gates upstream owns live in the SYNCED `.husky/framework-gates.sh`,
+  // which each hook sources and calls in one line; a hook that predates that
+  // split gets a parity row with the block to paste (`frameworkGatesNote`).
+  { path: '.husky/pre-commit', reason: 'project gates and their ordering live here; the gates upstream owns come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
+  { path: '.husky/pre-push', reason: 'project gates and their ordering live here; the gates upstream owns come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
   // The forensic-trailer warning ships here, but a project's own commit-msg
   // gate (commitlint and the like) lives in the same file: deliver once, never
   // overwrite.
-  { path: '.husky/commit-msg', reason: 'project commit-message gates live here' },
+  { path: '.husky/commit-msg', reason: 'project commit-message checks live here (commitlint, ...); the warn-only checks upstream owns (forensic trailers) come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
 ];
 
 /**

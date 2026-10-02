@@ -244,6 +244,58 @@ export function protectNote(filePath: string): string {
   ].join('\n');
 }
 
+/** The project-owned pre-commit hook (watchlisted: delivered once, never overwritten). */
+export const HUSKY_PRE_COMMIT = '.husky/pre-commit';
+
+/** Its pre-push sibling. Same delivery: once when missing, then project-owned. */
+export const HUSKY_PRE_PUSH = '.husky/pre-push';
+
+/** The commit-message sibling. Same delivery; its gates are warn-only. */
+export const HUSKY_COMMIT_MSG = '.husky/commit-msg';
+
+/** The SYNCED file every hook sources to get the gates upstream owns. */
+export const HUSKY_GATES_FILE = '.husky/framework-gates.sh';
+
+/**
+ * Every husky hook is bootstrap-only: delivered once when missing, then
+ * project-owned, because a project's own gates live in them. The cost was that
+ * a gate added upstream never reached a project scaffolded earlier.
+ *
+ * Upstream's fix is the gates split: the gates upstream owns live in the
+ * SYNCED `.husky/framework-gates.sh`, and each hook sources it and calls one
+ * function. A hook that predates the split keeps every gate inlined and will
+ * never see another one, and nothing but this row can tell it so. The same
+ * holds for a project that already had its own `.husky/commit-msg`
+ * (commitlint, say): ours is never delivered over it, so this row is the only
+ * way the warn-only trailer check reaches it.
+ *
+ * Returns the adoption note (the block to paste) while the hook does not source
+ * the gates file; null once it does. A mention in a comment is not adoption.
+ */
+export function frameworkGatesNote(projectHook: string, hookPath: string): string | null {
+  const sourced = projectHook
+    .split('\n')
+    .some(line => !line.trimStart().startsWith('#') && line.includes('framework-gates.sh'));
+  if (sourced) { return null; }
+  const fn = hookPath === HUSKY_PRE_PUSH
+    ? 'framework_gates_pre_push'
+    : hookPath === HUSKY_COMMIT_MSG ? 'framework_gates_commit_msg "$1"' : 'framework_gates_pre_commit';
+  return [
+    `Adopt the gates split in ${hookPath}. Your gates and their ordering stay yours; replace only the block`,
+    'that runs upstream\'s gates with the call below, and every gate a future release adds arrives with',
+    `${HUSKY_GATES_FILE} instead of needing this file rewritten:`,
+    '',
+    '    GATES="$(dirname -- "$0")/framework-gates.sh"',
+    '    if [ -f "$GATES" ]; then',
+    '      . "$GATES"',
+    `      ${fn}`,
+    '    fi',
+    '',
+    'The `-f` guard is not decoration: `.husky/_/h` runs the hook under `sh -e`, so sourcing a file that is',
+    'not there kills the hook. Read the synced file for what each gate covers.',
+  ].join('\n');
+}
+
 // ============================================================================
 // DIFF HELPERS
 // ============================================================================
@@ -885,19 +937,30 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       continue;
     }
     const { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
+    const notes: { clause: string, note: string }[] = [];
+    // No husky hook is ever overwritten, so a consumer only learns about the
+    // gates split if the row says so: without it no gate a future release adds
+    // ever runs there.
+    if (entry.path === HUSKY_PRE_COMMIT || entry.path === HUSKY_PRE_PUSH || entry.path === HUSKY_COMMIT_MSG) {
+      const gates = frameworkGatesNote(project, entry.path);
+      if (gates !== null) {
+        notes.push({ clause: `this hook does not source ${HUSKY_GATES_FILE}, so no gate a future release adds will ever run here`, note: gates });
+      }
+    }
     // An MCP host file still carrying a server upstream moved to harness level
     // or retired: the row explains why; the file is never overwritten.
-    const mcpNotes = [harnessLevelMcpNote(entry.path, project, upstream), retiredMcpNote(entry.path, project, upstream)]
-      .filter((n): n is { clause: string, note: string } => n !== null);
+    for (const mcpNote of [harnessLevelMcpNote(entry.path, project, upstream), retiredMcpNote(entry.path, project, upstream)]) {
+      if (mcpNote !== null) { notes.push(mcpNote); }
+    }
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path, entry.source),
       path: entry.path,
-      evidence: [evidence, ...mcpNotes.map(n => n.clause)].join('; '),
+      evidence: [evidence, ...notes.map(n => n.clause)].join('; '),
       suggested,
       blocking: false,
       diff,
       projectOnly,
-      ...(mcpNotes.length === 0 ? {} : { note: mcpNotes.map(n => n.note).join('\n\n') }),
+      ...(notes.length === 0 ? {} : { note: notes.map(n => n.note).join('\n\n') }),
     });
   }
 

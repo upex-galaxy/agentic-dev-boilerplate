@@ -1,5 +1,5 @@
 import type { ParityFinding, ParityInput, ParityMeta } from './updater-parity.ts';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
@@ -19,6 +19,7 @@ import {
   describeWatchedFile,
   diffNoIndex,
   diffStats,
+  frameworkGatesNote,
   harnessLevelMcpNote,
   markdownSectionDelta,
   persistArchivedSkillMarkers,
@@ -673,8 +674,9 @@ describe('rows the diff-based table could not see before', () => {
   test('a drifted file without key structure (a husky hook) reads its hunks; the row is never blocking', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
-    write(root, '.husky/pre-push', '#!/bin/sh\nbun run repo:check\nbun run e2e\n');
-    write(upstream, '.husky/pre-push', '#!/bin/sh\nbun run repo:check\n');
+    // Both copies already source the gates file, so the gates-split note stays out of the evidence.
+    write(root, '.husky/pre-push', '. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\nbun run e2e\n');
+    write(upstream, '.husky/pre-push', '. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\n');
     const findings = collectParityFindings({ ...base(root, upstream), drift: [{ path: '.husky/pre-push', reason: 'project gates live here' }] });
     expect(findings).toHaveLength(1);
     expect(findings[0].surface).toBe('components');
@@ -872,5 +874,47 @@ describe('harnessLevelMcpNote', () => {
     expect(row!.suggested).not.toBe('take upstream');
     expect(row!.evidence).toContain('now run at harness level');
     expect(row!.note).toContain('ADR-0005');
+  });
+});
+
+function bareInput(root: string, upstream: string): ParityInput {
+  return { root, upstreamDir: upstream, drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, '.template/pre-agents-migration/skills'), heldBack: [], envNewKeys: [] };
+}
+
+describe('the husky hooks carry the gates split downstream', () => {
+  // Every hook is bootstrap-only, so a gate added upstream never reached a
+  // project scaffolded earlier. The gates upstream owns now live in the SYNCED
+  // `.husky/framework-gates.sh`; a hook that does not source it still sees
+  // nothing, and only this row can say so.
+  test('the note fires only for a hook that does not source the gates file', () => {
+    const pending = frameworkGatesNote('bunx lint-staged\nbun run types:check\n', '.husky/pre-commit');
+    expect(pending).toContain('framework_gates_pre_commit');
+    expect(pending).toContain('if [ -f "$GATES" ]; then');
+    // Each hook is nudged towards its OWN function.
+    expect(frameworkGatesNote('bun run lint:check\n', '.husky/pre-push')).toContain('framework_gates_pre_push');
+    expect(frameworkGatesNote('bunx commitlint --edit "$1"\n', '.husky/commit-msg')).toContain('framework_gates_commit_msg "$1"');
+    // Already adopted: silence.
+    expect(frameworkGatesNote('. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\n', '.husky/pre-push')).toBeNull();
+    // A mention in a comment is not an adoption.
+    expect(frameworkGatesNote('# see framework-gates.sh\nbun run types:check\n', '.husky/pre-commit')).toContain('Adopt the gates split');
+  });
+
+  test('a pre-split hook gets a non-blocking row with the block to paste', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, '.husky/pre-push', 'bun run format:check && bun run lint:check\n');
+    write(upstream, '.husky/pre-push', 'GATES="$(dirname -- "$0")/framework-gates.sh"\nif [ -f "$GATES" ]; then\n  . "$GATES"\n  framework_gates_pre_push\nfi\n');
+    const findings = collectParityFindings({ ...bareInput(root, upstream), drift: [{ path: '.husky/pre-push', reason: 'project gates live here' }] });
+    const row = findings.find(f => f.path === '.husky/pre-push');
+    expect(row!.evidence).toContain('does not source .husky/framework-gates.sh');
+    expect(row!.note).toContain('framework_gates_pre_push');
+    expect(row!.blocking).toBe(false);
+  });
+
+  test('the repo\'s own hooks all source the synced gates file', () => {
+    const repo = join(import.meta.dir, '..', '..');
+    for (const hook of ['.husky/pre-commit', '.husky/pre-push', '.husky/commit-msg']) {
+      expect(frameworkGatesNote(readFileSync(join(repo, hook), 'utf8'), hook)).toBeNull();
+    }
   });
 });
