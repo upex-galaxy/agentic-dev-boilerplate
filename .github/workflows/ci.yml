@@ -30,6 +30,20 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # `.claude/skills` is a generated, gitignored alias, so a fresh checkout
+      # never has it and agents:compat:check fails on it. Generate it the
+      # documented way, then fail if regeneration touched anything tracked:
+      # agents:compat also rewrites command wrappers, and without this guard
+      # it would silently repair committed wrapper drift instead of reporting it.
+      - name: Generate harness surfaces
+        run: |
+          bun run agents:compat
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "agents:compat changed committed files; run it locally and commit the result:"
+            git status --porcelain
+            exit 1
+          fi
+
       - name: Repo checks
         run: bun run repo:check
 
