@@ -1,11 +1,11 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates } from './update-boilerplate.ts';
+import { COMPONENTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -33,6 +33,36 @@ describe('component registry', () => {
     // `.claude` itself is never a directory component: `commands` owns
     // `.claude/commands`, the alias `.claude/skills` is generated.
     expect(COMPONENTS.filter(c => c.type !== 'file-list').flatMap(c => c.paths)).not.toContain('.claude');
+  });
+});
+
+describe('worktree refusal', () => {
+  function git(cwd: string, ...args: string[]): void {
+    const p = Bun.spawnSync(['git', '-C', cwd, ...args], { stdout: 'pipe', stderr: 'pipe' });
+    if (p.exitCode !== 0) { throw new Error(`git ${args.join(' ')}: ${p.stderr.toString()}`); }
+  }
+
+  test('runs in the primary checkout and refuses in a linked worktree, naming the primary', () => {
+    const root = realpathSync(temporaryRoot());
+    const primary = join(root, 'primary');
+    mkdirSync(primary);
+    git(primary, 'init', '-q', '-b', 'main');
+    git(primary, '-c', 'user.email=t@t.invalid', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init');
+    const wt = join(root, 'wt');
+    git(primary, 'worktree', 'add', '-q', '-b', 'probe', wt);
+
+    expect(worktreeRefusal(primary)).toBeNull();
+    const refusal = worktreeRefusal(wt);
+    expect(refusal).toContain('worktree');
+    expect(refusal).toContain(primary);
+    // Outside any checkout there is nothing to refuse.
+    expect(worktreeRefusal(root)).toBeNull();
+  });
+
+  test('orca.yaml and .worktreeinclude ship once, then stay project-owned', () => {
+    for (const [name, file] of [['worktree-include', '.worktreeinclude'], ['orca-config', 'orca.yaml']] as const) {
+      expect(COMPONENTS.find(c => c.name === name)).toMatchObject({ type: 'file-list', paths: ['.'], files: [file], bootstrapOnly: true });
+    }
   });
 });
 

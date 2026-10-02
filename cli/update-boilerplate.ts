@@ -54,6 +54,7 @@ import {
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
 import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifest';
+import { checkoutRoots } from './lib/worktree.ts';
 
 // --- CONFIGURATION ---
 // Not tied to the lock schema (`schemaVersion: 7` stays): it stamps the lock's
@@ -94,6 +95,10 @@ const AGENTS_ROOT_FILES = [...AGENTS_FRAMEWORK_FILES, ...AGENTS_BOOTSTRAP_FILES]
 // The hook adapter carries no project state and keeps flowing.
 const CODEX_FRAMEWORK_FILES = ['hooks.json'];
 const CLAUDE_ROOT_CONFIG_FILES = ['settings.json'];
+// The gitignored files a Claude Code or Codex-managed worktree copies in.
+const WORKTREE_INCLUDE_FILES = ['.worktreeinclude'];
+// Orca's committed repo hooks: provision a new worktree, audit it before removal.
+const ORCA_CONFIG_FILES = ['orca.yaml'];
 
 /** Canonical cross-harness skill source. Claude consumes it through an alias. */
 const SKILLS_CANONICAL_DIR = '.agents/skills';
@@ -154,6 +159,12 @@ export const COMPONENTS: Component[] = [
   // env-var drift detection in the afterApply hook — we can only diff a target's
   // .env against an .env.example we actually delivered.
   { name: 'env-template', type: 'file-list', paths: ['.'], files: ['.env.example'] },
+  // Delivered once when missing, then project-owned: a project appends its own
+  // gitignored inputs (and its own hook lines), and a later sync must not drop
+  // them. Without `.worktreeinclude` a Codex-managed worktree starts with no
+  // `.env`, and every MCP loader in `.codex/config.toml` with it.
+  { name: 'worktree-include', type: 'file-list', paths: ['.'], files: WORKTREE_INCLUDE_FILES, bootstrapOnly: true },
+  { name: 'orca-config', type: 'file-list', paths: ['.'], files: ORCA_CONFIG_FILES, bootstrapOnly: true },
 ];
 
 // --- ARG PARSE ---
@@ -263,8 +274,9 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   se mantienen locales ganan una fila cada una.
   Una corrida que no aplica nada deja el arbol byte-identico (el lock no se
   reescribe solo para cambiar la fecha). Un abort (arbol sucio, lock corrupto,
-  clone fallido, migracion o self-update rechazados) termina en "Abortado." y
-  exit 1, nunca en "Sincronizacion completada".
+  clone fallido, migracion o self-update rechazados, o un worktree enlazado en
+  vez del checkout principal) termina en "Abortado." y exit 1, nunca en
+  "Sincronizacion completada".
 
 VERIFICACION POST-SYNC (gates):
   Tras aplicar archivos, corre \`types:check\` y \`lint:check\` de tu
@@ -1505,10 +1517,33 @@ function buildSink(): ReportSink {
 }
 
 // --- MAIN ---
+/**
+ * Why the updater must not run from `cwd`, or null when it may.
+ *
+ * Everything the updater keeps between runs is gitignored and cwd-relative:
+ * the `.backups/` that `--rollback` restores, the `.template/` markers, the
+ * single-use prompts under `.agents/prompts/`. Run from a linked worktree, all
+ * of it lands in the worktree and dies with it, and the next run in the
+ * primary sees none of it. So the updater runs in the primary checkout only.
+ */
+export function worktreeRefusal(cwd = process.cwd()): string | null {
+  const roots = checkoutRoots(cwd);
+  if (roots === null || !roots.linked) { return null; }
+  return 'Este checkout es un worktree. `bun run up` guarda backups (para --rollback), marcadores y prompts '
+    + 'dentro del checkout, y en un worktree se pierden al borrarlo. Ejecuta `bun run up` en el checkout '
+    + `principal: ${roots.primaryRoot}`;
+}
+
 async function main(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
 
   if (parsed.help) { process.stdout.write(HELP_TEXT); process.exit(0); }
+  const refusal = worktreeRefusal();
+  if (refusal !== null) {
+    tui.log.error(refusal);
+    tui.outro('Abortado.');
+    process.exit(1);
+  }
   if (parsed.rollback) { rollbackFromBackup(); process.exit(0); }
   if (parsed.updateMcpTemplate) { await updateMcpTemplateForAgent(parsed.updateMcpTemplate); process.exit(0); }
 
