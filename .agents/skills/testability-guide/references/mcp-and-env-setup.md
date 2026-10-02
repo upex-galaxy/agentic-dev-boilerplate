@@ -10,7 +10,7 @@
 
 ## The zero-hardcode + zero-invention rule
 
-Every concrete value (`API_BASE_URL`, spec URL, DB host, package version) comes from Phase-1 detection or the project's committed config. Every external behavioral claim (a flag being mandatory, a missing-var behavior, a tool's capability list) must trace to the project's own MCP guide or the tool's official docs. If you need to state something about an MCP/library that is NOT in the detected config or the host's guide, look it up via Context7 or Tavily first — never fabricate.
+Every concrete value (`API_BASE_URL`, spec URL, DB host, package version) comes from Phase-1 detection or the project's committed config. Every external behavioral claim (a flag being mandatory, a missing-var behavior, a tool's capability list) must trace to the project's own MCP guide or the tool's official docs. If you need to state something about an MCP/library that is NOT in the detected config or the host's guide, look it up via `[DOCS_TOOL]` (`library-docs`) or `[WEB_SEARCH_TOOL]` (`web-search`) first — never fabricate; neither available → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4.
 
 ---
 
