@@ -21,7 +21,7 @@ compact_rules: |
   - **Never** `--force`, `--force-with-lease`, `--no-verify`, amend, or rebase pushed history on a shared branch unless the user explicitly asks AND the branch is unshared.
   - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
   - **Stop at PR creation.** Never auto-merge.
-  - **One commit = one responsibility**, conventional prefix, no AI-attribution lines (sole scoped exception: the `Claude-Session: <session-id>` forensic trailer on AI-authored commits — `references/conventional-commits.md` § Hard rules).
+  - **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -75,7 +75,7 @@ If the user is asking about feature implementation, test design, product backlog
 - **Never** `--force`, `--force-with-lease`, `--no-verify`, amend, or rebase pushed history on a shared branch unless the user explicitly asks AND the branch is unshared.
 - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
 - **Stop at PR creation.** Never auto-merge.
-- **One commit = one responsibility**, conventional prefix, no AI-attribution lines (sole scoped exception: the `Claude-Session: <session-id>` forensic trailer on AI-authored commits — `references/conventional-commits.md` § Hard rules).
+- **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
 
 **Read full SKILL.md when**: running Strategy Setup, resolving conflicts, planning a chain, or when the compact rules above do not settle the operation.
 
@@ -311,8 +311,21 @@ Group changes by responsibility, not by file type:
 
 - One commit = one responsibility. Never bundle unrelated changes.
 - Never `git add -A` or `git add .` — list explicit paths to avoid leaking secrets (`.env`, credentials) or unrelated work.
-- **No AI attribution.** No `Generated with Claude Code`, no `Co-Authored-By: Claude`, no equivalent line. Commits look human-authored. (Critical Rule #3 in `AGENTS.md`.) Sole scoped exception, defined where the rule lives: the `Claude-Session: <session-id>` forensic trailer on AI-authored commits — `references/conventional-commits.md` § Hard rules.
+- **No AI attribution.** No `Generated with Claude Code`, no `Co-Authored-By: Claude`, no equivalent line. Commits look human-authored. (Critical Rule #3 in `AGENTS.md`.)
 - If a pre-commit hook fails, **stop, fix the underlying issue, create a NEW commit**. Never `--amend` a commit the hook rejected — `--amend` operates on the previous commit, which destroys context.
+
+**Forensic trailers (mandatory, every commit, every strategy).** The last two lines of every commit message are:
+
+```
+Worktree: <name|primary>
+Session: <label>
+```
+
+- Both values come from the `AGENT IDENTITY:` line the prompt hook (`.agents/hooks/personality-reinject.mjs`) injects into this session's context (`worktree=…`, `session=…`). Copy them; do not re-derive them per commit. The session label may contain spaces and parentheses (`my-session (c0ffee12)`): take everything after `session=` up to the literal ` harness=` token, never split the line on whitespace.
+- `primary` is the correct worktree value when the session runs in the main checkout. When a value could not be resolved at all, write `unknown`: never guess a name, never drop the key. A missing trailer is less recoverable than an honest `unknown`.
+- Nothing goes below them, and nothing is added beside them.
+- **These are forensics, not attribution.** They record WHICH working tree and WHICH session produced the commit, so a bisect, an incident review, or a parallel-session post-mortem can find the right transcript on any harness. They are deliberately harness-agnostic: no tool, vendor, or model is named. The prohibition in Critical Rule #3 is untouched: never `Claude-Session:` or any other `<Tool>-Session:` key, never a `Co-Authored-By:` for an AI, never a "Generated with …" line.
+- `.husky/commit-msg` runs `scripts/check-commit-trailers.ts`, which WARNS (never blocks) when the pair is missing or out of place or a branded trailer is present. A warning on an agent-written commit is a defect to fix in the next commit, not by amending a pushed one.
 
 Present all proposed commits as one block. Wait for OK / modify / reject before executing.
 
@@ -357,7 +370,7 @@ The user can override with `--base X` in arguments. If overridden, surface it in
 
 **Title format**: `{type}({ISSUE-KEY}): {description}` — under 70 chars. Without a key: `{type}: {description}`.
 
-**Body** — render inline (no template file to read) using the structure in `references/pr-templating.md`. Substitute placeholders the skill can fill (`<<ISSUE_KEY>>`, `<<SUMMARY>>`, `<<CHANGES>>`, `<<TEST_PLAN>>`, `<<RISK>>`, `<<SESSION_ID>>`, `<<CWD_SLUG>>`). Leave any unfilled placeholder visible so the author can edit it before posting — do not silently drop sections. Exception: the `- Session:` / `- Transcript:` provenance lines are dropped (both, together) when the session id cannot be determined or the PR is human-opened — a wrong session id is worse than none (`references/pr-templating.md` § Placeholder rules).
+**Body** — render inline (no template file to read) using the structure in `references/pr-templating.md`. Substitute placeholders the skill can fill (`<<ISSUE_KEY>>`, `<<SUMMARY>>`, `<<CHANGES>>`, `<<TEST_PLAN>>`, `<<RISK>>`, `<<WORKTREE>>`, `<<SESSION_LABEL>>`). Leave any unfilled placeholder visible so the author can edit it before posting — do not silently drop sections. The `- Worktree:` / `- Session:` provenance lines carry the same values as the commit trailers (`unknown` when unresolved) and are dropped together only on a human-opened PR (`references/pr-templating.md` § Placeholder rules).
 
 Write the rendered body to a tempfile (e.g. `$(mktemp)`) and pass it via `gh pr create --body-file` to avoid escaping issues.
 
@@ -523,7 +536,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 
 1. **Diagnose before acting.** Step 1 always runs. Never assume repo state.
 2. **One commit = one responsibility.** Never bundle unrelated changes.
-3. **No AI attribution** in commits or PR bodies. Commits look human-authored. (Critical Rule #3 in `AGENTS.md`.) Sole scoped exceptions, provenance not attribution: the `Claude-Session:` commit trailer and the PR body's `Session` / `Transcript` lines — `references/conventional-commits.md` § Hard rules, `references/pr-templating.md` § Placeholder rules.
+3. **No AI attribution** in commits or PR bodies. Commits look human-authored. (Critical Rule #3 in `AGENTS.md`.) The two forensic trailers of 3.2 (`Worktree:` / `Session:`) always close a commit message, and the PR body carries the same pair: they name a working tree and a session, never a tool, so they are provenance, not attribution, and not optional. Harness-branded trailers stay forbidden.
 4. **Confirm before pushing to any protected branch.** Strategy-driven; see Step 3.3. (Critical Reminder #4 in `AGENTS.md`.)
 5. **Never force-push, never rewrite pushed history, never `--no-verify`** unless the user explicitly authorises it AND the branch is unshared. (Critical Reminder #5 in `AGENTS.md`.)
 6. **No `git add -A` / `git add .`** — always list explicit paths.
@@ -541,7 +554,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 - **G1.** NEVER force-push to `main` or any shared branch — destroys teammates' history and is unrecoverable once others have pulled.
 - **G2.** NEVER amend or rebase a pushed commit — creates orphan commits in others' clones and rewrites history that was already replicated.
 - **G3.** NEVER commit secrets, credentials, `.env` contents, or auth tokens — git history is forever; a single commit leaks the secret permanently.
-- **G4.** NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-attribution line in commit messages or PR bodies (Critical Rule #3). Commits look human-authored. (The `Claude-Session:` forensic trailer and the PR `Session`/`Transcript` lines are NOT attribution and are the one scoped exception — `references/conventional-commits.md` § Hard rules.)
+- **G4.** NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-attribution line in commit messages or PR bodies (Critical Rule #3). Commits look human-authored. The `Worktree:` / `Session:` forensic trailers are NOT attribution and are mandatory (§3.2); a `Claude-Session:` or any other harness-branded trailer IS forbidden.
 - **G5.** NEVER push to `main` without explicit user confirmation (Critical Rule #4). Strategy-driven protection applies to every protected branch, not just `main`.
 - **G6.** NEVER bypass pre-commit / pre-push hooks with `--no-verify` to "ship faster" — hooks exist to catch the bug you didn't notice. Fix the hook failure and create a new commit.
 - **G7.** NEVER mix concerns in a single commit (feat + refactor + lint fix bundled together) — atomic commits enable surgical revert and clean blame.
@@ -578,6 +591,7 @@ Full lifecycle, multi-session safety rules, the registry contract, and the decis
 - [ ] Strategy resolved (detected from the `git_strategy:` block in `.agents/project.yaml`, inferred from layout, or asked) and persisted to the `git_strategy:` block in `.agents/project.yaml` if newly chosen.
 - [ ] Branch / commit / push / PR / conflict operation followed the runbook for that strategy.
 - [ ] Each commit is atomic, conventional, and free of AI attribution.
+- [ ] Each commit message ends with the two forensic trailers (`Worktree:` then `Session:`), values taken from the `AGENT IDENTITY:` context line or written as `unknown`.
 - [ ] No `git add -A` / `--force` / `--no-verify` used unless explicitly authorised.
 - [ ] No global discard ran (`git restore .` / `git checkout -- .` / `git reset --hard` / untargeted `git stash` / `git clean`); any discard targeted explicit session-owned paths only.
 - [ ] PR (if created) has Title <70 chars, body with Summary / Changes / Test Plan / Traceability / Risk, base branch matches strategy.

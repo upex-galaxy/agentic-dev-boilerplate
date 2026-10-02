@@ -149,9 +149,9 @@ export const COMPONENTS: Component[] = [
   { name: 'context', type: 'directory', paths: ['.context'], bootstrapOnly: true, frameworkFiles: ['README.md'], frameworkFilesExcept: ['.context/ADR/README.md'] },
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
-  // `.husky/pre-commit` and `.husky/pre-push` are on PROTECTED_WATCHLIST (the
-  // project's gates live there): delivered once when missing, never
-  // overwritten. Anything else under `.husky/` (the `_/` helpers) keeps syncing.
+  // `.husky/pre-commit`, `.husky/pre-push` and `.husky/commit-msg` are on
+  // PROTECTED_WATCHLIST (the project's gates live there): delivered once when
+  // missing, never overwritten. Anything else under `.husky/` (the `_/` helpers) keeps syncing.
   { name: 'husky', type: 'directory', paths: ['.husky'] },
   { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
   // .env.example carries no secrets (every value is empty / placeholder) so it
@@ -261,7 +261,8 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   sugiere "merge", nunca un reemplazo, y una fila "merge" siempre dice que
   portar (lo que upstream agrego) y que conservar (lo que solo tiene el
   proyecto). Los archivos protegidos (AGENTS.md, .agents/project.yaml,
-  .mcp.json, .claude/settings.json, .husky/pre-commit, .husky/pre-push, …)
+  .mcp.json, .claude/settings.json, .husky/pre-commit, .husky/pre-push,
+  .husky/commit-msg, …)
   nunca se sobrescriben: solo aparecen en ese reporte. .claude/settings.json,
   .codex/ y los hooks de .husky/ se entregan UNA vez si faltan. El proyecto
   suma sus propias rutas protegidas en .agents/project.yaml ->
@@ -819,6 +820,10 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   // once when missing (bootstrapOnlyPaths below), then project-owned.
   { path: '.husky/pre-commit', reason: 'project gates live here' },
   { path: '.husky/pre-push', reason: 'project gates live here' },
+  // The forensic-trailer warning ships here, but a project's own commit-msg
+  // gate (commitlint and the like) lives in the same file: deliver once, never
+  // overwrite.
+  { path: '.husky/commit-msg', reason: 'project commit-message gates live here' },
 ];
 
 /**

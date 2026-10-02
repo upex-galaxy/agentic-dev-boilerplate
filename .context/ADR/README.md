@@ -61,8 +61,9 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 
 | ADR | Title | Status | Supersedes | Superseded by |
 | --- | ----- | ------ | ---------- | ------------- |
-| [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted | — | — |
+| [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted (item 8 superseded) | — | ADR-0004 (item 8) |
 | [ADR-0003](./ADR-0003-forensic-measurements-ledger.md) | Doctrine keeps the why; the measured figures and dates live here (Critical Rule #17 forensic-note split + the ledger of measurements behind the boilerplate's doctrine) | Accepted | — | — |
+| [ADR-0004](./ADR-0004-harness-agnostic-commit-trailers.md) | Harness-agnostic forensic trailers on every agent commit (`Worktree:` + `Session:` from the hook's `AGENT IDENTITY:` line; `Claude-Session:` and every branded trailer forbidden; WARN-only `commit-msg` check) | Accepted | ADR-0002 (item 8) | — |
 | [ADR-0005](./ADR-0005-harness-level-mcps-and-capabilities.md) | Remote API-key MCPs (web search) run at harness level, never in the project MCP files; skills declare capabilities and resolve tools by name suffix, with a point-of-use STOP instead of a silent fallback | Accepted | — | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.

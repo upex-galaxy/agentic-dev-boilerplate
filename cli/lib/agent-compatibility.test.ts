@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
+import { IDENTITY_PREFIX, PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
 import opencodePlugin from '../../.opencode/plugins/personality-reinject.js';
 import {
   CLAUDE_HOOK_COMMAND,
@@ -297,15 +297,23 @@ function repositoryFixture(): string {
 }
 
 describe('shared personality hook', () => {
-  test('emits the canonical payload and exits successfully', () => {
+  test('emits the contract plus the identity line and exits successfully', () => {
+    // A sandbox primary checkout with a `.env`, and an environment REPLACED
+    // rather than inherited: the suite itself runs inside a harness whose
+    // CLAUDE_* variables would otherwise turn the output into hook JSON.
+    const checkout = temporaryRoot('agent compatibility hook checkout ');
+    mkdirSync(join(checkout, '.git'));
+    write(checkout, '.env', '');
     const result = Bun.spawnSync({
-      cmd: ['node', join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs')],
+      cmd: [Bun.which('node') ?? 'node', join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs')],
+      cwd: checkout,
+      env: { PATH: join(checkout, 'bin'), HOME: checkout },
       stdout: 'pipe',
       stderr: 'pipe',
     });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toBe(PERSONALITY_CONTRACT);
+    expect(result.stdout.toString()).toBe(`${PERSONALITY_CONTRACT}\n${IDENTITY_PREFIX} worktree=primary session=unknown harness=unknown\n`);
     expect(result.stderr.toString()).toBe('');
   });
 
@@ -321,13 +329,19 @@ describe('shared personality hook', () => {
     const originalArray = output.system;
 
     await transform({ sessionID: 'test', model: {} }, output);
+    const afterFirst = output.system.length;
     await transform({ sessionID: 'test', model: {} }, output);
 
     expect(output.system).toBe(originalArray);
-    expect(output.system).toEqual(['base system', PERSONALITY_CONTRACT]);
+    expect(output.system.length).toBe(afterFirst);
+    expect(output.system[0]).toBe('base system');
+    expect(output.system[1]).toBe(PERSONALITY_CONTRACT);
+    // The label degrades to the raw id: OpenCode exposes no session name.
+    expect(output.system[2]).toStartWith(IDENTITY_PREFIX);
+    expect(output.system[2]).toEndWith('session=test harness=opencode');
   });
 
-  test('OpenCode 2 (setup entrypoint) registers a context hook that pushes one text part', async () => {
+  test('OpenCode 2 (setup entrypoint) registers a context hook that pushes the text parts once', async () => {
     const hooks: Record<string, (event: { sessionID: string, system: Array<{ type: string, text: string }> }) => void> = {};
     await opencodePlugin.setup({
       session: { hook: async (name: string, callback: (typeof hooks)[string]) => { hooks[name] = callback; } },
@@ -336,12 +350,15 @@ describe('shared personality hook', () => {
     const originalArray = event.system;
 
     hooks.context(event);
+    const afterFirst = event.system.length;
     hooks.context(event);
 
     expect(opencodePlugin.id).toBe('agentic-dev.personality-reinject');
     expect(Object.keys(hooks)).toEqual(['context']);
     expect(event.system).toBe(originalArray);
-    expect(event.system).toEqual([{ type: 'text', text: 'base system' }, { type: 'text', text: PERSONALITY_CONTRACT }]);
+    expect(event.system.length).toBe(afterFirst);
+    expect(event.system[1]).toEqual({ type: 'text', text: PERSONALITY_CONTRACT });
+    expect(event.system[2].text).toEndWith('session=test harness=opencode');
   });
 });
 
@@ -373,7 +390,7 @@ describe('Codex hook portability', () => {
     });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toBe(PERSONALITY_CONTRACT);
+    expect(result.stdout.toString()).toContain(PERSONALITY_CONTRACT);
   });
 
   test('renders a Windows command with Git-root and Join-Path resolution', () => {
@@ -444,12 +461,12 @@ describe('hook adapters', () => {
   test('rejects an OpenCode adapter that dropped the V1 entrypoint', () => {
     const root = contractFixture();
     write(root, '.opencode/plugins/personality-reinject.js', [
-      'import { PERSONALITY_CONTRACT } from \'../../.agents/hooks/personality-reinject.mjs\';',
+      'import { agentContextLines } from \'../../.agents/hooks/personality-reinject.mjs\';',
       'export default {',
       '  id: \'agentic-dev.personality-reinject\',',
       '  async setup(ctx) {',
       '    await ctx.session.hook(\'context\', (event) => {',
-      '      event.system.push({ type: \'text\', text: PERSONALITY_CONTRACT });',
+      '      for (const text of agentContextLines()) { event.system.push({ type: \'text\', text }); }',
       '    });',
       '  },',
       '};',
@@ -462,10 +479,28 @@ describe('hook adapters', () => {
   test('rejects an OpenCode adapter that reassigns event.system', () => {
     const root = contractFixture();
     const plugin = readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8')
-      .replace('event.system.push({ type: \'text\', text: PERSONALITY_CONTRACT });', 'event.system = [...event.system, { type: \'text\', text: PERSONALITY_CONTRACT }];');
+      .replace('event.system.push({ type: \'text\', text });', 'event.system = [...event.system, { type: \'text\', text }];');
     write(root, '.opencode/plugins/personality-reinject.js', plugin);
 
     expect(validateHookCompatibility(root)).toEqual(['OpenCode personality adapter must mutate event.system in place.']);
+  });
+
+  test('rejects an OpenCode adapter that pushes the contract alone, without the identity line', () => {
+    const root = contractFixture();
+    const plugin = readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8')
+      .replaceAll('agentContextLines', 'contractOnlyLines');
+    write(root, '.opencode/plugins/personality-reinject.js', plugin);
+
+    expect(validateHookCompatibility(root)).toEqual(['OpenCode personality adapter must push the shared context lines (agentContextLines), identity line included.']);
+  });
+
+  test('rejects an emitter that lost the identity resolver', () => {
+    const root = contractFixture();
+    const emitter = readFileSync(join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs'), 'utf8')
+      .replace('export function resolveAgentIdentity', 'function resolveAgentIdentity');
+    write(root, '.agents/hooks/personality-reinject.mjs', emitter);
+
+    expect(validateHookCompatibility(root)).toEqual(['Shared hook emitter must export resolveAgentIdentity(): the identity line has one source.']);
   });
 
   test('accepts the shipped dual-entrypoint OpenCode adapter', () => {
