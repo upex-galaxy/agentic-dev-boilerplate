@@ -13,6 +13,7 @@ import {
   collectParityFindings,
   compatErrorSuggestion,
   compatErrorSurface,
+  CONFIG_BLOCK_READERS,
   configEntries,
   configKeyDelta,
   configKeys,
@@ -22,7 +23,10 @@ import {
   frameworkGatesNote,
   harnessLevelMcpNote,
   markdownSectionDelta,
+  missingConfigBlocks,
+  PATH_PREREQUISITES,
   persistArchivedSkillMarkers,
+  prerequisiteFor,
   protectNote,
   readGitStrategyStamp,
   renderParityReport,
@@ -915,6 +919,88 @@ describe('the husky hooks carry the gates split downstream', () => {
     const repo = join(import.meta.dir, '..', '..');
     for (const hook of ['.husky/pre-commit', '.husky/pre-push', '.husky/commit-msg']) {
       expect(frameworkGatesNote(readFileSync(join(repo, hook), 'utf8'), hook)).toBeNull();
+    }
+  });
+});
+
+describe('a kept file whose upstream hunk another file depends on blocks', () => {
+  test('a declared prerequisite path escalates its drift row and names the gate', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'scripts/lint-skills.ts', 'const KINDS = [\'workflow\'];\n');
+    write(upstream, 'scripts/lint-skills.ts', 'const KINDS = [\'workflow\', \'context\'];\n');
+    const drift = [{ path: 'scripts/lint-skills.ts', reason: 'declared in updater.protected_paths', source: 'project' as const }];
+    const [row] = collectParityFindings({ ...bareInput(root, upstream), drift });
+    expect(row.blocking).toBe(true);
+    expect(row.suggested).toBe('merge');
+    expect(row.evidence).toContain('PREREQUISITE for this release');
+    expect(row.evidence).toContain('`bun run skills:check`');
+
+    // An undeclared path stays ordinary, non-blocking drift.
+    const [plain] = collectParityFindings({ ...bareInput(root, upstream), drift, prerequisites: {} });
+    expect(plain.blocking).toBe(false);
+    expect(plain.evidence).not.toContain('PREREQUISITE');
+  });
+
+  test('the shipped manifest declares the skill vocabulary', () => {
+    expect(prerequisiteFor('scripts/lint-skills.ts')?.gate).toBe('bun run skills:check');
+    expect(prerequisiteFor('scripts\\lint-skills.ts')).toBe(PATH_PREREQUISITES['scripts/lint-skills.ts']);
+    expect(prerequisiteFor('README.md')).toBeNull();
+  });
+});
+
+describe('a missing config block a shipped skill reads blocks the run', () => {
+  const READERS = {
+    '.agents/project.yaml': {
+      git_strategy: { skill: '/git-flow-master', requiredBy: 'the protected-branch list and the push policy' },
+    },
+  };
+
+  function rows(projectYaml: string, upstreamYaml: string): ParityFinding[] {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, '.agents/project.yaml', projectYaml);
+    write(upstream, '.agents/project.yaml', upstreamYaml);
+    return collectParityFindings({
+      ...bareInput(root, upstream),
+      drift: [{ path: '.agents/project.yaml', reason: 'per-project identity', structural: true }],
+      configBlockReaders: READERS,
+    }).filter(f => f.path === '.agents/project.yaml');
+  }
+
+  test('the block is missing: the row blocks and names the skill that reads it', () => {
+    const [row] = rows('project:\n  name: consumer\n', 'project:\n  name: upstream\ngit_strategy:\n  strategy: solo-main\n');
+    expect(row.blocking).toBe(true);
+    expect(row.suggested).toBe('merge');
+    expect(row.evidence).toContain('BLOCKING');
+    expect(row.evidence).toContain('/git-flow-master');
+    expect(row.evidence).toContain('adapt its VALUES to this project');
+  });
+
+  test('a block the project HAS stays informational however much its values differ', () => {
+    const found = rows('git_strategy:\n  strategy: main-integration\n', 'git_strategy:\n  strategy: solo-main\n');
+    expect(found.every(f => !f.blocking)).toBe(true);
+  });
+
+  test('an undeclared block upstream added is informational, exactly as before', () => {
+    const [row] = rows('project:\n  name: consumer\n', 'project:\n  name: upstream\nsome_new_block:\n  a: 1\n');
+    expect(row.blocking).toBe(false);
+    expect(row.evidence).toContain('informational');
+    expect(row.evidence).not.toContain('BLOCKING');
+  });
+
+  test('missingConfigBlocks is top-level only and declaration-driven', () => {
+    // `policy` is a CHILD of a block the project has: a value-shaped difference.
+    expect(missingConfigBlocks('.agents/project.yaml', 'git_strategy:\n  strategy: solo-main\n', 'git_strategy:\n  strategy: solo-main\n  policy:\n    a: 1\n', READERS)).toEqual([]);
+    expect(missingConfigBlocks('.mcp.json', '{}', '{"git_strategy":{}}', READERS)).toEqual([]);
+  });
+
+  test('every shipped declaration names a block the template has and a skill that ships', () => {
+    const repo = join(import.meta.dir, '..', '..');
+    const template = configEntries(readFileSync(join(repo, '.agents/project.yaml'), 'utf8'), '.agents/project.yaml')!;
+    for (const [block, reader] of Object.entries(CONFIG_BLOCK_READERS['.agents/project.yaml'])) {
+      expect(template.has(block)).toBe(true);
+      expect(existsSync(join(repo, '.agents/skills', reader.skill.slice(1), 'SKILL.md'))).toBe(true);
     }
   });
 });

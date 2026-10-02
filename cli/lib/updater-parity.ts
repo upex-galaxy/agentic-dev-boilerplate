@@ -64,7 +64,12 @@ export interface ParityFinding {
   /** Concrete, scannable: headings, keys, server ids, counts. Never a diff. */
   evidence: string
   suggested: ParitySuggestion
-  /** Blocking = a failed compatibility contract. Watched-file drift never blocks. */
+  /**
+   * Blocking = a failed compatibility contract, a kept file whose upstream hunk
+   * another file of the same release depends on (`PATH_PREREQUISITES`), or a
+   * missing config block a shipped skill reads (`CONFIG_BLOCK_READERS`).
+   * Ordinary watched-file drift never blocks.
+   */
   blocking: boolean
   /** Full paired diff, written to the saved file under the finding's heading. */
   diff?: string
@@ -144,6 +149,10 @@ export interface ParityInput {
   gates?: GateResult[]
   /** A legacy git-tracked `.context/PBI/` cache (see `updater-pbi.ts`): one row, the recipe in its file. */
   pbiCache?: PbiCacheInput | null
+  /** Prerequisite declarations, keyed by repo-relative path. Defaults to `PATH_PREREQUISITES`. */
+  prerequisites?: Record<string, PathPrerequisite>
+  /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
+  configBlockReaders?: Record<string, Record<string, ConfigBlockReader>>
 }
 
 export interface PbiCacheInput {
@@ -294,6 +303,127 @@ export function frameworkGatesNote(projectHook: string, hookPath: string): strin
     'The `-f` guard is not decoration: `.husky/_/h` runs the hook under `sh -e`, so sourcing a file that is',
     'not there kills the hook. Read the synced file for what each gate covers.',
   ].join('\n');
+}
+
+export interface PathPrerequisite {
+  /** What the upstream hunk is needed FOR, in one scannable phrase. */
+  requiredBy: string
+  /** The project's own gate that proves it, named in the row. */
+  gate: string
+}
+
+/**
+ * Files whose upstream hunk is a PREREQUISITE for something else the same
+ * release ships. A kept copy of one of these (a watched path, or one the
+ * project declared in `updater.protected_paths`) is not cosmetic drift: the
+ * release is half-delivered until the hunk lands, and the row has to say so.
+ *
+ * Measured in the sibling QA boilerplate: upstream shipped a skill declaring a
+ * new category AND the one-line `scripts/lint-skills.ts` change that admits it.
+ * The project protected that script, so only the skill arrived and
+ * `bun run skills:check` failed on a freshly synced repo, while the row's whole
+ * evidence was a hunk count indistinguishable from a cosmetic diff.
+ */
+export const PATH_PREREQUISITES: Record<string, PathPrerequisite> = {
+  'scripts/lint-skills.ts': {
+    requiredBy: 'the skill vocabulary (categories, `metadata.kind`) every .agents/skills/**/SKILL.md is linted against; a skill shipped in the same release that declares a new value stays unlintable until this file carries it',
+    gate: 'bun run skills:check',
+  },
+};
+
+export interface ConfigBlockReader {
+  /** The skill that reads the block, spelled as it is invoked. */
+  skill: string
+  /** What the skill needs the block FOR, in one scannable phrase. */
+  requiredBy: string
+}
+
+/**
+ * Top-level blocks of a structural config file that a SHIPPED SKILL reads,
+ * per file. A block upstream added and the project does not have is otherwise
+ * reported as `structural`: informational, never blocking. That is right for
+ * project identity, but wrong the moment a skill in the same release reads the
+ * block: the release ships a skill that fails at RUNTIME, in the middle of
+ * somebody's session, rather than at sync time when there is a prompt and an
+ * operator.
+ *
+ * So the rule is narrow on purpose: the block must be MISSING (a block that is
+ * present with different values stays informational, always), top-level, and
+ * DECLARED here. Nothing is inferred. Declaring a block is the deliberate act
+ * of saying "a skill breaks without this", and the cost of that act is one
+ * blocking row for every project that lacks it.
+ *
+ * It lives beside `PATH_PREREQUISITES`, the same statement about a different
+ * unit: that one says a kept FILE leaves the release half-delivered, this one
+ * says a missing BLOCK does.
+ */
+export const CONFIG_BLOCK_READERS: Record<string, Record<string, ConfigBlockReader>> = {
+  '.agents/project.yaml': {
+    git_strategy: {
+      skill: '/git-flow-master',
+      requiredBy: 'the branching strategy, the protected-branch list and `policy.direct_push_to_protected`, resolved before every push; without the block the skill cannot tell an authorized direct push from a forbidden one, and `bun run git:policy verify` has no declared side to compare the host ruleset against',
+    },
+    autonomous_delivery: {
+      skill: '/autonomous-delivery',
+      requiredBy: 'the master switch, the per-mode caps, the isolation mode and the gh identity asserted before every push and merge, all read in Phase 0 of every unattended run',
+    },
+    decision_authority: {
+      skill: '/autonomous-delivery',
+      requiredBy: 'whether a product call stops the run (`escalate`) or is decided by a scored subagent (`decide`), read before treating any product question as an escalation',
+    },
+  },
+};
+
+/**
+ * Top-level blocks the project is MISSING that a shipped skill reads. Empty for
+ * a file with no declaration, for one that does not parse, and for every block
+ * whose only difference is its values.
+ */
+export function missingConfigBlocks(
+  filePath: string,
+  project: string,
+  upstream: string,
+  readers: Record<string, Record<string, ConfigBlockReader>> = CONFIG_BLOCK_READERS,
+): { block: string, reader: ConfigBlockReader }[] {
+  const declared = readers[filePath.replace(/\\/g, '/')];
+  if (declared === undefined) { return []; }
+  const mine = configEntries(project, filePath);
+  const theirs = configEntries(upstream, filePath);
+  if (!mine || !theirs) { return []; }
+  return Object.entries(declared)
+    // Top-level only: `configEntries` also carries `top.child` rows, and a
+    // missing CHILD of a block the project has is a value-shaped difference,
+    // not the absent-block failure this escalates.
+    .filter(([block]) => theirs.has(block) && !mine.has(block))
+    .map(([block, reader]) => ({ block, reader }));
+}
+
+/**
+ * The clause that turns a missing declared block into a blocking row. It names
+ * the skill, because the operator's real question is "what breaks if I skip
+ * this", and the answer is a skill they already have installed.
+ */
+export function configBlockClause(missing: { block: string, reader: ConfigBlockReader }[]): string {
+  const each = missing.map(m => `\`${m.block}:\` read by \`${m.reader.skill}\` for ${m.reader.requiredBy}`);
+  return `BLOCKING: ${missing.length} block(s) upstream added are MISSING here and a shipped skill reads them, so it fails at runtime instead of at sync time: ${each.join(' | ')}. Take upstream's block and adapt its VALUES to this project; the values are yours, the block's existence is not`;
+}
+
+/** The declaration for a path, or null when its content gates nothing else. */
+export function prerequisiteFor(
+  filePath: string,
+  manifest: Record<string, PathPrerequisite> = PATH_PREREQUISITES,
+): PathPrerequisite | null {
+  return manifest[filePath.replace(/\\/g, '/')] ?? null;
+}
+
+/**
+ * The clause appended to a kept row whose hunk gates another file of the same
+ * release. It names the gate as the arbiter on purpose: the declaration is
+ * per-path, not per-hunk, so a project that already merged the hunk by hand
+ * proves it in one command instead of arguing with the row.
+ */
+export function prerequisiteClause(prerequisite: PathPrerequisite): string {
+  return `PREREQUISITE for this release: ${prerequisite.requiredBy}; keeping the project copy as-is fails \`${prerequisite.gate}\` (run it: it is the arbiter, and it passes if your copy already carries the hunk)`;
 }
 
 // ============================================================================
@@ -930,10 +1060,24 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     const upstream = readIfExists(path.join(input.upstreamDir, entry.path));
     if (project === null || upstream === null) { continue; }
     const diff = diffNoIndex(path.join(input.root, entry.path), path.join(input.upstreamDir, entry.path));
+    // Every one of these rows is a KEPT file (a watched path is never
+    // overwritten), and a kept path whose upstream hunk gates another file of
+    // this release says so and blocks.
+    const prerequisite = prerequisiteFor(entry.path, input.prerequisites);
+    const withPrerequisite = (evidence: string): string =>
+      prerequisite === null ? evidence : `${evidence}; ${prerequisiteClause(prerequisite)}`;
     if (entry.structural) {
       const evidence = structuralEvidence(entry.path, project, upstream);
-      if (evidence === null) { continue; }
-      drifted.set(entry.path, { surface: watchedSurface(entry.path, entry.source), path: entry.path, evidence, suggested: 'merge', blocking: false, diff, projectOnly: true });
+      // A MISSING top-level block a shipped skill reads is not informational:
+      // the skill fails at runtime in somebody's session instead of here, where
+      // there is an operator and a prompt. It escalates even when
+      // `structuralEvidence` found nothing else to say.
+      const missingBlocks = missingConfigBlocks(entry.path, project, upstream, input.configBlockReaders);
+      if (evidence === null && missingBlocks.length === 0) { continue; }
+      const structural = [evidence, missingBlocks.length > 0 ? configBlockClause(missingBlocks) : null]
+        .filter((part): part is string => part !== null)
+        .join('; ');
+      drifted.set(entry.path, { surface: watchedSurface(entry.path, entry.source), path: entry.path, evidence: withPrerequisite(structural), suggested: 'merge', blocking: prerequisite !== null || missingBlocks.length > 0, diff, projectOnly: true });
       continue;
     }
     const { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
@@ -955,9 +1099,11 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path, entry.source),
       path: entry.path,
-      evidence: [evidence, ...notes.map(n => n.clause)].join('; '),
-      suggested,
-      blocking: false,
+      evidence: withPrerequisite([evidence, ...notes.map(n => n.clause)].join('; ')),
+      // A prerequisite row cannot be "reviewed later": the release is
+      // half-delivered until its hunk lands, so it is a merge, and it blocks.
+      suggested: prerequisite === null ? suggested : 'merge',
+      blocking: prerequisite !== null,
       diff,
       projectOnly,
       ...(notes.length === 0 ? {} : { note: notes.map(n => n.note).join('\n\n') }),

@@ -72,7 +72,14 @@ const UPSTREAM_DIR = process.env[UPDATER_UPSTREAM_DIR_ENV] || TEMP_DIR;
 const VERSION_FILE = '.template/boilerplate.lock.json';
 /** Post-apply gates: each gets this long, then it is skipped with a note. */
 const GATE_TIMEOUT_MS = 120_000;
-const GATE_SCRIPTS = ['types:check', 'lint:check'] as const;
+/**
+ * Scripts run as gates when `package.json` defines them (a missing one is
+ * skipped). `skills:check` is here because a release can ship a skill and the
+ * vocabulary hunk that makes it lintable in two different files: when the
+ * second one is protected, only this gate sees the half-delivered pair (see
+ * `PATH_PREREQUISITES` in `./lib/updater-parity.ts`).
+ */
+export const GATE_SCRIPTS = ['types:check', 'lint:check', 'skills:check'] as const;
 
 // `eslint.config.base.js` is the SYNCED half of the lint config: the shared
 // options and the `cli/` import-closure block the updater's self-update depends
@@ -189,7 +196,7 @@ interface ParsedArgs {
   force: boolean
   /** Exit 1 on a blocking parity finding (failed compatibility contract). Default: warn, exit 0. */
   strict: boolean
-  /** Skip the post-apply quality gates (`types:check`, `lint:check`). */
+  /** Skip the post-apply quality gates (`types:check`, `lint:check`, `skills:check`). */
   noGates: boolean
   /** Keep the prompts even when stdin is not a TTY (the default there is `--auto`). */
   interactive: boolean
@@ -292,8 +299,8 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   "Sincronizacion completada".
 
 VERIFICACION POST-SYNC (gates):
-  Tras aplicar archivos, corre \`types:check\` y \`lint:check\` de tu
-  package.json (120 s cada uno; un gate que no termina se omite). Un gate roto
+  Tras aplicar archivos, corre \`types:check\`, \`lint:check\` y
+  \`skills:check\` de tu package.json (120 s cada uno; un gate que no termina se omite). Un gate roto
   NO bloquea: aparece como fila "Verificacion" (codigo de salida, primeras
   lineas de error, que archivos aplicados esta corrida nombra) y como linea
   "Gates:" en el resumen. --no-gates lo desactiva.
@@ -333,7 +340,8 @@ FLAGS:
                                   compatibilidad roto: alias, wrappers, hooks,
                                   MCP). Por defecto solo avisa y sale 0. El
                                   drift de archivos protegidos nunca bloquea.
-  --no-gates                      No corre types:check / lint:check tras aplicar
+  --no-gates                      No corre types:check / lint:check /
+                                  skills:check tras aplicar
   --interactive                   Mantiene los prompts aunque stdin no sea TTY
   --rollback                      Restaura backup mas reciente
   --update-mcp-template <agent>   Refresca docs/mcp/<agent>.template.*
@@ -355,7 +363,7 @@ EJEMPLOS:
   bun up --force                            # Forzar todo del upstream (sin preguntar)
   bun up --dry-run                          # Preview (con el updater nuevo si hay self-update)
   bun up --auto --strict                    # CI: falla si queda un contrato roto
-  bun up --auto --no-gates                  # Sin types:check / lint:check al final
+  bun up --auto --no-gates                  # Sin gates (types / lint / skills) al final
   bun up --rollback                         # Restaurar backup
   bun up --update-mcp-template claude       # Refrescar MCP template
 `;
@@ -461,7 +469,7 @@ interface RunFacts {
   migrationPlanned: boolean
   /** The compat hook left `.claude/skills` for `bun run agents:compat` after the migration commit. */
   aliasDeferred: boolean
-  /** Post-apply quality gates (`types:check`, `lint:check`); empty when skipped. */
+  /** Post-apply quality gates (`GATE_SCRIPTS`); empty when skipped. */
   gates: GateResult[]
   /** Why `gates` stayed empty this run: nothing to say when gates actually ran (even a fail leaves at least one `GateResult`). */
   gatesSkippedReason: 'no-gates' | 'no-changes' | null

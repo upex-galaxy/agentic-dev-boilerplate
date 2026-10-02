@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { COMPONENTS, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -124,6 +124,12 @@ describe('flags', () => {
 });
 
 describe('post-apply gates', () => {
+  // A release can ship a skill and the vocabulary hunk that admits it in two
+  // files; when the second is protected, only skills:check sees the half.
+  test('skills:check runs after the apply, next to types and lint', () => {
+    expect([...GATE_SCRIPTS]).toEqual(['types:check', 'lint:check', 'skills:check']);
+  });
+
   /** A project whose package.json defines the gate scripts as shell one-liners. */
   function project(scripts: Record<string, string>): string {
     const root = temporaryRoot();
