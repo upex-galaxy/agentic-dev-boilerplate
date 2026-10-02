@@ -365,7 +365,7 @@ async function promptVarsInto(
 
 /**
  * Prompt for the CRITICAL tool credentials (ATLASSIAN_URL/EMAIL/API_TOKEN,
- * RESEND_API_KEY, TAVILY_API_KEY) and upsert them into `.env`. IDEMPOTENT: an
+ * RESEND_API_KEY) and upsert them into `.env`. IDEMPOTENT: an
  * already-set var is shown and left untouched unless the user opts to overwrite
  * it. Secrets are masked at the prompt; their values are never printed.
  *
@@ -373,7 +373,7 @@ async function promptVarsInto(
  * prompts these on a fresh clone; this is the "set / reset" power-tool path.
  */
 async function setCriticalVars(opts: VariablesFlowOptions): Promise<void> {
-  tui.section('CRITICAL — tool credentials (Atlassian, Resend, Tavily)');
+  tui.section('CRITICAL — tool credentials (Atlassian, Resend)');
   await promptVarsInto(criticalVars(), opts);
 }
 
@@ -783,7 +783,7 @@ async function runMenu(
     message: 'What do you want to do?',
     options: [
       { value: 'walk', label: 'Set variables one by one (walk all local vars)' },
-      { value: 'critical', label: 'Set / reset the critical variables (Atlassian, Resend, Tavily)' },
+      { value: 'critical', label: 'Set / reset the critical variables (Atlassian, Resend)' },
       { value: 'push', label: 'Push local .env → Vercel env (production / preview / development)' },
       { value: 'pull', label: 'Pull infra vars from Vercel (Supabase / Postgres / app URL) into .env' },
       { value: 'everything', label: 'Everything (set critical, then push to Vercel)' },

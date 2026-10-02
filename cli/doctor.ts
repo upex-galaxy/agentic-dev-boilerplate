@@ -35,11 +35,12 @@
 
 import type { CompatibilityCheck, CompatibilityErrorGroup } from './lib/agent-compatibility.ts';
 import type { AtlassianUrlSource } from './lib/atlassian-instance.ts';
+import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
 
+import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
   declaredMcpIds,
@@ -57,6 +58,7 @@ import {
   formatInstanceMismatchWarning,
   resolveAtlassianInstance,
 } from './lib/atlassian-instance.ts';
+import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
 import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -105,7 +107,6 @@ const MIN_BUN: readonly [number, number, number] = [1, 0, 0];
 // checked separately (see the Atlassian-host block in `buildReport`). Listing it
 // here would report `missing` forever on a correctly configured repo.
 const DAY_ZERO_VARS = [
-  'TAVILY_API_KEY',
   'RESEND_API_KEY',
   'ATLASSIAN_EMAIL',
   'ATLASSIAN_API_TOKEN',
@@ -115,8 +116,8 @@ const DAY_ZERO_VARS = [
 // Project-bound vars are derived from the canonical VAR_MANIFEST (single source
 // of truth — kills the prior install/doctor drift where doctor knew 13 vars and
 // the installer 5). They are the manifest's NON-critical vars (Supabase /
-// Postgres / app-runtime / n8n). The CRITICAL tool credentials (TAVILY_API_KEY,
-// ATLASSIAN_*, RESEND_API_KEY) also live in the manifest now but are day-zero
+// Postgres / app-runtime / n8n). The CRITICAL tool credentials (ATLASSIAN_*,
+// RESEND_API_KEY) also live in the manifest now but are day-zero
 // (prompted at install), so they are excluded here to avoid double-listing with
 // DAY_ZERO_VARS. SUPABASE_ACCESS_TOKEN stays day-zero (not in the manifest).
 const PROJECT_BOUND_VARS: readonly string[] = varsFor('local')
@@ -137,10 +138,6 @@ const REQUIRED_VARS: readonly string[] = [...DAY_ZERO_VARS, ...PROJECT_BOUND_VAR
 const LEGACY_JIRA_CRED_KEYS: readonly string[] = DEPRECATED_VARS.map(d => d.name);
 
 const VAR_HINTS: Record<string, { hint: string, where: string }> = {
-  TAVILY_API_KEY: {
-    hint: 'Tavily web-search MCP API key',
-    where: 'https://app.tavily.com/  →  account  →  API keys',
-  },
   RESEND_API_KEY: {
     hint: 'Resend API key (transactional email + resend CLI auth)',
     where: 'https://resend.com/api-keys  (docs: https://resend.com/docs/api-reference/introduction)',
@@ -327,6 +324,8 @@ interface DoctorReport {
   /** Linked worktree: the primary checkout's root; null in the primary itself. */
   worktree_of: string | null
   direnv: DirenvState
+  /** Servers that run at harness level, classified against the user-level configs (never a value). */
+  harness_level_mcps: { verdicts: HarnessLevelVerdict[], sources: string[] }
   pending_actions: PendingAction[]
 }
 
@@ -547,6 +546,7 @@ async function runDoctor(): Promise<DoctorReport> {
       return roots !== null && roots.linked ? roots.primaryRoot : null;
     })(),
     direnv: { installed: false },
+    harness_level_mcps: harnessLevelMcpReport(),
     pending_actions: [],
   };
 
@@ -793,6 +793,17 @@ function printHuman(report: DoctorReport): void {
     v === 'set' ? 'set' : 'missing',
   ]);
   process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
+
+  // Servers that are not in the project config because they run at harness
+  // level. Its own section and never a check row: a claude.ai connector is
+  // invisible to a file read, so "not detectable" must never look like "missing".
+  tui.section('MCP servers provided at harness level (not in .mcp.json by design)');
+  for (const verdict of report.harness_level_mcps.verdicts) {
+    const icon = tui.statusIcon(verdict.state === 'provided elsewhere' ? 'ok' : 'info');
+    process.stdout.write(`  ${icon} ${verdict.id} (${verdict.capability}): ${verdict.state}${verdict.hosts.length > 0 ? ` (${verdict.hosts.join(', ')})` : ''}\n`);
+    process.stdout.write(`    ${verdict.detail}\n`);
+  }
+  process.stdout.write(`  read: ${report.harness_level_mcps.sources.length > 0 ? report.harness_level_mcps.sources.join(', ') : '(no user-level config found)'}\n\n`);
 
   // Legacy JIRA_* credential keys (pre-DRY .env leftover)
   if (report.legacy_jira_cred_keys.length > 0) {

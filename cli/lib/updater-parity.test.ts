@@ -19,11 +19,13 @@ import {
   describeWatchedFile,
   diffNoIndex,
   diffStats,
+  harnessLevelMcpNote,
   markdownSectionDelta,
   persistArchivedSkillMarkers,
   protectNote,
   readGitStrategyStamp,
   renderParityReport,
+  retiredMcpNote,
   runVerdict,
   strictVerdict,
   structuralEvidence,
@@ -762,5 +764,75 @@ describe('a git-tracked .context/PBI/ cache is one row on Componentes', () => {
     expect(renderParityReport(findings, META).surfaces.find(s => s.surface === 'components')?.cell).toBe('1 hallazgo: .context/PBI/');
     // Nothing tracked: no row.
     expect(collectParityFindings({ root, upstreamDir: temporaryRoot(), drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, 'x'), heldBack: [], envNewKeys: [], pbiCache: null })).toEqual([]);
+  });
+});
+
+describe('retiredMcpNote', () => {
+  const upstream = JSON.stringify({ mcpServers: { context7: { command: 'bunx' } } });
+  test('names a retired server the project keeps, says why, and offers keep or remove', () => {
+    const project = JSON.stringify({ mcpServers: { context7: { command: 'bunx' }, atlassian: { command: 'npx' } } });
+    const note = retiredMcpNote('.mcp.json', project, upstream);
+    expect(note).not.toBeNull();
+    expect(note!.clause).toContain('upstream retired "atlassian"');
+    expect(note!.note).toContain('/acli');
+    expect(note!.note).toContain('keep project');
+  });
+  test('silent when the project dropped it too, when upstream still has it, and on a non-MCP file', () => {
+    expect(retiredMcpNote('.mcp.json', upstream, upstream)).toBeNull();
+    const both = JSON.stringify({ mcpServers: { atlassian: { command: 'npx' } } });
+    expect(retiredMcpNote('.mcp.json', both, both)).toBeNull();
+    expect(retiredMcpNote('AGENTS.md', '# a', '# b')).toBeNull();
+  });
+  test('reads the Codex and OpenCode registries too', () => {
+    const codexProject = '[mcp_servers.atlassian]\ncommand = "npx"\n';
+    const codexUpstream = '[mcp_servers.context7]\ncommand = "bunx"\n';
+    expect(retiredMcpNote('.codex/config.toml', codexProject, codexUpstream)!.clause).toContain('atlassian');
+    const ocProject = '{ "mcp": { "atlassian": { "type": "local" } } }';
+    const ocUpstream = '{ "mcp": { "context7": { "type": "local" } } }';
+    expect(retiredMcpNote('opencode.jsonc', ocProject, ocUpstream)!.clause).toContain('atlassian');
+  });
+});
+
+describe('harnessLevelMcpNote', () => {
+  const upstream = JSON.stringify({ mcpServers: { context7: { command: 'bunx' } } });
+  test('names a server the project keeps that upstream moved to harness level, with its former key', () => {
+    const project = JSON.stringify({ mcpServers: { context7: { command: 'bunx' }, tavily: { command: 'bunx', args: ['-y', 'mcp-remote', 'https://mcp.tavily.com/mcp/'] } } });
+    const note = harnessLevelMcpNote('.mcp.json', project, upstream);
+    expect(note).not.toBeNull();
+    expect(note!.clause).toContain('"tavily" now run at harness level');
+    expect(note!.clause).toContain('TAVILY_API_KEY');
+    expect(note!.note).toContain('keep project');
+    expect(note!.note).toContain('claude mcp add --scope user');
+  });
+  test('silent when the project declares none of them, when upstream still has them, and on a non-MCP file', () => {
+    expect(harnessLevelMcpNote('.mcp.json', upstream, upstream)).toBeNull();
+    const both = JSON.stringify({ mcpServers: { tavily: { command: 'bunx' } } });
+    expect(harnessLevelMcpNote('.mcp.json', both, both)).toBeNull();
+    expect(harnessLevelMcpNote('AGENTS.md', '# a', '# b')).toBeNull();
+  });
+  test('silent on a harness-level server upstream never committed: nothing moved, so there is nothing to migrate', () => {
+    const project = JSON.stringify({ mcpServers: { context7: { command: 'bunx' }, exa: { type: 'http', url: 'https://mcp.exa.ai/mcp' } } });
+    expect(harnessLevelMcpNote('.mcp.json', project, upstream)).toBeNull();
+  });
+  test('reads the Codex and OpenCode registries too', () => {
+    const codexProject = '[mcp_servers.tavily]\nurl = "https://mcp.tavily.com/mcp/"\n';
+    const codexUpstream = '[mcp_servers.context7]\ncommand = "bunx"\n';
+    expect(harnessLevelMcpNote('.codex/config.toml', codexProject, codexUpstream)!.clause).toContain('tavily');
+    const ocProject = '{ "mcp": { "tavily": { "type": "local", "command": ["bunx"], }, } }';
+    const ocUpstream = '{ "mcp": { "context7": { "type": "local" } } }';
+    expect(harnessLevelMcpNote('opencode.jsonc', ocProject, ocUpstream)!.clause).toContain('tavily');
+  });
+  test('a watched MCP file that keeps tavily gets a parity row with the clause and the note, never an overwrite', () => {
+    const root = temporaryRoot();
+    const upstreamDir = temporaryRoot();
+    write(root, '.mcp.json', JSON.stringify({ mcpServers: { context7: { command: 'bunx' }, tavily: { command: 'bunx' } } }, null, 2));
+    write(upstreamDir, '.mcp.json', JSON.stringify({ mcpServers: { context7: { command: 'bunx' } } }, null, 2));
+    const findings = collectParityFindings({ root, upstreamDir, drift: [{ path: '.mcp.json', reason: 'r' }], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, 'x'), heldBack: [], envNewKeys: [], pbiCache: null });
+    const row = findings.find(f => f.path === '.mcp.json');
+    expect(row).toBeDefined();
+    expect(row!.surface).toBe('mcp');
+    expect(row!.suggested).not.toBe('take upstream');
+    expect(row!.evidence).toContain('now run at harness level');
+    expect(row!.note).toContain('ADR-0005');
   });
 });

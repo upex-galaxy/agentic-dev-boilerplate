@@ -77,7 +77,8 @@ function copyFromRepo(root: string, relativePath: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Inline fixtures: the four servers this repo ships plus `playwright` (a
+// Inline fixtures: the servers this repo ships, plus `tavily` (upstream moved
+// it to harness level; a downstream project may keep it) and `playwright` (a
 // downstream server the contract does not know), spelled per host. Written
 // here rather than copied so the tests describe the contract on their own,
 // whatever the real repo looks like at the moment they run. Each host file is
@@ -86,8 +87,8 @@ function copyFromRepo(root: string, relativePath: string): void {
 // ---------------------------------------------------------------------------
 
 /** The set this boilerplate ships (and the strict per-host shapes cover). */
-const BOILERPLATE_IDS = ['context7', 'tavily', 'supabase', 'n8n'];
-/** A downstream set: no `n8n`, plus a server the contract has no shape for. */
+const BOILERPLATE_IDS = ['context7', 'supabase', 'n8n'];
+/** A downstream set: no `n8n`, keeps `tavily`, plus a server the contract has no shape for. */
 const PROJECT_IDS = ['context7', 'tavily', 'supabase', 'playwright'];
 
 const MCP_SERVERS: Record<string, unknown> = {
@@ -548,8 +549,8 @@ describe('MCP semantic parity', () => {
     expect(errors.some(error => error.includes('MCP supabase env contract differs between claude and codex'))).toBe(true);
   });
 
-  test('reports a missing Tavily server', () => {
-    const root = contractFixture();
+  test('reports a project-kept server missing from one host', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
     const configPath = join(root, '.codex/config.toml');
     const config = readFileSync(configPath, 'utf8').replace(
       /\n\[mcp_servers\.tavily\][\s\S]*?(?=\n\[mcp_servers\.)/,
@@ -578,12 +579,13 @@ describe('MCP semantic parity', () => {
   });
 
   test('reports an environment-variable mismatch', () => {
-    const root = contractFixture();
+    const root = contractFixture(undefined, PROJECT_IDS);
     const configPath = join(root, 'opencode.jsonc');
     const config = readFileSync(configPath, 'utf8').replace('{env:TAVILY_API_KEY}', '{env:TAVILY_TOKEN}');
     writeFileSync(configPath, config);
 
-    expect(validateMcpParity(root).some(error => error.includes('opencode MCP tavily mismatch') && error.includes('TAVILY_TOKEN'))).toBe(true);
+    // tavily has no pinned shape any more: the generic cross-host check catches it.
+    expect(validateMcpParity(root).some(error => error.includes('MCP tavily env contract differs between claude and opencode') && error.includes('TAVILY_TOKEN'))).toBe(true);
   });
 
   test('reports a literal setting that differs on one host', () => {
