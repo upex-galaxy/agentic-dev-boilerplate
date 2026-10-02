@@ -182,7 +182,7 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 - ✅ **Paleta de colores aplicada consistentemente** en todas las páginas
 - ✅ **Content Writing real** basado en contexto de negocio (NO texto genérico)
 - ✅ Pídele al usuario que corra el servidor para verificar que compile sin warnings y que las páginas se vean bien
-- ✅ Design system visualmente coherente y atractivo (MCP Playwright si disponible, o verificación manual del usuario)
+- ✅ Design system visualmente coherente y atractivo (`/playwright-cli` en una sesión con nombre, o verificación manual del usuario)
 
 ---
 
