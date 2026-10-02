@@ -333,7 +333,7 @@ For changes big enough to need a written spec, the workflow is spec → design �
 
 ### Orchestration model
 
-The main conversation is a **command center**, not an executor. Sub-agents do the heavy reading, writing, and running. This keeps the main thread's context lean and lets each sub-agent specialize. The 6-component briefing format (`AGENTS.md` § Orchestration Mode) is the contract between orchestrator and sub-agent.
+The main conversation is a **command center**, not an executor. Sub-agents do the heavy reading, writing, and running. This keeps the main thread's context lean and lets each sub-agent specialize. The 7-component briefing format (`AGENTS.md` § Orchestration Mode) is the contract between orchestrator and sub-agent.
 
 ### One source, three harnesses
 

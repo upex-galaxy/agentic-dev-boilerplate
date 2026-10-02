@@ -95,4 +95,4 @@ Candidatos típicos en esta fase: modelo de auth/authorization, patrón de data-
 - **Template + lifecycle + índice**: `.context/ADR/README.md`.
 - **Lo que NO es un ADR**: trade-offs locales de una story (van en su `implementation-plan.md`), bugfixes, refactors locales, naming.
 - **Append-only**: un ADR Accepted no se reescribe; se **supersede** con uno nuevo que enlaza de vuelta.
-- La IA redacta como `Proposed`; el humano lo pasa a `Accepted`. Persistí la decisión en engram (`mem_save`, type `architecture`).
+- Estado: una decisión que el humano ya aprobó (está en el SRS/PRD que firmó, o la decidió en el chat o en un deck) se escribe `Accepted` desde el inicio, citando dónde se aprobó; solo una pregunta todavía abierta va como `Proposed`. Persistí la decisión en engram (`mem_save`, type `architecture`).

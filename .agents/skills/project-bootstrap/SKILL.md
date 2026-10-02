@@ -201,7 +201,7 @@ Incremental features are usually **sequential after the base** but independent f
 - After base backend exists → `openapi-setup`, `api-routes-setup`, `bearer-token-support`, `env-url-setup` can each run in their own subagent.
 - After base frontend exists → `supabase-types-setup` wires backend types into the frontend.
 
-Briefings for each subagent must follow the 6-component template in `agentic-dev-core/references/briefing-template.md`. Each briefing should cite the specific reference file the subagent must read.
+Briefings for each subagent must follow the 7-component template in `agentic-dev-core/references/briefing-template.md`. Each briefing should cite the specific reference file the subagent must read.
 
 ---
 

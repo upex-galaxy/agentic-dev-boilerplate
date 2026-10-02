@@ -90,7 +90,7 @@ Unsettled, and not in §5? Decide it. For a call that is close, consequential, o
 **scored judge panel** rather than picking on instinct.
 
 **Shape.** Dispatch independent subagents in **Parallel** per `./dispatch-patterns.md` gate 3, each with
-the standard 6-component briefing. Give every panelist the same options and the same evidence, and a
+the standard 7-component briefing. Give every panelist the same options and the same evidence, and a
 **different lens**. Panelists do not confer, do not see each other's output, and do not choose — they
 score and justify. You adjudicate. This preserves `dispatch-patterns.md`'s "don't delegate planning": the
 panel supplies evaluations, the deciding agent supplies the decision.
@@ -148,6 +148,11 @@ Four categories, and they are exhaustive. Everything outside them is yours.
 **When you do escalate, escalate informed.** Present what the record already says, the options with your
 scoring if you ran a panel, and your recommendation. Never ask a bare open question — that is how a human
 gets pulled into re-deciding something they already decided.
+
+**Pick the instrument by the shape of the ask**: a handful of simple questions go to the harness prompt;
+more than three decision points, or one decision whose tradeoff does not fit in two sentences, go to the
+`mkd` decision deck. The ladder, the deck's justification rules, the fallback when `mkd` is absent, and
+how to read the returned contract live in `./decision-elicitation-doctrine.md`.
 
 ### 5.1 Category 1 is configurable — but only by explicit opt-in
 

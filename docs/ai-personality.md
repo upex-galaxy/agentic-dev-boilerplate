@@ -223,6 +223,7 @@ After the suspension turn, PM Voice resumes automatically.
 - **Ask for "PM mode" / "PM voice"** (in any language) to force the default register if a previous turn drifted technical.
 - **Ask for "technical mode" / "developer mode" / "speak technically"** (in any language) to force a technical reply.
 - **Say "normal mode" / "stop caveman"** (or equivalent in your language) to fully disable caveman compression for the rest of the session.
+- **Expect a decision deck when there is a lot to decide.** Up to three simple questions arrive as a normal prompt. More than three, or one decision whose tradeoff needs more than two sentences, arrive as an `mkd` deck in your browser: every option says what it buys and what it costs, at most one is recommended and says why. Skipping an item means "decide later". If a question makes no sense to you, say so in its note: the AI will not act on that item and will ask again in plainer words. Canon: `agentic-dev-core/references/decision-elicitation-doctrine.md`.
 
 ---
 
