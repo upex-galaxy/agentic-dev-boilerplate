@@ -543,6 +543,37 @@ function personalAbsolutePath(command: string): boolean {
   return /(?:^|[\s"'])(?:\/Users\/|\/home\/|[A-Za-z]:[\\/]Users[\\/])/.test(command);
 }
 
+/**
+ * The OpenCode adapter must load on BOTH plugin generations, because the repo
+ * cannot pin which OpenCode a teammate runs.
+ *
+ * OpenCode 2 reads ONE default export `{ id, setup(ctx) }` and refuses
+ * anything else ("Plugin must export a default definition with an id and an
+ * effect or setup function"); the contract line then goes through
+ * `ctx.session.hook('context', ...)`. OpenCode 1 (1.18.29 and newer) calls
+ * `server()` on that same object and expects the
+ * `experimental.chat.system.transform` hook back. A V1-only named export
+ * passed every other check here while OpenCode 2 refused to load it, so the
+ * check names each entrypoint. Text-level on purpose, like the rest of this
+ * contract: importing the adapter would execute it.
+ */
+export function validateOpenCodePluginEntrypoints(plugin: string): string[] {
+  const errors: string[] = [];
+  if (!/^export default\b/m.test(plugin)) {
+    errors.push('OpenCode personality adapter must default-export one plugin definition: OpenCode 2 loads nothing else.');
+  }
+  if (!/^\s*id:\s*['"][^'"]+['"]/m.test(plugin)) {
+    errors.push('OpenCode personality adapter must declare a stable id: OpenCode 2 refuses a definition without one.');
+  }
+  if (!/\bsetup\s*\(/.test(plugin) || !/ctx\.session\.hook\(\s*['"]context['"]/.test(plugin)) {
+    errors.push('OpenCode personality adapter must register the OpenCode 2 entrypoint: setup(ctx) with ctx.session.hook(\'context\', ...).');
+  }
+  if (!/\bserver\s*\(/.test(plugin) || !plugin.includes('experimental.chat.system.transform')) {
+    errors.push('OpenCode personality adapter must keep the OpenCode 1 entrypoint: server() returning experimental.chat.system.transform.');
+  }
+  return errors;
+}
+
 function readHookCommand(settings: JsonObject, host: 'claude' | 'codex'): JsonObject {
   const hooks = object(settings.hooks, `${host} hooks`);
   const event = hooks.UserPromptSubmit;
@@ -605,6 +636,10 @@ export function validateHookCompatibility(root = process.cwd()): string[] {
     if (plugin.includes('output.system =')) {
       errors.push('OpenCode personality adapter must mutate output.system in place.');
     }
+    if (/\bevent\.system\s*=[^=]/.test(plugin)) {
+      errors.push('OpenCode personality adapter must mutate event.system in place.');
+    }
+    errors.push(...validateOpenCodePluginEntrypoints(plugin));
     for (const duplicate of ['.claude/hooks/personality-reinject.js', '.codex/hooks/personality-reinject.js']) {
       if (existsSync(join(resolvedRoot, duplicate))) {
         errors.push(`Duplicated personality hook must be removed: ${duplicate}`);
