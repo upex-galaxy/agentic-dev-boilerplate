@@ -40,6 +40,7 @@ import { parse as parseYaml } from 'yaml';
 
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, compatibilityErrorGroup, undeclaredCommandWrappers } from './agent-compatibility.ts';
+import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
 
 // ============================================================================
 // TYPES
@@ -620,6 +621,73 @@ export function structuralEvidence(filePath: string, project: string, upstream: 
   return `informational: upstream added ${added.length} ${unit}${added.length === 1 ? '' : 's'}: ${listNames(added)}; merge = add the new ${unit}s, values are project identity and never compared`;
 }
 
+/** Registry keys of the three MCP host files (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`). */
+const MCP_REGISTRY_KEYS = ['mcpServers', 'mcp', 'mcp_servers'];
+
+/** Server ids among `ids` the project file declares and the upstream copy no longer does. */
+function serversUpstreamDropped(filePath: string, project: string, upstream: string, ids: readonly string[]): string[] {
+  if (!Object.values(MCP_HOST_FILE).includes(filePath)) { return []; }
+  const mine = configEntries(project, filePath);
+  const theirs = configEntries(upstream, filePath);
+  if (!mine || !theirs) { return []; }
+  return ids.filter(id => MCP_REGISTRY_KEYS.some(r => mine.has(`${r}.${id}`)) && !MCP_REGISTRY_KEYS.some(r => theirs.has(`${r}.${id}`)));
+}
+
+/**
+ * A downstream project's protected MCP file still declares a server upstream
+ * moved to HARNESS level (ADR-0005: web search). The file is on the
+ * watchlist, so nothing overwrites it; this note is how the project learns
+ * the server is now the harness's business. Returns the clause for the row and
+ * the longer note, or null when the project declares none of them or upstream
+ * still has them.
+ */
+export function harnessLevelMcpNote(filePath: string, project: string, upstream: string): { clause: string, note: string } | null {
+  // Only a server upstream once committed moved; one it never shipped has no migration to explain.
+  const committed = HARNESS_LEVEL_MCPS.filter(m => m.formerEnvVar !== null);
+  const ids = serversUpstreamDropped(filePath, project, upstream, committed.map(m => m.id));
+  if (ids.length === 0) { return null; }
+  const vars = committed.filter(m => ids.includes(m.id)).flatMap(m => (m.formerEnvVar === null ? [] : [m.formerEnvVar]));
+  return {
+    clause: `${listNames(ids)} now run at harness level (upstream removed them and their keys ${listNames(vars)}): keep them here as project-only servers, or remove them and connect them once per machine`,
+    note: [
+      `Upstream no longer commits ${listNames(ids)}: a remote MCP server whose only project-side content is an API key is the harness's business, and the skills resolve it by capability whatever the server prefix (ADR-0005; .agents/skills/agentic-dev-core/references/mcp-capabilities.md).`,
+      'Two valid answers for this project:',
+      `  - keep project: the server stays a project-only entry in ${filePath} and in the other two host files, and its key stays in your .env, which no sync touches (the synced .env.example and the variable manifest no longer list ${listNames(vars)}, so document it wherever this project keeps its own keys).`,
+      `  - remove it here (and from the other two host files) and connect it at user level: Claude Code \`claude mcp add --scope user\` or a claude.ai connector; OpenCode ~/.config/opencode/opencode.json; Codex \`codex mcp add\`. Then drop ${listNames(vars)} from .env.`,
+      'bun run setup:doctor reports which of these servers your user-level configs already declare.',
+    ].join('\n'),
+  };
+}
+
+/**
+ * Servers upstream once committed and then RETIRED outright (no harness-level
+ * replacement): the capability they served moved to a CLI. Keyed by server
+ * id; the value is the one-line reason the row prints.
+ */
+export const RETIRED_MCPS: Readonly<Record<string, string>> = {
+  atlassian: 'Jira and Confluence go through the `/acli` CLI (`[ISSUE_TRACKER_TOOL]`); the Atlassian MCP is an opt-in, per-developer setup (docs/mcp/)',
+};
+
+/**
+ * A downstream project's protected MCP file still declares a server upstream
+ * RETIRED (`RETIRED_MCPS`). Nothing overwrites the file; this note is how the
+ * project learns why the server left and that keeping it is a valid answer.
+ * Null when the project declares none of them or upstream still has them.
+ */
+export function retiredMcpNote(filePath: string, project: string, upstream: string): { clause: string, note: string } | null {
+  const retired = serversUpstreamDropped(filePath, project, upstream, Object.keys(RETIRED_MCPS));
+  if (retired.length === 0) { return null; }
+  return {
+    clause: `upstream retired ${listNames(retired)}: keep it here as a project-only server, or remove it`,
+    note: [
+      ...retired.map(id => `Upstream no longer commits ${listNames([id])}: ${RETIRED_MCPS[id]}.`),
+      'Two valid answers for this project:',
+      `  - keep project: the server stays a project-only entry in ${filePath} (and in the other two host files); agents:compat:check still compares it across hosts, just without a pinned shape.`,
+      '  - remove it from all three host files.',
+    ].join('\n'),
+  };
+}
+
 /** One evidence sentence for a watched file, from its two copies plus the diff. */
 export function describeWatchedFile(filePath: string, project: string, upstream: string, diff: string): string {
   return watchedFileEvidence(filePath, project, upstream, diff).evidence;
@@ -773,14 +841,19 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       continue;
     }
     const { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
+    // An MCP host file still carrying a server upstream moved to harness level
+    // or retired: the row explains why; the file is never overwritten.
+    const mcpNotes = [harnessLevelMcpNote(entry.path, project, upstream), retiredMcpNote(entry.path, project, upstream)]
+      .filter((n): n is { clause: string, note: string } => n !== null);
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path, entry.source),
       path: entry.path,
-      evidence,
+      evidence: [evidence, ...mcpNotes.map(n => n.clause)].join('; '),
       suggested,
       blocking: false,
       diff,
       projectOnly,
+      ...(mcpNotes.length === 0 ? {} : { note: mcpNotes.map(n => n.note).join('\n\n') }),
     });
   }
 
