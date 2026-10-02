@@ -1005,6 +1005,38 @@ describe('a missing config block a shipped skill reads blocks the run', () => {
   });
 });
 
+describe('the doctrine ledger row', () => {
+  test('with no AGENTS.md drift row of its own it stands alone on instructions', () => {
+    const root = temporaryRoot();
+    const row = collectParityFindings({ ...bareInput(root, temporaryRoot()), doctrineDebt: 'informational: 2 doctrine section(s) missing' })
+      .find(f => f.path === 'AGENTS.md');
+    expect(row!.surface).toBe('instructions');
+    expect(row!.blocking).toBe(false);
+    expect(row!.evidence).toContain('2 doctrine section(s) missing');
+  });
+
+  test('it folds onto the AGENTS.md drift row instead of raising a second one', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'AGENTS.md', '# Memory\n\n## 1. RULES\n\nmine\n');
+    write(upstream, 'AGENTS.md', '# Memory\n\n## 1. RULES\n\nmine\n\n## 9. DOCTRINE\n\nnew\n');
+    const found = collectParityFindings({
+      ...bareInput(root, upstream),
+      drift: [{ path: 'AGENTS.md', reason: 'per-project AI memory' }],
+      doctrineDebt: 'informational: 1 doctrine section(s) unresolved for 4 run(s)',
+    }).filter(f => f.path === 'AGENTS.md');
+    expect(found).toHaveLength(1);
+    expect(found[0].evidence).toContain('unresolved for 4 run(s)');
+    // The fold appends, never replaces the ordinary drift evidence.
+    expect(found[0].evidence).toContain('9. DOCTRINE');
+  });
+
+  test('no debt means no row', () => {
+    const root = temporaryRoot();
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), doctrineDebt: null }).find(f => f.path === 'AGENTS.md')).toBeUndefined();
+  });
+});
+
 describe('the allow-list merge is reported, never silent', () => {
   test('an informational row names every permission the merge added', () => {
     const root = temporaryRoot();

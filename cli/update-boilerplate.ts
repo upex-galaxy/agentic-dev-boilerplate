@@ -34,6 +34,7 @@ import {
   suggestCommitMessage,
   UPDATER_UPSTREAM_DIR_ENV,
 } from './lib/updater-core';
+import { DOCTRINE_FILE, runDoctrineLedger } from './lib/updater-doctrine.ts';
 import { detectProtectedDrift, mergeProtectedWatchlist, persistMarkers, readProjectProtectedPaths, splitFirstProjectAdvice } from './lib/updater-drift';
 import {
   applyHarnessMigration,
@@ -481,9 +482,11 @@ interface RunFacts {
   pbiCache: PbiCacheFact | null
   /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` (on --dry-run: would append). */
   allowListAdded: string[]
+  /** One-line evidence for the unresolved-doctrine ledger row, when AGENTS.md carries debt. */
+  doctrineDebt: string | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -1260,6 +1263,8 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       gates: runFacts.gates,
       pbiCache: runFacts.pbiCache,
       allowListAdded: runFacts.allowListAdded,
+      doctrineDebt: runFacts.doctrineDebt,
+      doctrineFile: DOCTRINE_FILE,
     });
     const report = renderParityReport(findings, {
       templateRepo: TEMPLATE_REPO,
@@ -1718,6 +1723,8 @@ async function main(): Promise<void> {
             sink,
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
             makeAllowListHook(UPSTREAM_DIR, sink, true),
+            // A dry run neither ages nor writes the doctrine ledger.
+            async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
             // Read-only detection so the preview's table matches the real run's.
             makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH), dryRun: true }, sink, (fact) => { runFacts.pbiCache = fact; }),
             makeParityHook(sink, priorLockSha, true, watchlist),
@@ -1731,6 +1738,11 @@ async function main(): Promise<void> {
             // After the compat check reads settings.json: the merge only ADDS
             // allow entries, which no compatibility contract asserts on.
             makeAllowListHook(UPSTREAM_DIR, sink, false),
+            // The unresolved-doctrine ledger. Content-tracked, so unlike every
+            // other watched-file nudge it survives `keep project` and clears
+            // only when the section is actually written. Runs before the parity
+            // hook, which folds its one row in.
+            async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR); },
             async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),

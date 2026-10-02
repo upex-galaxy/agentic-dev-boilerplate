@@ -152,6 +152,10 @@ export interface ParityInput {
   pbiCache?: PbiCacheInput | null
   /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` this run (`updater-settings.ts`). */
   allowListAdded?: string[]
+  /** Evidence for the unresolved-doctrine ledger row (`runDoctrineLedger`), when there is debt. */
+  doctrineDebt?: string | null
+  /** The file that row is about. Defaults to `AGENTS.md` (`DOCTRINE_FILE`). */
+  doctrineFile?: string
   /** Prerequisite declarations, keyed by repo-relative path. Defaults to `PATH_PREREQUISITES`. */
   prerequisites?: Record<string, PathPrerequisite>
   /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
@@ -1176,6 +1180,29 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       blocking: true,
     });
   }
+  // The doctrine ledger: one aggregated row for AGENTS.md sections this project
+  // still lacks. Unlike every other watched-file row it is tracked by CONTENT,
+  // so `keep project` does not retire it: writing the section does. It folds
+  // onto the existing AGENTS.md drift row when there is one, so a run never
+  // shows two rows about the same file.
+  if (typeof input.doctrineDebt === 'string' && input.doctrineDebt !== '') {
+    // The path comes from the caller, not from an import of `updater-doctrine`:
+    // that module imports `markdownSectionDelta` from here, and taking the
+    // constant back would close the cycle.
+    const doctrinePath = input.doctrineFile ?? 'AGENTS.md';
+    const existing = drifted.get(doctrinePath);
+    if (existing) { existing.evidence = `${existing.evidence}; ${input.doctrineDebt}`; }
+    else {
+      findings.push({
+        surface: 'instructions',
+        path: doctrinePath,
+        evidence: input.doctrineDebt,
+        suggested: 'merge',
+        blocking: false,
+      });
+    }
+  }
+
   findings.push(...[...drifted.values()].map(({ projectOnly: _projectOnly, ...finding }) => finding), ...compat);
 
   // 3. Archived skills: the migration kept the legacy copy because upstream owns the name.
