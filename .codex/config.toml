@@ -5,7 +5,8 @@
 # compares the three semantically, so a server added to one host only fails.
 #
 # Codex never expands `${VAR}` in args or env values. Every secret is therefore
-# forwarded BY NAME (`env_vars`, `bearer_token_env_var`) from the environment
+# forwarded BY NAME (`env_vars`, `bearer_token_env_var`): the stdio servers
+# read them through the .env loader below, the remote one from the environment
 # `bun run codex` loads out of .env; `[mcp_servers.X.env]` tables hold literal
 # settings only. The parity check compares the .env variable names each host
 # depends on, so the command shape may differ from .mcp.json where Codex needs it.
@@ -13,10 +14,35 @@
 [shell_environment_policy]
 inherit = "core"
 
+# EVERY stdio server below starts through a .env loader: `bunx -p
+# dotenv-cli@8.0.0 dotenv -o -e .env -- <the real command>`. `env_vars` forwards
+# variables BY NAME from Codex's own process environment, and Codex Desktop
+# opened from Finder or the Dock has none, so without the loader those servers
+# started empty. The loader reads .env from the project root whatever launched
+# Codex; `-o` lets .env win over a stale inherited value, like `bun run codex`.
+# `env_vars` stays: it is what `bun run agents:compat:check` compares across
+# the three hosts.
+#
+# Needs `bun install` once (the dotenv-cli devDependency) and a .env in the
+# checkout.
+#
+# `startup_timeout_sec = 30` on each: Codex waits 10 s by default, and a cold
+# `bunx` / `npx` fetch plus the loader hop can pass that before the first
+# handshake.
+
 [mcp_servers.context7]
 command = "bunx"
 enabled = true
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "bunx",
   "-y",
   "@upstash/context7-mcp",
 ]
@@ -36,7 +62,16 @@ enabled = true
 [mcp_servers.supabase]
 command = "bunx"
 enabled = true
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "bunx",
   "-y",
   "@supabase/mcp-server-supabase@latest",
 ]
@@ -48,9 +83,18 @@ env_vars = [
 ]
 
 [mcp_servers.n8n]
-command = "npx"
+command = "bunx"
 enabled = true
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "n8n-mcp",
 ]
