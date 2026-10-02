@@ -51,7 +51,7 @@ The persisted source of truth for **this repository's** git workflow lives as th
 | `policy.direct_push_to_protected` | enum | `forbidden` / `confirm` / `allowed` — direct pushes to protected branches. |
 | `policy.admin_bypass` | bool | Team policy: may a repo admin bypass PR/protection for urgent changes? Intent only — real capability depends on the GitHub user's role; the skill re-confirms at runtime. |
 | `policy.require_pr_reviews` | int\|null | Min approvals before merge to a protected branch. Records the team's EXPECTATION — what the host enforces is discovered by the Step 1b reconciliation. |
-| `policy.accepted_divergences[]` | list | Host divergences formally ACCEPTED, not drift. Each entry names a `bun run git:policy verify` finding verbatim (`field`), plus `enforced`, `accepted` date, and `reason`. `verify` reports matching findings as ACCEPTED instead of DRIFT (and can stamp entries via `--stamp`); `apply` preserves the host's side for accepted fields. |
+| `policy.accepted_divergences[]` | list | Host divergences formally ACCEPTED, not drift. Each entry names a `bun run git:policy verify` finding verbatim (`field`), plus `enforced`, `accepted` date, and `reason`. `verify` reports matching findings as ACCEPTED instead of DRIFT (exit 0), flags an entry that matches no drift as STALE, and `--stamp` records `meta.policy_source: accepted`; `apply` preserves the host's side for accepted fields. |
 | `branch_prefixes.precedence` | list | Order for choosing a prefix when several apply. |
 | `branch_prefixes.naming_with_key` | string | Branch-name template with an issue key (e.g. `feat/UPEX-123-slug`). |
 | `branch_prefixes.naming_without_key` | string | Branch-name template without a key. |
