@@ -65,7 +65,7 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
 >
-> ADR-0002 is a decision about the boilerplate itself, numbered to match the sibling `agentic-qa-boilerplate` record of the same decision; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
+> ADR-0002 is a decision about the boilerplate itself; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
 
 ---
 

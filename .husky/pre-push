@@ -17,9 +17,10 @@
 #                                only. Fix is always `bun run agents:compat` (regenerates +
 #                                repairs); canonical/config files are fixed by hand.
 #
-# Commands are INLINED (not an aggregate npm script) on purpose: this hook syncs to
-# downstream projects via the boilerplate updater's `husky` directory component, and must
-# never depend on a package.json script key that could land in a separate, partially-applied
-# sync phase. Every command below already exists in every scaffolded project.
+# Commands are INLINED (not an aggregate npm script) on purpose: the updater delivers this
+# hook to a downstream project ONCE, when the project has none, and from then on it is
+# project-owned (on the updater's protected watchlist: never overwritten, upstream changes
+# surface as a parity row). A copy delivered that way must not depend on a package.json
+# script key the project may not have. Every command below exists in every scaffolded project.
 # The full suite (incl. types/vars/skills) lives in `repo:check` for CI / manual runs.
 bun run format:check && bun run lint:check && VARS_ENV_CHECK_DRIFT=warn bun run vars:env:check && bun run skills:registry:check && bun run agents:compat:check

@@ -83,7 +83,6 @@ A small set of short skills bypass Phase 0 because they have no meaningful inter
 - Atomic operators: `git-flow-master`
 - Informational walkthroughs: `agentic-dev-onboard`
 - Inline TDD slices: `unit-testing`
-- Within-session-only operators: `judgment-day`
 - Meta / reference-only: `agentic-dev-core`
 
 A skill in this list MUST state its opt-out explicitly in its SKILL.md so future readers don't expect a `.session/` directory.
