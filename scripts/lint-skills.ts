@@ -68,6 +68,42 @@
  *                                size, a tool version. Fenced blocks and the
  *                                frontmatter are skipped. Severity:
  *                                VOLATILE_SEVERITY.
+ *  18. KIND-MISSING           (ERROR) — a T1 SKILL.md must declare the purpose
+ *                                axis `metadata.kind` (one of KNOWN_KINDS).
+ *                                Committed community skills keep their
+ *                                install.ts tier and are exempt. Doctrine:
+ *                                skill-composition-strategy.md §2b.
+ *  19. KIND-VOCAB             (ERROR) — a declared `metadata.kind` outside
+ *                                context / workflow / utility / core.
+ *  20. KIND-SUFFIX            (ERROR) — the slug suffix and the declared kind
+ *                                agree in BOTH directions (KIND_SUFFIX_RULES):
+ *                                `-context` ⇔ `context`, `-cli` / `-tool` /
+ *                                `-app` ⇔ `utility`. Slugs in
+ *                                KIND_SUFFIX_EXEMPT predate the rule.
+ *  21. CAPABILITY-VOCAB       (ERROR) — a name in `metadata.requires_capabilities`
+ *                                outside KNOWN_CAPABILITIES, the mirror of
+ *                                agentic-dev-core/references/mcp-capabilities.md §2.
+ *  22. CAPABILITY-UNDECLARED  (WARN)  — a T1 SKILL.md body (outside fenced
+ *                                blocks) carries a resolution tag from
+ *                                CAPABILITY_TAGS without declaring the matching
+ *                                capability (mcp-capabilities.md §3). A `core`
+ *                                skill is skipped: it hosts the doctrine that
+ *                                describes the tags.
+ *  23. STAGE-OWNER-DISPATCH   (ERROR) — `metadata.stage_owner: true` without a
+ *                                dispatch section (DISPATCH_SECTION_HEADING:
+ *                                `## Subagent Dispatch Strategy`,
+ *                                `## Subagent dispatch` or `## Session & Dispatch`).
+ *  24. CONTEXT-WRITES         (ERROR) — `metadata.writes` (skill-scaffold.md §2,
+ *                                the context-kind amendment) declared by a
+ *                                non-context skill, naming a target outside the
+ *                                skill's own `references/`, without
+ *                                `references/refresh.md`, or next to a tracker
+ *                                tag (TRACKER_WRITE_TAGS): a context skill edits
+ *                                its own map, never Jira or Confluence.
+ *  25. STALE-PATH (context)   (ERROR) — inside a `metadata.kind: context` skill
+ *                                every `.context/` cite must exist on disk (the
+ *                                map is born before the skill); only the
+ *                                gitignored `.context/PBI/` cache is exempt.
  *
  * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
  * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
@@ -131,6 +167,72 @@ const VOLATILE_SEVERITY: Record<VolatileKind, Severity> = {
   'FILE-LINE': 'WARN',
   'CURRENT-STATE': 'WARN',
 };
+
+// -----------------------------------------------------------------------------
+// Skill-system axes (checks 18-25; canon agentic-dev-core/references/skill-scaffold.md)
+// -----------------------------------------------------------------------------
+
+/**
+ * Purpose axis vocabulary (`metadata.kind`), mirroring §2b of the strategy doc.
+ * Orthogonal to the tier (ownership) and to `complementary_categories`
+ * (domain): a skill is exactly one of these. Checks 18-20.
+ */
+const KNOWN_KINDS = new Set(['context', 'workflow', 'utility', 'core']);
+
+/**
+ * Slugs exempt from KIND-SUFFIX (check 20), in both directions. Every entry
+ * predates the suffix rule and is grandfathered BY NAME so the exemption stays
+ * visible here instead of hiding in a looser regex:
+ *   - `acli`: a utility without the `-cli` / `-tool` / `-app` suffix.
+ *   - `project-context`: a workflow whose slug ends `-context` (the suffix the
+ *     `context` kind reserves). `UPSTREAM_CONTEXT_SUFFIX_SKILLS` in
+ *     `cli/lib/updater-core.ts` mirrors the `-context` entries; a test there
+ *     keeps the two in step.
+ * A new skill picks a slug that matches its kind; it does not get added here.
+ */
+const KIND_SUFFIX_EXEMPT = new Set<string>(['acli', 'project-context']);
+
+/**
+ * Suffix ⇔ kind table for KIND-SUFFIX (check 20). `workflow` and `core` are
+ * absent on purpose: they carry no suffix rule.
+ */
+const KIND_SUFFIX_RULES: ReadonlyArray<{ kind: string, suffixes: readonly string[] }> = [
+  { kind: 'context', suffixes: ['-context'] },
+  { kind: 'utility', suffixes: ['-cli', '-tool', '-app'] },
+];
+
+/**
+ * MCP capability vocabulary (`metadata.requires_capabilities`), mirroring §2
+ * of agentic-dev-core/references/mcp-capabilities.md. A skill declares the
+ * CAPABILITY it needs, never a server name. Add a name here AND in the
+ * reference, in the same change. Check 21.
+ */
+const KNOWN_CAPABILITIES = new Set(['library-docs', 'web-search', 'db', 'automation-flows']);
+
+/**
+ * Resolution tag → capability it resolves to (AGENTS.md §6). Drives the
+ * CAPABILITY-UNDECLARED heuristic (check 22). `[ISSUE_TRACKER_TOOL]` and
+ * `[AUTOMATION_TOOL]` are absent on purpose: they resolve to CLIs.
+ */
+const CAPABILITY_TAGS: ReadonlyArray<{ tag: string, capability: string }> = [
+  { tag: '[DB_TOOL]', capability: 'db' },
+  { tag: '[DOCS_TOOL]', capability: 'library-docs' },
+  { tag: '[WEB_SEARCH_TOOL]', capability: 'web-search' },
+  { tag: '[AUTOMATION_FLOWS_TOOL]', capability: 'automation-flows' },
+];
+
+/** Tracker resolution tags a context skill with a write scope must never carry (check 24). */
+const TRACKER_WRITE_TAGS = ['[ISSUE_TRACKER_TOOL]', '[KNOWLEDGE_BASE_TOOL]'];
+
+/**
+ * The dispatch section a stage-owning skill must carry (check 23). Three
+ * spellings, because this repo's stage owners grew them independently and each
+ * one holds the dispatch contract: renaming headings would buy nothing.
+ */
+const DISPATCH_SECTION_HEADING = /^## (?:Subagent Dispatch Strategy|Subagent dispatch|Session & Dispatch)\s*$/m;
+
+/** The gitignored Jira cache: never on disk in the boilerplate, exempt from check 25. */
+const CONTEXT_CACHE_PREFIX = '.context/PBI/';
 
 // -----------------------------------------------------------------------------
 // Session-management contract (per agentic-dev-core/references/session-management.md §14)
@@ -198,6 +300,13 @@ interface SkillMeta {
   name: string
   path: string
   body: string
+  /** `metadata.kind`; undefined when absent (KIND-MISSING). */
+  kind?: string
+  stageOwner: boolean
+  /** `metadata.requires_capabilities`; undefined when the key is absent. */
+  requiresCapabilities?: string[]
+  /** `metadata.writes` (a context skill's own write scope); undefined when absent. */
+  writes?: string[]
   complementaryCategories: string[]
   hasComposableSection: boolean
   expectedMatchesSkills: string[] // skills mentioned in the "Expected matches" table
@@ -206,6 +315,20 @@ interface SkillMeta {
 
 interface Frontmatter {
   complementary_categories?: string[]
+  metadata?: {
+    kind?: unknown
+    stage_owner?: unknown
+    requires_capabilities?: unknown
+    writes?: unknown
+  }
+}
+
+/** A list-valued frontmatter key as strings; undefined when the key is absent. */
+function stringList(value: unknown): string[] | undefined {
+  if (value === undefined) { return undefined; }
+  if (value === null) { return []; }
+  if (Array.isArray(value)) { return value.map(v => String(v)); }
+  return [String(value)];
 }
 
 function parseFrontmatter(raw: string): { meta: Frontmatter, body: string } {
@@ -281,10 +404,15 @@ function loadSkill(name: string): SkillMeta | null {
   const cats = Array.isArray(meta.complementary_categories) ? meta.complementary_categories : [];
   const hasSection = body.includes('## Composable Skills') || body.includes('## SDD Composition');
   const { skills, tierAnnotations } = extractExpectedMatches(body);
+  const metadata = meta.metadata && typeof meta.metadata === 'object' ? meta.metadata : {};
   return {
     name,
     path,
     body,
+    kind: typeof metadata.kind === 'string' ? metadata.kind : undefined,
+    stageOwner: metadata.stage_owner === true,
+    requiresCapabilities: stringList(metadata.requires_capabilities),
+    writes: stringList(metadata.writes),
     complementaryCategories: cats,
     hasComposableSection: hasSection,
     expectedMatchesSkills: skills,
@@ -454,6 +582,89 @@ function checkInlineStalePaths(
     if (existsSync(join(skillDir, path))) { continue; }
     if (existsSync(join(repoRoot, path))) { continue; }
     record('ERROR', 'STALE-PATH', skillSlug, `\`${path}\` referenced in SKILL.md body does not exist on disk`);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Skill-system axes (checks 18-25)
+// -----------------------------------------------------------------------------
+
+function checkKind(skill: SkillMeta): void {
+  if (skill.kind === undefined) {
+    record('ERROR', 'KIND-MISSING', skill.name, 'frontmatter must declare `metadata.kind` (one of: context, workflow, utility, core); see skill-composition-strategy.md §2b');
+    return;
+  }
+  if (!KNOWN_KINDS.has(skill.kind)) {
+    record('ERROR', 'KIND-VOCAB', skill.name, `\`metadata.kind: ${skill.kind}\` is not in the §2b vocabulary (context, workflow, utility, core)`);
+    return;
+  }
+  if (KIND_SUFFIX_EXEMPT.has(skill.name)) { return; }
+  for (const rule of KIND_SUFFIX_RULES) {
+    const matchedSuffix = rule.suffixes.find(sfx => skill.name.endsWith(sfx));
+    if (matchedSuffix && skill.kind !== rule.kind) {
+      record('ERROR', 'KIND-SUFFIX', skill.name, `slug ends \`${matchedSuffix}\` so \`metadata.kind\` must be \`${rule.kind}\`, found \`${skill.kind}\``);
+    }
+    if (!matchedSuffix && skill.kind === rule.kind) {
+      record('ERROR', 'KIND-SUFFIX', skill.name, `\`metadata.kind: ${rule.kind}\` requires a slug ending ${rule.suffixes.map(sfx => `\`${sfx}\``).join(' / ')} (grandfathered by name in KIND_SUFFIX_EXEMPT: ${[...KIND_SUFFIX_EXEMPT].join(', ')})`);
+    }
+  }
+}
+
+function checkCapabilities(skill: SkillMeta): void {
+  for (const capability of skill.requiresCapabilities ?? []) {
+    if (!KNOWN_CAPABILITIES.has(capability)) {
+      record('ERROR', 'CAPABILITY-VOCAB', skill.name, `\`metadata.requires_capabilities\` names \`${capability}\`, not in the mcp-capabilities.md §2 vocabulary (${[...KNOWN_CAPABILITIES].join(', ')})`);
+    }
+  }
+  if (skill.kind === 'core') { return; }
+  const declared = new Set(skill.requiresCapabilities ?? []);
+  const prose = stripFencedCodeBlocks(skill.body);
+  for (const { tag, capability } of CAPABILITY_TAGS) {
+    if (prose.includes(tag) && !declared.has(capability)) {
+      record('WARN', 'CAPABILITY-UNDECLARED', skill.name, `body uses \`${tag}\` but \`metadata.requires_capabilities\` does not declare \`${capability}\` (declare it, or drop the mention if the skill never uses it; mcp-capabilities.md §3)`);
+    }
+  }
+}
+
+function checkStageOwnerDispatch(skill: SkillMeta): void {
+  if (!skill.stageOwner || DISPATCH_SECTION_HEADING.test(skill.body)) { return; }
+  record('ERROR', 'STAGE-OWNER-DISPATCH', skill.name, 'frontmatter declares `metadata.stage_owner: true` but the body has no dispatch section (`## Subagent Dispatch Strategy`, `## Subagent dispatch` or `## Session & Dispatch`; AGENTS.md §3)');
+}
+
+function checkContextWrites(skill: SkillMeta, skillDir: string): void {
+  if (skill.writes === undefined) { return; }
+  if (skill.kind !== 'context') {
+    record('ERROR', 'CONTEXT-WRITES', skill.name, `\`metadata.writes\` is the context-kind amendment; a \`${skill.kind ?? 'kind-less'}\` skill does not declare a write scope (skill-scaffold.md §2)`);
+    return;
+  }
+  for (const target of skill.writes) {
+    const normalized = target.replace(/^\.\//, '');
+    if (normalized !== 'references' && !normalized.startsWith('references/')) {
+      record('ERROR', 'CONTEXT-WRITES', skill.name, `\`metadata.writes\` names \`${target}\`; a context skill writes only under its own \`references/\``);
+    }
+  }
+  const refreshPath = join(skillDir, 'references', 'refresh.md');
+  const hasRefresh = existsSync(refreshPath);
+  if (!hasRefresh) {
+    record('ERROR', 'CONTEXT-WRITES', skill.name, 'a context skill that declares `metadata.writes` must carry `references/refresh.md`, the procedure its write path runs');
+  }
+  const surfaces = [skill.body, hasRefresh ? readFileSync(refreshPath, 'utf8') : ''];
+  for (const tag of TRACKER_WRITE_TAGS) {
+    if (surfaces.some(text => text.includes(tag))) {
+      record('ERROR', 'CONTEXT-WRITES', skill.name, `a context skill with a write scope carries \`${tag}\`; it edits its own map, never a tracker`);
+    }
+  }
+}
+
+const INLINE_CONTEXT_PATH = /`(\.context\/[\w./-]+)`/g;
+
+function checkContextSkillCites(skill: SkillMeta): void {
+  if (skill.kind !== 'context') { return; }
+  for (const match of stripFencedCodeBlocks(skill.body).matchAll(INLINE_CONTEXT_PATH)) {
+    const path = match[1];
+    if (path.startsWith(CONTEXT_CACHE_PREFIX)) { continue; }
+    if (existsSync(join(REPO_ROOT, path))) { continue; }
+    record('ERROR', 'STALE-PATH', skill.name, `\`${path}\` cited by a context skill does not exist on disk (a context skill cites what exists; skill-scaffold.md §3)`);
   }
 }
 
@@ -896,6 +1107,13 @@ function main() {
     // Session-management checks (per-skill).
     checkSessionBanner(skill);
     checkSessionPhase0(skill);
+
+    // Checks 18-25: purpose axis, capabilities, stage owners, context write scope.
+    checkKind(skill);
+    checkCapabilities(skill);
+    checkStageOwnerDispatch(skill);
+    checkContextWrites(skill, join(SKILLS_DIR, skillName));
+    checkContextSkillCites(skill);
   }
 
   // Check 6: stale path scan

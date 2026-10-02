@@ -34,6 +34,8 @@ function write(root: string, relativePath: string, content: string): void {
  * COMMITTED as a real directory inside `.agents/skills/` while `cli/install.ts`
  * lists it under PROJECT_LEVEL_SKILLS (T3).
  */
+const VERCEL_CLI_FRONTMATTER = '---\nname: vercel-cli\nmetadata:\n  kind: utility\n---\n\n# vercel-cli\n';
+
 function fixture(annotation: string): string {
   const root = mkdtempSync(join(tmpdir(), 'lint-skills-'));
   temporaryRoots.push(root);
@@ -66,6 +68,8 @@ function fixture(annotation: string): string {
     'name: unit-testing',
     'complementary_categories:',
     '  - frontend-ui',
+    'metadata:',
+    '  kind: workflow',
     '---',
     '',
     '# unit-testing',
@@ -82,7 +86,7 @@ function fixture(annotation: string): string {
   write(root, '.agents/skills/shadcn/SKILL.md', '---\nname: shadcn\ndescription: Community UI skill.\n---\n\n# shadcn\n');
 
   // A project-authored skill that install.ts does not know stays T1.
-  write(root, '.agents/skills/vercel-cli/SKILL.md', '---\nname: vercel-cli\n---\n\n# vercel-cli\n');
+  write(root, '.agents/skills/vercel-cli/SKILL.md', VERCEL_CLI_FRONTMATTER);
   return root;
 }
 
@@ -117,11 +121,11 @@ describe('lint-skills tier classification', () => {
 describe('lint-skills volatile facts (Critical Rule #17, checks 16-17)', () => {
   test('a path:line citation and a dated claim in a T1 body are FILE-LINE / CURRENT-STATE warnings', () => {
     const root = fixture('(T3)');
-    write(root, '.agents/skills/vercel-cli/SKILL.md', '---\nname: vercel-cli\n---\n\n# vercel-cli\n\nSee `cli/install.ts:403`.\nMeasured 2026-09-17 on a live deploy.\n');
+    write(root, '.agents/skills/vercel-cli/SKILL.md', `${VERCEL_CLI_FRONTMATTER}\nSee \`cli/install.ts:403\`.\nMeasured 2026-09-17 on a live deploy.\n`);
     const { exitCode, stdout } = runLint(root);
 
-    expect(stdout).toContain('[WARN/FILE-LINE] .agents/skills/vercel-cli/SKILL.md — line 7: `cli/install.ts:403`');
-    expect(stdout).toContain('[WARN/CURRENT-STATE] .agents/skills/vercel-cli/SKILL.md — line 8: `Measured 2026-09-17`');
+    expect(stdout).toContain('[WARN/FILE-LINE] .agents/skills/vercel-cli/SKILL.md — line 9: `cli/install.ts:403`');
+    expect(stdout).toContain('[WARN/CURRENT-STATE] .agents/skills/vercel-cli/SKILL.md — line 10: `Measured 2026-09-17`');
     expect(exitCode).toBe(0);
   });
 
@@ -142,5 +146,103 @@ describe('lint-skills volatile facts (Critical Rule #17, checks 16-17)', () => {
     expect(stdout).toContain('[WARN/CURRENT-STATE] AGENTS.md — line 3: `Since 8.4`');
     expect(stdout).not.toContain('FILE-LINE]');
     expect(stdout).not.toContain('shadcn/SKILL.md');
+  });
+});
+
+/** Writes a T1 skill whose frontmatter carries the given `metadata:` lines. */
+function skill(root: string, slug: string, metadata: string[], body = ''): void {
+  write(root, `.agents/skills/${slug}/SKILL.md`, ['---', `name: ${slug}`, 'metadata:', ...metadata.map(l => `  ${l}`), '---', '', `# ${slug}`, '', body].join('\n'));
+}
+
+describe('lint-skills purpose axis (checks 18-20)', () => {
+  test('a T1 skill without `metadata.kind` is KIND-MISSING; a committed community skill is not', () => {
+    const root = fixture('(T3)');
+    write(root, '.agents/skills/git-flow-master/SKILL.md', '---\nname: git-flow-master\n---\n\n# git-flow-master\n');
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).toContain('[ERROR/KIND-MISSING] frontmatter must declare `metadata.kind`');
+    expect(stdout.match(/KIND-MISSING/g)?.length).toBe(1);
+    expect(exitCode).toBe(1);
+  });
+
+  test('a kind outside the vocabulary is KIND-VOCAB', () => {
+    const root = fixture('(T3)');
+    skill(root, 'git-flow-master', ['kind: procedure']);
+    expect(runLint(root).stdout).toContain('[ERROR/KIND-VOCAB] `metadata.kind: procedure`');
+  });
+
+  test('the suffix binds both ways; grandfathered slugs skip it', () => {
+    const root = fixture('(T3)');
+    skill(root, 'billing-context', ['kind: workflow']);
+    skill(root, 'deploy-notes', ['kind: utility']);
+    skill(root, 'project-context', ['kind: workflow']);
+    skill(root, 'acli', ['kind: utility']);
+    const { stdout } = runLint(root);
+
+    expect(stdout).toContain('[ERROR/KIND-SUFFIX] slug ends `-context` so `metadata.kind` must be `context`, found `workflow`');
+    expect(stdout).toContain('[ERROR/KIND-SUFFIX] `metadata.kind: utility` requires a slug ending `-cli` / `-tool` / `-app`');
+    expect(stdout.match(/KIND-SUFFIX/g)?.length).toBe(2);
+  });
+});
+
+describe('lint-skills capabilities (checks 21-22)', () => {
+  test('a capability outside the mcp-capabilities.md vocabulary is CAPABILITY-VOCAB', () => {
+    const root = fixture('(T3)');
+    skill(root, 'git-flow-master', ['kind: workflow', 'requires_capabilities: [db, tavily]']);
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).toContain('[ERROR/CAPABILITY-VOCAB] `metadata.requires_capabilities` names `tavily`');
+    expect(stdout).not.toContain('names `db`');
+    expect(exitCode).toBe(1);
+  });
+
+  test('a tag in the body without its capability is a CAPABILITY-UNDECLARED warning; a fenced tag and a core skill are not', () => {
+    const root = fixture('(T3)');
+    skill(root, 'git-flow-master', ['kind: workflow', 'requires_capabilities: [db]'], 'Run `[DB_TOOL]` then `[DOCS_TOOL]`.\n\n```\n[WEB_SEARCH_TOOL]\n```\n');
+    skill(root, 'agentic-dev-core', ['kind: core'], 'The `[AUTOMATION_FLOWS_TOOL]` tag resolves to n8n.\n');
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).toContain('[WARN/CAPABILITY-UNDECLARED] body uses `[DOCS_TOOL]`');
+    expect(stdout.match(/CAPABILITY-UNDECLARED/g)?.length).toBe(1);
+    expect(exitCode).toBe(0);
+  });
+});
+
+describe('lint-skills stage owners and context write scope (checks 23-25)', () => {
+  test('a stage owner needs a dispatch section, in any of the three spellings', () => {
+    const root = fixture('(T3)');
+    skill(root, 'sprint-development', ['kind: workflow', 'stage_owner: true'], '## Stages\n');
+    skill(root, 'product-management', ['kind: workflow', 'stage_owner: true'], '## Session & Dispatch\n');
+    skill(root, 'project-bootstrap', ['kind: workflow', 'stage_owner: true'], '## Subagent dispatch\n');
+    const { stdout } = runLint(root);
+
+    expect(stdout).toContain('[ERROR/STAGE-OWNER-DISPATCH]');
+    expect(stdout.match(/STAGE-OWNER-DISPATCH/g)?.length).toBe(1);
+  });
+
+  test('`metadata.writes` is only for a context skill, only under its own references/, with refresh.md and no tracker tag', () => {
+    const root = fixture('(T3)');
+    skill(root, 'git-flow-master', ['kind: workflow', 'writes: [references/]']);
+    skill(root, 'billing-context', ['kind: context', 'writes: [references/, ../sprint-development/]'], 'Post the change with `[ISSUE_TRACKER_TOOL]`.\n');
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).toContain('[ERROR/CONTEXT-WRITES] `metadata.writes` is the context-kind amendment; a `workflow` skill');
+    expect(stdout).toContain('[ERROR/CONTEXT-WRITES] `metadata.writes` names `../sprint-development/`');
+    expect(stdout).toContain('[ERROR/CONTEXT-WRITES] a context skill that declares `metadata.writes` must carry `references/refresh.md`');
+    expect(stdout).toContain('[ERROR/CONTEXT-WRITES] a context skill with a write scope carries `[ISSUE_TRACKER_TOOL]`');
+    expect(exitCode).toBe(1);
+  });
+
+  test('a well-formed context skill passes; its `.context/` cites must exist, except the PBI cache', () => {
+    const root = fixture('(T3)');
+    write(root, '.context/business/business-data-map.md', '# map\n');
+    skill(root, 'billing-context', ['kind: context', 'writes: [references/]'], 'Reads `.context/business/business-data-map.md` and `.context/PBI/epics/x.md`.\n');
+    write(root, '.agents/skills/billing-context/references/refresh.md', '# refresh\n');
+    expect(runLint(root).exitCode).toBe(0);
+
+    skill(root, 'billing-context', ['kind: context', 'writes: [references/]'], 'Reads `.context/business/missing-map.md`.\n');
+    const { exitCode, stdout } = runLint(root);
+    expect(stdout).toContain('[ERROR/STALE-PATH] `.context/business/missing-map.md` cited by a context skill does not exist on disk');
+    expect(exitCode).toBe(1);
   });
 });
