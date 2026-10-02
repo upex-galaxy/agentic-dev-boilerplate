@@ -12,7 +12,7 @@
  *      A manifest var absent from the human doc is a real bug → ERROR.
  *   3. `.env.example` keys NOT in the manifest are reported as INFO, not errors.
  *      DEV intentionally documents day-zero / control-plane vars (ATLASSIAN_*,
- *      TAVILY_API_KEY, SUPABASE_ACCESS_TOKEN) that the manifest does not *route*
+ *      SUPABASE_ACCESS_TOKEN) that the manifest does not *route*
  *      to a remote backend — they are local-only credentials surfaced by doctor.
  *   4. No deprecated var (DEPRECATED_VARS) still appears in `.env.example` →
  *      ERROR (a retired key left in the template would mislead new clones).

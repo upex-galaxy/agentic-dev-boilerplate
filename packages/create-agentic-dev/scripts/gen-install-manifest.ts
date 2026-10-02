@@ -62,7 +62,6 @@ const MANIFEST_PATH = resolve(import.meta.dir, '../src/installer-manifest.json')
 // skill, with different one-line descriptions).
 const MCP_PURPOSES: Record<string, string> = {
   context7: 'Library documentation MCP — fetches official current docs for any library.',
-  tavily: 'Web search MCP — used by skills that need fresh community / docs lookups.',
   atlassian: 'Jira / Confluence MCP — story and page operations from the agent.',
   supabase: 'Supabase MCP — direct DB queries, schema introspection, project state.',
   n8n: 'n8n automation MCP — workflow and integration management.',
@@ -446,7 +445,7 @@ function buildManifest(src: string): object {
       {
         name: 'API keys (.env)',
         required: false,
-        purpose: 'MCP servers (Tavily, Atlassian, Supabase, n8n) require API keys set in .env before they can connect.',
+        purpose: 'The MCP servers .mcp.json declares need their keys set in .env before they can connect; web search runs at harness level and keeps its key outside .env.',
         installHint: 'See .env.example in the project root after scaffolding.',
       },
       {

@@ -45,6 +45,7 @@ import {
   toSiteSlug,
   writeAtlassianUrlToYaml,
 } from './lib/atlassian-instance.ts';
+import { HARNESS_LEVEL_HOWTO, HARNESS_LEVEL_MCPS } from './lib/harness-level-mcps.ts';
 import * as tui from './lib/tui.ts';
 import { nextStepsVars, varsFor } from './lib/variables-manifest.ts';
 
@@ -125,7 +126,7 @@ const MIN_GENTLE_AI_VERSION = [1, 26, 5] as const;
 
 const ENGRAM_COMPONENT = 'engram';
 
-const CANONICAL_MCPS = ['context7', 'tavily', 'supabase', 'n8n'] as const;
+const CANONICAL_MCPS = ['context7', 'supabase', 'n8n'] as const;
 
 interface CommunitySkill {
   package: string
@@ -291,7 +292,6 @@ const SECRET_NAME_HINTS = ['TOKEN', 'KEY', 'SECRET', 'PASSWORD'];
 // (require an existing Supabase project) — so they're deferred to doctor.
 const MCP_SERVER_SECRETS: Record<string, readonly string[]> = {
   context7: [],
-  tavily: ['TAVILY_API_KEY'],
   supabase: [
     'SUPABASE_ACCESS_TOKEN',
     'NEXT_PUBLIC_SUPABASE_URL',
@@ -2297,6 +2297,24 @@ function statusFor(found: number, total: number): string {
   return `${tui.statusIcon('warn')} ${total - found} pending`;
 }
 
+/**
+ * Print how to connect the MCP servers that run at harness level: connected
+ * once per machine, never in `.mcp.json`, resolved by capability
+ * (`agentic-dev-core/references/mcp-capabilities.md`). Guidance only: nothing
+ * here is prompted, written or verified by the installer.
+ */
+function printHarnessLevelGuidance(): void {
+  process.stdout.write('→  Connect web search at harness level (once per machine, not in .mcp.json):\n');
+  for (const mcp of HARNESS_LEVEL_MCPS) {
+    process.stdout.write(`     • ${mcp.id.padEnd(12)} ${COLORS.dim}${mcp.purpose}${COLORS.reset}\n`);
+  }
+  for (const host of ['claude', 'opencode', 'codex'] as const) {
+    process.stdout.write(`     ${COLORS.cyan}${host}${COLORS.reset}: ${HARNESS_LEVEL_HOWTO[host].how}\n`);
+    process.stdout.write(`       ${COLORS.dim}${HARNESS_LEVEL_HOWTO[host].where}${COLORS.reset}\n`);
+  }
+  process.stdout.write(`     ${COLORS.dim}bun run setup:doctor reports which of these servers your user-level harness config already declares.${COLORS.reset}\n\n`);
+}
+
 function printClosingSummary(state: InstallState): void {
   const allSkillEntries = Object.entries(state.skills);
   const gentleSkills = allSkillEntries.filter(([k]) => !k.startsWith('community:'));
@@ -2426,12 +2444,12 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write(`    ${COLORS.dim}AFTER foundation + bootstrap exist. Updates README, AGENTS.md, and other docs from the new project state.${COLORS.reset}\n\n`);
 
   // 4c.1 — NEXT STEPS (non-critical vars). Critical tool creds (Atlassian,
-  // Resend, Tavily) were prompted above. These are NOT asked at install and NOT
+  // Resend) were prompted above. These are NOT asked at install and NOT
   // warnings — they're set later, each with a where/how-to-obtain hint. The
   // auto-provisioned infra vars (Supabase, Postgres, app URL) are NEVER listed
   // individually here — they're covered by the single `--variables` pull line.
   tui.section('NEXT STEPS — finish later (non-critical vars, not blocking)');
-  process.stdout.write(`${COLORS.dim}  Critical tool credentials (Atlassian, Resend, Tavily) were already prompted above.${COLORS.reset}\n`);
+  process.stdout.write(`${COLORS.dim}  Critical tool credentials (Atlassian, Resend) were already prompted above.${COLORS.reset}\n`);
   for (const spec of nextStepsVars()) {
     process.stdout.write(`→  ${COLORS.bold}${spec.name}${COLORS.reset}\n`);
     process.stdout.write(`    ${COLORS.dim}${spec.obtainHint ?? spec.note}${COLORS.reset}\n`);
@@ -2468,6 +2486,8 @@ function printClosingSummary(state: InstallState): void {
     process.stdout.write(`     • ${'acli'.padEnd(12)} ${COLORS.dim}(handled by Step 12.4 above)${COLORS.reset}\n`);
     process.stdout.write('\n');
   }
+
+  printHarnessLevelGuidance();
 
   // `--no-hooks` is deliberate. The installer defaults to `--all`, which installs
   // the Claude Code plugin AND writes a second copy of the same two hooks into

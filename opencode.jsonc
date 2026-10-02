@@ -21,20 +21,12 @@
   //     in the OpenCode TUI so multi-agent dispatch is visible at a glance.
   "plugin": ["@warp-dot-dev/opencode-warp", "opencode-subagent-statusline"],
 
+  // Local (stdio) servers only. Web search runs at harness level (your user
+  // config), never here: see .agents/skills/agentic-dev-core/references/mcp-capabilities.md.
   "mcp": {
     "context7": {
       "type": "local",
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
-      "enabled": true,
-    },
-    "tavily": {
-      "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "mcp-remote",
-        "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
-      ],
       "enabled": true,
     },
     "supabase": {

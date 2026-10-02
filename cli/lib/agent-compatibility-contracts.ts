@@ -11,8 +11,10 @@
  *
  * The MCP server SET is project-declared: whatever `.mcp.json` lists is what
  * the other two hosts must list (see PARITY RULE). Only the per-host SHAPE of
- * the four servers this boilerplate ships is pinned here (`KNOWN_MCP_IDS`), so
- * a downstream project that drops `n8n` or adds `playwright` still passes.
+ * the servers this boilerplate ships is pinned here (`KNOWN_MCP_IDS`), so a
+ * downstream project that drops `n8n` or adds `playwright` still passes. A
+ * remote server whose only project-side content is an API key (web search) is
+ * not committed at all: it runs at harness level (`harness-level-mcps.ts`).
  *
  * Import-closed: only Node builtins and `cli/lib` siblings (see the header of
  * `agent-compatibility.ts` for why `cli/` must never import a sibling
@@ -32,7 +34,6 @@ import { isSchemaOwner } from './agents-schema.ts';
  */
 export const KNOWN_MCP_IDS = [
   'context7',
-  'tavily',
   'supabase',
   'n8n',
 ] as const;
@@ -124,13 +125,10 @@ interface JsonObject {
  *
  * `transport`, `command` and `args` are NOT compared generically, because Codex
  * cannot expand `${VAR}` inside `args` and a host may legitimately reach the
- * same server another way. For the four servers this boilerplate ships they
- * are pinned per host in `EXPECTED_MCP` instead, and that strict shape check
- * runs only when the project declares the server:
+ * same server another way. For the servers this boilerplate ships they are
+ * pinned per host in `EXPECTED_MCP` instead, and that strict shape check runs
+ * only when the project declares the server:
  *
- *   - `tavily`: Claude/OpenCode tunnel through `mcp-remote` with the key in
- *     the URL; Codex connects to the streamable-HTTP endpoint directly with
- *     `bearer_token_env_var`.
  *   - `supabase`: Claude/OpenCode pass `--access-token ${SUPABASE_ACCESS_TOKEN}`;
  *     Codex forwards `SUPABASE_ACCESS_TOKEN` via `env_vars` and lets the server
  *     read it from the environment (documented behaviour of
@@ -154,8 +152,6 @@ const SUPABASE_DEPENDS_ON = [
   'SUPABASE_PUBLISHABLE_KEY',
   'SUPABASE_SECRET_KEY',
 ];
-
-const TAVILY_MCP_REMOTE = ['-y', 'mcp-remote'];
 
 /** `${NAME}`: the canonical spelling every host's placeholder is normalized to. */
 function ref(name: string): string {
@@ -188,12 +184,6 @@ const server = canonical;
 
 const CLAUDE_AND_OPENCODE: Record<KnownMcpId, NormalizedMcpServer> = {
   context7: server({ transport: 'stdio', command: 'bunx', args: ['-y', '@upstash/context7-mcp'] }),
-  tavily: server({
-    transport: 'stdio',
-    command: 'bunx',
-    args: [...TAVILY_MCP_REMOTE, `https://mcp.tavily.com/mcp/?tavilyApiKey=${ref('TAVILY_API_KEY')}`],
-    dependsOn: ['TAVILY_API_KEY'],
-  }),
   supabase: server({
     transport: 'stdio',
     command: 'bunx',
@@ -227,11 +217,6 @@ export const EXPECTED_MCP: Record<McpHost, Record<KnownMcpId, NormalizedMcpServe
   opencode: CLAUDE_AND_OPENCODE,
   codex: {
     context7: codexStdio(CLAUDE_AND_OPENCODE.context7),
-    tavily: server({
-      transport: 'http',
-      url: 'https://mcp.tavily.com/mcp/',
-      dependsOn: ['TAVILY_API_KEY'],
-    }),
     supabase: codexStdio(server({
       transport: 'stdio',
       command: 'bunx',
