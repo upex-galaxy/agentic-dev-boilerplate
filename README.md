@@ -348,7 +348,7 @@ Every skill belongs to one of three tiers. Each tier has different discovery and
 | T3   | Community project-level       | Installed by `install.ts` `PROJECT_LEVEL_SKILLS` | Silent if matched by category                               |
 | T4   | Community user-level (global) | Installed by `install.ts` `USER_LEVEL_SKILLS`    | **ASK** user before load (cross-project, not always wanted) |
 
-Validation: `bun run skills:check` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths).
+Validation: `bun run skills:check` checks tier coherence (orphan categories, tier mismatches, missing sections, stale doc paths) and flags volatile facts in `.agents/**` + `AGENTS.md` (Critical Rule #17). `bun run docs:check` does the same for the human docs, decks and READMEs, plus dead links, missing paths, unknown `bun run` scripts and skills missing from the `AGENTS.md` router. Both run inside `bun run repo:check`.
 
 ### Slash commands (transport aliases, not workflows)
 

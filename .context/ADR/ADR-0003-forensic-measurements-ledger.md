@@ -1,0 +1,57 @@
+# ADR-0003 — Doctrine keeps the why; the measured figures and dates live here
+
+- **Status:** Accepted
+- **Date:** 2026-10-02
+- **Deciders:** Boilerplate maintainer (upex-galaxy), owner decision OD-volatile of the dev-sync plan (2026-10-02: the rule lands as warnings first, the sweep and the flip to blocking come last), mirroring ADR-0006 of `agentic-qa-boilerplate`
+- **Tags:** doctrine, documentation, lint, forensics, cross-cutting-invariant
+- **Supersedes:** —
+- **Superseded by:** —
+
+---
+
+## Context
+
+The boilerplate's committed prose (`AGENTS.md`, `.agents/**`, `docs/**`, `README.md`, the decks) carries facts whose truth depends on the current contents of another file, of the tracker or of an external tool: counted rosters, enumerations copied from the file that owns them, a ruleset reading stamped with the day it was taken, and an updater paragraph in `AGENTS.md` §5.5 written as a changelog ("Since 8.2 / 8.3 / 8.4"). Each one is correct the day it is written and wrong a few weeks later, and an agent reads all of them every session with no way to tell the two states apart.
+
+Some of those dated notes are the only inline record of WHY a rule exists. Deleting them loses the argument; keeping them in doctrine makes the rule carry a date that reads as a claim about the present and invites re-verification on every read.
+
+Critical Rule #17 (`AGENTS.md` §1) and its canon (`.agents/skills/agentic-dev-core/references/volatile-facts.md`) settle the general case: committed prose names the source of truth, never its current value. This ADR settles the forensic-note case and is the record the prose points at. The sibling `agentic-qa-boilerplate` took the same decision first (its ADR-0006); this is the port.
+
+## Decision
+
+We will keep the WHY of a rule in the doctrine as one sentence with no figure and no date, and move the figure, the date and the context of every measurement that motivated a rule into a dated record: the §Ledger below for the boilerplate's own doctrine, `CHANGELOG.md` for release-by-release behaviour of the CLI, or a dated ledger a skill owns by design. The doctrine links the record instead of restating the number.
+
+A new measurement that motivates a rule is appended to §Ledger, never inlined in the rule. ADRs, changelogs and dated reports are exempt from Rule #17 because the date is part of the claim; both linters skip `.context/ADR/` by path.
+
+The two regex-visible families (`FILE-LINE`, `CURRENT-STATE`) are reported by `scripts/lint-skills.ts` and `scripts/lint-docs.ts` (`bun run docs:check`) at WARN while the existing prose is swept, and flip to ERROR when the sweep leaves no residue.
+
+### Ledger of measurements behind current doctrine
+
+Every row is a snapshot at its date. None of them is a claim about the present.
+
+| Doctrine that keeps the why | Measurement (figure, date, context) |
+|---|---|
+| `AGENTS.md` Rule #9, MCP credential failure is silent on every host but Codex | Measured 2026-09-20 on all three hosts in `agentic-qa-boilerplate` (its ADR-0006): Claude Code passes an unset `${VAR}` through literally and the server dies on its first authenticated call, OpenCode substitutes an empty string, Codex fails loudly naming the server. It corrected the rule's earlier claim that a missing variable fails at parse time; the wording was ported here in the dev-sync doctrine pack (PR #35). |
+| `AGENTS.md` §5.5 UPDATER END-OF-RUN, behaviours formerly narrated as "Since 8.2 / 8.3 / 8.4" | Release history of `bun run up`, recorded per release under `CHANGELOG.md` → `[Unreleased]` → the "Fixed (updater 8.1 …)" through "Fixed (updater 8.4)" sections (documented in `AGENTS.md` on 2026-09-04 and 2026-09-05). 8.1 introduced the env signal a self-update sends, which the `cli` cursor advance keys on; 8.2 put `.husky/pre-commit` and `.husky/pre-push` on the protected watchlist, added `updater.protected_paths`, the port-and-keep advice on a watched-file `merge` row and the structure-only compare of `.agents/project.yaml` / `.agents/jira-required.yaml`; 8.3 narrowed the dirty-tree guard to what the sync writes, collapsed a git-tracked `.context/PBI/` cache into one Componentes row with a saved recipe, seeded the marker of a newly protected path silently, advanced the `cli` cursor after a self-update and named the differing fields in MCP registry rows; 8.4 advanced the cursor after a self-update from a pre-8.1 parent by content comparison, made the heading compare punctuation-insensitive, reran `bun run skills:registry` as the last afterApply hook, seeded an unchanged watched file silently and printed the `Gates: omitidas` line. |
+| `AGENTS.md` § Git Strategy, the accepted `main` divergence (ruleset requires a review, the maintainer pushes directly) | Verified 2026-08-21 against GitHub ruleset 16809536 on `main`: one approving review required; the classic `branches/main/protection` endpoint returned `404`, so only `rules/branches/main` revealed it. Divergence `main.direct_push_to_protected` accepted the same day (`policy.accepted_divergences` in `.agents/project.yaml`). |
+
+## Consequences
+
+- **Positive:** doctrine reads as a contract again: the rule, its one-sentence why, and a pointer. A session never has to decide whether a dated verification is still true; `bun run git:policy verify` and the CLI's own behaviour are the live answers. The lint can flag a dating word in doctrine without an allowlist per rule, because the dated form has one home.
+- **Negative / trade-offs:** the reader who doubts a rule takes one more hop to see the evidence. A measurement appended here has to be linked from the doctrine by hand; nothing checks that the link exists. While the lints run at WARN, new residue can still land; the sweep that flips them to ERROR closes that window.
+- **Neutral / follow-ups:** counts and enumerations have no regex shape and stay a review-time judgement (canon §7). The `AGENTS.md` §5 skill router is the one enumeration `docs:check` verifies, against the committed skills.
+
+## Alternatives considered
+
+- **Delete the forensic notes outright** — loses the only record of why several rules exist; the next session re-litigates a settled rule with no evidence.
+- **Keep the dated notes in the doctrine** — the reader cannot tell a rationale from a live claim, and the lint cannot flag dating vocabulary without allowlisting every rule.
+- **Only the CHANGELOG** — a changelog is ordered by release, not by rule; a reader starting from a rule would not find its measurement. It stays the home of release-by-release CLI behaviour, and the ledger row points into it.
+- **Block (ERROR) from day one** — every unit working in parallel on prose would fail a gate on residue it did not write. Rejected by the owner in favour of warn first, sweep and block last.
+
+## References
+
+- Critical Rule #17: `AGENTS.md` §1
+- Canon: `.agents/skills/agentic-dev-core/references/volatile-facts.md`
+- Linters: `scripts/lint-skills.ts` (checks 16-17), `scripts/lint-docs.ts` (`bun run docs:check`), shared scanner `scripts/lib/volatile-facts.ts`
+- Release history of the CLI: `CHANGELOG.md`
+- Sibling decision: `agentic-qa-boilerplate` → `.context/ADR/ADR-0006-forensic-measurements-ledger.md`
