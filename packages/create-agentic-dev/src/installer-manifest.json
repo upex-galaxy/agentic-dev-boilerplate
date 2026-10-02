@@ -45,7 +45,7 @@
     {
       "name": "API keys (.env)",
       "required": false,
-      "purpose": "MCP servers (Tavily, Atlassian, Supabase, n8n) require API keys set in .env before they can connect.",
+      "purpose": "The MCP servers .mcp.json declares need their keys set in .env before they can connect; web search runs at harness level and keeps its key outside .env.",
       "installHint": "See .env.example in the project root after scaffolding."
     },
     {
@@ -228,11 +228,6 @@
         "name": "context7",
         "envVars": [],
         "purpose": "Library documentation MCP — fetches official current docs for any library."
-      },
-      {
-        "name": "tavily",
-        "envVars": ["TAVILY_API_KEY"],
-        "purpose": "Web search MCP — used by skills that need fresh community / docs lookups."
       },
       {
         "name": "supabase",

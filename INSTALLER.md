@@ -62,12 +62,11 @@ Each entry is required by one or more skills; install them as you need them.
 
 > **Windows users**: skip direnv. PowerShell support is experimental and needs direnv 2.37+; Git Bash works but the `bun run claude` wrapper is simpler everywhere. Decline the installer's direnv prompt — the wrappers already load `.env`.
 
-### MCP credentials — 9 env vars filled into `.env`
+### MCP credentials filled into `.env`
 
-The MCP config of every selected harness ships with credential placeholders: `${VAR}` in `.mcp.json` (Claude Code), `{env:VAR}` in `opencode.jsonc` (OpenCode), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex). The installer resolves required vars by scanning those committed configs (`discoverRequiredEnvVars()`) — current list backs the MCP servers those configs declare (four out of the box) and the Atlassian CLI (context7 needs none):
+The MCP config of every selected harness ships with credential placeholders: `${VAR}` in `.mcp.json` (Claude Code), `{env:VAR}` in `opencode.jsonc` (OpenCode), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex). The installer resolves required vars by scanning those committed configs (`discoverRequiredEnvVars()`) — the list backs the MCP servers those configs declare and the Atlassian CLI (context7 needs none). Web search is not in it: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`); the installer prints how to connect it. With the shipped configs the list reads:
 
 ```
-TAVILY_API_KEY
 ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
 SUPABASE_ACCESS_TOKEN · NEXT_PUBLIC_SUPABASE_URL · SUPABASE_PUBLISHABLE_KEY · SUPABASE_SECRET_KEY
 N8N_API_URL · N8N_API_KEY
@@ -75,7 +74,7 @@ N8N_API_URL · N8N_API_KEY
 
 The Atlassian **site host** is deliberately not in that list. The installer prompts for it at day-0 and writes it to `.agents/project.yaml` -> `issue_tracker.atlassian_url`, not to `.env` — a hostname is not a secret, it is project identity, and while it sat in `.env` a stale copy inherited from the parent shell shadowed the file in silence. Read it back with `bun run --silent jira:url`.
 
-Generation is interactive (web logins + 2FA), so the installer cannot do it for you. `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — every pending credential carries a `where` URL (Tavily dashboard, Atlassian token page, Supabase project settings, n8n API panel).
+Generation is interactive (web logins + 2FA), so the installer cannot do it for you. `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — every pending credential carries a `where` URL (Atlassian token page, Supabase project settings, n8n API panel).
 
 ### Where to verify your status
 
@@ -104,7 +103,7 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
   "platform": "linux",
   "shell": "/usr/bin/bash",
   "is_tty": true,
-  "env_vars": { "TAVILY_API_KEY": "set", "N8N_API_KEY": "missing", ... },
+  "env_vars": { "ATLASSIAN_API_TOKEN": "set", "N8N_API_KEY": "missing", ... },
   "direnv": { "installed": true, "version": "2.25.2", "envrc_allowed": true, "hook_in_rc": true, "rc_file": "/home/user/.bashrc" },
   "pending_actions": [
     { "type": "credential", "target": "N8N_API_KEY", "hint": "n8n API key for the n8n MCP server", "where": "n8n instance → Settings → API" },
@@ -117,14 +116,14 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
 
 | type             | Who handles it | How                                                                                                                             |
 | ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `credential`     | **User**       | AI asks the user for the value in chat (e.g. "paste your Tavily key from https://app.tavily.com"). Then AI writes it to `.env`. |
+| `credential`     | **User**       | AI asks the user for the value in chat (e.g. "paste your Atlassian API token from https://id.atlassian.com/manage-profile/security/api-tokens"). Then AI writes it to `.env`. |
 | `shell_hook`     | **AI**         | AI appends the `where` line to the `target` rc file with its Edit/Bash tool. Trivial.                                           |
 | `system_install` | **User**       | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password).                                 |
 | `shell_command`  | **AI**         | AI runs the `target` command via Bash.                                                                                          |
 
 ### What an AI **cannot** do (hard limits)
 
-- **Generate API tokens** — Tavily / Atlassian / Supabase / n8n keys all require an interactive web login + 2FA. The user creates and pastes them; the AI never sees the generation flow.
+- **Generate API tokens** — Atlassian / Supabase / n8n keys all require an interactive web login + 2FA. The user creates and pastes them; the AI never sees the generation flow.
 - **Decide business config** — e.g. which Supabase project to target, which n8n instance to use, etc. The AI suggests; the user decides.
 - **Execute privileged installs cleanly** — `brew install`, `winget install`, `apt install` may show a sudo/admin prompt that lives outside the agent's terminal. The AI runs the command but the user clicks "allow".
 
@@ -134,7 +133,6 @@ The installer auto-detects no-TTY (an agent invoking it without a terminal) and 
 
 ```bash
 INSTALL_AGENTS=claude-code,opencode,codex \
-  TAVILY_API_KEY=tvly-... \
   ATLASSIAN_EMAIL=... \
   ATLASSIAN_API_TOKEN=... \
   SUPABASE_ACCESS_TOKEN=... \
@@ -163,7 +161,7 @@ Then `bun run setup:doctor --json` to confirm the rest.
 
 ## Launching the agent after setup
 
-`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `TAVILY_API_KEY`, `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
+`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
 
 | Method                                                                | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                          |
 | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -335,7 +333,7 @@ The installer configures whichever of **Claude Code, OpenCode, and Codex** you s
 - **Skills.** All 16 committed skills live in `.agents/skills/`, and the community project-level skills install into the same store. Claude Code reaches that tree through `.claude/skills`, a POSIX symlink (Windows junction) that is generated and gitignored: never committed, never hand-edited.
 - **Commands.** The 8 slash commands carry no workflow body. Both wrapper sets are short files generated from `.agents/compatibility/command-aliases.json`; each names a target skill plus a mode and forwards `$ARGUMENTS`. Codex skips the wrapper layer and invokes the skill directly.
 - **Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once. Claude Code and Codex run it as a command hook (`.claude/settings.json` and `.codex/hooks.json`, the latter with a POSIX and a PowerShell command); OpenCode imports the same lines from `.opencode/plugins/personality-reinject.js`.
-- **MCP.** The canonical server set is whatever `.mcp.json` declares (`context7`, `tavily`, `supabase`, `n8n` out of the box); every server there must exist in the other two configs. Parity is checked semantically: each native format is normalized before comparison and matched on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The four boilerplate-known ids additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only, so a downstream project may add or drop servers freely. Codex cannot expand `${VAR}` inside `args`, so `.codex/config.toml` reaches `tavily` over HTTP with `bearer_token_env_var` and passes `supabase` env-only auth. `docs/mcp/*.template.*` stay as opt-in templates for hosts without a runtime adapter (Gemini CLI, Cursor).
+- **MCP.** The canonical server set is whatever `.mcp.json` declares (local servers only; web search runs at harness level); every server there must exist in the other two configs. Parity is checked semantically: each native format is normalized before comparison and matched on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The four boilerplate-known ids additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only, so a downstream project may add or drop servers freely. Codex cannot expand `${VAR}` inside `args`, so `.codex/config.toml` passes `supabase` env-only auth. `docs/mcp/*.template.*` stay as opt-in templates for hosts without a runtime adapter (Gemini CLI, Cursor).
 
 ### Regenerating and verifying
 
@@ -470,7 +468,7 @@ What you lose:
 
 - **Persistent memory (Engram)** — no cross-session recall, no `mem_save` / `mem_search`. Each session starts blind.
 
-What you keep: every workflow skill committed in this repo (`/sprint-development`, `/project-foundation`, etc.) and the canonical MCPs (Tavily, Context7, Supabase, n8n). The repo is fully usable without gentle-ai — the integration is additive.
+What you keep: every workflow skill committed in this repo (`/sprint-development`, `/project-foundation`, etc.) and the MCP servers `.mcp.json` declares. The repo is fully usable without gentle-ai — the integration is additive.
 
 ---
 

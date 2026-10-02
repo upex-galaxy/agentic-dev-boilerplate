@@ -30,6 +30,9 @@ compact_rules: |
   - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
   - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
   - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
+  - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
+metadata:
+  requires_capabilities: [library-docs, db]
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -68,6 +71,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
 - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
 - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
+- **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
 **Read full SKILL.md when**: the stage you are running needs its full walkthrough, a gate fires, or the briefing tells you to load the full skill.
 
@@ -601,7 +605,7 @@ If the prerequisite check at the top of this skill fails (no `.agents/project.ya
 | Tag                    | Resolves to                                       | Defined in                  |
 | ---------------------- | ------------------------------------------------- | --------------------------- |
 | `[ISSUE_TRACKER_TOOL]` | `acli`, Atlassian MCP, or `{{ISSUE_TRACKER_CLI}}` | `AGENTS.md` Tool Resolution |
-| `[DB_TOOL]`            | DBHub MCP, Supabase MCP, or raw SQL               | `AGENTS.md` Tool Resolution |
+| `[DB_TOOL]`            | capability `db` (Supabase MCP; DBHub if the project adds it); raw SQL only when the user chooses it | `AGENTS.md` Tool Resolution |
 | `[API_TOOL]`           | OpenAPI MCP, Postman, or `curl`                   | `AGENTS.md` Tool Resolution |
 | `[AUTOMATION_TOOL]`    | Playwright CLI, Playwright MCP, or claude-in-chrome MCP | `AGENTS.md` Tool Resolution |
 

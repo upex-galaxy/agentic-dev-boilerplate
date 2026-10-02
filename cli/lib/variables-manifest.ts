@@ -101,7 +101,8 @@ export interface VarSpec {
    * CRITICAL = project-independent TOOL credential, prompted interactively
    * during the NORMAL installer (`configureMcps` / `configureDayZeroCredentials`).
    * Identical in both boilerplates: ATLASSIAN_URL/EMAIL/API_TOKEN (Jira/acli),
-   * RESEND_API_KEY (email testing), TAVILY_API_KEY (pre-configured Tavily MCP).
+   * RESEND_API_KEY (email testing). Web search is not here: it runs at harness
+   * level and keeps its key outside `.env` (`harness-level-mcps.ts`).
    * Everything else is non-critical: never asked at install, never warned about,
    * surfaced only in the closing "Next steps" with an `obtainHint`.
    */
@@ -191,14 +192,6 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: true,
     note: 'Resend API key (transactional email + resend CLI auth). Critical tool credential — prompted at install; app runtime → also reaches Vercel.',
-  },
-  {
-    name: 'TAVILY_API_KEY',
-    destinations: ['local'],
-    secret: true,
-    required: true,
-    critical: true,
-    note: 'Tavily web-search MCP API key. Critical tool credential — prompted at install.',
   },
   // --- Supabase project backend (auto-provisioned; pulled from Vercel) ---
   {
@@ -458,9 +451,8 @@ export function envFileVars(): VarSpec[] {
 
 /**
  * The CRITICAL tool credentials — project-independent vars prompted interactively
- * during the normal installer (ATLASSIAN_URL/EMAIL/API_TOKEN, RESEND_API_KEY,
- * TAVILY_API_KEY). Drives `install.ts`'s day-0 prompt set. Identical in both
- * boilerplates.
+ * during the normal installer (ATLASSIAN_URL/EMAIL/API_TOKEN, RESEND_API_KEY).
+ * Drives `install.ts`'s day-0 prompt set.
  */
 export function criticalVars(): VarSpec[] {
   return VAR_MANIFEST.filter(spec => spec.critical);

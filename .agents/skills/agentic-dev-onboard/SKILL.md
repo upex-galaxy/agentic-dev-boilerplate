@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-onboard
-description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCPs available (Tavily, Context7, Supabase, n8n, Atlassian), critical env vars, Critical Rule #12 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
+description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCP capabilities (library docs, web search at harness level, DB, automation flows), critical env vars, Critical Rule #12 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, opencode]
 phase: foundation
@@ -8,8 +8,8 @@ complementary_categories: []
 # compact_rules is consumed VERBATIM by scripts/build-skill-registry.ts (frontmatter-first,
 # no truncation). Keep in sync with the MCP decision rule + "What this skill does NOT do" in the body below.
 compact_rules: |
-  - Use **Context7** for "how to use X" — official docs, current API
-  - Use **Tavily** for "how to solve X" — community fixes, troubleshooting
+  - Use `library-docs` (Context7) for "how to use X" — official docs, current API
+  - Use `web-search` (Exa or Tavily, connected at harness level) for "how to solve X" — community fixes, troubleshooting
   - Use **Atlassian** only as fallback — prefer `/acli` skill (fewer tokens, faster)
   What this skill does NOT do:
   - Implement features → use `/sprint-development`
@@ -85,7 +85,7 @@ Run the interactive installer once after cloning:
 bun run setup
 ```
 
-This bootstraps `.agents/`, installs Engram (persistent memory) via gentle-ai `--preset minimal`, configures the 5 canonical MCPs (Tavily, Context7, Supabase, n8n, Atlassian), and writes `.mcp.json`. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
+This bootstraps `.agents/`, installs Engram (persistent memory) via gentle-ai `--preset minimal`, wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
@@ -141,20 +141,21 @@ optional: without a master design plan, UI fidelity degrades gracefully to `DESI
 
 ## MCPs available
 
-Five canonical MCPs ship with the boilerplate:
+Skills ask for a CAPABILITY and resolve it by tool-name suffix, whatever the server prefix (`agentic-dev-core/references/mcp-capabilities.md`). The committed servers are whatever `.mcp.json` declares; web search runs at harness level, connected once per machine:
 
-| MCP       | Use it for                                        |
-| --------- | ------------------------------------------------- |
-| Tavily    | Web search, troubleshooting community Q&A         |
-| Context7  | Official library docs (Next.js, Supabase…)        |
-| Supabase  | DB queries, migrations, type generation           |
-| n8n       | Workflow automation, scheduled jobs               |
-| Atlassian | Jira/Confluence fallback when `/acli` unavailable |
+| Capability         | Provided by                                              | Use it for                                |
+| ------------------ | -------------------------------------------------------- | ----------------------------------------- |
+| `library-docs`     | Context7 (committed)                                     | Official library docs (Next.js, Supabase…) |
+| `web-search`       | Exa or Tavily at harness level (`bun run setup:doctor`)  | Web search, troubleshooting community Q&A |
+| `db`               | Supabase (committed)                                     | DB queries, migrations, type generation   |
+| `automation-flows` | n8n (committed)                                          | Workflow automation, scheduled jobs       |
+
+The Atlassian MCP is opt-in (`docs/mcp/`): Jira and Confluence go through `/acli`.
 
 **Decision rule:**
 
-- Use **Context7** for "how to use X" — official docs, current API
-- Use **Tavily** for "how to solve X" — community fixes, troubleshooting
+- Use `library-docs` for "how to use X" — official docs, current API
+- Use `web-search` for "how to solve X" — community fixes, troubleshooting
 - Use **Atlassian** only as fallback — prefer `/acli` skill (fewer tokens, faster)
 
 `.mcp.json` lives at the repo root and is **committed** (uses `${VAR}` references to `.env` — no secrets stored in the file).
@@ -171,7 +172,6 @@ Place these in `.env` before running anything that talks to a real environment:
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (manual / ad-hoc)      |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
 | `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
-| `TAVILY_API_KEY`                               | Tavily MCP                             |
 | `SUPABASE_URL` / `SUPABASE_*_KEY`              | Supabase MCP + runtime                 |
 
 `.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code) or `{env:VAR}` (OpenCode). The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
@@ -225,7 +225,7 @@ The AI persistent-memory file at the repo root carries the full operational cont
 Run through this checklist before you reach for your first ticket:
 
 - [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
-- [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `TAVILY_API_KEY`, `SUPABASE_*`)?
+- [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `SUPABASE_*`)? Did you connect a web-search provider at harness level (`bun run setup:doctor`)?
 - [ ] Does the agents linter (`bun run vars:check` per `package.json`) exit clean (0 errors)?
 - [ ] Does Engram appear in the active MCP list (restart your agent if not)?
 - [ ] Ready for your first ticket: `/sprint-development <UPEX-XXX>`
