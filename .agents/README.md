@@ -114,6 +114,23 @@ Seven syntaxes coexist across skills, commands, and docs. Each resolves from a d
 
 The `{{…}}` vs `<<…>>` distinction is intentional: it removes the ambiguity where both project data and ephemeral session data might share the same `{{VAR}}` syntax.
 
+### Checkout roots: `<<REPO_ROOT>>` and `<<PRIMARY_ROOT>>`
+
+Two session variables name a directory, and they differ the moment a session runs inside a linked git worktree (Orca, `claude --worktree`, the harness `EnterWorktree`, a Codex-managed worktree, a plain `git worktree add`):
+
+| Variable | Resolves to | Use it for |
+|---|---|---|
+| `<<REPO_ROOT>>` | `git rev-parse --show-toplevel`: THIS checkout, the worktree when there is one | tracked files the session reads or edits: code, skills, docs, configs, migrations, the committed `.context/` docs (including `.context/reports/`) |
+| `<<PRIMARY_ROOT>>` | `dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`: the primary checkout, the same value from the primary and from every worktree of it | durable GITIGNORED state: `.session/**` (plans, progress, locks, run reports, escalation logs), `.scratch/`, updater markers and backups |
+
+In the primary checkout both resolve to the same path. In a worktree, anything written under `<<REPO_ROOT>>` that git ignores dies when the worktree is removed, so durable state is always written to and resumed from `<<PRIMARY_ROOT>>`, by absolute path. Never derive either root from `pwd`: inside a worktree `pwd` is the worktree.
+
+Three commands carry the contract (code: `cli/lib/worktree.ts`):
+
+- `bun run worktree:provision [<path>]`: wires a fresh worktree with the gitignored inputs it cannot rebuild (`.env`, `.vercel/`, local settings), then `bun install` and `bun run agents:compat`. Refuses to run on the primary. `orca.yaml` runs it as Orca's setup hook, `.codex/environments/environment.toml` as the Codex app's; Claude Code and the Codex app copy the same files through `.worktreeinclude`.
+- `bun run worktree:audit [<path>]`: classifies what a worktree still holds that git does not (state / cache / disposable / unknown) before it is removed; exit 1 while state or unknown remains. `--rescue` copies the state class to the same path under `<<PRIMARY_ROOT>>`, never overwriting. `orca.yaml` runs it as Orca's archive hook.
+- `bun run up` refuses to run in a linked worktree: its backups, markers and prompts are gitignored and would die with it.
+
 ### Active environment
 
 `project.yaml` has a top-level `environments:` map (defaults: `local` + `staging`; you can add `production`, `qa`, `dev`, `uat`, etc.). Each environment declares the same three leaves: `web_url`, `api_url`, `db_project_ref`. Skills and commands don't hardcode "staging" or "local" anywhere — they reference the bare form (`{{WEB_URL}}` etc.) and the AI resolves it against the **active environment** for the current session:
