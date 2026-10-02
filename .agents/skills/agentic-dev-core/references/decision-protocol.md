@@ -149,6 +149,11 @@ Four categories, and they are exhaustive. Everything outside them is yours.
 scoring if you ran a panel, and your recommendation. Never ask a bare open question — that is how a human
 gets pulled into re-deciding something they already decided.
 
+**Pick the instrument by the shape of the ask**: a handful of simple questions go to the harness prompt;
+more than three decision points, or one decision whose tradeoff does not fit in two sentences, go to the
+`mkd` decision deck. The ladder, the deck's justification rules, the fallback when `mkd` is absent, and
+how to read the returned contract live in `./decision-elicitation-doctrine.md`.
+
 ### 5.1 Category 1 is configurable — but only by explicit opt-in
 
 Everything above is the default and is correct for any project with a human product owner. **Read
