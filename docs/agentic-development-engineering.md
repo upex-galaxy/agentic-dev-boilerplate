@@ -178,7 +178,7 @@ This is the foundational decision behind every architectural choice in this repo
 | **INVEST**              | Independent, Negotiable, Valuable, Estimable, Small, Testable. Validation criteria for user stories. Enforced by `/product-management`.                                                 |
 | **Implementation Plan** | The artefact produced by `/sprint-development` Stage 1. The input contract for Stage 2 (coding).                                                                                        |
 | **Compact Rules**       | Pre-digested coding standards injected into subagent prompts so they do not have to load and parse a full skill registry on every dispatch.                                             |
-| **Briefing Template**   | The 6-component format (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                                             |
+| **Briefing Template**   | The 7-component format (Goal · Context docs · Project Standards · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                                             |
 | **Dispatch Pattern**    | One of Single / Sequential / Parallel / Background. Picked per stage in each skill's `## Subagent Dispatch Strategy` section.                                                           |
 | **Active Environment**  | The environment URLs and credentials currently in use (local / staging / production). Resolved from `testing.default_env` in `.agents/project.yaml` or session override.                |
 | **Topic Key**           | The stable identifier under which an artefact is saved in engram (e.g. `pbi/{ticket}/impl-plan`). Documented in `agentic-dev-core/references/topic-key-conventions.md`.                 |
@@ -374,7 +374,7 @@ A second knowledge surface exists outside `.context/`: the `agentic-dev-core/ref
 
 | `agentic-dev-core` reference | Purpose                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `briefing-template.md`       | The 6-component subagent briefing format with concrete examples per dispatch pattern.                        |
+| `briefing-template.md`       | The 7-component subagent briefing format with concrete examples per dispatch pattern.                        |
 | `dispatch-patterns.md`       | Decision table + heuristic for picking Single / Sequential / Parallel / Background.                          |
 | `orchestration-doctrine.md`  | Cacheable mirror of `AGENTS.md` §Orchestration Mode (Subagent Strategy).                                     |
 | `model-routing.md`           | Phase → model alias table (opus for foundation, sonnet for impl, haiku for archive).                         |
@@ -529,7 +529,7 @@ The orchestration model is not improvised per session — it is captured in cano
 
 - **`AGENTS.md` §Orchestration Mode** — canonical project-level statement of the strategy (delegation rules, briefing format, error protocol).
 - **`agentic-dev-core/references/orchestration-doctrine.md`** — cacheable mirror loaded by subagents that need the full doctrine without re-reading `AGENTS.md`.
-- **`agentic-dev-core/references/briefing-template.md`** — the six-component briefing format every dispatch uses (Goal · Context docs · Skills to load · Exact instructions · Report format · Rules).
+- **`agentic-dev-core/references/briefing-template.md`** — the seven-component briefing format every dispatch uses (Goal · Context docs · Project Standards · Skills to load · Exact instructions · Report format · Rules).
 - **`agentic-dev-core/references/dispatch-patterns.md`** — decision guide for the four patterns (Single, Sequential, Parallel, Background) and when each applies.
 - **`## Subagent Dispatch Strategy`** sections inside each workflow `SKILL.md` (`sprint-development`, `project-foundation`, `project-bootstrap`, `product-management`, etc.) — per-stage tables declaring which steps delegate to subagents and with what pattern.
 

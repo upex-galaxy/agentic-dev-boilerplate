@@ -281,7 +281,7 @@ Phases 1 → 2 → 3 → 4 are **logically sequential** (each phase consumes out
 - **Phase 3 (SRS)**: `srs-functional`, `srs-non-functional`, `srs-architecture`, `srs-api-contracts` can run in parallel once the PRD is locked.
 - **Phase 4 (Discovery)**: Steps 1 (`/business-data-map`) and 2 (`/business-feature-map`) can run in parallel against the same source code / SRS. Step 3 (`/business-api-map`) is parallel-friendly with 1 and 2 (soft gates only). Step 4 (`project-dev-guide`) has a hard prerequisite on Step 1. Step 5 (`/master-implementation-plan`) is the natural synthesis after Steps 1–3 — run it last.
 
-Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 6-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
+Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 7-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
 
 For research-heavy tasks (market sizing, competitor audits, persona interviews) dispatch a single subagent with web/search tools rather than running the research from the main conversation.
 

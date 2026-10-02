@@ -50,7 +50,7 @@ This §2 WINS on content and structure of information. OUTPUT STYLE never contra
 
 **SURGICAL CHANGES.** Touch only what required. Match existing style even if you'd do it differently. Don't refactor unbroken code. Don't improve adjacent comments/formatting. Notice unrelated dead code → mention, don't delete. Remove imports/vars YOUR changes made unused. _Scope note_: regenerative commands EXEMPT: regen IS task: `/project-foundation`, `/design-system`, `/project-bootstrap`, `/sync-ai-memory`, `/sprint-development` impl-plan stage, `/product-management` AC-writing.
 
-**GOAL-DRIVEN EXECUTION.** Define success criteria. Loop until verified. Transform vague tasks into testable goals ("add validation" → "write tests for invalid input, then make them pass"). Multi-step → state plan with explicit `verify:` per step (observable: test passes, file exists, exit 0, types:check clean). Complements 6-component briefing (§3): does NOT replace it.
+**GOAL-DRIVEN EXECUTION.** Define success criteria. Loop until verified. Transform vague tasks into testable goals ("add validation" → "write tests for invalid input, then make them pass"). Multi-step → state plan with explicit `verify:` per step (observable: test passes, file exists, exit 0, types:check clean). Complements 7-component briefing (§3): does NOT replace it.
 
 **EXPANDABLE RESPONSES (BUTLER PATTERN).** Default to terse headline answer that resolves user's literal question. Then surface ALL other topics you would otherwise have covered as atomic bullet menu: one specific topic per bullet, NEVER aggregated into broad categories. Let user pull topics they care about; do not push every detail in one shot.
 
@@ -115,14 +115,15 @@ Example (same work, different register):
 
 **NO SUBAGENTS FOR**: quick lookups, memory reads/writes, task tracking, ask user, planning.
 
-**6-COMPONENT BRIEFING (MANDATORY every dispatch)**:
+**7-COMPONENT BRIEFING (MANDATORY every dispatch)**: canonical template + filled examples: `agentic-dev-core/references/briefing-template.md`.
 
 1. **Goal**: one sentence
 2. **Context docs**: files to read first
-3. **Skills to load**: explicit (e.g. `/playwright-cli`)
-4. **Exact instructions**: step-by-step, not vague goals
-5. **Report format**: what to return (files changed, tests passed, blockers)
-6. **Rules**: relevant Critical Rules to follow
+3. **Project Standards (auto-resolved)**: compact rules pulled from `.agents/skills/REGISTRY.md` (built by `bun run skills:registry`). Subagents trust these as authoritative for listed conventions and DO NOT re-read full SKILL.md unless told to. Protocol: `agentic-dev-core/references/skill-resolver.md`.
+4. **Skills to load**: explicit (e.g. `/playwright-cli`)
+5. **Exact instructions**: step-by-step, not vague goals
+6. **Report format**: what to return (files changed, tests passed, blockers)
+7. **Rules**: relevant Critical Rules to follow
 
 **EXECUTION PATTERNS**:
 
@@ -133,7 +134,7 @@ Example (same work, different register):
 | Background | Long-running      | Test suite + plan next ticket |
 | Single     | Simple task       | One file edit + verification  |
 
-**RULE REACHABILITY**: subagent sees ONLY briefing + `REGISTRY.md` compact rules + files briefing names. It does NOT walk `references/`. Rule that must BIND executor (prohibition, fail-closed gate, credential contract, cleanup duty) MUST land in all three: owning `references/*.md` (full text) + owning `SKILL.md` `## Compact Rules` (so registry propagates it) + briefing component 6. Rule only in reference file = documentation, NOT constraint.
+**RULE REACHABILITY**: subagent sees ONLY briefing + `REGISTRY.md` compact rules + files briefing names. It does NOT walk `references/`. Rule that must BIND executor (prohibition, fail-closed gate, credential contract, cleanup duty) MUST land in all three: owning `references/*.md` (full text) + owning `SKILL.md` `## Compact Rules` (so registry propagates it) + briefing component 7 (Rules). Rule only in reference file = documentation, NOT constraint.
 
 **EPHEMERAL-ARTIFACT CONTRACT (secret hygiene)**: subagent materializing auth/session material to disk (cookie jar, `storageState.json`, token file, `.har` with `Authorization`/`Cookie`, session-bearing logs, DB dump) MUST: write ONLY to session scratch dir (never repo tree, not even ignored paths) → delete BEFORE reporting → disclose `secrets_materialized: none|<kinds>` + `cleaned: yes|no (<reason>)` in report. `cleaned: no` = BLOCKER surfaced to user. NEVER echo material into report/plan/commit/PR/tracker comment.
 

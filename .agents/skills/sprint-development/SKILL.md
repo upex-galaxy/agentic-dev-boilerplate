@@ -163,18 +163,18 @@ exist early is the **§8 row** — a one-line statement of what the screen owes 
 
 This skill is **per-ticket scope**: `<scope>` = `<JIRA-KEY>` (e.g. `UPEX-123`), resolved from the invocation trigger. Session state lives at `.session/sprint-development/<JIRA-KEY>/progress.md` per `agentic-dev-core/references/session-management.md` §3 + §9. This skill adopts the **progress-only variant** (§5 special cases + §13) — no `plan.md` is written under `.session/`; the canonical plan stays in Jira and is materialized to `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` by the sync.
 
-This skill is compliant with the doctrine in `agentic-dev-core/references/orchestration-doctrine.md`. Every dispatch follows the 6-component briefing format defined in `agentic-dev-core/references/briefing-template.md`, and the pattern selected per stage matches the decision guide in `agentic-dev-core/references/dispatch-patterns.md`.
+This skill is compliant with the doctrine in `agentic-dev-core/references/orchestration-doctrine.md`. Every dispatch follows the 7-component briefing format defined in `agentic-dev-core/references/briefing-template.md`, and the pattern selected per stage matches the decision guide in `agentic-dev-core/references/dispatch-patterns.md`.
 
 ### Execution mode — Orchestrated (default) vs Solo (opt-in)
 
-**Default = ORCHESTRATED.** Each stage is dispatched as a fresh-context subagent using the 6-component briefing (`agentic-dev-core/references/briefing-template.md`). The main thread is the command center and never does the heavy per-stage work itself. This is the mode unless the user explicitly opts out.
+**Default = ORCHESTRATED.** Each stage is dispatched as a fresh-context subagent using the 7-component briefing (`agentic-dev-core/references/briefing-template.md`). The main thread is the command center and never does the heavy per-stage work itself. This is the mode unless the user explicitly opts out.
 
 **SOLO mode (opt-in, user-invoked).** When the invocation contains an explicit solo signal — `solo`, `no-subagents`, `no subagent`, `single session`, `inline`, `work in one session`, `en una sola sesión`, `sin subagentes`, `trabaja todo en esta sesión` — the orchestrator runs **every stage inline in this one conversation and dispatches ZERO subagents.** Detect the signal from the trigger message; if ambiguous, ASK once, then lock the mode for the whole run and state it back ("Running SOLO — all stages inline, no subagents").
 
 | Aspect             | Orchestrated (default)                  | Solo (opt-in)                        |
 | ------------------ | --------------------------------------- | ------------------------------------ |
 | Per-stage work     | fresh subagent per the dispatch table   | inline in the main thread            |
-| Briefing           | 6-component briefing per dispatch        | n/a (no dispatch); same Context docs |
+| Briefing           | 7-component briefing per dispatch        | n/a (no dispatch); same Context docs |
 | Verification cap=3 | 3 parallel verifier subagents           | the 3 checks inline, sequentially    |
 | Fix after review   | dispatch a fix subagent                 | apply the fix inline                 |
 | Live-UI validation | inside the stage subagent that owns it  | inline, same stage                   |

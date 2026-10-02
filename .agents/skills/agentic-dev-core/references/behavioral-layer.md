@@ -76,7 +76,7 @@ For multi-step tasks, state a brief plan with explicit checks:
 3. [Step] → verify: [observable check]
 ```
 
-`verify` = an observable signal that the step actually landed (test passes, file exists, command exits 0, types:check clean). This format **complements** the 6-component subagent briefing in `references/briefing-template.md` — it does **not** replace it. Use this format for thinking-out-loud during execution; use the briefing for delegation.
+`verify` = an observable signal that the step actually landed (test passes, file exists, command exits 0, types:check clean). This format **complements** the 7-component subagent briefing in `references/briefing-template.md` — it does **not** replace it. Use this format for thinking-out-loud during execution; use the briefing for delegation.
 
 ---
 
@@ -88,7 +88,7 @@ These guidelines are working if:
 - Fewer rewrites due to overcomplication
 - Clarifying questions come BEFORE implementation rather than after mistakes
 - Plans are presented and approved before code is written
-- Sub-agent dispatches happen via the 6-component briefing instead of vague hand-offs
+- Sub-agent dispatches happen via the 7-component briefing instead of vague hand-offs
 
 ---
 

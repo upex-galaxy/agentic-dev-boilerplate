@@ -245,7 +245,7 @@ Page codegen and credentials-artifact publish are independent once decisions are
 - Sub-agent B: credentials-artifact build (template) + publish (chosen channel).
 - Sequential after both: verification (Sub-agent C, browser smoke + lint/build) → `/git-flow-master` (branch, commit, PR).
 
-Each sub-agent briefing must follow the 6-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the sub-agent must read.
+Each sub-agent briefing must follow the 7-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the sub-agent must read.
 
 ---
 

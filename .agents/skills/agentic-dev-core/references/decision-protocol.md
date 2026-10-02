@@ -90,7 +90,7 @@ Unsettled, and not in §5? Decide it. For a call that is close, consequential, o
 **scored judge panel** rather than picking on instinct.
 
 **Shape.** Dispatch independent subagents in **Parallel** per `./dispatch-patterns.md` gate 3, each with
-the standard 6-component briefing. Give every panelist the same options and the same evidence, and a
+the standard 7-component briefing. Give every panelist the same options and the same evidence, and a
 **different lens**. Panelists do not confer, do not see each other's output, and do not choose — they
 score and justify. You adjudicate. This preserves `dispatch-patterns.md`'s "don't delegate planning": the
 panel supplies evaluations, the deciding agent supplies the decision.
