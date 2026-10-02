@@ -162,7 +162,6 @@ El emisor es `.agents/hooks/personality-reinject.mjs`, el mismo que ejecuta Clau
 ## 🧩 Qué NO existe en Codex
 
 - **Plugins de Claude Code** (Engram, caveman): no se instalan. Las reglas de `AGENTS.md` que los mencionan (§1 #11, §12) son no-ops en Codex.
-- **Trailer `Claude-Session:`** en commits: solo se emite cuando el harness expone un puntero a la transcripción (Claude Code). En Codex los commits no llevan trailer de sesión (Critical Rule #3).
 - **Wrappers de comando**: ver la tabla de arriba; se pide la skill + modo.
 
 ---
