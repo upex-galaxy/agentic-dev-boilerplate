@@ -55,6 +55,20 @@
  *                                citations (line contains `NEVER` or quoted
  *                                `"Wave"`).
  *
+ *  16. FILE-LINE              (WARN)  — A `path.ext:N` / `:N-M` / `#LN` citation in
+ *                                the prose of the `.agents/` markdown or `AGENTS.md`.
+ *                                A line number shifts on any edit above it; cite
+ *                                the file plus a symbol or a heading. Per-line
+ *                                escape: `volatile-ok: <reason>`. Severity:
+ *                                VOLATILE_SEVERITY (Critical Rule #17; canon
+ *                                agentic-dev-core/references/volatile-facts.md).
+ *  17. CURRENT-STATE          (WARN)  — A claim about the present in the same
+ *                                prose: "today", "currently", "as of <year>", a
+ *                                dated measurement, "since <version>", a measured
+ *                                size, a tool version. Fenced blocks and the
+ *                                frontmatter are skipped. Severity:
+ *                                VOLATILE_SEVERITY.
+ *
  * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
  * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
  * like git-flow-master, acli) simply omit the field — no warning, no info.
@@ -64,9 +78,11 @@
  *   1 — at least one ERROR found
  */
 
+import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
+import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 // -----------------------------------------------------------------------------
 // Configuration
@@ -105,6 +121,16 @@ const HARDCODED_CFID_ALLOWED_SKILLS = new Set<string>(['acli']);
  * generators / sources, not the cache.
  */
 const SKILL_AGGREGATE_FILES = new Set<string>(['REGISTRY.md']);
+
+/**
+ * Severity of the two volatile-facts checks (16-17). WARN while the existing
+ * prose is swept; the sweep flips both to ERROR once the residue is gone, so a
+ * new hit becomes a regression instead of one more line in the backlog.
+ */
+const VOLATILE_SEVERITY: Record<VolatileKind, Severity> = {
+  'FILE-LINE': 'WARN',
+  'CURRENT-STATE': 'WARN',
+};
 
 // -----------------------------------------------------------------------------
 // Session-management contract (per agentic-dev-core/references/session-management.md §14)
@@ -713,6 +739,59 @@ function checkSkillRefactor(): void {
 }
 
 // -----------------------------------------------------------------------------
+// Volatile facts (Checks 16-17, Critical Rule #17)
+// -----------------------------------------------------------------------------
+
+/**
+ * Every markdown file under `.agents/` plus `AGENTS.md`, minus what the rule exempts or this lint
+ * does not own: symlinked and community skills (their tier comes from
+ * install.ts), the gitignored `.agents/prompts/`, skill-creator workspaces, the
+ * generated `REGISTRY.md`, and the dated records `isVolatileExemptPath` names.
+ */
+function gatherVolatileTargets(communitySlugs: Set<string>): string[] {
+  const out: string[] = [];
+  const agentsDir = join(REPO_ROOT, '.agents');
+  const visit = (dir: string): void => {
+    let entries: string[];
+    try { entries = readdirSync(dir); }
+    catch { return; }
+    for (const e of entries) {
+      const full = join(dir, e);
+      if (lstatSync(full).isSymbolicLink()) { continue; }
+      if (statSync(full).isDirectory()) {
+        if (dir === agentsDir && e === 'prompts') { continue; }
+        if (dir === SKILLS_DIR && (communitySlugs.has(e) || e.endsWith('-workspace'))) { continue; }
+        visit(full);
+      }
+      else if (e.endsWith('.md')) {
+        if (dir === SKILLS_DIR && SKILL_AGGREGATE_FILES.has(e)) { continue; }
+        out.push(full);
+      }
+    }
+  };
+  visit(agentsDir);
+  const agentsMd = join(REPO_ROOT, 'AGENTS.md');
+  if (existsSync(agentsMd)) { out.push(agentsMd); }
+  return out.filter(f => !isVolatileExemptPath(relScope(f)));
+}
+
+function checkVolatileFacts(files: string[]): void {
+  for (const file of files) {
+    let text: string;
+    try { text = readFileSync(file, 'utf8'); }
+    catch { continue; }
+    const rel = relative(REPO_ROOT, file).replace(/\\/g, '/');
+    const seen = new Set<string>();
+    for (const hit of scanVolatile(text, { html: false })) {
+      const key = `${hit.line}:${hit.kind}`;
+      if (seen.has(key)) { continue; }
+      seen.add(key);
+      record(VOLATILE_SEVERITY[hit.kind], hit.kind, rel, `line ${hit.line}: \`${hit.match}\` — ${volatileRemedy(hit.kind)}`);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
@@ -827,6 +906,9 @@ function main() {
 
   // Skill-wide refactor checks (K1–K4 repo-wide; K7 narrow scope).
   checkSkillRefactor();
+
+  // Checks 16-17: volatile facts (Critical Rule #17) over .agents/**/*.md + AGENTS.md.
+  checkVolatileFacts(gatherVolatileTargets(new Set([...t2, ...t3, ...t4])));
 
   // Report
   const counts = { ERROR: 0, WARN: 0, INFO: 0 };
