@@ -18,6 +18,8 @@ compact_rules: |
   - Define a brand-new product → use `/project-foundation`
   - Scaffold backend / frontend code → use `/project-bootstrap`
   - Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
+metadata:
+  kind: workflow
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->

@@ -199,13 +199,19 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'supabase/agent-skills', skill: 'supabase-postgres-best-practices' },
   { package: 'https://github.com/vercel-labs/agent-skills', skill: 'deploy-to-vercel' },
   { package: 'resend/resend-cli' },
+  // Builder skills — project-level because a T1 workflow depends on them and
+  // must not hinge on a user's global plugin list (a user-level install still
+  // satisfies them). skill-creator (Anthropic) is the builder of every skill
+  // this repo scaffolds: `project-context` mode `context-skill` (a project's
+  // `<aspect>-context`) and any new T1 skill go through it, per
+  // agentic-dev-core/references/skill-scaffold.md.
+  { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
 ];
 
 // Community skills installed at USER (global) level — universal across every
-// project the user works on (meta-tooling, runtime, browser automation, CI
+// project the user works on (skill discovery, runtime, browser automation, CI
 // docs, brainstorming, presentation authoring).
 const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
-  { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
   { package: 'https://github.com/vercel-labs/skills', skill: 'find-skills' },
   { package: 'https://github.com/xixu-me/skills', skill: 'github-actions-docs' },
   { package: 'https://github.com/obra/superpowers', skill: 'brainstorming' },

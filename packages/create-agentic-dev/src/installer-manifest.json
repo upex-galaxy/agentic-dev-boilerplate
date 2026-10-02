@@ -67,7 +67,7 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 21,
+      "count": 22,
       "items": [
         {
           "name": "frontend-design",
@@ -173,17 +173,17 @@
           "name": "resend-cli (full package)",
           "purpose": "Transactional email development with Resend.",
           "source": "resend/resend-cli"
-        }
-      ]
-    },
-    "communityUserSkills": {
-      "count": 8,
-      "items": [
+        },
         {
           "name": "skill-creator",
           "purpose": "Create, modify, and evaluate Claude Code skills.",
           "source": "https://github.com/anthropics/skills"
-        },
+        }
+      ]
+    },
+    "communityUserSkills": {
+      "count": 7,
+      "items": [
         {
           "name": "find-skills",
           "purpose": "Discover and search available skills.",

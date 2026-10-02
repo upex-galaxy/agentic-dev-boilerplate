@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-02T21:29:56.630Z`
+> Generated: `2026-10-02T21:32:47.205Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -30,7 +30,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/acli/SKILL.md` · phase: `unknown` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/acli/SKILL.md` · phase: `unknown` · kind: `utility` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -51,7 +51,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/agentic-dev-core/SKILL.md` · phase: `foundation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/agentic-dev-core/SKILL.md` · phase: `foundation` · kind: `core` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -73,7 +73,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/agentic-dev-onboard/SKILL.md` · phase: `foundation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/agentic-dev-onboard/SKILL.md` · phase: `foundation` · kind: `workflow` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -102,7 +102,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: you are running any phase of a scheduled run, a gate fires, or the briefing tells you to load the full skill.
 
-> Source: `.agents/skills/autonomous-delivery/SKILL.md` · phase: `implementation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/autonomous-delivery/SKILL.md` · phase: `implementation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -121,7 +121,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/design-system/SKILL.md` · phase: `foundation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/design-system/SKILL.md` · phase: `foundation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -147,7 +147,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: running Strategy Setup, resolving conflicts, planning a chain, or when the compact rules above do not settle the operation.
 
-> Source: `.agents/skills/git-flow-master/SKILL.md` · phase: `implementation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/git-flow-master/SKILL.md` · phase: `implementation` · kind: `workflow` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -170,7 +170,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the mode is ambiguous, a dry-run diff or migration audit looks wrong, or you need the selected reference's step-by-step phases and verification list.
 
-> Source: `.agents/skills/jira-administration/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents/skills/jira-administration/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
 
 ---
 
@@ -204,7 +204,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/product-management/SKILL.md` · phase: `management` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/product-management/SKILL.md` · phase: `management` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -225,7 +225,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/project-bootstrap/SKILL.md` · phase: `foundation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/project-bootstrap/SKILL.md` · phase: `foundation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -234,7 +234,8 @@ Skills indexed: 16
 **Purpose**: Generate or refresh the canonical project-context artifacts for development: business data map, business feature map, business API map, m...
 
 **Compact Rules**:
-- Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all`. Load only that mode's reference; never open a second one in the same pass.
+- Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all` · `context-skill`. Load only that mode's reference; never open a second one in the same pass.
+- `context-skill` scaffolds a project-owned `<aspect>-context` (`references/context-skill.md`, contract `agentic-dev-core/references/skill-scaffold.md` §3-§5) THROUGH `skill-creator` (T3) for an aspect the business maps do not cover. It cites its sources and never copies them; `refresh-all` never includes it.
 - Mode → reference → output: `data` → `references/data.md` → `.context/business/business-data-map.md` · `features` → `references/features.md` → `.context/business/business-feature-map.md` · `api` → `references/api.md` → `.context/business/business-api-map.md` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
 - User did not name a mode → ASK. NEVER infer `refresh-all` from a generic "refresh the context" request.
 - `refresh-all` runs strictly `data` → `features` → `api` → `master-plan` → `dev-roadmap`, one at a time. Each reference's own validation and approval gate must close before the next is loaded. Never skip ahead.
@@ -247,7 +248,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the requested mode is ambiguous, a `refresh-all` chain fails mid-sequence, or you need the selected reference's own analysis steps and validation gate.
 
-> Source: `.agents/skills/project-context/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents/skills/project-context/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
 
 ---
 
@@ -268,7 +269,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/project-foundation/SKILL.md` · phase: `foundation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/project-foundation/SKILL.md` · phase: `foundation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -296,7 +297,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the stage you are running needs its full walkthrough, a gate fires, or the briefing tells you to load the full skill.
 
-> Source: `.agents/skills/sprint-development/SKILL.md` · phase: `implementation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/sprint-development/SKILL.md` · phase: `implementation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -316,7 +317,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the audit scope is disputed, a structural-drift flag needs the preserve-list, or the standalone-HTML patch rules are needed.
 
-> Source: `.agents/skills/sync-ai-memory/SKILL.md` · phase: `unknown` · extraction strategy: A
+> Source: `.agents/skills/sync-ai-memory/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
 
 ---
 
@@ -335,7 +336,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/testability-guide/SKILL.md` · phase: `foundation-extension` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/testability-guide/SKILL.md` · phase: `foundation-extension` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -357,7 +358,7 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/unit-testing/SKILL.md` · phase: `implementation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/unit-testing/SKILL.md` · phase: `implementation` · kind: `workflow` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -382,4 +383,4 @@ Skills indexed: 16
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
-> Source: `.agents/skills/vercel-cli/SKILL.md` · phase: `implementation` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/vercel-cli/SKILL.md` · phase: `implementation` · kind: `utility` · source: frontmatter `compact_rules` (verbatim)

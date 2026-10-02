@@ -18,6 +18,8 @@ compact_rules: |
   - Sync project-specific facts in `AGENTS.md` (that belongs to `/sync-ai-memory`).
   - Sync OpenAPI / API schemas (that's `bun run api:sync`).
   - Run any external command — no `bun install`, no `git`, no `gh`.
+metadata:
+  kind: core
 ---
 
 # Agentic Dev Core — Foundation reference host
@@ -41,6 +43,8 @@ This skill does NOT orchestrate workflows, does NOT generate files, and does NOT
 | `references/behavioral-layer.md`           | Workflow skills that need full behavioral-layer examples beyond AGENTS.md §2                                               | Detailed examples + working-signals for THINK / SIMPLICITY / SURGICAL / GOAL-DRIVEN.            |
 | `references/model-routing.md`              | Orchestrators that route phases across Opus / Sonnet / Haiku                                                               | Phase → model alias mapping with rationale.                                                     |
 | `references/skill-resolver.md`             | Skills that resolve composable skills at runtime via the registry                                                          | Skill Resolver Protocol used by sub-agent launches.                                             |
+| `references/skill-scaffold.md`             | `project-context` mode `context-skill`, any change that adds a T1 skill, `scripts/lint-skills.ts`                          | Contract a new T1 skill is born with: frontmatter (`metadata.kind`, `stage_owner`, `requires_capabilities`, `writes`), per-kind files and sections, the context-skill three-question test, the project-local `<aspect>-context` ownership rule, `skill-creator` as the builder. |
+| `references/session-footer-contract.md`    | Every `metadata.stage_owner: true` skill                                                                                   | Chat-facing session close: evidence paths, the footer (skills / MCPs / CLIs / dev surfaces touched) and the light stage verifier read at the destination (Jira status, PR, migration, deploy SHA, `progress.md`). |
 | `references/topic-key-conventions.md`      | SDD-aware skills + sprint-development                                                                                      | Engram / openspec topic-key naming conventions for SDD artifacts.                               |
 | `references/adr-doctrine.md`               | `project-foundation` (SRS phase), `sprint-development` (Stage 1 planning)                                                  | When an architectural decision earns an ADR (two-gate test) + the detect → draft → record procedure. |
 | `references/decision-elicitation-doctrine.md` | `AGENTS.md` §2, `decision-protocol.md` §5, any skill about to ask the human to decide                                  | How to ask: harness prompt vs `mkd` decision deck (the >3-decisions-or-one-dense threshold), deck justification rules, the non-silent `mkd` gate + fallback, reading the returned contract. |

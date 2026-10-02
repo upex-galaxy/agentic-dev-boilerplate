@@ -12,17 +12,15 @@
 > - `.agents/skills/*/SKILL.md` (per-skill instructions; reference this doc relatively as `agentic-dev-core/references/skill-composition-strategy.md`)
 > - `cli/install.ts` (installer — declares project-level vs user-level skill installs)
 > - `.agents/skills/agentic-dev-core/references/{briefing-template,dispatch-patterns,orchestration-doctrine,skill-resolver}.md` (sibling meta-doctrine references)
->
-> **Last updated**: 2026-05-18
 
 ---
 
 ## 1. Problem Statement
 
-The repo ships with **11 project-owned workflow skills** (`.agents/skills/`). The installer (`cli/install.ts`) also installs:
+The repo ships the project-owned skills `.agents/skills/REGISTRY.md` lists (`.agents/skills/`). The installer (`cli/install.ts`) also installs:
 
-- **21 community skills (project-level)**: `next-best-practices`, `next-cache-components`, `next-upgrade`, `deploy-to-vercel`, `tailwind-css-patterns`, `shadcn`, `react-hook-form`, `zod`, `typescript-advanced-types`, `supabase`, `supabase-postgres-best-practices`, `resend-cli`, `accessibility`, `seo`, `frontend-design`, `n8n-skills`, `emil-design-eng`, `ui-ux-pro-max`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects`.
-- **7 community skills (user-level / global)**: `skill-creator`, `find-skills`, `github-actions-docs`, `brainstorming`, `html-ppt`, `bun`, `playwright-cli`.
+- **Community skills (project-level)**: the `PROJECT_LEVEL_SKILLS` array in `cli/install.ts`: the stack skills, plus the builder skills a T1 workflow depends on (`skill-creator`, the builder of every skill this repo scaffolds, `skill-scaffold.md`).
+- **Community skills (user-level / global)**: the `USER_LEVEL_SKILLS` array in `cli/install.ts`.
 - **Engram (persistent memory)**: installed via `gentle-ai install --preset minimal`. Not a workflow skill — it is the persistent-memory MCP referenced from AGENTS.md §12 (proactive memory triggers).
 
 Gaps the protocol addresses:
@@ -39,9 +37,9 @@ Three tiers. Different discovery and load rules per tier.
 
 | Tier                              | Location                                                          | Examples                                                                                                                                                                                                          | Discovery                                                                                                     | Load behavior                                                                                |
 | --------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **T1 — Project-owned**            | `.agents/skills/` (committed)                                     | `sprint-development`, `design-system`, `git-flow-master`, `product-management`, `project-foundation`, `project-bootstrap`, `testability-guide`, `agentic-dev-core`, `agentic-dev-onboard`, `acli`, `unit-testing`, `vercel-cli` | Named in AGENTS.md §5 "Skills T1" table                                                                       | Silent (load on trigger, no ask)                                                             |
-| **T3 — Community project-level**  | `.agents/skills/` (installed by `install.ts:PROJECT_LEVEL_SKILLS`) | `next-best-practices`, `shadcn`, `tailwind-css-patterns`, `zod`, `supabase`, `supabase-postgres-best-practices`, `deploy-to-vercel`, `resend-cli`, etc                                                            | Named **by category** in AGENTS.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
-| **T4 — Community user-level**     | `~/.claude/skills/` (installed by `install.ts:USER_LEVEL_SKILLS`) | `github-actions-docs`, `brainstorming`, `skill-creator`, `find-skills`, `html-ppt`, `bun`, `playwright-cli`                                                                                                       | **NOT named in AGENTS.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain  | **ASK user before load** (may not be installed, or user may not want it for this task)       |
+| **T1 — Project-owned**            | `.agents/skills/` (committed)                                     | every committed skill `.agents/skills/REGISTRY.md` lists | Named in AGENTS.md §5 "Skills T1" table                                                                       | Silent (load on trigger, no ask)                                                             |
+| **T3 — Community project-level**  | `.agents/skills/` (installed by `install.ts:PROJECT_LEVEL_SKILLS`) | `PROJECT_LEVEL_SKILLS` in `cli/install.ts` (stack skills + builder skills such as `skill-creator`)                                                            | Named **by category** in AGENTS.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
+| **T4 — Community user-level**     | `~/.claude/skills/` (installed by `install.ts:USER_LEVEL_SKILLS`) | `USER_LEVEL_SKILLS` in `cli/install.ts`                                                                                                       | **NOT named in AGENTS.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain  | **ASK user before load** (may not be installed, or user may not want it for this task)       |
 
 ### Tier decision rule
 
@@ -51,6 +49,40 @@ ELIF skill is in install.ts PROJECT_LEVEL_SKILLS → T3
 ELIF skill is in install.ts USER_LEVEL_SKILLS    → T4
 ELSE → T4 (unknown community)
 ```
+
+**Builder skills are T3, not T4.** A community skill that a T1 workflow DEPENDS on (not one it merely borrows by category) is installed at project level, so a clone never silently skips it. `skill-creator` sits there because `project-context` mode `context-skill` and every new T1 skill are built through it (`skill-scaffold.md`). A user-level install of the same skill still satisfies it. A builder joins `PROJECT_LEVEL_SKILLS` in the same change as the T1 flow that loads it: an install nothing loads should not exist.
+
+---
+
+## 2b. Purpose Axis (`metadata.kind`)
+
+A skill carries three independent labels. Each answers one question, is declared in one place, and has one gate. Collapsing any two of them is the wrong turn: `acli` is T1 **and** utility, `skill-creator` is T3 and nothing here labels its kind (the project does not author community frontmatter).
+
+| Axis | Question it answers | Where declared | Gate |
+|---|---|---|---|
+| **Ownership** (T1 / T3 / T4, §2) | Who owns it, where it is installed, whether to ask before loading | `.agents/skills/` dir walk + `PROJECT_LEVEL_SKILLS` / `USER_LEVEL_SKILLS` in `cli/install.ts` | the tier checks in `scripts/lint-skills.ts` (`TIER-MISMATCH` against the `(T3)` / `(T4)` annotations of every Expected-matches table, `DUPLICATE-TIER`) |
+| **Purpose** (`metadata.kind`) | What the skill IS: knowledge, a procedure, a tool index, or a doctrine parent | `SKILL.md` frontmatter, nested under `metadata:` | `KIND-MISSING`, `KIND-VOCAB`, `KIND-SUFFIX` in `scripts/lint-skills.ts` |
+| **Domain** (`complementary_categories`, §4) | Which community skills a T1 skill may borrow, by category not name | `SKILL.md` frontmatter, top level | `ORPHAN-CATEGORY` / `EMPTY-CATEGORY` against §4.1 |
+
+### The four kinds
+
+| Kind | Classifying test | Slug suffix |
+|---|---|---|
+| **context** | Loading it changes what the agent KNOWS, not what it DOES next. No stages, drives no tool. Cites `.context/`, never restates it. May hold its own generated map and keep it honest (the write-scope amendment, `skill-scaffold.md` §3) | `-context` (mandatory) |
+| **workflow** | A procedure with stages the agent runs end-to-end: a delivery stage (foundation, bootstrap, backlog, story, deploy) OR an operating flow around one (git, onboarding, Jira administration, context refresh) | none |
+| **utility** | Owns ONE tool's grammar (a binary in `allowed-tools`, or an AGENTS.md §6.5 CLI row) and has no stages of its own | `-cli` / `-tool` / `-app` (mandatory for new skills) |
+| **core** | Parent of other skills: they cite its `references/`; it has no write path of its own | none |
+
+### Rules
+
+- **`kind` lives under `metadata`, never top-level.** The Agent Skills frontmatter spec reserves the top level; `metadata` is its extension point. One kind per skill.
+- **`stage_owner: true` marks a workflow skill that owns stages.** It binds `STAGE-OWNER-DISPATCH` (a dispatch section must exist) and the session close in `session-footer-contract.md`. The set is whatever skills declare it; `REGISTRY.md` prints `stage owner` on their Source line.
+- **The suffix rule binds both ways.** A slug ending `-context` must declare `context` and a `context` skill must end `-context`; a slug ending `-cli` / `-tool` / `-app` must declare `utility` and a `utility` skill must carry one of them. `workflow` and `core` have no suffix rule.
+- **Grandfathering is by name, visibly.** `KIND_SUFFIX_EXEMPT` in `scripts/lint-skills.ts` lists the slugs that predate the rule (a utility without a suffix, a workflow whose slug ends `-context`). A new skill picks a slug that matches its kind instead of joining that set.
+- **Which skill is which: read `.agents/skills/REGISTRY.md`** (generated by `bun run skills:registry`; the Source line prints `kind:`). This document never carries a per-skill list, so there is nothing here to fall behind.
+- **A context skill may write, but only its own `references/`.** `metadata.writes: [references/]` + `references/refresh.md`; it never runs a stage and never touches Jira or Confluence. `CONTEXT-WRITES` in `scripts/lint-skills.ts` gates it.
+- **Capabilities are declared, not inferred.** `metadata.requires_capabilities` names MCP capabilities from `mcp-capabilities.md` §2 only; `CAPABILITY-VOCAB` rejects any other name, `CAPABILITY-UNDECLARED` warns when a body uses a resolution tag it did not declare.
+- **T3 / T4 bodies are not linted for kind.** A community skill committed in the store keeps its `cli/install.ts` tier and the project does not author its frontmatter.
 
 ---
 
@@ -116,7 +148,7 @@ Project-owned skills are named explicitly. Community skills (T3, T4) are matched
 | `ci-cd`              | `github-actions-docs`                                                                                                                                         | `project-bootstrap` (CI phase), `sprint-development`                                  |
 | `issue-tracker`      | (acli is T1)                                                                                                                                                  | `sprint-development`, `product-management`                                            |
 | `creativity`         | `brainstorming`                                                                                                                                               | `project-foundation`, `product-management`                                            |
-| `meta-skill`         | `skill-creator`, `find-skills`                                                                                                                                | only on user request (find-skills auto-invoked per §6.2 as last-resort)               |
+| `meta-skill`         | `skill-creator`, `find-skills`                                                                                                                                | `project-context` mode `context-skill` (`skill-creator`, the builder); otherwise only on user request (find-skills auto-invoked per §6.2 as last-resort) |
 | `automation`         | `n8n-skills`                                                                                                                                                  | only on user request                                                                  |
 | `presentation`       | `html-ppt`, `presentation-designer`                                                                                                                           | only on user request (HTML decks, slideshows)                                         |
 

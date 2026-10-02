@@ -1,6 +1,6 @@
 import type { Component, SyncStateV6, SyncStateV7 } from './updater-types.ts';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
@@ -16,6 +16,7 @@ import {
   foreignDirtyPaths,
   isBootstrapOnlyFile,
   isLocalTemplateSource,
+  isProjectLocalSkillPath,
   isWithinWriteSurface,
   LAST_APPLY_FILE,
   parsePorcelainPaths,
@@ -29,6 +30,7 @@ import {
   UPDATER_OWNED_PATHS_ENV,
   UPDATER_SELF_UPDATED_ENV,
   UPDATER_UPSTREAM_DIR_ENV,
+  UPSTREAM_CONTEXT_SUFFIX_SKILLS,
   writeLastApply,
 } from './updater-core.ts';
 
@@ -654,5 +656,63 @@ describe('watched files inside a synced component (.husky hooks, updater.protect
     // Once present, a later upstream change never reaches it.
     write(project, '.husky/pre-push', '#!/bin/sh\nbun run repo:check\n');
     expect(classifyFile({ component: 'husky', path: '.husky/pre-push', status: 'M', fromSha: '', toSha: 'y', added: 1, removed: 0, isBinary: false, templateOldSha: 'x', templateNewSha: 'y' }, upstream, project, [husky], protectedPaths)).toBe('unchanged');
+  });
+});
+
+describe('project-local context skills (a project\'s `<aspect>-context/` is never synced)', () => {
+  test('isProjectLocalSkillPath: any `-context` slug under the skills dir, except the ones upstream owns', () => {
+    expect(isProjectLocalSkillPath('.agents/skills/billing-context/SKILL.md')).toBe(true);
+    expect(isProjectLocalSkillPath('.agents/skills/auth-context/references/gotchas.md')).toBe(true);
+    expect(isProjectLocalSkillPath('.agents\\skills\\billing-context\\SKILL.md')).toBe(true);
+    expect(isProjectLocalSkillPath('.agents/skills/project-context/SKILL.md')).toBe(false);
+    expect(isProjectLocalSkillPath('.agents/skills/acli/SKILL.md')).toBe(false);
+    // Segment-aware: the suffix binds the SLUG, not a deeper directory or a sibling store.
+    expect(isProjectLocalSkillPath('.agents/skills/acli/references/billing-context/x.md')).toBe(false);
+    expect(isProjectLocalSkillPath('.agents/skills-context/x.md')).toBe(false);
+    expect(isProjectLocalSkillPath('app/billing-context/page.tsx')).toBe(false);
+  });
+
+  test('the upstream set matches the `-context` slugs scripts/lint-skills.ts grandfathers (cli/ is import-closed, so this is the seam)', () => {
+    const lint = readFileSync(join(import.meta.dir, '..', '..', 'scripts', 'lint-skills.ts'), 'utf8');
+    const m = /const KIND_SUFFIX_EXEMPT = new Set<string>\(\[([^\]]+)\]\)/.exec(lint);
+    expect(m).not.toBeNull();
+    const exempt = [...m![1].matchAll(/'([^']+)'/g)].map(x => x[1]).filter(slug => slug.endsWith('-context'));
+    expect(exempt.length).toBeGreaterThan(0);
+    for (const slug of exempt) { expect(UPSTREAM_CONTEXT_SUFFIX_SKILLS.has(slug)).toBe(true); }
+  });
+
+  test('the upstream walk skips a same-slug context skill, and a delete upstream never reaches the project copy', () => {
+    const SKILLS: Component = { name: 'skills', type: 'directory', paths: ['.agents/skills'] };
+    const template = temporaryRoot();
+    git(template, ['init', '--quiet', '--initial-branch=main']);
+    git(template, ['config', 'user.email', 'test@example.com']);
+    git(template, ['config', 'user.name', 'test']);
+    write(template, '.agents/skills/project-context/SKILL.md', 'project-context v1\n');
+    write(template, '.agents/skills/billing-context/SKILL.md', 'an example upstream should never ship, but might\n');
+    git(template, ['add', '-A']);
+    git(template, ['commit', '--quiet', '-m', 'lock']);
+    const lock = git(template, ['rev-parse', 'HEAD']).trim();
+    git(template, ['rm', '--quiet', '-r', '.agents/skills/billing-context']);
+    write(template, '.agents/skills/project-context/SKILL.md', 'project-context v2\n');
+    git(template, ['add', '-A']);
+    git(template, ['commit', '--quiet', '-m', 'head']);
+
+    const local = temporaryRoot();
+    write(local, '.agents/skills/project-context/SKILL.md', 'project-context v1\n');
+    write(local, '.agents/skills/billing-context/SKILL.md', 'the project\'s own judgment layer\n');
+
+    const reconciled = reconcileComponentsByContent(template, [SKILLS], local, []);
+    expect(reconciled.map(e => e.path)).toEqual(['.agents/skills/project-context/SKILL.md']);
+
+    const state: SyncStateV6 = { schemaVersion: 6, lastSync: '', templateCommit: lock, cliVersion: '8.1', syncedComponents: [], variableSystemVersion: 1, perComponentCommit: { skills: lock } };
+    const delta = computeDelta(template, [SKILLS], state, local, []);
+    expect(delta.map(e => e.path)).toEqual(['.agents/skills/project-context/SKILL.md']);
+    expect(delta.some(e => e.classification === 'deleted-upstream')).toBe(false);
+  });
+
+  test('a project context skill is outside the write surface, so its uncommitted edits never block a sync', () => {
+    const cfg = { components: [{ name: 'skills', type: 'directory' as const, paths: ['.agents/skills'] }], ignoreFiles: [], packageJsonSpecs: [], deprecatedFiles: [], excludePaths: [], repoOnlyPaths: [], bootstrapOnlyPaths: [] };
+    expect(isWithinWriteSurface(cfg, '.agents/skills/billing-context/SKILL.md')).toBe(false);
+    expect(isWithinWriteSurface(cfg, '.agents/skills/project-context/SKILL.md')).toBe(true);
   });
 });
