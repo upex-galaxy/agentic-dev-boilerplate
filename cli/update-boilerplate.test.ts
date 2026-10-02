@@ -64,6 +64,10 @@ describe('worktree refusal', () => {
       expect(COMPONENTS.find(c => c.name === name)).toMatchObject({ type: 'file-list', paths: ['.'], files: [file], bootstrapOnly: true });
     }
   });
+
+  test('the playwright-cli config ships once, then stays project-owned', () => {
+    expect(COMPONENTS.find(c => c.name === 'playwright-cli-config')).toMatchObject({ type: 'file-list', paths: ['.playwright'], files: ['cli.config.json'], bootstrapOnly: true });
+  });
 });
 
 describe('protected watchlist', () => {
