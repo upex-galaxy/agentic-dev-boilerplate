@@ -58,6 +58,7 @@ import {
   resolveAtlassianInstance,
 } from './lib/atlassian-instance.ts';
 import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
+import { checkoutRoots } from './lib/worktree.ts';
 
 // `tui` pulls third-party deps (boxen/cli-table3/figures/picocolors). It is
 // imported lazily inside main() so `--preflight` loads only node built-ins and
@@ -227,6 +228,36 @@ interface PendingAction {
   where?: string
 }
 
+/** What setup a linked worktree lacks, as the worktree-aware fix reads it. */
+export interface WorktreeSetupState {
+  envFile: boolean
+  deps: boolean
+  /** `.husky/_/` exists: without it `core.hooksPath` points at nothing and no git hook runs. */
+  gitHooks: boolean
+}
+
+/**
+ * The fix for missing setup inside a LINKED worktree, or null when nothing is
+ * missing. One command, `bun run worktree:provision`: it copies the real
+ * `.env` (and `.vercel/`, local settings) from the primary checkout and
+ * installs dependencies and git hooks. The primary-checkout answer
+ * (`cp .env.example .env`) is the wrong one here: it leaves the worktree with
+ * an empty template while the filled `.env` sits one directory away.
+ */
+export function worktreeSetupAction(state: WorktreeSetupState): PendingAction | null {
+  const missing = [
+    state.envFile ? null : '.env',
+    state.deps ? null : 'node_modules/',
+    state.gitHooks ? null : '.husky/_ (git hooks)',
+  ].filter((m): m is string => m !== null);
+  if (missing.length === 0) { return null; }
+  return {
+    type: 'shell_command',
+    target: 'bun run worktree:provision',
+    hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here.`,
+  };
+}
+
 interface DirenvState {
   installed: boolean
   version?: string
@@ -293,6 +324,8 @@ interface DoctorReport {
   codex_config_exists: boolean
   agent_compatibility: AgentCompatibilityDiagnostic
   deps_installed: boolean
+  /** Linked worktree: the primary checkout's root; null in the primary itself. */
+  worktree_of: string | null
   direnv: DirenvState
   pending_actions: PendingAction[]
 }
@@ -509,12 +542,27 @@ async function runDoctor(): Promise<DoctorReport> {
     codex_config_exists: existsSync(CODEX_CONFIG_PATH),
     agent_compatibility: diagnoseAgentCompatibility(REPO_ROOT),
     deps_installed: existsSync(NODE_MODULES_DOTENV),
+    worktree_of: ((): string | null => {
+      const roots = checkoutRoots(REPO_ROOT);
+      return roots !== null && roots.linked ? roots.primaryRoot : null;
+    })(),
     direnv: { installed: false },
     pending_actions: [],
   };
 
+  // A linked worktree gets ONE fix for missing setup (worktree:provision),
+  // replacing the primary-checkout `.env` copy and `bun install` below.
+  const worktreeFix = report.worktree_of === null
+    ? null
+    : worktreeSetupAction({
+        envFile: report.env_file_exists,
+        deps: report.deps_installed,
+        gitHooks: existsSync(join(REPO_ROOT, '.husky', '_')),
+      });
+  if (worktreeFix !== null) { report.pending_actions.push(worktreeFix); }
+
   // .env presence
-  if (!report.env_file_exists) {
+  if (!report.env_file_exists && worktreeFix === null) {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'cp .env.example .env',
@@ -596,7 +644,7 @@ async function runDoctor(): Promise<DoctorReport> {
   }
 
   // node_modules / dotenv-cli
-  if (!report.deps_installed) {
+  if (!report.deps_installed && worktreeFix === null) {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun install',
@@ -716,6 +764,7 @@ function printHuman(report: DoctorReport): void {
     ['Codex CLI executable', compat.codex.cli_detected ? tui.statusIcon('ok') : `${tui.statusIcon('warn')} not on PATH; Desktop still reads the repository config`],
     ['Codex repository trust', `${tui.statusIcon('warn')} required; runtime state, not file-verifiable`],
     ['node_modules', report.deps_installed ? tui.statusIcon('ok') : tui.statusIcon('fail')],
+    ...(report.worktree_of !== null ? [['Linked worktree of', `${tui.statusIcon('info')} ${report.worktree_of}`]] : []),
     [`direnv binary${report.direnv.version ? ` (${report.direnv.version})` : ''}`, report.direnv.installed ? tui.statusIcon('ok') : tui.statusIcon('warn')],
   ];
   if (report.direnv.installed) {
