@@ -35,7 +35,7 @@ Proposed ──→ Accepted ──→ Superseded   (by ADR-NNNN, which links bac
                    └────→ Deprecated   (no longer applies; nothing replaces it)
 ```
 
-- **Proposed** — drafted, under discussion, not yet binding.
+- **Proposed** — the decision is still open; the ADR names what is unresolved. An ADR that records a decision the human already approved starts as `Accepted`.
 - **Accepted** — binding. Downstream work must honor it.
 - **Superseded** — a newer ADR replaces it. Set `Superseded by: ADR-NNNN`; the new ADR sets `Supersedes: ADR-MMMM`. **Do not edit the old decision body** — leave it as the historical record.
 - **Deprecated** — the decision no longer applies and nothing replaces it (e.g. the feature was removed).
@@ -53,7 +53,7 @@ Proposed ──→ Accepted ──→ Superseded   (by ADR-NNNN, which links bac
 3. Add a row to the **Index** below.
 4. If it supersedes an existing ADR, wire both directions (`Supersedes` / `Superseded by`) and flip the old one's `Status`.
 
-Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes both gates). Either way, the human approves before `Status: Accepted`. The detection + authoring procedure for AI workflows lives in `.agents/skills/agentic-dev-core/references/adr-doctrine.md`.
+Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes both gates). Either way, `Status: Accepted` means a human approved the decision: an ADR that records a decision the human already took (a decision deck, a chat answer, an approved plan) is written `Accepted` from the start, naming the approval in `Deciders`; only a decision still open is `Proposed`. The detection + authoring procedure for AI workflows lives in `.agents/skills/agentic-dev-core/references/adr-doctrine.md`.
 
 ---
 

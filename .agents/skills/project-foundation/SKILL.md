@@ -16,7 +16,7 @@ compact_rules: |
   - **F5.** NEVER hardcode tool choices (DB engine, hosting provider, auth vendor, framework) in the Constitution. Tool selection lives in SRS architecture — Constitution stays vendor-agnostic so the SRS can change without invalidating the strategic anchor.
   - **F6.** NEVER define personas, problem statements, or KPIs without quoting evidence (user interview, analytics snapshot, stakeholder ask, market data citation). Evidence-free claims look authoritative and mislead the PRD downstream.
   - **F7.** NEVER produce a PRD without an explicit out-of-scope section. Implicit scope boundaries always leak; missing out-of-scope is the #1 source of mid-sprint argumentation.
-  - **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Draft as `Proposed`; never mark `Accepted` without human sign-off.
+  - **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Status per `adr-doctrine.md` §3 step 4: a decision the human already approved is `Accepted` from the start (cite the approval); only a still-open one is `Proposed`.
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
@@ -184,7 +184,7 @@ The SRS turns the PRD into a technical contract: formal functional requirements,
 - Read `references/srs-architecture.md` for system architecture diagram, tech stack rationale, data model, deployment topology.
 - Read `references/srs-api-contracts.md` for OpenAPI endpoint definitions per domain.
 
-**Seed the first ADRs.** The architecture phase is where the most hard-to-reverse decisions are made (auth model, data-access pattern, error/response contract, tenancy, deployment topology, framework choices with lock-in). After `srs-architecture.md` is drafted, promote each decision that passes the two-gate test (architectural **and** hard to reverse) into a standalone `ADR-NNNN-<slug>.md` under `.context/ADR/`, then reference them from the architecture doc. Follow `agentic-dev-core/references/adr-doctrine.md` (detection + authoring) and `.context/ADR/README.md` (template + lifecycle). AI drafts as `Proposed`; the human accepts.
+**Seed the first ADRs.** The architecture phase is where the most hard-to-reverse decisions are made (auth model, data-access pattern, error/response contract, tenancy, deployment topology, framework choices with lock-in). After `srs-architecture.md` is drafted, promote each decision that passes the two-gate test (architectural **and** hard to reverse) into a standalone `ADR-NNNN-<slug>.md` under `.context/ADR/`, then reference them from the architecture doc. Follow `agentic-dev-core/references/adr-doctrine.md` (detection + authoring) and `.context/ADR/README.md` (template + lifecycle). Status: a decision the human already approved (it is in the PRD/SRS they signed off) is written `Accepted`, naming that approval; a still-open one is `Proposed`.
 
 Output: `.context/SRS/*.md` files, plus the seeded `.context/ADR/ADR-NNNN-*.md` records and an updated `.context/ADR/README.md` index.
 
@@ -321,7 +321,7 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 - **F5.** NEVER hardcode tool choices (DB engine, hosting provider, auth vendor, framework) in the Constitution. Tool selection lives in SRS architecture — Constitution stays vendor-agnostic so the SRS can change without invalidating the strategic anchor.
 - **F6.** NEVER define personas, problem statements, or KPIs without quoting evidence (user interview, analytics snapshot, stakeholder ask, market data citation). Evidence-free claims look authoritative and mislead the PRD downstream.
 - **F7.** NEVER produce a PRD without an explicit out-of-scope section. Implicit scope boundaries always leak; missing out-of-scope is the #1 source of mid-sprint argumentation.
-- **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Draft as `Proposed`; never mark `Accepted` without human sign-off.
+- **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Status per `adr-doctrine.md` §3 step 4: a decision the human already approved is `Accepted` from the start (cite the approval); only a still-open one is `Proposed`.
 
 ---
 
