@@ -24,6 +24,8 @@ compact_rules: |
   - **B8.** NEVER scaffold OpenAPI without the Scalar UI route at `/api/docs` (the `@scalar/nextjs-api-reference` route handler). The contract surface must be browsable from day one or downstream consumers won't trust it. Do NOT ship Redoc/Swagger instead — Scalar is the standard for this stack.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
+  kind: workflow
+  stage_owner: true
   requires_capabilities: [library-docs]
 ---
 
@@ -119,6 +121,8 @@ Canonical reading order for any AI starting cold on a project-bootstrap workflow
 ## Session & Dispatch
 
 > **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 1 (plan write) are NOT optional.
+>
+> **Session close**: every stage ends with the light stage verifier and the session ends with the chat footer (tools used + dev surfaces touched), both per `agentic-dev-core/references/session-footer-contract.md`.
 
 This skill is **project-scope**: no `<scope>` segment. Session state lives directly at `.session/project-bootstrap/{plan.md, progress.md}` per `agentic-dev-core/references/session-management.md` §3 + §9.
 

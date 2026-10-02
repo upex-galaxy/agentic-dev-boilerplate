@@ -23,6 +23,8 @@ compact_rules: |
   - **Never commit `.env.local`** produced by `vercel env pull`. It's gitignored; keep it that way.
   - **Verify exit codes.** `vercel inspect --wait` exits 0 only on `READY`. Any non-zero is a real failure — surface it, don't swallow it.
   - **Pin the CLI version in CI.** New majors have shifted flag shapes (e.g. `--confirm` → `--yes`). Document the pinned version in `package.json` devDependencies or in the CI workflow.
+metadata:
+  kind: utility
 ---
 
 # Vercel CLI (`vercel`)
