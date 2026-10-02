@@ -3,6 +3,8 @@ name: sync-ai-memory
 description: "Audit and sync all AI-consumed documentation in this repo against the current repo state: AGENTS.md (canonical AI memory), README.md, CONTEXT.md, INSTALLER.md, docs/**, and the hand-maintained docs/onboarding.html. Patches drifted facts in place; never rewrites from scratch. Use for sync ai memory, sync docs, sincronizar memoria, docs audit, realinear documentación con el estado del repo, refresh memory, refresh ai memory, actualizar memoria, refrescar documentación, documentation drift. The CLAUDE.md shim is verified, never patched: operational prose found there is structural drift that stops the run. Do NOT use for writing new docs (use /project-foundation), generating business maps (use project-context), or Engram memory operations."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
+metadata:
+  kind: workflow
 ---
 
 # Sync AI Memory

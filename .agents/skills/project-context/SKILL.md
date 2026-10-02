@@ -1,20 +1,22 @@
 ---
 name: project-context
-description: "Generate or refresh the canonical project-context artifacts for development: business data map, business feature map, business API map, master implementation plan and dev roadmap. Use for business-data-map, business-feature-map, business-api-map, master-implementation-plan, dev-roadmap, roadmap de desarrollo, mapear el dominio, inventario de features, cómo funciona el API, plan maestro de implementación, qué historia sigue, refresh project context, refresh all context. Routes exactly one mode at a time unless refresh-all is explicit. UPDATE mode always shows a diff and waits for approval before overwriting."
+description: "Generate or refresh the canonical project-context artifacts for development: business data map, business feature map, business API map, master implementation plan and dev roadmap. Use for business-data-map, business-feature-map, business-api-map, master-implementation-plan, dev-roadmap, roadmap de desarrollo, mapear el dominio, inventario de features, cómo funciona el API, plan maestro de implementación, qué historia sigue, refresh project context, refresh all context. Also scaffolds a project-owned <aspect>-context skill for any aspect the business maps do not cover (context-skill mode: context skill, scaffold a context skill, judgment layer over X). Routes exactly one mode at a time unless refresh-all is explicit. UPDATE mode always shows a diff and waits for approval before overwriting."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
-complementary_categories: [backend-db, issue-tracker]
+complementary_categories: [backend-db, issue-tracker, meta-skill]
 metadata:
+  kind: workflow
   requires_capabilities: [db, library-docs, web-search]
 ---
 
 # Project Context
 
-Own the five regenerative project-context artifacts without duplicating their workflows across harness commands. Each mode is a full workflow that used to live inline in a slash command; the commands are now transport-only aliases (`.agents/compatibility/command-aliases.json`) that invoke this skill with a mode.
+Own the five regenerative project-context artifacts, and scaffold a project's own context skills, without duplicating their workflows across harness commands. Each mode is a full workflow that used to live inline in a slash command; the commands are now transport-only aliases (`.agents/compatibility/command-aliases.json`) that invoke this skill with a mode.
 
 ## Compact Rules
 
-- Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all`. Load only that mode's reference; never open a second one in the same pass.
+- Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all` · `context-skill`. Load only that mode's reference; never open a second one in the same pass.
+- `context-skill` scaffolds a project-owned `<aspect>-context` (`references/context-skill.md`, contract `agentic-dev-core/references/skill-scaffold.md` §3-§5) THROUGH `skill-creator` (T3) for an aspect the business maps do not cover. It cites its sources and never copies them; `refresh-all` never includes it.
 - Mode → reference → output: `data` → `references/data.md` → `.context/business/business-data-map.md` · `features` → `references/features.md` → `.context/business/business-feature-map.md` · `api` → `references/api.md` → `.context/business/business-api-map.md` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
 - User did not name a mode → ASK. NEVER infer `refresh-all` from a generic "refresh the context" request.
 - `refresh-all` runs strictly `data` → `features` → `api` → `master-plan` → `dev-roadmap`, one at a time. Each reference's own validation and approval gate must close before the next is loaded. Never skip ahead.
@@ -39,6 +41,7 @@ Resolve one mode from the invocation. Load only the reference named in that row.
 | `master-plan` | `/master-implementation-plan`, master plan, what to build first | `references/master-plan.md` | `.context/master-implementation-plan.md` |
 | `dev-roadmap` | `/dev-roadmap`, roadmap de desarrollo, qué historia sigue, execution order | `references/dev-roadmap.md` | `.context/dev-roadmap.md` |
 | `refresh-all` | refresh all project context | all five references, one at a time | all five outputs |
+| `context-skill` | context skill, scaffold `<aspect>-context` for another aspect | `references/context-skill.md` | `.agents/skills/<aspect>-context/` (project-owned, never shipped upstream) |
 
 If the user does not identify a mode, ask which artifact to refresh. Do not infer `refresh-all` from a generic request.
 
@@ -63,6 +66,7 @@ Stop on a hard dependency failure or rejected overwrite. Do not skip ahead. Miss
 | `api` | none | `business-data-map.md`, `business-feature-map.md` |
 | `master-plan` | `.context/business/business-data-map.md` | `business-feature-map.md` |
 | `dev-roadmap` | at least one epic with child stories (and dependency links) in the issue tracker | `business-data-map.md`, `master-design-plan.md`, `master-implementation-plan.md` |
+| `context-skill` | what the skill sits over must exist (a map, a module, a contract) | none |
 
 ## Shared contract
 
@@ -79,7 +83,7 @@ Stop on a hard dependency failure or rejected overwrite. Do not skip ahead. Miss
 
 Run once when this skill is invoked, before the selected mode's first phase. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md` §3.
 
-1. Read `complementary_categories` from this skill's frontmatter (`backend-db`, `issue-tracker`).
+1. Read `complementary_categories` from this skill's frontmatter (`backend-db`, `issue-tracker`, `meta-skill`).
 2. Resolve via the local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. Classify tier per strategy doc §2.
 4. Apply the threshold rule per strategy doc §3.2:
@@ -93,3 +97,4 @@ Expected matches in this repo:
 |---|---|---|
 | `backend-db` | `supabase` | Modes data, features and api read the live schema through `[DB_TOOL]` (Supabase MCP); the community skill owns query and schema-reading patterns. |
 | `issue-tracker` | `/acli` | Mode dev-roadmap reads epics, stories and dependency links through `[ISSUE_TRACKER_TOOL]`; mode master-plan cross-checks epics. Load before any Jira read. |
+| `meta-skill` | `skill-creator` (T3) | Mode context-skill builds every `<aspect>-context` through it: draft loop, description pass, three test prompts. |

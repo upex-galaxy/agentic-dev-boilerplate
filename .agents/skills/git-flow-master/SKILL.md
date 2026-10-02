@@ -22,6 +22,8 @@ compact_rules: |
   - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
   - **Stop at PR creation.** Never auto-merge.
   - **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
+metadata:
+  kind: workflow
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->
