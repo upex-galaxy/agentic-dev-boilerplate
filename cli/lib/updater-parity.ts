@@ -41,6 +41,7 @@ import { parse as parseYaml } from 'yaml';
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, compatibilityErrorGroup, undeclaredCommandWrappers } from './agent-compatibility.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
+import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
 // ============================================================================
 // TYPES
@@ -149,6 +150,8 @@ export interface ParityInput {
   gates?: GateResult[]
   /** A legacy git-tracked `.context/PBI/` cache (see `updater-pbi.ts`): one row, the recipe in its file. */
   pbiCache?: PbiCacheInput | null
+  /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` this run (`updater-settings.ts`). */
+  allowListAdded?: string[]
   /** Prerequisite declarations, keyed by repo-relative path. Defaults to `PATH_PREREQUISITES`. */
   prerequisites?: Record<string, PathPrerequisite>
   /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
@@ -1238,6 +1241,21 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       path: '.env',
       evidence: `upstream .env.example added ${input.envNewKeys.length} key(s): ${input.envNewKeys.join(', ')}`,
       suggested: 'decide',
+      blocking: false,
+    });
+  }
+
+  // 6b. The allow-list merge is additive and already decided: it ran, and this
+  //     row says what it added so nothing is a surprise. Informational, never
+  //     blocking: `deny` is untouched and wins, so an entry a project does not
+  //     want is re-expressible there without this row asking anything of it.
+  const allowAdded = input.allowListAdded ?? [];
+  if (allowAdded.length > 0) {
+    findings.push({
+      surface: 'components',
+      path: CLAUDE_SETTINGS_FILE,
+      evidence: `informational: ${allowAdded.length} permission(s) added to permissions.allow (set-union with upstream; deny/ask/hooks/env untouched): ${allowAdded.join(', ')}`,
+      suggested: 'keep project',
       blocking: false,
     });
   }

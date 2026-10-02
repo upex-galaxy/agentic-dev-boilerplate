@@ -24,6 +24,7 @@ import { checkAgentCompatibility, COMMAND_ALIAS_MANIFEST, repairAgentSurfaces, S
 import * as tui from './lib/tui';
 import {
   cleanupTempDir,
+  createBackupDir,
   detectGitVersion,
   gitVersionMeetsMin,
   isLocalTemplateSource,
@@ -53,6 +54,7 @@ import {
   runVerdict,
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
+import { CLAUDE_SETTINGS_FILE, mergeAllowList } from './lib/updater-settings.ts';
 import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifest';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -477,9 +479,11 @@ interface RunFacts {
   promptKept: boolean
   /** `.context/PBI/` paths still tracked in git, and where the migration recipe was saved. */
   pbiCache: PbiCacheFact | null
+  /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` (on --dry-run: would append). */
+  allowListAdded: string[]
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -1103,6 +1107,49 @@ export function runGate(script: string, cwd: string, applied: readonly string[],
   };
 }
 
+// --- CLAUDE PERMISSION ALLOW LIST (afterApply hook) ---
+//
+// `.claude/settings.json` is bootstrap-only AND watched, so a skill shipped
+// upstream used to arrive without the `Skill(<name>)` entry that authorizes it
+// and silently could not be invoked. This merges ONE array additively,
+// `permissions.allow`, and leaves `deny`, `ask`, `hooks`, `env` and every
+// other key exactly as the project wrote them. See `updater-settings.ts` for
+// why removals are deliberately not remembered.
+//
+// Backup before write, like every other mutation the run makes: the file is on
+// the watchlist, so a consumer who dislikes the addition restores it from
+// `.backups/` and expresses the removal in `deny`.
+function makeAllowListHook(
+  templateDir: string,
+  sink: ReportSink,
+  dryRun: boolean,
+): (summary: RunSummary) => Promise<void> {
+  return async (summary: RunSummary): Promise<void> => {
+    if (dryRun) {
+      runFacts.allowListAdded = mergeAllowList(process.cwd(), templateDir).added;
+      return;
+    }
+    const localPath = path.join(process.cwd(), CLAUDE_SETTINGS_FILE);
+    const { added, merged } = mergeAllowList(process.cwd(), templateDir);
+    if (merged === null) { return; }
+    try {
+      // This run's backup dir when it made one; otherwise its own, so the
+      // pre-write backup contract holds even on a run that wrote nothing else.
+      const dir = summary.backupDir ?? createBackupDir(process.cwd());
+      const backupPath = path.join(dir, CLAUDE_SETTINGS_FILE);
+      fs.mkdirSync(path.dirname(backupPath), { recursive: true });
+      fs.copyFileSync(localPath, backupPath);
+      fs.writeFileSync(localPath, merged, 'utf-8');
+    }
+    catch (err) {
+      sink.warn(`No se pudo fusionar la allow list de ${CLAUDE_SETTINGS_FILE}: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+    runFacts.allowListAdded = added;
+    sink.step(`Permisos agregados a ${CLAUDE_SETTINGS_FILE}: ${added.length}`);
+  };
+}
+
 function makeGatesHook(sink: ReportSink, enabled: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     if (!enabled) { runFacts.gatesSkippedReason = 'no-gates'; return; }
@@ -1212,6 +1259,7 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       packageJsonKept: summary.packageJsonKept ?? [],
       gates: runFacts.gates,
       pbiCache: runFacts.pbiCache,
+      allowListAdded: runFacts.allowListAdded,
     });
     const report = renderParityReport(findings, {
       templateRepo: TEMPLATE_REPO,
@@ -1669,6 +1717,7 @@ async function main(): Promise<void> {
         ? composeHooks(
             sink,
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
+            makeAllowListHook(UPSTREAM_DIR, sink, true),
             // Read-only detection so the preview's table matches the real run's.
             makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH), dryRun: true }, sink, (fact) => { runFacts.pbiCache = fact; }),
             makeParityHook(sink, priorLockSha, true, watchlist),
@@ -1679,6 +1728,9 @@ async function main(): Promise<void> {
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
             makeGatesHook(sink, !parsed.noGates),
+            // After the compat check reads settings.json: the merge only ADDS
+            // allow entries, which no compatibility contract asserts on.
+            makeAllowListHook(UPSTREAM_DIR, sink, false),
             async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),

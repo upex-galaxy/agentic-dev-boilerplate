@@ -1004,3 +1004,21 @@ describe('a missing config block a shipped skill reads blocks the run', () => {
     }
   });
 });
+
+describe('the allow-list merge is reported, never silent', () => {
+  test('an informational row names every permission the merge added', () => {
+    const root = temporaryRoot();
+    const row = collectParityFindings({ ...bareInput(root, temporaryRoot()), allowListAdded: ['Skill(vercel-cli)', 'Skill(autonomous-delivery)'] })
+      .find(f => f.path === '.claude/settings.json');
+    expect(row!.surface).toBe('components');
+    expect(row!.blocking).toBe(false);
+    expect(row!.evidence).toContain('2 permission(s) added');
+    expect(row!.evidence).toContain('Skill(vercel-cli)');
+    expect(row!.evidence).toContain('deny/ask/hooks/env untouched');
+  });
+
+  test('a run that added nothing raises no row at all', () => {
+    const root = temporaryRoot();
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), allowListAdded: [] }).find(f => f.path === '.claude/settings.json')).toBeUndefined();
+  });
+});
