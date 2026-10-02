@@ -1171,12 +1171,13 @@ bun run up                    # migra un proyecto creado antes de este release</
                 </tr>
                 <tr>
                   <td>Trailer de sesión en commits</td>
-                  <td>ninguno: cero atribución, punto</td>
+                  <td><code>Worktree:</code> + <code>Session:</code> en los tres harness</td>
                   <td>
-                    <code>Claude-Session:</code> solo cuando el harness expone un transcript;
-                    OpenCode y Codex lo omiten
+                    <code>Worktree:</code> + <code>Session:</code> en los tres harness, desde la
+                    línea <code>AGENT IDENTITY:</code> del hook;
+                    <code>Claude-Session:</code> prohibido
                   </td>
-                  <td><span class="pill diff">distinto</span></td>
+                  <td><span class="pill same">igual</span></td>
                 </tr>
                 <tr>
                   <td>Tests del motor</td>

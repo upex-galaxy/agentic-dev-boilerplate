@@ -61,12 +61,13 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 
 | ADR | Title | Status | Supersedes | Superseded by |
 | --- | ----- | ------ | ---------- | ------------- |
-| [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted | — | — |
+| [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted (item 8 superseded) | — | ADR-0004 (item 8) |
 | [ADR-0003](./ADR-0003-forensic-measurements-ledger.md) | Doctrine keeps the why; the measured figures and dates live here (Critical Rule #17 forensic-note split + the ledger of measurements behind the boilerplate's doctrine) | Accepted | — | — |
+| [ADR-0004](./ADR-0004-harness-agnostic-commit-trailers.md) | Harness-agnostic forensic trailers on every agent commit (`Worktree:` + `Session:` from the hook's `AGENT IDENTITY:` line; `Claude-Session:` and every branded trailer forbidden; WARN-only `commit-msg` check) | Accepted | ADR-0002 (item 8) | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
 >
-> ADR-0002 and ADR-0003 are decisions about the boilerplate itself; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
+> ADR-0002, ADR-0003 and ADR-0004 are decisions about the boilerplate itself; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
 
 ---
 

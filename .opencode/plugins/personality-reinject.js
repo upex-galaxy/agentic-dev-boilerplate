@@ -1,8 +1,10 @@
-import { PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
+import { agentContextLines } from '../../.agents/hooks/personality-reinject.mjs';
 
 // OpenCode has no command hook: the plugin imports the shared emitter and
-// pushes the same contract line into the system prompt, in place and without
-// duplicating.
+// pushes the same lines (output contract, `AGENT IDENTITY:`, `ORCA:` when the
+// binary is there, at most one setup warning) into the system prompt, in place
+// and without duplicating. OpenCode exposes no session NAME to a plugin, only
+// the id, so the session label degrades to the raw id here.
 //
 // ONE default export, TWO entrypoints. OpenCode 2 calls `setup(ctx)` and
 // refuses a module that lacks a default `{ id, setup }` definition; OpenCode 1
@@ -17,14 +19,20 @@ import { PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.m
 // depend on the plugin SDK, and the loader reads the shape, not the helper.
 // See https://opencode.ai/v2/docs/build/plugins/migrate-v1.
 
+function linesFor(sessionId) {
+  return agentContextLines({ harness: 'opencode', sessionId: sessionId ?? '' });
+}
+
 export default {
   id: 'agentic-dev.personality-reinject',
 
   // OpenCode 2.
   async setup(ctx) {
     await ctx.session.hook('context', (event) => {
-      if (!event.system.some(part => part?.text === PERSONALITY_CONTRACT)) {
-        event.system.push({ type: 'text', text: PERSONALITY_CONTRACT });
+      for (const text of linesFor(event?.sessionID)) {
+        if (!event.system.some(part => part?.text === text)) {
+          event.system.push({ type: 'text', text });
+        }
       }
     });
   },
@@ -32,9 +40,11 @@ export default {
   // OpenCode 1.
   async server() {
     return {
-      'experimental.chat.system.transform': async (_input, output) => {
-        if (!output.system.includes(PERSONALITY_CONTRACT)) {
-          output.system.push(PERSONALITY_CONTRACT);
+      'experimental.chat.system.transform': async (input, output) => {
+        for (const line of linesFor(input?.sessionID)) {
+          if (!output.system.includes(line)) {
+            output.system.push(line);
+          }
         }
       },
     };
