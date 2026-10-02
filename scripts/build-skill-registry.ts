@@ -72,6 +72,8 @@ interface SkillFrontmatter {
   description?: string
   phase?: string
   compact_rules?: unknown
+  /** `metadata.kind` is the purpose axis (context / workflow / utility / core); `stage_owner` flags a stage-owning workflow skill. Both gated by `skills:check`. */
+  metadata?: { kind?: string, stage_owner?: boolean }
 }
 
 interface SkillEntry {
@@ -396,7 +398,7 @@ function renderEntry(entry: SkillEntry): string {
   const strategyLabel = entry.strategy === 'frontmatter'
     ? 'source: frontmatter `compact_rules` (verbatim)'
     : `extraction strategy: ${entry.strategy}`;
-  lines.push(`> Source: \`${entry.path}\` · phase: \`${entry.frontmatter.phase ?? 'unknown'}\` · ${strategyLabel}`);
+  lines.push(`> Source: \`${entry.path}\` · phase: \`${entry.frontmatter.phase ?? 'unknown'}\` · kind: \`${entry.frontmatter.metadata?.kind ?? 'unknown'}\`${entry.frontmatter.metadata?.stage_owner ? ' · stage owner' : ''} · ${strategyLabel}`);
   return lines.join('\n');
 }
 
