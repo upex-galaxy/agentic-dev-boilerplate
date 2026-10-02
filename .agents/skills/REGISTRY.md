@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-02T08:55:19.143Z`
+> Generated: `2026-10-02T09:27:34.347Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -141,7 +141,7 @@ Skills indexed: 16
 - **Never** `--force`, `--force-with-lease`, `--no-verify`, amend, or rebase pushed history on a shared branch unless the user explicitly asks AND the branch is unshared.
 - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
 - **Stop at PR creation.** Never auto-merge.
-- **One commit = one responsibility**, conventional prefix, no AI-attribution lines (sole scoped exception: the `Claude-Session: <session-id>` forensic trailer on AI-authored commits — `references/conventional-commits.md` § Hard rules).
+- **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
 
 **Read full SKILL.md when**: running Strategy Setup, resolving conflicts, planning a chain, or when the compact rules above do not settle the operation.
 
