@@ -98,10 +98,9 @@ These are **not optional** for the workflow — each one is required by a specif
 
 ### MCP credentials (`.env` keys)
 
-The three MCP configs, `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex), ship with placeholders that read from `.env` (`${VAR}`, `{env:VAR}`, and `env_vars` / `bearer_token_env_var` respectively). Nine keys back the 4 canonical MCPs and the Atlassian CLI (context7 needs none):
+The three MCP configs, `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex), ship with placeholders that read from `.env` (`${VAR}`, `{env:VAR}`, and `env_vars` / `bearer_token_env_var` respectively). These keys back the MCP servers those configs declare and the Atlassian CLI (context7 needs none); with the shipped configs they read as below. Web search is not among them: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`).
 
 ```
-TAVILY_API_KEY
 ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
 SUPABASE_ACCESS_TOKEN · NEXT_PUBLIC_SUPABASE_URL · SUPABASE_PUBLISHABLE_KEY · SUPABASE_SECRET_KEY
 N8N_API_URL · N8N_API_KEY
@@ -166,7 +165,7 @@ What it does:
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, gentle-ai (Engram only), community skills, `.env` wiring for every MCP server declared in `.mcp.json` (context7, tavily, supabase and n8n out of the box) plus the Atlassian CLI, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`.claude/skills` alias, command wrappers) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
+5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, gentle-ai (Engram only), community skills, `.env` wiring for every MCP server declared in `.mcp.json` plus the Atlassian CLI, how to connect web search at harness level, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`.claude/skills` alias, command wrappers) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -492,7 +491,7 @@ This repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is
 - **Skills.** All 16 skills live committed in `.agents/skills/`, and the project-level community skills install into the same store. OpenCode and Codex read it directly; Claude Code reaches it through `.claude/skills`, a POSIX symlink (Windows junction) that is generated and gitignored: never committed, never hand-edited. Each skill still declares `compatibility: [claude-code, copilot, cursor, codex, opencode]` per the [agentskills.io](https://agentskills.io) spec, and hosts without slash triggers auto-activate from the same `description` field.
 - **Commands.** The 8 slash commands are transport, not workflow: generated from `.agents/compatibility/command-aliases.json`, a few lines each. A wrapper that grows a body fails the check as `contains workflow prose`.
 - **Hook.** `.agents/hooks/personality-reinject.mjs` holds the contract text once. Claude Code and Codex run it as a `UserPromptSubmit` command hook (the Codex adapter carries a POSIX and a PowerShell command); OpenCode imports the constant from a thin plugin.
-- **MCP.** Every server declared in `.mcp.json` must exist in the other two configs with the same `.env` dependencies. Parity is checked semantically: each native format (JSON / JSONC / TOML) is normalized into a common shape, then compared on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The boilerplate's own four (`context7`, `tavily`, `supabase`, `n8n`) additionally get a strict per-host shape check when declared; a downstream project with a different set passes on the generic check alone. Codex cannot expand `${VAR}` inside `args`, so its adapter reaches `tavily` over HTTP with `bearer_token_env_var` and passes `supabase` env-only auth.
+- **MCP.** Every server declared in `.mcp.json` must exist in the other two configs with the same `.env` dependencies. Parity is checked semantically: each native format (JSON / JSONC / TOML) is normalized into a common shape, then compared on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The servers this boilerplate ships (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check when declared; a downstream project with a different set passes on the generic check alone. Codex cannot expand `${VAR}` inside `args`, so its adapter passes `supabase` env-only auth.
 - **Commit provenance.** Rule #3 in `AGENTS.md` bans AI attribution on every harness. The harness session trailer (`Claude-Session:`) is emitted only when the running harness exposes a transcript pointer; OpenCode and Codex sessions omit it.
 
 Gemini CLI and Cursor stay at the template level: skills declare them in `compatibility:`, and `docs/mcp/*.template.*` holds opt-in MCP configs, but there is no runtime adapter.
