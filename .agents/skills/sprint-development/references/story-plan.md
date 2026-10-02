@@ -488,6 +488,15 @@ Textos que reflejan el contexto específico del proyecto, usando vocabulario del
 
 > Antes de escribir campos rich-text en Jira, leé `.agents/skills/product-management/references/jira-publishing-gotchas.md` para los dos bugs ADF conocidos y sus workarounds.
 
+> **Presupuesto de tamaño (bloqueante).** Jira Cloud corta cada valor rich-text en 32,767 caracteres y cuenta el **ADF serializado**, no el Markdown: el plan convertido mide varias veces lo que mide en Markdown, y las tablas, listas anidadas, paneles y bloques de código son lo que más crece (mediciones: `.context/ADR/ADR-0003-forensic-measurements-ledger.md`). Antes de publicar, en el campo o en el comentario fallback, convertí y medí el cuerpo COMPLETO tal como va a quedar guardado:
+>
+> ```bash
+> bun .agents/skills/acli/scripts/md-to-adf.ts plan.md plan.adf.json
+> jq -c . plan.adf.json | wc -m        # debe quedar en 30000 o menos
+> ```
+>
+> Más de 30,000 → **STOP antes de escribir.** Proponé qué secciones salen del plan y a dónde van, con lo que ahorra cada movimiento, y esperá la decisión del usuario. Destinos de este nivel: código de ejemplo largo sale del plan (el plan nombra archivo y símbolo; el código vive en la rama y el PR); una decisión arquitectónica difícil de revertir va a un ADR (`.context/ADR/`) y el plan la enlaza; el contexto que ya está en el Feature Implementation Plan del Epic se enlaza, no se repite; una Story que sigue sin entrar es una Story demasiado grande: proponé partirla con `/product-management`. Un rechazo de Jira por longitud (`CONTENT_LIMIT_EXCEEDED`) es el mismo STOP. Nunca truncar, nunca partir el plan en dos campos o dos comentarios, nunca quitar el formato para que entre. Las secciones de la plantilla que no aplican a este plan se omiten, no se publican vacías. Regla canónica: `.agents/skills/acli/SKILL.md` → "Size budget" (T5).
+
 2. **Si el campo existe:**
    - Publicar el cuerpo COMPLETO del plan al campo `{{jira.spec_implementation_plan}}` de la Story vía `[ISSUE_TRACKER_TOOL]` (escritura de custom field).
    - Agregar label: `implementation-plan-ready`.
@@ -509,5 +518,6 @@ Textos que reflejan el contexto específico del proyecto, usando vocabulario del
 ### Output Esperado
 
 - [ ] Cuerpo del plan publicado al campo `{{jira.spec_implementation_plan}}` de la Story (si el slug resuelve a un campo presente) o al comentario fallback `## Spec Implementation Plan (Dev)`
+- [ ] Tamaño del cuerpo medido como ADF serializado antes de publicar: `{N} / 30,000` (o STOP con la propuesta de qué secciones se mueven)
 - [ ] Label `implementation-plan-ready` agregado a la Story
 - [ ] `bun run jira:sync-issues get <STORY_KEY> --include-comments` ejecutado; `implementation-plan.md` materializado y leído
