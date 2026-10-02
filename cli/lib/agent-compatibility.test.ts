@@ -6,17 +6,23 @@ import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
-import { PersonalityReinject } from '../../.opencode/plugins/personality-reinject.js';
+import opencodePlugin from '../../.opencode/plugins/personality-reinject.js';
 import {
   CLAUDE_HOOK_COMMAND,
+  CODEX_ENV_LOADER_ARGS,
+  CODEX_ENV_LOADER_COMMAND,
   CODEX_HOOK_COMMAND,
   CODEX_HOOK_COMMAND_WINDOWS,
+  CODEX_STARTUP_TIMEOUT_SEC,
   declaredMcpIds,
   EXPECTED_MCP,
   KNOWN_MCP_IDS,
   stripJsonComments,
+  unwrapCodexEnvLoader,
   validateHookCompatibility,
   validateMcpParity,
+  validateMcpParityFindings,
+  validateOpenCodePluginEntrypoints,
 } from './agent-compatibility-contracts.ts';
 import {
   checkAgentCompatibility,
@@ -165,27 +171,36 @@ const OPENCODE_SERVERS: Record<string, string> = {
     },`,
 };
 
-const CODEX_SERVERS: Record<string, string> = {
-  context7: `[mcp_servers.context7]
-command = "bunx"
-enabled = true
-args = ["-y", "@upstash/context7-mcp"]
+/** The `.env` loader prefix every Codex stdio fixture starts through (CODEX_ENV_LOADER_*). */
+const CODEX_LOADER = CODEX_ENV_LOADER_ARGS.map(arg => JSON.stringify(arg)).join(', ');
+
+/**
+ * A Codex stdio launch: through the loader (the boilerplate shape) or the bare
+ * command (a project scaffolded before the loader existed). The startup budget
+ * is there either way, so a test that drops the loader changes nothing else.
+ */
+function codexLaunch(command: string, args: string, loader: boolean): string {
+  return loader
+    ? `command = "${CODEX_ENV_LOADER_COMMAND}"\nenabled = true\nstartup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC}\nargs = [${CODEX_LOADER}, "${command}", ${args}]`
+    : `command = "${command}"\nenabled = true\nstartup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC}\nargs = [${args}]`;
+}
+
+function codexServers(loader: boolean): Record<string, string> {
+  return {
+    context7: `[mcp_servers.context7]
+${codexLaunch('bunx', '"-y", "@upstash/context7-mcp"', loader)}
 `,
-  tavily: `[mcp_servers.tavily]
+    tavily: `[mcp_servers.tavily]
 url = "https://mcp.tavily.com/mcp/"
 bearer_token_env_var = "TAVILY_API_KEY"
 enabled = true
 `,
-  supabase: `[mcp_servers.supabase]
-command = "bunx"
-enabled = true
-args = ["-y", "@supabase/mcp-server-supabase@latest"]
+    supabase: `[mcp_servers.supabase]
+${codexLaunch('bunx', '"-y", "@supabase/mcp-server-supabase@latest"', loader)}
 env_vars = ["SUPABASE_ACCESS_TOKEN", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]
 `,
-  n8n: `[mcp_servers.n8n]
-command = "npx"
-enabled = true
-args = ["-y", "n8n-mcp"]
+    n8n: `[mcp_servers.n8n]
+${codexLaunch('npx', '"-y", "n8n-mcp"', loader)}
 env_vars = ["N8N_API_URL", "N8N_API_KEY"]
 
 [mcp_servers.n8n.env]
@@ -193,12 +208,14 @@ MCP_MODE = "stdio"
 LOG_LEVEL = "error"
 DISABLE_CONSOLE_OUTPUT = "true"
 `,
-  playwright: `[mcp_servers.playwright]
+    // Unknown to the contract and needs nothing from .env: no loader required.
+    playwright: `[mcp_servers.playwright]
 command = "bunx"
 enabled = true
 args = ["@playwright/mcp@latest", "--extension"]
 `,
-};
+  };
+}
 
 function mcpJson(ids: string[]): string {
   const mcpServers = Object.fromEntries(ids.map(id => [id, MCP_SERVERS[id]]));
@@ -217,11 +234,12 @@ ${ids.map(id => OPENCODE_SERVERS[id]).join('\n')}
 `;
 }
 
-function codexToml(ids: string[]): string {
+function codexToml(ids: string[], loader = true): string {
+  const servers = codexServers(loader);
   return `[shell_environment_policy]
 inherit = "core"
 
-${ids.map(id => CODEX_SERVERS[id]).join('\n')}`;
+${ids.map(id => servers[id]).join('\n')}`;
 }
 
 function hookSettings(command: string, windows?: string): string {
@@ -295,8 +313,8 @@ describe('shared personality hook', () => {
     expect(PERSONALITY_CONTRACT).not.toContain('CLAUDE.md');
   });
 
-  test('OpenCode mutates the system array in place with the same payload', async () => {
-    const plugin = await PersonalityReinject();
+  test('OpenCode 1 (server entrypoint) mutates the system array in place with the same payload', async () => {
+    const plugin = await opencodePlugin.server();
     const transform = plugin['experimental.chat.system.transform'];
     const output = { system: ['base system'] };
     const originalArray = output.system;
@@ -306,6 +324,23 @@ describe('shared personality hook', () => {
 
     expect(output.system).toBe(originalArray);
     expect(output.system).toEqual(['base system', PERSONALITY_CONTRACT]);
+  });
+
+  test('OpenCode 2 (setup entrypoint) registers a context hook that pushes one text part', async () => {
+    const hooks: Record<string, (event: { sessionID: string, system: Array<{ type: string, text: string }> }) => void> = {};
+    await opencodePlugin.setup({
+      session: { hook: async (name: string, callback: (typeof hooks)[string]) => { hooks[name] = callback; } },
+    });
+    const event = { sessionID: 'test', system: [{ type: 'text', text: 'base system' }] };
+    const originalArray = event.system;
+
+    hooks.context(event);
+    hooks.context(event);
+
+    expect(opencodePlugin.id).toBe('agentic-dev.personality-reinject');
+    expect(Object.keys(hooks)).toEqual(['context']);
+    expect(event.system).toBe(originalArray);
+    expect(event.system).toEqual([{ type: 'text', text: 'base system' }, { type: 'text', text: PERSONALITY_CONTRACT }]);
   });
 });
 
@@ -386,6 +421,54 @@ describe('hook adapters', () => {
     ].join('\n'));
 
     expect(validateHookCompatibility(root)).toContain('OpenCode personality adapter must mutate output.system in place.');
+  });
+
+  test('rejects a V1-only OpenCode adapter: OpenCode 2 refuses to load it', () => {
+    const root = contractFixture();
+    write(root, '.opencode/plugins/personality-reinject.js', [
+      'import { PERSONALITY_CONTRACT } from \'../../.agents/hooks/personality-reinject.mjs\';',
+      'export const PersonalityReinject = async () => ({',
+      '  \'experimental.chat.system.transform\': async (_input, output) => {',
+      '    output.system.push(PERSONALITY_CONTRACT);',
+      '  },',
+      '});',
+      '',
+    ].join('\n'));
+
+    const errors = validateHookCompatibility(root);
+    expect(errors.some(e => e.includes('must default-export one plugin definition'))).toBe(true);
+    expect(errors.some(e => e.includes('OpenCode 2 entrypoint'))).toBe(true);
+  });
+
+  test('rejects an OpenCode adapter that dropped the V1 entrypoint', () => {
+    const root = contractFixture();
+    write(root, '.opencode/plugins/personality-reinject.js', [
+      'import { PERSONALITY_CONTRACT } from \'../../.agents/hooks/personality-reinject.mjs\';',
+      'export default {',
+      '  id: \'agentic-dev.personality-reinject\',',
+      '  async setup(ctx) {',
+      '    await ctx.session.hook(\'context\', (event) => {',
+      '      event.system.push({ type: \'text\', text: PERSONALITY_CONTRACT });',
+      '    });',
+      '  },',
+      '};',
+      '',
+    ].join('\n'));
+
+    expect(validateHookCompatibility(root)).toEqual(['OpenCode personality adapter must keep the OpenCode 1 entrypoint: server() returning experimental.chat.system.transform.']);
+  });
+
+  test('rejects an OpenCode adapter that reassigns event.system', () => {
+    const root = contractFixture();
+    const plugin = readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8')
+      .replace('event.system.push({ type: \'text\', text: PERSONALITY_CONTRACT });', 'event.system = [...event.system, { type: \'text\', text: PERSONALITY_CONTRACT }];');
+    write(root, '.opencode/plugins/personality-reinject.js', plugin);
+
+    expect(validateHookCompatibility(root)).toEqual(['OpenCode personality adapter must mutate event.system in place.']);
+  });
+
+  test('accepts the shipped dual-entrypoint OpenCode adapter', () => {
+    expect(validateOpenCodePluginEntrypoints(readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8'))).toEqual([]);
   });
 });
 
@@ -520,7 +603,7 @@ describe('project-declared MCP set', () => {
     const configPath = join(root, '.codex/config.toml');
     // Same .env dependencies, different command shape: only the strict check sees it.
     writeFileSync(configPath, readFileSync(configPath, 'utf8')
-      .replace('args = ["-y", "@supabase/mcp-server-supabase@latest"]', 'args = ["-y", "@supabase/mcp-server-supabase@latest", "--read-only"]'));
+      .replace('"@supabase/mcp-server-supabase@latest"]', '"@supabase/mcp-server-supabase@latest", "--read-only"]'));
 
     const errors = validateMcpParity(root);
     expect(errors).toHaveLength(1);
@@ -545,6 +628,101 @@ describe('project-declared MCP set', () => {
       .replace('args = ["@playwright/mcp@latest", "--extension"]', 'args = ["@playwright/mcp@latest"]'));
 
     expect(validateMcpParity(root)).toEqual([]);
+  });
+});
+
+describe('Codex .env loader', () => {
+  test('in the boilerplate, requires the loader on a Codex server that needs .env values, known or not', () => {
+    const root = contractFixture(undefined, PROJECT_IDS);
+    // An unknown server that needs a variable, on every host.
+    const mcp = JSON.parse(readFileSync(join(root, '.mcp.json'), 'utf8'));
+    mcp.mcpServers.playwright.env = { PLAYWRIGHT_BROWSERS_PATH: '${PLAYWRIGHT_BROWSERS_PATH}' };
+    write(root, '.mcp.json', JSON.stringify(mcp));
+    write(root, 'opencode.jsonc', readFileSync(join(root, 'opencode.jsonc'), 'utf8')
+      .replace('"command": ["bunx", "@playwright/mcp@latest", "--extension"],', '"command": ["bunx", "@playwright/mcp@latest", "--extension"],\n      "environment": { "PLAYWRIGHT_BROWSERS_PATH": "{env:PLAYWRIGHT_BROWSERS_PATH}" },'));
+    write(root, '.codex/config.toml', `${codexToml(PROJECT_IDS, false)}env_vars = ["PLAYWRIGHT_BROWSERS_PATH"]\n`);
+
+    const errors = validateMcpParity(root, { schemaOwner: true });
+    expect(errors.some(e => e.startsWith('codex MCP playwright must launch through the .env loader'))).toBe(true);
+    expect(errors.some(e => e.startsWith('codex MCP supabase must launch through the .env loader'))).toBe(true);
+    // A server with nothing to load is left alone by the generic rule.
+    expect(errors.some(e => e.startsWith('codex MCP context7 must launch'))).toBe(false);
+    // The remote server has no launch at all.
+    expect(errors.some(e => e.includes('MCP tavily'))).toBe(false);
+  });
+
+  test('downstream, a missing Codex loader is a warning that names the file and what to add', () => {
+    const root = contractFixture();
+    write(root, '.codex/config.toml', codexToml(BOILERPLATE_IDS, false));
+
+    const { errors, warnings } = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(errors).toEqual([]);
+    // A known server gets ONE launch warning, never a second one from the generic rule.
+    const supabase = warnings.filter(w => w.startsWith('codex MCP supabase '));
+    expect(supabase).toHaveLength(1);
+    expect(supabase[0]).toStartWith('codex MCP supabase launch is out of date in .codex/config.toml: ');
+    expect(supabase[0]).toContain(`set command = "${CODEX_ENV_LOADER_COMMAND}"`);
+    expect(supabase[0]).toContain(JSON.stringify(CODEX_ENV_LOADER_ARGS));
+    expect(warnings.filter(w => w.startsWith('codex MCP n8n '))).toHaveLength(1);
+    // context7 needs no variable, but it is a known server: its pinned shape
+    // carries the loader, so it is warned about too.
+    expect(warnings.some(w => w.startsWith('codex MCP context7 launch is out of date'))).toBe(true);
+    expect(warnings.some(w => w.includes('tavily'))).toBe(false);
+  });
+
+  test('ownership comes from package.json: the boilerplate errors, any other name warns', () => {
+    const root = contractFixture();
+    write(root, '.codex/config.toml', codexToml(BOILERPLATE_IDS, false));
+
+    expect(validateMcpParity(root)).toEqual([]);
+    write(root, 'package.json', JSON.stringify({ name: 'my-product' }));
+    expect(validateMcpParity(root)).toEqual([]);
+    write(root, 'package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
+    expect(validateMcpParity(root).some(e => e.includes('must launch through the .env loader'))).toBe(true);
+  });
+
+  test('in the boilerplate, pins the Codex startup budget of a known server', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('[mcp_servers.n8n]\ncommand = "bunx"\nenabled = true\nstartup_timeout_sec = 30\n', '[mcp_servers.n8n]\ncommand = "bunx"\nenabled = true\n'));
+
+    const errors = validateMcpParity(root, { schemaOwner: true });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toStartWith('codex MCP n8n mismatch: expected ');
+    expect(errors[0]).toContain(`"startupTimeoutSec":${CODEX_STARTUP_TIMEOUT_SEC}`);
+  });
+
+  test('downstream, a missing Codex startup budget is a warning; any other shape difference still fails', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('[mcp_servers.n8n]\ncommand = "bunx"\nenabled = true\nstartup_timeout_sec = 30\n', '[mcp_servers.n8n]\ncommand = "bunx"\nenabled = true\n'));
+
+    const budget = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(budget.errors).toEqual([]);
+    expect(budget.warnings).toEqual([
+      `codex MCP n8n launch is out of date in .codex/config.toml: set startup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC} (Codex's 10-second default is too short for a server fetched on a cold cache). Upstream never overwrites this file, so add it by hand.`,
+    ]);
+
+    writeFileSync(configPath, readFileSync(configPath, 'utf8').replace('"n8n-mcp"]', '"n8n-mcp", "--debug"]'));
+    const shape = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(shape.warnings).toEqual([]);
+    expect(shape.errors).toHaveLength(1);
+    expect(shape.errors[0]).toStartWith('codex MCP n8n mismatch: expected ');
+  });
+
+  test('reads a loader-wrapped Codex command as the server it starts', () => {
+    expect(unwrapCodexEnvLoader('bunx', [...CODEX_ENV_LOADER_ARGS, 'npx', '-y', 'pkg'])).toEqual({ command: 'npx', args: ['-y', 'pkg'], envLoader: true });
+    expect(unwrapCodexEnvLoader('bunx', ['-y', 'pkg'])).toEqual({ command: 'bunx', args: ['-y', 'pkg'], envLoader: false });
+    // A prefix with nothing after it is not a launch.
+    expect(unwrapCodexEnvLoader('bunx', [...CODEX_ENV_LOADER_ARGS]).envLoader).toBe(false);
+  });
+
+  test('pins the loader to the dotenv-cli major the repo installs', () => {
+    const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { devDependencies: Record<string, string> };
+    const pinned = CODEX_ENV_LOADER_ARGS[1].replace('dotenv-cli@', '');
+    expect(pkg.devDependencies['dotenv-cli'].replace(/^[\^~]/, '').split('.')[0]).toBe(pinned.split('.')[0]);
   });
 });
 
@@ -808,7 +986,25 @@ describe('checkAgentCompatibility', () => {
     const root = repositoryFixture();
     repairClaudeSkillsAlias(root, 'linux');
 
-    expect(checkAgentCompatibility(root, 'linux')).toMatchObject({ ok: true, errors: [], alias: { status: 'valid' } });
+    expect(checkAgentCompatibility(root, 'linux')).toMatchObject({ ok: true, errors: [], warnings: [], alias: { status: 'valid' } });
+  });
+
+  test('a downstream Codex launch gap passes with a warning; the boilerplate fails on the same file', () => {
+    const root = repositoryFixture();
+    repairClaudeSkillsAlias(root, 'linux');
+    write(root, '.codex/config.toml', codexToml(BOILERPLATE_IDS, false));
+
+    const downstream = checkAgentCompatibility(root, 'linux');
+    expect(downstream.ok).toBe(true);
+    expect(downstream.errors).toEqual([]);
+    expect(downstream.warnings.length).toBeGreaterThan(0);
+    expect(downstream.warnings.every(w => w.includes('.codex/config.toml'))).toBe(true);
+
+    write(root, 'package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
+    const owner = checkAgentCompatibility(root, 'linux');
+    expect(owner.ok).toBe(false);
+    expect(owner.warnings).toEqual([]);
+    expect(owner.errors.some(e => e.includes('must launch through the .env loader'))).toBe(true);
   });
 
   test('reports the missing alias together with every contract error', () => {

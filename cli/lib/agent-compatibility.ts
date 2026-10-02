@@ -23,7 +23,7 @@ import type { Stats } from 'node:fs';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
-import { validateHookCompatibility, validateMcpParity } from './agent-compatibility-contracts.ts';
+import { validateHookCompatibility, validateMcpParityFindings } from './agent-compatibility-contracts.ts';
 
 export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md\n';
 
@@ -110,6 +110,8 @@ export interface AliasStatus {
 export interface CompatibilityCheck {
   ok: boolean
   errors: string[]
+  /** Printed, never failing: a downstream gap the sync cannot deliver (see `McpParityOptions`). */
+  warnings: string[]
   /** `deferred`: absent on purpose until the migration commit (see SKILLS_ALIAS_DEFERRED_MARKER). */
   alias: Omit<AliasStatus, 'status'> & { status: 'missing' | 'invalid' | 'valid' | 'deferred' }
 }
@@ -480,12 +482,15 @@ export function checkAgentCompatibility(
   const type = aliasType(platform);
   const target = desiredAliasTarget(paths, platform);
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   try {
     assertCanonicalSources(paths);
     errors.push(...validateCommandAliases(paths.root));
     errors.push(...validateHookCompatibility(paths.root));
-    errors.push(...validateMcpParity(paths.root));
+    const mcp = validateMcpParityFindings(paths.root);
+    errors.push(...mcp.errors);
+    warnings.push(...mcp.warnings);
   }
   catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
@@ -494,15 +499,15 @@ export function checkAgentCompatibility(
   const entry = lstatIfPresent(paths.claudeSkills);
   if (entry === null) {
     if (existsSync(join(paths.root, SKILLS_ALIAS_DEFERRED_MARKER))) {
-      return { ok: errors.length === 0, errors, alias: { path: paths.claudeSkills, target, type, status: 'deferred' } };
+      return { ok: errors.length === 0, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'deferred' } };
     }
     errors.push(SKILLS_ALIAS_MISSING_ERROR);
-    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'missing' } };
+    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'missing' } };
   }
 
   if (!entry.isSymbolicLink()) {
     errors.push('Refusing compatibility state: .claude/skills exists but is not a generated symlink or junction.');
-    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
   }
 
   const actualTarget = readlinkSync(paths.claudeSkills);
@@ -511,12 +516,13 @@ export function checkAgentCompatibility(
     : actualTarget === POSIX_CLAUDE_SKILLS_TARGET;
   if (!exactTarget) {
     errors.push(`Claude skills alias has unexpected target: ${actualTarget}`);
-    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
   }
 
   return {
     ok: errors.length === 0,
     errors,
+    warnings,
     alias: { path: paths.claudeSkills, target, type, status: 'valid' },
   };
 }
