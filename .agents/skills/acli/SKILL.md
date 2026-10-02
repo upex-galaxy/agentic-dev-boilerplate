@@ -12,6 +12,7 @@ compact_rules: |
   - **T2.** NEVER hardcode Jira `customfield_NNNNN` IDs in scripts or AI output that consumes `acli`. Resolve via the host project's slug catalog (see the host repo's `acli-integration.md`). IDs differ per workspace; slugs travel.
   - **T3.** NEVER assume `acli` accepts custom-field input on `workitem edit`. It hard-rejects every shape (`additionalAttributes`, `fields`, flat `customfield_X`) with exit 1. Use the REST `PUT /rest/api/3/issue/{KEY}` workaround documented above — there is no acli-native path.
   - **T4.** NEVER run a bulk `acli` mutation (transition, edit, comment, link, archive) without first verifying `acli jira auth status`. Silent auth expiry cascades into HTTP 401s mid-loop, leaving the batch half-applied with no clean rollback.
+  - **T5.** NEVER write a rich-text value (description, comment, rich-text custom field) without measuring its serialized ADF first: `jq -c . <file>.adf.json | wc -m` must stay at or under 30000. Jira's 32,767-character cap counts the ADF JSON, not the Markdown. Over budget → STOP and propose which sections move where; never truncate, never split one value across two fields. Detail: "Size budget" under "Publishing rich text".
   - **`--paginate` is opt-in.** Default limit is server-side (30–50 depending on command). No warning on truncation. If you are counting, iterating, or making decisions based on the result, pass `--paginate`.
   - **Custom fields on `workitem create` go through `additionalAttributes` in `--from-json`.** Numeric IDs only (`customfield_NNNN`), no name-addressing. Documented value shapes in the `create` template are: `{"value": "..."}` (single-select), bare number, bare string. **`workitem edit` actively REJECTS custom-field input — hard error, exit 1, not a silent drop** (empirically confirmed across `additionalAttributes`, `fields`, and flat `customfield_X` shapes). For editing custom-field values on existing items, the **only** working path is REST `PUT /rest/api/3/issue/{KEY}` via `curl` using the session env vars — see the "WORKAROUND" subsection in "Publishing rich text" above, plus `references/gotchas.md` §4 and `references/workitem.md`.
   - **`acli` cannot enumerate custom fields.** `acli jira field` only does create/update/delete/cancel-delete. To discover field IDs, use `workitem view --json | jq` against an item that has the field set, or call `GET /rest/api/3/field` directly. There is no in-CLI listing. Host repos typically cache the catalog under `.agents/` and resolve fields by slug — see `<repo-core>/references/acli-integration.md`.
@@ -271,6 +272,21 @@ bun .agents/skills/acli/scripts/md-to-adf.ts --check field.adf.json   # exit 0 v
 
 **Recommended habit**: after splicing ADF into a `--from-json` create payload or a REST `PUT` body (where the wrapper is assembled outside the converter), run `--check` on each ADF field before sending. The gate is necessary but not sufficient — a round-trip `GET` of the field after write is still the only way to catch server-side coercion (Jira silently drops some invalid nodes).
 
+### Size budget (Jira counts the serialized ADF, not the text)
+
+Jira Cloud caps every rich-text value (description, comment, rich-text custom field) at 32,767 characters, and the cap is not configurable on Cloud. What it counts is the **serialized ADF JSON** of the value, not the visible text: every node, mark and attribute is paid for. ADF is several times longer than the Markdown it came from, and structure-heavy content (tables, nested lists, panels, code blocks) expands the most. The measurements behind this paragraph are in `.context/ADR/ADR-0003-forensic-measurements-ledger.md`.
+
+So every write of a rich-text value measures the FULL value as it will be stored, before sending it:
+
+```bash
+bun .agents/skills/acli/scripts/md-to-adf.ts body.md body.adf.json
+jq -c . body.adf.json | wc -m        # must stay at or under 30000
+```
+
+The budget is **30,000**, which leaves room under the cap for text a human adds to the same field later. When the field already holds content you keep (a section rewrite inside a longer description), measure the merged document, not only your part.
+
+Over budget → **STOP before writing.** Propose which sections move out of this field and where (the owning workflow names the destinations), with the size each move saves, and wait for the user's decision. A Jira rejection for length (`CONTENT_LIMIT_EXCEEDED` on REST v3, or a `400` naming the field length) is the same STOP. Never truncate, never split one value across two fields or two comments, never drop the formatting to squeeze under the cap.
+
 ### Recipe by Jira surface
 
 | Surface | How to publish ADF | Notes |
@@ -428,6 +444,7 @@ These are tool-level anti-patterns intrinsic to the `acli` binary and its REST c
 - **T2.** NEVER hardcode Jira `customfield_NNNNN` IDs in scripts or AI output that consumes `acli`. Resolve via the host project's slug catalog (see the host repo's `acli-integration.md`). IDs differ per workspace; slugs travel.
 - **T3.** NEVER assume `acli` accepts custom-field input on `workitem edit`. It hard-rejects every shape (`additionalAttributes`, `fields`, flat `customfield_X`) with exit 1. Use the REST `PUT /rest/api/3/issue/{KEY}` workaround documented above — there is no acli-native path.
 - **T4.** NEVER run a bulk `acli` mutation (transition, edit, comment, link, archive) without first verifying `acli jira auth status`. Silent auth expiry cascades into HTTP 401s mid-loop, leaving the batch half-applied with no clean rollback.
+- **T5.** NEVER write a rich-text value without measuring its serialized ADF against the 30,000 budget (`jq -c . <file>.adf.json | wc -m`). Jira's cap counts the ADF JSON, which is several times the Markdown length, so a plan that "looks short" is still rejected. Over budget → STOP and propose which sections move where; never truncate, never split one value across two fields.
 
 > **Repo-specific anti-patterns** (workflow abstraction, project-key portability, TMS modality boundaries, prod-workspace safety, CI batching, version pinning, sync-script auth) live in `<repo-core>/references/acli-integration.md`. Load it whenever a session touches the host repo's Jira workflow.
 

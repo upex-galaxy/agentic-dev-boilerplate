@@ -27,6 +27,13 @@ next-env.d.ts
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+# `playwright-cli` output when a command gets no explicit path (snapshots, console
+# logs, screenshots), and the file `state-save` writes into the current directory
+# when no filename is given. Session state never belongs in the repo tree
+# (sprint-development/references/live-ui-identity.md §4): these are a net, not a home.
+.playwright/output
+.playwright-cli/
+storage-state-*.json
 
 # ===== Auth Storage (Session State) =====
 /.auth/

@@ -8,7 +8,7 @@
 
 **Core Principle**: Main conversation = command center. Subagents = executors.
 
-> **Sanctioned exceptions** (not violations of the doctrine): a skill MAY define an explicit, user-invoked all-inline (**Solo**) mode that dispatches no subagents, AND MAY pin a specific step to the session that owns a non-delegable resource (e.g. a browser/extension or user auth bound to the main session). Example: `/sprint-development` Solo mode, and its live-UI step when the chosen tool is the session-bound claude-in-chrome MCP.
+> **Sanctioned exceptions** (not violations of the doctrine): a skill MAY define an explicit, user-invoked all-inline (**Solo**) mode that dispatches no subagents, AND MAY pin a specific step to the session that owns a non-delegable resource (e.g. a browser/extension or user auth bound to the main session). Example: `/sprint-development` Solo mode. Its live-UI step is NOT one: `/playwright-cli` is not session-bound, so it runs inside the stage subagent.
 
 **Use subagents for**: Reading/writing multiple files, MCP operations, research across repos, git operations, verification (tests/types/lint), multi-file edits.
 

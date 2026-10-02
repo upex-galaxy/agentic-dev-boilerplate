@@ -99,6 +99,9 @@ const CLAUDE_ROOT_CONFIG_FILES = ['settings.json'];
 const WORKTREE_INCLUDE_FILES = ['.worktreeinclude'];
 // Orca's committed repo hooks: provision a new worktree, audit it before removal.
 const ORCA_CONFIG_FILES = ['orca.yaml'];
+// `playwright-cli` session defaults: in memory, headless, no shared profile, so a
+// session name is the isolation (sprint-development/references/live-ui-validation.md).
+const PLAYWRIGHT_CLI_CONFIG_FILES = ['cli.config.json'];
 
 /** Canonical cross-harness skill source. Claude consumes it through an alias. */
 const SKILLS_CANONICAL_DIR = '.agents/skills';
@@ -165,6 +168,9 @@ export const COMPONENTS: Component[] = [
   // `.env`, and every MCP loader in `.codex/config.toml` with it.
   { name: 'worktree-include', type: 'file-list', paths: ['.'], files: WORKTREE_INCLUDE_FILES, bootstrapOnly: true },
   { name: 'orca-config', type: 'file-list', paths: ['.'], files: ORCA_CONFIG_FILES, bootstrapOnly: true },
+  // Delivered once when missing, then project-owned: a project tunes its own
+  // viewport, timeouts or test-id attribute, and a later sync must not undo that.
+  { name: 'playwright-cli-config', type: 'file-list', paths: ['.playwright'], files: PLAYWRIGHT_CLI_CONFIG_FILES, bootstrapOnly: true },
 ];
 
 // --- ARG PARSE ---
