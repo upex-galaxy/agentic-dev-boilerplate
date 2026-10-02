@@ -435,8 +435,10 @@ export interface KeyDelta {
    * whole, args, env and url included.
    */
   changed: string[]
-  /** For each `changed` key holding an object on both sides: which fields differ (`args differ`, `env keys differ`). */
+  /** For each `changed` key holding an object on both sides: which fields differ (`args differ`, `env keys differ`). For an array on both sides: the elements added / removed. */
   changedDetail: Record<string, string>
+  /** The subset of `changed` holding an ARRAY on both sides (named in full, never "values differ"). */
+  changedArrays: string[]
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -481,15 +483,40 @@ function describeObjectDelta(mine: Record<string, unknown>, theirs: Record<strin
 }
 
 /**
- * The changed keys as evidence: scalars by name (`values differ at: "a.x"`),
- * object entries by what differs inside (`context7: args differ`), at most
- * `MAX_NAMES` of each named, the rest counted.
+ * Which ELEMENTS of two arrays differ: `added: ["a"]`, `removed: ["b"]`, both.
+ * An appended entry is not a changed value, and reporting it as one is wrong in
+ * kind: `.claude/settings.json` read "values differ at permissions.allow" while
+ * upstream had simply appended two `Skill(...)` permissions.
  */
-function describeChangedKeys(changed: string[], detail: Record<string, string>): string {
+function describeArrayDelta(mine: readonly unknown[], theirs: readonly unknown[]): string {
+  const asText = (v: unknown): string => (typeof v === 'string' ? v : stableValue(v));
+  const minePlain = mine.map(asText);
+  const theirsPlain = theirs.map(asText);
+  const mineSet = new Set(minePlain);
+  const theirsSet = new Set(theirsPlain);
+  const added = theirsPlain.filter(v => !mineSet.has(v));
+  const removed = minePlain.filter(v => !theirsSet.has(v));
+  const parts: string[] = [];
+  if (added.length > 0) { parts.push(`added: [${listNames(added)}]`); }
+  if (removed.length > 0) { parts.push(`removed: [${listNames(removed)}]`); }
+  return parts.length > 0 ? parts.join(', ') : `same ${theirsPlain.length} item(s), order differs`;
+}
+
+/**
+ * The changed keys as evidence: scalars by name (`values differ at: "a.x"`),
+ * object entries by what differs inside (`context7: args differ`), arrays by
+ * their elements with the key named in full (`"permissions.allow": added:
+ * [...]`), at most `MAX_NAMES` of each named, the rest counted.
+ */
+function describeChangedKeys(changed: string[], detail: Record<string, string>, arrays: readonly string[] = []): string {
+  const isArray = new Set(arrays);
   const scalars = changed.filter(k => !(k in detail));
-  const objects = changed.filter(k => k in detail);
+  const arrayKeys = changed.filter(k => k in detail && isArray.has(k));
+  const objects = changed.filter(k => k in detail && !isArray.has(k));
   const parts: string[] = [];
   if (scalars.length > 0) { parts.push(`values differ at: ${listNames(scalars)}`); }
+  for (const key of arrayKeys.slice(0, MAX_NAMES)) { parts.push(`"${key}": ${detail[key]}`); }
+  if (arrayKeys.length > MAX_NAMES) { parts.push(`+${arrayKeys.length - MAX_NAMES} more array(s)`); }
   if (objects.length > 0) {
     // The entry's own name: the key minus the registry it sits under.
     const shown = objects.slice(0, MAX_NAMES).map(k => `${k.slice(k.indexOf('.') + 1)}: ${detail[k]}`).join('; ');
@@ -518,6 +545,7 @@ export function configKeyDelta(project: readonly string[] | ReadonlyMap<string, 
   const projectOnly = [...mine.keys()].filter(k => !theirs.has(k));
   const changed: string[] = [];
   const changedDetail: Record<string, string> = {};
+  const changedArrays: string[] = [];
   if (withValues) {
     // A key whose children are entries of their own (a top key holding an
     // object) is judged through them; anything else is compared whole.
@@ -533,9 +561,13 @@ export function configKeyDelta(project: readonly string[] | ReadonlyMap<string, 
       if (stableValue(own) === stableValue(value)) { continue; }
       changed.push(key);
       if (isPlainObject(own) && isPlainObject(value)) { changedDetail[key] = describeObjectDelta(own, value); }
+      else if (Array.isArray(own) && Array.isArray(value)) {
+        changedDetail[key] = describeArrayDelta(own, value);
+        changedArrays.push(key);
+      }
     }
   }
-  return { added, projectOnly, changed, changedDetail };
+  return { added, projectOnly, changed, changedDetail, changedArrays };
 }
 
 export interface WatchedFileEvidence {
@@ -551,9 +583,16 @@ export interface WatchedFileEvidence {
  * lack. `unit` names the structure compared ("key" / "heading"). Never a bare
  * `merge`: the evidence says what to port and what to keep.
  */
-function costSignal(unit: string, added: string[], projectOnly: string[], changed: string[], changedDetail: Record<string, string> = {}): { parts: string[], suggested: ParitySuggestion } {
+function costSignal(
+  unit: string,
+  added: string[],
+  projectOnly: string[],
+  changed: string[],
+  changedDetail: Record<string, string> = {},
+  changedArrays: readonly string[] = [],
+): { parts: string[], suggested: ParitySuggestion } {
   const units = (n: number): string => `${unit}${n === 1 ? '' : 's'}`;
-  const changedNote = unit === 'heading' ? `body differs in ${changed.length}: ${listNames(changed)}` : describeChangedKeys(changed, changedDetail);
+  const changedNote = unit === 'heading' ? `body differs in ${changed.length}: ${listNames(changed)}` : describeChangedKeys(changed, changedDetail, changedArrays);
   if (added.length > 0 && projectOnly.length > 0) {
     const parts = [`port upstream additions only: ${listNames(added)}`, `keep project-only ${units(projectOnly.length)}: ${listNames(projectOnly)}`];
     if (changed.length > 0) { parts.push(changedNote); }
@@ -588,7 +627,7 @@ export function watchedFileEvidence(filePath: string, project: string, upstream:
     if (mine && theirs) {
       const delta = configKeyDelta(mine, theirs);
       projectOnly = delta.projectOnly.length > 0;
-      ({ parts, suggested } = costSignal('key', delta.added, delta.projectOnly, delta.changed, delta.changedDetail));
+      ({ parts, suggested } = costSignal('key', delta.added, delta.projectOnly, delta.changed, delta.changedDetail, delta.changedArrays));
     }
     else {
       // No key structure (a shell hook, a JS config): the hunks are the evidence.

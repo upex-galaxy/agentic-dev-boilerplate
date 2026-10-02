@@ -173,12 +173,24 @@ describe('section-level evidence', () => {
   });
 
   test('key delta separates upstream additions from project-only keys', () => {
-    expect(configKeyDelta(['a', 'b.x'], ['a', 'b.y'])).toEqual({ added: ['b.y'], projectOnly: ['b.x'], changed: [], changedDetail: {} });
+    expect(configKeyDelta(['a', 'b.x'], ['a', 'b.y'])).toEqual({ added: ['b.y'], projectOnly: ['b.x'], changed: [], changedDetail: {}, changedArrays: [] });
     // With values (Maps) the shared keys whose values differ are named; a top
     // key with object children is judged through its children only.
     const mine = configEntries('{"a":1,"b":{"x":1,"y":[1]},"c":{"z":1}}', 'x.json')!;
     const theirs = configEntries('{"a":2,"b":{"x":1,"y":[2]},"c":{"z":1}}', 'x.json')!;
-    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['a', 'b.y'], changedDetail: {} });
+    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['a', 'b.y'], changedDetail: { 'b.y': 'added: ["2"], removed: ["1"]' }, changedArrays: ['b.y'] });
+  });
+
+  // An appended entry is not a changed value: `.claude/settings.json` used to
+  // read "values differ at permissions.allow" when upstream had only appended
+  // `Skill(...)` permissions. The array delta names the elements instead.
+  test('an array on both sides reports its added and removed elements', () => {
+    const mine = configEntries('{"permissions":{"allow":["Read","Skill(acli)","mcp__tavily__*"]}}', '.claude/settings.json')!;
+    const theirs = configEntries('{"permissions":{"allow":["Read","Skill(acli)","Skill(vercel-cli)"]}}', '.claude/settings.json')!;
+    const { evidence } = watchedFileEvidence('.claude/settings.json', '{"permissions":{"allow":["Read","Skill(acli)","mcp__tavily__*"]}}', '{"permissions":{"allow":["Read","Skill(acli)","Skill(vercel-cli)"]}}', '');
+    expect(configKeyDelta(mine, theirs).changedArrays).toEqual(['permissions.allow']);
+    expect(evidence).toContain('"permissions.allow": added: ["Skill(vercel-cli)"], removed: ["mcp__tavily__*"]');
+    expect(evidence).not.toContain('values differ at');
   });
 
   test('watched-file evidence names sections for markdown and keys for config, plus hunk counts', () => {
@@ -718,7 +730,7 @@ describe('MCP registries are compared per server, args and env included', () => 
   test('a nested server object is compared whole; the evidence names the server and the fields that differ', () => {
     const mine = configEntries('{"mcpServers":{"context7":{"command":"npx","args":["-y","@upstash/context7-mcp@1"],"env":{"CONTEXT7_API_KEY":"ref"}}}}', '.mcp.json')!;
     const theirs = configEntries('{"mcpServers":{"context7":{"command":"npx","args":["-y","@upstash/context7-mcp@2"],"env":{"CONTEXT7_API_KEY":"ref"}}}}', '.mcp.json')!;
-    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['mcpServers.context7'], changedDetail: { 'mcpServers.context7': 'args differ' } });
+    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['mcpServers.context7'], changedDetail: { 'mcpServers.context7': 'args differ' }, changedArrays: [] });
 
     expect(row(
       '{"mcpServers":{"context7":{"command":"npx","args":["a"]},"supabase":{"command":"npx","args":["s"],"env":{"SUPABASE_ACCESS_TOKEN":"ref"}}}}',
