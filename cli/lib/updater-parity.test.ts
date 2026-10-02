@@ -258,6 +258,32 @@ describe('compat error classification', () => {
     expect(compatErrorSurface(stray)).toBe('commands');
     expect(compatErrorSuggestion(stray)).toBe('add to overlay');
   });
+
+  // The base is synced, `eslint.config.js` is watched: an unwired block is a
+  // merge into the project file, and it folds onto that file's drift row.
+  test('an unwired eslint block lands on eslint.config.js as a blocking merge, folded with its drift', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'eslint.config.js', 'export default antfu({});\n');
+    write(upstream, 'eslint.config.js', 'import { CLI_IMPORT_CLOSURE } from \'./eslint.config.base.js\';\nexport default antfu({}, CLI_IMPORT_CLOSURE);\n');
+    const error = 'eslint.config.js does not wire CLI_IMPORT_CLOSURE from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.';
+    expect(compatErrorSurface(error)).toBe('gates');
+    expect(compatErrorSuggestion(error)).toBe('merge');
+    const findings = collectParityFindings({
+      root,
+      upstreamDir: upstream,
+      drift: [{ path: 'eslint.config.js', reason: 'project-owned overrides' }],
+      compatErrors: [error],
+      archivedSkills: [],
+      archivedSkillsDir: join(root, 'archive'),
+      heldBack: [],
+      envNewKeys: [],
+    });
+    const rows = findings.filter(f => f.path === 'eslint.config.js');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ surface: 'gates', suggested: 'merge', blocking: true });
+    expect(rows[0].evidence).toContain('does not wire CLI_IMPORT_CLOSURE');
+  });
 });
 
 describe('diffNoIndex', () => {

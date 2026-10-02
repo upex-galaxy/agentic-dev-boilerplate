@@ -747,6 +747,8 @@ const COMPAT_GROUP_SURFACE: Record<CompatibilityErrorGroup, ParitySurface> = {
   wrappers: 'commands',
   hooks: 'hooks',
   mcp: 'mcp',
+  // An unwired lint block is a verification gap: the rule ships and enforces nothing.
+  lint: 'gates',
 };
 
 /** Same classifier `bun run agents:compat` groups its output by. */
@@ -761,6 +763,8 @@ export function compatErrorSurface(message: string): ParitySurface {
  */
 export function compatErrorSuggestion(message: string): ParitySuggestion {
   if (WRAPPER_UNDECLARED_RE.test(message)) { return 'add to overlay'; }
+  // The wiring lives in the project-owned `eslint.config.js`: add the block, keep the rest.
+  if (/does not wire \w+ from eslint\.config\.base\.js/.test(message)) { return 'merge'; }
   return /command wrapper|skills alias|\.claude\/skills/i.test(message) ? 'run agents:compat' : 'take upstream';
 }
 
@@ -770,6 +774,7 @@ function compatErrorPath(message: string): string {
   const host = /(claude|opencode|codex)\b/i.exec(message);
   if (host && /MCP/.test(message)) { return MCP_HOST_FILE[host[1].toLowerCase()]; }
   if (/skills alias|\.claude\/skills/.test(message)) { return '.claude/skills'; }
+  if (/^eslint\.config\.js /.test(message)) { return 'eslint.config.js'; }
   return '(compat)';
 }
 
