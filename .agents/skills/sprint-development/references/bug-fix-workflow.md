@@ -42,7 +42,7 @@ Analyze, triage, and fix bugs/defects reported during exploratory testing or pro
 - Bug reported in Jira (from exploratory testing or production)
 - Access to `[ISSUE_TRACKER_TOOL]` (e.g., Atlassian/Jira MCP)
 - Access to GitHub CLI (`gh`)
-- Optional: Browser testing tools (e.g., Playwright MCP)
+- Optional: `/playwright-cli` for browser reproduction (session rules: `live-ui-validation.md` §3)
 - Optional: API testing tools (e.g., Postman MCP)
 - Optional: Context7 MCP for library documentation
 
@@ -105,7 +105,7 @@ This workflow requires GitHub CLI for:
 - Reproducing user interaction bugs
 - Taking screenshots of before/after state
 
-**Examples:** Playwright MCP, browser automation tools
+**Tool:** `/playwright-cli`, in a named in-memory session logged in as the declared automation identity (`live-ui-validation.md` §3, `live-ui-identity.md`)
 
 > **Attaching a screenshot as inline evidence** (to the bug, or to `{{jira.evidence}}`): `![](path)` does NOT embed in Jira ADF. Use the bundled helper, which uploads the file and posts it inline as a real image so a reviewer sees the before/after state without opening the Attachments panel:
 > ```bash

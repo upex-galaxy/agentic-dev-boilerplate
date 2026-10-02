@@ -110,7 +110,7 @@ Example (same work, different register):
 
 > **Main conversation = command center. Subagents = executors.** Active EVERY session. Not optional.
 >
-> **Sanctioned exceptions** (not violations): a skill MAY define an explicit, user-invoked all-inline (Solo) mode that dispatches no subagents, and MAY pin a step to the session owning a non-delegable resource (browser/extension or session-bound auth). E.g. `/sprint-development` Solo mode + its session-bound live-UI step. Detail → `.agents/skills/agentic-dev-core/references/orchestration-doctrine.md`.
+> **Sanctioned exceptions** (not violations): a skill MAY define an explicit, user-invoked all-inline (Solo) mode that dispatches no subagents, and MAY pin a step to the session owning a non-delegable resource (browser/extension or session-bound auth). E.g. `/sprint-development` Solo mode. Detail → `.agents/skills/agentic-dev-core/references/orchestration-doctrine.md`.
 
 **USE SUBAGENTS FOR**: read/write multiple files, MCP ops, research across repos, git ops, verification (tests/types/lint), multi-file edits, long-running tasks.
 
@@ -295,7 +295,7 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 | ----------------------- | --------------------------------- | ----------------------------------------- | -------------------------------------- |
 | `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in: see docs/mcp/) |
-| `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | MCP Playwright                         |
+| `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | none: the only browser path            |
 | `[DB_TOOL]`             | Database                          | Supabase MCP                              | raw SQL via Supabase CLI               |
 | `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
 | `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | Context7 MCP (`mcp__context7__resolve-library-id` → `mcp__context7__query-docs`) | built-in `WebSearch` / `WebFetch` (last resort only) |
