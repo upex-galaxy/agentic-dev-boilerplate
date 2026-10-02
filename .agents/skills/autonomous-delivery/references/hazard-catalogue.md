@@ -262,8 +262,9 @@ in the main checkout, never a blanket one.
 
 **Trigger.** Session state is gitignored and lives inside the worktree.
 **Symptom.** Per-ticket resume records stranded and unrecoverable once the worktree is removed.
-**Check.** Rescue them into the main checkout **before** removal. Writing a good handoff and then losing
-the underlying records is the failure this ordering exists to prevent.
+**Check.** Rescue them into the main checkout **before** removal: `bun run worktree:audit <path> --rescue`
+copies them to `<<PRIMARY_ROOT>>` and exits 0 only when nothing durable is left. Writing a good handoff and
+then losing the underlying records is the failure this ordering exists to prevent.
 
 ### 5.5 A background subagent outlives its dispatcher and shares its working directory
 

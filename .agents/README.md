@@ -51,7 +51,7 @@ The persisted source of truth for **this repository's** git workflow lives as th
 | `policy.direct_push_to_protected` | enum | `forbidden` / `confirm` / `allowed` — direct pushes to protected branches. |
 | `policy.admin_bypass` | bool | Team policy: may a repo admin bypass PR/protection for urgent changes? Intent only — real capability depends on the GitHub user's role; the skill re-confirms at runtime. |
 | `policy.require_pr_reviews` | int\|null | Min approvals before merge to a protected branch. Records the team's EXPECTATION — what the host enforces is discovered by the Step 1b reconciliation. |
-| `policy.accepted_divergences[]` | list | Host divergences formally ACCEPTED, not drift. Each entry names a `bun run git:policy verify` finding verbatim (`field`), plus `enforced`, `accepted` date, and `reason`. `verify` reports matching findings as ACCEPTED instead of DRIFT (and can stamp entries via `--stamp`); `apply` preserves the host's side for accepted fields. |
+| `policy.accepted_divergences[]` | list | Host divergences formally ACCEPTED, not drift. Each entry names a `bun run git:policy verify` finding verbatim (`field`), plus `enforced`, `accepted` date, and `reason`. `verify` reports matching findings as ACCEPTED instead of DRIFT (exit 0), flags an entry that matches no drift as STALE, and `--stamp` records `meta.policy_source: accepted`; `apply` preserves the host's side for accepted fields. |
 | `branch_prefixes.precedence` | list | Order for choosing a prefix when several apply. |
 | `branch_prefixes.naming_with_key` | string | Branch-name template with an issue key (e.g. `feat/UPEX-123-slug`). |
 | `branch_prefixes.naming_without_key` | string | Branch-name template without a key. |
@@ -113,6 +113,23 @@ Seven syntaxes coexist across skills, commands, and docs. Each resolves from a d
 | `{{jira.transition.<work_type>.<slug>}}` | **Jira transition reference** — portable pointer to a workflow transition's `id` (e.g. `"41"`). The default sub-key is `.id` because it removes the ambiguous-transition gotcha — invoke transitions unambiguously via REST `POST /rest/api/3/issue/{key}/transitions` with `{"transition":{"id":"…"}}`. Optional sub-key: `.name` (transition literal name) for callers that prefer `acli`'s name-based interface. | `.agents/jira-workflows.json` → `<work_type>.transitions.<slug>` (default sub-key: `.id`). Both `<work_type>` and `<slug>` must be declared in `.agents/jira-required.yaml` under `work_types.<work_type>.required_transitions`. | `bun run vars:check` (manifest declaration + catalog presence + valid sub-key). |
 
 The `{{…}}` vs `<<…>>` distinction is intentional: it removes the ambiguity where both project data and ephemeral session data might share the same `{{VAR}}` syntax.
+
+### Checkout roots: `<<REPO_ROOT>>` and `<<PRIMARY_ROOT>>`
+
+Two session variables name a directory, and they differ the moment a session runs inside a linked git worktree (Orca, `claude --worktree`, the harness `EnterWorktree`, a Codex-managed worktree, a plain `git worktree add`):
+
+| Variable | Resolves to | Use it for |
+|---|---|---|
+| `<<REPO_ROOT>>` | `git rev-parse --show-toplevel`: THIS checkout, the worktree when there is one | tracked files the session reads or edits: code, skills, docs, configs, migrations, the committed `.context/` docs (including `.context/reports/`) |
+| `<<PRIMARY_ROOT>>` | `dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`: the primary checkout, the same value from the primary and from every worktree of it | durable GITIGNORED state: `.session/**` (plans, progress, locks, run reports, escalation logs), `.scratch/`, updater markers and backups |
+
+In the primary checkout both resolve to the same path. In a worktree, anything written under `<<REPO_ROOT>>` that git ignores dies when the worktree is removed, so durable state is always written to and resumed from `<<PRIMARY_ROOT>>`, by absolute path. Never derive either root from `pwd`: inside a worktree `pwd` is the worktree.
+
+Three commands carry the contract (code: `cli/lib/worktree.ts`):
+
+- `bun run worktree:provision [<path>]`: wires a fresh worktree with the gitignored inputs it cannot rebuild (`.env`, `.vercel/`, local settings), then `bun install` and `bun run agents:compat`. Refuses to run on the primary. `orca.yaml` runs it as Orca's setup hook, `.codex/environments/environment.toml` as the Codex app's; Claude Code and the Codex app copy the same files through `.worktreeinclude`.
+- `bun run worktree:audit [<path>]`: classifies what a worktree still holds that git does not (state / cache / disposable / unknown) before it is removed; exit 1 while state or unknown remains. `--rescue` copies the state class to the same path under `<<PRIMARY_ROOT>>`, never overwriting. `orca.yaml` runs it as Orca's archive hook.
+- `bun run up` refuses to run in a linked worktree: its backups, markers and prompts are gitignored and would die with it.
 
 ### Active environment
 
