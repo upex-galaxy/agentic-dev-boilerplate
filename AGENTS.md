@@ -234,14 +234,18 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 | `/jira-instance-migration`    | Alias → skill `jira-administration` mode `instance-migration`. Repoint the repo at a new Atlassian instance (`.agents/project.yaml` + machine-global `acli` session) and regenerate the `.agents/` catalogs the migration invalidated. Takes source + target instance as arguments; asks for whatever is missing. |
 | `/jira-components`            | Alias → skill `jira-administration` mode `components`. Reconcile a Jira project's Components against the app's real functional modules, plan-first (`scripts/sync-jira-components.ts`, dry run by default, `--apply` only after explicit approval). |
 
-### MCPs (configured in `.mcp.json`)
+### MCPs (decision rules)
 
-| MCP      | Use for                                         | Rule                                    |
-| -------- | ----------------------------------------------- | --------------------------------------- |
-| Tavily   | Web search, troubleshooting community solutions, non-doc research | `[WEB_SEARCH_TOOL]` primary. **MANDATORY** for any general web search: community fixes, error message lookups, "how to solve X". PREFER OVER built-in `WebSearch` / `WebFetch`: Tavily returns ranked + summarized results; built-in is shallower. |
-| Context7 | Library / framework / SDK / API / CLI official docs ("how to use X") | `[DOCS_TOOL]` primary. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup (React, Next, Prisma, Tailwind, Express, etc.). PREFER OVER built-in `WebSearch` / `WebFetch`: Context7 returns current versioned docs; built-in returns stale blog posts. |
-| Supabase | DB queries, schema, project state               | `[DB_TOOL]` primary                     |
-| n8n      | Workflow automation, integrations               | `[AUTOMATION_FLOWS_TOOL]`               |
+> Skills declare the CAPABILITY they need (`metadata.requires_capabilities`) and the AI resolves it by tool-name SUFFIX, whatever server prefix the host gave it. Vocabulary, suffixes, point-of-use STOP and how to enable per host → `agentic-dev-core/references/mcp-capabilities.md`. The project MCP files declare LOCAL servers only (the set is whatever `.mcp.json` declares); web search runs at harness level (ADR-0005).
+
+| Capability | Provided by | Rule |
+| ---------- | ----------- | ---- |
+| `library-docs` | committed `context7` (`resolve-library-id` → `query-docs`) | `[DOCS_TOOL]`. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup ("how to use X") before writing code against it. |
+| `web-search` | HARNESS level, never `.mcp.json`: Exa first (`web_search_exa`), Tavily second (`tavily_search`); connect once per machine (`bun run setup:doctor` shows what this machine declares) | `[WEB_SEARCH_TOOL]`. **MANDATORY** for community fixes, error-message lookups, "how to solve X", non-doc research. |
+| `db` | committed `supabase` (`execute_sql`, `list_tables`) | `[DB_TOOL]`: schema, migration ledger, read-only data checks. |
+| `automation-flows` | committed `n8n` | `[AUTOMATION_FLOWS_TOOL]`: workflow automation, integrations. |
+
+**Missing capability = STOP at the point of use**: name the capability, the server that normally provides it, and how to enable it; then wait. Built-in `WebSearch` / `WebFetch` (or any other substitute) only when the user explicitly chooses it after the STOP, for that step.
 
 ---
 
@@ -275,7 +279,7 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 
 **HOOK: one emitter, three adapters.** `.agents/hooks/` holds the personality-reinject contract text once. Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`) execute it as a `UserPromptSubmit` command hook; OpenCode imports the constant from the thin plugin `.opencode/plugins/personality-reinject.js`, ONE default export `{ id, setup, server }` that loads on both plugin generations (OpenCode 2 calls `setup(ctx)` and registers `ctx.session.hook('context')`; OpenCode 1 calls `server()` for `experimental.chat.system.transform`). Contract enforced by `cli/lib/agent-compatibility-contracts.ts`: no absolute personal paths, no duplicated hook file, both OpenCode entrypoints present (`validateOpenCodePluginEntrypoints`), system prompt mutated in place.
 
-**MCP: one declared set, three formats, semantic parity.** The canonical server set is whatever `.mcp.json` declares: every server there must exist in `opencode.jsonc` and `.codex/config.toml` with the same `.env` dependencies and the same literal env settings, and a server present in one host only fails naming the server and the host. Parity is checked by NORMALIZING each native format (JSON / JSONC / TOML) into a common shape — transport, command, args, url, env vars, enabled — then comparing. The boilerplate's own four (`context7`, `tavily`, `supabase`, `n8n`) additionally get a strict per-host shape check whenever the project declares them; any other server gets the generic check only, so a downstream project may drop or add servers freely. Env references keep each host's own syntax: `${VAR}` (`.mcp.json`), `{env:VAR}` (`opencode.jsonc`), `env_vars` / `bearer_token_env_var` (`.codex/config.toml`, which never expands placeholders, so every Codex stdio server starts through a `.env` loader with `startup_timeout_sec = 30`, `CODEX_ENV_LOADER_*` in `cli/lib/agent-compatibility-contracts.ts`: a Codex Desktop launch has no process environment for `env_vars` to forward; a missing loader or startup budget fails `agents:compat:check` in the boilerplate and is a WARNING downstream, naming the file and what to add, because `.codex/` is bootstrap-only and a sync never delivers the fix); Critical Rule #9 applies to all three.
+**MCP: one declared set, three formats, semantic parity.** The canonical server set is whatever `.mcp.json` declares: every server there must exist in `opencode.jsonc` and `.codex/config.toml` with the same `.env` dependencies and the same literal env settings, and a server present in one host only fails naming the server and the host. Parity is checked by NORMALIZING each native format (JSON / JSONC / TOML) into a common shape — transport, command, args, url, env vars, enabled — then comparing. The servers this boilerplate ships (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check whenever the project declares them; any other server gets the generic check only, so a downstream project may drop or add servers freely. Env references keep each host's own syntax: `${VAR}` (`.mcp.json`), `{env:VAR}` (`opencode.jsonc`), `env_vars` / `bearer_token_env_var` (`.codex/config.toml`, which never expands placeholders, so every Codex stdio server starts through a `.env` loader with `startup_timeout_sec = 30`, `CODEX_ENV_LOADER_*` in `cli/lib/agent-compatibility-contracts.ts`: a Codex Desktop launch has no process environment for `env_vars` to forward; a missing loader or startup budget fails `agents:compat:check` in the boilerplate and is a WARNING downstream, naming the file and what to add, because `.codex/` is bootstrap-only and a sync never delivers the fix); Critical Rule #9 applies to all three.
 
 **HARNESS-SPECIFIC GOTCHAS.**
 
@@ -296,14 +300,15 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 | `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | MCP Playwright                         |
-| `[DB_TOOL]`             | Database                          | Supabase MCP                              | raw SQL via Supabase CLI               |
+| `[DB_TOOL]`             | Database                          | capability `db` (Supabase MCP: `execute_sql`, `list_tables`) | raw SQL via Supabase CLI, only when the user chooses it after the STOP |
 | `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
-| `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | Context7 MCP (`mcp__context7__resolve-library-id` → `mcp__context7__query-docs`) | built-in `WebSearch` / `WebFetch` (last resort only) |
-| `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | Tavily MCP (`mcp__tavily__tavily_search` / `tavily_extract` / `tavily_research`) | built-in `WebSearch` / `WebFetch` (last resort only) |
+| `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | capability `library-docs`: any tool ending in `resolve-library-id` / `query-docs` | none: STOP (see below) |
+| `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | capability `web-search`: any tool ending in `web_search_exa` / `web_fetch_exa` (preferred) or `tavily_search` / `tavily_extract` / `tavily_research` | none: STOP (see below) |
+| `[AUTOMATION_FLOWS_TOOL]` | n8n workflow automation          | capability `automation-flows` (n8n MCP)   | none: STOP (see below)                 |
 
 **MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside owning skill's `references/`.
 
-**MCP-only tags** (`[DOCS_TOOL]`, `[WEB_SEARCH_TOOL]`): no skill load required: MCPs self-document via tool descriptions. But **NEVER** substitute these with built-in `WebSearch` / `WebFetch` when MCP available: Context7 and Tavily return higher-quality, current, ranked results. Built-ins are stale-blog-post traps for library docs.
+**MCP capability tags** (`[DOCS_TOOL]`, `[WEB_SEARCH_TOOL]`, `[DB_TOOL]`, `[AUTOMATION_FLOWS_TOOL]`): no skill load required: MCPs self-document via tool descriptions. **Resolve by tool-name SUFFIX, any prefix**: `mcp__context7__query-docs`, `mcp__claude_ai_context7__query-docs` and a user-named server's `…__query-docs` are the same capability; never conclude "not available" from a prefix. **No silent fallback**: when no tool provides the capability, STOP and tell the user which capability, which server, how to enable it (`agentic-dev-core/references/mcp-capabilities.md` §4-§5). Built-in `WebSearch` / `WebFetch` are used ONLY when the user explicitly chooses them after that STOP.
 
 **Pseudocode value types**: `Literal` (fixed domain) · `{per convention}` (consult skill ref) · `{{PROJECT_VAR}}` (from `.agents/project.yaml`) · `{from analysis}` (runtime-derived).
 

@@ -63,10 +63,11 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 | --- | ----- | ------ | ---------- | ------------- |
 | [ADR-0002](./ADR-0002-multi-harness-single-source.md) | One instruction source and one skill store for three harnesses (`AGENTS.md` canonical, `CLAUDE.md` shim, `.agents/skills/` store, generated adapters, parity gate, updater migration) | Accepted | — | — |
 | [ADR-0003](./ADR-0003-forensic-measurements-ledger.md) | Doctrine keeps the why; the measured figures and dates live here (Critical Rule #17 forensic-note split + the ledger of measurements behind the boilerplate's doctrine) | Accepted | — | — |
+| [ADR-0005](./ADR-0005-harness-level-mcps-and-capabilities.md) | Remote API-key MCPs (web search) run at harness level, never in the project MCP files; skills declare capabilities and resolve tools by name suffix, with a point-of-use STOP instead of a silent fallback | Accepted | — | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
 >
-> ADR-0002 and ADR-0003 are decisions about the boilerplate itself; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
+> ADR-0002 to ADR-0005 are decisions about the boilerplate itself; ADR-0001 is left free for the first product-level decision seeded by `/project-foundation`. Product-level ADRs in a scaffolded project start their own sequence from the next free number.
 
 ---
 
