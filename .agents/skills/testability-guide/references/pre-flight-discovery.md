@@ -32,7 +32,7 @@ The `/qa` page is generated against THREE+ wildly different realities (observed 
 | Framework + version | `package.json` deps (`next`, `remix`, `astro`, `nuxt`, `@sveltejs/kit`, `vite`+`react-router-dom`, `react-scripts`) + exact version | Page-route location + redirect mechanism (`routing-patterns.md`). Snapshot field. |
 | UI kit | `components.json`/`shadcn`, `@mui/material`, `@mantine/core`, `@chakra-ui/react`, `radix-ui`, plain Tailwind | Reuse — never add a UI dep. Primitives (Button/Card/Accordion/Tabs) come from the host kit. |
 | Icon library | `lucide-react`, `react-icons`, `@heroicons/react`, `phosphor-react` | Reuse. None → inline SVG, do not add a lib. |
-| i18n / language | `next-intl`, `next-i18next`, `react-i18next`, root `<html lang="…">`, copy in existing pages | Sets visible-copy language. Default Spanish per Q5 in this ecosystem (page is for QA), English only if no signal AND user picks it. |
+| i18n / language | `next-intl`, `next-i18next`, `react-i18next`, root `<html lang="…">`, copy in existing pages | Sets visible-copy language: Q5 follows this signal; with no signal, Q5 asks (no assumed default). |
 | Dark/light theme | `next-themes`, `dark:` Tailwind variants, CSS-variable theme, theme provider | The page MUST mirror the host's existing dark/light mechanism. |
 
 ### API, auth & docs (the high-risk detections)

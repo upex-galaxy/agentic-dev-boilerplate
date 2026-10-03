@@ -4,7 +4,7 @@
 >
 > **When to read**: Phase 4 of `SKILL.md`. Pair with `page-craft.md` (components) + `routing-patterns.md` (file location).
 >
-> Code identifiers + `data-testid`s stay English. Visible copy uses Q5 language (**Spanish is the default in this ecosystem** — the page is for QA; English only if no signal AND the user picks it).
+> Code identifiers + `data-testid`s stay English. Visible copy uses the Q5 language, which follows the host's language signal (with no signal, Q5 asks; no assumed default).
 
 ---
 
@@ -128,7 +128,7 @@ The page is a Server Component by default. `QaShell` is an **async Server Compon
 - Dark/light: mirror the host (CSS vars, `dark:` variants, theme provider). Per-domain accent hues all have `dark:` variants.
 - Responsive: mobile-first. TOC rail, diagram, two-way/agent tabs, demo-user table all degrade gracefully under `md`/`lg`.
 - A11y: tabs/accordions keyboard-navigable, semantic headings, icon-only buttons `aria-label`.
-- Language: visible copy = Q5 (Spanish default). Code, `data-testid`s, inline tech labels (`JWT`, `Bearer`, `OpenAPI`) stay English.
+- Language: visible copy = Q5 (the host's language signal). Code, `data-testid`s, inline tech labels (`JWT`, `Bearer`, `OpenAPI`) stay English.
 
 ---
 
