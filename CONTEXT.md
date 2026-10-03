@@ -22,7 +22,7 @@ This repo applies Context Engineering as a first-class architectural concern. Ev
 | **Context Relevance**      | Different tasks need different context — match scope to need                                                                                                                                                                                               |
 | **Single Source of Truth** | One place per fact (project values, Jira fields, branching strategy, etc.)                                                                                                                                                                                 |
 | **Skills over prompts**    | Executable workflows live in `.agents/skills/`, never as copy-paste files                                                                                                                                                                                  |
-| **Tool-agnostic context**  | `.agents/` holds the shared substrate (instructions, skills, hook emitter, alias manifest) consumed by every supported harness. `.claude/`, `.opencode/` and `.codex/` hold only thin adapters and generated artifacts, never a second copy of the content |
+| **Tool-agnostic context**  | `.agents/` holds the shared substrate (instructions, skills, hook emitter) consumed by every supported harness. `.claude/`, `.opencode/` and `.codex/` hold only thin adapters and generated artifacts, never a second copy of the content |
 
 For the theory behind these principles and the broader Agentic Development Engineering philosophy, see `docs/agentic-development-engineering.md`.
 
@@ -38,7 +38,8 @@ agentic-dev-boilerplate/
 ├── README.md                       Project overview (humans)
 ├── CONTEXT.md                      This file — Context Engineering in this repo
 ├── .mcp.json                       MCP config: Claude Code
-├── opencode.jsonc                  MCP config: OpenCode
+├── opencode.jsonc                  MCP config: OpenCode (reads `.auth/opencode/<VAR>` files that `bun run harness:env` writes)
+├── orca.yaml                       Worktree hooks for Orca: `bun run worktree:provision` on create, `worktree:audit --rescue` before remove
 │
 ├── .agents/                        Shared, harness-agnostic substrate (agentskills.io layout)
 │   ├── project.yaml                {{VAR_NAME}} resolution (SOT for project values)
@@ -49,8 +50,8 @@ agentic-dev-boilerplate/
 │   ├── skills/                     THE skill store: workflow skills + REGISTRY.md, read by all three harnesses
 │   └── hooks/                      personality-reinject.mjs: one emitter, three adapters
 │
-├── .claude/                        Claude Code adapter: settings.json (hook) + generated commands/ + skills alias (gitignored)
-├── .opencode/                      OpenCode adapter: plugins/personality-reinject.js + generated commands/
+├── .claude/                        Claude Code adapter: settings.json (hook) + generated skills alias (gitignored)
+├── .opencode/                      OpenCode adapter: plugins/personality-reinject.js
 ├── .codex/                         Codex adapter: config.toml (MCP) + hooks.json. Shared by CLI and Desktop
 │
 ├── .context/                       Project memory the AI reads
@@ -65,11 +66,12 @@ agentic-dev-boilerplate/
 │   └── PBI/                        Per-epic / per-ticket backlog artifacts
 │
 ├── docs/                           Human-facing documentation
-│   ├── onboarding.html             Single-file HTML onboarding artifact (served by `bun run onboarding`)
+│   ├── onboarding.html             Start-here page (served by `bun run onboarding`; published on the docs hub as onboarding.html)
 │   ├── agentic-development-engineering.md   Methodology deep dive
 │   ├── architectures/              Stack-specific guides (e.g. supabase-nextjs)
-│   ├── methodology/                IQL, Jira platform, early/mid/late-game testing notes
-│   ├── setup/                      MCP, Jira, gentle-ai setup
+│   ├── mcp/                        MCP config templates + configuration guide
+│   ├── methodology/                How dev hands work to QA (IQL touchpoints) + Jira/Xray from the dev side
+│   ├── setup/                      Per-harness MCP setup
 │   └── workflows/                  git-flow, environments, OpenAPI sync, template updates
 │
 ├── scripts/                        Build/sync scripts (skill registry, OpenAPI, env validation)
@@ -95,7 +97,7 @@ This is the load-bearing distinction in the repo. They look adjacent but serve o
 
 The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is exactly one copy of every instruction and every skill. Where the harnesses genuinely differ (MCP file format, hook API, whether slash commands exist at all) each keeps a thin versioned adapter. Nothing is duplicated.
 
-> Visual walkthrough: [**Una fuente, tres harnesses**](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (Spanish, published page with diagrams; source `packages/pages-home/harnesses.es.html`). Decision record: [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md).
+> Visual walkthrough: [**Una fuente, tres harnesses**](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (Spanish, published page with diagrams; source `packages/pages-home/harnesses.es.html`), one page of the [docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/). Decision record: [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md).
 
 | Surface          | Claude Code                                     | OpenCode                                    | Codex CLI + Desktop                      |
 | ---------------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
@@ -257,7 +259,7 @@ The agent should load only what the current step needs. Use this table to decide
 | **Product / PM**        | `/product-management`, `/project-foundation`; `.context/PRD/`, `.context/business/`             |
 | **Architect / Founder** | `/project-foundation`; `.context/business/`, `.context/PRD/`, `.context/SRS/`                   |
 | **DevOps / Infra**      | `/project-bootstrap`; `bun up --help`, `docs/setup/mcp/`                                        |
-| **New contributor**     | `/agentic-dev-onboard`; `docs/onboarding.html` (via `bun run onboarding`)                       |
+| **New contributor**     | `/agentic-dev-onboard`; `docs/onboarding.html` (via `bun run onboarding`); the [docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/) |
 
 ---
 
@@ -387,12 +389,13 @@ Use this table to decide what to re-generate after what kind of change.
 | `AGENTS.md`                                                                                  | Operational context loaded each session, on every supported harness (`CLAUDE.md` is its shim) |
 | `.context/ADR/ADR-0002-multi-harness-single-source.md`                                       | Why instructions and skills exist once and how each harness reaches them                      |
 | `docs/agentic-development-engineering.md`                                                    | Deep dive on the Agentic Development Engineering philosophy                                   |
-| `docs/onboarding.html`                                                                       | Onboarding for new contributors (single-file HTML, served by `bun run onboarding`)            |
+| `docs/onboarding.html`                                                                       | Start-here page for new contributors (served by `bun run onboarding`, published on the docs hub) |
+| [Docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/)                                  | Published decks: one per workflow skill, plus the core doctrine and multi-harness pages       |
 | `.context/README.md`                                                                         | Generator map for `.context/` artifacts                                                       |
 | `.context/ADR/README.md`                                                                     | Architecture Decision Records — when to write one, status lifecycle, index (append-only)      |
 | `.agents/README.md`                                                                          | Variable contract: `{{VAR}}`, `{{jira.*}}`, validation scripts                                |
 | `INSTALLER.md`                                                                               | What `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out    |
-| `docs/setup/jira-setup-guide.md`                                                             | Jira workspace setup + custom field configuration                                             |
+| `docs/methodology/jira-platform.md`                                                          | Jira and Xray from the dev side: instance anchor, fields dev writes, what the sync reads      |
 | Sister repo: [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) | QA-side workflows (sprint testing, automation, regression)                                    |
 
 ---

@@ -64,7 +64,7 @@ Each entry is required by one or more skills; install them as you need them.
 
 ### MCP credentials filled into `.env`
 
-The MCP config of every selected harness ships with credential placeholders: `${VAR}` in `.mcp.json` (Claude Code), `{env:VAR}` in `opencode.jsonc` (OpenCode), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex). The installer resolves required vars by scanning those committed configs (`discoverRequiredEnvVars()`) — the list backs the MCP servers those configs declare and the Atlassian CLI (context7 needs none). Web search is not in it: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`); the installer prints how to connect it. With the shipped configs the list reads:
+The MCP config of every selected harness ships with credential placeholders: `${VAR}` in `.mcp.json` (Claude Code), `{file:.auth/opencode/VAR}` value files in `opencode.jsonc` (OpenCode, written from `.env` by `bun run harness:env`), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex, behind a per-server `.env` loader). The installer resolves required vars by scanning those committed configs (`discoverRequiredEnvVars()`) — the list backs the MCP servers those configs declare and the Atlassian CLI (context7 needs none). Web search is not in it: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`); the installer prints how to connect it. With the shipped configs the list reads:
 
 ```
 ATLASSIAN_EMAIL · ATLASSIAN_API_TOKEN
@@ -177,7 +177,7 @@ Then `bun run setup:doctor --json` to confirm the rest.
 | fish       | `direnv hook fish \| source`              | `~/.config/fish/config.fish`                     |
 | PowerShell | `Invoke-Expression "$(direnv hook pwsh)"` | `$PROFILE` (requires direnv 2.37+, experimental) |
 
-All three MCP configs are committed with credential placeholders — `${VAR}` in `.mcp.json` (Claude Code), `{env:VAR}` in `opencode.jsonc` (OpenCode), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex). Real values live in `.env` (gitignored). If a server returns 401/403 at first call, the matching env var is missing — see `AGENTS.md` Critical Rule #9 (stop, fix `.env`, restart the agent session).
+All three MCP configs are committed with credential placeholders — `${VAR}` in `.mcp.json` (Claude Code), `{file:.auth/opencode/VAR}` in `opencode.jsonc` (OpenCode; `bun run harness:env` writes those files from `.env`, and setup runs it in Step 7d), `env_vars` / `bearer_token_env_var` keys in `.codex/config.toml` (Codex, every stdio server started through a `.env` loader). Real values live in `.env` (gitignored). If a server returns 401/403 at first call, the matching env var is missing — see `AGENTS.md` Critical Rule #9 (stop, fix `.env`, restart the agent session).
 
 ---
 
@@ -340,7 +340,7 @@ A project scaffolded when instructions lived in `CLAUDE.md` and skills in `.clau
 
 The migration promotes the project's memory from `CLAUDE.md` to `AGENTS.md` and leaves `CLAUDE.md` as the shim; moves every skill under `.claude/skills/` into `.agents/skills/`, project-authored ones included; and archives (never overwrites) any legacy skill whose name the canonical store already owns. Nothing is deleted: what is not moved is preserved under `.template/pre-agents-migration/` (gitignored). The pass is idempotent, and if a single item cannot be resolved without guessing it refuses in full, before touching anything, rather than applying halfway. A shim found without an `AGENTS.md` beside it is reported as an orphaned shim with a recovery command instead of being synced over.
 
-After that one update, the project works in Claude Code, OpenCode and Codex from the same source. See [**Una fuente, tres harnesses**](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) for the full picture and [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md) for the decision record.
+After that one update, the project works in Claude Code, OpenCode and Codex from the same source. See [**Una fuente, tres harnesses**](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (one page of the [docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/)) for the full picture and [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md) for the decision record.
 
 ### What every `bun run up` reports
 
@@ -386,7 +386,7 @@ Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does no
 | ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | `bun`            | General-purpose runtime + package manager — this repo runs on bun (scripts, install.ts, dev)    | — (OS-specific — see docs)                          | <https://bun.com/>                                                       |
 | `gh`             | GitHub CLI — `gh repo create`, PR ops, `gh api`. Powers Step 9 of the installer                 | — (OS-specific — see docs)                          | <https://github.com/cli/cli#installation>                                |
-| `supabase`       | Local Supabase stack, migrations, type generation (`bun run supabase:types`)                    | — (OS-specific — see docs)                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
+| `supabase`       | Local Supabase stack, migrations, type generation (`supabase gen types`, wired by `/project-bootstrap`)                    | — (OS-specific — see docs)                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
 | `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps) + verification, env sync, debug, rollback via `/vercel-cli` | `bun add -g vercel`                                 | <https://vercel.com/docs/cli>                                            |
 | `resend`         | Send transactional email via Resend (used by features that integrate email notifications)       | — (OS-specific — see docs)                          | <https://resend.com/docs/cli>                                            |
 | `acli`           | Atlassian CLI for Jira/Confluence terminal workflows — used by the `/acli` skill                | — (OS-specific — see docs)                          | <https://developer.atlassian.com/cloud/acli/guides/install-acli/>        |
@@ -428,7 +428,7 @@ Three reasons:
 - **`--upex` flag** — every `jira:sync-*` script (`fields`, `workflows`, `link-types`) accepts `--upex` to download the UPEX-standard reference JSON from the upstream boilerplate repo. URL is hardcoded per script and pinned to `main`. Bypasses ATLASSIAN_* env vars, `project_key`, `jira-required.yaml` and all Jira REST calls; only network requirement is GitHub raw access. Useful when (a) you have no Jira admin, (b) you want a working catalog without setting up auth, or (c) you want to compare against the canonical UPEX standard before custom-syncing.
 - **gentle-ai not detected after install** — re-run `bun run setup`. The detector probes `which gentle-ai` plus `gentle-ai version`; if either fails the installer falls back to "skip gentle-ai" branch. Confirm the binary is on PATH (`which gentle-ai` should return a path under `/usr/local/bin/`, `~/bin/`, `~/go/bin/`, or a Homebrew prefix).
 - **MCPs returning 401/403** — the matching env var in `.env` is unset or wrong. All three MCP configs (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`) are committed with placeholders; real values live in `.env`. Open `.env`, fill the var, and **restart the agent session** — env vars are read once at MCP-server spawn time. See `AGENTS.md` Critical Rule #9.
-- **MCPs not loading at all** — confirm you launched the agent via `bun run claude` / `bun run opencode` / `bun run codex` (each wraps with `dotenv-cli`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). Launching the bare binary without either path means MCP placeholders never get expanded.
+- **MCPs not loading at all** — confirm you launched the agent via `bun run claude` / `bun run opencode` / `bun run codex` (each wraps with `dotenv-cli`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). A launch with no command line (desktop app, supervised worker) needs `bun run harness:env` instead: it writes Claude Code's `.claude/settings.local.json` env block and OpenCode's `.auth/opencode/<VAR>` files from `.env` (re-run it after every `.env` change; `bun run harness:env:check` reports drift). Codex is the exception: its servers start through the `.env` loader in `.codex/config.toml`, whatever launched it.
 - **Codex ignores `.codex/config.toml` and the hook never fires** — the repository is not marked trusted. Codex loads project `.codex/` config and hooks only in a trusted repo, and that is runtime state no file check can see. `bun run setup:doctor` reports it on its own WARN line; approve trust in Codex, then restart the session.
 - **The skills alias disappeared after an edit** — you probably hand-edited the `.claude/skills` alias. Fix the source instead (`.agents/skills/`), then run `bun run agents:compat`. Verify with `bun run agents:compat:check`.
 - **A project command vanished into `.backups/shadowing-commands/`** — it had the name of a repo skill, which hides that skill's instructions. Port anything worth keeping into the skill, or rename the command, then restore it.
@@ -456,7 +456,7 @@ What you keep: every workflow skill committed in this repo (`/sprint-development
 
 ## See also
 
-- [.scratch/plans/GENTLE-AI-RESEARCH.md](./.scratch/plans/GENTLE-AI-RESEARCH.md) — full research doc on the gentle-ai ecosystem (commands, components, agent matrix)
+- [Docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/) — the visual start-here page and one deck per workflow skill
 - [AGENTS.md](./AGENTS.md) — the single instruction body every harness loads; §5.5 covers the multi-harness contract
 - [CONTEXT.md](./CONTEXT.md) — context-engineering strategy and the surface-by-harness map (§2.1)
 - [README.md](./README.md) — project overview and Quick Start
