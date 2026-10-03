@@ -35,11 +35,11 @@ describe('lint-docs references', () => {
 
   test('a dead link fails the gate; a missing root path is a warning', () => {
     write('docs/README.md', 'See [gone](./methodology/gone.md).\n\n`docs/nope/file.md`');
-    write('docs/onboarding.html', `${head}<a href="setup/missing.html">x</a>`);
+    write('docs/guide.html', `${head}<a href="setup/missing.html">x</a>`);
     expect(lintDocs(root).findings.map(tag)).toEqual([
       'error:docs/README.md:1:link:./methodology/gone.md',
       'warning:docs/README.md:3:path:docs/nope/file.md',
-      'error:docs/onboarding.html:1:link:setup/missing.html',
+      'error:docs/guide.html:1:link:setup/missing.html',
     ]);
   });
 
@@ -193,7 +193,8 @@ describe('lint-docs published site (Pages home and decks)', () => {
   test('maps a published file to its site path; markdown and unpublished files have none', () => {
     expect(sitePathOf('packages/pages-home/index.html')).toBe('index.html');
     expect(sitePathOf('packages/decks/a/how-it-works.es.html')).toBe('decks/a/how-it-works.es.html');
-    expect(sitePathOf('docs/onboarding.html')).toBeNull();
+    expect(sitePathOf('docs/onboarding.html')).toBe('onboarding.html');
+    expect(sitePathOf('docs/other.html')).toBeNull();
     expect(sitePathOf('docs/README.md')).toBeNull();
   });
 
@@ -202,6 +203,8 @@ describe('lint-docs published site (Pages home and decks)', () => {
     expect(resolvePublishedLink('index.html', './harnesses.html')).toBe('packages/pages-home/harnesses.html');
     expect(resolvePublishedLink('decks/a/x.html', '../../index.html')).toBe('packages/pages-home/index.html');
     expect(resolvePublishedLink('decks/a/x.html', '../../../README.md')).toBe('outside');
+    expect(resolvePublishedLink('index.html', './onboarding.html')).toBe('docs/onboarding.html');
+    expect(resolvePublishedLink('decks/a/x.html', '../../onboarding.html')).toBe('docs/onboarding.html');
   });
 
   test('a dead home-page link fails; a live one and a link back from a deck pass', () => {
@@ -209,8 +212,10 @@ describe('lint-docs published site (Pages home and decks)', () => {
       '<a href="./decks/a/x.html">ok</a>',
       '<a href="./decks/">deck index</a>',
       '<a href="./decks/gone/x.html">gone</a>',
+      '<a href="./onboarding.html">start here</a>',
     ].join('\n'));
     write('packages/decks/a/x.html', '<a href="../../index.html">hub</a> <a href="../a/x.html">self</a>');
+    write('docs/onboarding.html', `${head}<a href="./decks/a/x.html">deck</a>`);
     const findings = lintDocs(root).findings.filter(f => f.kind === 'link');
     expect(findings.map(f => `${f.file}:${f.line}:${f.target}`)).toEqual([
       'packages/pages-home/index.html:3:./decks/gone/x.html',
