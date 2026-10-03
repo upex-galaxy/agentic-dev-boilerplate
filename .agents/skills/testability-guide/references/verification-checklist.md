@@ -58,10 +58,12 @@ Load `/playwright-cli`. Run:
 
 - Open `/qa` against the local dev server (`{{environments.local.web_url}}/qa`, fallback `http://localhost:3000/qa`).
 - Assert the page returns 200, the H1 reads `Software Testability Guide for QA`, and `data-testid="qa-page"` is present.
+- Assert `data-testid="qa-build-sha"` is present. Locally the platform SHA variable is unset, so it shows the fallback line and `data-sha` is empty: that is the expected local result, not a failure.
 - Click `data-testid="qa-credentials-button"` → assert it opens the credentials destination URL in a new tab.
 - Expand every accordion / section → assert `data-testid` selectors render their code blocks.
 - If the redirect was added (Q4 = yes) → request the old route → assert a 301 / 308 to `/qa`.
 - Take ONE full-page screenshot for the PR body.
+- **Deployed build stamp** (once the change reaches a deployed environment, e.g. staging after `/sprint-development` Stage 4): open that environment's `/qa`, read `data-sha` from `qa-build-sha`, and confirm it is the commit that environment should run (`git rev-parse origin/<deployed branch>`) AND that a deployment exists for it (load `/vercel-cli`: `vercel ls -m githubCommitSha=<sha> --format json`). Empty `data-sha` on a deployed environment means the SHA source is missing there (on Vercel: the system-env exposure setting is off) → fix the source, never hardcode the value.
 
 If `/playwright-cli` is not available in the host → degrade to a curl smoke (HTTP 200 + body contains the H1 string) and warn the user that visual checks were skipped.
 
@@ -88,6 +90,7 @@ Manually scan for:
 - Password-shaped strings (12+ chars, mixed case + digits).
 - Token-shaped strings (`eyJ…`, `sk_…`, `pk_live_…`, `xoxb-…`).
 - Private hostnames (e.g. `<random>.upexgalaxy.com`).
+- A literal commit SHA (7-40 hex chars) in `app/qa/**`. The build stamp is runtime-only; a literal means codegen baked the value in.
 
 If anything matches → STOP. Remove from the diff. Re-run from step 1.
 

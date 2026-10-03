@@ -13,6 +13,7 @@
 - Title: `Software Testability Guide for QA` (translate only if Q5 demands).
 - Subtitle: one sentence — audience is manual QA + AI-driven testers exercising the app at DB, API, and UI layers.
 - Root container: `data-testid="qa-page"`. Title node: `data-testid="qa-title"`.
+- Build stamp under the subtitle: `data-testid="qa-build-sha"`. Shows the deployed short commit SHA, linked to the commit when a repo URL was detected, read at RUNTIME from the env var names in `qaConfig.build` (`page-craft.md` → Build stamp). No SHA available → the same node renders a gap line (es: `build local, sin SHA de despliegue`). The SHA is never written into the page source.
 - Snapshot comment at the very top of the file (`idempotency-snapshot.md`).
 - Layout: own shell with sticky TOC + hero — NOT a flat accordion list. See `page-craft.md`.
 
