@@ -24,7 +24,7 @@ The output contains:
 - Explicit out-of-scope section (to stop scope creep into the master plan)
 - Implementation gaps — spike candidates and unknowns to investigate before building
 
-This is **NOT** a story-level implementation plan (→ `/sprint-development` Planning stage), a flow description (→ the data map in `business-data-context`), a feature inventory (→ the feature map in `business-feature-context`), nor a per-epic ROADMAP (→ `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md`). It is the **implementation-strategy layer** above those maps.
+This is **NOT** a story-level implementation plan (→ `/sprint-development` Planning stage), a flow description (→ the data map in `business-data-context`), a feature inventory (→ the feature map in `business-feature-context`), nor the ticket-level execution order (→ `.context/dev-roadmap.md`, `/project-context dev-roadmap`). It is the **implementation-strategy layer** above those maps.
 
 ---
 
@@ -36,7 +36,7 @@ This is **NOT** a story-level implementation plan (→ `/sprint-development` Pla
 | The feature map (`business-feature-context`) | Optional — warn if missing | Feature catalog, CRUD matrix, feature flags, dependency tags, MVP-relevance matrix                                      | `bun run context:map business-feature-context` |
 | Existing context                            | If available               | PRD priorities, SRS architecture, user journeys, domain glossary                                                        | `.context/PRD/`, `.context/SRS/`, `.context/business/domain-glossary.md` |
 | Git history                                 | If signals needed          | Already-shipped modules (skip), recently-touched modules (in-flight)                                                    | `git log --oneline -90 --stat`     |
-| PBI epics                                   | If available               | Existing epic/story breakdowns to align the plan with current backlog                                                   | `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md` |
+| PBI epics                                   | If available               | Existing epic/story breakdowns to align the plan with current backlog                                                   | `.context/PBI/epic-tree.md`, `.context/PBI/epics/EPIC-<KEY>-<slug>/epic.md` (synced cache; `bun run context:hydrate`) |
 | Issue tracker                               | If helpful                 | Already-prioritized backlog signals from product                                                                        | `[ISSUE_TRACKER_TOOL]`             |
 
 **Golden rule**: ground every priority claim in evidence from the maps. "This feature is Master Sprint 0 because…" must cite either a data-map flow (revenue / legal / blocker), a feature-map MVP-relevance row, a named external dependency, or an explicit user-journey reference. No hand-wave prioritization.
@@ -70,7 +70,7 @@ Do not proceed with assumptions. An implementation plan without an entity / flow
 
 #### 1.2 Feature map check (SOFT)
 
-If `bun run context:map business-feature-context` prints the placeholder notice → **WARN and proceed**. Log in §11 Implementation Gaps:
+If `bun run context:map business-feature-context` prints the placeholder notice → **WARN and proceed**. Log in §12 Implementation gaps:
 
 > The feature-map was not available at generation time. This plan reflects the data map only. Angles missed: per-feature MVP-relevance scoring, CRUD-completeness signals, feature-flag staging, third-party-dependency tagging. Run `/project-context features` and re-run `/project-context master-plan` for the complete picture.
 
@@ -99,7 +99,7 @@ Composite score = product of the three. Map:
 - `≥ 18` → **Master Sprint 0** (foundational — must ship first; unblocks the rest)
 - `8–17` → **Master Sprint 1** (core MVP — main value delivery)
 - `3–7` → **Master Sprint 2** (post-MVP enhancement)
-- `< 3` → **Deferred** (log in §10, do not include in Master Sprints)
+- `< 3` → **Deferred** (log in §11's "Deferred / won't-do" list, do not include in Master Sprints)
 
 ### Phase 3 — Dependency mapping
 
@@ -154,7 +154,7 @@ Narrative paragraph (3–5 sentences) framing the system's biggest value-unlock 
 | Master Sprint 1 | Notifications (email)          | Closes the loop on every transactional flow | Depends on: auth, checkout              |
 ```
 
-Cap at 7–10 rows. Anything below Master Sprint 1 goes to §10 as a short list or §11 if it needs a spike first.
+Cap at 7–10 rows. Anything below Master Sprint 1 goes to §11's "Deferred / won't-do" list, or to §12 if it needs a spike first.
 
 ### 3. What to implement first and why
 
@@ -235,7 +235,7 @@ Per item, name the specific project feature most at risk and the cheapest way to
 Short, action-oriented. No more than 12 items. Ordered by what is most often skipped first. Each line is one check phrased as "Verify X is true before merging Y". Examples (adapt to the project):
 
 ```markdown
-- Verify the feature is covered by the master-test-plan's risk map (or document why it is not).
+- Verify the feature's critical paths have automated tests (`/unit-testing`; targets by code type in its `references/test-coverage.md`), or document why they do not.
 - Verify env vars consumed by the feature are documented in `.env.example` and `.agents/project.yaml`.
 - Verify the feature is wired behind a feature flag if it is part of a partial-Master-Sprint rollout.
 - Verify the implementation matches the entity definition in the data map (`business-data-context`; no schema drift).
@@ -254,8 +254,8 @@ Explicit delegation to stop scope creep into this plan:
 - Feature catalog, CRUD matrix, feature flags → the feature map (`bun run context:map business-feature-context`)
 - Flow diagrams and state-machine transitions → the data map (`bun run context:map business-data-context`)
 - API endpoint inventory / contracts → `bun run api:sync` + `/project-context api` (when available)
-- Test strategy and risk map → `.context/master-test-plan.md` (sister repo: `/master-test-plan`)
-- Sprint-level execution order → `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md` (per-epic) or sprint planning artifacts
+- Formal QA test strategy → out of scope here; a separate QA workflow picks up from `Ready For QA`
+- Ticket-level execution order → `.context/dev-roadmap.md` (`/project-context dev-roadmap`)
 - Definite delivery dates → out of scope; this plan only orders work, it does not estimate it
 - Deferred / won't-do features → list here at the end of this section, do not promote them into Master Sprints
 ```
