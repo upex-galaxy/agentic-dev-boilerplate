@@ -836,6 +836,40 @@ async function runMenu(
  * Never prints secret values. Remote writes are gated + stdin-only (D3) and
  * idempotent (D4); `.env` is backed up before any local mutation (D5).
  */
+/**
+ * Regenerate `.claude/settings.local.json` + `.auth/opencode/*` from `.env`.
+ *
+ * A credential written to `.env` reaches an MCP server only through those
+ * generated files (a harness spawns its servers at startup, before any hook or
+ * wrapper can help), so a `--variables` run that stops at `.env` leaves a
+ * desktop-launched agent exactly as broken as before. Never fatal:
+ * `bun run setup:doctor` reports the same drift and `bun run harness:env`
+ * fixes it. Prints variable NAMES only.
+ *
+ * DYNAMIC import: `harness-env.ts` imports from `../install.ts`, which imports
+ * this file; a static import here would close that cycle.
+ */
+async function regenerateHarnessSurfaces(): Promise<void> {
+  try {
+    const { generate } = await import('./harness-env.ts');
+    const result = generate();
+    if (result.refused !== undefined) {
+      tui.log.warn(`Harness credential surfaces NOT written: ${result.refused}`);
+      return;
+    }
+    tui.log.info(
+      `Harness credential surfaces ${result.changed ? 'regenerated' : 'already in sync'}: `
+      + `${result.emitted.length === 0 ? '(none emitted)' : result.emitted.join(', ')}`,
+    );
+    if (result.changed) {
+      process.stdout.write('  Restart the agent session: MCP servers read credentials at startup, not later.\n');
+    }
+  }
+  catch (err) {
+    tui.log.warn(`Could not regenerate the harness credential surfaces: ${(err as Error).message}. Run \`bun run harness:env\`.`);
+  }
+}
+
 export async function runVariablesFlow(opts: VariablesFlowOptions = {}): Promise<void> {
   const mode = opts.mode ?? 'both';
 
@@ -878,6 +912,10 @@ export async function runVariablesFlow(opts: VariablesFlowOptions = {}): Promise
     }
     await warnDeprecated();
     printResultsTable(localResults, remoteResults, mode);
+  }
+
+  if (!opts.dryRun) {
+    await regenerateHarnessSurfaces();
   }
 
   process.stdout.write('\n');
