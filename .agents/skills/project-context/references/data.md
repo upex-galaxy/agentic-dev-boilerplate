@@ -60,17 +60,17 @@ This command is **invocable standalone** — you do NOT have to run `/project-fo
 
 ## Sources (use ALL available)
 
-Exhaust every source before writing. Cite paths/files for every claim.
+Exhaust every source before writing. Cite paths/files for every claim. App paths resolve under `{{stack.app_root}}` (SKILL.md § Stack parameters).
 
 | Source                         | What to extract                                                            | How to access                                                                                                                                                       |
 | ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database schema**            | Tables, columns, relationships, constraints, enums, RLS policies, triggers | `[DB_TOOL]` (capability `db`: any tool ending in `list_tables` / `execute_sql`, whatever the server prefix) against the project identified by `{{DB_PROJECT_REF}}` (active env). Use it to **understand**, not to dump `information_schema`. |
+| **Database schema**            | Tables, columns, relationships, constraints, enums, RLS policies, triggers | per `{{stack.database.schema_source}}` (SKILL.md § Stack parameters). `live`: `[DB_TOOL]` (capability `db`: any tool ending in `list_tables` / `execute_sql`, whatever the server prefix) against the project identified by `{{DB_PROJECT_REF}}` (active env). `migrations`: the migration files under `{{stack.database.migrations_dir}}`, read offline. Use it to **understand**, not to dump `information_schema`. |
 | **Backend codebase**           | Services, controllers, models, validation rules, business logic, schemas   | Read files under the backend tree (e.g. `api/`, `src/server/`, `app/api/`). Focus on services and controllers, not boilerplate.                                     |
 | **Frontend codebase**          | Pages, routes, forms, user flows, state management, client schemas         | Read files under the frontend tree (e.g. `src/app/`, `src/pages/`, `src/routes/`). Focus on user-facing flows.                                                      |
 | **API surface**                | Routes, methods, payloads, auth levels                                     | Read `api/openapi.json` if it exists; otherwise read route files directly. Cross-check with `bun run api:sync` output.                                              |
 | **Existing context**           | PRD, SRS, domain glossary                                                  | `.context/PRD/`, `.context/SRS/`, `.context/business/` (incl. `.context/business/domain-glossary.md`): entity and flow names use the glossary's words                |
 | **Legacy map (input only)**    | a project's old markdown data map                                          | `.context/business/business-data-map.md` when present: read it as input, cite it in `data-migrated-from` on the sections it seeded; never delete or rewrite it       |
-| **Migrations**                 | how the schema got its shape, RLS policies, triggers                       | the project's migrations folder plus `[DB_TOOL]` `list_migrations`                                                                                                  |
+| **Migrations**                 | how the schema got its shape, RLS policies, triggers                       | `[DB_TOOL]` `list_migrations` (the ledger when `{{stack.database.migrations_dir}}` is null) plus the migration files under `{{stack.database.migrations_dir}}` when it is set |
 | **Package dependencies**       | External integrations (Stripe, SendGrid, Auth0, Resend, etc.)              | `package.json`, `requirements.txt`, `Gemfile`, etc. — match names against known SaaS services.                                                                      |
 | **Library docs (when needed)** | Confirm how an external SDK shapes data flow                               | `[DOCS_TOOL]` (`library-docs`) for library docs; `[WEB_SEARCH_TOOL]` (`web-search`) for community patterns.                                                         |
 | **Workflow automation**        | n8n flows that touch the domain                                            | n8n MCP (only if relevant — most projects will not have it).                                                                                                        |
@@ -112,7 +112,7 @@ Read in this order (delegate heavy reads to a sub-agent if context is tight):
 
 1. Existing context: `.context/PRD/`, `.context/SRS/`, `.context/business/` (glossary, and any legacy markdown map as input)
 2. Package manifests (to spot external services)
-3. DB schema, RLS policies and the migration ledger via Supabase MCP
+3. DB schema, RLS policies and the migration ledger, from the source `{{stack.database.schema_source}}` names: the live database via `[DB_TOOL]`, or the migration files read in order (then `[DB_TOOL]` only as an optional cross-check; a file-vs-database difference goes to Discovery Gaps)
 4. Backend code (services + controllers + models)
 5. Frontend code (routes + pages + forms)
 6. OpenAPI spec if present
@@ -127,7 +127,7 @@ For every entity discovered via DB + code:
 - Why does it exist? What problem does it solve?
 - How does it relate to other entities, and why?
 
-**Do NOT dump columns** — the DB MCP serves that on demand. Document the business meaning.
+**Do NOT dump columns**: the DB MCP (or the migration files) serves that on demand. Document the business meaning.
 
 Produce an ER figure (diagram-design) + a table (`Entity | Business Role | Why it exists`) + a short narrative on the key relationships. For each table with RLS, state in plain words who can read and write which rows and why; for the migrations, name the ones that changed the meaning of an entity (a soft delete, a status enum, a tenancy column), not every file.
 
@@ -192,11 +192,11 @@ Write the map as flat `<section>`s, in this order, each with a stable `id`, its 
 
 | Section id | Content | Figure (diagram-design type) |
 |---|---|---|
-| `overview` | executive summary: what the system does, main actors (table `Actor \| Description`), value proposition, scope | one overview figure for the whole map (architecture or ER) |
+| `overview` | executive summary: what the system does, main actors (table `Actor \| Description`), value proposition, scope, and where the schema was read (the env for `live`, the migrations folder and its newest file for `migrations`) | one overview figure for the whole map (architecture or ER) |
 | `entities` | table `Entity \| Business role \| Why it exists` + the key relationships in prose (WHY they exist, not only that they do) | ER / data model (split above the type's budget) |
 | `entity-<slug>` | one per entity whose meaning is not obvious from the table: soft deletes, derived fields, ownership, tenancy | only when a picture carries the mechanism |
 | `access-control` | RLS per table in plain words (`Table \| Who reads \| Who writes \| Why`), the roles they rely on, and the tables with RLS off | none by default |
-| `migrations` | the migrations that changed the meaning of an entity, oldest first, each with what changed and why | none |
+| `migrations` | the migrations that changed the meaning of an entity, oldest first, each with what changed and why (cited `migration:<file>` when the files are the source) | none |
 | `flow-<slug>` | one per business flow (do not cap): numbered narrative, business rules with their why, code paths involved, side effects | flowchart or sequence |
 | `state-<entity>` | one per stateful entity: transitions table `From \| To \| Triggering event \| Effects`, the rules that constrain them | state machine |
 | `automatic-processes` | three tables (DB triggers, cron jobs / scheduled tasks, async workers / incoming webhooks), each with a "why it exists" column | none by default |
@@ -210,7 +210,7 @@ Every fact a figure shows is also written in the section text: the AI reads the 
 ## Rules
 
 1. **Cite sources** — every entity, flow, trigger, and integration claim must reference a file path or DB object. No invented behavior.
-2. **Synthesize, don't dump** — do not list every column. The DB MCP is live and serves schema on demand.
+2. **Synthesize, don't dump** — do not list every column. The schema source (the DB MCP, or the migration files) serves it on demand.
 3. **Section-level updates only**: in UPDATE mode, regenerate only the stale sections; never rewrite the whole map and never change a section id.
 4. **Always write Discovery Gaps**: even if the section is empty. An empty list still proves you looked.
 5. **Visual first, text complete**: a diagram-design figure wherever the structure allows it, and every fact it shows also in the section text.
@@ -230,6 +230,7 @@ After generation, print a short report:
 
 **File**: `.agents/skills/business-data-context/references/business-data-map.html`
 **Scope**: <full-system | module=<name>>
+**Schema source**: <live: env read | migrations: folder, newest file>
 
 ## Documented
 
