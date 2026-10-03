@@ -29,6 +29,7 @@ import type {
   Component,
   CoreLogger,
   DeltaEntry,
+  DeprecatedFile,
   FailedFile,
   FileClass,
   GitVersion,
@@ -473,8 +474,8 @@ export function isFrameworkExemptPath(
  *  1. the whole component is `bootstrapOnly`, except its framework-exempt
  *     files (`frameworkFiles` minus `frameworkFilesExcept`), which flow through;
  *  2. the repo-relative path is listed in `bootstrapOnlyPaths`, whatever
- *     component owns it (`.agents/compatibility/command-aliases.project.json`
- *     belongs to `agent-compatibility`, not `agents`);
+ *     component owns it (a path from `updater.protected_paths` such as
+ *     `.husky/pre-push` belongs to `husky`, not `agents`);
  *  3. legacy `agents` contract: a basename listed there (`project.yaml`,
  *     `jira-*.json`) is bootstrap-only for the `agents` root file-list, unless
  *     `agentsFrameworkFiles` names it as boilerplate-owned (`README.md`).
@@ -2226,6 +2227,35 @@ export function buildPairedDiff(entry: DeltaEntry, templateDir: string, localRep
 // ============================================================================
 
 /**
+ * Remove the folders a deleted file left empty, walking up toward the repo
+ * root and stopping at the first one that still holds anything. A retired
+ * skill otherwise leaves `.agents/skills/<slug>/references/` behind, and a
+ * skill folder with no SKILL.md fails skills:check.
+ */
+function pruneEmptyParents(repoRoot: string, relPath: string): void {
+  let dir = path.dirname(path.join(repoRoot, relPath));
+  const root = path.resolve(repoRoot);
+  while (path.resolve(dir) !== root && path.resolve(dir).startsWith(root + path.sep)) {
+    if (fs.readdirSync(dir).length > 0) { return; }
+    fs.rmdirSync(dir);
+    dir = path.dirname(dir);
+  }
+}
+
+/**
+ * Drop the `deleted-upstream` entries of files `cleanupDeprecated` removes in
+ * Phase 5 anyway. Left in, the interactive run asks about the same delete
+ * twice and `--auto` defers it, which holds the whole component back.
+ */
+export function dropDeprecatedDeletes<T extends { path: string, classification: string }>(
+  entries: T[],
+  deprecatedFiles: Pick<DeprecatedFile, 'path'>[],
+): T[] {
+  const deprecated = new Set(deprecatedFiles.map(d => d.path.replace(/\\/g, '/')));
+  return entries.filter(e => !(e.classification === 'deleted-upstream' && deprecated.has(e.path.replace(/\\/g, '/'))));
+}
+
+/**
  * Remove files in `cfg.deprecatedFiles` from the local repo. Honors dryRun.
  * Returns the count of files actually removed (or that would be removed in dry-run).
  */
@@ -2247,6 +2277,7 @@ export function cleanupDeprecated(
     }
     try {
       fs.unlinkSync(path.join(repoRoot, dep.path));
+      pruneEmptyParents(repoRoot, dep.path);
       logger.success(`Eliminado: ${dep.path}`);
       logger.info(`Razon: ${dep.reason} (deprecated desde ${dep.deprecatedSince})`);
       removed++;
@@ -2384,7 +2415,7 @@ export async function runUpdate(
   /**
    * Record what this run left uncommitted (everything dirty now minus the
    * user's own dirt from before), so the next guard recognises it. Runs after
-   * the afterApply hooks: wrappers, the registry and the prompt count too.
+   * the afterApply hooks: the alias repair, the registry and the prompt count too.
    */
   const recordLastApply = (summary: RunSummary, promptFile: string | null): void => {
     if (opts.dryRun) { return; }
@@ -2758,6 +2789,9 @@ export async function runUpdate(
     entries = entries.filter(e => !isRepoOnlyPath(e.path, cfg.repoOnlyPaths ?? []));
   }
 
+  // A deprecated file leaves through cleanupDeprecated (Phase 5), not the delete prompt.
+  entries = dropDeprecatedDeletes(entries, cfg.deprecatedFiles);
+
   // Filter out unchanged / binary-skip from the user-facing pool
   const visible = entries.filter(
     e => e.classification !== 'unchanged' && e.classification !== 'binary-skip',
@@ -2820,7 +2854,7 @@ export async function runUpdate(
     ...settledSelfUpdate,
   ])];
   // The afterApply hooks still run on a no-op: they are idempotent (alias,
-  // wrappers, registry) and they own the parity report, which is the run's
+  // registry) and they own the parity report, which is the run's
   // end state whatever was applied. A re-run over an uncommitted sync lands
   // here and ends with the same table instead of an abort.
   const runAfterApply = async (summary: RunSummary): Promise<void> => {
@@ -3366,10 +3400,9 @@ export async function runUpdate(
     appendBackupManifest(backupDir, [...applied.map(a => a.entry), ...skipped, ...failed.map(f => f.entry)], v6Shape, cfg.cliVersion);
   }
 
-  // Deprecated cleanup runs AFTER apply, BEFORE state write
-  if (!opts.dryRun) {
-    cleanupDeprecated(cfg, repoRoot, false, makeCoreLoggerFromSink(sink));
-  }
+  // Deprecated cleanup runs AFTER apply, BEFORE state write (and before the
+  // afterApply hooks). A dry-run lists what it would remove and writes nothing.
+  cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
 
   // Compute advancement
   const advancement = computeComponentAdvancement(

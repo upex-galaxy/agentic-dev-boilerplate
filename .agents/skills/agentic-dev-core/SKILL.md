@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-core
-description: 'Foundation skill that hosts shared references cited by other workflow skills (briefing template, dispatch patterns, orchestration doctrine, skill composition strategy, behavioral layer, model routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded on demand by `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`, `testability-guide`, `agentic-dev-onboard`. Do NOT use for: syncing project memory facts (use `/sync-ai-memory`), onboarding project discovery (use `/agentic-dev-onboard`), or test framework adaptation (testing-only, not in scope).'
+description: 'Foundation skill that hosts shared references cited by other workflow skills (briefing template, dispatch patterns, orchestration doctrine, skill composition strategy, behavioral layer, model routing, skill resolver, topic-key conventions, TypeScript patterns). Loaded on demand by `sprint-development`, `unit-testing`, `project-foundation`, `project-bootstrap`, `product-management`, `testability-guide`, `agentic-dev-onboard`. Do NOT use for: syncing project memory facts (that is the docs follow-through in `references/docs-follow-through.md`, run by the skill that made the change), onboarding project discovery (use `/agentic-dev-onboard`), or test framework adaptation (testing-only, not in scope).'
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 phase: foundation
@@ -15,7 +15,7 @@ compact_rules: |
   - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
   - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
   - Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
-  - Sync project-specific facts in `AGENTS.md` (that belongs to `/sync-ai-memory`).
+  - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
   - Sync OpenAPI / API schemas (that's `bun run api:sync`).
   - Run any external command — no `bun install`, no `git`, no `gh`.
 metadata:
@@ -50,6 +50,7 @@ This skill does NOT orchestrate workflows, does NOT generate files, and does NOT
 | `references/adr-doctrine.md`               | `project-foundation` (SRS phase), `sprint-development` (Stage 1 planning)                                                  | When an architectural decision earns an ADR (two-gate test) + the detect → draft → record procedure. |
 | `references/decision-elicitation-doctrine.md` | `AGENTS.md` §2, `decision-protocol.md` §5, any skill about to ask the human to decide                                  | How to ask: harness prompt vs `mkd` decision deck (the >3-decisions-or-one-dense threshold), deck justification rules, the non-silent `mkd` gate + fallback, reading the returned contract. |
 | `references/volatile-facts.md`             | `AGENTS.md` Rule #17, any skill that writes or reviews committed prose, `scripts/lint-skills.ts` + `scripts/lint-docs.ts`     | Canon for committed prose: name the owner, never its current value (count / enumeration / file:line / current-state / edit-history), the exemptions, the forensic-note split into `.context/ADR/ADR-0003-forensic-measurements-ledger.md`, the two lint families + the `volatile-ok:` escape. |
+| `references/docs-follow-through.md`        | `sprint-development` (Stage 3), `project-context`, `testability-guide`, `AGENTS.md` §4                                    | Keeping the docs in step with the change that moved them: `docs:check` + `agents:compat:check` as the mechanical half, the per-surface patch rules (patch never rewrite, cross-doc consistency, redaction, standalone-HTML text nodes only) as the judgment half. Replaces the retired `sync-ai-memory` skill. |
 | `references/typescript-patterns.md`        | `sprint-development`, code-writing skills                                                                                  | Fallback TS conventions when no project-specific dev guide exists.                              |
 
 When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `agentic-dev-core` before continuing.
@@ -114,7 +115,7 @@ This boilerplate is designed to be cloned in full. The workflow skills under `.a
 - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
 - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
 - Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
-- Sync project-specific facts in `AGENTS.md` (that belongs to `/sync-ai-memory`).
+- Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
 

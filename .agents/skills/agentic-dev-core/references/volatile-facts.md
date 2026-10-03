@@ -14,7 +14,7 @@ The fix is always the same shape: **replace the value with the name of its owner
 
 | Category | The test | Owner to name instead |
 |---|---|---|
-| **Count** | Would a routine commit change this number? | The file or command that counts: `REGISTRY.md` (`bun run skills:registry`), `package.json`, `.agents/compatibility/command-aliases.json` |
+| **Count** | Would a routine commit change this number? | The file or command that counts: `REGISTRY.md` (`bun run skills:registry`), `package.json`, `.mcp.json` |
 | **Enumeration** | Does another file already own this list? | That file or constant: `.mcp.json` (servers), `.agents/skills/` + `REGISTRY.md` (skills), `cli/install.ts` (community skills), `.agents/jira-required.yaml` (Jira fields), `SURFACE_ORDER` in `cli/lib/updater-parity.ts` (updater surfaces) |
 | **file:line** | Would an unrelated edit above it shift the line? | The file plus a symbol or a heading |
 | **Current-state claim** | Does the sentence carry "today", a date, a version, a measurement, or a live ticket / PR number? <!-- volatile-ok: names the word it forbids --> | The behaviour without the qualifier; the dated figure goes to an ADR |

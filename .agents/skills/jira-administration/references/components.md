@@ -12,8 +12,8 @@ Derive the target application's functional modules from its source, compare them
 **Inputs**: `$ARGUMENTS` — optionally the Jira project key and/or the path to the target application's source. Both may be omitted; Phase 1 resolves them (`{{PROJECT_KEY}}` from `.agents/project.yaml`, the target repo from the session or by asking).
 
 ```
-/jira-components                       # -> resolve key + target repo, then run the 4 phases
-/jira-components BK ../bunkai          # -> explicit key + target source
+/jira-administration components             # -> resolve key + target repo, then run the 4 phases
+/jira-administration components BK ../bunkai # -> explicit key + target source
 ```
 
 **Convention (binding)**: one component = one functional module of the *running application*, derived from the app's

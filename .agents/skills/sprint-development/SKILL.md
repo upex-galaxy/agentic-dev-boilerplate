@@ -32,6 +32,7 @@ compact_rules: |
   - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
   - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
   - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
+  - **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
   - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
@@ -78,6 +79,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
 - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
+- **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
 - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
@@ -120,7 +122,7 @@ Canonical reading order for any AI starting cold on a sprint-development workflo
 2. `.agents/jira-required.yaml` — canonical slug catalog (custom fields, statuses, link types) for the active workspace.
 3. `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping for `{{jira.<slug>}}` resolution.
 4. `.agents/jira-workflows.json` — workflow + transition catalog (resolves Ready For Dev → In Progress → In Review → Ready For QA); which stage fires which slug, and the unmapped-status fallback: `agentic-dev-core/references/artifact-lifecycle.md`.
-5. `.context/master-implementation-plan.md` (EPIC/strategy) **and** `.context/dev-roadmap.md` (TICKET/sequence) — the roadmap stack for the parent feature. The master plan gives Master Sprint priority; **`dev-roadmap.md` gives the dependency edges, execution-sprint order, and mockup-gates** — consult it as the canonical "what's next + what blocks this ticket" source (it subsumes the former `.context/PBI/sprint-sequence.md`). If it is missing, Phase 0 bootstraps it via `/dev-roadmap`.
+5. `.context/master-implementation-plan.md` (EPIC/strategy) **and** `.context/dev-roadmap.md` (TICKET/sequence) — the roadmap stack for the parent feature. The master plan gives Master Sprint priority; **`dev-roadmap.md` gives the dependency edges, execution-sprint order, and mockup-gates** — consult it as the canonical "what's next + what blocks this ticket" source (it subsumes the former `.context/PBI/sprint-sequence.md`). If it is missing, Phase 0 bootstraps it via `/project-context dev-roadmap`.
 6. `.context/business/domain-glossary.md` — canonical domain terminology; consult BEFORE planning so the impl plan, code identifiers, PR prose, and Jira comments use canonical terms and avoid anti-glossary banned terms.
 7. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — story-level context (dev-authored, non-Jira): session notes, open questions.
 8. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` — canonical story-level technical plan, synced from the Jira `spec_implementation_plan` field (read-only cache; read before Stage 2 resume).
@@ -357,7 +359,7 @@ Phase 0 is inline — no subagent dispatch. The check fires even on first invoca
 
 Immediately after the resume check, before Epic precheck, consult `.context/dev-roadmap.md` — the canonical ticket-level "what's next + what blocks this ticket" source (it subsumes the former `.context/PBI/sprint-sequence.md`).
 
-1. **Bootstrap-if-missing.** If `.context/dev-roadmap.md` is absent or still the placeholder stub → invoke `/dev-roadmap` to generate it (do NOT re-derive the sort inline — delegate to the owner so there is a single implementation). Then proceed.
+1. **Bootstrap-if-missing.** If `.context/dev-roadmap.md` is absent or still the placeholder stub → invoke `/project-context dev-roadmap` to generate it (do NOT re-derive the sort inline — delegate to the owner so there is a single implementation). Then proceed.
 2. **Consult (always).** Read the §3 dependency graph + §4 execution sprints + §5 mockup-gate registry for `<JIRA-KEY>`:
    - Take the **dependency edges**, the **mockup gates**, and the execution-sprint grouping from the doc. These are durable and the doc owns them.
    - Confirm this ticket is not 🔒 mockup-gated in §5 (if it is and the mockup is absent, route per the Stage-1 missing-row gate / Critical Rule #15 before coding).
@@ -365,12 +367,12 @@ Immediately after the resume check, before Epic precheck, consult `.context/dev-
 3. **Live status query (MANDATORY, before recommending or planning any ticket).** The roadmap doc is authoritative for edges, NEVER for status. Run the §6 query recipe against `[ISSUE_TRACKER_TOOL]` for **this ticket plus its direct hard blockers** in one call (e.g. a single JQL `key in (<CANDIDATE>, <BLOCKER-1>, <BLOCKER-2>)` returning status), then:
    - Every hard blocker must be dev-done **according to the live query**. Not dev-done → STOP and surface it ("TICKET-X depends on TICKET-Y, live status `In Progress` — proceed anyway, switch tickets, or abort?").
    - If the candidate itself is already past dev (e.g. `Ready For QA` / `Done`), STOP and say so before planning anything.
-   - **Live wins over prose, always.** When the query contradicts the doc, act on the query and flag the stale line so it gets corrected on the next `/dev-roadmap` run.
+   - **Live wins over prose, always.** When the query contradicts the doc, act on the query and flag the stale line so it gets corrected on the next `/project-context dev-roadmap` run.
    - **A recent timestamp on `dev-roadmap.md` is not evidence of current status.** That file's dates track when edges and mockup gates were refreshed, which is a different axis from a ticket's status today. Never skip the query because the doc "looks fresh". Never recommend a next ticket on prose alone.
 4. **Cheap inline flips (surgical — NOT a regen).** Keep the durable layers fresh as work lands, without re-running the whole sort:
    - When this ticket reaches dev-done in this run (Stage 4 — staging merged / Jira → Ready For QA), flip its gate marker in §3/§4 and clear any §5 mockup-gate it satisfied.
    - If this ticket is new and absent from §3, add its edge (cite the real Jira link / data-map / design source) or, if unclear, log it to the §6 edge-mapping TODO.
-   - **NEVER write live status** into the doc — status stays a §6 query recipe. **NEVER regenerate §4 inline** — a structural re-sort is `/dev-roadmap`'s job; if many edges changed, recommend re-running `/dev-roadmap` instead of hand-editing.
+   - **NEVER write live status** into the doc — status stays a §6 query recipe. **NEVER regenerate §4 inline** — a structural re-sort is `/project-context dev-roadmap`'s job; if many edges changed, recommend re-running `/project-context dev-roadmap` instead of hand-editing.
 
 Phase 0b is inline. It reads on every invocation; it writes only the narrow flips above (and only when this run actually changed the ticket's state).
 
@@ -495,7 +497,7 @@ Review notes are dev-authored (non-Jira) and persist at `.context/PBI/epics/EPIC
 
 **Glossary check**: if the story introduced new domain terms or exposed an ambiguous/banned term, flag it in the review notes / PR description for the PM to add to `.context/business/domain-glossary.md` per its change protocol — do NOT edit the glossary from inside implementation.
 
-**Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
+**Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`. When the story moved a fact the repo docs quote (a skill mode, a script, a path, an MCP, an env var), run the docs follow-through in the same branch: `agentic-dev-core/references/docs-follow-through.md`.
 
 Hand-off: `/git-flow-master` for PR creation, merge ops, and conflict resolution.
 

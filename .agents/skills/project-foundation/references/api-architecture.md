@@ -1,6 +1,6 @@
 # API Architecture — pointer
 
-> **This reference is a thin pointer.** The full generation logic lives in the standalone command `/business-api-map`.
+> **This reference is a thin pointer.** The full generation logic lives in skill `project-context` mode `api`.
 
 During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture generation logic — it **invokes the command** so the same playbook is reusable from any session.
 
@@ -8,7 +8,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture
 
 ## How `project-foundation` uses this
 
-- Skill orchestrator hands off to skill `project-context` mode `api` (alias `/business-api-map`; see `.agents/skills/project-context/references/api.md`).
+- Skill orchestrator hands off to skill `project-context` mode `api` (see `.agents/skills/project-context/references/api.md`).
 - Command output: `.context/business/business-api-map.md` (auth model, critical journeys, architecture-behind-the-API, external integrations).
 - The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
 

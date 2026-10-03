@@ -14,9 +14,9 @@ All "understand the business" outputs live here. Two layers in one folder:
 | `business-model.md`       | `/project-foundation` Phase 1            | Business Model Canvas, value prop  |
 | `market-context.md`       | `/project-foundation` Phase 1            | Industry, competitors, positioning |
 | `legacy-analysis.md`      | `/project-foundation` Phase 1 (optional) | Legacy stack + doc-gap analysis    |
-| `business-data-map.md`    | `/business-data-map`                     | Entities, flows, state machines    |
-| `business-feature-map.md` | `/business-feature-map`                  | Feature catalog, CRUD matrix       |
-| `business-api-map.md`     | `/business-api-map`                      | Auth model, critical journeys      |
+| `business-data-map.md`    | `/project-context data`                  | Entities, flows, state machines    |
+| `business-feature-map.md` | `/project-context features`              | Feature catalog, CRUD matrix       |
+| `business-api-map.md`     | `/project-context api`                   | Auth model, critical journeys      |
 | `project-dev-guide.md`    | `/project-foundation` Phase 4 Step 4     | How to build features here         |
 
 ## When to refresh

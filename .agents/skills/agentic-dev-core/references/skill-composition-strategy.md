@@ -226,7 +226,7 @@ Every sub-agent / skill prompt MUST include:
    3. If a task domain has no match in steps 1-2 AND the task would benefit significantly from a specialized skill → invoke `find-skills` automatically to suggest installable skills. Ask user before installing.
    - **Do NOT confuse with `bunx autoskills`**: that is a one-shot bootstrap step run during `/project-bootstrap` (after `/project-foundation`) to install stack-matched skills. `find-skills` is per-task runtime discovery.
 
-3. **Category vocabulary maintainer**: ✅ **`/sync-ai-memory` auto-maintains §4.1.** On invocation, sync-ai-memory scans T1 SKILL.md frontmatter + installed T3/T4 skills (via local skill-registry script), detects category gaps, writes additions to §4.1 of this doc. No human approval required (categories are additive, not destructive). Removal of unused categories: deferred to manual review.
+3. **Category vocabulary maintainer**: **no automated maintainer.** `bun run skills:check` rejects a `complementary_categories` value missing from §4.1, so a skill that needs a new category fails until a human adds it to §4.1 in the same change. Removal of unused categories: manual review.
 
 4. **Sub-agent skill list inspection**: ✅ **Contract drafted in §3.4 is authoritative.** Sub-agents that cannot find a named skill in their own list MUST emit `skill_resolution: "fallback-inline" + missing: [list]` in their result envelope. Orchestrator on receiving fallback re-resolves and may retry with explicit injection.
 

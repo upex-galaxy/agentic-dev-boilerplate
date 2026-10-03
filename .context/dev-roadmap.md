@@ -1,6 +1,6 @@
 # Dev Roadmap — placeholder
 
-> **Run `/dev-roadmap` (Claude Code command) to populate or refresh this file.**
+> **Run `/project-context dev-roadmap` to populate or refresh this file (skill `project-context`; Claude Code slash form shown, other harnesses invoke the skill and mode in prose).**
 
 This file is the canonical **ticket-level dependency execution roadmap** for this repo — the operational view of "which Jira ticket do we work next, and what is blocking it?". It sits **below** `master-implementation-plan.md` (epic strategy) and **above** the per-story `implementation-plan.md` files. It subsumes the topological execution-sprint sort that earlier boilerplate versions wrote to `.context/PBI/sprint-sequence.md`.
 

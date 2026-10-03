@@ -256,7 +256,7 @@ When the methodology evolves and needs a brand-new canonical status or transitio
 | `bun run jira:sync-workflows` | Discover Jira workflows (statuses + transitions per `work_type`) → write `jira-workflows.json`. Interactive on first run for slugs that don't auto-resolve. Flags: `--force` (re-prompt for already-mapped slugs), `--allow-collisions`, `--dry-run`, `--verbose`, `--json`, `--help`. |
 | `bun run jira:sync-link-types` | Discover Jira issue link types → write `jira-link-types.json`.                                                                                                                       |
 | `bun run jira:check`       | Compare `jira-required.yaml` vs `jira-fields.json` (custom fields) AND vs `jira-workflows.json` (work types, statuses, transitions) → setup report. Flags: `--json` (machine-readable), `--verbose` (include OK rows), `--help`. Exits 1 if any required field, `work_type`, status or transition is missing or mismatched. |
-| `bun run vars:check`       | Validate every `{{VAR}}`, `{{jira.<slug>}}`, `{{jira.<slug>.<option>}}`, `{{jira.work_type.*}}`, `{{jira.status.*}}` and `{{jira.transition.*}}` reference across `.agents/skills/`, `.claude/commands/`, `.context/`, `AGENTS.md`. Exits 1 if any are undeclared.                                      |
+| `bun run vars:check`       | Validate every `{{VAR}}`, `{{jira.<slug>}}`, `{{jira.<slug>.<option>}}`, `{{jira.work_type.*}}`, `{{jira.status.*}}` and `{{jira.transition.*}}` reference across `.agents/skills/`, `.context/`, `AGENTS.md`.                        Exits 1 if any are undeclared.                                      |
 
 ## Troubleshooting
 

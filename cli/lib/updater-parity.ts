@@ -15,9 +15,9 @@
  *  - skills the cross-harness migration archived because `.agents/skills/`
  *    already owned the name (this run's, plus any archive dir entry that has
  *    not been nudged yet; one marker per skill under `.template/upstream-sha/`);
- *  - command wrappers no manifest produced (upstream manifest, plus the
- *    optional project overlay `command-aliases.project.json`), ONE row per
- *    path whether the compat check named it or the disk scan found it;
+ *  - the retired command-alias overlay when a project still has one (one
+ *    informational row), and every project command the compat hook moved
+ *    aside because it carried a skill's name (one informational row each);
  *  - components held back this run, with their lock commits;
  *  - `.env` keys upstream documents and the project lacks;
  *  - the `git_strategy` provenance stamp in `.agents/project.yaml`.
@@ -39,7 +39,7 @@ import * as path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
-import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, compatibilityErrorGroup, undeclaredCommandWrappers } from './agent-compatibility.ts';
+import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OVERLAY, SHADOWING_COMMANDS_BACKUP_DIR } from './agent-compatibility.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
 import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
@@ -47,7 +47,7 @@ import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 // TYPES
 // ============================================================================
 
-export type ParitySurface = 'instructions' | 'skills' | 'commands' | 'hooks' | 'mcp' | 'env' | 'components' | 'package' | 'git' | 'gates';
+export type ParitySurface = 'instructions' | 'skills' | 'hooks' | 'mcp' | 'env' | 'components' | 'package' | 'git' | 'gates';
 
 /**
  * `take upstream` is reserved for content the project lacks entirely. A row
@@ -56,7 +56,7 @@ export type ParitySurface = 'instructions' | 'skills' | 'commands' | 'hooks' | '
  * there would delete it.
  */
 export type ParitySuggestion
-  = 'keep project' | 'take upstream' | 'merge' | 'add to overlay' | 'run agents:compat' | 'decide';
+  = 'keep project' | 'take upstream' | 'merge' | 'run agents:compat' | 'decide';
 
 export interface ParityFinding {
   id: number
@@ -148,6 +148,8 @@ export interface ParityInput {
   packageJsonKept?: PackageJsonKeptInput[]
   /** Quality gates run after the apply; only failed / timed-out ones become rows. */
   gates?: GateResult[]
+  /** Project commands the compat hook moved to `SHADOWING_COMMANDS_BACKUP_DIR` this run. */
+  shadowingCommandsMoved?: string[]
   /** A legacy git-tracked `.context/PBI/` cache (see `updater-pbi.ts`): one row, the recipe in its file. */
   pbiCache?: PbiCacheInput | null
   /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` this run (`updater-settings.ts`). */
@@ -200,7 +202,6 @@ export interface ParityReport {
 export const PARITY_PROMPT_PATH = path.join('.agents', 'prompts', 'parity-plan.md');
 /** One marker per archived skill, next to the watchlist sha markers (gitignored). */
 const ARCHIVED_SKILL_MARKER_DIR = path.join('.template', 'upstream-sha');
-const WRAPPER_UNDECLARED_EVIDENCE = `wrapper not produced by ${COMMAND_ALIAS_MANIFEST} nor ${COMMAND_ALIAS_PROJECT_MANIFEST}`;
 
 const MCP_HOST_FILE: Record<string, string> = {
   claude: '.mcp.json',
@@ -209,13 +210,12 @@ const MCP_HOST_FILE: Record<string, string> = {
 };
 
 /** Order of the surfaces in every table. */
-export const SURFACE_ORDER: ParitySurface[] = ['instructions', 'skills', 'commands', 'hooks', 'mcp', 'env', 'components', 'package', 'git', 'gates'];
+export const SURFACE_ORDER: ParitySurface[] = ['instructions', 'skills', 'hooks', 'mcp', 'env', 'components', 'package', 'git', 'gates'];
 
 /** English labels for the prompt (the AI reads it). */
 const SURFACE_LABEL_EN: Record<ParitySurface, string> = {
   instructions: 'Instructions',
   skills: 'Skills',
-  commands: 'Commands',
   hooks: 'Hooks',
   mcp: 'MCP',
   env: 'Env',
@@ -229,7 +229,6 @@ const SURFACE_LABEL_EN: Record<ParitySurface, string> = {
 const SURFACE_LABEL_ES: Record<ParitySurface, string> = {
   instructions: 'Instrucciones y config',
   skills: 'Skills',
-  commands: 'Comandos',
   hooks: 'Hooks',
   mcp: 'MCP',
   env: 'Env',
@@ -927,13 +926,12 @@ export function describeWatchedFile(filePath: string, project: string, upstream:
 
 const MCP_MISSING_RE = /^MCP (\S+) missing from (\w+):/;
 const MCP_EXTRA_RE = /^MCP (\S+) present in (\w+) only:/;
-/** `validateCommandAliases` names a wrapper file no manifest produced. */
-const WRAPPER_UNDECLARED_RE = /^Command wrapper not declared in any manifest: (\S+?);/;
 
 const COMPAT_GROUP_SURFACE: Record<CompatibilityErrorGroup, ParitySurface> = {
   instructions: 'instructions',
   alias: 'skills',
-  wrappers: 'commands',
+  // A command that shadows a skill is a skills problem: the skill is what stops loading.
+  commands: 'skills',
   hooks: 'hooks',
   mcp: 'mcp',
   // An unwired lint block is a verification gap: the rule ships and enforces nothing.
@@ -946,15 +944,14 @@ export function compatErrorSurface(message: string): ParitySurface {
 }
 
 /**
- * Generated surfaces are rebuilt by `agents:compat`; a wrapper no manifest
- * declares is the project's to declare (overlay) or delete; anything else
- * comes from upstream's shape.
+ * Generated surfaces are rebuilt by `agents:compat`, and the same repair moves
+ * a command that shadows a skill aside; anything else comes from upstream's
+ * shape.
  */
 export function compatErrorSuggestion(message: string): ParitySuggestion {
-  if (WRAPPER_UNDECLARED_RE.test(message)) { return 'add to overlay'; }
   // The wiring lives in the project-owned `eslint.config.js`: add the block, keep the rest.
   if (/does not wire \w+ from eslint\.config\.base\.js/.test(message)) { return 'merge'; }
-  return /command wrapper|skills alias|\.claude\/skills/i.test(message) ? 'run agents:compat' : 'take upstream';
+  return /command shadows skill|skills alias|\.claude\/skills/i.test(message) ? 'run agents:compat' : 'take upstream';
 }
 
 function compatErrorPath(message: string): string {
@@ -983,17 +980,6 @@ function watchedSurface(filePath: string, source: 'upstream' | 'project' = 'upst
   // Synced component files kept as the project's own (.husky hooks, a declared path).
   if (filePath.startsWith('.husky/') || source === 'project') { return 'components'; }
   return 'instructions';
-}
-
-/**
- * Wrappers on disk that no manifest (upstream, project overlay) produces, as the
- * compat engine sees them. Without a manifest there is nothing to compare
- * against, so a project that has not received `agent-compatibility` yet yields
- * nothing instead of throwing.
- */
-function wrappersNoManifestProduced(root: string): string[] {
-  try { return undeclaredCommandWrappers(root); }
-  catch { return []; }
 }
 
 // ============================================================================
@@ -1117,9 +1103,8 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     });
   }
 
-  // 2. Compat errors. MCP set errors fold into one finding per host; a wrapper
-  //    no manifest declares is one row per path; the rest stay one finding
-  //    each. All of them block: the contract failed. A drifted watched file on
+  // 2. Compat errors. MCP set errors fold into one finding per host; the rest
+  //    stay one finding each. All of them block: the contract failed. A drifted watched file on
   //    the same path folds in: compat evidence first, drift evidence appended,
   //    the full diff kept for the saved file. Upstream's shape is suggested
   //    only when the project holds nothing of its own there; a project-only
@@ -1138,15 +1123,8 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       diff: driftFinding.diff,
     });
   };
-  const wrappersReported = new Set<string>();
   const mcpByHost = new Map<string, { missing: string[], extra: string[] }>();
   for (const error of input.compatErrors) {
-    const undeclared = WRAPPER_UNDECLARED_RE.exec(error);
-    if (undeclared) {
-      wrappersReported.add(undeclared[1]);
-      pushCompat({ surface: 'commands', path: undeclared[1], evidence: WRAPPER_UNDECLARED_EVIDENCE, suggested: 'add to overlay', blocking: true });
-      continue;
-    }
     const missing = MCP_MISSING_RE.exec(error);
     const extra = MCP_EXTRA_RE.exec(error);
     const match = missing ?? extra;
@@ -1224,15 +1202,27 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     });
   }
 
-  // 4. Command wrappers no manifest knows about, when the compat check did not
-  //    already name them (it did not run, or the manifest was missing then).
-  for (const wrapper of wrappersNoManifestProduced(input.root)) {
-    if (wrappersReported.has(wrapper)) { continue; }
+  // 4. Harness commands. The alias layer is retired: a skill is invoked by its
+  //    own name plus a mode, and nothing generates command files any more. A
+  //    project that declared its own aliases keeps its wrapper files as plain
+  //    harness commands; the overlay that listed them is inert, named once.
+  //    A command that carried a skill's name was moved aside by the compat
+  //    hook, one row each, so the project can port anything worth keeping.
+  if (fs.existsSync(path.join(input.root, RETIRED_COMMAND_ALIAS_OVERLAY))) {
     findings.push({
-      surface: 'commands',
-      path: wrapper,
-      evidence: WRAPPER_UNDECLARED_EVIDENCE,
-      suggested: 'add to overlay',
+      surface: 'components',
+      path: RETIRED_COMMAND_ALIAS_OVERLAY,
+      evidence: `informational: command aliases are retired and nothing reads this overlay any more; the commands it declared are plain harness command files now (${HARNESS_COMMAND_DIRS.join(', ')}): edit them there, and delete the overlay when convenient`,
+      suggested: 'keep project',
+      blocking: false,
+    });
+  }
+  for (const moved of input.shadowingCommandsMoved ?? []) {
+    findings.push({
+      surface: 'skills',
+      path: moved,
+      evidence: `informational: this command had the name of a skill and would have replaced the skill's instructions; moved to ${SHADOWING_COMMANDS_BACKUP_DIR}/${moved}; port anything worth keeping into the skill, then drop the backup`,
+      suggested: 'keep project',
       blocking: false,
     });
   }

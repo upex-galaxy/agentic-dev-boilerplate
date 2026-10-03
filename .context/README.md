@@ -13,14 +13,14 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 │   ├── business-model.md          Business Model Canvas, value prop (/project-foundation Phase 1)
 │   ├── market-context.md          Industry, competitors, positioning (/project-foundation Phase 1)
 │   ├── legacy-analysis.md         Legacy stack + doc-gap analysis    (/project-foundation Phase 1, optional)
-│   ├── business-data-map.md       Entities, flows, state machines    (/business-data-map)
-│   ├── business-feature-map.md    Feature catalog, CRUD matrix       (/business-feature-map)
-│   ├── business-api-map.md        Auth model, critical journeys      (/business-api-map)
+│   ├── business-data-map.md       Entities, flows, state machines    (/project-context data)
+│   ├── business-feature-map.md    Feature catalog, CRUD matrix       (/project-context features)
+│   ├── business-api-map.md        Auth model, critical journeys      (/project-context api)
 │   ├── project-dev-guide.md       How to build features here         (/project-foundation Phase 4 embedded)
 │   └── domain-glossary.md         Canonical domain terminology       (/project-foundation Phase 4 Step 6; hand-maintained, append-only)
 │
-├── master-implementation-plan.md  High-level dependency-cascaded roadmap — EPIC/strategy (/master-implementation-plan)
-├── dev-roadmap.md                 Ticket-level dependency execution roadmap — TICKET/sequence (/dev-roadmap; subsumes PBI/sprint-sequence.md)
+├── master-implementation-plan.md  High-level dependency-cascaded roadmap — EPIC/strategy (/project-context master-plan)
+├── dev-roadmap.md                 Ticket-level dependency execution roadmap — TICKET/sequence (/project-context dev-roadmap; subsumes PBI/sprint-sequence.md)
 │
 ├── reports/                       Sprint-level cross-ticket dev trackers (/sprint-development batch)
 │   └── README.md                  Lifecycle rules for SPRINT-{N}-DEVELOPMENT.md
@@ -48,13 +48,13 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
 | `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
 | `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
-| `business/business-data-map.md`                     | `/business-data-map` command            | Invoked by `/project-foundation` Phase 4 Step 1        |
-| `business/business-feature-map.md`                  | `/business-feature-map` command         | Invoked by `/project-foundation` Phase 4 Step 2        |
-| `business/business-api-map.md`                      | `/business-api-map` command             | Invoked by `/project-foundation` Phase 4 Step 3        |
+| `business/business-data-map.md`                     | `project-context` mode `data`           | Invoked by `/project-foundation` Phase 4 Step 1        |
+| `business/business-feature-map.md`                  | `project-context` mode `features`       | Invoked by `/project-foundation` Phase 4 Step 2        |
+| `business/business-api-map.md`                      | `project-context` mode `api`            | Invoked by `/project-foundation` Phase 4 Step 3        |
 | `business/project-dev-guide.md`                     | `/project-foundation` (Phase 4 Step 4)  | Embedded skill logic; re-run if architecture changes   |
 | `business/domain-glossary.md`                       | `/project-foundation` (Phase 4 Step 6); updated when new terms surface (via `/product-management` flag) | Hand-maintained, append-only, never regenerated        |
-| `master-implementation-plan.md`                     | `/master-implementation-plan` command   | Invoked by `/project-foundation` Phase 4 Step 5. EPIC/strategy layer. |
-| `dev-roadmap.md`                                    | `/dev-roadmap` command                  | TICKET/sequence layer. Surgical UPDATE (regenerates §4 Kahn sort, preserves hand-authored §2/§3/§5/§6). Subsumes `PBI/sprint-sequence.md`. Cascaded from `/master-implementation-plan` + `/product-management`; bootstrapped by `/sprint-development` Phase 0. |
+| `master-implementation-plan.md`                     | `project-context` mode `master-plan`    | Invoked by `/project-foundation` Phase 4 Step 5. EPIC/strategy layer. |
+| `dev-roadmap.md`                                    | `project-context` mode `dev-roadmap`    | TICKET/sequence layer. Surgical UPDATE (regenerates §4 Kahn sort, preserves hand-authored §2/§3/§5/§6). Subsumes `PBI/sprint-sequence.md`. Cascaded from `/project-context master-plan` + `/product-management`; bootstrapped by `/sprint-development` Phase 0. |
 | `PRD/*.md`                                          | `/project-foundation` (Phase 2)         | Executive summary, personas, MVP scope, user journeys  |
 | `SRS/*.md`                                          | `/project-foundation` (Phase 2)         | Functional / non-functional / architecture / API specs |
 | `ADR/ADR-NNNN-<slug>.md`                            | Human architect, or `/project-foundation` (SRS) / `/sprint-development` (Stage 1) — AI drafts for human approval | **Exception: append-only, never regenerated.** Superseded by a newer ADR, never overwritten or hand-re-run. See `ADR/README.md`. |
@@ -81,6 +81,6 @@ After that, `/sprint-development` operates per ticket and fills in `PBI/epics/EP
 ## References
 
 - Repo architecture: `CONTEXT.md` (root) — canonical Context Engineering map
-- Project memory: `AGENTS.md` (root) — generated/synced via `/sync-ai-memory`
+- Project memory: `AGENTS.md` (root) — kept in step by the change that moves a fact (`agentic-dev-core/references/docs-follow-through.md`)
 - Skill cookbook: `.agents/skills/*/SKILL.md` (also indexed in `.agents/skills/REGISTRY.md`)
 - Topic keys for engram: `.agents/skills/agentic-dev-core/references/topic-key-conventions.md`

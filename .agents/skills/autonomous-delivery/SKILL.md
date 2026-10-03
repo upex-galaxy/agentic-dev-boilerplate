@@ -88,6 +88,10 @@ Use this skill when a **scheduler, cron, routine, or timed wake-up** starts a se
 
 The invoking routine passes the mode: `/autonomous-delivery story`. No mode, or an unrecognized one, is a fast-fail — do not guess a default.
 
+## Mode routing
+
+The first token of `$ARGUMENTS` IS the mode: `story`, `bug` or `discovery` (Claude Code: `/autonomous-delivery bug`; OpenCode and Codex: the routine's prompt says "load autonomous-delivery, mode bug"). Unlike an interactive skill, never ask and never infer it from prose: nobody is on the line to answer, so a missing or unknown first token is the Phase 0b fast-fail above.
+
 **Do NOT use this skill** when a human is on the line and named a ticket. That is `/sprint-development` directly. This skill's only value is the audit / selection / handoff layer around it, and that layer is pure overhead when a human already did the selecting.
 
 ---
@@ -615,7 +619,7 @@ Every item below has been observed. Each is a check the run performs, not a caut
 - **Per-ticket implementation, review, and deploy** -> `/sprint-development`. It owns every stage; this skill only selects and dispatches.
 - **Refinement, epics, acceptance criteria, backlog gaps** -> `/product-management` (`discovery` mode's only callee).
 - **Branch creation, pull requests, merges, conflicts, chained-pull-request planning** -> `/git-flow-master`.
-- **Dependency edges and execution ordering are stale or missing** -> `/dev-roadmap`.
+- **Dependency edges and execution ordering are stale or missing** -> `/project-context dev-roadmap`.
 - **Launching, supervising and closing the dispatched workers through an orchestration runtime, and registering the run as a scheduled routine there** -> `/orca-orchestration` (only when its gate passes; this skill keeps every WHAT).
 
 ### Out of scope

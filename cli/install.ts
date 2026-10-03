@@ -11,7 +11,8 @@
  *      with ${VAR} / {env:VAR} / env-var-name forwarding — installer only
  *      ensures `.env` has the union of values the selected harnesses need)
  *   4b. Repair cross-harness compatibility: the generated `.claude/skills`
- *      alias and the command wrappers (`cli/lib/agent-compatibility.ts`)
+ *      alias, plus moving any command that shadows a skill out of the way
+ *      (`cli/lib/agent-compatibility.ts`)
  *   5. Verify external CLIs (bun, gh, supabase, vercel, resend, acli,
  *      playwright-cli, jq) — `which`-check only; no auto-install (Rule 4:
  *      OS-dependent installs are deferred to upstream docs)
@@ -37,8 +38,9 @@ import { dirname, join, resolve } from 'node:path';
 import { checkbox, password } from '@inquirer/prompts';
 import {
   checkAgentCompatibility,
+  removeShadowingCommands,
   repairClaudeSkillsAlias,
-  repairCommandWrappers,
+  SHADOWING_COMMANDS_BACKUP_DIR,
 } from './lib/agent-compatibility.ts';
 import {
   resolveAtlassianInstance,
@@ -1461,31 +1463,31 @@ export function launchCommandsForAgents(agents: AgentId[]): string[] {
 }
 
 // ============================================================================
-// Step 6b — repository compatibility (Claude skills alias + command wrappers)
+// Step 6b — repository compatibility (Claude skills alias + shadowing commands)
 // ============================================================================
 
 /**
  * Restore the generated cross-harness artifacts and prove the contract holds.
  *
  * `.claude/skills` becomes the directory-level alias to `.agents/skills`
- * (reclaiming the per-skill symlink shim `bunx skills add` leaves behind), the
- * command wrappers under `.claude/commands` / `.opencode/commands` are
- * regenerated from `.agents/compatibility/command-aliases.json`, and the full
- * check (hooks, MCP parity, shim) runs afterwards. Throws with the check's
+ * (reclaiming the per-skill symlink shim `bunx skills add` leaves behind), any
+ * harness command whose name equals a repo skill is moved to
+ * `SHADOWING_COMMANDS_BACKUP_DIR` (it would hide the skill's instructions), and
+ * the full check (hooks, MCP parity, shim) runs afterwards. Throws with the check's
  * errors when something the repair cannot fix (a hand-edited config, a missing
  * canonical file) is still out of contract.
  */
 export function repairRepositoryCompatibility(
   root = REPO_ROOT,
   platform: NodeJS.Platform = process.platform,
-): { alias: ReturnType<typeof repairClaudeSkillsAlias>, wrappersWritten: number } {
+): { alias: ReturnType<typeof repairClaudeSkillsAlias>, shadowingCommandsMoved: string[] } {
   const alias = repairClaudeSkillsAlias(root, platform);
-  const wrappersWritten = repairCommandWrappers(root);
+  const shadowingCommandsMoved = removeShadowingCommands(root);
   const check = checkAgentCompatibility(root, platform);
   if (!check.ok) {
     throw new Error(`Agent compatibility repair incomplete:\n${check.errors.join('\n')}`);
   }
-  return { alias, wrappersWritten };
+  return { alias, shadowingCommandsMoved };
 }
 
 /**
@@ -1496,7 +1498,8 @@ export function repairRepositoryCompatibility(
 function runRepositoryCompatibility(): void {
   try {
     const compatibility = repairRepositoryCompatibility();
-    log.success(`Repository compatibility ready (${compatibility.wrappersWritten} wrapper update(s); Claude skills alias ${compatibility.alias.status}).`);
+    const moved = compatibility.shadowingCommandsMoved;
+    log.success(`Repository compatibility ready (Claude skills alias ${compatibility.alias.status}${moved.length > 0 ? `; moved ${moved.join(', ')} to ${SHADOWING_COMMANDS_BACKUP_DIR}/ because each shadowed a skill` : ''}).`);
   }
   catch (err) {
     log.error(`Repository compatibility is out of contract — ${(err as Error).message ?? String(err)}`);
@@ -2445,9 +2448,9 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write(`    ${COLORS.dim}First defines the PRD/SRS, then scaffolds backend + frontend.${COLORS.reset}\n\n`);
   stepNum++;
 
-  process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Sync project memory${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}/sync-ai-memory${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.dim}AFTER foundation + bootstrap exist. Updates README, AGENTS.md, and other docs from the new project state.${COLORS.reset}\n\n`);
+  process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Keep the docs in step${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun run docs:check${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.dim}Each change patches the docs that name what it moved (agentic-dev-core/references/docs-follow-through.md); docs:check proves links, the skill router and quoted scripts.${COLORS.reset}\n\n`);
 
   // 4c.1 — NEXT STEPS (non-critical vars). Critical tool creds (Atlassian,
   // Resend) were prompted above. These are NOT asked at install and NOT
@@ -2803,7 +2806,7 @@ async function main(): Promise<void> {
   // Step 6b — runs on EVERY install, right after the step that can leave a
   // per-skill shim in `.claude/skills/`, so an aborted run later on still
   // leaves Claude Code able to see the canonical skills.
-  tui.section('Step 6b: Repository compatibility (Claude skills alias + command wrappers)');
+  tui.section('Step 6b: Repository compatibility (Claude skills alias + shadowing commands)');
   runRepositoryCompatibility();
 
   // ── PHASE 3 — CONFIGURATION ──────────────────────────────────────────────

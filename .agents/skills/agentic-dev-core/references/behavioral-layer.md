@@ -50,7 +50,7 @@ Don't add error handling, fallbacks, or validation for scenarios that can't happ
 - `/project-foundation` (PRD, SRS, Discovery)
 - `/design-system` (DESIGN.md generation, including rebrand)
 - `/project-bootstrap` (backend + frontend scaffolding)
-- `/sync-ai-memory` (project memory + cross-doc consistency + HTML rendered-from sync)
+- the docs follow-through (`docs-follow-through.md`: cross-doc consistency + standalone-HTML text patches)
 - `/sprint-development` implementation-plan stage
 - `/product-management` AC-writing (Gherkin scenarios)
 
