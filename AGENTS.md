@@ -447,13 +447,13 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 > Full TS conventions live in feature dev-guide (Discovery output via `/project-foundation`) if present, else fallback `.agents/skills/agentic-dev-core/references/typescript-patterns.md`. LOAD `/sprint-development` before writing or reviewing feature code.
 
-| Pattern        | Rule                                                                       |
-| -------------- | -------------------------------------------------------------------------- |
-| **Parameters** | Max 2 positional. 3+ → object param                                        |
-| **Utilities**  | Agnostic only, no domain coupling in shared modules                       |
-| **Imports**    | Always aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
-| **Types**      | Declare interfaces at top of file, after imports                           |
-| **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)    |
+| Pattern        | Rule                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Parameters** | Max 2 positional. 3+ → object param                                                                                                        |
+| **Utilities**  | Agnostic only, no domain coupling in shared modules                                                                                        |
+| **Imports**    | Always the aliases `tsconfig.json` `paths` declares (Next.js `@/`, or per-layer `@api/`, `@schemas/`, `@utils/`). No deep relative imports |
+| **Types**      | Declare interfaces at top of file, after imports                                                                                           |
+| **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)                                                                    |
 
 **DRY: context matters**:
 
