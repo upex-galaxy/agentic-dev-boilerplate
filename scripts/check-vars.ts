@@ -28,8 +28,9 @@
 
 import type { VarSpec } from '../cli/lib/variables-manifest.ts';
 import { existsSync } from 'node:fs';
-
 import { join, relative } from 'node:path';
+
+import { appOwnedExampleKeys } from '../cli/lib/updater-adopt.ts';
 import {
   DEPRECATED_VARS,
   envFileVars,
@@ -188,10 +189,17 @@ function main(): void {
         .map(s => s.name)
     : [];
 
-  // ERROR: a deprecated var still present in `.env.example`.
-  const deprecatedStillPresent = DEPRECATED_VARS
+  // ERROR: a deprecated var still present in `.env.example`. On an adopted app
+  // a declaration OUTSIDE the tooling's sentinel block is the app's own
+  // variable that happens to share a retired name (measured: upexgalaxy-webapp
+  // declares JIRA_API_TOKEN for its own Jira CLI): reported, never an error,
+  // because removing it would break the app.
+  const appOwned = appOwnedExampleKeys(REPO_ROOT, ENV_EXAMPLE);
+  const deprecatedDeclared = DEPRECATED_VARS
     .filter(d => exampleSet.has(d.name))
     .map(d => d.name);
+  const deprecatedStillPresent = deprecatedDeclared.filter(n => !appOwned.has(n));
+  const deprecatedAppOwned = deprecatedDeclared.filter(n => appOwned.has(n));
 
   // INFO: `.env.example` keys not routed by the manifest (day-zero / local-only).
   const untrackedByManifest = exampleKeys.filter(k => !manifestSet.has(k));
@@ -228,6 +236,14 @@ function main(): void {
       );
     }
     console.log('  Source of truth: .agents/project.yaml (read it with `bun run --silent jira:url`).');
+    console.log('');
+  }
+
+  if (deprecatedAppOwned.length > 0) {
+    console.log(`WARNINGS (${deprecatedAppOwned.length}) — reported, not blocking:`);
+    for (const name of deprecatedAppOwned) {
+      console.log(`  - DEPRECATED_NAME_APP_OWNED: ${name}  (a retired tooling name, declared by the adopted app outside the tooling's block: the app's own variable; the tooling does not read it)`);
+    }
     console.log('');
   }
 

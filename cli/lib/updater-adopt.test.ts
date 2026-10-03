@@ -16,6 +16,7 @@ import {
   ADOPT_REPO_ONLY_PATTERNS,
   adoptFindings,
   appendEnvExampleBlock,
+  appOwnedExampleKeys,
   blankStackValues,
   CANONICAL_TEMPLATE,
   composeAdoptedInstructions,
@@ -472,5 +473,20 @@ describe('maskPreservedAppInstructions', () => {
     expect(masked).toContain('## 1. RULES');
     expect(masked).toContain('Never say today.');
     expect(maskPreservedAppInstructions(upstream)).toBe(upstream);
+  });
+});
+
+describe('appOwnedExampleKeys', () => {
+  test('on an adopted app: the keys above the tooling block are the app\'s', () => {
+    const root = tempRoot();
+    write(root, '.env.example', `JIRA_API_TOKEN=\nAPP_URL=\n\n${ADOPT_ENV_SENTINEL}\nATLASSIAN_EMAIL=\n`);
+    write(root, INSTALLER_LOCK_FILE, '{ "adopted": true }\n');
+    expect([...appOwnedExampleKeys(root)].sort()).toEqual(['APP_URL', 'JIRA_API_TOKEN']);
+  });
+
+  test('greenfield (no adoption lock): none, the whole file is the template\'s', () => {
+    const root = tempRoot();
+    write(root, '.env.example', 'JIRA_API_TOKEN=\n');
+    expect(appOwnedExampleKeys(root).size).toBe(0);
   });
 });

@@ -158,6 +158,20 @@ const ENV_EXAMPLE = '.env.example';
 // ============================================================================
 
 /** Keys a `.env.example` declares, commented declarations (`# KEY=`) included. */
+/**
+ * Keys an ADOPTED app declares in its own part of `.env.example`, above the
+ * block of tooling variables the adoption appended (`ADOPT_ENV_SENTINEL`).
+ * Empty on a greenfield repo, where the whole file is the template's. A
+ * retired tooling name declared there is the app's own variable
+ * (`scripts/check-vars.ts` reports it, never fails on it).
+ */
+export function appOwnedExampleKeys(root: string, envExample: string = path.join(root, ENV_EXAMPLE)): Set<string> {
+  if (!isAdopted(root) || !fs.existsSync(envExample)) { return new Set(); }
+  const text = fs.readFileSync(envExample, 'utf8');
+  const at = text.indexOf(ADOPT_ENV_SENTINEL);
+  return envDeclaredKeys(at === -1 ? text : text.slice(0, at));
+}
+
 export function envDeclaredKeys(text: string): Set<string> {
   const keys = new Set<string>();
   for (const raw of text.split(/\r?\n/)) {
