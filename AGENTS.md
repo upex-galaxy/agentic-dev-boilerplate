@@ -116,6 +116,18 @@ Example (same work, different register):
 
 **NO SUBAGENTS FOR**: quick lookups, memory reads/writes, task tracking, ask user, planning.
 
+**TWO EXECUTORS.** One-shot subagents are the DEFAULT executor and nothing below changes that. A second, OPTIONAL executor exists: the **supervised worker**, a persistent agent session coordinated through `/orca-orchestration` (conductor ↔ worker mailbox). It is gated on the orchestration binary AND a reachable runtime; when either is missing the repo is SILENT about it and the work runs on subagents plus the `launch.txt` lines a human pastes. Never name it to the user from a workflow skill when the gate fails.
+
+| | One-shot subagent (default) | Supervised worker (optional) |
+|---|---|---|
+| Lifetime | inside the turn | until it is explicitly closed |
+| Context | lost when it reports | persists; you keep talking to it |
+| Communication | none until it finishes | ask / reply / send at any moment, both ways |
+| Git | the orchestrator's index | its own worktree and branch, one story per worker |
+| Best for | reading, mapping, verifying; one-shot tasks | a whole story through Stages 1-3 to an open PR, work the owner wants to step into |
+
+The conductor keeps using SUBAGENTS for its own reads and verifications, and keeps every shared-state write (merge, staging deploy, shared-DB migration, sprint report) for itself. A supervised worker is warranted when the unit of work is a whole scope (one story, one module) that writes and integrates by itself. Doctrine: `agentic-dev-core/references/orchestration-doctrine.md`; transport: `/orca-orchestration`; the story fleet: `/sprint-development` fleet mode.
+
 **7-COMPONENT BRIEFING (MANDATORY every dispatch)**: canonical template + filled examples: `agentic-dev-core/references/briefing-template.md`.
 
 1. **Goal**: one sentence
@@ -163,6 +175,7 @@ Example (same work, different register):
 | QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
 | Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epic-tree.md`, `PRD/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]`                       |
 | Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md`, `DESIGN.md` + `.context/design/master-design-plan.md` (UI stories: Rule 14) | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
+| Orchestrate several sessions (fleet of workers) | "orchestrate", "fleet", "one session per story", "parallelize the sprint", "resume the run", "orquestar", "lanza workers", "una sesión por historia", "comunícate con el worker" | `/orca-orchestration` | `.agents/project.yaml` → `orchestration:` block (defaults); the skill self-loads its references | `[ORCHESTRATION_TOOL]` (gate: binary + reachable runtime; silent when absent) |
 | TDD slice / unit tests                      | "write unit tests", "TDD this function"                                                         | `/unit-testing`                                    | function under test, existing tests                             | Code edit                                    |
 | Sync AI memory                              | "sync memory", `/sync-ai-memory`                                                                | `/sync-ai-memory`                                  | `README.md`, `AGENTS.md`, `.context/`, `package.json`           | Edit                                         |
 | Business map refresh                        | "refresh data map", `/business-*-map`                                                           | `/business-data-map` / `-feature-map` / `-api-map` | Supabase schema, backend code, PRD                              | Read + Write                                 |
@@ -207,6 +220,7 @@ Example (same work, different register):
 | `git-flow-master`     | (auto on git/PR intents)      | End-to-end Git operator. Auto-detects branching strategy, and keeps it in parity with the host ruleset via `bun run git:policy` (verify / apply).                                                                                                                                       |
 | `pr-review-lead`      | `/pr-review-lead`             | Tech Lead review of a teammate's or an external repo's PR (via `gh`): strictness preflight (Flexible / Standard / Strict), every finding cited to code or doctrine (TypeScript patterns, layer boundaries, Rule #14, ADRs, RPC authorization), Real / Pattern / Positive buckets + score, posts only after explicit OK. Shares checklist + severity scale with `/sprint-development` Stage 3 (`review-pr.md`), which stays the in-pipeline story reviewer. |
 | `session-handoff`     | `/session-handoff`            | Hand the WHOLE session to a successor when the context window runs high or work outlives the session: writes `<<PRIMARY_ROOT>>/.session/handoffs/<session>-handoff-NN.md` (ten mandatory sections, measured vs predicted, PERISHABLE live state), then launches the successor in the same worktree + harness (or prints the launch line). Not orchestration, not per-story resume. |
+| `orca-orchestration`  | `/orca-orchestration`, "orchestrate", "fleet", "one session per story", "resume the run", "orquestar", "lanza workers" | Multi-session orchestration layer (CONDUCTOR / WORKER / AUTOMATION modes) over the `orca` binary: launches persistent supervised workers, coordinates them through the run mailbox, owns the claims protocol and the fleet side of worktree provisioning. The WHAT stays with the workflow skill (`/sprint-development` fleet mode, `/autonomous-delivery` for unattended runs). OPTIONAL by construction: gate = binary + reachable runtime; workflow skills stay silent and fall back to their `launch.txt` when it fails. Owns the `orchestration:` block in `.agents/project.yaml`. |
 | `jira-administration` | `/jira-components` · `/jira-instance-migration` | Bounded Jira ADMIN workflows, one mode per run: `components` (reconcile a project's Components against the app's real modules, plan-first) or `instance-migration` (repoint the Atlassian host + regenerate the `.agents/` catalogs). Both sealed behind read-first analysis and explicit approval before any Jira / credential-session / repo mutation. |
 | `project-context`     | `/project-context` (modes `data` · `features` · `api` · `master-plan` · `dev-roadmap`) | Business maps + master implementation plan + dev roadmap; formerly five inline commands. One mode per run: `data` → `.context/business/business-data-map.md`, `features` → `business-feature-map.md`, `api` → `business-api-map.md`, `master-plan` → `.context/master-implementation-plan.md`, `dev-roadmap` → `.context/dev-roadmap.md`. |
 | `sync-ai-memory`      | `/sync-ai-memory`             | Audit + sync README, `AGENTS.md`, CONTEXT.md, docs/, onboarding HTML against current repo state. Skill (formerly a command). Shim guard: operational prose found in `CLAUDE.md` is structural drift → STOP, never propagate. |
@@ -309,6 +323,7 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 | `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | capability `library-docs`: any tool ending in `resolve-library-id` / `query-docs` | none: STOP (see below) |
 | `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | capability `web-search`: any tool ending in `web_search_exa` / `web_fetch_exa` (preferred) or `tavily_search` / `tavily_extract` / `tavily_research` | none: STOP (see below) |
 | `[AUTOMATION_FLOWS_TOOL]` | n8n workflow automation          | capability `automation-flows` (n8n MCP)   | none: STOP (see below)                 |
+| `[ORCHESTRATION_TOOL]`  | Multi-session orchestration: launch / supervise / message / close persistent workers, worktrees, runs, automations | `/orca-orchestration` (owns the `orca` binary grammar; gate = binary + reachable runtime) | one-shot subagents (§3) + the workflow skill's `launch.txt` lines pasted by hand; never named when the gate fails |
 
 **MANDATORY**: LOAD owning skill BEFORE invoking its tool. Skills hold WHEN/WHAT only. HOW (syntax, flags, auth, pagination, errors) lives inside owning skill's `references/`.
 
@@ -332,6 +347,7 @@ Each command is a transport-only alias declared in `.agents/compatibility/comman
 | `acli`           | `/acli`                                                                | Atlassian CLI: Jira/Confluence workflows. Owns slug syntax + custom-field IDs. |
 | `playwright-cli` | `/playwright-cli`, `/sprint-development`                               | Browser automation: used by sprint-dev E2E checks + standalone QA capture.     |
 | `jq`             | `/acli`                                                                | JSON processor: required by acli skill for parsing `acli ... --json` output.   |
+| `orca`           | `/orca-orchestration`                                                  | Orchestration runtime CLI. The skill holds WHEN/WHAT; the stubs in `orchestration.orchestrator_skills` load alongside it, and DEEP topics stay served by the binary, never copied into the repo. |
 
 **Mandatory**: before any `Bash` call that names one of these binaries, check matching skill loaded for this session. If not, load via Skill tool first. Hard gate, not suggestion.
 
