@@ -56,6 +56,20 @@ In UPDATE mode, the most likely triggers are: scope shift, post-architecture-dec
 
 ---
 
+## Existing app (remaining-work framing)
+
+When `.template/installer.lock.json` records `adopted: true`, the app was running before the agentic layer arrived, and most of what the maps describe is already shipped. A plan that scores those features again puts finished work in Master Sprint 0. So, for an adopted app only:
+
+- **The shipped baseline is input, not a candidate.** Features the feature map marks Stable, and flows the data map traces end to end in code, form the baseline. They are never scored and never placed in a Master Sprint; §2 names them in one short "Baseline (already shipped)" table (`Module | Feature-map section id | Why it matters to what remains`) above the priority table.
+- **The candidates are what remains**: Beta, Planned and WIP features, partial CRUD rows, discovery gaps the maps flag, the epics open in the tracker, and the debt the maps expose (a table with RLS off, an integration with no degradation mode).
+- **Urgency reads the team's roadmap, not an MVP.** In the Phase 2 rubric, "Required for MVP" becomes "required for the next release the tracker or the PRD names"; with neither, say so in §12 and score urgency from the maps alone.
+- **Master Sprint 0 is the foundational REMAINING work** (what several remaining features wait on), never a rebuild of the baseline. A remaining item that would change a baseline entity or flow says which section it touches and is flagged in §6 Hidden dependencies.
+- **Git history marks what is in flight**: modules touched in recent commits or open branches are "in flight" rows of the remaining work, not baseline.
+
+A greenfield project never takes this path; its plan is the one below unchanged.
+
+---
+
 ## Discovery phases
 
 ### Phase 1 — Validation gate
@@ -289,6 +303,7 @@ Each gap should be phrased as a one-line spike: "Spike: choose payment provider 
   - Hidden dependencies flagged: N
   - External integrations mapped: N
   - Implementation gaps / spikes open: N
+  - Adopted app only: baseline modules recognized as shipped: N
 - If §1.2 warned, remind the user to run `/project-context features` and re-run this command.
 - If any §12 spike is rated as "blocks Master Sprint 0", call it out explicitly in the report — these need a decision before the plan is actionable.
 

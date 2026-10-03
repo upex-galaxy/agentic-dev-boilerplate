@@ -4,7 +4,7 @@
 
 This file is the canonical **ticket-level dependency execution roadmap** for this repo — the operational view of "which Jira ticket do we work next, and what is blocking it?". It sits **below** `master-implementation-plan.md` (epic strategy) and **above** the per-story `implementation-plan.md` files. It subsumes the topological execution-sprint sort that earlier boilerplate versions wrote to `.context/PBI/sprint-sequence.md`.
 
-- **Hard requirement**: at least one epic with child stories (and their dependency links) must exist in the issue tracker before the generator runs.
+- **Hard requirement**: at least one epic with child stories must exist in the issue tracker before the generator runs. Their dependency links are a soft input: without them the sort runs over a sparse graph and the unlinked stories are listed for linking.
 - **Soft inputs**: the data map's `entities` + `access-control` sections (`bun run context:map business-data-context`; epic backbone), `.context/design/master-design-plan.md` §8 (mockup-gates), `.context/master-implementation-plan.md` §4–§5 (Master Sprint grouping).
 - **Consumed by**: `/sprint-development` (Phase 0 — "what's next" + dependency context; bootstraps this file if missing), `/product-management` (cascades here after backlog seed / feature add / epic creation), and any human reading the dev roadmap.
 
