@@ -399,7 +399,7 @@ See `references/dependency-linking.md` for the full pseudo-code, slug-resolution
 **Action:** Order the child stories into **Execution Sprints** using the dependency graph as the primary constraint and value / risk as tie-breakers. Invoke `/project-context dev-roadmap` to write the execution-sprint sort to `.context/dev-roadmap.md` §4 (which also preserves the hand-authored backbone/edges/gates) — this skill DELEGATES the write, it no longer authors the file itself.
 
 - Sequence stories so that no story is scheduled before its `{{jira.link_types.dependencies}}` predecessors.
-- Fill each Execution Sprint up to its capacity (story points + count) per the project's sprint rules.
+- Group stories into Execution Sprints by topological level only (the sort in `references/sprint-sequencing.md`): no capacity fill, because Story Points stay empty by default (anti-pattern `I16`) and capacity belongs to the human sprint-planning meeting that consumes the ordering.
 - Cross-reference the epic's Master Sprint context from §`Master Sprint` above.
 
 See `references/sprint-sequencing.md` for the full algorithm, conflict resolution, and the exact shape of the §4 schema `/project-context dev-roadmap` emits into `.context/dev-roadmap.md`.
