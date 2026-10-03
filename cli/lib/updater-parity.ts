@@ -32,6 +32,7 @@
  */
 
 import type { CompatibilityErrorGroup } from './agent-compatibility.ts';
+import type { MapStatus } from './context-maps.ts';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -40,6 +41,7 @@ import { parse as parseYaml } from 'yaml';
 
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OVERLAY, SHADOWING_COMMANDS_BACKUP_DIR } from './agent-compatibility.ts';
+import { contextMapAdvice, contextMapStatuses, mapRelPath } from './context-maps.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
 import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
@@ -162,6 +164,8 @@ export interface ParityInput {
   prerequisites?: Record<string, PathPrerequisite>
   /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
   configBlockReaders?: Record<string, Record<string, ConfigBlockReader>>
+  /** Business context map states; defaults to reading them from `root` (`contextMapStatuses`). */
+  contextMaps?: MapStatus[]
 }
 
 export interface PbiCacheInput {
@@ -1226,6 +1230,23 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       surface: 'skills',
       path: moved,
       evidence: `informational: this command had the name of a skill and would have replaced the skill's instructions; moved to ${SHADOWING_COMMANDS_BACKUP_DIR}/${moved}; port anything worth keeping into the skill, then drop the backup`,
+      suggested: 'keep project',
+      blocking: false,
+    });
+  }
+
+  // 4b. Business context maps (cli/lib/context-maps.ts): a delivered skill whose
+  //     map was never generated, with the old markdown map it replaces beside
+  //     it when there is one. Informational, never blocking: a `project-context`
+  //     mode generates the map, not a sync, and the old file is generator
+  //     input, never a deletion candidate.
+  for (const status of input.contextMaps ?? contextMapStatuses(input.root)) {
+    const advice = contextMapAdvice(status);
+    if (advice === null) { continue; }
+    findings.push({
+      surface: 'skills',
+      path: mapRelPath(status.skill),
+      evidence: `informational: ${advice}`,
       suggested: 'keep project',
       blocking: false,
     });

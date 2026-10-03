@@ -838,11 +838,12 @@ const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-mig
 //    a root file-list entry) appears, the guard already stands. Both workflows
 //    run the boilerplate's own publishing / quality gates; a consumer defines
 //    its own CI.
-//  - `.context/business/business-*.md` + `.context/master-implementation-plan.md`:
-//    REACHABLE. `.context` is a synced component with `bootstrapOnly: true`, so
-//    a consumer missing the file gets a bootstrap copy — which would deliver the
-//    maintainer's generated maps of THIS boilerplate. Consumers regenerate their
-//    own via `/business-*-map` and `/master-implementation-plan`.
+//  - `.context/master-implementation-plan.md`: REACHABLE. `.context` is a
+//    synced component with `bootstrapOnly: true`, so a consumer missing the
+//    file gets a bootstrap copy — which would deliver the maintainer's plan of
+//    THIS boilerplate. Consumers regenerate their own via
+//    `/project-context master-plan`. (The business maps live in their context
+//    skills now, delivered once as placeholders by `collectContextMapBootstrap`.)
 //  - `.agents/jira-fields.json` + `jira-workflows.json`: REACHABLE. They sit in
 //    `bootstrapOnlyPaths`, so a consumer missing them would receive the
 //    boilerplate authors' per-instance Jira catalogs (and `jira:sync-fields`
@@ -854,9 +855,6 @@ const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-mig
 const REPO_ONLY_PATHS = [
   '.github/workflows/pages.yml',
   '.github/workflows/ci.yml',
-  '.context/business/business-data-map.md',
-  '.context/business/business-feature-map.md',
-  '.context/business/business-api-map.md',
   '.context/master-implementation-plan.md',
   '.agents/jira-fields.json',
   '.agents/jira-workflows.json',

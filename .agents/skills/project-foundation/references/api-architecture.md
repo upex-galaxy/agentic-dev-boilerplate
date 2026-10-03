@@ -9,15 +9,15 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed API-architecture
 ## How `project-foundation` uses this
 
 - Skill orchestrator hands off to skill `project-context` mode `api` (see `.agents/skills/project-context/references/api.md`).
-- Command output: `.context/business/business-api-map.md` (auth model, critical journeys, architecture-behind-the-API, external integrations).
-- The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
+- Command output: the API map inside `business-api-context` (`references/business-api-map.html`: auth model, critical journeys, architecture-behind-the-API, external integrations).
+- The command auto-detects CREATE vs UPDATE mode from the map's state: an absent or placeholder map gets CREATE, a generated map gets UPDATE (stale sections only).
 
 ## Inputs the command expects (provided by Phase 4 context)
 
 - OpenAPI spec (`api/openapi.json` or equivalent).
 - Auth middleware + controllers in the backend.
-- `.context/business/business-data-map.md` (soft gate — referenced for entity flows).
-- `.context/business/business-feature-map.md` (soft gate — referenced for feature → endpoint mapping).
+- The data map, read with `bun run context:map business-data-context` (soft gate — referenced for entity flows).
+- The feature map, read with `bun run context:map business-feature-context` (soft gate — referenced for feature → endpoint mapping).
 
 ## When to invoke
 

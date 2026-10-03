@@ -20,14 +20,14 @@ A hand-curated-yet-regenerable document that converts the **Jira dependency-link
 The output contains:
 
 - **§1 Authority split** — a plain-language "read me first" that tells an AI/human exactly what this doc owns vs delegates, and that status is queried, never frozen.
-- **§2 Epic backbone** — the schema-forced epic spine (which epic must ship before which), derived from `business-data-map.md` entity topology.
+- **§2 Epic backbone** — the schema-forced epic spine (which epic must ship before which), derived from the data map's entity topology (`business-data-context`).
 - **§3 Story dependency graph** — the hard/soft edge list with the *reason* for each edge. This is the part nothing else holds — Jira issue-links are sparse and carry no reason.
 - **§4 Execution sprints** — the topologically-sorted parallel-safe batches (Kahn's sort of the link graph). **This subsumes the former `.context/PBI/sprint-sequence.md`.**
 - **§5 Mockup-gate registry** — which stories cannot start until a mockup lands (Critical Rule #15 / `master-design-plan.md` §8).
 - **§6 Live status — query recipe** — NOT a status table. A recipe to fetch today's truth, plus the local-only knowledge Jira does not store (per-story pre-dev blockers, edge-mapping TODO).
 - **§7 Maintenance protocol** — who owns what, what is durable vs volatile, when to re-run.
 
-This is **NOT** the epic strategy (→ `/project-context master-plan`), a per-story file plan (→ `/sprint-development`), a flow map (→ `business-data-map.md`), nor a feature catalog (→ `business-feature-map.md`).
+This is **NOT** the epic strategy (→ `/project-context master-plan`), a per-story file plan (→ `/sprint-development`), a flow map (→ the data map in `business-data-context`), nor a feature catalog (→ the feature map in `business-feature-context`).
 
 ---
 
@@ -46,12 +46,12 @@ Earlier boilerplate versions persisted the Kahn topological sort to `.context/PB
 | ------ | ------ | --------------- | ---- |
 | Issue tracker — epics + child stories + **full `issuelinks` array** | **HARD REQUIREMENT** | Story membership, `dependencies` / `blocks` / `relates` links — the edges the §4 sort consumes | `[ISSUE_TRACKER_TOOL]` |
 | `.agents/jira-link-types.json` | **must be current** | Link-type slugs. Refresh with `bun run jira:sync-link-types` BEFORE sorting — a stale catalog silently misclassifies edges | Read + `bun run jira:sync-link-types` |
-| `.context/business/business-data-map.md` §2 | Soft — warn if missing | Entity topology → the §2 epic backbone (no entity ships before the entities + RLS it depends on) | Read file |
+| The data map (`business-data-context`), `entities` + `access-control` sections | Soft — warn if missing | Entity topology → the §2 epic backbone (no entity ships before the entities + RLS it depends on) | `bun run context:map business-data-context` |
 | `.context/design/master-design-plan.md` §8 | Soft — warn if missing | US→Screen map + per-screen mockup status → the §5 mockup-gate registry (Critical Rule #15) | Read file |
 | `.context/master-implementation-plan.md` §4–§5 | Soft | Master Sprint grouping — to tag each Execution Sprint with its parent Master Sprint | Read file |
 | `.context/PBI/epic-tree.md` + `epics/` | If available | Local story-membership mirror + any hand-authored `context.md` notes (pre-dev blockers, open Qs) | Read files |
 
-**Golden rule**: every §3 edge MUST cite a real source — a Jira `dependencies`/`blocks` link, a `business-data-map.md` entity dependency, or a `master-design-plan.md` mockup-gate. NEVER invent an edge because it "feels like" a dependency — that is a refinement signal: go add the link in the tracker via `product-management/references/dependency-linking.md`, then re-run.
+**Golden rule**: every §3 edge MUST cite a real source — a Jira `dependencies`/`blocks` link, a data-map entity dependency, or a `master-design-plan.md` mockup-gate. NEVER invent an edge because it "feels like" a dependency — that is a refinement signal: go add the link in the tracker via `product-management/references/dependency-linking.md`, then re-run.
 
 ---
 
@@ -89,11 +89,11 @@ Run `bun run jira:sync-link-types` so `.agents/jira-link-types.json` is current 
 
 #### 1.3 Soft-input checks
 For each missing soft input, WARN and proceed, logging the gap in §6 edge-mapping TODO:
-- No `business-data-map.md` → §2 epic backbone is built from Jira epic-links only (less reliable); note the limitation.
+- Data map not generated (placeholder notice) → §2 epic backbone is built from Jira epic-links only (less reliable); note the limitation.
 - No `master-design-plan.md` → §5 mockup-gate registry is empty; note that mockup-gating is unenforced until the design plan exists.
 
 ### Phase 2 — Epic backbone (§2)
-From `business-data-map.md` §2 entity topology, order epics by forced dependency: no epic ships before the entities + access-control it depends on. Cross-check against Jira epic-level links. Output the schema-forced spine.
+From the data map's entity topology (`bun run context:map business-data-context --section entities`), order epics by forced dependency: no epic ships before the entities + access-control it depends on. Cross-check against Jira epic-level links. Output the schema-forced spine.
 
 ### Phase 3 — Story dependency graph (§3)
 Fetch every in-scope story including its full `issuelinks`. For each edge, record: blocker → unblocked, hard/soft, and the **reason** (which shared entity, screen, or contract forces it). Hard = `dependencies`/`blocks`; soft = a real coupling that is buildable-but-low-value before the blocker (annotate, do not let it delay the sort).

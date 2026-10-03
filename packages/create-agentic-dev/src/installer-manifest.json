@@ -67,7 +67,7 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 22,
+      "count": 23,
       "items": [
         {
           "name": "frontend-design",
@@ -178,6 +178,11 @@
           "name": "skill-creator",
           "purpose": "Create, modify, and evaluate Claude Code skills.",
           "source": "https://github.com/anthropics/skills"
+        },
+        {
+          "name": "diagram-design",
+          "purpose": "Community skill: diagram-design",
+          "source": "https://github.com/cathrynlavery/diagram-design"
         }
       ]
     },

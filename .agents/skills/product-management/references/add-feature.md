@@ -25,12 +25,12 @@ Cold start? Read these files in this exact order before proposing anything. Each
 9. `.context/PRD/user-journeys.md` — flow-level expectations.
 10. `.context/SRS/functional-specs.md` — FR catalog (source of `**Source spec:**` references).
 11. `.context/SRS/non-functional-specs.md` — NFRs (performance, security, a11y).
-12. `.context/business/business-data-map.md` — entity graph (source of entity-level dependencies).
-13. `.context/business/business-feature-map.md` — CRUD matrix by domain.
-14. `.context/business/business-api-map.md` — endpoint catalog (auth model, journeys).
+12. `bun run context:map business-data-context` — entity graph (source of entity-level dependencies).
+13. `bun run context:map business-feature-context` — CRUD matrix by domain.
+14. `bun run context:map business-api-context` — endpoint catalog (auth model, journeys).
 15. `.context/PBI/epic-tree.md` — current backlog state.
 
-**Optional inputs.** Some mature projects also produce business maps via `/business-*-map`. If they are absent (typically at early seed time), proceed without them but flag the gap.
+**Optional inputs.** Some mature projects also produce business maps via `/project-context` modes `data` / `features` / `api`. If they are absent (typically at early seed time), proceed without them but flag the gap.
 
 ---
 
@@ -208,7 +208,7 @@ Before classifying, ask yourself:
 **Existing epic (if applicable):** EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{name} or "N/A — requires a new epic"
 
 **Identified dependencies:**
-[List dependencies with other epics or systems — sources: PRD/SRS sequencing, master-plan Master Sprints, business-data-map. Never invent.]
+[List dependencies with other epics or systems — sources: PRD/SRS sequencing, master-plan Master Sprints, the data map (`business-data-context`). Never invent.]
 ```
 
 ---
@@ -283,9 +283,9 @@ If the project's workflow does not offer that transition from the initial status
 Anti-pattern `I18` requires an **active** discovery pass before any link is created.
 
 1. Read `.context/PBI/epic-tree.md` — stories of the same epic + related epics.
-2. Read `.context/business/business-data-map.md` if present — entity-level relations.
+2. Read the data map (`bun run context:map business-data-context`) when it is generated (a placeholder notice means no map) — entity-level relations.
 3. Query via `[ISSUE_TRACKER_TOOL]` the current link graph of the new story and of its possible neighbors in the parent epic.
-4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` ∈ `{prd-sequencing, srs-sequencing, master-implementation-plan, business-data-map, local-declaration}`.
+4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` ∈ `{prd-sequencing, srs-sequencing, master-implementation-plan, business-data-context, local-declaration}`.
 5. **Filter noise**: discard candidates whose only justification is a global / infrastructural prerequisite (auth exists, DB exists, framework is wired up). Those are properties of the project, not dependencies between stories.
 6. **Heuristic**: does the candidate dependency disappear if we reorder sprints? YES → global noise, drop. NO → real feature-level dependency, keep.
 7. Surface the filtered matrix to the user and wait for confirmation before creating any link in Step 4.
@@ -300,7 +300,7 @@ Anti-pattern `I18` requires an **active** discovery pass before any link is crea
 
 - Explicit sequencing in PRD / SRS / functional-specs.
 - Master Sprint ordering in `.context/master-implementation-plan.md`.
-- Entity-level relations in `.context/business/business-data-map.md`.
+- Entity-level relations in the data map (`bun run context:map business-data-context`).
 - Explicit `Blocked By` / `Blocks` declarations in the local `story.md` (Step 5).
 
 **How:**
@@ -646,7 +646,7 @@ This emits the canonical `.context/PBI/epics/EPIC-{PROJECT_KEY}-{EPIC_NUM}-{slug
 Anti-pattern `I18` requires an **active** discovery pass before any internal link of the newly created epic is created.
 
 1. Read `.context/PBI/epic-tree.md` — stories of the newly created epic + related epics that already exist.
-2. Read `.context/business/business-data-map.md` if present — entity-level relations between the entities these stories touch.
+2. Read the data map (`bun run context:map business-data-context`) when it is generated (a placeholder notice means no map) — entity-level relations between the entities these stories touch.
 3. Query via `[ISSUE_TRACKER_TOOL]` the current link graph of every story created in Step 6.
 4. Build the candidate matrix `(from, to, link_type_slug, source-of-decision)`.
 5. **Filter noise**: discard candidates justified only by global / infrastructural prerequisites. Keep only feature-level dependencies between specific stories of the epic (or cross-epic when explicit).
@@ -663,7 +663,7 @@ Anti-pattern `I18` requires an **active** discovery pass before any internal lin
 
 - Explicit sequencing in PRD / SRS / functional-specs.
 - Master Sprint ordering in `.context/master-implementation-plan.md`.
-- Entity-level relations in `.context/business/business-data-map.md`.
+- Entity-level relations in the data map (`bun run context:map business-data-context`).
 - Explicit author-intent `Blocked By` / `Blocks` dependencies surfaced during this session (these become Jira issue links here, then sync back into each `story.md` in Step 11).
 
 **How:**
@@ -1203,7 +1203,7 @@ Depending on the level, the following are generated:
 - `.context/PRD/mvp-scope.md` — product context.
 - `.context/SRS/functional-specs.md` — technical context and FR catalog.
 - `.context/SRS/architecture-specs.md` — validation of architectural changes.
-- `.context/business/business-data-map.md` — to infer real entity-level dependencies.
+- `bun run context:map business-data-context` — to infer real entity-level dependencies.
 
 ---
 

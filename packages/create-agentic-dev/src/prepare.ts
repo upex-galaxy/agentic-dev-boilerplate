@@ -340,9 +340,6 @@ const TEMPLATE_EXCLUDES: readonly string[] = [
   // (installer tests, registry checks) against the boilerplate repo. A consumer
   // project defines its own CI for its own stack.
   '.github/workflows/ci.yml',
-  '.context/business/business-data-map.md',
-  '.context/business/business-feature-map.md',
-  '.context/business/business-api-map.md',
   '.context/master-implementation-plan.md',
   // Jira catalogs are cached from the boilerplate's source workspace and must
   // not travel to a new project (otherwise `jira:sync-fields` errors with

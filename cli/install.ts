@@ -208,6 +208,13 @@ const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   // `<aspect>-context`) and any new T1 skill go through it, per
   // agentic-dev-core/references/skill-scaffold.md.
   { package: 'https://github.com/anthropics/skills', skill: 'skill-creator' },
+  // diagram-design (Cathryn Lavery): the figures inside the business context
+  // maps (`project-context` modes data / features / api and each map skill's
+  // refresh). Capability `diagrams`, resolved by skill presence with a
+  // point-of-use STOP (agentic-dev-core/references/business-context-maps.md §7).
+  // Project-level because a T1 workflow depends on it; a user-level install
+  // satisfies it too.
+  { package: 'https://github.com/cathrynlavery/diagram-design', skill: 'diagram-design' },
 ];
 
 // Community skills installed at USER (global) level — universal across every

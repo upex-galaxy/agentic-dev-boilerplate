@@ -15,7 +15,7 @@
     {
       "name": "should-trigger-discovery-on-existing-codebase",
       "prompt": "Generate the business data map and api architecture for this codebase — I want the discovery context files.",
-      "expected_behavior": "Activates project-foundation in Discovery mode (Phase 4). Phase 4 is now an orchestrator that delegates to project-context modes: invokes /project-context data (produces .context/business/business-data-map.md), /project-context features (produces .context/business/business-feature-map.md), /project-context api (produces .context/business/business-api-map.md — note: replaces the legacy api-architecture.md filename), then executes references/project-dev-guide.md in-skill (produces .context/business/project-dev-guide.md), and optionally invokes /project-context master-plan (produces .context/master-implementation-plan.md). Uses [DB_TOOL] and [API_TOOL] per AGENTS.md tool resolution. Final report lists artifacts created.",
+      "expected_behavior": "Activates project-foundation in Discovery mode (Phase 4). Phase 4 is now an orchestrator that delegates to project-context modes: invokes /project-context data (produces the data map inside the business-data-context skill), /project-context features (produces the feature map inside business-feature-context), /project-context api (produces the API map inside business-api-context — note: replaces the legacy api-architecture.md filename), then executes references/project-dev-guide.md in-skill (produces .context/business/project-dev-guide.md), and optionally invokes /project-context master-plan (produces .context/master-implementation-plan.md). Uses [DB_TOOL] and [API_TOOL] per AGENTS.md tool resolution. Final report lists artifacts created.",
       "category": "positive"
     },
     {

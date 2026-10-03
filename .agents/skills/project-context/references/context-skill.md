@@ -4,7 +4,7 @@ Scaffold a project-owned `<aspect>-context` skill: the judgment layer over one a
 
 **Target**: $ARGUMENTS (`<aspect>`: a project-chosen aspect such as `billing`, `auth`, `notifications`; optional path to what it sits over)
 
-Data, feature and API knowledge already have an owner: the business maps this skill's modes `data` / `features` / `api` generate, and their reading rules accrue next to them through those modes. A request for `data-context`, `feature-context` or `api-context` is answered by pointing to that owner, never by scaffolding a second source over the same aspect.
+Data, feature and API knowledge already have an owner: the shipped business context map skills `business-data-context`, `business-feature-context` and `business-api-context` (`CONTEXT_MAP_SKILLS`, `cli/lib/context-maps.ts`), whose maps this skill's modes `data` / `features` / `api` generate and whose reading rules accrue in their own `## Rules` and gotchas. A request for `data-context`, `feature-context` or `api-context` is answered by pointing to that owner, never by scaffolding a second source over the same aspect.
 
 ---
 
@@ -12,7 +12,7 @@ Data, feature and API knowledge already have an owner: the business maps this sk
 
 | Aspect | What it sits over | Produced by |
 |---|---|---|
-| a business module (`billing`, `auth`, ...) | the module's code, its tables, its routes, the slice of the business maps that covers it | the code itself, modes `data` / `features` / `api` |
+| a business module (`billing`, `auth`, ...) | the module's code, its tables, its routes, the sections of the business maps that cover it (`bun run context:map <map skill> --section <id>`) | the code itself, modes `data` / `features` / `api` |
 | an integration (`stripe`, `resend`, ...) | the integration's client module, its env vars, its webhook routes | the code itself |
 | other | the path the user names | whoever owns it |
 

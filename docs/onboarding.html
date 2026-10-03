@@ -2008,9 +2008,8 @@ bun run vars:check           # validate placeholders</code></pre>
                     <dt>Produces</dt>
                     <dd>
                       <code>idea/*</code> (constitution), <code>PRD/*</code>, <code>SRS/*</code>,
-                      <code>.context/business/business-data-map.md</code>,
-                      <code>.context/business/business-feature-map.md</code>,
-                      <code>.context/business/business-api-map.md</code>,
+                      the data, feature and API maps inside <code>business-data-context</code>,
+                      <code>business-feature-context</code> and <code>business-api-context</code>,
                       <code>.context/business/project-dev-guide.md</code>,
                       <code>.context/master-implementation-plan.md</code>. The skill orchestrates
                       each phase with explicit human checkpoints.
@@ -2121,8 +2120,10 @@ bun run vars:check           # validate placeholders</code></pre>
                         </li>
                         <li>
                           <code>/business-data-map</code>, <code>/business-feature-map</code>,
-                          <code>/business-api-map</code> — regenerate the business maps under
-                          <code>.context/business/</code>.
+                          <code>/business-api-map</code> — regenerate the business maps inside
+                          <code>business-data-context</code>,
+                          <code>business-feature-context</code> and
+                          <code>business-api-context</code>.
                         </li>
                         <li>
                           <code>/master-implementation-plan</code> — regenerate
@@ -3548,21 +3549,22 @@ bun run vars:check           # validate placeholders</code></pre>
                   <li>
                     <code>/business-data-map</code>
                     <span class="muted"
-                      >Generate / update <code>.context/business/business-data-map.md</code> —
+                      >Generate / update the data map inside <code>business-data-context</code> —
                       entities, flows, state machines, external integrations.</span
                     >
                   </li>
                   <li>
                     <code>/business-feature-map</code>
                     <span class="muted"
-                      >Generate / update <code>.context/business/business-feature-map.md</code> —
-                      feature catalog by domain, CRUD matrix, API inventory, flags.</span
+                      >Generate / update the feature map inside
+                      <code>business-feature-context</code> — feature catalog by domain, CRUD
+                      matrix, API inventory, flags.</span
                     >
                   </li>
                   <li>
                     <code>/business-api-map</code>
                     <span class="muted"
-                      >Generate / update <code>.context/business/business-api-map.md</code> — auth
+                      >Generate / update the API map inside <code>business-api-context</code> — auth
                       model, critical journeys, architecture, external integrations.</span
                     >
                   </li>
@@ -3768,7 +3770,7 @@ bun run vars:check           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td><code>/business-data-map</code></td>
-                    <td><code>.context/business/business-data-map.md</code></td>
+                    <td>the data map inside <code>business-data-context</code></td>
                     <td>
                       Schema migration shipped, new entity, state machine changed, external
                       integration added.
@@ -3776,7 +3778,7 @@ bun run vars:check           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td><code>/business-feature-map</code></td>
-                    <td><code>.context/business/business-feature-map.md</code></td>
+                    <td>the feature map inside <code>business-feature-context</code></td>
                     <td>
                       New feature merged, feature flag added/removed, CRUD endpoint added, domain
                       reshuffled.
@@ -3784,7 +3786,7 @@ bun run vars:check           # validate placeholders</code></pre>
                   </tr>
                   <tr>
                     <td><code>/business-api-map</code></td>
-                    <td><code>.context/business/business-api-map.md</code></td>
+                    <td>the API map inside <code>business-api-context</code></td>
                     <td>
                       Auth model changed, critical journey added, API architecture decision made,
                       new external service consumed.
@@ -4003,8 +4005,9 @@ bun run vars:check           # validate placeholders</code></pre>
               </li>
               <li>
                 <strong><code>.context/</code></strong> = what the AI KNOWS about the project
-                (generated by <code>/project-foundation</code> and the
-                <code>/business-*-map</code> commands, kept fresh by <code>/sync-ai-memory</code>).
+                (generated by <code>/project-foundation</code>, kept fresh by
+                <code>/sync-ai-memory</code>; the business maps live in the
+                <code>business-*-context</code> skills instead).
               </li>
               <li>
                 <strong>Application code</strong> = the real product, scaffolded by

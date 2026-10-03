@@ -16,6 +16,7 @@
     "claude": "dotenv -o -e .env -- claude",
     "codex": "dotenv -o -e .env -- codex",
     "context:hydrate": "bun scripts/sync-jira-issues.ts pull --include-comments",
+    "context:map": "bun scripts/context-map.ts",
     "docs:check": "bun scripts/lint-docs.ts",
     "format:check": "prettier --check '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "format:fix": "prettier --write '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",

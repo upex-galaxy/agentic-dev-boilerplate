@@ -55,6 +55,7 @@ import * as os from 'node:os';
 
 import * as path from 'node:path';
 
+import { CONTEXT_MAP_SKILLS } from './context-maps';
 import { applyIgnoreAppend, computeBlobSha, detectIgnoreDelta } from './updater-ignore';
 import { applyPackageJsonAppend, applyPackageJsonOverride, detectPackageJsonDelta } from './updater-package';
 import { ComponentOverlapError, CorruptStateError } from './updater-types';
@@ -108,7 +109,10 @@ export function isRepoOnlyPath(filePath: string, prefixes: string[]): boolean {
  * the workflow skill whose slug predates the `-context` suffix rule,
  * `project-context`, which `scripts/lint-skills.ts` grandfathers in
  * KIND_SUFFIX_EXEMPT (`cli/` is import-closed, so a test keeps the two in
- * step). Doctrine: agentic-dev-core/references/skill-scaffold.md §3.
+ * step). The shipped business context map skills (`CONTEXT_MAP_SKILLS`) stay
+ * project-local here too: they are delivered once by
+ * `collectContextMapBootstrap` and never overwritten or deleted after that.
+ * Doctrine: agentic-dev-core/references/skill-scaffold.md §3.
  */
 export const CONTEXT_SKILL_SUFFIX = '-context';
 export const UPSTREAM_CONTEXT_SUFFIX_SKILLS: ReadonlySet<string> = new Set(['project-context']);
@@ -124,6 +128,46 @@ export function isProjectLocalSkillPath(relPath: string, skillsDir = '.agents/sk
   const slug = p.slice(root.length + 1).split('/')[0] ?? '';
   if (slug === '' || !slug.endsWith(CONTEXT_SKILL_SUFFIX)) { return false; }
   return !UPSTREAM_CONTEXT_SUFFIX_SKILLS.has(slug);
+}
+
+/**
+ * The one exception to "a `<aspect>-context` is project-local": the business
+ * context map skills (`CONTEXT_MAP_SKILLS`, cli/lib/context-maps.ts) ship as
+ * placeholders, so a project that lacks one gets its WHOLE folder once. A
+ * folder that exists, even half-empty, is the project's and is never touched:
+ * `isProjectLocalSkillPath` still keeps every one of these paths out of the
+ * overwrite and delete pools, so this is delivery-only. Returns bootstrap
+ * entries for the absent folders, owned by whichever selected component owns
+ * the skills dir (or that skill's own subdirectory, for `--skill` runs).
+ */
+export function collectContextMapBootstrap(
+  components: readonly Component[],
+  templateDir: string,
+  repoRoot: string,
+  existing: readonly DeltaEntry[] = [],
+  skillsDir = '.agents/skills',
+): DeltaEntry[] {
+  const root = skillsDir.replace(/\\/g, '/').replace(/\/+$/, '');
+  const taken = new Set(existing.map(e => e.path.replace(/\\/g, '/')));
+  const out: DeltaEntry[] = [];
+  for (const skill of CONTEXT_MAP_SKILLS) {
+    const skillRel = `${root}/${skill.slug}`;
+    const owner = components.find(c => c.type === 'directory'
+      && c.paths.some(p => [root, skillRel].includes(p.replace(/\\/g, '/').replace(/\/+$/, ''))));
+    if (!owner) { continue; }
+    const src = path.join(templateDir, ...skillRel.split('/'));
+    if (!fs.existsSync(src) || fs.existsSync(path.join(repoRoot, ...skillRel.split('/')))) { continue; }
+    const walk = (dir: string): void => {
+      for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, item.name);
+        if (item.isDirectory()) { walk(full); continue; }
+        const rel = `${skillRel}/${path.relative(src, full).split(path.sep).join('/')}`;
+        if (!taken.has(rel)) { out.push(bootstrapEntry(owner.name, rel, templateDir)); }
+      }
+    };
+    walk(src);
+  }
+  return out;
 }
 
 /**
@@ -2783,7 +2827,7 @@ export async function runUpdate(
   }
 
   // Drop the boilerplate's own working material, which no consumer inherits
-  // (e.g. `.context/business/business-*.md`). Same filter point as excludePaths
+  // (e.g. `.context/master-implementation-plan.md`). Same filter point as excludePaths
   // for the same reason: all detection paths converge on `entries`.
   if (cfg.repoOnlyPaths && cfg.repoOnlyPaths.length > 0) {
     entries = entries.filter(e => !isRepoOnlyPath(e.path, cfg.repoOnlyPaths ?? []));
@@ -2791,6 +2835,9 @@ export async function runUpdate(
 
   // A deprecated file leaves through cleanupDeprecated (Phase 5), not the delete prompt.
   entries = dropDeprecatedDeletes(entries, cfg.deprecatedFiles);
+
+  // Business context map skills: the whole folder once, when the project has none.
+  entries.push(...collectContextMapBootstrap(cfg.components, templateDir, repoRoot, entries));
 
   // Filter out unchanged / binary-skip from the user-facing pool
   const visible = entries.filter(

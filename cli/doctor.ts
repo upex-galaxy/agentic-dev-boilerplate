@@ -58,6 +58,7 @@ import {
   formatInstanceMismatchWarning,
   resolveAtlassianInstance,
 } from './lib/atlassian-instance.ts';
+import { contextMapAdvice, contextMapStatuses } from './lib/context-maps.ts';
 import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
 import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
 import { checkoutRoots } from './lib/worktree.ts';
@@ -325,6 +326,12 @@ interface DoctorReport {
   direnv: DirenvState
   /** Servers that run at harness level, classified against the user-level configs (never a value). */
   harness_level_mcps: { verdicts: HarnessLevelVerdict[], sources: string[] }
+  /**
+   * Business context maps still to generate, one line each (cli/lib/context-maps.ts).
+   * Informational, never a pending action: a `project-context` mode writes the
+   * map, and an old `.context/business/` markdown map beside it is kept as input.
+   */
+  context_maps: string[]
   /** `.env` vs the per-harness credential surfaces `bun run harness:env` writes. NAMES only, never a value. */
   harness_env: HarnessEnvDiagnostic
   /**
@@ -639,6 +646,7 @@ async function runDoctor(): Promise<DoctorReport> {
     })(),
     direnv: { installed: false },
     harness_level_mcps: harnessLevelMcpReport(),
+    context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
     harness_env: await harnessEnvDiagnostic(),
     project_schema: await projectSchemaDiagnostic(),
     pending_actions: [],
@@ -953,6 +961,14 @@ function printHuman(report: DoctorReport): void {
     process.stdout.write(`    ${verdict.detail}\n`);
   }
   process.stdout.write(`  read: ${report.harness_level_mcps.sources.length > 0 ? report.harness_level_mcps.sources.join(', ') : '(no user-level config found)'}\n\n`);
+
+  if (report.context_maps.length > 0) {
+    tui.section('Business context maps not generated yet');
+    for (const line of report.context_maps) {
+      process.stdout.write(`  ${tui.statusIcon('info')} ${line.replace(/`/g, '')}\n`);
+    }
+    process.stdout.write('\n');
+  }
 
   // Legacy JIRA_* credential keys (pre-DRY .env leftover)
   if (report.legacy_jira_cred_keys.length > 0) {
