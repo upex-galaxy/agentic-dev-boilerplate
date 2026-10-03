@@ -18,6 +18,8 @@ The authored "understand the business" files live here. Two layers:
 | Business maps (data / feature / API) | `/project-context data` / `features` / `api` | HTML maps inside `business-data-context`, `business-feature-context`, `business-api-context`; read with `bun run context:map <slug>` |
 | `project-dev-guide.md`               | `/project-foundation` Phase 4 Step 4         | How to build features here                                                                                                           |
 
+On an existing app (adopted) the Constitution files are not written: `business-model.md` and `market-context.md` stay absent, and the maps, `project-dev-guide.md` and `domain-glossary.md` are produced from the code (`/project-context refresh-all`, then `/project-foundation` Discovery-only).
+
 ## When to refresh
 
 - Constitution files (`business-model.md` / `market-context.md`):
