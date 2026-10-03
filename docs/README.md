@@ -6,7 +6,7 @@ Bienvenido a la documentación del **AI-Driven Project Starter**.
 
 Esta documentación está orientada a **humanos** — para aprender conceptos, entender metodologías y seguir guías paso a paso.
 
-> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `AGENTS.md` y `CONTEXT.md` en la raíz del repo (`CLAUDE.md` es solo un shim de una línea, `@AGENTS.md`, para que Claude Code llegue al mismo archivo). El resto del comportamiento de la AI vive en skills (`.agents/skills/`, leídas por Claude Code, OpenCode y Codex) y en los slash commands generados (`.claude/commands/`, `.opencode/commands/`), que son alias hacia una skill y un modo.
+> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `AGENTS.md` y `CONTEXT.md` en la raíz del repo (`CLAUDE.md` es solo un shim de una línea, `@AGENTS.md`, para que Claude Code llegue al mismo archivo). El resto del comportamiento de la AI vive en skills (`.agents/skills/`, leídas por Claude Code, OpenCode y Codex) No hay archivos de comando: una skill se invoca por su nombre más un modo (`/project-context data` en Claude Code; "cargá `project-context`, modo `data`" en OpenCode y Codex). Decisión en [ADR-0006](../.context/ADR/ADR-0006-skill-plus-mode-invocation.md).
 
 ---
 
@@ -30,11 +30,10 @@ docs/
 │   ├── late-game-testing.md     # Fase de regresión
 │   └── jira-platform.md          # Uso de Jira en el flujo
 │
-├── setup/                        # Guías de configuración
-│   ├── jira-setup-guide.md       # Configurar Jira/Atlassian
-│   └── mcp/                      # Guías per-cliente MCP (claude-code, gemini-cli, …)
+├── setup/                        # Guías de configuración (incluye Jira lado dev)
+│   └── mcp/                      # Primer MCP y guías por harness
 │
-├── mcp/                          # Templates opt-in de MCP para hosts sin adapter (gemini-cli, cursor, …)
+├── mcp/                          # Configuración MCP de los tres harnesses + bloques opt-in
 │
 ├── workflows/                    # Flujos de trabajo
 │   ├── environments.md           # Ambientes dev, staging, prod
@@ -70,8 +69,8 @@ La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)*
 | Documento                                          | Descripción                                                      |
 | -------------------------------------------------- | ---------------------------------------------------------------- |
 | [Jira (lado dev)](./setup/README.md#jira-lado-dev) | Configurar credenciales y MCP de Atlassian/Jira                  |
-| [setup/mcp/](./setup/mcp/)                         | Guías per-cliente (claude-code, gemini-cli, copilot-cli, vscode) |
-| [mcp/](./mcp/)                                     | Templates copy-pasteables (`cp docs/mcp/*.template.* …`)         |
+| [setup/mcp/](./setup/mcp/)                         | Primer MCP y guías por harness                                   |
+| [mcp/](./mcp/)                                     | Servidores MCP declarados y bloques opt-in por harness           |
 
 ---
 
@@ -111,11 +110,12 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 - [Flujo Git](./workflows/git-flow.md) para control de versiones
 - [Ambientes](./workflows/environments.md) para etapas de deployment
-- `bun up --help` para sincronizar este boilerplate upstream
+- `bun run up --help` para sincronizar este boilerplate upstream
+- `bun run worktree:provision` para preparar un worktree nuevo (`.env`, dependencias, credenciales MCP); `bun run worktree:audit` para revisarlos
 
-### 4. Usar Skills y Commands
+### 4. Usar Skills y Modos
 
-El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejecutar el sprint) vive en skills bajo `.agents/skills/`, la única copia que leen Claude Code, OpenCode y Codex. Cada skill se invoca con `/<nombre>` (por ejemplo `/sprint-development`, `/project-foundation`). Lista completa en `AGENTS.md` sección **Skills**. Los slash commands (`/business-data-map`, `/sync-ai-memory`, etc.) son alias generados hacia una skill y un modo; en Codex no hay wrappers, se invoca la skill directamente.
+El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejecutar el sprint) vive en skills bajo `.agents/skills/`, la única copia que leen Claude Code, OpenCode y Codex. Cada skill se invoca por su nombre, más un modo cuando tiene varios: `/project-context data` en Claude Code, o "cargá `project-context`, modo `data`" en OpenCode y Codex. Una skill multi-modo lista sus modos en su propia sección `## Mode routing`. El catálogo de skills es `.agents/skills/REGISTRY.md` (lo genera `bun run skills:registry`).
 
 ---
 
@@ -124,10 +124,9 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 | Directorio / archivo                         | Audiencia | Propósito                                                                                   |
 | -------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
 | `docs/`                                      | Humanos   | Aprendizaje, tutoriales, referencia                                                         |
-| `.context/`                                  | AI        | Memoria persistente del proyecto (PRD, SRS, business map, PBI, ADR)                         |
+| `.context/`                                  | AI        | Memoria persistente del proyecto (PRD, SRS, PBI, ADR). Los business maps viven en las skills `business-*-context` y se leen con `bun run context:map <skill>` |
 | `.agents/skills/`                            | AI        | Workflows ejecutables: la única copia, leída por los tres harnesses                         |
-| `.agents/compatibility/command-aliases.json` | AI        | Manifiesto de alias: fuente de todos los slash commands generados                           |
-| `.claude/`, `.opencode/`, `.codex/`          | AI        | Adapters por harness (hook, MCP, wrappers generados). Nunca una segunda copia del contenido |
+| `.claude/`, `.opencode/`, `.codex/`          | AI        | Adapters por harness (hook, MCP). Generado solo `.claude/skills`; nunca una segunda copia del contenido |
 | `AGENTS.md`                                  | AI        | Operational context cargado en cada sesión, en cualquier harness                            |
 | `CLAUDE.md`                                  | AI        | Shim de una línea (`@AGENTS.md`) para Claude Code. Generado, nunca lleva prosa              |
 
@@ -145,7 +144,9 @@ Para agregar documentación:
 
 1. **Educacional / Tutorial** → Agregar al subdirectorio apropiado de `docs/`
 2. **Workflow ejecutable para AI** → Crear o editar una skill en `.agents/skills/<nombre>/SKILL.md`
-3. **Slash command de utilidad** → Declarar el alias en `.agents/compatibility/command-aliases.json` y correr `bun run agents:compat` (los wrappers en `.claude/commands/` y `.opencode/commands/` se generan; no se editan a mano)
+3. **Una variante de una skill existente** → Agregar un modo a la sección `## Mode routing` de esa skill (no hay archivos de comando, ver ADR-0006)
+
+Antes de commitear prosa, `bun run docs:check`: la Regla #17 de `AGENTS.md` prohíbe conteos que cambian, listas de un conjunto mutable, citas `archivo:línea` y fechas de estado actual. Nombrá al dueño del dato (un archivo, un comando), nunca el valor que tiene. Detalle en `.agents/skills/agentic-dev-core/references/volatile-facts.md`.
 
 ### Agregar Nuevas Arquitecturas
 
@@ -154,6 +155,3 @@ Para agregar documentación:
 3. Agregar guías de configuración específicas
 4. Mantener conceptos genéricos en `docs/methodology/`
 
----
-
-**Última actualización**: 2026-09-03

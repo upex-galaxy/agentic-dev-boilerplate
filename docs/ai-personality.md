@@ -60,7 +60,7 @@ Drops articles (`a`, `an`, `the`), fillers (`just`, `really`, `basically`, `simp
 
 Three intensity levels: `lite`, `full` (default), `ultra`. Toggle with `/caveman lite|full|ultra`. Disable with `stop caveman` or `normal mode`.
 
-**Why it exists**: cuts roughly 75% of tokens without losing technical accuracy. Faster to read, cheaper to run.
+**Why it exists**: cuts a large share of output tokens without losing technical accuracy. Faster to read, cheaper to run.
 
 ### 3.2 Butler Pattern (information granularity)
 
@@ -91,7 +91,7 @@ Default communication register is **Project Manager voice**, not senior-dev-to-s
 | "Refactored `useAuthState` to memoize the Supabase session subscription" | "App stops doing extra background work when users navigate between private screens: should feel lighter" |
 | "Added `revalidateTag('user')` after the mutation"                       | "User list now refreshes immediately after edits, no manual reload"                                      |
 
-**No headline punch** _(removed 2026-08-18)_: the headline opens on the value itself, with no attention-priming phrase in front of it. The earlier rule asked for a short hook that had to vary across replies, which read as manufactured theatre and contradicted the anti-theatre trait in section 2. A reader does not need to be primed to read one line.
+**No headline punch**: the headline opens on the value itself, with no attention-priming phrase in front of it. A hook that has to vary across replies reads as manufactured theatre and contradicts the anti-theatre trait in section 2. A reader does not need to be primed to read one line.
 
 **Bullet menu orientation (conditional)**: when the response contains 3+ bullets serving as expandable topics, a short question appears between the headline and the menu, inviting the reader to pull a thread. The wording is the AI's choice and mirrors the conversation language. The question is skipped for 1-2 bullet menus that are clearly recap, not navigation.
 
@@ -204,7 +204,7 @@ PM Voice is on by default, but **auto-suspends for one turn** when any of these 
 - Your message contains file paths, shell commands, literal errors or stack traces, function or class names, library names
 - You explicitly request technical detail in any phrasing (the AI interprets intent, not literal keywords)
 - Topic touches security, secrets, auth, RLS, migrations, rollback, irreversible actions, production deploys
-- Active skill is `/sprint-development`, `/sdd-*`, or the output is a commit message / PR body / code block
+- Active skill is `/sprint-development`, or the output is a commit message / PR body / code block
 
 After the suspension turn, PM Voice resumes automatically.
 
@@ -246,7 +246,7 @@ After the suspension turn, PM Voice resumes automatically.
 | Source                                                                 | What it controls                                                                                                              | Loaded                                                                                                                                  |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `AGENTS.md` (root of this repo)                                        | Critical rules (§1), behavioral layer + Butler + PM Voice + Visual Mapping Bias (§2), orchestration mode (§3)                 | Every session; OpenCode and Codex read it natively, Claude Code reads it through the generated one-line `CLAUDE.md` shim                |
-| `~/.claude/CLAUDE.md` (user-level, Claude Code)                        | Two sections only: the Engram memory protocol, and `## OUTPUT STYLE` (markdown rendering, human texture, substance)           | Every session, automatically                                                                                                            |
+| `~/.claude/CLAUDE.md` (user-level, Claude Code)                        | The user's personal instructions; the part this contract relies on is `## OUTPUT STYLE` (markdown rendering, human texture, substance) | Every session, automatically                                                                                                            |
 | `caveman@caveman` plugin (user-global, `~/.claude/plugins/`)           | Caveman compression rules and intensity levels. Registers its own SessionStart + UserPromptSubmit hooks                       | Auto-active by default if installed                                                                                                     |
 | `.agents/skills/agentic-dev-core/references/behavioral-layer.md`       | Deep examples and signals for the behavioral layer                                                                            | Loaded on demand by workflow skills                                                                                                     |
 | `.agents/hooks/personality-reinject.mjs` (this repo, UserPromptSubmit) | Re-injects the §2 output contract every turn so PM Voice and Butler do not dilute in long sessions the way caveman never does, plus the `AGENT IDENTITY:` line the commit trailers copy | Every turn, via one thin adapter per harness: `.claude/settings.json`, `.opencode/plugins/personality-reinject.js`, `.codex/hooks.json` |
