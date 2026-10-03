@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { cleanupDeprecated, validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -89,6 +89,22 @@ describe('component registry', () => {
     // A skill folder with no SKILL.md would fail skills:check: the empty folders go.
     expect(existsSync(join(root, '.agents/skills/sync-ai-memory'))).toBe(false);
     expect(existsSync(join(root, '.agents/skills/acli/SKILL.md'))).toBe(true);
+  });
+  test('docs pages removed upstream leave downstream instead of holding the docs component back', () => {
+    expect(DEPRECATED_FILES.map(d => d.path)).toEqual(expect.arrayContaining(RETIRED_DOCS_FILES.map(d => d.path)));
+    for (const d of RETIRED_DOCS_FILES) {
+      expect(d.component).toBe('docs');
+      expect(existsSync(join(import.meta.dir, '..', d.path))).toBe(false);
+    }
+
+    const root = temporaryRoot();
+    for (const p of [...RETIRED_DOCS_FILES.map(d => d.path), 'docs/setup/mcp/codex.md']) {
+      mkdirSync(join(root, p, '..'), { recursive: true });
+      writeFileSync(join(root, p), 'x\n');
+    }
+    const cfg = { deprecatedFiles: RETIRED_DOCS_FILES } as Parameters<typeof cleanupDeprecated>[0];
+    expect(cleanupDeprecated(cfg, root, false)).toBe(RETIRED_DOCS_FILES.length);
+    expect(existsSync(join(root, 'docs/setup/mcp/codex.md'))).toBe(true);
   });
 });
 
@@ -176,6 +192,19 @@ describe('flags', () => {
     expect(parseArgs(['--auto', '--no-gates'])).toMatchObject({ auto: true, noGates: true, interactive: false });
     expect(parseArgs(['--interactive', '--dry-run'])).toMatchObject({ interactive: true, dryRun: true, auto: false, noGates: false });
     expect(parseArgs([])).toMatchObject({ auto: false, noGates: false, interactive: false, strict: false });
+  });
+});
+
+describe('MCP template refresh', () => {
+  test('offers one template per supported host, and each one ships in docs/mcp', () => {
+    expect([...MCP_TEMPLATE_AGENTS]).toEqual(['claude', 'opencode', 'codex']);
+    for (const agent of MCP_TEMPLATE_AGENTS) {
+      expect(existsSync(join(import.meta.dir, '..', 'docs', 'mcp', MCP_TEMPLATE_FILE[agent]))).toBe(true);
+    }
+  });
+
+  test('--update-mcp-template takes a supported host', () => {
+    expect(parseArgs(['--update-mcp-template', 'codex']).updateMcpTemplate).toBe('codex');
   });
 });
 

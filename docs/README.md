@@ -69,7 +69,7 @@ La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)*
 
 | Documento                                          | Descripción                                                      |
 | -------------------------------------------------- | ---------------------------------------------------------------- |
-| [jira-setup-guide.md](./setup/jira-setup-guide.md) | Configurar credenciales y MCP de Atlassian/Jira                  |
+| [Jira (lado dev)](./setup/README.md#jira-lado-dev) | Configurar credenciales y MCP de Atlassian/Jira                  |
 | [setup/mcp/](./setup/mcp/)                         | Guías per-cliente (claude-code, gemini-cli, copilot-cli, vscode) |
 | [mcp/](./mcp/)                                     | Templates copy-pasteables (`cp docs/mcp/*.template.* …`)         |
 
@@ -105,7 +105,7 @@ Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fa
 
 ### 2. Configurar Tus Herramientas
 
-- Jira / Atlassian: [jira-setup-guide.md](./setup/jira-setup-guide.md)
+- Jira / Atlassian: [Jira (lado dev)](./setup/README.md#jira-lado-dev)
 
 ### 3. Aprender los Workflows
 
