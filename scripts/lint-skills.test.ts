@@ -246,3 +246,30 @@ describe('lint-skills stage owners and context write scope (checks 23-25)', () =
     expect(exitCode).toBe(1);
   });
 });
+
+describe('lint-skills on an adopted app', () => {
+  const APP_SKILL = '---\nname: app-email\n---\n\n# app-email\n\nSee `cli/install.ts:403`. Measured 2026-09-17.\n';
+
+  test('the app\'s own skills are listed, not linted; the framework\'s still are', () => {
+    const root = fixture('(T3)');
+    write(root, '.agents/skills/app-email/SKILL.md', APP_SKILL);
+    write(root, '.template/installer.lock.json', `${JSON.stringify({ adopted: true, upstreamOwned: { scripts: [], skills: ['unit-testing', 'vercel-cli', 'agentic-dev-core'] } })}\n`);
+    const clean = runLint(root);
+    expect(clean.stdout).toContain('(+ 1 skills of the adopted app, outside the framework\'s doctrine: not linted here)');
+    expect(clean.stdout).not.toContain('app-email/SKILL.md');
+    expect(clean.exitCode).toBe(0);
+
+    write(root, '.agents/skills/vercel-cli/SKILL.md', `${VERCEL_CLI_FRONTMATTER}\nSee \`cli/install.ts:403\`.\n`);
+    const red = runLint(root);
+    expect(red.stdout).toContain('[ERROR/FILE-LINE] .agents/skills/vercel-cli/SKILL.md');
+    expect(red.exitCode).toBe(1);
+  });
+
+  test('without the list (greenfield) the same skill is linted as before', () => {
+    const root = fixture('(T3)');
+    write(root, '.agents/skills/app-email/SKILL.md', APP_SKILL);
+    const { exitCode, stdout } = runLint(root);
+    expect(stdout).toContain('app-email/SKILL.md');
+    expect(exitCode).toBe(1);
+  });
+});

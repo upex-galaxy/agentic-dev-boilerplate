@@ -34,8 +34,9 @@ describe('the tooling scope ships with the tooling component', () => {
 
   test('package.json runs the tooling scope through its own scripts; the greenfield scripts are unchanged', () => {
     const scripts = (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts;
-    expect(scripts['tooling:types:check']).toBe('tsc --noEmit -p tsconfig.tooling.json');
-    expect(scripts['tooling:lint:check']).toBe('eslint --config eslint.config.tooling.mjs cli scripts');
+    // Scoped to what upstream owns on an adopted app; folder-wide everywhere else (scripts/tooling-check.ts).
+    expect(scripts['tooling:types:check']).toBe('bun scripts/tooling-check.ts types');
+    expect(scripts['tooling:lint:check']).toBe('bun scripts/tooling-check.ts lint');
     expect(scripts['types:check']).toBe('tsc --noEmit');
     expect(scripts['lint:check']).toBe('eslint .');
   });

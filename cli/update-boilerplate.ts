@@ -25,6 +25,7 @@ import { parseEnvFile } from './install';
 import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
+import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
 import { ADOPT_REPO_ONLY_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
 import {
@@ -33,6 +34,7 @@ import {
   detectGitVersion,
   gitVersionMeetsMin,
   isLocalTemplateSource,
+  isRepoOnlyPath,
   LAST_APPLY_FILE,
   readSyncState,
   runUpdate,
@@ -1073,6 +1075,25 @@ function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolea
   };
 }
 
+// --- UPSTREAM-OWNED LIST (afterApply hook, adopted repos only) ---
+//
+// An adopted app shares `scripts/` and `.agents/skills/` with the tooling. The
+// tooling gates (`scripts/tooling-check.ts`, `skills:check`) scope themselves
+// to what upstream ships there, recorded in the installer lock on every sync
+// while the upstream clone is on disk. After the adopt hook, which writes the
+// lock on the first run.
+function makeUpstreamOwnedHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
+  return async (): Promise<void> => {
+    const excluded = (rel: string): boolean => isRepoOnlyPath(rel, REPO_ONLY_PATHS)
+      || ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel))
+      || GENERATED_PATHS.includes(rel);
+    const owned = collectUpstreamOwned(UPSTREAM_DIR, excluded);
+    if (writeUpstreamOwned(process.cwd(), owned)) {
+      sink.step(`${INSTALLER_LOCK_FILE}: alcance del tooling registrado (lo que upstream posee en scripts/ y .agents/skills/); los gates no juzgan el código propio de la app.`);
+    }
+  };
+}
+
 // --- PARITY REPORT (afterApply hook) ---
 //
 // Folds everything the run learned into ONE set of findings: watched files
@@ -1837,6 +1858,9 @@ async function main(): Promise<void> {
             // --adopt: before everything else (instructions, project.yaml,
             // .env.example, installer lock), so the hooks below see the result.
             ...(parsed.adopt ? [makeAdoptHook(sink, false, parsed.auto)] : []),
+            // Adopted app: what upstream owns in the shared namespaces, for the
+            // tooling gates below and every later commit (`./lib/tooling-scope.ts`).
+            ...(adoptedRepo ? [makeUpstreamOwnedHook(sink)] : []),
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
