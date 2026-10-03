@@ -1,0 +1,2874 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Git Flow Master: ramas, pushes y PRs</title>
+    <meta
+      name="description"
+      content="Cómo /git-flow-master opera la capa de git: lee el estado, reconcilia la política declarada contra el host, resuelve la estrategia de ramas y adapta ramas, commits, pushes, PRs, conflictos, cadenas de PRs y worktrees."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+
+      /* ============================================================
+     Deck-local: sprint-development (Stages 1 a 5).
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.82rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+      .wf span.mono {
+        display: inline;
+        margin-top: 0;
+        font-size: 0.82rem;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .code.pre {
+        white-space: pre;
+      }
+
+      .states {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0 4px;
+      }
+      .states .st {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        padding: 6px 10px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+      .states .st.hum {
+        border-color: var(--signal);
+        color: var(--signal);
+      }
+      .states .ar {
+        color: var(--ink-faint);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host .say + .say {
+        margin-top: 8px;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .alts > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .sec-head .mono,
+      .plane .mono,
+      .callout .mono,
+      .step .mono,
+      .trio .mono,
+      .gate .mono,
+      .check .mono,
+      table.cmp .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      @media (max-width: 600px) {
+        table.cmp.narrow tbody th {
+          width: 36%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">Cuándo</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#estrategia">Estrategia</a>
+        <a href="#push">Push</a>
+        <a href="#paridad">Paridad</a>
+        <a href="#commits">Commits</a>
+        <a href="#pr">PR</a>
+        <a href="#cadena">Cadena</a>
+        <a href="#worktrees">Worktrees</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · la capa de control de versiones</div>
+        <h1>Lo que se decidió para el repo, <span class="sig">aplicado</span> en cada push.</h1>
+        <p class="lede">
+          <span class="mono">/git-flow-master</span> es la única puerta para todo lo que pasa en git:
+          ramas, commits, pushes, pull requests, conflictos y cadenas de PRs. No asume un modelo de
+          ramas: lee el que el proyecto <b>eligió</b>, comprueba lo que el host <b>impone</b> de
+          verdad y adapta cada comando a eso.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para quien codea y quien <b>lidera</b> el repo</span
+          >
+          <span class="chip"
+            ><span class="dot"></span> la estrategia vive en
+            <b>.agents/project.yaml</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> se detiene al abrir el PR: el merge es <b>tuyo</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Step 1</div>
+            <h3>Leer el estado</h3>
+            <p>Rama, árbol, upstream, remotos. Siempre, antes de todo.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 1b</div>
+            <h3>Reconciliar la política</h3>
+            <p><span class="mono">git:policy verify</span> en el primer push, PR o merge.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 2</div>
+            <h3>Resolver la estrategia</h3>
+            <p>El bloque <span class="mono">git_strategy</span>, o detección, o pregunta.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 3</div>
+            <h3>Operar</h3>
+            <p>Rama, commit, push, PR, conflicto o Strategy Setup.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 4</div>
+            <h3>Partir si crece</h3>
+            <p>Más de 400 líneas: árbol de decisión de PRs encadenados.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
+          <h2>Cada vez que el trabajo toca git</h2>
+          <p class="sub">
+            Se dispara aunque no la nombres: si el pedido tiene forma de rama, commit, push o PR, es
+            esta skill. Las demás skills del repo le pasan la posta cuando llegan a esa capa.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Usala cuando</div>
+            <h3>Hay que mover código por git</h3>
+            <ul>
+              <li>Arrancás trabajo: <b>"start work on PROJ-123"</b>, crear una rama.</li>
+              <li><b>Commitear</b> y <b>pushear</b>: "commit and push", "subir cambios".</li>
+              <li>Abrir un <b>pull request</b>: "abrí un PR contra staging".</li>
+              <li>Hay <b>conflictos</b> o el push fue <b>rechazado</b>.</li>
+              <li>Un cambio va a quedar <b>enorme</b> y hay que partirlo en varios PRs.</li>
+              <li>Querés <b>elegir o cambiar</b> la estrategia de ramas del repo.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No la uses para</div>
+            <h3>Lo que no es control de versiones</h3>
+            <ul>
+              <li>
+                <b>Implementar una feature:</b> eso es
+                <span class="mono">/sprint-development</span>, que llama a esta skill para el PR.
+              </li>
+              <li><b>Escribir tests:</b> eso es <span class="mono">/unit-testing</span>.</li>
+              <li>
+                <b>Refinar el backlog:</b> eso es <span class="mono">/product-management</span>.
+              </li>
+              <li>
+                <b>Editar código en general:</b> la skill opera estrictamente sobre la capa de
+                versiones.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Si el pedido es ambiguo</b> ("hagamos lo de git"), la skill no adivina: reporta el
+          estado del repo (Step 1) y te pregunta qué necesitás.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · el mapa</div>
+          <h2>Dos chequeos fijos, una operación, una cadena si hace falta</h2>
+          <p class="sub">
+            El pedido elige la operación; la estrategia decide cómo corre. Los dos primeros pasos
+            son los mismos para cualquier operación.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Siempre · antes de actuar</div>
+            <a class="wf" href="#mapa"
+              ><span class="lt agent">1</span
+              ><span
+                ><b>Estado del repo</b
+                ><span>Rama actual, árbol sucio o limpio, adelante o atrás del upstream.</span></span
+              ></a
+            >
+            <a class="wf" href="#paridad"
+              ><span class="lt agent">1b</span
+              ><span
+                ><b>Política contra host</b
+                ><span>Una vez por sesión, al primer push, PR o merge.</span></span
+              ></a
+            >
+            <a class="wf" href="#estrategia"
+              ><span class="lt agent">2</span
+              ><span
+                ><b>Estrategia</b
+                ><span>Leída de <span class="mono">.agents/project.yaml</span> en cada invocación.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">La operación · según el pedido</div>
+            <a class="wf" href="#commits"
+              ><span class="lt">B</span
+              ><span><b>Branch</b><span>Prefijo + key del issue, propuesto antes de crear.</span></span></a
+            >
+            <a class="wf" href="#commits"
+              ><span class="lt">C</span
+              ><span><b>Commit</b><span>Una responsabilidad por commit, con trailers forenses.</span></span></a
+            >
+            <a class="wf" href="#push"
+              ><span class="lt sig">P</span
+              ><span><b>Push</b><span>Compuerta de rama protegida resuelta por variable.</span></span></a
+            >
+            <a class="wf" href="#pr"
+              ><span class="lt">PR</span
+              ><span><b>Pull request</b><span>Base según la estrategia; se detiene al crearlo.</span></span></a
+            >
+            <a class="wf" href="#conflictos"
+              ><span class="lt sig">X</span
+              ><span><b>Conflict</b><span>Diagnóstico primero, opciones por seguridad.</span></span></a
+            >
+            <a class="wf" href="#setup"
+              ><span class="lt sig">S</span
+              ><span><b>Strategy Setup</b><span>Elegir el flujo y escribir el bloque.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Cuando el cambio crece</div>
+            <a class="wf" href="#cadena"
+              ><span class="lt">4</span
+              ><span
+                ><b>PRs encadenados</b
+                ><span>Árbol de decisión con traza; el que llama rechaza una etiqueta sola.</span></span
+              ></a
+            >
+            <a class="wf" href="#worktrees"
+              ><span class="lt agent">W</span
+              ><span
+                ><b>Worktrees</b
+                ><span>Trabajo aislado o sesiones en paralelo, con su ciclo de vida.</span></span
+              ></a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ESTRATEGIA ============ -->
+    <section class="band" id="estrategia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · Step 2 · la estrategia de ramas</div>
+          <h2>Un default no es una decisión</h2>
+          <p class="sub">
+            La estrategia se guarda en el bloque <span class="mono">git_strategy</span> de
+            <span class="mono">.agents/project.yaml</span> y se lee en cada invocación. Nunca se
+            infiere de un ejemplo de la skill ni de otro proyecto.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Estrategia</th>
+                <th>Forma</th>
+                <th>Rama de trabajo sale de</th>
+                <th>El PR apunta a</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">solo-main</span></th>
+                <td>Una sola rama larga, <span class="mono">main</span>. Todo aterriza directo.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span>, cuando hay PR</td>
+              </tr>
+              <tr>
+                <th><span class="mono">main-integration</span></th>
+                <td><span class="mono">main</span> + una rama de integración (<span class="mono">staging</span> o similar).</td>
+                <td>integración</td>
+                <td>integración</td>
+              </tr>
+              <tr>
+                <th><span class="mono">enterprise</span></th>
+                <td>Integración + muchas <span class="mono">feature/*</span>, <span class="mono">release/*</span>, <span class="mono">hotfix/*</span>.</td>
+                <td>integración (hotfix: <span class="mono">main</span>)</td>
+                <td>integración (hotfix: <span class="mono">main</span>)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">trunk-based</span></th>
+                <td>Solo el trunk; ramas de menos de un día, detrás de feature flags.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitflow</span></th>
+                <td><span class="mono">main</span> + <span class="mono">develop</span> + release y hotfix.</td>
+                <td><span class="mono">develop</span> (hotfix: <span class="mono">main</span>)</td>
+                <td><span class="mono">develop</span>; release y hotfix: <span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">github-flow</span></th>
+                <td><span class="mono">main</span> siempre desplegable; rama, PR, merge, deploy.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitlab-flow</span></th>
+                <td>GitHub Flow + ramas de entorno (<span class="mono">pre-production</span>, <span class="mono">production</span>).</td>
+                <td><span class="mono">main</span>, que es su integración</td>
+                <td><span class="mono">main</span>; la promoción va por entorno</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>Cómo la encuentra</h3>
+            <p>
+              Primero el bloque: si <span class="mono">git_strategy.strategy</span> tiene valor, esa
+              es la decisión. Si no, mira las ramas (solo <span class="mono">main</span>,
+              <span class="mono">main</span> + una de integración, muchas
+              <span class="mono">feature/*</span>) y las pistas del repo
+              (<span class="mono">.gitlab-ci.yml</span>, ramas <span class="mono">release/*</span>).
+              Si nada alcanza, te muestra el catálogo y elegís vos. Nunca elige en silencio.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Elegida o heredada</h3>
+            <p>
+              El boilerplate entrega el bloque lleno con <span class="mono">solo-main</span>. Lo
+              que separa "este proyecto eligió <span class="mono">solo-main</span>" de "nadie
+              eligió" es <span class="mono">meta.strategy_source</span>:
+              <span class="mono">inherited</span> o <span class="mono">chosen</span>. Solo Strategy
+              Setup estampa <span class="mono">chosen</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>La oferta, nunca la ejecución</h3>
+            <p>
+              Si el bloque falta en un repo nuevo, si el proyecto aún no se configuró
+              (<span class="mono">project.project_name</span> vacío), o si el proyecto ya tiene
+              nombre pero la estrategia sigue <span class="mono">inherited</span>, la skill
+              <b>ofrece</b> Strategy Setup una vez por sesión y te dice qué cuesta el default: sin
+              rama de integración, sin camino de promoción, sin compuerta de review propia. Un "no"
+              sigue con la estrategia que hay, sin escribir nada.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 STRATEGY SETUP ============ -->
+    <section class="band" id="setup">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · operación · Strategy Setup</div>
+          <h2>Un cuestionario, ramas solo si hacen falta, un bloque escrito</h2>
+          <p class="sub">
+            Es la única operación que crea ramas largas y escribe el bloque
+            <span class="mono">git_strategy</span>. Las demás operaciones se adaptan a lo que esta
+            deja.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Aplica a</th>
+                <th>Opciones (default primero)</th>
+                <th>Se guarda en</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · promoción integración → producción</th>
+                <td>estrategias con rama de integración</td>
+                <td>fast-forward only · merge commit · squash</td>
+                <td><span class="mono">decisions.promote_method</span></td>
+              </tr>
+              <tr>
+                <th>Q2 · merge de la rama de trabajo</th>
+                <td>estrategias de varias ramas</td>
+                <td>merge commit · squash · rebase + merge</td>
+                <td><span class="mono">decisions.feature_merge</span></td>
+              </tr>
+              <tr>
+                <th>Q3 · hotfixes</th>
+                <td>producción distinta de donde se trabaja</td>
+                <td>salir de producción + back-merge el mismo día · siempre por integración · sin política</td>
+                <td><span class="mono">decisions.hotfix_policy</span></td>
+              </tr>
+              <tr>
+                <th>Q4 · ramas protegidas</th>
+                <td><b>todas</b> las estrategias</td>
+                <td>push directo, bypass de admin, reviews mínimas</td>
+                <td><span class="mono">policy.*</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>
+              Resuelve la estrategia, salta las preguntas que no aplican o que ya tienen respuesta,
+              propone cada rama a crear y sincroniza solo por fast-forward.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>
+              La estrategia, cada respuesta del cuestionario, cada rama propuesta y el push de
+              sincronización a una rama protegida.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>
+              El bloque <span class="mono">git_strategy</span> escrito en su lugar dentro de
+              <span class="mono">.agents/project.yaml</span>, con
+              <span class="mono">strategy_source: chosen</span> y
+              <span class="mono">policy_source: declared</span>.
+            </p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Compuerta</b> Nunca <span class="mono">--force</span>, tampoco
+          <span class="mono">--force-with-lease</span>. Si integración y producción divergieron
+          para los dos lados, la sincronización se detiene y pasa a resolución de conflictos.
+        </div>
+
+        <div class="callout r">
+          <b>El push de sincronización siempre pregunta.</b> Setup corre antes de que ratifiques la
+          nueva política, así que un <span class="mono">allowed</span> recién contestado no
+          autoriza su propio push. Al final, Setup ofrece llevar la política al host con
+          <span class="mono">bun run git:policy</span>: primero lectura, después un dry run, y la
+          escritura solo con tu sí.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 PUSH ============ -->
+    <section class="band" id="push">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · operación · push</div>
+          <h2>La variable decide si la IA pregunta</h2>
+          <p class="sub">
+            Antes de pushear a una rama protegida, la skill resuelve
+            <span class="mono">git_strategy.policy.direct_push_to_protected</span>
+            (<span class="mono">AGENTS.md</span>, Critical Rule #4). La respuesta nunca está
+            escrita en la regla: está en el valor.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Valor</th>
+                <th>Qué hace la IA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">allowed</span></th>
+                <td>
+                  Pushea <b>sin preguntar</b>. El valor guardado es la autorización permanente;
+                  preguntar igual convertiría <span class="mono">allowed</span> en
+                  <span class="mono">confirm</span>.
+                </td>
+              </tr>
+              <tr>
+                <th><span class="mono">confirm</span></th>
+                <td>Pregunta <b>antes de cada push</b> y espera un sí explícito.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">forbidden</span></th>
+                <td>
+                  No pushea a la rama protegida: abre una rama de trabajo, la pushea y manda el
+                  cambio por PR.
+                </td>
+              </tr>
+              <tr>
+                <th>bloque ausente o <span class="mono">null</span></th>
+                <td>Se comporta como <span class="mono">confirm</span>: lo seguro es preguntar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Antes del push</div>
+            <h3>El estado elige el comando</h3>
+            <ul>
+              <li>Sin upstream: <span class="mono">git push -u origin &lt;rama&gt;</span>.</li>
+              <li>Upstream atrás: <span class="mono">git push</span>.</li>
+              <li>Upstream divergido: se detiene y pasa a conflictos. No fuerza.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Bypass de admin</div>
+            <h3>Solo se ofrece, y con doble chequeo</h3>
+            <ul>
+              <li>Solo si <span class="mono">policy.admin_bypass: true</span>.</li>
+              <li>Te pregunta si de verdad sos admin: la skill no puede saber tu rol.</li>
+              <li>Te confirma la acción irreversible concreta.</li>
+              <li>Con <span class="mono">false</span>, nunca lo ofrece.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Qué ramas cuentan como protegidas</b> sale de la estrategia:
+          <span class="mono">main</span> siempre, la rama de integración cuando existe,
+          <span class="mono">develop</span> en gitflow y <span class="mono">release/*</span> en
+          enterprise. Sobre cualquiera de ellas, nunca
+          <span class="mono">--force</span>, <span class="mono">--force-with-lease</span> ni
+          <span class="mono">--no-verify</span> sin un pedido explícito tuyo y una rama que nadie
+          más usa.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 PARIDAD ============ -->
+    <section class="band" id="paridad">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · Step 1b · paridad con el host</div>
+          <h2>Lo declarado es intención; lo que manda es el host</h2>
+          <p class="sub">
+            El bloque <span class="mono">policy</span> registra lo que el equipo decidió. GitHub
+            registra lo que se impone. Se desalinean, y la sorpresa llega en el peor momento: un
+            merge rechazado a mitad de camino. Por eso la reconciliación es un script, no un
+            procedimiento.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Comando</th>
+                <th>Lee el host</th>
+                <th>Escribe</th>
+                <th>Para qué</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">bun run git:policy plan</span></th>
+                <td>no</td>
+                <td>nada</td>
+                <td>Ver qué ruleset deriva del bloque.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run git:policy verify</span></th>
+                <td>sí</td>
+                <td>nada</td>
+                <td>Al primer push, PR o merge de la sesión. Sale con 1 ante un desvío no aceptado.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">… verify --stamp</span></th>
+                <td>sí</td>
+                <td><span class="mono">meta.policy_verified</span> y <span class="mono">policy_source</span></td>
+                <td>Registrar la reconciliación cuando está limpia.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run git:policy apply</span></th>
+                <td>sí</td>
+                <td>nada (dry run)</td>
+                <td>Mostrar el payload exacto antes de proponer la escritura.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">… apply --yes</span></th>
+                <td>sí</td>
+                <td>el ruleset del host</td>
+                <td>Escribir, con tu elección. Nunca para tapar un desvío que no leíste.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Lo que el script sabe</div>
+            <h3>Dos mecanismos, y un push no prueba nada</h3>
+            <ul>
+              <li>
+                Consulta la protección clásica <b>y</b> los rulesets. Un
+                <span class="mono">404</span> en la clásica no significa "sin protección".
+              </li>
+              <li>
+                Un push que pasa no prueba que no haya regla: los admins la saltean y la regla sigue
+                valiendo para el resto. Si el remoto dice
+                <span class="mono">Changes must be made through a pull request</span>, fue un bypass.
+              </li>
+              <li>
+                <span class="mono">require_code_owner_review</span> sin archivo
+                <span class="mono">CODEOWNERS</span> no es estricto: es imposible de cumplir, y cada
+                merge termina siendo un bypass.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Ante un desvío</div>
+            <h3>Se reporta, nunca se corrige solo</h3>
+            <ul>
+              <li>(a) corregir <span class="mono">.agents/project.yaml</span> para que coincida con el host;</li>
+              <li>(b) cambiar la configuración del host;</li>
+              <li>
+                (c) aceptar la diferencia y anotar por qué en
+                <span class="mono">policy.accepted_divergences</span>.
+              </li>
+              <li>Cualquiera de las tres necesita tu elección.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="c"># una divergencia aceptada: un campo del verify, con su razón</span>
+<span class="k">git_strategy</span>:
+  <span class="k">policy</span>:
+    <span class="k">accepted_divergences</span>:
+      - <span class="k">field</span>: <span class="s">main.direct_push_to_protected</span>
+        <span class="k">enforced</span>: <span class="s">blocked (pull_request rule)</span>
+        <span class="k">accepted</span>: <span class="s">&lt;fecha de la firma&gt;</span>
+        <span class="k">reason</span>: <span class="s">por qué los dos lados difieren a propósito</span></div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Aceptada no es silenciada.</b> <span class="mono">verify</span> la lista como
+              ACCEPTED con su razón y sale con 0; <span class="mono">--stamp</span> registra
+              <span class="mono">policy_source: accepted</span>, distinto de
+              <span class="mono">verified</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Una excepción vieja aparece sola.</b> Una divergencia aceptada que ya no coincide
+              con ningún desvío se reporta como nota, para que la lista no junte excepciones
+              muertas.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b><span class="mono">apply</span> no afloja nada sin permiso.</b> Quitar una
+              guarda, bajar las aprobaciones, apagar code-owner review o ampliar los métodos de
+              merge exige <span class="mono">--allow-loosening</span> para esa renuncia
+              concreta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lo no verificado se dice así.</b> Con
+              <span class="mono">policy_source: declared</span>, la IA no te dice qué exige el
+              remoto: dice "declarado, no verificado".</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 COMMITS ============ -->
+    <section class="band" id="commits">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · operaciones · branch y commit</div>
+          <h2>Ramas con nombre propuesto, commits con una sola razón</h2>
+          <p class="sub">
+            La IA propone el nombre de la rama y el bloque de commits completo, y espera tu OK antes
+            de ejecutar. Podés aceptar, cambiar o rechazar cada uno.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Branch</div>
+            <h3>Prefijo + key + slug</h3>
+            <ul>
+              <li>
+                Prefijo por el cambio dominante: <span class="mono">feat</span>,
+                <span class="mono">fix</span>, <span class="mono">refactor</span>,
+                <span class="mono">test</span>, <span class="mono">docs</span>,
+                <span class="mono">chore</span>, en ese orden de precedencia.
+              </li>
+              <li>
+                Con key: <span class="mono">feat/PROJ-123-bulk-assign</span>. Sin key:
+                <span class="mono">refactor/split-auth-utils</span>.
+              </li>
+              <li>Sale de la rama base que fija la estrategia.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Commit</div>
+            <h3>Conventional, atómico, explícito</h3>
+            <ul>
+              <li>Un commit, una responsabilidad. Los tests van con el comportamiento que prueban.</li>
+              <li><span class="mono">feat(PROJ-123): add bulk-assign action</span>.</li>
+              <li>Nunca <span class="mono">git add -A</span> ni <span class="mono">git add .</span>: cada ruta, por nombre.</li>
+              <li>Si un hook rechaza el commit: se arregla la causa y se hace un commit nuevo, nunca <span class="mono">--amend</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px">feat(PROJ-123): add bulk-assign action
+
+<span class="c">Cuerpo opcional: el resultado, no la lista de archivos.</span>
+
+<span class="k">Worktree</span>: <span class="s">&lt;nombre|primary&gt;</span>
+<span class="k">Session</span>: <span class="s">&lt;label&gt;</span></div>
+
+        <div class="callout agent r">
+          <b>Los trailers son forenses, no atribución.</b> Las dos últimas líneas de todo commit
+          que escribe una sesión de agente dicen qué checkout y qué sesión lo produjeron, copiadas
+          de la línea <span class="mono">AGENT IDENTITY:</span> que inyecta el hook del prompt
+          (<span class="mono">unknown</span> si no se resuelve). No nombran ninguna herramienta.
+          Prohibido: "Generated with…", un <span class="mono">Co-Authored-By:</span> de una IA o
+          cualquier trailer con marca como <span class="mono">Claude-Session:</span>.
+          <span class="mono">.husky/commit-msg</span> corre
+          <span class="mono">scripts/check-commit-trailers.ts</span> y avisa, sin bloquear.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 PR ============ -->
+    <section class="band" id="pr">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · operación · pull request</div>
+          <h2>Se abre con contexto completo y se detiene ahí</h2>
+          <p class="sub">
+            La base sale de la estrategia, el cuerpo se arma en el momento, y el merge queda como tu
+            próximo paso explícito.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Base y título</h3>
+            <p>
+              La base es la que fija la estrategia (tabla de la sección 03). Si la cambiás con
+              <span class="mono">--base</span>, la IA te lo marca contra el default. El título sigue
+              el formato del commit, con menos de 70 caracteres.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cuerpo</h3>
+            <p>
+              Summary, Changes, Test Plan, Traceability (issue, rama, base, estrategia, worktree y
+              sesión), Evidence y Risk. Lo que la skill no puede completar queda visible para que
+              lo edites: no se borra en silencio. Te muestra cuerpo y base antes de enviarlos con
+              <span class="mono">gh pr create --body-file</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Etiquetas, revisores, draft</h3>
+            <p>
+              Te los pregunta. No inventa etiquetas que el repo quizás no tiene: si duda, las
+              confirma con <span class="mono">gh label list</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cuántas aprobaciones faltan, y según quién</h3>
+            <p>
+              Con la política verificada dice "el host exige N aprobaciones en la base". Con la
+              política solo declarada dice "declarado <span class="mono">require_pr_reviews: N</span>,
+              no verificado contra el host".
+            </p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Compuerta</b> La skill no mergea nunca. Te deja el PR y el comando para cuando esté
+          aprobado.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 CONFLICTOS ============ -->
+    <section class="band" id="conflictos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · operación · conflictos</div>
+          <h2>Diagnóstico antes que arreglo</h2>
+          <p class="sub">
+            Un arreglo equivocado acá cuesta horas. La IA mira
+            <span class="mono">git status</span>, <span class="mono">git diff --check</span> y los
+            archivos de estado de <span class="mono">.git/</span> para saber qué pasó antes de
+            proponer nada.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">explicar la causa</span><span class="ar">→</span>
+          <span class="st hum">opciones por seguridad</span><span class="ar">→</span>
+          <span class="st">guiar paso a paso</span><span class="ar">→</span>
+          <span class="st">verificar</span><span class="ar">→</span>
+          <span class="st">cómo evitarlo</span>
+        </div>
+
+        <div class="alts r" style="margin-top: 18px">
+          <div class="alt">
+            <div class="kk">Merge y rebase</div>
+            <h3>Contenido, renombres, rebase</h3>
+            <p>Conflictos de contenido, de renombre o borrado, y de rebase o cherry-pick.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Ramas</div>
+            <h3>Push rechazado, HEAD suelto</h3>
+            <p>Ramas divergidas, push rechazado, detached HEAD, historias sin relación.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Trabajo local</div>
+            <h3>Stash y hooks</h3>
+            <p>Conflicto al aplicar un stash, o un pre-commit que rechazó el commit.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Ante la duda</div>
+            <h3>Abortar gana</h3>
+            <p>
+              <span class="mono">git merge --abort</span>,
+              <span class="mono">git rebase --abort</span>: abortar siempre le gana a adivinar.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Las opciones destructivas nunca se eligen en silencio.</b> Force push, reset duro o
+          abortar un merge con trabajo sin commitear se te presentan como opción, con su riesgo, y
+          esperan tu decisión.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CADENA ============ -->
+    <section class="band" id="cadena">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · Step 4 · PRs encadenados</div>
+          <h2>Más de 400 líneas: se parte, y la decisión viaja con su traza</h2>
+          <p class="sub">
+            Arriba de ese presupuesto de review la detección de defectos cae fuerte. Antes de abrir
+            PRs, la skill recorre un árbol de tres preguntas y se detiene en la primera hoja.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Si es sí</th>
+                <th>Si es no</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · ¿es mayormente mecánico? (renombre, formateo, código generado)</th>
+                <td><span class="mono">size-exception</span>: un PR, con tu override y una línea <span class="mono">Why size-exception:</span></td>
+                <td>sigue a Q2</td>
+              </tr>
+              <tr>
+                <th>Q2 · ¿se parte en 2 a 4 tajadas independientes, cada una segura sola en la base?</th>
+                <td><span class="mono">stacked-to-main</span>: PRs chicos sobre la base</td>
+                <td>sigue a Q3</td>
+              </tr>
+              <tr>
+                <th>Q3 · ¿hay andamiaje compartido que un merge parcial rompería?</th>
+                <td><span class="mono">feature-branch-chain</span>: una rama de integración, PRs hijos, un PR final</td>
+                <td>volver a descomponer la historia: es un olor de planificación</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="k">Chain strategy</span>: <span class="s">feature-branch-chain</span>
+<span class="k">Decision trace</span>: Q1=No (lógica de dominio nueva, no un renombre) ·
+                Q2=No (la tajada 2 no compila sin los tipos de la 1) ·
+                Q3=Yes (esquema compartido que usan las tajadas 2 a 4) → feature-branch-chain
+<span class="k">Decided by</span>: /git-flow-master §Chained-PR decision tree (branching-strategies.md)</div>
+
+        <div class="callout blue r">
+          <b>Una etiqueta sola no es una decisión.</b>
+          <span class="mono">/sprint-development</span> bloquea su Stage 2 sobre esta respuesta y
+          rechaza un nombre de estrategia sin traza. Cada respuesta lleva la razón de este cambio,
+          y esta skill es la única autoridad que puede completar esas líneas. Si el diff real
+          supera la estimación, se vuelve a decidir: no se estira el presupuesto en silencio.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 WORKTREES ============ -->
+    <section class="band" id="worktrees">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · trabajo aislado</div>
+          <h2>Una sesión, un worktree, una rama</h2>
+          <p class="sub">
+            Un worktree es un segundo directorio de trabajo sobre el mismo
+            <span class="mono">.git</span>, con su propia rama y su propio índice. Sirve para dos
+            sesiones de IA en paralelo, un hotfix con una feature abierta, o trabajo riesgoso que no
+            querés mezclar.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">crear</span><span class="ar">→</span>
+          <span class="st">bun run worktree:provision</span><span class="ar">→</span>
+          <span class="st">trabajar</span><span class="ar">→</span>
+          <span class="st hum">bun run worktree:audit &lt;wt&gt; --rescue</span><span class="ar">→</span>
+          <span class="st">remover</span>
+        </div>
+
+        <div class="steps r" style="margin-top: 18px">
+          <div class="step">
+            <h3>Crear: git es el canon, el harness es un atajo</h3>
+            <p>
+              <span class="mono">git worktree add ../dir -b feat/x main</span> funciona en
+              cualquier host. La herramienta propia de un harness (en Claude Code
+              <span class="mono">EnterWorktree</span>, o un worktree administrado por Codex) es un
+              camino del harness, nunca el canon del repo, y necesita los mismos dos pasos
+              alrededor. OpenCode no tiene equivalente: usa git.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Provisionar antes de trabajar</h3>
+            <p>
+              Un worktree nuevo trae solo los archivos versionados.
+              <span class="mono">worktree:provision</span> copia los insumos ignorados que no se
+              pueden reconstruir (<span class="mono">.env</span>,
+              <span class="mono">.vercel/</span>, settings locales), instala dependencias y crea el
+              alias <span class="mono">.claude/skills</span>. La lista vive en código:
+              <span class="mono">PROVISION_COPIES</span> en
+              <span class="mono">cli/lib/worktree.ts</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">.session/</span> nunca se copia</h3>
+            <p>
+              El estado durable (planes, progreso, locks, reportes) vive en
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, el checkout principal, y se
+              cita por ruta absoluta desde el worktree. Una copia diverge en silencio y muere con el
+              worktree.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Auditar antes de remover</h3>
+            <p>
+              <span class="mono">worktree:audit</span> es de solo lectura y sale con 1 mientras haya
+              estado que vive solo en el worktree; <span class="mono">--rescue</span> lo copia al
+              principal sin pisar nada. Con Orca, el <span class="mono">orca.yaml</span> versionado
+              corre los dos pasos como hooks de setup y archive.
+            </p>
+          </div>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lo no versionado no viaja.</b> Un archivo nuevo sin
+              <span class="mono">git add</span> se queda en el directorio original: se mueve, o se
+              commitea antes de crear el worktree.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>El stash es de todo el repo.</b> No sirve para pasar trabajo entre sesiones:
+              commiteá en tu rama.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>La procedencia está en el commit.</b> Los trailers
+              <span class="mono">Worktree:</span> y <span class="mono">Session:</span> dicen quién
+              escribió una rama huérfana. Un worktree viejo se reporta, nunca se borra si es de otra
+              sesión.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · rieles de seguridad</div>
+          <h2>Lo que la skill nunca hace</h2>
+          <p class="sub">
+            La lista completa vive en <span class="mono">SKILL.md</span> (Compact Rules, Critical
+            rules y antipatrones). Estos son los que más se notan desde afuera.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No reescribe historia pusheada.</b> Ni force push a una rama compartida, ni
+              <span class="mono">--amend</span> o rebase sobre commits ya publicados: se agrega un
+              commit nuevo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No descarta cambios globales.</b> Nunca <span class="mono">git restore .</span>,
+              <span class="mono">git checkout -- .</span>, <span class="mono">git reset --hard</span>,
+              un <span class="mono">git stash</span> sin rutas ni
+              <span class="mono">git clean -f</span>: otra sesión puede estar en el mismo árbol. Solo
+              rutas que modificó esta sesión (Critical Rule #13).</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No commitea secretos.</b> <span class="mono">.env</span>, credenciales o tokens
+              en git son para siempre; por eso cada ruta se agrega por nombre.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No mergea</b> ni encadena PRs sin nombrar la dependencia en el cuerpo de cada
+              uno.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No cita ejemplos como configuración.</b> Los bloques de
+              <span class="mono">references/</span> son ilustraciones; la respuesta sobre un
+              proyecto sale de su propio <span class="mono">.agents/project.yaml</span>, citado.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No finge un PR.</b> Si <span class="mono">gh</span> falta o no está autenticado,
+              se detiene y te lo dice.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §13 ENTRADAS Y SALIDAS ============ -->
+    <section class="band" id="archivos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · dónde vive cada cosa</div>
+          <h2>Los archivos dueños, no copias</h2>
+          <p class="sub">
+            El deck no repite valores: cada uno se lee en su dueño, que es lo que la skill también
+            hace.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Archivo o comando</th>
+                <th>Qué resuelve</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">.agents/project.yaml</span> → <span class="mono">git_strategy</span></th>
+                <td>Estrategia, ramas, protegidas, decisiones, política, divergencias aceptadas y la procedencia en <span class="mono">meta</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">package.json</span></th>
+                <td>Los scripts <span class="mono">git:policy</span>, <span class="mono">worktree:provision</span> y <span class="mono">worktree:audit</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.husky/commit-msg</span></th>
+                <td>El aviso de trailers, vía <span class="mono">scripts/check-commit-trailers.ts</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">cli/lib/worktree.ts</span> · <span class="mono">orca.yaml</span></th>
+                <td>Qué copia el provisionado y los hooks de setup y archive en Orca.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/README.md</span> · "Checkout roots"</th>
+                <td>Qué es <span class="mono">&lt;&lt;REPO_ROOT&gt;&gt;</span> y qué es <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">AGENTS.md</span> · "Git Strategy"</th>
+                <td>Solo un puntero al bloque, más el contexto en prosa de una divergencia aceptada.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/skills/REGISTRY.md</span></th>
+                <td>Las Compact Rules de la skill que viajan en el briefing de un subagente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">14</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            La skill no tiene modos con nombre: la operación sale de tu frase, en español o en
+            inglés. Muchas veces ni hace falta nombrarla.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/git-flow-master abrí un PR</span>
+            <span class="say">/git-flow-master configura el flujo de git</span>
+            <p>La barra carga la skill; el resto de la frase elige la operación.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill git-flow-master: commit and push</span>
+            <p>Sin barra: nombrás la skill en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill git-flow-master: tengo conflictos al hacer pull</span>
+            <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Si decís algo como…</th>
+                <th>Corre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"start work on PROJ-123" · "crear branch"</th>
+                <td>Branch</td>
+              </tr>
+              <tr>
+                <th>"commit this" · "commitear esto" · "commit and push"</th>
+                <td>Commit, y Push si lo pediste</td>
+              </tr>
+              <tr>
+                <th>"create PR" · "abrir PR"</th>
+                <td>Pull request</td>
+              </tr>
+              <tr>
+                <th>"fix conflict" · "push rejected" · "resolver conflicto"</th>
+                <td>Conflict</td>
+              </tr>
+              <tr>
+                <th>"split this PR" · "PR demasiado grande"</th>
+                <td>Árbol de PRs encadenados</td>
+              </tr>
+              <tr>
+                <th>"set up our git strategy" · "configura el flujo de git"</th>
+                <td>Strategy Setup</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §15 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">15</span> · con quién trabaja</div>
+          <h2>A quién le pasa la posta, y quién se la pasa</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">El loop de la historia</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Implementa y revisa; le pide a esta skill el PR, la cadena con su traza y la política
+              de push.
+              <a href="../sprint-development/como-funciona.es.html">Ver el deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">TDD dentro de una feature</div>
+            <h3>/unit-testing</h3>
+            <p>
+              Rojo, verde, refactor; los tests van en el mismo commit que el comportamiento.
+              <a href="../unit-testing/como-funciona.es.html">Ver el deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Backlog y refinamiento</div>
+            <h3>/product-management</h3>
+            <p>
+              Si el pedido es sobre historias y no sobre git, va ahí.
+              <a href="../product-management/como-funciona.es.html">Ver el deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Jira desde un commit o un PR</div>
+            <h3>/acli</h3>
+            <p>Las operaciones de Jira que dispara un commit o un PR.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Flotas de workers en worktrees</div>
+            <h3>/orca-orchestration</h3>
+            <p>
+              Un conductor que lanza workers supervisados, cada uno en su worktree; Orca crea,
+              provisiona y audita.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/git-flow-master/SKILL.md"
+            >.agents/skills/git-flow-master/SKILL.md</a
+          >
+          y su carpeta <span class="mono">references/</span>: el catálogo de estrategias, la
+          mecánica de Strategy Setup, la paridad de rulesets, los commits, los PRs, los conflictos y
+          los worktrees, una referencia por tema.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> La política de git se decide una vez,
+            se guarda en un solo lugar y se comprueba contra el host. Después, cada rama, commit,
+            push y PR la aplica sin que nadie la tenga que recordar. La IA propone y ejecuta; vos
+            elegís la estrategia, aceptás o no las divergencias y hacés el merge.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/git-flow-master/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
