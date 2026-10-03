@@ -263,6 +263,25 @@ export function composeAdoptedInstructions(upstreamAgents: string, sources: read
   return [...lines.slice(0, at), ...block, ...lines.slice(at)].join('\n');
 }
 
+/**
+ * `text` with the app's preserved instruction block blanked line for line
+ * (line numbers kept): from `ADOPT_INSTRUCTIONS_HEADING` to the boilerplate's
+ * own section 1, the LAST `## 1` heading in the file (the app's text comes
+ * first and may carry its own). That text is the app's, verbatim by contract
+ * (never rewritten), so the boilerplate's doctrine lints (Critical Rule #17
+ * volatile facts) must not judge it. Unchanged when the block is absent.
+ */
+export function maskPreservedAppInstructions(text: string): string {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => l.trim() === ADOPT_INSTRUCTIONS_HEADING);
+  if (start === -1) { return text; }
+  let end = lines.length;
+  for (let i = lines.length - 1; i > start; i -= 1) {
+    if (/^## 1[.\s]/.test(lines[i])) { end = i; break; }
+  }
+  return lines.map((l, i) => (i >= start && i < end ? '' : l)).join('\n');
+}
+
 // ============================================================================
 // .agents/project.yaml
 // ============================================================================

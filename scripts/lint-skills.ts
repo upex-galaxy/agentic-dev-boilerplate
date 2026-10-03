@@ -119,6 +119,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { ADOPT_UPSTREAM_SKILLS_DIR, isToolingSkill, readUpstreamOwned } from '../cli/lib/tooling-scope.ts';
+import { maskPreservedAppInstructions } from '../cli/lib/updater-adopt.ts';
 import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 // -----------------------------------------------------------------------------
@@ -1005,6 +1006,8 @@ function checkVolatileFacts(files: string[]): void {
     try { text = readFileSync(file, 'utf8'); }
     catch { continue; }
     const rel = relative(REPO_ROOT, file).replace(/\\/g, '/');
+    // An adopted app's own instructions, preserved verbatim in AGENTS.md, are not this doctrine's to judge.
+    if (rel === 'AGENTS.md') { text = maskPreservedAppInstructions(text); }
     const seen = new Set<string>();
     for (const hit of scanVolatile(text, { html: false })) {
       const key = `${hit.line}:${hit.kind}`;

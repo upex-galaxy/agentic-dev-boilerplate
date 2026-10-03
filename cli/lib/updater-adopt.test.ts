@@ -22,6 +22,7 @@ import {
   envDeclaredKeys,
   INSTALLER_LOCK_FILE,
   isAdopted,
+  maskPreservedAppInstructions,
   planAdoptInstructions,
   runAdopt,
   scriptCompositionProposal,
@@ -457,5 +458,19 @@ describe('blankStackValues', () => {
     expect(out).toContain('issue_tracker: Jira');
     expect(blankStackValues(out)).toBe(out);
     expect(blankStackValues('project:\n  a: 1\n')).toBe('project:\n  a: 1\n');
+  });
+});
+
+describe('maskPreservedAppInstructions', () => {
+  test('blanks the app\'s preserved block line for line, up to the boilerplate\'s own section 1', () => {
+    const upstream = '# AGENTS.md\n\nintro\n\n## 1. RULES\n\nNever say today.\n';
+    const composed = composeAdoptedInstructions(upstream, [{ file: 'CLAUDE.md', text: '# App\n\n## 1. App rule\n\nShipped today.\n' }], null);
+    const masked = maskPreservedAppInstructions(composed);
+    expect(masked.split('\n')).toHaveLength(composed.split('\n').length);
+    expect(masked).not.toContain('Shipped today.');
+    expect(masked).not.toContain('## 1. App rule');
+    expect(masked).toContain('## 1. RULES');
+    expect(masked).toContain('Never say today.');
+    expect(maskPreservedAppInstructions(upstream)).toBe(upstream);
   });
 });
