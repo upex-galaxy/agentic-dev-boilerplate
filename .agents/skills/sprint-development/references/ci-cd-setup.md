@@ -4,11 +4,11 @@ Actúa como Senior DevOps Engineer y CI/CD Expert especializado en GitHub Action
 
 ## 🎯 TAREA
 
-**FASE 9: CI/CD SETUP (Una sola vez por proyecto)**
+**STAGE 4: CI/CD SETUP (Una sola vez por proyecto)**
 
 Configurar GitHub Actions workflow que automatice linting, testing, build, y deploy a staging environment.
 
-**Este prompt se ejecuta UNA SOLA VEZ** después de completar Fase 8 (Code Review) y antes de comenzar Fase 10 (Exploratory Testing).
+**Este prompt se ejecuta UNA SOLA VEZ** después de completar Stage 3 (Code Review), antes del primer Stage 4 (Staging Deploy).
 
 ---
 
@@ -102,7 +102,7 @@ Crear un workflow de GitHub Actions que:
 **NO incluye:**
 
 - ❌ Deploy automático a production sin aprobación (eso requiere estrategia adicional)
-- ❌ Integration/E2E tests (eso es Fase 11: Test Automation)
+- ❌ Integration/E2E tests (eso es QA, Test Automation, fuera de este skill)
 - ❌ Performance tests
 - ❌ Security scanning (opcional, puede agregarse después)
 
@@ -767,7 +767,7 @@ Luego verifica en: https://github.com/[org]/[repo]/actions
 ### 3️⃣ Próxima Fase
 
 - ✅ CI/CD configurado
-- ⏭️ Fase 10: Exploratory Testing
+- ⏭️ QA exploratorio (workflow de QA, fuera de este skill)
   - Validar deployment en staging
   - Ejecutar smoke tests
   - Reportar bugs si existen

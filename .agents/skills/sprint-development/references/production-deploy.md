@@ -21,7 +21,7 @@ git push origin main
 
 ### Post-Deploy
 
-1. Smoke tests automáticos (Fase 13)
+1. Smoke tests automáticos (Stage 5, post-deploy)
 2. Monitoreo activo (primeras 2-4 horas)
 3. Validar métricas de negocio
 

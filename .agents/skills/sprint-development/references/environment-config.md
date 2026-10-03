@@ -4,7 +4,7 @@ Actúa como Senior DevOps Engineer especializado en configuración de secrets y 
 
 ## 🎯 TAREA
 
-**FASE 9: ENVIRONMENT CONFIGURATION (Una sola vez por proyecto)**
+**STAGE 4: ENVIRONMENT CONFIGURATION (Una sola vez por proyecto)**
 
 Configurar variables de entorno separadas por ambiente (Development, Staging, Production) en las plataformas correspondientes.
 
@@ -56,12 +56,12 @@ Configurar environment variables en:
 
 - ✅ **Development:** Variables en `.env` para local dev
 - ✅ **Staging:** Variables en Vercel/Railway para staging environment
-- ✅ **Production:** (Placeholder para Fase 12) Estructura preparada
+- ✅ **Production:** (Placeholder para Stage 5) Estructura preparada
 - ✅ Validar que no hay secrets hardcodeados en código
 
 **NO incluye:**
 
-- ❌ Configurar production environment completo (eso es Fase 12)
+- ❌ Configurar production environment completo (eso es Stage 5)
 - ❌ Secrets de terceros no configurados aún (se agregan cuando se integran)
 
 **Resultado:** Cada ambiente tiene sus propias variables configuradas correctamente.
@@ -94,7 +94,7 @@ Configurar environment variables en:
 - **NO commitear secrets reales** - Solo .env.example
 - **NO exponer secret keys** - Solo en server-side
 - **NO usar mismos valores en todos los ambientes** - Cada ambiente separado
-- **NO configurar production todavía** - Eso es Fase 12
+- **NO configurar production todavía** - Eso es Stage 5
 
 ### ✅ SÍ HACER:
 
@@ -243,7 +243,7 @@ https://vercel.com/[org]/[project]/settings/environment-variables
 **⚠️ IMPORTANTE:**
 
 - **Scope "Preview"** = Solo para staging (rama de integración)
-- **Scope "Production"** = Configurar en Fase 12
+- **Scope "Production"** = Configurar en Stage 5
 - **Encrypted** = Vercel encripta automáticamente los valores
 
 ### 3️⃣ Click "Save" después de cada variable
@@ -315,7 +315,7 @@ Click en "New Variable" y agrega:
 
 ---
 
-### Production (Configurar en Fase 12)
+### Production (Configurar en Stage 5)
 
 **Platform:** Vercel Dashboard → Settings → Environment Variables
 
@@ -323,10 +323,10 @@ Click en "New Variable" y agrega:
 
 | Variable                               | Valor                              | Notas                    |
 | -------------------------------------- | ---------------------------------- | ------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`             | https://[prod-project].supabase.co | ⚠️ Configurar en Fase 12 |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | [publishable key production]       | ⚠️ Configurar en Fase 12 |
-| `SUPABASE_SECRET_KEY`                  | [secret key production]            | ⚠️ Configurar en Fase 12 |
-| `NEXT_PUBLIC_APP_URL`                  | https://[domain].com               | ⚠️ Configurar en Fase 12 |
+| `NEXT_PUBLIC_SUPABASE_URL`             | https://[prod-project].supabase.co | ⚠️ Configurar en Stage 5 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | [publishable key production]       | ⚠️ Configurar en Stage 5 |
+| `SUPABASE_SECRET_KEY`                  | [secret key production]            | ⚠️ Configurar en Stage 5 |
+| `NEXT_PUBLIC_APP_URL`                  | https://[domain].com               | ⚠️ Configurar en Stage 5 |
 
 ---
 
@@ -445,7 +445,7 @@ git push origin staging
 - Deploy de staging validado
 - URL: https://[project]-staging.vercel.app
 
-### ⏭️ Production (Fase 12)
+### ⏭️ Production (Stage 5)
 
 - Estructura documentada
 - Variables placeholder en `.context/environment-variables.md`
@@ -458,7 +458,7 @@ git push origin staging
 
 1. ✅ Environment variables configuradas
 2. ⏭️ Ejecutar `deploy-to-staging.md` para deploy inicial
-3. ⏭️ Fase 10: Exploratory Testing en staging
+3. ⏭️ QA exploratorio en staging (workflow de QA, fuera de este skill)
 
 ---
 

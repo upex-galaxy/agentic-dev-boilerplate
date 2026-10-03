@@ -28,7 +28,7 @@ bun run types:check
 
 Expected: exit 0, no new errors. Pre-existing errors that the run didn't touch are OK but flag them.
 
-If the host uses a different script name (`bun run lint:types`, `tsc --noEmit`, `npm run typecheck`, etc.) → READ `package.json` and pick the right one (AGENTS.md Critical Rule #12).
+If the host uses a different script name (`bun run lint:types`, `tsc --noEmit`, `npm run typecheck`, etc.) → READ `package.json` and pick the right one (AGENTS.md Critical Rule #10).
 
 ## 2. Build
 

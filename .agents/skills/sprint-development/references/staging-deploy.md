@@ -4,7 +4,7 @@ Actúa como Senior DevOps Engineer especializado en deployment automation y stag
 
 ## 🎯 TAREA
 
-**FASE 9: DEPLOY TO STAGING**
+**STAGE 4: DEPLOY TO STAGING**
 
 Desplegar código a staging environment (automático via CI/CD o manual si necesario).
 
@@ -12,7 +12,7 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 - ci-cd-setup.md (GitHub Actions configurado)
 - environment-config.md (Variables configuradas)
-- Code Review (Fase 8)
+- Code Review (Stage 3)
 
 ---
 
@@ -24,7 +24,7 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 **Verificar:**
 
-- PR aprobado en code review (Fase 8)
+- PR aprobado en code review (Stage 3)
 - Unit tests pasando localmente
 - Build local exitoso
 - Feature branch listo para merge
@@ -70,9 +70,9 @@ Desplegar código a staging environment:
 
 **NO incluye:**
 
-- ❌ Deploy a production (eso es Fase 12)
-- ❌ Exploratory testing completo (eso es Fase 10)
-- ❌ Integration/E2E tests (eso es Fase 11)
+- ❌ Deploy a production (eso es Stage 5)
+- ❌ Exploratory testing completo (eso es QA, fuera de este skill)
+- ❌ Integration/E2E tests (eso es QA, fuera de este skill)
 
 **Resultado:** Feature desplegada en staging, lista para QA.
 
@@ -103,7 +103,7 @@ Desplegar código a staging environment:
 - **NO deployar sin code review** - PR debe estar aprobado
 - **NO deployar con tests fallando** - CI debe estar verde
 - **NO saltarse el CI/CD** - Dejar que GitHub Actions maneje el deploy
-- **NO deployar a production** - Eso es Fase 12
+- **NO deployar a production** - Eso es Stage 5
 
 ### ✅ SÍ HACER:
 
@@ -365,7 +365,7 @@ railway up
 2. **Auth flow (si aplica):**
    - [ ] Signup page accesible
    - [ ] Login page accesible
-   - [ ] (No testear funcionalidad completa - eso es Fase 10)
+   - [ ] (No testear funcionalidad completa - eso es QA, fuera de este skill)
 
 3. **Navegación básica:**
    - [ ] Links principales funcionan
@@ -377,7 +377,7 @@ railway up
 
 ### ✅ Resultado:
 
-- **Pass:** App funciona básicamente, ready para QA en Fase 10
+- **Pass:** App funciona básicamente, ready para QA
 - **Fail:** Investigar logs, corregir, re-deploy
 ```
 

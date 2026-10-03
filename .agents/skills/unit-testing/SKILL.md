@@ -128,7 +128,7 @@ When in doubt, start with `references/unit-testing.md` — it covers the broad w
 
 - **Implementing a feature with TDD** → return to `/sprint-development` Stage 2 once tests are green and the slice is refactored
 - **Integration / E2E tests** → out of scope here; handled by a separate QA workflow
-- **First-time test runner setup in a fresh repo** → `/sprint-development` Stage 4 (deploy/scaffolding) covers tooling installation; this skill assumes a runner exists
+- **First-time test runner setup in a fresh repo** → set the runner up first per `references/unit-testing.md` § Setup; the rest of this skill assumes a runner exists
 - **Bug-fix workflow with reproducer-first** → invoke this skill from `/sprint-development` for the reproducer test, then continue with the fix
 
 ## Anti-patterns — NEVER do these

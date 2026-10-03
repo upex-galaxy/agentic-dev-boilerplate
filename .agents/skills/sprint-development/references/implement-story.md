@@ -173,7 +173,7 @@ DESIGN.md                                  # tokens congelados (ruta: frontend.d
    - Entiende qué se espera que funcione
    - Identifica edge cases a considerar
    - Usa los test cases como checklist durante la implementación
-   - (NO implementes tests ahora - eso es Fase 8)
+   - (los unit tests van después del código, con `/unit-testing`; integration/E2E son del workflow de QA)
 
 4. **Consulta docs con Context7 MCP (CRÍTICO)**
    - ⚠️ **MCP MÁS IMPORTANTE**: Úsalo siempre que trabajes con librerías externas
@@ -351,7 +351,7 @@ npm run dev
 - **NO usar `console.error`** (usar logger apropiado)
 - **NO crear componentes UI si ya existen** (reusar design system)
 - **NO ejecutar scripts interactivos**
-- **NO implementar integration/E2E tests** (eso es Fase 11: Test Automation)
+- **NO implementar integration/E2E tests** (eso es QA, Test Automation, fuera de este skill)
 
 ### ✅ SÍ HACER:
 - **Seguir structure de carpetas** del proyecto
@@ -404,7 +404,7 @@ npm run build  # o: bun run build
 3. [Resultado esperado] ✅
 ```
 
-**Nota:** Unit tests se crean con el prompt `unit-testing.md`. Integration/E2E tests en Fase 11.
+**Nota:** Unit tests se crean con `/unit-testing`. Integration/E2E tests: workflow de QA, fuera de este skill.
 
 ---
 
@@ -466,7 +466,7 @@ npm run dev
 - Carga el skill `/unit-testing` para diseño de unit tests (TDD, AAA, mocking)
 - Crea tests para lógica de negocio crítica
 
-**2. Code Review (Fase 8):**
+**2. Code Review (Stage 3):**
 
 - Usa `references/review-pr.md` (sibling en este skill)
 - Revisa código con análisis estático
@@ -493,7 +493,7 @@ Acceptance Criteria:
 Story: [Link a Jira si aplica]
 ```
 
-**Nota:** NO hagas commit todavía - primero crea unit tests y luego pasa por Code Review (Fase 8).
+**Nota:** NO hagas commit todavía - primero crea unit tests y luego pasa por Code Review (Stage 3).
 
 ````
 
@@ -567,4 +567,4 @@ Este comando requiere input interactivo. Te proporciono los pasos manuales:
 
 ---
 
-**Nota final:** Esta fase implementa funcionalidad + unit tests. Integration/E2E tests se agregan en Fase 11 (Test Automation).
+**Nota final:** Esta fase implementa funcionalidad + unit tests. Integration/E2E tests se agregan en el workflow de QA (Test Automation, fuera de este skill).

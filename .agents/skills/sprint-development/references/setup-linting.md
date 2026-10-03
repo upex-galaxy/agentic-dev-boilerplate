@@ -390,4 +390,4 @@ Este comando requiere input interactivo. En su lugar:
 
 ---
 
-**Nota:** Después de configurar linting, procede con code review (Fase 8) usando `review-pr.md`.
+**Nota:** Después de configurar linting, procede con code review (Stage 3) usando `review-pr.md`.
