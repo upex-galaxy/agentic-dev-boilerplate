@@ -15,6 +15,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import { generateSchema, SCHEMA_SOURCE, seedFromSchema, yamlLeafWalk } from './agents-schema.ts';
 import {
+  deriveIdentity,
   detectStack,
   diagnoseStack,
   readStack,
@@ -22,6 +23,7 @@ import {
   stackDrift,
   unsupportedInV1,
   validateStack,
+  writeDerivedIdentity,
   writeStack,
 } from './stack-descriptor.ts';
 
@@ -267,6 +269,57 @@ describe('writeStack', () => {
     const result = writeStack(withTodo, realSchema(), { test_runner: 'vitest' });
     expect(result.error).toBeNull();
     expect(result.text).toMatch(/test_runner: vitest # vitest \|/);
+  });
+});
+
+describe('identity leaves derived from the stack', () => {
+  const NEXT_VALUES = { 'app_root': '.', 'framework': 'nextjs-app-router', 'database.engine': 'postgres', 'database.provider': 'supabase', 'ui.css': 'tailwind-v3', 'ui.kit': 'shadcn' };
+
+  test('a Next + Supabase app gets every leaf, entry points read from disk', () => {
+    const root = repo({ 'src/app/page.tsx': '', 'src/app/api/health/route.ts': '' });
+    expect(deriveIdentity(NEXT_VALUES, root)).toEqual({
+      'frontend.frontend_stack': 'Next.js (App Router) + Tailwind CSS v3 + shadcn/ui',
+      'backend.backend_stack': 'Next.js route handlers + server actions + Supabase',
+      'frontend.frontend_entry': 'src/app/',
+      'backend.backend_entry': 'src/app/api/',
+      'database.db_type': 'PostgreSQL (Supabase)',
+    });
+  });
+
+  test('a monorepo app root prefixes the entry points; no api dir means the router dir', () => {
+    const root = repo({ 'apps/web/app/page.tsx': '' });
+    const out = deriveIdentity({ ...NEXT_VALUES, app_root: 'apps/web' }, root);
+    expect(out['frontend.frontend_entry']).toBe('apps/web/app/');
+    expect(out['backend.backend_entry']).toBe('apps/web/app/');
+  });
+
+  test('nothing is guessed: unknown values and a missing router dir derive nothing', () => {
+    const root = repo({});
+    expect(deriveIdentity({ 'framework': null, 'database.engine': null }, root)).toEqual({});
+    expect(deriveIdentity({ 'framework': 'other', 'database.engine': 'other' }, root)).toEqual({});
+    const noDir = deriveIdentity(NEXT_VALUES, root);
+    expect(noDir['frontend.frontend_entry']).toBeUndefined();
+    expect(noDir['backend.backend_entry']).toBeUndefined();
+  });
+
+  test('writeDerivedIdentity fills only null leaves, answers their TODO, never overwrites', () => {
+    const root = repo({ 'src/app/page.tsx': '' });
+    const filledSource = realSource().replace(/^ {2}db_type: null.*$/m, '  db_type: MySQL # the app says so');
+    const result = writeDerivedIdentity(filledSource, root);
+    expect(result.error).toBeNull();
+    expect(result.filled['database.db_type']).toBeUndefined();
+    expect(result.filled['frontend.frontend_entry']).toBe('src/app/');
+    expect(result.text).toContain('  db_type: MySQL # the app says so');
+    expect(result.text).toMatch(/^ {2}backend_stack: 'Next\.js route handlers \+ server actions \+ Supabase' # Backend technology stack/m);
+    expect(result.text).toMatch(/^ {2}frontend_entry: src\/app\/ # Frontend source entry point/m);
+    const again = writeDerivedIdentity(result.text, root);
+    expect(again.filled).toEqual({});
+    expect(again.text).toBe(result.text);
+  });
+
+  test('a yaml with no stack block is left untouched', () => {
+    const text = 'project:\n  project_name: null\nbackend:\n  backend_stack: null\n';
+    expect(writeDerivedIdentity(text, repo({}))).toEqual({ text, filled: {}, error: null });
   });
 });
 
