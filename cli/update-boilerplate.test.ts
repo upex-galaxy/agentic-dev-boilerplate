@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { cleanupDeprecated, validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -217,6 +217,9 @@ describe('post-apply gates', () => {
   // files; when the second is protected, only skills:check sees the half.
   test('skills:check runs after the apply, next to types and lint', () => {
     expect([...GATE_SCRIPTS]).toEqual(['types:check', 'lint:check', 'skills:check']);
+    expect(gateScriptsFor(false)).toEqual(GATE_SCRIPTS);
+    // An adopted app: the tooling's scoped checks, never the app's types/lint.
+    expect([...gateScriptsFor(true)]).toEqual(['tooling:types:check', 'tooling:lint:check', 'skills:check']);
   });
 
   /** A project whose package.json defines the gate scripts as shell one-liners. */
@@ -259,6 +262,7 @@ describe('post-apply gates', () => {
     expect(gatesSummaryLine([], null)).toBeNull();
     expect(gatesSummaryLine([], 'no-gates')).toBe('omitidas (--no-gates)');
     expect(gatesSummaryLine([], 'no-changes')).toBe('omitidas (sin cambios)');
+    expect(gatesSummaryLine([], 'adopt')).toBe('omitidas (--adopt: corren tras bun install)');
     expect(gatesSummaryLine([
       { script: 'types:check', status: 'pass', exitCode: 0, seconds: 3, errorCount: 0, firstErrors: [], failingApplied: [], output: '' },
     ], 'no-changes')).toBe('types:check OK');

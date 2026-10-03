@@ -182,6 +182,37 @@ describe('detectStack', () => {
   });
 });
 
+describe('detectStack on an adopted app (measured: upexgalaxy-webapp)', () => {
+  const ADOPTED = {
+    'bun.lock': '',
+    'app/page.tsx': 'export default function Page() {}\n',
+    'types/database.types.ts': 'export type Database = {}\n',
+    'package.json': pkg({
+      name: 'webapp',
+      // The app's own `lint` / `type-check`, plus the tooling's `lint:check` / `types:check` the adoption appended.
+      scripts: { 'lint': 'eslint .', 'type-check': 'tsc --noEmit', 'lint:check': 'eslint .', 'types:check': 'tsc --noEmit' },
+      dependencies: { 'next': '15.0.0', '@supabase/supabase-js': '^2.0.0' },
+    }),
+    '.template/installer.lock.json': '{ "adopted": true }\n',
+    '.template/boilerplate.lock.json': JSON.stringify({ packageJsonSync: { 'package.json': { scripts: { appliedKeys: ['lint:check', 'types:check'] } } } }),
+  };
+
+  test('the app\'s own role scripts win over the ones the tooling appended', () => {
+    const d = detectStack(repo(ADOPTED));
+    expect(d.fields['scripts.lint'].value).toBe('lint');
+    expect(d.fields['scripts.types'].value).toBe('type-check');
+  });
+
+  test('types/database.types.ts is a generated types path', () => {
+    expect(detectStack(repo(ADOPTED)).fields['database.types_path'].value).toBe('types/database.types.ts');
+  });
+
+  test('greenfield (no adoption lock): the same scripts are the project\'s own', () => {
+    const { '.template/installer.lock.json': _, ...greenfield } = ADOPTED;
+    expect(detectStack(repo(greenfield)).fields['scripts.lint'].value).toBe('lint:check');
+  });
+});
+
 describe('writeStack', () => {
   test('replaces values in place and leaves every other byte alone', () => {
     const source = realSource();

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { applyAllowListMerge, CLAUDE_SETTINGS_FILE, mergeAllowList } from './updater-settings.ts';
+import { applyAllowListMerge, CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook, mergeAllowList } from './updater-settings.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -126,5 +126,36 @@ describe('the Claude permission allow list merges additively', () => {
     expect(applyAllowListMerge(root, upstream)).toEqual(['Skill(new)']);
     const onDisk = JSON.parse(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf-8')) as { permissions: { allow: string[] } };
     expect(onDisk.permissions.allow).toEqual(['Read', 'Skill(new)']);
+  });
+});
+
+describe('--adopt: the agent-context hook joins an app settings file that has none', () => {
+  // upexgalaxy-webapp's file: a plugin switch and its own SessionStart hook, no permissions, no UserPromptSubmit.
+  const APP = `${JSON.stringify({
+    enabledPlugins: { 'caveman@caveman': false },
+    hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'cat orca-mode.md', timeout: 5 }] }] },
+  }, null, 2)}\n`;
+
+  test('added beside the app\'s own hooks; every other key untouched', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, APP);
+    write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read']));
+    const { added, merged } = mergeAdoptPromptHook(root, upstream);
+    expect(added).toBe(true);
+    const out = JSON.parse(merged!) as Record<string, any>;
+    expect(out.hooks.UserPromptSubmit).toEqual([{ hooks: [{ type: 'command', command: 'node hook.mjs' }] }]);
+    expect(out.hooks.SessionStart).toEqual(JSON.parse(APP).hooks.SessionStart);
+    expect(out.enabledPlugins).toEqual({ 'caveman@caveman': false });
+    expect(out.permissions).toBeUndefined();
+  });
+
+  test('an app that wires its own UserPromptSubmit keeps it; nothing is written', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settings(['Read']).replace('node hook.mjs', 'the app hook'));
+    write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read']));
+    expect(mergeAdoptPromptHook(root, upstream)).toEqual({ added: false, merged: null });
+    expect(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf8')).toContain('the app hook');
   });
 });

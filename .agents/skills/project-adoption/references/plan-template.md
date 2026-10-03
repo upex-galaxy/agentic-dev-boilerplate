@@ -52,6 +52,12 @@ app's and is added to `updater.protected_paths`:
 | Path | Why it collided | Already protected |
 |---|---|---|
 
+Framework skills the app had copied in by hand (`take upstream` rows; upstream's copy saved under
+`.agents/prompts/adopt-upstream/<name>/`). One approval line each, after reading the row's detail:
+
+| Skill | Files that differ | Only in the app's copy | Decision (take upstream / keep, with why) | Approved |
+|---|---|---|---|---|
+
 ## 5. Credentials (.env slots, names only)
 
 | Variable | Needed by | Who supplies it |
@@ -128,6 +134,7 @@ A missing PRD / SRS is not a gap here: the business maps, dev guide and glossary
 - [ ] §2 stack values match the app (or I corrected them above)
 - [ ] §3 identity and environments are right
 - [ ] §4 every protected path stays the app's
+- [ ] §4 each framework skill row carries its own decision and approval
 - [ ] §7 instruction merge: apply / leave pending (tick the box in §7 to apply)
 - [ ] §10 team items are understood as NOT done by this run
 - [ ] Nothing in this plan touches app code, the database, dependencies, CI, git history or Jira configuration

@@ -26,6 +26,7 @@ import {
   validateOpenCodePluginEntrypoints,
 } from './agent-compatibility-contracts.ts';
 import {
+  ADOPT_INSTRUCTIONS_PENDING_FILE,
   checkAgentCompatibility,
   CLAUDE_INSTRUCTIONS_SHIM,
   claudeSkillsAliasPlan,
@@ -44,6 +45,7 @@ import {
   SKILLS_ALIAS_MISSING_ERROR,
   validateCanonicalSources,
 } from './agent-compatibility.ts';
+import { ADOPT_INSTRUCTIONS_PROMPT } from './updater-adopt.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..', '..');
 const temporaryRoots: string[] = [];
@@ -1114,5 +1116,39 @@ describe('compatibility report grouping', () => {
     expect(describeAliasStatus({ ...alias, status: 'valid' })).toContain('OK');
     expect(describeAliasStatus({ ...alias, status: 'missing' })).toContain('bun run agents:compat');
     expect(describeAliasStatus({ ...alias, status: 'invalid' })).toContain('not the generated symlink');
+  });
+});
+
+describe('an adopted app whose instructions wait for their composition', () => {
+  /** The --adopt --auto state: AGENTS.md absent, the app's own CLAUDE.md, the composed file saved, the alias deferred. */
+  function pendingAdoption(): string {
+    const root = contractFixture();
+    write(root, 'CLAUDE.md', '# The app\'s own instructions\n');
+    write(root, '.agents/skills/project-adoption/SKILL.md', '---\nname: project-adoption\n---\n');
+    write(root, '.template/installer.lock.json', '{ "adopted": true }\n');
+    write(root, ADOPT_INSTRUCTIONS_PENDING_FILE, '# AGENTS.md (composed)\n');
+    write(root, SKILLS_ALIAS_DEFERRED_MARKER, 'now\n');
+    return root;
+  }
+
+  test('a pending adoption step, not a broken contract: the adoption commit passes the gate', () => {
+    const check = checkAgentCompatibility(pendingAdoption());
+    expect(check.errors).toEqual([]);
+    expect(check.ok).toBe(true);
+    expect(check.alias.status).toBe('deferred');
+    expect(check.warnings.some(w => w.startsWith('AGENTS.md pending'))).toBe(true);
+  });
+
+  test('without the saved composition, or on a greenfield repo, a missing AGENTS.md is still an error', () => {
+    const noSaved = pendingAdoption();
+    rmSync(join(noSaved, ADOPT_INSTRUCTIONS_PENDING_FILE));
+    expect(checkAgentCompatibility(noSaved).errors).toContain('Canonical instructions missing: AGENTS.md');
+    const greenfield = pendingAdoption();
+    rmSync(join(greenfield, '.template/installer.lock.json'));
+    expect(checkAgentCompatibility(greenfield).errors).toContain('Canonical instructions missing: AGENTS.md');
+  });
+
+  test('the pending path is the one the adopt hook saves', () => {
+    expect(ADOPT_INSTRUCTIONS_PENDING_FILE).toBe(ADOPT_INSTRUCTIONS_PROMPT.replace(/\\/g, '/'));
   });
 });

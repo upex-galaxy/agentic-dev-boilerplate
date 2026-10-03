@@ -1,4 +1,10 @@
-bunx lint-staged
+# lint-staged lints and formats the staged files with the project's own
+# config. An adopted app may have none (its formatting is its own, and the
+# adoption never adds one): then it is skipped, never a failed commit.
+if grep -Eq '"lint-staged"[[:space:]]*:[[:space:]]*\{' package.json 2>/dev/null \
+  || [ -n "$(ls -d .lintstagedrc* lint-staged.config.* 2>/dev/null)" ]; then
+  bunx lint-staged
+fi
 
 # Framework gates, in one call. They live in `.husky/framework-gates.sh`, which
 # the boilerplate updater SYNCS, while this hook is project-owned and never

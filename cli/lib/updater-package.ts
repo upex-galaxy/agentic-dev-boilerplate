@@ -416,6 +416,17 @@ export function adoptPackageJsonDelta(delta: PackageJsonDelta, local: Record<str
     }
   }
 
+  // The app's formatting is its own (the adopted gates skip format:check for
+  // the same reason): the adoption never adds a lint-staged config, and the
+  // keys are remembered so a later plain run does not add them either.
+  const lintStaged = sections['lint-staged'];
+  if (lintStaged) {
+    for (const key of Object.keys(lintStaged.upstreamOnlyKeys)) {
+      delete lintStaged.upstreamOnlyKeys[key];
+      remember('lint-staged', key);
+    }
+  }
+
   const scripts = sections.scripts;
   const prepare = scripts?.upstreamOnlyKeys.prepare;
   if (opts.foreignHookManager === true && scripts && prepare !== undefined) {

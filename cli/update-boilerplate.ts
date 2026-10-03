@@ -7,6 +7,7 @@
  * rollback flag) live here; everything else lives in core.
  */
 
+import type { ReincludeOutcome } from './lib/adopt-gitignore.ts';
 import type { CompatibilityCheck } from './lib/agent-compatibility.ts';
 import type { AdoptOutcome } from './lib/updater-adopt.ts';
 import type { ProtectedWatchEntry } from './lib/updater-drift';
@@ -21,8 +22,10 @@ import * as path from 'node:path';
 
 import pc from 'picocolors';
 import { parseEnvFile } from './install';
+import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
+import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
 import { ADOPT_REPO_ONLY_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
 import {
@@ -31,6 +34,7 @@ import {
   detectGitVersion,
   gitVersionMeetsMin,
   isLocalTemplateSource,
+  isRepoOnlyPath,
   LAST_APPLY_FILE,
   readSyncState,
   runUpdate,
@@ -86,6 +90,17 @@ const GATE_TIMEOUT_MS = 120_000;
  * `PATH_PREREQUISITES` in `./lib/updater-parity.ts`).
  */
 export const GATE_SCRIPTS = ['types:check', 'lint:check', 'skills:check'] as const;
+/**
+ * The same gates on an ADOPTED app: `types:check` / `lint:check` there would
+ * judge the app's code by the tooling's rules (or be the app's own scripts),
+ * so the tooling's scoped checks run instead, as in `.husky/framework-gates.sh`.
+ */
+export const ADOPTED_GATE_SCRIPTS = ['tooling:types:check', 'tooling:lint:check', 'skills:check'] as const;
+
+/** Which post-sync gates this repo runs. */
+export function gateScriptsFor(adopted: boolean): readonly string[] {
+  return adopted ? ADOPTED_GATE_SCRIPTS : GATE_SCRIPTS;
+}
 
 /**
  * The line a finished `--adopt` run closes with. The install layer stops here:
@@ -578,7 +593,7 @@ interface RunFacts {
   /** Post-apply quality gates (`GATE_SCRIPTS`); empty when skipped. */
   gates: GateResult[]
   /** Why `gates` stayed empty this run: nothing to say when gates actually ran (even a fail leaves at least one `GateResult`). */
-  gatesSkippedReason: 'no-gates' | 'no-changes' | null
+  gatesSkippedReason: 'no-gates' | 'no-changes' | 'adopt' | null
   /** A no-op run left the previous run's prompt file untouched. */
   promptKept: boolean
   /** `.context/PBI/` paths still tracked in git, and where the migration recipe was saved. */
@@ -589,9 +604,11 @@ interface RunFacts {
   doctrineDebt: string | null
   /** `--adopt` only: what the adopt hook did, and its parity rows. */
   adopt: AdoptOutcome | null
+  /** `--adopt` only: the app's `.gitignore` hid the agentic store; what this run appended to re-include it. */
+  reinclude: ReincludeOutcome | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, reinclude: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -872,6 +889,17 @@ export function resolveProtectedWatchlist(cwd: string, warn: (message: string) =
  * exclude, an ignore) is `cli/lib/adopt-isolation.ts`'s row. The entries stay
  * on the watchlist (never overwritten); only the drift row is dropped.
  */
+/**
+ * The retired paths `cleanupDeprecated` may delete: every entry, minus the
+ * ones the project protects. An adopted app keeps its own copy of a file at a
+ * path upstream retired (`--adopt` lists it in `updater.protected_paths`), and
+ * a protected path is never overwritten, so never deleted either.
+ */
+export function deprecatedFilesToClean<T extends { path: string }>(deprecated: readonly T[], watchlist: readonly ProtectedWatchEntry[]): T[] {
+  const kept = new Set(watchlist.map(e => e.path.replace(/\\/g, '/')));
+  return deprecated.filter(d => !kept.has(d.path.replace(/\\/g, '/')));
+}
+
 export const ADOPTED_APP_CONFIGS: readonly string[] = ['tsconfig.json', 'eslint.config.js'];
 
 /** The watchlist entries whose drift is reported: all of them, minus the app's own configs on an adopted repo. */
@@ -1010,6 +1038,13 @@ function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => 
     const adoptInstructions = runFacts.adopt?.instructions;
     if (adoptInstructions?.kind === 'compose' && !adoptInstructions.applied) {
       sink.step('Superficies de Claude/OpenCode/Codex sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
+      // The alias waits with them (it needs AGENTS.md): deferred, not missing,
+      // so the adoption itself can be committed through the gates.
+      // Only the real run's chain carries this hook, so nothing here is a dry run.
+      const marker = path.join(process.cwd(), SKILLS_ALIAS_DEFERRED_MARKER);
+      fs.mkdirSync(path.dirname(marker), { recursive: true });
+      fs.writeFileSync(marker, `${new Date().toISOString()}\n`);
+      runFacts.aliasDeferred = true;
       return;
     }
     const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());
@@ -1050,10 +1085,31 @@ function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolea
       collisions: summary.adoptCollisions ?? [],
       packageJsonKept: summary.packageJsonKept ?? [],
       backupDir: summary.backupDir ?? null,
+      reinclude: runFacts.reinclude,
+      ignoreLinesWithheld: summary.ignoreLinesWithheld ?? [],
       confirm: async message => sink.confirm(message, false),
       step: message => sink.step(message),
       warn: message => sink.warn(message),
     });
+  };
+}
+
+// --- UPSTREAM-OWNED LIST (afterApply hook, adopted repos only) ---
+//
+// An adopted app shares `scripts/` and `.agents/skills/` with the tooling. The
+// tooling gates (`scripts/tooling-check.ts`, `skills:check`) scope themselves
+// to what upstream ships there, recorded in the installer lock on every sync
+// while the upstream clone is on disk. After the adopt hook, which writes the
+// lock on the first run.
+function makeUpstreamOwnedHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
+  return async (): Promise<void> => {
+    const excluded = (rel: string): boolean => isRepoOnlyPath(rel, REPO_ONLY_PATHS)
+      || ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel))
+      || GENERATED_PATHS.includes(rel);
+    const owned = collectUpstreamOwned(UPSTREAM_DIR, excluded);
+    if (writeUpstreamOwned(process.cwd(), owned)) {
+      sink.step(`${INSTALLER_LOCK_FILE}: alcance del tooling registrado (lo que upstream posee en scripts/ y .agents/skills/); los gates no juzgan el código propio de la app.`);
+    }
   };
 }
 
@@ -1190,14 +1246,18 @@ function makeAllowListHook(
   };
 }
 
-function makeGatesHook(sink: ReportSink, enabled: boolean): (summary: RunSummary) => Promise<void> {
+function makeGatesHook(sink: ReportSink, enabled: boolean, adopted: boolean, adoptRun: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     if (!enabled) { runFacts.gatesSkippedReason = 'no-gates'; return; }
     if (summary.applied.length === 0) { runFacts.gatesSkippedReason = 'no-changes'; return; }
+    // The --adopt run appends the tooling's devDependencies to package.json but
+    // installs nothing: every gate would fail on a missing package, not on the
+    // code. They run on the first commit (framework gates) after `bun install`.
+    if (adoptRun) { runFacts.gatesSkippedReason = 'adopt'; return; }
     const cwd = process.cwd();
     const scripts = packageScripts(cwd);
     const applied = summary.applied.map(a => a.entry.path);
-    for (const script of GATE_SCRIPTS) {
+    for (const script of gateScriptsFor(adopted)) {
       if (!scripts[script]) { continue; }
       const spin = sink.spinner();
       spin.start(`Gate ${script} (máx. ${GATE_TIMEOUT_MS / 1000} s)…`);
@@ -1234,6 +1294,7 @@ export function gatesSummaryLine(gates: readonly GateResult[], skippedReason: Ru
   if (summary) { return summary; }
   if (skippedReason === 'no-gates') { return 'omitidas (--no-gates)'; }
   if (skippedReason === 'no-changes') { return 'omitidas (sin cambios)'; }
+  if (skippedReason === 'adopt') { return 'omitidas (--adopt: corren tras bun install)'; }
   return null;
 }
 
@@ -1456,7 +1517,9 @@ function runHarnessMigration(sink: ReportSink, dryRun: boolean, adopt: boolean):
 
 // --- SINK ---
 function abortOnCancel<T>(v: T | symbol): T {
-  if (tui.isCancel(v)) {
+  // A plain `typeof` narrowing: an adopted app resolves `@clack/prompts` to a
+  // newer minor whose `isCancel` guard no longer narrows `T | symbol` to `T`.
+  if (typeof v === 'symbol' || tui.isCancel(v)) {
     throw Object.assign(new Error('Aborted by user.'), { name: 'ExitPromptError' });
   }
   return v;
@@ -1724,12 +1787,26 @@ async function main(): Promise<void> {
   // a migrated repo plans nothing. Under --dry-run it reports the plan only.
   // In the self-update re-exec child the plan is empty (already migrated), and
   // the parent's result arrives through the environment instead.
+  // `--adopt`: an app whose `.gitignore` hides `.agents/` gets it re-included
+  // FIRST, so neither the migration below nor the sync moves tracked app files
+  // into a folder git ignores (`./lib/adopt-gitignore.ts`).
+  if (parsed.adopt) {
+    const reinclude = reincludeAgenticStore(process.cwd(), parsed.dryRun);
+    if (reinclude.hidden.length > 0) {
+      runFacts.reinclude = reinclude;
+      const rules = [...new Set(reinclude.hidden.map(h => `${h.pattern} (${h.source})`))].join(', ');
+      sink.step(`${parsed.dryRun ? '[dry-run] ' : ''}.gitignore de la app oculta ${SKILLS_CANONICAL_DIR.split('/')[0]}/ (${rules}): ${parsed.dryRun ? 'se añadiría' : 'añadido'} ${reinclude.added.join(' ')} en un bloque propio; las líneas de la app no cambian.`);
+    }
+  }
   const migration = runHarnessMigration(sink, parsed.dryRun, parsed.adopt) ?? readHarnessMigrationResultFromEnv();
   if (migration?.applied && runFacts.migration === null) { runFacts.migration = migration; }
   // What the preflight just wrote is the updater's own dirt: the dirty-tree
   // guard in runUpdate (and in the self-update re-exec child) must not refuse
   // a tree that was clean before `bun run up` started.
   const updaterOwnedPaths = migration ? harnessMigrationTouchedPaths(migration) : [];
+  if (runFacts.reinclude !== null && runFacts.reinclude.added.length > 0 && !updaterOwnedPaths.includes('.gitignore')) {
+    updaterOwnedPaths.push('.gitignore');
+  }
   // Lock cursor BEFORE this run advances it: the parity prompt names both shas.
   const priorLockSha = readLock(process.cwd()).templateCommit;
   // Upstream watchlist + the project's own `updater.protected_paths`. Feeds the
@@ -1755,7 +1832,9 @@ async function main(): Promise<void> {
     packageJsonSpecs: [
       { path: 'package.json', sections: ['scripts', 'devDependencies', 'dependencies', 'lint-staged'] },
     ],
-    deprecatedFiles: DEPRECATED_FILES,
+    // A retired path the project protects is its own file (an adopted app kept
+    // its copy at that path): `cleanupDeprecated` never deletes it.
+    deprecatedFiles: deprecatedFilesToClean(DEPRECATED_FILES, watchlist),
     // Every watched path is project-owned inside a synced component too:
     // delivered once when missing, never overwritten (`.husky/pre-push`, a
     // path from `updater.protected_paths`). Paths no component owns are
@@ -1774,7 +1853,7 @@ async function main(): Promise<void> {
     repoOnlyPaths: REPO_ONLY_PATHS,
     // An adopted app (this --adopt run, or any run after one): the
     // boilerplate's own numbered ADRs stay out of the app's decision log.
-    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
+    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS, adopted: true } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),
@@ -1803,10 +1882,13 @@ async function main(): Promise<void> {
             // --adopt: before everything else (instructions, project.yaml,
             // .env.example, installer lock), so the hooks below see the result.
             ...(parsed.adopt ? [makeAdoptHook(sink, false, parsed.auto)] : []),
+            // Adopted app: what upstream owns in the shared namespaces, for the
+            // tooling gates below and every later commit (`./lib/tooling-scope.ts`).
+            ...(adoptedRepo ? [makeUpstreamOwnedHook(sink)] : []),
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
-            makeGatesHook(sink, !parsed.noGates),
+            makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS
             // allow entries, which no compatibility contract asserts on.
             makeAllowListHook(UPSTREAM_DIR, sink, false),

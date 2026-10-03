@@ -29,27 +29,40 @@
  * Nothing here runs on a plain `bun run up` or on a greenfield first run.
  */
 
+import type { HiddenPath, ReincludeOutcome } from './adopt-gitignore.ts';
 import type { ParityFinding, ParitySurface } from './updater-parity';
-import type { AdoptCollision, PackageJsonKeptKey } from './updater-types';
+import type { AdoptCollision, IgnoreLineWithheld, PackageJsonKeptKey } from './updater-types';
+import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
+import { hiddenPaths } from './adopt-gitignore.ts';
 import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
 import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
+import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
+import { CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook } from './updater-settings.ts';
 
 /**
  * Upstream paths an adopted app never receives, on the `--adopt` run and on
- * every plain run after it (`UpdaterConfig.repoOnlyPatterns`): the
- * boilerplate's own numbered ADRs would land in the app's decision log and
- * take its numbers. The ADR README and the `ADR-NNNN-template.md` still travel.
+ * every plain run after it (`UpdaterConfig.repoOnlyPatterns`):
+ *  - the boilerplate's own numbered ADRs would land in the app's decision log
+ *    and take its numbers (the ADR README and `ADR-NNNN-template.md` travel);
+ *  - the tooling's own test files: they verify the boilerplate in its CI, and
+ *    an app's test runner picks them up (measured: `bun test lib` matched
+ *    `cli/lib/*.test.ts` and the app's suite went red on the boilerplate's
+ *    self-checks).
  */
-export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [/^\.context\/ADR\/ADR-\d{4}-/];
+export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [
+  /^\.context\/ADR\/ADR-\d{4}-/,
+  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
+  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
+];
 
 /**
  * Agentic files the `--adopt` run delivers when the app lacks them. Each is on
@@ -75,6 +88,64 @@ export const ADOPT_INSTRUCTIONS_HEADING = '## 0. Project instructions (pre-adopt
 /** Where a composed `AGENTS.md` waits for review when it was not applied (gitignored, single-use). */
 export const ADOPT_INSTRUCTIONS_PROMPT = path.join('.agents', 'prompts', 'adopt-instructions.md');
 
+export { ADOPT_UPSTREAM_SKILLS_DIR } from './tooling-scope.ts';
+
+/** A framework skill the app already carried (an older hand copy): kept this run, `take upstream` proposed. */
+export interface FrameworkSkillCollision {
+  name: string
+  /** Files of upstream's copy that differ in the app's copy. */
+  differing: string[]
+  /** Files only the app's copy has (they move to the backup when upstream's copy is taken). */
+  appOnly: string[]
+  /** `git diff --no-index --shortstat` of the app copy against upstream's. */
+  shortstat: string
+  /** Where upstream's copy was saved (null on --dry-run). */
+  saved: string | null
+}
+
+function filesOf(dir: string): string[] {
+  const out: string[] = [];
+  const walk = (abs: string): void => {
+    let entries: fs.Dirent[];
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); }
+    catch { return; }
+    for (const e of entries) {
+      const child = path.join(abs, e.name);
+      if (e.isDirectory()) { walk(child); }
+      else if (e.isFile()) { out.push(path.relative(dir, child).replace(/\\/g, '/')); }
+    }
+  };
+  walk(dir);
+  return out.sort();
+}
+
+/**
+ * The collisions that sit inside a skill folder upstream ships: the app's
+ * hand copy of a FRAMEWORK skill, not an app file. Grouped by skill.
+ */
+export function frameworkSkillGroups(collisions: readonly string[], upstreamDir: string): Map<string, string[]> {
+  const groups = new Map<string, string[]>();
+  for (const p of collisions) {
+    const m = /^\.agents\/skills\/([^/]+)\//.exec(p);
+    if (!m || !fs.existsSync(path.join(upstreamDir, '.agents', 'skills', m[1], 'SKILL.md'))) { continue; }
+    groups.set(m[1], [...(groups.get(m[1]) ?? []), p]);
+  }
+  return groups;
+}
+
+function describeFrameworkSkill(root: string, upstreamDir: string, name: string, files: readonly string[]): Omit<FrameworkSkillCollision, 'saved'> {
+  const appDir = path.join(root, '.agents', 'skills', name);
+  const upDir = path.join(upstreamDir, '.agents', 'skills', name);
+  const upstreamFiles = new Set(filesOf(upDir));
+  const stat = spawnSync('git', ['diff', '--no-index', '--shortstat', '--', appDir, upDir], { encoding: 'utf8' });
+  return {
+    name,
+    differing: files.map(f => f.slice(`.agents/skills/${name}/`.length)).sort(),
+    appOnly: filesOf(appDir).filter(f => !upstreamFiles.has(f)),
+    shortstat: (stat.stdout ?? '').trim(),
+  };
+}
+
 /** Scripts whose collision gets a composition proposal: both halves must run for setup to work. */
 const COMPOSABLE_SCRIPTS = new Set(['prepare', 'setup']);
 
@@ -87,6 +158,20 @@ const ENV_EXAMPLE = '.env.example';
 // ============================================================================
 
 /** Keys a `.env.example` declares, commented declarations (`# KEY=`) included. */
+/**
+ * Keys an ADOPTED app declares in its own part of `.env.example`, above the
+ * block of tooling variables the adoption appended (`ADOPT_ENV_SENTINEL`).
+ * Empty on a greenfield repo, where the whole file is the template's. A
+ * retired tooling name declared there is the app's own variable
+ * (`scripts/check-vars.ts` reports it, never fails on it).
+ */
+export function appOwnedExampleKeys(root: string, envExample: string = path.join(root, ENV_EXAMPLE)): Set<string> {
+  if (!isAdopted(root) || !fs.existsSync(envExample)) { return new Set(); }
+  const text = fs.readFileSync(envExample, 'utf8');
+  const at = text.indexOf(ADOPT_ENV_SENTINEL);
+  return envDeclaredKeys(at === -1 ? text : text.slice(0, at));
+}
+
 export function envDeclaredKeys(text: string): Set<string> {
   const keys = new Set<string>();
   for (const raw of text.split(/\r?\n/)) {
@@ -192,6 +277,25 @@ export function composeAdoptedInstructions(upstreamAgents: string, sources: read
   return [...lines.slice(0, at), ...block, ...lines.slice(at)].join('\n');
 }
 
+/**
+ * `text` with the app's preserved instruction block blanked line for line
+ * (line numbers kept): from `ADOPT_INSTRUCTIONS_HEADING` to the boilerplate's
+ * own section 1, the LAST `## 1` heading in the file (the app's text comes
+ * first and may carry its own). That text is the app's, verbatim by contract
+ * (never rewritten), so the boilerplate's doctrine lints (Critical Rule #17
+ * volatile facts) must not judge it. Unchanged when the block is absent.
+ */
+export function maskPreservedAppInstructions(text: string): string {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => l.trim() === ADOPT_INSTRUCTIONS_HEADING);
+  if (start === -1) { return text; }
+  let end = lines.length;
+  for (let i = lines.length - 1; i > start; i -= 1) {
+    if (/^## 1[.\s]/.test(lines[i])) { end = i; break; }
+  }
+  return lines.map((l, i) => (i >= start && i < end ? '' : l)).join('\n');
+}
+
 // ============================================================================
 // .agents/project.yaml
 // ============================================================================
@@ -203,7 +307,41 @@ export function composeAdoptedInstructions(upstreamAgents: string, sources: read
  */
 export function seedAdoptedProjectYaml(delivered: string, schema: string | null): string {
   const seeded = schema === null ? null : seedFromSchema(schema);
-  return seeded ?? resetGitStrategyProvenance(delivered).content;
+  return blankStackValues(seeded ?? resetGitStrategyProvenance(delivered).content);
+}
+
+/**
+ * Every value of the top-level `stack:` block set to `null`, comments and
+ * layout kept (a line splice, never a re-serialisation). The schema carries the
+ * boilerplate's own greenfield stack (`lint: lint:check`, a `src/types/` path,
+ * Vercel); seeded into an app, a value detection cannot confirm would stay as a
+ * claim about the app with no evidence behind it (measured on
+ * upexgalaxy-webapp). `null` means "not known yet": `project-adoption` fills
+ * what `agents:setup --stack` detects, and asks for the rest.
+ */
+export function blankStackValues(yaml: string): string {
+  const lines = yaml.split('\n');
+  const start = lines.findIndex(l => /^stack:\s*(?:#.*)?$/.test(l));
+  if (start === -1) { return yaml; }
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (line.trim() !== '' && !/^\s/.test(line)) { break; }
+    // `  key: value  # comment` -> `  key: null  # comment`; a mapping key (no value) is left alone.
+    const key = /^(\s+[\w-]+:)[ \t]/.exec(line);
+    if (!key) { continue; }
+    const rest = line.slice(key[1].length);
+    const hash = rest.search(/[ \t]#/);
+    const value = (hash === -1 ? rest : rest.slice(0, hash)).trim();
+    if (value === '' || value.startsWith('#') || value === 'null') { continue; }
+    lines[i] = `${key[1]} null${hash === -1 ? '' : rest.slice(hash)}`;
+  }
+  const next = lines.join('\n');
+  try {
+    const stack = (parseYaml(next) as { stack?: unknown } | null)?.stack;
+    const leaves = (v: unknown): unknown[] => v !== null && typeof v === 'object' ? Object.values(v as Record<string, unknown>).flatMap(leaves) : [v];
+    return leaves(stack).every(v => v === null) ? next : yaml;
+  }
+  catch { return yaml; }
 }
 
 /**
@@ -326,6 +464,10 @@ export interface AdoptRowsInput {
   upstreamDir: string
   /** Collisions other than `.env.example` (that one has its own row). */
   collisions: readonly string[]
+  /** App files at paths upstream retired (`deprecatedFiles`): kept, never deleted. */
+  retired?: readonly string[]
+  /** The app's hand copies of framework skills (`frameworkSkillGroups`). */
+  frameworkSkills?: readonly FrameworkSkillCollision[]
   /** True when `collisions` are listed in `updater.protected_paths` (this run, or would be on a real run). */
   protectedWritten: boolean
   envAdded: readonly string[]
@@ -334,6 +476,11 @@ export interface AdoptRowsInput {
   instructions: AdoptInstructionsOutcome
   /** The app's hooks run on a manager other than husky (`./hook-manager.ts`). */
   foreignHooks?: boolean
+  /** The agentic store the app's `.gitignore` hid, and what re-included it. */
+  reinclude?: ReincludeOutcome | null
+  /** Delivered paths the app's `.gitignore` still hides (teammates never receive them). */
+  hiddenDelivered?: readonly HiddenPath[]
+  ignoreLinesWithheld?: readonly IgnoreLineWithheld[]
 }
 
 export interface AdoptInstructionsOutcome {
@@ -387,6 +534,85 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
     });
   }
 
+  for (const skill of input.frameworkSkills ?? []) {
+    const detail = [
+      `differs from upstream: ${skill.differing.join(', ')}`,
+      ...(skill.appOnly.length > 0 ? [`only in the app's copy (moves to the backup when upstream's is taken): ${skill.appOnly.join(', ')}`] : []),
+      ...(skill.shortstat ? [skill.shortstat] : []),
+    ].join('\n');
+    rows.push({
+      surface: 'skills',
+      path: `.agents/skills/${skill.name}/`,
+      evidence: `the app carries its own copy of the framework skill \`${skill.name}\` (${skill.differing.length} file(s) differ from upstream${skill.appOnly.length > 0 ? `, ${skill.appOnly.length} only in the app's copy` : ''}${skill.shortstat ? `; ${skill.shortstat}` : ''}); kept this run and NOT protected, so it does not freeze on this copy`,
+      suggested: 'take upstream',
+      adoptTakeUpstream: true,
+      blocking: false,
+      detail,
+      note: skill.saved
+        ? `Upstream's copy is saved in ${skill.saved}/. \`project-adoption\` applies it on its own approval line: the app's copy goes to .backups/project-adoption/ first. Review the detail for app-specific edits before approving.`
+        : 'On the real run upstream\'s copy is saved under .agents/prompts/adopt-upstream/ for project-adoption to apply.',
+    });
+  }
+
+  for (const file of input.retired ?? []) {
+    rows.push({
+      surface: surfaceFor(file),
+      path: file,
+      evidence: `app file kept at a path upstream retired (--adopt never deletes what the app already has); ${input.protectedWritten
+        ? 'listed in updater.protected_paths, so no later sync deletes it'
+        : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun run up\` deletes it`}`,
+      suggested: 'keep project',
+      blocking: !input.protectedWritten,
+      note: input.protectedWritten
+        ? 'Upstream no longer ships this path. Delete it by hand when the app no longer needs it, and drop it from updater.protected_paths.'
+        : protectNote(file),
+    });
+  }
+
+  const re = input.reinclude;
+  if (re && re.hidden.length > 0) {
+    const rules = [...new Set(re.hidden.map(h => `\`${h.pattern}\` (${h.source})`))].join(', ');
+    rows.push(re.stillHidden.length === 0
+      ? {
+          surface: 'components',
+          path: '.gitignore',
+          evidence: `the app's ${rules} hid the agentic store; re-included with ${re.added.map(a => `\`${a}\``).join(', ')} in an appended block, the app's own lines untouched`,
+          suggested: 'keep project',
+          blocking: false,
+          note: 'Without it the adoption commit versions nothing under .agents/ and the moved .claude/skills disappear from git. Drop the block only if the team decides to keep the agentic layer local.',
+        }
+      : {
+          surface: 'components',
+          path: '.gitignore',
+          evidence: `the app's ${rules} still hide${re.stillHidden.length === 1 ? 's' : ''} ${re.stillHidden.map(h => h.path).join(', ')}: the agentic store would not be versioned`,
+          suggested: 'decide',
+          blocking: true,
+          note: 'Re-include .agents/ by hand (a `!/.agents/` line, plus `!/.agents/**` when a rule hides its children), then confirm with `git check-ignore -v .agents/project.yaml` (no output).',
+        });
+  }
+
+  for (const w of input.ignoreLinesWithheld ?? []) {
+    rows.push({
+      surface: 'components',
+      path: w.file,
+      evidence: `upstream line \`${w.line}\` NOT appended: it matches files the app tracks (${w.tracked.join(', ')}), so every new file there would be ignored`,
+      suggested: 'keep project',
+      blocking: false,
+      note: `Upstream ignores its own \`${w.line}\` output; the app's folder of that name is source. If the app has build output there too, ignore it with a path the app's source does not share.`,
+    });
+  }
+
+  for (const h of input.hiddenDelivered ?? []) {
+    rows.push({
+      surface: surfaceFor(h.path),
+      path: h.path,
+      evidence: `delivered, but the app's \`${h.pattern}\` (${h.source}) keeps it out of git: a teammate who clones never receives it`,
+      suggested: 'keep project',
+      blocking: false,
+      note: `The app's ignore rule is its own decision and is never edited. Track the file with \`git add -f ${h.path}\` or a \`!/${h.path}\` line only if the team wants it shared.`,
+    });
+  }
+
   if (input.envCollision) {
     rows.push({
       surface: 'env',
@@ -430,6 +656,10 @@ export interface AdoptHookInput {
   packageJsonKept: readonly PackageJsonKeptKey[]
   /** This run's backup dir, when the core created one. */
   backupDir: string | null
+  /** The app's `.gitignore` hid the agentic store and the wrapper re-included it (`./adopt-gitignore.ts`). */
+  reinclude?: ReincludeOutcome | null
+  /** Upstream ignore lines the core withheld: they would hide files the app tracks. */
+  ignoreLinesWithheld?: readonly IgnoreLineWithheld[]
   confirm: (message: string) => Promise<boolean>
   step: (message: string) => void
   warn: (message: string) => void
@@ -447,6 +677,8 @@ export interface AdoptOutcome {
   installerLockWritten: boolean
   /** Where the tooling-isolation snippets were saved (null: nothing pending, or --dry-run). */
   isolationPrompt: string | null
+  /** The app's hand copies of framework skills: kept, unprotected, upstream's copy saved. */
+  frameworkSkills: FrameworkSkillCollision[]
 }
 
 function readOrNull(file: string): string | null {
@@ -461,7 +693,27 @@ function relPosix(root: string, abs: string): string {
 /** Everything `--adopt` does after the sync landed. On --dry-run it writes nothing and reports what it would do. */
 export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   const { root, upstreamDir, dryRun } = input;
-  const collisionPaths = input.collisions.map(c => c.path);
+  // The app's hand copies of framework skills are NOT protected: protecting
+  // them would freeze the app on a stale framework forever. Upstream's copy is
+  // saved for `project-adoption` to apply on its own approval line.
+  const frameworkGroups = frameworkSkillGroups(input.collisions.filter(c => c.retired !== true).map(c => c.path), upstreamDir);
+  const inFrameworkSkill = new Set([...frameworkGroups.values()].flat());
+  const collisionPaths = input.collisions.map(c => c.path).filter(p => !inFrameworkSkill.has(p));
+  const frameworkSkills: FrameworkSkillCollision[] = [];
+  for (const [name, files] of frameworkGroups) {
+    let saved: string | null = null;
+    if (!dryRun) {
+      const dest = path.join(root, ADOPT_UPSTREAM_SKILLS_DIR, name);
+      fs.rmSync(dest, { recursive: true, force: true });
+      // What an adopted app never receives (the skill's own tests) stays out of the saved copy too.
+      fs.cpSync(path.join(upstreamDir, '.agents', 'skills', name), dest, {
+        recursive: true,
+        filter: src => !ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(relPosix(upstreamDir, src))),
+      });
+      saved = relPosix(root, dest);
+    }
+    frameworkSkills.push({ ...describeFrameworkSkill(root, upstreamDir, name, files), saved });
+  }
 
   // 1. .env.example: the app's file stays, the tooling's variables are appended.
   const envCollision = collisionPaths.includes(ENV_EXAMPLE);
@@ -516,6 +768,19 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     }
   }
 
+  // 2b. The agent-context hook in the app's own .claude/settings.json, when
+  //     the app wires no UserPromptSubmit at all (`mergeAdoptPromptHook`).
+  const promptHook = mergeAdoptPromptHook(root, upstreamDir);
+  if (promptHook.merged !== null && !dryRun) {
+    const backupDir = input.backupDir ?? createBackupDir(root);
+    fs.mkdirSync(path.dirname(path.join(backupDir, CLAUDE_SETTINGS_FILE)), { recursive: true });
+    fs.copyFileSync(path.join(root, CLAUDE_SETTINGS_FILE), path.join(backupDir, CLAUDE_SETTINGS_FILE));
+    fs.writeFileSync(path.join(root, CLAUDE_SETTINGS_FILE), promptHook.merged);
+  }
+  if (promptHook.added) {
+    input.step(`${dryRun ? '[dry-run] se añadiría' : 'Añadido'} el hook UserPromptSubmit del framework a ${CLAUDE_SETTINGS_FILE} (la app no tenía ninguno); sus otros hooks y claves no cambian.`);
+  }
+
   // 3. Agentic files no synced component creates (the MCP registries).
   const delivered: string[] = [];
   for (const rel of ADOPT_DELIVER_IF_ABSENT) {
@@ -551,14 +816,20 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     input.warn(`${SCHEMA_SOURCE} ya existía (de la app): no se edita. Las filas de colisión dicen qué rutas proteger.`);
   }
 
-  // 5. The installer lock.
-  if (!dryRun) { writeInstallerLock(root); }
+  // 5. The installer lock, with what upstream owns in the namespaces the app
+  //    shares (`./tooling-scope.ts`): the isolation below and the tooling gates
+  //    read it. The wrapper refreshes the list on every later sync.
+  const owned = collectUpstreamOwned(upstreamDir, rel => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel)));
+  if (!dryRun) {
+    writeInstallerLock(root);
+    writeUpstreamOwned(root, owned);
+  }
 
   // 6. Tooling isolation: the app's tsconfig / ESLint config / hook manager
   //    still reach (or ignore) the tooling. Never edited: one blocking row
   //    each, every snippet saved in one file.
   const hooks = detectHookManager(root);
-  const isolation = analyzeIsolation(root, hooks);
+  const isolation = analyzeIsolation(root, hooks, owned);
   const isolationText = isolationPrompt(isolation);
   let isolationSaved: string | null = null;
   if (isolationText !== null && !dryRun) {
@@ -575,14 +846,19 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   const findings = adoptFindings({
     root,
     upstreamDir,
-    collisions: collisionPaths.filter(p => p !== ENV_EXAMPLE),
+    collisions: input.collisions.filter(c => c.retired !== true && c.path !== ENV_EXAMPLE && !inFrameworkSkill.has(c.path)).map(c => c.path),
+    frameworkSkills,
+    retired: input.collisions.filter(c => c.retired === true).map(c => c.path),
     protectedWritten: protectedPaths.length > 0,
     envAdded,
     envCollision,
     scriptsKept: input.packageJsonKept.filter(k => k.section === 'scripts'),
     instructions,
     foreignHooks: hooks.foreign,
+    reinclude: input.reinclude ?? null,
+    ignoreLinesWithheld: input.ignoreLinesWithheld ?? [],
+    hiddenDelivered: dryRun ? [] : hiddenPaths(root, [...input.appliedPaths, ...delivered]),
   });
   findings.push(...isolationFindings(isolation, isolationSaved));
-  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved };
+  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved, frameworkSkills };
 }

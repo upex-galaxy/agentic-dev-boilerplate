@@ -36,6 +36,7 @@ import type {
   GitVersion,
   IgnoreDelta,
   IgnoreLineOption,
+  IgnoreLineWithheld,
   LocalEditOverwritten,
   PackageJsonDelta,
   PackageJsonKeptKey,
@@ -2315,6 +2316,26 @@ function pruneEmptyParents(repoRoot: string, relPath: string): void {
 }
 
 /**
+ * True when `relPath` never travels to this repo: a repo-only path, or a
+ * repo-only pattern (an adopted app's, `UpdaterConfig.repoOnlyPatterns`).
+ * Applies to every delivery route, the self-update of the updater included.
+ */
+export function isRepoOnlyForRun(cfg: Pick<UpdaterConfig, 'repoOnlyPaths' | 'repoOnlyPatterns'>, relPath: string): boolean {
+  const rel = relPath.replace(/\\/g, '/');
+  return isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? []) || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
+}
+
+/**
+ * Files git tracks that the ignore `pattern` would match (a fresh file at the
+ * same place would be ignored). Empty outside a repo or with git missing.
+ */
+export function trackedFilesMatching(repoRoot: string, pattern: string): string[] {
+  const res = spawnSync('git', ['-C', repoRoot, 'ls-files', '--cached', '--ignored', `--exclude=${pattern}`], { encoding: 'utf8' });
+  if (res.status !== 0) { return []; }
+  return (res.stdout ?? '').split('\n').filter(Boolean);
+}
+
+/**
  * Drop the `deleted-upstream` entries of files `cleanupDeprecated` removes in
  * Phase 5 anyway. Left in, the interactive run asks about the same delete
  * twice and `--auto` defers it, which holds the whole component back.
@@ -2640,7 +2661,9 @@ export async function runUpdate(
   if (cfg.selfUpdateComponent && process.env.UPEX_UPDATER_REEXEC !== '1') {
     const selfComp = cfg.components.find(c => c.name === cfg.selfUpdateComponent);
     if (selfComp) {
-      const selfFiles = collectComponentRelPaths(selfComp, templateDir);
+      // Repo-only paths never travel, the self-update included: on an adopted
+      // app that keeps the tooling's own tests out (ADOPT_REPO_ONLY_PATTERNS).
+      const selfFiles = collectComponentRelPaths(selfComp, templateDir).filter(relPath => !isRepoOnlyForRun(cfg, relPath));
       const stale: string[] = [];
       for (const relPath of selfFiles) {
         const localPath = path.join(repoRoot, relPath);
@@ -2791,9 +2814,7 @@ export async function runUpdate(
   const adoptCollisions: AdoptCollision[] = [];
   const adoptExcluded = (relPath: string): boolean => {
     const rel = relPath.replace(/\\/g, '/');
-    return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel)
-      || isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? [])
-      || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
+    return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel) || isRepoOnlyForRun(cfg, rel);
   };
 
   const collectBootstrapEntries = (comps: readonly Component[]): DeltaEntry[] => {
@@ -2937,8 +2958,25 @@ export async function runUpdate(
   // Pre-detect ignore-line deltas so we know whether to early-exit. If file delta
   // is empty but ignore-line delta is non-empty, we still proceed to Phase 4.5.
   const ignoreDeltasPre: IgnoreDelta[] = [];
+  const ignoreLinesWithheld: IgnoreLineWithheld[] = [];
   for (const spec of cfg.ignoreFiles) {
     const delta = detectIgnoreDelta(spec, repoRoot, templateDir, v7State);
+    // Adopted app: a generic upstream line (`build/`) can match a folder the
+    // app tracks (`app/build/`), and every new file there would be ignored in
+    // silence. Such a line is withheld, never appended. Filtered HERE, before
+    // the early exit, so a run with nothing else to do stays a no-op.
+    if (cfg.adopted === true && path.basename(spec.path) === '.gitignore') {
+      const keep: string[] = [];
+      for (const line of delta.upstreamOnlyLines) {
+        const tracked = line.startsWith('!') ? [] : trackedFilesMatching(repoRoot, line);
+        if (tracked.length > 0) {
+          ignoreLinesWithheld.push({ file: spec.path, line, tracked: tracked.slice(0, 3) });
+          sink.warn(`${spec.path}: línea "${line}" retenida, ocultaría archivos que la app versiona (${tracked.slice(0, 3).join(', ')}).`);
+        }
+        else { keep.push(line); }
+      }
+      delta.upstreamOnlyLines = keep;
+    }
     if (delta.upstreamOnlyLines.length > 0) {
       ignoreDeltasPre.push(delta);
     }
@@ -3551,7 +3589,18 @@ export async function runUpdate(
 
   // Deprecated cleanup runs AFTER apply, BEFORE state write (and before the
   // afterApply hooks). A dry-run lists what it would remove and writes nothing.
-  cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
+  // `--adopt`: a file at a retired path is the APP's (upstream never delivered
+  // it here), so it is kept and reported as a collision, never deleted.
+  if (opts.adopt === true) {
+    for (const dep of cfg.deprecatedFiles) {
+      if (fs.existsSync(path.join(repoRoot, dep.path))) {
+        adoptCollisions.push({ path: dep.path.replace(/\\/g, '/'), component: dep.component, retired: true });
+      }
+    }
+  }
+  else {
+    cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
+  }
 
   // Compute advancement
   const advancement = computeComponentAdvancement(
@@ -3575,6 +3624,7 @@ export async function runUpdate(
     localEditsOverwritten,
     packageJsonKept,
     ...(opts.adopt === true ? { adoptCollisions } : {}),
+    ...(ignoreLinesWithheld.length > 0 ? { ignoreLinesWithheld } : {}),
   };
 
   // State write

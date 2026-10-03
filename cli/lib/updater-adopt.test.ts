@@ -16,11 +16,14 @@ import {
   ADOPT_REPO_ONLY_PATTERNS,
   adoptFindings,
   appendEnvExampleBlock,
+  appOwnedExampleKeys,
+  blankStackValues,
   CANONICAL_TEMPLATE,
   composeAdoptedInstructions,
   envDeclaredKeys,
   INSTALLER_LOCK_FILE,
   isAdopted,
+  maskPreservedAppInstructions,
   planAdoptInstructions,
   runAdopt,
   scriptCompositionProposal,
@@ -28,6 +31,7 @@ import {
   withProtectedPaths,
   writeInstallerLock,
 } from './updater-adopt.ts';
+import { isRepoOnlyForRun } from './updater-core';
 import { adoptPackageJsonDelta } from './updater-package.ts';
 import { collectParityFindings } from './updater-parity.ts';
 
@@ -57,6 +61,26 @@ describe('ADOPT_REPO_ONLY_PATTERNS', () => {
     expect(excluded('.context/ADR/ADR-0002-multi-harness-single-source.md')).toBe(true);
     expect(excluded('.context/ADR/README.md')).toBe(false);
     expect(excluded('.context/ADR/ADR-NNNN-template.md')).toBe(false);
+  });
+
+  test('every delivery route honours them, the updater\'s self-update included', () => {
+    const cfg = { repoOnlyPaths: ['.github/workflows/ci.yml'], repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS };
+    expect(isRepoOnlyForRun(cfg, 'cli/lib/updater-core.test.ts')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, 'cli\\lib\\updater-core.test.ts')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, '.github/workflows/ci.yml')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, 'cli/update-boilerplate.ts')).toBe(false);
+    // Greenfield: no patterns, the tests travel as before.
+    expect(isRepoOnlyForRun({ repoOnlyPaths: [] }, 'cli/lib/updater-core.test.ts')).toBe(false);
+  });
+
+  test('the tooling\'s own tests stay out; the code they test travels', () => {
+    const excluded = (p: string): boolean => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(p));
+    expect(excluded('cli/lib/updater-core.test.ts')).toBe(true);
+    expect(excluded('scripts/lint-skills.test.ts')).toBe(true);
+    expect(excluded('.agents/skills/acli/scripts/md-to-adf.test.ts')).toBe(true);
+    expect(excluded('cli/lib/updater-core.ts')).toBe(false);
+    expect(excluded('scripts/lint-skills.ts')).toBe(false);
+    expect(excluded('.agents/skills/acli/scripts/md-to-adf.ts')).toBe(false);
   });
 });
 
@@ -191,6 +215,12 @@ describe('adoptPackageJsonDelta', () => {
     expect(satisfied).toEqual({ dependencies: ['picocolors', 'yaml'], devDependencies: ['typescript'] });
     // Pure.
     expect(delta.sections.dependencies.upstreamOnlyKeys).toEqual({ yaml: '^2.8.2', picocolors: '^1.1.1' });
+  });
+
+  test('never a lint-staged config: the app owns its formatting', () => {
+    const { delta: out, satisfied } = adoptPackageJsonDelta({ file: 'package.json', sections: { 'lint-staged': section({ '*.ts': 'eslint --fix' }) } }, {});
+    expect(out.sections['lint-staged'].upstreamOnlyKeys).toEqual({});
+    expect(satisfied).toEqual({ 'lint-staged': ['*.ts'] });
   });
 
   test('a foreign hook manager gets upstream prepare without husky; husky apps and greenfield keep it whole', () => {
@@ -406,5 +436,57 @@ describe('the parity table on an --adopt run', () => {
     const adopted = collectParityFindings({ ...input, adopting: true }).find(f => f.path === 'tsconfig.json')!;
     expect(adopted.suggested).toBe('merge');
     expect(adopted.evidence).toContain('never replace it');
+  });
+
+  test('the framework-skill row keeps its deliberate take upstream', () => {
+    const root = tempRoot();
+    const upstream = tempRoot();
+    const row = { surface: 'skills' as const, path: '.agents/skills/acli/', evidence: 'the app carries its own copy of the framework skill `acli`', suggested: 'take upstream' as const, adoptTakeUpstream: true, blocking: false };
+    const found = collectParityFindings({ ...base(root, upstream), adoptFindings: [row], adopting: true }).find(f => f.path === '.agents/skills/acli/')!;
+    expect(found.suggested).toBe('take upstream');
+    expect(found.evidence).not.toContain('never replace it');
+  });
+});
+
+describe('blankStackValues', () => {
+  test('the schema\'s greenfield stack is seeded as unknown, comments and the rest of the file kept', () => {
+    const yaml = 'project:\n  project_name: null\n\nstack:\n  app_root: . # where the app lives\n  scripts: # names\n    lint: lint:check\n    types: null\n  conventions:\n    import_alias: \'@/\' # alias\n\nissue_tracker:\n  issue_tracker: Jira\n';
+    const out = blankStackValues(yaml);
+    expect(out).toContain('  app_root: null # where the app lives');
+    expect(out).toContain('    lint: null');
+    expect(out).toContain('  scripts: # names');
+    expect(out).toContain('    import_alias: null # alias');
+    expect(out).toContain('issue_tracker: Jira');
+    expect(blankStackValues(out)).toBe(out);
+    expect(blankStackValues('project:\n  a: 1\n')).toBe('project:\n  a: 1\n');
+  });
+});
+
+describe('maskPreservedAppInstructions', () => {
+  test('blanks the app\'s preserved block line for line, up to the boilerplate\'s own section 1', () => {
+    const upstream = '# AGENTS.md\n\nintro\n\n## 1. RULES\n\nNever say today.\n';
+    const composed = composeAdoptedInstructions(upstream, [{ file: 'CLAUDE.md', text: '# App\n\n## 1. App rule\n\nShipped today.\n' }], null);
+    const masked = maskPreservedAppInstructions(composed);
+    expect(masked.split('\n')).toHaveLength(composed.split('\n').length);
+    expect(masked).not.toContain('Shipped today.');
+    expect(masked).not.toContain('## 1. App rule');
+    expect(masked).toContain('## 1. RULES');
+    expect(masked).toContain('Never say today.');
+    expect(maskPreservedAppInstructions(upstream)).toBe(upstream);
+  });
+});
+
+describe('appOwnedExampleKeys', () => {
+  test('on an adopted app: the keys above the tooling block are the app\'s', () => {
+    const root = tempRoot();
+    write(root, '.env.example', `JIRA_API_TOKEN=\nAPP_URL=\n\n${ADOPT_ENV_SENTINEL}\nATLASSIAN_EMAIL=\n`);
+    write(root, INSTALLER_LOCK_FILE, '{ "adopted": true }\n');
+    expect([...appOwnedExampleKeys(root)].sort()).toEqual(['APP_URL', 'JIRA_API_TOKEN']);
+  });
+
+  test('greenfield (no adoption lock): none, the whole file is the template\'s', () => {
+    const root = tempRoot();
+    write(root, '.env.example', 'JIRA_API_TOKEN=\n');
+    expect(appOwnedExampleKeys(root).size).toBe(0);
   });
 });

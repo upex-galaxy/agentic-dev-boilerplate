@@ -104,3 +104,44 @@ export function applyAllowListMerge(repoRoot: string, templateDir: string): stri
   fs.writeFileSync(path.join(repoRoot, CLAUDE_SETTINGS_FILE), merged, 'utf-8');
   return added;
 }
+
+export interface PromptHookMerge {
+  /** True when the project's file had no `hooks.UserPromptSubmit` and upstream's groups were added. */
+  added: boolean
+  /** The file's new contents, or null when nothing changes (no write). */
+  merged: string | null
+}
+
+/**
+ * `--adopt` only. An adopted app's own `.claude/settings.json` (kept, never
+ * overwritten) usually has no `UserPromptSubmit` hook, and the compatibility
+ * contract requires the one that emits the agent context (output contract +
+ * the AGENT IDENTITY line the commit trailers copy): without it the adoption
+ * commit itself is refused by the pre-commit gate (measured on
+ * upexgalaxy-webapp). Added only when the event is ABSENT: an app that wires
+ * its own `UserPromptSubmit` keeps it, and the contract row says what to add.
+ * Every other key, and every other hook event, is written back untouched.
+ */
+export function mergeAdoptPromptHook(repoRoot: string, templateDir: string): PromptHookMerge {
+  const localPath = path.join(repoRoot, CLAUDE_SETTINGS_FILE);
+  const upstreamPath = path.join(templateDir, CLAUDE_SETTINGS_FILE);
+  const nothing: PromptHookMerge = { added: false, merged: null };
+  if (!fs.existsSync(localPath) || !fs.existsSync(upstreamPath)) { return nothing; }
+  let local: ReturnType<typeof parsePackageJson>;
+  let upstream: ReturnType<typeof parsePackageJson>;
+  try {
+    local = parsePackageJson(localPath);
+    upstream = parsePackageJson(upstreamPath);
+  }
+  catch { return nothing; }
+
+  const upstreamHooks = upstream.data.hooks as Record<string, unknown> | undefined;
+  const wanted = upstreamHooks?.UserPromptSubmit;
+  if (!Array.isArray(wanted)) { return nothing; }
+  const hooks = local.data.hooks;
+  if (hooks !== undefined && (hooks === null || typeof hooks !== 'object' || Array.isArray(hooks))) { return nothing; }
+  const localHooks = (hooks ?? {}) as Record<string, unknown>;
+  if ('UserPromptSubmit' in localHooks) { return nothing; }
+  local.data.hooks = { ...localHooks, UserPromptSubmit: wanted };
+  return { added: true, merged: stringifyPackageJson(local) };
+}

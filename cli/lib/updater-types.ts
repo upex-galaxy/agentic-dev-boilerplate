@@ -229,9 +229,22 @@ export interface PackageJsonKeptKey {
  * carries with different content. Never written: the wrapper reports it and
  * protects it (`updater.protected_paths`) so a later sync never overwrites it.
  */
+/** An upstream `.gitignore` line withheld on an adopted app: it matches files the app tracks. */
+export interface IgnoreLineWithheld {
+  file: string
+  line: string
+  /** Up to a few tracked paths it would hide (the evidence). */
+  tracked: string[]
+}
+
 export interface AdoptCollision {
   path: string
   component: string
+  /**
+   * The app carries a file at a path upstream RETIRED (`deprecatedFiles`):
+   * kept and protected like any collision, never deleted by the adopt run.
+   */
+  retired?: boolean
 }
 
 export interface RunSummary {
@@ -260,6 +273,8 @@ export interface RunSummary {
   promptSaved?: boolean
   /** `--adopt` only: app files kept because upstream ships a different file at the same path. */
   adoptCollisions?: AdoptCollision[]
+  /** Adopted repos only: upstream ignore lines NOT appended because they would hide files the app tracks. */
+  ignoreLinesWithheld?: IgnoreLineWithheld[]
 }
 
 export interface MergeResult {
@@ -555,6 +570,12 @@ export interface UpdaterConfig {
    * Unset on a greenfield project, which keeps receiving them.
    */
   repoOnlyPatterns?: RegExp[]
+  /**
+   * The repo is an adopted app (this `--adopt` run, or any run after one). An
+   * upstream `.gitignore` line that would hide a file the app tracks is
+   * withheld (`RunSummary.ignoreLinesWithheld`), never appended.
+   */
+  adopted?: boolean
   /**
    * Optional component name (e.g. `'cli'`) whose files contain the updater itself.
    * When set, runUpdate performs a Phase 0 self-update: if any file under this
