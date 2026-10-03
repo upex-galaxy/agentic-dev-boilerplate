@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T02:22:11.332Z`
+> Generated: `2026-10-03T02:40:03.016Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 17
+Skills indexed: 20
 
 ---
 ## Skill: acli
@@ -104,6 +104,63 @@ Skills indexed: 17
 **Read full SKILL.md when**: you are running any phase of a scheduled run, a gate fires, or the briefing tells you to load the full skill.
 
 > Source: `.agents/skills/autonomous-delivery/SKILL.md` · phase: `implementation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-api-context
+
+**Purpose**: What the API of the product under development MEANS to the business: the auth model (Supabase Auth, sessions, roles), every route group (...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). NEVER read `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `api`; never add a route as if the API were empty.
+- DO: take field names, types and required flags from the OpenAPI types (`bun run api:sync`, `@schemas/{domain}.types`), and the MEANING from the map. On a conflict the spec wins for shape, the running API wins for behaviour.
+- WHEN a session observes something that contradicts a section (a status, a field, an auth rule): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no generated types, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a route, OpenAPI or auth dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-api-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-data-context
+
+**Purpose**: What the product under development IS at the data level: business entities and why they exist, their relationships, RLS policies and who...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). NEVER read `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `data`; never plan a migration as if the schema were empty.
+- DO: cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
+- WHEN a session observes something that contradicts a section (a column, a policy, a trigger): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no migration, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment (a rule for READING the data) goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `db` (verifying a section) or `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a migration, RLS or seed dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-data-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-feature-context
+
+**Purpose**: What the product under development DOES for its users, feature by feature: the feature catalog grouped by module, the CRUD matrix (which...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-feature-context` (or `--section <id>` for one feature or module). NEVER read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `features`; never place a story as if the product had no features.
+- DO: take how a screen LOOKS from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature DOES from the map. On a conflict the running app wins for behaviour.
+- WHEN a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no design file, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a UI, CRUD or navigation dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-feature-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
