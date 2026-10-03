@@ -136,9 +136,9 @@ export function lintDocMeta(rel: string, html: string): DocFinding[] {
 }
 
 /**
- * Documented optional files: described in prose, present only in some
- * projects. The project overlay of the command aliases is created by a project
- * that declares its own slash commands, never shipped.
+ * Documented optional files: described in prose, present only in some projects.
+ * The retired command-alias overlay is one: nothing creates it any more, but a
+ * project scaffolded earlier may still carry it, and the updater names it.
  */
 export const OPTIONAL_PATHS = new Set<string>([
   '.agents/compatibility/command-aliases.project.json',
