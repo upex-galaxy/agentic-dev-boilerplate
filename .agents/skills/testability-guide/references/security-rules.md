@@ -29,6 +29,7 @@
   - **Real per-tester credentials** (any account with real-data reach or per-person identity) are NEVER inlined — emails only on the page, passwords gated in the credentials artifact.
   - When unsure which case applies → default to gated (emails only). Pre-flight + project context (public practice/demo vs internal tool) decides.
 - Private hostnames (e.g. `<random>.upexgalaxy.com`-shaped, customer-specific subdomains) NEVER on the page. They live in the credentials artifact.
+- The build stamp shows the short commit SHA (and a commit link from `.agents/project.yaml`) and nothing else. A commit SHA is public-safe; the platform variables around it are not all safe: never render other platform env values next to it (commit message, author, `VERCEL_AUTOMATION_BYPASS_SECRET`, …).
 - NEVER add analytics, tracking pixels, or third-party scripts to `/qa`. The page is operational tooling, not a marketing surface.
 - NEVER store the credentials destination URL in `.env`. It goes in the snapshot comment (which is committed) — and that is intentional, because the destination URL itself is access-gated by the destination's permission model.
 
