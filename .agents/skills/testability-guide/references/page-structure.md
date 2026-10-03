@@ -54,7 +54,7 @@
 
 `data-testid="qa-section-database"`. Emerald accent. Two-way tabs (`data-testid="qa-db-ways"`).
 
-- **Way 1 — DBHub MCP**: the committed `dbhub.toml` (`${VAR}` interpolation), the `.env` `DBHUB_*` slots, the silent-substitution warning + `env | grep DBHUB`, and the MCP config block per agent (4-agent tabs). All from `mcp-and-env-setup.md` §4.
+- **Way 1 — DBHub MCP** (the default `mcp-and-env-setup.md` §4.0 resolves from `stack.database`; a Supabase app adds the read-only Supabase MCP tab for team members there): the committed `dbhub.toml` (`${VAR}` interpolation), the `.env` `DBHUB_*` slots, the silent-substitution warning + `env | grep DBHUB`, and the MCP config block per agent (4-agent tabs). All from `mcp-and-env-setup.md` §4.
 - **Way 2 — Connection URI (VSCode/Cursor extension)**: the `postgresql://…` / `sqlserver://…` string shape for the detected engine, credentials by name. Same read-only QA role as Way 1.
 - A callout: `Host, user, password viven en <destination>. Nunca en esta página.`
 - Short generic example queries: `Mostrame todas las tablas`, `Contá las <rows> del usuario <email>`.

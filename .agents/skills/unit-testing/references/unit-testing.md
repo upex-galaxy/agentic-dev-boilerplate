@@ -1,4 +1,4 @@
-Actúa como Senior QA Engineer y Test Automation Expert especializado en unit testing con Jest/Vitest.
+Actúa como Senior QA Engineer y Test Automation Expert especializado en unit testing con el runner que la app ya usa (`stack.test_runner` en `.agents/project.yaml`: Vitest, Jest, Bun test, …).
 
 ---
 
@@ -32,10 +32,10 @@ Crear unit tests para funciones y lógica de negocio implementadas en la story a
 
 **Buscar y analizar:**
 
-- `src/**/*.ts` - Archivos TypeScript implementados en esta story
-- `src/**/*.tsx` - Componentes React implementados
-- `lib/**/*.ts` - Helpers y utilidades creadas
-- `utils/**/*.ts` - Funciones de transformación o cálculo
+- Los archivos que la story creó o cambió (`git diff --name-only` contra la rama base), bajo `{{stack.app_root}}`
+- Componentes, helpers, utilidades y funciones de transformación o cálculo entre esos archivos
+
+Las carpetas de los ejemplos de abajo (`src/lib/`, `src/utils/`) son ilustrativas: la app adoptada puede tener otra estructura (`lib/` en la raíz, paquetes de un monorepo) y se respeta la suya.
 
 **Qué identificar:**
 
@@ -58,17 +58,22 @@ Crear unit tests para funciones y lógica de negocio implementadas en la story a
 
 ### 3. Testing Framework
 
-**Verificar setup existente:**
+**Leer primero el bloque `stack:` de `.agents/project.yaml`:**
 
-- `package.json` - ¿Jest o Vitest instalado?
-- `jest.config.js` o `vitest.config.ts` - Configuración del framework
-- Archivos `.test.ts` o `.spec.ts` existentes - Patrones actuales
+- `stack.test_runner` - el runner de la app (`vitest`, `jest`, `bun`, `playwright`, `other`, `none`; `null` = todavía no se eligió)
+- `stack.scripts.test` - el NOMBRE del script de tests en el `package.json` de la app; el comando es `{{stack.package_manager}} run {{stack.scripts.test}}`
+- `stack.app_root` - dónde vive la app (y su `package.json`)
+
+**Después verificar el setup existente bajo `{{stack.app_root}}`:**
+
+- La config del runner (`vitest.config.*`, `jest.config.*`, `bunfig.toml`, …) - entorno, setup files, aliases, coverage
+- Archivos `*.test.*` / `*.spec.*` existentes - ubicación (colocados, `__tests__/`, `tests/`) y naming actuales
 
 **Qué identificar:**
 
-1. ¿Qué testing framework usa el proyecto? (Jest / Vitest)
+1. ¿El runner de `stack.test_runner` coincide con lo que el repo muestra? Si no coincide, decirlo y correr `bun run setup:doctor` (reporta el drift); nunca cambiar de runner por cuenta propia
 2. ¿Existe configuración de coverage?
-3. ¿Qué patrones de naming se usan?
+3. ¿Qué patrones de ubicación y naming se usan? Los tests nuevos los siguen
 
 ---
 
@@ -79,17 +84,17 @@ Crear unit tests para funciones y lógica de negocio implementadas en la story a
 1. **MCP Context7** - ALTAMENTE RECOMENDADO
    - Consultar docs oficiales antes de escribir tests
    - Queries recomendadas:
-     - "Jest latest best practices"
-     - "Vitest setup Next.js App Router"
+     - "<runner de stack.test_runner> latest best practices"
+     - "<runner> setup <stack.framework>"
      - "React Testing Library latest API"
-     - "Jest mock functions examples"
+     - "<runner> mock functions examples"
 
 2. **NO se requieren otros MCP** para esta fase
 
 ### Herramientas Locales:
 
-- Testing framework instalado (Jest/Vitest)
-- Package manager (npm/pnpm/yarn/bun)
+- El runner de `stack.test_runner`
+- El package manager de `stack.package_manager`
 
 ---
 
@@ -267,15 +272,17 @@ El proceso se divide en 5 pasos ejecutados secuencialmente.
 
 ## 🧪 PASO 2: SETUP DEL TESTING FRAMEWORK (Si no existe)
 
-**Objetivo:** Asegurar que Jest/Vitest está configurado correctamente.
+**Objetivo:** Asegurar que el runner de la app está configurado correctamente.
+
+**Este paso corre SOLO cuando `stack.test_runner` es `null`** (proyecto nuevo, runner sin elegir). Con cualquier otro valor la app ya decidió: se usa su runner, su config y su script tal como están, y este paso se salta entero. Nunca se instala un segundo runner al lado del existente ni se reemplaza uno por otro.
 
 ### Paso 2.1: Verificar Testing Framework
 
 **Acción:**
 
 ```bash
-# Verificar package.json
-cat package.json | grep -E "(jest|vitest)"
+# Confirmar en el package.json de la app (bajo stack.app_root) que no hay runner
+grep -E '"(jest|vitest)"|bun test' {{stack.app_root}}/package.json
 ```
 
 **Si NO está instalado:**
@@ -289,10 +296,10 @@ cat package.json | grep -E "(jest|vitest)"
    - "Jest setup Next.js latest"
    - O "Vitest setup Next.js latest"
 
-3. **Instalar:**
+3. **Instalar** con el package manager de la app:
    ```bash
-   [package-manager] add -D jest @types/jest ts-jest
-   # O: [package-manager] add -D vitest
+   {{stack.package_manager}} add -D jest @types/jest ts-jest
+   # O: {{stack.package_manager}} add -D vitest
    ```
 
 ---
@@ -325,7 +332,7 @@ SI framework = Vitest:
 
 ### Paso 2.3: Agregar Scripts
 
-**En `package.json`, agregar:**
+**Solo si `stack.scripts.test` es `null`**: un script que la app ya declara no se renombra ni se reemplaza. En el `package.json` de la app, agregar:
 
 ```json
 {
@@ -339,9 +346,12 @@ SI framework = Vitest:
 
 **Output:**
 
+Después, registrar la elección en el bloque `stack:`: `bun run agents:setup --stack` (detecta el runner y el script nuevos y propone los valores con su evidencia).
+
 ```
 ✅ Testing framework configurado
 ✅ Scripts de test agregados
+✅ stack.test_runner + stack.scripts.test registrados
 ✅ Coverage configurado (umbrales solo en critical paths nombrados; gates por delta en CI)
 ```
 
@@ -353,7 +363,7 @@ SI framework = Vitest:
 
 ### Paso 3.1: Crear Archivos de Test
 
-**Convención de naming:**
+**Convención de naming:** la que ya usan los tests hermanos de la app (Paso 3 del input). Sin precedente, colocado junto al módulo:
 
 - `src/lib/discount-calculator.ts` → `src/lib/discount-calculator.test.ts`
 - `src/utils/format-currency.ts` → `src/utils/format-currency.test.ts`
@@ -606,14 +616,12 @@ utils/format-currency.ts   | 95     | 87.5     | 100     | 95      |
 ### Unit Tests
 
 ```bash
-# Run all tests
-npm run test
+# Run all tests (the app's own script: stack.scripts.test)
+{{stack.package_manager}} run {{stack.scripts.test}}
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
+# Watch / coverage: the app's own scripts when it declares them; otherwise pass the runner flag
+{{stack.package_manager}} run {{stack.scripts.test}} --watch
+{{stack.package_manager}} run {{stack.scripts.test}} --coverage
 ```
 ````
 
@@ -659,13 +667,13 @@ npm run test:coverage
 
 ```bash
 # Run tests
-npm run test
+{{stack.package_manager}} run {{stack.scripts.test}}
 
 # Watch mode (útil durante desarrollo)
-npm run test:watch
+{{stack.package_manager}} run {{stack.scripts.test}} --watch
 
 # Coverage report
-npm run test:coverage
+{{stack.package_manager}} run {{stack.scripts.test}} --coverage
 ````
 
 ## Próximos Pasos:

@@ -29,7 +29,7 @@ For exploratory questions ("what could we do about X?", "how should we approach 
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
 
-**Scope note** — this rule applies to code authored by the agent within a task. Do **not** collapse the architecture layers of the scaffold (`api/`, `schemas/`, `db/` boundaries in backend; design system structure in frontend) — they are framework architecture, not speculative abstraction.
+**Scope note** — this rule applies to code authored by the agent within a task. Do **not** collapse the architecture layers the app already has (on a scaffolded project the `api/`, `schemas/`, `db/` boundaries in backend and the design system structure in frontend; on an adopted app whatever layering its code shows under `stack.app_root`) — they are framework architecture, not speculative abstraction. The reverse holds too: never impose the scaffold's layers on an app that does not have them.
 
 Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees. Only validate at system boundaries (user input, external APIs). Don't use feature flags or backwards-compatibility shims when you can just change the code.
 

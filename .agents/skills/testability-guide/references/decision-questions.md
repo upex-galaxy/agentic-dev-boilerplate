@@ -63,11 +63,11 @@ Which database role will the credentials artifact expose to testers?
 
 | Option                                         | When to pick                                                                                                       | Risk                                                                                                          |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| **`qa_*` read-only role** (default)            | Tests can `SELECT` directly via DBHub MCP, but all writes go through the REST API which enforces tenant isolation. | None. Recommended.                                                                                            |
+| **`qa_*` read-only role** (default)            | Tests can `SELECT` directly via the DB MCP `mcp-and-env-setup.md` §4.0 resolves (DBHub by default), but all writes go through the REST API which enforces tenant isolation. | None. Recommended.                                                                                            |
 | Existing DML role scoped to specific tables    | Tests genuinely need direct writes (e.g. seed fixtures, bypass slow API).                                          | No row-level isolation — every tester sees every other tester's writes. Mention in the page.                  |
 | Existing superuser / schema owner / `postgres` | Never. The skill REFUSES this option.                                                                              | Catastrophic. The skill stops and asks the user to provision a read-only role first. See `security-rules.md`. |
 
-**Recommendation**: read-only. If no such role exists, the skill STOPS, asks the user to provision one and hands over the SQL (`security-rules.md` Hard refusals 1); it never creates the role itself.
+**Recommendation**: read-only. If no such role exists, the skill STOPS, asks the user to provision one and hands over the SQL plus the route `db-change-doctrine.md` assigns by `stack.database.migrations_tool` (`security-rules.md` Hard refusals 1); it never creates the role itself.
 
 ---
 

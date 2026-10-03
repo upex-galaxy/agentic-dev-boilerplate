@@ -27,7 +27,7 @@ UI (Playwright) + API (OpenAPI / Postman) + DB (DBHub) = Testing Completo
 | **UI** | **`playwright-cli` binary + the `/playwright-cli` skill** (default, Q7) | Drive the browser: scripted regression + agentic exploration | login `data-testid`s + a demo user |
 | **API** | OpenAPI MCP (`@ivotoby/openapi-mcp-server`) | Invoke endpoints directly from the agent | Bearer token + spec URL |
 | **API (formal)** | Postman MCP (`https://mcp.postman.com/mcp`) | Manage collections, run formal test suites | Postman API key |
-| **DB** | DBHub MCP (`@bytebase/dbhub`) | Verify data directly in the database | read-only connection (`dbhub.toml`) |
+| **DB** | the DB MCP §4.0 resolves from `stack.database` (DBHub `@bytebase/dbhub` by default) | Verify data directly in the database | read-only connection (`dbhub.toml`, or the Supabase MCP in `--read-only` mode) |
 
 Render this as the overview card grid in §3. Each card deep-links to its detailed section (§4 DB, §5 API, §6 UI).
 
@@ -92,6 +92,21 @@ Render this trio everywhere the page tells a tester to "verify the env var" — 
 ---
 
 ## §4 — DB testing (DBHub) — TWO ways to connect
+
+### §4.0 — Which DB MCP the page documents (resolved from `stack:`)
+
+The testers' DB MCP is NOT the agent's `db` capability. The agent's server (AGENTS.md §6, `[DB_TOOL]`; on Supabase, `@supabase/mcp-server-supabase` with `SUPABASE_ACCESS_TOKEN`) authenticates with a personal access token that carries its holder's whole Supabase account. That token never reaches the page or the credentials artifact. Testers get a connection whose reach the database itself limits: a `qa_*` read-only role.
+
+Read `stack.database` from `.agents/project.yaml`, confirm it against the code (Phase 1), then pick:
+
+| `stack.database` | Way 1 (agentic) the page documents | Alternative, shown as a second tab only when it applies |
+| --- | --- | --- |
+| `engine: postgres`, `provider: supabase` | DBHub, `type = "postgres"`, over the project's session pooler, logged in as the `qa_*` role | Supabase MCP in read-only mode, scoped to the project, for team members who already hold a Supabase account on it (`--read-only --project-ref <ref>` locally, `https://mcp.supabase.com/mcp?project_ref=<ref>&read_only=true&features=database` hosted). Each person signs in with their OWN account; the artifact names the ref, never a token |
+| `engine: postgres`, `provider: other` | DBHub, `type = "postgres"`, logged in as the `qa_*` role | none |
+| `engine: none` | no DB section: §4 renders one line saying the app has no database layer to inspect, and the DB card drops from the §3 overview | none |
+| `engine: other` (outside the v1 support set) | DBHub with the detected `type` when DBHub supports the engine; otherwise a gap the user resolves | none |
+
+`project_ref` is `environments.<env>.db_project_ref` of the environment the artifact documents. The read-only mode is a decision, not a convenience (`agentic-dev-core/references/db-change-doctrine.md` §2): a tester's DB MCP never runs in write mode, whichever server it is. Record the choice in the snapshot field `db` (`idempotency-snapshot.md`): a change of `stack.database` is drift.
 
 ### Way 1 — DBHub MCP (agentic)
 
