@@ -563,6 +563,13 @@ const STALE_PATH_DEFERRED_ALLOWLIST = new Set<string>([
   // file appears only after a real workspace sync. Skills reference the path
   // to teach the contract; STALE-PATH must not fire while it's deferred.
   '.agents/jira-link-types.json',
+  // .agents/jira-fields.json + jira-workflows.json — per-INSTANCE catalogs
+  // written by `bun run jira:sync-fields` / `jira:sync-workflows` against the
+  // project's own Jira. Never delivered (REPO_ONLY_PATHS in
+  // cli/update-boilerplate.ts, TEMPLATE_EXCLUDES in the scaffolder), so a fresh
+  // project or an adopted app lacks them until that sync runs.
+  '.agents/jira-fields.json',
+  '.agents/jira-workflows.json',
 ]);
 
 function checkInlineStalePaths(
