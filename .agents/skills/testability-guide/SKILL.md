@@ -121,7 +121,7 @@ If the project still lacks a backend / frontend / auth scaffolding, surface that
 
 ## Session & Dispatch
 
-> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 1 (plan write) are NOT optional.
+> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 0.5 (plan write) are NOT optional.
 >
 > **Session close**: every stage ends with the light stage verifier and the session ends with the chat footer (tools used + dev surfaces touched), both per `agentic-dev-core/references/session-footer-contract.md`.
 
@@ -139,7 +139,7 @@ Both stay. Phase 0 reads the session directory; Phase 2 (idempotency check) read
 Before any subagent dispatch and before Phase 1 (pre-flight discovery) runs, run the resume contract from `agentic-dev-core/references/session-management.md` §4:
 
 1. Check whether `.session/testability-guide/progress.md` exists.
-2. If it does NOT exist → proceed to Phase 1 (pre-flight discovery) which also writes `plan.md` after Phase 3 decisions land.
+2. If it does NOT exist → proceed to Phase 1 (pre-flight discovery); Phase 0.5 writes `plan.md` once the Phase 3 decisions land.
 3. If it DOES exist:
    1. Read `.session/testability-guide/plan.md` in full.
    2. Read the tail of `.session/testability-guide/progress.md` (last ~3 entries).
@@ -148,7 +148,7 @@ Before any subagent dispatch and before Phase 1 (pre-flight discovery) runs, run
 
 Phase 0 is inline — no subagent dispatch.
 
-## Phase 1 — Write `plan.md` (after Phase 3 batched decisions)
+## Phase 0.5 — Write `plan.md` (after Phase 3 batched decisions)
 
 Phase 3 below collects the user's batched answers to Q1–Q8 (credentials destination, DB role policy, page route, redirect of old route, language, and the detection-pre-answered page-craft trio: highlighter, agentic UI driver, request viewer). Immediately after those answers land, write `.session/testability-guide/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6:
 

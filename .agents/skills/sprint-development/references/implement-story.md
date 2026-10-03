@@ -146,6 +146,8 @@ DESIGN.md                                  # tokens congelados (ruta: frontend.d
 .context/SRS/api-contracts.yaml  (si story toca backend/API)
 ```
 
+Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas preguntas se responden con las secciones de los mapas que lista `../SKILL.md` → "Product docs: PRD/SRS or business maps" (arquitectura, modelo de datos, contrato de API), más `.context/business/project-dev-guide.md`. No se crea un SRS para completar este paso.
+
 **Propósito:**
 
 - Stack técnico del proyecto
@@ -182,7 +184,8 @@ DESIGN.md                                  # tokens congelados (ruta: frontend.d
    - Antes de implementar: confirma que la API/método existe en la versión actual
    - Ejemplo: usar `[DOCS_TOOL]` para consultar docs de Next.js, React, Supabase, etc.
 
-5. **Consulta shadcn MCP (si proyecto usa shadcn)**
+5. **Load the frontend skills, then consult the shadcn MCP (story has UI)**
+   - **Required, before the first component or layout write:** `/frontend-design` + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They carry the composition, shadcn and Tailwind rules; the shadcn MCP below is the component catalog, not a substitute. A public, indexable page also loads `/seo`. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
    - Si necesitas componentes UI: busca componentes shadcn disponibles
    - Si tienes dudas sobre props de componentes: consulta la API
    - Ejemplo: buscar "dialog", "form", "table" para encontrar componentes apropiados
@@ -238,6 +241,7 @@ DESIGN.md                                  # tokens congelados (ruta: frontend.d
 
 **Para cambios de DB:**
 
+- ✅ **Required first:** load `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call through the DB MCP. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - ✅ Usa Supabase MCP si está disponible
 - ✅ Si NO está disponible: proporciona SQL para que usuario ejecute manualmente
 

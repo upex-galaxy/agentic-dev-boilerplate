@@ -3,9 +3,11 @@ export type ErrorCode
     | 'ENVIRONMENT'
     | 'NETWORK'
     | 'CONFLICT'
+    | 'PREFLIGHT'
     | 'BOOTSTRAP'
     | 'INSTALL'
     | 'SETUP'
+    | 'ADOPT'
     | 'CANCEL';
 
 const EXIT_CODES: Record<ErrorCode, number> = {
@@ -13,9 +15,11 @@ const EXIT_CODES: Record<ErrorCode, number> = {
   ENVIRONMENT: 10,
   NETWORK: 11,
   CONFLICT: 12,
+  PREFLIGHT: 13,
   BOOTSTRAP: 20,
   INSTALL: 30,
   SETUP: 31,
+  ADOPT: 32,
   CANCEL: 130,
 };
 

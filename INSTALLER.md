@@ -181,6 +181,48 @@ All three MCP configs are committed with credential placeholders — `${VAR}` in
 
 ---
 
+## Adopt an existing app
+
+A scaffolded project starts from the template. An existing app goes the other way: the tooling is installed into the app's own repository, and nothing the app already has is overwritten. Two layers do it. The install layer is `bunx create-agentic-dev --adopt` (or the updater's `--adopt` run it delegates to), and the understanding layer is the `project-adoption` skill, loaded in an agent session afterwards.
+
+### Preflight: `bunx create-agentic-dev --doctor --preflight`
+
+Read-only. It prints the system checks plus these rows for the current directory; `--adopt` runs the same table first and exits `13` with nothing written when a required row fails.
+
+| Row | Blocks `--adopt` when | Why |
+| --- | --- | --- |
+| git repository | the directory is not a git repository, or not its root | adoption runs inside the app's own repo and never runs `git init` |
+| clean working tree | `git status --porcelain` lists anything | the adoption lands as one reviewable diff |
+| install state | `.template/boilerplate.lock.json` exists without `adopted: true` | a scaffolded project updates with `bun run up`; an adopted one makes `--adopt` a no-op |
+| gh authenticated | `gh` is missing or logged out | the updater clones the template through it |
+| package manager | the lockfile (or `packageManager`) names anything but bun | v1 supports bun apps only; no lockfile is a warning, bun assumed |
+| stack family | no `package.json` declaring `next` at the root or under `apps/*` / `packages/*`, or a non-Postgres database (a MySQL, MongoDB or SQLite driver, or a Prisma datasource for one) | v1 supports Next.js on the Postgres family |
+| `stack.app_root` | never (warning) | several Next apps in a monorepo: one app per adoption, `project-adoption` asks which |
+
+The scaffolder carries its own small copy of these detections because the published package cannot import the boilerplate; the full stack descriptor lives in `cli/lib/stack-descriptor.ts`, and `project-adoption` writes the `stack:` block from it.
+
+### Install: `bunx create-agentic-dev --adopt`
+
+From the app's repo root:
+
+1. Runs the preflight above.
+2. Downloads the template into a temp directory and installs its dependencies there. Nothing is downloaded into the app.
+3. Runs that copy's `cli/update-boilerplate.ts --adopt` with the app as the working directory (`--non-interactive` becomes the updater's `--auto`; `--template-repo` reaches it as `UPEX_TEMPLATE_REPO`). The first-run adopt policy is described in [`AGENTS.md`](AGENTS.md) §5.5, "UPDATER `--adopt`", and owned by `cli/lib/updater-adopt.ts`.
+4. Deletes the temp directory and prints the next steps.
+
+It never scrubs history, renames the project, runs `git init`, runs `bun install` or `bun run setup` inside the app, or touches a database. `--adopt` refuses the greenfield-only inputs (a project name, `--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup`) and a `--template` other than `main`, because the updater syncs the template's default branch. Exit `32` means the updater's own run failed; its output says why, and whatever it touched is backed up under `.backups/`.
+
+### After the install
+
+1. Review the parity table the updater printed (it saves the rows to `.agents/prompts/parity-plan.md`). Rows marked BLOCKING, such as a script name the app already uses or the pending merge of its instruction files, need a decision before `bun run agents:compat:check` passes.
+2. `bun install`, for the tooling `devDependencies` the updater appended to `package.json`.
+3. Commit the adoption as one change. `project-adoption` refuses to start on a dirty tree.
+4. Open an agent session (`bun run claude`, `bun run opencode` or `bun run codex`) and load `project-adoption`. It analyses the app without writing, proposes one plan in `.context/reports/project-adoption-plan.md`, and after your approval fills identity, `stack:`, environments, the tracker catalogs and `updater.protected_paths`, then checks that the app's own build, lint and test scripts still exit as they did before.
+
+`bun run setup` is a separate step on an adopted repo: run it after the adoption is committed when you want the machine-level pieces it installs (Engram, community skills, harness detection).
+
+---
+
 ## Git strategy setup (agent-driven, before your first push)
 
 The scaffold ships a **default** git strategy (`solo-main`) with `meta.strategy_source: inherited` in `.agents/project.yaml` — a placeholder nobody chose for YOUR project (`packages/create-agentic-dev/src/prepare.ts` resets the provenance stamps on scaffold). Defining it is an explicit step, not an inherited fact: once your project identity is filled in, ask your AI agent:
@@ -280,7 +322,7 @@ Skills that are workflow-specific to this boilerplate live in `.agents/skills/` 
 | Skill                 | Trigger                                         | Why it stays local                                                                                                                                                                                      |
 | --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `agentic-dev-core`    | (auto, cited by other skills)                   | Passive reference host for shared doctrine (briefing template, dispatch patterns, orchestration, skill-composition strategy). Loaded on demand by workflow skills — not invoked directly.               |
-| `project-foundation`  | `/project-foundation`                           | Constitution + PRD + SRS + Discovery (one-time per product)                                                                                                                                             |
+| `project-foundation`  | `/project-foundation`                           | Constitution + PRD + SRS + Discovery (one-time per product); Discovery only on an existing app                                                                                                          |
 | `design-system`       | `/design-system`                                | DESIGN.md (Google Labs spec, 5 paths) pre-scaffolding + opt-in per-story screen-mapping phase (design briefs → `master-design-plan.md`)                                                                 |
 | `project-bootstrap`   | `/project-bootstrap`                            | Backend + frontend skeleton + features (OpenAPI, auth, env)                                                                                                                                             |
 | `project-adoption`    | `/project-adoption [check]`                     | Existing app after the updater's `--adopt` install: sealed analysis, plan to approve, then agentic surfaces only (identity, `stack:`, tracker, protected paths) |

@@ -244,7 +244,7 @@ Features with ambiguous scope, pending technical decisions, or competing approac
 
 Per item, name the specific project feature most at risk and the cheapest way to **defer the decision** vs the cheapest way to **lock it down**.
 
-### 10. Pre-ship checklist (applies to every feature before merging to main)
+### 10. Pre-ship checklist (applies to every feature before merging to the production branch, `git_strategy.branches.production` in `.agents/project.yaml`)
 
 Short, action-oriented. No more than 12 items. Ordered by what is most often skipped first. Each line is one check phrased as "Verify X is true before merging Y". Examples (adapt to the project):
 

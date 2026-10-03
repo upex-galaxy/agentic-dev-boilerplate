@@ -31,6 +31,24 @@
       "category": "positive"
     },
     {
+      "name": "should-accept-business-maps-without-prd-srs",
+      "prompt": "Implement BK-42 on our adopted app. We never wrote a PRD or SRS; the business maps, dev guide and glossary are generated.",
+      "expected_behavior": "Pre-requisites pass on the business-maps form: `.context/PRD/` and `.context/SRS/` hold only their READMEs, but `bun run context:map business-data-context` prints sections. No fast-fail and no suggestion to write a PRD or SRS. Stage 1 reads the architecture record from `business-api-context` `architecture` + `business-data-context` `overview` + `.context/business/project-dev-guide.md` and `.context/ADR/`; data model from the data map's `entities` / `access-control` / `migrations`; the API contract from the app's OpenAPI spec when present, else `auth-model` / `journey-<slug>` and the feature map's `route-inventory`; UI copy from the glossary and the live UI. A placeholder map the story needs is a `missing_input` that recommends `/project-context <mode>`.",
+      "category": "positive"
+    },
+    {
+      "name": "should-fast-fail-without-any-product-docs",
+      "prompt": "Implement BK-7. The repo has no PRD, no SRS and the business maps are still placeholders.",
+      "expected_behavior": "Fast-fails at Pre-requisites because neither product-doc set exists. Hands off to /project-foundation when the product is still being defined, or /project-context data when the app's code already exists. Does not write a PRD, an SRS or a map itself, and does not start Stage 1.",
+      "category": "positive"
+    },
+    {
+      "name": "should-keep-srs-inputs-when-prd-srs-exist",
+      "prompt": "Implement UPEX-310, a new backend endpoint. This project went through /project-foundation, so PRD and SRS are there.",
+      "expected_behavior": "PRD/SRS path, unchanged: Pre-requisites pass on the PRD/SRS form. Stage 1 reads `.context/SRS/architecture-specs.md` and `.context/ADR/` as input 9, Stage 2 reads `.context/SRS/api-contracts.yaml` for the backend contract, and UI copy follows the glossary plus the PRD `executive-summary.md` / `user-personas.md`. Business maps remain optional inputs; a missing one is a `missing_input` note, not a blocker.",
+      "category": "positive"
+    },
+    {
       "name": "should-not-trigger-ac-refinement",
       "prompt": "Refine the AC for UPEX-277 — the criteria are vague and I want them as Gherkin before we code.",
       "expected_behavior": "Does NOT activate sprint-development. Should route to /product-management (acceptance-criteria.md reference) because AC refinement happens BEFORE implementation. sprint-development assumes the story is Ready-For-Development; refining AC mid-flight is a sign the story shouldn't have been pulled into the sprint yet.",

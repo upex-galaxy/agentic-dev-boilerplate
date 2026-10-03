@@ -10,6 +10,17 @@ Configurar el sistema de **tipado auto-generado** desde Supabase para obtener ty
 
 ---
 
+## 🧭 PASO PREVIO: LEER EL BLOQUE `stack:`
+
+Esta add-on corre igual en un proyecto greenfield y en una app existente (veredicto `existing-app` del guard de entrada, `SKILL.md` → Phase 3). Antes del primer paso, leer `.agents/project.yaml` → `stack:` (contrato: `.agents/README.md` → `stack`) y resolver con él todo lo que esta referencia escribe como literal:
+
+- Las rutas de ejemplo (`src/app/api/`, `src/lib/supabase/`, `src/types/supabase.ts`) son el default greenfield: se resuelven bajo `{{stack.app_root}}`; el archivo de tipos es `{{stack.database.types_path}}`; con `stack.framework: nextjs-pages` la API vive en `pages/api/`.
+- Los comandos de la app son `{{stack.package_manager}} run <script>` con el NOMBRE de `stack.scripts`; un script en `null` se salta y se dice, nunca se inventa. Las dependencias se instalan con ese package manager, sin cambiarlo.
+- Lo que la app ya tiene gana: una UI de docs, un contrato de error, un esquema de auth, la ubicación de los Supabase clients o la versión mayor de una dependencia (Zod, Next) se leen y se extienden, nunca se reemplazan ni se actualizan desde esta add-on. Un choque se le muestra al usuario con las dos formas.
+- El Supabase project ref es `environments.<env>.db_project_ref`; todo toque a la base sigue `agentic-dev-core/references/db-change-doctrine.md`.
+
+---
+
 ## 📥 INPUT REQUERIDO
 
 ### 1. Contexto del Proyecto
@@ -115,7 +126,11 @@ El project ref tiene formato: xxxxxxxxxxxxxxxxxxxx (20 caracteres)
 
 ### FASE 1: Generar Tipos de Supabase
 
+**Paso 1.0: Load the Supabase skills.** Load `/supabase` + `/supabase-postgres-best-practices` before generating (they cover the type generator, the `Database` type wiring and the schema the types mirror). Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+
 **Paso 1.1: Ejecutar generación**
+
+Si `stack.scripts.db_types` no es `null`, la app ya tiene su script de generación: correr `{{stack.package_manager}} run {{stack.scripts.db_types}}` y saltar el Paso 3.2 (no se agrega un segundo script). Si es `null`, generar al archivo `{{stack.database.types_path}}` (default greenfield `src/types/supabase.ts`):
 
 ```bash
 # Reemplazar [PROJECT_ID] con el valor real
@@ -247,7 +262,7 @@ export const adminClient = createClient<Database>(
 cat package.json | grep -A5 '"scripts"'
 ```
 
-**Paso 3.2: Agregar script db:types**
+**Paso 3.2: Agregar script db:types** (solo cuando `stack.scripts.db_types` es `null`; después, registrar el nombre nuevo con `bun run agents:setup --stack`)
 
 **Editar `package.json` para agregar:**
 

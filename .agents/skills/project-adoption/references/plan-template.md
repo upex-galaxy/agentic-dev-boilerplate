@@ -105,8 +105,8 @@ Required fields missing on the instance (never created here; fallback per `.agen
 
 ## 12. Discovery Gaps
 
-<Everything unverified: undetected stack fields, a test suite not run, no tracker, no OpenAPI spec,
-a prerequisite another skill states (PRD / SRS) that the business maps replace for an adopted app.>
+<Everything unverified: undetected stack fields, a test suite not run, no tracker, no OpenAPI spec.
+A missing PRD / SRS is not a gap here: the business maps, dev guide and glossary replace them for an adopted app.>
 
 ## 13. Baseline snapshot (Phase 0 signals)
 
@@ -145,7 +145,7 @@ a prerequisite another skill states (PRD / SRS) that the business maps replace f
 - Final signals: <table>
 - Gaps remaining: <list>
 - Team-owed items: <list from §10>
-- Next: /project-context refresh-all (fresh session) · /git-flow-master Strategy Setup · optional /design-system extract, /testability-guide
+- Next: /project-context refresh-all (fresh session) · /project-foundation Discovery-only (dev guide + glossary) · /git-flow-master Strategy Setup · optional /design-system extract, /testability-guide
 ```
 
 A later drift run (`Status: COMPLETED` and some signal `PENDING` again) appends `## Drift run <YYYY-MM-DD>` with its own small table and approval line; the closed sections above are never rewritten.
