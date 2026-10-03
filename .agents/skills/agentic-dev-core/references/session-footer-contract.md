@@ -78,6 +78,8 @@ Every stage a stage owner runs closes with this. **"Light" means the agent answe
 ```
 Light stage verifier — <Stage name>
 [ ] Tracker status — the issue re-read (bun run jira:sync-issues get <KEY>) shows the status this stage meant to reach
+    (artifact-lifecycle.md §1: name the slug fired or verified, or the stated reason it was not)
+[ ] Assignee — read back after every transition fired or verified (artifact-lifecycle.md §2), or stated N/A
 [ ] Tracker writes — every field / comment this stage owns actually landed (re-read body, not the "created OK")
 [ ] PR — exists, base branch matches the git strategy, `gh pr checks` state named (green / red / pending)
 [ ] Migration — the schema or migration ledger re-read shows the change (db capability), or stated N/A
