@@ -5,6 +5,78 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-03 — Parity wave with agentic-qa-boilerplate; volatile-facts lints block (updater 8.6)
+
+The dev-sync parity wave: mechanisms first built in the sibling
+`agentic-qa-boilerplate`, adapted to a development boilerplate (stories, PRs,
+deploys, Supabase, Vercel), one PR per unit (#31 to #50, and the sweep that
+closes it). The command-alias retirement of the same wave has its own entry
+below (updater 8.5).
+
+### Added
+
+- **Doctrine pack** (#35): verify at the destination (Critical Rule #16),
+  decision elicitation through the harness prompt or the `mkd` deck, ADRs that
+  record an owner decision as Accepted.
+- **Volatile facts** (#36, closed by the sweep): Critical Rule #17 and its canon
+  `agentic-dev-core/references/volatile-facts.md`, the `FILE-LINE` and
+  `CURRENT-STATE` checks in `scripts/lint-skills.ts`, the `docs:check` gate
+  (`scripts/lint-docs.ts`) and the measurements ledger ADR-0003.
+- **Agent identity and forensic trailers** (#37): the prompt hook injects an
+  `AGENT IDENTITY:` line; every agent commit ends with `Worktree:` + `Session:`;
+  harness-branded trailers are forbidden (ADR-0004). `.husky/commit-msg` warns.
+- **Worktree foundation** (#34): `bun run worktree:provision`, `bun run
+  worktree:audit` and the checkout roots.
+- **Live-UI browser sessions and the Jira ADF budget** (#38, #40): named
+  in-memory `playwright-cli` sessions at the live-UI gate; plan templates that
+  fit under the Jira rich-text cap, guarded by a test.
+- **MCP capabilities** (#39): skills declare `library-docs`, `web-search`, `db`,
+  `automation-flows`; tools resolve by name suffix; web search lives at harness
+  level (ADR-0005).
+- **Skill-system mechanics** (#41): `metadata.kind`, context skills, the session
+  footer.
+- **`session-handoff` and `pr-review-lead`** (#42).
+- **Artifact lifecycle doctrine** (#44).
+- **`bun run harness:env`** (#46, #48): per-harness MCP credential files derived
+  from `.env` for launches with no command line, supervised workers included.
+- **`orca-orchestration`** (#47): conductor / worker / automation modes over the
+  Orca runtime and `/sprint-development` fleet mode; silent when the runtime is
+  absent.
+- **Business context maps as HTML** (#49): the data, feature and API maps live
+  inside three shipped context skills, read with `bun run context:map`.
+- **`.agents/project.schema.yaml`** (#50): generated from the maintainer yaml with
+  an identity leak gate; one schema-driven hook back-fills every block a project
+  lacks; `setup:doctor` reports the gaps; `agents:setup` reseeds a copied
+  maintainer yaml.
+
+### Changed
+
+- **Updater parity gates** (#43): array-valued config deltas, `PATH_PREREQUISITES`
+  and `CONFIG_BLOCK_READERS` block a half-delivered release, the synced halves
+  `eslint.config.base.js` and `.husky/framework-gates.sh`, and the additive
+  `permissions.allow` merge of `.claude/settings.json`.
+- **Volatile-facts lints block.** `FILE-LINE` and `CURRENT-STATE` are ERROR in
+  `skills:check` and `docs:check` after the prose sweep: dated tool releases and
+  verifications moved to the ADR-0003 ledger, line-number citations became
+  symbol names, and the updater release narration in `README.md`,
+  `INSTALLER.md` and `CONTEXT.md` became behaviour statements pointing here.
+
+### Fixed
+
+- `bun run git:policy verify`, `--stamp` and `apply` honour
+  `policy.accepted_divergences` (#31).
+- The OpenCode plugin loads on both plugin generations; Codex stdio MCP servers
+  start through a `.env` loader (#33).
+
+### Upgrading a project
+
+`bun run up` delivers the wave; its parity prompt names what a project must
+merge by hand (hooks, `eslint.config.js`, `AGENTS.md` sections, missing
+`.agents/project.yaml` blocks). After it, `bun run repo:check` fails on any
+`FILE-LINE` or `CURRENT-STATE` hit in the project's own committed prose: name
+the owner instead of the value, or mark a line that must keep it with
+`volatile-ok: <reason>`.
+
 ## 2026-10-02 — Skills by name plus mode; command aliases and sync-ai-memory retired (updater 8.5)
 
 Port of the sibling `agentic-qa-boilerplate` retirements (its PRs #52 and #55),

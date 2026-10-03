@@ -133,7 +133,7 @@ Once branches are materialized and decisions captured, persist in this order:
    - `policy:` — `direct_push_to_protected` / `admin_bypass` / `require_pr_reviews`, captured from Q4 (applies to every strategy).
    - `branch_prefixes:` — `precedence` + naming patterns (carry the defaults unless the user overrides).
    - `description:` — the one-paragraph human summary of the flow for this repo.
-   - `meta.created:` — today's date; bump `meta.setup_version` on a re-run that changes the schema. Leave `meta.policy_verified: null` and `meta.policy_source: declared` — only a successful `bun run git:policy verify --stamp` may flip them (Section 4.5).
+   - `meta.created:` — the date of the run; bump `meta.setup_version` on a re-run that changes the schema. Leave `meta.policy_verified: null` and `meta.policy_source: declared` — only a successful `bun run git:policy verify --stamp` may flip them (Section 4.5).
    - `meta.strategy_source: chosen` — **stamp this whenever the questionnaire actually ran.** It ships `inherited`, and that is the ONLY thing separating "this project picked `solo-main`" from "this project never chose and kept the default". `strategy:` itself is never null, so it cannot carry that distinction. Forgetting the stamp means the bootstrap offer keeps proposing a setup the user already completed.
    Per-strategy field values: `references/branching-strategies.md` → "git_strategy field rules (per strategy)".
 2. **Set up local tracking** for any newly-ensured branch (`git branch --set-upstream-to=origin/<branch> <branch>` or `git checkout -b <branch> origin/<branch>`), so later operations don't re-detect.

@@ -166,11 +166,11 @@ particular way.
 | Input | Authoritative for | Never authoritative for |
 | --- | --- | --- |
 | `.context/dev-roadmap.md` | dependency edges, mockup gates, execution ordering | current status of anything |
-| Live tracker query | status right now, assignee, changelog | whether work merged |
+| Live tracker query | live status, assignee, changelog | whether work merged |
 | Phase 1 verdict column | whether work merged | what should be built |
-| Queue / board / claim file | who owns which row right now | whether a dependency shipped |
+| Queue / board / claim file | who owns which row at read time | whether a dependency shipped |
 
-**A recent timestamp on the roadmap is not evidence about any ticket's status today.** The file tracks when
+**A recent timestamp on the roadmap is not evidence about any ticket's live status.** The file tracks when
 edges and gates were refreshed, which is a different axis entirely.
 
 ---

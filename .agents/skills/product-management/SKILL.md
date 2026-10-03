@@ -69,7 +69,7 @@ Use this skill whenever you are doing backlog or refinement work after the found
 The skill is reference-driven: each workflow points to a specific reference file with the exact protocol.
 
 **This skill does NOT own design, and must not wait for one.** A story is written, refined and made
-ready without any mockup existing. Screens are produced later, per story, at the moment development
+ready without any mockup existing. Screens are produced later, per story, when development
 picks the story up — `/sprint-development`'s design gate routes to `/design-system`'s screen phase
 then. Do not defer, block or downgrade a story because its screen has not been drawn.
 

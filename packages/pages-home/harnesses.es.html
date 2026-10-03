@@ -567,7 +567,7 @@
                   <td>
                     <code>AGENTS.md</code> es el único cuerpo de instrucciones;
                     <code>CLAUDE.md</code>
-                    queda en 11 bytes (<code>@AGENTS.md</code>). Las 14 skills se mueven a
+                    queda en una sola línea (<code>@AGENTS.md</code>). Las skills se mueven a
                     <code>.agents/skills/</code>; <code>.claude/skills</code> pasa a ser un alias
                     generado e ignorado por git. Regla crítica #15 nueva.
                   </td>
@@ -734,7 +734,7 @@
             <p>
               <strong>Por qué <code>CLAUDE.md</code> es un include y no un symlink.</strong> Un
               symlink no sobrevive un checkout en Windows sin permisos de developer. Un archivo de
-              11 bytes sí. El alias de skills, en cambio, es un symlink POSIX o una junction de
+              una línea sí. El alias de skills, en cambio, es un symlink POSIX o una junction de
               Windows porque Claude Code no ofrece otra forma de apuntar su descubrimiento de skills
               a otra carpeta.
             </p>

@@ -1135,7 +1135,7 @@ supabase gen types typescript --project-id [PROJECT_ID] > src/types/supabase.ts
 - Archivo creado: `src/types/supabase.ts`
 - Contiene tipos de todas las tablas
 - No hay errores de sintaxis
-- Tamaño del archivo > 0 bytes
+- El archivo no está vacío
 
 **Explicar:**
 

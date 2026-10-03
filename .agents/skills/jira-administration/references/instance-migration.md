@@ -94,7 +94,7 @@ Classify every hit into change / do-not-change, and **present the table to the u
 
 ### Does not change
 
-- **A vanity / alias domain** (an org-owned hostname that fronts Jira instead of the numbered or named instance slug). If one appears in the code, leave it: these normally redirect to whatever instance is currently active, which is exactly why already-published `/browse/` links survive a migration. **But the alias is invisible from the repo** — tell the user to confirm by hand that it now resolves to the target. If it still points at the source, every published link is broken and nothing in the codebase reveals it.
+- **A vanity / alias domain** (an org-owned hostname that fronts Jira instead of the numbered or named instance slug). If one appears in the code, leave it: these normally redirect to whatever instance is active, which is exactly why already-published `/browse/` links survive a migration. **But the alias is invisible from the repo** — tell the user to confirm by hand that it now resolves to the target. If it still points at the source, every published link is broken and nothing in the codebase reveals it.
 - **Historical records** — sprint reports, retros, changelogs of closed work. Rewriting them falsifies the past.
 - **Code whose pattern already generalizes.** If the logic matches the instance with a regex rather than a literal (`/site\d+\.atlassian\.net/`), it already supports the target and only a comment names the source. Read the code before deciding; do not edit a pattern that already generalizes.
 - **Regenerable cache** — `.context/PBI/` is rebuilt by the sync, so occurrences there clear themselves.

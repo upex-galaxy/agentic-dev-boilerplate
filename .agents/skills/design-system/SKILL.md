@@ -101,7 +101,7 @@ Use this skill when:
 - An existing project wants to rebrand without touching Constitution / PRD / code.
 - A team wants to centralize design tokens in a portable format consumable by multiple AI agents.
 - **A specific story needs a screen and no mockup covers it.** This is the screen phase (below), invoked
-  standalone, per story, at the moment the story is picked up — NOT up front for the whole product.
+  standalone, per story, when the story is picked up — NOT up front for the whole product.
   `/sprint-development`'s missing-row gate routes here; a human can also invoke it directly.
 
 Do NOT use this skill to:
@@ -239,7 +239,7 @@ Matching (Path B) and validation (lint) stay inline — both are cheap and fast.
 
 **This is a separate event from the token phase above, and it runs at a different time.** The token
 phase (`DESIGN.md`) happens once, up front, before scaffolding: it is the frozen contract. The screen
-phase happens **per story, just-in-time, at the moment that story is picked up for development** —
+phase happens **per story, just-in-time, when that story is picked up for development** —
 typically from `/sprint-development`'s missing-row gate, or invoked directly by whoever is about to
 build the screen.
 
@@ -347,7 +347,7 @@ On successful completion (all verification items pass), the orchestrator runs Ar
 ## Notes
 
 - **Schema status: alpha** (Google Labs). Drift risk is mitigated by always validating with the latest `@google/design.md` via `npx` (no version pin). If the schema changes substantially, update `assets/design-md-spec-summary.md` accordingly.
-- **Multi-platform out of scope (v1)**: today `DESIGN.md` assumes web. Mobile (React Native, Flutter) can be added later as a variant (`DESIGN.mobile.md`) without breaking the v1 contract.
+- **Multi-platform out of scope (v1)**: `DESIGN.md` assumes web. Mobile (React Native, Flutter) can be added later as a variant (`DESIGN.mobile.md`) without breaking the v1 contract.
 - **No `designmd-mcp` in `.mcp.example.json`**: the committed MCP set stays whatever `.mcp.json` declares. If the runtime catalog browse is needed, shell out to `npx designmd search` instead — keeps the token overhead at zero.
 - **Brownfield mode**: the skill detects repos without Constitution / PRD and drops into Q&A mode (five questions: industry, tone, target, competitors, keywords) before matching. Same flow works for projects mid-pivot.
 - **Config consumed**: `design_md_path` (optional) from `.agents/project.yaml`. Default `./DESIGN.md`.

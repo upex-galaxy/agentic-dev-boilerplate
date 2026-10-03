@@ -14,7 +14,7 @@ Use the **lowercase CLI form** in scripts. Dashboard labels are display-only.
 
 ## The canonical env-var set for this boilerplate
 
-This boilerplate's `.env.example` declares ~15 keys. Every key listed MUST exist in BOTH `production` and `preview` scopes before a deploy will run successfully. Mapping (current as of 2026-05; verify against the live `.env.example`):
+`.env.example` is the source of truth for the key set. Every app-runtime key it declares MUST exist in BOTH `production` and `preview` scopes before a deploy will run successfully. The mapping below is a snapshot to read alongside it; a key in `.env.example` that the table does not name follows the row of its family:
 
 | Key                                | Scope             | Source / notes                                                                                                                                          |
 | ---------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,9 +38,9 @@ This boilerplate's `.env.example` declares ~15 keys. Every key listed MUST exist
 | `ATLASSIAN_*`, `N8N_*`             | (skip)            | Devtime / agent-side only. Do NOT push these to Vercel scopes unless app code reads them at runtime.                                                    |
 | `SUPABASE_ACCESS_TOKEN`            | (skip)            | Supabase MCP admin-scope PAT — devtime only.                                                                                                            |
 
-> **Shortcut:** Vercel + Supabase have a first-party integration that auto-injects ALL `SUPABASE_*`, `NEXT_PUBLIC_SUPABASE_*`, and `POSTGRES_*` vars into both scopes at once. See `.env.example` lines 95–99 (the "Copy Snippet" tip). When that integration is wired, `vercel env pull` is the source of truth — your local `.env` mirrors Vercel, not the other way around.
+> **Shortcut:** Vercel + Supabase have a first-party integration that auto-injects ALL `SUPABASE_*`, `NEXT_PUBLIC_SUPABASE_*`, and `POSTGRES_*` vars into both scopes at once. See the "Copy Snippet" tip in `.env.example`. When that integration is wired, `vercel env pull` is the source of truth — your local `.env` mirrors Vercel, not the other way around.
 
-## Read what Vercel currently has
+## Read what Vercel has
 
 ```bash
 # Pull preview-scope vars into .env.local (gitignored)

@@ -24,7 +24,7 @@ The output contains:
 - **§3 Story dependency graph** — the hard/soft edge list with the *reason* for each edge. This is the part nothing else holds — Jira issue-links are sparse and carry no reason.
 - **§4 Execution sprints** — the topologically-sorted parallel-safe batches (Kahn's sort of the link graph). **This subsumes the former `.context/PBI/sprint-sequence.md`.**
 - **§5 Mockup-gate registry** — which stories cannot start until a mockup lands (Critical Rule #15 / `master-design-plan.md` §8).
-- **§6 Live status — query recipe** — NOT a status table. A recipe to fetch today's truth, plus the local-only knowledge Jira does not store (per-story pre-dev blockers, edge-mapping TODO).
+- **§6 Live status — query recipe** — NOT a status table. A recipe to fetch the live truth, plus the local-only knowledge Jira does not store (per-story pre-dev blockers, edge-mapping TODO).
 - **§7 Maintenance protocol** — who owns what, what is durable vs volatile, when to re-run.
 
 This is **NOT** the epic strategy (→ `/project-context master-plan`), a per-story file plan (→ `/sprint-development`), a flow map (→ the data map in `business-data-context`), nor a feature catalog (→ the feature map in `business-feature-context`).
@@ -123,7 +123,7 @@ Write `.context/dev-roadmap.md` with this structure.
 > **Authority**: dependency edges + execution sprints + mockup-gates are owned HERE. Live story status is owned by the issue tracker (see §6 — never frozen here).
 ```
 
-**Never emit a single undifferentiated "Last sync" date.** One timestamp invites the reader to treat everything on the page as fresh, including availability — and the durable layers (edges, gates) move on a completely different axis from a ticket's status today. Separate dates, plus the explicit "no status snapshot" line, keep those axes visibly apart. A recent edge date says nothing about whether PROJ-39 is still open.
+**Never emit a single undifferentiated "Last sync" date.** One timestamp invites the reader to treat everything on the page as fresh, including availability — and the durable layers (edges, gates) move on a completely different axis from a ticket's live status. Separate dates, plus the explicit "no status snapshot" line, keep those axes visibly apart. A recent edge date says nothing about whether PROJ-39 is still open.
 
 ### 1. How to read this — authority split
 Open with a **plain-language TL;DR** so any reader (especially an AI loading this cold) gets it in one breath:
@@ -153,7 +153,7 @@ The Kahn-sort output (Execution Sprint | parallel-safe count | story keys | note
 | Banned (reads as status) | Required (reads as order) |
 | ------------------------ | ------------------------- |
 | "PROJ-39 workable now" | "PROJ-39 workable once PROJ-38 is dev-done" |
-| "ready" / "unblocked" / "available" / "next up" / "can start today" | "unblocked by PROJ-38" / "no upstream edges" / "first in Execution Sprint 2" |
+| "ready" / "unblocked" / "available" / "next up" / "can start now" | "unblocked by PROJ-38" / "no upstream edges" / "first in Execution Sprint 2" |
 | "already done" / "shipped" | (say nothing about completion — that is §6) |
 
 Same rule in the user's language: any phrasing implying a ticket's CURRENT state is banned here. A story with no upstream edges is described as having no upstream edges, never as "ready to work" — whether it can actually be picked up depends on its live status, which this page does not know.

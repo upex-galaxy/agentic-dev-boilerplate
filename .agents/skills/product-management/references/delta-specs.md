@@ -163,7 +163,7 @@ Each requirement is a `### Requirement: {Title}` block with:
 
 ## Concrete example: adding 2FA to login
 
-Suppose `auth/login.md` currently exists with one requirement:
+Suppose `auth/login.md` already exists with one requirement:
 
 ```markdown
 # Login

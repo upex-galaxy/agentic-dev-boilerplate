@@ -245,4 +245,4 @@ If any box is unchecked, fix that first. The downstream skills assume a green fo
 - Scaffold backend / frontend code → use `/project-bootstrap`
 - Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
 
-The onboard tour ends at the moment the user knows which skill to call next. From there, the relevant workflow skill takes over.
+The onboard tour ends once the user knows which skill to call next. From there, the relevant workflow skill takes over.

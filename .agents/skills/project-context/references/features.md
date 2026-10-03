@@ -285,4 +285,3 @@ Keep section ids stable so downstream consumers can address them with `--section
 ---
 
 **Version**: 1.0
-**Last updated**: 2026-05-11

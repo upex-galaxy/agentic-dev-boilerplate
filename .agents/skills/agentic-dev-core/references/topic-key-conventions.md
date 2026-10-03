@@ -50,7 +50,7 @@ Session-state keys mirror the file layout under `.session/<skill-slug>/<scope>/{
 
 ## Common artifact types
 
-The vocabulary is open — pick whatever name the workflow naturally uses — but the table below covers the names most skills emit today. New names should follow the same kebab-case style and be added here when introduced.
+The vocabulary is open — pick whatever name the workflow naturally uses — but the table below covers the names most skills emit. New names should follow the same kebab-case style and be added here when introduced.
 
 | Artifact name       | Producer                                          | What it is                                                  | File path                                       |
 | ------------------- | ------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |

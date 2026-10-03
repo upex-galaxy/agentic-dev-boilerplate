@@ -188,7 +188,7 @@ These are the statuses for **Test Runs** (not the Test issue itself):
 | Status          | Description                 | Color  | Action                 |
 | --------------- | --------------------------- | ------ | ---------------------- |
 | 📝 **TODO**      | Test not yet executed       | Gray   | Execute in next run    |
-| 🔄 **EXECUTING** | Currently running           | Blue   | In progress            |
+| 🔄 **EXECUTING** | Running                     | Blue   | In progress            |
 | ✅ **PASS**      | Test passed                 | Green  | Maintain in regression |
 | ❌ **FAIL**      | Test failed                 | Red    | Investigate & fix      |
 | ⚠️ **ABORTED**   | Execution stopped           | Orange | Review and retry       |

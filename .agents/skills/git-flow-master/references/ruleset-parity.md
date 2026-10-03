@@ -95,7 +95,7 @@ Acceptance is per-field and needs a reason. The yaml entry is what the tool read
 - removes the `pull_request` rule entirely (direct pushes become possible);
 - lowers `required_approving_review_count`;
 - turns off `require_code_owner_review`;
-- permits a merge method the host currently forbids.
+- permits a merge method the host forbids.
 
 A tool that can silently open `main` is a worse problem than the drift it fixes. The flag exists because some of these are legitimate and intended — turning off an unsatisfiable code-owner requirement, for instance — but each one has to be asked for.
 

@@ -94,19 +94,24 @@ describe('lint-docs references', () => {
 });
 
 describe('lint-docs volatile facts (Critical Rule #17)', () => {
-  test('a path:line citation is a FILE-LINE warning, not a missing path', () => {
-    write('scripts/tool.ts', '');
-    write('docs/README.md', 'See `scripts/tool.ts:12` for the shape.');
-    expect(lintDocs(root).findings.map(tag)).toEqual(['warning:docs/README.md:1:file-line:scripts/tool.ts:12']);
+  test('both volatile families block the gate after the sweep', () => {
+    expect(SEVERITY['file-line']).toBe('error');
+    expect(SEVERITY['current-state']).toBe('error');
   });
 
-  test('a claim about the present is a CURRENT-STATE warning in markdown and HTML prose', () => {
+  test('a path:line citation is a FILE-LINE error, not a missing path', () => {
+    write('scripts/tool.ts', '');
+    write('docs/README.md', 'See `scripts/tool.ts:12` for the shape.');
+    expect(lintDocs(root).findings.map(tag)).toEqual(['error:docs/README.md:1:file-line:scripts/tool.ts:12']);
+  });
+
+  test('a claim about the present is a CURRENT-STATE error in markdown and HTML prose', () => {
     write('README.md', 'The store holds ten skills today.\nMeasured 2026-09-17 on a live project.');
     write('docs/onboarding.html', `${head}<p>El catálogo tiene hoy 24 entradas.</p>`);
     expect(lintDocs(root).findings.map(tag)).toEqual([
-      'warning:README.md:1:current-state:today',
-      'warning:README.md:2:current-state:Measured 2026-09-17',
-      'warning:docs/onboarding.html:1:current-state:hoy',
+      'error:README.md:1:current-state:today',
+      'error:README.md:2:current-state:Measured 2026-09-17',
+      'error:docs/onboarding.html:1:current-state:hoy',
     ]);
   });
 

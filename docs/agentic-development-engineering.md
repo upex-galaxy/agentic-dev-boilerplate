@@ -163,7 +163,7 @@ This is the foundational decision behind every architectural choice in this repo
 | Term                    | Definition                                                                                                                                                                              |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Token**               | The unit an AI model reads and writes. Tokens have direct cost and occupy context window space.                                                                                         |
-| **Context Window**      | The memory available within a single conversation. Everything the AI can "see" right now.                                                                                               |
+| **Context Window**      | The memory available within a single conversation. Everything the AI can "see" in that conversation.                                                                                               |
 | **MCP**                 | Model Context Protocol. A standard that lets AI tools talk to live systems — database, browser, web search, official library docs.                                                      |
 | **Skill**               | A reusable AI capability, stored under `.agents/skills/<name>/` and shared by every supported harness. Auto-triggers when the user's intent matches its description.                    |
 | **Command**             | A generated transport alias (`.claude/commands/<name>.md`, `.opencode/commands/<name>.md`) that forwards `/<name>` to a skill + mode. Holds no workflow of its own. No auto-triggering. |
@@ -180,7 +180,7 @@ This is the foundational decision behind every architectural choice in this repo
 | **Compact Rules**       | Pre-digested coding standards injected into subagent prompts so they do not have to load and parse a full skill registry on every dispatch.                                             |
 | **Briefing Template**   | The 7-component format (Goal · Context docs · Project Standards · Skills to load · Exact instructions · Report format · Rules) every subagent dispatch follows.                                             |
 | **Dispatch Pattern**    | One of Single / Sequential / Parallel / Background. Picked per stage in each skill's `## Subagent Dispatch Strategy` section.                                                           |
-| **Active Environment**  | The environment URLs and credentials currently in use (local / staging / production). Resolved from `testing.default_env` in `.agents/project.yaml` or session override.                |
+| **Active Environment**  | The environment URLs and credentials in use for the session (local / staging / production). Resolved from `testing.default_env` in `.agents/project.yaml` or session override.                |
 | **Topic Key**           | The stable identifier under which an artefact is saved in engram (e.g. `pbi/{ticket}/impl-plan`). Documented in `agentic-dev-core/references/topic-key-conventions.md`.                 |
 
 ---
@@ -734,8 +734,6 @@ A development practice that ships features faster, documents every decision, rem
 The rest is execution.
 
 ---
-
-**Last Updated**: 2026-05-13
 
 **See also**:
 

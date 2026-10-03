@@ -205,7 +205,7 @@ remedio concreto.
 5. **¿Nada de lo anterior?** Degradá al flujo manual original: generá `BRIEF.md`, pausá, el user
    itera en la UI y te avisa (contrato de espera de siempre).
 
-### Flujo MCP autónomo — screen mockups end-to-end (verificado 2026-07-30)
+### Flujo MCP autónomo — screen mockups end-to-end
 
 Camino estándar cuando la fase screen-mapping (skill `design-system`) corre con el MCP disponible.
 El agente **comisiona** los diseños a Open Design; nunca los escribe él (S1 sigue vigente: el que
