@@ -146,6 +146,8 @@ DESIGN.md                                  # tokens congelados (ruta: frontend.d
 .context/SRS/api-contracts.yaml  (si story toca backend/API)
 ```
 
+Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas preguntas se responden con las secciones de los mapas que lista `../SKILL.md` → "Product docs: PRD/SRS or business maps" (arquitectura, modelo de datos, contrato de API), más `.context/business/project-dev-guide.md`. No se crea un SRS para completar este paso.
+
 **Propósito:**
 
 - Stack técnico del proyecto
