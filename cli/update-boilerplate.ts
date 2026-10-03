@@ -862,6 +862,23 @@ export function resolveProtectedWatchlist(cwd: string, warn: (message: string) =
   return mergeProtectedWatchlist(PROTECTED_WATCHLIST, declared.paths);
 }
 
+/**
+ * Watched paths that are the APP's own root configs on an adopted repo. Their
+ * drift row compares them with upstream's greenfield `tsconfig.json` /
+ * `eslint.config.js` and would advise porting `bun-types`, `.ts` import
+ * extensions or the antfu preset INTO the app's config: the opposite of
+ * isolation. The tooling's halves are the synced `tsconfig.tooling.json` /
+ * `eslint.config.tooling.mjs`, and what the app's configs owe the tooling (an
+ * exclude, an ignore) is `cli/lib/adopt-isolation.ts`'s row. The entries stay
+ * on the watchlist (never overwritten); only the drift row is dropped.
+ */
+export const ADOPTED_APP_CONFIGS: readonly string[] = ['tsconfig.json', 'eslint.config.js'];
+
+/** The watchlist entries whose drift is reported: all of them, minus the app's own configs on an adopted repo. */
+export function watchedForDrift(watchlist: readonly ProtectedWatchEntry[], adopted: boolean): ProtectedWatchEntry[] {
+  return adopted ? watchlist.filter(e => !ADOPTED_APP_CONFIGS.includes(e.path)) : [...watchlist];
+}
+
 // NOT on the watchlist, deliberately — do not "fix" this asymmetry:
 //
 //  - `.agents/jira-fields.json` / `jira-workflows.json` / `jira-link-types.json`
@@ -1220,7 +1237,7 @@ export function gatesSummaryLine(gates: readonly GateResult[], skippedReason: Ru
   return null;
 }
 
-function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean, watchlist: readonly ProtectedWatchEntry[]): (summary: RunSummary) => Promise<void> {
+function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean, watchlist: readonly ProtectedWatchEntry[], adopted: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     const cwd = process.cwd();
     // A freshly declared `updater.protected_paths` entry gets its marker
@@ -1230,7 +1247,7 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
     // project's own lock cursor, first-run noise on a migrated repo, not a
     // new upstream change to review.
     const { advised: drifted, seeded, seededNoUpstreamChange } = splitFirstProjectAdvice(
-      detectProtectedDrift(watchlist, UPSTREAM_DIR, cwd),
+      detectProtectedDrift(watchedForDrift(watchlist, adopted), UPSTREAM_DIR, cwd),
       { tempDir: UPSTREAM_DIR, lockCursor: priorLockSha || null },
     );
     // Markers FIRST: one nudge per upstream change even if the user ignores
@@ -1719,6 +1736,7 @@ async function main(): Promise<void> {
   // never-overwrite rule (bootstrapOnlyPaths), the sparse checkout and the
   // drift rows below.
   const watchlist = resolveProtectedWatchlist(process.cwd(), msg => sink.warn(msg));
+  const adoptedRepo = parsed.adopt || isAdopted(process.cwd());
 
   const cfg: UpdaterConfig = {
     templateRepo: TEMPLATE_REPO,
@@ -1756,7 +1774,7 @@ async function main(): Promise<void> {
     repoOnlyPaths: REPO_ONLY_PATHS,
     // An adopted app (this --adopt run, or any run after one): the
     // boilerplate's own numbered ADRs stay out of the app's decision log.
-    ...(parsed.adopt || isAdopted(process.cwd()) ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
+    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),
@@ -1778,7 +1796,7 @@ async function main(): Promise<void> {
             async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
             // Read-only detection so the preview's table matches the real run's.
             makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH), dryRun: true }, sink, (fact) => { runFacts.pbiCache = fact; }),
-            makeParityHook(sink, priorLockSha, true, watchlist),
+            makeParityHook(sink, priorLockSha, true, watchlist, adoptedRepo),
           )
         : composeHooks(
             sink,
@@ -1811,7 +1829,7 @@ async function main(): Promise<void> {
             // AGENTS.md keeps the legacy CLAUDE.md marker), the compat check,
             // the gates, the migration archive and the rest into the single
             // parity report main() prints after runUpdate returns.
-            makeParityHook(sink, priorLockSha, false, watchlist),
+            makeParityHook(sink, priorLockSha, false, watchlist, adoptedRepo),
             // VERY LAST: rebuilds REGISTRY.md from whatever `.agents/skills/`
             // looks like once every other hook (parity included) has run. A
             // skill the parity hook just reported as "project edit

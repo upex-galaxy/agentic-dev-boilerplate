@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { COMPONENTS } from './update-boilerplate.ts';
+import { ADOPTED_APP_CONFIGS, COMPONENTS, resolveProtectedWatchlist, watchedForDrift } from './update-boilerplate.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
 const GATES = join(REPO_ROOT, '.husky', 'framework-gates.sh');
@@ -38,6 +38,21 @@ describe('the tooling scope ships with the tooling component', () => {
     expect(scripts['tooling:lint:check']).toBe('eslint --config eslint.config.tooling.mjs cli scripts');
     expect(scripts['types:check']).toBe('tsc --noEmit');
     expect(scripts['lint:check']).toBe('eslint .');
+  });
+});
+
+describe('the app\'s own root configs on an adopted repo', () => {
+  // Upstream's root tsconfig/eslint config are greenfield's: comparing an app's
+  // config with them advises porting Bun settings INTO the app.
+  test('their drift rows are dropped on an adopted repo and kept on a greenfield one; the watchlist itself is unchanged', () => {
+    const watchlist = resolveProtectedWatchlist(REPO_ROOT);
+    const paths = (adopted: boolean): string[] => watchedForDrift(watchlist, adopted).map(e => e.path);
+    for (const config of ADOPTED_APP_CONFIGS) {
+      expect(watchlist.map(e => e.path)).toContain(config);
+      expect(paths(false)).toContain(config);
+      expect(paths(true)).not.toContain(config);
+    }
+    expect(paths(true)).toContain('.husky/pre-commit');
   });
 });
 
