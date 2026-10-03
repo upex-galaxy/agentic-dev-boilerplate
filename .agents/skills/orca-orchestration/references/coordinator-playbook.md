@@ -85,14 +85,15 @@ orca terminal rename --terminal <handle> --title "<KEY> · task_<first 4 of the 
 #     --effort requires --model; neither combines with --terminal. --name names a NEW WORKTREE,
 #       not the session: there is no session-name flag on this path (see §1b).
 #     Prerequisites, both invisible from here: the agent's per-machine default arguments must carry
-#       an auto permission mode, and credentials must reach the worker: with no launch line the
-#       `bun run <harness>` wrapper never runs, so `.env` arrives only through direnv in the
-#       interactive shell (G45). references/orca-machine-setup.md §3.
+#       an auto permission mode, and credentials must reach the worker: Claude reads
+#       `.claude/settings.local.json`, OpenCode reads `.auth/opencode/*` (both from `bun run harness:env`),
+#       Codex stdio MCP servers load `.env` themselves; shell-exported CLI variables need direnv in
+#       the interactive shell (G45). references/orca-machine-setup.md §3.
 
 # 5 · verify readiness AND credentials on the worker's screen, before sending it any work
 orca terminal read --terminal <handle> --screen --json </dev/null
 #     want: the agent's status footer (model, effort) AND evidence credentials loaded
-#     (an MCP tool listed as connected, a direnv export line, or the worker's own
+#     (an MCP tool listed as connected, a direnv export line for shell CLIs, or the worker's own
 #     first probe). No credentials → fix the machine, do not dispatch work to it.
 #     Also the SESSION NAME in the status bar. Claude Code: the identity hook named it from the
 #     prompt token; the bar reads `<KEY>`. OpenCode and Codex have no hook that can: drive the TUI
@@ -154,7 +155,7 @@ about each:
 | the session-name flag, and any say over the tab title | the roster, the board card and the `Session:` commit trailer all key off the label, and the runtime titles the tab `worker-<task id>` (G71) | the prompt opens with `/<workflow-skill> <KEY> fleet worker` and the identity hook names a Claude Code session `<KEY>` from it; the conductor sends `/rename <KEY>` to the other harnesses (step 5) and renames the tab (step 4b). `references/session-identity.md` §2b |
 | environment variables in the launch line | a worker cannot be marked as a fleet worker by an exported variable | the brief and the prompt token carry it. `sprint-development` detects worker mode from them, not from the environment |
 | the prompt in the launch itself | the worker starts idle at its prompt | step 6: `terminal send` immediately after readiness. Until it lands, the worker has nothing to do |
-| a launch line that also loads the env file | every worker's `.env` depends on the MACHINE having direnv in the shell Orca runs (Codex stdio MCP servers excepted: they load `.env` themselves), and nothing reports its absence | step 5: verify credentials on screen BEFORE dispatching work (G45) |
+| a launch line that also loads the env file | Claude Code and OpenCode workers read the surfaces `bun run harness:env` generated (stale after a `.env` change until it re-runs) and Codex stdio MCP servers load `.env` themselves; a shell-exported CLI variable inside any worker depends on the MACHINE having direnv in the shell Orca runs, and nothing reports either gap | step 5: verify credentials on screen BEFORE dispatching work (G45) |
 
 **The custom-argv path** (`terminal create --command '<the line from launch.txt>'` plus
 `terminal wait --for tui-idle`) keeps exactly one role: it is the shape of the line a HUMAN pastes
