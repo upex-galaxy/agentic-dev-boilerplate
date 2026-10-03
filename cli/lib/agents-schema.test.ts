@@ -455,6 +455,12 @@ describe('the maintainer copy and the template route', () => {
     expect(reseeded).not.toContain('ProtectPublic');
     expect(reseeded.startsWith(CONSUMER_YAML_HEADER)).toBe(true);
   });
+
+  test('the consumer header matches its twin in the scaffolder', () => {
+    const prepare = readFileSync(join(REPO_ROOT, 'packages', 'create-agentic-dev', 'src', 'prepare.ts'), 'utf8');
+    const twin = /const CONSUMER_YAML_HEADER = `([\s\S]*?)`;/.exec(prepare)![1].replace(/\\`/g, '`');
+    expect(twin).toBe(CONSUMER_YAML_HEADER);
+  });
 });
 
 describe('checkSchema', () => {
