@@ -1306,8 +1306,32 @@
         }
       }
       .hosts > *,
-      .planes > * {
+      .planes > *,
+      .steps > * {
         min-width: 0;
+      }
+      .step .say {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      table.cmp.narrow td {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow th {
+        hyphens: auto;
+        overflow-wrap: break-word;
+      }
+      @media (max-width: 600px) {
+        table.cmp.narrow th,
+        table.cmp.narrow td {
+          padding: 10px 10px;
+          font-size: 0.84rem;
+        }
+        table.cmp.narrow tr > :first-child {
+          width: 34%;
+        }
       }
       .host {
         border: 1px solid var(--line);
@@ -1518,7 +1542,7 @@
         </div>
 
         <div class="tablewrap r" style="margin-bottom: 30px">
-          <table class="cmp">
+          <table class="cmp narrow">
             <thead>
               <tr>
                 <th>Camino</th>
@@ -1742,11 +1766,11 @@
           <div class="eyebrow"><span class="num">03·b</span> · el design gate</div>
           <p class="sub" style="font-size: 1rem">
             Corre en Stage 1 de <span class="mono">/sprint-development</span>, en cada historia con
-            UI, antes de planear código. Ese skill no diseña: chequea y rutea.
+            UI, antes de planear código. Esa skill no diseña: chequea y rutea.
           </p>
         </div>
         <div class="tablewrap r">
-          <table class="cmp">
+          <table class="cmp narrow">
             <thead>
               <tr>
                 <th>Lo que encuentra</th>
@@ -1781,7 +1805,7 @@
         </div>
 
         <div class="tablewrap r" style="margin-top: 22px">
-          <table class="cmp">
+          <table class="cmp narrow">
             <thead>
               <tr>
                 <th>Ruta</th>
