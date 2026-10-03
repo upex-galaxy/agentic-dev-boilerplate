@@ -13,6 +13,7 @@ import {
   parseJsonc,
   tsconfigIsolation,
   tsGlobMatches,
+  uncommented,
 } from './adopt-isolation.ts';
 import { detectHookManager } from './hook-manager.ts';
 
@@ -169,5 +170,22 @@ describe('an app that keeps its own scripts/ next to the tooling (measured: upex
     // Once applied, the config carries the lock-reading ignore: nothing is pending for scripts/.
     writeFileSync(join(root, 'eslint.config.mjs'), `import { readFileSync } from 'node:fs';\nexport default [${snippet.split('\n').pop()} { ignores: ['.next/**'] }];\n`);
     expect(eslintIsolation(root, owned)).toBeNull();
+  });
+});
+
+describe('uncommented', () => {
+  test('a glob holding "/*" inside a string is not a comment; real comments go', () => {
+    const src = 'const a = ["out/**", ".next.stale.*/**", // trailing\n  ".agents/**"]; /* block */ const b = \'x\';\n# hash line\n';
+    const out = uncommented(src);
+    expect(out).toContain('".agents/**"');
+    expect(out).toContain('"out/**"');
+    expect(out).not.toContain('trailing');
+    expect(out).not.toContain('block');
+    expect(out).not.toContain('hash line');
+  });
+
+  test('the app\'s own ".agents/**" ignore is seen behind such a glob', () => {
+    const root = tempRoot({ 'eslint.config.mjs': 'export default [{ ignores: ["out/**", ".next.stale.*/**", // x\n ".agents/**"] }];\n' });
+    expect(eslintIsolation(root)?.missing).not.toContain('.agents/**');
   });
 });
