@@ -74,6 +74,14 @@ A brand-new project that wants productive AI sessions should produce, in order:
 
 After that, `/sprint-development` operates per ticket and fills in `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/*` files as work progresses.
 
+An **existing app** (adopted with `create-agentic-dev --adopt`) has no product to define, and its context is read from its code instead:
+
+1. `/project-adoption` — identity, `stack:` block, tracker catalogs; writes nothing under `.context/`.
+2. `/project-context refresh-all` — the data, feature and API maps, then the master plan and the dev roadmap.
+3. `/project-foundation` Discovery-only — `business/project-dev-guide.md` and `business/domain-glossary.md` from the code and the maps.
+
+`PRD/`, `SRS/` and the Constitution files stay empty on that path: the maps, the dev guide and the glossary are the app's product docs, and `/sprint-development` accepts them in place of a PRD / SRS.
+
 ## References
 
 - Repo architecture: `CONTEXT.md` (root) — canonical Context Engineering map

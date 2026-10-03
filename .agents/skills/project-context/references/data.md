@@ -44,6 +44,8 @@ This command is **invocable standalone** — you do NOT have to run `/project-fo
 - Note the missing inputs in the **Discovery Gaps** section of the output
 - Suggest the user run `/project-foundation` for a fuller picture
 
+On an existing app (`.template/installer.lock.json` → `adopted: true`) a missing PRD / SRS is NOT a gap and is not reported: this map, the other two maps, the dev guide and the glossary are that app's product docs. The follow-up is `/project-foundation` Discovery-only (dev guide + glossary), never a PRD or SRS.
+
 ---
 
 ## Input
@@ -182,7 +184,7 @@ After writing:
 - Print **Discovery Gaps**: even if the list is empty, write the `discovery-gaps` section
 - In UPDATE mode, print a section-level diff (sections regenerated vs untouched, entities / flows / integrations added or changed) and wait for confirmation before writing
 - The map just changed: review the rules section and `references/gotchas.md` of `business-data-context` against it. A rule the new map contradicts is PROPOSED for the gotchas' "No longer true" section, never deleted
-- Suggest follow-ups (`/project-context api`, `/project-context features`, `/project-context master-plan`, or `/project-foundation` if PRD/SRS were missing)
+- Suggest follow-ups (`/project-context api`, `/project-context features`, `/project-context master-plan`, or `/project-foundation` if PRD/SRS were missing; on an existing app, `/project-foundation` Discovery-only for the dev guide and the glossary)
 
 ---
 
@@ -201,7 +203,7 @@ Write the map as flat `<section>`s, in this order, each with a stable `id`, its 
 | `state-<entity>` | one per stateful entity: transitions table `From \| To \| Triggering event \| Effects`, the rules that constrain them | state machine |
 | `automatic-processes` | three tables (DB triggers, cron jobs / scheduled tasks, async workers / incoming webhooks), each with a "why it exists" column | none by default |
 | `integration-<service>` | one per external service: what it does, which entities it changes, dependent flows, failure behaviour | data flow when it clarifies direction |
-| `discovery-gaps` | MANDATORY: everything you could not verify, missing PRD / SRS inputs (recommend `/project-foundation`), tables you could not place in a flow. "I could not verify X" beats an invented answer | none |
+| `discovery-gaps` | MANDATORY: everything you could not verify, missing PRD / SRS inputs (recommend `/project-foundation`; never on an existing app, see the soft-gate notice), tables you could not place in a flow. "I could not verify X" beats an invented answer | none |
 
 Every fact a figure shows is also written in the section text: the AI reads the text only (`bun run context:map`). Ids are slugs of the source name and never change after CREATE. Code paths are cited as `<code>` with real file paths.
 

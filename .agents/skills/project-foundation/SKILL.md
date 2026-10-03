@@ -1,6 +1,6 @@
 ---
 name: project-foundation
-description: 'Orchestrates the foundational definition of a new product/project: Constitution (business model + market context), Architecture (PRD + SRS + API contracts), and Discovery (business data map + API architecture + dev guide). Triggers on: `ideando un nuevo producto`, `define el PRD`, `construir la constitución del proyecto`, `mapear arquitectura del sistema`, `definir SRS`, `user personas`, `user journeys`, `MVP scope`, `business data map`, `api architecture discovery`, `project dev guide`, `constituir el proyecto desde cero`. Do NOT use for: infrastructure scaffolding (use `/project-bootstrap`), backlog seeding (use `/product-management`), per-story development (use `/sprint-development`), unit testing (use `/unit-testing`), or formal QA workflows (out of scope here).'
+description: 'Orchestrates the foundational definition of a new product/project: Constitution (business model + market context), Architecture (PRD + SRS + API contracts), and Discovery (business data map + API architecture + dev guide). On an existing app (adopted, or code with no PRD/SRS) it runs Discovery only, read from the code: maps + dev guide + domain glossary, never an invented PRD/SRS. Triggers on: `ideando un nuevo producto`, `define el PRD`, `construir la constitución del proyecto`, `mapear arquitectura del sistema`, `definir SRS`, `user personas`, `user journeys`, `MVP scope`, `business data map`, `api architecture discovery`, `project dev guide`, `constituir el proyecto desde cero`, `dev guide and glossary for this existing app`, `documentar la app existente`, `foundation for an adopted app`. Do NOT use for: infrastructure scaffolding (use `/project-bootstrap`), backlog seeding (use `/product-management`), per-story development (use `/sprint-development`), unit testing (use `/unit-testing`), or formal QA workflows (out of scope here).'
 license: MIT
 compatibility: [claude-code, codex, opencode]
 phase: foundation
@@ -17,6 +17,7 @@ compact_rules: |
   - **F6.** NEVER define personas, problem statements, or KPIs without quoting evidence (user interview, analytics snapshot, stakeholder ask, market data citation). Evidence-free claims look authoritative and mislead the PRD downstream.
   - **F7.** NEVER produce a PRD without an explicit out-of-scope section. Implicit scope boundaries always leak; missing out-of-scope is the #1 source of mid-sprint argumentation.
   - **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Status per `adr-doctrine.md` §3 step 4: a decision the human already approved is `Accepted` from the start (cite the approval); only a still-open one is `Proposed`.
+  - **F9.** NEVER run Phases 1-3 to manufacture a Constitution, PRD or SRS for an app whose code already exists (`.template/installer.lock.json` → `adopted: true`, or the user asks to document an existing app). Its foundation is Phase 4 Discovery alone, read from the code ("Existing app: Discovery-only foundation"); a missing PRD / SRS there is not a gap to fill.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
   kind: workflow
@@ -98,6 +99,7 @@ Use this skill when:
 - A new product/project is being defined from scratch and you need Constitution + PRD + SRS + Discovery artifacts.
 - An existing project needs to redefine scope significantly (e.g. pivot, new MVP cut) and the foundation docs must be regenerated.
 - A specific section is missing or stale (e.g. user journeys haven't been written yet) — invoke just that phase via the Specific tasks table below.
+- An existing app (adopted through `/project-adoption`, or code with no PRD / SRS) needs its foundation: run Phase 4 Discovery only, per "Existing app: Discovery-only foundation" below.
 
 Do NOT use this skill to:
 
@@ -236,7 +238,7 @@ Phase 4 is an **orchestrator** with six steps: it delegates to four `project-con
 
 **Step 6 — Domain glossary** (canonical domain terminology — the single vocabulary every later artifact must speak):
 
-- Runs **once**. Seed it from the PRD (personas, product terms), the SRS, the business maps (Steps 1–3), and existing ADRs.
+- Runs **once**. Seed it from the PRD (personas, product terms) and the SRS when they exist, the business maps (Steps 1–3), and existing ADRs (an existing app adds the sources listed under "Existing app: Discovery-only foundation").
 - Output: `.context/business/domain-glossary.md` with this section structure: §0 read-first clarification of the most-confused term (optional), §1 Core acronyms table (term → expansion → one-line definition), §2 Methodology terms, §3 Product entities (short forms pointing to the data map in `business-data-context` for detail), §4 Anti-glossary (banned/ambiguous terms → correct replacement → why), §5 Change protocol (glossary updated FIRST in the same PR; glossary wins doc conflicts; Jira content must match it).
 - Hand-maintained and **append-only** afterwards (like ADRs) — re-running `/project-foundation` NEVER regenerates it. If the file already exists, skip this step with a note.
 - Every domain term used later in Jira content, docs, code comments, and UI copy must match this glossary.
@@ -252,6 +254,26 @@ Phase 4 is an **orchestrator** with six steps: it delegates to four `project-con
 - `.context/business/domain-glossary.md`
 
 On successful completion of Phase 4 (Verification checklist from `plan.md` passes), the orchestrator runs Archive per `agentic-dev-core/references/session-management.md` §8 — moves `.session/project-foundation/` to `.session/.archive/<YYYY-MM-DD>-project-foundation-project/` and calls `mem_session_summary` with the archive path included so future `mem_search` calls can navigate back.
+
+---
+
+## Existing app: Discovery-only foundation
+
+An app whose code already exists has no product to define: its foundation is what the code does, written down. The business maps, the dev guide and the domain glossary ARE its product docs, and `/sprint-development` accepts them in place of a PRD / SRS (its Pre-requisites).
+
+**When it applies**: `.template/installer.lock.json` records `adopted: true` (the same key `project-context` reads), or the user asks to document an existing app that has no `.context/PRD/` / `.context/SRS/` content. A project that has a PRD / SRS keeps the full chain above, unchanged.
+
+**What changes**:
+
+| Phase | Existing app |
+|---|---|
+| 1 Constitution, 2 PRD, 3 SRS | not run (F9). A team that already holds real product docs may hand them in; nothing is invented to fill a phase |
+| 2.5 Design system | not run from here: `DESIGN.md` from the live theme is `/design-system extract`, optional, its own skill |
+| 4 Steps 1-3, 5 | the `project-context` modes, which read the code and the `stack:` block (`project-context` → "Stack parameters"). `/project-adoption` hands off `/project-context refresh-all` first: a map that `bun run context:map <skill> --list` already shows generated is not regenerated, only refreshed through its own mode when stale |
+| 4 Step 4 dev guide | reverse-engineered: folder layout, conventions and commands come from the app's code, `package.json` and the `stack:` block, never from this boilerplate's defaults |
+| 4 Step 6 glossary | seeded from the maps, the code's identifiers, the live UI copy, existing ADRs and the tracker's epic names; skipped when the file exists |
+
+**Inputs**: the seed is the code, not a stakeholder brief; Inputs #1 and #4 above are optional. Phase 0.5 writes the plan with `discovery-only` in `## Approach` and Phase 4 alone in `## Phase breakdown`. **Hand-offs**: `/product-management` for the backlog and `/sprint-development` per story; never `/project-bootstrap` base phases on an existing app.
 
 ---
 
@@ -330,6 +352,7 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 - **F6.** NEVER define personas, problem statements, or KPIs without quoting evidence (user interview, analytics snapshot, stakeholder ask, market data citation). Evidence-free claims look authoritative and mislead the PRD downstream.
 - **F7.** NEVER produce a PRD without an explicit out-of-scope section. Implicit scope boundaries always leak; missing out-of-scope is the #1 source of mid-sprint argumentation.
 - **F8.** NEVER leave the SRS architecture's hard-to-reverse decisions undocumented. Seed the foundational ones as ADRs in `.context/ADR/` (per `agentic-dev-core/references/adr-doctrine.md`) so later sessions don't re-litigate or silently violate them. Status per `adr-doctrine.md` §3 step 4: a decision the human already approved is `Accepted` from the start (cite the approval); only a still-open one is `Proposed`.
+- **F9.** NEVER run Phases 1-3 to manufacture a Constitution, PRD or SRS for an app whose code already exists (`.template/installer.lock.json` → `adopted: true`, or the user asks to document an existing app). Its foundation is Phase 4 Discovery alone, read from the code ("Existing app: Discovery-only foundation"); a missing PRD / SRS there is not a gap to fill.
 
 ---
 

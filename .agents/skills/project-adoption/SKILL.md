@@ -18,8 +18,8 @@ compact_rules: |
   - Detection never guesses: an undetected value is asked in the Phase 1 questionnaire or recorded under `## Discovery Gaps`, never invented. A null `stack.scripts.<x>` means skip and say so.
   - App intact = the app's own `build` / `lint` / `types` / `test` exit codes after Phase 7 equal the Phase 1 baseline. Run an app script that may reach a shared database or a paid API only when the questionnaire confirmed it is safe; otherwise record it as not measured.
   - Fail-closed prerequisites a live app may lack (the automation identity in `testing.automation_identity`, `autonomous_delivery.automation_gh_account`, a dedicated DB role) are listed in the plan as owed by the team and NEVER created by this skill.
-  - Product docs of an adopted app are the business maps + glossary (OD5): never invent a PRD or SRS to satisfy another skill's prerequisite; record the prerequisite as a Discovery Gap and hand off.
-  - Close with the signal table, the plan marked `Status: COMPLETED` with its results block, and the hand-off: `/project-context refresh-all` (maps from code) in a fresh session, `/git-flow-master` Strategy Setup, optional `/design-system extract` and `/testability-guide`. Never auto-chain them; the commit is proposed through `/git-flow-master`, never made silently.
+  - Product docs of an adopted app are the business maps + glossary (OD5): never invent a PRD or SRS: `/sprint-development` accepts the maps in their place, and `/project-foundation` Discovery-only adds the dev guide and the glossary.
+  - Close with the signal table, the plan marked `Status: COMPLETED` with its results block, and the hand-off: `/project-context refresh-all` (maps from code) in a fresh session, then `/project-foundation` Discovery-only (dev guide + glossary), `/git-flow-master` Strategy Setup, optional `/design-system extract` and `/testability-guide`. Never auto-chain them; the commit is proposed through `/git-flow-master`, never made silently.
 metadata:
   kind: workflow
   stage_owner: true
@@ -144,6 +144,7 @@ A subagent report that claims a write is verified at the destination (Critical R
 | After adoption | Skill | Session |
 |---|---|---|
 | Business maps read from the app's code and schema | `/project-context refresh-all` | a fresh one (the maps are token-heavy) |
+| Dev guide + domain glossary, which complete the app's product docs (`/sprint-development` reads them in place of a PRD / SRS) | `/project-foundation` Discovery-only | after the maps |
 | The project's own branching strategy and host protection | `/git-flow-master` Strategy Setup | its own, read-only first |
 | `DESIGN.md` from the live theme | `/design-system extract` | optional |
 | In-app `/qa` page + credentials artifact | `/testability-guide` | optional |
