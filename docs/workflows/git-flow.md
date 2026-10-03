@@ -8,7 +8,7 @@
 
 ## Filosofía del Flujo
 
-La AI genera código y lo commitea inteligentemente, pero **tú mantienes el control** en los puntos clave: qué se pushea a una branch protegida y qué se mergea.
+La AI genera código y lo commitea inteligentemente, pero **tú mantienes el control** en los puntos clave: la política de push a una branch protegida (la fijás vos en `git_strategy.policy`) y qué se mergea.
 
 > **Fuente de verdad:** la estrategia activa de CADA proyecto vive en el bloque `git_strategy:` de `.agents/project.yaml`, y la skill `git-flow-master` la lee y adapta cada commit, branch, push y PR a ella. Este documento explica los conceptos con un sabor de referencia (**main + staging**); tu proyecto puede usar otro.
 
@@ -109,13 +109,13 @@ docs: actualizar README con nuevas variables de entorno
 
 Pushear tu branch de trabajo es libre. Pushear directo a una branch protegida (`main`, o `staging` en este sabor) depende de `git_strategy.policy.direct_push_to_protected`:
 
-| Valor       | Qué hace la AI                                          |
-| ----------- | ------------------------------------------------------- |
-| `confirm`   | Pregunta antes de cada push a la branch protegida       |
-| `forbidden` | Se niega y lleva el trabajo por PR                      |
-| `allowed`   | Permite el push directo, y aun así confirma una vez     |
+| Valor       | Qué hace la AI                                               |
+| ----------- | ------------------------------------------------------------ |
+| `confirm`   | Pregunta antes de cada push a la branch protegida            |
+| `forbidden` | Se niega y lleva el trabajo por PR                           |
+| `allowed`   | Pushea directo sin preguntar: el valor ya es tu autorización |
 
-Nunca pushea a `main` sin tu confirmación explícita (`AGENTS.md` Regla #4), y nunca usa `--force` ni `--no-verify`.
+Si el bloque `git_strategy` falta o está en `null` (proyecto recién scaffoldeado), se comporta como `confirm`. La variable decide, no la AI (`AGENTS.md` Regla #4): con `allowed` preguntar igual la convertiría en `confirm`. Nunca usa `--force` ni `--no-verify`.
 
 ### 5. Pull Request
 

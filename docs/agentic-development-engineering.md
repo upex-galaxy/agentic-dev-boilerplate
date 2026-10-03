@@ -578,7 +578,7 @@ The commands above are the names in this repo's `package.json`; a scaffolded app
 
 ### Pre-flight checklist
 
-Before any push to `main`:
+Before any push to a protected branch:
 
 - [ ] Plan presented and approved before coding (skill-internal in `/sprint-development`).
 - [ ] Imports use the aliases `tsconfig.json` `paths` declares (Next.js `@/`). No deep relative imports.
@@ -588,7 +588,7 @@ Before any push to `main`:
 - [ ] No AI attribution in commits ("Generated with Claude Code", "Co-Authored-By: Claude", any harness-branded trailer are forbidden).
 - [ ] Every agent-written commit ends with the forensic trailers `Worktree:` then `Session:`, copied from the `AGENT IDENTITY:` line (ADR-0004).
 - [ ] Context loaded progressively (not all at once).
-- [ ] Human confirmation before push to `main`.
+- [ ] Push policy resolved from `git_strategy.policy.direct_push_to_protected` (Critical Rule #4): `confirm` asks first, `allowed` pushes without asking, `forbidden` routes through a PR; a missing block behaves as `confirm`.
 
 ### Failure protocol
 
