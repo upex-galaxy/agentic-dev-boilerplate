@@ -284,9 +284,14 @@ const EXTERNAL_CLIS: ReadonlyArray<{ name: string, install?: string, docs: strin
 ];
 
 // Matches Claude Code ${VAR} and ${VAR:-default} placeholders in .mcp.json.
-const MCP_VAR_PATTERN = /\$\{([A-Z][A-Z0-9_]*)(?::-[^}]*)?\}/g;
+// Exported for `cli/lib/harness-env.ts`, which builds its allowlist from the
+// same patterns instead of keeping a second copy that could drift.
+export const MCP_VAR_PATTERN = /\$\{([A-Z][A-Z0-9_]*)(?::-[^}]*)?\}/g;
 // Matches OpenCode {env:VAR} placeholders in opencode.jsonc.
-const OPENCODE_VAR_PATTERN = /\{env:([A-Z][A-Z0-9_]*)\}/g;
+export const OPENCODE_VAR_PATTERN = /\{env:([A-Z][A-Z0-9_]*)\}/g;
+// Matches the OpenCode {file:.auth/opencode/VAR} references `bun run harness:env`
+// writes in place of {env:VAR}: the same `.env` dependency by another route.
+const OPENCODE_FILE_VAR_PATTERN = /\{file:\.auth\/opencode\/([A-Z][A-Z0-9_]*)\}/g;
 const SECRET_NAME_HINTS = ['TOKEN', 'KEY', 'SECRET', 'PASSWORD'];
 
 // Map MCP server → env vars its secrets depend on. Servers with empty arrays
@@ -296,7 +301,7 @@ const SECRET_NAME_HINTS = ['TOKEN', 'KEY', 'SECRET', 'PASSWORD'];
 // The other Supabase vars (URL + publishable/secret keys) ARE consumed via
 // the "env" mapping in .mcp.json / opencode.jsonc, but they're project-bound
 // (require an existing Supabase project) — so they're deferred to doctor.
-const MCP_SERVER_SECRETS: Record<string, readonly string[]> = {
+export const MCP_SERVER_SECRETS: Record<string, readonly string[]> = {
   context7: [],
   supabase: [
     'SUPABASE_ACCESS_TOKEN',
@@ -810,9 +815,11 @@ async function installCommunitySkills(
 // Step 7 — Wire .env for MCP servers (+ direnv autoload offer)
 // ============================================================================
 //
-// `.mcp.json` and `opencode.jsonc` are committed with `${VAR}` / `{env:VAR}`
-// expansion. The installer no longer rewrites those files — it only ensures
-// `.env` contains the required values, then optionally enables direnv.
+// `.mcp.json` and `opencode.jsonc` are committed with `${VAR}` /
+// `{file:.auth/opencode/VAR}` references. The installer never rewrites those
+// files: it only ensures `.env` contains the required values, then optionally
+// enables direnv. `bun run harness:env` (Step 7d) derives the per-harness
+// credential surfaces from that `.env`.
 
 function isSecretName(name: string): boolean {
   return SECRET_NAME_HINTS.some(hint => name.endsWith(hint) || name.endsWith(`_${hint}`));
@@ -852,7 +859,8 @@ function collectCodexMcpEnvVars(value: unknown, seen: Set<string>): void {
 /**
  * Union of the `.env` names the selected harnesses' committed MCP configs
  * depend on. Each host declares them differently (`${VAR}` in `.mcp.json`,
- * `{env:VAR}` in `opencode.jsonc`, forwarded names in `.codex/config.toml`).
+ * `{env:VAR}` or `{file:.auth/opencode/VAR}` in `opencode.jsonc`, forwarded
+ * names in `.codex/config.toml`).
  */
 export async function discoverRequiredEnvVars(
   agents: AgentId[],
@@ -870,6 +878,7 @@ export async function discoverRequiredEnvVars(
     const raw = await readFile(openCodeConfigPath, 'utf8');
     const content = stripJsoncComments(raw);
     for (const m of content.matchAll(OPENCODE_VAR_PATTERN)) { seen.add(m[1]); }
+    for (const m of content.matchAll(OPENCODE_FILE_VAR_PATTERN)) { seen.add(m[1]); }
   }
   if (agents.includes('codex') && existsSync(codexConfigPath)) {
     const parsed = Bun.TOML.parse(await readFile(codexConfigPath, 'utf8'));
@@ -2384,7 +2393,9 @@ function printClosingSummary(state: InstallState): void {
   if (state.pendingEnvVars.length > 0) {
     process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Fill missing env vars${COLORS.reset}  ${COLORS.yellow}(BLOCKS the agent from working with MCPs)${COLORS.reset}\n`);
     process.stdout.write(`    ${COLORS.cyan}Edit .env → set: ${state.pendingEnvVars.join(', ')}${COLORS.reset}\n`);
-    process.stdout.write(`    ${COLORS.dim}Without these, MCP servers will 401/403 silently.${COLORS.reset}\n\n`);
+    process.stdout.write(`    ${COLORS.dim}Without these, MCP servers will 401/403 silently.${COLORS.reset}\n`);
+    process.stdout.write(`    ${COLORS.cyan}Then: bun run harness:env${COLORS.reset}  ${COLORS.dim}(regenerates the credential files Claude and OpenCode read at startup)${COLORS.reset}\n`);
+    process.stdout.write(`    ${COLORS.cyan}Then restart the agent session${COLORS.reset}  ${COLORS.dim}(MCP servers read credentials at startup, not later)${COLORS.reset}\n\n`);
     stepNum++;
   }
 
@@ -2817,6 +2828,9 @@ async function main(): Promise<void> {
   tui.section('Step 7c: Day-0 credentials (Atlassian, Resend)');
   await configureDayZeroCredentials(state);
 
+  // Step 7d: after every .env write above, so the surfaces see the final values.
+  await generateHarnessEnv();
+
   // Step 9 — optional GitHub repo creation
   tui.section('Step 7b: GitHub repository (optional)');
   await setupGithubRemote(state);
@@ -2840,6 +2854,42 @@ async function main(): Promise<void> {
   // Step 11 (closing summary)
   tui.section('Step 11: Closing summary');
   printClosingSummary(state);
+}
+
+/**
+ * Generate the per-harness credential surfaces (`bun run harness:env`). Never
+ * fatal: a failure leaves the repo exactly as it was and the installer still
+ * finishes, because `bun run setup:doctor` reports the same drift and
+ * `bun run harness:env` fixes it. Prints variable NAMES only, never a value.
+ *
+ * Dynamic import: `cli/lib/harness-env.ts` imports this module, so a static
+ * import would be a cycle evaluated at load time.
+ */
+async function generateHarnessEnv(): Promise<void> {
+  tui.section('Step 7d: Harness credential surfaces (.env -> files a harness reads at startup)');
+  try {
+    const { generate } = await import('./lib/harness-env.ts');
+    const result = generate();
+    if (result.refused !== undefined) {
+      log.warn(`Harness credential surfaces NOT written: ${result.refused}`);
+      return;
+    }
+    log.success(
+      `${result.changed ? 'Wrote' : 'Already in sync:'} ${result.emitted.length} of `
+      + `${result.declared.length} declared variables `
+      + `(${result.excluded.length} not referenced by any MCP config, so not copied).`,
+    );
+    if (result.emitted.length > 0) {
+      process.stdout.write(`  emitted: ${result.emitted.join(', ')}\n`);
+    }
+    if (result.claude.skipped.length > 0) {
+      process.stdout.write(`  empty in .env, left out of the Claude env block: ${result.claude.skipped.join(', ')}\n`);
+    }
+  }
+  catch (err) {
+    log.warn(`Could not generate the harness credential surfaces: ${(err as Error).message}`);
+    process.stdout.write('  Run `bun run harness:env` once .env is in place; `bun run setup:doctor` reports the same gap.\n');
+  }
 }
 
 // Only auto-run when install.ts is the program entry point. Guards the reused
