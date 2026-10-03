@@ -92,7 +92,7 @@ Canonical reading order for any AI starting cold on a product-management workflo
 1. `.agents/project.yaml` — project identity, env URLs, project key, MCP names.
 2. `.agents/jira-required.yaml` — canonical slug catalog (fields + statuses + link types).
 3. `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping.
-4. `.agents/jira-workflows.json` — workflow + transition catalog.
+4. `.agents/jira-workflows.json` — workflow + transition catalog (which status a created Epic / Story is moved to, and the unmapped-status fallback: `agentic-dev-core/references/artifact-lifecycle.md`).
 5. `.agents/jira-link-types.json` — slug → workspace link-type mapping (when present).
 6. `.context/master-implementation-plan.md` — Master Sprint roadmap.
 7. `.context/PRD/mvp-scope.md` — what's in vs out of the MVP.
