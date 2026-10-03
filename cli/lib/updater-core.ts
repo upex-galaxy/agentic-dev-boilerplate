@@ -2316,6 +2316,16 @@ function pruneEmptyParents(repoRoot: string, relPath: string): void {
 }
 
 /**
+ * True when `relPath` never travels to this repo: a repo-only path, or a
+ * repo-only pattern (an adopted app's, `UpdaterConfig.repoOnlyPatterns`).
+ * Applies to every delivery route, the self-update of the updater included.
+ */
+export function isRepoOnlyForRun(cfg: Pick<UpdaterConfig, 'repoOnlyPaths' | 'repoOnlyPatterns'>, relPath: string): boolean {
+  const rel = relPath.replace(/\\/g, '/');
+  return isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? []) || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
+}
+
+/**
  * Files git tracks that the ignore `pattern` would match (a fresh file at the
  * same place would be ignored). Empty outside a repo or with git missing.
  */
@@ -2651,7 +2661,9 @@ export async function runUpdate(
   if (cfg.selfUpdateComponent && process.env.UPEX_UPDATER_REEXEC !== '1') {
     const selfComp = cfg.components.find(c => c.name === cfg.selfUpdateComponent);
     if (selfComp) {
-      const selfFiles = collectComponentRelPaths(selfComp, templateDir);
+      // Repo-only paths never travel, the self-update included: on an adopted
+      // app that keeps the tooling's own tests out (ADOPT_REPO_ONLY_PATTERNS).
+      const selfFiles = collectComponentRelPaths(selfComp, templateDir).filter(relPath => !isRepoOnlyForRun(cfg, relPath));
       const stale: string[] = [];
       for (const relPath of selfFiles) {
         const localPath = path.join(repoRoot, relPath);
@@ -2802,9 +2814,7 @@ export async function runUpdate(
   const adoptCollisions: AdoptCollision[] = [];
   const adoptExcluded = (relPath: string): boolean => {
     const rel = relPath.replace(/\\/g, '/');
-    return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel)
-      || isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? [])
-      || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
+    return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel) || isRepoOnlyForRun(cfg, rel);
   };
 
   const collectBootstrapEntries = (comps: readonly Component[]): DeltaEntry[] => {

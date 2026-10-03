@@ -28,6 +28,7 @@ import {
   withProtectedPaths,
   writeInstallerLock,
 } from './updater-adopt.ts';
+import { isRepoOnlyForRun } from './updater-core';
 import { adoptPackageJsonDelta } from './updater-package.ts';
 import { collectParityFindings } from './updater-parity.ts';
 
@@ -57,6 +58,16 @@ describe('ADOPT_REPO_ONLY_PATTERNS', () => {
     expect(excluded('.context/ADR/ADR-0002-multi-harness-single-source.md')).toBe(true);
     expect(excluded('.context/ADR/README.md')).toBe(false);
     expect(excluded('.context/ADR/ADR-NNNN-template.md')).toBe(false);
+  });
+
+  test('every delivery route honours them, the updater\'s self-update included', () => {
+    const cfg = { repoOnlyPaths: ['.github/workflows/ci.yml'], repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS };
+    expect(isRepoOnlyForRun(cfg, 'cli/lib/updater-core.test.ts')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, 'cli\\lib\\updater-core.test.ts')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, '.github/workflows/ci.yml')).toBe(true);
+    expect(isRepoOnlyForRun(cfg, 'cli/update-boilerplate.ts')).toBe(false);
+    // Greenfield: no patterns, the tests travel as before.
+    expect(isRepoOnlyForRun({ repoOnlyPaths: [] }, 'cli/lib/updater-core.test.ts')).toBe(false);
   });
 
   test('the tooling\'s own tests stay out; the code they test travels', () => {
