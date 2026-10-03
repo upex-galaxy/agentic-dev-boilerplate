@@ -511,6 +511,18 @@ describe('projectDelta', () => {
     expect(delta.gaps[0].paths.length).toBeGreaterThan(3);
   });
 
+  // The block the orca-orchestration skill reads: a project scaffolded before
+  // it shipped is offered it, with the skill's own defaults.
+  test('a project scaffolded before orchestration: existed is offered the block', () => {
+    const old = source.replace(/\n(?:#.*\n)*orchestration:\n(?: {2}.*\n)+/, '\n');
+    const delta = projectDelta(old, schema);
+    expect(delta.gaps.map(g => g.block)).toEqual(['orchestration']);
+    const { text, error } = applyInsertions(old, planInsertions(old, schema, ['orchestration'], null));
+    expect(error).toBeNull();
+    expect(yamlLeafWalk(text)!.entries.get('orchestration.default_agent')).toBe('claude');
+    expect(projectDelta(text, schema).gaps).toEqual([]);
+  });
+
   // The headline of the whole change: this path sits at depth 3, so the
   // 2-level walk could not see it at all.
   test('a missing DEPTH-3 leaf is visible', () => {
@@ -578,11 +590,11 @@ describe('insertion', () => {
     const plan = planInsertions(old, schema, ['autonomous_delivery'], '2.0.0');
     const { text, error } = applyInsertions(old, plan);
     expect(error).toBeNull();
-    const top = [...yamlLeafWalk(text)!.entries.keys()].filter(k => !k.includes('.'));
-    // Exactly where it was: between decision_authority and updater. Appending
-    // would have put it after environments, and one block further out per release.
-    expect(top.slice(top.indexOf('decision_authority'), top.indexOf('decision_authority') + 3))
-      .toEqual(['decision_authority', 'autonomous_delivery', 'updater']);
+    const topLevel = (yaml: string): string[] => [...yamlLeafWalk(yaml)!.entries.keys()].filter(k => !k.includes('.'));
+    // Exactly where it was, between the same neighbours. Appending would have
+    // put it after environments, and one block further out per release.
+    expect(topLevel(text)).toEqual(topLevel(source));
+    expect(topLevel(text).at(-1)).toBe('environments');
   });
 
   test('re-inserting closes the gap the diff reported', () => {
