@@ -1267,6 +1267,7 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       // On --adopt a kept script is the adopt hook's BLOCKING row instead.
       packageJsonKept: (summary.packageJsonKept ?? []).filter(k => !(runFacts.adopt !== null && k.section === 'scripts')),
       adoptFindings: runFacts.adopt?.findings ?? [],
+      adopting: runFacts.adopt !== null,
       gates: runFacts.gates,
       shadowingCommandsMoved: runFacts.shadowingCommandsMoved,
       pbiCache: runFacts.pbiCache,

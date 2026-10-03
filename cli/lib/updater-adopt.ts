@@ -267,10 +267,23 @@ export function isAdopted(root: string): boolean {
 // PARITY ROWS
 // ============================================================================
 
-/** `"prepare": "<app> && <upstream>"` for a `prepare` / `setup` collision, else null. */
+/**
+ * `"prepare": "<app> && <upstream>"` for a `prepare` / `setup` collision, else
+ * null. A step both sides already run (`husky`) appears once, the app's first.
+ */
 export function scriptCompositionProposal(key: string, local: string, upstream: string): string | null {
   if (!COMPOSABLE_SCRIPTS.has(key)) { return null; }
-  return `${JSON.stringify(key)}: ${JSON.stringify(`${local} && ${upstream}`)}`;
+  const steps = (cmd: string): string[] => cmd.split('&&').map(part => part.trim()).filter(Boolean);
+  const composed = [...steps(local)];
+  for (const step of steps(upstream)) {
+    if (!composed.includes(step)) { composed.push(step); }
+  }
+  return `${JSON.stringify(key)}: ${JSON.stringify(composed.join(' && '))}`;
+}
+
+/** At most `max` names, then `+N more`. */
+function someNames(names: readonly string[], max = 6): string {
+  return names.length <= max ? names.join(', ') : `${names.slice(0, max).join(', ')} +${names.length - max} more`;
 }
 
 /** One row per skill folder under `.agents/skills/`, one per file elsewhere. */
@@ -359,10 +372,11 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       surface: 'env',
       path: ENV_EXAMPLE,
       evidence: input.envAdded.length > 0
-        ? `app file kept; ${input.envAdded.length} variable(s) the tooling reads appended inside the sentinel block: ${input.envAdded.join(', ')}`
+        ? `app file kept; ${input.envAdded.length} variable(s) the tooling reads appended inside the sentinel block: ${someNames(input.envAdded)}`
         : 'app file kept; it already declares every variable the tooling reads',
       suggested: 'keep project',
       blocking: false,
+      ...(input.envAdded.length > 0 ? { detail: input.envAdded.join('\n') } : {}),
     });
   }
 

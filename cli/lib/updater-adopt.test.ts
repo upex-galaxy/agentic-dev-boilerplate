@@ -1,4 +1,5 @@
 import type { AdoptHookInput } from './updater-adopt.ts';
+import type { ParityInput } from './updater-parity.ts';
 import type { PackageJsonDelta } from './updater-types';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -27,6 +28,7 @@ import {
   writeInstallerLock,
 } from './updater-adopt.ts';
 import { adoptPackageJsonDelta } from './updater-package.ts';
+import { collectParityFindings } from './updater-parity.ts';
 
 const roots: string[] = [];
 function tempRoot(): string {
@@ -193,7 +195,9 @@ describe('adoptPackageJsonDelta', () => {
 
 describe('parity rows', () => {
   test('prepare and setup collisions carry a composition proposal; other scripts do not', () => {
-    expect(scriptCompositionProposal('prepare', 'husky', 'husky && bun x')).toBe('"prepare": "husky && husky && bun x"');
+    // A step both sides run appears once.
+    expect(scriptCompositionProposal('prepare', 'husky', 'husky && bun x')).toBe('"prepare": "husky && bun x"');
+    expect(scriptCompositionProposal('setup', 'node a.js', 'bun cli/install.ts')).toBe('"setup": "node a.js && bun cli/install.ts"');
     expect(scriptCompositionProposal('test', 'vitest', 'bun test')).toBeNull();
   });
 
@@ -208,6 +212,13 @@ describe('parity rows', () => {
     const scriptRow = adoptFindings({ ...base, collisions: [], protectedWritten: true, scriptsKept: [{ file: 'package.json', section: 'scripts', key: 'prepare', localValue: 'husky', upstreamValue: 'husky && bun x', resolution: 'mine' }] })[0];
     expect(scriptRow).toMatchObject({ surface: 'package', blocking: true, suggested: 'decide' });
     expect(scriptRow.evidence).toContain('proposed: "prepare"');
+  });
+
+  test('a long env list is cut in the evidence and complete in the saved detail', () => {
+    const keys = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'];
+    const row = adoptFindings({ root: tempRoot(), upstreamDir: tempRoot(), collisions: [], protectedWritten: true, envAdded: keys, envCollision: true, scriptsKept: [], instructions: { kind: 'none', applied: false, files: [], where: null } })[0];
+    expect(row.evidence).toContain('A6 +2 more');
+    expect(row.detail).toBe(keys.join('\n'));
   });
 
   test('skill files collapse into one row per skill folder', () => {
@@ -306,5 +317,37 @@ describe('runAdopt', () => {
     expect(asked).toBe(false);
     expect(read(root, 'AGENTS.md')).toBe(UPSTREAM_AGENTS);
     expect(read(root, 'CLAUDE.md')).toBe(CLAUDE_INSTRUCTIONS_SHIM);
+  });
+});
+
+describe('the parity table on an --adopt run', () => {
+  function base(root: string, upstream: string): ParityInput {
+    return { root, upstreamDir: upstream, drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, 'x'), heldBack: [], envNewKeys: [], contextMaps: [] };
+  }
+
+  test('one row per path: the instructions proposal absorbs the watched AGENTS.md drift row', () => {
+    const root = tempRoot();
+    const upstream = tempRoot();
+    write(root, 'AGENTS.md', '# App agents\n');
+    write(upstream, 'AGENTS.md', UPSTREAM_AGENTS);
+    const adoptRows = adoptFindings({ root, upstreamDir: upstream, collisions: [], protectedWritten: true, envAdded: [], envCollision: false, scriptsKept: [], instructions: { kind: 'compose', applied: false, files: ['AGENTS.md'], where: null } });
+    const findings = collectParityFindings({ ...base(root, upstream), drift: [{ path: 'AGENTS.md', reason: 'memory' }], adoptFindings: adoptRows, adopting: true });
+    const rows = findings.filter(f => f.path === 'AGENTS.md');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].blocking).toBe(true);
+    expect(rows[0].evidence).toContain('not merged yet');
+    expect(rows[0].diff).toBeTruthy();
+  });
+
+  test('never take upstream over an app file: the app tsconfig.json row says merge', () => {
+    const root = tempRoot();
+    const upstream = tempRoot();
+    write(root, 'tsconfig.json', '{"compilerOptions":{"strict":true}}');
+    write(upstream, 'tsconfig.json', '{"compilerOptions":{"strict":true,"target":"ES2022"}}');
+    const input = { ...base(root, upstream), drift: [{ path: 'tsconfig.json', reason: 'aliases' }] };
+    expect(collectParityFindings(input).find(f => f.path === 'tsconfig.json')?.suggested).toBe('take upstream');
+    const adopted = collectParityFindings({ ...input, adopting: true }).find(f => f.path === 'tsconfig.json')!;
+    expect(adopted.suggested).toBe('merge');
+    expect(adopted.evidence).toContain('never replace it');
   });
 });

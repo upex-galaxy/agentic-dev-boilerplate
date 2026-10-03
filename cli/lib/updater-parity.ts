@@ -168,6 +168,12 @@ export interface ParityInput {
   contextMaps?: MapStatus[]
   /** `bun run up --adopt` only: the rows `runAdopt` built (`./updater-adopt.ts`), listed before the git-strategy row. */
   adoptFindings?: Omit<ParityFinding, 'id'>[]
+  /**
+   * The run is `--adopt`: every file a row names was the APP's before this run,
+   * so no row suggests `take upstream` (it would replace the app's own
+   * `tsconfig.json`, say); `merge` instead, saying why.
+   */
+  adopting?: boolean
 }
 
 export interface PbiCacheInput {
@@ -1372,7 +1378,30 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
 
   // 10. `--adopt`: app files kept, the instructions proposal, the scripts the
   //     app kept under a name upstream also defines. Built by `runAdopt`.
-  findings.push(...(input.adoptFindings ?? []));
+  //     One row per path: an adopt row on a path another row already names
+  //     (the watched `AGENTS.md`) absorbs that row's evidence. `package.json`
+  //     keeps one row per key, as everywhere else.
+  for (const row of input.adoptFindings ?? []) {
+    const at = row.surface === 'package' ? -1 : findings.findIndex(f => f.path === row.path && f.surface !== 'package');
+    if (at === -1) { findings.push(row); continue; }
+    const [prior] = findings.splice(at, 1);
+    const note = [row.note, prior.note].filter(Boolean).join('\n\n');
+    findings.push({
+      ...row,
+      evidence: `${row.evidence}; ${prior.evidence}`,
+      blocking: row.blocking || prior.blocking,
+      ...(row.diff ?? prior.diff ? { diff: row.diff ?? prior.diff } : {}),
+      ...(row.detail ?? prior.detail ? { detail: row.detail ?? prior.detail } : {}),
+      ...(note ? { note } : {}),
+    });
+  }
+  if (input.adopting === true) {
+    for (const f of findings) {
+      if (f.suggested !== 'take upstream') { continue; }
+      f.suggested = 'merge';
+      f.evidence = `${f.evidence}; the app's own file (--adopt): port upstream's additions, never replace it`;
+    }
+  }
 
   // 11. Git strategy provenance: a shipped default nobody chose is a pending decision.
   const stamp = readGitStrategyStamp(readIfExists(path.join(input.root, '.agents', 'project.yaml')));
