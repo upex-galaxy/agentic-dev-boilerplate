@@ -5,6 +5,84 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-03 — Docs hub and one deck per workflow skill; behaviour layer recorded (updater 8.7)
+
+The human-docs wave that follows the parity wave (#52 to #77, and the portal
+PR that closes it): every human surface was measured against the owners it
+describes, rewritten where it had drifted, and the GitHub Pages hub now
+carries a deck for every workflow skill. The catalog itself is
+`.agents/skills/REGISTRY.md`; the deck backlog and its fold/drop decisions are
+`packages/decks/ROADMAP.md`.
+
+### Added
+
+- **One deck per workflow skill** (#56, #58, #60 to #62, #67 to #74):
+  `packages/decks/<skill>/como-funciona.es.html`, published under
+  `/decks/<skill>/`. Category decks for the business context skills
+  (`packages/decks/context-skills/`, #75) and the utility skills
+  (`packages/decks/tooling/`, #76). The design-system deck now covers the token
+  phase and the screen phase at its old URL (#77).
+- **Start-here page on Pages**: `docs/onboarding.html`, rebuilt on the
+  skill-plus-mode model (#64), is published as `/onboarding.html` by
+  `.github/workflows/pages.yml`; `scripts/lint-docs.ts` resolves links to it
+  through `PUBLISHED_FILES`.
+- **Docs hub portal**: `packages/pages-home/index.html` links every deck that
+  exists, grouped by section, plus a block for maintainers. `README.md`,
+  `CONTEXT.md`, `INSTALLER.md`, `docs/README.md` and the `agentic-dev-onboard`
+  skill link the hub root, and the onboard skill hands the user each skill's
+  deck.
+- **Deployed build stamp on `/qa`** (#54): the page `/testability-guide`
+  generates shows the deployed short SHA at runtime
+  (`data-testid="qa-build-sha"`), outside the idempotency snapshot.
+
+### Changed
+
+- **Doctrine settled before the decks quoted it** (#57, #63): push under
+  `direct_push_to_protected: allowed` is standing authorization (Critical Rule
+  #4); the AI may commission mockups through a design tool and a human
+  ratifies them, never hand-authoring them (Rule #14); the live UI plus
+  `DESIGN.md` tokens are the fidelity reference and the mockup is inspiration;
+  every skill's `compatibility:` frontmatter names the three supported hosts.
+- **Human docs refreshed** (#55, #59, #64 to #66): `docs/mcp/` and
+  `docs/setup/` describe the committed servers, harness-level web search,
+  OpenCode `{file:.auth/opencode/VAR}` files and the Codex `.env` loader; the
+  multi-harness page (`packages/pages-home/harnesses.es.html`) is an evergreen
+  behaviour page; `docs/methodology/` keeps only the dev-to-QA handoff and the
+  dev side of Jira; the core decks drop dated stamps and edit history.
+- **Deck convention** (`packages/decks/README.md`, #57): no dated stamp, count
+  or version in a deck or on the hub; a deck names its owner files instead.
+- **The behaviour layer** (recorded here; the change itself landed with the
+  `capa-comportamental` deck): three layers govern chat output, each on one
+  dimension. caveman owns word count, `AGENTS.md` §2 owns what is said and at
+  what granularity, and the active user-level OUTPUT STYLE owns rendering and
+  texture. Butler bullets use a colon separator, the headline punch is gone,
+  and `.agents/hooks/personality-reinject.mjs` re-injects the output contract
+  every turn on all three hosts (`AGENTS.md` §5.5 HOOK). `cli/install.ts`
+  installs caveman with `--no-hooks` so the plugin's own hooks are the only
+  copy. Narrative: `packages/decks/agentic-dev-core/capa-comportamental.es.html`
+  and `docs/ai-personality.md`.
+
+### Removed
+
+- Docs pages for hosts outside the three-host contract (Copilot CLI, Gemini
+  CLI, VS Code, the Gemini MCP template), the Xray setup guide and the
+  early/mid/late-game QA methodology pages (#55, #64). They are
+  `RETIRED_DOCS_FILES` in `cli/update-boilerplate.ts`, so `bun run up` removes
+  them downstream instead of holding the `docs` component back.
+
+### Fixed
+
+- The registry carries every authored compact rule; only the Strategy B scrape
+  is capped (#52).
+- Greenfield hygiene in skills and docs: stale env names, version pins, stage
+  and rule numbers, import aliases read from `tsconfig.json` (#53).
+
+### Upgrading a project
+
+`bun run up` delivers the refreshed `docs/` and skills and retires the pages
+listed above. `packages/` (the hub and the decks) and `.github/workflows/pages.yml`
+never travel: a project reads the upstream hub.
+
 ## 2026-10-03 — Parity wave with agentic-qa-boilerplate; volatile-facts lints block (updater 8.6)
 
 The dev-sync parity wave: mechanisms first built in the sibling
