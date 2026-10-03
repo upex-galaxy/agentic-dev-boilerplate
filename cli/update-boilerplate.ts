@@ -1215,18 +1215,23 @@ export function runGate(script: string, cwd: string, applied: readonly string[],
 // Backup before write, like every other mutation the run makes: the file is on
 // the watchlist, so a consumer who dislikes the addition restores it from
 // `.backups/` and expresses the removal in `deny`.
+//
+// `adoptRun`: the `--adopt` run also CREATES the allow list when the app's own
+// settings file has none (`createMissing` in `updater-settings.ts`); a plain
+// update never does.
 function makeAllowListHook(
   templateDir: string,
   sink: ReportSink,
   dryRun: boolean,
+  adoptRun: boolean,
 ): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     if (dryRun) {
-      runFacts.allowListAdded = mergeAllowList(process.cwd(), templateDir).added;
+      runFacts.allowListAdded = mergeAllowList(process.cwd(), templateDir, { createMissing: adoptRun }).added;
       return;
     }
     const localPath = path.join(process.cwd(), CLAUDE_SETTINGS_FILE);
-    const { added, merged } = mergeAllowList(process.cwd(), templateDir);
+    const { added, merged } = mergeAllowList(process.cwd(), templateDir, { createMissing: adoptRun });
     if (merged === null) { return; }
     try {
       // This run's backup dir when it made one; otherwise its own, so the
@@ -1234,7 +1239,9 @@ function makeAllowListHook(
       const dir = summary.backupDir ?? createBackupDir(process.cwd());
       const backupPath = path.join(dir, CLAUDE_SETTINGS_FILE);
       fs.mkdirSync(path.dirname(backupPath), { recursive: true });
-      fs.copyFileSync(localPath, backupPath);
+      // An earlier hook of this run (the `--adopt` prompt-hook merge) may have
+      // backed the file up already: that copy is the pre-run state, keep it.
+      if (!fs.existsSync(backupPath)) { fs.copyFileSync(localPath, backupPath); }
       fs.writeFileSync(localPath, merged, 'utf-8');
     }
     catch (err) {
@@ -1870,7 +1877,7 @@ async function main(): Promise<void> {
             sink,
             ...(parsed.adopt ? [makeAdoptHook(sink, true, true)] : []),
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
-            makeAllowListHook(UPSTREAM_DIR, sink, true),
+            makeAllowListHook(UPSTREAM_DIR, sink, true, parsed.adopt),
             // A dry run neither ages nor writes the doctrine ledger.
             async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
             // Read-only detection so the preview's table matches the real run's.
@@ -1891,7 +1898,7 @@ async function main(): Promise<void> {
             makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS
             // allow entries, which no compatibility contract asserts on.
-            makeAllowListHook(UPSTREAM_DIR, sink, false),
+            makeAllowListHook(UPSTREAM_DIR, sink, false, parsed.adopt),
             // The unresolved-doctrine ledger. Content-tracked, so unlike every
             // other watched-file nudge it survives `keep project` and clears
             // only when the section is actually written. Runs before the parity
