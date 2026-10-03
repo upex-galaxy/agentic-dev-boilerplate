@@ -111,6 +111,15 @@ Do NOT use this skill to:
 - Scaffold the frontend code (Tailwind install, page skeletons, shadcn setup) — that's `/project-bootstrap` frontend-setup.
 - Tweak existing tokens after scaffolding — edit `DESIGN.md` directly and re-run the bootstrap pre-flight.
 
+## Mode routing
+
+Two phases, two modes. The first token of `$ARGUMENTS` names it when it is one of these (`/design-system screen UPEX-123` on Claude Code, "load design-system, mode screen" in prose on OpenCode and Codex); otherwise the request does: a story that needs a screen is `screen`, a brand / token / DESIGN.md request is `tokens`. Still unclear: ask.
+
+| Mode | Trigger phrases | Section |
+|---|---|---|
+| `tokens` | define the design system, DESIGN.md, rebrand, design tokens | Path selection → Default flow (Path B) / Other paths |
+| `screen` | no mockup for this story, design this screen, `/sprint-development` missing-row gate | The screen phase |
+
 ---
 
 ## Output

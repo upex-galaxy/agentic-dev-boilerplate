@@ -262,7 +262,7 @@ After the skill completes, the page + artifact are live. Hand off to:
 
 - **`/sync-ai-memory`** — registers the new `/qa` page + credentials-artifact URL in the AI persistent memory so future skills know they exist.
 - **`/sprint-development`** — QA-found bugs that touch the page itself become normal stories.
-- **`/business-feature-map`** — flag the `/qa` page so future map refreshes record it as an internal-only operational page (no PRD coverage required).
+- **`/project-context features`** — flag the `/qa` page so future map refreshes record it as an internal-only operational page (no PRD coverage required).
 
 ---
 
