@@ -80,6 +80,12 @@ export interface ParityFinding {
   detail?: string
   /** A follow-up the saved file repeats under the row (how to keep a merge on the next sync). */
   note?: string
+  /**
+   * `--adopt` only: this row's `take upstream` is deliberate and survives the
+   * adopt rewrite to `merge` (the app's hand copy of a framework skill, whose
+   * upstream copy the adoption saved for an approved replacement).
+   */
+  adoptTakeUpstream?: boolean
 }
 
 /** A synced file the project had edited that this run overwrote (`RunSummary.localEditsOverwritten`). */
@@ -1404,7 +1410,7 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
   }
   if (input.adopting === true) {
     for (const f of findings) {
-      if (f.suggested !== 'take upstream') { continue; }
+      if (f.suggested !== 'take upstream' || f.adoptTakeUpstream === true) { continue; }
       f.suggested = 'merge';
       f.evidence = `${f.evidence}; the app's own file (--adopt): port upstream's additions, never replace it`;
     }

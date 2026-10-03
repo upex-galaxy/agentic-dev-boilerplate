@@ -417,4 +417,13 @@ describe('the parity table on an --adopt run', () => {
     expect(adopted.suggested).toBe('merge');
     expect(adopted.evidence).toContain('never replace it');
   });
+
+  test('the framework-skill row keeps its deliberate take upstream', () => {
+    const root = tempRoot();
+    const upstream = tempRoot();
+    const row = { surface: 'skills' as const, path: '.agents/skills/acli/', evidence: 'the app carries its own copy of the framework skill `acli`', suggested: 'take upstream' as const, adoptTakeUpstream: true, blocking: false };
+    const found = collectParityFindings({ ...base(root, upstream), adoptFindings: [row], adopting: true }).find(f => f.path === '.agents/skills/acli/')!;
+    expect(found.suggested).toBe('take upstream');
+    expect(found.evidence).not.toContain('never replace it');
+  });
 });

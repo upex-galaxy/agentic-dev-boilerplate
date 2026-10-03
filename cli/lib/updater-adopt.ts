@@ -483,6 +483,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       path: `.agents/skills/${skill.name}/`,
       evidence: `the app carries its own copy of the framework skill \`${skill.name}\` (${skill.differing.length} file(s) differ from upstream${skill.appOnly.length > 0 ? `, ${skill.appOnly.length} only in the app's copy` : ''}${skill.shortstat ? `; ${skill.shortstat}` : ''}); kept this run and NOT protected, so it does not freeze on this copy`,
       suggested: 'take upstream',
+      adoptTakeUpstream: true,
       blocking: false,
       detail,
       note: skill.saved
