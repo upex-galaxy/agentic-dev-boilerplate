@@ -19,6 +19,7 @@ compact_rules: |
   - **T5.** NEVER duplicate the credentials-artifact body across multiple publisher targets. The markdown body in `references/credentials-content-template.md` is the single source of truth; publishers are thin adapters.
   - **T6.** NEVER assume idempotency without re-checking the snapshot comment. Re-runs MUST read the snapshot, diff against current detected stack, and only then decide no-op vs surgical patch vs fresh scaffold.
   - **T7.** NEVER write the deployed commit SHA into the generated `/qa` source. The hero build stamp (`data-testid="qa-build-sha"`) reads it at RUNTIME from the platform env var whose NAME detection put in `qaConfig.build` (on Vercel `VERCEL_GIT_COMMIT_SHA`), with a visible fallback line when absent; the value stays out of the snapshot comment and the content-hash, so a redeploy is never drift (`references/page-craft.md` → Build stamp).
+  - **T8.** NEVER pick the testers' DB MCP from habit or hand them the agent's own `db` credential. The DB layer resolves from `stack.database` (`references/mcp-and-env-setup.md` §4.0): DBHub logged in as a `qa_*` read-only role by default; the Supabase MCP only as a `--read-only --project-ref` alternative for people who already hold a Supabase account; the `SUPABASE_ACCESS_TOKEN` personal access token is never published. Provisioning the read-only role is a database change on the route `stack.database.migrations_tool` names (`agentic-dev-core/references/db-change-doctrine.md`): this skill hands over the SQL and never applies it.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
   kind: workflow
@@ -40,7 +41,7 @@ model_preferences:
 
 `testability-guide` builds and maintains the bridge between a working app and the humans (and AI agents) who test it. It produces two artifacts:
 
-1. **A public `/qa` page inside the app** titled _"Software Testability Guide for QA"_ — explains the architecture, demo users, DB-level testing via DBHub MCP, API-level testing via OpenAPI MCP, UI-level testing via Playwright (scripted and agentic). The page links out to the real credentials but never inlines them.
+1. **A public `/qa` page inside the app** titled _"Software Testability Guide for QA"_ — explains the architecture, demo users, DB-level testing through the DB MCP the `stack:` block resolves (DBHub as a read-only role by default, `references/mcp-and-env-setup.md` §4.0), API-level testing via OpenAPI MCP, UI-level testing via Playwright (scripted and agentic). The page links out to the real credentials but never inlines them.
 2. **A tool-agnostic credentials artifact** (a markdown body) that holds the real DB connection, API login, demo passwords, OpenAPI spec URL, and Swagger UI link. The user picks where this artifact gets published: a Jira Epic (default), a Confluence page, a Notion page, any tool reachable via an MCP or a CLI, or — as a last resort — manual paste.
 
 > **Division of labor**: the credentials artifact (the Epic/page) holds the **real values** + a copy-paste `.env` block; the `/qa` page holds **placeholders + how-it-works** and never inlines a secret. Each artifact links to the other — the page's CTA opens the credentials destination, and the credentials body links back to `/qa`.
@@ -53,9 +54,9 @@ The skill is idempotent. On re-run it reads a snapshot comment at the top of the
 
 Canonical reading order for any AI starting cold on a testability-guide run. Read in order; stop earlier when the run is small enough (e.g. a snapshot no-op) that later inputs add no signal.
 
-1. `.agents/project.yaml` — project identity, env URLs, default branch, MCP names.
+1. `.agents/project.yaml` — project identity, env URLs, default branch, MCP names, and the `stack:` block (`stack.framework`, `stack.app_root`, `stack.database.*`, `stack.ui`, `stack.hosting`, `stack.scripts`): Phase 1 starts from it and confirms it against the code, never the other way round.
 2. `.mcp.json` — available MCP servers (Atlassian, Notion, etc.). Determines which publisher targets are reachable.
-3. `app/qa/page.tsx` snapshot (or framework-equivalent location) when present — current state of the `/qa` page; needed for the idempotency / drift-detection check (Phase 2).
+3. The `/qa` page snapshot under `{{stack.app_root}}` (`app/qa/page.tsx` on the App Router, `pages/qa.tsx` on Pages) when present — current state of the `/qa` page; needed for the idempotency / drift-detection check (Phase 2).
 4. The publisher target's API contract — varies by Q1 answer: Jira Epic via `[ISSUE_TRACKER_TOOL]`, Confluence page via `[KNOWLEDGE_BASE_TOOL]`, Notion page via Notion MCP, generic MCP / CLI per `references/publishers/`.
 5. `.env.example` — to know which credentials slots the credentials artifact should reference by name (NEVER quote the actual values).
 
@@ -167,7 +168,7 @@ Phases are mostly sequential, but page codegen and credentials-artifact authorin
 
 ### 1. Pre-flight discovery (read-only)
 
-Detect the host stack, UI kit, icon library, auth model, DB, existing `/qa` or `/guide` / `/docs` / `/integration` page, existing test infrastructure, available MCPs (Atlassian, Notion, etc.), i18n, OpenAPI / Swagger location, default branch.
+Read the `stack:` block first, then detect and confirm against the code: host stack, UI kit, icon library, auth model, DB, existing `/qa` or `/guide` / `/docs` / `/integration` page, existing test infrastructure, available MCPs (Atlassian, Notion, etc.), i18n, OpenAPI / Swagger location, default branch.
 
 Full checklist: `references/pre-flight-discovery.md`.
 
@@ -222,7 +223,7 @@ The security audit (§7) runs before the publish call below. If the chosen desti
 
 Numbered after §6 for reading order, it RUNS before §6's publish call: before any external publish call fires, the skill runs the security rules in `references/security-rules.md`. Hard refusals include: admin / schema-owner credentials, session-signing secrets (`NEXTAUTH_SECRET`, JWT signing keys), and credentials already exposed in git history without prior rotation.
 
-If the only DB credential available is a superuser, the skill stops and asks the user to provision a `qa_*` read-only role first.
+If the only DB credential available is a superuser, the skill stops and asks the user to provision a `qa_*` read-only role first. It hands over the SQL and the route (`references/security-rules.md` Hard refusal 1): the role and its grants are a schema change on the route `stack.database.migrations_tool` names in `agentic-dev-core/references/db-change-doctrine.md`, and the role's password is set by a person outside the migration history. The skill never applies it.
 
 ### 8. Verification
 
@@ -284,6 +285,7 @@ On successful completion (all eight verification items pass), the orchestrator r
 - **T5.** NEVER duplicate the credentials-artifact body across multiple publisher targets. The markdown body in `references/credentials-content-template.md` is the single source of truth; publishers are thin adapters.
 - **T6.** NEVER assume idempotency without re-checking the snapshot comment. Re-runs MUST read the snapshot, diff against current detected stack, and only then decide no-op vs surgical patch vs fresh scaffold.
 - **T7.** NEVER write the deployed commit SHA into the generated `/qa` source. The hero build stamp (`data-testid="qa-build-sha"`) reads it at RUNTIME from the platform env var whose NAME detection put in `qaConfig.build` (on Vercel `VERCEL_GIT_COMMIT_SHA`), with a visible fallback line when absent; the value stays out of the snapshot comment and the content-hash, so a redeploy is never drift (`references/page-craft.md` → Build stamp).
+- **T8.** NEVER pick the testers' DB MCP from habit or hand them the agent's own `db` credential. The DB layer resolves from `stack.database` (`references/mcp-and-env-setup.md` §4.0): DBHub logged in as a `qa_*` read-only role by default; the Supabase MCP only as a `--read-only --project-ref` alternative for people who already hold a Supabase account; the `SUPABASE_ACCESS_TOKEN` personal access token is never published. Provisioning the read-only role is a database change on the route `stack.database.migrations_tool` names (`agentic-dev-core/references/db-change-doctrine.md`): this skill hands over the SQL and never applies it.
 
 ---
 

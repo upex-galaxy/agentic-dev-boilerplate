@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-onboard
-description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCP capabilities (library docs, web search at harness level, DB, automation flows), critical env vars, Critical Rule #10 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
+description: "Walks new users through this repo's dev flow — which entry path the repo took (new project scaffolded by /project-bootstrap, or an existing app adopted with `create-agentic-dev --adopt` + /project-adoption), the app's real stack as the `stack:` block of `.agents/project.yaml` declares it, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCP capabilities (library docs, web search at harness level, DB, automation flows), critical env vars, Critical Rule #10 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `we just adopted our app, now what`, `acabamos de adoptar la app`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, codex, opencode]
 phase: foundation
@@ -16,8 +16,10 @@ compact_rules: |
   - Write unit tests → use `/unit-testing`
   - Refine acceptance criteria → use `/product-management`
   - Define a brand-new product → use `/project-foundation`
-  - Scaffold backend / frontend code → use `/project-bootstrap`
+  - Scaffold backend / frontend code → use `/project-bootstrap` (greenfield only: `bun run bootstrap:guard` refuses its base phases on an existing app)
+  - Teach the agentic layer an existing app → use `/project-adoption`
   - Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
+  Entry path: `.template/installer.lock.json` with `adopted: true` = adopted app (tour the adoption hand-off, never `/project-bootstrap` base phases); otherwise a new project. Stack facts come from `.agents/project.yaml` → `stack:`, never from this skill's defaults.
 metadata:
   kind: workflow
 ---
@@ -36,15 +38,22 @@ model_preferences:
 
 Activate when a user lands on this repo for the first time and asks "where do I start?", "how does this work?", or invokes `/agentic-dev-onboard`. The skill is a guided tour, not an executor: it explains the stack, the workflow, the MCPs, and the env vars that everything depends on, points at the visual docs hub, then hands off to the right downstream skill.
 
-`/agentic-dev-onboard` is specific to **this** Next.js + Supabase boilerplate and points at the concrete entry points (`/sprint-development`, `/product-management`, etc.).
+`/agentic-dev-onboard` is specific to **this** boilerplate and points at the concrete entry points (`/sprint-development`, `/product-management`, etc.). Every stack fact it states is read from the `stack:` block of `.agents/project.yaml`, so the tour describes the app this repo actually holds.
 
 ---
 
 ## Welcome
 
-This is **agentic-dev-boilerplate** — a dev-only boilerplate for building Next.js + Supabase apps with AI agents in the loop. The repo ships skills, scripts, and conventions that turn a Jira ticket into merged code via `/sprint-development`. It does **not** ship a backend or a frontend; both are scaffolded on top of the boilerplate by `/project-bootstrap`.
+This is **agentic-dev-boilerplate** — a dev-only boilerplate for building Next.js apps on the Postgres family with AI agents in the loop. The repo ships skills, scripts, and conventions that turn a Jira ticket into merged code via `/sprint-development`. It reaches a repository by one of two paths, and the tour opens by saying which one this repo took:
 
-If you cloned this repo and you don't yet have `bun run setup` complete, start there. Everything else assumes the foundation is green.
+| Path | How to tell | Where the app came from | First steps |
+| ---- | ----------- | ----------------------- | ----------- |
+| New project | `.template/installer.lock.json` absent or without `adopted: true` | `/project-bootstrap` scaffolds the backend and frontend on top of the boilerplate (`bun run bootstrap:guard` exits 0 while no app exists yet) | `bun run setup`, then `/project-foundation` → `/design-system` → `/project-bootstrap` |
+| Adopted app | `.template/installer.lock.json` records `adopted: true` | the team's own code; `bunx create-agentic-dev --adopt` installed the tooling around it and overwrote nothing | commit the adoption, load `/project-adoption`, then follow the hand-off it prints |
+
+On an adopted app the `/project-bootstrap` base phases are refused (`bun run bootstrap:guard` exits 2 and names the signals): never send the user there to "scaffold" an app that already exists. The adoption hand-off is, in order and one session each: `/project-context refresh-all` (business maps from the code), `/project-foundation` Discovery-only (dev guide + domain glossary, no PRD or SRS), `/git-flow-master` Strategy Setup, and optionally `/design-system extract` and `/testability-guide`. `/sprint-development` works from the maps on such a repo. Install detail: `README.md` → "Adopt an existing app" and `INSTALLER.md`.
+
+If you cloned this repo and you don't yet have `bun run setup` complete, start there (on an adopted app, after the adoption commit). Everything else assumes the foundation is green.
 
 **Docs hub (read it in a browser):** `https://upex-galaxy.github.io/agentic-dev-boilerplate/`. It holds the start-here page (`onboarding.html`, also opened locally by `bun run onboarding`), the multi-harness page, and one deck per workflow skill (table below). Hand the user this URL in every tour.
 
@@ -67,17 +76,20 @@ Skip step if the catalog is unavailable; log `skill_resolution: "fallback-inline
 
 ## Stack
 
-| Layer       | Choice                                |
-| ----------- | ------------------------------------- |
-| Framework   | Next.js (locked, App Router)          |
-| Database    | Supabase (Postgres + Auth + Storage)  |
-| Language    | TypeScript (strict mode)              |
-| Runtime     | bun                                   |
-| Lint/format | ESLint + Prettier (pre-commit hooks)  |
-| Tests       | Vitest (unit) + Playwright (E2E) — scaffolded app stack; this repo's own suite runs on Bun's test runner |
-| AI agent    | Claude Code, OpenCode, Codex (CLI + Desktop): one `AGENTS.md`, one skill store (AGENTS.md §5.5) |
+Read the app's stack from `.agents/project.yaml` → `stack:` and present it as a table; never recite a default from memory. The block ships the greenfield defaults (what `/project-bootstrap` scaffolds); on an adopted app `/project-adoption` replaced them with what the app runs, and `bun run setup:doctor` reports any drift between the block and the repo.
 
-The stack is intentionally locked. If your project needs a different stack, this boilerplate is not the right starting point.
+| Layer           | Read from                                                                 |
+| --------------- | ------------------------------------------------------------------------- |
+| Framework       | `stack.framework`, app code under `stack.app_root`                        |
+| Database        | `stack.database.engine` + `provider`; schema changes route by `stack.database.migrations_tool` (`agentic-dev-core/references/db-change-doctrine.md`) |
+| Package manager | `stack.package_manager`; an app command is `{{stack.package_manager}} run <name from stack.scripts>`, a null script is skipped and said so |
+| UI              | `stack.ui` (css, kit, icons)                                              |
+| Tests           | `stack.test_runner` + `stack.scripts.test` (the app's own runner; `/unit-testing` never adds a second one). This repo's own tooling suite runs on Bun's test runner |
+| Hosting / CI    | `stack.hosting`, `stack.ci`                                               |
+| Language        | TypeScript                                                                |
+| AI agent        | Claude Code, OpenCode, Codex (CLI + Desktop): one `AGENTS.md`, one skill store (AGENTS.md §5.5) |
+
+The skills support the set named by `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`: Next.js (App Router or Pages) on the Postgres family, with bun, one app per repo. A stack outside it stops at the adoption preflight or at `/project-adoption`'s analysis with the field and the value that failed; this skill says so plainly instead of touring workflows that would not fit.
 
 ---
 
@@ -103,7 +115,7 @@ After setup, fill `.env` with the credentials the rest of the workflow expects (
 
 `/sprint-development` is the mega-orchestrator for ticket-driven work. Call it with a Jira issue key (`/sprint-development UPEX-123`) and it drives the per-story dev loop end-to-end.
 
-**Jira state machine:**
+**Jira state machine** (the default workflow; the real statuses and transitions of THIS instance are in `.agents/jira-workflows.json`, so read them there before naming one):
 
 ```
 Ready For Dev → In Progress → In Review → Ready For QA
@@ -156,7 +168,7 @@ Skills ask for a CAPABILITY and resolve it by tool-name suffix, whatever the ser
 | ------------------ | -------------------------------------------------------- | ----------------------------------------- |
 | `library-docs`     | Context7 (committed)                                     | Official library docs (Next.js, Supabase…) |
 | `web-search`       | Exa or Tavily at harness level (`bun run setup:doctor`)  | Web search, troubleshooting community Q&A |
-| `db`               | Supabase (committed)                                     | DB queries, migrations, type generation   |
+| `db`               | the DB MCP for `stack.database.provider` (Supabase when the block says `supabase`) | DB queries, schema changes per `db-change-doctrine.md`, type generation |
 | `automation-flows` | n8n (committed)                                          | Workflow automation, scheduled jobs       |
 
 The Atlassian MCP is opt-in (`docs/mcp/`): Jira and Confluence go through `/acli`.
@@ -181,8 +193,8 @@ Place these in `.env` before running anything that talks to a real environment:
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (manual / ad-hoc)      |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
 | `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
-| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime + Supabase MCP (the full set is `.env.example`) |
-| `SUPABASE_ACCESS_TOKEN`                        | Supabase MCP (personal access token)   |
+| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime + Supabase MCP, when `stack.database.provider` is `supabase` (the full set is `.env.example`; an adopted app keeps its own variable names, inside or beside the sentinel block the adoption appended) |
+| `SUPABASE_ACCESS_TOKEN`                        | Supabase MCP (personal access token), same condition |
 | `N8N_API_URL` / `N8N_API_KEY`                  | n8n MCP (`automation-flows`)           |
 
 `.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code); OpenCode reads `{file:.auth/opencode/VAR}` files that `bun run harness:env` writes from `.env`, and Codex starts its servers through a `.env` loader. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
@@ -239,6 +251,7 @@ The AI persistent-memory file at the repo root carries the full operational cont
 
 Run through this checklist before you reach for your first ticket:
 
+- [ ] Adopted app only: is the adoption committed, and does `/project-adoption check` report every signal `ADOPTED`?
 - [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `SUPABASE_*`, `N8N_*`)? Did you connect a web-search provider at harness level (`bun run setup:doctor`)?
 - [ ] Did you launch the agent through `bun run claude|opencode|codex` (or run `bun run harness:env` for a launch with no command line)?
@@ -257,7 +270,8 @@ If any box is unchecked, fix that first. The downstream skills assume a green fo
 - Write unit tests → use `/unit-testing`
 - Refine acceptance criteria → use `/product-management`
 - Define a brand-new product → use `/project-foundation`
-- Scaffold backend / frontend code → use `/project-bootstrap`
+- Scaffold backend / frontend code → use `/project-bootstrap` (greenfield only)
+- Teach the agentic layer an existing app → use `/project-adoption`
 - Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
 
 The onboard tour ends once the user knows which skill to call next. From there, the relevant workflow skill takes over.

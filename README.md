@@ -214,6 +214,8 @@ bunx -y ccstatusline@latest
 
 Already running an application with its own code, schema, CI and conventions? Install the agentic layer into it instead of starting a new project. v1 adopts a Next.js app on the Postgres family (Supabase or plain Postgres) that uses bun as its package manager. One app is adopted at a time; in a monorepo, `stack.app_root` names which one.
 
+**Not supported in v1:** a framework other than Next.js (App Router or Pages), a database outside the Postgres family, a package manager other than bun (no coexistence with npm, pnpm or yarn, and no migration to bun), and more than one app per adoption. Each of these stops the preflight or `project-adoption`'s analysis with the field and the value that failed, and nothing is written. The support set is `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`.
+
 ```bash
 cd <your-app>                                          # the repo root, with a clean working tree
 bunx create-agentic-dev@latest --doctor --preflight    # read-only: can this app be adopted?
@@ -314,7 +316,7 @@ bun install
 cp .env.example .env   # then fill in the values
 ```
 
-> Foundation files (`.agents/`, `scripts/`, `AGENTS.md`) ship with the repo — no bootstrap step needed. À la carte adoption of individual skills is not supported.
+> Foundation files (`.agents/`, `scripts/`, `AGENTS.md`) ship with the repo — no bootstrap step needed. Copying individual skills into another repo is not supported: an existing app takes the whole layer through `--adopt` (see [Adopt an existing app](#adopt-an-existing-app)).
 
 > End-users building a new project should NOT clone manually — use `bunx create-agentic-dev@latest` so git history is scrubbed and the project is renamed automatically.
 
