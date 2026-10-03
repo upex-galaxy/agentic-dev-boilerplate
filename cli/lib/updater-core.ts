@@ -57,6 +57,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { CONTEXT_MAP_SKILLS } from './context-maps';
+import { detectHookManager } from './hook-manager';
 import { applyIgnoreAppend, computeBlobSha, detectIgnoreDelta } from './updater-ignore';
 import { adoptPackageJsonDelta, applyPackageJsonAppend, applyPackageJsonOverride, detectPackageJsonDelta, parsePackageJson } from './updater-package';
 import { ComponentOverlapError, CorruptStateError } from './updater-types';
@@ -2957,7 +2958,7 @@ export async function runUpdate(
       let localData: Record<string, unknown> = {};
       try { localData = parsePackageJson(path.join(repoRoot, spec.path)).data; }
       catch { localData = {}; }
-      const folded = adoptPackageJsonDelta(delta, localData);
+      const folded = adoptPackageJsonDelta(delta, localData, { foreignHookManager: detectHookManager(repoRoot).foreign });
       delta = folded.delta;
       if (Object.keys(folded.satisfied).length > 0) { adoptSatisfiedKeys.set(spec.path, folded.satisfied); }
     }

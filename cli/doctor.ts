@@ -38,11 +38,12 @@ import type { AtlassianUrlSource } from './lib/atlassian-instance.ts';
 import type { CheckFinding as HarnessEnvFinding } from './lib/harness-env.ts';
 import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { analyzeIsolation } from './lib/adopt-isolation.ts';
 import {
   declaredMcpIds,
   validateHookCompatibility,
@@ -60,6 +61,7 @@ import {
 } from './lib/atlassian-instance.ts';
 import { contextMapAdvice, contextMapStatuses } from './lib/context-maps.ts';
 import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
+import { detectHookManager } from './lib/hook-manager.ts';
 import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -355,6 +357,13 @@ interface DoctorReport {
    * and the fix is one `agents:setup --stack`, not a red doctor today.
    */
   stack: StackDiagnosticReport
+  /**
+   * On an ADOPTED app (installer lock `adopted: true`): the app configs that
+   * still reach the tooling (`cli/lib/adopt-isolation.ts`). The adoption never
+   * edits them, so after the `--adopt` run this is the only place that keeps
+   * saying so. NEVER a failure: the fix is a hand edit of the app's file.
+   */
+  tooling_isolation: { adopted: boolean, pending: string[] }
   pending_actions: PendingAction[]
 }
 
@@ -593,6 +602,21 @@ async function stackDiagnostic(): Promise<StackDiagnosticReport> {
   }
 }
 
+/** One line per app config that still reaches the tooling; silent on a greenfield repo. */
+function toolingIsolationDiagnostic(): { adopted: boolean, pending: string[] } {
+  const adopted = (() => {
+    try { return (JSON.parse(readFileSync(join(REPO_ROOT, '.template', 'installer.lock.json'), 'utf8')) as { adopted?: unknown }).adopted === true; }
+    catch { return false; }
+  })();
+  if (!adopted) { return { adopted, pending: [] }; }
+  const a = analyzeIsolation(REPO_ROOT);
+  const pending: string[] = [];
+  if (a.tsconfig !== null) { pending.push(`tsconfig.json type-checks ${a.tsconfig.reached.map(d => `${d}/`).join(', ')}: add them to its "exclude"`); }
+  if (a.eslint !== null) { pending.push(`${a.eslint.path} lints the tooling: ignore ${a.eslint.missing.join(', ')}`); }
+  if (a.hooksPending) { pending.push(`${a.hooks.manager} (${a.hooks.evidence}) does not call .husky/framework-gates.sh: the framework gates never run`); }
+  return { adopted, pending };
+}
+
 // ----------------------------------------------------------------------------
 // Cross-harness compatibility
 // ----------------------------------------------------------------------------
@@ -689,6 +713,7 @@ async function runDoctor(): Promise<DoctorReport> {
     harness_env: await harnessEnvDiagnostic(),
     project_schema: await projectSchemaDiagnostic(),
     stack: await stackDiagnostic(),
+    tooling_isolation: toolingIsolationDiagnostic(),
     pending_actions: [],
   };
 
@@ -699,7 +724,9 @@ async function runDoctor(): Promise<DoctorReport> {
     : worktreeSetupAction({
         envFile: report.env_file_exists,
         deps: report.deps_installed,
-        gitHooks: existsSync(join(REPO_ROOT, '.husky', '_')),
+        // A foreign hook manager (lefthook, simple-git-hooks, ...) installs its
+        // own hooks: `.husky/_` is never created there, on purpose.
+        gitHooks: existsSync(join(REPO_ROOT, '.husky', '_')) || detectHookManager(REPO_ROOT).foreign,
       });
   if (worktreeFix !== null) { report.pending_actions.push(worktreeFix); }
 
@@ -1019,6 +1046,16 @@ function printHuman(report: DoctorReport): void {
       }
     }
     process.stdout.write('\n');
+  }
+
+  // Tooling isolation on an adopted app. Its own section and never a check
+  // row: the fix is a hand edit of one of the app's files.
+  if (report.tooling_isolation.pending.length > 0) {
+    tui.section('Tooling isolation (adopted app)');
+    for (const line of report.tooling_isolation.pending) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${line}\n`);
+    }
+    process.stdout.write('  Fix: by hand in the app\'s own files; the exact lines are in .agents/prompts/adopt-tooling-isolation.md (written by the --adopt run)\n\n');
   }
 
   // Servers that are not in the project config because they run at harness

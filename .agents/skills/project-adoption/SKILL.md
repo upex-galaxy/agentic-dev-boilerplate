@@ -148,7 +148,7 @@ A subagent report that claims a write is verified at the destination (Critical R
 | The project's own branching strategy and host protection | `/git-flow-master` Strategy Setup | its own, read-only first |
 | `DESIGN.md` from the live theme | `/design-system extract` | optional |
 | In-app `/qa` page + credentials artifact | `/testability-guide` | optional |
-| DB types into `stack.database.types_path` when absent | `/project-bootstrap` add-on `supabase-types-setup` | optional, through the DB MCP under the delivery doctrine |
+| DB types into `stack.database.types_path` when absent | `/project-bootstrap` add-on `supabase-types-setup` | optional, through the DB MCP under the delivery doctrine (`agentic-dev-core/references/db-change-doctrine.md`) |
 | Commit of the adoption writes | `/git-flow-master` | this one, proposed at close |
 
 ---

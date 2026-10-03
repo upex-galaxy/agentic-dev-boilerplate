@@ -36,7 +36,8 @@ Each row is a command or read plus a pass condition. `ADOPTED` when the conditio
 | harness | `bun run agents:compat:check` | exit 0 |
 | env | `bun run vars:env:check` and `bun run harness:env:check` | both exit 0 |
 | tracker | `bun run jira:check` | exit 0, or the plan records a no-tracker gap |
-| tooling | `bun run types:check` and `bun run lint:check` (the tooling's own scripts) | exit 0, or the plan names the app-script collision that shadows them |
+| tooling | `bun run tooling:types:check` and `bun run tooling:lint:check` (the tooling's own scope: `tsconfig.tooling.json`, `eslint.config.tooling.mjs`) | exit 0 |
+| tooling isolation | `bun run setup:doctor` section "Tooling isolation (adopted app)" (rows of `.agents/prompts/adopt-tooling-isolation.md`: the app's `tsconfig.json` / ESLint config still reaching `cli/` + `scripts/`, a foreign hook manager not calling `.husky/framework-gates.sh`) | section absent; otherwise every line is a team decision in the plan, applied by hand, never by this skill |
 | app intact | the app's `build` / `lint` / `types` / `test` (names from `stack.scripts`) | exit codes equal to the Phase 1 baseline |
 | maps | `bun run context:map <slug> --list` for each map skill in `CONTEXT_MAP_SKILLS` (`cli/lib/context-maps.ts`) | informational here: the maps are `/project-context`'s, reported as the first hand-off when placeholders |
 | git | `git_strategy.meta.strategy_source` | informational: `inherited` points at `/git-flow-master` Strategy Setup in the hand-off |
@@ -82,7 +83,8 @@ Read, never edit:
 
 - Adoption parity: `.agents/prompts/parity-plan.md` (rows the adoption run left: app-owned collisions, script collisions with their composition proposal, the instruction merge). Missing file = take the collisions from `git diff` of the adoption commit.
 - Instructions: whether `.agents/prompts/adopt-instructions.md` exists and whether `CLAUDE.md` is already the shim.
-- Hooks: `.husky/`, `lefthook.yml`, `simple-git-hooks` in `package.json`, `git config core.hooksPath`. A second hook manager is a gap, never replaced.
+- Hooks: `.husky/`, `lefthook.yml`, `simple-git-hooks` in `package.json`, `.pre-commit-config.yaml`, husky v4 config, `git config --local core.hooksPath` (detector: `detectHookManager` in `cli/lib/hook-manager.ts`). A foreign manager is never replaced: the adoption run installed no husky over it, and the wiring snippet that makes it call the framework gates sits in `.agents/prompts/adopt-tooling-isolation.md` as a team decision.
+- Tooling isolation: `.agents/prompts/adopt-tooling-isolation.md` (the exact `exclude` / ignore lines for the app's own `tsconfig.json` and ESLint config). A stock Next.js tsconfig type-checks `cli/` and `scripts/` and fails on Bun-only syntax, so the app's own `tsc` / `next build` stay red until the team applies them.
 - Env files: `.env`, `.env.local`, `.env.example` (the sentinel block the adoption appended). Variable NAMES only; never print a value.
 - CI: the workflow files and which scripts they call (the tooling must not change what CI runs).
 - Branches: `git branch -a` and the default branch (input for the Strategy Setup hand-off, never acted on).
@@ -167,8 +169,8 @@ Only when the app serves or commits a spec AND neither `api/openapi.json` nor `a
 4. bun run harness:env:check
 5. bun run jira:check                 # skipped with the recorded no-tracker gap
 6. bun run setup:doctor               # stack section: no issue, no drift
-7. bun run types:check                # tooling scripts; a collision with an app script is named, not hidden
-8. bun run lint:check
+7. bun run tooling:types:check        # the tooling's own scope, never the app's tsconfig
+8. bun run tooling:lint:check
 9. the app's build / lint / types / test from stack.app_root   # exit codes == Phase 1 baseline
 ```
 

@@ -27,7 +27,7 @@ import { delimiter, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { PROVISION_COPIES, worktreeIncludeLine } from '../cli/lib/worktree.ts';
+import { PROVISION_COPIES, provisionPackageManager, worktreeIncludeLine } from '../cli/lib/worktree.ts';
 
 const SCRIPT = resolve(import.meta.dir, 'provision-worktree.ts');
 const IS_WINDOWS = platform() === 'win32';
@@ -127,7 +127,53 @@ function pathWithoutDirenv(): string {
   return [bin, ...kept].join(delimiter);
 }
 
+describe('provisionPackageManager (bun only)', () => {
+  function repo(files: Record<string, string>): string {
+    const root = mkdtempSync(join(tmpdir(), 'provision-pm-'));
+    temporaryRoots.push(root);
+    for (const [rel, text] of Object.entries(files)) {
+      mkdirSync(join(root, rel, '..'), { recursive: true });
+      writeFileSync(join(root, rel), text);
+    }
+    return root;
+  }
+  const stack = (pm: string): string => `project:\n  project_name: x\nstack:\n  app_root: .\n  package_manager: ${pm} # bun | pnpm\n`;
+
+  test('bun, or nothing to tell, provisions as before', () => {
+    expect(provisionPackageManager(repo({ 'bun.lock': '' }))).toEqual({ ok: true, note: null });
+    expect(provisionPackageManager(repo({}))).toEqual({ ok: true, note: null });
+    expect(provisionPackageManager(repo({ '.agents/project.yaml': stack('null') }))).toEqual({ ok: true, note: null });
+  });
+
+  test('another package manager is refused with the reason, declared or by lockfile', () => {
+    const declared = provisionPackageManager(repo({ '.agents/project.yaml': stack('pnpm'), 'bun.lock': '' }));
+    expect(declared).toMatchObject({ ok: false });
+    expect(!declared.ok && declared.reason).toContain('stack.package_manager is pnpm');
+    const byLock = provisionPackageManager(repo({ 'package-lock.json': '{}' }));
+    expect(!byLock.ok && byLock.reason).toContain('the app installs with package-lock.json');
+    expect(!byLock.ok && byLock.reason).toContain('requires bun');
+  });
+
+  test('two package managers and nothing declared is ambiguous; declared bun wins with a warning', () => {
+    const both = provisionPackageManager(repo({ 'bun.lock': '', 'yarn.lock': '' }));
+    expect(!both.ok && both.reason).toContain('no stack.package_manager to choose between them');
+    const chosen = provisionPackageManager(repo({ '.agents/project.yaml': stack('bun'), 'bun.lock': '', 'yarn.lock': '' }));
+    expect(chosen).toMatchObject({ ok: true });
+    expect(chosen.ok && chosen.note).toContain('yarn.lock');
+  });
+});
+
 describe('provision-worktree', () => {
+  test('refuses a non-bun app before copying anything', () => {
+    const { worktree } = fixture();
+    writeFileSync(join(worktree, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n');
+    const result = run([worktree]);
+    expect(result.code).not.toBe(0);
+    expect(result.out).toContain('Refusing to provision');
+    expect(result.out).toContain('requires bun');
+    expect(existsSync(join(worktree, '.env'))).toBe(false);
+  });
+
   test('refuses to run on the primary checkout', () => {
     const { primary } = fixture();
     const result = run([primary, '--dry-run']);

@@ -254,6 +254,25 @@ describe('compat error classification', () => {
     expect(compatErrorSurface('opencode MCP n8n mismatch: expected {…}, found {…}')).toBe('mcp');
   });
 
+  // On an adopted app the consumer is the synced tooling config: restoring
+  // upstream's copy is the fix, and the row names that file.
+  test('an unwired block in eslint.config.tooling.mjs is a take-upstream row on that file', () => {
+    const root = temporaryRoot();
+    const error = 'eslint.config.tooling.mjs does not wire CLI_IMPORT_CLOSURE from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.';
+    expect(compatErrorSuggestion(error)).toBe('take upstream');
+    const findings = collectParityFindings({
+      root,
+      upstreamDir: temporaryRoot(),
+      drift: [],
+      compatErrors: [error],
+      archivedSkills: [],
+      archivedSkillsDir: join(root, 'archive'),
+      heldBack: [],
+      envNewKeys: [],
+    });
+    expect(findings.find(f => f.evidence.includes('does not wire'))?.path).toBe('eslint.config.tooling.mjs');
+  });
+
   // The base is synced, `eslint.config.js` is watched: an unwired block is a
   // merge into the project file, and it folds onto that file's drift row.
   test('an unwired eslint block lands on eslint.config.js as a blocking merge, folded with its drift', () => {

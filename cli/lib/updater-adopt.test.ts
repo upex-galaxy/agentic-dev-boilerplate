@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import { parse as parseYaml } from 'yaml';
+import { ADOPT_ISOLATION_PROMPT } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import {
   ADOPT_ENV_SENTINEL,
@@ -191,9 +192,26 @@ describe('adoptPackageJsonDelta', () => {
     // Pure.
     expect(delta.sections.dependencies.upstreamOnlyKeys).toEqual({ yaml: '^2.8.2', picocolors: '^1.1.1' });
   });
+
+  test('a foreign hook manager gets upstream prepare without husky; husky apps and greenfield keep it whole', () => {
+    const delta = (): PackageJsonDelta => ({ file: 'package.json', sections: { scripts: section({ prepare: 'husky && bun scripts/harness-env.ts --placeholders' }) } });
+    expect(adoptPackageJsonDelta(delta(), {}, { foreignHookManager: true }).delta.sections.scripts.upstreamOnlyKeys)
+      .toEqual({ prepare: 'bun scripts/harness-env.ts --placeholders' });
+    expect(adoptPackageJsonDelta(delta(), {}).delta.sections.scripts.upstreamOnlyKeys)
+      .toEqual({ prepare: 'husky && bun scripts/harness-env.ts --placeholders' });
+    // Nothing left to run: the key is not added at all, and remembered as handled.
+    const only = adoptPackageJsonDelta({ file: 'package.json', sections: { scripts: section({ prepare: 'husky' }) } }, {}, { foreignHookManager: true });
+    expect(only.delta.sections.scripts.upstreamOnlyKeys).toEqual({});
+    expect(only.satisfied).toEqual({ scripts: ['prepare'] });
+  });
 });
 
 describe('parity rows', () => {
+  test('a prepare composition leaves upstream husky out when the app runs another hook manager', () => {
+    expect(scriptCompositionProposal('prepare', 'lefthook install', 'husky && bun x', true)).toBe('"prepare": "lefthook install && bun x"');
+    expect(scriptCompositionProposal('prepare', 'lefthook install', 'husky && bun x')).toBe('"prepare": "lefthook install && husky && bun x"');
+  });
+
   test('prepare and setup collisions carry a composition proposal; other scripts do not', () => {
     // A step both sides run appears once.
     expect(scriptCompositionProposal('prepare', 'husky', 'husky && bun x')).toBe('"prepare": "husky && bun x"');
@@ -320,6 +338,32 @@ describe('runAdopt', () => {
     expect(out.yamlSeeded).toBe(true);
     expect(out.protectedPaths).toEqual(['.env.example', 'docs/README.md']);
     expect(out.installerLockWritten).toBe(false);
+  });
+
+  test('tooling isolation: app tsconfig + lefthook get blocking rows and one saved file; neither app file is written', async () => {
+    const { root, upstream } = fixture();
+    const tsconfig = '{ "include": ["**/*.ts"], "exclude": ["node_modules"] }\n';
+    write(root, 'tsconfig.json', tsconfig);
+    write(root, 'lefthook.yml', 'pre-commit:\n  commands: {}\n');
+    const out = await runAdopt(input(root, upstream));
+    expect(read(root, 'tsconfig.json')).toBe(tsconfig);
+    expect(read(root, 'lefthook.yml')).toBe('pre-commit:\n  commands: {}\n');
+    expect(out.isolationPrompt).toBe(ADOPT_ISOLATION_PROMPT);
+    expect(read(root, ADOPT_ISOLATION_PROMPT)).toContain('"exclude": ["node_modules","cli","scripts"]');
+    const rows = out.findings.filter(f => f.path === 'tsconfig.json' || f.path === 'lefthook.yml');
+    expect(rows.map(r => [r.path, r.blocking])).toEqual([['tsconfig.json', true], ['lefthook.yml', true]]);
+  });
+
+  test('tooling isolation: nothing reaching the tooling means no row and no saved file; --dry-run never saves', async () => {
+    const { root, upstream } = fixture();
+    const out = await runAdopt(input(root, upstream));
+    expect(out.isolationPrompt).toBeNull();
+    expect(existsSync(join(root, ADOPT_ISOLATION_PROMPT))).toBe(false);
+    write(root, 'tsconfig.json', '{}\n');
+    const dry = await runAdopt(input(root, upstream, { dryRun: true }));
+    expect(dry.isolationPrompt).toBeNull();
+    expect(existsSync(join(root, ADOPT_ISOLATION_PROMPT))).toBe(false);
+    expect(dry.findings.find(f => f.path === 'tsconfig.json')?.blocking).toBe(true);
   });
 
   test('no instructions anywhere: upstream AGENTS.md and the shim are delivered without asking', async () => {
