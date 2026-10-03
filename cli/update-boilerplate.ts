@@ -975,6 +975,14 @@ function migrationCommitPending(cwd: string): boolean {
 
 function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
+    // --adopt with the app's instructions still waiting for their composition:
+    // CLAUDE.md is the app's own text, which the repair refuses by contract.
+    // The BLOCKING instructions row already says what to do; repair after it.
+    const adoptInstructions = runFacts.adopt?.instructions;
+    if (adoptInstructions?.kind === 'compose' && !adoptInstructions.applied) {
+      sink.step('Superficies de Claude/OpenCode/Codex sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
+      return;
+    }
     const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());
     sink.step(deferSkillsAlias
       ? 'Revisando superficies de Claude/OpenCode/Codex (el alias .claude/skills espera al commit de la migración)…'
