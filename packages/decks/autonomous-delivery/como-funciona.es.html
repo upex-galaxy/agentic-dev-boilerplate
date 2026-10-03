@@ -1,0 +1,2847 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autonomous delivery: corridas programadas sin nadie mirando</title>
+    <meta
+      name="description"
+      content="Cómo /autonomous-delivery convierte un disparo programado en una corrida segura: lock por modo, auditoría donde git es la verdad, selección de trabajo de verdad desbloqueado, ejecución por la skill dueña, presupuesto de contexto y un reporte del que la próxima corrida puede arrancar."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      .steps,
+      .step {
+        min-width: 0;
+      }
+      .step .mono,
+      .check .mono,
+      .alt .mono,
+      .g .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.sections tbody th {
+        width: 3em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">Cuándo</a>
+        <a href="#modos">Modos</a>
+        <a href="#lock">Lock</a>
+        <a href="#auditoria">Auditoría</a>
+        <a href="#seleccion">Selección</a>
+        <a href="#ejecucion">Ejecución</a>
+        <a href="#contexto">Contexto</a>
+        <a href="#autonomia">Autonomía</a>
+        <a href="#cierre">Cierre</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · corridas sin nadie mirando</div>
+        <h1>Entregar <em>de noche</em>, sin <span class="sig">adivinar</span>.</h1>
+        <p class="lede">
+          <span class="mono">/autonomous-delivery</span> es la capa entre un scheduler y
+          <span class="mono">/sprint-development</span>. Un pipeline interactivo da por hecho que un
+          humano eligió el ticket, confirmó el estado y está presente si algo se tuerce. Sin nadie
+          en la línea, esas tres suposiciones son falsas. <b>Esta skill no implementa nada</b>:
+          establece qué es cierto, elige trabajo de verdad desbloqueado, se lo pasa a la skill dueña
+          y deja un registro desde el que la próxima corrida puede arrancar.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para quien <b>lidera</b> el equipo y quien es
+            <b>dueño del producto</b></span
+          >
+          <span class="chip"><span class="dot"></span> la dispara un <b>scheduler</b>, no una persona</span>
+          <span class="chip agent"
+            ><span class="dot"></span> git es la <b>verdad</b>, el tracker una <b>pista</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Fase 0</div>
+            <h3>Aislar y tomar el lock</h3>
+            <p>Su propio worktree, un lock por modo. Lock vivo de otra corrida: sale limpia.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fase 1</div>
+            <h3>Auditar</h3>
+            <p>Cuatro fuentes de evidencia en paralelo. Decide la ascendencia en git.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fase 2</div>
+            <h3>Seleccionar</h3>
+            <p>Solo lo desbloqueado de verdad. Una corrida vacía es un resultado correcto.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fase 3</div>
+            <h3>Ejecutar</h3>
+            <p>Despacha la skill dueña. Compuerta de migraciones, handoff sobre la marcha.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fase 4</div>
+            <h3>Cerrar y reportar</h3>
+            <p>Verifica el cierre, rescata registros, suelta el lock, escribe el reporte.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · cuándo sí y cuándo no</div>
+          <h2>Un scheduler la dispara con un modo. Esa es toda su superficie</h2>
+          <p class="sub">
+            Un cron, una rutina o un despertador programado abre una sesión sin humano presente y le
+            pasa el modo. Si una persona está en la línea y nombró un ticket, esta skill sobra: su
+            único valor es la capa de auditoría, selección y traspaso, y esa capa es puro costo
+            cuando un humano ya eligió.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Situación</th>
+                <th>Va a</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Trabajo por ticket con un humano presente</td>
+                <td><span class="mono">/sprint-development</span>, directo</td>
+              </tr>
+              <tr>
+                <td>Sembrar backlog o refinar criterios de un ticket con nombre</td>
+                <td><span class="mono">/product-management</span>, directo</td>
+              </tr>
+              <tr>
+                <td>Ramas, pull requests, conflictos</td>
+                <td><span class="mono">/git-flow-master</span></td>
+              </tr>
+              <tr>
+                <td>Definir el producto desde cero</td>
+                <td><span class="mono">/project-foundation</span></td>
+              </tr>
+              <tr>
+                <td>Andamiaje de infraestructura</td>
+                <td><span class="mono">/project-bootstrap</span></td>
+              </tr>
+              <tr>
+                <td>Una tajada TDD de tests unitarios</td>
+                <td><span class="mono">/unit-testing</span></td>
+              </tr>
+              <tr>
+                <th>Una corrida programada, desatendida, con un modo</th>
+                <th><span class="mono">/autonomous-delivery &lt;modo&gt;</span></th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Precondiciones</div>
+            <h3>Si falta una, termina en la fase 0</h3>
+            <ul>
+              <li>
+                <span class="mono">.agents/project.yaml</span> con el bloque
+                <span class="mono">autonomous_delivery:</span> y
+                <span class="mono">git_strategy.branches.integration</span>, la rama contra la que
+                corre cada chequeo de ascendencia.
+              </li>
+              <li>
+                <span class="mono">.context/dev-roadmap.md</span> como fuente de las aristas de
+                dependencia.
+              </li>
+              <li>
+                <span class="mono">.env</span> completo: las credenciales se leen por NOMBRE de
+                variable, nunca van en un reporte.
+              </li>
+              <li>Una identidad con permiso de push, verificada en la fase 0 y no en el primer push.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Sin improvisar</div>
+            <h3>El reporte nombra el archivo y la clave</h3>
+            <ul>
+              <li>
+                Un requisito ausente no se rodea: la corrida para y dice exactamente qué falta y
+                dónde. Las precondiciones de la skill despachada las verifica esa skill, y esta
+                falla rápido cuando le avisan.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MODOS ============ -->
+    <section class="band" id="modos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · modos y topes</div>
+          <h2>Tres modos, cada uno con un tope que no se negocia</h2>
+          <p class="sub">
+            Cada historia medida terminó siendo una cadena de miles de líneas: dos no entran en el
+            contexto de una corrida. Los topes salen de esa medición, no de la prudencia.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Elige</th>
+                <th>Tope</th>
+                <th>Despacha a</th>
+                <th>Escribe código</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">story</span></td>
+                <td>La historia de mayor prioridad, desbloqueada de verdad</td>
+                <td><b>1 por corrida</b>, duro</td>
+                <td><span class="mono">/sprint-development</span></td>
+                <td>sí</td>
+              </tr>
+              <tr>
+                <td><span class="mono">bug</span></td>
+                <td>Defectos desbloqueados, primero los más viejos y graves</td>
+                <td><b>hasta 3</b>, estrictamente en secuencia</td>
+                <td><span class="mono">/sprint-development</span> (entrada de bug)</td>
+                <td>sí</td>
+              </tr>
+              <tr>
+                <td><span class="mono">discovery</span></td>
+                <td>Huecos de refinamiento, épicas o backlog</td>
+                <td>solo definiciones, hasta <span class="mono">discovery_definitions</span></td>
+                <td><span class="mono">/product-management</span></td>
+                <td><b>nunca</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Sin modo, no hay corrida</b
+            ><span
+              >El primer token de los argumentos ES el modo. Uno faltante o desconocido es un
+              fast-fail: nadie está para contestar, así que nunca se pregunta ni se deduce de la
+              prosa, y nunca se cae a un modo por defecto.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un bug a la vez, cerrado del todo</b
+            ><span
+              >El segundo bug no se reclama hasta que el primero pasó por el cierre de la fase 4.
+              Tres bugs no son tres hilos en paralelo.</span
+            >
+          </div>
+          <div class="g">
+            <b>El interruptor maestro</b
+            ><span
+              ><span class="mono">autonomous_delivery.enabled</span> en
+              <span class="mono">false</span>, o un modo ausente de
+              <span class="mono">modes</span>, terminan la corrida en la fase 0 con un reporte de una
+              línea. No es una falla.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Los valores de tu proyecto viven en un solo lugar:</b> el bloque
+          <span class="mono">autonomous_delivery:</span> de
+          <span class="mono">.agents/project.yaml</span>. El bloque de la skill es un ejemplo con
+          los valores seguros de cada eje; citarlo como estado del proyecto es un error de
+          procedencia.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 FASE 0 ============ -->
+    <section class="band" id="lock">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · fase 0, aislamiento y lock</div>
+          <h2>Primero su propio worktree, después el lock del modo</h2>
+          <p class="sub">
+            La colisión que no puede pasar es dos corridas implementando el mismo ticket en dos
+            ramas. <span class="mono">story</span> y <span class="mono">bug</span> entran a un
+            worktree propio, creado a mano para poder cerrarlo a mano.
+            <span class="mono">discovery</span> no toca código ni crea ramas: trabaja en el checkout
+            común y salta el aislamiento entero.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Anotar el primario</h3>
+            <p>
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span> sale de
+              <span class="mono">git rev-parse --git-common-dir</span>, nunca de
+              <span class="mono">pwd</span>. Es el mismo valor desde el primario y desde cada
+              worktree. <span class="mono">.session/</span> vive ahí toda la corrida y se lee y
+              escribe por ruta absoluta.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Crear el worktree</h3>
+            <p>
+              Con nombre generado, nunca fijo. En Claude Code,
+              <span class="mono">EnterWorktree</span>. En OpenCode y Codex, la ruta portable:
+              <span class="mono">git worktree add</span> fuera del primario, desde
+              <span class="mono">origin/&lt;integration-branch&gt;</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Aprovisionar</h3>
+            <p>
+              <span class="mono">bun run worktree:provision</span> copia
+              <span class="mono">.env</span>, <span class="mono">.vercel/</span> y lo demás que git
+              ignora. <b>No copia <span class="mono">.session/</span></b>: el lock solo excluye a
+              otra corrida si las dos ven el MISMO archivo.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Verificar la base</h3>
+            <p>
+              <span class="mono">git fetch</span> y un chequeo de ascendencia contra la rama de
+              integración. Si está mal, se realinea con
+              <span class="mono">git checkout -B</span>. Nunca
+              <span class="mono">git reset --hard</span>: la regla #13 lo prohíbe.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Si el scheduler ya asignó un worktree</b> (la opción "Worktree" de una rutina de Claude
+          Code, el modo worktree de una automatización de Codex), la corrida no crea un segundo:
+          trabaja ahí, avisa en el reporte que esa opción debería ir apagada y no lo borra al final.
+          Es un camino degradado pero funcional. Bajo Orca, el hook de archivo de
+          <span class="mono">orca.yaml</span> lo audita y lo quita.
+        </div>
+
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">Un lock por modo, nunca una cola</h2>
+          <p class="sub">
+            Es <span class="mono">lock.json</span>, en
+            <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/</span> del checkout
+            primario, con dueño, máquina, worktree, inicio y un latido que se refresca en cada frontera de
+            fase.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Encuentra</th>
+                <th>Hace</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ningún lock</td>
+                <td>Lo escribe y sigue.</td>
+              </tr>
+              <tr>
+                <td>Un lock con latido reciente</td>
+                <td>
+                  Otra corrida es dueña del modo: <b>sale limpia</b> con un reporte que la nombra.
+                  No espera, no reintenta, no sigue igual. El próximo disparo es el reintento.
+                </td>
+              </tr>
+              <tr>
+                <td>Un lock más viejo que <span class="mono">lock_staleness_minutes</span></td>
+                <td>
+                  Abandonado: lo reclama y lo anota en el log de escalaciones. El worktree de la
+                  corrida muerta queda para que un humano lo audite y lo quite.
+                </td>
+              </tr>
+              <tr>
+                <td>Un lock de esta misma sesión</td>
+                <td>Una fase anterior de esta corrida: sigue.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>La identidad de push se verifica tres veces</b
+            ><span
+              ><span class="mono">gh auth status</span> contra
+              <span class="mono">automation_gh_account</span>: en la fase 0, justo antes del primer
+              push y justo antes de cualquier merge. Una CLI con varias cuentas puede cambiar de
+              identidad en el medio, y el error recién aparece en el merge, disfrazado de protección
+              de rama.</span
+            >
+          </div>
+          <div class="g">
+            <b>Retomar sin preguntar</b
+            ><span
+              >Sin usuario, la fase 0 resuelve el <span class="mono">progress.md</span> previo por
+              tabla: rama en el remoto, retoma; rama ausente, escala (se perdió trabajo y no se
+              rehace en silencio); fase final completa, archiva y arranca de cero.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 FASE 1 ============ -->
+    <section class="band" id="auditoria">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · fase 1, auditoría</div>
+          <h2>Git es la fuente de verdad. El tracker es una pista</h2>
+          <p class="sub">
+            Un tracker puede decir "listo para QA" sin nada en la rama de integración: la
+            automatización de merge se dispara con CUALQUIER pull request, también con los internos
+            de una cadena. Toda decisión de dependencia de la fase 2 descansa acá, así que se
+            verifica, nunca se infiere.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># de más confiable a menos; cuando dos chocan, gana la de arriba y el choque se REGISTRA</span>
+<span class="k">ascendencia en git</span> contra la rama de integración   <span class="c">&lt;- decide</span>
+pull requests abiertos + estado de ramas en el remoto  <span class="c">&lt;- explica</span>
+estado vivo del tracker                                <span class="c">&lt;- insinúa</span>
+archivo de cola / tablero / claims                     <span class="c">&lt;- reclama</span>
+roadmap y prosa de diseño                              <span class="c">&lt;- solo aristas, nunca estado</span>
+
+<span class="c"># el chequeo que más se usa, siempre con fetch inmediatamente antes</span>
+git fetch origin
+git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/<span class="s">&lt;integration-branch&gt;</span>   <span class="c"># exit 0 == llegó de verdad</span></pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Cuatro fuentes, en paralelo</div>
+            <h3>Un verificador por fuente</h3>
+            <ul>
+              <li>Ascendencia en git, en cada commit de merge que contribuye a una dependencia.</li>
+              <li>Pull requests abiertos y ramas sin mergear.</li>
+              <li>Estado vivo del tracker, con su changelog y sus comentarios.</li>
+              <li>El archivo de cola, tablero o claims, leído <b>entero</b>, no solo la fila propia.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Por qué no un solo agente</div>
+            <h3>Porque alisaría la contradicción</h3>
+            <ul>
+              <li>
+                Que las cuatro fuentes no coincidan es el caso normal. Un agente único las concilia
+                en un relato prolijo y borra justo la señal que la fase 2 necesita ver.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>
+              Fetch, las cuatro fuentes, el ledger vivo de migraciones con
+              <span class="mono">[DB_TOOL]</span> y la protección de ramas por los DOS endpoints:
+              el clásico devuelve 404 cuando la protección es un ruleset.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>
+              Nada en el momento. Cada discrepancia entre tracker y git queda en el log de
+              escalaciones, con evidencia, para que la leas y para que la próxima corrida sepa de
+              qué manera miente este tracker.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>
+              Una tabla, no un relato: ticket, lo que dice el tracker, commit de merge, si es
+              ancestro, PR abierto, estado de la rama y un veredicto (<b>merged</b>, claimed-only,
+              in-flight, not-started).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 FASE 2 ============ -->
+    <section class="band" id="seleccion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · fase 2, selección</div>
+          <h2>Elige lo que está desbloqueado de verdad, o no elige nada</h2>
+          <p class="sub">
+            Cuatro entradas, ponderadas y no promediadas. El veredicto de la fase 1 pisa a las otras
+            cuando no coinciden.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Entrada</th>
+                <th>Manda sobre</th>
+                <th>Nunca manda sobre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">.context/dev-roadmap.md</span></td>
+                <td>aristas de dependencia, compuertas de mockup, orden</td>
+                <td>el estado actual de cualquier cosa</td>
+              </tr>
+              <tr>
+                <td>El tracker, consultado ahora</td>
+                <td>estado vivo, responsable, changelog</td>
+                <td>si el trabajo se mergeó</td>
+              </tr>
+              <tr>
+                <td>Veredicto de la fase 1</td>
+                <td>si el trabajo se mergeó</td>
+                <td>qué hay que construir</td>
+              </tr>
+              <tr>
+                <td>Cola, tablero o claims</td>
+                <td>quién tiene qué fila al momento de leer</td>
+                <td>si una dependencia salió</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Listo no es un estado</h3>
+            <p>
+              Lee el rastro de refinamiento: preguntas bloqueantes abiertas, respuestas de práctica
+              marcadas como borrador, casos borde sin tildar, o un cambio de estado sin comentario
+              que lo explique. Cualquiera significa no listo, diga lo que diga el campo. Es un
+              salteo con razón anotada, no una escalación.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Chequeo de crecimiento</h3>
+            <p>
+              Estimación alta, una historia de UI sin mockup donde el plan de diseño lo espera, una
+              decisión de arquitectura implícita en los criterios, más de una migración o una ruta
+              nueva de autorización: <b>no se reclama sin un humano presente</b>. Se anota y se
+              toma la siguiente.
+            </p>
+          </div>
+          <div class="step">
+            <h3>El protocolo de claim</h3>
+            <p>
+              Escribe su nombre en la fila, guarda y <b>vuelve a leer el archivo</b>. Si ahora hay
+              otro nombre, ganó un par: retrocede y toma el siguiente candidato. Nunca se pelea una
+              fila ni se edita la de otra corrida.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Una corrida vacía es un resultado correcto.</b> Si nada sobrevive, sale limpia con un
+          reporte que dice qué consideró y por qué descartó cada uno. Elegir trabajo marginal para no
+          entregar un reporte vacío es justo la falla que esta fase existe para evitar.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FASE 3 ============ -->
+    <section class="band" id="ejecucion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · fase 3, ejecución</div>
+          <h2>Despacha a la skill dueña y no repite sus etapas</h2>
+          <p class="sub">
+            Cada despacho lleva el briefing de siete componentes. El componente 7 (reglas) carga la
+            compuerta de migraciones, la ruta del worktree, la prohibición de rebasear ramas ya
+            pusheadas y el procedimiento de parada por contexto: una regla que vive solo en esta
+            skill nunca llega al ejecutor.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Despacho</th>
+                <th>Lo que agrega esta skill</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">story</span></td>
+                <td><span class="mono">/sprint-development</span>, entrada de historia nueva</td>
+                <td>
+                  clave del ticket, tabla de la fase 1, el claim, la ruta del worktree, la compuerta
+                  de migraciones, el presupuesto de contexto
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">bug</span></td>
+                <td><span class="mono">/sprint-development</span>, entrada de bug (causa raíz primero)</td>
+                <td>lo mismo, una vez por bug, en secuencia</td>
+              </tr>
+              <tr>
+                <td><span class="mono">discovery</span></td>
+                <td><span class="mono">/product-management</span></td>
+                <td>el hueco encontrado en la fase 2 y su evidencia</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">La compuerta de migraciones</h2>
+          <p class="sub">
+            Escribir el archivo de migración es trabajo técnico y siempre es autónomo.
+            <b>Aplicarlo</b> a una base compartida es irreversible y le pega a cada agente
+            concurrente: es otro acto, con otra compuerta, según
+            <span class="mono">autonomous_delivery.migrations</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th><span class="mono">migrations:</span></th>
+                <th>Cambio aditivo</th>
+                <th>Cambio destructivo (drop, rename, reescritura)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">confirm</span> (por defecto)</td>
+                <td>Pausa y pide aprobación: destino, qué hace, que es aditivo.</td>
+                <td>Pausa y pide aprobación, con una segunda opción real: diferirlo.</td>
+              </tr>
+              <tr>
+                <td><span class="mono">autonomous</span></td>
+                <td>Sigue.</td>
+                <td><b>Igual para.</b> <span class="mono">autonomous</span> nunca cubre esto.</td>
+              </tr>
+              <tr>
+                <td><span class="mono">unrestricted</span></td>
+                <td>Sigue.</td>
+                <td>
+                  Sigue. Opt-in y peligroso a propósito: para una base sin datos de producción que
+                  perder. Nunca es el defecto.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>El número sale del ledger vivo</b
+            ><span
+              >Inmediatamente antes de escribir el archivo, nunca de listar el directorio local: el
+              ledger puede ir adelante de tu rama por la migración sin mergear de un par.</span
+            >
+          </div>
+          <div class="g">
+            <b>Releer después de cada apply</b
+            ><span
+              >Y comparar la definición viva contra el archivo commiteado. Nunca se aplica una
+              migración solo para que desaparezca un error local.</span
+            >
+          </div>
+          <div class="g">
+            <b>Tests verdes no son evidencia</b
+            ><span
+              >Al menos una aserción tiene que pasar por una ruta de escritura real de producción.
+              Fixtures que siembran la columna que el código lee, y no la que producción escribe,
+              mantienen la suite verde sobre un camino de datos muerto.</span
+            >
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Fase 3.5, por ticket</div>
+            <h3>Limpieza inmediata, no al final</h3>
+            <ul>
+              <li>Confirmar que la rama está pusheada (o que no hubo commits).</li>
+              <li>
+                Rescatar el <span class="mono">.session/</span> local de la skill despachada con
+                <span class="mono">bun run worktree:audit &lt;path&gt; --rescue</span>; si sale con
+                error, no se sigue.
+              </li>
+              <li><span class="mono">git worktree remove &lt;path&gt;</span> y una línea en <span class="mono">progress.md</span>.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Opcional</div>
+            <h3>Un worker supervisado por ticket</h3>
+            <ul>
+              <li>
+                Cuando pasa la compuerta de orquestación (binario y runtime alcanzable), un
+                despacho de <span class="mono">story</span> o <span class="mono">bug</span> puede ir
+                a un worker por ticket. Lock, auditoría, selección, topes y compuertas siguen siendo
+                de esta skill; el worker para en un PR abierto y el merge queda en la corrida.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 CONTEXTO ============ -->
+    <section class="band" id="contexto">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · el contrato de presupuesto</div>
+          <h2>Lo que se acaba primero es el contexto, no el reloj</h2>
+          <p class="sub">
+            En la corrida de la que sale esta skill, cada generación de workers se retiró por
+            contexto, varias a mitad de un ticket. Se diseña para eso.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Handoff sobre la marcha</h3>
+            <p>
+              <span class="mono">handoff.md</span> se completa en cada frontera de fase y después de
+              cada tajada terminada, según <span class="mono">context_budget.handoff_checkpoint</span>.
+              Una sesión que se quedó sin espacio no puede escribir por qué.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Medir el propio presupuesto</h3>
+            <p>
+              En cada frontera de fase. Al llegar a
+              <span class="mono">context_budget.stop_at_remaining_pct</span> deja de tomar trabajo:
+              ni tajada nueva, ni agente en segundo plano, ni despertador programado.
+            </p>
+          </div>
+          <div class="step">
+            <h3>La parada limpia, en este orden</h3>
+            <p>
+              Primero el push. Después rescatar registros, el estado de reanudación en
+              <span class="mono">handoff.md</span> (rama, SHA, PRs, el próximo comando concreto), la
+              última entrada de <span class="mono">progress.md</span>, soltar el lock y reportar.
+            </p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># la secuencia de parada limpia</span>
+<span class="k">1. PUSH de la rama</span>          <span class="c">&lt;- siempre primero: trabajo sin pushear en un worktree descartable</span>
+                               <span class="c">   es la única pérdida irrecuperable de este sistema</span>
+2. rescatar registros de sesión
+3. estado de reanudación en handoff.md, escrito para un extraño que retoma en frío
+4. última entrada de progress.md
+5. soltar el lock
+6. reportar</pre>
+
+        <div class="callout blue r">
+          <b>Una corrida que entrega un traspaso limpio es un éxito.</b> Se la juzga por si la
+          próxima puede retomarla, no por si shippeó. Una muerte a mitad de ticket con trabajo sin
+          pushear es la falla contra la que está diseñada.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 AUTONOMÍA ============ -->
+    <section class="band" id="autonomia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · quién decide qué</div>
+          <h2>Decide lo técnico sola. Escala solo cuatro cosas</h2>
+          <p class="sub">
+            Sigue <span class="mono">agentic-dev-core/references/decision-protocol.md</span>: buscar
+            en el registro, seguir lo ya decidido, un panel de jueces puntuado si la pregunta es
+            nueva de verdad, y escalar solo lo que corresponde. Todo queda escrito donde la fase 1
+            de la próxima corrida lo va a encontrar.
+          </p>
+        </div>
+
+        <pre class="code r">BUSCAR EN EL REGISTRO -&gt; ¿ya decidido? SEGUIRLO
+        |
+        | no decidido
+        v
+  ¿producto / seguridad nueva / irreversible / reservado?
+        |  no                                  |  sí
+        v                                      v
+  PANEL DE JUECES PUNTUADO (3-5 lentes)     ESCALAR (informado)
+        |                                      |
+        +---------&gt; ESCRIBIRLO &lt;---------------+</pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">El registro que lee primero</div>
+            <h3>El log de escalaciones, entero</h3>
+            <ul>
+              <li>
+                <span class="mono">.session/autonomous-delivery/escalation-log.md</span>, más
+                <span class="mono">.context/ADR/</span> y los tickets hermanos. Busca la FORMA de la
+                pregunta, no su redacción: un fallo que te gobierna puede haberlo escrito hace una
+                hora una corrida que nunca viste.
+              </li>
+              <li>
+                Escalar acá es caro: no hay quién conteste, y una parada por una cuestión técnica
+                cuesta un turno programado entero.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Producto: es configuración</div>
+            <h3><span class="mono">decision_authority.product</span></h3>
+            <ul>
+              <li>
+                <span class="mono">escalate</span> (el defecto correcto): una pregunta de producto
+                para la corrida.
+              </li>
+              <li>
+                <span class="mono">decide</span>: no hay PO humano. Un subagente de decisión puntúa
+                las opciones, publica el fallo en el ticket bajo un encabezado con el perfil que
+                decidió y la corrida sigue. Nunca se presenta como firma humana.
+              </li>
+              <li>Seguridad nueva, irreversible y lo reservado escalan con cualquiera de los dos.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Escalar es una parada limpia</b
+            ><span
+              >Escribe la entrada (qué pasó, por qué es de esta categoría, qué tiene que decidir el
+              humano, qué cuesta esperar), pushea, suelta el lock, avisa y termina. Nunca deja una
+              sesión estacionada esperando una respuesta que no puede llegar.</span
+            >
+          </div>
+          <div class="g">
+            <b>Dos canales, dos trabajos</b
+            ><span
+              ><span class="mono">escalation_channel</span> lleva solo escalaciones, algo que un
+              humano tiene que resolver. <span class="mono">report_channel</span> lleva los
+              resúmenes. Con <span class="mono">null</span>, el archivo del reporte es la
+              notificación.</span
+            >
+          </div>
+          <div class="g">
+            <b>Discovery crea, el operador veta</b
+            ><span
+              >No hay compuerta de aprobación: crea hasta su tope, anota cada clave en
+              <span class="mono">discovery/created-log.md</span> (solo se agrega) y la reporta. Al
+              arrancar, lee ese log contra el tracker: un ticket cerrado o borrado es un veto vigente
+              y no se recrea, ni con otro título.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Para el dueño del producto:</b> tu control sobre <span class="mono">discovery</span> es
+          el veto después del hecho. Cerrar una historia en Backlog cuesta un click. La skill prohíbe
+          reintroducir una espera de aprobación, o una versión más suave de ella, porque una
+          propuesta sin respuesta dejó varios disparos seguidos sin crear nada, y el tope por corrida
+          es lo que acota el daño.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 CIERRE ============ -->
+    <section class="band" id="cierre">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · fase 4, cierre y reporte</div>
+          <h2>Cada paso puede perderse con el anterior, por eso el orden</h2>
+          <p class="sub">
+            Nada se evapora en silencio: cada discrepancia, cada decisión autónoma y cada chequeo
+            que la corrida no pudo hacer aparece nombrado en el reporte.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>1 · Cierre de la skill dueña, verificado.</b> Que la transición automática del
+              tracker de verdad ocurrió, que el responsable de verdad cambió, el comentario de
+              traspaso y la sincronización de la caché. Esta skill no lo reimplementa: comprueba que
+              pasó.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>2 · Rescatar antes de borrar.</b> El estado de esta skill ya vive en
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, pero una skill despachada
+              puede haber escrito un <span class="mono">.session/</span> dentro del worktree:
+              <span class="mono">bun run worktree:audit &lt;worktree&gt; --rescue</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>3 · Soltar el lock.</b> También si escaló o paró por presupuesto: el lock es de
+              una sesión en marcha, no de un ticket sin terminar.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>4 · Escribir el reporte</b> en
+              <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/run-report.md</span>,
+              también para la corrida vacía.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>5 · Publicar el resumen</b> en <span class="mono">report_channel</span> si hay uno
+              configurado. Nunca un destino improvisado.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>6 · Archivar la sesión</b> y cerrar la memoria con la ruta del archivo.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>7 · Cerrar SU worktree, el último paso.</b>
+              <span class="mono">ExitWorktree(remove)</span> en Claude Code,
+              <span class="mono">git worktree remove</span> desde el primario en la ruta portable.
+              Nunca el de otra corrida, y nunca uno que asignó el scheduler.</span
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Artefacto</th>
+                <th>Alcance y vida</th>
+                <th>Para qué</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">run-report.md</span></td>
+                <td>una corrida; se pisa en cada corrida y se archiva</td>
+                <td>lo que hizo esta corrida, para un humano que se pone al día</td>
+              </tr>
+              <tr>
+                <td><span class="mono">handoff.md</span></td>
+                <td>una corrida, escrito de continuo; se archiva</td>
+                <td>lo que la próxima corrida no puede sacar de otro lado</td>
+              </tr>
+              <tr>
+                <td><span class="mono">escalation-log.md</span></td>
+                <td>todas las corridas y modos; solo se agrega, nunca se archiva</td>
+                <td>cada parada, cada fallo, cada discrepancia</td>
+              </tr>
+              <tr>
+                <td><span class="mono">progress.md</span></td>
+                <td>una corrida; solo se agrega, se archiva</td>
+                <td>estado mecánico para retomar, con lo que queda sin pushear</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue r">
+          <b>Lo primero que lee un líder:</b> la sección "Not verified by this run" del reporte. Lo
+          que una corrida programada no pudo comprobar se nombra exacto, para que quien sí puede
+          sepa por dónde empezar. Nunca queda implícita.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 BARANDAS ============ -->
+    <section class="band" id="reglas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · barandas</div>
+          <h2>Lo que no hace nunca, con nadie mirando</h2>
+          <p class="sub">
+            Las reglas que tienen que atar al ejecutor viven en
+            <span class="mono">## Compact Rules</span> y llegan a cada briefing por
+            <span class="mono">.agents/skills/REGISTRY.md</span>. Cada riesgo observado, con su
+            disparador y su chequeo, está en
+            <span class="mono">references/hazard-catalogue.md</span>.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca avanza una dependencia por un cambio de estado</b> en el tracker. Solo la
+              ascendencia en git decide si algo salió.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca rebasea, fuerza el push ni reescribe historia pusheada.</b> Sobre una rama
+              que un subagente ya pusheó, mergea la base. Y una operación denegada es una señal para
+              parar y nombrar el permiso que falta, nunca un acertijo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca su propia configuración de permisos</b> para recuperar una capacidad.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca improvisa una identidad o credencial</b> cuando falta la declarada. Un
+              worktree sin su <span class="mono">.env</span> es la forma más común de esa
+              tentación: falla cerrado y reporta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca adivina una transición.</b> Un slug que falta en
+              <span class="mono">.agents/jira-workflows.json</span> no dispara nada: deja el issue
+              donde está y el reporte recomienda
+              <span class="mono">bun run jira:sync-workflows</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca commitea salida regenerada sin leerla.</b> Tipos o clientes generados desde
+              una instancia compartida absorben el esquema sin mergear de un par.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca edita la fila, la rama ni el worktree de otra corrida</b>, salvo para
+              reclamar una fila libre según el protocolo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Sin atribución de IA</b> en commits, pull requests ni comentarios del tracker
+              (Critical Rule #3).</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Editar una regla no cambia nada hasta regenerar el registro</b> con
+          <span class="mono">bun run skills:registry</span>. El registro es lo que llega a un
+          briefing: una regla que no llegó al briefing no llegó a ningún ejecutor.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · qué le dice el scheduler a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            Lo escribe el prompt de la rutina, no una persona. El modo va siempre explícito:
+            <span class="mono">story</span>, <span class="mono">bug</span> o
+            <span class="mono">discovery</span>, definidos en
+            <span class="mono">## Mode routing</span> de la skill.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/autonomous-delivery bug</span>
+            <p>La barra de la skill y el modo como primer argumento.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
+            <p>Sin barra: el prompt de la rutina nombra la skill y el modo.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Al armar la rutina, dejá apagada la opción de worktree del scheduler.</b> La skill crea
+          y cierra su propio aislamiento en los tres hosts: así la fase 4 puede borrar el worktree de
+          la corrida en vez de dejarlo en disco para un humano.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Selecciona y despacha; cada etapa del trabajo la hace su dueña. Fuera de alcance quedan
+            la verificación de QA, que arranca desde el estado listo para QA, y elegir qué
+            construir, que es producto y escala.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Despachada · story y bug</div>
+            <h3><a href="../sprint-development/como-funciona.es.html">/sprint-development</a></h3>
+            <p>
+              Implementa, revisa y despliega cada ticket. Su cierre de Stage 4 es el que la fase 4
+              verifica.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Despachada · discovery</div>
+            <h3><a href="../product-management/como-funciona.es.html">/product-management</a></h3>
+            <p>Refinamiento, épicas y criterios: la única skill que llama el modo discovery.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al lado · git</div>
+            <h3><a href="../git-flow-master/como-funciona.es.html">/git-flow-master</a></h3>
+            <p>Ramas, pull requests, merges, conflictos y la planificación de cadenas de PRs.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Upstream · aristas</div>
+            <h3>/project-context dev-roadmap</h3>
+            <p>
+              Cuando las aristas o el orden de <span class="mono">.context/dev-roadmap.md</span>
+              están viejos o faltan.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Opcional · workers y rutinas</div>
+            <h3><a href="../orca-orchestration/como-funciona.es.html">/orca-orchestration</a></h3>
+            <p>
+              Lanza, supervisa y cierra los workers despachados, y registra la corrida como rutina
+              programada. Solo cuando pasa su compuerta; cada QUÉ sigue siendo de esta skill.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/autonomous-delivery/SKILL.md"
+            >.agents/skills/autonomous-delivery/SKILL.md</a
+          >
+          y sus tres referencias en <span class="mono">references/</span>
+          (<span class="mono">audit-and-selection.md</span>,
+          <span class="mono">hazard-catalogue.md</span>,
+          <span class="mono">run-report-format.md</span>). Doctrina relacionada:
+          <span class="mono">agentic-dev-core/references/decision-protocol.md</span> y
+          <span class="mono">session-management.md</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Shippear es lo que sale; un estado
+            desde el que se puede retomar es lo que no se negocia. Una corrida sin nadie mirando
+            vale lo que vale el registro que deja: qué era cierto, qué eligió y por qué, qué no pudo
+            comprobar.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/autonomous-delivery/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
