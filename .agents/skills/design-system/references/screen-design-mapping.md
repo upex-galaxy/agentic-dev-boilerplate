@@ -24,7 +24,7 @@ Supported external tools (document both; the user picks):
 | Tool | How | Output |
 |------|-----|--------|
 | **Claude Design** (`claude.ai/design`) | Premium (Claude Pro+). User mocks screens in HTML/CSS, exports the handoff bundle. | A bundle (HTML/CSS/JS prototypes + chat transcript) dropped into the drop zone. |
-| **Open Design** (OSS, local Docker app) | Free. User iterates screens in the local UI, downloads the prototypes. | Prototype files dropped into the drop zone. |
+| **Open Design** (OSS, local desktop app; Docker optional) | Free. User iterates screens in the local UI, downloads the prototypes. | Prototype files dropped into the drop zone. |
 | Any other prototyper (Figma export, hand-authored HTML, …) | User's choice | Whatever lands in the drop zone is treated as the screen source. |
 
 **Drop zone:** `.context/designs/<project-slug>/<batch-slug>/` (project-slug from `.agents/project.yaml`;

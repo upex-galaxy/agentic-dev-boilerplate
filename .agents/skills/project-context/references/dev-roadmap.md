@@ -23,7 +23,7 @@ The output contains:
 - **§2 Epic backbone** — the schema-forced epic spine (which epic must ship before which), derived from the data map's entity topology (`business-data-context`).
 - **§3 Story dependency graph** — the hard/soft edge list with the *reason* for each edge. This is the part nothing else holds — Jira issue-links are sparse and carry no reason.
 - **§4 Execution sprints** — the topologically-sorted parallel-safe batches (Kahn's sort of the link graph). **This subsumes the former `.context/PBI/sprint-sequence.md`.**
-- **§5 Mockup-gate registry** — which stories cannot start until a mockup lands (Critical Rule #15 / `master-design-plan.md` §8).
+- **§5 Mockup-gate registry** — which stories cannot start until a mockup lands (Critical Rule #14, UI fidelity contract / `master-design-plan.md` §8).
 - **§6 Live status — query recipe** — NOT a status table. A recipe to fetch the live truth, plus the local-only knowledge Jira does not store (per-story pre-dev blockers, edge-mapping TODO).
 - **§7 Maintenance protocol** — who owns what, what is durable vs volatile, when to re-run.
 
@@ -47,7 +47,7 @@ Earlier boilerplate versions persisted the Kahn topological sort to `.context/PB
 | Issue tracker — epics + child stories + **full `issuelinks` array** | **HARD REQUIREMENT** | Story membership, `dependencies` / `blocks` / `relates` links — the edges the §4 sort consumes | `[ISSUE_TRACKER_TOOL]` |
 | `.agents/jira-link-types.json` | **must be current** | Link-type slugs. Refresh with `bun run jira:sync-link-types` BEFORE sorting — a stale catalog silently misclassifies edges | Read + `bun run jira:sync-link-types` |
 | The data map (`business-data-context`), `entities` + `access-control` sections | Soft — warn if missing | Entity topology → the §2 epic backbone (no entity ships before the entities + RLS it depends on) | `bun run context:map business-data-context` |
-| `.context/design/master-design-plan.md` §8 | Soft — warn if missing | US→Screen map + per-screen mockup status → the §5 mockup-gate registry (Critical Rule #15) | Read file |
+| `.context/design/master-design-plan.md` §8 | Soft — warn if missing | US→Screen map + per-screen mockup status → the §5 mockup-gate registry (Critical Rule #14, UI fidelity contract) | Read file |
 | `.context/master-implementation-plan.md` §4–§5 | Soft | Master Sprint grouping — to tag each Execution Sprint with its parent Master Sprint | Read file |
 | `.context/PBI/epic-tree.md` + `epics/` | If available | Local story-membership mirror + any hand-authored `context.md` notes (pre-dev blockers, open Qs) | Read files |
 
@@ -102,7 +102,7 @@ Fetch every in-scope story including its full `issuelinks`. For each edge, recor
 Apply the topological sort defined in `.agents/skills/product-management/references/sprint-sequencing.md` (Kahn's algorithm, cycle detection, sequencing rules). The output table replaces what used to live in `sprint-sequence.md`. On a detected cycle: HALT, report participating keys, ask the user to re-orient a link. NEVER break cycles automatically.
 
 ### Phase 5 — Mockup-gate registry (§5)
-From `master-design-plan.md` §8 (US→Screen map) + §4 per-screen specs, list every story whose primary screen has no mockup yet. Each is 🔒-gated until the mockup lands or a spec-only departure is ratified (master-design-plan §5 + ADR) per Critical Rule #15.
+From `master-design-plan.md` §8 (US→Screen map) + §4 per-screen specs, list every story whose primary screen has no mockup yet. Each is 🔒-gated until the mockup lands or a spec-only departure is ratified (master-design-plan §5 + ADR) per Critical Rule #14, UI fidelity contract.
 
 ### Phase 6 — Local knowledge (§6)
 Collect the knowledge Jira does NOT store as queryable fields: per-story pre-dev blockers (gating Qs from shift-left refinement, found in `context.md` / shift-left docs), and the edge-mapping TODO (stories on the board not yet in the §3 graph, suspected supersedes). Preserve any of these already hand-written on UPDATE.
@@ -158,7 +158,7 @@ The Kahn-sort output (Execution Sprint | parallel-safe count | story keys | note
 
 Same rule in the user's language: any phrasing implying a ticket's CURRENT state is banned here. A story with no upstream edges is described as having no upstream edges, never as "ready to work" — whether it can actually be picked up depends on its live status, which this page does not know.
 
-### 5. Mockup-gate registry (Critical Rule #15)
+### 5. Mockup-gate registry (Critical Rule #14, UI fidelity contract)
 Table (Mockup needed | Screen ref | Blocks | Status). A story whose primary screen has no mockup cannot start until it lands or a spec-only departure is ratified.
 
 ### 6. Live status — query it, never freeze it

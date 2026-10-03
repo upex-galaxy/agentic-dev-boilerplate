@@ -201,17 +201,18 @@ npm run build
 **Alternatively, via CLI:**
 
 ```bash
-# Asegúrate de estar en staging
-git checkout staging
+# <integration> = git_strategy.branches.integration (.agents/project.yaml)
+git checkout <integration>
 
 # Pull latest
-git pull origin staging
+git pull origin <integration>
 
 # Merge feature branch
 git merge [feature-branch]
 
-# Push to trigger CI/CD
-git push origin staging
+# Push to trigger CI/CD. Direct push to a protected branch:
+# resolved by git_strategy.policy.direct_push_to_protected (/git-flow-master §3.3)
+git push origin <integration>
 ```
 
 ---
@@ -282,7 +283,7 @@ https://[project]-staging.vercel.app
 
 **Deployment Details:**
 
-- Branch: staging
+- Branch: <integration>
 - Commit: [hash corto]
 - Status: Ready
 - Duration: [X] minutos
@@ -311,8 +312,9 @@ vercel login
 **Deploy:**
 
 ```bash
-# Desde la raíz del proyecto
-vercel --prod
+# Desde la raíz del proyecto. Sin --prod: es un Preview deployment, la
+# superficie de staging. --prod despliega a Production, y eso es Stage 5.
+vercel
 
 # Seleccionar proyecto correcto
 # Vercel desplegará y dará URL
@@ -459,7 +461,7 @@ _QA verification on staging is out of scope here._
 
 ## 📊 Deployment Summary:
 
-- Branch: `staging`
+- Branch: `<integration>`
 - Commit: [hash]
 - Duration: [X] minutos
 - CI/CD: [Automático / Manual]
@@ -516,7 +518,7 @@ npm run lint:check && npm run test && npm run build
 
 - ✅ Code review obligatorio
 - ✅ CI checks must pass
-- ❌ No direct push a staging
+- ❌ No direct push a la rama de integración salvo que `git_strategy.policy.direct_push_to_protected` lo permita (`/git-flow-master` §3.3)
 
 ### **3. Monitor GitHub Actions**
 

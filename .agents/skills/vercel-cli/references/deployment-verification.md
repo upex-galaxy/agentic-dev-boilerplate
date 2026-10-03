@@ -56,8 +56,8 @@ CANCELED      — superseded by a newer commit OR manually canceled
 Filter examples:
 
 ```bash
-# What's currently building on this branch?
-vercel ls -m githubCommitBranch=staging --status BUILDING --format json
+# What's currently building on this branch? (<branch> from git_strategy.branches, never a literal)
+vercel ls -m githubCommitBranch=<branch> --status BUILDING --format json
 
 # Last 5 production deploys that errored
 vercel ls --prod --status ERROR --format json | jq '.deployments[:5]'

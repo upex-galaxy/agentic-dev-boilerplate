@@ -37,7 +37,7 @@ Genera Entity-Relationship Diagram en Mermaid que muestre:
 
 Por cada componente del stack, incluir:
 
-- **Componente:** (ej: Next.js 15)
+- **Componente:** (ej: Next.js)
 - **Por qué elegido:**
   - ✅ Ventaja 1
   - ✅ Ventaja 2
@@ -45,7 +45,7 @@ Por cada componente del stack, incluir:
 
 **Ejemplo:**
 
-- **Frontend: Next.js 15 (App Router)**
+- **Frontend: Next.js (App Router)**
   - ✅ React Server Components (mejor performance)
   - ✅ Routing file-based (DX mejorada)
   - ✅ Full-stack framework (API routes integrados)

@@ -216,8 +216,6 @@ Las URLs por ambiente viven en `.agents/project.yaml` → `environments:` y en n
 
 **NEVER hardcode URLs** - always use the helper functions.
 
-````
-
 ---
 
 ### FASE 3: Validación
@@ -226,7 +224,7 @@ Las URLs por ambiente viven en `.agents/project.yaml` → `environments:` y en n
 
 ```bash
 bun run types:check
-````
+```
 
 **Si hay errores:**
 
@@ -318,7 +316,6 @@ const env = getEnvironment(); // 'development' | 'staging' | 'production'
 // Acceder a URLs específicas
 const stagingUrl = APP_URLS.staging;
 ```
-````
 
 ## Uso Recomendado:
 
@@ -360,7 +357,7 @@ export const APP_URLS = {
   staging: '...',
   production: '...',
 }
-````
+```
 
 **P: ¿Funciona en Server Components?**
 R: Sí, `process.env.VERCEL_ENV` está disponible tanto en server como client (es variable de sistema, no `.env`).

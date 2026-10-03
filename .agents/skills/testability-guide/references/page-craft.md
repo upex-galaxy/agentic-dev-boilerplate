@@ -300,7 +300,7 @@ export async function QaShell({ config }: { config: QaConfig }) {
 
 > `t.buildGap` is the fallback copy for the build stamp (es: `build local, sin SHA de despliegue`; en: `local build, no deploy SHA`).
 >
-> `Section` is a tiny local wrapper (Card + accent border + anchor heading + a copy-link button). `TrinityCards` renders the three-card grid from `mcp-and-env-setup.md` §3. The §4 DB section also renders the roles table + REVOKE callout + pooler + RLS-probe callouts (see "DB-roles depth" in `page-structure.md` §4) — all conditional on the detected `config.db.*` fields. `es`/`en` are copy dictionaries (Spanish default).
+> `Section` is a tiny local wrapper (Card + accent border + anchor heading + a copy-link button). `TrinityCards` renders the three-card grid from `mcp-and-env-setup.md` §3. The §4 DB section also renders the roles table + REVOKE callout + pooler + RLS-probe callouts (see "DB-roles depth" in `page-structure.md` §4) — all conditional on the detected `config.db.*` fields. `es`/`en` are copy dictionaries; `qaConfig.lang` (Q5) picks the active one.
 
 ---
 
@@ -846,7 +846,7 @@ export function EnvSetup({ config }: { config: QaConfig }) {
 - [ ] **Custom token vocabulary?** The golden is coded against shadcn-neutral tokens (`text-muted-foreground`, `bg-card`, `border`). If the host uses a CUSTOM token system (e.g. `fg-0..4` / `surface-0..2` / `stroke-*` / `accent`), READ an existing host component (`components/ui/card.tsx`, a real page) for the real vocabulary and MAP the golden's classes onto it — do not emit raw shadcn-neutral classes the host app doesn't use. Domain-accent hues (amber/emerald/violet/cyan/pink/slate) come from default Tailwind and are safe regardless. Mirror the host's dark mechanism (`darkMode:'class'` vs `next-themes`); do not add `next-themes` if absent.
 - [ ] Icons = the detected icon lib (lucide here; swap if host differs; inline SVG if none).
 - [ ] Dark/light uses the host mechanism.
-- [ ] Visible copy in `qaConfig.lang` (Spanish default in this ecosystem); identifiers + `data-testid`s stay English.
+- [ ] Visible copy in `qaConfig.lang` (Q5, the host's language signal); identifiers + `data-testid`s stay English.
 - [ ] Agent tabs include only `qaConfig.mcp.agents`; the 4-tab set is the documentation default.
 - [ ] **Highlighter (Q6).** If the host already ships one (Shiki / Prism / highlight.js / `rehype-pretty-code`), adapt the `_lib/highlight.ts` bridge onto it instead of adding Shiki. Shiki is added ONLY when the host has none (the single sanctioned dep — `SKILL.md` Notes). NEVER import `highlight()` from a `'use client'` module — highlight server-side, pass html down. If the framework has no server model, run it at build / in the route loader.
 - [ ] **Request viewer (Q8).** `apiRequests[]` is filled from the project's DETECTED auth requests (`<METHOD> <path>` placeholders) — never the example signup/signin/token shapes. Fall back to plain-curl `AuthMethods` only when the host kit can't render tabs/tables.

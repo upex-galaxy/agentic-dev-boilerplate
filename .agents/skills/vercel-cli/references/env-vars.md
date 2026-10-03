@@ -6,8 +6,8 @@ Vercel stores env vars per **environment** (Production / Preview / Development).
 
 | CLI flag value  | Dashboard label | Triggered for                                                                   |
 | --------------- | --------------- | ------------------------------------------------------------------------------- |
-| `production`    | Production      | The production branch (default `main`)                                          |
-| `preview`       | Preview         | Every other branch — feature branches, `staging`, hotfixes                      |
+| `production`    | Production      | The production branch (`git_strategy.branches.production`)                      |
+| `preview`       | Preview         | Every other branch: feature branches, the integration branch, hotfixes          |
 | `development`   | Development     | Local `vercel dev` / `vercel env pull` to `.env.local`                          |
 
 Use the **lowercase CLI form** in scripts. Dashboard labels are display-only.

@@ -187,7 +187,7 @@ Question text + defaults + tradeoffs: `references/decision-questions.md`.
 
 ### 4. Page codegen — `/qa`
 
-Generate the page in the host framework's idiomatic location (Next App Router, Pages, Remix, Astro, SvelteKit, Vite+RR). Reuse the host UI kit and icon library — never add a new dependency. Apply the host language for visible copy (**Spanish is the default in this ecosystem** — the page is for QA); keep code identifiers + `data-testid`s in English. EVERY endpoint, host, spec URL, docs route, and MCP block comes from Phase-1 detection via the `qaConfig` object — zero hardcode (`pre-flight-discovery.md`).
+Generate the page in the host framework's idiomatic location (Next App Router, Pages, Remix, Astro, SvelteKit, Vite+RR). Reuse the host UI kit and icon library — never add a new dependency. Apply the Q5 language for visible copy: it follows the host's language signal, and with no signal Q5 asks, never assumes one; keep code identifiers + `data-testid`s in English. EVERY endpoint, host, spec URL, docs route, and MCP block comes from Phase-1 detection via the `qaConfig` object — zero hardcode (`pre-flight-discovery.md`).
 
 Section order + copy: `references/page-structure.md` (§1–§7).
 
@@ -216,11 +216,11 @@ Route the markdown body to the chosen destination:
 | Any other tool reachable via a CLI  | `references/publishers/generic-cli.md`     | detected CLI                                     |
 | None of the above is reachable      | `references/publishers/manual-paste.md`    | hand the user the markdown + the destination URL |
 
-If the chosen destination is not reachable (MCP missing, CLI absent), the skill **always falls back to manual paste** and tells the user exactly which tool to install or which URL to paste into. The artifact body is never lost.
+The security audit (§7) runs before the publish call below. If the chosen destination is not reachable (MCP missing, CLI absent), the skill **always falls back to manual paste** and tells the user exactly which tool to install or which URL to paste into. The artifact body is never lost.
 
 ### 7. Security audit before publish
 
-Before any external publish call fires, the skill runs the security rules in `references/security-rules.md`. Hard refusals include: admin / schema-owner credentials, session-signing secrets (`NEXTAUTH_SECRET`, JWT signing keys), and credentials already exposed in git history without prior rotation.
+Numbered after §6 for reading order, it RUNS before §6's publish call: before any external publish call fires, the skill runs the security rules in `references/security-rules.md`. Hard refusals include: admin / schema-owner credentials, session-signing secrets (`NEXTAUTH_SECRET`, JWT signing keys), and credentials already exposed in git history without prior rotation.
 
 If the only DB credential available is a superuser, the skill stops and asks the user to provision a `qa_*` read-only role first.
 
@@ -239,7 +239,7 @@ If a step fails → fix and re-run from step 1. Never paper over a failure.
 
 ### 9. Commit + PR
 
-Delegate to `/git-flow-master`. This skill never invokes `git push`, `gh pr create`, or branch operations inline. The orchestrator hands `/git-flow-master` the branch name (`feature/testability-guide` if fresh, `fix/testability-guide-drift-YYYY-MM-DD` if surgical patch), the commit-message stems (one for page, one for redirect, one per dep bump), and the PR title `feat(qa): add Software Testability Guide for QA at /qa` (or `fix(qa): refresh testability guide after stack drift`).
+Delegate to `/git-flow-master`. This skill never invokes `git push`, `gh pr create`, or branch operations inline. The orchestrator hands `/git-flow-master` the branch name (`feat/testability-guide` if fresh, `fix/testability-guide-drift-YYYY-MM-DD` if surgical patch), the commit-message stems (one for page, one for redirect, one per dep bump), and the PR title `feat(qa): add Software Testability Guide for QA at /qa` (or `fix(qa): refresh testability guide after stack drift`).
 
 **The work lands through that PR.** Whether anything may go straight to a protected branch is `/git-flow-master`'s call: it resolves `git_strategy.policy.direct_push_to_protected` (AGENTS.md Critical Rule #4). This skill never pushes and never decides the push policy itself.
 
@@ -291,5 +291,5 @@ On successful completion (all eight verification items pass), the orchestrator r
 
 - Security non-negotiables live in `references/security-rules.md`. Read it before any publish.
 - MCP credentials are cached at MCP-spawn time (AGENTS.md Critical Rule #9). If a publish path fails on `401` / `403`, stop, point the user at the right `.env` variable, and ask them to restart the agent session. Do NOT work around.
-- This skill assumes English visible copy by default. Switch to the host language whenever the host app exposes a clear signal (root `lang` attribute, i18n config, copy already in another language). Code identifiers + `data-testid`s stay English regardless.
+- Visible copy follows the host app's language signal (root `lang` attribute, i18n config, copy already in a language); with no signal, Q5 asks. No language is assumed by default. Code identifiers + `data-testid`s stay English regardless.
 - **One sanctioned dependency — the syntax highlighter (the ONLY exception).** The skill adds **no other** dependencies. If the host UI kit lacks a `<CodeBlock>` component, create a minimal local one with a copy button — do not pull in a library for it. The single exception is a **server-only syntax highlighter (Shiki, or the host's existing equivalent)**: when the host has no highlighter, the skill MAY add Shiki because it runs server-side (build/request time), emits static dual-theme HTML, and ships **zero client JavaScript**. This is gated by Q6 (`decision-questions.md`) and detection — reuse the host's highlighter if one exists, and skip it entirely if the host has an explicit "no new deps" policy. Everything else still follows "no new deps": tabs, badges, request cards, and the highlight pipeline's framing components are local files in the host's style, not packages.

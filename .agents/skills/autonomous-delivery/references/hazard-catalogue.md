@@ -260,7 +260,8 @@ in the main checkout, never a blanket one.
 
 ### 5.4 Session files written inside a worktree die with it
 
-**Trigger.** Session state is gitignored and lives inside the worktree.
+**Trigger.** A dispatched skill writes its session state inside the worktree it ran in (this skill's own
+state lives at `<<PRIMARY_ROOT>>`, SKILL.md Phase 0a step 1, and is not at risk).
 **Symptom.** Per-ticket resume records stranded and unrecoverable once the worktree is removed.
 **Check.** Rescue them into the main checkout **before** removal: `bun run worktree:audit <path> --rescue`
 copies them to `<<PRIMARY_ROOT>>` and exits 0 only when nothing durable is left. Writing a good handoff and
@@ -311,25 +312,28 @@ against whatever branch is actually current.
 
 **Trigger.** The scheduling app's own "Worktree" option is checked, so the session starts already inside a
 worktree the scheduler created — not one this session entered itself.
-**Symptom.** `ExitWorktree` is a documented no-op here: it only tracks worktrees entered via `EnterWorktree`
+**Symptom.** On Claude Code, `ExitWorktree` is a documented no-op here: it only tracks worktrees entered via `EnterWorktree`
 by this session. The run finishes, the branch is pushed, and the worktree it ran in is still on disk with no
 tool this session has left to remove it — indistinguishable, from the run's own vantage point, from having
 closed cleanly.
-**Check.** Leave the scheduler's "Worktree" option **unchecked**. The run calls `EnterWorktree` itself in
-Phase 0a and `ExitWorktree(remove)` itself in Phase 4 — the only sequence that gives this session a worktree
-it is actually allowed to close.
+**Check.** Leave the scheduler's "Worktree" option **unchecked**. The run creates its own worktree in Phase 0a
+and closes it in Phase 4 (SKILL.md Phase 0a step 4, Phase 4 step 7): `EnterWorktree` / `ExitWorktree(remove)`
+on Claude Code, `git worktree add` / `git worktree remove` on OpenCode and Codex. Either pair gives the run a
+worktree it is actually allowed to close.
 
-### 5.11 A fresh `EnterWorktree` branches from the wrong branch entirely, not merely a stale one
+### 5.11 A fresh worktree branches from the wrong branch entirely, not merely a stale one
 
-**Trigger.** `EnterWorktree`'s default base-ref behavior (`fresh`) branches from `origin/<the repo's default
-branch>`. A repo's default branch (what `origin/HEAD` points to) and its **integration** branch
+**Trigger.** On Claude Code, `EnterWorktree`'s default base-ref behavior (`fresh`) branches from
+`origin/<the repo's default branch>`; on OpenCode and Codex, a `git worktree add` given the default branch
+instead of `origin/<integration-branch>` does the same. A repo's default branch (what `origin/HEAD` points to) and its **integration** branch
 (`git_strategy.branches.integration`) are not always the same ref — in a `main-integration` strategy the
 default branch is typically `main` (production) while work is meant to branch from `staging`.
 **Symptom.** Distinct from 5.1 (a stale but correctly-chosen base): here the base is the WRONG branch outright,
 not an old commit on the right one. Every commit this run makes lands on top of `main` instead of `staging`,
 which either fails to merge cleanly against the real integration branch or, worse, opens a pull request
 against the wrong target without anyone noticing until review.
-**Check.** Immediately after `EnterWorktree` returns, before any other work:
+**Check.** Immediately after the worktree is created (`EnterWorktree` returns, or `git worktree add` exits),
+before any other work:
 `git fetch origin && git merge-base --is-ancestor origin/<integration-branch> HEAD`. If that reports the base
 is wrong, realign with `git checkout -B <this-worktree-branch> origin/<integration-branch>` — safe because
 nothing has been committed on the brand-new branch yet. **Not `git reset --hard`**: Critical Rule #13 forbids
