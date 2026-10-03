@@ -23,7 +23,7 @@ This is a **read-only PM visibility workflow**. It does not change Jira state, d
 ## Prerequisites
 
 - `[ISSUE_TRACKER_TOOL]` reachable (`acli` preferred — see the `/acli` skill — or MCP Atlassian as fallback). Resolve via the Tool Resolution table in `AGENTS.md`.
-- `{{PROJECT_KEY}}` available in `.agents/project.yaml` (ships with the cloned boilerplate; clone the full repo if missing).
+- `{{PROJECT_KEY}}` available in `.agents/project.yaml` (ships with the installed layer; if missing, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model)).
 - (Optional) `gh` authenticated against the project's GitHub repo if the user wants PR state included.
 
 ---

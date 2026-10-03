@@ -29,7 +29,7 @@ compact_rules: |
 metadata:
   kind: workflow
   stage_owner: true
-  requires_capabilities: [library-docs]
+  requires_capabilities: [library-docs, db]
 ---
 
 <!-- Model preferences (advisory; dispatchers may use to route) -->

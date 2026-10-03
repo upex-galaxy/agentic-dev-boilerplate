@@ -112,7 +112,7 @@ Trigger phrases: "implementar esta historia", "implement this story", "trabajar 
 
 ## Pre-requisites
 
-- `.agents/project.yaml` populated. If missing, clone the full boilerplate — foundation files ship with the repo.
+- `.agents/project.yaml` populated. If missing, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model).
 - Product docs exist, in ONE of two forms (either one passes; both is fine):
   - **PRD/SRS**: `.context/PRD/` and `.context/SRS/` hold documents beyond their `README.md` placeholder (the new-product chain, `/project-foundation` Phases 2-3).
   - **Business maps**: the data map is generated (`bun run context:map business-data-context` prints sections, not the placeholder notice). The existing-app chain: `/project-adoption` → `/project-context refresh-all` → `/project-foundation` Discovery-only for the dev guide and the glossary.
@@ -715,7 +715,7 @@ Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolv
 - `{{stack.<path>}}` — the app's root, script names, database, CI, hosting and conventions (`## Stack parameters`)
 - `{{jira.*}}` — story custom fields (acceptance_criteria, business_rules, acceptance_test_plan, etc.)
 
-If any required var is unset, ensure `.agents/project.yaml` exists (clone the full boilerplate — foundation files ship with the repo) and run `/project-foundation` to fill in stack values.
+If any required var is unset, ensure `.agents/project.yaml` exists (when it does not, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model)) and fill the missing values: `/project-foundation` on a new project, `/project-adoption` on an adopted app (its `stack:` block and identity).
 
 ---
 

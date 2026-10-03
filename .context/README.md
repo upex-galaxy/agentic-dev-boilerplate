@@ -68,7 +68,7 @@ Plan history for a story lives in the Jira field's own edit history (plus engram
 
 A brand-new project that wants productive AI sessions should produce, in order:
 
-1. Clone the full boilerplate — `.agents/`, scripts, and `AGENTS.md` ship at the repo root. No bootstrap step.
+1. Install the agentic layer — `bunx create-agentic-dev@latest <name>` scaffolds a new project with `.agents/`, scripts, and `AGENTS.md` at the repo root. (An existing app installs it with `bunx create-agentic-dev@latest --adopt`, then `/project-adoption`, whose hand-off writes the business maps and the Discovery-only foundation from its code in place of step 2: no PRD or SRS.)
 2. `/project-foundation` — Constitution → PRD → SRS → Discovery outputs.
 3. `/product-management` — Seed initial backlog (epics + foundational stories) under `PBI/`.
 

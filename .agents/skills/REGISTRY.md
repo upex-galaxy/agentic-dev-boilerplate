@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T11:18:43.634Z`
+> Generated: `2026-10-03T11:26:47.745Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -40,11 +40,11 @@ Skills indexed: 22
 
 **Compact Rules**:
 - `agentic-dev-core` does not:
-- Provide a bootstrap or init action — clone the full repo instead.
+- Provide a bootstrap or init action — the layer installs whole: `create-agentic-dev` for a new project, `create-agentic-dev --adopt` then `/project-adoption` for an existing app.
 - Create or modify any files. It is a passive reference library.
 - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
 - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
-- Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
+- Adapt the framework to a specific stack (that belongs to `/project-bootstrap` on a new project, `/project-adoption` on an existing app).
 - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
