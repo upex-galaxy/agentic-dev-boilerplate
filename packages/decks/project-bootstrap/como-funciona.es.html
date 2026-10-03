@@ -1593,6 +1593,7 @@
       >
       <nav class="topnav">
         <a href="#cuando">Cuándo</a>
+        <a href="#guard">Guard</a>
         <a href="#mapa">Mapa</a>
         <a href="#plan">Plan</a>
         <a href="#backend">Backend</a>
@@ -1687,6 +1688,7 @@
               <li>
                 Un repo existente necesita <b>una pieza de infraestructura</b> más: "agregá OpenAPI a
                 la API", "sumá auth por bearer token", "conectá los tipos de Supabase al frontend".
+                Solo las piezas incrementales: la base no corre sobre una app que ya existe (§01·b).
               </li>
             </ul>
           </div>
@@ -1718,6 +1720,66 @@
           se leen de <span class="mono">.agents/project.yaml</span>. Si esos valores están vacíos, la
           skill te manda primero a <span class="mono">/project-foundation</span>, porque las
           decisiones de infraestructura salen de la arquitectura del SRS.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §01·b GUARD GREENFIELD ============ -->
+    <section class="band" id="guard">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01·b</span> · solo greenfield para la base</div>
+          <h2>La base no corre sobre una app que ya existe</h2>
+          <p class="sub">
+            Las fases base (backend y frontend) crean: tablas, RLS, seeds, clientes, middleware,
+            layout, tema, la config de Tailwind, páginas y credenciales de demo. Sobre una app viva,
+            cada uno de esos pasos pisaría algo. Por eso el veredicto lo da un script, nunca la IA
+            mirando el árbol: un gate que el agente puede satisfacer escribiendo un valor creíble no es
+            un gate.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># al entrar, antes del plan de la sesión; el veredicto y el exit code van a plan.md</span>
+bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app existente (con las señales) · --json</span></pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">exit 0 · greenfield</div>
+            <h3>Todo corre como está escrito</h3>
+            <ul>
+              <li>Las fases base y las piezas incrementales.</li>
+              <li>
+                Una corrida retomada conserva el veredicto que registró su plan: para entonces, lo que
+                el guard vería es la propia salida de la skill.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">exit 2 · app existente</div>
+            <h3>La base se rechaza</h3>
+            <ul>
+              <li>
+                Cualquier señal alcanza: el lock de adopción, un <span class="mono">package.json</span>
+                que declara <span class="mono">next</span> o <span class="mono">react</span>, o archivos
+                de app (rutas, middleware, config de Tailwind, <span class="mono">components.json</span>,
+                migraciones).
+              </li>
+              <li>
+                La IA cita las señales, nombra qué habría pisado y te manda a
+                <span class="mono">/project-adoption</span> (y a
+                <span class="mono">/design-system extract</span> si el pedido era sobre cómo se ve la
+                UI).
+              </li>
+              <li>Las piezas incrementales siguen disponibles y leen el bloque <span class="mono">stack:</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Fail-closed.</b> Sin veredicto registrado, o con uno ilegible, la base no corre. Decir "esto
+          es greenfield" no lo destraba: el arreglo de una lectura equivocada es quitar la señal que el
+          script citó y volver a correrlo. Deck de la otra puerta:
+          <a href="../project-adoption/como-funciona.es.html">Project adoption</a>.
         </div>
       </div>
     </section>
