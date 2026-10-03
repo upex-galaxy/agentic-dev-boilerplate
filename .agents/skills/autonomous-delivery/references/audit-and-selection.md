@@ -4,7 +4,8 @@
 > Companion: `./hazard-catalogue.md` (why each check exists), `./run-report-format.md` (where the output goes).
 
 Substitute the project's integration branch for `<integration-branch>` throughout — read it from
-`.agents/project.yaml` -> `git_strategy.branches.integration`, never assume a name.
+`.agents/project.yaml` -> `git_strategy.branches.integration` (the production branch when that is null),
+never assume a name.
 
 ---
 
@@ -139,9 +140,11 @@ Verify a correction exactly as hard as the claim it corrects, against live refs.
 
 ### 4e. Also collected in this phase
 
-- **The live migration ledger**, via `[DB_TOOL]`. It can be ahead of your branch (a peer applied out of
-  band) and it can contain a migration that exists in no file you can list. Cross-check against
-  `git log origin/<integration-branch> -- <migrations-dir>/` and sibling branches.
+- **The live migration ledger**, via `[DB_TOOL]` (`list_migrations`). It can be ahead of your branch (a peer
+  applied out of band) and it can contain a migration that exists in no file you can list. When the app keeps
+  migration files (`{{stack.database.migrations_dir}}` non-null), cross-check against
+  `git log origin/<integration-branch> -- <migrations-dir>/` and sibling branches; when it does not
+  (`migrations_tool: supabase-mcp`), the ledger is the only record and the PR bodies name what each applied.
 - **Branch-protection reality**, from BOTH the classic branch-protection endpoint AND the rulesets
   endpoint. The classic one returns a not-protected 404 when protection is implemented as a ruleset, which
   reads as unprotected if it is all you check. Record the enforced fields: required approving reviews,

@@ -66,8 +66,8 @@ those four.
 **Symptom.** A local listing shows one number as last while peers have already applied later ones to the
 shared instance; conversely the live ledger holds a migration that exists in no file you can list, pushed
 from a branch that never merged.
-**Check.** Query the live ledger via `[DB_TOOL]` **immediately before writing the file**, not at planning
-time — a number chosen at planning time goes stale within minutes under concurrency. Cross-check the
+**Check.** Query the live ledger via `[DB_TOOL]` **immediately before composing the change** (and naming its
+file, when `{{stack.database.migrations_tool}}` keeps one), not at planning time — a number chosen at planning time goes stale within minutes under concurrency. Cross-check the
 integration branch's migration history and sibling branches.
 
 ### 2.2 Regenerating from a shared live instance imports a peer's unmerged schema
@@ -84,7 +84,7 @@ consumers in the diff. If hand-patching a generated file, disclose the reason in
 **Trigger.** A local error that "just needs" a live schema change.
 **Symptom.** Every other running agent's regeneration now carries your change; the run that caused it has
 no idea.
-**Check.** The migration gate in the parent skill. Writing the file is autonomous; applying is gated.
+**Check.** The migration gate in the parent skill. Composing the change is autonomous; applying is gated.
 Additive proceeds under `migrations: autonomous`; drop / rename / rewrite always stops. Never apply merely
 to clear a local error. If something wrong was applied: stop and report — do not self-author a corrective
 migration.
@@ -101,10 +101,10 @@ fast-follow) rather than a yes/no.
 
 ### 2.5 Hand-retyped migration SQL is its own drift source
 
-**Trigger.** Typing a migration's contents into an apply call rather than applying the file.
+**Trigger.** Typing a migration's contents into an apply call by hand rather than from the reviewed SQL (or the file).
 **Symptom.** A clause silently dropped. Caught only by habit.
 **Check.** After ANY apply — including re-applies where you believe nothing changed — re-read the live
-definition and diff it against the committed file.
+definition and diff it against the SQL you meant to apply (the committed file, when the tool keeps one).
 
 ### 2.6 Shared-instance fixtures produce races and permanent flakes
 
