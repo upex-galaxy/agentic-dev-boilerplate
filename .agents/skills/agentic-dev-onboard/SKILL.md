@@ -140,8 +140,9 @@ Critical Rule 14 — UI Fidelity Contract):
     unratified divergence from THEM = review defect
 ```
 
-The AI never hand-authors mockups: it either commissions them through a design tool (Open Design
-MCP or equivalent) or hands you the brief to design in the external tool (which keeps project memory
+The AI never hand-authors mockups on its own: it commissions them through a design tool (Open Design
+MCP or equivalent), generates the HTML itself only through a loaded design skill (`frontend-design`,
+`ui-ux-pro-max`, `impeccable`: the `frontend-ui` category), or hands you the brief to design in the external tool (which keeps project memory
 across batches, so later briefs are light "follow-up" deltas). Either way you ratify every mockup. Entirely
 optional: without a master design plan, UI fidelity degrades gracefully to `DESIGN.md` tokens only.
 
