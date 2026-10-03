@@ -125,3 +125,40 @@ describe('framework gates pick the scope', () => {
     expect(commit.out).toContain('no "tooling:types:check" script');
   });
 });
+
+describe('the pre-commit hook runs lint-staged only where the project configures it', () => {
+  const HOOK = resolve(import.meta.dir, '..', '.husky', 'pre-commit');
+
+  /** Runs the real hook with a stub `bunx` that logs its arguments; no gates file, so only lint-staged can call it. */
+  function commit(files: Record<string, string>): { code: number, calls: string[] } {
+    const root = mkdtempSync(join(tmpdir(), 'pre-commit lint-staged '));
+    roots.push(root);
+    const bin = join(root, '.bin');
+    mkdirSync(bin);
+    const log = join(root, 'calls.log');
+    writeFileSync(join(bin, 'bunx'), `#!/bin/sh\necho "$*" >> "${log}"\nexit 0\n`);
+    chmodSync(join(bin, 'bunx'), 0o755);
+    for (const [rel, text] of Object.entries(files)) { writeFileSync(join(root, rel), text); }
+    // A copy of the hook with no gates file beside it: the gates only warn, so lint-staged is all that runs.
+    mkdirSync(join(root, '.husky'));
+    writeFileSync(join(root, '.husky', 'pre-commit'), readFileSync(HOOK, 'utf8'));
+    const p = Bun.spawnSync(['sh', '-e', join(root, '.husky', 'pre-commit')], { cwd: root, stdout: 'pipe', stderr: 'pipe', env: { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH ?? ''}` } });
+    let calls: string[] = [];
+    try { calls = readFileSync(log, 'utf8').trim().split('\n').filter(Boolean); }
+    catch {}
+    return { code: p.exitCode ?? 1, calls };
+  }
+
+  test('greenfield: package.json carries the config, lint-staged runs as before', () => {
+    if (IS_WINDOWS) { return; }
+    expect(commit({ 'package.json': '{\n  "lint-staged": {\n    "*.ts": ["eslint --fix"]\n  }\n}\n' }).calls).toEqual(['lint-staged']);
+    expect(commit({ '.lintstagedrc.json': '{}', 'package.json': '{}' }).calls).toEqual(['lint-staged']);
+  });
+
+  test('adopted app with no config (only the devDependency): skipped, the commit is not failed', () => {
+    if (IS_WINDOWS) { return; }
+    const r = commit({ 'package.json': '{\n  "devDependencies": {\n    "lint-staged": "^16.2.7"\n  }\n}\n' });
+    expect(r.calls).toEqual([]);
+    expect(r.code).toBe(0);
+  });
+});

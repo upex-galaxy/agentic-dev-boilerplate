@@ -203,6 +203,12 @@ describe('adoptPackageJsonDelta', () => {
     expect(delta.sections.dependencies.upstreamOnlyKeys).toEqual({ yaml: '^2.8.2', picocolors: '^1.1.1' });
   });
 
+  test('never a lint-staged config: the app owns its formatting', () => {
+    const { delta: out, satisfied } = adoptPackageJsonDelta({ file: 'package.json', sections: { 'lint-staged': section({ '*.ts': 'eslint --fix' }) } }, {});
+    expect(out.sections['lint-staged'].upstreamOnlyKeys).toEqual({});
+    expect(satisfied).toEqual({ 'lint-staged': ['*.ts'] });
+  });
+
   test('a foreign hook manager gets upstream prepare without husky; husky apps and greenfield keep it whole', () => {
     const delta = (): PackageJsonDelta => ({ file: 'package.json', sections: { scripts: section({ prepare: 'husky && bun scripts/harness-env.ts --placeholders' }) } });
     expect(adoptPackageJsonDelta(delta(), {}, { foreignHookManager: true }).delta.sections.scripts.upstreamOnlyKeys)
