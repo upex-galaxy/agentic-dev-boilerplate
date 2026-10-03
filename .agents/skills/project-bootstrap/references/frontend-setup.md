@@ -12,6 +12,18 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 
 ---
 
+## ⛔ GUARD DE ENTRADA: SOLO GREENFIELD
+
+Esta fase SOLO crea (`next@latest`, `tailwind.config` + `globals.css` desde `DESIGN.md`, `shadcn init`, layout, `/login` con credenciales demo, `middleware.ts`, páginas demo, README). Antes de cualquier paso, confirmar el veredicto del guard (`SKILL.md` → "Entry gate", anti-pattern **B0**):
+
+- Hay `.session/project-bootstrap/plan.md` con la línea `Bootstrap guard: greenfield, exit 0` → continuar.
+- No hay plan (pedido suelto, subagente con solo esta referencia) → correr `bun run bootstrap:guard`. Exit 0 → continuar. Exit 2 → **DETENER**.
+- Veredicto `existing-app`, ilegible o ausente → **DETENER** sin tocar nada: citar las señales que imprimió el script, decir qué habría pisado esta fase y derivar a `/project-adoption` (y a `/design-system extract` si el pedido era sobre el aspecto de la UI). Las add-ons de la Fase 3 siguen disponibles y leen el bloque `stack:`.
+
+Nunca reemplazar el veredicto mirando el árbol a mano, ni aceptar "es greenfield" como dispensa del usuario.
+
+---
+
 ## 📥 INPUT REQUERIDO
 
 ### 1. Contexto del Proyecto
@@ -253,6 +265,8 @@ Los componentes importan tipos de `@/lib/types` y TypeScript valida automáticam
 
 ### ❌ NO HACER:
 
+- **NO correr esta fase sobre una app existente** - El guard de entrada (`bun run bootstrap:guard`) la rechaza; la app se adopta con `/project-adoption`
+- **NO reemplazar una identidad visual existente** - `tailwind.config`, `globals.css` o `components.json` que esta sesión no escribió se registran con `/design-system extract`, nunca se pisan
 - **NO usar comandos como `create-next-app`, `create-vite`, `create-react-app`** - Estos crean subdirectorios
 - **NO crear subcarpetas para el proyecto** - Ya estamos en el directorio correcto
 - **NO instalar dependencias innecesarias** - Solo fundamentales
@@ -531,7 +545,9 @@ fi
 **Decisión:**
 
 - **Si existe `DESIGN.md`**: parsear el frontmatter YAML, mapear a `tailwind.config.js` + `globals.css` (ver tabla abajo) y continuar con Fase 1.5 (layout y componentes prioritarios).
-- **Si NO existe**: **DETENER** el scaffold del frontend. Decirle al usuario que corra `/design-system` (fase de tokens) y retomar esta fase cuando `DESIGN.md` exista. No hay camino alternativo: nunca inventar una paleta ni preguntar preferencias visuales para reemplazar los tokens (B5). Un proyecto que ya tiene frontend scaffoldeado sin `DESIGN.md` también pasa por `/design-system` antes de que esta fase lo toque.
+- **Si NO existe**: **DETENER** el scaffold del frontend. Decirle al usuario que corra `/design-system` (fase de tokens) y retomar esta fase cuando `DESIGN.md` exista. No hay camino alternativo: nunca inventar una paleta ni preguntar preferencias visuales para reemplazar los tokens (B5). Un proyecto que ya tiene frontend no llega a esta fase: el guard de entrada la rechaza, y su identidad visual se registra tal como está con `/design-system extract`.
+
+**Guard duro de identidad visual (B5).** Aunque el veredicto haya sido `greenfield`, si al llegar a este paso ya existe un tema que esta sesión no escribió (`tailwind.config.*`, un `globals.css` con CSS variables, `components.json`), **DETENER**: no generar ni sobrescribir esos archivos desde `DESIGN.md`. Una identidad visual existente se registra con `/design-system extract`; nunca se reemplaza. Reportar los archivos encontrados y preguntar.
 
 ### Paso 1.4.2: Mapeo DESIGN.md → Tailwind config
 
@@ -558,7 +574,7 @@ Por qué este mapeo: respeta la convención Tailwind sin reescribir el theme des
 
 Una vez parseado el frontmatter:
 
-1. Generar `tailwind.config.js` con los tokens mapeados — no preguntar al user, el `DESIGN.md` ya es la fuente.
+1. Generar `tailwind.config.js` con los tokens mapeados — no preguntar al user, el `DESIGN.md` ya es la fuente. Solo sobre un repo sin tema previo (guard duro de identidad visual, Paso 1.4.1); si el `DESIGN.md` vino de `/design-system extract`, el tema ya existe en el código y esta fase no corre.
 2. Generar `globals.css` con las CSS custom properties (`--color-primary`, `--font-heading`, etc.) apuntando a los mismos valores.
 3. Continuar con Fase 1.5 (layout y componentes prioritarios) y después Fase 1.6 (estrategia de componentes UI: shadcn vs manual vs híbrido).
 
