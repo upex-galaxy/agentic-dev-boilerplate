@@ -26,7 +26,7 @@ A cold-start refinement needs the following files loaded in this exact sequence.
 5. `.agents/jira-link-types.json` — slug → workspace link-type mapping (when present).
 6. `.context/master-implementation-plan.md` — Master Sprint roadmap.
 7. `.context/PRD/mvp-scope.md` — what is in vs out of the MVP.
-8. `.context/PRD/user-personas.md` — actor model (for the `As a` line).
+8. `.context/PRD/user-personas.md` — actor model (for the `As a` line). No PRD (existing app): the glossary's actors + the data map's `access-control` roles (`../SKILL.md` → "Product docs: PRD/SRS or business maps").
 9. `.context/PRD/user-journeys.md` — flow-level expectations.
 10. `.context/SRS/functional-specs.md` — FR catalog (source of `**Source spec:**` references).
 11. `.context/SRS/non-functional-specs.md` — NFRs (perf, security, a11y).
@@ -215,7 +215,7 @@ A story is Ready when **all** of these are true:
 - [ ] **INVEST** — all six criteria pass
 - [ ] **Acceptance Criteria** — minimum 3 Gherkin Scenarios (happy + error + edge) in `{{jira.acceptance_criteria}}`, each wrapped in a ` ```gherkin ` fenced code block (anti-pattern `I17`)
 - [ ] **Voice gate passed** — AC / Scope / Out-of-Scope / Workflow describe persona-observable behavior; no endpoint paths, HTTP status codes, table/column names, framework names, or internal algorithms appear (anti-pattern `I15`). Exception: API-consumer persona.
-- [ ] **Persona grounded** — `As a` line names a persona that exists in `.context/PRD/user-personas.md`; no generic "user" / "system" actors (anti-pattern `I19`).
+- [ ] **Persona grounded** — `As a` line names a persona that exists in `.context/PRD/user-personas.md` (or, with no PRD, in the glossary / the data map's `access-control` roles); no generic "user" / "system" actors (anti-pattern `I19`).
 - [ ] **Deduplication audit passed** — run the dedup audit per `references/description-custom-field-dedup.md`. Confirm the description body excludes AC / Scope / OOS H2 sections and that those contents live in `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}` respectively. If a duplicate is found, strip from the description and keep the custom field as canonical.
 - [ ] **Story Points** — leave `{{jira.story_points}}` EMPTY by default. Populate ONLY if the user explicitly requested estimation in this session. Estimation belongs to the team that will build the story (Design + Dev + Test), not to the PO/BA. When opted-in: Fibonacci (1, 2, 3, 5, 8); 13+ → split. See anti-pattern `I16`.
 - [ ] **Dependency Discovery executed** — active pass over the current backlog graph (epic-tree + Jira link graph + the data map in `business-data-context`) ran BEFORE creation/edit. Candidate `(from, to, source)` matrix surfaced to the user; global/infrastructural noise filtered out; only feature-level explicit dependencies kept. See anti-pattern `I18`.
