@@ -19,7 +19,7 @@
 vercel rollback [deployment-url]
 ```
 
-> Con `{{stack.hosting}}` distinto de `vercel`, usa el rollback de ese host. Un rollback de deploy NO revierte un cambio de base de datos: si el deploy aplicó uno, revertirlo es un cambio nuevo, destructivo, confirmado por el usuario y aplicado según `database-changes.md`.
+> Con `{{stack.hosting}}` distinto de `vercel`, usa el rollback de ese host. Un rollback de deploy NO revierte un cambio de base de datos: si el deploy aplicó uno, revertirlo es un cambio nuevo, destructivo, confirmado por el usuario y aplicado según `agentic-dev-core/references/db-change-doctrine.md`.
 
 ### Post-Rollback
 

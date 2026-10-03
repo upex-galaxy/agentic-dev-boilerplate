@@ -243,8 +243,9 @@ Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas 
 
 - ✅ **Required first:** load `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call through the DB MCP. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - ✅ Lee el historial de migraciones por el DB MCP (`list_migrations`) justo antes de escribir el cambio
-- ✅ Aplica según `{{stack.database.migrations_tool}}`: `supabase-mcp` / `supabase-cli` por el DB MCP (`supabase-cli` además commitea el archivo con la versión que registró el MCP); `prisma` / `drizzle` con la herramienta de la app, y el MCP verifica después. Detalle: `database-changes.md`
-- ✅ Después de aplicar: relee la definición en vivo y regenera los tipos (`{{stack.package_manager}} run {{stack.scripts.db_types}}`)
+- ✅ Aplica según `{{stack.database.migrations_tool}}`: `supabase-mcp` / `supabase-cli` por el DB MCP (`supabase-cli` además commitea el archivo con la versión que registró el MCP); `prisma` / `drizzle`: la herramienta de la app genera la migración y aplicarla es el pipeline del equipo, preguntando antes; el MCP queda en solo lectura. Detalle: `agentic-dev-core/references/db-change-doctrine.md`
+- ✅ Después de aplicar: `list_migrations` muestra el cambio, relee la definición en vivo y regenera los tipos (`{{stack.package_manager}} run {{stack.scripts.db_types}}`)
+- ❌ Nunca DDL por `execute_sql`, nunca aplicar un cambio solo para destrabar un error local
 
 ---
 
@@ -352,7 +353,7 @@ export function MentorCard({ mentor }) {
 - **NO hardcodear valores** (usar env vars, constants)
 - **NO duplicar código** (DRY always)
 - **NO usar `any` en TypeScript** (tipos explícitos)
-- **NO hardcodear SQL en el código de la app** (queries parametrizadas o el cliente del proyecto; los cambios de schema van por el DB MCP, `database-changes.md`)
+- **NO hardcodear SQL en el código de la app** (queries parametrizadas o el cliente del proyecto; los cambios de schema van por el DB MCP, `agentic-dev-core/references/db-change-doctrine.md`)
 - **NO usar `console.error`** (usar logger apropiado)
 - **NO crear componentes UI si ya existen** (reusar design system)
 - **NO ejecutar scripts interactivos**

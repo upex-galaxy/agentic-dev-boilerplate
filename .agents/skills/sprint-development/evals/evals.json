@@ -69,7 +69,7 @@
     {
       "name": "should-apply-schema-change-per-migrations-tool",
       "prompt": "The story needs a new `invoices.due_date` column. stack.database.migrations_tool is prisma, migrations_dir prisma/migrations.",
-      "expected_behavior": "Loads /supabase + /supabase-postgres-best-practices, reads the migration history through the DB MCP (`list_migrations`) first, then generates the migration with the app's own Prisma script (not the MCP's apply call, which would bypass Prisma's ledger table), and after it runs re-reads the live column through the MCP and regenerates the database types. Per `references/database-changes.md`.",
+      "expected_behavior": "Loads /supabase + /supabase-postgres-best-practices, reads the migration history through the DB MCP (`list_migrations`) first, then lets the app's own Prisma tool generate the migration and asks before the team's pipeline applies it; the MCP stays read-only (an `apply_migration` around Prisma would never reach Prisma's migrations table). After it runs, the live column is re-read through the MCP and the database types are regenerated. Per `agentic-dev-core/references/db-change-doctrine.md`.",
       "category": "positive"
     },
     {

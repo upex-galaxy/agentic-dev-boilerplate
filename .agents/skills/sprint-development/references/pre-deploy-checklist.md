@@ -28,7 +28,7 @@ Antes de desplegar a producción, validar que todo está listo.
 
 - [ ] Variables de entorno configuradas en producción
 - [ ] Secrets configurados correctamente
-- [ ] Cambios de base de datos listos (si aplica): cada uno aplicado y verificado en el ambiente de integración, presente en `list_migrations` del DB MCP, y con su plan de aplicación a producción según `{{stack.database.migrations_tool}}` (`database-changes.md`)
+- [ ] Cambios de base de datos listos (si aplica): cada uno aplicado y verificado en el ambiente de integración, presente en `list_migrations` del DB MCP, y con su plan de aplicación a producción según `{{stack.database.migrations_tool}}` (`agentic-dev-core/references/db-change-doctrine.md`)
 - [ ] Backup de producción reciente
 
 ### 4. Monitoreo

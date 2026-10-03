@@ -25,9 +25,9 @@
       "category": "positive"
     },
     {
-      "name": "should-gate-a-prisma-migration-but-apply-it-with-the-apps-tool",
+      "name": "should-escalate-a-prisma-migration-in-an-unattended-run",
       "prompt": "Unattended run, migrations: autonomous. The story adds a nullable column; stack.database.migrations_tool is prisma.",
-      "expected_behavior": "Additive under `autonomous`: proceeds. Reads the history through the DB MCP immediately before, applies with the app's own Prisma script (sprint-development/references/database-changes.md), never the MCP apply call, then re-reads the live definition and diffs it against the generated migration.",
+      "expected_behavior": "Reads the history through the DB MCP, lets Prisma generate the migration and pushes it, then escalates instead of applying: the DB change doctrine asks the team before a Prisma/Drizzle pipeline applies a migration and nobody is on the line, so `migrations: autonomous` does not open this case. Never applies it through the MCP's `apply_migration` either (`agentic-dev-core/references/db-change-doctrine.md`).",
       "category": "positive"
     },
     {
