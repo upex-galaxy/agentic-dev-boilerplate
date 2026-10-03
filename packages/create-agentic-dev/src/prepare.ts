@@ -124,7 +124,67 @@ function escapeReg(s: string): string {
 }
 
 /**
+ * The header a CONSUMER's `.agents/project.yaml` opens with. Twin of
+ * `CONSUMER_YAML_HEADER` in `cli/lib/agents-schema.ts` (this package is
+ * published separately and cannot import from the repo): keep the two
+ * identical, a test in the boilerplate reads both.
+ *
+ * The schema's own banner says GENERATED / DO NOT EDIT BY HAND, which is true
+ * of the template and a lie on the copy a project edits every week. The seed
+ * swaps one for the other.
+ */
+const CONSUMER_YAML_HEADER = `# Project configuration consumed by AI agents (Claude Code, OpenCode, Codex)
+# when they encounter {{VAR_NAME}} references in skills, templates and docs.
+# Variable names are snake_case; the AI maps {{PROJECT_NAME}} -> project.project_name lexically.
+# Edit values manually, or run \`bun run agents:setup\` for an interactive walkthrough.
+# Every unfilled field is \`null\` plus a TODO comment with a concrete example.
+#
+# \`bun run agents:schema --project\` lists the keys upstream has added since this
+# project was scaffolded; \`bun run up\` offers to insert them, one prompt per block.
+`;
+
+/**
+ * Seed a scaffolded `.agents/project.yaml` from `.agents/project.schema.yaml`.
+ *
+ * What travels to a new project is upstream's TEMPLATE, not the maintainer's
+ * filled file, so the scaffold no longer has to hunt down the boilerplate's
+ * provenance field by field and hope it found all of them. It did not: the
+ * field-by-field reset cleared the `meta.*` stamps and the divergence list,
+ * and left `git_strategy.description` narrating the boilerplate's admin-bypass
+ * push flow, `direct_push_to_protected: allowed`, `admin_bypass: true` and a
+ * `require_pr_reviews` comment citing its host ruleset in every new project.
+ *
+ * The schema is already blanked, already carries `strategy_source: inherited`,
+ * and already ships the safe `confirm` / `admin_bypass: false` pair.
+ *
+ * Returns false when the template predates the schema, so the caller can fall
+ * back to the old field-by-field reset.
+ */
+export async function seedProjectYamlFromSchema(projectDir: string): Promise<boolean> {
+  const schemaPath = join(projectDir, '.agents', 'project.schema.yaml');
+  const yamlPath = join(projectDir, '.agents', 'project.yaml');
+  if (!existsSync(schemaPath) || !existsSync(yamlPath)) { return false; }
+
+  const schema = await readFile(schemaPath, 'utf8');
+  // Drop the generated banner: the contiguous comment run the generator wrote,
+  // plus the blank line after it. The boundary is stable because we emit it.
+  const lines = schema.split('\n');
+  let i = 0;
+  while (i < lines.length && lines[i].startsWith('#')) { i += 1; }
+  while (i < lines.length && lines[i].trim() === '') { i += 1; }
+  if (i === 0 || i >= lines.length) { return false; } // not the shape we emit: leave it alone.
+
+  await writeFile(yamlPath, `${CONSUMER_YAML_HEADER}\n${lines.slice(i).join('\n')}`, 'utf8');
+  log.dim('  Seeded .agents/project.yaml from the upstream schema (no maintainer values travel).');
+  return true;
+}
+
+/**
  * Reset the git-strategy PROVENANCE in a freshly scaffolded `.agents/project.yaml`.
+ *
+ * FALLBACK ONLY: `seedProjectYamlFromSchema` replaces it whenever the template
+ * ships `.agents/project.schema.yaml`. A template tagged before the schema
+ * existed still needs this, so it is kept rather than deleted.
  *
  * The boilerplate repo ships its `git_strategy:` block with the maintainer's own
  * provenance stamps: `meta.strategy_source: chosen`, `meta.policy_source:
