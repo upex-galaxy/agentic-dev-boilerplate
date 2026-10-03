@@ -353,7 +353,7 @@ Three consumers, three severities: `bun run up` offers to INSERT what a project 
 
 **Mandatory**: before any `Bash` call that names one of these binaries, check matching skill loaded for this session. If not, load via Skill tool first. Hard gate, not suggestion.
 
-**MCP side of the same rule**: a DB-MCP MUTATION (capability `db`: a schema, RLS, function or migration change through `apply_migration` / `execute_sql`, Supabase or the same Postgres family) loads `/supabase` + `/supabase-postgres-best-practices` first, exactly like the `supabase` binary row; the database work goes through the MCP, so the binary row alone never fires. Read-only checks (`list_tables`, a `SELECT`) do not need it. Not installed → say so once and point at the install path, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+**MCP side of the same rule**: a DB-MCP MUTATION (capability `db`: a schema, RLS, function or migration change through `apply_migration` / `execute_sql`, Supabase or the same Postgres family) loads `/supabase` + `/supabase-postgres-best-practices` first, exactly like the `supabase` binary row; the database work goes through the MCP, so the binary row alone never fires. HOW the change is made (history read first, DDL only through `apply_migration`, verified at the destination, ADR when significant): `agentic-dev-core/references/db-change-doctrine.md`. Read-only checks (`list_tables`, a `SELECT`) do not need it. Not installed → say so once and point at the install path, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 
 ---
 
