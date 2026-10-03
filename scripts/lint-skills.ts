@@ -250,6 +250,7 @@ const SESSION_RETROFITTED_SKILLS: Record<string, RegExp | null> = {
   'autonomous-delivery': /^(?:story|bug|discovery)$/,
   'project-foundation': null,
   'project-bootstrap': null,
+  'project-adoption': null,
   // `seed` (curation root) is a strict subset of `[a-z0-9][a-z0-9-]*`
   // (kebab-case epic slug); no separate literal branch is needed.
   'product-management': /^[a-z0-9][a-z0-9-]*$/,

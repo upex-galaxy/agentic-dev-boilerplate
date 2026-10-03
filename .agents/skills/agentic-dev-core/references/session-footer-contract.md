@@ -69,6 +69,7 @@ Dev surfaces touched:
 |---|---|
 | `sprint-development`, `autonomous-delivery` | what the story or bug actually changed and shipped, surface by surface |
 | `project-bootstrap` | which layers were scaffolded (DB, API, UI, env, auth) |
+| `project-adoption` | `none` for the app's own code, schema and CI by contract; name the agentic files written (`.agents/project.yaml`, `.env`, catalogs, the plan) |
 | `project-foundation`, `product-management`, `design-system`, `testability-guide` | usually all `none` (definition work); name the artifact written instead in the skill's own report |
 
 ## Part 3 — Light stage verifier (closing checklist of every stage)

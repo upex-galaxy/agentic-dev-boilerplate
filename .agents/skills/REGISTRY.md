@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T10:41:33.668Z`
+> Generated: `2026-10-03T10:42:39.692Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 21
+Skills indexed: 22
 
 ---
 ## Skill: acli
@@ -320,6 +320,31 @@ Skills indexed: 21
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.agents/skills/product-management/SKILL.md` · phase: `management` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: project-adoption
+
+**Purpose**: Teach the agentic layer an EXISTING application after the adoption install (`bun <boilerplate clone>/cli/update-boilerplate.ts --adopt`)...
+
+**Compact Rules**:
+- Exactly ONE mode per run: `adopt` (default, Phases 0-9 in `references/adoption-workflow.md`) or `check` (Phase 0 signals + `bun run setup:doctor` stack drift, read-only, writes nothing). Forward the rest of `$ARGUMENTS` unchanged.
+- Entry gate: `.template/installer.lock.json` records `adopted: true` AND the working tree is clean (`git status --porcelain` empty, the adoption install already committed). Missing lock = STOP, the files were never installed: run the updater with `--adopt` first. A greenfield lock (`adopted` absent) = STOP, this repo was scaffolded: `/project-bootstrap` + `bun run agents:setup` own it.
+- Phases 0-2 are SEALED: no tracked file changes. The seal is measured: `git status --porcelain` after Phase 2 differs from Phase 0 only by `.context/reports/project-adoption-plan.md`. Phase 3 starts only after the user approves that plan (`Status: PENDING APPROVAL` -> `APPROVED`) in this run; a plan from an earlier run is resumed, never rewritten.
+- v1 support set is `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts` (Next.js + Postgres family, bun). Anything outside it STOPS at analysis with the named field and value (owner decisions OD2, OD3); never adapt an unsupported stack, never switch a package manager.
+- One app per adoption: `stack.app_root` names it (OD6). A monorepo with several Next.js apps = ask which one; never adopt two in one run.
+- REFUSAL LIST, binding on every write: never write or delete a file under `stack.app_root` that existed before adoption; never run a migration, apply SQL, change RLS, seed data or open a database connection in any environment (the adoption itself never touches a database, OD4 = C governs later delivery work, not this skill); never add, remove, upgrade or downgrade an app dependency or regenerate its lockfile; never edit CI workflows, `README.md`, `tsconfig.json`, eslint / prettier config, `.gitattributes`, `middleware.ts` / `proxy.ts` or an app `package.json` script; never change git history, remotes, branch protection or rulesets; never create Jira projects, fields, workflows or issues; never push; never write a credential value anywhere but `.env`.
+- Writes are limited to agentic surfaces named in the approved plan: `.agents/project.yaml` (identity, `stack:` through `bun run agents:setup --stack`, environments, `updater.protected_paths`), `.env` (values the user supplies), the Jira catalogs under `.agents/`, `api/openapi*` only when absent before adoption, the instruction merge the updater saved (`.agents/prompts/adopt-instructions.md`, applied verbatim on its own approval line, originals backed up under `.backups/project-adoption/`), the credential files `bun run harness:env` derives from `.env`, the plan file and `.session/project-adoption/`. Full allowlist: `references/adoption-workflow.md` §Refusal list.
+- Collisions are refused file by file (OD7): a path the app already owned stays the app's, gets an `updater.protected_paths` entry, and is reported; never `take upstream` on an adopted repo.
+- Detection never guesses: an undetected value is asked in the Phase 1 questionnaire or recorded under `## Discovery Gaps`, never invented. A null `stack.scripts.<x>` means skip and say so.
+- App intact = the app's own `build` / `lint` / `types` / `test` exit codes after Phase 7 equal the Phase 1 baseline. Run an app script that may reach a shared database or a paid API only when the questionnaire confirmed it is safe; otherwise record it as not measured.
+- Fail-closed prerequisites a live app may lack (the automation identity in `testing.automation_identity`, `autonomous_delivery.automation_gh_account`, a dedicated DB role) are listed in the plan as owed by the team and NEVER created by this skill.
+- Product docs of an adopted app are the business maps + glossary (OD5): never invent a PRD or SRS to satisfy another skill's prerequisite; record the prerequisite as a Discovery Gap and hand off.
+- Close with the signal table, the plan marked `Status: COMPLETED` with its results block, and the hand-off: `/project-context refresh-all` (maps from code) in a fresh session, `/git-flow-master` Strategy Setup, optional `/design-system extract` and `/testability-guide`. Never auto-chain them; the commit is proposed through `/git-flow-master`, never made silently.
+
+**Read full SKILL.md when**: the entry gate fails in an unexpected way, the app's stack is outside the v1 set, the instruction merge is pending, or a verification step disagrees with the baseline.
+
+> Source: `.agents/skills/project-adoption/SKILL.md` · phase: `unknown` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
