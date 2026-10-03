@@ -78,6 +78,45 @@ app per adoption; the set is `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`.
 - **Updater CLI version** `8.7` → `8.8` (`CLI_VERSION` in
   `cli/update-boilerplate.ts`).
 
+### Fixed (dogfood: the adoption run on a copy of a real app, U18-12)
+
+The wave was run end to end on a throwaway copy of an existing Next.js +
+Supabase app; every defect it exposed is fixed here, and the measured
+contract is ADR-0008 (`.context/ADR/ADR-0008-adoption-contract.md`).
+
+- **The agentic store is versioned even when the app's `.gitignore` hid it**:
+  `--adopt` re-includes `.agents/` in an appended block before the
+  cross-harness migration runs, and the migration refuses, on any run, to
+  untrack skills into a folder git ignores. Owner: `cli/lib/adopt-gitignore.ts`.
+- **Nothing of the app is deleted or hidden**: a file at a path upstream
+  retired is kept and protected; an upstream ignore line that matches files
+  the app tracks is withheld; the tooling's own test files never reach an
+  adopted app, the updater's self-update included.
+- **The tooling gates judge only the tooling**: on an adopted repo every
+  sync records what upstream owns under `scripts/` and `.agents/skills/`
+  (`upstreamOwned` in the installer lock, `cli/lib/tooling-scope.ts`);
+  `tooling:types:check` / `tooling:lint:check` (`scripts/tooling-check.ts`)
+  and `skills:check` scope themselves to it; the app's preserved instruction
+  text is not judged by Critical Rule #17; a retired variable name the app
+  declares itself is a warning in `vars:env:check`.
+- **The adoption commit passes the gates**: a pending instruction merge
+  defers the alias instead of failing the compatibility check; the
+  agent-context hook joins an app `.claude/settings.json` that has none;
+  `.husky/pre-commit` runs lint-staged only where the project configures it;
+  the post-sync gates of an adopted repo run the tooling's scope and are
+  skipped on the `--adopt` run itself.
+- **Framework skills the app had copied in by hand** are no longer frozen:
+  they stay unprotected, upstream's copy is saved under
+  `.agents/prompts/adopt-upstream/`, and `project-adoption` takes it on its
+  own approval line.
+- **Isolation snippets fit an app that keeps its own `scripts/`**: every app
+  `tsconfig*.json` is analysed, upstream's files are excluded one by one, and
+  an ESM flat ESLint config reads them from the installer lock; the agentic
+  dot-directories are covered.
+- **The stack block describes the app**: the adopt seed starts it as unknown,
+  and detection prefers the app's own role scripts over the ones the tooling
+  appended.
+
 ## 2026-10-03 — Docs hub and one deck per workflow skill; behaviour layer recorded (updater 8.7)
 
 The human-docs wave that follows the parity wave (#52 to #77, and the portal

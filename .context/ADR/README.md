@@ -67,6 +67,7 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 | [ADR-0005](./ADR-0005-harness-level-mcps-and-capabilities.md) | Remote API-key MCPs (web search) run at harness level, never in the project MCP files; skills declare capabilities and resolve tools by name suffix, with a point-of-use STOP instead of a silent fallback | Accepted | — | — |
 | [ADR-0006](./ADR-0006-skill-plus-mode-invocation.md) | A skill is invoked by its name plus a mode; the command-alias layer and `sync-ai-memory` are retired (no generated commands, a command that shadows a skill is moved to `.backups/shadowing-commands/`, docs kept in step by the change that moved them) | Accepted | ADR-0002 (item 3, item 6 wrapper half) | — |
 | [ADR-0007](./ADR-0007-discovery-runs-without-approval-gate.md) | Unattended `discovery` runs create within the per-run cap and never wait on an approval gate (the operator vetoes after the fact; `created-log.md` read first; no softer synchronous wait) | Accepted | — | — |
+| [ADR-0008](./ADR-0008-adoption-contract.md) | Adopting an existing app: an install layer that never overwrites or deletes an app file (`--adopt`) and an understanding layer (`project-adoption`) that writes agentic surfaces only after approval; owner decisions OD1-OD9 (OD4 = C: DB changes through the DB MCP, never during adoption) and the contract measured on a dogfood copy | Accepted | — | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
 >
