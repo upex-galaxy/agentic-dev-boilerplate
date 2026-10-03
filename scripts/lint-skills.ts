@@ -207,7 +207,7 @@ const KIND_SUFFIX_RULES: ReadonlyArray<{ kind: string, suffixes: readonly string
  * CAPABILITY it needs, never a server name. Add a name here AND in the
  * reference, in the same change. Check 21.
  */
-const KNOWN_CAPABILITIES = new Set(['library-docs', 'web-search', 'db', 'automation-flows']);
+const KNOWN_CAPABILITIES = new Set(['library-docs', 'web-search', 'db', 'automation-flows', 'diagrams']);
 
 /**
  * Resolution tag → capability it resolves to (AGENTS.md §6). Drives the
