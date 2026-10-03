@@ -571,20 +571,27 @@ The branch plan that comes out of the decision is the **contract** for execution
 When work needs to be isolated from in-progress changes on the current branch — a second
 AI session running in parallel, a hotfix while a feature is open, or unrelated WIP you do
 not want to mix — use a **git worktree** (a second working directory on its own branch,
-sharing one `.git`). Two paths:
+sharing one `.git`). The repo lifecycle is the same on every host and every creation path:
 
-- **Manual git** (portable, any tool): `git worktree add ../dir -b feat/x main` → work →
-  `git worktree remove` / `prune`.
-- **Claude Code harness** (this agent only): `EnterWorktree` moves the session into a fresh
-  worktree under `.claude/worktrees/`; `ExitWorktree` (`keep`/`remove`) leaves it. Other
-  coding agents lack this — they use the manual path.
+```
+create  ->  bun run worktree:provision  ->  work  ->  bun run worktree:audit <wt> --rescue  ->  remove
+```
+
+- **Create**: `git worktree add ../dir -b feat/x main` on any host (portable canon). A host's own
+  tool (Claude Code `EnterWorktree` / `ExitWorktree`, a Codex-managed worktree) is a harness path
+  only: it still needs the two repo steps around it. Supervised fleets go through
+  `/orca-orchestration`, whose committed `orca.yaml` runs both steps as hooks.
+- **Provision** copies the gitignored inputs a fresh worktree lacks (`.env`, `.vercel/`, local
+  settings), installs dependencies and creates the `.claude/skills` alias.
+- **`.session/` is never copied**: durable state lives at `<<PRIMARY_ROOT>>` and is cited by
+  absolute path (`.agents/README.md` §"Checkout roots").
+- **Audit before removing**: `--rescue` copies state that lives only in the worktree back to the
+  primary, never overwriting.
 
 Key gotcha: a fresh worktree contains only the **tracked** files of its base — **untracked
 WIP does not teleport**, so `mv` it in (or commit first). Keep the primary tree's
-`git status` clean. Record every worktree you create in the `.session/worktrees.json`
-registry (path, branch, session id — a record for post-hoc forensics, never a lock).
-Full lifecycle, multi-session safety rules, the registry contract, and the decision guide:
-`references/worktrees.md`.
+`git status` clean. Provenance is the commit's forensic trailers (§3.2), not a side file.
+Full lifecycle, multi-session safety rules, and the decision guide: `references/worktrees.md`.
 
 ---
 
@@ -614,6 +621,6 @@ Full lifecycle, multi-session safety rules, the registry contract, and the decis
 | `references/conventional-commits.md` | Full type vocabulary, scope rules, breaking-change syntax, mixed-changes precedence. Read when proposing commits.                                      |
 | `references/pr-templating.md`        | PR body template, placeholder rules, label / reviewer / draft conventions, multi-strategy base-branch table. Read when opening a PR.                   |
 | `references/conflict-resolution.md`  | Per-conflict-type playbooks (merge / rebase / push-rejected / detached-HEAD / stash / unrelated histories / hook rejection). Read when Step 3.5 fires. |
-| `references/worktrees.md`            | Git worktrees for isolated/parallel work — manual git + Claude Code `EnterWorktree`/`ExitWorktree`, the untracked-files gotcha, multi-session safety, cleanup, decision guide. Read when isolating work or running parallel sessions. |
+| `references/worktrees.md`            | Git worktrees for isolated/parallel work — the repo lifecycle (`worktree:provision` → work → `worktree:audit --rescue`), manual git as the portable canon, harness tools as a harness path, the untracked-files gotcha, multi-session safety, cleanup, decision guide. Read when isolating work or running parallel sessions. |
 
 Read references on demand — do not load them all upfront. Each file is self-contained.

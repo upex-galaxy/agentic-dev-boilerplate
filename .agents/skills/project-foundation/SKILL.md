@@ -146,7 +146,7 @@ After `plan.md` is written and the user approves the scope, transition `status: 
 
 ## Phase walkthrough
 
-The skill covers three sequential phases. Each phase has multiple sub-deliverables; read only the references your current task needs.
+The skill covers four sequential phases (1 Constitution → 2 PRD → 3 SRS → 4 Discovery), with the Phase 2.5 hand-off to `/design-system` between PRD and SRS. Each phase has multiple sub-deliverables; read only the references your current task needs.
 
 > **Progress checkpoint**: after each of Phase 1 (Constitution), Phase 2 (PRD), Phase 2.5 (DESIGN handoff return), Phase 3 (SRS), and Phase 4 sub-steps 1–5 completes, the orchestrator appends a phase entry to `.session/project-foundation/progress.md` per `agentic-dev-core/references/session-management.md` §7.
 
@@ -286,7 +286,7 @@ Phases 1 → 2 → 3 → 4 are **logically sequential** (each phase consumes out
 
 - **Phase 2 (PRD)**: `prd-personas`, `prd-user-journeys`, `prd-mvp-scope` can run in parallel after `prd-executive-summary` is drafted.
 - **Phase 3 (SRS)**: `srs-functional`, `srs-non-functional`, `srs-architecture`, `srs-api-contracts` can run in parallel once the PRD is locked.
-- **Phase 4 (Discovery)**: Steps 1 (`/project-context data`) and 2 (`/project-context features`) can run in parallel against the same source code / SRS. Step 3 (`/project-context api`) is parallel-friendly with 1 and 2 (soft gates only). Step 4 (`project-dev-guide`) has a hard prerequisite on Step 1. Step 5 (`/project-context master-plan`) is the natural synthesis after Steps 1–3 — run it last.
+- **Phase 4 (Discovery)**: Steps 1–3 run one at a time in the `project-context` dependency order, `data` → `features` → `api` (canonical list: `project-context` SKILL.md → "`refresh-all` dependency order"): `features` and `api` read the data map, and every mode closes its own approval gate before the next starts. Step 4 (`project-dev-guide`) needs only Step 1 and may run alongside Steps 2–3. Step 5 (`/project-context master-plan`) is the synthesis after Steps 1–3 — run it last.
 
 Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 7-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
 
