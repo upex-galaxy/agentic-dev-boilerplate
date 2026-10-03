@@ -31,12 +31,12 @@ Before creating any epic, read these in order. Skip files marked **optional** if
 9. `.context/PRD/user-journeys.md` — flow-level expectations.
 10. `.context/SRS/functional-specs.md` — FR catalog (source of `**Source spec:** FR-XXX` references on each child story).
 11. `.context/SRS/non-functional-specs.md` — NFRs (performance, security, accessibility).
-12. `.context/business/business-data-map.md` — entity graph (source of entity-level dependencies). **Optional** at seed time.
-13. `.context/business/business-feature-map.md` — CRUD matrix. **Optional** at seed time.
-14. `.context/business/business-api-map.md` — endpoint catalog (auth model, journey breakdown). **Optional** at seed time.
+12. `bun run context:map business-data-context` — entity graph (source of entity-level dependencies). **Optional** at seed time.
+13. `bun run context:map business-feature-context` — CRUD matrix. **Optional** at seed time.
+14. `bun run context:map business-api-context` — endpoint catalog (auth model, journey breakdown). **Optional** at seed time.
 15. `.context/PBI/epic-tree.md` — current backlog state (skip if seeding from scratch).
 
-**Optional inputs note.** Items 12-14 arrive after `/business-*-map` has been run. In a fresh project, the business maps may not exist yet — proceed without them and re-evaluate dependencies once the maps are seeded.
+**Optional inputs note.** Items 12-14 arrive after `/project-context` modes `data` / `features` / `api` have been run. In a fresh project, the business maps may not exist yet — proceed without them and re-evaluate dependencies once the maps are seeded.
 
 ---
 
@@ -379,7 +379,7 @@ Story-level ACs (Gherkin Scenario / Given-When-Then) live in each story's `{{jir
 
 **When:** This phase runs AFTER every child story under the epic has been created in the tracker (so the keys exist and can be referenced). Do not attempt linking before then — it will fail or create dangling references.
 
-**Action:** For each dependency edge surfaced by an active discovery pass (sources: PRD/SRS sequencing, master-implementation-plan Master Sprints, business-data-map entity relations, explicit author intent surfaced this session — see `references/dependency-linking.md`; the synced `epic.md` Dependencies block is read-only context, not the authoring source), create an issue link in the tracker. After linking, re-sync so the cache reflects the live links.
+**Action:** For each dependency edge surfaced by an active discovery pass (sources: PRD/SRS sequencing, master-implementation-plan Master Sprints, the data map (`business-data-context`) entity relations, explicit author intent surfaced this session — see `references/dependency-linking.md`; the synced `epic.md` Dependencies block is read-only context, not the authoring source), create an issue link in the tracker. After linking, re-sync so the cache reflects the live links.
 
 - Use `[ISSUE_TRACKER_TOOL]` with the link type resolved from `{{jira.link_types.dependencies}}`.
 - If `{{jira.link_types.dependencies}}` is unresolved in the workspace, degrade to the fallback `{{jira.link_types.dependencies.fallback}}` (literal: `relates`) and flag the degradation in the run report — `relates` loses directional semantics.

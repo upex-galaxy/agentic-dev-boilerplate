@@ -22,7 +22,7 @@ Load `AGENTS.md` in full, then the files the PR actually touches. Widen or narro
 | a story's scope | the synced PBI for the story key (`story.md`, `acceptance-criteria.md`, `implementation-plan.md`) via `bun run jira:sync-issues get <KEY>` |
 | error paths, API handlers | `sprint-development/references/error-handling.md` |
 | backend structure, new modules | `project-bootstrap` SKILL.md rule B1 (layer boundaries `api/` / `schemas/` / `db/`) |
-| Postgres functions, RLS, migrations | `sprint-development/references/rpc-authorization.md`; `.context/business/business-data-map.md` when present |
+| Postgres functions, RLS, migrations | `sprint-development/references/rpc-authorization.md`; the data map (`bun run context:map business-data-context`) when generated |
 | UI | `DESIGN.md`; `.context/design/master-design-plan.md` §2 / §4 / §5 / §8 when present; `AGENTS.md` Critical Rule #14 (incl. LIVE-UI-FIRST); `sprint-development/references/data-testid-standards.md` |
 | an architectural choice | `.context/ADR/` (the `Accepted` records it touches); `agentic-dev-core/references/adr-doctrine.md` |
 | unit tests | `unit-testing` SKILL.md `## Compact Rules` |

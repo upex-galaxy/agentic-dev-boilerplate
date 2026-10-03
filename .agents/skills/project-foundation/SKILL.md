@@ -205,47 +205,47 @@ Phase 4 is now an **orchestrator** — it delegates to four `project-context` mo
 
 - Invoke skill `project-context` mode `data`.
 - Pointer: `references/business-data-map.md`.
-- Output: `.context/business/business-data-map.md`.
+- Output: the data map inside `business-data-context` (`references/business-data-map.html`).
 
 **Step 2 — Business feature map** (feature inventory by domain, CRUD matrix, endpoint catalog, UI component inventory, third-party integrations, feature flags):
 
 - Invoke skill `project-context` mode `features`.
-- Soft gate: Step 1 should be done first (the command will surface a warning if `business-data-map.md` is missing but will not block).
-- Output: `.context/business/business-feature-map.md`.
+- Soft gate: Step 1 should be done first (the command will surface a warning if the data map (`business-data-context`) is still a placeholder but will not block).
+- Output: the feature map inside `business-feature-context` (`references/business-feature-map.html`).
 
 **Step 3 — Business API map** (auth model, critical user journeys traced through API call chains, architecture behind the API, integrations at the API boundary):
 
 - Invoke skill `project-context` mode `api`.
-- Pointer: `references/api-architecture.md` (kept under the legacy name for grep-stability; the command writes `business-api-map.md` instead of the legacy `api-architecture.md`).
+- Pointer: `references/api-architecture.md` (kept under the legacy name for grep-stability; the command writes the API map inside `business-api-context` instead of the legacy `api-architecture.md`).
 - Soft gates: Steps 1 and 2 inform but do not block.
-- Output: `.context/business/business-api-map.md`.
+- Output: the API map inside `business-api-context` (`references/business-api-map.html`).
 
 **Step 4 — Project dev guide** (conversational onboarding guide for any developer — human or AI — joining the project):
 
 - Read `references/project-dev-guide.md` and execute it in-skill (this one has no `project-context` mode — its content is unique to the foundation flow).
-- Hard prerequisite: `.context/business/business-data-map.md` from Step 1.
+- Hard prerequisite: the data map from Step 1 is generated (`bun run context:map business-data-context` prints sections, not the placeholder notice).
 - Output: `.context/business/project-dev-guide.md`.
 
 **Step 5 — Master implementation plan** (bonus: roadmap of all features to build, dependency-cascaded and value-prioritized — the natural synthesis of Steps 1–3):
 
 - Invoke skill `project-context` mode `master-plan`.
-- Hard gate: `.context/business/business-data-map.md` (Step 1).
-- Soft gate: `.context/business/business-feature-map.md` (Step 2).
+- Hard gate: the data map from Step 1 is generated (`bun run context:map business-data-context` prints sections, not the placeholder notice).
+- Soft gate: the feature map from Step 2 is generated (`bun run context:map business-feature-context`).
 - Output: `.context/master-implementation-plan.md`.
 - This step is **recommended but optional**. Skip it if the user has not yet defined product scope (e.g. greenfield where only the constitution exists). Re-invoke later, after `/product-management` has seeded the backlog, to align the master plan with the planned epics.
 
 **Step 6 — Domain glossary** (canonical domain terminology — the single vocabulary every later artifact must speak):
 
 - Runs **once**. Seed it from the PRD (personas, product terms), the SRS, the business maps (Steps 1–3), and existing ADRs.
-- Output: `.context/business/domain-glossary.md` with this section structure: §0 read-first clarification of the most-confused term (optional), §1 Core acronyms table (term → expansion → one-line definition), §2 Methodology terms, §3 Product entities (short forms pointing to `business-data-map.md` for detail), §4 Anti-glossary (banned/ambiguous terms → correct replacement → why), §5 Change protocol (glossary updated FIRST in the same PR; glossary wins doc conflicts; Jira content must match it).
+- Output: `.context/business/domain-glossary.md` with this section structure: §0 read-first clarification of the most-confused term (optional), §1 Core acronyms table (term → expansion → one-line definition), §2 Methodology terms, §3 Product entities (short forms pointing to the data map in `business-data-context` for detail), §4 Anti-glossary (banned/ambiguous terms → correct replacement → why), §5 Change protocol (glossary updated FIRST in the same PR; glossary wins doc conflicts; Jira content must match it).
 - Hand-maintained and **append-only** afterwards (like ADRs) — re-running `/project-foundation` NEVER regenerates it. If the file already exists, skip this step with a note.
 - Every domain term used later in Jira content, docs, code comments, and UI copy must match this glossary.
 
 **Final Phase 4 outputs:**
 
-- `.context/business/business-data-map.md`
-- `.context/business/business-feature-map.md`
-- `.context/business/business-api-map.md`
+- the data map inside `business-data-context` (`references/business-data-map.html`)
+- the feature map inside `business-feature-context` (`references/business-feature-map.html`)
+- the API map inside `business-api-context` (`references/business-api-map.html`)
 - `.context/business/project-dev-guide.md`
 - `.context/master-implementation-plan.md` (if Step 5 ran)
 - `.context/business/domain-glossary.md`
