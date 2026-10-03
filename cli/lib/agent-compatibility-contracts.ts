@@ -843,10 +843,24 @@ export function validateHookCompatibility(root = process.cwd()): string[] {
  * plugins resolving: a check that cannot run is worse than a coarse one that
  * does. A project is free to narrow a block's `files` afterwards; it is not
  * free to drop it silently.
+ *
+ * On an ADOPTED app (`.template/installer.lock.json` says `"adopted": true`)
+ * the consumer is the synced `eslint.config.tooling.mjs` instead: a root
+ * `eslint.config.js` there is the app's own, and requiring it to wire the
+ * tooling's blocks would force the app's lint to include the tooling.
  */
+/** `.template/installer.lock.json` records `adopted: true` (read inline: the adopt module imports this one). */
+function isAdoptedRepo(root: string): boolean {
+  try {
+    return (JSON.parse(readFileSync(join(root, '.template', 'installer.lock.json'), 'utf8')) as { adopted?: unknown }).adopted === true;
+  }
+  catch { return false; }
+}
+
 export function validateEslintBlockWiring(root = process.cwd()): string[] {
   const basePath = join(root, 'eslint.config.base.js');
-  const consumerPath = join(root, 'eslint.config.js');
+  const consumerFile = isAdoptedRepo(root) ? 'eslint.config.tooling.mjs' : 'eslint.config.js';
+  const consumerPath = join(root, consumerFile);
   if (!existsSync(basePath) || !existsSync(consumerPath)) { return []; }
 
   let base: string;
@@ -876,7 +890,7 @@ export function validateEslintBlockWiring(root = process.cwd()): string[] {
   const errors: string[] = [];
   for (const name of blocks) {
     if (!new RegExp(`\\b${name}\\b`).test(code)) {
-      errors.push(`eslint.config.js does not wire ${name} from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.`);
+      errors.push(`${consumerFile} does not wire ${name} from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.`);
     }
   }
   return errors;

@@ -970,6 +970,8 @@ export function compatErrorSurface(message: string): ParitySurface {
  */
 export function compatErrorSuggestion(message: string): ParitySuggestion {
   // The wiring lives in the project-owned `eslint.config.js`: add the block, keep the rest.
+  // On an adopted app the consumer is the SYNCED `eslint.config.tooling.mjs`: restore it.
+  if (/^eslint\.config\.tooling\.mjs does not wire/.test(message)) { return 'take upstream'; }
   if (/does not wire \w+ from eslint\.config\.base\.js/.test(message)) { return 'merge'; }
   return /command shadows skill|skills alias|\.claude\/skills/i.test(message) ? 'run agents:compat' : 'take upstream';
 }
@@ -980,7 +982,8 @@ function compatErrorPath(message: string): string {
   const host = /(claude|opencode|codex)\b/i.exec(message);
   if (host && /MCP/.test(message)) { return MCP_HOST_FILE[host[1].toLowerCase()]; }
   if (/skills alias|\.claude\/skills/.test(message)) { return '.claude/skills'; }
-  if (/^eslint\.config\.js /.test(message)) { return 'eslint.config.js'; }
+  const eslint = /^(eslint\.config(?:\.tooling)?\.m?js) /.exec(message);
+  if (eslint) { return eslint[1]; }
   return '(compat)';
 }
 

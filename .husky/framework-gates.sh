@@ -24,11 +24,36 @@
 # project-specific paths, POSIX sh only. Adding a gate here is how it reaches
 # every downstream repo on the next sync.
 
+# ADOPTED APPS. On a repo `bun run up --adopt` installed into an existing app
+# (`.template/installer.lock.json` says `"adopted": true`) the root
+# `tsconfig.json` and ESLint config are the APP's, never replaced, so
+# `types:check` / `lint:check` would either be the app's own scripts or judge
+# the tooling by the app's rules. There the gates check the tooling through its
+# own scope instead (`tsconfig.tooling.json`, `eslint.config.tooling.mjs`), and
+# the app keeps checking its code with its own hooks. A greenfield project takes
+# the first branch of every helper below, exactly as before.
+_fg_adopted() {
+  grep -Eq '"adopted"[[:space:]]*:[[:space:]]*true' .template/installer.lock.json 2>/dev/null
+}
+
+# _fg_scoped <greenfield script> <adopted-app script>. The adopted script is
+# guarded like any key this file cannot assume (see the contract above): a repo
+# whose package.json has not received it yet skips the check and says so.
+_fg_scoped() {
+  if ! _fg_adopted; then
+    bun run "$1"
+  elif grep -q "\"$2\"" package.json 2>/dev/null; then
+    bun run "$2"
+  else
+    echo "⚠️  package.json has no \"$2\" script: tooling check SKIPPED. Restore it with: bun run up"
+  fi
+}
+
 # Gates that run on EVERY commit. Fast, full-repo, plus the freshness checks
 # that only matter when the staged set touches what they guard.
 framework_gates_pre_commit() {
   # Light-weight repo health checks on every commit (fast, cover full repo).
-  bun run types:check
+  _fg_scoped types:check tooling:types:check
   bun run vars:check
   bun run skills:check
 
@@ -116,12 +141,24 @@ framework_gates_pre_commit() {
 # command below already exists in every scaffolded project, so this function cannot be
 # broken by a package.json key that lands in a separate, partially-applied sync phase.
 # The full suite (incl. types/vars/skills/docs) lives in `repo:check` for CI / manual runs.
+#
+# On an adopted app `format:check` is skipped: it runs Prettier over every JSON
+# and YAML file in the repo, and the app's own formatting (and its own
+# `.prettierrc`, which the adoption keeps) is not the framework's to gate.
 framework_gates_pre_push() {
-  bun run format:check \
-    && bun run lint:check \
+  _fg_format_check \
+    && _fg_scoped lint:check tooling:lint:check \
     && VARS_ENV_CHECK_DRIFT=warn bun run vars:env:check \
     && bun run skills:registry:check \
     && bun run agents:compat:check
+}
+
+_fg_format_check() {
+  if _fg_adopted; then
+    echo "ℹ️  adopted app: format:check skipped (the app owns its formatting)."
+    return 0
+  fi
+  bun run format:check
 }
 
 # Gate that runs on the COMMIT MESSAGE (`.husky/commit-msg`, which passes the

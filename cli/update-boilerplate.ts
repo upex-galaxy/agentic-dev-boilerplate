@@ -98,7 +98,11 @@ export const ADOPT_NEXT_STEP = 'Adopción instalada: nada de la app se sobrescri
 // `eslint.config.base.js` is the SYNCED half of the lint config: the shared
 // options and the `cli/` import-closure block the updater's self-update depends
 // on. The project-owned `eslint.config.js` (watchlisted) spreads it.
-const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint.config.base.js'];
+// `tsconfig.tooling.json` + `eslint.config.tooling.mjs` are the tooling's OWN
+// scope (`cli/`, `scripts/`): an adopted app keeps its root `tsconfig.json` and
+// ESLint config, so `tooling:types:check` / `tooling:lint:check` (and the
+// framework gates on an adopted repo) judge the tooling through these instead.
+const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint.config.base.js', 'eslint.config.tooling.mjs', 'tsconfig.tooling.json'];
 // `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
 // component: a basename listed here is synced even when the path also matches
 // a bootstrap-only entry. Keep it to files the boilerplate genuinely owns.
