@@ -71,6 +71,7 @@ export const MISSING_ENV_LINE = [
   'started without one. They are already running; this session cannot be repaired.',
   'Fix and restart: in a linked worktree run `bun run worktree:provision` in it',
   '(it copies `.env` from the main checkout); in a fresh clone run `bun run setup`.',
+  'Then `bun run harness:env` (writes the credential files Claude and OpenCode read at startup).',
 ].join(' ');
 
 /**
