@@ -1,0 +1,2715 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context skills: el mapa del negocio adentro de una skill</title>
+    <meta
+      name="description"
+      content="Qué es una skill de contexto con mapa: por qué el mapa del negocio vive en una skill y no en .context/, cómo lo genera project-context, cómo se lee por sección con bun run context:map, cómo se detecta que está viejo y cómo se corrige de a una sección con evidencia y aprobación."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      .steps,
+      .step {
+        min-width: 0;
+      }
+      .step .mono,
+      .check .mono,
+      .alt .mono,
+      .g .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.sections tbody th {
+        width: 3em;
+      }
+      /* deck-local: inline identifiers inside a .wf step description */
+      .wf span.mono {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#por-que">Por qué</a>
+        <a href="#mapas">Mapas</a>
+        <a href="#anatomia">Anatomía</a>
+        <a href="#leer">Leer</a>
+        <a href="#generar">Generar</a>
+        <a href="#frescura">Frescura</a>
+        <a href="#corregir">Corregir</a>
+        <a href="#propia">La tuya</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · context skills</div>
+        <h1>El mapa del negocio <em>llega solo</em>, no se <span class="sig">busca</span>.</h1>
+        <p class="lede">
+          Qué entidades tiene el producto, qué puede hacer cada rol desde cada pantalla, qué cambia
+          cada ruta: eso no lo saca ningún script de una fuente. Lo escribe una IA leyendo el
+          código, el esquema y el contrato del API. Por eso cada mapa del negocio vive
+          <b>adentro de una skill de contexto</b>, como un HTML que un humano abre en el navegador
+          y que la IA lee por sección con <span class="mono">bun run context:map</span>. Este deck
+          explica qué es un mapa, cómo se lee y cómo se mantiene honesto.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para quien <b>desarrolla</b> y quien <b>mantiene</b></span
+          >
+          <span class="chip"><span class="dot"></span> conocimiento, no un <b>workflow</b></span>
+          <span class="chip agent"
+            ><span class="dot"></span> escribe solo en su <b>references/</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Generar</div>
+            <h3>Un modo de project-context</h3>
+            <p>
+              <span class="mono">data</span>, <span class="mono">features</span> o
+              <span class="mono">api</span> leen las fuentes y escriben el mapa.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Guardar</div>
+            <h3>Un HTML en la skill</h3>
+            <p><span class="mono">references/&lt;map&gt;.html</span>, una sección por hecho.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Leer</div>
+            <h3>El lector</h3>
+            <p>
+              <span class="mono">bun run context:map</span> saca el SVG y deja el texto, por
+              sección.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Usar</div>
+            <h3>La IA, o vos</h3>
+            <p>
+              Un briefing inyecta el comando; un humano usa
+              <span class="mono">--open</span> y lo ve en el navegador.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Corregir</div>
+            <h3>Una sección por vez</h3>
+            <p>Lo que contradice al mapa se propone con evidencia y se aplica con tu sí.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 POR QUÉ ============ -->
+    <section class="band" id="por-que">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · por qué un mapa es una skill</div>
+          <h2>Una síntesis no es un caché</h2>
+          <p class="sub">
+            <span class="mono">.context/</span> guarda lo que un SCRIPT trae de una fuente de verdad
+            y lo que este repo mismo es fuente de verdad. Un mapa del negocio no es ninguna de las
+            dos cosas: dos sesiones lo escribirían distinto y rehacerlo cuesta miles de tokens. Es
+            conocimiento escrito, y el conocimiento que tiene que llegar sin que nadie lo pida es una
+            skill.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>La pregunta, para cada pieza de conocimiento</th>
+                <th>Si la respuesta es sí, va a</th>
+                <th>Se recupera con</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>¿Un script la trae de una fuente externa? (Jira, el spec OpenAPI, el esquema)</td>
+                <td><span class="mono">.context/</span> como caché <span class="mono">[SYNC]</span>, o tipos generados</td>
+                <td>
+                  <span class="mono">bun run context:hydrate</span>,
+                  <span class="mono">bun run api:sync</span>
+                </td>
+              </tr>
+              <tr>
+                <td>¿Este repo es la fuente de verdad? (ADR, PRD, SRS, glosario, plan de diseño)</td>
+                <td><span class="mono">.context/</span> como <span class="mono">[COMMIT]</span></td>
+                <td><span class="mono">git checkout</span></td>
+              </tr>
+              <tr>
+                <th>Si no: la IA la sintetiza del código, la base y los contratos</th>
+                <th>Una skill de contexto: el mapa generado adentro, el juicio en sus reglas</th>
+                <th>Regenerar cuesta caro: se corrige por sección</th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Hecho</div>
+            <h3>Va al mapa</h3>
+            <ul>
+              <li>
+                Dos sesiones competentes lo escribirían igual: una entidad, una ruta, una acción
+                CRUD. Nunca se copia al <span class="mono">SKILL.md</span>.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Juicio</div>
+            <h3>Va a las reglas de la skill</h3>
+            <ul>
+              <li>
+                Dos sesiones lo escribirían distinto: "los perfiles tienen borrado lógico; un conteo
+                sin <span class="mono">deleted_at IS NULL</span> está mal". Va a
+                <span class="mono">## Rules</span> o a <span class="mono">references/gotchas.md</span>,
+                con fecha y cómo se midió.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Un solo archivo, sin gemelo.</b> El humano y la IA leen el mismo HTML. No hay copia en
+          markdown ni otra bajo <span class="mono">docs/</span>: el gemelo es siempre el que se
+          desactualiza. Para ver el otro lado, el caché de Jira, está el deck
+          <a href="../agentic-dev-core/pbi-jira-cache.es.html">el caché del PBI</a>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPAS ============ -->
+    <section class="band" id="mapas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · los mapas que trae el boilerplate</div>
+          <h2>Un aspecto por skill, un generador por mapa</h2>
+          <p class="sub">
+            La lista única de skills con mapa es <span class="mono">CONTEXT_MAP_SKILLS</span> en
+            <span class="mono">cli/lib/context-maps.ts</span>: cada entrada nombra su mapa, su
+            generador y el markdown viejo que reemplaza. La tabla de abajo es lo que trae el
+            boilerplate; para saber qué hay en tu repo, leé esa constante.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Skill</th>
+                <th>Qué sabe</th>
+                <th>Generador</th>
+                <th>Ante un conflicto gana</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">business-data-context</span></td>
+                <td>
+                  Entidades y relaciones, RLS, migraciones, máquinas de estado, procesos automáticos,
+                  integraciones
+                </td>
+                <td><span class="mono">project-context</span> modo <span class="mono">data</span></td>
+                <td>La base viva de Supabase (capability <span class="mono">db</span>)</td>
+              </tr>
+              <tr>
+                <td><span class="mono">business-feature-context</span></td>
+                <td>Catálogo de features, matriz CRUD, inventario de UI, flujos entre features</td>
+                <td>
+                  <span class="mono">project-context</span> modo
+                  <span class="mono">features</span>
+                </td>
+                <td>El árbol del frontend; la app corriendo, para el comportamiento</td>
+              </tr>
+              <tr>
+                <td><span class="mono">business-api-context</span></td>
+                <td>Modelo de auth, grupos de rutas, superficie OpenAPI, recorridos entre rutas</td>
+                <td><span class="mono">project-context</span> modo <span class="mono">api</span></td>
+                <td>El spec para la forma; los handlers y el API corriendo, para el comportamiento</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Se cargan por su descripción</b
+            ><span
+              >Una tarea que escribe una migración trae la de datos; una que toca un handler, la de
+              API; una que toca una pantalla, la de features. Nadie tiene que decir "mapa".</span
+            >
+          </div>
+          <div class="g">
+            <b>No hay mapa de dominio ni de infraestructura</b
+            ><span
+              >El vocabulario vive en <span class="mono">.context/business/domain-glossary.md</span>,
+              escrito a mano. PRD y SRS siguen bajo <span class="mono">.context/</span>.</span
+            >
+          </div>
+          <div class="g">
+            <b>Cada una cita a las otras</b
+            ><span
+              >El mapa de features nombra los datos y las rutas detrás de cada feature, y no los
+              repite: los cita a su skill.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ANATOMÍA ============ -->
+    <section class="band" id="anatomia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · anatomía de un mapa</div>
+          <h2>El contrato que escribe el generador y parsea el lector</h2>
+          <p class="sub">
+            Un HTML autocontenido que abre desde <span class="mono">file://</span>, con secciones
+            planas. El <span class="mono">id</span> de cada sección es el ancla de edición: se fija
+            en el CREATE y no cambia nunca más.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c">&lt;!-- línea 1 de un mapa generado --&gt;</span>
+&lt;!-- generated by <span class="s">project-context mode data</span>; edited in place by <span class="s">business-data-context</span> refresh; do not hand-edit --&gt;
+<span class="c">&lt;!-- o, si todavía no se generó --&gt;</span>
+&lt;!-- placeholder: run <span class="s">project-context mode data</span> to generate this map --&gt;
+
+<span class="k">&lt;section</span> id="<span class="s">orders-lifecycle</span>"
+         data-sources="<span class="s">src/app/api/orders/, db:orders, migration:&lt;file&gt;</span>"
+         data-updated="<span class="s">YYYY-MM-DD</span>"<span class="k">&gt;</span>
+  &lt;h2&gt;...&lt;/h2&gt;  &lt;p&gt; &lt;ul&gt; &lt;table&gt; &lt;code&gt;  <span class="c">&lt;!-- HTML semántico simple --&gt;</span>
+  &lt;figure data-diagram="<span class="s">state</span>" data-for="<span class="s">orders-lifecycle</span>"&gt;&lt;svg&gt;…&lt;/svg&gt;&lt;figcaption&gt;…&lt;/figcaption&gt;&lt;/figure&gt;
+<span class="k">&lt;/section&gt;</span>
+...
+<span class="k">&lt;section</span> id="<span class="s">discovery-gaps</span>"<span class="k">&gt;</span>  <span class="c">&lt;!-- siempre la última --&gt;</span></pre>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>La línea 1 decide todo</h3>
+            <p>
+              El lector, el updater y el doctor leen SOLO esa línea para saber si el mapa está
+              generado o es un placeholder. El generador que nombra sale tal cual de la entrada de
+              <span class="mono">CONTEXT_MAP_SKILLS</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Una sección por unidad de hecho</h3>
+            <p>
+              Una entidad, un flujo, una feature, un grupo de rutas. Nunca anidadas, cada una abre
+              con su <span class="mono">&lt;h2&gt;</span>.
+              <span class="mono">data-sources</span> lista las señales de las que salió (el chequeo
+              de frescura las lee); <span class="mono">data-updated</span>, la fecha.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Ningún hecho vive solo en una figura</h3>
+            <p>
+              Todo lo que muestra un diagrama también está en el texto. Una figura de resumen arriba,
+              y una por sección solo donde un dibujo explica el mecanismo.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">discovery-gaps</span>, al final</h3>
+            <p>
+              Lo que no se pudo verificar. "No pude verificar X" le gana a una respuesta inventada.
+              Una sección migrada de un mapa markdown viejo lleva
+              <span class="mono">data-migrated-from</span> una vez, hasta que se regenera.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Un mapa generado puede tener conteos.</b> Tablas por esquema, rutas por grupo: es un
+          artefacto generado y queda exento de la Critical Rule #17, como cualquier archivo
+          generado.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 LEER ============ -->
+    <section class="band" id="leer">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · cómo se lee</div>
+          <h2>La IA nunca lee el HTML crudo</h2>
+          <p class="sub">
+            El SVG inline es casi todo el peso de un mapa y ninguno de sus hechos. El lector,
+            <span class="mono">scripts/context-map.ts</span>, saca el SVG, el
+            <span class="mono">&lt;style&gt;</span> y el <span class="mono">&lt;head&gt;</span>, e
+            imprime cada sección como texto con su id, su fecha y sus fuentes.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Necesitás</th>
+                <th>Comando</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>El mapa entero, como texto</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt;</span></td>
+              </tr>
+              <tr>
+                <td>Una sección (una dispatch que toca una entidad o un grupo de rutas)</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span></td>
+              </tr>
+              <tr>
+                <td>El índice, para un chequeo de frescura (id · fecha · fuentes)</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --list</span></td>
+              </tr>
+              <tr>
+                <td>El mapa dibujado, para un humano</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --open</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">En un briefing</div>
+            <h3>Se inyecta el comando, no la ruta</h3>
+            <ul>
+              <li>
+                El Skill Resolver (regla 5 de <span class="mono">skill-resolver.md</span>) inyecta
+                solo las skills de contexto cuyo ASPECTO toca la dispatch, como
+                <span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span> de
+                las secciones que toca. Nunca todas: un subagente que toca un aspecto paga por uno.
+              </li>
+              <li>Una dispatch que no nombra ningún aspecto no recibe ninguna. Ante la duda, nombralo en el Goal.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Placeholder</div>
+            <h3>Es "no hay mapa", no un sistema vacío</h3>
+            <ul>
+              <li>
+                El lector avisa por stderr qué generador correr y sale con
+                <span class="mono">0</span>. Nunca se planifica una migración como si el esquema
+                estuviera vacío: se le pasa al humano el modo que lo genera.
+              </li>
+              <li>
+                Sale con <span class="mono">1</span> ante una skill desconocida, un mapa que falta o
+                un id de sección que no existe, y en ese caso lista los ids conocidos.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Citar con fecha.</b> Un hecho del mapa se cita con su id de sección y su
+          <span class="mono">data-updated</span>. Una sección más vieja que la migración que describe
+          es una hipótesis para chequear contra la base, no una respuesta.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 GENERAR ============ -->
+    <section class="band" id="generar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · crear y actualizar</div>
+          <h2>Ningún camino regenera un mapa entero</h2>
+          <p class="sub">
+            Generar es trabajo de <span class="mono">project-context</span>: sus modos, sus gates y
+            el orden de <span class="mono">refresh-all</span> los explica su propio deck. Acá va lo
+            que le pasa al mapa. El id de sección es lo que vuelve mecánico el ahorro: una edición
+            sobre un bloque <span class="mono">&lt;section&gt;</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Estado del mapa</th>
+                <th>Qué corre</th>
+                <th>Qué escribe</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ausente o placeholder</td>
+                <td>
+                  CREATE del modo: todas las secciones desde las fuentes. Si existe el markdown viejo
+                  que reemplaza (la lista <span class="mono">legacy</span> de su entrada), se lee como
+                  entrada y se cita en <span class="mono">data-migrated-from</span>
+                </td>
+                <td>El archivo entero, una sola vez</td>
+              </tr>
+              <tr>
+                <td>Generado</td>
+                <td>
+                  UPDATE del modo: chequeo de frescura, regenera SOLO las secciones viejas, muestra
+                  un diff por sección y ESPERA tu aprobación
+                </td>
+                <td>Las secciones aprobadas</td>
+              </tr>
+              <tr>
+                <td>Cambiaron los hechos de una sección con figura</td>
+                <td>Se redibuja esa figura</td>
+                <td>Un <span class="mono">&lt;figure&gt;</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Lee cada fuente que pide el modo. Lo que no verificó va a <span class="mono">discovery-gaps</span>, no al cuerpo.</p>
+            <p>
+              Después de escribir un mapa, revisa las <span class="mono">## Rules</span> y los
+              gotchas de esa skill contra el mapa nuevo y PROPONE cambios.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Qué <b>modo</b> corre: si no lo nombrás, la IA pregunta.</p>
+            <p>Si el diff de un UPDATE se <b>aplica</b>.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>
+              <span class="mono">references/&lt;map&gt;.html</span> adentro de su skill, y nada más:
+              el modo escribe solo ese archivo.
+            </p>
+            <p>Los mapas markdown viejos de <span class="mono">.context/business/</span> no se borran nunca.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> un mapa existente no se pisa sin tu aprobación explícita del diff por sección.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FRESCURA ============ -->
+    <section class="band" id="frescura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · ¿está viejo?</div>
+          <h2>Cada sección dice de dónde salió, y eso dice cuándo venció</h2>
+          <p class="sub">
+            El chequeo recorre <span class="mono">--list</span> y mira cada señal de
+            <span class="mono">data-sources</span> contra su fecha. Las señales genéricas están en la
+            doctrina; cada skill agrega las de su aspecto en su propio
+            <span class="mono">references/refresh.md</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Señal</th>
+                <th>Vieja cuando</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Una ruta del repo</td>
+                <td>
+                  <span class="mono">git log --since=&lt;data-updated&gt; --oneline -- &lt;path&gt;</span>
+                  devuelve algún commit
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">db:&lt;table&gt;</span>, <span class="mono">migration:&lt;file&gt;</span></td>
+                <td>
+                  Hay una migración posterior, o la base (capability <span class="mono">db</span>)
+                  muestra una columna, constraint, policy o trigger que la sección no describe
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">openapi:&lt;x&gt;</span></td>
+                <td>
+                  El contrato cambió desde la fecha (salida de
+                  <span class="mono">bun run api:sync</span>, o el <span class="mono">git log</span>
+                  del spec)
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">route:&lt;path&gt;</span></td>
+                <td>Cambió el handler o la página</td>
+              </tr>
+              <tr>
+                <td>Señales propias del aspecto</td>
+                <td>
+                  Las declara el <span class="mono">refresh.md</span> de cada skill: por ejemplo
+                  <span class="mono">cron:&lt;job&gt;</span> y
+                  <span class="mono">webhook:&lt;event&gt;</span> en datos,
+                  <span class="mono">auth:&lt;scheme&gt;</span> en API, un flag o un gate de rol en
+                  features
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout r">
+          <b>Sin fuentes no hay frescura.</b> Una sección que no declara fuentes se reporta como
+          <span class="mono">unknown</span>, nunca como fresca en silencio.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 CORREGIR ============ -->
+    <section class="band" id="corregir">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · la skill se corrige a sí misma</div>
+          <h2>Propone con evidencia, aplica con tu sí</h2>
+          <p class="sub">
+            Una skill de contexto no corre workflows. Lo único que hace es mantener honesto su mapa:
+            cuando una sesión ve algo que contradice una sección (una columna que el mapa omite, un
+            status que el mapa dice imposible, una acción CRUD que falta en la matriz), propone la
+            edición.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Los cinco pasos</div>
+            <a class="wf" href="#corregir"
+              ><span class="lt">1</span
+              ><span
+                ><b>Ubicar</b
+                ><span
+                  ><span class="mono">--list</span>, después <span class="mono">--section &lt;id&gt;</span>
+                  de la sección que toca.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">2</span
+              ><span
+                ><b>Evidencia</b
+                ><span
+                  >Medida: una query, un request, un archivo en un commit, una sesión. Sin evidencia
+                  no hay propuesta.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt sig">3</span
+              ><span
+                ><b>Proponer</b
+                ><span
+                  >Al dueño de la sesión: vos en el hilo principal, o el conductor si es un worker
+                  supervisado. Un subagente de una sola vez la deja en su reporte.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">4</span
+              ><span
+                ><b>Aplicar, solo con aprobación</b
+                ><span
+                  >Releer la sección (otra sesión pudo editarla), editar ESE bloque, actualizar
+                  <span class="mono">data-updated</span> y las fuentes; la figura, solo si cambiaron
+                  sus hechos.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">5</span
+              ><span
+                ><b>Verificar</b
+                ><span><span class="mono">--section &lt;id&gt;</span> imprime el texto nuevo.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Dos caminos, nunca mezclados</div>
+            <a class="wf" href="#corregir"
+              ><span class="lt">A</span
+              ><span
+                ><b>Una sección contradicha</b
+                ><span
+                  >La escribe la skill de contexto, después de tu sí, con los cinco pasos.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt sig">B</span
+              ><span
+                ><b>Varias secciones viejas, o algo nuevo</b
+                ><span
+                  >Lo hace el UPDATE del modo de <span class="mono">project-context</span>. La skill
+                  te pasa ese modo; no reconstruye secciones ella misma.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">=</span
+              ><span
+                ><b>El silencio no es aprobación</b
+                ><span>Solo un <span class="mono">yes</span> aplica la edición.</span></span
+              ></a
+            >
+          </div>
+        </div>
+
+        <pre
+          class="code r"
+          style="margin-top: 26px"
+        ><span class="c"># la propuesta, en un solo mensaje (references/refresh.md)</span>
+<span class="k">business-data-context</span> · proposed edit to section <span class="s">&lt;id&gt;</span> (updated <span class="s">&lt;date&gt;</span>)
+evidence: <span class="s">&lt;what was observed, how, where: query / request / file@commit / session label&gt;</span>
+before: <span class="s">&lt;the sentence or row as the map has it&gt;</span>
+after:  <span class="s">&lt;the replacement&gt;</span>
+figure: <span class="s">&lt;unchanged | redraw: why&gt;</span>
+apply? (yes / no)</pre>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Se verifica antes de proponer</b
+            ><span
+              >Datos, contra la base; features, contra la app corriendo o el archivo de ruta; API,
+              contra el handler, los tipos OpenAPI o un request real.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un id no se renombra</b
+            ><span
+              >Una entidad, feature o grupo renombrado es una sección nueva, más una línea en
+              <span class="mono">discovery-gaps</span> durante un refresh.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un juicio sigue el mismo camino</b
+            ><span
+              >Una regla nueva para LEER el mapa va a <span class="mono">## Rules</span> o a los
+              gotchas, fechada y medida, con la misma aprobación.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 ALCANCE ============ -->
+    <section class="band" id="alcance">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · alcance de escritura</div>
+          <h2>Escribe en su <span class="mono">references/</span> y en ningún otro lado</h2>
+          <p class="sub">
+            La skill lo declara en su frontmatter con
+            <span class="mono">metadata.writes: [references/]</span>, y un lint lo hace cumplir. Nada
+            de Jira, nada de <span class="mono">.context/</span>, ninguna otra skill, ni migraciones
+            ni código del producto.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Solo una skill de kind <span class="mono">context</span> declara
+              <span class="mono">metadata.writes</span></b
+              >. En cualquier otro kind, el lint lo marca como error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Cada destino está adentro de su propio <span class="mono">references/</span></b
+              >. Un destino afuera es error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Trae <span class="mono">references/refresh.md</span></b>, el procedimiento que
+              corre su camino de escritura. Sin él, error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Ningún tag de tracker</b> en el cuerpo ni en <span class="mono">refresh.md</span>:
+              edita su mapa, nunca un tracker.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Quién lo controla:</b> la regla <span class="mono">CONTEXT-WRITES</span> de
+          <span class="mono">scripts/lint-skills.ts</span>, que corre con
+          <span class="mono">bun run skills:check</span>. En el mismo lint,
+          <span class="mono">STALE-PATH</span> es estricto dentro de una skill de contexto: cada ruta
+          de <span class="mono">.context/</span> que cita tiene que existir (solo el caché
+          <span class="mono">.context/PBI/</span> queda exento). Cita, nunca copia.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 DIAGRAMAS ============ -->
+    <section class="band" id="diagramas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · las figuras</div>
+          <h2>La capability <span class="mono">diagrams</span> es una skill, no un MCP</h2>
+          <p class="sub">
+            Las figuras las dibuja la skill <span class="mono">diagram-design</span>, que instala
+            <span class="mono">cli/install.ts</span> a nivel proyecto; una instalación de usuario o
+            un plugin del harness también sirve. Es la única capability que se resuelve por la
+            presencia de una skill y no por el sufijo de una herramienta.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Antes de dibujar</div>
+            <h3>¿Se puede cargar <span class="mono">diagram-design</span>?</h3>
+            <ul>
+              <li>
+                Si no: STOP en el punto de uso, nombrando la línea de instalación. Nunca un mapa con
+                SVG dibujado a mano o ASCII en su lugar.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">El estilo</div>
+            <h3>Es asunto de diagram-design</h3>
+            <ul>
+              <li>
+                Un marcador <span class="mono">.diagram-design</span> en la raíz
+                (<span class="mono">profile: &lt;slug&gt;</span>) elige un perfil guardado si el
+                proyecto quiere uno. Dos máquinas pueden dibujar distinto: lo que importa está en el
+                texto.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># la línea que nombra el STOP (mcp-capabilities.md)</span>
+bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-design --yes</pre>
+      </div>
+    </section>
+
+    <!-- ============ §10 ENTREGA ============ -->
+    <section class="band" id="entrega">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · entrega y dueño</div>
+          <h2>Upstream la entrega una vez; después es tuya</h2>
+          <p class="sub">
+            Toda skill <span class="mono">&lt;aspect&gt;-context</span> es local del proyecto: el
+            updater nunca la entrega, la pisa ni la borra (<span class="mono"
+              >isProjectLocalSkillPath</span
+            >
+            en <span class="mono">cli/lib/updater-core.ts</span>). Las de
+            <span class="mono">CONTEXT_MAP_SKILLS</span> son la única excepción, y es solo de
+            entrega.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Llega como placeholder</h3>
+            <p>
+              <span class="mono">bun run up</span> entrega la carpeta de la skill cuando falta
+              (<span class="mono">collectContextMapBootstrap</span>), con un mapa placeholder
+              adentro.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Nunca más se toca desde upstream</h3>
+            <p>
+              A partir de ahí, nada del updater pisa ni borra lo que hay adentro: el mapa es la
+              síntesis de TU producto, y sus reglas y gotchas también.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Un placeholder se avisa, no bloquea</h3>
+            <p>
+              Un mapa que falta o sigue en placeholder (con el markdown viejo al lado, si lo hay)
+              aparece como fila informativa en el cierre de <span class="mono">bun run up</span>, y
+              <span class="mono">bun run setup:doctor</span> imprime la misma línea, con el generador
+              a correr.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 PROPIA ============ -->
+    <section class="band" id="propia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · tu propia skill de contexto</div>
+          <h2>Para un aspecto que los mapas no cubren</h2>
+          <p class="sub">
+            <span class="mono">billing</span>, <span class="mono">auth</span>,
+            <span class="mono">stripe</span>: la capa de juicio sobre un aspecto que una sesión
+            competente leería mal. La crea <span class="mono">project-context</span> modo
+            <span class="mono">context-skill</span>, siempre a través de
+            <span class="mono">skill-creator</span>. Las fuentes guardan los hechos; la skill, las
+            reglas para leerlos.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>
+              Lee completo lo que la skill va a cubrir y lista cada lugar donde se puede leer mal:
+              borrado lógico, RLS que esconde filas a un rol, estados con nombres distintos en base,
+              API y UI.
+            </p>
+            <p>Pasa cada candidato por las tres preguntas de §01: solo el juicio queda como regla.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>El <b>aspecto</b> y sobre qué se apoya.</p>
+            <p>En UPDATE, si el <b>diff</b> se aplica: las reglas se agregan con fecha, nunca se reescriben.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>
+              <span class="mono">.agents/skills/&lt;aspect&gt;-context/</span> con
+              <span class="mono">metadata.kind: context</span>, más
+              <span class="mono">references/gotchas.md</span>.
+            </p>
+            <p>Del proyecto, nunca enviada upstream.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> <span class="mono">bun run skills:check</span> verde y
+          <span class="mono">bun run skills:registry</span> con el bloque nuevo en
+          <span class="mono">REGISTRY.md</span>; ninguna oración repetida del mapa o del código.
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Lo que cubre tiene que existir antes</b
+            ><span
+              >Un mapa, un módulo, un contrato. Una skill sobre nada termina siendo la fuente por
+              accidente.</span
+            >
+          </div>
+          <div class="g">
+            <b>Datos, features y API ya tienen dueño</b
+            ><span
+              >Un pedido de <span class="mono">data-context</span> se responde apuntando a
+              <span class="mono">business-data-context</span>, nunca con una segunda fuente sobre el
+              mismo aspecto.</span
+            >
+          </div>
+          <div class="g">
+            <b>Sin medición no hay regla</b
+            ><span
+              >Cada regla lleva fecha y cómo se midió. Lo que no se midió va a la memoria, no a la
+              skill.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · qué le decís a la IA</div>
+          <h2>Las skills de contexto no tienen modos: se generan, se leen y se cargan</h2>
+          <p class="sub">
+            Generar un mapa es un modo de <span class="mono">project-context</span>. Leerlo es un
+            comando del repo, igual en los tres hosts. Cargar la skill pasa solo, por su
+            descripción, o nombrándola.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-context data</span>
+            <p>Genera o actualiza el mapa de datos. Igual con <span class="mono">features</span> o <span class="mono">api</span>.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill project-context, modo data</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill project-context, modo data</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <pre
+          class="code r"
+          style="margin-top: 26px"
+        ><span class="c"># leer, en cualquier host</span>
+bun run context:map <span class="s">business-data-context</span> --section <span class="s">&lt;id&gt;</span>
+bun run context:map <span class="s">business-feature-context</span> --list
+bun run context:map <span class="s">business-api-context</span> --open   <span class="c"># para vos, en el navegador</span>
+
+<span class="c"># una skill de contexto propia</span>
+/project-context context-skill <span class="s">billing</span>        <span class="c"># o: cargá la skill project-context, modo context-skill</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ §13 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · alrededor de los mapas</div>
+          <h2>Quién los genera y quién los lee</h2>
+          <p class="sub">
+            Los mapas no son de un solo workflow: los escribe uno y los consultan varios.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Los genera · modos y gates</div>
+            <h3>/project-context</h3>
+            <p>
+              Sus modos <span class="mono">data</span>, <span class="mono">features</span> y
+              <span class="mono">api</span> escriben los mapas; <span class="mono">master-plan</span>
+              exige el mapa de datos generado. Sus gates y su orden viven en su
+              <span class="mono">SKILL.md</span>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Los encadena · Discovery</div>
+            <h3><a href="../project-foundation/como-funciona.es.html">/project-foundation</a></h3>
+            <p>
+              Su fase de Discovery corre los modos de mapa y verifica el mapa de datos con
+              <span class="mono">bun run context:map</span> antes del plan maestro.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Los lee · por historia</div>
+            <h3><a href="../sprint-development/como-funciona.es.html">/sprint-development</a></h3>
+            <p>
+              Para evaluar el impacto de una historia que toca varios dominios. Si un mapa sigue en
+              placeholder, sigue sin él y lo anota en el plan.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Los lee · backlog</div>
+            <h3><a href="../product-management/como-funciona.es.html">/product-management</a></h3>
+            <p>
+              Su pase de dependencias usa el grafo de entidades, la matriz CRUD y el catálogo de
+              rutas antes de crear o editar una historia.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/business-context-maps.md"
+            >agentic-dev-core/references/business-context-maps.md</a
+          >
+          (la doctrina entera), <span class="mono">skill-scaffold.md</span> §3 a §5 (el principio y
+          la skill propia), el <span class="mono">SKILL.md</span> y el
+          <span class="mono">references/refresh.md</span> de cada skill de contexto, y
+          <span class="mono">cli/lib/context-maps.ts</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Lo que una IA sintetiza leyendo el
+            producto cuesta caro rehacer y sale distinto cada vez. Por eso se guarda una sola vez,
+            adentro de la skill que lo trae a la sesión, se lee por sección y se corrige de a una
+            sección, con evidencia y con tu sí.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            >Fuente: <span class="mono">.agents/skills/business-*-context/</span> ·
+            <span class="mono">cli/lib/context-maps.ts</span></span
+          >
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
