@@ -1,11 +1,11 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { cleanupDeprecated, validateComponentRegistry } from './lib/updater-core.ts';
+import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -30,9 +30,65 @@ describe('component registry', () => {
   test('.claude/settings.json ships once (bootstrap-only) and stays out of every directory component', () => {
     const rootConfig = COMPONENTS.find(c => c.name === 'agent-root-config');
     expect(rootConfig).toMatchObject({ type: 'file-list', paths: ['.claude'], files: ['settings.json'], bootstrapOnly: true });
-    // `.claude` itself is never a directory component: `commands` owns
-    // `.claude/commands`, the alias `.claude/skills` is generated.
+    // `.claude` itself is never a directory component: `.claude/commands` is
+    // the project's own, the alias `.claude/skills` is generated.
     expect(COMPONENTS.filter(c => c.type !== 'file-list').flatMap(c => c.paths)).not.toContain('.claude');
+  });
+
+  test('the retired command aliases leave the sync and are removed downstream, the project\'s own commands stay', () => {
+    const paths = COMPONENTS.flatMap(c => c.paths);
+    for (const p of ['.agents/compatibility', '.claude/commands', '.opencode/commands']) {
+      expect(paths).not.toContain(p);
+    }
+    expect(COMPONENTS.find(c => c.name === 'commands')).toBeUndefined();
+    // Muscle memory: the retired component name still selects the one that replaced it.
+    expect(parseArgs(['commands']).commands).toEqual(['agent-compatibility']);
+
+    const retired = RETIRED_COMMAND_WRAPPERS.map(d => d.path);
+    expect(retired).toContain('.agents/compatibility/command-aliases.json');
+    expect(retired).toContain('.claude/commands/business-data-map.md');
+    expect(retired).toContain('.opencode/commands/sync-ai-memory.md');
+    // Same alias set on both hosts: one wrapper per host per alias.
+    const byHost = (dir: string): string[] => retired.filter(p => p.startsWith(`${dir}/`)).map(p => p.slice(dir.length + 1)).sort();
+    expect(byHost('.claude/commands')).toEqual(byHost('.opencode/commands'));
+    expect(retired).not.toContain('.agents/compatibility/command-aliases.project.json');
+    for (const d of RETIRED_COMMAND_WRAPPERS) {
+      expect(d.reason).toContain('invoke the skill by name plus its mode');
+      expect(d.deprecatedSince).not.toBe('');
+    }
+
+    const root = temporaryRoot();
+    for (const d of RETIRED_COMMAND_WRAPPERS) {
+      mkdirSync(join(root, d.path, '..'), { recursive: true });
+      writeFileSync(join(root, d.path), 'wrapper\n');
+    }
+    writeFileSync(join(root, '.claude/commands/acme-deploy.md'), 'the project\'s own\n');
+    const cfg = { deprecatedFiles: RETIRED_COMMAND_WRAPPERS } as Parameters<typeof cleanupDeprecated>[0];
+    expect(cleanupDeprecated(cfg, root, true)).toBe(RETIRED_COMMAND_WRAPPERS.length);
+    expect(cleanupDeprecated(cfg, root, false)).toBe(RETIRED_COMMAND_WRAPPERS.length);
+    expect(cleanupDeprecated(cfg, root, false)).toBe(0);
+    expect(existsSync(join(root, '.claude/commands/acme-deploy.md'))).toBe(true);
+    // A folder the cleanup emptied goes with it; one that still holds a file stays.
+    expect(existsSync(join(root, '.opencode/commands'))).toBe(false);
+    expect(existsSync(join(root, '.agents/compatibility'))).toBe(false);
+  });
+
+  test('the retired sync-ai-memory skill leaves downstream, folder included', () => {
+    expect(DEPRECATED_FILES.map(d => d.path)).toEqual(expect.arrayContaining([...RETIRED_COMMAND_WRAPPERS, ...RETIRED_SKILL_FILES].map(d => d.path)));
+    const retired = RETIRED_SKILL_FILES.map(d => d.path);
+    expect(retired).toEqual(['.agents/skills/sync-ai-memory/SKILL.md', '.agents/skills/sync-ai-memory/references/sync.md']);
+    for (const d of RETIRED_SKILL_FILES) { expect(d.reason).toContain('docs:check'); }
+
+    const root = temporaryRoot();
+    for (const p of [...retired, '.agents/skills/acli/SKILL.md']) {
+      mkdirSync(join(root, p, '..'), { recursive: true });
+      writeFileSync(join(root, p), 'x\n');
+    }
+    const cfg = { deprecatedFiles: RETIRED_SKILL_FILES } as Parameters<typeof cleanupDeprecated>[0];
+    expect(cleanupDeprecated(cfg, root, false)).toBe(2);
+    // A skill folder with no SKILL.md would fail skills:check: the empty folders go.
+    expect(existsSync(join(root, '.agents/skills/sync-ai-memory'))).toBe(false);
+    expect(existsSync(join(root, '.agents/skills/acli/SKILL.md'))).toBe(true);
   });
 });
 

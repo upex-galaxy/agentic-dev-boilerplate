@@ -29,24 +29,20 @@ import {
   checkAgentCompatibility,
   CLAUDE_INSTRUCTIONS_SHIM,
   claudeSkillsAliasPlan,
-  COMMAND_ALIAS_MANIFEST,
-  COMMAND_ALIAS_PROJECT_MANIFEST,
-  commandWrapperCounts,
+  commandsShadowingSkills,
   COMPATIBILITY_GROUP_LABEL,
   COMPATIBILITY_GROUP_ORDER,
   describeAliasStatus,
   groupCompatibilityErrors,
   isInside,
-  mergedCommandAliases,
   POSIX_CLAUDE_SKILLS_TARGET,
+  removeShadowingCommands,
   repairAgentSurfaces,
   repairClaudeSkillsAlias,
-  repairCommandWrappers,
+  SHADOWING_COMMANDS_BACKUP_DIR,
   SKILLS_ALIAS_DEFERRED_MARKER,
   SKILLS_ALIAS_MISSING_ERROR,
-  undeclaredCommandWrappers,
   validateCanonicalSources,
-  validateCommandAliases,
 } from './agent-compatibility.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..', '..');
@@ -263,37 +259,16 @@ function contractFixture(prefix?: string, ids = BOILERPLATE_IDS): string {
   return root;
 }
 
-const ALIASES = [
-  { alias: 'dev-roadmap', skill: 'project-context', mode: 'dev-roadmap' },
-  { alias: 'business-data-map', skill: 'project-context', mode: 'data' },
-  { alias: 'sync-ai-memory', skill: 'sync-ai-memory', mode: 'sync' },
-];
-
-function manifest(aliases = ALIASES): string {
-  return `${JSON.stringify({
-    version: 1,
-    wrapperHosts: ['claude', 'opencode'],
-    aliases: aliases.map(alias => ({
-      ...alias,
-      description: `Run ${alias.skill} in mode ${alias.mode}`,
-      argumentHint: '[args]',
-      forwardArguments: true,
-      mutability: 'read-only',
-    })),
-  }, null, 2)}\n`;
-}
+const SKILLS = ['project-context', 'jira-administration'];
 
 /** Everything `checkAgentCompatibility` wants, except the alias itself. */
 function repositoryFixture(): string {
   const root = contractFixture();
   write(root, 'AGENTS.md', '# AI memory\n');
   write(root, 'CLAUDE.md', CLAUDE_INSTRUCTIONS_SHIM);
-  write(root, COMMAND_ALIAS_MANIFEST, manifest());
-  for (const skill of new Set(ALIASES.map(alias => alias.skill))) {
-    const modes = ALIASES.filter(alias => alias.skill === skill).map(alias => `\`${alias.mode}\``);
-    write(root, `.agents/skills/${skill}/SKILL.md`, `---\nname: ${skill}\n---\n\nModes: ${modes.join(', ')}.\n`);
+  for (const skill of SKILLS) {
+    write(root, `.agents/skills/${skill}/SKILL.md`, `---\nname: ${skill}\n---\n`);
   }
-  repairCommandWrappers(root);
   return root;
 }
 
@@ -867,160 +842,46 @@ describe('Claude skills alias', () => {
   });
 });
 
-describe('command alias wrappers', () => {
-  test('reports the missing manifest', () => {
-    const root = temporaryRoot();
-    expect(validateCommandAliases(root)).toEqual([`Command alias manifest missing: ${COMMAND_ALIAS_MANIFEST}`]);
-  });
-
-  test('generates one wrapper per host per alias, idempotently', () => {
+describe('commands shadowing a skill', () => {
+  test('finds a command, on either host and in a subdirectory, whose name is a repo skill', () => {
     const root = repositoryFixture();
-    expect(commandWrapperCounts(root)).toEqual({ expected: 3, claude: 3, opencode: 3 });
-    expect(repairCommandWrappers(root)).toBe(0);
-    expect(validateCommandAliases(root)).toEqual([]);
-
-    const wrapper = readFileSync(join(root, '.opencode/commands/dev-roadmap.md'), 'utf8');
-    expect(wrapper).toBe(readFileSync(join(root, '.claude/commands/dev-roadmap.md'), 'utf8'));
-    expect(wrapper).toContain('Invoke skill `project-context` in mode `dev-roadmap`.');
-    expect(wrapper).toContain('Forward `$ARGUMENTS` unchanged.');
-  });
-
-  test('distinguishes a stale wrapper from one that grew workflow prose', () => {
-    const root = repositoryFixture();
-    const stale = join(root, '.claude/commands/dev-roadmap.md');
-    writeFileSync(stale, readFileSync(stale, 'utf8').replace('dev-roadmap`', 'roadmap`'));
-    const prose = join(root, '.opencode/commands/sync-ai-memory.md');
-    writeFileSync(prose, `${readFileSync(prose, 'utf8')}\n## Steps\n\n1. Read every doc.\n2. Patch drift.\n3. Report.\n`);
-
-    const errors = validateCommandAliases(root);
-    expect(errors).toContain('claude command wrapper is stale: .claude/commands/dev-roadmap.md');
-    expect(errors).toContain('opencode command wrapper contains workflow prose: .opencode/commands/sync-ai-memory.md');
-  });
-
-  test('rejects an alias whose skill or mode does not exist', () => {
-    const root = repositoryFixture();
-    write(root, COMMAND_ALIAS_MANIFEST, manifest([
-      ...ALIASES,
-      { alias: 'business-api-map', skill: 'project-context', mode: 'api' },
-      { alias: 'ghost', skill: 'nowhere', mode: 'x' },
-      { alias: 'Bad Alias', skill: 'project-context', mode: 'data' },
-    ]));
-
-    const errors = validateCommandAliases(root);
-    expect(errors).toContain('Command alias target mode missing: business-api-map -> project-context:api');
-    expect(errors).toContain('Command alias target skill missing: ghost -> nowhere');
-    expect(errors).toContain('Invalid command alias: Bad Alias');
-  });
-
-  test('reports a wrapper file that no manifest produced, by name, without deleting it', () => {
-    const root = repositoryFixture();
-    write(root, '.claude/commands/hand-made.md', '---\ndescription: mine\n---\n\nDo things.\n');
+    write(root, '.claude/commands/project-context.md', '---\ndescription: mine\n---\n\nDo it my way.\n');
+    write(root, '.opencode/commands/team/jira-administration.md', 'Do it my way.\n');
+    write(root, '.claude/commands/deploy.md', 'A project command with its own name.\n');
     write(root, '.opencode/commands/.DS_Store', '');
+    // A folder without SKILL.md is not a skill, so its name is free.
+    mkdirSync(join(root, '.agents/skills/deploy'), { recursive: true });
 
-    expect(undeclaredCommandWrappers(root)).toEqual(['.claude/commands/hand-made.md']);
-    expect(validateCommandAliases(root)).toEqual([
-      `Command wrapper not declared in any manifest: .claude/commands/hand-made.md; add it to ${COMMAND_ALIAS_PROJECT_MANIFEST} or delete it`,
+    expect(commandsShadowingSkills(root)).toEqual([
+      { path: '.claude/commands/project-context.md', skill: 'project-context' },
+      { path: '.opencode/commands/team/jira-administration.md', skill: 'jira-administration' },
     ]);
-    expect(repairCommandWrappers(root)).toBe(0);
-    expect(readFileSync(join(root, '.claude/commands/hand-made.md'), 'utf8')).toContain('Do things.');
-  });
-});
-
-describe('project command alias overlay', () => {
-  function overlay(aliases: Array<{ alias: string, skill: string, mode: string, description?: string }>): string {
-    return `${JSON.stringify({
-      version: 1,
-      aliases: aliases.map(alias => ({
-        alias: alias.alias,
-        skill: alias.skill,
-        mode: alias.mode,
-        description: alias.description ?? `Project-owned ${alias.alias}`,
-        argumentHint: '[args]',
-        forwardArguments: true,
-        mutability: 'read-only',
-      })),
-    }, null, 2)}\n`;
-  }
-
-  test('without an overlay the upstream manifest is the whole contract', () => {
-    const root = repositoryFixture();
-    const merged = mergedCommandAliases(root);
-    expect(merged.overlayPresent).toBe(false);
-    expect(merged.aliases.map(alias => alias.alias)).toEqual(ALIASES.map(alias => alias.alias));
-    expect(merged.aliases.every(alias => alias.source === 'upstream')).toBe(true);
-    expect(commandWrapperCounts(root)).toEqual({ expected: 3, claude: 3, opencode: 3 });
+    expect(checkAgentCompatibility(root, 'linux').errors).toContain(
+      `Command shadows skill project-context: .claude/commands/project-context.md; a command with a skill's name hides the skill's instructions (\`bun run agents:compat\` moves it to ${SHADOWING_COMMANDS_BACKUP_DIR}/)`,
+    );
   });
 
-  test('an overlay alias is added, rendered on both hosts and counted as expected', () => {
+  test('moves each one to the backup dir with its path, and leaves every other command alone', () => {
     const root = repositoryFixture();
-    write(root, '.agents/skills/project-context/SKILL.md', '---\nname: project-context\n---\n\nModes: `dev-roadmap`, `data`, `api`.\n');
-    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, overlay([{ alias: 'business-api-map', skill: 'project-context', mode: 'api' }]));
+    write(root, '.claude/commands/project-context.md', 'Do it my way.\n');
+    write(root, '.claude/commands/deploy.md', 'Mine.\n');
 
-    // Before the repair the new wrapper is missing on both hosts.
-    expect(commandWrapperCounts(root)).toEqual({ expected: 4, claude: 3, opencode: 3 });
-    expect(validateCommandAliases(root)).toEqual([
-      'claude command wrapper missing: .claude/commands/business-api-map.md',
-      'opencode command wrapper missing: .opencode/commands/business-api-map.md',
-    ]);
-
-    expect(repairCommandWrappers(root)).toBe(2);
-    expect(commandWrapperCounts(root)).toEqual({ expected: 4, claude: 4, opencode: 4 });
-    expect(validateCommandAliases(root)).toEqual([]);
-    expect(undeclaredCommandWrappers(root)).toEqual([]);
-
-    const merged = mergedCommandAliases(root);
-    expect(merged.overlayPresent).toBe(true);
-    expect(merged.aliases.at(-1)).toMatchObject({ alias: 'business-api-map', source: 'project' });
-    expect(readFileSync(join(root, '.opencode/commands/business-api-map.md'), 'utf8'))
-      .toContain('Invoke skill `project-context` in mode `api`.');
+    expect(removeShadowingCommands(root)).toEqual(['.claude/commands/project-context.md']);
+    expect(existsSync(join(root, '.claude/commands/project-context.md'))).toBe(false);
+    expect(readFileSync(join(root, SHADOWING_COMMANDS_BACKUP_DIR, '.claude/commands/project-context.md'), 'utf8')).toBe('Do it my way.\n');
+    expect(readFileSync(join(root, '.claude/commands/deploy.md'), 'utf8')).toBe('Mine.\n');
+    expect(commandsShadowingSkills(root)).toEqual([]);
+    expect(removeShadowingCommands(root)).toEqual([]);
   });
 
-  test('an overlay entry overrides the upstream alias of the same name in place', () => {
+  test('without command directories there is nothing to report', () => {
     const root = repositoryFixture();
-    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, overlay([
-      { alias: 'dev-roadmap', skill: 'project-context', mode: 'dev-roadmap', description: 'Roadmap the way THIS project runs it' },
-    ]));
-
-    const merged = mergedCommandAliases(root);
-    expect(merged.aliases).toHaveLength(ALIASES.length);
-    expect(merged.aliases[0]).toMatchObject({ alias: 'dev-roadmap', source: 'project', description: 'Roadmap the way THIS project runs it' });
-    expect(merged.wrapperHosts).toEqual(['claude', 'opencode']);
-
-    // The previously generated upstream wrapper is now stale; repair rewrites it on both hosts.
-    expect(validateCommandAliases(root)).toEqual([
-      'claude command wrapper is stale: .claude/commands/dev-roadmap.md',
-      'opencode command wrapper is stale: .opencode/commands/dev-roadmap.md',
-    ]);
-    expect(repairCommandWrappers(root)).toBe(2);
-    expect(readFileSync(join(root, '.claude/commands/dev-roadmap.md'), 'utf8')).toContain('description: Roadmap the way THIS project runs it');
-    expect(validateCommandAliases(root)).toEqual([]);
-  });
-
-  test('the overlay never changes wrapperHosts and an overlay alias still needs a real skill and mode', () => {
-    const root = repositoryFixture();
-    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, `${JSON.stringify({
-      version: 1,
-      wrapperHosts: ['claude'],
-      aliases: [{ alias: 'ghost', skill: 'nowhere', mode: 'x', description: 'd', argumentHint: '[a]', forwardArguments: true, mutability: 'read-only' }],
-    }, null, 2)}\n`);
-
-    expect(mergedCommandAliases(root).wrapperHosts).toEqual(['claude', 'opencode']);
-    expect(validateCommandAliases(root)).toEqual(['Command alias target skill missing: ghost -> nowhere']);
-  });
-
-  test('a malformed overlay is reported as one error and stops the wrapper check', () => {
-    const root = repositoryFixture();
-    write(root, COMMAND_ALIAS_PROJECT_MANIFEST, '{ "version": 2, "aliases": {} }\n');
-
-    expect(validateCommandAliases(root)).toEqual([
-      `Project command alias overlay must have version 1 and an aliases array: ${COMMAND_ALIAS_PROJECT_MANIFEST}`,
-    ]);
-    expect(() => commandWrapperCounts(root)).toThrow('Project command alias overlay');
+    expect(commandsShadowingSkills(root)).toEqual([]);
   });
 });
 
 describe('checkAgentCompatibility', () => {
-  test('passes on a repository with alias, wrappers, adapters and parity in place', () => {
+  test('passes on a repository with alias, adapters and parity in place', () => {
     const root = repositoryFixture();
     repairClaudeSkillsAlias(root, 'linux');
 
@@ -1067,15 +928,15 @@ describe('checkAgentCompatibility', () => {
 });
 
 describe('repairAgentSurfaces', () => {
-  test('creates the alias, renders the wrappers and passes the check', () => {
+  test('creates the alias, moves a command that shadows a skill and passes the check', () => {
     const root = repositoryFixture();
-    rmSync(join(root, '.claude/commands/dev-roadmap.md'));
+    write(root, '.opencode/commands/project-context.md', 'Mine.\n');
 
     const repair = repairAgentSurfaces(root, {}, 'linux');
     expect(repair.aliasDeferred).toBe(false);
     expect(repair.alias?.status).toBe('created');
     expect(readlinkSync(join(root, '.claude/skills'))).toBe(POSIX_CLAUDE_SKILLS_TARGET);
-    expect(repair.wrappersWritten).toBe(1);
+    expect(repair.shadowingCommandsMoved).toEqual(['.opencode/commands/project-context.md']);
     expect(repair.check).toMatchObject({ ok: true, errors: [] });
   });
 
@@ -1101,14 +962,6 @@ describe('repairAgentSurfaces', () => {
     // Without the marker, a missing alias is the error it always was.
     rmSync(join(root, '.claude/skills'));
     expect(checkAgentCompatibility(root, 'linux').errors).toContain(SKILLS_ALIAS_MISSING_ERROR);
-  });
-
-  test('without the manifest the wrappers are skipped, not invented', () => {
-    const root = repositoryFixture();
-    rmSync(join(root, COMMAND_ALIAS_MANIFEST));
-    const repair = repairAgentSurfaces(root, {}, 'linux');
-    expect(repair.wrappersWritten).toBeNull();
-    expect(repair.check.errors).toContain(`Command alias manifest missing: ${COMMAND_ALIAS_MANIFEST}`);
   });
 });
 
@@ -1181,14 +1034,14 @@ describe('compatibility report grouping', () => {
   test('errors bucket per surface in a fixed order, empty groups omitted', () => {
     const groups = groupCompatibilityErrors([
       'MCP n8n missing from codex: declared in .mcp.json, absent from .codex/config.toml',
-      'claude command wrapper is stale: .claude/commands/x.md',
+      'Command shadows skill x: .claude/commands/x.md; a command with a skill\'s name hides the skill\'s instructions',
       'Claude skills alias missing: .claude/skills',
       'codex hook command must be exactly: node x',
       'CLAUDE.md must contain exactly `@AGENTS.md` followed by one newline.',
       'MCP tavily present in opencode only: declare it in .mcp.json or remove it from opencode.jsonc',
       'eslint.config.js does not wire CLI_IMPORT_CLOSURE from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.',
     ]);
-    expect(groups.map(g => [g.group, g.errors.length])).toEqual([['instructions', 1], ['alias', 1], ['wrappers', 1], ['hooks', 1], ['mcp', 2], ['lint', 1]]);
+    expect(groups.map(g => [g.group, g.errors.length])).toEqual([['instructions', 1], ['alias', 1], ['commands', 1], ['hooks', 1], ['mcp', 2], ['lint', 1]]);
     expect(groups.map(g => g.label)).toEqual(COMPATIBILITY_GROUP_ORDER.map(g => COMPATIBILITY_GROUP_LABEL[g]));
     expect(groupCompatibilityErrors([])).toEqual([]);
   });

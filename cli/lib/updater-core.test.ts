@@ -7,12 +7,14 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import {
+  advanceSyncStateV7,
   classifyFile,
   componentOwnedPaths,
   computeComponentAdvancement,
   computeDelta,
   detectLocalEdits,
   dirtyTreeExemptions,
+  dropDeprecatedDeletes,
   foreignDirtyPaths,
   isBootstrapOnlyFile,
   isLocalTemplateSource,
@@ -186,6 +188,34 @@ describe('dirty-tree guard: self-update re-exec', () => {
   });
 });
 
+describe('advanceSyncStateV7 with a retired component', () => {
+  // A consumer lock written before a component was retired (the `commands`
+  // alias wrappers) still carries its cursor. Every walk iterates the CURRENT
+  // component list, so the stale key must never hold `templateCommit` back
+  // nor abort the run; it simply stays behind, unread.
+  test('a stale cursor in the lock neither blocks the advance nor gets walked', () => {
+    const prior: SyncStateV7 = {
+      schemaVersion: 7,
+      templateRepo: 'upex-galaxy/agentic-dev-boilerplate',
+      templateCommit: 'old',
+      perComponentCommit: { cli: 'old', docs: 'old', commands: 'old' },
+      syncedComponents: ['cli', 'docs', 'commands'],
+      ignoreFileSync: {},
+      packageJsonSync: {},
+      cliVersion: '8.4',
+      lastSyncedAt: '2026-09-04T10:00:00.000Z',
+      variableSystemVersion: 1,
+    };
+    const current: Component[] = [
+      { name: 'cli', type: 'directory', paths: ['cli'] },
+      { name: 'docs', type: 'directory', paths: ['docs'] },
+    ];
+    const next = advanceSyncStateV7(prior, { applied: [], skipped: [], failed: [], newHeadSha: 'new', componentsAdvanced: ['cli', 'docs'], componentsHeldBack: [] } as never, current, 'new', '8.5');
+    expect(next.templateCommit).toBe('new');
+    expect(next.perComponentCommit).toMatchObject({ cli: 'new', docs: 'new', commands: 'old' });
+  });
+});
+
 describe('syncStateWriteNeeded', () => {
   const state: SyncStateV7 = {
     schemaVersion: 7,
@@ -275,13 +305,13 @@ describe('isLocalTemplateSource', () => {
 
 describe('isBootstrapOnlyFile', () => {
   const agents: Component = { name: 'agents', type: 'file-list', paths: ['.agents'], files: ['README.md', 'project.yaml'] };
-  const compat: Component = { name: 'agent-compatibility', type: 'directory', paths: ['.agents/skills', '.agents/compatibility'] };
-  const paths = ['.agents/project.yaml', '.agents/compatibility/command-aliases.project.json'];
+  const compat: Component = { name: 'agent-compatibility', type: 'directory', paths: ['.agents/skills', '.agents/hooks'] };
+  const paths = ['.agents/project.yaml', '.agents/hooks/project-hook.mjs'];
 
   test('an exact listed path binds for ANY component, not only `agents`', () => {
-    expect(isBootstrapOnlyFile('.agents/compatibility/command-aliases.project.json', compat, paths)).toBe(true);
-    expect(isBootstrapOnlyFile('.agents/compatibility/command-aliases.json', compat, paths)).toBe(false);
-    expect(isBootstrapOnlyFile('.agents\\compatibility\\command-aliases.project.json', compat, paths)).toBe(true);
+    expect(isBootstrapOnlyFile('.agents/hooks/project-hook.mjs', compat, paths)).toBe(true);
+    expect(isBootstrapOnlyFile('.agents/hooks/personality-reinject.mjs', compat, paths)).toBe(false);
+    expect(isBootstrapOnlyFile('.agents\\hooks\\project-hook.mjs', compat, paths)).toBe(true);
   });
 
   test('the legacy agents basename contract and its framework-file override still hold', () => {
@@ -714,5 +744,18 @@ describe('project-local context skills (a project\'s `<aspect>-context/` is neve
     const cfg = { components: [{ name: 'skills', type: 'directory' as const, paths: ['.agents/skills'] }], ignoreFiles: [], packageJsonSpecs: [], deprecatedFiles: [], excludePaths: [], repoOnlyPaths: [], bootstrapOnlyPaths: [] };
     expect(isWithinWriteSurface(cfg, '.agents/skills/billing-context/SKILL.md')).toBe(false);
     expect(isWithinWriteSurface(cfg, '.agents/skills/project-context/SKILL.md')).toBe(true);
+  });
+});
+
+describe('dropDeprecatedDeletes', () => {
+  test('a deprecated file leaves through the cleanup, not the delete prompt; every other entry stays', () => {
+    const deprecated = [{ path: '.agents/skills/sync-ai-memory/SKILL.md' }];
+    const entries = [
+      { path: '.agents/skills/sync-ai-memory/SKILL.md', classification: 'deleted-upstream' },
+      { path: '.agents/skills/gone/SKILL.md', classification: 'deleted-upstream' },
+      { path: '.agents/skills/sync-ai-memory/SKILL.md', classification: 'locally-diverged' },
+    ];
+    expect(dropDeprecatedDeletes(entries, deprecated)).toEqual(entries.slice(1));
+    expect(dropDeprecatedDeletes(entries, [])).toEqual(entries);
   });
 });

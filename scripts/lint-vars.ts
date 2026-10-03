@@ -50,8 +50,8 @@ const PROJECT_YAML = join(REPO_ROOT, '.agents', 'project.yaml');
 const JIRA_REQUIRED_YAML = join(REPO_ROOT, '.agents', 'jira-required.yaml');
 
 // Directories to scan recursively. AI-facing content only.
-// `.claude/commands` and `.opencode/commands` hold generated transport wrappers
-// (`bun run agents:compat`) with no `{{VAR}}` content — not scanned.
+// The harness command directories are not scanned: the boilerplate ships none
+// (a skill is invoked by name plus mode), and what a project keeps there is its own.
 const SCAN_ROOTS = [
   '.context',
   '.agents/skills',
