@@ -7,6 +7,7 @@
  * rollback flag) live here; everything else lives in core.
  */
 
+import type { ReincludeOutcome } from './lib/adopt-gitignore.ts';
 import type { CompatibilityCheck } from './lib/agent-compatibility.ts';
 import type { AdoptOutcome } from './lib/updater-adopt.ts';
 import type { ProtectedWatchEntry } from './lib/updater-drift';
@@ -21,6 +22,7 @@ import * as path from 'node:path';
 
 import pc from 'picocolors';
 import { parseEnvFile } from './install';
+import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
 import * as tui from './lib/tui';
@@ -589,9 +591,11 @@ interface RunFacts {
   doctrineDebt: string | null
   /** `--adopt` only: what the adopt hook did, and its parity rows. */
   adopt: AdoptOutcome | null
+  /** `--adopt` only: the app's `.gitignore` hid the agentic store; what this run appended to re-include it. */
+  reinclude: ReincludeOutcome | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, reinclude: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -1061,6 +1065,7 @@ function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolea
       collisions: summary.adoptCollisions ?? [],
       packageJsonKept: summary.packageJsonKept ?? [],
       backupDir: summary.backupDir ?? null,
+      reinclude: runFacts.reinclude,
       confirm: async message => sink.confirm(message, false),
       step: message => sink.step(message),
       warn: message => sink.warn(message),
@@ -1735,12 +1740,26 @@ async function main(): Promise<void> {
   // a migrated repo plans nothing. Under --dry-run it reports the plan only.
   // In the self-update re-exec child the plan is empty (already migrated), and
   // the parent's result arrives through the environment instead.
+  // `--adopt`: an app whose `.gitignore` hides `.agents/` gets it re-included
+  // FIRST, so neither the migration below nor the sync moves tracked app files
+  // into a folder git ignores (`./lib/adopt-gitignore.ts`).
+  if (parsed.adopt) {
+    const reinclude = reincludeAgenticStore(process.cwd(), parsed.dryRun);
+    if (reinclude.hidden.length > 0) {
+      runFacts.reinclude = reinclude;
+      const rules = [...new Set(reinclude.hidden.map(h => `${h.pattern} (${h.source})`))].join(', ');
+      sink.step(`${parsed.dryRun ? '[dry-run] ' : ''}.gitignore de la app oculta ${SKILLS_CANONICAL_DIR.split('/')[0]}/ (${rules}): ${parsed.dryRun ? 'se añadiría' : 'añadido'} ${reinclude.added.join(' ')} en un bloque propio; las líneas de la app no cambian.`);
+    }
+  }
   const migration = runHarnessMigration(sink, parsed.dryRun, parsed.adopt) ?? readHarnessMigrationResultFromEnv();
   if (migration?.applied && runFacts.migration === null) { runFacts.migration = migration; }
   // What the preflight just wrote is the updater's own dirt: the dirty-tree
   // guard in runUpdate (and in the self-update re-exec child) must not refuse
   // a tree that was clean before `bun run up` started.
   const updaterOwnedPaths = migration ? harnessMigrationTouchedPaths(migration) : [];
+  if (runFacts.reinclude !== null && runFacts.reinclude.added.length > 0 && !updaterOwnedPaths.includes('.gitignore')) {
+    updaterOwnedPaths.push('.gitignore');
+  }
   // Lock cursor BEFORE this run advances it: the parity prompt names both shas.
   const priorLockSha = readLock(process.cwd()).templateCommit;
   // Upstream watchlist + the project's own `updater.protected_paths`. Feeds the

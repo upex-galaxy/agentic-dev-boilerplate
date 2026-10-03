@@ -253,6 +253,23 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(row?.blocking).toBe(false);
   });
 
+  test('a delivered file the app\'s own .gitignore hides gets an informational row, never an edit', async () => {
+    const { template, app } = setup();
+    write(app, '.gitignore', 'node_modules/\nnew-tool.ts\n');
+    git(app, ['add', '-A']);
+    git(app, ['commit', '--quiet', '-m', 'ignore']);
+    process.chdir(app);
+    let adopt: AdoptOutcome | null = null;
+    const cfg = config(template, [], async (summary: RunSummary) => {
+      adopt = await runAdopt({ root: app, upstreamDir: cfg.tempDir, dryRun: false, nonInteractive: true, appliedPaths: summary.applied.map(a => a.entry.path), collisions: summary.adoptCollisions ?? [], packageJsonKept: [], backupDir: null, confirm: async () => false, step: () => {}, warn: () => {} });
+    });
+    await runUpdate(cfg, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
+    const row = (adopt as AdoptOutcome | null)?.findings.find(f => f.path === 'scripts/new-tool.ts');
+    expect(row?.evidence).toContain('`new-tool.ts` (.gitignore:2)');
+    expect(row?.blocking).toBe(false);
+    expect(read(app, '.gitignore').startsWith('node_modules/\nnew-tool.ts\n')).toBe(true);
+  });
+
   test('--dry-run writes nothing and still reports the collisions', async () => {
     const { template, app } = setup();
     process.chdir(app);

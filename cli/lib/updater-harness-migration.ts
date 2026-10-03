@@ -37,6 +37,7 @@ import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
+import { hiddenPaths } from './adopt-gitignore.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM, isInside, OS_METADATA_FILES } from './agent-compatibility.ts';
 
 /**
@@ -219,6 +220,12 @@ function ensureGeneratedArtifactsIgnored(root: string): string[] {
   return missing.map(([entry]) => entry);
 }
 
+/** True when git tracks at least one file under `rel` (false outside a repo or with git missing). */
+function tracksAnything(root: string, rel: string): boolean {
+  const res = spawnSync('git', ['-C', root, 'ls-files', '--', rel], { encoding: 'utf8' });
+  return res.status === 0 && res.stdout.trim() !== '';
+}
+
 function isRealDirectory(path: string): boolean {
   if (!existsSync(path)) { return false; }
   const stats = lstatSync(path);
@@ -315,6 +322,20 @@ export function planHarnessMigration(root = process.cwd(), opts: { adopt?: boole
       if (existsSync(join(canonicalSkills, entry))) { skillsToArchive.push(entry); }
       else { skillsToMove.push(entry); }
     }
+  }
+
+  // Fail closed: the move untracks `.claude/skills` (`unindexLegacySkillTree`).
+  // A destination git ignores turns that into a plain deletion of the skills
+  // from history on the next commit, with nothing versioned in their place.
+  const trackedMoves = skillsToMove.filter(skill => tracksAnything(resolvedRoot, `.claude/skills/${skill}`));
+  const hiddenDestinations = hiddenPaths(resolvedRoot, trackedMoves.map(skill => `.agents/skills/${skill}/SKILL.md`));
+  if (hiddenDestinations.length > 0) {
+    const rules = [...new Set(hiddenDestinations.map(h => `${h.pattern} (${h.source})`))].join(', ');
+    blockers.push(
+      `${hiddenDestinations.length} tracked skill(s) would move from .claude/skills/ into .agents/skills/, which git ignores (${rules}): `
+      + 'the next commit would delete them from git and version nothing. Re-include .agents/ in .gitignore (or run the first install with --adopt, which does it), then re-run. '
+      + `Skills: ${hiddenDestinations.map(h => h.path.split('/')[2]).join(', ')}`,
+    );
   }
 
   const archivesLegacyHook = isRealFile(join(resolvedRoot, LEGACY_CLAUDE_HOOK));

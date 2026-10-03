@@ -29,12 +29,14 @@
  * Nothing here runs on a plain `bun run up` or on a greenfield first run.
  */
 
+import type { HiddenPath, ReincludeOutcome } from './adopt-gitignore.ts';
 import type { ParityFinding, ParitySurface } from './updater-parity';
 import type { AdoptCollision, PackageJsonKeptKey } from './updater-types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
+import { hiddenPaths } from './adopt-gitignore.ts';
 import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
@@ -336,6 +338,10 @@ export interface AdoptRowsInput {
   instructions: AdoptInstructionsOutcome
   /** The app's hooks run on a manager other than husky (`./hook-manager.ts`). */
   foreignHooks?: boolean
+  /** The agentic store the app's `.gitignore` hid, and what re-included it. */
+  reinclude?: ReincludeOutcome | null
+  /** Delivered paths the app's `.gitignore` still hides (teammates never receive them). */
+  hiddenDelivered?: readonly HiddenPath[]
 }
 
 export interface AdoptInstructionsOutcome {
@@ -404,6 +410,39 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
     });
   }
 
+  const re = input.reinclude;
+  if (re && re.hidden.length > 0) {
+    const rules = [...new Set(re.hidden.map(h => `\`${h.pattern}\` (${h.source})`))].join(', ');
+    rows.push(re.stillHidden.length === 0
+      ? {
+          surface: 'components',
+          path: '.gitignore',
+          evidence: `the app's ${rules} hid the agentic store; re-included with ${re.added.map(a => `\`${a}\``).join(', ')} in an appended block, the app's own lines untouched`,
+          suggested: 'keep project',
+          blocking: false,
+          note: 'Without it the adoption commit versions nothing under .agents/ and the moved .claude/skills disappear from git. Drop the block only if the team decides to keep the agentic layer local.',
+        }
+      : {
+          surface: 'components',
+          path: '.gitignore',
+          evidence: `the app's ${rules} still hide${re.stillHidden.length === 1 ? 's' : ''} ${re.stillHidden.map(h => h.path).join(', ')}: the agentic store would not be versioned`,
+          suggested: 'decide',
+          blocking: true,
+          note: 'Re-include .agents/ by hand (a `!/.agents/` line, plus `!/.agents/**` when a rule hides its children), then confirm with `git check-ignore -v .agents/project.yaml` (no output).',
+        });
+  }
+
+  for (const h of input.hiddenDelivered ?? []) {
+    rows.push({
+      surface: surfaceFor(h.path),
+      path: h.path,
+      evidence: `delivered, but the app's \`${h.pattern}\` (${h.source}) keeps it out of git: a teammate who clones never receives it`,
+      suggested: 'keep project',
+      blocking: false,
+      note: `The app's ignore rule is its own decision and is never edited. Track the file with \`git add -f ${h.path}\` or a \`!/${h.path}\` line only if the team wants it shared.`,
+    });
+  }
+
   if (input.envCollision) {
     rows.push({
       surface: 'env',
@@ -447,6 +486,8 @@ export interface AdoptHookInput {
   packageJsonKept: readonly PackageJsonKeptKey[]
   /** This run's backup dir, when the core created one. */
   backupDir: string | null
+  /** The app's `.gitignore` hid the agentic store and the wrapper re-included it (`./adopt-gitignore.ts`). */
+  reinclude?: ReincludeOutcome | null
   confirm: (message: string) => Promise<boolean>
   step: (message: string) => void
   warn: (message: string) => void
@@ -600,6 +641,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     scriptsKept: input.packageJsonKept.filter(k => k.section === 'scripts'),
     instructions,
     foreignHooks: hooks.foreign,
+    reinclude: input.reinclude ?? null,
+    hiddenDelivered: dryRun ? [] : hiddenPaths(root, [...input.appliedPaths, ...delivered]),
   });
   findings.push(...isolationFindings(isolation, isolationSaved));
   return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved };
