@@ -160,6 +160,38 @@ autonomous_delivery:
   escalation_channel: null # null | slack:<CHANNEL-ID>. ESCALATIONS ONLY — never summaries.
   escalation_log: .session/autonomous-delivery/escalation-log.md # append-only, shared across modes.
 
+# Defaults for supervised multi-session worker fleets: one conductor session
+# coordinating N persistent workers through the Orca runtime, or, with no
+# runtime, the same launch lines pasted by hand. Read by the `orca-orchestration`
+# skill. DEFAULTS only: an explicit instruction in the conductor session always
+# wins for that run ("run three", "use opencode for this one").
+# A missing block degrades, it does not break: cap 1, the harness defaults, and
+# no orchestrator named. Full semantics: .agents/README.md -> "orchestration".
+orchestration:
+  max_workers: 3 # concurrent workers per round (merge + staging deploy stay serialized through the conductor)
+  default_agent: claude # claude | codex | opencode
+  default_model: '' # full provider model id; empty = the harness default. Never an alias (it moves on its own).
+  default_effort: high # harness effort level when supported
+  # WHICH orchestrator, named here instead of hardcoded in a skill. Empty
+  # `orchestrator_cli` = no orchestrator on this machine: every workflow skill
+  # falls back to the pasted-launch-line path and says NOTHING about it.
+  orchestrator_name: Orca # the application the operator sees
+  orchestrator_cli: orca # the binary on PATH (Linux outside a managed terminal: orca-ide)
+  # THE TWO VERBS ARE NOT INTERCHANGEABLE. `message_verb` carries every message
+  # BETWEEN sessions and is byte-intact. `terminal_verb` DRIVES a terminal
+  # (commands, CLI calls, harness slash-commands, keystrokes): it truncates a
+  # long payload silently, keeps only the TAIL, and still reports success.
+  # One structural exception: a supervised worker's first prompt goes through
+  # `terminal_verb`, because the native launch has no argv. Keep it short and
+  # pointing at a file. Canon: orca-orchestration/references/channel-discipline.md.
+  message_verb: orca orchestration # session-to-session messages ONLY
+  terminal_verb: orca terminal # commands and keystrokes ONLY
+  # Vendor skills the orchestrator installs at USER level, loaded ALONGSIDE the
+  # repo's own `orca-orchestration` skill, never instead of it: the repo skill
+  # owns WHEN and WHAT, these own the command grammar. Empty list = none
+  # installed; the repo skill then asks the binary for its grammar.
+  orchestrator_skills: [orca-cli, orchestration]
+
 # Files `bun run up` must keep as THIS project's own. Read by `cli/update-boilerplate.ts`
 # at the start of every run and merged into the protected watchlist (AGENTS.md,
 # .agents/project.yaml, .mcp.json, .claude/settings.json, .husky/pre-commit,
@@ -197,6 +229,7 @@ external_consumers:
   - protected_paths # key of the structured `updater:` block, read directly by cli/lib/updater-drift.ts (projectProtectedPaths), never resolved through {{VAR}} templating
   - strategy_source # key of the structured `git_strategy.meta:` block, read directly by .agents/skills/git-flow-master (bootstrap trigger + Strategy Setup persist) — never resolved through {{VAR}} templating
   - default_env # consumed implicitly by the AI variable resolver (sets active env for {{WEB_URL}} / {{API_URL}} / ...) AND by scripts/agents-setup.ts via process.env.DEFAULT_ENV in --non-interactive mode
+  - orchestrator_skills # list key of the flat `orchestration:` block, read directly by .agents/skills/orca-orchestration/SKILL.md (Quick start step 2, Modes) as a list of user-level skills to load — never resolved through {{VAR}} templating
   - design_md_path # read by `yq '.design_md_path'` inside bash code fences of .agents/skills/{design-system/references/getdesign-matcher.md, project-bootstrap/references/frontend-setup.md}
 
 # Per-environment config. Add/remove environments freely (production, dev, qa, uat, etc.).

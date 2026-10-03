@@ -176,7 +176,7 @@ export const AUDIT_RULES: readonly AuditRule[] = [
 
   // DISPOSABLE: run output, session material and editor litter.
   { pattern: /^(test-results|playwright-report|blob-report)(\/|$)/, class: 'disposable', note: 'test run output' },
-  { pattern: /^(\.auth|playwright\/\.auth)(\/|$)/, class: 'disposable', note: 'browser session material; never durable (ephemeral-artifact contract)' },
+  { pattern: /^(\.auth|playwright\/\.auth)(\/|$)/, class: 'disposable', note: 'browser session material and the OpenCode credential files `bun run harness:env` regenerates from .env; never durable (ephemeral-artifact contract)' },
   { pattern: /(^|\/)[^/]*(storage-state|storageState)[^/]*\.json$|\.cookies$|(^|\/)cookies\.txt$|\.har$/, class: 'disposable', note: 'session material; never durable (ephemeral-artifact contract)' },
   { pattern: /^\.playwright(\/|$)|^\.playwright-mcp(\/|$)|^\.playwright-cli(\/|$)|(^|\/)storage-state-[^/]*\.json$/, class: 'disposable', note: 'browser output and sessions' },
   { pattern: /(^|\/)(npm-debug|yarn-debug|yarn-error|\.pnpm-debug)\.log/, class: 'disposable', note: 'debug logs' },

@@ -71,6 +71,7 @@ export const MISSING_ENV_LINE = [
   'started without one. They are already running; this session cannot be repaired.',
   'Fix and restart: in a linked worktree run `bun run worktree:provision` in it',
   '(it copies `.env` from the main checkout); in a fresh clone run `bun run setup`.',
+  'Then `bun run harness:env` (writes the credential files Claude and OpenCode read at startup).',
 ].join(' ');
 
 /**
@@ -88,6 +89,7 @@ export const UNPROVISIONED_WORKTREE_LINE = [
 /** Emitted only when the `orca` binary is reachable (`orcaAvailable`). */
 export const ORCA_CONTEXT_LINE = [
   'ORCA: available.',
+  'Multi-session orchestration -> /orca-orchestration.',
   'Dispatched worker: follow your preamble;',
   'channel = orca orchestration, never SendMessage/AskUserQuestion.',
 ].join(' ');

@@ -35,6 +35,7 @@
 
 import type { CompatibilityCheck, CompatibilityErrorGroup } from './lib/agent-compatibility.ts';
 import type { AtlassianUrlSource } from './lib/atlassian-instance.ts';
+import type { CheckFinding as HarnessEnvFinding } from './lib/harness-env.ts';
 import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -331,7 +332,16 @@ interface DoctorReport {
    * map, and an old `.context/business/` markdown map beside it is kept as input.
    */
   context_maps: string[]
+  /** `.env` vs the per-harness credential surfaces `bun run harness:env` writes. NAMES only, never a value. */
+  harness_env: HarnessEnvDiagnostic
   pending_actions: PendingAction[]
+}
+
+interface HarnessEnvDiagnostic {
+  ok: boolean
+  summary: string
+  allowlist: string[]
+  findings: Array<Omit<HarnessEnvFinding, 'kind'> & { kind: HarnessEnvFinding['kind'] | 'check-failed' }>
 }
 
 // ----------------------------------------------------------------------------
@@ -452,6 +462,41 @@ function compareVersion(a: readonly number[], b: readonly number[]): number {
 }
 
 // ----------------------------------------------------------------------------
+// Harness credential surfaces
+// ----------------------------------------------------------------------------
+
+/**
+ * `.env` against the files Claude Code and OpenCode read at startup
+ * (`bun run harness:env --check`, as data).
+ *
+ * DYNAMIC import: `cli/lib/harness-env.ts` imports `cli/install.ts`, which pulls
+ * third-party packages at module load, and this module must stay loadable with
+ * node built-ins only for `--preflight`. Try-wrapped because a doctor that
+ * crashes on the thing it was meant to diagnose is useless.
+ */
+async function harnessEnvDiagnostic(): Promise<HarnessEnvDiagnostic> {
+  try {
+    const { check } = await import('./lib/harness-env.ts');
+    const result = check(REPO_ROOT);
+    return { ok: result.ok, summary: result.summary, allowlist: result.allowlist.all, findings: result.findings };
+  }
+  catch (err) {
+    return {
+      ok: false,
+      summary: 'the harness-env check could not run',
+      allowlist: [],
+      findings: [{
+        surface: 'claude',
+        kind: 'check-failed',
+        names: [],
+        detail: `harness-env check threw: ${(err as Error).message}`,
+        blocking: true,
+      }],
+    };
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Cross-harness compatibility
 // ----------------------------------------------------------------------------
 
@@ -544,6 +589,7 @@ async function runDoctor(): Promise<DoctorReport> {
     direnv: { installed: false },
     harness_level_mcps: harnessLevelMcpReport(),
     context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
+    harness_env: await harnessEnvDiagnostic(),
     pending_actions: [],
   };
 
@@ -655,7 +701,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'system_install',
       target: 'direnv',
-      hint: 'Optional. Without direnv, launch with `bun run claude` / `bun run opencode` / `bun run codex` (wrapper). Install if you want the executables to work directly via shell autoload.',
+      hint: 'Optional. Claude and OpenCode read their MCP credentials from the files `bun run harness:env` generates, and Codex starts each MCP server through a .env loader; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
       where: installCommandForPlatform(),
     });
   }
@@ -698,6 +744,20 @@ async function runDoctor(): Promise<DoctorReport> {
       type: 'shell_command',
       target: 'git restore .codex/config.toml',
       hint: '.codex/config.toml is missing. Restore from git — it is the committed Codex (CLI + Desktop) config.',
+    });
+  }
+
+  // A missing `.env` (or an unprovisioned worktree) already has its own action
+  // above, and running the generator before that is fixed is refused anyway.
+  if (!report.harness_env.ok && report.env_file_exists && worktreeFix === null) {
+    const blocking = report.harness_env.findings.filter(f => f.blocking);
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run harness:env',
+      hint: 'The per-harness credential surfaces disagree with .env, so an MCP server '
+        + `launched without a command line (desktop app, supervised worker) gets no credential: ${
+          blocking.map(f => `${f.kind} (${f.names.join(', ')})`).join('; ')}`,
+      where: '.claude/settings.local.json + .auth/opencode/',
     });
   }
 
@@ -789,6 +849,20 @@ function printHuman(report: DoctorReport): void {
     v === 'set' ? 'set' : 'missing',
   ]);
   process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
+
+  // Per-harness credential surfaces. Its own section because it is per-VARIABLE
+  // and per-surface: an exit code says something is stale, not WHICH credential.
+  tui.section('Harness credential surfaces (.env -> the files a harness reads at startup)');
+  process.stdout.write(`  ${tui.statusIcon(report.harness_env.ok ? 'ok' : 'fail')} ${report.harness_env.summary}\n`);
+  process.stdout.write(`  allowlist: ${report.harness_env.allowlist.join(', ') || '(none)'}\n`);
+  for (const finding of report.harness_env.findings) {
+    process.stdout.write(`  ${tui.statusIcon(finding.blocking ? 'fail' : 'warn')} ${finding.kind}: ${finding.names.join(', ') || '-'}\n`);
+    process.stdout.write(`    ${finding.detail}\n`);
+  }
+  if (!report.harness_env.ok) {
+    process.stdout.write('  Fix: bun run harness:env  (values are never printed by the generator or by this report)\n');
+  }
+  process.stdout.write('\n');
 
   // Servers that are not in the project config because they run at harness
   // level. Its own section and never a check row: a claude.ai connector is

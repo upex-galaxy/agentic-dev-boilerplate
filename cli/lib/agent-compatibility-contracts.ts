@@ -102,7 +102,7 @@ type Transport = 'stdio' | 'http';
  *
  * `dependsOn` is the set of `.env` variable NAMES the server needs at launch,
  * regardless of how the host spells the reference: `${VAR}` in `.mcp.json`,
- * `{env:VAR}` in `opencode.jsonc`, `env_vars = [...]` / `bearer_token_env_var`
+ * `{env:VAR}` / `{file:dir/VAR}` in `opencode.jsonc`, `env_vars = [...]` / `bearer_token_env_var`
  * / `env_http_headers` in `.codex/config.toml`. A renamed key does not count as
  * a new dependency: `SUPABASE_URL = "${NEXT_PUBLIC_SUPABASE_URL}"` depends on
  * `NEXT_PUBLIC_SUPABASE_URL`, the same variable Codex forwards by name.
@@ -358,20 +358,38 @@ export function stripTrailingCommas(source: string): string {
   return result;
 }
 
-const PLACEHOLDER = /\$\{([A-Z][A-Z0-9_]*)\}|\{env:([A-Z][A-Z0-9_]*)\}/g;
+/**
+ * OpenCode's `{file:<path>/<VAR>}` form, which substitutes a FILE'S CONTENTS.
+ *
+ * It is a DEPENDENCY, not a literal: `{file:.auth/opencode/N8N_API_KEY}` says
+ * the server needs N8N_API_KEY exactly as `{env:N8N_API_KEY}` does; only the
+ * delivery route differs, and `scripts/harness-env.ts` generates those files
+ * from `.env`. Reading the file form as an opaque literal would report the
+ * hosts as disagreeing when they agree.
+ *
+ * WHAT KEEPS IT SAFE, and do not widen it: only an ALL-CAPS final path segment
+ * matches. A generic `{file:certs/ca.pem}` still reads as a literal, which is
+ * correct: that is a file, not a credential named after a variable.
+ */
+const FILE_REF = /\{file:(?:[^}]*\/)?([A-Z][A-Z0-9_]*)\}/g;
 
-/** OpenCode spells a placeholder `{env:VAR}`; compare it as `${VAR}`. */
+const PLACEHOLDER = /\$\{([A-Z][A-Z0-9_]*)\}|\{env:([A-Z][A-Z0-9_]*)\}|\{file:(?:[^}]*\/)?([A-Z][A-Z0-9_]*)\}/g;
+
+/** OpenCode spells a placeholder `{env:VAR}` or `{file:dir/VAR}`; compare both as `${VAR}`. */
 function canonicalPlaceholders(text: string): string {
-  return text.replace(/\{env:([A-Z][A-Z0-9_]*)\}/g, (_match, name: string) => ref(name));
+  return text
+    .replace(/\{env:([A-Z][A-Z0-9_]*)\}/g, (_match, name: string) => ref(name))
+    .replace(FILE_REF, (_match, name: string) => ref(name));
 }
 
-/** Every `${VAR}` / `{env:VAR}` referenced anywhere inside `value`. */
+/** Every `${VAR}` / `{env:VAR}` / `{file:dir/VAR}` referenced anywhere inside `value`. */
 function placeholderNames(value: unknown): string[] {
   const names = new Set<string>();
   const visit = (entry: unknown): void => {
     if (typeof entry === 'string') {
       for (const match of entry.matchAll(PLACEHOLDER)) {
-        names.add(match[1] ?? match[2]);
+        const name = match[1] ?? match[2] ?? match[3];
+        if (name !== undefined) { names.add(name); }
       }
     }
     else if (Array.isArray(entry)) {
@@ -438,8 +456,8 @@ function normalizeOpenCode(root: JsonObject): NormalizedMcpConfig {
       command: command[0],
       args: transport === 'stdio' ? command.slice(1).map(canonicalPlaceholders) : undefined,
       url: transport === 'http' ? canonicalPlaceholders(stringValue(server.url, `${label}.url`)) : undefined,
-      // OpenCode spells the placeholder `{env:VAR}` and, like Claude, expands it
-      // in both `command` and `environment`.
+      // OpenCode spells the placeholder `{env:VAR}` or `{file:dir/VAR}` and,
+      // like Claude, expands it in both `command` and `environment`.
       dependsOn: sorted(placeholderNames(server)),
       literalEnv: literalEntries(environment, `${label}.environment`),
       enabled: server.enabled !== false,

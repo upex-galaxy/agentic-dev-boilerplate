@@ -1,15 +1,33 @@
 {
-  // OpenCode shared team config — committed to git.
-  // Secrets are NEVER stored here: every {env:VAR} placeholder is resolved
-  // from the developer's local environment (loaded from .env via `bun run opencode`,
-  // direnv, or a manually-sourced shell). See .env.example for required vars.
+  // OpenCode shared team config, committed to git.
+  // Secrets are NEVER stored here. Every credential below is a {file:...} POINTER
+  // to a gitignored value file under .auth/opencode/, which `bun run harness:env`
+  // generates from .env (one file per variable, mode 0600, no trailing newline).
+  // See .env.example for the variables themselves.
+  //
+  // WHY {file:} AND NOT {env:}. {env:VAR} resolves from the OpenCode PROCESS
+  // environment, which a desktop / GUI launch or a natively-launched supervised
+  // worker does not have: the MCP servers would start with empty credentials.
+  // {file:path} substitutes the file's CONTENTS and needs no environment at all.
+  //
+  // Two behaviours to know before editing this file:
+  //   - a MISSING {file:} target invalidates the WHOLE config, not one server.
+  //     `bun install` (the `prepare` script) creates an EMPTY placeholder for
+  //     every reference below, so a fresh clone still loads; an empty file
+  //     resolves to "" exactly as an unset {env:VAR} did.
+  //   - {file:} paths are relative to THIS file's directory, so in a worktree
+  //     they read the worktree's own .auth/opencode/ (`bun run worktree:provision`
+  //     regenerates it from the copied .env).
+  //   - OpenCode's background service caches the resolved config per directory,
+  //     so a rewritten value file is not seen until it restarts
+  //     (`opencode service restart`, or quit every OpenCode session).
   //
   // Syntax notes (OpenCode-specific, different from Claude Code's .mcp.json):
-  //   - Env var expansion uses {env:VAR_NAME}  (NOT ${VAR})
+  //   - File substitution uses {file:path}, env expansion {env:VAR_NAME} (NOT ${VAR})
   //   - MCP root key is "mcp"                  (NOT "mcpServers")
   //   - MCP env field is "environment"         (NOT "env")
-  //   - Missing env vars resolve to empty string (no hard failure) — see CLAUDE.md
-  //     Critical Reminder about stopping immediately when MCP credentials fail.
+  //   - An empty value fails later, at the first authenticated call: AGENTS.md
+  //     Critical Rule #9 (stop immediately when MCP credentials fail).
   "$schema": "https://opencode.ai/config.json",
 
   // Plugins:
@@ -36,13 +54,13 @@
         "-y",
         "@supabase/mcp-server-supabase@latest",
         "--access-token",
-        "{env:SUPABASE_ACCESS_TOKEN}",
+        "{file:.auth/opencode/SUPABASE_ACCESS_TOKEN}",
       ],
       "enabled": true,
       "environment": {
-        "SUPABASE_URL": "{env:NEXT_PUBLIC_SUPABASE_URL}",
-        "SUPABASE_ANON_KEY": "{env:SUPABASE_PUBLISHABLE_KEY}",
-        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SECRET_KEY}",
+        "SUPABASE_URL": "{file:.auth/opencode/NEXT_PUBLIC_SUPABASE_URL}",
+        "SUPABASE_ANON_KEY": "{file:.auth/opencode/SUPABASE_PUBLISHABLE_KEY}",
+        "SUPABASE_SERVICE_ROLE_KEY": "{file:.auth/opencode/SUPABASE_SECRET_KEY}",
       },
     },
     "n8n": {
@@ -53,8 +71,8 @@
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "{env:N8N_API_URL}",
-        "N8N_API_KEY": "{env:N8N_API_KEY}",
+        "N8N_API_URL": "{file:.auth/opencode/N8N_API_URL}",
+        "N8N_API_KEY": "{file:.auth/opencode/N8N_API_KEY}",
       },
     },
   },
