@@ -117,6 +117,30 @@ contract is ADR-0008 (`.context/ADR/ADR-0008-adoption-contract.md`).
   and detection prefers the app's own role scripts over the ones the tooling
   appended.
 
+### Fixed (deferred from the dogfood, U18-14)
+
+- **`lint-staged` changes reach every project**: the `package.json` sync kept
+  string values only, so a glob mapped to an array of commands never
+  travelled, greenfield included. A `lint-staged` value now moves through the
+  delta and the kept-keys state as JSON text and is written back as the array
+  it was. Owner: `getSection` in `cli/lib/updater-package.ts`.
+- **Identity leaves follow the stack**: `bun run agents:setup --stack` fills
+  `backend_stack`, `frontend_stack`, `db_type` and the two entry points where
+  they are still null, from the `stack:` block and the router directories on
+  disk, once an app exists; a filled leaf is never overwritten. Owner:
+  `writeDerivedIdentity` in `cli/lib/stack-descriptor.ts`.
+- **`setup:doctor` no longer asks an adopted app to delete its own variable**:
+  a retired credential name the app declares above the tooling block of
+  `.env.example` is listed as the app's, the rule `vars:env:check` applies.
+- **An adopted app's skills run without a prompt**: the `--adopt` run creates
+  the `permissions.allow` list an app `.claude/settings.json` lacks, with
+  upstream's entries; greenfield and plain updates keep skipping that shape.
+- **`repo:check` judges only the tooling on an adopted app**: it opens with
+  `bun scripts/tooling-check.ts repo`, which runs `format:check`,
+  `lint:check` and `types:check` unchanged on greenfield and the
+  tooling-scoped lint and types checks, with no format leg, on an adopted
+  app. `setup:doctor` names an adopted app whose `repo:check` predates it.
+
 ## 2026-10-03 — Docs hub and one deck per workflow skill; behaviour layer recorded (updater 8.7)
 
 The human-docs wave that follows the parity wave (#52 to #77, and the portal

@@ -107,6 +107,25 @@ describe('the Claude permission allow list merges additively', () => {
     expect(mergeAllowList(root, upstream).merged).toBeNull();
   });
 
+  test('--adopt creates the allow list an app settings file lacks, keeping every other key', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(new)']));
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "env": { "A": "1" },\n  "hooks": {}\n}\n');
+    const created = mergeAllowList(root, upstream, { createMissing: true });
+    expect(created.added).toEqual(['Read', 'Skill(new)']);
+    expect(JSON.parse(created.merged!)).toEqual({ env: { A: '1' }, hooks: {}, permissions: { allow: ['Read', 'Skill(new)'] } });
+    // A permissions block with deny only gets an allow beside it; deny untouched.
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "deny": ["Bash(rm *)"] }\n}\n');
+    expect(JSON.parse(mergeAllowList(root, upstream, { createMissing: true }).merged!))
+      .toEqual({ permissions: { deny: ['Bash(rm *)'], allow: ['Read', 'Skill(new)'] } });
+    // A value of another shape is still never guessed at.
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": ["Read"]\n}\n');
+    expect(mergeAllowList(root, upstream, { createMissing: true }).merged).toBeNull();
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "allow": "Read" }\n}\n');
+    expect(mergeAllowList(root, upstream, { createMissing: true }).merged).toBeNull();
+  });
+
   test('the file keeps its indent and trailing-newline style', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();

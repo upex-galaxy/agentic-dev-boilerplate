@@ -97,7 +97,7 @@ import { confirm, input, select } from '@inquirer/prompts';
 import { parse as parseYaml } from 'yaml';
 
 import { classifyProjectYaml, SCHEMA_FILE, seedFromSchema } from '../cli/lib/agents-schema.ts';
-import { detectStack, readStack, STACK_FIELDS, validateStack, writeStack } from '../cli/lib/stack-descriptor.ts';
+import { detectStack, readStack, STACK_FIELDS, validateStack, writeDerivedIdentity, writeStack } from '../cli/lib/stack-descriptor.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -293,7 +293,11 @@ FLAGS:
                        differently. With --non-interactive: writes every
                        detected value, leaves undetected fields as they are.
                        Inserts the block from .agents/project.schema.yaml when
-                       the project lacks it. Combine with --dry-run to preview.
+                       the project lacks it. Once an app exists, also fills
+                       the identity leaves that restate the stack
+                       (backend_stack, frontend_stack, db_type, the entry
+                       points) where they are still null; a filled one is
+                       never overwritten. Combine with --dry-run to preview.
   --help, -h           Show this help.
 
 VARIABLE MODEL:
@@ -1233,18 +1237,32 @@ async function runStack(loaded: LoadedConfig, flags: CliFlags): Promise<void> {
     process.exit(1);
   }
   if (result.inserted.length > 0) { log.info(`Inserted from ${SCHEMA_FILE}: ${result.inserted.join(', ')}`); }
-  if (result.changed.length === 0 && result.inserted.length === 0) {
+  // The identity leaves that restate the stack (`backend_stack`, `db_type`,
+  // the entry points) are filled where still null, only once an app exists:
+  // before /project-bootstrap the block holds defaults, not a measured stack.
+  const identity = detection.appFound
+    ? writeDerivedIdentity(result.text, REPO_ROOT)
+    : { text: result.text, filled: {}, error: null };
+  if (identity.error) {
+    log.error(identity.error);
+    process.exit(1);
+  }
+  const filled = Object.entries(identity.filled);
+  if (result.changed.length === 0 && result.inserted.length === 0 && filled.length === 0) {
     log.success('stack: nothing to change, the yaml already matches what the repo shows.');
     return;
   }
   for (const path of result.changed) {
     err(`  stack.${path}: ${current.values[path] ?? 'null'} -> ${updates[path] ?? 'null'}`);
   }
-  for (const issue of validateStack(readStack(result.text))) {
+  for (const [path, value] of filled) {
+    err(`  ${path}: null -> ${value} (derived from stack:)`);
+  }
+  for (const issue of validateStack(readStack(identity.text))) {
     log.warn(`stack.${issue.path} ${issue.message}`);
   }
   if (flags.dryRun) {
-    out(result.text);
+    out(identity.text);
     log.success('Dry run complete — file NOT written.');
     return;
   }
@@ -1255,7 +1273,7 @@ async function runStack(loaded: LoadedConfig, flags: CliFlags): Promise<void> {
       process.exit(0);
     }
   }
-  writeFileSync(PROJECT_YAML_PATH, result.text, 'utf8');
+  writeFileSync(PROJECT_YAML_PATH, identity.text, 'utf8');
   log.success(`Wrote the stack block of ${relative(process.cwd(), PROJECT_YAML_PATH)}.`);
 }
 
