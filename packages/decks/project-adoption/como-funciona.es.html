@@ -1,0 +1,2381 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project adoption: la capa agéntica sobre una app viva</title>
+    <meta
+      name="description"
+      content="Cómo /project-adoption le enseña la capa agéntica a una app existente después de la instalación con --adopt: lee la app sin escribir, propone un plan, espera tu aprobación, escribe solo superficies agénticas y verifica que la app quedó igual."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">Cuándo</a>
+        <a href="#capas">Capas</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#sellado">Sellado</a>
+        <a href="#escritura">Escritura</a>
+        <a href="#verificar">Verificar</a>
+        <a href="#rieles">Rieles</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · adoptar una app existente</div>
+        <h1>Una app que ya existe <em>no</em> se reescribe: se <span class="sig">lee</span>.</h1>
+        <p class="lede">
+          <span class="mono">/project-adoption</span> le enseña la capa agéntica a una aplicación que
+          ya tiene código, schema, CI y convenciones propias. Lee la app sin escribir nada, propone un
+          solo plan, espera tu aprobación y recién ahí completa las superficies agénticas, para que
+          cada skill trabaje con el stack real de la app y no con los defaults del boilerplate. El
+          código, el schema, el CI y las dependencias de la app no cambian.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> para quien <b>adopta</b> una app viva</span>
+          <span class="chip"><span class="dot"></span> se corre <b>después</b> de la instalación</span>
+          <span class="chip agent"
+            ><span class="dot"></span> nada se escribe sin el <b>plan aprobado</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Instalar</div>
+            <h3>Con <span class="mono">--adopt</span></h3>
+            <p>La herramienta llega sin pisar nada de la app. Se commitea como un solo cambio.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Leer</div>
+            <h3>Sellado</h3>
+            <p>Stack, scripts, schema, CI, hooks, tracker y la línea de base de la app.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Proponer</div>
+            <h3>Un plan</h3>
+            <p>Un archivo, <span class="mono">PENDING APPROVAL</span>, y la IA espera.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Escribir</div>
+            <h3>Y comparar</h3>
+            <p>Solo superficies agénticas, y la app tiene que salir igual que entró.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
+          <h2>Después de instalar, antes de trabajar historias</h2>
+          <p class="sub">
+            Es la puerta de entrada de una app existente. Un proyecto nuevo entra por otra, y cada cosa
+            que viene después tiene su propia skill.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Usala cuando</div>
+            <h3>La adopción quedó instalada y falta enseñarle la app</h3>
+            <ul>
+              <li>
+                "Adoptá esta app" · "la adopción quedó instalada" · "adoptar la app existente": el
+                instalador con <span class="mono">--adopt</span> ya corrió y está commiteado.
+              </li>
+              <li>
+                "¿La adopción sigue siendo correcta?" · "adoption drift check": modo
+                <span class="mono">check</span>, solo lectura.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No la uses para</div>
+            <h3>Lo que pertenece a otra skill o a otro paso</h3>
+            <ul>
+              <li>
+                <b>Un proyecto desde cero</b>: <span class="mono">/project-foundation</span> y después
+                <span class="mono">/project-bootstrap</span>.
+              </li>
+              <li>
+                <b>Instalar los archivos en la app</b>: eso es la corrida del updater con
+                <span class="mono">--adopt</span>, que esta skill nunca reemplaza.
+              </li>
+              <li>
+                <b>Los mapas de negocio</b> (<span class="mono">/project-context</span>), la
+                <b>estrategia de branches</b> (<span class="mono">/git-flow-master</span> Strategy
+                Setup), la <b>identidad visual</b> (<span class="mono">/design-system extract</span>) o
+                <b>crear campos, workflows o issues de Jira</b>
+                (<span class="mono">/jira-administration</span>,
+                <span class="mono">/product-management</span>).
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 DOS CAPAS ============ -->
+    <section class="band" id="capas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · instalar y entender</div>
+          <h2>Dos capas, dos momentos</h2>
+          <p class="sub">
+            Instalar la herramienta y entender la app son trabajos distintos. El primero lo hace un
+            comando que no pregunta nada sobre la app; el segundo lo hace esta skill, que pregunta todo
+            lo que los archivos no contestan.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Capa de instalación</div>
+            <h3>El updater con <span class="mono">--adopt</span></h3>
+            <ul>
+              <li>
+                Entrega lo que la app no tiene y <b>nunca pisa</b> lo que tiene: un archivo propio de
+                la app en la misma ruta queda como está, aparece como fila <span class="mono">merge</span>
+                y entra en <span class="mono">updater.protected_paths</span>.
+              </li>
+              <li>
+                <span class="mono">package.json</span> solo suma las
+                <span class="mono">devDependencies</span> de la herramienta y los scripts que la app no
+                declara. Un nombre de script que ya existe se conserva y se reporta.
+              </li>
+              <li>
+                No reescribe la historia de git, no renombra, no hace <span class="mono">git init</span>
+                y no toca ninguna base de datos.
+              </li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">Capa de entendimiento</div>
+            <h3>Esta skill</h3>
+            <ul>
+              <li>
+                Lee la app y escribe identidad, el bloque <span class="mono">stack:</span>, entornos,
+                catálogos del tracker y rutas protegidas.
+              </li>
+              <li>
+                Con eso, el resto de las skills lee el stack real de la app en vez de los defaults del
+                boilerplate.
+              </li>
+              <li>Nunca reemplaza al instalador: sin su lock, se detiene.</li>
+            </ul>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># desde la raíz del repo de la app, con el árbol limpio</span>
+bunx create-agentic-dev@latest --doctor --preflight   <span class="c"># solo lectura: ¿se puede adoptar?</span>
+bunx create-agentic-dev@latest <span class="k">--adopt</span>
+
+<span class="c"># revisar la tabla de paridad, bun install, commitear la adopción; después, en una sesión:</span>
+/project-adoption</pre>
+
+        <div class="callout r">
+          <b>Qué soporta la primera versión.</b> Una app Next.js sobre la familia Postgres (Supabase
+          o Postgres plano) que usa bun, una app por adopción. El conjunto vive en
+          <span class="mono">V1_SUPPORTED</span> (<span class="mono">cli/lib/stack-descriptor.ts</span>):
+          algo afuera detiene el preflight o el análisis con el campo y el valor que fallaron, y no se
+          escribe nada. Detalle de la instalación: <span class="mono">INSTALLER.md</span>, sección
+          "Adopt an existing app".
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · el mapa</div>
+          <h2>Una caja sellada y una caja de escritura</h2>
+          <p class="sub">
+            Entre las dos hay una sola puerta: tu aprobación explícita del plan, dentro de la misma
+            corrida. Un plan de una corrida anterior se retoma, nunca se reescribe.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Sellado: sin escrituras</div>
+            <a class="wf" href="#sellado"
+              ><span class="lt">0</span
+              ><span><b>Reanudar + puerta de entrada</b><span>Lock adoptado, árbol limpio, señales.</span></span></a
+            >
+            <a class="wf" href="#sellado"
+              ><span class="lt">1</span
+              ><span><b>Análisis</b><span>Huella del stack, gate v1, línea de base, cuestionario.</span></span></a
+            >
+            <a class="wf" href="#sellado"
+              ><span class="lt sig">2</span
+              ><span><b>El plan</b><span>Un archivo en PENDING APPROVAL. Esperar.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Escritura: solo superficies agénticas</div>
+            <a class="wf" href="#escritura"
+              ><span class="lt">3-4</span
+              ><span><b>Identidad, stack, entornos, credenciales</b><span>Yaml y <span class="mono">.env</span>.</span></span></a
+            >
+            <a class="wf" href="#escritura"
+              ><span class="lt">5-7</span
+              ><span><b>Tracker, instrucciones, contrato de API</b><span>Cada uno con su fila aprobada.</span></span></a
+            >
+            <a class="wf" href="#verificar"
+              ><span class="lt sig">8-9</span
+              ><span><b>Verificar y cerrar</b><span>Fail-fast, la app igual que antes, hand-off.</span></span></a
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Frases que lo disparan</th>
+                <th>Escribe</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">adopt</span></th>
+                <td>"adoptá esta app" · "adopción" · "after --adopt" · "project adoption"</td>
+                <td>solo después de aprobar el plan, solo superficies agénticas</td>
+              </tr>
+              <tr>
+                <th><span class="mono">check</span></th>
+                <td>"adoption drift check" · "is the adoption still accurate"</td>
+                <td>nada: tabla de señales más la sección de stack de <span class="mono">setup:doctor</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          un modo por corrida; <span class="mono">check</span> con señales pendientes termina nombrando
+          <span class="mono">adopt</span>, nunca lo arranca
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §04 SELLADO ============ -->
+    <section class="band" id="sellado">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · fases 0 a 2</div>
+          <h2>Leer todo antes de tocar nada</h2>
+          <p class="sub">
+            El sello se mide, no se promete: después de la fase 2,
+            <span class="mono">git status --porcelain</span> solo puede diferir del de la fase 0 por el
+            archivo del plan.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Fase 0 · reanudar, puerta y señales</h3>
+            <p>
+              Si hay una corrida a medias, ofrece reanudar, reiniciar o abortar, y espera. La puerta
+              exige que <span class="mono">.template/installer.lock.json</span> diga
+              <span class="mono">adopted: true</span> y que el árbol esté limpio. Sin lock, los archivos
+              nunca se instalaron; con un lock greenfield, el repo fue scaffoldeado y le toca a
+              <span class="mono">/project-bootstrap</span>.
+            </p>
+            <p>
+              Después corre las <b>señales de detección</b>: cada subsistema queda
+              <span class="mono">PENDING</span> o <span class="mono">ADOPTED</span>. Las pendientes son
+              la lista de trabajo de esta corrida.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 1 · análisis</h3>
+            <p>
+              La huella del stack sale de <span class="mono">bun run agents:setup --stack --dry-run
+              --non-interactive</span>: cada valor trae el archivo de donde se leyó, y lo que no se
+              detecta queda ausente, nunca adivinado. Fuera de <span class="mono">V1_SUPPORTED</span>,
+              la corrida para acá sin escribir ni siquiera el plan.
+            </p>
+            <p>
+              Lee las convenciones del repo (paridad de la adopción, hooks, aislamiento de la
+              herramienta, archivos de entorno solo por nombre, CI, branches), prueba el tracker en
+              solo lectura y corre los scripts de la app para la <b>línea de base</b>. Lo que los
+              archivos no contestan va en un solo cuestionario.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 2 · el plan</h3>
+            <p>
+              Escribe <span class="mono">.context/reports/project-adoption-plan.md</span> con cabecera
+              <span class="mono">Status: PENDING APPROVAL</span>, verifica el sello y se detiene. Un
+              cambio que pidas edita el plan y vuelve a preguntar.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Corre las señales, despacha tres analistas de solo lectura y mide la línea de base.</p>
+            <p>Arma el plan con los hechos de los analistas y tus respuestas.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Identidad del proyecto, entornos, tracker y qué app cubre la adopción en un monorepo.</p>
+            <p>Si el <span class="mono">test</span> de la app es seguro de correr para la línea de base.</p>
+            <p>El <b>sí</b> que pasa el plan a <span class="mono">APPROVED</span>.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>La tabla de señales y el plan en <span class="mono">.context/reports/</span>, que lee todo el equipo.</p>
+            <p>Lo que quedó sin respuesta, como <span class="mono">## Discovery Gaps</span>.</p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> el plan aprobado en esta corrida, con quién lo aprobó y la fecha en la cabecera.</div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Detectar no es adivinar</b
+            ><span
+              >Un valor sin evidencia en la app es una pregunta o una brecha, nunca un default del
+              boilerplate.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un script que escribe</b
+            ><span
+              >Si la línea de base cambia archivos versionados, la IA lo registra, no revierte nada por
+              su cuenta y pregunta.</span
+            >
+          </div>
+          <div class="g">
+            <b>Varias apps Next.js</b
+            ><span
+              >En un monorepo pregunta cuál cubre esta adopción y la fija en
+              <span class="mono">stack.app_root</span>. Nunca dos en una corrida.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 ESCRITURA ============ -->
+    <section class="band" id="escritura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · fases 3 a 7</div>
+          <h2>Escribir solo lo que el plan aprobó</h2>
+          <p class="sub">
+            Un escritor por fase, cada uno con las filas aprobadas de su fase y nada más. Cada escritura
+            se verifica leyendo el destino.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Fase 3 · identidad, stack, entornos, rutas protegidas</h3>
+            <p>
+              <span class="mono">bun run agents:setup --stack</span> escribe el bloque
+              <span class="mono">stack:</span> con los valores del plan;
+              <span class="mono">bun run agents:setup</span> completa identidad y entornos. Cada
+              colisión que la app ya poseía entra en <span class="mono">updater.protected_paths</span>,
+              con un empalme que deja el resto del yaml byte por byte.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 4 · credenciales</h3>
+            <p>
+              Solo <span class="mono">.env</span>, solo valores que vos das en esta corrida, sin
+              repetirlos nunca. Después <span class="mono">bun run harness:env</span> y reiniciar la
+              sesión: el entorno se lee cuando arranca el servidor MCP.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 5 · catálogos del tracker</h3>
+            <p>
+              Carga <span class="mono">/acli</span> y sincroniza los catálogos contra la instancia
+              propia de la app, nunca con la bandera de referencia de UPEX. Un campo faltante no se
+              crea: el plan nombra el fallback y que crearlo es decisión de un admin de Jira. Y la
+              adopción no hidrata el proyecto entero: el caché del backlog se llena por historia.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fases 6 y 7 · instrucciones y contrato de API</h3>
+            <p>
+              Si el instalador dejó una fusión de instrucciones pendiente, se aplica <b>tal cual</b>,
+              con su propia línea de aprobación y respaldo previo; el texto de la app nunca se resume
+              ni se reordena. El contrato de API se sincroniza solo si la app sirve una spec y las rutas
+              de salida no existían antes.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Relee el plan aprobado antes de cada fase y escribe solo sus filas.</p>
+            <p>Re-lee el yaml, re-corre la señal, re-parsea el archivo: un "listo" no alcanza.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Los valores de credenciales, que se tipean solo en <span class="mono">.env</span>.</p>
+            <p>La fusión de instrucciones, con una aprobación aparte de la del plan.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p><span class="mono">.agents/project.yaml</span> con la app descrita, los catálogos <span class="mono">.agents/jira-*.json</span> y el <span class="mono">AGENTS.md</span> fusionado.</p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> cada fase verificada en el destino antes de pasar a la siguiente.</div>
+      </div>
+    </section>
+
+    <!-- ============ §06 VERIFICAR ============ -->
+    <section class="band" id="verificar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · fases 8 y 9</div>
+          <h2>La app tiene que salir como entró</h2>
+          <p class="sub">
+            La verificación es fail-fast y en orden: para en el primer fallo, lo reporta con su salida,
+            propone el arreglo y espera. Nunca arregla sola.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># fase 8, en este orden</span>
+bun run agents:compat:check
+bun run vars:check
+bun run vars:env:check
+bun run harness:env:check
+bun run jira:check                 <span class="c"># salteado si el plan registró "sin tracker"</span>
+bun run setup:doctor               <span class="c"># sección stack: sin issues, sin drift</span>
+bun run tooling:types:check        <span class="c"># el alcance propio de la herramienta, nunca el tsconfig de la app</span>
+bun run tooling:lint:check
+<span class="s">build / lint / types / test de la app</span>   <span class="c"># exit codes == línea de base de la fase 1</span></pre>
+
+        <div class="planes r">
+          <div class="plane sig">
+            <div class="tag">El fallo que más importa</div>
+            <h3>Un script de la app que cambió</h3>
+            <ul>
+              <li>
+                Si el <span class="mono">build</span>, el <span class="mono">lint</span>, los
+                <span class="mono">types</span> o el <span class="mono">test</span> de la app no dan el
+                mismo exit code que en la línea de base, la corrida no terminó.
+              </li>
+              <li>El reporte nombra el script, los dos códigos y el primer error nuevo.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Fase 9 · cierre</div>
+            <h3>Las señales como reporte</h3>
+            <ul>
+              <li>Re-corre las señales de la fase 0 e imprime la tabla final.</li>
+              <li>
+                Marca el plan <span class="mono">Status: COMPLETED</span> con su bloque de resultados.
+              </li>
+              <li>
+                Propone el commit a través de <span class="mono">/git-flow-master</span>. Nunca lo hace
+                en silencio.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout blue r">
+          <b>Idempotente.</b> Las mismas señales son la lista de trabajo al entrar y el reporte al salir.
+          Una segunda corrida sobre una app ya adoptada dice que no hay nada que hacer.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · rieles</div>
+          <h2>Una lista de rechazos y una lista de permisos</h2>
+          <p class="sub">
+            La capa agéntica vive dentro del árbol de la app, así que no alcanza con "el repo destino
+            es de solo lectura". La lista de rechazos viaja literal en cada briefing de subagente.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca escribe ni borra un archivo de la app</b> bajo
+              <span class="mono">stack.app_root</span> que existía antes de la adopción.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca una base de datos</b>: ni migraciones, ni SQL, ni RLS, ni seeds, ni una
+              conexión, en ningún entorno. El schema vivo lo lee después
+              <span class="mono">/project-context data</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca cambia dependencias</b>, el package manager ni el lockfile.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca edita</b> el CI, el <span class="mono">README.md</span>, el
+              <span class="mono">tsconfig.json</span>, la config de eslint o prettier,
+              <span class="mono">.gitattributes</span>, el middleware ni un script del
+              <span class="mono">package.json</span> de la app.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca git ni Jira por su cuenta</b>: ni historia, remotos, protección de branches
+              o rulesets, ni proyectos, campos, workflows o issues. Nunca hace push.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Una credencial solo va a <span class="mono">.env</span></b>, nunca al plan, a un
+              reporte o a un commit.</span
+            >
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Puede escribir</div>
+            <h3>Solo con su fila aprobada</h3>
+            <ul>
+              <li><span class="mono">.agents/project.yaml</span>, <span class="mono">.env</span> y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
+              <li><span class="mono">AGENTS.md</span> + <span class="mono">CLAUDE.md</span>, solo a través de la fusión que guardó el instalador.</li>
+              <li>El plan, <span class="mono">.session/project-adoption/</span> y los archivos de credenciales que deriva <span class="mono">bun run harness:env</span>.</li>
+            </ul>
+            <div class="path">lista completa: references/adoption-workflow.md §Refusal list</div>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Lo que debe el equipo</div>
+            <h3>Se reporta, nunca se crea</h3>
+            <ul>
+              <li>Una identidad dedicada para la automatización (<span class="mono">testing.automation_identity</span>).</li>
+              <li>La cuenta de GitHub de la entrega autónoma (<span class="mono">autonomous_delivery.automation_gh_account</span>).</li>
+              <li>Un rol de base de datos dedicado para chequeos de solo lectura.</li>
+            </ul>
+            <div class="path">el plan nombra la skill que lo necesita y qué tiene que aportar el equipo</div>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Sin PRD inventado.</b> Los documentos de producto de una app adoptada son los mapas de
+          negocio y el glosario. <span class="mono">/sprint-development</span> los acepta en lugar de un
+          PRD o un SRS, y ninguna skill escribe uno para pasar una puerta.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            Sin modo, la skill lo saca de la frase y, si no puede, corre
+            <span class="mono">adopt</span>.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-adoption</span>
+            <p>Barra de la skill. Para el chequeo de drift: <span class="mono">/project-adoption check</span>.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill project-adoption, modo check</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill project-adoption, modo adopt</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · después de adoptar</div>
+          <h2>El hand-off, en orden y nunca encadenado solo</h2>
+          <p class="sub">
+            Al cerrar, la skill te deja cada paso siguiente con la frase que lo dispara. Ninguno arranca
+            por su cuenta.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Primero · sesión nueva</div>
+            <h3>/project-context refresh-all</h3>
+            <p>
+              Los mapas de negocio leídos del código y el schema de la app. Van en una sesión aparte
+              porque pesan en tokens. Deck:
+              <a href="../project-context/como-funciona.es.html">Project context</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Después de los mapas</div>
+            <h3>/project-foundation, solo Discovery</h3>
+            <p>
+              La guía de desarrollo y el glosario del dominio, que completan los documentos de producto
+              de la app. Deck: <a href="../project-foundation/como-funciona.es.html">Project foundation</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Su propia sesión</div>
+            <h3>/git-flow-master Strategy Setup</h3>
+            <p>
+              La estrategia de branches propia del proyecto y la protección del host, en solo lectura
+              primero. Deck: <a href="../git-flow-master/como-funciona.es.html">Git flow master</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Opcional</div>
+            <h3>/design-system extract</h3>
+            <p>
+              <span class="mono">DESIGN.md</span> escrito desde el tema vivo de la app. Deck:
+              <a href="../design-system/flujo-mockups.es.html#extract">Design system</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Opcional</div>
+            <h3>/testability-guide</h3>
+            <p>
+              La página <span class="mono">/qa</span> dentro de la app y el artefacto de credenciales.
+              Deck: <a href="../testability-guide/como-funciona.es.html">Testability guide</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Opcional</div>
+            <h3>/project-bootstrap, add-on de tipos</h3>
+            <p>
+              Los tipos de la base en <span class="mono">stack.database.types_path</span> cuando faltan.
+              Las fases base de bootstrap no corren sobre una app adoptada. Deck:
+              <a href="../project-bootstrap/como-funciona.es.html">Project bootstrap</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-adoption/SKILL.md"
+            >.agents/skills/project-adoption/SKILL.md</a
+          >
+          y sus referencias: <span class="mono">references/adoption-workflow.md</span> (las fases, las
+          señales y la lista de rechazos) y <span class="mono">references/plan-template.md</span> (las
+          secciones del plan). La instalación está en <span class="mono">README.md</span>, sección
+          "Adopt an existing app".
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Una app viva ya tomó sus
+            decisiones. La adopción las registra para que las demás skills las respeten: lee antes de
+            escribir, escribe solo lo agéntico y demuestra al final que la app compila, lintea y testea
+            igual que antes.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/project-adoption/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
