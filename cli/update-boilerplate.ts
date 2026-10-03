@@ -395,9 +395,10 @@ ADOPTAR UNA APP EXISTENTE (--adopt, solo la primera corrida):
   inherited). Si la app trae su propio AGENTS.md o CLAUDE.md, se propone UN
   AGENTS.md = upstream + ese texto literal bajo "## 0. Project instructions
   (pre-adoption)", con CLAUDE.md como shim: se aplica solo con un si explicito
-  (con --auto queda guardado para revision y la fila bloquea). Los ADR
-  numerados del boilerplate no viajan. Escribe ${INSTALLER_LOCK_FILE} con
-  adopted: true. Incompatible con --force y con subcomandos. Un repo que ya
+  (con --auto queda guardado para revision y la fila bloquea). .mcp.json y
+  opencode.jsonc se entregan si la app no los tiene. Los ADR numerados del
+  boilerplate no viajan, ni en esa corrida ni en las siguientes. Escribe
+  ${INSTALLER_LOCK_FILE} con adopted: true. Incompatible con --force y con subcomandos. Un repo que ya
   tiene lock: --adopt no hace nada (sale 0 si estaba adoptado).
 
 --dry-run CON SELF-UPDATE PENDIENTE:
@@ -1733,8 +1734,9 @@ async function main(): Promise<void> {
     // in TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts); see
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.
     repoOnlyPaths: REPO_ONLY_PATHS,
-    // `--adopt` only: the boilerplate's own numbered ADRs stay out of the app's log.
-    adoptRepoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS,
+    // An adopted app (this --adopt run, or any run after one): the
+    // boilerplate's own numbered ADRs stay out of the app's decision log.
+    ...(parsed.adopt || isAdopted(process.cwd()) ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),

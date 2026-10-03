@@ -2792,7 +2792,7 @@ export async function runUpdate(
     const rel = relPath.replace(/\\/g, '/');
     return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel)
       || isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? [])
-      || (cfg.adoptRepoOnlyPatterns ?? []).some(re => re.test(rel));
+      || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
   };
 
   const collectBootstrapEntries = (comps: readonly Component[]): DeltaEntry[] => {
@@ -2908,8 +2908,8 @@ export async function runUpdate(
   if (cfg.repoOnlyPaths && cfg.repoOnlyPaths.length > 0) {
     entries = entries.filter(e => !isRepoOnlyPath(e.path, cfg.repoOnlyPaths ?? []));
   }
-  if (opts.adopt === true && cfg.adoptRepoOnlyPatterns && cfg.adoptRepoOnlyPatterns.length > 0) {
-    const patterns = cfg.adoptRepoOnlyPatterns;
+  if (cfg.repoOnlyPatterns && cfg.repoOnlyPatterns.length > 0) {
+    const patterns = cfg.repoOnlyPatterns;
     entries = entries.filter(e => !patterns.some(re => re.test(e.path.replace(/\\/g, '/'))));
   }
 

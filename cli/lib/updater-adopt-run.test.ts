@@ -96,7 +96,7 @@ const COMPONENTS: Component[] = [
   { name: 'env-template', type: 'file-list', paths: ['.'], files: ['.env.example'] },
 ];
 
-function config(template: string, extraBootstrapOnly: string[] = [], afterApply?: (summary: RunSummary) => Promise<void>): UpdaterConfig {
+function config(template: string, extraBootstrapOnly: string[] = [], afterApply?: (summary: RunSummary) => Promise<void>, adopted = true): UpdaterConfig {
   return {
     templateRepo: template,
     cliVersion: 'test',
@@ -110,7 +110,8 @@ function config(template: string, extraBootstrapOnly: string[] = [], afterApply?
     agentsFrameworkFiles: ['project.schema.yaml'],
     excludePaths: ['CLAUDE.md'],
     repoOnlyPaths: [],
-    adoptRepoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS,
+    // What the wrapper sets for an adopted app (the --adopt run and every run after it).
+    ...(adopted ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
     sparseExtraPaths: ['AGENTS.md'],
     ...(afterApply ? { hooks: { afterApply } } : {}),
   };
@@ -226,6 +227,8 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(read(app, 'docs/README.md')).toBe(APP['docs/README.md']);
     const pkg = JSON.parse(read(app, 'package.json')) as { dependencies: Record<string, string> };
     expect(pkg.dependencies).toEqual({ react: '19.0.0', typescript: '5.4.0' });
+    // The boilerplate's own ADRs stay out on every run of an adopted app, not only the first.
+    expect(existsSync(join(app, '.context/ADR/ADR-0002-multi-harness.md'))).toBe(false);
   });
 
   test('--dry-run writes nothing and still reports the collisions', async () => {
@@ -272,7 +275,7 @@ describe('the greenfield first run is unchanged (no --adopt)', () => {
   test('the same fixture still gets upstream\'s copy of every synced path', async () => {
     const { template, app } = setup();
     process.chdir(app);
-    const summary = await runUpdate(config(template), sink(), { auto: true, dryRun: false, rollback: false });
+    const summary = await runUpdate(config(template, [], undefined, false), sink(), { auto: true, dryRun: false, rollback: false });
     expect(summary.adoptCollisions).toBeUndefined();
     expect(read(app, 'scripts/lint.ts')).toBe(UPSTREAM['scripts/lint.ts']);
     expect(read(app, 'docs/README.md')).toBe(UPSTREAM['docs/README.md']);

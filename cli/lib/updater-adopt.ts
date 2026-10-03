@@ -39,11 +39,21 @@ import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 
 /**
- * Upstream paths an adopting app never receives (`UpdaterConfig.adoptRepoOnlyPatterns`):
- * the boilerplate's own numbered ADRs would land in the app's decision log and
+ * Upstream paths an adopted app never receives, on the `--adopt` run and on
+ * every plain run after it (`UpdaterConfig.repoOnlyPatterns`): the
+ * boilerplate's own numbered ADRs would land in the app's decision log and
  * take its numbers. The ADR README and the `ADR-NNNN-template.md` still travel.
  */
 export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [/^\.context\/ADR\/ADR-\d{4}-/];
+
+/**
+ * Agentic files the `--adopt` run delivers when the app lacks them. Each is on
+ * the protected watchlist and owned by no synced component, so the sync never
+ * creates one (a greenfield project gets it from the scaffold). `AGENTS.md`
+ * is handled with the instructions; `tsconfig.json` and `eslint.config.js`
+ * are the app's own configs and are never created here.
+ */
+export const ADOPT_DELIVER_IF_ABSENT: readonly string[] = ['.mcp.json', 'opencode.jsonc'];
 
 /** Tracked sentinel `cli/install.ts` reads to accept a renamed `package.json`. */
 export const INSTALLER_LOCK_FILE = '.template/installer.lock.json';
@@ -422,6 +432,8 @@ export interface AdoptOutcome {
   yamlSeeded: boolean
   envAdded: string[]
   instructions: AdoptInstructionsOutcome
+  /** `ADOPT_DELIVER_IF_ABSENT` files written this run (on --dry-run: that would be). */
+  delivered: string[]
   installerLockWritten: boolean
 }
 
@@ -492,7 +504,19 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     }
   }
 
-  // 3. .agents/project.yaml: seeded from the schema when this run delivered it.
+  // 3. Agentic files no synced component creates (the MCP registries).
+  const delivered: string[] = [];
+  for (const rel of ADOPT_DELIVER_IF_ABSENT) {
+    const upstream = path.join(upstreamDir, rel);
+    if (fs.existsSync(path.join(root, rel)) || !fs.existsSync(upstream)) { continue; }
+    if (!dryRun) { fs.copyFileSync(upstream, path.join(root, rel)); }
+    delivered.push(rel);
+  }
+  if (delivered.length > 0) {
+    input.step(`${dryRun ? '[dry-run] se entregarían' : 'Entregados'} (la app no los tenía): ${delivered.join(', ')}.`);
+  }
+
+  // 4. .agents/project.yaml: seeded from the schema when this run delivered it.
   const yamlPath = path.join(root, SCHEMA_SOURCE);
   const yamlDelivered = dryRun ? !fs.existsSync(yamlPath) : input.appliedPaths.includes(SCHEMA_SOURCE);
   let yamlSeeded = false;
@@ -515,7 +539,7 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     input.warn(`${SCHEMA_SOURCE} ya existía (de la app): no se edita. Las filas de colisión dicen qué rutas proteger.`);
   }
 
-  // 4. The installer lock.
+  // 5. The installer lock.
   if (!dryRun) { writeInstallerLock(root); }
 
   const findings = adoptFindings({
@@ -528,5 +552,5 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     scriptsKept: input.packageJsonKept.filter(k => k.section === 'scripts'),
     instructions,
   });
-  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, installerLockWritten: !dryRun };
+  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun };
 }

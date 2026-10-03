@@ -235,6 +235,8 @@ describe('runAdopt', () => {
     write(upstream, '.agents/project.schema.yaml', SCHEMA);
     write(upstream, '.agents/project.yaml', 'git_strategy:\n  meta:\n    strategy_source: chosen\n');
     write(upstream, '.env.example', 'APP=\nATLASSIAN_EMAIL=\n');
+    write(upstream, '.mcp.json', '{"mcpServers":{}}\n');
+    write(upstream, 'opencode.jsonc', '{}\n');
     write(root, '.env.example', 'APP=real\n');
     write(root, 'CLAUDE.md', '# App memory\n');
     // What the core delivered this run: the maintainer's yaml.
@@ -275,6 +277,17 @@ describe('runAdopt', () => {
     expect(out.instructions).toMatchObject({ kind: 'compose', applied: false });
     expect(out.findings.find(f => f.surface === 'instructions')?.blocking).toBe(true);
     expect(out.findings.find(f => f.path === 'docs/README.md')?.blocking).toBe(false);
+    // The MCP registries no component creates arrive when absent.
+    expect(out.delivered).toEqual(['.mcp.json', 'opencode.jsonc']);
+    expect(read(root, '.mcp.json')).toBe('{"mcpServers":{}}\n');
+  });
+
+  test('an MCP registry the app already has is never replaced', async () => {
+    const { root, upstream } = fixture();
+    write(root, '.mcp.json', '{"mcpServers":{"app":{}}}\n');
+    const out = await runAdopt(input(root, upstream));
+    expect(read(root, '.mcp.json')).toBe('{"mcpServers":{"app":{}}}\n');
+    expect(out.delivered).toEqual(['opencode.jsonc']);
   });
 
   test('interactive yes: AGENTS.md composed, CLAUDE.md the shim, the original in the backup', async () => {

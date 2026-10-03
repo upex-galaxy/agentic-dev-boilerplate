@@ -548,12 +548,13 @@ export interface UpdaterConfig {
   sparseExtraPaths?: string[]
   agentsFrameworkFiles?: string[]
   /**
-   * `--adopt` only, on top of `repoOnlyPaths`: upstream paths an EXISTING app
-   * adopting the boilerplate never receives, matched against the repo-relative
-   * path (e.g. the boilerplate's own numbered ADRs, which would land in the
-   * app's decision log and numbering). Ignored on every other run.
+   * On top of `repoOnlyPaths`, matched against the repo-relative path: upstream
+   * paths this repo never receives. The wrapper sets it for an ADOPTED app
+   * only (the `--adopt` run and every run after it), e.g. the boilerplate's own
+   * numbered ADRs, which would land in the app's decision log and numbering.
+   * Unset on a greenfield project, which keeps receiving them.
    */
-  adoptRepoOnlyPatterns?: RegExp[]
+  repoOnlyPatterns?: RegExp[]
   /**
    * Optional component name (e.g. `'cli'`) whose files contain the updater itself.
    * When set, runUpdate performs a Phase 0 self-update: if any file under this
