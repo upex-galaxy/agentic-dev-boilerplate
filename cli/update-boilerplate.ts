@@ -21,6 +21,7 @@ import * as path from 'node:path';
 import pc from 'picocolors';
 import { parseEnvFile } from './install';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
+import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
 import * as tui from './lib/tui';
 import {
   cleanupTempDir,
@@ -91,7 +92,11 @@ const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint
 // `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
 // component: a basename listed here is synced even when the path also matches
 // a bootstrap-only entry. Keep it to files the boilerplate genuinely owns.
-const AGENTS_FRAMEWORK_FILES = ['README.md'];
+// The GENERATED schema is plainly SYNCED, never bootstrapOnly: it is
+// upstream's template, not the project's identity, and a project must receive
+// each release's copy or the back-fill compares it against a template frozen
+// at scaffold time and reports nothing to do.
+const AGENTS_FRAMEWORK_FILES = ['README.md', 'project.schema.yaml'];
 const AGENTS_BOOTSTRAP_FILES = ['project.yaml', 'jira-fields.json', 'jira-workflows.json', 'jira-link-types.json', 'jira-required.yaml'];
 // The `agents` component is a file-list of the `.agents/` ROOT on purpose: the
 // subtrees (`skills/`, `hooks/`, `compatibility/`) belong to `agent-compatibility`
@@ -623,235 +628,119 @@ async function detectEnvVarDrift(
   }
 }
 
-// --- GIT_STRATEGY UPSERT (afterApply hook) ---
+// --- SCHEMA-DRIVEN BACK-FILL for .agents/project.yaml (afterApply hook) ---
 //
-// The `git_strategy:` block in `.agents/project.yaml` (git workflow definition,
-// read by the git-flow-master skill) was added to the boilerplate AFTER some
-// projects were already scaffolded. `.agents/project.yaml` is bootstrapOnly, so
-// the regular sync NEVER overwrites it — a pre-feature project would silently
-// stay without the block. This hook back-fills it ONCE, APPEND-ONLY.
+// ONE hook for every block upstream adds to `.agents/project.yaml`. It
+// replaces the two hand-written ones that used to target the file
+// (`upsertGitStrategyBlock`, which appended the MAINTAINER's `git_strategy`
+// block at EOF, standing push authorization included, and
+// `upsertAutomationIdentityBlock`). A key added upstream used to need a new
+// hook written by hand, and every block after those two (`decision_authority`,
+// `autonomous_delivery`, `updater`) is the proof that did not scale: nothing
+// gave them to a project scaffolded before they existed.
 //
-// HARD CONSTRAINT: append-only. It NEVER edits, reorders, or deletes any
-// existing line in the consumer's project.yaml — it only appends the missing
-// block at EOF. This preserves every user-set value verbatim.
+// What arrives instead is derived from `.agents/project.schema.yaml`, which is
+// generated from upstream's own yaml with every identity value blanked and
+// gated against it (`agents:schema:check`), so a key cannot exist upstream and
+// be missing from what this hook offers, and no maintainer value can travel.
 //
-// Like detectEnvVarDrift, the upstream clone still sits in `tempDir` (cleanup
-// happens after afterApply). We lift the `git_strategy:` block (with its leading
-// comment header) out of the upstream copy and append it to the consumer's file.
+// The promises the old hooks made are kept, because they are what make writing
+// to a project's identity file acceptable at all: INSERT-ONLY (the result is
+// re-parsed and every existing leaf proven unchanged before it reaches disk),
+// never an edit to an existing line, idempotent, interactive confirm, and
+// `--auto` warns without mutating. One prompt per BLOCK: per-key prompting on
+// a project far behind is abusive, and a single all-or-nothing prompt hides
+// what is being accepted. Each key lands at its schema position, not at EOF.
 
-/**
- * Extract the `git_strategy:` block from an upstream `.agents/project.yaml`,
- * INCLUDING the contiguous comment header immediately preceding it.
- *
- * Strategy: find the `git_strategy:` line, walk BACKWARDS over contiguous
- * leading `#` comment lines to capture the header, then walk FORWARDS over all
- * indented (space-prefixed) lines until the next top-level key or top-level
- * comment introducing another section. Returns the block as a trimmed string,
- * or null if no `git_strategy:` key exists upstream.
- */
-function extractUpstreamGitStrategyBlock(upstreamYaml: string): string | null {
-  const lines = upstreamYaml.split('\n');
-  const keyIdx = lines.findIndex(l => l.startsWith('git_strategy:'));
-  if (keyIdx === -1) { return null; }
-
-  // Walk backwards over the contiguous comment header (stop at blank/non-comment).
-  let start = keyIdx;
-  while (start - 1 >= 0 && /^\s*#/.test(lines[start - 1])) { start -= 1; }
-
-  // Walk forwards over indented body lines (block scalars, nested keys, lists).
-  let end = keyIdx; // inclusive index of last block line
-  for (let i = keyIdx + 1; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (line.trim() === '') { continue; } // blank lines inside the block are tolerated
-    if (/^\s/.test(line)) { end = i; continue; } // indented → still part of the block
-    break; // top-level key or top-level comment → block ended
+/** Upstream's version, for the `NEW in <release>` marker. See `markRelease`. */
+function upstreamRelease(templateDir: string): string | null {
+  try {
+    const raw = fs.readFileSync(path.join(templateDir, 'package.json'), 'utf8');
+    const version = (JSON.parse(raw) as { version?: string }).version;
+    return typeof version === 'string' && version !== '' ? version : null;
   }
-
-  return lines.slice(start, end + 1).join('\n').trimEnd();
+  catch { return null; }
 }
 
-/**
- * Back-fill a missing `git_strategy:` block into the consumer's
- * `.agents/project.yaml`. Mirrors detectEnvVarDrift's signature (tempDir, sink,
- * nonInteractive). Append-only; never modifies existing lines.
- */
-async function upsertGitStrategyBlock(
+async function backfillProjectYamlFromSchema(
   templateDir: string,
   sink: ReportSink,
   nonInteractive: boolean,
 ): Promise<void> {
-  const consumerYaml = path.join(process.cwd(), '.agents', 'project.yaml');
-  if (!fs.existsSync(consumerYaml)) { return; }
+  const consumerPath = path.join(process.cwd(), SCHEMA_SOURCE);
+  const schemaPath = path.join(templateDir, SCHEMA_FILE);
+  if (!fs.existsSync(consumerPath) || !fs.existsSync(schemaPath)) { return; }
 
-  let consumerContent: string;
+  let consumer: string;
+  let schema: string;
   try {
-    consumerContent = fs.readFileSync(consumerYaml, 'utf8');
+    consumer = fs.readFileSync(consumerPath, 'utf8');
+    schema = fs.readFileSync(schemaPath, 'utf8');
   }
-  catch {
-    return; // unreadable consumer file — nothing to do.
-  }
-
-  // Already has a top-level git_strategy block → NO-OP. Never touch it.
-  if (/^git_strategy:/m.test(consumerContent)) { return; }
-
-  // Absent → pre-feature project. Lift the block from the upstream clone.
-  const upstreamYaml = path.join(templateDir, '.agents', 'project.yaml');
-  if (!fs.existsSync(upstreamYaml)) { return; }
-
-  let block: string | null;
-  try {
-    block = extractUpstreamGitStrategyBlock(fs.readFileSync(upstreamYaml, 'utf8'));
-  }
-  catch {
-    return; // unreadable upstream — skip.
-  }
-  if (!block) { return; }
-
-  // CI / non-interactive: never modify the file — just flag it.
-  if (nonInteractive) {
-    sink.warn('Tu `.agents/project.yaml` no tiene el bloque `git_strategy` (definición del flujo de git).');
-    sink.step('Modo --auto: ejecuta el updater de forma interactiva para agregarlo (o añádelo manualmente).');
-    return;
-  }
-
-  // Interactive: OFFER to append (append-only — existing values untouched).
-  const proceed = await sink.confirm(
-    'Tu `.agents/project.yaml` no tiene el nuevo bloque `git_strategy` (definición del flujo de git). ¿Agregarlo ahora? (append-only — tus valores existentes nunca se modifican)',
-    false,
-  );
-  if (!proceed) {
-    sink.step('Omitido. Puedes agregar el bloque `git_strategy` más tarde.');
-    return;
-  }
-
-  // APPEND ONLY — preserve the existing file verbatim, and prepend exactly one
-  // blank line before the block regardless of the file's trailing-newline state:
-  //  - ends with "\n"  → add "\n" (a blank line) then the block.
-  //  - no trailing "\n" → add "\n\n" (close the last line + a blank line).
-  const sep = consumerContent.endsWith('\n') ? '\n' : '\n\n';
-  try {
-    fs.appendFileSync(consumerYaml, `${sep}${block}\n`);
-  }
-  catch (err) {
-    sink.warn(`No se pudo agregar el bloque \`git_strategy\`: ${err instanceof Error ? err.message : String(err)}`);
-    return;
-  }
-  sink.step('Bloque `git_strategy` agregado al final de `.agents/project.yaml` (append-only).');
-  sink.step('Revisa la estrategia o ejecuta "set up our git strategy" en Claude (git-flow-master) para definir la tuya.');
-}
-
-// --- AUTOMATION_IDENTITY UPSERT (afterApply hook) ---
-//
-// `testing.automation_identity` declares WHICH account browser / HTTP automation
-// logs in as during live-UI validation (variable NAMES only — values stay in
-// `.env`). It was added to the boilerplate after some projects were scaffolded,
-// and `.agents/project.yaml` is bootstrapOnly, so those projects would stay
-// without the slot — and a missing slot is exactly what makes a stage subagent
-// improvise a login. This hook back-fills it ONCE.
-//
-// Unlike `git_strategy` (a top-level block appended at EOF), this one is NESTED
-// under `testing:`, so it is spliced in at the end of that block. Still additive:
-// it only INSERTS lines, never edits, reorders, or deletes an existing one.
-
-/**
- * Extract the `automation_identity:` sub-block (plus its contiguous comment
- * header) from an upstream `.agents/project.yaml`. Returns the block verbatim
- * with its original indentation, or null when the key is absent upstream.
- */
-function extractUpstreamAutomationIdentityBlock(upstreamYaml: string): string | null {
-  const lines = upstreamYaml.split('\n');
-  const keyIdx = lines.findIndex(l => /^\s+automation_identity:/.test(l));
-  if (keyIdx === -1) { return null; }
-
-  const indent = (lines[keyIdx].match(/^\s*/) ?? [''])[0].length;
-
-  // Walk backwards over the contiguous comment header at the SAME indent.
-  let start = keyIdx;
-  while (start - 1 >= 0 && new RegExp(`^\\s{${indent}}#`).test(lines[start - 1])) { start -= 1; }
-
-  // Walk forwards while lines are indented deeper than the key itself.
-  let end = keyIdx;
-  for (let i = keyIdx + 1; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (line.trim() === '') { break; }
-    const lineIndent = (line.match(/^\s*/) ?? [''])[0].length;
-    if (lineIndent > indent) { end = i; continue; }
-    break;
-  }
-
-  return lines.slice(start, end + 1).join('\n').trimEnd();
-}
-
-/**
- * Back-fill a missing `testing.automation_identity` block into the consumer's
- * `.agents/project.yaml`. Additive splice at the end of the `testing:` block.
- */
-async function upsertAutomationIdentityBlock(
-  templateDir: string,
-  sink: ReportSink,
-  nonInteractive: boolean,
-): Promise<void> {
-  const consumerYaml = path.join(process.cwd(), '.agents', 'project.yaml');
-  if (!fs.existsSync(consumerYaml)) { return; }
-
-  let consumerContent: string;
-  try { consumerContent = fs.readFileSync(consumerYaml, 'utf8'); }
   catch { return; }
 
-  // Already present → NO-OP. Never touch a slot the project already filled.
-  if (/^\s+automation_identity:/m.test(consumerContent)) { return; }
-
-  const consumerLines = consumerContent.split('\n');
-  const testingIdx = consumerLines.findIndex(l => l.startsWith('testing:'));
-  if (testingIdx === -1) {
-    sink.warn('Tu `.agents/project.yaml` no tiene sección `testing:` — no se puede añadir `automation_identity` automáticamente.');
+  const delta = projectDelta(consumer, schema);
+  if (delta.error) {
+    // Say so. A silently skipped comparison that reports success is worse than
+    // no comparison, because it certifies its own emptiness.
+    sink.warn(`No se pudo comparar \`${SCHEMA_SOURCE}\` contra el schema: ${delta.error}`);
     return;
   }
+  if (delta.gaps.length === 0) { return; }
 
-  // Last line of the `testing:` block (contiguous indented lines).
-  let insertAt = testingIdx;
-  for (let i = testingIdx + 1; i < consumerLines.length; i += 1) {
-    if (consumerLines[i].trim() === '') { continue; }
-    if (/^\s/.test(consumerLines[i])) { insertAt = i; continue; }
-    break;
-  }
-
-  const upstreamYaml = path.join(templateDir, '.agents', 'project.yaml');
-  if (!fs.existsSync(upstreamYaml)) { return; }
-
-  let block: string | null;
-  try { block = extractUpstreamAutomationIdentityBlock(fs.readFileSync(upstreamYaml, 'utf8')); }
-  catch { return; }
-  if (!block) { return; }
+  const release = upstreamRelease(templateDir);
+  const total = delta.gaps.reduce((n, g) => n + g.paths.length, 0);
 
   if (nonInteractive) {
-    sink.warn('Tu `.agents/project.yaml` no declara `testing.automation_identity` (identidad de automatización para live-UI).');
-    sink.step('Modo --auto: ejecuta el updater de forma interactiva para agregarlo (o añádelo manualmente).');
+    sink.warn(`Tu \`${SCHEMA_SOURCE}\` no tiene ${total} clave(s) que el schema de upstream declara.`);
+    for (const gap of delta.gaps) {
+      sink.step(`  ${gap.block}${gap.wholeBlock ? ' (bloque completo)' : ''}: ${gap.paths.join(', ')}`);
+    }
+    sink.step('Modo --auto: no se modifica nada. Ejecuta el updater interactivo, o `bun run agents:schema --project`.');
     return;
   }
 
-  const proceed = await sink.confirm(
-    'Tu `.agents/project.yaml` no declara `testing.automation_identity` (la cuenta con la que la automatización hace login en live-UI). ¿Agregar el slot ahora? (solo inserta líneas nuevas — tus valores existentes no se tocan)',
-    false,
-  );
-  if (!proceed) {
-    sink.step('Omitido. Sin este slot, /sprint-development se detendrá antes de cualquier validación live-UI.');
-    return;
+  let current = consumer;
+  const applied: string[] = [];
+  for (const gap of delta.gaps) {
+    const what = gap.wholeBlock
+      ? `el bloque \`${gap.block}\` completo (${gap.paths.length} clave(s))`
+      : `${gap.paths.length} clave(s) nueva(s) en \`${gap.block}\`: ${gap.paths.join(', ')}`;
+    const proceed = await sink.confirm(
+      `Tu \`${SCHEMA_SOURCE}\` no tiene ${what}. ¿Insertarlas ahora? (insert-only: ningún valor tuyo se modifica)`,
+      false,
+    );
+    if (!proceed) { continue; }
+
+    // A whole missing block is inserted as ONE unit, not leaf by leaf: its
+    // children come with it, and asking for each would be the per-key
+    // prompting this design rejected.
+    const targets = gap.wholeBlock ? [gap.block] : gap.paths;
+    const plan = planInsertions(current, schema, targets, release);
+    const result = applyInsertions(current, plan);
+    if (result.error) {
+      sink.warn(`No se insertó \`${gap.block}\`: ${result.error}`);
+      continue;
+    }
+    for (const skip of plan.skipped) { sink.warn(`  \`${skip.path}\` no se pudo ubicar: ${skip.reason}`); }
+    current = result.text;
+    applied.push(...plan.inserted);
   }
 
-  const next = [
-    ...consumerLines.slice(0, insertAt + 1),
-    ...block.split('\n'),
-    ...consumerLines.slice(insertAt + 1),
-  ].join('\n');
-
-  try { fs.writeFileSync(consumerYaml, next); }
+  if (applied.length === 0) {
+    sink.step('Omitido. Ejecuta `bun run agents:schema --project` cuando quieras ver qué falta.');
+    return;
+  }
+  try { fs.writeFileSync(consumerPath, current); }
   catch (err) {
-    sink.warn(`No se pudo agregar \`automation_identity\`: ${err instanceof Error ? err.message : String(err)}`);
+    sink.warn(`No se pudo escribir \`${SCHEMA_SOURCE}\`: ${err instanceof Error ? err.message : String(err)}`);
     return;
   }
-  sink.step('Slot `testing.automation_identity` agregado a `.agents/project.yaml`.');
-  sink.step('Rellena `email_var` / `password_var` / `scope` con una cuenta DEDICADA de no-producción y define esas variables en `.env`.');
+  sink.step(`Insertadas ${applied.length} clave(s) en \`${SCHEMA_SOURCE}\`: ${applied.join(', ')}.`);
+  sink.step(`Cada una lleva un comentario \`# NEW in ${release ?? '?'}\` y queda con el valor del template. Revísalas con \`git diff ${SCHEMA_SOURCE}\`.`);
+  if (applied.some(p => p === 'git_strategy' || p.startsWith('git_strategy.'))) {
+    sink.step('`git_strategy` llega como `inherited`: ejecuta "set up our git strategy" (git-flow-master) para definir la tuya.');
+  }
 }
 
 // --- PROTECTED-FILE WATCHLIST (feeds the parity report) ---
@@ -1797,8 +1686,11 @@ async function main(): Promise<void> {
             // hook, which folds its one row in.
             async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR); },
             async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
-            async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
-            async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),
+            // ONE schema-driven hook for `.agents/project.yaml`, replacing the
+            // two hand-written ones (`git_strategy`, `automation_identity`).
+            // Before the parity hook, so a block inserted here is not also
+            // reported as a missing CONFIG_BLOCK_READERS block.
+            async () => backfillProjectYamlFromSchema(UPSTREAM_DIR, sink, parsed.auto),
             // Legacy git-tracked PBI cache detection: the recipe goes to its
             // file, one parity row points at it; the hook NEVER mutates the
             // git index.
