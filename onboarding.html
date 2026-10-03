@@ -1,0 +1,1662 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Empezá acá · Agentic Dev Boilerplate</title>
+    <meta
+      name="description"
+      content="Orientación para quien llega al Agentic Dev Boilerplate: cómo se invocan las skills por nombre y modo, qué hacen los scripts, cómo viaja una historia de Jira hasta el deploy y dónde se entrega a QA."
+    />
+    <style>
+      /* ============================================================
+         Página autocontenida: cero requests externos, ni fuentes.
+         Tokens "Planos": fuente única en packages/decks/README.md.
+         Se sirve local con `bun run onboarding` y publicada en Pages.
+         ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1180px;
+        --prose: 68ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 72px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.15;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:hover {
+        text-decoration-color: var(--blue);
+      }
+      a:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      code {
+        font-size: 0.86em;
+        padding: 0.08em 0.36em;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        color: var(--ink);
+        overflow-wrap: anywhere;
+      }
+      pre {
+        margin: 0 0 1.1em;
+        padding: 14px 16px;
+        border-radius: var(--r-sm);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        overflow-x: auto;
+        font-size: 0.84rem;
+        line-height: 1.6;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        overflow-wrap: normal;
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(16px, 5vw, 56px);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      /* ---------- topbar ---------- */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px clamp(16px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        -webkit-backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+        min-width: 0;
+      }
+      .brand b {
+        color: var(--ink);
+      }
+      .brand .mark {
+        width: 14px;
+        height: 14px;
+        flex: none;
+        border: 2px solid var(--blue);
+        border-radius: 3px;
+        box-shadow: 3px 3px 0 var(--signal-wash);
+      }
+      .brand .repo {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-soft);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 12px;
+        cursor: pointer;
+        flex: none;
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        padding: clamp(40px, 8vw, 88px) 0 clamp(28px, 5vw, 48px);
+      }
+      .hero h1 {
+        font-size: clamp(2.1rem, 6vw, 3.6rem);
+        margin: 14px 0 18px;
+        max-width: 18ch;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+      }
+      .lede {
+        font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+        color: var(--ink-soft);
+        max-width: 62ch;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+      .chip {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .chip .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--blue);
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+      .chip.sig .dot {
+        background: var(--signal);
+      }
+
+      /* ---------- path cards ---------- */
+      .paths {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin-top: 32px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+        min-width: 0;
+      }
+      .card h3 {
+        font-size: 1.12rem;
+        margin-bottom: 6px;
+      }
+      .card p {
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+        margin-bottom: 0.6em;
+      }
+      .card .go {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+      }
+      .card.agent {
+        border-color: color-mix(in srgb, var(--agent) 30%, var(--line));
+      }
+      .card.sig {
+        border-color: color-mix(in srgb, var(--signal) 30%, var(--line));
+      }
+
+      /* ---------- layout ---------- */
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+        padding-bottom: 64px;
+      }
+      @media (min-width: 980px) {
+        .layout {
+          grid-template-columns: 230px minmax(0, 1fr);
+          gap: 48px;
+        }
+      }
+      .toc {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 14px 16px;
+        font-size: 0.86rem;
+        align-self: start;
+      }
+      @media (min-width: 980px) {
+        .toc {
+          position: sticky;
+          top: 70px;
+          max-height: calc(100vh - 90px);
+          overflow-y: auto;
+        }
+      }
+      .toc .t {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+      }
+      .toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 2px 12px;
+      }
+      @media (min-width: 980px) {
+        .toc ol {
+          grid-template-columns: 1fr;
+        }
+      }
+      .toc a {
+        display: flex;
+        gap: 8px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        color: var(--ink-soft);
+        text-decoration: none;
+      }
+      .toc a:hover,
+      .toc a.on {
+        background: var(--blue-wash);
+        color: var(--ink);
+      }
+      .toc a .n {
+        font-family: var(--font-mono);
+        color: var(--blue);
+        font-size: 0.78rem;
+        flex: none;
+        padding-top: 1px;
+      }
+
+      /* ---------- sections ---------- */
+      main section {
+        padding: 36px 0 8px;
+        border-top: 1px solid var(--line-soft);
+      }
+      main section:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      main section h2 {
+        font-size: clamp(1.55rem, 3.6vw, 2.1rem);
+        margin: 10px 0 16px;
+      }
+      main section h3 {
+        font-size: 1.18rem;
+        margin: 26px 0 10px;
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+      .prose ul,
+      .prose ol {
+        padding-left: 1.2em;
+        margin: 0 0 1em;
+      }
+      .prose li {
+        margin-bottom: 0.35em;
+      }
+
+      .callout {
+        border-left: 3px solid var(--blue);
+        background: var(--blue-wash);
+        border-radius: 0 var(--r-sm) var(--r-sm) 0;
+        padding: 12px 16px;
+        margin: 0 0 1.2em;
+        font-size: 0.95rem;
+        max-width: var(--prose);
+      }
+      .callout.sig {
+        border-left-color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* tables scroll inside their box, never the page */
+      .tbl {
+        overflow-x: auto;
+        margin: 0 0 1.3em;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      th {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        font-weight: 600;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td code {
+        overflow-wrap: normal;
+        white-space: nowrap;
+      }
+      /* phones: every row becomes a small card, labelled by its column */
+      @media (max-width: 640px) {
+        .tbl table,
+        .tbl tbody,
+        .tbl tr,
+        .tbl td {
+          display: block;
+          width: 100%;
+        }
+        .tbl thead {
+          display: none;
+        }
+        .tbl tr {
+          padding: 10px 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .tbl tr:last-child {
+          border-bottom: 0;
+        }
+        .tbl td {
+          border: 0;
+          padding: 3px 14px;
+        }
+        .tbl td[data-label]::before {
+          content: attr(data-label);
+          display: block;
+          font-family: var(--font-mono);
+          font-size: 0.66rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--ink-faint);
+        }
+        .tbl td:empty {
+          display: none;
+        }
+        td code {
+          white-space: normal;
+          overflow-wrap: break-word;
+        }
+      }
+
+      /* three-piece model */
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin: 6px 0 1.4em;
+      }
+      .trio .card .k {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+
+      /* pipeline (stages) */
+      .pipe {
+        list-style: none;
+        margin: 6px 0 1.4em;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px;
+      }
+      /* the five stages read as one row whenever the column fits them */
+      @media (min-width: 1180px) {
+        .pipe {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+      }
+      .pipe li {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-top: 3px solid var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 14px;
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+      }
+      .pipe li b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+      }
+      .pipe li .s {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--blue);
+        letter-spacing: 0.08em;
+      }
+      .pipe li.gate {
+        border-top-color: var(--signal);
+      }
+      .pipe li.gate .s {
+        color: var(--signal);
+      }
+      .pipe li.qa {
+        border-top-color: var(--agent);
+      }
+      .pipe li.qa .s {
+        color: var(--agent);
+      }
+
+      /* state flow */
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin: 4px 0 1.2em;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+      }
+      .flow .st {
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        white-space: nowrap;
+      }
+      .flow .st.dev {
+        border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+        color: var(--blue);
+      }
+      .flow .st.qa {
+        border-color: color-mix(in srgb, var(--agent) 45%, var(--line));
+        color: var(--agent);
+      }
+      .flow .ar {
+        color: var(--ink-faint);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 28px 0 40px;
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+      }
+      footer .sig {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="https://upex-galaxy.github.io/agentic-dev-boilerplate/"
+        ><span class="mark"></span> <b>Planos</b>
+        <span class="repo">· agentic-dev-boilerplate</span></a
+      >
+      <button class="themebtn" id="themebtn" type="button" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <header class="hero">
+      <div class="wrap">
+        <div class="eyebrow"><span class="num">00</span> empezá acá</div>
+        <h1>Un repo donde la IA trabaja <em>dentro</em> del <span class="sig">plano</span>.</h1>
+        <p class="lede">
+          Agentic Dev Boilerplate es el punto de partida para equipos que quieren que un agente de
+          IA conduzca el ciclo de desarrollo entero: definir el producto, montar el stack, refinar
+          el backlog, implementar cada historia y desplegarla. Esta página te orienta en media hora:
+          qué piezas existen, cómo se invocan y dónde termina el trabajo del dev y empieza el de QA.
+        </p>
+        <div class="chips">
+          <span class="chip"><span class="dot"></span> Claude Code · OpenCode · Codex</span>
+          <span class="chip agent"
+            ><span class="dot"></span> una skill se invoca por nombre + modo</span
+          >
+          <span class="chip sig"><span class="dot"></span> plan antes de código, siempre</span>
+        </div>
+
+        <div class="paths">
+          <div class="card">
+            <h3>Arranco un proyecto</h3>
+            <p>Querés un repo nuevo con todo cableado: credenciales, harness, skills.</p>
+            <a class="go" href="#arrancar">→ 02 Arrancar</a>
+          </div>
+          <div class="card agent">
+            <h3>Uso el repo a diario</h3>
+            <p>Ya está instalado. Necesitás saber qué skill pedir para cada cosa.</p>
+            <a class="go" href="#recetas">→ 11 Quiero X, hago Y</a>
+          </div>
+          <div class="card sig">
+            <h3>Soy PM, PO o QA</h3>
+            <p>Te importa cómo viaja una historia y qué recibís al final.</p>
+            <a class="go" href="#historia">→ 05 Una historia de punta a punta</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap layout">
+      <nav class="toc" aria-label="Índice">
+        <div class="t">Índice</div>
+        <ol>
+          <li>
+            <a href="#idea"><span class="n">01</span> La idea</a>
+          </li>
+          <li>
+            <a href="#arrancar"><span class="n">02</span> Arrancar</a>
+          </li>
+          <li>
+            <a href="#piezas"><span class="n">03</span> Las tres piezas</a>
+          </li>
+          <li>
+            <a href="#ciclo"><span class="n">04</span> El ciclo de vida</a>
+          </li>
+          <li>
+            <a href="#historia"><span class="n">05</span> Una historia</a>
+          </li>
+          <li>
+            <a href="#agente"><span class="n">06</span> Cómo trabaja el agente</a>
+          </li>
+          <li>
+            <a href="#voz"><span class="n">07</span> Cómo te habla</a>
+          </li>
+          <li>
+            <a href="#git"><span class="n">08</span> Git y trazabilidad</a>
+          </li>
+          <li>
+            <a href="#mcp"><span class="n">09</span> Herramientas externas</a>
+          </li>
+          <li>
+            <a href="#contexto"><span class="n">10</span> Dónde vive el contexto</a>
+          </li>
+          <li>
+            <a href="#recetas"><span class="n">11</span> Quiero X, hago Y</a>
+          </li>
+          <li>
+            <a href="#salud"><span class="n">12</span> Diagnóstico</a>
+          </li>
+          <li>
+            <a href="#seguir"><span class="n">13</span> Adónde seguir</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <!-- 01 -->
+        <section id="idea">
+          <div class="eyebrow"><span class="num">01</span> la idea</div>
+          <h2>Una sola copia de cada instrucción, leída por tres harnesses</h2>
+          <div class="prose">
+            <p>
+              El repo tiene una única fuente de reglas, <code>AGENTS.md</code>, y una única carpeta
+              de workflows, <code>.agents/skills/</code>. Claude Code, OpenCode y Codex leen las
+              dos. Claude Code entra por <code>CLAUDE.md</code>, que es solo un import de una línea
+              (<code>@AGENTS.md</code>), y por <code>.claude/skills</code>, un alias generado. Nada
+              se duplica: lo que difiere entre harnesses (formato de MCP, API de hooks) vive en
+              adaptadores finos.
+            </p>
+            <p>
+              La segunda idea es la del nombre de la casa, <b>Planos</b>: el agente escribe un plan
+              antes de escribir código. Un plan de implementación por historia, un plan maestro de
+              diseño, un desglose de épica. El plan se revisa, después se construye.
+            </p>
+          </div>
+          <div class="callout">
+            <p>
+              El detalle de cómo una fuente alimenta a los tres harnesses está en la página
+              publicada
+              <a href="https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html"
+                >Una fuente, tres harnesses</a
+              >.
+            </p>
+          </div>
+        </section>
+
+        <!-- 02 -->
+        <section id="arrancar">
+          <div class="eyebrow"><span class="num">02</span> arrancar</div>
+          <h2>Tres maneras de empezar</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Camino</th>
+                  <th>Cuándo</th>
+                  <th>Qué corrés</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Scaffolder</b> (recomendado)</td>
+                  <td>Proyecto nuevo, sin historia de git que conservar</td>
+                  <td><code>bunx create-agentic-dev@latest &lt;repo&gt;</code></td>
+                </tr>
+                <tr>
+                  <td><b>Use this template</b> en GitHub</td>
+                  <td>Querés el repo creado desde la UI de GitHub</td>
+                  <td>clonar, después <code>bun install</code> y <code>bun run setup</code></td>
+                </tr>
+                <tr>
+                  <td><b>Clonar el boilerplate</b></td>
+                  <td>Vas a contribuir al boilerplate mismo</td>
+                  <td><code>bun install</code> y <code>bun run setup</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              <code>bun run setup</code> es el instalador interactivo: detecta qué harnesses tenés,
+              cablea el <code>.env</code> para cada servidor que declara <code>.mcp.json</code>,
+              instala las skills de la comunidad y genera las superficies por harness. Si algo queda
+              a medias, <code>bun run setup:doctor</code> te dice qué falta y dónde se arregla. Para
+              lanzar el agente usá los wrappers <code>bun run claude</code>,
+              <code>bun run opencode</code> o <code>bun run codex</code>: cargan el
+              <code>.env</code> por encima de cualquier variable heredada del shell.
+            </p>
+            <p>
+              Un proyecto creado desde el boilerplate se mantiene al día con
+              <code>bun run up</code>. El updater sincroniza lo que es del boilerplate, nunca pisa
+              lo que es del proyecto, y cierra con una tabla por superficie y un prompt de paridad
+              para las filas que necesitan tu decisión.
+            </p>
+          </div>
+          <div class="callout sig">
+            <p>
+              Antes del primer <code>bun run setup</code> necesitás Bun y al menos uno de Claude
+              Code, OpenCode o Codex. El resto, el instalador te lo señala cuando lo necesita. Guía
+              de problemas del instalador:
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md"
+                >INSTALLER.md</a
+              >.
+            </p>
+          </div>
+        </section>
+
+        <!-- 03 -->
+        <section id="piezas">
+          <div class="eyebrow"><span class="num">03</span> las tres piezas</div>
+          <h2>Skills con modos, scripts y variables</h2>
+          <div class="trio">
+            <div class="card agent">
+              <div class="k">Skill</div>
+              <h3>Lo que el agente sabe hacer</h3>
+              <p>
+                Un workflow en <code>.agents/skills/&lt;nombre&gt;/</code>. Se invoca por su nombre;
+                si tiene varios modos, por nombre más modo.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">Script</div>
+              <h3>Lo que la máquina ejecuta</h3>
+              <p>
+                Comandos deterministas en <code>package.json</code>: sync con Jira, gates, setup.
+                Las skills los llaman; vos también podés.
+              </p>
+            </div>
+            <div class="card sig">
+              <div class="k">Variable</div>
+              <h3>Lo que es de tu proyecto</h3>
+              <p>
+                <code>.agents/project.yaml</code> guarda la identidad y la política del proyecto;
+                <code>.env</code> guarda las credenciales. Ninguna skill las inventa.
+              </p>
+            </div>
+          </div>
+
+          <h3>Cómo se invoca una skill</h3>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Harness</th>
+                  <th>Forma</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Claude Code</td>
+                  <td><code>/project-context data</code></td>
+                </tr>
+                <tr>
+                  <td>OpenCode, Codex</td>
+                  <td>en prosa: "cargá <code>project-context</code>, modo <code>data</code>"</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              No hay archivos de comando. Una skill con varios modos los lista en su propia sección
+              <code>## Mode routing</code>, y esa sección es la única lista. Muchas skills se cargan
+              solas cuando tu pedido coincide con su descripción: "abrí un PR" carga
+              <code>/git-flow-master</code> sin que la nombres. La decisión está registrada en
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.context/ADR/ADR-0006-skill-plus-mode-invocation.md"
+                >ADR-0006</a
+              >.
+            </p>
+          </div>
+
+          <h3>El catálogo no está en esta página</h3>
+          <div class="prose">
+            <p>
+              La lista de skills cambia con cada release, así que no se copia acá. El catálogo es
+              <code>.agents/skills/REGISTRY.md</code>, generado por
+              <code>bun run skills:registry</code>: una entrada por skill con su propósito y sus
+              reglas compactas. En tu proyecto, abrí tu propia copia; la del boilerplate está en
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/REGISTRY.md"
+                >GitHub</a
+              >. El ruteo por tarea (qué skill para qué pedido) está en <code>AGENTS.md</code>,
+              secciones 4 y 5.
+            </p>
+            <p>
+              Para leer el registro conviene saber que hay cuatro clases de skill: de
+              <b>workflow</b> (conducen una fase entera, como <code>/sprint-development</code>), de
+              <b>contexto</b> (guardan un mapa del negocio), <b>utilitarias</b> (envuelven una CLI,
+              como <code>/acli</code>) y el <b>núcleo</b> <code>agentic-dev-core</code>, que no se
+              invoca: guarda la doctrina que citan las demás.
+            </p>
+          </div>
+        </section>
+
+        <!-- 04 -->
+        <section id="ciclo">
+          <div class="eyebrow"><span class="num">04</span> el ciclo de vida</div>
+          <h2>De la idea al producto mantenido</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fase</th>
+                  <th>Cadencia</th>
+                  <th>Skill</th>
+                  <th>Deja</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Fundación</b></td>
+                  <td>una vez</td>
+                  <td><code>/project-foundation</code></td>
+                  <td>
+                    modelo de negocio, PRD, SRS, glosario de dominio, primeros ADR, mapas del
+                    negocio (delegados a <code>/project-context</code>)
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Sistema de diseño</b></td>
+                  <td>una vez (tokens) y por historia (pantallas)</td>
+                  <td><code>/design-system</code></td>
+                  <td>
+                    <code>DESIGN.md</code>; después, mockups por historia encargados a una
+                    herramienta de diseño y ratificados por un humano
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Scaffolding</b></td>
+                  <td>una vez</td>
+                  <td><code>/project-bootstrap</code></td>
+                  <td>backend, frontend, OpenAPI, auth, entornos, tipos de Supabase</td>
+                </tr>
+                <tr>
+                  <td><b>Backlog</b></td>
+                  <td>continuo</td>
+                  <td><code>/product-management</code></td>
+                  <td>épicas e historias en Jira con criterios de aceptación refinados</td>
+                </tr>
+                <tr>
+                  <td><b>Sprint</b></td>
+                  <td>por historia</td>
+                  <td><code>/sprint-development</code></td>
+                  <td>plan, código, PR revisado, deploy a staging, historia en Ready For QA</td>
+                </tr>
+                <tr>
+                  <td><b>Mantenimiento</b></td>
+                  <td>cuando cambia algo</td>
+                  <td>
+                    <code>/project-context</code> (modos <code>data</code>, <code>features</code>,
+                    <code>api</code>, <code>master-plan</code>, <code>dev-roadmap</code>)
+                  </td>
+                  <td>mapas del negocio, plan maestro y roadmap al día</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              Alrededor del ciclo hay skills de apoyo que no son una fase:
+              <code>/unit-testing</code> para TDD dentro de una historia,
+              <code>/testability-guide</code> para la página que recibe QA,
+              <code>/pr-review-lead</code> para revisar el PR de otra persona,
+              <code>/jira-administration</code> para la configuración de Jira y
+              <code>/autonomous-delivery</code> para corridas programadas sin nadie en la línea. Qué
+              hace cada una, en <code>REGISTRY.md</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 05 -->
+        <section id="historia">
+          <div class="eyebrow"><span class="num">05</span> una historia de punta a punta</div>
+          <h2>Cinco etapas, y la última tiene una puerta</h2>
+          <ol class="pipe">
+            <li>
+              <span class="s">ETAPA 1</span><b>Plan</b>Plan de implementación, publicado en el campo
+              de Jira de la historia.
+            </li>
+            <li>
+              <span class="s">ETAPA 2</span><b>Implementación</b>Código, tests, tipos y lint en
+              verde.
+            </li>
+            <li>
+              <span class="s">ETAPA 3</span><b>Code review</b>PR abierto; un revisor independiente
+              marca severidades.
+            </li>
+            <li class="qa">
+              <span class="s">ETAPA 4</span><b>Staging</b>Merge con tu OK y deploy verificado por
+              SHA.
+            </li>
+            <li class="gate">
+              <span class="s">ETAPA 5 · PUERTA</span><b>Producción</b>Solo con QA en verde y
+              aprobación del negocio.
+            </li>
+          </ol>
+          <div class="prose">
+            <p>
+              Lo conduce <code>/sprint-development</code>. Cada etapa alimenta a la siguiente, así
+              que nunca corren en paralelo; el paralelismo vive adentro de una etapa. El merge nunca
+              es automático: lo pedís vos. Bajo una estrategia sin rama de integración (como
+              <code>solo-main</code>), el "staging" de la etapa 4 es el Preview deployment de la
+              rama del PR.
+            </p>
+          </div>
+
+          <h3>Los estados que ve el equipo en Jira</h3>
+          <div class="flow" aria-label="Estados de una historia">
+            <span class="st">Ready For Dev</span><span class="ar">→</span>
+            <span class="st dev">In Progress</span><span class="ar">→</span>
+            <span class="st dev">In Review</span><span class="ar">→</span>
+            <span class="st qa">Ready For QA</span><span class="ar">→</span>
+            <span class="st">QA y release</span>
+          </div>
+          <div class="prose">
+            <p>
+              El fin de la etapa 1 mueve la historia a <b>In Progress</b>; abrir el PR la lleva a
+              <b>In Review</b>; el deploy verde a staging la deja en <b>Ready For QA</b>. Si la
+              automatización de Jira no dispara la transición, la skill la dispara y vuelve a leer
+              el estado. Ninguna skill de desarrollo mueve una historia más allá de Ready For QA:
+              probarla y liberarla es de QA y de quien hace el release. La tabla completa por tipo
+              de issue vive en
+              <code>.agents/skills/agentic-dev-core/references/artifact-lifecycle.md</code>.
+            </p>
+          </div>
+          <div class="callout agent">
+            <p>
+              <b>Dónde se entrega a QA.</b> Lo que QA recibe (la página <code>/qa</code> con el SHA
+              del build, el deploy de staging, la historia en Ready For QA) está descrito en
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/methodology/IQL-methodology.md"
+                >Cómo el dev le entrega trabajo a QA</a
+              >. La metodología de testing completa vive en el repo hermano,
+              <a
+                href="https://upex-galaxy.github.io/agentic-qa-boilerplate/docs/core/metodologia/index.html"
+                >agentic-qa-boilerplate</a
+              >.
+            </p>
+          </div>
+        </section>
+
+        <!-- 06 -->
+        <section id="agente">
+          <div class="eyebrow"><span class="num">06</span> cómo trabaja el agente</div>
+          <h2>Una conversación que dirige, subagentes que ejecutan</h2>
+          <div class="prose">
+            <p>
+              La sesión con la que hablás es el centro de mando. Leer muchos archivos, editar
+              varios, correr verificaciones o hablar con Jira se delega a subagentes, cada uno con
+              un briefing completo: objetivo, documentos a leer, reglas del proyecto resueltas desde
+              <code>REGISTRY.md</code>, skills a cargar, instrucciones exactas, formato del reporte
+              y reglas críticas. La plantilla es
+              <code>.agents/skills/agentic-dev-core/references/briefing-template.md</code>. Un
+              subagente ve solo su briefing, así que una regla que no viaja ahí no lo obliga.
+            </p>
+          </div>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Subagente (por defecto)</th>
+                  <th>Worker supervisado (opcional)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Vive</b></td>
+                  <td>dentro del turno</td>
+                  <td>hasta que se lo cierra</td>
+                </tr>
+                <tr>
+                  <td><b>Contexto</b></td>
+                  <td>se pierde al reportar</td>
+                  <td>persiste; podés seguir hablándole</td>
+                </tr>
+                <tr>
+                  <td><b>Git</b></td>
+                  <td>el índice de la sesión principal</td>
+                  <td>su propio worktree y rama, una historia por worker</td>
+                </tr>
+                <tr>
+                  <td><b>Sirve para</b></td>
+                  <td>leer, mapear, verificar</td>
+                  <td>una historia entera hasta el PR</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              Los workers supervisados los coordina <code>/orca-orchestration</code> y solo existen
+              si el runtime de Orca está disponible; si no, el repo ni los menciona y el trabajo
+              corre en subagentes. Dos piezas más para trabajo largo:
+            </p>
+            <ul>
+              <li>
+                <b>Worktrees.</b> Para aislar trabajo en paralelo: <code>git worktree add</code>,
+                después <code>bun run worktree:provision</code> (copia <code>.env</code>, instala
+                dependencias, crea el alias de skills), y antes de borrarlo
+                <code>bun run worktree:audit</code> con <code>--rescue</code>.
+              </li>
+              <li>
+                <b>Relevo de sesión.</b> Cuando la ventana de contexto se llena,
+                <code>/session-handoff</code> escribe un documento de relevo y lanza la sesión
+                sucesora en el mismo worktree y el mismo harness.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 07 -->
+        <section id="voz">
+          <div class="eyebrow"><span class="num">07</span> cómo te habla</div>
+          <h2>Primero la respuesta, después el menú</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Capa</th>
+                  <th>Gobierna</th>
+                  <th>En la práctica</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Caveman</b></td>
+                  <td>cuántas palabras</td>
+                  <td>
+                    sin relleno ni cortesías; el código, los commits y los avisos de seguridad se
+                    escriben normal
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Butler</b></td>
+                  <td>la granularidad</td>
+                  <td>
+                    un titular que resuelve tu pregunta y un menú de temas atómicos para que tires
+                    del que te importe
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>PM Voice</b></td>
+                  <td>el registro</td>
+                  <td>
+                    el titular habla del valor para el usuario, no del archivo tocado; pasa a
+                    registro técnico ante rutas, errores, seguridad o deploys
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Visual Mapping</b></td>
+                  <td>la forma</td>
+                  <td>tablas, flujos y árboles cuando reemplazan a un párrafo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              El titular abre directo con el valor, sin frase de enganche antes. El agente responde
+              en el idioma en que le escribís; el código, los commits, los PR y los tickets van
+              siempre en inglés. Para volver a un tono detallado alcanza con pedirlo ("habla
+              normal"). El espejo humano del contrato es
+              <a
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/ai-personality.md"
+                >docs/ai-personality.md</a
+              >, y hay un deck sobre la
+              <a
+                href="https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/agentic-dev-core/capa-comportamental.es.html"
+                >capa comportamental</a
+              >.
+            </p>
+          </div>
+        </section>
+
+        <!-- 08 -->
+        <section id="git">
+          <div class="eyebrow"><span class="num">08</span> git y trazabilidad</div>
+          <h2>La estrategia es una variable, no un párrafo</h2>
+          <div class="prose">
+            <p>
+              Cómo se ramifica, se integra y se publica lo decide el bloque
+              <code>git_strategy</code> de <code>.agents/project.yaml</code>. Toda operación de git
+              pasa por <code>/git-flow-master</code>, que lee ese bloque y adapta ramas, commits,
+              pushes y PR. El bloque llega con <code>solo-main</code> como valor por defecto; si
+              nadie lo eligió para tu proyecto, la skill te ofrece la configuración inicial la
+              primera vez que hagas algo con git.
+            </p>
+            <ul>
+              <li>
+                <b>Push a una rama protegida:</b> lo resuelve
+                <code>git_strategy.policy.direct_push_to_protected</code>. Con
+                <code>forbidden</code> va por PR, con <code>confirm</code> pregunta cada vez, con
+                <code>allowed</code> empuja sin preguntar.
+              </li>
+              <li>
+                <b>Política contra el host:</b> <code>bun run git:policy verify</code> compara lo
+                declarado con lo que GitHub aplica de verdad (protección clásica y rulesets).
+              </li>
+              <li>
+                <b>Commits forenses:</b> todo commit de un agente termina con
+                <code>Worktree:</code> y <code>Session:</code>, que dicen qué checkout y qué sesión
+                lo produjeron. Ninguna línea nombra a una herramienta de IA.
+              </li>
+              <li>
+                <b>Historia intocable:</b> nunca se reescribe lo que ya está pusheado, nunca se
+                fuerza un push sobre una rama compartida, y un PR nunca se mergea solo.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 09 -->
+        <section id="mcp">
+          <div class="eyebrow"><span class="num">09</span> herramientas externas</div>
+          <h2>Las skills piden capacidades; el harness las provee</h2>
+          <div class="prose">
+            <p>
+              Una skill no pide "el servidor X": declara la capacidad que necesita
+              (<code>library-docs</code>, <code>web-search</code>, <code>db</code>,
+              <code>automation-flows</code>, <code>diagrams</code>) y el agente la resuelve por el
+              sufijo del nombre de la herramienta, con el prefijo que sea. Los servidores
+              comprometidos en el repo son los que declara <code>.mcp.json</code>, con su
+              equivalente en <code>opencode.jsonc</code> y <code>.codex/config.toml</code>. La
+              búsqueda web se conecta a nivel del harness, nunca en esos archivos.
+            </p>
+          </div>
+          <div class="callout sig">
+            <p>
+              <b>Si falta una capacidad, el agente se detiene.</b> Te dice cuál es, qué servidor la
+              suele proveer y cómo habilitarla. Lo mismo ante un 401 o 403 de un MCP: el fallo de
+              credenciales es silencioso en casi todos los harnesses, así que el agente no improvisa
+              un desvío. Arreglás el <code>.env</code> y reiniciás la sesión.
+            </p>
+          </div>
+          <div class="prose">
+            <p>
+              Las credenciales viven en <code>.env</code> (plantilla en <code>.env.example</code>).
+              Para un lanzamiento sin línea de comandos (app de escritorio, worker supervisado),
+              <code>bun run harness:env</code> deriva desde el <code>.env</code> los archivos que
+              cada harness lee al arrancar; <code>bun run harness:env:check</code> detecta la
+              deriva. El host de Atlassian no es una variable de entorno: vive en
+              <code>issue_tracker.atlassian_url</code> del <code>project.yaml</code> y se imprime
+              con <code>bun run jira:url</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="contexto">
+          <div class="eyebrow"><span class="num">10</span> dónde vive el contexto</div>
+          <h2>Jira es la verdad; el repo guarda lo que no está en Jira</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lugar</th>
+                  <th>Qué guarda</th>
+                  <th>Cómo se mantiene</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>.context/PBI/</code></td>
+                  <td>caché local de épicas, historias y planes de Jira</td>
+                  <td>
+                    gitignored; se reconstruye con <code>bun run context:hydrate</code>. Nunca se
+                    edita a mano: se escribe en Jira y se sincroniza
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>.context/PRD/</code>, <code>.context/SRS/</code>,
+                    <code>.context/business/</code>
+                  </td>
+                  <td>definición del producto, arquitectura, glosario de dominio</td>
+                  <td>los crea <code>/project-foundation</code>; el glosario solo crece</td>
+                </tr>
+                <tr>
+                  <td><code>.context/ADR/</code></td>
+                  <td>decisiones de arquitectura difíciles de revertir</td>
+                  <td>se agregan, se reemplazan, nunca se borran</td>
+                </tr>
+                <tr>
+                  <td>skills <code>business-*-context</code></td>
+                  <td>mapas del negocio en HTML: datos, features, API</td>
+                  <td>
+                    se leen con <code>bun run context:map &lt;skill&gt;</code>; los genera
+                    <code>/project-context</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>.context/design/master-design-plan.md</code></td>
+                  <td>especificación por pantalla y mapa historia → pantalla</td>
+                  <td>la fase de pantallas de <code>/design-system</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="prose">
+            <p>
+              Y hay una memoria que cruza sesiones: Engram, instalado por
+              <code>bun run setup</code>, guarda decisiones, bugs resueltos y hallazgos para que la
+              próxima sesión no arranque a ciegas. El deck
+              <a
+                href="https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/agentic-dev-core/pbi-jira-cache.es.html"
+                >la caché PBI de Jira</a
+              >
+              explica por qué <code>.context/PBI/</code> no se commitea.
+            </p>
+          </div>
+        </section>
+
+        <!-- 11 -->
+        <section id="recetas">
+          <div class="eyebrow"><span class="num">11</span> quiero x, hago y</div>
+          <h2>Pedidos frecuentes</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Quiero</th>
+                  <th>Pedile al agente</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>definir un producto nuevo</td>
+                  <td><code>/project-foundation</code></td>
+                </tr>
+                <tr>
+                  <td>fijar paleta, tipografía y tokens</td>
+                  <td><code>/design-system</code></td>
+                </tr>
+                <tr>
+                  <td>un mockup para una historia que no tiene pantalla</td>
+                  <td><code>/design-system</code>, fase de pantallas</td>
+                </tr>
+                <tr>
+                  <td>montar backend, frontend y auth</td>
+                  <td><code>/project-bootstrap</code></td>
+                </tr>
+                <tr>
+                  <td>crear una épica o refinar criterios de aceptación</td>
+                  <td><code>/product-management</code></td>
+                </tr>
+                <tr>
+                  <td>implementar una historia de Jira</td>
+                  <td><code>/sprint-development</code> con la clave de la historia</td>
+                </tr>
+                <tr>
+                  <td>escribir tests unitarios con TDD</td>
+                  <td><code>/unit-testing</code></td>
+                </tr>
+                <tr>
+                  <td>abrir un PR, resolver un conflicto, partir un PR enorme</td>
+                  <td><code>/git-flow-master</code> (se carga solo ante un pedido de git)</td>
+                </tr>
+                <tr>
+                  <td>revisar el PR de alguien</td>
+                  <td><code>/pr-review-lead</code></td>
+                </tr>
+                <tr>
+                  <td>la página que QA necesita para probar</td>
+                  <td><code>/testability-guide</code></td>
+                </tr>
+                <tr>
+                  <td>refrescar el mapa de datos del negocio</td>
+                  <td><code>/project-context data</code></td>
+                </tr>
+                <tr>
+                  <td>saber cómo se guarda una entidad</td>
+                  <td><code>bun run context:map business-data-context</code></td>
+                </tr>
+                <tr>
+                  <td>alinear los Components de Jira con los módulos reales</td>
+                  <td><code>/jira-administration components</code></td>
+                </tr>
+                <tr>
+                  <td>varias historias en paralelo, una sesión por historia</td>
+                  <td><code>/orca-orchestration</code></td>
+                </tr>
+                <tr>
+                  <td>seguir este trabajo en una sesión nueva</td>
+                  <td><code>/session-handoff</code></td>
+                </tr>
+                <tr>
+                  <td>traer los cambios del boilerplate</td>
+                  <td><code>bun run up</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 12 -->
+        <section id="salud">
+          <div class="eyebrow"><span class="num">12</span> diagnóstico</div>
+          <h2>Cuando algo no anda</h2>
+          <div class="tbl">
+            <table>
+              <thead>
+                <tr>
+                  <th>Script</th>
+                  <th>Responde</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>bun run setup:doctor</code></td>
+                  <td>
+                    qué falta en la instalación: credenciales, harnesses, contrato multi-harness
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>bun run repo:check</code></td>
+                  <td>el gate completo del repo: formato, lint, tipos, variables, docs, skills</td>
+                </tr>
+                <tr>
+                  <td><code>bun run agents:compat:check</code></td>
+                  <td>si las superficies generadas por harness siguen en regla</td>
+                </tr>
+                <tr>
+                  <td><code>bun run docs:check</code></td>
+                  <td>links muertos y hechos volátiles en la documentación</td>
+                </tr>
+                <tr>
+                  <td><code>bun run skills:check</code></td>
+                  <td>que cada skill respete su contrato</td>
+                </tr>
+                <tr>
+                  <td><code>bun run vars:check</code></td>
+                  <td>
+                    que cada <code>{{VARIABLE}}</code> resuelva contra <code>project.yaml</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>bun run jira:check</code></td>
+                  <td>que el manifiesto de Jira coincida con el catálogo de la instancia</td>
+                </tr>
+                <tr>
+                  <td><code>bun run harness:env:check</code></td>
+                  <td>
+                    si los archivos de credenciales por harness se desviaron del <code>.env</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <p>
+              Los comandos exactos los define <code>package.json</code>. Si una guía y
+              <code>package.json</code> no coinciden, gana <code>package.json</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 13 -->
+        <section id="seguir">
+          <div class="eyebrow"><span class="num">13</span> adónde seguir</div>
+          <h2>Siguiente lectura según lo que necesites</h2>
+          <div class="paths">
+            <div class="card">
+              <h3>Los decks</h3>
+              <p>Una guía visual por skill, publicada en el hub Planos.</p>
+              <a class="go" href="https://upex-galaxy.github.io/agentic-dev-boilerplate/"
+                >→ hub Planos</a
+              >
+            </div>
+            <div class="card">
+              <h3>El porqué</h3>
+              <p>La filosofía del ciclo agéntico y cómo extenderlo.</p>
+              <a
+                class="go"
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/agentic-development-engineering.md"
+                >→ agentic-development-engineering.md</a
+              >
+            </div>
+            <div class="card">
+              <h3>Las guías</h3>
+              <p>Setup, MCP, git, entornos y arquitecturas, en español.</p>
+              <a
+                class="go"
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/docs/README.md"
+                >→ docs/README.md</a
+              >
+            </div>
+            <div class="card agent">
+              <h3>Las reglas del agente</h3>
+              <p>Lo que el agente carga en cada sesión. Denso, escrito para máquinas.</p>
+              <a
+                class="go"
+                href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/AGENTS.md"
+                >→ AGENTS.md</a
+              >
+            </div>
+            <div class="card sig">
+              <h3>El lado de QA</h3>
+              <p>Cómo se prueba lo que el dev entrega, en el repo hermano.</p>
+              <a class="go" href="https://github.com/upex-galaxy/agentic-qa-boilerplate"
+                >→ agentic-qa-boilerplate</a
+              >
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          Esta página no lista skills, scripts ni servidores: nombra dónde están. Si un dato de acá
+          no coincide con el repo, gana el archivo que la página nombra.
+        </p>
+        <div class="sig">
+          <span>Fuente: <span class="mono">docs/onboarding.html</span></span>
+          <span>·</span>
+          <span>Local: <span class="mono">bun run onboarding</span></span>
+          <span>·</span>
+          <span
+            ><a href="https://upex-galaxy.github.io/agentic-dev-boilerplate/"
+              >← volver a Planos</a
+            ></span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // label each cell with its column header, for the stacked phone layout
+      (function () {
+        document.querySelectorAll('.tbl table').forEach(function (table) {
+          var heads = [].map.call(table.querySelectorAll('thead th'), function (th) {
+            return th.textContent.trim();
+          });
+          table.querySelectorAll('tbody tr').forEach(function (tr) {
+            [].forEach.call(tr.children, function (td, i) {
+              if (heads[i]) td.setAttribute('data-label', heads[i]);
+            });
+          });
+        });
+      })();
+
+      // table of contents: highlight the section in view
+      (function () {
+        if (!('IntersectionObserver' in window)) return;
+        var links = {};
+        document.querySelectorAll('.toc a').forEach(function (a) {
+          links[a.getAttribute('href').slice(1)] = a;
+        });
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              Object.keys(links).forEach(function (k) {
+                links[k].classList.toggle('on', k === e.target.id);
+              });
+            });
+          },
+          { rootMargin: '-20% 0px -70% 0px' }
+        );
+        document.querySelectorAll('main section').forEach(function (s) {
+          io.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
