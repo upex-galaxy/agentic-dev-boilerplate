@@ -285,7 +285,7 @@ Anti-pattern `I18` requires an **active** discovery pass before any link is crea
 1. Read `.context/PBI/epic-tree.md` — stories of the same epic + related epics.
 2. Read the data map (`bun run context:map business-data-context`) when it is generated (a placeholder notice means no map) — entity-level relations.
 3. Query via `[ISSUE_TRACKER_TOOL]` the current link graph of the new story and of its possible neighbors in the parent epic.
-4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` ∈ `{prd-sequencing, srs-sequencing, master-implementation-plan, business-data-context, local-declaration}`.
+4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` ∈ `{prd-sequencing, srs-sequencing, master-implementation-plan, business-data-context, author-intent}`.
 5. **Filter noise**: discard candidates whose only justification is a global / infrastructural prerequisite (auth exists, DB exists, framework is wired up). Those are properties of the project, not dependencies between stories.
 6. **Heuristic**: does the candidate dependency disappear if we reorder sprints? YES → global noise, drop. NO → real feature-level dependency, keep.
 7. Surface the filtered matrix to the user and wait for confirmation before creating any link in Step 4.
@@ -301,7 +301,7 @@ Anti-pattern `I18` requires an **active** discovery pass before any link is crea
 - Explicit sequencing in PRD / SRS / functional-specs.
 - Master Sprint ordering in `.context/master-implementation-plan.md`.
 - Entity-level relations in the data map (`bun run context:map business-data-context`).
-- Explicit `Blocked By` / `Blocks` declarations in the local `story.md` (Step 5).
+- Explicit `Blocked By` / `Blocks` dependencies the author stated in this session (`author-intent`).
 
 **How:**
 
@@ -574,15 +574,15 @@ The regenerated tree reflects the live Jira backlog graph (epics → child stori
 
 ---
 
-### Step 4: Create Local Epic Folder
+### Step 4: Local Epic Folder Name (the sync in Step 5 creates it)
 
-**Naming:** `EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{descriptive-name}/`
+**Naming:** `EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{descriptive-name}/`. Never `mkdir` it: the folder is part of the `.context/PBI/` cache (`AGENTS.md` §9).
 
 **Example:**
 
 If PROJECT_KEY = "MYM" and Jira assigned issue number = 50, the full Jira Key is "MYM-50".
 
-Create folder:
+The sync writes:
 
 ```
 .context/PBI/epics/EPIC-MYM-50-{name-per-domain}/
@@ -774,16 +774,14 @@ Full details (Kahn algorithm, cycle detection, output schema) → `references/sp
 **Result:**
 
 - ✅ Epic created in Jira with real ID and transitioned to `{{jira.statuses.epic_default}}`
-- ✅ Local epic folder created
-- ✅ `epic.md` file complete (no AC/Scope duplicated when they live in epic custom fields)
+- ✅ Local epic cache materialized via sync (no AC/Scope duplicated when they live in epic custom fields)
 - ✅ All stories created in Jira with real IDs
 - ✅ Stories transitioned to `{{jira.statuses.story_default}}`
 - ✅ Dependencies published as issue links (matrix reported)
 - ✅ Scope overlap check completed (alerts resolved by the user)
-- ✅ Local story folders created
-- ✅ `story.md` files complete (no AC/Scope/OOS duplicated)
-- ✅ `epic.md` updated with real IDs
-- ✅ `epic-tree.md` updated
+- ✅ Local story caches materialized via sync (no AC/Scope/OOS duplicated)
+- ✅ `epic.md` re-synced with real IDs
+- ✅ `epic-tree.md` regenerated via sync
 - ✅ Sprint sequencing executed and written via `/project-context dev-roadmap` to `.context/dev-roadmap.md` §4
 
 ---
@@ -1058,10 +1056,10 @@ STORY-{PROJECT}-{NUMBER}-{descriptive-name}/
 3. Create story in Jira → Capture ID
 4. Transition story to {{jira.statuses.story_default}}
 5. Link dependencies (when applicable) → see dependency-linking.md
-6. Create local folder STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}/
-7. Create story.md (no AC/Scope/OOS duplicated)
-8. Update parent epic.md
-9. Update epic-tree.md
+6. Sync the story cache (bun run jira:sync-issues get <KEY>) — never hand-write it
+7. Read back the synced story.md (no AC/Scope/OOS duplicated)
+8. Re-sync the parent epic.md
+9. Re-sync epic-tree.md
 ✅ Completed
 ```
 
@@ -1072,16 +1070,16 @@ STORY-{PROJECT}-{NUMBER}-{descriptive-name}/
  2. Define epic and decompose into stories
  3. Create epic in Jira → Capture ID
  4. Transition epic to {{jira.statuses.epic_default}}
- 5. Create local folder EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{name}/
- 6. Create epic.md
+ 5. Sync the epic cache (bun run jira:sync-issues get <EPIC_KEY>)
+ 6. Read back the synced epic.md
  7. Create every story in Jira → Capture IDs
  8. Transition stories to {{jira.statuses.story_default}}
  9. Link internal dependencies → see dependency-linking.md
 10. Cross-story Scope overlap check (pairwise)
-11. Create local story folders
-12. Create story.md files (no AC/Scope/OOS duplicated)
-13. Update epic.md with real IDs
-14. Update epic-tree.md
+11. Sync the story caches — never hand-write them
+12. Read back the synced story.md files (no AC/Scope/OOS duplicated)
+13. Re-sync epic.md with real IDs
+14. Re-sync epic-tree.md
 15. Sprint sequencing (final) → invoke /project-context dev-roadmap → .context/dev-roadmap.md §4
 ✅ Completed
 ```
@@ -1126,18 +1124,16 @@ STORY-{PROJECT}-{NUMBER}-{descriptive-name}/
 - ✅ (Level 2) Did the Scope overlap check pass?
 - ✅ (Level 2) Did you run sprint-sequencing and did it write `.context/dev-roadmap.md` §4 via `/project-context dev-roadmap`?
 
-### When Creating Local Files
+### After Syncing the Local Cache (read-back, never hand-edit)
 
-- ✅ Does the folder naming use the real Jira ID?
-- ✅ Is the format EPIC-{PROJECT}-{NUM}-{name}?
-- ✅ Did you use kebab-case in the descriptive name?
-- ✅ Do the `.md` files carry every required piece of information AND not duplicate AC/Scope/OOS?
+- ✅ Did the sync name the folders with the real Jira ID (`EPIC-{PROJECT}-{NUM}-{name}`, kebab-case)?
+- ✅ Do the synced `.md` files carry every required piece of information AND not duplicate AC/Scope/OOS? A gap is fixed in Jira, then re-synced.
 
 ---
 
 ## 📚 GENERATED FILES
 
-Depending on the level, the following are generated:
+Depending on the level, `bun run jira:sync-issues` materializes the following read-only cache (`AGENTS.md` §9: never hand-written):
 
 ### Level 1 (Individual Story)
 
@@ -1248,7 +1244,5 @@ Depending on the level, the following are generated:
 ---
 
 **Format:** Markdown files + Jira issues ready for implementation.
-
-**Last update:** 2026-05-22 — slug-based catalog refactor (custom fields + statuses + link types), dependency-linking phase, sprint sequencing, scope overlap check, dedup audit, Source spec convention.
 
 **Complements:** `product-backlog-seed.md` (initial MVP setup), `epic-creation.md`, `story-refinement.md`.

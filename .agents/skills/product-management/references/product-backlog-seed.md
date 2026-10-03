@@ -385,7 +385,7 @@ Anti-pattern `I18` in `SKILL.md` requires an **active** discovery pass before an
 1. Refresh the full backlog tree first — `bun run jira:sync-issues pull` — then read the materialized `.context/PBI/epic-tree.md` (live Jira backlog graph) alongside the Phase 1 planning draft.
 2. Read the data map (`bun run context:map business-data-context`) when it is generated (a placeholder notice means no map) (entity foreign-key graph).
 3. For every epic and story created in Phase 2, query its current Jira link graph via `[ISSUE_TRACKER_TOOL]` so the discovery pass sees any links that may already exist.
-4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` is one of: `prd-sequencing`, `srs-sequencing`, `master-implementation-plan`, `business-data-context`, `local-declaration`.
+4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` is one of: `prd-sequencing`, `srs-sequencing`, `master-implementation-plan`, `business-data-context`, `author-intent`.
 5. **Filter noise**: discard candidates whose only justification is a global / infrastructural prerequisite (auth exists, DB exists, framework is wired up, observability is set up). Those are properties of the project as a whole, not of one story over another. Keep ONLY feature-level, observable, explicit dependencies between specific work items.
 6. **Heuristic**: would the candidate dependency disappear if we reordered sprints? YES → it is global noise, drop. NO → it is a real feature-level dependency, keep.
 7. Surface the filtered matrix to the user and wait for confirmation before any link is written. Never auto-create.

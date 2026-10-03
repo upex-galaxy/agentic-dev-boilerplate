@@ -2,7 +2,7 @@
 name: sprint-development
 description: "Orchestrates the per-story dev loop end-to-end: Planning -> Implementation -> Code Review -> Staging deploy -> (gated) Production deploy. Mega-orchestrator on the dev side. Runs the design gate on every UI story (checks the US→Screen row, routes to `/design-system`'s screen phase when no mockup exists — never authors design itself). Drives the 12-step workflow: epic precheck, Jira transitions (Ready For Dev -> In Progress -> In Review -> Ready For QA), impl plan, code, PR, review, docs, merge, staging deploy, optional production deploy with rollback. Triggers on: implementar esta historia, implement this story, trabajar el ticket UPEX-XXX, plan to code to review to deploy, fix this bug and merge, deploy a staging, code review for PR, production deployment, rollback, continue implementation, story-level dev workflow, sprint-development, process sprint N, continue sprint, implement sprint N, sprint-file. Do NOT use for: foundational product definition (use /project-foundation), infrastructure scaffolding (use /project-bootstrap), backlog seeding / AC refinement (use /product-management), unit-testing TDD (use /unit-testing), formal QA testing (out of scope here)."
 license: MIT
-compatibility: [claude-code, copilot, cursor, codex, opencode]
+compatibility: [claude-code, codex, opencode]
 phase: implementation
 complementary_categories:
   - frontend-ui
@@ -668,7 +668,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 2. **Plan before code**: never skip Stage 1. Even bug fixes get a one-paragraph root-cause analysis before the diff.
 3. **Atomic commits**: one commit per logical step. Lint + build must pass before each push.
 4. **No AI attribution in commits**: never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines.
-5. **Confirm before push to main**: never push to `main`/`master` without explicit user confirmation. PR flow targets `staging`; production promotions are a separate gated event (Stage 5).
+5. **Push to a protected branch = resolve `git_strategy.policy.direct_push_to_protected`** (Critical Rule #4, mechanics in `/git-flow-master` §3.3): `allowed` pushes, `confirm` asks, `forbidden` routes through a PR. PR flow targets the integration branch (`git_strategy.branches.integration`, or the production branch when it is null); production promotions are a separate gated event (Stage 5).
 6. **Docs travel with the PR**: doc updates go in the feature branch, not pushed direct to `staging`.
 7. **Jira automation verification**: after PR open and after merge, wait ~30s and verify the auto-transition fired. If not, fire the mapped slug and surface the gap. A slug the catalog lacks follows the unmapped-status fallback in `agentic-dev-core/references/artifact-lifecycle.md` §4, never a guessed transition.
 8. **ATP source-of-truth** (modality-aware): jira-native detailed read = `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `acceptance-test-plan.md`; jira-xray detailed read = `bun run jira:sync-issues get <ATP_KEY>` (Test Plan issue `description`), then read the synced `test-plans/TESTPLAN-<KEY>-<slug>.md`. Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. Final fallback = `comments.md` / the issue description (where the `## Acceptance Test Plan` fallback comment lands when the custom field is absent).

@@ -18,7 +18,7 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 ## 📥 INPUT REQUERIDO
 
-> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo.
+> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo, y nunca escribas el literal `staging` ni `develop` en un comando. Si vale `null` (`solo-main`, `github-flow`, `trunk-based`) no hay rama de integración: no hay merge a staging, Stage 4 verifica el Preview deployment de Vercel de la rama del PR, y el merge a `git_strategy.branches.production` es Stage 5.
 
 ### 1. Estado del PR/Feature
 
