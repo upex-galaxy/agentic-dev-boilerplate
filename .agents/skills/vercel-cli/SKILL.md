@@ -1,6 +1,6 @@
 ---
 name: vercel-cli
-description: 'Vercel CLI cookbook for this Next.js + Supabase + Vercel boilerplate. Covers deployment verification (poll by commit SHA + `vercel inspect --wait`), env var sync between `.env` and Vercel scopes (Preview / Production / Development), build and runtime log streaming, rollback, and `.vercel/` project linking detection. Trigger whenever the user runs `vercel`, asks to "check deploy status", "wait until ready", "is my deploy live", "sync env vars to Vercel", "push env to Vercel", "see build logs", "tail Vercel logs", "rollback last deploy", "promote to production", "link this repo to Vercel", or any vercel-CLI-shaped task. Composes with `/deploy-to-vercel` (community skill, owns the deploy method selection) and `/sprint-development` (Stages 9 & 12 own the deploy orchestration). Do NOT use for: choosing a deploy method or doing a first-time link (use `/deploy-to-vercel`), driving the full sprint deploy stage (use `/sprint-development`), reading Supabase as source-of-truth for env values (use Supabase MCP — Vercel only mirrors them), or Bitbucket / Netlify / Cloudflare deployment (out of scope).'
+description: 'Vercel CLI cookbook for this Next.js + Supabase + Vercel boilerplate. Covers deployment verification (poll by commit SHA + `vercel inspect --wait`), env var sync between `.env` and Vercel scopes (Preview / Production / Development), build and runtime log streaming, rollback, and `.vercel/` project linking detection. Trigger whenever the user runs `vercel`, asks to "check deploy status", "wait until ready", "is my deploy live", "sync env vars to Vercel", "push env to Vercel", "see build logs", "tail Vercel logs", "rollback last deploy", "promote to production", "link this repo to Vercel", or any vercel-CLI-shaped task. Composes with `/deploy-to-vercel` (community skill, owns the deploy method selection) and `/sprint-development` (Stages 4 & 5 own the deploy orchestration). Do NOT use for: choosing a deploy method or doing a first-time link (use `/deploy-to-vercel`), driving the full sprint deploy stage (use `/sprint-development`), reading Supabase as source-of-truth for env values (use Supabase MCP — Vercel only mirrors them), or Bitbucket / Netlify / Cloudflare deployment (out of scope).'
 license: MIT
 compatibility: [claude-code, cursor, codex, opencode]
 allowed-tools: Bash(vercel:*)
@@ -29,7 +29,7 @@ metadata:
 
 # Vercel CLI (`vercel`)
 
-`vercel` is Vercel's official command-line client. In this boilerplate it is the primary verification + env-management surface for our standard stack: **Next.js + Supabase + Vercel + Resend**, with branch-based auto-deploys (`develop` → Vercel Preview / staging, `main` → Vercel Production).
+`vercel` is Vercel's official command-line client. In this boilerplate it is the primary verification + env-management surface for our standard stack: **Next.js + Supabase + Vercel + Resend**, with branch-based auto-deploys (the integration branch, `git_strategy.branches.integration` in `.agents/project.yaml`, e.g. `staging` → Vercel Preview / staging; `main` → Vercel Production).
 
 This skill teaches the operations that live AROUND a deploy — confirming it actually shipped, pushing the right env vars before it ships, tailing logs when it breaks, rolling back when it breaks badly. The act of TRIGGERING a deploy (choosing between git push, `vercel deploy`, or first-time `vercel link`) is owned by the community skill `/deploy-to-vercel`. This skill points at it; it does not duplicate it.
 
@@ -50,7 +50,7 @@ This skill is a CLI companion, not a deploy orchestrator. Other skills own the s
 | Companion skill         | What it owns                                                                                                          | When to defer to it                                                       |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `/deploy-to-vercel`     | Deploy method selection (git push vs `vercel deploy`), first-time `vercel link`, team scope selection (community v3.0.0+, author: vercel)             | The user has NOT deployed yet, or `.vercel/project.json` + `.vercel/repo.json` are both absent. Load FIRST in those cases.       |
-| `/sprint-development`   | Per-story deploy stages — Stage 9 (environment config + staging deploy), Stage 12 (production deploy + rollback)      | The deploy is part of a story workflow (Jira ticket open, branch `feature/UPEX-*`). Let it drive; this skill provides the verbs. |
+| `/sprint-development`   | Per-story deploy stages — Stage 4 (environment config + staging deploy), Stage 5 (production deploy + rollback)        | The deploy is part of a story workflow (Jira ticket open, branch `feature/UPEX-*`). Let it drive; this skill provides the verbs. |
 | `/git-flow-master`      | `git push` mechanics, branch protection, PR creation — the push that TRIGGERS the Vercel webhook                       | Any git-shaped step. Push first, then come back here to verify.            |
 
 Resolution steps (per `agentic-dev-core/references/skill-composition-strategy.md`):
@@ -63,10 +63,10 @@ Resolution steps (per `agentic-dev-core/references/skill-composition-strategy.md
 
 | DEV moment                                                       | What this skill does                                                                                                          |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `/sprint-development` Stage 9 — pre-deploy env audit             | `vercel env ls preview` → diff against `.env.example` keys; push the missing ones                                              |
-| `/sprint-development` Stage 9 — after merging `feature/*` → `develop` | Poll `vercel ls -m githubCommitSha=$(git rev-parse develop)` → `vercel inspect <url> --wait` until READY → smoke test          |
-| `/sprint-development` Stage 12 — after merging `develop` → `main`    | Same poll + inspect, on the production deployment                                                                              |
-| `/sprint-development` Stage 12 — production blew up               | `vercel rollback <previous-prod-url>` (or dashboard "Promote to Production" on the prior good deploy)                          |
+| `/sprint-development` Stage 4 — pre-deploy env audit             | `vercel env ls preview` → diff against `.env.example` keys; push the missing ones                                              |
+| `/sprint-development` Stage 4 — after merging `feature/*` → `staging` | Poll `vercel ls -m githubCommitSha=$(git rev-parse staging)` → `vercel inspect <url> --wait` until READY → smoke test          |
+| `/sprint-development` Stage 5 — after merging `staging` → `main`    | Same poll + inspect, on the production deployment                                                                              |
+| `/sprint-development` Stage 5 — production blew up               | `vercel rollback <previous-prod-url>` (or dashboard "Promote to Production" on the prior good deploy)                          |
 | Any session, after a deploy fails                                | `vercel inspect <url> --logs` to grab the build log; `vercel logs <url>` for runtime logs                                       |
 | First-time onboarding to a new Vercel project                    | Defer to `/deploy-to-vercel` for `vercel link`; come back here for `vercel env pull .env.local`                                |
 
@@ -184,7 +184,7 @@ Load the reference that matches the user's current need. Do not preload all of t
 | Understand `.vercel/project.json` vs `.vercel/repo.json`, link a new directory                          | `references/linking.md`                       |
 | Diagnose surprising CLI behavior — UPPERCASE status, ANSI in `ls`, scope spellings, blocking defaults  | `references/gotchas.md`                       |
 | Choose a deploy method or do a first-time link                                                         | **Defer to `/deploy-to-vercel`** (community)  |
-| Drive the per-story deploy stages                                                                      | **Defer to `/sprint-development`** Stages 9, 12 |
+| Drive the per-story deploy stages                                                                      | **Defer to `/sprint-development`** Stages 4, 5 |
 
 ## Working style
 

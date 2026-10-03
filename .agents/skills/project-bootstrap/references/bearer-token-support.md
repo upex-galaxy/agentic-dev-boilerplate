@@ -30,7 +30,7 @@ Agregar soporte de **autenticación Bearer Token** a las API routes de Next.js p
 ### 2. Información a Extraer
 
 - **Supabase URL** → Para crear cliente con token
-- **Anon Key** → Para autenticación
+- **Publishable Key** → Para autenticación
 - **Endpoints existentes** → Para actualizarlos
 
 ---
@@ -336,7 +336,7 @@ registry.registerComponent('securitySchemes', 'bearerAuth', {
 **Paso 4.1: TypeScript check**
 
 ```bash
-bun run typecheck
+bun run types:check
 ```
 
 **Paso 4.2: Lint check**
@@ -350,7 +350,7 @@ bun run lint:check
 ```bash
 # 1. Obtener token
 curl -X POST "https://[PROJECT_ID].supabase.co/auth/v1/token?grant_type=password" \
-  -H "apikey: [ANON_KEY]" \
+  -H "apikey: [PUBLISHABLE_KEY]" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
 
@@ -379,7 +379,7 @@ curl "http://localhost:3000/api/[endpoint]" \
 
 ### Validación:
 
-- [ ] `bun run typecheck` pasa
+- [ ] `bun run types:check` pasa
 - [ ] `bun run lint:check` pasa sin nuevos errores
 - [ ] Endpoints siguen funcionando con cookies (browser)
 - [ ] Endpoints funcionan con Bearer token (Postman)
@@ -418,7 +418,7 @@ curl "http://localhost:3000/api/[endpoint]" \
 POST https://[PROJECT_ID].supabase.co/auth/v1/token?grant_type=password
 Headers:
 
-- apikey: [ANON_KEY]
+- apikey: [PUBLISHABLE_KEY]
 - Content-Type: application/json
   Body:
   {"email": "...", "password": "..."}

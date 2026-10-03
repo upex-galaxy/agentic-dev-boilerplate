@@ -96,7 +96,7 @@ Continuar la implementación de **STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** que
 
 **Sigue las mismas restricciones de `implement-story.md`:**
 
-- ❌ NO integration/E2E tests (eso es Fase 11)
+- ❌ NO integration/E2E tests (eso es QA, fuera de este skill)
 - ✅ Code standards
 - ✅ Error handling
 - ✅ Design system

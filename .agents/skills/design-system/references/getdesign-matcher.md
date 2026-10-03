@@ -179,7 +179,7 @@ npx --yes getdesign add <slug>
 By default, `getdesign` writes to `./DESIGN.md`. If `.agents/project.yaml` has a non-default `design_md_path`, pass `--out`:
 
 ```bash
-DESIGN_MD_PATH=$(yq '.design_md_path // "./DESIGN.md"' .agents/project.yaml)
+DESIGN_MD_PATH=$(yq '.frontend.design_md_path // "./DESIGN.md"' .agents/project.yaml)
 npx --yes getdesign add <slug> --out "$DESIGN_MD_PATH"
 ```
 

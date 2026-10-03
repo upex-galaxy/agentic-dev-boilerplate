@@ -12,7 +12,6 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 │   ├── README.md                  Folder index
 │   ├── business-model.md          Business Model Canvas, value prop (/project-foundation Phase 1)
 │   ├── market-context.md          Industry, competitors, positioning (/project-foundation Phase 1)
-│   ├── legacy-analysis.md         Legacy stack + doc-gap analysis    (/project-foundation Phase 1, optional)
 │   ├── project-dev-guide.md       How to build features here         (/project-foundation Phase 4 embedded)
 │   └── domain-glossary.md         Canonical domain terminology       (/project-foundation Phase 4 Step 6; hand-maintained, append-only)
 │
@@ -46,7 +45,6 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
 | `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
 | `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
-| `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
 | `business/project-dev-guide.md`                     | `/project-foundation` (Phase 4 Step 4)  | Embedded skill logic; re-run if architecture changes   |
 | `business/domain-glossary.md`                       | `/project-foundation` (Phase 4 Step 6); updated when new terms surface (via `/product-management` flag) | Hand-maintained, append-only, never regenerated        |
 | `master-implementation-plan.md`                     | `project-context` mode `master-plan`    | Invoked by `/project-foundation` Phase 4 Step 5. EPIC/strategy layer. |

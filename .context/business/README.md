@@ -15,13 +15,12 @@ The authored "understand the business" files live here. Two layers:
 | ------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `business-model.md`                  | `/project-foundation` Phase 1                | Business Model Canvas, value prop                                                                                                    |
 | `market-context.md`                  | `/project-foundation` Phase 1                | Industry, competitors, positioning                                                                                                   |
-| `legacy-analysis.md`                 | `/project-foundation` Phase 1 (optional)     | Legacy stack + doc-gap analysis                                                                                                      |
 | Business maps (data / feature / API) | `/project-context data` / `features` / `api` | HTML maps inside `business-data-context`, `business-feature-context`, `business-api-context`; read with `bun run context:map <slug>` |
 | `project-dev-guide.md`               | `/project-foundation` Phase 4 Step 4         | How to build features here                                                                                                           |
 
 ## When to refresh
 
-- Constitution files (`business-model.md` / `market-context.md` / `legacy-analysis.md`):
+- Constitution files (`business-model.md` / `market-context.md`):
   major product pivot, new MVP cut, market repositioning. Otherwise once-and-done.
 - Maps + dev guide: re-run the matching `/project-context <mode>` (maps) or `/project-foundation` step (dev guide) after architecture changes.
 

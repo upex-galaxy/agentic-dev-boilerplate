@@ -7,7 +7,7 @@ Vercel stores env vars per **environment** (Production / Preview / Development).
 | CLI flag value  | Dashboard label | Triggered for                                                                   |
 | --------------- | --------------- | ------------------------------------------------------------------------------- |
 | `production`    | Production      | The production branch (default `main`)                                          |
-| `preview`       | Preview         | Every other branch — feature branches, `develop`, hotfixes                      |
+| `preview`       | Preview         | Every other branch — feature branches, `staging`, hotfixes                      |
 | `development`   | Development     | Local `vercel dev` / `vercel env pull` to `.env.local`                          |
 
 Use the **lowercase CLI form** in scripts. Dashboard labels are display-only.
@@ -24,6 +24,7 @@ Use the **lowercase CLI form** in scripts. Dashboard labels are display-only.
 | `SUPABASE_URL`                     | production + preview | Server-side mirror of `NEXT_PUBLIC_SUPABASE_URL`. Some Supabase libs require both spellings.                                                            |
 | `SUPABASE_ANON_KEY`                | production + preview | Server-side mirror of the public anon key.                                                                                                              |
 | `SUPABASE_PUBLISHABLE_KEY`         | production + preview | New-style publishable key. Browser-safe.                                                                                                                |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | production + preview | Browser-side copy of the publishable key, read by the Supabase browser client. NOT provisioned by the integration: set it by hand.                  |
 | `SUPABASE_SECRET_KEY`              | production + preview | New-style secret. **Server-only — never `NEXT_PUBLIC_`.**                                                                                              |
 | `SUPABASE_SERVICE_ROLE_KEY`        | production + preview | Legacy service-role. **Server-only.** Bypasses RLS — guard it.                                                                                          |
 | `SUPABASE_JWT_SECRET`              | production + preview | Used to verify / sign custom JWTs.                                                                                                                      |
@@ -104,7 +105,7 @@ Env mutations do NOT automatically redeploy. To pick up new values:
 ## Hard rules
 
 - **NEVER commit `.env.local`** produced by `vercel env pull`. It's in `.gitignore` for a reason.
-- **NEVER put service-role / secret keys in `NEXT_PUBLIC_*` names.** Anything `NEXT_PUBLIC_` is bundled into the browser JS. The boilerplate's `NEXT_PUBLIC_SUPABASE_*` keys are deliberately the public anon key only.
+- **NEVER put service-role / secret keys in `NEXT_PUBLIC_*` names.** Anything `NEXT_PUBLIC_` is bundled into the browser JS. The boilerplate's `NEXT_PUBLIC_SUPABASE_*` keys are deliberately the public publishable (or legacy anon) key only.
 - **NEVER push `ATLASSIAN_*`, `N8N_*`, `SUPABASE_ACCESS_TOKEN` to Vercel scopes** unless runtime app code reads them. These are devtime/agent-side credentials; they have no business sitting in production runtime env.
 - **Always re-run `vercel whoami` and check `.vercel/project.json` `orgId`** before bulk-pushing. A misrouted push to the wrong team's project is the most common foot-gun.
 

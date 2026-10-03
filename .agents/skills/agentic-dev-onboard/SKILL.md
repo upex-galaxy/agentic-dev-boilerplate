@@ -1,6 +1,6 @@
 ---
 name: agentic-dev-onboard
-description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCP capabilities (library docs, web search at harness level, DB, automation flows), critical env vars, Critical Rule #12 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
+description: "Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready For QA), /sprint-development for ticket-driven work, MCP capabilities (library docs, web search at harness level, DB, automation flows), critical env vars, Critical Rule #10 (READ package.json DIRECTLY). Triggers on: `onboard me`, `explain this repo`, `first time using this`, `primer vez en este repo`, `/agentic-dev-onboard`. Do NOT use for: feature implementation (use /sprint-development), test design (use /unit-testing), backlog refinement (use /product-management)."
 license: MIT
 compatibility: [claude-code, opencode]
 phase: foundation
@@ -91,7 +91,7 @@ This bootstraps `.agents/`, installs Engram (persistent memory) via gentle-ai `-
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
-> **Critical Rule #12** (AGENTS.md §1): for build/test/lint commands, **READ `package.json` DIRECTLY** — never trust a hardcoded list in a doc. Scripts drift; `package.json` is canonical.
+> **Critical Rule #10** (AGENTS.md §1): for build/test/lint commands, **READ `package.json` DIRECTLY** — never trust a hardcoded list in a doc. Scripts drift; `package.json` is canonical.
 
 ---
 
@@ -174,11 +174,12 @@ Place these in `.env` before running anything that talks to a real environment:
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (manual / ad-hoc)      |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
 | `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
-| `SUPABASE_URL` / `SUPABASE_*_KEY`              | Supabase MCP + runtime                 |
+| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime + Supabase MCP (the full set is `.env.example`) |
+| `SUPABASE_ACCESS_TOKEN`                        | Supabase MCP (personal access token)   |
 
-`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code) or `{env:VAR}` (OpenCode). The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
+`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code); OpenCode reads `{file:.auth/opencode/VAR}` files that `bun run harness:env` writes from `.env`, and Codex starts its servers through a `.env` loader. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
-Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #12.
+Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #10.
 
 ---
 
@@ -201,7 +202,7 @@ Verify your config by running the linter declared in `package.json` (typically `
 | `acli`                | (auto)                        | Atlassian CLI wrapper for Jira/Confluence terminal work                                                                                                                |
 | `vercel-cli`          | (auto on `vercel`)            | Vercel CLI cookbook — deployment verification, env var sync, debug, rollback. Companion to community `/deploy-to-vercel`                                               |
 
-Browser automation is provided by `/playwright-cli` (community skill from `microsoft/playwright-cli`, installed by setup — see Critical Rule #11 in AGENTS.md).
+Browser automation is provided by `/playwright-cli` (community skill from `microsoft/playwright-cli`, installed by setup; AGENTS.md §6 resolves `[AUTOMATION_TOOL]` to it).
 
 ---
 
@@ -215,7 +216,7 @@ Browser automation is provided by `/playwright-cli` (community skill from `micro
 
 The AI persistent-memory file at the repo root carries the full operational contract. Before your first ticket, skim these sections:
 
-- **§1 CRITICAL RULES** — 14 rules that override defaults (credentials, plan-before-coding, no AI attribution, MCP credential failure protocol, `READ package.json DIRECTLY`, UI fidelity contract).
+- **§1 CRITICAL RULES** — the rules that override defaults (credentials, plan-before-coding, no AI attribution, MCP credential failure protocol, `READ package.json DIRECTLY`, UI fidelity contract).
 - **§4 CONTEXT LOADING MAP** — task → trigger phrase → skill → context files → primary tool.
 - **§5 SKILLS + COMMANDS + MCPs REGISTRY** — full T1/T3/T4 skill model.
 - **§12 PROACTIVE MEMORY TRIGGERS** — when to call `mem_save` without being asked.

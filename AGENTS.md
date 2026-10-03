@@ -171,7 +171,7 @@ The conductor keeps using SUBAGENTS for its own reads and verifications, and kee
 | Foundational definition (PRD/SRS/Discovery) | "define el PRD", "ideando un nuevo producto"                                                    | `/project-foundation`                              | `business/`, `PRD/`, `SRS/`                                     | Read + Write                                 |
 | Design system (DESIGN.md)                   | "definir design system", "rebrandear el proyecto"                                               | `/design-system`                                   | `business/business-model.md`, `PRD/`                            | Write                                        |
 | Screen design for one story (mockup)        | "no hay mockup para esta historia", "diseñar esta pantalla", "design this screen"       | `/design-system` (screen phase)                    | `DESIGN.md`, `design/master-design-plan.md` §2/§4/§8            | Open Design / Claude Design                  |
-| Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/infrastructure.md`, `DESIGN.md`                            | Code edit                                    |
+| Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/architecture-specs.md`, `DESIGN.md`                        | Code edit                                    |
 | QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
 | Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epic-tree.md`, `PRD/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]`                       |
 | Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md`, `DESIGN.md` + `.context/design/master-design-plan.md` (UI stories: Rule 14) | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
@@ -447,13 +447,13 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 > Full TS conventions live in feature dev-guide (Discovery output via `/project-foundation`) if present, else fallback `.agents/skills/agentic-dev-core/references/typescript-patterns.md`. LOAD `/sprint-development` before writing or reviewing feature code.
 
-| Pattern        | Rule                                                                       |
-| -------------- | -------------------------------------------------------------------------- |
-| **Parameters** | Max 2 positional. 3+ → object param                                        |
-| **Utilities**  | Agnostic only, no domain coupling in shared modules                       |
-| **Imports**    | Always aliases (`@api/`, `@schemas/`, `@utils/`). No deep relative imports |
-| **Types**      | Declare interfaces at top of file, after imports                           |
-| **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)    |
+| Pattern        | Rule                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Parameters** | Max 2 positional. 3+ → object param                                                                                                        |
+| **Utilities**  | Agnostic only, no domain coupling in shared modules                                                                                        |
+| **Imports**    | Always the aliases `tsconfig.json` `paths` declares (Next.js `@/`, or per-layer `@api/`, `@schemas/`, `@utils/`). No deep relative imports |
+| **Types**      | Declare interfaces at top of file, after imports                                                                                           |
+| **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)                                                                    |
 
 **DRY: context matters**:
 
@@ -469,14 +469,14 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.agents/skills
 
 > **Active strategy + branch policy = the `git_strategy:` block in `.agents/project.yaml`** (source of truth). This repo operates as `solo-main`.
 
-**Protected branches**:
+**Branch roles** (names come from `git_strategy.branches`; `staging` below is the conventional integration name):
 
-| Branch      | Role                                                               |
-| ----------- | ------------------------------------------------------------------ |
-| `main`      | Production. PRs merged from `staging` or `feature/*` after review. |
-| `staging`   | Integration branch for AI commits + pre-release validation.        |
-| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`.                       |
-| `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                        |
+| Branch      | Role                                                                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main`      | Production (`git_strategy.branches.production`). PRs merged from the integration branch or `feature/*` after review.                          |
+| `staging`   | Integration branch for AI commits + pre-release validation, ONLY when `git_strategy.branches.integration` names one (null under `solo-main`). |
+| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`.                                                                                                  |
+| `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                                                                                                   |
 
 **Critical commit rules**:
 

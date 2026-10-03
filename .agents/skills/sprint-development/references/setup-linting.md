@@ -204,9 +204,10 @@ package-lock.json
 ```json
 {
   "scripts": {
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:check": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   }
 }
 ```
@@ -389,4 +390,4 @@ Este comando requiere input interactivo. En su lugar:
 
 ---
 
-**Nota:** Después de configurar linting, procede con code review (Fase 8) usando `review-pr.md`.
+**Nota:** Después de configurar linting, procede con code review (Stage 3) usando `review-pr.md`.

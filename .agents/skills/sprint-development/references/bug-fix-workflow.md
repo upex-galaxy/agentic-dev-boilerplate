@@ -600,7 +600,7 @@ git checkout -b hotfix/[ISSUE_KEY]/[short-description]
 
 ```bash
 # TypeScript check (adjust command per project)
-npm run typecheck  # or: bun run typecheck
+npm run types:check  # or: bun run types:check
 
 # Linting
 npm run lint:check  # or: bun run lint:check
@@ -693,7 +693,7 @@ git push -u origin [branch-name]
 **Step 3: Create Pull Request**
 
 ```bash
-# For BUGFIX (to staging/develop)
+# For BUGFIX (to the integration branch: git_strategy.branches.integration, e.g. staging)
 gh pr create \
   --title "fix(ISSUE_KEY): brief description" \
   --body "$(cat <<'EOF'
@@ -1075,7 +1075,7 @@ _Reclassifying and moving to backlog._
 5. [ ] Request expedited review
 6. [ ] After merge to main:
    - [ ] Verify production deployment
-   - [ ] Backport to staging/develop
+   - [ ] Backport to the integration branch (`git_strategy.branches.integration`, e.g. `staging`)
 7. [ ] Update Jira with hotfix documentation
 ```
 
@@ -1142,7 +1142,7 @@ git push origin staging
 ### Deployment Notes
 
 - [ ] Requires immediate deployment to production
-- [ ] Backport needed to: staging, develop
+- [ ] Backport needed to: the integration branch (`git_strategy.branches.integration`, e.g. `staging`)
 
 ### Rollback Plan
 
@@ -1575,12 +1575,12 @@ Use [ISSUE_TRACKER_TOOL] to transition issue:
 
 ## Quick Reference: Code Quality Commands
 
-| Check      | Command (npm)        | Command (bun)        |
-| ---------- | -------------------- | -------------------- |
-| TypeScript | `npm run typecheck`  | `bun run typecheck`  |
-| Lint       | `npm run lint:check` | `bun run lint:check` |
-| Build      | `npm run build`      | `bun run build`      |
-| Test       | `npm run test`       | `bun run test`       |
+| Check      | Command (npm)         | Command (bun)         |
+| ---------- | --------------------- | --------------------- |
+| TypeScript | `npm run types:check` | `bun run types:check` |
+| Lint       | `npm run lint:check`  | `bun run lint:check`  |
+| Build      | `npm run build`       | `bun run build`       |
+| Test       | `npm run test`        | `bun run test`        |
 
 ---
 
@@ -1751,7 +1751,7 @@ To continue a previous session, paste this block with updated data:
 | Cannot reproduce bug             | Request more info, check environment differences     |
 | Fix breaks other tests           | Investigate regression, consider scope of fix        |
 | PR conflicts                     | Rebase on target branch, resolve conflicts           |
-| Hotfix needs backport            | Use cherry-pick to apply to staging/develop          |
+| Hotfix needs backport            | Use cherry-pick to apply to the integration branch   |
 
 ### Custom Fields Not Returned (Common Issue)
 

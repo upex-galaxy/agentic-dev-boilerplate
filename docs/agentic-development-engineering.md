@@ -328,7 +328,6 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 ├── business/                         # Authored business knowledge (Constitution + glossary)
 │   ├── business-model.md            #   Problem, solution, monetization, segments  (/project-foundation Phase 1)
 │   ├── market-context.md            #   Industry, competitors, trends              (/project-foundation Phase 1)
-│   ├── legacy-analysis.md           #   Legacy stack + doc-gap analysis (optional) (/project-foundation Phase 1)
 │   └── domain-glossary.md           #   Canonical domain terminology     (/project-foundation Phase 4 Step 6; hand-maintained, append-only)
 │
 ├── master-implementation-plan.md     # High-level roadmap                (/master-implementation-plan)

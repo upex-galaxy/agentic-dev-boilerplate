@@ -51,7 +51,7 @@ It is invoked once per project, after the PRD / SRS / API contract exist, and be
 
 Requires `agentic-dev-core`. Loads on demand:
 
-- `agentic-dev-core/references/briefing-template.md` — used when dispatching parallel scaffolding subagents (e.g. backend + frontend in parallel).
+- `agentic-dev-core/references/briefing-template.md` — used when dispatching scaffolding subagents (backend, then frontend).
 - `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
 - `agentic-dev-core/references/skill-composition-strategy.md` — composition contract consumed by the step below.
 - `agentic-dev-core/references/orchestration-doctrine.md` — mandatory subagent dispatch (main thread is command center).
@@ -145,7 +145,7 @@ Phase 0 is inline — no subagent dispatch. Runs even on first invocation so res
 After Phase 0 confirms no prior session exists, write `.session/project-bootstrap/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6. The plan must list which incremental features the user wants on top of the base backend + frontend:
 
 - Frontmatter: `topic_key: session/project-bootstrap/project/plan`, `skill: project-bootstrap`, `scope: project`, `status: draft`, `capture_prompt: true`.
-- Body sections (fixed H2 order): `## Goal` · `## Inputs` (SRS architecture path, stack vars, DESIGN.md path) · `## Approach` · `## Phase breakdown` (Phase 1 Backend + Phase 2 Frontend run as Parallel subagents; Phase 3 lists chosen incremental features from `openapi-setup` / `api-routes-setup` / `bearer-token-support` / `env-url-setup` / `supabase-types-setup`, with dispatch pattern per row) · `## Risks & open questions` · `## Verification checklist` · `## Cross-references`.
+- Body sections (fixed H2 order): `## Goal` · `## Inputs` (SRS architecture path, stack vars, DESIGN.md path) · `## Approach` · `## Phase breakdown` (Phase 1 Backend, then Phase 2 Frontend, as Sequential subagents; Phase 3 lists chosen incremental features from `openapi-setup` / `api-routes-setup` / `bearer-token-support` / `env-url-setup` / `supabase-types-setup`, with dispatch pattern per row) · `## Risks & open questions` · `## Verification checklist` · `## Cross-references`.
 
 Dispatch: inline drafting by the orchestrator is normal — inputs (SRS + `.agents/project.yaml` + DESIGN.md) are small. A Single planner subagent is only warranted when the SRS is unusually large.
 
@@ -153,9 +153,9 @@ After `plan.md` is written and the user approves the chosen incremental features
 
 ## Phase walkthrough
 
-Bootstrap is split into a base layer (backend + frontend, usually run in parallel) and an incremental layer (composable features, run on demand).
+Bootstrap is split into a base layer (backend first, then frontend) and an incremental layer (composable features, run on demand).
 
-> **Progress checkpoint**: Phases 1 (Backend) and 2 (Frontend) are dispatched as a Parallel pair; the orchestrator writes ONE `progress.md` entry after BOTH subagents return. Each incremental feature in Phase 3 gets its own checkpoint entry on completion. All checkpoints follow `agentic-dev-core/references/session-management.md` §7.
+> **Progress checkpoint**: Phases 1 (Backend) and 2 (Frontend) are dispatched as a Sequential pair; the orchestrator writes one `progress.md` entry after each subagent returns. Each incremental feature in Phase 3 gets its own checkpoint entry on completion. All checkpoints follow `agentic-dev-core/references/session-management.md` §7.
 
 ### 1. Backend setup
 
@@ -201,7 +201,7 @@ If the user intent does not match a row, fall back to `references/backend-setup.
 
 ## Subagent dispatch
 
-Backend and frontend setup are **independent** — once the SRS exists, both can run in parallel under separate subagents. Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`.
+Backend and frontend setup are **sequential**: the frontend pre-flight (`references/frontend-setup.md`) reads `src/types/supabase.ts` and the Supabase clients that `references/backend-setup.md` produces, and stops when they are missing. Dispatch backend, then frontend, with the sequential pattern from `agentic-dev-core/references/dispatch-patterns.md`.
 
 Incremental features are usually **sequential after the base** but independent from each other:
 
@@ -233,7 +233,7 @@ After running any phase, confirm:
 - The dev server starts and the home page (frontend) / health route (backend) responds.
 - TypeScript compiles with no errors across the whole monorepo or split repos.
 - New env vars are documented in `.env.example`.
-- Generated artefacts (OpenAPI schema, Supabase types) are committed.
+- Generated artefacts (OpenAPI schema, Supabase types) are committed. The references never commit on their own: they recommend the commit and the user (or `/git-flow-master`) makes it.
 
 If any check fails, surface the failure in the report rather than papering over it. Do not invent fixes for unfamiliar stacks — ask the user.
 
@@ -258,5 +258,5 @@ On successful completion (Verification checklist from `plan.md` passes), the orc
 
 - Each "incremental feature" reference is composable — the project does not need all of them. Pick by need, skip the rest.
 - This skill consumes `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}`, `{{API_URL}}`, `{{WEB_URL}}` from `.agents/project.yaml`. If unset, run `/project-foundation` first. If `.agents/project.yaml` itself is missing, clone the full boilerplate — foundation files ship with the repo.
-- For parallel scaffolding (backend + frontend at the same time), dispatch via the briefing template in `agentic-dev-core/references/briefing-template.md`.
+- For scaffolding subagents (backend, then frontend), dispatch via the briefing template in `agentic-dev-core/references/briefing-template.md`.
 - The references are written in Spanish in some sections (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.

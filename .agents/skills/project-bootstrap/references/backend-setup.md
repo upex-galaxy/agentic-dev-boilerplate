@@ -66,8 +66,10 @@ Crear la **infraestructura de backend base** (Database + Auth + API Layer) que s
 
 - Supabase Project ID (se solicitará al usuario)
 - Supabase Project URL
-- Supabase Anon Key
-- Supabase Service Role Key
+- Supabase Publishable Key
+- Supabase Secret Key
+
+Nombres canónicos: los de `.env.example` (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`). El par legacy (`NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`) sigue funcionando mientras Supabase lo provisione.
 
 ---
 
@@ -110,7 +112,7 @@ Crear la **infraestructura de backend base** (Database + Auth + API Layer) que s
 
 - ✅ `src/lib/supabase/client.ts` - Browser client con @supabase/ssr
 - ✅ `src/lib/supabase/server.ts` - Server client para Server Components
-- ✅ `src/lib/supabase/admin.ts` - (Opcional) Admin client con service_role
+- ✅ `src/lib/supabase/admin.ts` - (Opcional) Admin client con la secret key
 
 ### Middleware y Auth:
 
@@ -641,7 +643,7 @@ Para cada tabla:
 
 - [ ] ¿Users pueden leer datos ajenos? (Si no deben, política restrictiva)
 - [ ] ¿Policies son lo más restrictivas posible?
-- [ ] ¿Service role key nunca expuesto en frontend?
+- [ ] ¿Secret key nunca expuesta en frontend?
 
 **Output:**
 
@@ -763,8 +765,8 @@ Crear archivo config que:
 
 Estructura:
 - supabaseUrl: NEXT_PUBLIC_SUPABASE_URL
-- supabaseAnonKey: NEXT_PUBLIC_SUPABASE_ANON_KEY
-- supabaseServiceRoleKey: SUPABASE_SERVICE_ROLE_KEY (solo server)
+- supabasePublishableKey: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+- supabaseSecretKey: SUPABASE_SECRET_KEY (solo server)
 - appUrl: NEXT_PUBLIC_APP_URL
 
 Validaciones:
@@ -799,18 +801,16 @@ INCORRECTO:
 SI estrategia = "usar .env existente":
   Agregar variables a .env:
   - NEXT_PUBLIC_SUPABASE_URL=...
-  - NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-  - SUPABASE_SERVICE_ROLE_KEY=...
+  - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+  - SUPABASE_SECRET_KEY=...
 
 SI estrategia = "usar .env":
   Crear/actualizar .env con variables
 
 SIEMPRE:
-  Actualizar .env.example con:
-  - Instrucciones claras
-  - URLs de donde obtener credenciales
-  - Warnings de seguridad
-  - Valores de ejemplo (placeholder)
+  Verificar que .env.example ya declara estas variables (vienen en el template).
+  NUNCA reescribirlo: se mantiene en paridad con cli/lib/variables-manifest.ts.
+  Variable nueva → agregarla en .env.example Y en el manifest (ver Paso 6.3).
 ```
 
 **Mostrar al usuario:**
@@ -818,14 +818,14 @@ SIEMPRE:
 ```
 ✅ Variables de entorno configuradas
    - Archivo: .env
-   - Template: .env.example actualizado
+   - Template: .env.example verificado (sin reescribir)
 
 ⚠️ ACCIÓN REQUERIDA:
    Agrega tus credenciales reales al archivo [.env]
 
    Obtener credenciales:
    1. https://supabase.com/dashboard/project/[PROJECT_ID]/settings/api
-   2. Copiar: URL, anon key, service_role key
+   2. Copiar: URL, publishable key, secret key
    3. Pegar en tu archivo de env
 ```
 
@@ -894,7 +894,7 @@ NOTA: Si Next.js 13-14, cookies() es sync (sin await)
 
 ```
 Crear solo si necesario (bypass RLS)
-Usar service_role key
+Usar secret key (`SUPABASE_SECRET_KEY`)
 Advertir: NUNCA usar en frontend
 ```
 
@@ -1096,7 +1096,7 @@ para limpiar caché después de modificar `.env`.
 [package-manager] list | grep -E "(next|react|supabase)"
 ```
 
-**Output esperado (Noviembre 2025):**
+**Output esperado (ejemplo; las versiones reales son las que imprime el comando):**
 
 ```
 ✅ Versiones Validadas:
@@ -1161,7 +1161,7 @@ type [Entity] = Database['public']['Tables']['[table_name]']['Row']
 ### Paso 5.3: Validar TypeScript
 
 ```bash
-[package-manager] run typecheck
+[package-manager] run types:check
 # O: npx tsc --noEmit
 ```
 
@@ -1325,7 +1325,7 @@ type [Entity] = Database['public']['Tables']['[table_name]']['Row']
 ## Consideraciones de Seguridad
 
 - RLS policies aplicadas a todas las tablas
-- NUNCA exponer service_role key en frontend
+- NUNCA exponer secret key en frontend
 - Validar permisos en cada endpoint
 ```
 
@@ -1333,37 +1333,12 @@ type [Entity] = Database['public']['Tables']['[table_name]']['Row']
 
 ---
 
-### Paso 6.3: Actualizar .env.example
+### Paso 6.3: Verificar .env.example (no reescribir)
 
-**Hacer archivo MUY descriptivo:**
+`.env.example` ya trae el bloque de Supabase y se mantiene en paridad con `cli/lib/variables-manifest.ts` (`scripts/check-vars.ts` falla si divergen). NUNCA lo reescribas con un bloque propio: borraría las demás variables del template.
 
-```env
-# =============================================================================
-# Supabase Configuration
-# =============================================================================
-# Obtén credenciales en:
-# https://supabase.com/dashboard/project/[PROJECT_ID]/settings/api
-#
-# IMPORTANTE:
-# - Copia este archivo como .env
-# - Reemplaza valores placeholder
-# - NUNCA commitees archivos .env con credenciales reales
-# =============================================================================
-
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc... # ⚠️ SOLO servidor
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# =============================================================================
-# Instrucciones:
-# 1. cp .env.example .env
-# 2. Ve a Supabase dashboard → Settings → API
-# 3. Copia URL, anon key, service_role key
-# 4. Reinicia dev server
-# =============================================================================
-```
+- Verifica que declara `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY`.
+- Si el backend agrega una variable que el template no tiene, agrégala en `.env.example` Y en `cli/lib/variables-manifest.ts`, en el mismo commit.
 
 ---
 

@@ -161,7 +161,7 @@ Detect the real login endpoint + token shape in Phase 1. Render the flow as a sm
 ```bash
 # 1) Get the access token (endpoint + headers + body are DETECTED, not assumed)
 curl -X POST '<LOGIN_ENDPOINT>' \
-  -H 'apikey: <SUPABASE_ANON_KEY>' \
+  -H 'apikey: <SUPABASE_PUBLISHABLE_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{"email":"<see credentials source>","password":"<see credentials source>"}'
 # → { "access_token": "eyJ…", "token_type": "bearer", "expires_in": … }

@@ -23,7 +23,7 @@ vercel rollback [deployment-url]
 
 1. Validar que producción funciona
 2. Investigar causa del problema
-3. Fix en develop
+3. Fix en staging
 4. Re-testear en staging
 5. Re-deploy cuando esté listo
 

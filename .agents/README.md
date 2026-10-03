@@ -295,7 +295,7 @@ These produce false-positive `DECLARED_BUT_UNUSED` warnings. To silence them, ad
 ```yaml
 external_consumers:
   - default_env # consumed by the AI resolver + scripts/agents-setup.ts (process.env.DEFAULT_ENV)
-  - design_md_path # read by yq in .agents/skills/design-system/references/getdesign-matcher.md
+  - design_md_path # read by yq ('.frontend.design_md_path') in .agents/skills/design-system/references/getdesign-matcher.md
 ```
 
 If you forget the comment, `vars:check` fails with `EXTERNAL_CONSUMER_UNDOCUMENTED` to prevent the allowlist from rotting silently.

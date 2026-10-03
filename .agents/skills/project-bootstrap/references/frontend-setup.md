@@ -20,9 +20,8 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 
 - `.context/PRD/executive-summary.md` - **CRÍTICO** - Nombre del proyecto, descripción, industry
 - `.context/PRD/mvp-scope.md` - Épicas principales del MVP, features
-- `.context/PRD/success-metrics.md` - KPIs, métricas de negocio (inspiran dashboard)
 - `.context/SRS/architecture-specs.md` - Tech stack frontend, frameworks, librerías
-- `.context/SRS/design-specs.md` - Wireframes, paleta de colores, estilos visuales
+- `DESIGN.md` - Paleta, tipografía, estilos visuales (lo produce `/design-system`)
 - `.context/SRS/functional-specs.md` - Features principales (inspiran páginas demo)
 - `.context/PBI/epic-tree.md` - (Opcional) Épicas y estructura general para contexto
 
@@ -30,7 +29,7 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 
 **CRÍTICO - Backend debe estar completado primero:**
 
-- `src/types/supabase.ts` (o `lib/database.types.ts`) - **Tipos generados desde database schema**
+- `src/types/supabase.ts` - **Tipos generados desde database schema** (los genera `backend-setup.md` / `supabase-types-setup.md`)
 - `src/lib/supabase/client.ts` - Supabase browser client
 - `src/lib/supabase/server.ts` - Supabase server client
 - `src/lib/config.ts` - Configuración centralizada
@@ -112,7 +111,7 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 **Incluye:**
 
 - ✅ Setup del proyecto frontend (estructura de carpetas, configuración)
-- ✅ **Importar tipos TypeScript del backend** (supabase.ts o database.types.ts)
+- ✅ **Importar tipos TypeScript del backend** (`src/types/supabase.ts`)
 - ✅ **Design System completo** (paleta, tipografía, componentes UI reutilizables)
 - ✅ Layout system (Navbar, Sidebar, Footer según diseño)
 - ✅ **2-3 páginas demo estratégicas** (validar que el design system funciona)
@@ -195,18 +194,18 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 ```markdown
 ## 🔍 Verificando tipos generados por Backend
 
-**Archivo esperado:** `lib/database.types.ts` (generado en Fase 3.2)
+**Archivo esperado:** `src/types/supabase.ts` (generado por `backend-setup.md`)
 
 **¿Existe el archivo?**
-[Ejecutar: ls -la lib/database.types.ts]
+[Ejecutar: ls -la src/types/supabase.ts]
 
 **Si existe:**
 ✅ Tipos del backend disponibles
 ✅ Podemos importarlos en el frontend
 
 **Si NO existe:**
-⚠️ IMPORTANTE: Debes ejecutar Fase 3.2 (Backend Setup) primero
-⚠️ Los tipos se generan con: `npx supabase gen types typescript --project-id xxx > lib/database.types.ts`
+⚠️ IMPORTANTE: Debes ejecutar `backend-setup.md` primero
+⚠️ Los tipos se generan con: `npx supabase gen types typescript --project-id xxx > src/types/supabase.ts`
 ```
 
 ### Paso 0.5.2: Crear types helper
@@ -223,7 +222,7 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 
 **Directiva:**
 
-Importar tipos de `database.types` y extraer tipos específicos de tablas (Row, Insert, Update). Crear helper types para respuestas de API si es necesario.
+Importar `Database` de `@/types/supabase` y extraer tipos específicos de tablas (Row, Insert, Update). Crear helper types para respuestas de API si es necesario.
 
 **Explicación al usuario:**
 
@@ -269,7 +268,7 @@ Los componentes importan tipos de `@/lib/types` y TypeScript valida automáticam
 
 - **Hacer preguntas al usuario** - Preferencias de diseño, package manager, etc.
 - **Usar Context7 MCP** - Consultar docs oficiales (Next.js, Supabase, TailwindCSS, etc.)
-- **Importar tipos del backend** - Usar database.types.ts y crear helpers
+- **Importar tipos del backend** - Usar src/types/supabase.ts y crear helpers
 - **Crear design system completo** - Botones, cards, inputs, etc. con estilo coherente
 - **Aplicar paleta de colores** - Elegida o generada según negocio
 - **Páginas visualmente atractivas** - Modernas, con personalidad
@@ -411,7 +410,7 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 
 **Backend Types (NUEVO):**
 
-- `lib/database.types.ts` → Tipos generados del schema de Supabase
+- `src/types/supabase.ts` → Tipos generados del schema de Supabase
 - Identificar entidades principales disponibles
 
 **Qué identificar:**
@@ -447,7 +446,7 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 - Lista de épicas prioritarias
 - Vocabulario del dominio
 - Pistas de diseño (si existen)
-- **Entidades disponibles en database.types.ts**
+- **Entidades disponibles en src/types/supabase.ts**
 
 ---
 
@@ -499,7 +498,7 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 
 ### Tipos Backend Disponibles:
 
-[Listar entidades identificadas en database.types.ts]
+[Listar entidades identificadas en src/types/supabase.ts]
 
 ### Documentación Consultada:
 
@@ -519,7 +518,7 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 ### Paso 1.4.1: Detectar DESIGN.md
 
 ```bash
-DESIGN_MD_PATH=$(yq '.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
+DESIGN_MD_PATH=$(yq '.frontend.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
 
 if [ -f "$DESIGN_MD_PATH" ]; then
   echo "DESIGN.md encontrado en $DESIGN_MD_PATH — derivando tokens, saltando Fase 1.5 (Q&A interactivo)."
@@ -1063,8 +1062,7 @@ Antes de instalar, consultar Context7 MCP para versiones actualizadas:
 │   ├── layout/       ← Layout components (Navbar, Sidebar, etc.)
 │   └── [domain]/     ← Domain-specific components
 ├── lib/
-│   ├── database.types.ts  ← Backend types (ya existe desde Fase 3.2)
-│   ├── types.ts           ← Type helpers (crear en Fase 0.5)
+│   ├── types.ts           ← Type helpers sobre src/types/supabase.ts (crear en Fase 0.5)
 │   └── utils.ts           ← Utilities (cn function, etc.)
 ```
 
@@ -2201,7 +2199,7 @@ Importar tipo de entidad desde `@/lib/types` y crear array de mock data tipado q
 [pnpm/bun] list | grep -E "(next|react|tailwindcss|supabase)"
 ```
 
-**Output esperado (Noviembre 2025):**
+**Output esperado (ejemplo; las versiones reales son las que imprime el comando):**
 
 ```
 ✅ Versiones Validadas:
@@ -2277,7 +2275,7 @@ Stack Backend/Auth:
 → Re-ejecutar shadcn@latest init
 
 ❌ Si falla con error de Supabase tipos:
-→ Verificar que database.types.ts existe
+→ Verificar que src/types/supabase.ts existe
 → Regenerar tipos: npx supabase gen types typescript...
 → Verificar imports en lib/types.ts
 
@@ -2345,7 +2343,7 @@ Stack Backend/Auth:
 
 **Beneficio clave:** Zero type mismatches entre backend y frontend.
 
-**Archivo de tipos:** `lib/database.types.ts` (generado por Supabase CLI)
+**Archivo de tipos:** `src/types/supabase.ts` (generado por Supabase CLI)
 **Helper de tipos:** `lib/types.ts` (extrae tipos específicos)
 
 **Ejemplo de uso:**
@@ -2586,7 +2584,7 @@ Cuando implementes nuevas features en Fase 7:
 - **Estilos Globales:** `app/globals.css` - Variables CSS
 - **Componentes UI:** `components/ui/` - Todos los componentes
 - **Layout Components:** `components/layout/` - Navbar, Sidebar
-- **Tipos Backend:** `lib/database.types.ts` - Tipos generados de Supabase
+- **Tipos Backend:** `src/types/supabase.ts` - Tipos generados de Supabase
 - **Type Helpers:** `lib/types.ts` - Helpers de tipos
 
 ---
@@ -2620,7 +2618,7 @@ Cuando implementes nuevas features en Fase 7:
 
 ### ✅ Tipos TypeScript Sincronizados
 
-**Archivo backend:** `lib/database.types.ts` (generado en Fase 3.2)
+**Archivo backend:** `src/types/supabase.ts` (generado por `backend-setup.md`)
 **Helper frontend:** `lib/types.ts` (creado en esta fase)
 
 **Beneficio:**
@@ -2661,7 +2659,7 @@ const UserCard = ({ user }: { user: User }) => {
 
 ### 1. Integración Backend (NUEVO):
 
-- ✅ Tipos del backend importados (`lib/database.types.ts`)
+- ✅ Tipos del backend importados (`src/types/supabase.ts`)
 - ✅ Helper de tipos creado (`lib/types.ts`)
 - ✅ Mock data type-safe en páginas demo
 - ✅ Zero type errors entre backend y frontend
@@ -2773,7 +2771,7 @@ git commit -m "feat: Setup frontend with design system and backend types integra
 
 - Configured [Framework] with [package manager]
 - Created design system ([X] components)
-- Integrated backend types (database.types.ts)
+- Integrated backend types (src/types/supabase.ts)
 - Implemented [X] demo pages with type-safe mock data
 - Applied [Color Palette] + [Visual Style]
 - Layout: [Chosen Layout]
@@ -2853,7 +2851,7 @@ git commit -m "feat: Setup frontend with design system and backend types integra
 Checklist interno (NO mostrar al usuario):
 
 ### Integración Backend:
-- ✅ `lib/database.types.ts` existe (verificado)
+- ✅ `src/types/supabase.ts` existe (verificado)
 - ✅ `lib/types.ts` creado con helpers
 - ✅ Mock data en páginas usa tipos del backend
 - ✅ Build pasa sin TypeScript errors

@@ -4,14 +4,14 @@
       "name": "should-trigger-first-time-orientation",
       "prompt": "I just cloned this repo. First time using it — where do I start?",
       "expected_skill": "agentic-dev-onboard",
-      "expected_behavior": "Activates agentic-dev-onboard. Explains the stack (Next.js + Supabase), points at `bun run setup` for installation, walks through the primary `/sprint-development` workflow and the `/sdd-*` hand-off matrix, lists the 4 canonical MCPs, lists critical env vars, and ends with a checklist of next steps. Does NOT start implementing anything.",
+      "expected_behavior": "Activates agentic-dev-onboard. Explains the stack (Next.js + Supabase), points at `bun run setup` for installation, walks through the primary `/sprint-development` workflow and its hand-offs, lists the MCPs `.mcp.json` declares, lists critical env vars, and ends with a checklist of next steps. Does NOT start implementing anything.",
       "category": "positive"
     },
     {
       "name": "should-trigger-onboard-me",
       "prompt": "Onboard me to this repo. I've never used an AI-driven workflow before.",
       "expected_skill": "agentic-dev-onboard",
-      "expected_behavior": "Activates agentic-dev-onboard as a guided tour. Explains the boilerplate, the locked stack, the workflow split between `/sprint-development` (ticket-driven) and `/sdd-*` (spec-driven), the MCP decision rule (library docs vs web search), and the env vars required. Hands off to `/sprint-development` for the user's first ticket.",
+      "expected_behavior": "Activates agentic-dev-onboard as a guided tour. Explains the boilerplate, the locked stack, the ticket-driven `/sprint-development` workflow, the MCP decision rule (library docs vs web search), and the env vars required. Hands off to `/sprint-development` for the user's first ticket.",
       "category": "positive"
     },
     {

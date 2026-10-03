@@ -247,7 +247,7 @@ const dashboardUrl = buildUrl('/dashboard');
 **Paso 3.1: TypeScript Check**
 
 ```bash
-bun run typecheck
+bun run types:check
 ````
 
 **Si hay errores:**
@@ -295,7 +295,7 @@ console.log('Dashboard URL:', buildUrl('/dashboard'));
 
 ### Validaciones:
 
-- [ ] `bun run typecheck` pasa sin errores
+- [ ] `bun run types:check` pasa sin errores
 - [ ] URLs de staging y production son correctas
 - [ ] Funciones exportadas correctamente
 

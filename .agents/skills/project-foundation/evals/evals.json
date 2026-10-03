@@ -9,7 +9,7 @@
     {
       "name": "should-trigger-prd-architecture",
       "prompt": "Define the PRD: executive summary, personas, user journeys and MVP scope. Then map the system architecture and API contracts.",
-      "expected_behavior": "Activates project-foundation in Architecture mode. Reads phase-2-prd references (executive-summary, user-personas, user-journeys, mvp-scope) and phase-3-srs references (system-architecture, api-contracts, data-model). Produces PRD/* and SRS/* artifacts. Coordinates the two phases sequentially and waits for user OK between PRD and SRS.",
+      "expected_behavior": "Activates project-foundation in Architecture mode. Reads the PRD references (prd-executive-summary, prd-personas, prd-user-journeys, prd-mvp-scope) and the SRS references (srs-functional, srs-non-functional, srs-architecture, srs-api-contracts). Produces PRD/* and SRS/* artifacts. Coordinates the two phases sequentially and waits for user OK between PRD and SRS.",
       "category": "positive"
     },
     {
@@ -21,7 +21,7 @@
     {
       "name": "should-trigger-srs-mapping",
       "prompt": "Mapear arquitectura del sistema y definir el SRS con data model y API contracts.",
-      "expected_behavior": "Activates project-foundation in Architecture mode (SRS phase). Reads phase-3-srs references (system-architecture.md, data-model.md, api-contracts.md, infrastructure.md). Produces SRS/* artifacts and asks the user whether to continue with discovery or hand off to /project-bootstrap for infrastructure scaffolding.",
+      "expected_behavior": "Activates project-foundation in Architecture mode (SRS phase). Reads the SRS references (srs-functional.md, srs-non-functional.md, srs-architecture.md, srs-api-contracts.md). Produces SRS/* artifacts and asks the user whether to continue with discovery or hand off to /project-bootstrap for infrastructure scaffolding.",
       "category": "positive"
     },
     {
