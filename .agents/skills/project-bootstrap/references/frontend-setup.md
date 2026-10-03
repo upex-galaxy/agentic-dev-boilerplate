@@ -519,7 +519,7 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 ### Paso 1.4.1: Detectar DESIGN.md
 
 ```bash
-DESIGN_MD_PATH=$(yq '.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
+DESIGN_MD_PATH=$(yq '.frontend.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
 
 if [ -f "$DESIGN_MD_PATH" ]; then
   echo "DESIGN.md encontrado en $DESIGN_MD_PATH — derivando tokens, saltando Fase 1.5 (Q&A interactivo)."
