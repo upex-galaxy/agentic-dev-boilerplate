@@ -54,7 +54,9 @@ create  ──→  bun run worktree:provision  ──→  work  ──→  bun r
   worktree:provision` (no argument = the cwd) copies the gitignored inputs it cannot rebuild from
   the primary checkout (`.env`, `.vercel/`, local settings), installs dependencies and creates the
   `.claude/skills` alias. The list lives in code, never in prose: `PROVISION_COPIES` in
-  `cli/lib/worktree.ts`.
+  `cli/lib/worktree.ts`. It installs with bun only: an app on pnpm / npm / yarn
+  (`stack.package_manager`, else its lockfiles) is refused with the reason before anything is
+  copied (`provisionPackageManager`, same file), because `bun install` would write a second lockfile.
 - **`.session/` is never copied.** Durable gitignored state (plans, progress, locks, run reports)
   lives at `<<PRIMARY_ROOT>>` (`.agents/README.md` §"Checkout roots") and is cited by absolute path
   from inside the worktree. A copy diverges silently and dies with the worktree.

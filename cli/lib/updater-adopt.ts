@@ -22,6 +22,9 @@
  *    `cli/install.ts` (`verifyRepoRoot`) accepts as "bootstrapped project".
  *  - Parity rows for all of it, plus one BLOCKING row per `package.json`
  *    script the app kept under a name upstream also defines.
+ *  - Tooling isolation (`./adopt-isolation.ts`): one BLOCKING row per app
+ *    config (tsconfig, ESLint, a foreign hook manager) that still reaches the
+ *    tooling, with the lines to add; the app's file itself is never written.
  *
  * Nothing here runs on a plain `bun run up` or on a greenfield first run.
  */
@@ -32,9 +35,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
+import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
+import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 
@@ -280,12 +285,15 @@ export function isAdopted(root: string): boolean {
 /**
  * `"prepare": "<app> && <upstream>"` for a `prepare` / `setup` collision, else
  * null. A step both sides already run (`husky`) appears once, the app's first.
+ * With `foreignHooks` (the app's hooks run on another manager) upstream's
+ * `husky` step is left out: it would switch the app's hooks off.
  */
-export function scriptCompositionProposal(key: string, local: string, upstream: string): string | null {
+export function scriptCompositionProposal(key: string, local: string, upstream: string, foreignHooks = false): string | null {
   if (!COMPOSABLE_SCRIPTS.has(key)) { return null; }
   const steps = (cmd: string): string[] => cmd.split('&&').map(part => part.trim()).filter(Boolean);
   const composed = [...steps(local)];
-  for (const step of steps(upstream)) {
+  const upstreamSteps = foreignHooks ? steps(withoutHuskyStep(upstream) ?? '') : steps(upstream);
+  for (const step of upstreamSteps) {
     if (!composed.includes(step)) { composed.push(step); }
   }
   return `${JSON.stringify(key)}: ${JSON.stringify(composed.join(' && '))}`;
@@ -324,6 +332,8 @@ export interface AdoptRowsInput {
   envCollision: boolean
   scriptsKept: readonly PackageJsonKeptKey[]
   instructions: AdoptInstructionsOutcome
+  /** The app's hooks run on a manager other than husky (`./hook-manager.ts`). */
+  foreignHooks?: boolean
 }
 
 export interface AdoptInstructionsOutcome {
@@ -391,7 +401,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
   }
 
   for (const kept of input.scriptsKept) {
-    const proposal = scriptCompositionProposal(kept.key, kept.localValue, kept.upstreamValue);
+    const proposal = scriptCompositionProposal(kept.key, kept.localValue, kept.upstreamValue, input.foreignHooks === true);
     rows.push({
       surface: 'package',
       path: kept.file,
@@ -435,6 +445,8 @@ export interface AdoptOutcome {
   /** `ADOPT_DELIVER_IF_ABSENT` files written this run (on --dry-run: that would be). */
   delivered: string[]
   installerLockWritten: boolean
+  /** Where the tooling-isolation snippets were saved (null: nothing pending, or --dry-run). */
+  isolationPrompt: string | null
 }
 
 function readOrNull(file: string): string | null {
@@ -542,6 +554,24 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   // 5. The installer lock.
   if (!dryRun) { writeInstallerLock(root); }
 
+  // 6. Tooling isolation: the app's tsconfig / ESLint config / hook manager
+  //    still reach (or ignore) the tooling. Never edited: one blocking row
+  //    each, every snippet saved in one file.
+  const hooks = detectHookManager(root);
+  const isolation = analyzeIsolation(root, hooks);
+  const isolationText = isolationPrompt(isolation);
+  let isolationSaved: string | null = null;
+  if (isolationText !== null && !dryRun) {
+    const out = path.join(root, ADOPT_ISOLATION_PROMPT);
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, isolationText);
+    isolationSaved = ADOPT_ISOLATION_PROMPT;
+    input.warn(`Configs de la app que alcanzan la herramienta (nunca se editan): fragmentos guardados en ${ADOPT_ISOLATION_PROMPT}.`);
+  }
+  if (hooks.foreign) {
+    input.step(`Hooks de la app en ${hooks.manager} (${hooks.evidence}): husky no se instala; las gates se llaman desde ${hooks.manager}.`);
+  }
+
   const findings = adoptFindings({
     root,
     upstreamDir,
@@ -551,6 +581,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     envCollision,
     scriptsKept: input.packageJsonKept.filter(k => k.section === 'scripts'),
     instructions,
+    foreignHooks: hooks.foreign,
   });
-  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun };
+  findings.push(...isolationFindings(isolation, isolationSaved));
+  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved };
 }

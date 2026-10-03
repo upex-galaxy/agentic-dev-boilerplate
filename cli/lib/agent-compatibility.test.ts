@@ -1056,6 +1056,29 @@ export const SRC_IMPORT_ALIASES = { files: ['src/**/*.ts'], rules: {} };
     expect(validateEslintBlockWiring(contractFixture())).toEqual([]);
   });
 
+  // On an adopted app the root eslint.config.js is the app's: requiring it to
+  // wire the tooling's blocks would force the app's lint to include the tooling.
+  test('an adopted app is checked through eslint.config.tooling.mjs, never the app\'s own eslint.config.js', () => {
+    const root = contractFixture();
+    write(root, '.template/installer.lock.json', '{ "adopted": true }\n');
+    write(root, 'eslint.config.base.js', BASE);
+    write(root, 'eslint.config.js', 'export default [];\n');
+    write(root, 'eslint.config.tooling.mjs', 'import { CLI_IMPORT_CLOSURE } from \'./eslint.config.base.js\';\nexport default antfu({}, CLI_IMPORT_CLOSURE);\n');
+    const errors = validateEslintBlockWiring(root);
+    expect(errors).toEqual([expect.stringMatching(/^eslint\.config\.tooling\.mjs does not wire SRC_IMPORT_ALIASES/)]);
+    // Without the lock the same tree is greenfield: the root config is the consumer.
+    rmSync(join(root, '.template'), { recursive: true });
+    expect(validateEslintBlockWiring(root)).toHaveLength(2);
+  });
+
+  test('the real eslint.config.tooling.mjs wires every block the base exports', () => {
+    const root = contractFixture();
+    write(root, '.template/installer.lock.json', '{ "adopted": true }\n');
+    write(root, 'eslint.config.base.js', readFileSync(join(REPO_ROOT, 'eslint.config.base.js'), 'utf8'));
+    write(root, 'eslint.config.tooling.mjs', readFileSync(join(REPO_ROOT, 'eslint.config.tooling.mjs'), 'utf8'));
+    expect(validateEslintBlockWiring(root)).toEqual([]);
+  });
+
   test('the full compatibility check reports an unwired block in the lint group', () => {
     const root = contractFixture();
     write(root, 'eslint.config.base.js', BASE);

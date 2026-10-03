@@ -43,6 +43,8 @@
     "skills:registry:check": "bun scripts/build-skill-registry.ts --check",
     "skills:registry": "bun scripts/build-skill-registry.ts",
     "test": "bun test cli/ scripts/ && bun test --cwd .agents/skills/acli/scripts",
+    "tooling:lint:check": "eslint --config eslint.config.tooling.mjs cli scripts",
+    "tooling:types:check": "tsc --noEmit -p tsconfig.tooling.json",
     "types:check": "tsc --noEmit",
     "up": "bun cli/update-boilerplate.ts",
     "worktree:audit": "bun scripts/worktree-audit.ts",

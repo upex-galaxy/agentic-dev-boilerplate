@@ -33,6 +33,8 @@ import type {
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { withoutHuskyStep } from './hook-manager';
+
 // ============================================================================
 // PARSE HELPERS
 // ============================================================================
@@ -373,10 +375,15 @@ export interface AdoptPackageJsonFold {
  *    `devDependencies`: they run the agentic tooling, not the app, and must
  *    not ship in its production install.
  *
+ *  - with `foreignHookManager` (the app's hooks run on lefthook,
+ *    simple-git-hooks, ...: `./hook-manager.ts`), an upstream `prepare` the
+ *    app lacks arrives WITHOUT its `husky` step: running `husky` rewrites
+ *    `core.hooksPath` and switches the app's own hooks off.
+ *
  * Same-key drift (`localOverrideKeys`) is left as is: the caller keeps the
  * app's value. Pure: the input delta is not mutated.
  */
-export function adoptPackageJsonDelta(delta: PackageJsonDelta, local: Record<string, unknown>): AdoptPackageJsonFold {
+export function adoptPackageJsonDelta(delta: PackageJsonDelta, local: Record<string, unknown>, opts: { foreignHookManager?: boolean } = {}): AdoptPackageJsonFold {
   const declared = new Set<string>();
   for (const section of DEPENDENCY_SECTIONS) {
     for (const key of Object.keys(getSection(local, section))) { declared.add(key); }
@@ -407,6 +414,17 @@ export function adoptPackageJsonDelta(delta: PackageJsonDelta, local: Record<str
       remember('dependencies', key);
       if (!(key in dev.upstreamOnlyKeys)) { dev.upstreamOnlyKeys[key] = value; }
     }
+  }
+
+  const scripts = sections.scripts;
+  const prepare = scripts?.upstreamOnlyKeys.prepare;
+  if (opts.foreignHookManager === true && scripts && prepare !== undefined) {
+    const kept = withoutHuskyStep(prepare);
+    if (kept === null) {
+      delete scripts.upstreamOnlyKeys.prepare;
+      remember('scripts', 'prepare');
+    }
+    else { scripts.upstreamOnlyKeys.prepare = kept; }
   }
 
   return { delta: { file: delta.file, sections }, satisfied };

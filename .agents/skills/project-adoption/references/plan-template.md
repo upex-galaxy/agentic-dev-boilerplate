@@ -95,7 +95,9 @@ Required fields missing on the instance (never created here; fallback per `.agen
 | script collision `<name>` | <tooling entry never runs> | <tooling gates> | <composition from parity-plan.md> |
 | testing.automation_identity | fail-closed login identity | /sprint-development, /testability-guide | dedicated non-production account |
 | autonomous_delivery.automation_gh_account | unattended pushes | /autonomous-delivery | bot account |
-| second hook manager / CI / branch protection | ... | ... | ... |
+| app config reaching the tooling (`tsconfig.json`, ESLint config) | the app's own `tsc` / `next build` / lint judge `cli/` + `scripts/` and fail | the app's own scripts | the snippet in `.agents/prompts/adopt-tooling-isolation.md`, applied by hand |
+| foreign hook manager (lefthook, simple-git-hooks, ...) | the framework gates never run until it calls them | tooling gates, commit trailers | the wiring snippet in `.agents/prompts/adopt-tooling-isolation.md` |
+| CI / branch protection | ... | ... | ... |
 
 ## 11. Questions answered (verbatim)
 
