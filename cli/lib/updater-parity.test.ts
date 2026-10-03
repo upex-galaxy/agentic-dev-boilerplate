@@ -1,5 +1,5 @@
 import type { ParityFinding, ParityInput, ParityMeta } from './updater-parity.ts';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
@@ -13,15 +13,20 @@ import {
   collectParityFindings,
   compatErrorSuggestion,
   compatErrorSurface,
+  CONFIG_BLOCK_READERS,
   configEntries,
   configKeyDelta,
   configKeys,
   describeWatchedFile,
   diffNoIndex,
   diffStats,
+  frameworkGatesNote,
   harnessLevelMcpNote,
   markdownSectionDelta,
+  missingConfigBlocks,
+  PATH_PREREQUISITES,
   persistArchivedSkillMarkers,
+  prerequisiteFor,
   protectNote,
   readGitStrategyStamp,
   renderParityReport,
@@ -173,12 +178,24 @@ describe('section-level evidence', () => {
   });
 
   test('key delta separates upstream additions from project-only keys', () => {
-    expect(configKeyDelta(['a', 'b.x'], ['a', 'b.y'])).toEqual({ added: ['b.y'], projectOnly: ['b.x'], changed: [], changedDetail: {} });
+    expect(configKeyDelta(['a', 'b.x'], ['a', 'b.y'])).toEqual({ added: ['b.y'], projectOnly: ['b.x'], changed: [], changedDetail: {}, changedArrays: [] });
     // With values (Maps) the shared keys whose values differ are named; a top
     // key with object children is judged through its children only.
     const mine = configEntries('{"a":1,"b":{"x":1,"y":[1]},"c":{"z":1}}', 'x.json')!;
     const theirs = configEntries('{"a":2,"b":{"x":1,"y":[2]},"c":{"z":1}}', 'x.json')!;
-    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['a', 'b.y'], changedDetail: {} });
+    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['a', 'b.y'], changedDetail: { 'b.y': 'added: ["2"], removed: ["1"]' }, changedArrays: ['b.y'] });
+  });
+
+  // An appended entry is not a changed value: `.claude/settings.json` used to
+  // read "values differ at permissions.allow" when upstream had only appended
+  // `Skill(...)` permissions. The array delta names the elements instead.
+  test('an array on both sides reports its added and removed elements', () => {
+    const mine = configEntries('{"permissions":{"allow":["Read","Skill(acli)","mcp__tavily__*"]}}', '.claude/settings.json')!;
+    const theirs = configEntries('{"permissions":{"allow":["Read","Skill(acli)","Skill(vercel-cli)"]}}', '.claude/settings.json')!;
+    const { evidence } = watchedFileEvidence('.claude/settings.json', '{"permissions":{"allow":["Read","Skill(acli)","mcp__tavily__*"]}}', '{"permissions":{"allow":["Read","Skill(acli)","Skill(vercel-cli)"]}}', '');
+    expect(configKeyDelta(mine, theirs).changedArrays).toEqual(['permissions.allow']);
+    expect(evidence).toContain('"permissions.allow": added: ["Skill(vercel-cli)"], removed: ["mcp__tavily__*"]');
+    expect(evidence).not.toContain('values differ at');
   });
 
   test('watched-file evidence names sections for markdown and keys for config, plus hunk counts', () => {
@@ -245,6 +262,32 @@ describe('compat error classification', () => {
     const stray = 'Command wrapper not declared in any manifest: .claude/commands/stray.md; add it to .agents/compatibility/command-aliases.project.json or delete it';
     expect(compatErrorSurface(stray)).toBe('commands');
     expect(compatErrorSuggestion(stray)).toBe('add to overlay');
+  });
+
+  // The base is synced, `eslint.config.js` is watched: an unwired block is a
+  // merge into the project file, and it folds onto that file's drift row.
+  test('an unwired eslint block lands on eslint.config.js as a blocking merge, folded with its drift', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'eslint.config.js', 'export default antfu({});\n');
+    write(upstream, 'eslint.config.js', 'import { CLI_IMPORT_CLOSURE } from \'./eslint.config.base.js\';\nexport default antfu({}, CLI_IMPORT_CLOSURE);\n');
+    const error = 'eslint.config.js does not wire CLI_IMPORT_CLOSURE from eslint.config.base.js: the rule ships but enforces nothing. Add it to the import and to the antfu(...) call.';
+    expect(compatErrorSurface(error)).toBe('gates');
+    expect(compatErrorSuggestion(error)).toBe('merge');
+    const findings = collectParityFindings({
+      root,
+      upstreamDir: upstream,
+      drift: [{ path: 'eslint.config.js', reason: 'project-owned overrides' }],
+      compatErrors: [error],
+      archivedSkills: [],
+      archivedSkillsDir: join(root, 'archive'),
+      heldBack: [],
+      envNewKeys: [],
+    });
+    const rows = findings.filter(f => f.path === 'eslint.config.js');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ surface: 'gates', suggested: 'merge', blocking: true });
+    expect(rows[0].evidence).toContain('does not wire CLI_IMPORT_CLOSURE');
   });
 });
 
@@ -635,8 +678,9 @@ describe('rows the diff-based table could not see before', () => {
   test('a drifted file without key structure (a husky hook) reads its hunks; the row is never blocking', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
-    write(root, '.husky/pre-push', '#!/bin/sh\nbun run repo:check\nbun run e2e\n');
-    write(upstream, '.husky/pre-push', '#!/bin/sh\nbun run repo:check\n');
+    // Both copies already source the gates file, so the gates-split note stays out of the evidence.
+    write(root, '.husky/pre-push', '. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\nbun run e2e\n');
+    write(upstream, '.husky/pre-push', '. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\n');
     const findings = collectParityFindings({ ...base(root, upstream), drift: [{ path: '.husky/pre-push', reason: 'project gates live here' }] });
     expect(findings).toHaveLength(1);
     expect(findings[0].surface).toBe('components');
@@ -718,7 +762,7 @@ describe('MCP registries are compared per server, args and env included', () => 
   test('a nested server object is compared whole; the evidence names the server and the fields that differ', () => {
     const mine = configEntries('{"mcpServers":{"context7":{"command":"npx","args":["-y","@upstash/context7-mcp@1"],"env":{"CONTEXT7_API_KEY":"ref"}}}}', '.mcp.json')!;
     const theirs = configEntries('{"mcpServers":{"context7":{"command":"npx","args":["-y","@upstash/context7-mcp@2"],"env":{"CONTEXT7_API_KEY":"ref"}}}}', '.mcp.json')!;
-    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['mcpServers.context7'], changedDetail: { 'mcpServers.context7': 'args differ' } });
+    expect(configKeyDelta(mine, theirs)).toEqual({ added: [], projectOnly: [], changed: ['mcpServers.context7'], changedDetail: { 'mcpServers.context7': 'args differ' }, changedArrays: [] });
 
     expect(row(
       '{"mcpServers":{"context7":{"command":"npx","args":["a"]},"supabase":{"command":"npx","args":["s"],"env":{"SUPABASE_ACCESS_TOKEN":"ref"}}}}',
@@ -834,5 +878,179 @@ describe('harnessLevelMcpNote', () => {
     expect(row!.suggested).not.toBe('take upstream');
     expect(row!.evidence).toContain('now run at harness level');
     expect(row!.note).toContain('ADR-0005');
+  });
+});
+
+function bareInput(root: string, upstream: string): ParityInput {
+  return { root, upstreamDir: upstream, drift: [], compatErrors: [], archivedSkills: [], archivedSkillsDir: join(root, '.template/pre-agents-migration/skills'), heldBack: [], envNewKeys: [] };
+}
+
+describe('the husky hooks carry the gates split downstream', () => {
+  // Every hook is bootstrap-only, so a gate added upstream never reached a
+  // project scaffolded earlier. The gates upstream owns now live in the SYNCED
+  // `.husky/framework-gates.sh`; a hook that does not source it still sees
+  // nothing, and only this row can say so.
+  test('the note fires only for a hook that does not source the gates file', () => {
+    const pending = frameworkGatesNote('bunx lint-staged\nbun run types:check\n', '.husky/pre-commit');
+    expect(pending).toContain('framework_gates_pre_commit');
+    expect(pending).toContain('if [ -f "$GATES" ]; then');
+    // Each hook is nudged towards its OWN function.
+    expect(frameworkGatesNote('bun run lint:check\n', '.husky/pre-push')).toContain('framework_gates_pre_push');
+    expect(frameworkGatesNote('bunx commitlint --edit "$1"\n', '.husky/commit-msg')).toContain('framework_gates_commit_msg "$1"');
+    // Already adopted: silence.
+    expect(frameworkGatesNote('. "$(dirname -- "$0")/framework-gates.sh"\nframework_gates_pre_push\n', '.husky/pre-push')).toBeNull();
+    // A mention in a comment is not an adoption.
+    expect(frameworkGatesNote('# see framework-gates.sh\nbun run types:check\n', '.husky/pre-commit')).toContain('Adopt the gates split');
+  });
+
+  test('a pre-split hook gets a non-blocking row with the block to paste', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, '.husky/pre-push', 'bun run format:check && bun run lint:check\n');
+    write(upstream, '.husky/pre-push', 'GATES="$(dirname -- "$0")/framework-gates.sh"\nif [ -f "$GATES" ]; then\n  . "$GATES"\n  framework_gates_pre_push\nfi\n');
+    const findings = collectParityFindings({ ...bareInput(root, upstream), drift: [{ path: '.husky/pre-push', reason: 'project gates live here' }] });
+    const row = findings.find(f => f.path === '.husky/pre-push');
+    expect(row!.evidence).toContain('does not source .husky/framework-gates.sh');
+    expect(row!.note).toContain('framework_gates_pre_push');
+    expect(row!.blocking).toBe(false);
+  });
+
+  test('the repo\'s own hooks all source the synced gates file', () => {
+    const repo = join(import.meta.dir, '..', '..');
+    for (const hook of ['.husky/pre-commit', '.husky/pre-push', '.husky/commit-msg']) {
+      expect(frameworkGatesNote(readFileSync(join(repo, hook), 'utf8'), hook)).toBeNull();
+    }
+  });
+});
+
+describe('a kept file whose upstream hunk another file depends on blocks', () => {
+  test('a declared prerequisite path escalates its drift row and names the gate', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'scripts/lint-skills.ts', 'const KINDS = [\'workflow\'];\n');
+    write(upstream, 'scripts/lint-skills.ts', 'const KINDS = [\'workflow\', \'context\'];\n');
+    const drift = [{ path: 'scripts/lint-skills.ts', reason: 'declared in updater.protected_paths', source: 'project' as const }];
+    const [row] = collectParityFindings({ ...bareInput(root, upstream), drift });
+    expect(row.blocking).toBe(true);
+    expect(row.suggested).toBe('merge');
+    expect(row.evidence).toContain('PREREQUISITE for this release');
+    expect(row.evidence).toContain('`bun run skills:check`');
+
+    // An undeclared path stays ordinary, non-blocking drift.
+    const [plain] = collectParityFindings({ ...bareInput(root, upstream), drift, prerequisites: {} });
+    expect(plain.blocking).toBe(false);
+    expect(plain.evidence).not.toContain('PREREQUISITE');
+  });
+
+  test('the shipped manifest declares the skill vocabulary', () => {
+    expect(prerequisiteFor('scripts/lint-skills.ts')?.gate).toBe('bun run skills:check');
+    expect(prerequisiteFor('scripts\\lint-skills.ts')).toBe(PATH_PREREQUISITES['scripts/lint-skills.ts']);
+    expect(prerequisiteFor('README.md')).toBeNull();
+  });
+});
+
+describe('a missing config block a shipped skill reads blocks the run', () => {
+  const READERS = {
+    '.agents/project.yaml': {
+      git_strategy: { skill: '/git-flow-master', requiredBy: 'the protected-branch list and the push policy' },
+    },
+  };
+
+  function rows(projectYaml: string, upstreamYaml: string): ParityFinding[] {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, '.agents/project.yaml', projectYaml);
+    write(upstream, '.agents/project.yaml', upstreamYaml);
+    return collectParityFindings({
+      ...bareInput(root, upstream),
+      drift: [{ path: '.agents/project.yaml', reason: 'per-project identity', structural: true }],
+      configBlockReaders: READERS,
+    }).filter(f => f.path === '.agents/project.yaml');
+  }
+
+  test('the block is missing: the row blocks and names the skill that reads it', () => {
+    const [row] = rows('project:\n  name: consumer\n', 'project:\n  name: upstream\ngit_strategy:\n  strategy: solo-main\n');
+    expect(row.blocking).toBe(true);
+    expect(row.suggested).toBe('merge');
+    expect(row.evidence).toContain('BLOCKING');
+    expect(row.evidence).toContain('/git-flow-master');
+    expect(row.evidence).toContain('adapt its VALUES to this project');
+  });
+
+  test('a block the project HAS stays informational however much its values differ', () => {
+    const found = rows('git_strategy:\n  strategy: main-integration\n', 'git_strategy:\n  strategy: solo-main\n');
+    expect(found.every(f => !f.blocking)).toBe(true);
+  });
+
+  test('an undeclared block upstream added is informational, exactly as before', () => {
+    const [row] = rows('project:\n  name: consumer\n', 'project:\n  name: upstream\nsome_new_block:\n  a: 1\n');
+    expect(row.blocking).toBe(false);
+    expect(row.evidence).toContain('informational');
+    expect(row.evidence).not.toContain('BLOCKING');
+  });
+
+  test('missingConfigBlocks is top-level only and declaration-driven', () => {
+    // `policy` is a CHILD of a block the project has: a value-shaped difference.
+    expect(missingConfigBlocks('.agents/project.yaml', 'git_strategy:\n  strategy: solo-main\n', 'git_strategy:\n  strategy: solo-main\n  policy:\n    a: 1\n', READERS)).toEqual([]);
+    expect(missingConfigBlocks('.mcp.json', '{}', '{"git_strategy":{}}', READERS)).toEqual([]);
+  });
+
+  test('every shipped declaration names a block the template has and a skill that ships', () => {
+    const repo = join(import.meta.dir, '..', '..');
+    const template = configEntries(readFileSync(join(repo, '.agents/project.yaml'), 'utf8'), '.agents/project.yaml')!;
+    for (const [block, reader] of Object.entries(CONFIG_BLOCK_READERS['.agents/project.yaml'])) {
+      expect(template.has(block)).toBe(true);
+      expect(existsSync(join(repo, '.agents/skills', reader.skill.slice(1), 'SKILL.md'))).toBe(true);
+    }
+  });
+});
+
+describe('the doctrine ledger row', () => {
+  test('with no AGENTS.md drift row of its own it stands alone on instructions', () => {
+    const root = temporaryRoot();
+    const row = collectParityFindings({ ...bareInput(root, temporaryRoot()), doctrineDebt: 'informational: 2 doctrine section(s) missing' })
+      .find(f => f.path === 'AGENTS.md');
+    expect(row!.surface).toBe('instructions');
+    expect(row!.blocking).toBe(false);
+    expect(row!.evidence).toContain('2 doctrine section(s) missing');
+  });
+
+  test('it folds onto the AGENTS.md drift row instead of raising a second one', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, 'AGENTS.md', '# Memory\n\n## 1. RULES\n\nmine\n');
+    write(upstream, 'AGENTS.md', '# Memory\n\n## 1. RULES\n\nmine\n\n## 9. DOCTRINE\n\nnew\n');
+    const found = collectParityFindings({
+      ...bareInput(root, upstream),
+      drift: [{ path: 'AGENTS.md', reason: 'per-project AI memory' }],
+      doctrineDebt: 'informational: 1 doctrine section(s) unresolved for 4 run(s)',
+    }).filter(f => f.path === 'AGENTS.md');
+    expect(found).toHaveLength(1);
+    expect(found[0].evidence).toContain('unresolved for 4 run(s)');
+    // The fold appends, never replaces the ordinary drift evidence.
+    expect(found[0].evidence).toContain('9. DOCTRINE');
+  });
+
+  test('no debt means no row', () => {
+    const root = temporaryRoot();
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), doctrineDebt: null }).find(f => f.path === 'AGENTS.md')).toBeUndefined();
+  });
+});
+
+describe('the allow-list merge is reported, never silent', () => {
+  test('an informational row names every permission the merge added', () => {
+    const root = temporaryRoot();
+    const row = collectParityFindings({ ...bareInput(root, temporaryRoot()), allowListAdded: ['Skill(vercel-cli)', 'Skill(autonomous-delivery)'] })
+      .find(f => f.path === '.claude/settings.json');
+    expect(row!.surface).toBe('components');
+    expect(row!.blocking).toBe(false);
+    expect(row!.evidence).toContain('2 permission(s) added');
+    expect(row!.evidence).toContain('Skill(vercel-cli)');
+    expect(row!.evidence).toContain('deny/ask/hooks/env untouched');
+  });
+
+  test('a run that added nothing raises no row at all', () => {
+    const root = temporaryRoot();
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), allowListAdded: [] }).find(f => f.path === '.claude/settings.json')).toBeUndefined();
   });
 });

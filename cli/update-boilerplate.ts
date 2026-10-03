@@ -24,6 +24,7 @@ import { checkAgentCompatibility, COMMAND_ALIAS_MANIFEST, repairAgentSurfaces, S
 import * as tui from './lib/tui';
 import {
   cleanupTempDir,
+  createBackupDir,
   detectGitVersion,
   gitVersionMeetsMin,
   isLocalTemplateSource,
@@ -33,6 +34,7 @@ import {
   suggestCommitMessage,
   UPDATER_UPSTREAM_DIR_ENV,
 } from './lib/updater-core';
+import { DOCTRINE_FILE, runDoctrineLedger } from './lib/updater-doctrine.ts';
 import { detectProtectedDrift, mergeProtectedWatchlist, persistMarkers, readProjectProtectedPaths, splitFirstProjectAdvice } from './lib/updater-drift';
 import {
   applyHarnessMigration,
@@ -53,6 +55,7 @@ import {
   runVerdict,
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
+import { CLAUDE_SETTINGS_FILE, mergeAllowList } from './lib/updater-settings.ts';
 import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifest';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -72,9 +75,19 @@ const UPSTREAM_DIR = process.env[UPDATER_UPSTREAM_DIR_ENV] || TEMP_DIR;
 const VERSION_FILE = '.template/boilerplate.lock.json';
 /** Post-apply gates: each gets this long, then it is skipped with a note. */
 const GATE_TIMEOUT_MS = 120_000;
-const GATE_SCRIPTS = ['types:check', 'lint:check'] as const;
+/**
+ * Scripts run as gates when `package.json` defines them (a missing one is
+ * skipped). `skills:check` is here because a release can ship a skill and the
+ * vocabulary hunk that makes it lintable in two different files: when the
+ * second one is protected, only this gate sees the half-delivered pair (see
+ * `PATH_PREREQUISITES` in `./lib/updater-parity.ts`).
+ */
+export const GATE_SCRIPTS = ['types:check', 'lint:check', 'skills:check'] as const;
 
-const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes'];
+// `eslint.config.base.js` is the SYNCED half of the lint config: the shared
+// options and the `cli/` import-closure block the updater's self-update depends
+// on. The project-owned `eslint.config.js` (watchlisted) spreads it.
+const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint.config.base.js'];
 // `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
 // component: a basename listed here is synced even when the path also matches
 // a bootstrap-only entry. Keep it to files the boilerplate genuinely owns.
@@ -153,8 +166,11 @@ export const COMPONENTS: Component[] = [
   { name: 'context-engineering', type: 'file-list', paths: ['.'], files: ['CONTEXT.md'] },
   { name: 'vscode', type: 'directory', paths: ['.vscode'] },
   // `.husky/pre-commit`, `.husky/pre-push` and `.husky/commit-msg` are on
-  // PROTECTED_WATCHLIST (the project's gates live there): delivered once when
-  // missing, never overwritten. Anything else under `.husky/` (the `_/` helpers) keeps syncing.
+  // PROTECTED_WATCHLIST (the project's gates and their ordering live there):
+  // delivered once when missing, never overwritten. Everything else under
+  // `.husky/` keeps syncing, which is exactly how `framework-gates.sh` reaches
+  // a project scaffolded earlier: the gates upstream owns sit in that synced
+  // file, and each hook sources it.
   { name: 'husky', type: 'directory', paths: ['.husky'] },
   { name: 'tooling', type: 'file-list', paths: ['.'], files: TOOLING_FILES },
   // .env.example carries no secrets (every value is empty / placeholder) so it
@@ -183,7 +199,7 @@ interface ParsedArgs {
   force: boolean
   /** Exit 1 on a blocking parity finding (failed compatibility contract). Default: warn, exit 0. */
   strict: boolean
-  /** Skip the post-apply quality gates (`types:check`, `lint:check`). */
+  /** Skip the post-apply quality gates (`types:check`, `lint:check`, `skills:check`). */
   noGates: boolean
   /** Keep the prompts even when stdin is not a TTY (the default there is `--auto`). */
   interactive: boolean
@@ -286,8 +302,8 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   "Sincronizacion completada".
 
 VERIFICACION POST-SYNC (gates):
-  Tras aplicar archivos, corre \`types:check\` y \`lint:check\` de tu
-  package.json (120 s cada uno; un gate que no termina se omite). Un gate roto
+  Tras aplicar archivos, corre \`types:check\`, \`lint:check\` y
+  \`skills:check\` de tu package.json (120 s cada uno; un gate que no termina se omite). Un gate roto
   NO bloquea: aparece como fila "Verificacion" (codigo de salida, primeras
   lineas de error, que archivos aplicados esta corrida nombra) y como linea
   "Gates:" en el resumen. --no-gates lo desactiva.
@@ -327,7 +343,8 @@ FLAGS:
                                   compatibilidad roto: alias, wrappers, hooks,
                                   MCP). Por defecto solo avisa y sale 0. El
                                   drift de archivos protegidos nunca bloquea.
-  --no-gates                      No corre types:check / lint:check tras aplicar
+  --no-gates                      No corre types:check / lint:check /
+                                  skills:check tras aplicar
   --interactive                   Mantiene los prompts aunque stdin no sea TTY
   --rollback                      Restaura backup mas reciente
   --update-mcp-template <agent>   Refresca docs/mcp/<agent>.template.*
@@ -349,7 +366,7 @@ EJEMPLOS:
   bun up --force                            # Forzar todo del upstream (sin preguntar)
   bun up --dry-run                          # Preview (con el updater nuevo si hay self-update)
   bun up --auto --strict                    # CI: falla si queda un contrato roto
-  bun up --auto --no-gates                  # Sin types:check / lint:check al final
+  bun up --auto --no-gates                  # Sin gates (types / lint / skills) al final
   bun up --rollback                         # Restaurar backup
   bun up --update-mcp-template claude       # Refrescar MCP template
 `;
@@ -455,7 +472,7 @@ interface RunFacts {
   migrationPlanned: boolean
   /** The compat hook left `.claude/skills` for `bun run agents:compat` after the migration commit. */
   aliasDeferred: boolean
-  /** Post-apply quality gates (`types:check`, `lint:check`); empty when skipped. */
+  /** Post-apply quality gates (`GATE_SCRIPTS`); empty when skipped. */
   gates: GateResult[]
   /** Why `gates` stayed empty this run: nothing to say when gates actually ran (even a fail leaves at least one `GateResult`). */
   gatesSkippedReason: 'no-gates' | 'no-changes' | null
@@ -463,9 +480,13 @@ interface RunFacts {
   promptKept: boolean
   /** `.context/PBI/` paths still tracked in git, and where the migration recipe was saved. */
   pbiCache: PbiCacheFact | null
+  /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` (on --dry-run: would append). */
+  allowListAdded: string[]
+  /** One-line evidence for the unresolved-doctrine ledger row, when AGENTS.md carries debt. */
+  doctrineDebt: string | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -815,7 +836,7 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   { path: '.agents/project.yaml', reason: 'per-project identity + env map, but upstream keeps ADDING structural blocks (e.g. git_strategy). A project scaffolded before a block existed never learns it should have one.', structural: true },
   { path: '.agents/jira-required.yaml', reason: 'methodology manifest: upstream owns the baseline work_types + field slugs, the project owns its fallbacks and omissions. It is the INPUT to jira:sync-workflows, which catalogs only the work_types declared in it — a stale manifest silently regenerates a truncated jira-workflows.json and still exits 0.', structural: true },
   { path: 'tsconfig.json', reason: 'path aliases are the contract every synced file imports through — a new upstream alias breaks synced code in a project whose tsconfig never learned it.' },
-  { path: 'eslint.config.js', reason: 'lint rules evolve upstream and .husky/pre-commit (which IS synced) runs eslint against this local config.' },
+  { path: 'eslint.config.js', reason: 'project-owned overrides; lint-staged and lint:check run eslint against this local config. The shared rules and the cli/ import-closure block that guards the updater live in the synced `eslint.config.base.js` this file spreads (`agents:compat:check` fails on a base block it does not wire).' },
   { path: '.mcp.json', reason: 'MCP registry with project-specific servers/vars' },
   { path: 'opencode.jsonc', reason: 'OpenCode MCP registry (paired with .mcp.json)' },
   { path: '.codex/config.toml', reason: 'Codex MCP registry (paired with .mcp.json / opencode.jsonc; `agents:compat:check` enforces parity across the three)' },
@@ -824,12 +845,15 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   // 8.2 every run force-applied upstream's copy over a committed merge and
   // re-raised the same row forever. Same delivery as `.claude/settings.json`:
   // once when missing (bootstrapOnlyPaths below), then project-owned.
-  { path: '.husky/pre-commit', reason: 'project gates live here' },
-  { path: '.husky/pre-push', reason: 'project gates live here' },
+  // The gates upstream owns live in the SYNCED `.husky/framework-gates.sh`,
+  // which each hook sources and calls in one line; a hook that predates that
+  // split gets a parity row with the block to paste (`frameworkGatesNote`).
+  { path: '.husky/pre-commit', reason: 'project gates and their ordering live here; the gates upstream owns come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
+  { path: '.husky/pre-push', reason: 'project gates and their ordering live here; the gates upstream owns come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
   // The forensic-trailer warning ships here, but a project's own commit-msg
   // gate (commitlint and the like) lives in the same file: deliver once, never
   // overwrite.
-  { path: '.husky/commit-msg', reason: 'project commit-message gates live here' },
+  { path: '.husky/commit-msg', reason: 'project commit-message checks live here (commitlint, ...); the warn-only checks upstream owns (forensic trailers) come from the synced .husky/framework-gates.sh, so a hook that does not source it never sees another one' },
 ];
 
 /**
@@ -1086,6 +1110,49 @@ export function runGate(script: string, cwd: string, applied: readonly string[],
   };
 }
 
+// --- CLAUDE PERMISSION ALLOW LIST (afterApply hook) ---
+//
+// `.claude/settings.json` is bootstrap-only AND watched, so a skill shipped
+// upstream used to arrive without the `Skill(<name>)` entry that authorizes it
+// and silently could not be invoked. This merges ONE array additively,
+// `permissions.allow`, and leaves `deny`, `ask`, `hooks`, `env` and every
+// other key exactly as the project wrote them. See `updater-settings.ts` for
+// why removals are deliberately not remembered.
+//
+// Backup before write, like every other mutation the run makes: the file is on
+// the watchlist, so a consumer who dislikes the addition restores it from
+// `.backups/` and expresses the removal in `deny`.
+function makeAllowListHook(
+  templateDir: string,
+  sink: ReportSink,
+  dryRun: boolean,
+): (summary: RunSummary) => Promise<void> {
+  return async (summary: RunSummary): Promise<void> => {
+    if (dryRun) {
+      runFacts.allowListAdded = mergeAllowList(process.cwd(), templateDir).added;
+      return;
+    }
+    const localPath = path.join(process.cwd(), CLAUDE_SETTINGS_FILE);
+    const { added, merged } = mergeAllowList(process.cwd(), templateDir);
+    if (merged === null) { return; }
+    try {
+      // This run's backup dir when it made one; otherwise its own, so the
+      // pre-write backup contract holds even on a run that wrote nothing else.
+      const dir = summary.backupDir ?? createBackupDir(process.cwd());
+      const backupPath = path.join(dir, CLAUDE_SETTINGS_FILE);
+      fs.mkdirSync(path.dirname(backupPath), { recursive: true });
+      fs.copyFileSync(localPath, backupPath);
+      fs.writeFileSync(localPath, merged, 'utf-8');
+    }
+    catch (err) {
+      sink.warn(`No se pudo fusionar la allow list de ${CLAUDE_SETTINGS_FILE}: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+    runFacts.allowListAdded = added;
+    sink.step(`Permisos agregados a ${CLAUDE_SETTINGS_FILE}: ${added.length}`);
+  };
+}
+
 function makeGatesHook(sink: ReportSink, enabled: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     if (!enabled) { runFacts.gatesSkippedReason = 'no-gates'; return; }
@@ -1195,6 +1262,9 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       packageJsonKept: summary.packageJsonKept ?? [],
       gates: runFacts.gates,
       pbiCache: runFacts.pbiCache,
+      allowListAdded: runFacts.allowListAdded,
+      doctrineDebt: runFacts.doctrineDebt,
+      doctrineFile: DOCTRINE_FILE,
     });
     const report = renderParityReport(findings, {
       templateRepo: TEMPLATE_REPO,
@@ -1652,6 +1722,9 @@ async function main(): Promise<void> {
         ? composeHooks(
             sink,
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
+            makeAllowListHook(UPSTREAM_DIR, sink, true),
+            // A dry run neither ages nor writes the doctrine ledger.
+            async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
             // Read-only detection so the preview's table matches the real run's.
             makePbiCacheMigrationHook({ promptOutPath: path.join(process.cwd(), PBI_MIGRATION_PROMPT_PATH), dryRun: true }, sink, (fact) => { runFacts.pbiCache = fact; }),
             makeParityHook(sink, priorLockSha, true, watchlist),
@@ -1662,6 +1735,14 @@ async function main(): Promise<void> {
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
             makeGatesHook(sink, !parsed.noGates),
+            // After the compat check reads settings.json: the merge only ADDS
+            // allow entries, which no compatibility contract asserts on.
+            makeAllowListHook(UPSTREAM_DIR, sink, false),
+            // The unresolved-doctrine ledger. Content-tracked, so unlike every
+            // other watched-file nudge it survives `keep project` and clears
+            // only when the section is actually written. Runs before the parity
+            // hook, which folds its one row in.
+            async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR); },
             async () => detectEnvVarDrift(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertGitStrategyBlock(UPSTREAM_DIR, sink, parsed.auto),
             async () => upsertAutomationIdentityBlock(UPSTREAM_DIR, sink, parsed.auto),

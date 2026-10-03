@@ -147,6 +147,11 @@ dbhub.local.toml
 # .agents/skills already owned. Local recovery material, never repo content:
 # review it, then delete it).
 .template/pre-agents-migration/
+# `.template/doctrine-ledger.json` is GITIGNORED (per-dev runtime record of which
+# AGENTS.md doctrine sections upstream has that this checkout still lacks; it
+# re-surfaces the parity row until the text is actually present, so it is state,
+# not content).
+.template/doctrine-ledger.json
 # `.template/last-apply.json` is GITIGNORED (per-dev record of what the last
 # `bun run up` wrote, with hashes: the next run's dirty-tree guard recognises
 # that uncommitted output as its own instead of aborting on it).

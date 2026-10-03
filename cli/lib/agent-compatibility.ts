@@ -12,7 +12,8 @@
  * because the failure is at module load.
  *
  * The invariant is enforced by the `no-restricted-imports` block scoped to
- * `cli/**` in `eslint.config.js`: NOTHING under `cli/` may import from a
+ * `cli/**` in the synced `eslint.config.base.js` (wired by the project's
+ * `eslint.config.js`, checked by `validateEslintBlockWiring`): NOTHING under `cli/` may import from a
  * sibling top-level directory.
  *
  * `scripts/agent-compatibility.ts` remains the `bun run agents:compat`
@@ -23,7 +24,7 @@ import type { Stats } from 'node:fs';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
-import { validateHookCompatibility, validateMcpParityFindings } from './agent-compatibility-contracts.ts';
+import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings } from './agent-compatibility-contracts.ts';
 
 export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md\n';
 
@@ -117,9 +118,9 @@ export interface CompatibilityCheck {
 }
 
 /** The surface a compatibility error belongs to, so a report can group them. */
-export type CompatibilityErrorGroup = 'alias' | 'wrappers' | 'hooks' | 'mcp' | 'instructions';
+export type CompatibilityErrorGroup = 'alias' | 'wrappers' | 'hooks' | 'mcp' | 'lint' | 'instructions';
 
-export const COMPATIBILITY_GROUP_ORDER: CompatibilityErrorGroup[] = ['instructions', 'alias', 'wrappers', 'hooks', 'mcp'];
+export const COMPATIBILITY_GROUP_ORDER: CompatibilityErrorGroup[] = ['instructions', 'alias', 'wrappers', 'hooks', 'mcp', 'lint'];
 
 export const COMPATIBILITY_GROUP_LABEL: Record<CompatibilityErrorGroup, string> = {
   instructions: 'Instructions (AGENTS.md + CLAUDE.md shim, canonical skills)',
@@ -127,11 +128,13 @@ export const COMPATIBILITY_GROUP_LABEL: Record<CompatibilityErrorGroup, string> 
   wrappers: 'Command wrappers (.claude/commands, .opencode/commands)',
   hooks: 'Hook adapters',
   mcp: 'MCP parity (.mcp.json, opencode.jsonc, .codex/config.toml)',
+  lint: 'Lint config wiring (eslint.config.js <- eslint.config.base.js)',
 };
 
 /** Classify one error message by its wording (the messages are ours). */
 export function compatibilityErrorGroup(message: string): CompatibilityErrorGroup {
   if (/\bMCP\b/.test(message)) { return 'mcp'; }
+  if (/eslint\.config/i.test(message)) { return 'lint'; }
   if (/command wrapper|command alias/i.test(message)) { return 'wrappers'; }
   if (/skills alias|\.claude\/skills/i.test(message)) { return 'alias'; }
   if (/hook/i.test(message)) { return 'hooks'; }
@@ -495,6 +498,9 @@ export function checkAgentCompatibility(
   catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
+  // Independent of the canonical sources: a missing skills dir must not hide an
+  // unwired lint block. Never throws (an unreadable config is not a finding).
+  errors.push(...validateEslintBlockWiring(paths.root));
 
   const entry = lstatIfPresent(paths.claudeSkills);
   if (entry === null) {
