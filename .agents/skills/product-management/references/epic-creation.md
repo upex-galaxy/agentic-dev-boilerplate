@@ -36,6 +36,8 @@ Before creating any epic, read these in order. Skip files marked **optional** if
 14. `bun run context:map business-api-context` — endpoint catalog (auth model, journey breakdown). **Optional** at seed time.
 15. `.context/PBI/epic-tree.md` — current backlog state (skip if seeding from scratch).
 
+**No PRD/SRS (existing app documented by its business maps):** inputs 7-11 have substitutes, listed in `../SKILL.md` → "Product docs: PRD/SRS or business maps". Never write a PRD or SRS to fill them.
+
 **Optional inputs note.** Items 12-14 arrive after `/project-context` modes `data` / `features` / `api` have been run. In a fresh project, the business maps may not exist yet — proceed without them and re-evaluate dependencies once the maps are seeded.
 
 ---

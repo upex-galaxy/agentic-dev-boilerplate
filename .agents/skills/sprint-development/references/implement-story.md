@@ -53,15 +53,13 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 2. ▶️ Continúa sin Context7 (menos confiable)
 ```
 
-### Supabase MCP (Si proyecto usa Supabase)
+### DB MCP (capability `db`: Supabase o la misma familia Postgres)
 
-**¿Está disponible?** [Verificar si puedes acceder a Supabase MCP]
+**Solo si la story toca la base de datos** (schema, RLS, funciones, datos). Una story que no la toca nunca se detiene por esta capability (`agentic-dev-core/references/mcp-capabilities.md` §4, pasos opcionales).
 
-**Si NO está disponible y la story requiere DB:**
+**¿Está disponible?** [Verificar que existe una tool terminada en `list_migrations` / `execute_sql`, con cualquier prefijo]
 
-- Advertir al usuario
-- Proporcionar SQL manual para que ejecute
-- O instruir cómo conectar Supabase MCP
+**Si NO está disponible y la story requiere DB:** STOP per `agentic-dev-core/references/mcp-capabilities.md` §4: nombrar la capability, el server que la provee y cómo habilitarlo. SQL a mano solo si el usuario lo elige después del STOP.
 
 ### shadcn/ui MCP (Si proyecto usa shadcn)
 
@@ -118,6 +116,8 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 ├── error-handling.md           # Manejo de errores estructurado
 └── data-testid-standards.md    # Atributos data-testid para testing E2E
 ```
+
+Son los DEFAULTS para una app que todavía no tiene convención propia. Donde la app ya tiene una (estructura, alias `{{stack.conventions.import_alias}}`, naming, manejo de errores, estilo de test id `{{stack.conventions.testid_style}}`), gana la de la app: `../SKILL.md` → `## Stack parameters` → "Existing conventions win". Un test id existente nunca se renombra.
 
 **Propósito:**
 
@@ -236,14 +236,16 @@ Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas 
 **Si falta algo:**
 
 - ❌ **NO ejecutes scripts interactivos** (`npm init`, `npx create-*`, etc.)
-- ✅ Instala dependencias manualmente: `npm install [paquete]` o `bun add [paquete]`
+- ✅ Instala dependencias con el package manager de la app: `{{stack.package_manager}} add [paquete]`
 - ✅ Si requiere setup complejo: instruye al usuario paso a paso
 
 **Para cambios de DB:**
 
 - ✅ **Required first:** load `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call through the DB MCP. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
-- ✅ Usa Supabase MCP si está disponible
-- ✅ Si NO está disponible: proporciona SQL para que usuario ejecute manualmente
+- ✅ Lee el historial de migraciones por el DB MCP (`list_migrations`) justo antes de escribir el cambio
+- ✅ Aplica según `{{stack.database.migrations_tool}}`: `supabase-mcp` / `supabase-cli` por el DB MCP (`supabase-cli` además commitea el archivo con la versión que registró el MCP); `prisma` / `drizzle`: la herramienta de la app genera la migración y aplicarla es el pipeline del equipo, preguntando antes; el MCP queda en solo lectura. Detalle: `agentic-dev-core/references/db-change-doctrine.md`
+- ✅ Después de aplicar: `list_migrations` muestra el cambio, relee la definición en vivo y regenera los tipos (`{{stack.package_manager}} run {{stack.scripts.db_types}}`)
+- ❌ Nunca DDL por `execute_sql`, nunca aplicar un cambio solo para destrabar un error local
 
 ---
 
@@ -333,7 +335,7 @@ export function MentorCard({ mentor }) {
 **Cómo probar:**
 
 ```bash
-npm run dev
+{{stack.package_manager}} run {{stack.scripts.dev}}   # desde {{stack.app_root}}
 # Navega a: http://localhost:3000/[ruta]
 # Verifica: [Qué debe verse/funcionar]
 ```
@@ -351,20 +353,20 @@ npm run dev
 - **NO hardcodear valores** (usar env vars, constants)
 - **NO duplicar código** (DRY always)
 - **NO usar `any` en TypeScript** (tipos explícitos)
-- **NO hardcodear SQL** (usar Supabase MCP o parametrizar)
+- **NO hardcodear SQL en el código de la app** (queries parametrizadas o el cliente del proyecto; los cambios de schema van por el DB MCP, `agentic-dev-core/references/db-change-doctrine.md`)
 - **NO usar `console.error`** (usar logger apropiado)
 - **NO crear componentes UI si ya existen** (reusar design system)
 - **NO ejecutar scripts interactivos**
 - **NO implementar integration/E2E tests** (eso es QA, Test Automation, fuera de este skill)
 
 ### ✅ SÍ HACER:
-- **Seguir structure de carpetas** del proyecto
+- **Seguir la estructura y las convenciones que la app ya tiene** (ganan sobre los defaults de las references)
 - **Aplicar naming conventions** (camelCase, PascalCase apropiados)
 - **Documentar funciones complejas** (JSDoc si necesario)
 - **Manejar errores apropiadamente** (try-catch, error boundaries)
 - **Usar componentes del design system** (Button, Card, etc.)
 - **Validar inputs de usuario** (sanitización, validación)
-- **Agregar `data-testid` a componentes UI** (ver `references/data-testid-standards.md`)
+- **Agregar test ids a componentes UI nuevos** con el estilo de la app (`{{stack.conventions.testid_style}}`, o el que ya usa su código; sin ninguno, `references/data-testid-standards.md`). Nunca renombrar uno existente
 
 ---
 
@@ -374,7 +376,7 @@ npm run dev
 
 1. **Build del proyecto:**
 ```bash
-npm run build  # o: bun run build
+{{stack.package_manager}} run {{stack.scripts.build}}   # rol null: se omite y se reporta
 ````
 
 - ✅ Build exitoso sin errores TypeScript
@@ -449,10 +451,10 @@ npm run build  # o: bun run build
 
 ```bash
 # 1. Instalar dependencias (si agregaste alguna)
-npm install
+{{stack.package_manager}} install
 
 # 2. Levantar servidor
-npm run dev
+{{stack.package_manager}} run {{stack.scripts.dev}}
 
 # 3. Abrir en navegador
 # http://localhost:3000/[ruta]

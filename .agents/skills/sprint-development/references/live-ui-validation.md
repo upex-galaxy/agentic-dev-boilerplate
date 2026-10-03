@@ -95,7 +95,7 @@ playwright-cli list                                               # <KEY> is gon
 - **`--raw fill <ref> "$VAR"` is the only way a credential is typed.** `fill` echoes what it typed in its "Ran Playwright code" block; the shell expands the variable, the command text carries only its NAME, and `--raw` suppresses the echo.
 - The variables are in the process environment when the session was launched through the repo's harness wrappers (`bun run claude` / `opencode` / `codex` wrap `dotenv -o -e .env`). Launched bare, prefix the one command: `bunx dotenv -e .env -- sh -c 'playwright-cli -s=<KEY> --raw fill <ref> "$QA_E2E_USER_PASSWORD"'`.
 - After the login, verify WHICH account is signed in (a profile menu, `/me`, the user's email on screen) before trusting any result. A login page after `goto` means the session expired: log in again through the same form, never through a shortcut from `live-ui-identity.md` §3.
-- `{{WEB_URL}}` of the active env comes from `.agents/project.yaml`; the real-time check (§5.1) uses the local dev server. Read `package.json` for the script that starts it (AGENTS.md Rule #10).
+- `{{WEB_URL}}` of the active env comes from `.agents/project.yaml`; the real-time check (§5.1) uses the local dev server: `{{stack.package_manager}} run {{stack.scripts.dev}}` from `{{stack.app_root}}`, the name confirmed in the app's `package.json` (AGENTS.md Rule #10).
 
 ### 3.4 Session material is a secret
 
@@ -149,7 +149,7 @@ A UI story **cannot reach merge with an open, unratified live-UI gap.** On any g
 
 Non-UI stories skip live-UI validation entirely.
 
-**Hard rules (carry from SKILL.md):** NEVER validate against a production build — use the running dev server (read `package.json` for its script). Log in as the declared automation identity, resolved by variable name from `.env`, never hardcoded, never bypassing the app's login path (§0 + `live-ui-identity.md`), in a named in-memory `/playwright-cli` session (§3). Before reporting, close every session, delete any session material written to disk and disclose `browser_sessions:` / `secrets_materialized:` / `cleaned:` (§6).
+**Hard rules (carry from SKILL.md):** NEVER validate against a production build — use the running dev server (`{{stack.scripts.dev}}`, confirmed in the app's `package.json`). Log in as the declared automation identity, resolved by variable name from `.env`, never hardcoded, never bypassing the app's login path (§0 + `live-ui-identity.md`), in a named in-memory `/playwright-cli` session (§3). Before reporting, close every session, delete any session material written to disk and disclose `browser_sessions:` / `secrets_materialized:` / `cleaned:` (§6).
 
 ---
 

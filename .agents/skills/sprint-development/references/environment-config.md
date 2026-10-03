@@ -206,7 +206,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### 3️⃣ Verificar
 
 ```bash
-npm run dev
+{{stack.package_manager}} run {{stack.scripts.dev}}
 ```
 
 - ✅ App inicia sin errores de variables faltantes
@@ -394,7 +394,7 @@ Agregar fila a tabla correspondiente explicando para qué sirve.
 
 ```bash
 # Iniciar dev server
-npm run dev
+{{stack.package_manager}} run {{stack.scripts.dev}}
 
 # Verificar:
 # ✅ No hay errores de variables faltantes

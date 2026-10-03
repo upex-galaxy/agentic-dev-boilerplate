@@ -31,7 +31,7 @@ Genera Entity-Relationship Diagram en Mermaid que muestre:
 - Relaciones (1:1, 1:N, N:M)
 - Cardinalidad
 
-**IMPORTANTE:** NO generar SQL schemas estáticos. Indicar que se usará Supabase MCP para obtener schema real en tiempo real.
+**IMPORTANTE:** NO generar SQL schemas estáticos. Indicar que el schema real se lee y se cambia por el DB MCP (`agentic-dev-core/references/db-change-doctrine.md`).
 
 **3. Tech Stack Justification**
 

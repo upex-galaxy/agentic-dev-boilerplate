@@ -475,7 +475,7 @@ Slugs resolve through `{{jira.transition.bug.<slug>}}` (same slugs for `defect` 
 
 **Decision:**
 
-- [ ] **HOTFIX** → Use `hotfix/*` branch, PR to main
+- [ ] **HOTFIX** → Use `hotfix/*` branch, PR to the production branch (`git_strategy.branches.production`)
 - [ ] **BUGFIX** → Use `fix/*` branch, PR to the integration branch (`git_strategy.branches.integration`)
 ```
 
@@ -599,14 +599,16 @@ git checkout -b hotfix/[ISSUE_KEY]/[short-description]
 **Step 1: Code Quality Checks**
 
 ```bash
-# TypeScript check (adjust command per project)
-npm run types:check  # or: bun run types:check
+# The app's own scripts (`## Stack parameters` in ../SKILL.md), run from {{stack.app_root}}.
+# A null role is skipped and reported, never replaced by an invented command.
+# TypeScript check
+{{stack.package_manager}} run {{stack.scripts.types}}
 
 # Linting
-npm run lint:check  # or: bun run lint:check
+{{stack.package_manager}} run {{stack.scripts.lint}}
 
 # Build
-npm run build  # or: bun run build
+{{stack.package_manager}} run {{stack.scripts.build}}
 ````
 
 **Step 2: Manual Verification**
@@ -619,7 +621,7 @@ npm run build  # or: bun run build
 **Step 3: Run Tests (if available)**
 
 ```bash
-npm run test  # or: bun run test
+{{stack.package_manager}} run {{stack.scripts.test}}
 ```
 
 **Verification Checklist:**
@@ -735,11 +737,11 @@ EOF
 )" \
   --base <integration>
 
-# For HOTFIX (to main)
+# For HOTFIX (to the production branch, git_strategy.branches.production)
 gh pr create \
   --title "fix(ISSUE_KEY): brief description [HOTFIX]" \
   --body "..." \
-  --base main
+  --base <production>
 ```
 
 **Confirm PR creation:**
@@ -750,7 +752,7 @@ gh pr create \
 Title: fix(PROJ-123): resolve email validation
 PR #: [NUMBER]
 URL: [PR_URL]
-Base: [staging/main]
+Base: [integration branch, or production when integration is null]
 
 Next steps:
 1. Request code review
@@ -1069,12 +1071,12 @@ _Reclassifying and moving to backlog._
 
 ### Hotfix Workflow:
 
-1. [ ] Branch from `main`: `hotfix/[ISSUE_KEY]/[description]`
+1. [ ] Branch from `<production>` (`git_strategy.branches.production`): `hotfix/[ISSUE_KEY]/[description]`
 2. [ ] Implement minimal fix
 3. [ ] Verify fix locally
-4. [ ] Create PR to `main` with [HOTFIX] tag
+4. [ ] Create PR to `<production>` with [HOTFIX] tag
 5. [ ] Request expedited review
-6. [ ] After merge to main:
+6. [ ] After merge to `<production>`:
    - [ ] Verify production deployment
    - [ ] Backport to the integration branch (`git_strategy.branches.integration`, e.g. `staging`)
 7. [ ] Update Jira with hotfix documentation
@@ -1083,9 +1085,9 @@ _Reclassifying and moving to backlog._
 ### Hotfix Branch Strategy
 
 ```bash
-# 1. Create hotfix branch from main
-git checkout main
-git pull origin main
+# 1. Create hotfix branch from <production> (git_strategy.branches.production)
+git checkout <production>
+git pull origin <production>
 git checkout -b hotfix/[ISSUE_KEY]/[description]
 
 # 2. Implement fix (minimal changes only)
@@ -1100,9 +1102,9 @@ git commit -m "fix(ISSUE_KEY): description [HOTFIX]
 
 Fixes: ISSUE_KEY"
 
-# 4. Push and create PR to main
+# 4. Push and create PR to <production>
 git push -u origin hotfix/[ISSUE_KEY]/[description]
-gh pr create --base main --title "fix(ISSUE_KEY): description [HOTFIX]"
+gh pr create --base <production> --title "fix(ISSUE_KEY): description [HOTFIX]"
 
 # 5. After merge to <production>, backport to <integration> (git_strategy.branches.*;
 #    skip when integration is null). Hotfix policy: git_strategy.decisions.hotfix_policy
@@ -1357,7 +1359,7 @@ After completing the workflow, present this consolidated report to the user in t
 | Jira - Assign     | Asignado a [Tester name] para re-test                     |
 | Git - Branch      | `fix/[ISSUE_KEY]/[description]`                           |
 | Git - Commit      | `fix([ISSUE_KEY]): [commit message]`                      |
-| Git - Push        | → [target branch: staging/main]                           |
+| Git - Push        | → [target branch: integration, or production when null]   |
 | Verificación      | typecheck ✓, lint ✓, build ✓                              |
 
 ---
@@ -1577,12 +1579,14 @@ Use [ISSUE_TRACKER_TOOL] to transition issue:
 
 ## Quick Reference: Code Quality Commands
 
-| Check      | Command (npm)         | Command (bun)         |
-| ---------- | --------------------- | --------------------- |
-| TypeScript | `npm run types:check` | `bun run types:check` |
-| Lint       | `npm run lint:check`  | `bun run lint:check`  |
-| Build      | `npm run build`       | `bun run build`       |
-| Test       | `npm run test`        | `bun run test`        |
+Run from `{{stack.app_root}}`; a null role is skipped and reported.
+
+| Check      | Command                                                  |
+| ---------- | -------------------------------------------------------- |
+| TypeScript | `{{stack.package_manager}} run {{stack.scripts.types}}`  |
+| Lint       | `{{stack.package_manager}} run {{stack.scripts.lint}}`   |
+| Build      | `{{stack.package_manager}} run {{stack.scripts.build}}`  |
+| Test       | `{{stack.package_manager}} run {{stack.scripts.test}}`   |
 
 ---
 

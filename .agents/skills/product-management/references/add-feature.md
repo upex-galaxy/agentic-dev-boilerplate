@@ -30,6 +30,8 @@ Cold start? Read these files in this exact order before proposing anything. Each
 14. `bun run context:map business-api-context` — endpoint catalog (auth model, journeys).
 15. `.context/PBI/epic-tree.md` — current backlog state.
 
+**No PRD/SRS (existing app documented by its business maps):** inputs 7-11 have substitutes, listed in `../SKILL.md` → "Product docs: PRD/SRS or business maps". Never write a PRD or SRS to fill them.
+
 **Optional inputs.** Some mature projects also produce business maps via `/project-context` modes `data` / `features` / `api`. If they are absent (typically at early seed time), proceed without them but flag the gap.
 
 ---
@@ -1108,7 +1110,7 @@ STORY-{PROJECT}-{NUMBER}-{descriptive-name}/
 - ✅ Is the summary free of the functional-spec prefix (e.g. `FR-XXX` with em-dash and title)?
 - ✅ Are acceptance criteria in Gherkin format **wrapped in a ```gherkin code-fence** (anti-pattern `I17`)?
 - ✅ **Voice gate**: do AC / Scope / Out-of-Scope / Workflow describe persona-observable behavior, with no endpoints, HTTP status codes, table names, framework names, or internal algorithms (anti-pattern `I15`)? Exception: persona = API consumer.
-- ✅ **Persona grounding**: does the `As a` name a persona that exists in `.context/PRD/user-personas.md` (anti-pattern `I19`)?
+- ✅ **Persona grounding**: does the `As a` name a persona that exists in `.context/PRD/user-personas.md`, or on a business-maps project in the glossary / the data map's `access-control` roles (anti-pattern `I19`)?
 - ✅ **Story Points policy**: is `{{jira.story_points}}` left EMPTY unless the user explicitly requested estimation in this session (anti-pattern `I16`)?
 - ✅ **Active Dependency Discovery executed**: did the active pass run (Step 3.5 or 7.5), was global noise filtered out, and did the user confirm the matrix before any link (anti-pattern `I18`)?
 - ✅ Does the parent epic (when applicable) actually exist?
