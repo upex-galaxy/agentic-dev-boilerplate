@@ -10,9 +10,9 @@
     />
     <style>
       /* ============================================================
-     Self-contained deck — cero requests externos, ni siquiera
+     Self-contained deck: cero requests externos, ni siquiera
      fuentes. Diseñado para sobrevivir años como archivo suelto.
-     Tokens: "Planos" — ver packages/decks/README.md (fuente única).
+     Tokens: "Planos", ver packages/decks/README.md (fuente única).
      ============================================================ */
       :root {
         --paper: #e8ecf1;
@@ -42,7 +42,7 @@
         --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
         --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
         /* -solid tokens: fixed across both themes, reserved for solid-fill
-           + white-text UI (buttons, bubbles, ::selection) — the plain
+           + white-text UI (buttons, bubbles, ::selection): the plain
            --blue/--signal/--agent above lighten in dark mode for on-paper
            text/links and fail contrast as a white-text fill. Never themed. */
 
@@ -584,7 +584,7 @@
         color: var(--ink-soft);
       }
       .plane li::before {
-        content: '—';
+        content: '-';
         position: absolute;
         left: 0;
         color: var(--ink-faint);
@@ -1366,7 +1366,7 @@
     <!-- ============ HERO ============ -->
     <header class="hero">
       <div class="wrap">
-        <div class="kicker eyebrow"><span class="num">00</span> — el plano antes de la obra</div>
+        <div class="kicker eyebrow"><span class="num">00</span> · el plano antes de la obra</div>
         <h1>Del <em>plano</em> al <span class="sig">producto</span>, con la IA de por medio.</h1>
         <p class="lede">
           <span class="mono">/design-system</span> trabaja en dos momentos. Primero, una vez por
@@ -1428,18 +1428,18 @@
     <section class="band" id="modelo">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">01</span> — modelo mental</div>
+          <div class="eyebrow"><span class="num">01</span> · modelo mental</div>
           <h2>Dos planos que nunca se confunden</h2>
           <p class="sub">
             El error más común es mezclar el <em>sistema de diseño</em> con el
             <em>diseño de pantallas</em>. Son dos artefactos, con dos dueños y dos consumidores
-            distintos — y de hecho, dos "drop zones" físicas distintas en el repo.
+            distintos, y de hecho dos "drop zones" físicas distintas en el repo.
           </p>
         </div>
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Sistema — se define una vez</div>
+            <div class="tag">Sistema · se define una vez</div>
             <h3>DESIGN.md</h3>
             <span class="path">./DESIGN.md</span>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
@@ -1456,13 +1456,13 @@
               <li>Lo consume <b>/project-bootstrap</b> al montar el frontend.</li>
               <li>
                 Su drop zone de bundle es
-                <span class="mono">design/handoff/&lt;slug&gt;/</span> (raíz del repo) —
+                <span class="mono">design/handoff/&lt;slug&gt;/</span> (raíz del repo):
                 <b>no</b> confundir con la de pantallas.
               </li>
             </ul>
           </div>
           <div class="plane sig">
-            <div class="tag">Pantallas — se hace por feature</div>
+            <div class="tag">Pantallas · se hace por historia</div>
             <h3>master-design-plan.md</h3>
             <span class="path">.context/design/master-design-plan.md</span>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
@@ -1483,7 +1483,7 @@
               </li>
               <li>
                 Su drop zone de mockups crudos es
-                <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> — plural
+                <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span>, plural
                 "designs", distinto de "design" singular del plan.
               </li>
             </ul>
@@ -1496,7 +1496,7 @@
           DESIGN.md como autoridad de color/tipografía. Y ojo con los nombres de carpeta:
           <span class="mono">design/handoff/</span> (bundle de tokens) vs.
           <span class="mono">.context/designs/</span> (mockups de pantalla) vs.
-          <span class="mono">.context/design/</span> (el plan ya armado) — tres carpetas, tres
+          <span class="mono">.context/design/</span> (el plan ya armado): tres carpetas, tres
           cargas distintas.
         </div>
       </div>
@@ -1674,7 +1674,7 @@
     <section class="band" id="bucle">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">03</span> — el bucle</div>
+          <div class="eyebrow"><span class="num">03</span> · el bucle</div>
           <h2>Un mockup por historia, justo antes de construirla</h2>
           <p class="sub">
             No se diseñan todas las pantallas de golpe al inicio. Se diseña <em>just-in-time</em>:
@@ -1686,8 +1686,8 @@
         <div class="r" style="margin-bottom: 26px">
           <p class="lead-in" style="max-width: 66ch">
             Cada historia de usuario nueva que renderiza interfaz
-            <b>debería tener su propio mockup</b> — siempre que sea posible. Las historias puramente
-            de backend no tienen pantalla (se marcan con <span class="mono">—</span> en el mapa).
+            <b>debería tener su propio mockup</b>, siempre que sea posible. Las historias puramente
+            de backend no tienen pantalla (se marcan con un guion en el mapa).
             Cuando <span class="mono">/sprint-development</span> topa una historia de UI sin fila en
             §8, corre el <b>design gate</b>: se frena y te deja elegir entre tres rutas (abajo). Es
             la Regla 14 (UI Fidelity Contract) del repo.
@@ -1732,7 +1732,7 @@
 
         <div class="callout r">
           <b>Live-UI-first:</b> el mockup es <em>inspiración</em>, no evangelio. La UI viva actual
-          más los tokens de DESIGN.md son la fuente de verdad de fidelidad — se reutilizan los
+          más los tokens de DESIGN.md son la fuente de verdad de fidelidad: se reutilizan los
           componentes que ya existen y el mockup se adapta a ellos, no al revés. Seguir la UI viva
           donde el mockup difiere no es un defecto. Si el mockup trae algo genuinamente bueno que la
           UI viva no tiene, no se fuerza en la historia actual: se archiva como tech-story futura.
@@ -1836,12 +1836,12 @@
     <section class="band" id="handoff">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">04</span> — el patrón universal</div>
+          <div class="eyebrow"><span class="num">04</span> · el patrón universal</div>
           <h2>Cómo se entrega un mockup a la IA</h2>
           <p class="sub">
-            Este handoff es <em>idéntico</em> en su forma para todas las herramientas — lo que
+            Este handoff es <em>idéntico</em> en su forma para todas las herramientas; lo que
             cambia es <em>dónde</em> dibujás las pantallas (paso 2) y, para Open Design,
-            <em>quién</em> hace el paso 3 y 4 (vos, o la IA sola vía MCP — ver §06).
+            <em>quién</em> hace el paso 3 y 4 (vos, o la IA sola vía MCP, ver §06).
           </p>
         </div>
 
@@ -1863,7 +1863,7 @@
             <p>
               La IA escribe <span class="mono">BRIEF.md</span> sembrado con los tokens de DESIGN.md
               (valores reales inline) + las historias y comportamientos visibles. Es el prompt
-              portable que vas a pegar en la herramienta — o que la IA misma va a usar si el camino
+              portable que vas a pegar en la herramienta, o que la IA misma va a usar si el camino
               es MCP-driven.
             </p>
             <p class="mono" style="font-size: 0.8rem; color: var(--blue)">
@@ -1875,7 +1875,7 @@
             <p>
               Pegás el brief en Claude Design / Open Design / la que sea, iterás las pantallas
               conversando, y <b>exportás</b> el resultado. En el camino manual, este paso lo hacés
-              vos. En Open Design con MCP conectado, la IA puede disparar y pollear el run sola —
+              vos. En Open Design con MCP conectado, la IA puede disparar y pollear el run sola:
               ver Modo A en §06.
             </p>
           </div>
@@ -1961,7 +1961,7 @@
     <section class="band" id="claude">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">05</span> — herramienta A</div>
+          <div class="eyebrow"><span class="num">05</span> · herramienta A</div>
           <h2>Claude Design</h2>
           <p class="sub">
             La herramienta de Anthropic (<span class="mono">claude.ai/design</span>). Convertís
@@ -1997,7 +1997,7 @@
           <div class="win">
             <div class="win-bar">
               <div class="win-dots"><i></i><i></i><i></i></div>
-              <div class="win-url">claude.ai/design — flujo de login</div>
+              <div class="win-url">claude.ai/design · flujo de login</div>
               <div class="win-btn">Import</div>
               <div class="win-btn exp">Export ▼</div>
             </div>
@@ -2032,14 +2032,14 @@
             </div>
           </div>
           <div class="figcap">
-            Esquema aproximado — no es fiel al producto. Chat a la izquierda · canvas vivo a la
+            Esquema aproximado, no es fiel al producto. Chat a la izquierda · canvas vivo a la
             derecha · Export arriba a la derecha.
           </div>
         </div>
 
         <div class="sec-head r" style="margin: 44px 0 22px 0">
           <div class="eyebrow">
-            <span class="num">05·b</span> — paso a paso, para screen mockups
+            <span class="num">05·b</span> · paso a paso, para screen mockups
           </div>
         </div>
         <div class="steps r">
@@ -2063,12 +2063,12 @@
             <h3>Cubrís los estados y varias pantallas</h3>
             <p>
               Un proyecto sostiene el <b>flujo completo</b> (varias pantallas conectadas con
-              navegación). Generá los estados borde — vacío, cargando, error — <em>antes</em> del
+              navegación). Generá los estados borde (vacío, cargando, error) <em>antes</em> del
               handoff.
             </p>
           </div>
           <div class="step">
-            <h3>Exportás — dos rutas</h3>
+            <h3>Exportás: dos rutas</h3>
             <p>
               Botón <b>Export</b> (arriba a la derecha): <b>"Send to local coding agent"</b> empuja
               el bundle directo a tu Claude Code local corriendo en el repo, o
@@ -2080,7 +2080,7 @@
             <p>
               Con "Save as folder": descomprimís en
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span>. Con "Send
-              to local coding agent": le decís al agente esa misma ruta de destino — el scope de
+              to local coding agent": le decís al agente esa misma ruta de destino; el scope de
               este drop zone es <b>screen mockups</b>, no el bundle de DESIGN.md (ese usa
               <span class="mono">design/handoff/</span>).
             </p>
@@ -2093,13 +2093,13 @@
     <section class="band" id="open">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">06</span> — herramienta B</div>
+          <div class="eyebrow"><span class="num">06</span> · herramienta B</div>
           <h2>Open Design</h2>
           <p class="sub">
             La alternativa <em>open source</em> y gratuita a Claude Design (<span class="mono"
               >nexu-io/open-design</span
             >, Apache-2.0). Es una <b>desktop app</b> (no Docker) que usa
-            <em>tu propio</em> agente de código como motor — y puede operarse <b>sola</b> vía MCP.
+            <em>tu propio</em> agente de código como motor, y puede operarse <b>sola</b> vía MCP.
           </p>
         </div>
 
@@ -2169,21 +2169,21 @@
             </div>
           </div>
           <div class="figcap">
-            Esquema aproximado — no es fiel al producto. En Modo A no hay botón Export que tocar: la
+            Esquema aproximado, no es fiel al producto. En Modo A no hay botón Export que tocar: la
             IA ubica el resultado con <span class="mono">get_artifact</span>/<span class="mono"
               >list_files</span
             >
-            y lo copia (<span class="mono">cp</span>) al repo — el MCP no escribe fuera de su propio
+            y lo copia (<span class="mono">cp</span>) al repo; el MCP no escribe fuera de su propio
             directorio de datos.
           </div>
         </div>
 
         <div class="sec-head r" style="margin: 44px 0 22px 0">
-          <div class="eyebrow"><span class="num">06·b</span> — dos modos, mismo destino</div>
+          <div class="eyebrow"><span class="num">06·b</span> · dos modos, mismo destino</div>
         </div>
         <div class="planes r" style="margin-bottom: 30px">
           <div class="plane agent">
-            <div class="tag">Modo A — preferido</div>
+            <div class="tag">Modo A · preferido</div>
             <h3>MCP-driven</h3>
             <span class="path">mcp__open-design__*</span>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
@@ -2198,7 +2198,7 @@
             </p>
           </div>
           <div class="plane">
-            <div class="tag">Modo B — fallback</div>
+            <div class="tag">Modo B · fallback</div>
             <h3>Manual + PAUSE</h3>
             <span class="path">handoff manual</span>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
@@ -2211,16 +2211,16 @@
         </div>
 
         <div class="sec-head r" style="margin: 34px 0 18px 0">
-          <div class="eyebrow"><span class="num">06·c</span> — instalar y conectar el motor</div>
+          <div class="eyebrow"><span class="num">06·c</span> · instalar y conectar el motor</div>
         </div>
         <div class="r" style="margin-bottom: 22px">
           <div class="code">
-            <span class="c"># Vía recomendada — sin Docker, binario firmado</span> Descargá el
+            <span class="c"># Vía recomendada: sin Docker, binario firmado</span> Descargá el
             instalador de <span class="k">nexu-io/open-design</span> releases (macOS/Win/Linux) y
             abrí la app. No hace falta puerto fijo ni
             <span class="mono">host.docker.internal</span>.
 
-            <span class="c"># Docker sigue existiendo, pero ya no es el camino recomendado —</span>
+            <span class="c"># Docker sigue existiendo, pero ya no es el camino recomendado,</span>
             <span class="c"># solo si ya vivís en containers o necesitás acceso remoto.</span>
           </div>
         </div>
@@ -2230,7 +2230,7 @@
             <h3>Configurás el motor</h3>
             <p>
               En <b>Settings</b> elegís cómo genera: apuntando a tu CLI ya autenticado (Claude Code
-              / Codex / OpenCode — <em>sin</em> key extra) o cargando una API key de cualquier
+              / Codex / OpenCode, <em>sin</em> key extra) o cargando una API key de cualquier
               endpoint compatible con la API de OpenAI (BYOK).
             </p>
           </div>
@@ -2249,7 +2249,7 @@
               Skill de OD (para pantallas de aplicación usá
               <span class="mono">frontend-design</span>) + design system (tu
               <span class="mono">DESIGN.md</span> real) +
-              brief en lenguaje natural (el BRIEF.md). <b>Send</b> — a mano en Studio, o vía
+              brief en lenguaje natural (el BRIEF.md). <b>Send</b>, a mano en Studio, o vía
               <span class="mono">start_run</span> si es la IA quien dispara.
             </p>
           </div>
@@ -2257,7 +2257,7 @@
             <h3>El artifact se streamea en vivo</h3>
             <p>
               El agente interno de Open Design emite un HTML completo y auto-contenido; el panel
-              derecho lo <b>streamea</b> como prototipo navegable — botones, tabs y modales
+              derecho lo <b>streamea</b> como prototipo navegable: botones, tabs y modales
               funcionan. Cada follow-up crea una <b>nueva versión</b>, las anteriores quedan en el
               historial.
             </p>
@@ -2266,7 +2266,7 @@
             <h3>Cierra el handoff</h3>
             <p>
               Modo A: la IA ubica el archivo con <span class="mono">get_artifact</span> y lo copia
-              (<span class="mono">cp</span>) a la drop zone — el MCP no escribe fuera de su propio
+              (<span class="mono">cp</span>) a la drop zone; el MCP no escribe fuera de su propio
               data root. Modo B: copiás el archivo (o corrés <span class="mono">od export</span>) a
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> y avisás.
             </p>
@@ -2275,7 +2275,7 @@
 
         <div class="sec-head r" style="margin: 40px 0 18px 0">
           <div class="eyebrow">
-            <span class="num">06·d</span> — gotchas verificados en producción
+            <span class="num">06·d</span> · gotchas verificados en producción
           </div>
           <p class="sub" style="font-size: 1rem">
             Si vas a operar Open Design vía MCP (Modo A), estas cuatro señales confunden si no las
@@ -2288,7 +2288,7 @@
             ><span
               >El self-report (<span class="mono">agentMessage</span>) puede reportar el idioma o
               resultado equivocado aunque el HTML generado esté correcto. El archivo en disco es el
-              ground truth — grepealo, no reacciones al mensaje.</span
+              ground truth: grepealo, no reacciones al mensaje.</span
             >
           </div>
           <div class="g">
@@ -2302,7 +2302,7 @@
           <div class="g">
             <b><span class="mono">updatedAt</span> se congela durante extended thinking</b
             ><span
-              >Minutos sin movimiento en el timestamp del run no son un hang — es el modelo
+              >Minutos sin movimiento en el timestamp del run no son un hang: es el modelo
               pensando. Verificá liveness real contra el último evento de
               <span class="mono">events.jsonl</span>.</span
             >
@@ -2312,14 +2312,14 @@
             ><span
               >Un subagente que espera un run con <span class="mono">sleep</span> largo en
               background se estanca a sí mismo. Patrón probado: un loop foreground con timeout y
-              <span class="mono">sleep</span> corto adentro — nunca un
+              <span class="mono">sleep</span> corto adentro, nunca un
               <span class="mono">sleep</span> suelto.</span
             >
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Detalle clave:</b> Open Design <em>consume</em> DESIGN.md, no lo reemplaza — pero no es
+          <b>Detalle clave:</b> Open Design <em>consume</em> DESIGN.md, no lo reemplaza, pero no es
           automático. Primero hay que instalar el design system del repo como paquete de usuario
           (<span class="mono">user:&lt;slug&gt;</span>) y <b>publicarlo</b> (arranca en
           <span class="mono">draft</span>, los proyectos no pueden usarlo hasta publicarse). Sin
@@ -2333,7 +2333,7 @@
     <section class="band" id="otras">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">07</span> — otras vías</div>
+          <div class="eyebrow"><span class="num">07</span> · otras vías</div>
           <h2>Cualquier prototipador sirve</h2>
           <p class="sub">
             El repo trata como fuente de pantallas <em>cualquier cosa</em> que caiga en la drop
@@ -2357,7 +2357,7 @@
             <h3>HTML manual</h3>
             <div class="kk">sin herramienta visual</div>
             <p>
-              Lo escribís vos — a mano, o pegando el output de un chat de IA cualquiera que uses
+              Lo escribís vos, a mano, o pegando el output de un chat de IA cualquiera que uses
               como bloc de notas, en <b>otra sesión</b>, sin conexión con la que está corriendo
               <span class="mono">/design-system</span>. Rápido y sin salir de la terminal. La
               contra: sin canvas visual para iterar cómodo, el refinamiento es por chat en esa otra
@@ -2367,22 +2367,22 @@
         </div>
 
         <div class="callout agent r">
-          <b>Regla dura — delegar, no generar:</b> la sesión que corre
+          <b>Regla dura, delegar y no generar:</b> la sesión que corre
           <span class="mono">/design-system</span> <b>nunca</b> escribe el mockup ella misma (nada
           de <span class="mono">Write</span> / <span class="mono">write_file</span> sobre HTML de
-          diseño — anti-patrones S1 de <span class="mono">screen-design-mapping.md</span>, D7 del
+          diseño: anti-patrones S1 de <span class="mono">screen-design-mapping.md</span>, D7 del
           <span class="mono">SKILL.md</span>, B4 de
           <span class="mono">screen-design-brief.md</span>). Si el HTML nace de una IA, es de
           <b>otra sesión</b>, tratada exactamente como un export de Figma: un archivo externo que
-          vos soltás en la drop zone — nunca algo que la sesión orquestadora escribe "mientras
+          vos soltás en la drop zone, nunca algo que la sesión orquestadora escribe "mientras
           espera".
         </div>
 
         <div class="sec-head r" style="margin: 40px 0 22px 0">
-          <div class="eyebrow"><span class="num">07·b</span> — la vía manual, paso a paso</div>
+          <div class="eyebrow"><span class="num">07·b</span> · la vía manual, paso a paso</div>
           <p class="sub" style="font-size: 1rem">
             La opción más rápida cuando no querés levantar ninguna app. Sirve bien para pantallas
-            simples y para iterar rápido antes de pulir en una herramienta visual — siempre que el
+            simples y para iterar rápido antes de pulir en una herramienta visual, siempre que el
             archivo lo produzcas y lo muevas vos, no la sesión de
             <span class="mono">/design-system</span>.
           </p>
@@ -2405,7 +2405,7 @@
             <h3>Lo guardás vos en la drop zone</h3>
             <p>
               Copiás el <span class="mono">.html</span> resultante a
-              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/login.html</span> —
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/login.html</span>:
               acción tuya, igual que descomprimir un zip de Claude Design. Lo abrís y lo mirás en el
               navegador: ese render es tu canvas.
             </p>
@@ -2424,7 +2424,7 @@
           <div class="step">
             <h3>Cubrís los estados borde</h3>
             <p>
-              Pedí explícitamente vacío, cargando y error — no se agregan solos. Son parte del
+              Pedí explícitamente vacío, cargando y error: no se agregan solos. Son parte del
               contrato de pantalla.
             </p>
           </div>
@@ -2446,8 +2446,8 @@
           <b>El principio no cambia:</b> venga de donde venga el mockup, termina en
           <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> puesto ahí por
           vos, y la IA lo convierte en spec de pantalla + fila en el mapa Historia→Pantalla. La
-          herramienta es intercambiable; quién lo produce puede variar; el contrato — y quién lo
-          mueve a la drop zone — es siempre el mismo.
+          herramienta es intercambiable; quién lo produce puede variar; el contrato (y quién lo
+          mueve a la drop zone) es siempre el mismo.
         </div>
       </div>
     </section>
@@ -2456,7 +2456,7 @@
     <section class="band" id="comparacion">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> — comparación</div>
+          <div class="eyebrow"><span class="num">08</span> · comparación</div>
           <h2>Cuál elegir</h2>
         </div>
         <div class="tablewrap r">
@@ -2533,7 +2533,7 @@
     <section class="band" id="comandos">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> — qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">09</span> · qué le decís a la IA</div>
           <h2>Los comandos exactos</h2>
           <p class="sub">
             El nombre de la skill más el modo, <span class="mono">tokens</span> o
@@ -2617,7 +2617,7 @@
     <section class="band">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> — antes de arrancar</div>
+          <div class="eyebrow"><span class="num">10</span> · antes de arrancar</div>
           <h2>Precondiciones, en una lista</h2>
           <p class="sub">Antes de empezar a producir mockups, tené esto listo:</p>
         </div>
@@ -2626,7 +2626,7 @@
             <span class="bx"></span
             ><span
               ><b>DESIGN.md existe.</b> Los mockups se siembran con sus tokens congelados. Sin él no
-              hay contrato visual — corré <span class="mono">/design-system tokens</span>
+              hay contrato visual: corré <span class="mono">/design-system tokens</span>
               primero.</span
             >
           </div>
@@ -2658,7 +2658,7 @@
             ><span
               ><b>Drop zone clara.</b> Sabés en qué
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> va a caer el
-              bundle — y que no es la misma carpeta que
+              bundle, y que no es la misma carpeta que
               <span class="mono">design/handoff/</span>.</span
             >
           </div>
@@ -2670,11 +2670,11 @@
     <section class="band" id="empezar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> — empezá ahora</div>
+          <div class="eyebrow"><span class="num">11</span> · empezá ahora</div>
           <h2>Arrancar de cero</h2>
           <p class="sub">
             Runbook literal. Dos caminos según cuánto quieras montar. Los dos parten de abrir Claude
-            Code, OpenCode o Codex en la raíz del repo — las skills viven en
+            Code, OpenCode o Codex en la raíz del repo; las skills viven en
             <span class="mono">.agents/skills/</span> y las tres terminales las leen igual (Claude
             Code a través del alias generado <span class="mono">.claude/skills</span>), así que
             <span class="mono">/design-system</span> y
@@ -2685,7 +2685,7 @@
 
         <div class="planes r" style="margin-bottom: 30px">
           <div class="plane">
-            <div class="tag">Camino A — flujo completo con la skill</div>
+            <div class="tag">Camino A · flujo completo con la skill</div>
             <h3>Con herramienta visual</h3>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
               Cuando vas a diseñar en Claude Design u Open Design y querés el BRIEF sembrado con tus
@@ -2706,15 +2706,15 @@
             </p>
           </div>
           <div class="plane sig">
-            <div class="tag">Camino B — HTML manual, sin app externa</div>
+            <div class="tag">Camino B · HTML manual, sin app externa</div>
             <h3>Vos producís el HTML, aparte</h3>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
-              El más rápido para arrancar. No levantás nada — pero el archivo lo generás y lo
+              El más rápido para arrancar. No levantás nada, pero el archivo lo generás y lo
               movés vos, en una sesión <b>distinta</b> a la que corre
               <span class="mono">/design-system</span>.
             </p>
             <div class="code" style="font-size: 0.78rem">
-              <span class="c"># en OTRA ventana/sesión — no la del repo con /design-system</span>
+              <span class="c"># en OTRA ventana/sesión, no la del repo con /design-system</span>
               claude <span class="c"># o: opencode, o cualquier chat de IA</span>
 
               <span class="c"># prompt semilla (ajustá pantalla + historia):</span>
@@ -2738,7 +2738,8 @@
 
         <div class="callout blue r">
           <b>Regla para el prompt:</b> anclá siempre <em>pantalla</em> + <em>historia (PROJ-XX)</em> +
-          <em>"usá los tokens de DESIGN.md"</em>. Con esas anclas el mockup sale alineado — vos sos
+          <em>"usá los tokens de DESIGN.md"</em>. Con esas anclas el mockup sale alineado, y vos sos
+
           quien lo lleva a la drop zone para el resto del flujo, nunca la sesión orquestadora.
         </div>
 
