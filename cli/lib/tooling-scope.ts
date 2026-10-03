@@ -51,6 +51,11 @@ function stringList(value: unknown): string[] | null {
   return Array.isArray(value) && value.every(v => typeof v === 'string') ? value : null;
 }
 
+/** Whether the installer lock records an adoption (`"adopted": true`); false on greenfield or with no lock. */
+export function isAdoptedRepo(root: string): boolean {
+  return readLock(root)?.adopted === true;
+}
+
 /** The recorded list on an adopted repo; null anywhere else (greenfield, or a lock written before the list existed). */
 export function readUpstreamOwned(root: string): UpstreamOwned | null {
   const lock = readLock(root);

@@ -35,7 +35,7 @@
     "onboarding": "bun scripts/onboarding.ts",
     "opencode": "dotenv -o -e .env -- opencode",
     "prepare": "husky && bun scripts/harness-env.ts --placeholders",
-    "repo:check": "bun run format:check && bun run lint:check && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run agents:compat:check && bun run agents:schema:check",
+    "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run agents:compat:check && bun run agents:schema:check",
     "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run agents:compat:check",
     "setup:doctor": "bun cli/doctor.ts",
     "setup": "bun cli/doctor.ts --preflight && bun cli/install.ts",

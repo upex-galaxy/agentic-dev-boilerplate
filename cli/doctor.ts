@@ -630,7 +630,26 @@ function toolingIsolationDiagnostic(): { adopted: boolean, pending: string[] } {
   for (const t of a.tsconfigs) { pending.push(`${t.path} type-checks ${t.reached.map(d => `${d}/`).join(', ')}: add them to its "exclude" (snippet: .agents/prompts/adopt-tooling-isolation.md)`); }
   if (a.eslint !== null) { pending.push(`${a.eslint.path} lints the tooling: ignore ${a.eslint.missing.join(', ')}`); }
   if (a.hooksPending) { pending.push(`${a.hooks.manager} (${a.hooks.evidence}) does not call .husky/framework-gates.sh: the framework gates never run`); }
+  const repoCheck = (() => {
+    try { return (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { scripts?: Record<string, unknown> }).scripts?.['repo:check']; }
+    catch { return undefined; }
+  })();
+  if (repoCheckRunsAppWideLegs(repoCheck)) {
+    pending.push('package.json "repo:check" runs the app-wide format:check / lint:check / types:check: take upstream\'s value (`bun run up`, row scripts.repo:check), which opens with `bun scripts/tooling-check.ts repo` and scopes them to the tooling');
+  }
   return { adopted, pending };
+}
+
+/**
+ * Whether a `repo:check` script still opens with the legs that judge the whole
+ * repo (`format:check`, `lint:check`, `types:check`). On an adopted app those
+ * are the app's own scripts or tools run over the app's root configs; the
+ * scoped form is `bun scripts/tooling-check.ts repo`. An app without the
+ * script, or with its own composition, is not reported.
+ */
+export function repoCheckRunsAppWideLegs(script: unknown): boolean {
+  if (typeof script !== 'string') { return false; }
+  return /\bbun run (?:format:check|lint:check|types:check)\b/.test(script) && !script.includes('tooling-check.ts repo');
 }
 
 // ----------------------------------------------------------------------------

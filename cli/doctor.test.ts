@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { legacyCredentialKeys, worktreeSetupAction } from './doctor.ts';
+import { legacyCredentialKeys, repoCheckRunsAppWideLegs, worktreeSetupAction } from './doctor.ts';
 
 describe('worktreeSetupAction', () => {
   test('a provisioned worktree needs nothing', () => {
@@ -29,5 +29,14 @@ describe('legacyCredentialKeys', () => {
   test('an empty value is not reported at all', () => {
     const out = legacyCredentialKeys(env, new Set(['JIRA_USERNAME']));
     expect([...out.remove, ...out.appOwned]).not.toContain('JIRA_USERNAME');
+  });
+});
+
+describe('repoCheckRunsAppWideLegs', () => {
+  test('the pre-scoping value is reported; the scoped one, a missing script and an app composition are not', () => {
+    expect(repoCheckRunsAppWideLegs('bun run format:check && bun run lint:check && bun run types:check && bun run vars:check')).toBe(true);
+    expect(repoCheckRunsAppWideLegs('bun scripts/tooling-check.ts repo && bun run vars:check')).toBe(false);
+    expect(repoCheckRunsAppWideLegs(undefined)).toBe(false);
+    expect(repoCheckRunsAppWideLegs('npm run ci')).toBe(false);
   });
 });
