@@ -90,6 +90,17 @@ const GATE_TIMEOUT_MS = 120_000;
  * `PATH_PREREQUISITES` in `./lib/updater-parity.ts`).
  */
 export const GATE_SCRIPTS = ['types:check', 'lint:check', 'skills:check'] as const;
+/**
+ * The same gates on an ADOPTED app: `types:check` / `lint:check` there would
+ * judge the app's code by the tooling's rules (or be the app's own scripts),
+ * so the tooling's scoped checks run instead, as in `.husky/framework-gates.sh`.
+ */
+export const ADOPTED_GATE_SCRIPTS = ['tooling:types:check', 'tooling:lint:check', 'skills:check'] as const;
+
+/** Which post-sync gates this repo runs. */
+export function gateScriptsFor(adopted: boolean): readonly string[] {
+  return adopted ? ADOPTED_GATE_SCRIPTS : GATE_SCRIPTS;
+}
 
 /**
  * The line a finished `--adopt` run closes with. The install layer stops here:
@@ -582,7 +593,7 @@ interface RunFacts {
   /** Post-apply quality gates (`GATE_SCRIPTS`); empty when skipped. */
   gates: GateResult[]
   /** Why `gates` stayed empty this run: nothing to say when gates actually ran (even a fail leaves at least one `GateResult`). */
-  gatesSkippedReason: 'no-gates' | 'no-changes' | null
+  gatesSkippedReason: 'no-gates' | 'no-changes' | 'adopt' | null
   /** A no-op run left the previous run's prompt file untouched. */
   promptKept: boolean
   /** `.context/PBI/` paths still tracked in git, and where the migration recipe was saved. */
@@ -1228,14 +1239,18 @@ function makeAllowListHook(
   };
 }
 
-function makeGatesHook(sink: ReportSink, enabled: boolean): (summary: RunSummary) => Promise<void> {
+function makeGatesHook(sink: ReportSink, enabled: boolean, adopted: boolean, adoptRun: boolean): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
     if (!enabled) { runFacts.gatesSkippedReason = 'no-gates'; return; }
     if (summary.applied.length === 0) { runFacts.gatesSkippedReason = 'no-changes'; return; }
+    // The --adopt run appends the tooling's devDependencies to package.json but
+    // installs nothing: every gate would fail on a missing package, not on the
+    // code. They run on the first commit (framework gates) after `bun install`.
+    if (adoptRun) { runFacts.gatesSkippedReason = 'adopt'; return; }
     const cwd = process.cwd();
     const scripts = packageScripts(cwd);
     const applied = summary.applied.map(a => a.entry.path);
-    for (const script of GATE_SCRIPTS) {
+    for (const script of gateScriptsFor(adopted)) {
       if (!scripts[script]) { continue; }
       const spin = sink.spinner();
       spin.start(`Gate ${script} (máx. ${GATE_TIMEOUT_MS / 1000} s)…`);
@@ -1272,6 +1287,7 @@ export function gatesSummaryLine(gates: readonly GateResult[], skippedReason: Ru
   if (summary) { return summary; }
   if (skippedReason === 'no-gates') { return 'omitidas (--no-gates)'; }
   if (skippedReason === 'no-changes') { return 'omitidas (sin cambios)'; }
+  if (skippedReason === 'adopt') { return 'omitidas (--adopt: corren tras bun install)'; }
   return null;
 }
 
@@ -1865,7 +1881,7 @@ async function main(): Promise<void> {
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
-            makeGatesHook(sink, !parsed.noGates),
+            makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS
             // allow entries, which no compatibility contract asserts on.
             makeAllowListHook(UPSTREAM_DIR, sink, false),
