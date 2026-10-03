@@ -97,14 +97,16 @@ describe('component registry', () => {
       expect(existsSync(join(import.meta.dir, '..', d.path))).toBe(false);
     }
 
+    // Pages that stay next to the retired ones must survive the cleanup.
+    const kept = ['docs/setup/mcp/codex.md', 'docs/methodology/IQL-methodology.md', 'docs/methodology/jira-platform.md'];
     const root = temporaryRoot();
-    for (const p of [...RETIRED_DOCS_FILES.map(d => d.path), 'docs/setup/mcp/codex.md']) {
+    for (const p of [...RETIRED_DOCS_FILES.map(d => d.path), ...kept]) {
       mkdirSync(join(root, p, '..'), { recursive: true });
       writeFileSync(join(root, p), 'x\n');
     }
     const cfg = { deprecatedFiles: RETIRED_DOCS_FILES } as Parameters<typeof cleanupDeprecated>[0];
     expect(cleanupDeprecated(cfg, root, false)).toBe(RETIRED_DOCS_FILES.length);
-    expect(existsSync(join(root, 'docs/setup/mcp/codex.md'))).toBe(true);
+    for (const p of kept) { expect(existsSync(join(root, p))).toBe(true); }
   });
 });
 

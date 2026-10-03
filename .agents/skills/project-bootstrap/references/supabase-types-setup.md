@@ -20,7 +20,7 @@ Configurar el sistema de **tipado auto-generado** desde Supabase para obtener ty
 - `src/lib/supabase/client.ts` - Client actual (si existe)
 - `src/lib/supabase/server.ts` - Server client actual (si existe)
 - `src/types/supabase.ts` - Tipos actuales (si existen)
-- `AGENTS.md` - Configuración de Supabase Project ID
+- `.agents/project.yaml` → `environments.<env>.db_project_ref` (`{{DB_PROJECT_REF}}` del ambiente activo) - Supabase project ref
 
 ### 2. Precondiciones
 
@@ -92,13 +92,13 @@ supabase --version
 
 **Paso 0.2: Obtener Project ID**
 
-**Buscar en `AGENTS.md`:**
+**Leer de `.agents/project.yaml`** (`AGENTS.md` §7: la identidad del proyecto vive en el yaml):
 
 ```bash
-grep -i "project" AGENTS.md | grep -i "supabase\|id"
+yq '.environments.<env>.db_project_ref' .agents/project.yaml
 ```
 
-**Si no está documentado, preguntar al usuario:**
+**Si está en `null`, preguntar al usuario** (y guardarlo en ese campo con su OK):
 
 ```
 ¿Cuál es tu Supabase Project ID?
@@ -106,7 +106,7 @@ grep -i "project" AGENTS.md | grep -i "supabase\|id"
 Puedes encontrarlo en:
 https://supabase.com/dashboard/project/[TU_PROJECT]/settings/general
 
-El Project ID tiene formato: xxxxxxxxxxxxxxxxxxxxxxxx (24 caracteres)
+El project ref tiene formato: xxxxxxxxxxxxxxxxxxxx (20 caracteres)
 ```
 
 **Guardar Project ID para uso posterior.**

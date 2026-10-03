@@ -191,6 +191,8 @@ export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
   ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
     .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.6' })),
   { path: 'docs/setup/jira-setup-guide.md', component: 'docs', reason: 'Xray test-management setup belongs to the QA boilerplate; dev-side Jira setup is in docs/setup/README.md', deprecatedSince: '8.6' },
+  ...['docs/methodology/early-game-testing.md', 'docs/methodology/mid-game-testing.md', 'docs/methodology/late-game-testing.md']
+    .map(path => ({ path, component: 'docs', reason: 'QA methodology lives in the QA boilerplate; the dev-to-QA handoff is docs/methodology/IQL-methodology.md', deprecatedSince: '8.6' })),
 ];
 
 export const DEPRECATED_FILES: DeprecatedFile[] = [

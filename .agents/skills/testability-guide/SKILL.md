@@ -241,7 +241,7 @@ If a step fails → fix and re-run from step 1. Never paper over a failure.
 
 Delegate to `/git-flow-master`. This skill never invokes `git push`, `gh pr create`, or branch operations inline. The orchestrator hands `/git-flow-master` the branch name (`feature/testability-guide` if fresh, `fix/testability-guide-drift-YYYY-MM-DD` if surgical patch), the commit-message stems (one for page, one for redirect, one per dep bump), and the PR title `feat(qa): add Software Testability Guide for QA at /qa` (or `fix(qa): refresh testability guide after stack drift`).
 
-**Never push to `main` directly.** Always PR. AGENTS.md Rule #4 + Rule #11.
+**The work lands through that PR.** Whether anything may go straight to a protected branch is `/git-flow-master`'s call: it resolves `git_strategy.policy.direct_push_to_protected` (AGENTS.md Critical Rule #4). This skill never pushes and never decides the push policy itself.
 
 ---
 
@@ -290,6 +290,6 @@ On successful completion (all eight verification items pass), the orchestrator r
 ## Notes
 
 - Security non-negotiables live in `references/security-rules.md`. Read it before any publish.
-- MCP credentials are cached at MCP-spawn time (AGENTS.md Rule #11). If a publish path fails on `401` / `403`, stop, point the user at the right `.env` variable, and ask them to restart the agent session. Do NOT work around.
+- MCP credentials are cached at MCP-spawn time (AGENTS.md Critical Rule #9). If a publish path fails on `401` / `403`, stop, point the user at the right `.env` variable, and ask them to restart the agent session. Do NOT work around.
 - This skill assumes English visible copy by default. Switch to the host language whenever the host app exposes a clear signal (root `lang` attribute, i18n config, copy already in another language). Code identifiers + `data-testid`s stay English regardless.
 - **One sanctioned dependency — the syntax highlighter (the ONLY exception).** The skill adds **no other** dependencies. If the host UI kit lacks a `<CodeBlock>` component, create a minimal local one with a copy button — do not pull in a library for it. The single exception is a **server-only syntax highlighter (Shiki, or the host's existing equivalent)**: when the host has no highlighter, the skill MAY add Shiki because it runs server-side (build/request time), emits static dual-theme HTML, and ships **zero client JavaScript**. This is gated by Q6 (`decision-questions.md`) and detection — reuse the host's highlighter if one exists, and skip it entirely if the host has an explicit "no new deps" policy. Everything else still follows "no new deps": tabs, badges, request cards, and the highlight pipeline's framing components are local files in the host's style, not packages.

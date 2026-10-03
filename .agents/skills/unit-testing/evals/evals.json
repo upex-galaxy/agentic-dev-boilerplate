@@ -21,7 +21,7 @@
     {
       "name": "should-trigger-coverage-target",
       "prompt": "What's a good coverage target for this business logic module? Line vs branch — what should I aim for?",
-      "expected_behavior": "Activates unit-testing in advisory mode. Reads test-coverage.md reference. Explains line vs branch coverage trade-offs, recommends branch coverage as the more meaningful target for business logic (typically 80-90% branch, 100% on critical paths), mentions mutation testing as the next step to validate the tests actually catch bugs.",
+      "expected_behavior": "Activates unit-testing in advisory mode. Reads test-coverage.md reference. Explains line vs branch coverage trade-offs, recommends branch coverage as the more meaningful metric for business logic, quotes the per-code-type ranges from test-coverage.md (90-100% for pure business logic) as guidelines and a floor rather than a target, prefers delta-based CI gates over a single global threshold, mentions mutation testing as the next step to validate the tests actually catch bugs.",
       "category": "positive"
     },
     {

@@ -177,7 +177,7 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 ### Validation:
 
 - ✅ TypeScript build successful (sin errores de tipos): `[package-manager] run build`
-- ✅ **UI refleja la personalidad elegida** (Minimalista/Bold/Corporativo/Playful)
+- ✅ **UI refleja el estilo visual de `DESIGN.md`**
 - ✅ **Paleta de colores aplicada consistentemente** en todas las páginas
 - ✅ **Content Writing real** basado en contexto de negocio (NO texto genérico)
 - ✅ Pídele al usuario que corra el servidor para verificar que compile sin warnings y que las páginas se vean bien
@@ -266,11 +266,11 @@ Los componentes importan tipos de `@/lib/types` y TypeScript valida automáticam
 
 ### ✅ SÍ HACER:
 
-- **Hacer preguntas al usuario** - Preferencias de diseño, package manager, etc.
+- **Hacer preguntas al usuario** - Layout, componentes prioritarios, package manager, etc. (nunca paleta ni estilo: vienen de `DESIGN.md`)
 - **Usar Context7 MCP** - Consultar docs oficiales (Next.js, Supabase, TailwindCSS, etc.)
 - **Importar tipos del backend** - Usar src/types/supabase.ts y crear helpers
 - **Crear design system completo** - Botones, cards, inputs, etc. con estilo coherente
-- **Aplicar paleta de colores** - Elegida o generada según negocio
+- **Aplicar paleta de colores** - La de `DESIGN.md`, sin inventar valores
 - **Páginas visualmente atractivas** - Modernas, con personalidad
 - **Explicar cada decisión** - Educar al usuario
 - **Documentar diseño** - Crear `.context/design-system.md`
@@ -506,14 +506,14 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 - **[UI Library]**: [Patrones de diseño disponibles]
 - **[Auth Provider]**: [Setup recomendado]
 
-**Próximo paso:** Preguntar preferencias de diseño al usuario.
+**Próximo paso:** Pre-flight de `DESIGN.md` (Fase 1.4).
 ```
 
 ---
 
 ## FASE 1.4: PRE-FLIGHT DESIGN.md (NUEVO)
 
-**Objetivo:** Detectar si existe un `DESIGN.md` ya generado por `/design-system` y, si lo hay, derivar los tokens visuales (paleta, tipografía, espaciado) directamente del archivo — saltando la Fase 1.5 interactiva.
+**Objetivo:** Confirmar que existe el `DESIGN.md` que produce `/design-system` y derivar los tokens visuales (paleta, tipografía, espaciado, radios) directamente del archivo. Sin `DESIGN.md` no hay scaffold de frontend (SKILL.md, anti-pattern **B5**).
 
 ### Paso 1.4.1: Detectar DESIGN.md
 
@@ -521,20 +521,21 @@ Hoy en día, hay alternativas **mucho más rápidas y eficientes** que npm:
 DESIGN_MD_PATH=$(yq '.frontend.design_md_path // "./DESIGN.md"' .agents/project.yaml 2>/dev/null || echo "./DESIGN.md")
 
 if [ -f "$DESIGN_MD_PATH" ]; then
-  echo "DESIGN.md encontrado en $DESIGN_MD_PATH — derivando tokens, saltando Fase 1.5 (Q&A interactivo)."
+  echo "DESIGN.md encontrado en $DESIGN_MD_PATH: derivando tokens."
 else
-  echo "DESIGN.md no encontrado. Para producir uno antes del scaffolding correr /design-system primero. Procediendo con Q&A legacy."
+  echo "DESIGN.md no encontrado en $DESIGN_MD_PATH. DETENIDO (B5): correr /design-system y volver a esta fase."
+  exit 1
 fi
 ```
 
 **Decisión:**
 
-- **Si existe `DESIGN.md`**: parsear el frontmatter YAML, mapear a `tailwind.config.js` + `globals.css` (ver tabla abajo), **saltar Fase 1.5 entera** y continuar con Fase 1.6 (estrategia de componentes).
-- **Si NO existe**: imprimir el hint sobre `/design-system` y proseguir con Fase 1.5 legacy. La retrocompatibilidad se preserva — proyectos que ya scaffoldearon sin DESIGN.md siguen funcionando.
+- **Si existe `DESIGN.md`**: parsear el frontmatter YAML, mapear a `tailwind.config.js` + `globals.css` (ver tabla abajo) y continuar con Fase 1.5 (layout y componentes prioritarios).
+- **Si NO existe**: **DETENER** el scaffold del frontend. Decirle al usuario que corra `/design-system` (fase de tokens) y retomar esta fase cuando `DESIGN.md` exista. No hay camino alternativo: nunca inventar una paleta ni preguntar preferencias visuales para reemplazar los tokens (B5). Un proyecto que ya tiene frontend scaffoldeado sin `DESIGN.md` también pasa por `/design-system` antes de que esta fase lo toque.
 
 ### Paso 1.4.2: Mapeo DESIGN.md → Tailwind config
 
-Cuando se procede via DESIGN.md, los tokens del frontmatter mapean así:
+Los tokens del frontmatter mapean así:
 
 | DESIGN.md frontmatter        | Tailwind config target                    |
 | ---------------------------- | ----------------------------------------- |
@@ -559,77 +560,19 @@ Una vez parseado el frontmatter:
 
 1. Generar `tailwind.config.js` con los tokens mapeados — no preguntar al user, el `DESIGN.md` ya es la fuente.
 2. Generar `globals.css` con las CSS custom properties (`--color-primary`, `--font-heading`, etc.) apuntando a los mismos valores.
-3. Continuar directamente con Fase 1.6 (estrategia de componentes UI: shadcn vs manual vs híbrido).
+3. Continuar con Fase 1.5 (layout y componentes prioritarios) y después Fase 1.6 (estrategia de componentes UI: shadcn vs manual vs híbrido).
 
-**No saltar Fase 1.6**: la elección de cómo implementar componentes es ortogonal al design system. shadcn/ui sigue siendo una pregunta válida incluso con DESIGN.md.
-
----
-
-## 🎨 FASE 1.5: DISEÑO & PREFERENCIAS VISUALES (INTERACTIVA)
-
-> **Skip this phase entirely if Fase 1.4 detected `DESIGN.md`** — tokens are derived from the frontmatter, no need to ask the user. Resume at Fase 1.6.
-
-**Objetivo:** Recopilar preferencias visuales del usuario para crear un diseño coherente y bonito.
-
-### Paso 1.5.1: Pregunta 1 - Paleta de Colores
-
-**Usa `AskUserQuestion` tool:**
-
-**Pregunta:** "¿Qué paleta de colores prefieres para tu aplicación?"
-
-**Header:** "Paleta de Colores"
-
-**Opciones:**
-
-1. **Azul Profesional** (Confianza y corporativo)
-   - **Descripción:** "Tonos azules (ej: #3B82F6). Transmite confianza, profesionalismo. Ideal para: SaaS empresarial, aplicaciones B2B, plataformas corporativas."
-
-2. **Verde Moderno** (Crecimiento y tech)
-   - **Descripción:** "Tonos verdes (ej: #10B981). Transmite innovación, crecimiento. Ideal para: Startups tech, sostenibilidad, salud."
-
-3. **Morado Creativo** (Creatividad y premium)
-   - **Descripción:** "Tonos morados (ej: #8B5CF6). Transmite creatividad, lujo. Ideal para: Apps creativas, comunidades, productos premium."
-
-4. **Naranja Energético** (Energía y acción)
-   - **Descripción:** "Tonos naranjas (ej: #F59E0B). Transmite energía, call-to-action. Ideal para: Plataformas transaccionales, apps de acción, servicios dinámicos."
-
-5. **Elige por mí** (Basado en tu negocio)
-   - **Descripción:** "La IA analizará la personalidad de tu negocio (del PRD) y seleccionará la paleta más apropiada automáticamente."
-
-**MultiSelect:** false
+**No saltar Fase 1.5 ni 1.6**: la elección de cómo implementar componentes es ortogonal al design system. shadcn/ui sigue siendo una pregunta válida incluso con DESIGN.md.
 
 ---
 
-### Paso 1.5.2: Pregunta 2 - Estilo Visual
+## 🎨 FASE 1.5: LAYOUT Y COMPONENTES PRIORITARIOS (INTERACTIVA)
 
-**Usa `AskUserQuestion` tool:**
+> Paleta, tipografía y estilo visual NO se preguntan: vienen de `DESIGN.md` (Fase 1.4). Esta fase solo decide lo que los tokens no dicen: la estructura de navegación y qué componentes construir primero.
 
-**Pregunta:** "¿Qué estilo visual prefieres para la interfaz?"
+**Objetivo:** Definir el layout principal y los componentes UI prioritarios de la aplicación.
 
-**Header:** "Estilo Visual"
-
-**Opciones:**
-
-1. **Minimalista** (Clean y espacioso)
-   - **Descripción:** "Diseño limpio, mucho espacio en blanco, tipografía clara. Estilo Apple/Notion. Ideal para: Herramientas de productividad, dashboards, SaaS."
-
-2. **Moderno/Bold** (Vibrante y llamativo)
-   - **Descripción:** "Colores vibrantes, bordes redondeados, gradientes sutiles. Estilo Stripe/Vercel. Ideal para: Startups, productos innovadores, tech."
-
-3. **Corporativo** (Serio y profesional)
-   - **Descripción:** "Diseño formal, líneas rectas, colores sobrios. Estilo IBM/Microsoft. Ideal para: Enterprise, finanzas, gobierno."
-
-4. **Startup/Playful** (Amigable y accesible)
-   - **Descripción:** "Colores alegres, ilustraciones, bordes redondeados. Estilo Slack/Mailchimp. Ideal para: Comunidades, educación, consumer apps."
-
-5. **Elige por mí** (Basado en tu negocio)
-   - **Descripción:** "La IA seleccionará el estilo que mejor se ajuste a la personalidad de tu aplicación (inferida del PRD)."
-
-**MultiSelect:** false
-
----
-
-### Paso 1.5.3: Pregunta 3 - Layout Principal
+### Paso 1.5.1: Pregunta 1 - Layout Principal
 
 **Usa `AskUserQuestion` tool:**
 
@@ -655,7 +598,7 @@ Una vez parseado el frontmatter:
 
 ---
 
-### Paso 1.5.4: Pregunta 4 - Componentes UI Prioritarios
+### Paso 1.5.2: Pregunta 2 - Componentes UI Prioritarios
 
 **Usa `AskUserQuestion` tool:**
 
@@ -684,42 +627,22 @@ Una vez parseado el frontmatter:
 
 ---
 
-### Paso 1.5.5: Procesar Respuestas y Generar Plan de Diseño
+### Paso 1.5.3: Procesar Respuestas y Generar Plan de Diseño
 
 **Después de recibir todas las respuestas, genera un plan:**
 
 ```markdown
 ## 🎨 Plan de Diseño Generado
 
-Basándome en tus preferencias y el análisis del proyecto, aquí está el plan de diseño:
+Basándome en `DESIGN.md`, tus respuestas y el análisis del proyecto, aquí está el plan de diseño:
 
 ---
 
-### Paleta de Colores: [Seleccionada]
+### Tokens (de `DESIGN.md`)
 
-**Colores principales:**
-
-- **Primary:** [Color hex] - [Descripción]
-- **Secondary:** [Color hex] - [Descripción]
-- **Accent:** [Color hex] - [Descripción]
-- **Background:** [Color hex]
-- **Text:** [Color hex]
-- **Border:** [Color hex]
-
-**Razón:** [Si fue "Elige por mí", explicar: "He seleccionado [Color] porque tu aplicación es sobre [dominio] que transmite [valor], y esta paleta comunica [mensaje]."]
-
----
-
-### Estilo Visual: [Seleccionado]
-
-**Características:**
-
-- Espaciado: [Generoso/Compacto]
-- Bordes: [Redondeados/Rectos/Muy redondeados]
-- Sombras: [Sutiles/Pronunciadas/Ninguna]
-- Tipografía: [Sans-serif moderna/Serif formal]
-
-**Razón:** [Si fue "Elige por mí", explicar por qué se ajusta al negocio]
+- **Colores:** primary [hex] · secondary [hex] · accent [hex] · background [hex] · text [hex] · border [hex]
+- **Tipografía:** heading [familia] · body [familia, tamaño]
+- **Radios y espaciado:** [valores del frontmatter]
 
 ---
 
@@ -839,7 +762,7 @@ Basándome en tus preferencias y el análisis del proyecto, aquí está el plan 
 - ✅ 100% customizado a tu necesidad específica
 
 **Componentes a crear:**
-[Usar lista del Paso 1.5.5: Componentes UI a Crear]
+[Usar lista del Paso 1.5.3: Componentes UI a Crear]
 
 **Consideraciones:**
 
@@ -1090,7 +1013,7 @@ Si necesitas referencia, consultar Context7 MCP:
 - ✅ Extensión de `theme` para colores personalizados
 - ✅ Compatible 100% con shadcn/ui
 
-**Propósito:** Aplicar la paleta de colores seleccionada en Fase 1.5 a todo el proyecto.
+**Propósito:** Aplicar la paleta de colores de `DESIGN.md` (mapeada en Fase 1.4) a todo el proyecto.
 ```
 
 **Paso 3.4.1: Inicializar configuración de Tailwind**
@@ -1272,7 +1195,7 @@ Sin el MCP:
 
 1. **Would you like to use TypeScript?** → Yes
 2. **Which style would you like to use?** → Default (o New York si prefieres más minimalista)
-3. **Which color would you like to use as base color?** → [Elegir según paleta de Fase 1.5]
+3. **Which color would you like to use as base color?** → [Elegir según la paleta de `DESIGN.md`]
    - Si paleta es azul → Slate o Blue
    - Si paleta es verde → Green o Emerald
    - Si paleta es morado → Violet
@@ -1307,13 +1230,13 @@ Sin el MCP:
 
 ---
 
-### Paso 4A.3: Configurar Colores con Paleta de Fase 1.5
+### Paso 4A.3: Configurar Colores con la Paleta de DESIGN.md
 
 **Acción:** Las CSS variables de shadcn/ui ya están configuradas en globals.css.
 
 **Directiva:**
 
-shadcn/ui CLI crea automáticamente las CSS variables en `:root` y `.dark` cuando ejecutas `shadcn@latest init`. Estas variables ya están en formato HSL compatible. Solo necesitas ajustar los valores HSL según la paleta elegida en Fase 1.5.
+shadcn/ui CLI crea automáticamente las CSS variables en `:root` y `.dark` cuando ejecutas `shadcn@latest init`. Estas variables ya están en formato HSL compatible. Solo necesitas ajustar los valores HSL según la paleta de `DESIGN.md`.
 
 **Variables principales a personalizar:**
 
@@ -1326,7 +1249,7 @@ shadcn/ui CLI crea automáticamente las CSS variables en `:root` y `.dark` cuand
 
 ---
 
-### Paso 4A.4: Instalar Componentes según Selección de Fase 1.5.4
+### Paso 4A.4: Instalar Componentes según Selección del Paso 1.5.2
 
 **Estrategia de instalación:**
 
@@ -1340,7 +1263,7 @@ Comando base: [pm] dlx shadcn@latest add [componente]
 Componentes SIEMPRE:
   - button, card, label
 
-SI usuario seleccionó "Forms & Inputs" en Fase 1.5.4:
+SI usuario seleccionó "Forms & Inputs" en el Paso 1.5.2:
   - input, textarea, select, checkbox, radio-group, switch
 
 SI usuario seleccionó "Modals & Dialogs":
@@ -1418,7 +1341,7 @@ ls -la components/ui/
 **Diseño aplicado:**
 
 - Paleta: [Usar colores de tailwind.config]
-- Bordes: [Según estilo visual elegido]
+- Bordes: [Según `rounded` de `DESIGN.md`]
 - Hover/Active states: [Transiciones suaves]
 - Disabled state: [Opacidad reducida]
 
@@ -1427,7 +1350,7 @@ ls -la components/ui/
 
 **Directiva para la IA (NO hardcodear código completo):**
 
-"Crea un componente Button usando TypeScript + TailwindCSS que implemente las variantes mencionadas. Usa `class-variance-authority` (cva) para gestionar variantes de forma limpia. Aplica la paleta de colores de `tailwind.config.ts` y el estilo de bordes/sombras según el estilo visual elegido. Incluye estados de hover, active, focus y disabled."
+"Crea un componente Button usando TypeScript + TailwindCSS que implemente las variantes mencionadas. Usa `class-variance-authority` (cva) para gestionar variantes de forma limpia. Aplica la paleta de colores de `tailwind.config.ts` y el estilo de bordes/sombras según `DESIGN.md`. Incluye estados de hover, active, focus y disabled."
 
 ---
 
@@ -1464,13 +1387,13 @@ ls -la components/ui/
 
 **Directiva para la IA:**
 
-"Crea un componente Card con sub-componentes (Header, Content, Footer) usando TailwindCSS. Aplica sombras y bordes según el estilo visual elegido. Si el estilo es 'Moderno/Bold', usa sombras más pronunciadas y hover effects. Si es 'Minimalista', usa sombras sutiles."
+"Crea un componente Card con sub-componentes (Header, Content, Footer) usando TailwindCSS. Aplica sombras y bordes según `DESIGN.md` (tokens y prosa de estilo); si no define sombras, usa sombras sutiles."
 
 ---
 
 ### Paso 4.3: Crear Componentes de Formulario (Si aplica)
 
-**Solo si el usuario seleccionó "Forms & Inputs" en Fase 1.5.4:**
+**Solo si el usuario seleccionó "Forms & Inputs" en el Paso 1.5.2:**
 
 ```markdown
 ### 📝 Creando Componentes de Formulario
@@ -1582,7 +1505,7 @@ ls -la components/ui/
 ```pseudocode
 Para componentes con Headless UI:
   1. Importar componente de @headlessui/react
-  2. Crear wrapper que aplique estilos Tailwind según paleta de Fase 1.5
+  2. Crear wrapper que aplique estilos Tailwind según la paleta de `DESIGN.md`
   3. Incluir transiciones suaves con <Transition>
   4. Exportar API simple
 
@@ -2142,7 +2065,7 @@ Importar tipo de entidad desde `@/lib/types` y crear array de mock data tipado q
 
 **1. Paleta de Colores:**
 
-- ✅ **Verifica que la paleta elegida en Fase 1.5 esté aplicada CONSISTENTEMENTE**
+- ✅ **Verifica que la paleta de `DESIGN.md` esté aplicada CONSISTENTEMENTE**
 - ✅ Primary color usado en CTAs, links, focus states
 - ✅ Secondary color en elementos secundarios
 - ✅ Accent color en highlights, badges
@@ -2333,7 +2256,7 @@ Stack Backend/Auth:
 
 **Generado:** Fase 3.3 - Frontend Setup
 **Fecha:** [Fecha]
-**Estilo Visual:** [Elegido en Fase 1.5]
+**Estilo Visual:** [Derivado de `DESIGN.md`]
 
 ---
 
