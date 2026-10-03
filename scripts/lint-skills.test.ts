@@ -273,3 +273,20 @@ describe('lint-skills on an adopted app', () => {
     expect(exitCode).toBe(1);
   });
 });
+
+describe('lint-skills: a framework skill still on the app\'s hand copy', () => {
+  test('is listed as take-upstream pending, not linted, while upstream\'s copy waits in .agents/prompts/adopt-upstream/', () => {
+    const root = fixture('(T3)');
+    write(root, '.agents/skills/vercel-cli/SKILL.md', `${VERCEL_CLI_FRONTMATTER}\nSee \`cli/install.ts:403\`.\n`);
+    write(root, '.template/installer.lock.json', `${JSON.stringify({ adopted: true, upstreamOwned: { scripts: [], skills: ['unit-testing', 'vercel-cli', 'agentic-dev-core'] } })}\n`);
+    write(root, '.agents/prompts/adopt-upstream/vercel-cli/SKILL.md', VERCEL_CLI_FRONTMATTER);
+    const pending = runLint(root);
+    expect(pending.stdout).toContain('take-upstream pending');
+    expect(pending.stdout).not.toContain('[ERROR/FILE-LINE] .agents/skills/vercel-cli/SKILL.md');
+    expect(pending.exitCode).toBe(0);
+
+    // Taken (the saved copy is gone): linted again.
+    rmSync(join(root, '.agents/prompts/adopt-upstream'), { recursive: true, force: true });
+    expect(runLint(root).exitCode).toBe(1);
+  });
+});

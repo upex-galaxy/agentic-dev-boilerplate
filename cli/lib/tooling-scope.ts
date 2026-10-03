@@ -24,6 +24,14 @@ import * as path from 'node:path';
 /** Same file `./updater-adopt.ts` writes; repeated here so this module stays a leaf. */
 const INSTALLER_LOCK = path.join('.template', 'installer.lock.json');
 
+/**
+ * Where `--adopt` saves upstream's copy of each framework skill the app had
+ * copied in by hand (gitignored with `.agents/prompts/`, single-use):
+ * `project-adoption` replaces the app's copy from here on its own approval
+ * line. While a copy waits here, `skills:check` leaves that skill alone.
+ */
+export const ADOPT_UPSTREAM_SKILLS_DIR = '.agents/prompts/adopt-upstream';
+
 export interface UpstreamOwned {
   /** Repo-relative files under `scripts/` that upstream ships (forward slashes). */
   scripts: string[]

@@ -43,7 +43,7 @@ import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
 import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
-import { collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
+import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 
@@ -87,13 +87,7 @@ export const ADOPT_INSTRUCTIONS_HEADING = '## 0. Project instructions (pre-adopt
 /** Where a composed `AGENTS.md` waits for review when it was not applied (gitignored, single-use). */
 export const ADOPT_INSTRUCTIONS_PROMPT = path.join('.agents', 'prompts', 'adopt-instructions.md');
 
-/**
- * Where `--adopt` saves upstream's copy of each framework skill the app had
- * copied in by hand (gitignored with `.agents/prompts/`, single-use):
- * `project-adoption` replaces the app's copy from here on its own approval
- * line, after backing the app's copy up.
- */
-export const ADOPT_UPSTREAM_SKILLS_DIR = path.join('.agents', 'prompts', 'adopt-upstream');
+export { ADOPT_UPSTREAM_SKILLS_DIR } from './tooling-scope.ts';
 
 /** A framework skill the app already carried (an older hand copy): kept this run, `take upstream` proposed. */
 export interface FrameworkSkillCollision {

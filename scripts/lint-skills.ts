@@ -118,7 +118,7 @@ import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { isToolingSkill, readUpstreamOwned } from '../cli/lib/tooling-scope.ts';
+import { ADOPT_UPSTREAM_SKILLS_DIR, isToolingSkill, readUpstreamOwned } from '../cli/lib/tooling-scope.ts';
 import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 // -----------------------------------------------------------------------------
@@ -796,7 +796,10 @@ function gatherAllSkillMarkdown(): string[] {
     const rel = f.slice(SKILLS_DIR.length + 1);
     if (!rel.includes('/') && SKILL_AGGREGATE_FILES.has(rel)) { return false; }
     // An adopted app's own skills are not this doctrine's (`cli/lib/tooling-scope.ts`).
-    return !rel.includes('/') || isToolingSkill(rel.split('/')[0], readUpstreamOwned(REPO_ROOT));
+    if (!rel.includes('/')) { return true; }
+    const name = rel.split('/')[0];
+    const owned = readUpstreamOwned(REPO_ROOT);
+    return isToolingSkill(name, owned) && !(owned !== null && existsSync(join(REPO_ROOT, ADOPT_UPSTREAM_SKILLS_DIR, name)));
   });
 }
 
@@ -1031,6 +1034,7 @@ function main() {
   const t1 = new Set<string>();
   const committedCommunity = new Set<string>();
   const appOwned = new Set<string>();
+  const pendingTake = new Set<string>();
   const upstreamOwned = readUpstreamOwned(REPO_ROOT);
   for (const e of readdirSync(SKILLS_DIR)) {
     // Symlinked entries (community skills linked from .agents/skills) are NOT
@@ -1048,6 +1052,9 @@ function main() {
     // An adopted app's own skill (`cli/lib/tooling-scope.ts`): written before
     // the adoption, to the app's conventions, never to this doctrine.
     if (!isToolingSkill(e, upstreamOwned)) { appOwned.add(e); continue; }
+    // The app's older hand copy of a framework skill, upstream's copy saved
+    // for `project-adoption` to apply on approval: linted once it is taken.
+    if (upstreamOwned !== null && existsSync(join(REPO_ROOT, ADOPT_UPSTREAM_SKILLS_DIR, e))) { pendingTake.add(e); continue; }
     t1.add(e);
   }
 
@@ -1141,7 +1148,7 @@ function main() {
   checkSkillRefactor();
 
   // Checks 16-17: volatile facts (Critical Rule #17) over .agents/**/*.md + AGENTS.md.
-  checkVolatileFacts(gatherVolatileTargets(new Set([...t2, ...t3, ...t4, ...appOwned])));
+  checkVolatileFacts(gatherVolatileTargets(new Set([...t2, ...t3, ...t4, ...appOwned, ...pendingTake])));
 
   // Report
   const counts = { ERROR: 0, WARN: 0, INFO: 0 };
@@ -1160,9 +1167,12 @@ function main() {
   const communityNote = committedCommunity.size > 0
     ? ` (+ ${committedCommunity.size} community skills committed in the store, tiers from cli/install.ts)`
     : '';
-  const appNote = appOwned.size > 0
+  const appNote = (appOwned.size > 0
     ? ` (+ ${appOwned.size} skills of the adopted app, outside the framework's doctrine: not linted here)`
-    : '';
+    : '')
+  + (pendingTake.size > 0
+    ? ` (+ ${pendingTake.size} framework skills still on the app's hand copy, take-upstream pending in ${ADOPT_UPSTREAM_SKILLS_DIR}/ (project-adoption Phase 3): ${[...pendingTake].sort().join(', ')})`
+    : '');
   console.log(`Scanning ${SKILLS_DIR.replace(`${REPO_ROOT}/`, '')} ... ${t1.size} T1 skills${communityNote}${appNote}`);
   console.log(`Reading ${STRATEGY_DOC.replace(`${REPO_ROOT}/`, '')} §4.1 ... ${vocab.size} categories`);
   console.log(`Reading cli/install.ts ... ${t2.size} T2, ${t3.size} T3, ${t4.size} T4\n`);
