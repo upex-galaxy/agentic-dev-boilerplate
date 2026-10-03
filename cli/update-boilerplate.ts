@@ -63,7 +63,7 @@ import { checkoutRoots } from './lib/worktree.ts';
 // --- CONFIGURATION ---
 // Not tied to the lock schema (`schemaVersion: 7` stays): it stamps the lock's
 // `cliVersion` and the ignore-file sentinel header, which is matched by prefix.
-const CLI_VERSION = '8.5';
+const CLI_VERSION = '8.6';
 // `UPEX_TEMPLATE_REPO` points the updater at another source: a fork, or a LOCAL
 // clone (absolute path / file:// URL, cloned with plain git, no gh session) to
 // exercise an unpublished boilerplate branch against a consumer repo.
