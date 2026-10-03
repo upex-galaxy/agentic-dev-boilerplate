@@ -45,6 +45,7 @@ import {
   walkGovernedFile,
   yamlLeafWalk,
 } from './agents-schema.ts';
+import { STACK_FIELDS } from './stack-descriptor.ts';
 
 const REPO_ROOT = join(import.meta.dir, '..', '..');
 const realSource = (): string => readFileSync(join(REPO_ROOT, SCHEMA_SOURCE), 'utf8');
@@ -729,8 +730,12 @@ describe('every schema placeholder has somebody to fill it', () => {
     const placeholders = [...schemaKeyPaths(schema)!.entries()].filter(([, todo]) => todo).map(([p]) => p);
     const installer = readFileSync(join(REPO_ROOT, 'scripts', 'agents-setup.ts'), 'utf8');
     const prompted = new Set([...installer.matchAll(/key:\s*'([a-z_]+)'/g)].map(m => m[1]));
+    // The `stack:` block is prompted field by field by `agents:setup --stack`,
+    // which walks STACK_FIELDS; the import is what makes that claim true.
+    expect(installer).toContain('STACK_FIELDS');
+    const stackPrompted = new Set(STACK_FIELDS.map(f => `stack.${f.path}`));
 
-    const orphans = placeholders.filter(p => !prompted.has(p.split('.').pop()!) && !(p in FILLED_ELSEWHERE));
+    const orphans = placeholders.filter(p => !prompted.has(p.split('.').pop()!) && !stackPrompted.has(p) && !(p in FILLED_ELSEWHERE));
     expect(orphans).toEqual([]);
     expect(placeholders.length).toBeGreaterThan(10);
   });

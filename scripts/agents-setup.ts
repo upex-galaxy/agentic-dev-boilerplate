@@ -47,6 +47,7 @@
  *   bun run agents:setup --dry-run                # print result, do not write
  *   bun run agents:setup --reset                  # set every field back to null
  *   bun run agents:setup --reseed                 # consent (non-interactive) to replace a copied maintainer yaml
+ *   bun run agents:setup --stack                  # detect the app's stack and fill the `stack:` block
  *   bun run agents:setup --help                   # show help
  *
  * ENV-VAR MAPPING (--non-interactive):
@@ -96,6 +97,7 @@ import { confirm, input, select } from '@inquirer/prompts';
 import { parse as parseYaml } from 'yaml';
 
 import { classifyProjectYaml, SCHEMA_FILE, seedFromSchema } from '../cli/lib/agents-schema.ts';
+import { detectStack, readStack, STACK_FIELDS, validateStack, writeStack } from '../cli/lib/stack-descriptor.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -218,6 +220,8 @@ interface CliFlags {
   reset: boolean
   /** Consent, in --non-interactive mode, to replace a copied maintainer yaml. */
   reseed: boolean
+  /** Walk only the `stack:` block, proposing what the repo shows. */
+  stack: boolean
   help: boolean
 }
 
@@ -227,6 +231,7 @@ function parseArgs(argv: string[]): CliFlags {
     dryRun: false,
     reset: false,
     reseed: false,
+    stack: false,
     help: false,
   };
   for (const arg of argv) {
@@ -242,6 +247,9 @@ function parseArgs(argv: string[]): CliFlags {
         break;
       case '--reseed':
         flags.reseed = true;
+        break;
+      case '--stack':
+        flags.stack = true;
         break;
       case '--help':
       case '-h':
@@ -278,6 +286,14 @@ FLAGS:
                        \`MAINTAINER COPY:\` and origin is not the
                        boilerplate) with the blank template from
                        .agents/project.schema.yaml. Interactive runs ask.
+  --stack              Fill only the \`stack:\` block: detect the app's real
+                       stack from the repo (package.json, lockfile, migration
+                       directory, tsconfig, CI and hosting files) and propose
+                       it. Interactive: one prompt per field the repo shows
+                       differently. With --non-interactive: writes every
+                       detected value, leaves undetected fields as they are.
+                       Inserts the block from .agents/project.schema.yaml when
+                       the project lacks it. Combine with --dry-run to preview.
   --help, -h           Show this help.
 
 VARIABLE MODEL:
@@ -1145,6 +1161,102 @@ async function runInteractive(loaded: LoadedConfig, dryRun: boolean): Promise<vo
   }
   writeFileSync(PROJECT_YAML_PATH, updated, 'utf8');
   log.success(`Wrote ${relative(process.cwd(), PROJECT_YAML_PATH)}.`);
+  log.dim('The app\'s stack (`stack:` block) is filled separately: bun run agents:setup --stack, once the app exists.');
+}
+
+// ============================================================================
+// FLOW: STACK (--stack)
+// ============================================================================
+
+const KEEP = '__keep__';
+const SET_NULL = '__null__';
+
+/**
+ * Detect the app's stack and write it into the `stack:` block.
+ *
+ * Detection proposes, the yaml decides: a field the repo says nothing about is
+ * never touched, and in interactive mode every proposal that differs from the
+ * yaml is one prompt with the evidence beside it. Before /project-bootstrap
+ * there is no app, so nothing app-level is proposed and the shipped greenfield
+ * defaults stay.
+ */
+async function runStack(loaded: LoadedConfig, flags: CliFlags): Promise<void> {
+  log.header('agents-setup — stack descriptor');
+  const schemaPath = join(REPO_ROOT, SCHEMA_FILE);
+  const schemaText = existsSync(schemaPath) ? readFileSync(schemaPath, 'utf8') : null;
+  const current = readStack(loaded.rawText);
+  if (current.error) {
+    log.error(current.error);
+    process.exit(1);
+  }
+  const detection = detectStack(REPO_ROOT);
+  if (!detection.appFound) {
+    log.info('No app found (no package.json declaring `next` at the root, apps/* or packages/*): only repo-level fields are proposed, the rest keep their value.');
+  }
+
+  const updates: Record<string, string | null> = {};
+  for (const field of STACK_FIELDS) {
+    const hit = detection.fields[field.path];
+    const have = current.values[field.path];
+    if (!hit || (have !== undefined && have === hit.value)) { continue; }
+    if (flags.nonInteractive) {
+      updates[field.path] = hit.value;
+      continue;
+    }
+    const shown = (v: string | null | undefined): string => v === undefined ? '(absent)' : v === null ? 'null' : v;
+    const message = `stack.${field.path} (${field.label}): yaml ${shown(have)}, repo shows ${shown(hit.value)} [${hit.evidence}]`;
+    let answer: string;
+    if (field.values !== null) {
+      const choices = [
+        { value: hit.value ?? SET_NULL, name: `${shown(hit.value)} (detected)` },
+        ...(have !== undefined ? [{ value: KEEP, name: `keep ${shown(have)}` }] : []),
+        ...field.values.filter(v => v !== hit.value && v !== have).map(v => ({ value: v, name: v })),
+      ];
+      answer = await select({ message, choices, default: choices[0].value });
+    }
+    else {
+      const typed = await input({ message: `${message}\n  value (empty = null, \`=\` = keep):`, default: hit.value ?? '' });
+      answer = typed.trim() === '=' ? KEEP : typed.trim() === '' ? SET_NULL : typed.trim();
+    }
+    if (answer === KEEP) { continue; }
+    const value = answer === SET_NULL ? null : answer;
+    if (value === null && !field.nullable) {
+      log.warn(`  stack.${field.path} cannot be null; kept as is.`);
+      continue;
+    }
+    updates[field.path] = value;
+  }
+
+  const result = writeStack(loaded.rawText, schemaText, updates);
+  if (result.error) {
+    log.error(result.error);
+    process.exit(1);
+  }
+  if (result.inserted.length > 0) { log.info(`Inserted from ${SCHEMA_FILE}: ${result.inserted.join(', ')}`); }
+  if (result.changed.length === 0 && result.inserted.length === 0) {
+    log.success('stack: nothing to change, the yaml already matches what the repo shows.');
+    return;
+  }
+  for (const path of result.changed) {
+    err(`  stack.${path}: ${current.values[path] ?? 'null'} -> ${updates[path] ?? 'null'}`);
+  }
+  for (const issue of validateStack(readStack(result.text))) {
+    log.warn(`stack.${issue.path} ${issue.message}`);
+  }
+  if (flags.dryRun) {
+    out(result.text);
+    log.success('Dry run complete — file NOT written.');
+    return;
+  }
+  if (!flags.nonInteractive) {
+    const proceed = await confirm({ message: 'Save the stack block to .agents/project.yaml?', default: true });
+    if (!proceed) {
+      log.warn('Cancelled. No changes saved.');
+      process.exit(0);
+    }
+  }
+  writeFileSync(PROJECT_YAML_PATH, result.text, 'utf8');
+  log.success(`Wrote the stack block of ${relative(process.cwd(), PROJECT_YAML_PATH)}.`);
 }
 
 // ============================================================================
@@ -1340,6 +1452,20 @@ async function main(): Promise<void> {
 
   await reseedCopiedTemplate(flags);
   const loaded = loadProjectYaml();
+
+  if (flags.stack) {
+    try {
+      await runStack(loaded, flags);
+    }
+    catch (e) {
+      if (isAbortError(e)) {
+        log.warn('Cancelled. No changes saved.');
+        process.exit(1);
+      }
+      throw e;
+    }
+    return;
+  }
 
   if (flags.reset) {
     try {
