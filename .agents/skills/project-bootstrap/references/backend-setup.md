@@ -10,6 +10,18 @@ Crear la **infraestructura de backend base** (Database + Auth + API Layer) que s
 
 ---
 
+## ⛔ GUARD DE ENTRADA: SOLO GREENFIELD
+
+Esta fase SOLO crea (tablas, RLS, seed, Supabase clients, `src/lib/config.ts`, `middleware.ts`, upgrades de dependencias). Antes de cualquier paso, confirmar el veredicto del guard (`SKILL.md` → "Entry gate", anti-pattern **B0**):
+
+- Hay `.session/project-bootstrap/plan.md` con la línea `Bootstrap guard: greenfield, exit 0` → continuar.
+- No hay plan (pedido suelto, subagente con solo esta referencia) → correr `bun run bootstrap:guard`. Exit 0 → continuar. Exit 2 → **DETENER**.
+- Veredicto `existing-app`, ilegible o ausente → **DETENER** sin tocar nada: citar las señales que imprimió el script, decir qué habría pisado esta fase y derivar a `/project-adoption` (y a `/design-system extract` si el pedido era sobre el aspecto de la UI). Las add-ons de la Fase 3 siguen disponibles y leen el bloque `stack:`.
+
+Nunca reemplazar el veredicto mirando el árbol a mano, ni aceptar "es greenfield" como dispensa del usuario.
+
+---
+
 ## 📥 INPUT REQUERIDO
 
 ### 1. Contexto del Proyecto
@@ -143,7 +155,8 @@ Crear la **infraestructura de backend base** (Database + Auth + API Layer) que s
 
 - **NO crear tablas que el MVP todavía no necesita** - Solo fundacionales
 - **NO hardcodear valores del proyecto** - Leer del contexto
-- **NO crear SQL scripts manuales** - Usar MCP de Supabase
+- **NO correr esta fase sobre una app existente** - El guard de entrada (`bun run bootstrap:guard`) la rechaza; la app se adopta con `/project-adoption`
+- **NO crear SQL scripts manuales** - Usar MCP de Supabase bajo `agentic-dev-core/references/db-change-doctrine.md` (DDL solo por `apply_migration`, nunca por `execute_sql`)
 - **NO proceder sin MCP de Supabase** - Es crítico
 - **NO escribir código completo en el prompt** - Usar pseudocódigo + Context7
 - **NO hacer commits automáticos** - Solo recomendar
@@ -514,9 +527,17 @@ A instalar:
 
 **Objetivo:** Crear tablas fundacionales usando MCP de Supabase.
 
+### Paso 2.0: Leer el historial antes de escribir
+
+**Doctrina:** `agentic-dev-core/references/db-change-doctrine.md`. Con `/supabase` + `/supabase-postgres-best-practices` ya cargadas:
+
+1. `list_migrations` sobre el project ref del Paso 0.2: en un proyecto greenfield el historial está vacío o solo trae lo que el usuario aplicó a mano. Si trae migraciones que esta sesión no conoce, **DETENER** y mostrárselas al usuario: la base no es nueva.
+2. `list_tables` (verbose) para confirmar que las tablas que se van a crear no existen.
+3. Decir en voz alta el ambiente y el ref antes de la primera escritura.
+
 ### Paso 2.1: Crear Tablas Fundacionales
 
-**IMPORTANTE:** Usar MCP de Supabase, NO scripts SQL manuales.
+**IMPORTANTE:** Usar MCP de Supabase, NO scripts SQL manuales. Cada cambio de schema (tabla + sus índices, o el RLS de una tabla) es UNA migración con `apply_migration` y un nombre snake_case que diga qué cambia, así queda en el historial (`list_migrations`). `execute_sql` nunca lleva DDL. Si `stack.database.migrations_tool` es `supabase-cli`, el mismo SQL se escribe además en `stack.database.migrations_dir` como `<version>_<name>.sql` (versión leída de `list_migrations`).
 
 **Para cada tabla fundacional:**
 
@@ -532,11 +553,11 @@ Para tabla [TABLE_NAME] del ERD:
      - FKs: [según relaciones]
      - Constraints: [unique, not null, defaults]
 
-  2. Crear via MCP Supabase:
-     MCP_CALL: create_table(definition)
+  2. Crear via MCP Supabase, como migración registrada:
+     MCP_CALL: apply_migration(name: "create_[table_name]", query: [DDL])
 
-  3. Validar creación:
-     Verificar que tabla existe en Supabase
+  3. Validar creación en el destino:
+     list_migrations muestra "create_[table_name]"; list_tables (verbose) muestra la tabla
 ```
 
 **Convenciones:**
@@ -604,8 +625,8 @@ Para cada tabla:
 **Pseudocódigo:**
 
 ```
-1. Habilitar RLS:
-   MCP_CALL: enable_rls([table_name])
+1. Habilitar RLS (DDL: va por apply_migration, nunca por execute_sql):
+   MCP_CALL: apply_migration(name: "rls_[table_name]", query: "ALTER TABLE ... ENABLE ROW LEVEL SECURITY; CREATE POLICY ...")
 
 2. Crear políticas según tipo de tabla:
 
@@ -624,7 +645,10 @@ Para cada tabla:
 
 3. Validar políticas:
    Probar con query simulado
+   get_advisors (security), si el MCP lo expone: reportar cada hallazgo nuevo
 ```
+
+**ADR:** el schema fundacional y su modelo de RLS (quién lee qué en toda la app) pasan las dos compuertas de `adr-doctrine.md`. Registrar un ADR que nombre las migraciones (`<version>_<name>` de `list_migrations`), el ambiente donde se aplicaron y el statement de rollback (`db-change-doctrine.md` §4).
 
 **Security Checklist:**
 
@@ -681,9 +705,8 @@ Para cada tabla:
    Crear 2-3 registros básicos por tabla
    Suficiente para validar queries
 
-5. Insertar via MCP Supabase:
-   Para cada registro:
-   MCP_CALL: insert_row([table], [data])
+5. Insertar via MCP Supabase (DML, solo en un ambiente que no sea producción, con los registros aprobados por el usuario):
+   MCP_CALL: execute_sql(INSERT ...)
 
 6. Validar inserción:
    Query para confirmar datos en DB
