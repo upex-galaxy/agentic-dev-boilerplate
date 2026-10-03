@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T11:00:01.834Z`
+> Generated: `2026-10-03T11:12:46.831Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -57,7 +57,7 @@ Skills indexed: 22
 
 ## Skill: agentic-dev-onboard
 
-**Purpose**: Walks new users through this repo's dev flow — Next.js + Supabase stack, Jira workflow (Ready For Dev → In Progress → In Review → Ready F...
+**Purpose**: Walks new users through this repo's dev flow — which entry path the repo took (new project scaffolded by /project-bootstrap, or an existi...
 
 **Compact Rules**:
 - Use `library-docs` (Context7) for "how to use X" — official docs, current API
@@ -68,8 +68,10 @@ Skills indexed: 22
 - Write unit tests → use `/unit-testing`
 - Refine acceptance criteria → use `/product-management`
 - Define a brand-new product → use `/project-foundation`
-- Scaffold backend / frontend code → use `/project-bootstrap`
+- Scaffold backend / frontend code → use `/project-bootstrap` (greenfield only: `bun run bootstrap:guard` refuses its base phases on an existing app)
+- Teach the agentic layer an existing app → use `/project-adoption`
 - Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
+- Entry path: `.template/installer.lock.json` with `adopted: true` = adopted app (tour the adoption hand-off, never `/project-bootstrap` base phases); otherwise a new project. Stack facts come from `.agents/project.yaml` → `stack:`, never from this skill's defaults.
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
