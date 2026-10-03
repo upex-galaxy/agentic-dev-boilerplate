@@ -282,7 +282,7 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 │  PROJECT LEVEL                                               │
 │  Business model · PRD · SRS · API map · Data map · Feature   │
 │  map · Design tokens                                         │
-│  Example: .context/business/business-feature-map.md tells    │
+│  Example: the feature map (business-feature-context) tells   │
 │  the AI what features exist in THIS codebase.                │
 └──────────────────────────────────────────────────────────────┘
                               ▼
@@ -325,13 +325,10 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 │   ├── ADR-NNNN-template.md         #   Template to copy
 │   └── ADR-NNNN-<slug>.md           #   One per hard-to-reverse decision (/project-foundation SRS, /sprint-development Stage 1)
 │
-├── business/                         # Single source of business knowledge (Constitution + Maps)
+├── business/                         # Authored business knowledge (Constitution + glossary)
 │   ├── business-model.md            #   Problem, solution, monetization, segments  (/project-foundation Phase 1)
 │   ├── market-context.md            #   Industry, competitors, trends              (/project-foundation Phase 1)
 │   ├── legacy-analysis.md           #   Legacy stack + doc-gap analysis (optional) (/project-foundation Phase 1)
-│   ├── business-data-map.md         #   Entities, flows, state machines  (/business-data-map)
-│   ├── business-feature-map.md      #   Feature inventory + CRUD matrix  (/business-feature-map)
-│   ├── business-api-map.md          #   Auth model + critical endpoints  (/business-api-map)
 │   └── domain-glossary.md           #   Canonical domain terminology     (/project-foundation Phase 4 Step 6; hand-maintained, append-only)
 │
 ├── master-implementation-plan.md     # High-level roadmap                (/master-implementation-plan)
@@ -358,6 +355,8 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
             ├── progress.md          #   Story progress       [LOCAL] disposable
             └── evidence/            #   Screenshots, logs   [LOCAL] disposable
 ```
+
+The business maps (data, feature, API) are HTML maps inside the `business-data-context`, `business-feature-context` and `business-api-context` skills under `.agents/skills/`; read one with `bun run context:map <slug>`.
 
 The `PBI/` tree is owned by `scripts/sync-jira-issues.ts` and is a **gitignored cache**: everything under `.context/PBI/` is excluded except `README.md` and `templates/`, the only two paths actually tracked in git. Jira is the source of truth; plan history lives in the Jira field's own edit history plus engram, not in git log. `bun run context:hydrate` (`sync-jira-issues pull --include-comments`) rebuilds the whole `[SYNC]` tree from scratch — a fresh clone starts with an almost-empty `PBI/` (just `README.md` and `templates/`), and that is the intended state, not a broken checkout. Detailed CONTENT reads go through the sync — run `bun run jira:sync-issues get <KEY> --include-comments` and read the generated `.md`, never `acli view` (which returns `null` for `customfield_*`). Authoring is Jira-first: write the field (or its fallback comment) → sync → read. Story-level `context.md`, `progress.md`, and `evidence/` are `[LOCAL]`: hand-written, machine-local, disposable — nothing downstream may depend on one existing; durable session state lives under `.session/` and durable evidence goes to Jira.
 
