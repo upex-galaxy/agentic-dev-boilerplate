@@ -111,7 +111,7 @@ Do NOT use this skill to:
 
 ## Session & Dispatch
 
-> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 1 (plan write) are NOT optional.
+> **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 0.5 (plan write) are NOT optional.
 >
 > **Session close**: every stage ends with the light stage verifier and the session ends with the chat footer (tools used + dev surfaces touched), both per `agentic-dev-core/references/session-footer-contract.md`.
 
@@ -122,33 +122,33 @@ This skill is **project-scope**: no `<scope>` segment. Session state lives direc
 Before any subagent dispatch and before invoking any phase below, run the resume contract from `agentic-dev-core/references/session-management.md` §4:
 
 1. Check whether `.session/project-foundation/progress.md` exists.
-2. If it does NOT exist → proceed to Phase 1 (write `plan.md`).
+2. If it does NOT exist → proceed to Phase 0.5 (write `plan.md`).
 3. If it DOES exist:
    1. Read `.session/project-foundation/plan.md` in full.
    2. Read the tail of `.session/project-foundation/progress.md` (last ~3 phase entries).
    3. Surface to the user: plan Goal (one sentence), last completed phase + timestamp, next planned phase, any blocking notes.
-   4. Offer three options and WAIT for input: **resume** (jump to the next planned phase) / **restart** (archive current dir to `.session/.archive/<YYYY-MM-DD>-project-foundation-project-aborted/`, then proceed to Phase 1 fresh) / **abort** (leave directory untouched, stop).
+   4. Offer three options and WAIT for input: **resume** (jump to the next planned phase) / **restart** (archive current dir to `.session/.archive/<YYYY-MM-DD>-project-foundation-project-aborted/`, then proceed to Phase 0.5 fresh) / **abort** (leave directory untouched, stop).
 
 Phase 0 is inline — no subagent dispatch. The check fires even on first invocation so resume-vs-fresh is deterministic.
 
-## Phase 1 — Write `plan.md`
+## Phase 0.5 — Write `plan.md`
 
 After Phase 0 confirms no prior session exists, write `.session/project-foundation/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6. The plan must capture which sub-deliverables the user picked across Constitution / PRD / SRS / Discovery:
 
 - Frontmatter: `topic_key: session/project-foundation/project/plan`, `skill: project-foundation`, `scope: project`, `status: draft`, `capture_prompt: true`.
-- Body sections (fixed H2 order): `## Goal` · `## Inputs` · `## Approach` · `## Phase breakdown` (Phase 1 Constitution → Phase 2 PRD → Phase 2.5 DESIGN handoff → Phase 3 SRS → Phase 4 sub-steps 1–5, with dispatch pattern per row) · `## Risks & open questions` · `## Verification checklist` · `## Cross-references`.
+- Body sections (fixed H2 order): `## Goal` · `## Inputs` · `## Approach` · `## Phase breakdown` (Phase 1 Constitution → Phase 2 PRD → Phase 2.5 DESIGN handoff → Phase 3 SRS → Phase 4 Steps 1–6, with dispatch pattern per row) · `## Risks & open questions` · `## Verification checklist` · `## Cross-references`.
 
 **Hand-off note (required in `## Cross-references`)**: Phase 2.5 hands off to the separate `/design-system` skill, which owns its own `.session/design-system/` directory. The Phase 4 sub-steps that delegate to `project-context` modes (`/project-context data`, `/project-context features`, `/project-context api`, `/project-context master-plan`) each manage their own progress checkpoints inline; this skill's `progress.md` records the orchestrator-level "delegated → returned" entries only.
 
 Dispatch: a Single planner subagent is typical when Constitution + PRD inputs are substantial (the orchestrator inline-drafts the plan only when scope is tiny).
 
-After `plan.md` is written and the user approves the scope, transition `status: draft → approved` in the frontmatter and proceed to Phase 2 (the existing "Phase walkthrough" below).
+After `plan.md` is written and the user approves the scope, transition `status: draft → approved` in the frontmatter and proceed to Phase 1 (Constitution) in the "Phase walkthrough" below.
 
 ## Phase walkthrough
 
 The skill covers four sequential phases (1 Constitution → 2 PRD → 3 SRS → 4 Discovery), with the Phase 2.5 hand-off to `/design-system` between PRD and SRS. Each phase has multiple sub-deliverables; read only the references your current task needs.
 
-> **Progress checkpoint**: after each of Phase 1 (Constitution), Phase 2 (PRD), Phase 2.5 (DESIGN handoff return), Phase 3 (SRS), and Phase 4 sub-steps 1–5 completes, the orchestrator appends a phase entry to `.session/project-foundation/progress.md` per `agentic-dev-core/references/session-management.md` §7.
+> **Progress checkpoint**: after each of Phase 1 (Constitution), Phase 2 (PRD), Phase 2.5 (DESIGN handoff return), Phase 3 (SRS), and Phase 4 Steps 1–6 completes, the orchestrator appends a phase entry to `.session/project-foundation/progress.md` per `agentic-dev-core/references/session-management.md` §7.
 
 ### 1. Constitution (Why we're building this)
 
@@ -199,7 +199,7 @@ Output: `.context/SRS/*.md` files, plus the seeded `.context/ADR/ADR-NNNN-*.md` 
 
 Discovery produces the running-mental-model docs every later skill loads at session start: the entity map, the feature inventory, the API map, and a conversational dev guide. Together they make a fresh AI session productive on day one.
 
-Phase 4 is now an **orchestrator** — it delegates to four `project-context` modes (each invocable on its own from any session as `/project-context <mode>`) plus the one in-skill reference for the dev guide. Re-running individual modes later (after schema or feature changes) is the supported maintenance flow.
+Phase 4 is an **orchestrator** with six steps: it delegates to four `project-context` modes (each invocable on its own from any session as `/project-context <mode>`) and runs two steps in-skill, the dev guide (Step 4) and the domain glossary (Step 6). Re-running individual modes later (after schema or feature changes) is the supported maintenance flow.
 
 **Step 1 — Business data map** (entities, business flows, state machines, automatic processes, external integrations):
 
@@ -248,6 +248,7 @@ Phase 4 is now an **orchestrator** — it delegates to four `project-context` mo
 - the API map inside `business-api-context` (`references/business-api-map.html`)
 - `.context/business/project-dev-guide.md`
 - `.context/master-implementation-plan.md` (if Step 5 ran)
+- `.context/business/domain-glossary.md` (Step 6; skipped when it already exists)
 - `.context/business/domain-glossary.md`
 
 On successful completion of Phase 4 (Verification checklist from `plan.md` passes), the orchestrator runs Archive per `agentic-dev-core/references/session-management.md` §8 — moves `.session/project-foundation/` to `.session/.archive/<YYYY-MM-DD>-project-foundation-project/` and calls `mem_session_summary` with the archive path included so future `mem_search` calls can navigate back.
@@ -286,7 +287,7 @@ Phases 1 → 2 → 3 → 4 are **logically sequential** (each phase consumes out
 
 - **Phase 2 (PRD)**: `prd-personas`, `prd-user-journeys`, `prd-mvp-scope` can run in parallel after `prd-executive-summary` is drafted.
 - **Phase 3 (SRS)**: `srs-functional`, `srs-non-functional`, `srs-architecture`, `srs-api-contracts` can run in parallel once the PRD is locked.
-- **Phase 4 (Discovery)**: Steps 1–3 run one at a time in the `project-context` dependency order, `data` → `features` → `api` (canonical list: `project-context` SKILL.md → "`refresh-all` dependency order"): `features` and `api` read the data map, and every mode closes its own approval gate before the next starts. Step 4 (`project-dev-guide`) needs only Step 1 and may run alongside Steps 2–3. Step 5 (`/project-context master-plan`) is the synthesis after Steps 1–3 — run it last.
+- **Phase 4 (Discovery)**: Steps 1–3 run one at a time in the `project-context` dependency order, `data` → `features` → `api` (canonical list: `project-context` SKILL.md → "`refresh-all` dependency order"): `features` and `api` read the data map, and every mode closes its own approval gate before the next starts. Step 4 (`project-dev-guide`) needs only Step 1 and may run alongside Steps 2–3. Step 5 (`/project-context master-plan`) is the synthesis after Steps 1–3. Step 6 (domain glossary, in-skill) seeds from the PRD, the SRS and the maps of Steps 1–3, and closes the phase.
 
 Use the parallel dispatch pattern from `agentic-dev-core/references/dispatch-patterns.md`. Each subagent briefing must follow the 7-component template in `agentic-dev-core/references/briefing-template.md` and cite the specific reference file the subagent must read.
 
@@ -337,4 +338,4 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 - This skill is **one-time per project**. If scope changes significantly mid-project, re-invoke specific phases (e.g. only `references/prd-mvp-scope.md` to re-cut the MVP).
 - Several reference files are written in Spanish (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
 - This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If `.agents/project.yaml` is missing, clone the full boilerplate — foundation files ship with the repo.
-- The discovery step delegates to four `project-context` modes (`/project-context data`, `/project-context features`, `/project-context api`, `/project-context master-plan`) plus one in-skill reference (`references/project-dev-guide.md`). All are intentionally agnostic of stack and work on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code). Re-invoke an individual command directly when only one artifact needs refreshing — there's no need to re-run the whole foundation.
+- The discovery step delegates to four `project-context` modes (`/project-context data`, `/project-context features`, `/project-context api`, `/project-context master-plan`) plus two in-skill steps: the dev guide (`references/project-dev-guide.md`) and the domain glossary (Step 6). All are intentionally agnostic of stack and work on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code). Re-invoke an individual command directly when only one artifact needs refreshing — there's no need to re-run the whole foundation.
