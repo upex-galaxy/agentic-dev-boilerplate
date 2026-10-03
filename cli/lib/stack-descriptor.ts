@@ -227,6 +227,7 @@ const TYPES_PATHS = [
   'src/types/supabase.ts',
   'types/supabase.ts',
   'src/types/database.types.ts',
+  'types/database.types.ts',
   'src/lib/database.types.ts',
   'lib/database.types.ts',
   'database.types.ts',
@@ -256,6 +257,19 @@ function findAppRoot(repoRoot: string): string | null {
 function major(range: string | undefined): number | null {
   const m = range?.match(/(\d+)/);
   return m ? Number(m[1]) : null;
+}
+
+/**
+ * Script names the updater appended to an ADOPTED app's package.json (the
+ * sync lock records them as applied keys). Empty on a greenfield repo, where
+ * those scripts are the project's own.
+ */
+export function toolingAppendedScripts(repoRoot: string): Set<string> {
+  const installer = readJson<{ adopted?: unknown }>(join(repoRoot, '.template', 'installer.lock.json'));
+  if (installer?.adopted !== true) { return new Set(); }
+  const lock = readJson<{ packageJsonSync?: Record<string, Record<string, { appliedKeys?: unknown }>> }>(join(repoRoot, '.template', 'boilerplate.lock.json'));
+  const applied = lock?.packageJsonSync?.['package.json']?.scripts?.appliedKeys;
+  return new Set(Array.isArray(applied) ? applied.filter((k): k is string => typeof k === 'string') : []);
 }
 
 export function detectStack(repoRoot: string): StackDetection {
@@ -290,8 +304,11 @@ export function detectStack(repoRoot: string): StackDetection {
   else if (pagesDir) { set('framework', 'nextjs-pages', `${pagesDir}/`); }
 
   const scripts = pkg.scripts ?? {};
+  // On an adopted app the tooling appended scripts of its own (`lint:check`,
+  // `types:check`): they are the tooling's, never the app's role script.
+  const appended = toolingAppendedScripts(repoRoot);
   for (const [path, candidates] of Object.entries(SCRIPT_CANDIDATES)) {
-    const name = candidates.find(c => c in scripts);
+    const name = candidates.find(c => c in scripts && !appended.has(c));
     set(path, name ?? null, name ? `${pkgFile} scripts.${name}` : `${pkgFile} declares none of ${candidates.join(', ')}`);
   }
 
