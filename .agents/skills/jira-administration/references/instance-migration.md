@@ -59,7 +59,7 @@ Three outcomes:
 
 Normalize both to the bare host (`site.atlassian.net`, no scheme, no trailing slash). Then confirm as one line and wait:
 
-> Migrating `<source>` -> `<target>`. Three places change: `.env`, `.agents/project.yaml`, and your machine-global `acli` session. Confirm?
+> Migrating `<source>` -> `<target>`. The host is rewritten in one place, `.agents/project.yaml`; a stale `ATLASSIAN_URL` copy, if the probes find one, is deleted; and your machine-global `acli` session is re-logged into the target. Confirm?
 
 **Verify the target is reachable and populated before proceeding.** Migrating into an empty or half-provisioned instance regenerates empty catalogs and publishes them, which is worse than doing nothing:
 
@@ -88,7 +88,7 @@ Classify every hit into change / do-not-change, and **present the table to the u
 
 | Target | What to write |
 |---|---|
-| `.agents/project.yaml` -> `atlassian_url` | `https://<target>` — **the only place the host is written.** Every script resolves the instance from here (`cli/lib/atlassian-instance.ts`), the test runtime reads it through `config/variables.ts`, and `bun run jira:url` is how shell recipes read it. Write it WITH the scheme, matching what `bun run agents:setup` writes; the resolver accepts a bare slug too, but a mixed repo is harder to review |
+| `.agents/project.yaml` -> `atlassian_url` | `https://<target>` — **the only place the host is written.** Every script resolves the instance from here (`cli/lib/atlassian-instance.ts`), and `bun run jira:url` is how shell recipes read it. Write it WITH the scheme, matching what `bun run agents:setup` writes; the resolver accepts a bare slug too, but a mixed repo is harder to review |
 | a stale `ATLASSIAN_URL`, if either probe hit | **delete it**, do not update it. Remove the `.env` line; for a process value, find and fix whatever exports it (`ps eww -p $PPID` up the chain). Updating it instead just recreates a second copy that will go stale at the next migration |
 | `acli` session | machine-global (`~/.config/acli`), not a repo file — re-login required per machine |
 
@@ -183,7 +183,7 @@ Project issue type "Task" exists in <KEY> but is not declared in
 
 So a stale manifest declaring 3 work types regenerates a catalog with 3 work types, exits `0`, and reports success. The migration looks clean and the catalog is missing everything the manifest forgot to ask for. Same silent-success failure this whole command exists to prevent, entering through the input side.
 
-The manifest goes stale invisibly because **the boilerplate updater neither syncs it nor warns about it**: it sits in `bootstrapOnlyPaths` (so `bun run update` never overwrites the project's customizations) and is absent from the drift watchlist (so nothing reports that it has fallen behind). A project scaffolded from an older boilerplate can be many versions behind with zero signal.
+The manifest goes stale quietly because **the boilerplate updater never syncs it**: it sits in `bootstrapOnlyPaths` (so `bun run up` never overwrites the project's customizations). The drift watchlist compares it by STRUCTURE only and reports the keys upstream added as an `informational` row, never a blocking one, and a row that was answered `keep project` once is easy to forget. A project scaffolded from an older boilerplate can be many versions behind with nothing that stops a migration.
 
 Compare against upstream before regenerating:
 

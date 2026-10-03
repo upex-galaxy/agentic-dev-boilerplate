@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T06:53:55.357Z`
+> Generated: `2026-10-03T07:27:58.214Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -217,7 +217,7 @@ Skills indexed: 21
 - Exactly ONE mode per run: `components` (`references/components.md`) or `instance-migration` (`references/instance-migration.md`). Load only that mode's reference. Never combine the two, never fall through into the other.
 - Mode unclear → ASK. Do not infer one from a bare "fix Jira" / "sync Jira" request.
 - Load `/acli` before any Jira operation. Load other tool-owner skills only when the selected reference requires them.
-- Missing MCP or Jira credentials = HARD STOP (`AGENTS.md` Critical Rule #10). Name the exact env var, point at `.env` / `.env.example`, ask for an agent-session restart. No workaround, no partial run.
+- Missing MCP or Jira credentials = HARD STOP (`AGENTS.md` Critical Rule #9, MCP credential failure). Name the exact env var, point at `.env` / `.env.example`, ask for an agent-session restart. No workaround, no partial run.
 - Read-first on every mutation: inspect the live state before authoring any plan. Nothing is created, applied, deleted, or repointed without the user's explicit approval given inside the same run.
 - `components`: derive and inspect → author the plan file → dry-run → WAIT for explicit approval → only then `--apply`.
 - `instance-migration`: resolve and confirm BOTH instances → audit and verify reachability → WAIT for explicit approval → only then change files or the `acli` session. That session lives at `~/.config/acli` and is machine-global: re-login repoints every repo on the host, not just this one.
