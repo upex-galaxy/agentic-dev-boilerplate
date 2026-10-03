@@ -10,9 +10,9 @@
 
 The single rule that keeps an unattended routine from turning into an unreviewed author:
 
-> You produce no artifact. Not a draft, not a plan, not a test case, not a report body. You create
-> the worker that produces, and you close your session. If you catch yourself writing the deliverable,
-> you have left your task.
+> You produce no deliverable. Not a draft, not a plan, not a test case, not the work's own report
+> (your run report, §2.4, is bookkeeping, not a deliverable). You create the worker that produces,
+> and you close your session. If you catch yourself writing the deliverable, you have left your task.
 
 It follows that an automation also: publishes nothing, approves nothing on the owner's behalf,
 invents no work, commits nothing, and — when something is ambiguous — ASKS in the same sweep instead
