@@ -348,7 +348,23 @@ interface DoctorReport {
    * is the answer to "why is my project behaving oddly".
    */
   project_schema: ProjectSchemaDiagnostic
+  /**
+   * The `stack:` block of `.agents/project.yaml` against the repo it
+   * describes (cli/lib/stack-descriptor.ts). NEVER a failure, like
+   * `project_schema`: a stale descriptor is a wrong command in a skill later,
+   * and the fix is one `agents:setup --stack`, not a red doctor today.
+   */
+  stack: StackDiagnosticReport
   pending_actions: PendingAction[]
+}
+
+interface StackDiagnosticReport {
+  present: boolean
+  app_found: boolean
+  issues: Array<{ path: string, message: string }>
+  unsupported: Array<{ path: string, message: string }>
+  drift: Array<{ path: string, declared: string | null, detected: string | null, evidence: string }>
+  note: string | null
 }
 
 interface ProjectSchemaDiagnostic {
@@ -558,6 +574,25 @@ async function projectSchemaDiagnostic(): Promise<ProjectSchemaDiagnostic> {
   }
 }
 
+/**
+ * The `stack:` block against the repo. Dynamic import and try-wrapped for the
+ * same reasons as `projectSchemaDiagnostic`.
+ */
+async function stackDiagnostic(): Promise<StackDiagnosticReport> {
+  const empty: StackDiagnosticReport = { present: false, app_found: false, issues: [], unsupported: [], drift: [], note: null };
+  try {
+    const { diagnoseStack } = await import('./lib/stack-descriptor.ts');
+    const { SCHEMA_SOURCE } = await import('./lib/agents-schema.ts');
+    const sourcePath = join(REPO_ROOT, SCHEMA_SOURCE);
+    if (!existsSync(sourcePath)) { return { ...empty, note: `${SCHEMA_SOURCE} not found` }; }
+    const d = diagnoseStack(REPO_ROOT, await readFile(sourcePath, 'utf8'));
+    return { present: d.present, app_found: d.appFound, issues: d.issues, unsupported: d.unsupported, drift: d.drift, note: d.note };
+  }
+  catch (err) {
+    return { ...empty, note: `the stack check threw: ${(err as Error).message}` };
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Cross-harness compatibility
 // ----------------------------------------------------------------------------
@@ -653,6 +688,7 @@ async function runDoctor(): Promise<DoctorReport> {
     context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
     harness_env: await harnessEnvDiagnostic(),
     project_schema: await projectSchemaDiagnostic(),
+    stack: await stackDiagnostic(),
     pending_actions: [],
   };
 
@@ -951,6 +987,36 @@ function printHuman(report: DoctorReport): void {
     }
     if (ps.exempt.length > 0) {
       process.stdout.write(`  silenced via updater.schema_exempt: ${ps.exempt.join(', ')}\n`);
+    }
+    process.stdout.write('\n');
+  }
+
+  // Stack descriptor. Its own section and never a check row, for the same
+  // reason as the schema gap above. Silent when the block is present, valid,
+  // and either matches the repo or has no app to be compared against yet.
+  const st = report.stack;
+  if (st.note !== null || !st.present || st.issues.length > 0 || st.unsupported.length > 0 || st.drift.length > 0) {
+    tui.section('Stack descriptor (.agents/project.yaml -> stack:)');
+    if (st.note !== null) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${st.note}\n`);
+    }
+    else if (!st.present) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} no \`stack:\` block: skills fall back to the greenfield defaults\n`);
+      process.stdout.write('  Fix: bun run agents:setup --stack  (inserts the block from the schema and fills it from the repo)\n');
+    }
+    else {
+      for (const issue of st.issues) {
+        process.stdout.write(`  ${tui.statusIcon('warn')} stack.${issue.path} ${issue.message}\n`);
+      }
+      for (const issue of st.unsupported) {
+        process.stdout.write(`  ${tui.statusIcon('info')} stack.${issue.path} ${issue.message}\n`);
+      }
+      for (const d of st.drift) {
+        process.stdout.write(`  ${tui.statusIcon('warn')} stack.${d.path}: declared ${d.declared ?? 'null'}, repo shows ${d.detected ?? 'null'} (${d.evidence})\n`);
+      }
+      if (st.issues.length > 0 || st.drift.length > 0) {
+        process.stdout.write('  Fix: bun run agents:setup --stack  (one prompt per field, evidence shown)\n');
+      }
     }
     process.stdout.write('\n');
   }
