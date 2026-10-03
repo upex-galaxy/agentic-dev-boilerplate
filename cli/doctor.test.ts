@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { worktreeSetupAction } from './doctor.ts';
+import { legacyCredentialKeys, worktreeSetupAction } from './doctor.ts';
 
 describe('worktreeSetupAction', () => {
   test('a provisioned worktree needs nothing', () => {
@@ -12,5 +12,22 @@ describe('worktreeSetupAction', () => {
     expect(action?.target).toBe('bun run worktree:provision');
     expect(action?.hint).toContain('.env, .husky/_ (git hooks)');
     expect(action?.hint).not.toContain('node_modules');
+  });
+});
+
+describe('legacyCredentialKeys', () => {
+  const env = { JIRA_API_TOKEN: 'x', JIRA_URL: 'https://a.atlassian.net', JIRA_USERNAME: '  ' };
+
+  test('greenfield: every retired name set in .env is a removal', () => {
+    expect(legacyCredentialKeys(env, new Set())).toEqual({ remove: ['JIRA_URL', 'JIRA_API_TOKEN'], appOwned: [] });
+  });
+
+  test('adopted: a retired name the app declares as its own is never a removal', () => {
+    expect(legacyCredentialKeys(env, new Set(['JIRA_API_TOKEN']))).toEqual({ remove: ['JIRA_URL'], appOwned: ['JIRA_API_TOKEN'] });
+  });
+
+  test('an empty value is not reported at all', () => {
+    const out = legacyCredentialKeys(env, new Set(['JIRA_USERNAME']));
+    expect([...out.remove, ...out.appOwned]).not.toContain('JIRA_USERNAME');
   });
 });
