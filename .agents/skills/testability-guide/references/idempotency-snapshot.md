@@ -51,7 +51,7 @@ A single multi-line comment at the very top of the generated page file. Format i
 | `auth-method`        | pre-flight detection                            | §5 AuthMethods tabs (login curl, header name, body shape) + §6 Playwright login fixture. DETECTED list, never a default path. |
 | `docs-ui`            | pre-flight detection                            | §5 docs link renderer label (scalar/redoc/swagger).                                                              |
 | `docs-route`         | pre-flight detection                            | §5 docs link href.                                                                                              |
-| `db`                 | pre-flight detection                            | §4 (DBHub connection template + the VSCode URI scheme).                                                          |
+| `db`                 | `stack.database` + pre-flight detection         | §4 (the DB MCP `mcp-and-env-setup.md` §4.0 picked, its connection template + the VSCode URI scheme).                                                          |
 | `orm`                | pre-flight detection                            | Architecture table label only. No code drift.                                                                    |
 | `repos-shape`        | `.agents/project.yaml` (`backend_repo`/`frontend_repo`) | §2 architecture diagram Repos block (mono one row vs poly two rows).                                     |
 | `mcp-config-files`   | pre-flight detection                            | Which agent tabs render in §3–§6 (claude/opencode/codex/gemini).                                                 |
