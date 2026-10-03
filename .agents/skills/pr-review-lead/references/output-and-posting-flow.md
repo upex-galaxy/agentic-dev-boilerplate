@@ -10,7 +10,7 @@ Group by bucket, severity within bucket, always include the evidence column, alw
 | # | Bucket | Severidad | Ubicación | Observación (con evidencia) |
 |---|---|---|---|---|
 | 1 | Real | BLOCKER | <file>:<line> | La función recibe `p_user_id` y filtra por él sin ligarlo a `auth.uid()`: cualquier usuario autenticado lee filas ajenas. `sprint-development/references/rpc-authorization.md` §"Actor bind — the canonical shape". |
-| 2 | Real | MAJOR | (todo el PR) | 90% del diff es tipos de Supabase regenerados junto con el cambio real; separarlos en su propio commit facilita la revisión. |
+| 2 | Pattern | MINOR | (todo el PR) | 90% del diff son tipos de Supabase regenerados (ya avisado como ruido en el Step 2, no revisado línea por línea) mezclados con el cambio real; la convención documentada es un commit por responsabilidad. No rompe nada: comparación, sin impacto en el score. `git-flow-master` §3.2. |
 | 3 | Pattern | MINOR | <file>:<line> | La página consulta Supabase directo; el patrón documentado pone el acceso a datos en `lib/api/`. Funciona igual: comparación, no error. `review-pr.md` §"Architecture & Structure". |
 ```
 

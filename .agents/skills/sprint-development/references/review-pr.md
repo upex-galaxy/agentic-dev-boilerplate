@@ -614,6 +614,6 @@ The orchestrator verifies each finding against the **actual diff + AC** and reco
 
 1. Only `legitimate` findings loop back to Stage 2. Applying a false positive is as much a defect as ignoring a real one.
 2. Every `false-positive` needs an explicit one-line reason (e.g. "Postgres `search_path` is set per-session by the framework; not reachable from this diff").
-3. Record the full per-finding verdict table in `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/review.md` (topic_key `pbi/{ticket}/review`).
+3. Record the full per-finding verdict table in `.session/sprint-development/<KEY>/review.md` (session working state at `<<PRIMARY_ROOT>>`, beside `progress.md`; topic_key `pbi/{ticket}/review`).
 4. In **SOLO** mode the orchestrator runs a deliberate fresh-eyes review pass inline, then adjudicates with the same table.
 5. Architectural rework (rare) does not loop to Stage 2 — it loops to Stage 1 with a new spec (+ ADR if the decision is architectural and hard to reverse).

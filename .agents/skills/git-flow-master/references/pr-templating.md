@@ -69,7 +69,7 @@ Render this verbatim, substituting the placeholders:
 | `{base}`        | PR base branch (resolved from the strategy — see table below).                                                                                                                                                             |
 | `{strategy}`    | Active strategy slug (`solo-main`, `main-integration`, etc.). Helps reviewers understand the merge target.                                                                                                                 |
 | `<<WORKTREE>>` / `<<SESSION_LABEL>>` | The same two values the commit trailers carry, copied from the `AGENT IDENTITY:` line in session context (`worktree=…`, `session=…`; `SKILL.md` §3.2). A value the line does not resolve is written `unknown`, never guessed. A human-opened PR drops both lines. |
-| `<<EVIDENCE>>`  | Pointer to `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/evidence/` when applicable (screenshots, traces, logs). For backend/CLI PRs without visual evidence, leave the placeholder so the author can fill it in or delete it. |
+| `<<EVIDENCE>>`  | Pointer to evidence a reviewer can open: a PR comment or a Jira attachment (screenshots, traces, logs). The session working copy (`.session/sprint-development/<KEY>/evidence/`) is local, so never the only pointer. For backend/CLI PRs without visual evidence, leave the placeholder so the author can fill it in or delete it. |
 | `<<RISK>>`      | Short risk assessment: blast radius, affected modules, rollback plan. One paragraph.                                                                                                                                       |
 
 Do not pad sections. Empty sections invite skim-reads.
@@ -212,8 +212,8 @@ model with unit tests; UI uses the existing table-action slot.
 
 ## Evidence
 
-See `.context/PBI/epics/EPIC-UPEX-100-<epic-slug>/stories/STORY-UPEX-123-bulk-assign/evidence/` for the design
-walkthrough screenshots.
+Design walkthrough screenshots are attached to UPEX-123 in Jira and to the
+first comment of this PR.
 
 ## Risk
 

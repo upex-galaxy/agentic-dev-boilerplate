@@ -75,7 +75,7 @@ Logging in produces session material. It is bound by the ephemeral-artifact cont
 - Report carries `secrets_materialized:` + `cleaned:`.
 - The password NEVER appears in a script committed to the repo, a screenshot, a log line, a plan, a PR body, or a tracker comment. Scripts read `process.env.<NAME>`; the name is committable, the value is not.
 
-Screenshots are evidence and DO belong in the story's `evidence/` folder — but capture them on screens that do not display the credential, and never photograph a filled password field.
+Screenshots are evidence and DO belong in the story's evidence (working copy in `.session/sprint-development/<KEY>/evidence/`, durable copy on the PR or the Jira issue) — but capture them on screens that do not display the credential, and never photograph a filled password field.
 
 ---
 

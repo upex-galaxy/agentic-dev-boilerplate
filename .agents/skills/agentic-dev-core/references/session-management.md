@@ -105,7 +105,7 @@ The choice is recorded in the skill's SKILL.md "Subagent Dispatch Strategy" tabl
 Some skills have a canonical plan artifact that already lives outside `.session/` (e.g. `sprint-development`'s story implementation plan). For those skills the canonical copy lives **in Jira** (the `spec_implementation_plan` field); the local file at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` is a `[SYNC]` cache materialized by `bun run jira:sync-issues` — gitignored, rebuilt on every sync. History and recovery go through Jira + re-sync, NOT git. For those skills:
 
 - The Jira-held artifact stays canonical; the synced file is how it is read.
-- `.session/<skill-slug>/<scope>/plan.md` MAY be omitted; the skill writes only `progress.md`.
+- `.session/<skill-slug>/<scope>/plan.md` MAY be omitted; the skill writes `progress.md` plus only the working artifacts its own SKILL.md names (§13).
 - `progress.md` §"Cross-references" cites the canonical plan by path.
 
 See §13 for the explicit list of skills that adopt this progress-only variant.
@@ -300,7 +300,7 @@ The subagent treats `plan.md` and `progress.md` as read-only context. Only the o
 
 ### Skills adopting the progress-only variant (no plan.md)
 
-`sprint-development`. The canonical plan lives in the Jira `spec_implementation_plan` field, read locally via its `[SYNC]` cache at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` (gitignored; recovery = re-sync). Only `progress.md` lives under `.session/`.
+`sprint-development`. The canonical plan lives in the Jira `spec_implementation_plan` field, read locally via its `[SYNC]` cache at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` (gitignored; recovery = re-sync). No `plan.md` is written under `.session/`: besides `progress.md`, the session folder holds only Stage 2-3 working artifacts (`notes.md`, `bug-fix.md`, `review.md`, `compliance-matrix.md`, `evidence/`), whose durable copies live on the PR or in Jira.
 
 ### Skills explicitly excluded
 

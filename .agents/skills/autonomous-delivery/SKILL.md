@@ -442,7 +442,8 @@ Three obligations, in order of importance:
 ```
 1. PUSH the branch.                 <- first, always. Unpushed work in a disposable
                                        worktree is the only unrecoverable loss here.
-2. Rescue session records out of the worktree into the main checkout.
+2. Rescue a dispatched skill's worktree-local session records into <<PRIMARY_ROOT>>
+   (this skill's own state already lives there).
 3. Append the resume state to handoff.md: exact branch, exact tip SHA, which pull
    requests exist and their state, what is done, what is not, and the NEXT CONCRETE
    COMMAND. Written so a stranger could resume from it cold.
@@ -525,7 +526,7 @@ Sequential, and the order matters because each step can be lost by the one befor
 3. **Release the lock** — delete `lock.json`. A run that escalated or stopped on budget releases it too; a lock is held by a running session, not by an unfinished ticket.
 4. **Write the run report** to `.session/autonomous-delivery/<mode>/run-report.md` per `references/run-report-format.md` §1. Include the empty-run case: what was considered, what was dropped, why.
 5. **Post the summary** to `report_channel` when one is configured. `null` means the file is the report — do not improvise a destination.
-6. **Archive** the session directory per `session-management.md` §8 and call the memory session summary with the archive path included.
+6. **Archive** this mode's session directory (`.session/autonomous-delivery/<mode>/`; the shared `escalation-log.md` beside it is never archived) per `session-management.md` §8 and call the memory session summary with the archive path included.
 7. **Close the run's OWN worktree** — the one created in Phase 0a, and only that one: `ExitWorktree(remove)` on Claude Code, `git worktree remove <path>` (run from `<<PRIMARY_ROOT>>`) on the portable path. Dispatched agents' worktrees were already closed per ticket in Phase 3.5, and another run's worktree is never yours to remove (A20). This is the last step for a reason: everything above reads or writes paths that stop existing the moment it runs. If the run is in the degraded path from Phase 0a step 3 (a scheduler-assigned worktree), do not remove it — say so in the report and name the path a human (or Orca's archive hook) needs to remove.
 
 Every discrepancy Phase 1 found, every autonomous decision made, and every check the run could not perform is named explicitly in the report. Nothing evaporates silently: what an unattended run could not verify becomes an explicit flag for the humans who can.

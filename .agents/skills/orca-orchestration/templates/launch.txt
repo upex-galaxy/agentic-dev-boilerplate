@@ -11,8 +11,9 @@
 #   2. The PROMPT is the payload both paths share, BYTE FOR BYTE. Never paraphrased.
 #   3. Regenerated WHOLE on each planning pass. Finished items drop out; nothing is edited in place.
 #   4. Self-contained: it exports what the worker needs and starts the agent with the full prompt.
-#   5. No `"` and no `<` or `>` inside the prompt. They break the shell parse, the terminal still
-#      reports success, and nothing runs.
+#   5. The whole prompt is single-quoted and holds no `'` and no unescaped `"`: either breaks the
+#      shell parse, the terminal still reports success, and nothing runs. `<` and `>` inside the
+#      quoted prompt are literal text, not redirection (references/launch-seam.md §2.2).
 #   6. Validate before launching:  sh -n <this file>        (or the equivalent for the user's shell)
 #   7. Comment lines (starting with #) are documentation; strip them before a syntax check if the
 #      checker objects, and never hand one to the launcher.

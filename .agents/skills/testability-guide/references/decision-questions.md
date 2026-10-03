@@ -12,7 +12,7 @@
 
 Ask all questions in ONE message. Do not interleave them with explanations of unrelated work. Defaults are pre-filled — the user can answer "all defaults" to skip the interactive flow.
 
-Format the message in the host language detected during pre-flight (default English). Use `AskUserQuestion` when available; otherwise plain text bullets.
+Format the message in the user's working language (AGENTS.md Critical Rule #12). Use `AskUserQuestion` when available; otherwise plain text bullets.
 
 ### Skip rule on initial prompt (IMPORTANT)
 
@@ -67,7 +67,7 @@ Which database role will the credentials artifact expose to testers?
 | Existing DML role scoped to specific tables    | Tests genuinely need direct writes (e.g. seed fixtures, bypass slow API).                                          | No row-level isolation — every tester sees every other tester's writes. Mention in the page.                  |
 | Existing superuser / schema owner / `postgres` | Never. The skill REFUSES this option.                                                                              | Catastrophic. The skill stops and asks the user to provision a read-only role first. See `security-rules.md`. |
 
-**Recommendation**: read-only. If no such role exists, the skill creates one (or asks the user to via Supabase / `psql` instructions) before continuing.
+**Recommendation**: read-only. If no such role exists, the skill STOPS, asks the user to provision one and hands over the SQL (`security-rules.md` Hard refusals 1); it never creates the role itself.
 
 ---
 
@@ -106,12 +106,12 @@ What language should the page's visible copy use? Code identifiers + `data-testi
 
 | Option                                    | When to pick                                                                                                                                            |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **English** (default when no host signal) | Stack default. Neutral. Most QA tooling docs are in English.                                                                                            |
+| English                                   | The host app's other pages are in English, or the user picks it.                                                                                        |
 | Spanish                                   | The host app's other pages are in Spanish (pre-flight detected `<html lang="es">` or Spanish copy).                                                     |
 | Mirror host language                      | Auto — the skill uses whatever the host app exposes. Pick this when the host app has clear language config (`next-intl`, `react-i18next`, root `lang`). |
 | Other                                     | The host app is in a language the skill should mirror. User specifies.                                                                                  |
 
-**Recommendation**: mirror host language when the host has a clear signal; otherwise English. The skill defaults to English in tests and fresh repos.
+**Recommendation**: mirror the host language when the host has a clear signal. With no signal, ask: the skill assumes no default language.
 
 ---
 

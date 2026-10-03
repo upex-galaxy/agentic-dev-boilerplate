@@ -9,11 +9,16 @@ Deploy gradual con feature flags si es posible.
 ### Automático (Vercel/Railway)
 
 ```bash
-# 1. Merge a main
-git checkout main
-git pull origin main
-git merge staging   # rama de integración: git_strategy.branches.integration
-git push origin main
+# 1. Promover a producción
+# <production>  = git_strategy.branches.production  (.agents/project.yaml)
+# <integration> = git_strategy.branches.integration (null en solo-main,
+#   github-flow, trunk-based: ahí Stage 5 es mergear el PR de la historia a <production>)
+# Método de promoción: git_strategy.decisions.promote_method, vía /git-flow-master.
+git checkout <production>
+git pull origin <production>
+git merge --ff-only <integration>   # o el método que promote_method nombre
+# Push directo a rama protegida: lo resuelve git_strategy.policy.direct_push_to_protected
+git push origin <production>
 
 # 2. Vercel auto-deploya a producción
 # Monitorear en dashboard

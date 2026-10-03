@@ -1,6 +1,6 @@
 # Live-UI validation — mechanics (flow-aware, `/playwright-cli` sessions)
 
-> Owned by `/sprint-development`. SKILL.md holds the WHEN/WHAT (the four principles + hard rules in the **Live-UI validation** subsection); this file holds the HOW. Live-UI validation runs against the **running app**, never a static read of the mockup plus green lint/types/tests — those stay green while the rendered UI is wrong.
+> Owned by `/sprint-development`. SKILL.md holds the WHEN/WHAT (the five principles + hard rules in the **Live-UI validation** subsection); this file holds the HOW. Live-UI validation runs against the **running app**, never a static read of the mockup plus green lint/types/tests — those stay green while the rendered UI is wrong.
 
 ---
 
@@ -137,7 +137,7 @@ While building UI, keep the dev server up and re-render after each meaningful ch
 
 ### 5.2 Final verification pass (Stage 3)
 
-Before approving the PR, run a clean pass over all of the story's screens against the §4 checklist (all states, responsive, every interactive AC). Capture evidence into `evidence/` for the Spec Compliance Matrix.
+Before approving the PR, run a clean pass over all of the story's screens against the §4 checklist (all states, responsive, every interactive AC). Capture evidence into `.session/sprint-development/<KEY>/evidence/` for the Spec Compliance Matrix, and publish what a matrix row cites on the PR or the Jira issue (the session folder is working scratch).
 
 ### 5.3 Fix loop (gate)
 

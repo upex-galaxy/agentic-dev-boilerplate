@@ -473,9 +473,9 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.agents/skills
 
 | Branch      | Role                                                                                                                                          |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main`      | Production (`git_strategy.branches.production`). PRs merged from the integration branch or `feature/*` after review.                          |
+| `main`      | Production (`git_strategy.branches.production`). PRs merged from the integration branch or `feat/*` after review.                             |
 | `staging`   | Integration branch for AI commits + pre-release validation, ONLY when `git_strategy.branches.integration` names one (null under `solo-main`). |
-| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`.                                                                                                  |
+| `feat/*`    | Task-specific. Use `feat/TICKET-ID-desc` (prefix table: `/git-flow-master` §3.1).                                                             |
 | `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                                                                                                   |
 
 **Critical commit rules**:
