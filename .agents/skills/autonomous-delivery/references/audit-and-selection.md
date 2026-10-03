@@ -224,7 +224,8 @@ Optimistic locking on a shared file. Steps 4 and 5 are the ones that get skipped
    never overwrite someone else's claim, never edit another run's row.
 6. **Keep the row current enough that a stranger could resume from it cold**: exact branch, exact tip SHA,
    which pull requests exist and their state, and the next concrete command. The board row is the real
-   cross-run resume artifact; a per-session progress file dies with its worktree.
+   cross-run resume artifact; a per-session progress file is machine-local (this skill's lives at
+   `<<PRIMARY_ROOT>>`), and a dispatched skill's worktree-local one dies with its worktree unless rescued.
 7. **A gated row is not claimable until you verify the gate LIVE and flip it yourself, citing what you
    checked.** Cite the merge commit and the ancestry result, not the tracker status that made it look open.
 
