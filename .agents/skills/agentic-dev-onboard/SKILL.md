@@ -174,9 +174,10 @@ Place these in `.env` before running anything that talks to a real environment:
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (manual / ad-hoc)      |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
 | `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
-| `SUPABASE_URL` / `SUPABASE_*_KEY`              | Supabase MCP + runtime                 |
+| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime + Supabase MCP (the full set is `.env.example`) |
+| `SUPABASE_ACCESS_TOKEN`                        | Supabase MCP (personal access token)   |
 
-`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code) or `{env:VAR}` (OpenCode). The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
+`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code); OpenCode reads `{file:.auth/opencode/VAR}` files that `bun run harness:env` writes from `.env`, and Codex starts its servers through a `.env` loader. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
 Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #10.
 

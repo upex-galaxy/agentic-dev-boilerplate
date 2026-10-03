@@ -2199,7 +2199,7 @@ Importar tipo de entidad desde `@/lib/types` y crear array de mock data tipado q
 [pnpm/bun] list | grep -E "(next|react|tailwindcss|supabase)"
 ```
 
-**Output esperado (Noviembre 2025):**
+**Output esperado (ejemplo; las versiones reales son las que imprime el comando):**
 
 ```
 ✅ Versiones Validadas:

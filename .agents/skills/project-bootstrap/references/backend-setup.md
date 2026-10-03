@@ -1096,7 +1096,7 @@ para limpiar caché después de modificar `.env`.
 [package-manager] list | grep -E "(next|react|supabase)"
 ```
 
-**Output esperado (Noviembre 2025):**
+**Output esperado (ejemplo; las versiones reales son las que imprime el comando):**
 
 ```
 ✅ Versiones Validadas:
