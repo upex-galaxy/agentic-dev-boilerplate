@@ -33,6 +33,8 @@ The `/design-system` skill offers five generation paths. Pick whichever matches 
 
 Run `/design-system` and the skill will walk you through the path selection.
 
+> **Existing app?** If this repo adopted agentic-dev on top of an app whose theme already lives in code (`tailwind.config.*`, the global stylesheet, `components.json`), do not pick a brand: run `/design-system extract`. It writes this file from the live tokens and leaves the app's code untouched.
+
 > **Second phase (separate moment)**: after this file exists, `/design-system` also owns the per-story **screen phase** — just-in-time mockups commissioned when development picks a UI story up (standalone or routed from `/sprint-development`'s design gate). Its output lives in `.context/design/master-design-plan.md` (per-screen specs + US→Screen map), not here. This file covers tokens only.
 
 ---
