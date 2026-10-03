@@ -136,13 +136,13 @@ const SKILLS_CANONICAL_DIR = '.agents/skills';
 // boilerplate ships no command file (a skill is invoked by name plus mode).
 const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 
-const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex', 'gemini'] as const;
+// One opt-in template per supported host (AGENTS.md section 5.5: three hosts).
+export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
-const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
+export const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
   claude: 'claude.template.json',
   opencode: 'opencode.template.json',
   codex: 'codex.template.toml',
-  gemini: 'gemini.template.json',
 };
 
 // The command-alias layer is retired: a skill is invoked by its own name plus a
@@ -183,11 +183,22 @@ export const RETIRED_SKILL_FILES: DeprecatedFile[] = [
   '.agents/skills/sync-ai-memory/references/sync.md',
 ].map(path => ({ path, component: 'agent-compatibility', reason: RETIRED_SYNC_REASON, deprecatedSince: '8.5' }));
 
+// Docs pages removed upstream. `docs` is a synced directory component, so
+// without these `--auto` would defer their `deleted-upstream` entries and hold
+// the whole component back.
+const RETIRED_HOST_REASON = 'host outside the three-host contract (AGENTS.md section 5.5)';
+export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
+  ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
+    .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.6' })),
+  { path: 'docs/setup/jira-setup-guide.md', component: 'docs', reason: 'Xray test-management setup belongs to the QA boilerplate; dev-side Jira setup is in docs/setup/README.md', deprecatedSince: '8.6' },
+];
+
 export const DEPRECATED_FILES: DeprecatedFile[] = [
   { path: '.prompts/setup/kata-framework-setup.md', component: 'prompts', reason: 'renamed to monorepo-for-qa-setup.md', deprecatedSince: '2026-04-28' },
   { path: '.prompts/setup/kata-architecture-adaptation.md', component: 'prompts', reason: 'renamed to test-framework-adaptation.md', deprecatedSince: '2026-04-28' },
   ...RETIRED_COMMAND_WRAPPERS,
   ...RETIRED_SKILL_FILES,
+  ...RETIRED_DOCS_FILES,
 ];
 
 export const COMPONENTS: Component[] = [

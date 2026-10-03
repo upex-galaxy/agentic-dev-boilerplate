@@ -1,188 +1,164 @@
 # ============================================
-# TEMPLATE DE MCPs PARA CODEX CLI + CODEX DESKTOP
+# OPT-IN MCP BLOCKS FOR CODEX CLI + CODEX DESKTOP
 # ============================================
-# Este archivo es una copia DERIVADA de `.codex/config.toml` (commiteado en la
-# raíz del repo y verificado en paridad con `.mcp.json` / `opencode.jsonc` por
-# `bun run agents:compat:check`) más servidores opt-in que el repo no activa.
+# The servers this repo runs are declared in `.codex/config.toml` (committed,
+# kept in parity with `.mcp.json` and `opencode.jsonc` by
+# `bun run agents:compat:check`). A project checkout needs nothing from here.
 #
-# Un checkout de este proyecto NO necesita copiar nada: `.codex/config.toml` ya
-# trae los mismos servidores que declara `.mcp.json`. Usá este template para:
-#   - un config global en ~/.codex/config.toml (fuera de este repo), o
-#   - sumar un bloque opt-in a `.codex/config.toml` (y a los otros dos hosts,
-#     o el gate de paridad falla).
+# Each block below is an OPT-IN server the repo does not enable. To add one:
+#   1. copy the block into `.codex/config.toml`,
+#   2. add the same server to `.mcp.json` and `opencode.jsonc`
+#      (docs/mcp/claude.template.json, docs/mcp/opencode.template.json),
+#   3. add its variables to `.env` (and `.env.example`), run
+#      `bun run harness:env`, then `bun run agents:compat:check`.
 #
-# `.codex/` de proyecto solo se carga en un repositorio trusted.
+# Project `.codex/` config loads only in a repository Codex trusts.
 #
-# REGLA DE SECRETOS: Codex NO expande `${VAR}` en `args` ni en `[X.env]`. Los
-# secretos viajan POR NOMBRE: `env_vars = ["VAR"]` (stdio) o
-# `bearer_token_env_var = "VAR"` (HTTP), y Codex los lee del entorno que
-# `bun run codex` carga desde .env. Los `{{VARIABLE}}` de abajo son marcadores
-# de búsqueda-y-reemplazo para valores que NO son secretos (URLs, rutas).
+# SECRETS: Codex never expands `${VAR}` in `args` or in `[X.env]`. Secrets travel
+# BY NAME: `env_vars = ["VAR"]` (stdio) or `bearer_token_env_var = "VAR"` (HTTP).
 #
-# IMPORTANTE: Para OAuth en servidores HTTP, habilitar:
-# experimental_use_rmcp_client = true
-
-[shell_environment_policy]
-inherit = "core"
-
-# ============================================
-# SERVIDORES CANÓNICOS (idénticos a .codex/config.toml)
-# ============================================
-
-[mcp_servers.context7]
-command = "bunx"
-enabled = true
-args = [
-  "-y",
-  "@upstash/context7-mcp",
-]
-
-# Streamable HTTP con la key como bearer: el túnel mcp-remote que usan
-# .mcp.json / opencode.jsonc existe solo para meter ${TAVILY_API_KEY} en la URL,
-# y Codex no puede interpolarla ahí.
-[mcp_servers.tavily]
-url = "https://mcp.tavily.com/mcp/"
-bearer_token_env_var = "TAVILY_API_KEY"
-enabled = true
-
-# @supabase/mcp-server-supabase lee SUPABASE_ACCESS_TOKEN del entorno cuando
-# falta --access-token (fallback documentado), así que el token se reenvía en
-# vez de interpolarse. Las otras tres viajan bajo su nombre de .env.
-[mcp_servers.supabase]
-command = "bunx"
-enabled = true
-args = [
-  "-y",
-  "@supabase/mcp-server-supabase@latest",
-]
-env_vars = [
-  "SUPABASE_ACCESS_TOKEN",
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "SUPABASE_PUBLISHABLE_KEY",
-  "SUPABASE_SECRET_KEY",
-]
-
-[mcp_servers.n8n]
-command = "npx"
-enabled = true
-args = [
-  "-y",
-  "n8n-mcp",
-]
-env_vars = [
-  "N8N_API_URL",
-  "N8N_API_KEY",
-]
-
-[mcp_servers.n8n.env]
-MCP_MODE = "stdio"
-LOG_LEVEL = "error"
-DISABLE_CONSOLE_OUTPUT = "true"
+# LOADER: every stdio block starts through `bunx -p dotenv-cli@8.0.0 dotenv -o
+# -e .env -- <real command>`, the same loader `.codex/config.toml` uses: Codex
+# Desktop opened from Finder or the Dock has no process environment for
+# `env_vars` to forward, and the loader reads `.env` whatever launched Codex.
+# `startup_timeout_sec = 30` covers a cold package fetch plus the loader hop.
+#
+# `{{VARIABLE}}` marks a NON-secret value to paste by hand (a URL, an org slug).
+#
+# OAuth on an HTTP server may need `experimental_use_rmcp_client = true`.
 
 # ============================================
-# SERVIDORES OPT-IN (no activos en este repo)
+# LOCAL (STDIO) SERVERS
 # ============================================
-# Copiá el bloque a `.codex/config.toml` y replicalo en .mcp.json y
-# opencode.jsonc antes de correr `bun run agents:compat:check`.
 
-[mcp_servers.playwright]
-command = "npx"
-args = [
-  "@playwright/mcp@latest",
-  "--caps",
-  "vision,pdf,testing,tracing,tabs",
-  "--timeout-action",
-  "10000",
-  "--timeout-navigation",
-  "30000",
-  "--viewport-size",
-  "1920x1080"
-]
-
-[mcp_servers.devtools]
-command = "npx"
-args = [
-  "-y",
-  "chrome-devtools-mcp"
-]
-
+# API_HEADERS carries the bearer inside the value and Codex does not
+# interpolate it: put the whole `API_HEADERS="Authorization:Bearer <token>"` in .env.
 [mcp_servers.openapi]
-command = "npx"
+command = "bunx"
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "@ivotoby/openapi-mcp-server",
   "--tools",
-  "dynamic"
+  "dynamic",
 ]
-
-# API_HEADERS lleva el bearer dentro del valor y Codex no lo interpola: exportá
-# API_HEADERS="Authorization:Bearer <token>" completo en el entorno.
 env_vars = [
   "API_HEADERS",
 ]
 
 [mcp_servers.openapi.env]
-API_BASE_URL = "https://staging-upexsoloq.vercel.app/api"
-OPENAPI_SPEC_PATH = "https://staging-upexsoloq.vercel.app/api/openapi"
+API_BASE_URL = "{{API_BASE_URL}}"
+OPENAPI_SPEC_PATH = "{{OPENAPI_SPEC_URL}}"
 
+# DBHub reads its sources from dbhub.toml (start from docs/mcp/dbhub.example.toml).
 [mcp_servers.sql]
-command = "npx"
+command = "bunx"
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "@bytebase/dbhub@latest",
   "--config",
-  "dbhub.toml"
+  "dbhub.toml",
 ]
 
 [mcp_servers.shadcn]
-command = "npx"
+command = "bunx"
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "shadcn@latest",
-  "mcp"
+  "mcp",
 ]
 
 [mcp_servers.slack]
-command = "npx"
+command = "bunx"
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "slack-mcp-server@latest",
   "--transport",
-  "stdio"
+  "stdio",
 ]
-
 env_vars = [
   "SLACK_MCP_XOXP_TOKEN",
 ]
 
 [mcp_servers.slack.env]
 SLACK_MCP_ADD_MESSAGE_TOOL = "true"
-SLACK_MCP_USERS_CACHE = "$HOME/.codex/mcp-cache/slack/"
-SLACK_MCP_CHANNELS_CACHE = "$HOME/.codex/mcp-cache/slack/"
+SLACK_MCP_USERS_CACHE = "./.session/mcp/slack/"
+SLACK_MCP_CHANNELS_CACHE = "./.session/mcp/slack/"
 
 [mcp_servers.nanobanana]
-command = "uvx"
-args = [ "nanobanana-mcp-server@latest" ]
-
+command = "bunx"
+startup_timeout_sec = 30
+args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "uvx",
+  "nanobanana-mcp-server@latest",
+]
 env_vars = [
   "GEMINI_API_KEY",
 ]
 
-# ============================================
-# ATLASSIAN - USANDO MCP-REMOTE (RECOMENDADO)
-# ============================================
-# mcp-remote maneja OAuth automáticamente y funciona con cualquier cliente
-
+# Atlassian through mcp-remote: OAuth in the browser, no token in .env.
+# Opt-in only: acli is the default Jira / Confluence path (AGENTS.md section 6).
 [mcp_servers.atlassian]
-command = "npx"
+command = "bunx"
+startup_timeout_sec = 30
 args = [
+  "-p",
+  "dotenv-cli@8.0.0",
+  "dotenv",
+  "-o",
+  "-e",
+  ".env",
+  "--",
+  "npx",
   "-y",
   "mcp-remote",
-  "https://mcp.atlassian.com/v1/sse"
+  "https://mcp.atlassian.com/v1/sse",
 ]
 
 # ============================================
-# SERVIDORES HTTP STREAMABLE (REMOTOS)
+# REMOTE (STREAMABLE HTTP) SERVERS
 # ============================================
 
 [mcp_servers.postman]
@@ -190,7 +166,7 @@ url = "https://mcp.postman.com/mcp"
 bearer_token_env_var = "POSTMAN_API_KEY"
 
 [mcp_servers.sentry]
-url = "https://mcp.sentry.dev/mcp/soloq/typescript"
+url = "https://mcp.sentry.dev/mcp/{{SENTRY_ORG}}/{{SENTRY_PROJECT}}"
 
 [mcp_servers.vercel]
 url = "https://mcp.vercel.com/"
