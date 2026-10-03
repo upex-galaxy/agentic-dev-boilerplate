@@ -20,14 +20,14 @@ Two trigger points; **both** apply:
 
 ```
 ### Evidence (relative paths)
-- .context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/evidence/<KEY>-live-ui-<label>.png
+- .session/sprint-development/<KEY>/evidence/<KEY>-live-ui-<label>.png
 ```
 
 Rules:
 
 - Omit the block when the session captured nothing; no empty headings.
 - List only files verified on disk (`ls` the directory): never claim a capture a subagent only *said* it took.
-- These story folders are `[LOCAL]` (`AGENTS.md` §9): a capture that another machine or a reviewer needs goes to Jira as an attachment or a comment, and the footer says where.
+- The session folder is working state at `<<PRIMARY_ROOT>>`, never the gitignored `.context/PBI/` cache (`AGENTS.md` §9): a capture that another machine or a reviewer needs goes to the PR (comment) or to Jira (attachment), and the footer says where.
 
 ## Part 2 — Session footer: tools used + dev surfaces touched
 
