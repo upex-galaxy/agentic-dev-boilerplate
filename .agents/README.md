@@ -15,7 +15,7 @@ The directory has two roles:
 
 | File                  | What it is                                                                                                                                                                       | Who edits it                             | How to regenerate                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
-| `project.yaml`        | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below) and the `updater:` block (files `bun run up` must keep as the project's own; see §"`updater`" below). | You (project owner) / `git-flow-master` | Edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
+| `project.yaml`        | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below), the `updater:` block (files `bun run up` must keep as the project's own; see §"`updater`" below), and the `orchestration:` block (defaults for supervised multi-session worker fleets, read by `orca-orchestration`; see §"`orchestration`" below). | You (project owner) / `git-flow-master` | Edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
 | `jira-fields.json`    | Auto-generated catalog of every custom field in your Jira workspace, keyed by canonical slug. Each entry has `id`, `type`, optional `name`, `options`, `system`, `provider`.     | Generated only — **do not edit by hand** | `bun run jira:sync-fields`                                                   |
 | `jira-workflows.json` | Auto-generated catalog of work-type workflows, statuses, and transitions resolved against your Jira workspace. Companion to `jira-fields.json` for the work_types substrate.     | Generated only — **do not edit by hand** | `bun run jira:sync-workflows`                                                |
 | `jira-link-types.json` | Auto-generated catalog of every issue link type in your Jira workspace (e.g. `blocks`, `relates`, `is caused by`), keyed by canonical slug. Each entry has `id`, `name`, `outward`, `inward`, `exists_in_workspace`. | Generated only — **do not edit by hand** | `bun run jira:sync-link-types`                                               |
@@ -77,6 +77,38 @@ updater:
 - **Semantics**: identical to the upstream watchlist. Never overwritten (also under `--auto` and `--force`), delivered once from upstream when the file is missing locally, included in the sparse checkout so its upstream copy can be diffed, one drift row per upstream change (marker under `.template/upstream-sha/`).
 - **Validation**: a path outside the repo (absolute, `..`), under `.git`, a directory, or a non-string is reported at the start of the run (`updater.protected_paths (.agents/project.yaml): entrada ignorada "...": <reason>.`) and ignored; the run continues. Duplicates and paths already on the upstream watchlist are folded silently.
 - **Bootstrap-only**: `project.yaml` is never synced, so the list is entirely yours. Both keys are allowlisted in `external_consumers` (not `{{VAR}}` sources).
+
+## `orchestration` (block inside `project.yaml`)
+
+Default settings for **supervised multi-session worker fleets**: one conductor session coordinating N persistent workers through the Orca runtime (or, without Orca, the same launch lines pasted by hand). Owned and read by the `orca-orchestration` skill. Unlike `git_strategy` and `updater`, this block is a **flat, top-level section like `project:` or `testing:`**: its scalar leaves ARE `{{VAR}}` template variables, resolved lexically by their bare leaf name (no `ORCHESTRATION_` prefix), per the flat-key rule in §"Variable syntax conventions" below.
+
+```yaml
+orchestration:
+  max_workers: 3        # concurrent workers per round (example value)
+  default_agent: claude # claude | codex | opencode
+  default_model: ''     # full provider model id; empty = the harness default
+  default_effort: high  # harness effort level when supported
+```
+
+| Field | `{{VAR}}` name | Description |
+|---|---|---|
+| `max_workers` | `{{MAX_WORKERS}}` | Ceiling on concurrent workers per round (a concurrency group; see `orca-orchestration/references/topologies.md` §5). Merge and staging deploy stay serialized through the conductor whatever the cap. |
+| `default_agent` | `{{DEFAULT_AGENT}}` | Which harness launches a worker when the user doesn't say: `claude` \| `codex` \| `opencode`. |
+| `default_model` | `{{DEFAULT_MODEL}}` | Full provider model id passed to the launch; empty string defers to the harness's own default. Never an alias. |
+| `default_effort` | `{{DEFAULT_EFFORT}}` | Effort level passed to the launch, when the harness supports one. |
+| `orchestrator_name` | `{{ORCHESTRATOR_NAME}}` | The orchestration application, as the operator names it. Prose only. |
+| `orchestrator_cli` | `{{ORCHESTRATOR_CLI}}` | The binary on `PATH`. Empty = no orchestrator on this machine: every workflow skill falls back to the pasted-launch-line path and says NOTHING about it. |
+| `message_verb` | `{{MESSAGE_VERB}}` | The command that carries **messages between sessions**. Byte-intact. |
+| `terminal_verb` | `{{TERMINAL_VERB}}` | The command that **drives a terminal**: commands, CLI calls, harness slash-commands, keystrokes. Truncates a long payload silently and keeps only the TAIL. |
+| `orchestrator_skills` | *(none, a list)* | Vendor skills the orchestrator installs at user level, loaded ALONGSIDE `/orca-orchestration`. Referenced by path (`orchestration.orchestrator_skills`), never as a `{{VAR}}`: a list is not a substitutable scalar, so it is listed in `external_consumers`. |
+
+**`message_verb` and `terminal_verb` are NOT interchangeable, and that pair is the point.** The test: if a HUMAN would read it, it does not go through `terminal_verb`; if a shell or a TUI would EXECUTE it, that is what the verb is for. One structural exception: a supervised worker's FIRST prompt goes through `terminal_verb`, because the native launch has no argv; keep it short and pointing at a file. Full doctrine: `orca-orchestration/references/channel-discipline.md`.
+
+**Naming the orchestrator here is what lets a skill stop hardcoding it.** A project on a different orchestrator keeps the whole doctrine and swaps the values of the block.
+
+**A missing block degrades, it does not break.** A project without `orchestration:` runs a fleet of one (the cap defaults to 1), on the harness defaults, and names no orchestrator; `/sprint-development` single-ticket mode never reads the block at all.
+
+**An explicit user instruction in the conductor session always overrides these defaults for that run**: they are the fallback only when the user says nothing ("launch 3 workers" beats `max_workers` for that dispatch).
 
 ## `testing.automation_identity` (block inside `project.yaml`)
 
