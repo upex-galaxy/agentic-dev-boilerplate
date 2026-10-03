@@ -88,6 +88,7 @@ export const UNPROVISIONED_WORKTREE_LINE = [
 /** Emitted only when the `orca` binary is reachable (`orcaAvailable`). */
 export const ORCA_CONTEXT_LINE = [
   'ORCA: available.',
+  'Multi-session orchestration -> /orca-orchestration.',
   'Dispatched worker: follow your preamble;',
   'channel = orca orchestration, never SendMessage/AskUserQuestion.',
 ].join(' ');
