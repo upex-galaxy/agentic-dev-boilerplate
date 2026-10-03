@@ -273,6 +273,8 @@ An app whose code already exists has no product to define: its foundation is wha
 | 4 Step 4 dev guide | reverse-engineered: folder layout, conventions and commands come from the app's code, `package.json` and the `stack:` block, never from this boilerplate's defaults |
 | 4 Step 6 glossary | seeded from the maps, the code's identifiers, the live UI copy, existing ADRs and the tracker's epic names; skipped when the file exists |
 
+**Capability `db`** is optional on this path: the data map reads the schema per `{{stack.database.schema_source}}` (`migrations` = the files, offline; `{{stack.database.engine}}` = `none` = no database), so a project with no DB MCP or no access to the live database is a Discovery Gap the data map names, never a STOP.
+
 **Inputs**: the seed is the code, not a stakeholder brief; Inputs #1 and #4 above are optional. Phase 0.5 writes the plan with `discovery-only` in `## Approach` and Phase 4 alone in `## Phase breakdown`. **Hand-offs**: `/product-management` for the backlog and `/sprint-development` per story; never `/project-bootstrap` base phases on an existing app.
 
 ---

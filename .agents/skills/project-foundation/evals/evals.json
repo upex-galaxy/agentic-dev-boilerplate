@@ -37,6 +37,12 @@
       "category": "positive"
     },
     {
+      "name": "should-not-stop-discovery-only-without-db-access",
+      "prompt": "Document this existing app (adopted, schema_source: migrations). There is no database MCP connected and no access to production.",
+      "expected_behavior": "Runs the Discovery-only path without stopping on capability `db`: the data map reads the migration files offline per `stack.database.schema_source`, and the missing live access is a Discovery Gap the data map names, never a STOP.",
+      "category": "positive"
+    },
+    {
       "name": "should-not-trigger-openapi-setup",
       "prompt": "Setup OpenAPI in the backend and configure the Scalar UI.",
       "expected_behavior": "Does NOT activate project-foundation. Should route to /project-bootstrap (openapi-setup.md reference) because the request is infrastructure scaffolding (code/config), not architectural definition. project-foundation produces SRS docs; project-bootstrap implements them.",

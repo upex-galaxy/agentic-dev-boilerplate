@@ -15,7 +15,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed data map generat
 ## Inputs the command expects (provided by Phase 4 context)
 
 - `.context/PRD/*` and `.context/SRS/*` if present (used as business context).
-- DB schema (via Supabase MCP or equivalent `[DB_TOOL]`).
+- DB schema, per `{{stack.database.schema_source}}`: live through `[DB_TOOL]` (capability `db`), or the migration files under `{{stack.database.migrations_dir}}` read offline (capability `db` then optional).
 - Source code (backend + frontend) for flow tracing.
 
 ## When to invoke
