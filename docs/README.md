@@ -23,12 +23,9 @@ Esta documentación está orientada a **humanos** — para aprender conceptos, e
 
 ```
 docs/
-├── methodology/                  # Metodologías de testing y QA
-│   ├── IQL-methodology.md        # Integrated Quality Lifecycle
-│   ├── early-game-testing.md     # Fase shift-left
-│   ├── mid-game-testing.md       # Fase de desarrollo activo
-│   ├── late-game-testing.md     # Fase de regresión
-│   └── jira-platform.md          # Uso de Jira en el flujo
+├── methodology/                  # La costura entre desarrollo y QA
+│   ├── IQL-methodology.md        # Cómo el dev le entrega trabajo a QA
+│   └── jira-platform.md          # Jira y Xray desde el lado dev
 │
 ├── setup/                        # Guías de configuración (incluye Jira lado dev)
 │   └── mcp/                      # Primer MCP y guías por harness
@@ -45,32 +42,29 @@ docs/
 │
 ├── agentic-development-engineering.md  # Ingeniería del ciclo de desarrollo agéntico
 ├── ai-personality.md             # Espejo humano del contrato de personalidad de la AI
-└── onboarding.html               # Tour de onboarding interactivo (HTML standalone)
+└── onboarding.html               # Empezá acá: orientación (HTML standalone, `bun run onboarding`)
 ```
 
 ---
 
 ## Metodología
 
-La metodología de testing está basada en **IQL (Integrated Quality Lifecycle)**.
+Este repo cubre el desarrollo; la metodología de testing (**IQL**, Integrated Quality Lifecycle) vive en [agentic-qa-boilerplate](https://upex-galaxy.github.io/agentic-qa-boilerplate/docs/core/metodologia/index.html). Acá solo está el lado dev de la costura:
 
-| Documento                                                    | Descripción                        |
-| ------------------------------------------------------------ | ---------------------------------- |
-| [IQL-methodology.md](./methodology/IQL-methodology.md)       | Vista completa de IQL              |
-| [early-game-testing.md](./methodology/early-game-testing.md) | Testing shift-left                 |
-| [mid-game-testing.md](./methodology/mid-game-testing.md)     | Desarrollo + automatización        |
-| [late-game-testing.md](./methodology/late-game-testing.md)   | Regresión y producción             |
-| [jira-platform.md](./methodology/jira-platform.md)           | Uso de Jira en el flujo end-to-end |
+| Documento                                              | Descripción                                                |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| [IQL-methodology.md](./methodology/IQL-methodology.md) | Cómo el dev le entrega trabajo a QA                        |
+| [jira-platform.md](./methodology/jira-platform.md)     | Jira y Xray desde el lado dev: qué se escribe y qué se lee |
 
 ---
 
 ## Guías de Configuración
 
-| Documento                                          | Descripción                                                      |
-| -------------------------------------------------- | ---------------------------------------------------------------- |
-| [Jira (lado dev)](./setup/README.md#jira-lado-dev) | Configurar credenciales y MCP de Atlassian/Jira                  |
-| [setup/mcp/](./setup/mcp/)                         | Primer MCP y guías por harness                                   |
-| [mcp/](./mcp/)                                     | Servidores MCP declarados y bloques opt-in por harness           |
+| Documento                                          | Descripción                                            |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| [Jira (lado dev)](./setup/README.md#jira-lado-dev) | Configurar credenciales y MCP de Atlassian/Jira        |
+| [setup/mcp/](./setup/mcp/)                         | Primer MCP y guías por harness                         |
+| [mcp/](./mcp/)                                     | Servidores MCP declarados y bloques opt-in por harness |
 
 ---
 
@@ -92,15 +86,15 @@ Guías para stacks tecnológicos específicos:
 | ---------------------- | -------------------------------- | ---------------------------------------------------- |
 | **Supabase + Next.js** | PostgreSQL + PostgREST + Next.js | [supabase-nextjs/](./architectures/supabase-nextjs/) |
 
-> **Nota**: Conceptos genéricos de testing pertenecen a `methodology/`. Solo configuraciones específicas de cada stack van en `architectures/`.
+> **Nota**: `architectures/` guarda solo configuración específica de cada stack. La costura con QA está en `methodology/`; la metodología de testing, en el repo de QA.
 
 ---
 
 ## Inicio Rápido
 
-### 1. Entender la Metodología
+### 1. Orientarte
 
-Lee la [Metodología IQL](./methodology/IQL-methodology.md) para entender las fases de testing.
+Corré `bun run onboarding`: abre `onboarding.html`, el recorrido de empezá acá (las piezas del repo, cómo se invoca una skill, cómo viaja una historia). Para saber qué recibe QA al final del sprint, leé [Cómo el dev le entrega trabajo a QA](./methodology/IQL-methodology.md).
 
 ### 2. Configurar Tus Herramientas
 
@@ -121,14 +115,14 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 
 ## Relación con `.context/`, `.agents/` y los adapters por harness
 
-| Directorio / archivo                         | Audiencia | Propósito                                                                                   |
-| -------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
-| `docs/`                                      | Humanos   | Aprendizaje, tutoriales, referencia                                                         |
-| `.context/`                                  | AI        | Memoria persistente del proyecto (PRD, SRS, PBI, ADR). Los business maps viven en las skills `business-*-context` y se leen con `bun run context:map <skill>` |
-| `.agents/skills/`                            | AI        | Workflows ejecutables: la única copia, leída por los tres harnesses                         |
-| `.claude/`, `.opencode/`, `.codex/`          | AI        | Adapters por harness (hook, MCP). Generado solo `.claude/skills`; nunca una segunda copia del contenido |
-| `AGENTS.md`                                  | AI        | Operational context cargado en cada sesión, en cualquier harness                            |
-| `CLAUDE.md`                                  | AI        | Shim de una línea (`@AGENTS.md`) para Claude Code. Generado, nunca lleva prosa              |
+| Directorio / archivo                | Audiencia | Propósito                                                                                                                                                     |
+| ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/`                             | Humanos   | Aprendizaje, tutoriales, referencia                                                                                                                           |
+| `.context/`                         | AI        | Memoria persistente del proyecto (PRD, SRS, PBI, ADR). Los business maps viven en las skills `business-*-context` y se leen con `bun run context:map <skill>` |
+| `.agents/skills/`                   | AI        | Workflows ejecutables: la única copia, leída por los tres harnesses                                                                                           |
+| `.claude/`, `.opencode/`, `.codex/` | AI        | Adapters por harness (hook, MCP). Generado solo `.claude/skills`; nunca una segunda copia del contenido                                                       |
+| `AGENTS.md`                         | AI        | Operational context cargado en cada sesión, en cualquier harness                                                                                              |
+| `CLAUDE.md`                         | AI        | Shim de una línea (`@AGENTS.md`) para Claude Code. Generado, nunca lleva prosa                                                                                |
 
 **Regla general**:
 
@@ -153,5 +147,4 @@ Antes de commitear prosa, `bun run docs:check`: la Regla #17 de `AGENTS.md` proh
 1. Crear carpeta: `docs/architectures/{nombre-stack}/`
 2. Agregar `README.md` con overview de la arquitectura
 3. Agregar guías de configuración específicas
-4. Mantener conceptos genéricos en `docs/methodology/`
-
+4. Mantener lo que no depende del stack fuera de `architectures/`
