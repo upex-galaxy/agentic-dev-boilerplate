@@ -163,6 +163,10 @@ const VAR_HINTS: Record<string, { hint: string, where: string }> = {
     hint: 'Supabase new-style publishable key (browser-safe, replaces anon key)',
     where: 'Supabase dashboard → Project Settings → API',
   },
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: {
+    hint: 'Browser-side copy of SUPABASE_PUBLISHABLE_KEY (not provisioned by the Vercel integration: set by hand)',
+    where: 'Supabase dashboard → Project Settings → API',
+  },
   SUPABASE_SECRET_KEY: {
     hint: 'Supabase new-style secret key (server only, replaces service_role)',
     where: 'Supabase dashboard → Project Settings → API',

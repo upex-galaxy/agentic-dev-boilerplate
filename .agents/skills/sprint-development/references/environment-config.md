@@ -92,7 +92,7 @@ Configurar environment variables en:
 
 - **NO hardcodear valores** - Usar variables de entorno
 - **NO commitear secrets reales** - Solo .env.example
-- **NO exponer service role keys** - Solo en server-side
+- **NO exponer secret keys** - Solo en server-side
 - **NO usar mismos valores en todos los ambientes** - Cada ambiente separado
 - **NO configurar production todavía** - Eso es Fase 12
 
@@ -117,8 +117,9 @@ Configurar environment variables en:
 
 1. **Supabase Variables:**
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SECRET_KEY` (server-only)
+   - Nombres canónicos: los de `.env.example`. El par legacy de Supabase (`NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`) sigue funcionando mientras Supabase lo provisione, pero el boilerplate usa publishable + secret.
 
 2. **Vercel Variables:**
    - `NEXT_PUBLIC_APP_URL`
@@ -134,8 +135,8 @@ Configurar environment variables en:
 ### Core Variables (Supabase):
 
 - `NEXT_PUBLIC_SUPABASE_URL` - URL del proyecto Supabase
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Anon key pública
-- `SUPABASE_SERVICE_ROLE_KEY` - Service role (server-only)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Publishable key (pública)
+- `SUPABASE_SECRET_KEY` - Secret key (server-only)
 
 ### App Variables:
 
@@ -184,10 +185,10 @@ cp .env.example .env
 # Supabase (Development)
 # =============================================================================
 NEXT_PUBLIC_SUPABASE_URL=https://[project-id].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 # ⚠️ NUNCA commitear este archivo - está en .gitignore
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+SUPABASE_SECRET_KEY=sb_secret_...
 
 # =============================================================================
 # App Configuration (Development)
@@ -232,12 +233,12 @@ https://vercel.com/[org]/[project]/settings/environment-variables
 
 ### 2️⃣ Para cada variable, agregar con Scope "Preview":
 
-| Variable Name                   | Value                                 | Environment |
-| ------------------------------- | ------------------------------------- | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | https://[staging-project].supabase.co | Preview     |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | eyJhbGc...                            | Preview     |
-| `SUPABASE_SERVICE_ROLE_KEY`     | eyJhbGc...                            | Preview     |
-| `NEXT_PUBLIC_APP_URL`           | https://[project]-develop.vercel.app  | Preview     |
+| Variable Name                          | Value                                 | Environment |
+| -------------------------------------- | ------------------------------------- | ----------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | https://[staging-project].supabase.co | Preview     |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | sb_publishable_...                    | Preview     |
+| `SUPABASE_SECRET_KEY`                  | sb_secret_...                         | Preview     |
+| `NEXT_PUBLIC_APP_URL`                  | https://[project]-develop.vercel.app  | Preview     |
 
 **⚠️ IMPORTANTE:**
 
@@ -264,8 +265,8 @@ https://railway.app/project/[project-id]/settings
 Click en "New Variable" y agrega:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `NEXT_PUBLIC_APP_URL`
 
 ### 4️⃣ Deploy nuevamente para aplicar cambios
@@ -290,12 +291,12 @@ Click en "New Variable" y agrega:
 
 **Archivo:** `.env` (gitignored)
 
-| Variable                        | Descripción                    | Ejemplo                 |
-| ------------------------------- | ------------------------------ | ----------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | URL del proyecto Supabase dev  | https://xxx.supabase.co |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key pública de Supabase   | eyJhbGc...              |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Service role key (server-only) | eyJhbGc...              |
-| `NEXT_PUBLIC_APP_URL`           | URL base de la app             | http://localhost:3000   |
+| Variable                               | Descripción                   | Ejemplo                 |
+| -------------------------------------- | ----------------------------- | ----------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | URL del proyecto Supabase dev | https://xxx.supabase.co |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key de Supabase   | sb_publishable_...      |
+| `SUPABASE_SECRET_KEY`                  | Secret key (server-only)      | sb_secret_...           |
+| `NEXT_PUBLIC_APP_URL`                  | URL base de la app            | http://localhost:3000   |
 
 ---
 
@@ -305,12 +306,12 @@ Click en "New Variable" y agrega:
 
 **Scope:** Preview (solo deploy de `develop` branch)
 
-| Variable                        | Valor                                 | Notas                           |
-| ------------------------------- | ------------------------------------- | ------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | https://[staging-project].supabase.co | Proyecto de staging en Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | [anon key staging]                    | Diferente de production         |
-| `SUPABASE_SERVICE_ROLE_KEY`     | [service key staging]                 | Solo server-side                |
-| `NEXT_PUBLIC_APP_URL`           | https://[project]-develop.vercel.app  | URL auto-generada por Vercel    |
+| Variable                               | Valor                                 | Notas                           |
+| -------------------------------------- | ------------------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | https://[staging-project].supabase.co | Proyecto de staging en Supabase |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | [publishable key staging]             | Diferente de production         |
+| `SUPABASE_SECRET_KEY`                  | [secret key staging]                  | Solo server-side                |
+| `NEXT_PUBLIC_APP_URL`                  | https://[project]-develop.vercel.app  | URL auto-generada por Vercel    |
 
 ---
 
@@ -320,12 +321,12 @@ Click en "New Variable" y agrega:
 
 **Scope:** Production (solo deploy de `main` branch)
 
-| Variable                        | Valor                              | Notas                    |
-| ------------------------------- | ---------------------------------- | ------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`      | https://[prod-project].supabase.co | ⚠️ Configurar en Fase 12 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | [anon key production]              | ⚠️ Configurar en Fase 12 |
-| `SUPABASE_SERVICE_ROLE_KEY`     | [service key production]           | ⚠️ Configurar en Fase 12 |
-| `NEXT_PUBLIC_APP_URL`           | https://[domain].com               | ⚠️ Configurar en Fase 12 |
+| Variable                               | Valor                              | Notas                    |
+| -------------------------------------- | ---------------------------------- | ------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`             | https://[prod-project].supabase.co | ⚠️ Configurar en Fase 12 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | [publishable key production]       | ⚠️ Configurar en Fase 12 |
+| `SUPABASE_SECRET_KEY`                  | [secret key production]            | ⚠️ Configurar en Fase 12 |
+| `NEXT_PUBLIC_APP_URL`                  | https://[domain].com               | ⚠️ Configurar en Fase 12 |
 
 ---
 
@@ -361,13 +362,13 @@ Agregar fila a tabla correspondiente explicando para qué sirve.
 ### Variables Públicas (NEXT*PUBLIC*)
 
 - ✅ Expuestas en frontend (browser)
-- ✅ Ejemplo: URLs públicas, anon keys
-- ❌ NUNCA service role keys o API secrets
+- ✅ Ejemplo: URLs públicas, publishable keys
+- ❌ NUNCA secret keys o API secrets
 
 ### Variables Privadas (Server-only)
 
 - ✅ Solo accesibles en server-side (API routes, server components)
-- ✅ Ejemplo: service role keys, API secrets
+- ✅ Ejemplo: secret keys, API secrets
 - ❌ NUNCA usar en componentes client
 
 ### .gitignore
@@ -380,7 +381,7 @@ Agregar fila a tabla correspondiente explicando para qué sirve.
 
 ### Rotation
 
-- Rotar service role keys cada 90 días
+- Rotar secret keys cada 90 días
 - Si compromiso de secret → regenerar inmediatamente
 
 ````

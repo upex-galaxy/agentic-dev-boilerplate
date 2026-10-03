@@ -702,11 +702,11 @@ const handler = ApiReference({
   // Multi-documento nativo de Scalar. El primero (o `default: true`) es el activo.
   sources: [
     { title: "Next.js API", slug: "nextjs", url: "/api/openapi", default: true },
-    // Opcional — Supabase REST (la anon key es pública por diseño):
+    // Opcional — Supabase REST (la publishable key es pública por diseño):
     // {
     //   title: "Supabase REST",
     //   slug: "supabase",
-    //   url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/?apikey=${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+    //   url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/?apikey=${process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}`,
     // },
   ],
   theme: "purple", // matchear brand (Redoc usaba #7c3aed)

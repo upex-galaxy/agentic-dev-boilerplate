@@ -217,6 +217,16 @@ export const VAR_MANIFEST: VarSpec[] = [
     note: 'Supabase new-style publishable key (browser-safe, replaces anon key).',
   },
   {
+    name: 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+    destinations: ['local', 'vercel'],
+    scopes: ALL_SCOPES,
+    secret: false,
+    required: true,
+    critical: false,
+    obtainHint: 'Same value as SUPABASE_PUBLISHABLE_KEY (Supabase dashboard → Project Settings → API). The Supabase↔Vercel integration does not provision this name: set it in .env and in Vercel by hand.',
+    note: 'Browser-side copy of the publishable key, read by the Supabase browser client (Next.js only inlines NEXT_PUBLIC_* into client bundles). The legacy NEXT_PUBLIC_SUPABASE_ANON_KEY still works while Supabase keeps the legacy pair.',
+  },
+  {
     name: 'SUPABASE_SECRET_KEY',
     destinations: ['local', 'vercel'],
     scopes: ALL_SCOPES,
