@@ -119,14 +119,14 @@ describe('lint-skills tier classification', () => {
 });
 
 describe('lint-skills volatile facts (Critical Rule #17, checks 16-17)', () => {
-  test('a path:line citation and a dated claim in a T1 body are FILE-LINE / CURRENT-STATE warnings', () => {
+  test('a path:line citation and a dated claim in a T1 body are FILE-LINE / CURRENT-STATE errors that fail the gate', () => {
     const root = fixture('(T3)');
     write(root, '.agents/skills/vercel-cli/SKILL.md', `${VERCEL_CLI_FRONTMATTER}\nSee \`cli/install.ts:403\`.\nMeasured 2026-09-17 on a live deploy.\n`);
     const { exitCode, stdout } = runLint(root);
 
-    expect(stdout).toContain('[WARN/FILE-LINE] .agents/skills/vercel-cli/SKILL.md — line 9: `cli/install.ts:403`');
-    expect(stdout).toContain('[WARN/CURRENT-STATE] .agents/skills/vercel-cli/SKILL.md — line 10: `Measured 2026-09-17`');
-    expect(exitCode).toBe(0);
+    expect(stdout).toContain('[ERROR/FILE-LINE] .agents/skills/vercel-cli/SKILL.md — line 9: `cli/install.ts:403`');
+    expect(stdout).toContain('[ERROR/CURRENT-STATE] .agents/skills/vercel-cli/SKILL.md — line 10: `Measured 2026-09-17`');
+    expect(exitCode).toBe(1);
   });
 
   test('AGENTS.md is scanned too; a fenced block, a volatile-ok line and a community skill are not', () => {
@@ -143,7 +143,7 @@ describe('lint-skills volatile facts (Critical Rule #17, checks 16-17)', () => {
     write(root, '.agents/skills/shadcn/SKILL.md', '---\nname: shadcn\n---\n\n# shadcn\n\nUpdated today.\n');
     const { stdout } = runLint(root);
 
-    expect(stdout).toContain('[WARN/CURRENT-STATE] AGENTS.md — line 3: `Since 8.4`');
+    expect(stdout).toContain('[ERROR/CURRENT-STATE] AGENTS.md — line 3: `Since 8.4`');
     expect(stdout).not.toContain('FILE-LINE]');
     expect(stdout).not.toContain('shadcn/SKILL.md');
   });

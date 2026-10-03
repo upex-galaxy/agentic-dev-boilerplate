@@ -55,14 +55,14 @@
  *                                citations (line contains `NEVER` or quoted
  *                                `"Wave"`).
  *
- *  16. FILE-LINE              (WARN)  — A `path.ext:N` / `:N-M` / `#LN` citation in
+ *  16. FILE-LINE              (ERROR) — A `path.ext:N` / `:N-M` / `#LN` citation in
  *                                the prose of the `.agents/` markdown or `AGENTS.md`.
  *                                A line number shifts on any edit above it; cite
  *                                the file plus a symbol or a heading. Per-line
  *                                escape: `volatile-ok: <reason>`. Severity:
  *                                VOLATILE_SEVERITY (Critical Rule #17; canon
  *                                agentic-dev-core/references/volatile-facts.md).
- *  17. CURRENT-STATE          (WARN)  — A claim about the present in the same
+ *  17. CURRENT-STATE          (ERROR) — A claim about the present in the same
  *                                prose: "today", "currently", "as of <year>", a
  *                                dated measurement, "since <version>", a measured
  *                                size, a tool version. Fenced blocks and the
@@ -159,13 +159,13 @@ const HARDCODED_CFID_ALLOWED_SKILLS = new Set<string>(['acli']);
 const SKILL_AGGREGATE_FILES = new Set<string>(['REGISTRY.md']);
 
 /**
- * Severity of the two volatile-facts checks (16-17). WARN while the existing
- * prose is swept; the sweep flips both to ERROR once the residue is gone, so a
- * new hit becomes a regression instead of one more line in the backlog.
+ * Severity of the two volatile-facts checks (16-17). ERROR: the prose sweep
+ * left no residue, so a new hit is a regression, not one more line in a
+ * backlog. A line that must carry the shape says why with `volatile-ok:`.
  */
 const VOLATILE_SEVERITY: Record<VolatileKind, Severity> = {
-  'FILE-LINE': 'WARN',
-  'CURRENT-STATE': 'WARN',
+  'FILE-LINE': 'ERROR',
+  'CURRENT-STATE': 'ERROR',
 };
 
 // -----------------------------------------------------------------------------

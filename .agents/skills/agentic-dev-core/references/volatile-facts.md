@@ -60,7 +60,7 @@ Two families have a regex-visible shape, and the linters report them:
 - `FILE-LINE`: a path with a known extension followed by `:N`, `:N-M` or `#LN`, outside fenced blocks and `<pre>` / `<code class="block">`.
 - `CURRENT-STATE`: the dating vocabulary ("today", "currently", "as of <year>", "measured <date>", "since <version>", a hand-stamped "Last updated: <date>", a `~Nk tokens` or `N bytes` measurement, a tool version after "as of" / "verified against" or a tool name such as `vercel` / `supabase` / `acli`, and the Spanish equivalents), outside the same blocks and outside the frontmatter. <!-- volatile-ok: names the words it forbids -->
 
-Both run at WARN severity while the existing prose is swept, so a parallel change is never blocked by residue it did not write. The sweep flips them to ERROR (`VOLATILE_SEVERITY` in `scripts/lint-skills.ts`, `SEVERITY` in `scripts/lint-docs.ts`); from then on a new hit is a regression.
+Both are ERROR (`VOLATILE_SEVERITY` in `scripts/lint-skills.ts`, `SEVERITY` in `scripts/lint-docs.ts`) and run inside `bun run repo:check`: a new hit fails the gate as a regression. The staged rollout behind that (warn first, sweep, then block) is recorded in `.context/ADR/ADR-0003-forensic-measurements-ledger.md`.
 
 Counts and enumerations have no regex shape: no pattern can tell a router table from a copied inventory. Those stay a review-time judgement, which is what this reference is for. The one enumeration a script CAN check is the `AGENTS.md` §5 skill router: `docs:check` fails when a committed repo skill is missing from it, so the human pages point at `REGISTRY.md` instead of listing skills.
 

@@ -77,9 +77,9 @@ export interface DocFinding {
 /**
  * What fails the gate. A family with no residue in this repo is an `error`, so
  * a new hit is a regression. A family that still carries residue is a
- * `warning` until the prose sweep removes it, then flips to `error`: `path`
- * and `script` (docs that describe paths and app scripts a scaffolded project
- * creates later) and the two volatile-facts families.
+ * `warning` until a sweep removes it, then flips to `error`: `path` and
+ * `script` (docs that describe paths and app scripts a scaffolded project
+ * creates later). The two volatile-facts families were swept and block.
  */
 export const SEVERITY: Record<DocFindingKind, 'error' | 'warning'> = {
   'link': 'error',
@@ -87,8 +87,8 @@ export const SEVERITY: Record<DocFindingKind, 'error' | 'warning'> = {
   'roster': 'error',
   'path': 'warning',
   'script': 'warning',
-  'file-line': 'warning',
-  'current-state': 'warning',
+  'file-line': 'error',
+  'current-state': 'error',
 };
 
 const VOLATILE_KIND: Record<VolatileKind, DocFindingKind> = {
