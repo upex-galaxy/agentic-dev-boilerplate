@@ -251,7 +251,6 @@ Phase 4 is an **orchestrator** with six steps: it delegates to four `project-con
 - `.context/business/project-dev-guide.md`
 - `.context/master-implementation-plan.md` (if Step 5 ran)
 - `.context/business/domain-glossary.md` (Step 6; skipped when it already exists)
-- `.context/business/domain-glossary.md`
 
 On successful completion of Phase 4 (Verification checklist from `plan.md` passes), the orchestrator runs Archive per `agentic-dev-core/references/session-management.md` §8 — moves `.session/project-foundation/` to `.session/.archive/<YYYY-MM-DD>-project-foundation-project/` and calls `mem_session_summary` with the archive path included so future `mem_search` calls can navigate back.
 
@@ -362,5 +361,5 @@ If a section is left as `[PLACEHOLDER]` because the user could not yet answer (e
 
 - This skill is **one-time per project**. If scope changes significantly mid-project, re-invoke specific phases (e.g. only `references/prd-mvp-scope.md` to re-cut the MVP).
 - Several reference files are written in Spanish (preserved from the original prompts). The skill orchestrator (this file) is in English; subagents should mirror the user's language when reporting results.
-- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If `.agents/project.yaml` is missing, clone the full boilerplate — foundation files ship with the repo.
+- This skill consumes `{{PROJECT_NAME}}`, `{{PROJECT_KEY}}`, `{{WEBAPP_DOMAIN}}` from `.agents/project.yaml`. If `.agents/project.yaml` is missing, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model).
 - The discovery step delegates to four `project-context` modes (`/project-context data`, `/project-context features`, `/project-context api`, `/project-context master-plan`) plus two in-skill steps: the dev guide (`references/project-dev-guide.md`) and the domain glossary (Step 6). All are intentionally agnostic of stack and work on either greenfield projects (where they ENCODE decisions) or brownfield projects (where they REVERSE-ENGINEER existing code). Re-invoke an individual command directly when only one artifact needs refreshing — there's no need to re-run the whole foundation.

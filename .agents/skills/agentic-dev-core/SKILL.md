@@ -10,11 +10,11 @@ complementary_categories:
 # no truncation). Keep in sync with "What this skill does NOT cover" in the body below.
 compact_rules: |
   `agentic-dev-core` does not:
-  - Provide a bootstrap or init action — clone the full repo instead.
+  - Provide a bootstrap or init action — the layer installs whole: `create-agentic-dev` for a new project, `create-agentic-dev --adopt` then `/project-adoption` for an existing app.
   - Create or modify any files. It is a passive reference library.
   - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
   - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
-  - Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
+  - Adapt the framework to a specific stack (that belongs to `/project-bootstrap` on a new project, `/project-adoption` on an existing app).
   - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
   - Sync OpenAPI / API schemas (that's `bun run api:sync`).
   - Run any external command — no `bun install`, no `git`, no `gh`.
@@ -103,7 +103,14 @@ Skip the resolution step only if the registry cache is missing AND no session-st
 
 ## Install model
 
-This boilerplate is designed to be cloned in full. The workflow skills under `.agents/skills/` depend on foundation files that live at the repo root (`AGENTS.md`, `.agents/`, `scripts/`, `package.json`, `tests/`) and on shared references under `agentic-dev-core/references/`. Installing only a subset of skills (e.g. copying one skill directory in isolation) leaves those skills without their dependencies and they will not function. If a downstream user has only the skills and not the rest of the repo, the supported path is to clone the full boilerplate repository and integrate it as a single unit. No per-skill scaffolding action is provided by this skill — the skill set is intentionally inseparable from the foundation.
+The layer installs as one unit. The workflow skills under `.agents/skills/` depend on foundation files that live at the repo root (`AGENTS.md`, `.agents/`, `scripts/`, `package.json`, `tests/`) and on shared references under `agentic-dev-core/references/`. Installing only a subset of skills (e.g. copying one skill directory in isolation) leaves those skills without their dependencies and they will not function. There are two supported install paths, both owned by the scaffolder `create-agentic-dev` (`packages/create-agentic-dev/`):
+
+| Starting point | Install | Then |
+|---|---|---|
+| New project | `bunx create-agentic-dev@latest <name>` | `/project-foundation`, `/project-bootstrap` |
+| Existing app | `bunx create-agentic-dev@latest --adopt` from the app's repo root (the updater's `--adopt`, `cli/lib/updater-adopt.ts`) | `/project-adoption` |
+
+User-facing detail: `README.md` → "Scaffold a new project" and "Adopt an existing app", `INSTALLER.md`. No per-skill scaffolding action is provided by this skill: the skill set is intentionally inseparable from the foundation.
 
 ---
 
@@ -111,13 +118,13 @@ This boilerplate is designed to be cloned in full. The workflow skills under `.a
 
 `agentic-dev-core` does not:
 
-- Provide a bootstrap or init action — clone the full repo instead.
+- Provide a bootstrap or init action — the layer installs whole: `create-agentic-dev` for a new project, `create-agentic-dev --adopt` then `/project-adoption` for an existing app.
 - Create or modify any files. It is a passive reference library.
 - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
 - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
-- Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
+- Adapt the framework to a specific stack (that belongs to `/project-bootstrap` on a new project, `/project-adoption` on an existing app).
 - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
 
-If a user invokes this skill expecting a bootstrap action, route them to "clone the full boilerplate repository" — there is no per-skill scaffolding.
+If a user invokes this skill expecting a bootstrap action, route them to the install path that matches their starting point (§Install model): there is no per-skill scaffolding.

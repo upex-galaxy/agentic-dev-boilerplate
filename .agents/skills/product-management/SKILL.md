@@ -82,7 +82,7 @@ not a mockup and writing it is not designing.
 ## Pre-requisites
 
 - Product docs in ONE of two forms: `.context/PRD/` + `.context/SRS/` from `/project-foundation` (required for workflow A, the initial backlog seed), or, on an existing app, its business maps + domain glossary (Discovery-only foundation), enough for every other workflow. Never write a PRD or SRS to get past this: see "Product docs: PRD/SRS or business maps" below
-- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — these ship with the cloned boilerplate; if missing, clone the full repo
+- `.agents/project.yaml` populated with `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — they ship with the installed layer; if missing, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model)
 - Atlassian / Jira tooling reachable (Atlassian CLI `acli` preferred, MCP Atlassian as fallback) for any workflow that writes to Jira
 
 ### Inputs — read these first
@@ -407,7 +407,7 @@ In addition, every Jira-side identifier (custom field, status, link type) is res
 - `{{jira.statuses.<slug>}}` — default statuses for newly-created items. Examples: `{{jira.statuses.epic_default}}` (default literal `Planning`), `{{jira.statuses.story_default}}` (default literal `Shift-Left QA`).
 - `{{jira.link_types.<slug>}}` — link-type names resolved via `.agents/jira-link-types.json`. Sub-fields: `.outward`, `.inward`, `.fallback`. Examples: `{{jira.link_types.dependencies}}`, `{{jira.link_types.dependencies.outward}}` (`depends on`), `{{jira.link_types.dependencies.inward}}` (`is dependency for`), `{{jira.link_types.dependencies.fallback}}` (`relates`).
 
-If unset, clone the full boilerplate — these foundation files ship with the repo.
+If unset, the agentic layer is not installed: `bunx create-agentic-dev@latest <name>` for a new project, `bunx create-agentic-dev@latest --adopt` then `/project-adoption` for an existing app (`agentic-dev-core` → Install model).
 
 ## Notes
 
