@@ -47,7 +47,7 @@
 
 ---
 
-## MCP credential failure protocol (mirrors AGENTS.md Rule #11)
+## MCP credential failure protocol (mirrors AGENTS.md Critical Rule #9)
 
 If any MCP used for publish (Atlassian, Notion, custom) returns `401` / `403` or fails to authenticate:
 

@@ -339,9 +339,10 @@ On successful completion of workflow A / B / C (Verification checklist from the 
 
 For projects with concurrent devs on the same feature, compliance/audit requirements, or capabilities that need an explicit history of behavioral change, an opt-in formal change-tracking pattern is available. Instead of editing acceptance criteria in place on each story, you maintain:
 
-- **Source-of-truth specs** at `.context/PBI/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
-- **Delta specs** per change at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
-- **Archive process** that merges deltas back into the source-of-truth on story close and moves the change folder under `.context/PBI/archive/YYYY-MM-DD-{ticket}/`
+- **Source-of-truth specs** at `.context/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
+- **Delta specs** per change at `.context/specs/changes/{ticket}/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
+- **Archive process** that merges deltas back into the source-of-truth on story close and moves the change folder under `.context/specs/archive/YYYY-MM-DD-{ticket}/`
+- All three live in the committed `.context/specs/` tree, never under the gitignored Jira cache `.context/PBI/` (`AGENTS.md` §9)
 
 See `references/delta-specs.md` for the full pattern: when to adopt it, requirement format, the **copy-full-then-edit rule** for MODIFIED requirements, the archive protocol, and migration guidance.
 

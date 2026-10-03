@@ -161,7 +161,7 @@ Recipe (generalized — adapt cell contents from detection, never hardcode the e
 
 | Symptom                                              | Cause                                         | Fix                                                                                                     |
 | ---------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Tier returns `401`                                   | API token expired or missing in `.env`        | STOP, ask user to set `ATLASSIAN_API_TOKEN`, restart session. AGENTS.md Rule #11.                       |
+| Tier returns `401`                                   | API token expired or missing in `.env`        | STOP, ask user to set `ATLASSIAN_API_TOKEN`, restart session. AGENTS.md Critical Rule #9.                       |
 | Epic created but body renders as literal `**` or `h2.`        | Published as wiki/markdown instead of ADF          | Re-run the ADF path: `md-to-adf.ts` then `acli edit --description-file`. Never hand-author wiki markup.                   |
 | Table renders as literal `| col | col |`            | Passed a markdown table to the converter      | Hand-build ADF table nodes (`table` / `tableRow` / `tableHeader` / `tableCell`) and interleave with the converted prose — see §"Tables: the converter can't build them". The converter never emits table nodes. |
 | Epic exists with same summary in a different project | Wrong `project_key` in `.agents/project.yaml` | Ask user to confirm key. Do NOT auto-pick.                                                              |

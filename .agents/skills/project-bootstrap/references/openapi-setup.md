@@ -22,7 +22,7 @@ Configurar un sistema completo de **documentación de APIs** que incluye:
 **Leer estos archivos:**
 
 - `.context/PRD/executive-summary.md` - Nombre y descripción del proyecto
-- `AGENTS.md` - Configuración de Supabase Project ID
+- `.agents/project.yaml` → `environments.<env>.db_project_ref` (`{{DB_PROJECT_REF}}` del ambiente activo) - Supabase project ref
 - `src/lib/config.ts` - Configuración existente
 - `src/lib/urls.ts` - URLs por ambiente (si existe)
 - `src/app/api/` - Endpoints existentes (si hay)
@@ -317,14 +317,14 @@ fi
 # Nombre del proyecto
 grep -i "title\|name\|proyecto" .context/PRD/executive-summary.md | head -3
 
-# Supabase Project ID
-grep -i "project.*id\|supabase" AGENTS.md | grep -E "[a-z]{20,}"
+# Supabase project ref (AGENTS.md §7: la identidad del proyecto vive en el yaml)
+yq '.environments.<env>.db_project_ref' .agents/project.yaml
 ```
 
 **Guardar:**
 
 - `PROJECT_NAME` - Nombre para título de API
-- `SUPABASE_PROJECT_ID` - Para cookie name (ej: `ionevzckjyxtpmyenbxc`)
+- `SUPABASE_PROJECT_ID` - Para cookie name (el ref de 20 caracteres; si el yaml lo tiene en `null`, preguntar al usuario y guardarlo ahí con su OK)
 
 **Paso 0.3: Verificar URLs**
 
