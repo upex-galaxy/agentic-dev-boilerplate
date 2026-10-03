@@ -327,7 +327,32 @@ interface DoctorReport {
   harness_level_mcps: { verdicts: HarnessLevelVerdict[], sources: string[] }
   /** `.env` vs the per-harness credential surfaces `bun run harness:env` writes. NAMES only, never a value. */
   harness_env: HarnessEnvDiagnostic
+  /**
+   * Which key paths upstream's `.agents/project.schema.yaml` declares that this
+   * project's `.agents/project.yaml` does not have.
+   *
+   * NEVER a failure. Being behind upstream is not a broken repo, and the moment
+   * an upstream key addition turns a project's own checks red, the project
+   * learns to skip them. `bun run up` is where it becomes actionable; here it
+   * is the answer to "why is my project behaving oddly".
+   */
+  project_schema: ProjectSchemaDiagnostic
   pending_actions: PendingAction[]
+}
+
+interface ProjectSchemaDiagnostic {
+  /** Key paths the schema declares and this project lacks, grouped by block. */
+  gaps: Array<{ block: string, paths: string[], wholeBlock: boolean }>
+  /** Blocks silenced through `updater.schema_exempt`. */
+  exempt: string[]
+  /** Set when nothing could be compared: a parse failure, or no schema on disk. */
+  note: string | null
+  /**
+   * True when `.agents/project.yaml` is the boilerplate maintainers' own copy
+   * in a repo that is not the boilerplate (GitHub "Use this template"). A
+   * warning, never a failure: `bun run agents:setup` is the fix.
+   */
+  copied_template: boolean
 }
 
 interface HarnessEnvDiagnostic {
@@ -489,6 +514,39 @@ async function harnessEnvDiagnostic(): Promise<HarnessEnvDiagnostic> {
   }
 }
 
+function gitOrigin(): string | null {
+  try {
+    return execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: REPO_ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() || null;
+  }
+  catch { return null; }
+}
+
+/**
+ * `.agents/project.yaml` against upstream's generated schema (`bun run
+ * agents:schema --project`, as data).
+ *
+ * DYNAMIC import for the same reason as the harness-env diagnostic: the
+ * schema module pulls the `yaml` package, and this module must stay loadable
+ * with node built-ins only for `--preflight`. Try-wrapped because a doctor
+ * that crashes on the thing it was meant to diagnose is useless.
+ */
+async function projectSchemaDiagnostic(): Promise<ProjectSchemaDiagnostic> {
+  try {
+    const { classifyProjectYaml, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } = await import('./lib/agents-schema.ts');
+    const sourcePath = join(REPO_ROOT, SCHEMA_SOURCE);
+    const schemaPath = join(REPO_ROOT, SCHEMA_FILE);
+    if (!existsSync(sourcePath)) { return { gaps: [], exempt: [], note: `${SCHEMA_SOURCE} not found`, copied_template: false }; }
+    const sourceText = await readFile(sourcePath, 'utf8');
+    const copied_template = classifyProjectYaml(sourceText, gitOrigin()) === 'copied-template';
+    if (!existsSync(schemaPath)) { return { gaps: [], exempt: [], note: `${SCHEMA_FILE} not found: run \`bun run up\` to receive it`, copied_template }; }
+    const delta = projectDelta(sourceText, await readFile(schemaPath, 'utf8'));
+    return { gaps: delta.gaps, exempt: delta.exempt, note: delta.error, copied_template };
+  }
+  catch (err) {
+    return { gaps: [], exempt: [], note: `the schema comparison threw: ${(err as Error).message}`, copied_template: false };
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Cross-harness compatibility
 // ----------------------------------------------------------------------------
@@ -582,6 +640,7 @@ async function runDoctor(): Promise<DoctorReport> {
     direnv: { installed: false },
     harness_level_mcps: harnessLevelMcpReport(),
     harness_env: await harnessEnvDiagnostic(),
+    project_schema: await projectSchemaDiagnostic(),
     pending_actions: [],
   };
 
@@ -855,6 +914,34 @@ function printHuman(report: DoctorReport): void {
     process.stdout.write('  Fix: bun run harness:env  (values are never printed by the generator or by this report)\n');
   }
   process.stdout.write('\n');
+
+  // Project schema gap. Its own section and NOT a check row: nothing here is a
+  // failure, and it must never push the report to `needs action`. It answers a
+  // different question from the checks above: not "is something broken" but
+  // "has upstream moved and am I still on the old shape".
+  const ps = report.project_schema;
+  if (ps.note !== null || ps.gaps.length > 0 || ps.copied_template) {
+    tui.section('Project config vs upstream schema (.agents/project.yaml)');
+    if (ps.copied_template) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} .agents/project.yaml is the boilerplate maintainers' own copy (GitHub "Use this template"): their git_strategy and push authorization\n`);
+      process.stdout.write('  Fix: bun run agents:setup  (replaces it with the blank template after one confirm)\n');
+    }
+    if (ps.note !== null) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${ps.note}\n`);
+    }
+    else if (ps.gaps.length > 0) {
+      const total = ps.gaps.reduce((n, g) => n + g.paths.length, 0);
+      process.stdout.write(`  ${tui.statusIcon('warn')} upstream declares ${total} key path(s) this project does not have\n`);
+      for (const gap of ps.gaps) {
+        process.stdout.write(`  ${gap.block}${gap.wholeBlock ? ' (whole block)' : ''}: ${gap.paths.join(', ')}\n`);
+      }
+      process.stdout.write('  Fix: bun run up  (offers to insert them, one prompt per block, insert-only)\n');
+    }
+    if (ps.exempt.length > 0) {
+      process.stdout.write(`  silenced via updater.schema_exempt: ${ps.exempt.join(', ')}\n`);
+    }
+    process.stdout.write('\n');
+  }
 
   // Servers that are not in the project config because they run at harness
   // level. Its own section and never a check row: a claude.ai connector is
