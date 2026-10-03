@@ -393,6 +393,10 @@ export const CONFIG_BLOCK_READERS: Record<string, Record<string, ConfigBlockRead
       skill: '/orca-orchestration',
       requiredBy: 'the worker cap per round, the default harness / model / effort a worker launches with, and which orchestrator CLI and verbs to drive; without the block the skill degrades to one worker, the harness defaults and no orchestrator named',
     },
+    stack: {
+      skill: '/project-context',
+      requiredBy: 'where the app lives (`app_root`), which schema source the maps trust (the live database or the migration files) and whether the API is Supabase-direct, read before every map, plan and roadmap run; without the block the skill assumes a greenfield app at the repo root with a live schema, which maps the wrong tree or the wrong database on an adopted app',
+    },
   },
 };
 

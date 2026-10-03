@@ -1,5 +1,5 @@
 import type { ParityFinding, ParityInput, ParityMeta } from './updater-parity.ts';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
@@ -991,6 +991,23 @@ describe('a missing config block a shipped skill reads blocks the run', () => {
       expect(template.has(block)).toBe(true);
       expect(existsSync(join(repo, '.agents/skills', reader.skill.slice(1), 'SKILL.md'))).toBe(true);
     }
+  });
+
+  test('every shipped declaration names a block its skill actually mentions', () => {
+    const repo = join(import.meta.dir, '..', '..');
+    for (const [block, reader] of Object.entries(CONFIG_BLOCK_READERS['.agents/project.yaml'])) {
+      const skillDir = join(repo, '.agents/skills', reader.skill.slice(1));
+      const files = [join(skillDir, 'SKILL.md'), ...readdirSync(join(skillDir, 'references')).map(name => join(skillDir, 'references', name))];
+      const mentions = files.some(file => new RegExp(`\\b${block}\\b`).test(readFileSync(file, 'utf8')));
+      expect({ block, mentions }).toEqual({ block, mentions: true });
+    }
+  });
+
+  test('a project lacking the stack block gets a blocking row naming project-context', () => {
+    const upstream = 'git_strategy:\n  strategy: solo-main\nstack:\n  app_root: .\n';
+    const missing = missingConfigBlocks('.agents/project.yaml', 'git_strategy:\n  strategy: solo-main\n', upstream);
+    expect(missing.map(m => [m.block, m.reader.skill])).toEqual([['stack', '/project-context']]);
+    expect(missingConfigBlocks('.agents/project.yaml', upstream.replace('app_root: .', 'app_root: apps/web'), upstream)).toEqual([]);
   });
 });
 

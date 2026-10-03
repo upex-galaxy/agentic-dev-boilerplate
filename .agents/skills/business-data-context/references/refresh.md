@@ -7,7 +7,7 @@
 | Signal in `data-sources` | Stale when | Check |
 |---|---|---|
 | a backend path (a route handler, a server action, a service) | a commit touched it after `data-updated` | `git log --since=<data-updated> --oneline -- <path>` |
-| `db:<table>` / `migration:<file>` | a migration since the date, or the live schema shows a column, constraint, enum value, policy or trigger the section does not describe | the migrations folder's `git log`, then `[DB_TOOL]` read-only |
+| `db:<table>` / `migration:<file>` | a migration since the date, or the schema shows a column, constraint, enum value, policy or trigger the section does not describe | by `stack.database.schema_source` in `.agents/project.yaml`: `migrations` → `git log --since=<data-updated>` on `stack.database.migrations_dir` (under `stack.app_root`), then the new files; `live` → `[DB_TOOL]` `list_migrations` for entries after the date, then a read-only schema query |
 | `cron:<job>` / `webhook:<event>` | the scheduler or handler file changed | `git log` on the file named |
 | a third-party integration | its client module or SDK version changed | `git log` on the client module, `package.json` |
 
