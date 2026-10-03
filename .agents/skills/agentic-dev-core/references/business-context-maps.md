@@ -63,7 +63,7 @@ The legacy markdown maps are never deleted by any of this. They stay where a pro
 For each section from `--list` (the generic prefixes below; an aspect's extra prefixes are checked by its own `references/refresh.md`):
 
 - a repo path in `data-sources` → `git log --since=<data-updated> --oneline -- <path>`; any commit → stale.
-- `db:<table>` or `migration:<file>` → a migration under the project's migrations folder since the date, or `[DB_TOOL]` (capability `db`) shows a column, constraint, policy or trigger the section does not describe.
+- `db:<table>` or `migration:<file>` → a migration under `stack.database.migrations_dir` (when the app keeps one) since the date, or `[DB_TOOL]` (capability `db`) shows a column, constraint, policy or trigger the section does not describe.
 - `openapi:<x>` → the contract changed since the date (`bun run api:sync` output, or the spec file's `git log`).
 - `route:<path>` → the route handler or page file changed since the date.
 - any other prefix → the rule the map skill's `references/refresh.md` declares for it; a prefix no `refresh.md` declares is reported as `unknown`, never silently fresh.
