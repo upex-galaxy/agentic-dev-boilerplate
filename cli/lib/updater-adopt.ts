@@ -43,6 +43,7 @@ import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
 import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
+import { collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 
@@ -735,14 +736,20 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     input.warn(`${SCHEMA_SOURCE} ya existía (de la app): no se edita. Las filas de colisión dicen qué rutas proteger.`);
   }
 
-  // 5. The installer lock.
-  if (!dryRun) { writeInstallerLock(root); }
+  // 5. The installer lock, with what upstream owns in the namespaces the app
+  //    shares (`./tooling-scope.ts`): the isolation below and the tooling gates
+  //    read it. The wrapper refreshes the list on every later sync.
+  const owned = collectUpstreamOwned(upstreamDir, rel => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel)));
+  if (!dryRun) {
+    writeInstallerLock(root);
+    writeUpstreamOwned(root, owned);
+  }
 
   // 6. Tooling isolation: the app's tsconfig / ESLint config / hook manager
   //    still reach (or ignore) the tooling. Never edited: one blocking row
   //    each, every snippet saved in one file.
   const hooks = detectHookManager(root);
-  const isolation = analyzeIsolation(root, hooks);
+  const isolation = analyzeIsolation(root, hooks, owned);
   const isolationText = isolationPrompt(isolation);
   let isolationSaved: string | null = null;
   if (isolationText !== null && !dryRun) {

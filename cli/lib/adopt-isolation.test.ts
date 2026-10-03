@@ -5,7 +5,9 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 import {
   analyzeIsolation,
+  appOwnsScripts,
   eslintIsolation,
+  eslintSnippet,
   isolationFindings,
   isolationPrompt,
   parseJsonc,
@@ -124,5 +126,48 @@ describe('isolationFindings + isolationPrompt', () => {
     const a = analyzeIsolation(root, detectHookManager(root, null));
     expect(isolationFindings(a, null)).toEqual([]);
     expect(isolationPrompt(a)).toBeNull();
+  });
+});
+
+describe('an app that keeps its own scripts/ next to the tooling (measured: upexgalaxy-webapp)', () => {
+  const owned = { scripts: ['scripts/lint-skills.ts', 'scripts/lib/volatile-facts.ts', 'scripts/README.md'], skills: [] };
+  // The webapp's layout: the root tsconfig excludes scripts/**; a second config
+  // type-checks scripts/ with Bun types.
+  const app = (): string => tempRoot({
+    'tsconfig.json': '{ "include": ["**/*.ts"], "exclude": ["node_modules", "scripts/**"] }',
+    'tsconfig.scripts.json': '{ "extends": "./tsconfig.json", "include": ["scripts/**/*.ts"], "exclude": ["node_modules"] }',
+    'tsconfig.tooling.json': '{ "include": ["cli/**/*.ts", "scripts/**/*.ts"] }',
+    'scripts/x-thread.ts': 'export {};\n',
+    'scripts/lint-skills.ts': 'export {};\n',
+    'eslint.config.mjs': 'export default [{ ignores: [".next/**"] }];\n',
+  });
+
+  test('detected only with the recorded list', () => {
+    expect(appOwnsScripts(app(), owned)).toBe(true);
+    expect(appOwnsScripts(app(), null)).toBe(false);
+    expect(appOwnsScripts(tempRoot({ 'scripts/lint-skills.ts': '' }), owned)).toBe(false);
+  });
+
+  test('every app tsconfig is checked, never tsconfig.tooling.json; scripts/ excluded file by file', () => {
+    const a = analyzeIsolation(app(), detectHookManager(app(), null), owned);
+    expect(a.tsconfigs.map(t => t.path)).toEqual(['tsconfig.json', 'tsconfig.scripts.json']);
+    expect(a.tsconfigs[0].exclude).toEqual(['node_modules', 'scripts/**', 'cli']);
+    // Its include is scripts/ only: cli/ is never reached there.
+    expect(a.tsconfigs[1].exclude).toEqual(['node_modules', 'scripts/lint-skills.ts', 'scripts/lib/volatile-facts.ts']);
+    expect(a.tsconfigs[1].exclude).not.toContain('scripts');
+  });
+
+  test('the ESLint snippet keeps the app\'s scripts linted and reads upstream\'s from the lock', () => {
+    const root = app();
+    const e = eslintIsolation(root, owned);
+    expect(e?.sharedScripts).toBe(true);
+    expect(e?.missing).not.toContain('scripts/**');
+    expect(e?.missing).toEqual(expect.arrayContaining(['cli/**', 'scripts/lint-skills.ts']));
+    const snippet = eslintSnippet(e!);
+    expect(snippet).toContain('upstreamOwned.scripts');
+    expect(snippet).not.toContain('\'scripts/**\'');
+    // Once applied, the config carries the lock-reading ignore: nothing is pending for scripts/.
+    writeFileSync(join(root, 'eslint.config.mjs'), `import { readFileSync } from 'node:fs';\nexport default [${snippet.split('\n').pop()} { ignores: ['.next/**'] }];\n`);
+    expect(eslintIsolation(root, owned)).toBeNull();
   });
 });

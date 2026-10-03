@@ -611,7 +611,7 @@ function toolingIsolationDiagnostic(): { adopted: boolean, pending: string[] } {
   if (!adopted) { return { adopted, pending: [] }; }
   const a = analyzeIsolation(REPO_ROOT);
   const pending: string[] = [];
-  if (a.tsconfig !== null) { pending.push(`tsconfig.json type-checks ${a.tsconfig.reached.map(d => `${d}/`).join(', ')}: add them to its "exclude"`); }
+  for (const t of a.tsconfigs) { pending.push(`${t.path} type-checks ${t.reached.map(d => `${d}/`).join(', ')}: add them to its "exclude" (snippet: .agents/prompts/adopt-tooling-isolation.md)`); }
   if (a.eslint !== null) { pending.push(`${a.eslint.path} lints the tooling: ignore ${a.eslint.missing.join(', ')}`); }
   if (a.hooksPending) { pending.push(`${a.hooks.manager} (${a.hooks.evidence}) does not call .husky/framework-gates.sh: the framework gates never run`); }
   return { adopted, pending };
