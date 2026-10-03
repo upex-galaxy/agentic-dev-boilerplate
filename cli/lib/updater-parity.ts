@@ -41,6 +41,7 @@ import { parse as parseYaml } from 'yaml';
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { COMMAND_ALIAS_MANIFEST, COMMAND_ALIAS_PROJECT_MANIFEST, compatibilityErrorGroup, undeclaredCommandWrappers } from './agent-compatibility.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
+import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
 // ============================================================================
 // TYPES
@@ -64,7 +65,12 @@ export interface ParityFinding {
   /** Concrete, scannable: headings, keys, server ids, counts. Never a diff. */
   evidence: string
   suggested: ParitySuggestion
-  /** Blocking = a failed compatibility contract. Watched-file drift never blocks. */
+  /**
+   * Blocking = a failed compatibility contract, a kept file whose upstream hunk
+   * another file of the same release depends on (`PATH_PREREQUISITES`), or a
+   * missing config block a shipped skill reads (`CONFIG_BLOCK_READERS`).
+   * Ordinary watched-file drift never blocks.
+   */
   blocking: boolean
   /** Full paired diff, written to the saved file under the finding's heading. */
   diff?: string
@@ -144,6 +150,16 @@ export interface ParityInput {
   gates?: GateResult[]
   /** A legacy git-tracked `.context/PBI/` cache (see `updater-pbi.ts`): one row, the recipe in its file. */
   pbiCache?: PbiCacheInput | null
+  /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` this run (`updater-settings.ts`). */
+  allowListAdded?: string[]
+  /** Evidence for the unresolved-doctrine ledger row (`runDoctrineLedger`), when there is debt. */
+  doctrineDebt?: string | null
+  /** The file that row is about. Defaults to `AGENTS.md` (`DOCTRINE_FILE`). */
+  doctrineFile?: string
+  /** Prerequisite declarations, keyed by repo-relative path. Defaults to `PATH_PREREQUISITES`. */
+  prerequisites?: Record<string, PathPrerequisite>
+  /** Which shipped skill reads which top-level config block. Defaults to `CONFIG_BLOCK_READERS`. */
+  configBlockReaders?: Record<string, Record<string, ConfigBlockReader>>
 }
 
 export interface PbiCacheInput {
@@ -242,6 +258,179 @@ export function protectNote(filePath: string): string {
     '      protected_paths:',
     `        - ${filePath}`,
   ].join('\n');
+}
+
+/** The project-owned pre-commit hook (watchlisted: delivered once, never overwritten). */
+export const HUSKY_PRE_COMMIT = '.husky/pre-commit';
+
+/** Its pre-push sibling. Same delivery: once when missing, then project-owned. */
+export const HUSKY_PRE_PUSH = '.husky/pre-push';
+
+/** The commit-message sibling. Same delivery; its gates are warn-only. */
+export const HUSKY_COMMIT_MSG = '.husky/commit-msg';
+
+/** The SYNCED file every hook sources to get the gates upstream owns. */
+export const HUSKY_GATES_FILE = '.husky/framework-gates.sh';
+
+/**
+ * Every husky hook is bootstrap-only: delivered once when missing, then
+ * project-owned, because a project's own gates live in them. The cost was that
+ * a gate added upstream never reached a project scaffolded earlier.
+ *
+ * Upstream's fix is the gates split: the gates upstream owns live in the
+ * SYNCED `.husky/framework-gates.sh`, and each hook sources it and calls one
+ * function. A hook that predates the split keeps every gate inlined and will
+ * never see another one, and nothing but this row can tell it so. The same
+ * holds for a project that already had its own `.husky/commit-msg`
+ * (commitlint, say): ours is never delivered over it, so this row is the only
+ * way the warn-only trailer check reaches it.
+ *
+ * Returns the adoption note (the block to paste) while the hook does not source
+ * the gates file; null once it does. A mention in a comment is not adoption.
+ */
+export function frameworkGatesNote(projectHook: string, hookPath: string): string | null {
+  const sourced = projectHook
+    .split('\n')
+    .some(line => !line.trimStart().startsWith('#') && line.includes('framework-gates.sh'));
+  if (sourced) { return null; }
+  const fn = hookPath === HUSKY_PRE_PUSH
+    ? 'framework_gates_pre_push'
+    : hookPath === HUSKY_COMMIT_MSG ? 'framework_gates_commit_msg "$1"' : 'framework_gates_pre_commit';
+  return [
+    `Adopt the gates split in ${hookPath}. Your gates and their ordering stay yours; replace only the block`,
+    'that runs upstream\'s gates with the call below, and every gate a future release adds arrives with',
+    `${HUSKY_GATES_FILE} instead of needing this file rewritten:`,
+    '',
+    '    GATES="$(dirname -- "$0")/framework-gates.sh"',
+    '    if [ -f "$GATES" ]; then',
+    '      . "$GATES"',
+    `      ${fn}`,
+    '    fi',
+    '',
+    'The `-f` guard is not decoration: `.husky/_/h` runs the hook under `sh -e`, so sourcing a file that is',
+    'not there kills the hook. Read the synced file for what each gate covers.',
+  ].join('\n');
+}
+
+export interface PathPrerequisite {
+  /** What the upstream hunk is needed FOR, in one scannable phrase. */
+  requiredBy: string
+  /** The project's own gate that proves it, named in the row. */
+  gate: string
+}
+
+/**
+ * Files whose upstream hunk is a PREREQUISITE for something else the same
+ * release ships. A kept copy of one of these (a watched path, or one the
+ * project declared in `updater.protected_paths`) is not cosmetic drift: the
+ * release is half-delivered until the hunk lands, and the row has to say so.
+ *
+ * Measured in the sibling QA boilerplate: upstream shipped a skill declaring a
+ * new category AND the one-line `scripts/lint-skills.ts` change that admits it.
+ * The project protected that script, so only the skill arrived and
+ * `bun run skills:check` failed on a freshly synced repo, while the row's whole
+ * evidence was a hunk count indistinguishable from a cosmetic diff.
+ */
+export const PATH_PREREQUISITES: Record<string, PathPrerequisite> = {
+  'scripts/lint-skills.ts': {
+    requiredBy: 'the skill vocabulary (categories, `metadata.kind`) every .agents/skills/**/SKILL.md is linted against; a skill shipped in the same release that declares a new value stays unlintable until this file carries it',
+    gate: 'bun run skills:check',
+  },
+};
+
+export interface ConfigBlockReader {
+  /** The skill that reads the block, spelled as it is invoked. */
+  skill: string
+  /** What the skill needs the block FOR, in one scannable phrase. */
+  requiredBy: string
+}
+
+/**
+ * Top-level blocks of a structural config file that a SHIPPED SKILL reads,
+ * per file. A block upstream added and the project does not have is otherwise
+ * reported as `structural`: informational, never blocking. That is right for
+ * project identity, but wrong the moment a skill in the same release reads the
+ * block: the release ships a skill that fails at RUNTIME, in the middle of
+ * somebody's session, rather than at sync time when there is a prompt and an
+ * operator.
+ *
+ * So the rule is narrow on purpose: the block must be MISSING (a block that is
+ * present with different values stays informational, always), top-level, and
+ * DECLARED here. Nothing is inferred. Declaring a block is the deliberate act
+ * of saying "a skill breaks without this", and the cost of that act is one
+ * blocking row for every project that lacks it.
+ *
+ * It lives beside `PATH_PREREQUISITES`, the same statement about a different
+ * unit: that one says a kept FILE leaves the release half-delivered, this one
+ * says a missing BLOCK does.
+ */
+export const CONFIG_BLOCK_READERS: Record<string, Record<string, ConfigBlockReader>> = {
+  '.agents/project.yaml': {
+    git_strategy: {
+      skill: '/git-flow-master',
+      requiredBy: 'the branching strategy, the protected-branch list and `policy.direct_push_to_protected`, resolved before every push; without the block the skill cannot tell an authorized direct push from a forbidden one, and `bun run git:policy verify` has no declared side to compare the host ruleset against',
+    },
+    autonomous_delivery: {
+      skill: '/autonomous-delivery',
+      requiredBy: 'the master switch, the per-mode caps, the isolation mode and the gh identity asserted before every push and merge, all read in Phase 0 of every unattended run',
+    },
+    decision_authority: {
+      skill: '/autonomous-delivery',
+      requiredBy: 'whether a product call stops the run (`escalate`) or is decided by a scored subagent (`decide`), read before treating any product question as an escalation',
+    },
+  },
+};
+
+/**
+ * Top-level blocks the project is MISSING that a shipped skill reads. Empty for
+ * a file with no declaration, for one that does not parse, and for every block
+ * whose only difference is its values.
+ */
+export function missingConfigBlocks(
+  filePath: string,
+  project: string,
+  upstream: string,
+  readers: Record<string, Record<string, ConfigBlockReader>> = CONFIG_BLOCK_READERS,
+): { block: string, reader: ConfigBlockReader }[] {
+  const declared = readers[filePath.replace(/\\/g, '/')];
+  if (declared === undefined) { return []; }
+  const mine = configEntries(project, filePath);
+  const theirs = configEntries(upstream, filePath);
+  if (!mine || !theirs) { return []; }
+  return Object.entries(declared)
+    // Top-level only: `configEntries` also carries `top.child` rows, and a
+    // missing CHILD of a block the project has is a value-shaped difference,
+    // not the absent-block failure this escalates.
+    .filter(([block]) => theirs.has(block) && !mine.has(block))
+    .map(([block, reader]) => ({ block, reader }));
+}
+
+/**
+ * The clause that turns a missing declared block into a blocking row. It names
+ * the skill, because the operator's real question is "what breaks if I skip
+ * this", and the answer is a skill they already have installed.
+ */
+export function configBlockClause(missing: { block: string, reader: ConfigBlockReader }[]): string {
+  const each = missing.map(m => `\`${m.block}:\` read by \`${m.reader.skill}\` for ${m.reader.requiredBy}`);
+  return `BLOCKING: ${missing.length} block(s) upstream added are MISSING here and a shipped skill reads them, so it fails at runtime instead of at sync time: ${each.join(' | ')}. Take upstream's block and adapt its VALUES to this project; the values are yours, the block's existence is not`;
+}
+
+/** The declaration for a path, or null when its content gates nothing else. */
+export function prerequisiteFor(
+  filePath: string,
+  manifest: Record<string, PathPrerequisite> = PATH_PREREQUISITES,
+): PathPrerequisite | null {
+  return manifest[filePath.replace(/\\/g, '/')] ?? null;
+}
+
+/**
+ * The clause appended to a kept row whose hunk gates another file of the same
+ * release. It names the gate as the arbiter on purpose: the declaration is
+ * per-path, not per-hunk, so a project that already merged the hunk by hand
+ * proves it in one command instead of arguing with the row.
+ */
+export function prerequisiteClause(prerequisite: PathPrerequisite): string {
+  return `PREREQUISITE for this release: ${prerequisite.requiredBy}; keeping the project copy as-is fails \`${prerequisite.gate}\` (run it: it is the arbiter, and it passes if your copy already carries the hunk)`;
 }
 
 // ============================================================================
@@ -435,8 +624,10 @@ export interface KeyDelta {
    * whole, args, env and url included.
    */
   changed: string[]
-  /** For each `changed` key holding an object on both sides: which fields differ (`args differ`, `env keys differ`). */
+  /** For each `changed` key holding an object on both sides: which fields differ (`args differ`, `env keys differ`). For an array on both sides: the elements added / removed. */
   changedDetail: Record<string, string>
+  /** The subset of `changed` holding an ARRAY on both sides (named in full, never "values differ"). */
+  changedArrays: string[]
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -481,15 +672,40 @@ function describeObjectDelta(mine: Record<string, unknown>, theirs: Record<strin
 }
 
 /**
- * The changed keys as evidence: scalars by name (`values differ at: "a.x"`),
- * object entries by what differs inside (`context7: args differ`), at most
- * `MAX_NAMES` of each named, the rest counted.
+ * Which ELEMENTS of two arrays differ: `added: ["a"]`, `removed: ["b"]`, both.
+ * An appended entry is not a changed value, and reporting it as one is wrong in
+ * kind: `.claude/settings.json` read "values differ at permissions.allow" while
+ * upstream had simply appended two `Skill(...)` permissions.
  */
-function describeChangedKeys(changed: string[], detail: Record<string, string>): string {
+function describeArrayDelta(mine: readonly unknown[], theirs: readonly unknown[]): string {
+  const asText = (v: unknown): string => (typeof v === 'string' ? v : stableValue(v));
+  const minePlain = mine.map(asText);
+  const theirsPlain = theirs.map(asText);
+  const mineSet = new Set(minePlain);
+  const theirsSet = new Set(theirsPlain);
+  const added = theirsPlain.filter(v => !mineSet.has(v));
+  const removed = minePlain.filter(v => !theirsSet.has(v));
+  const parts: string[] = [];
+  if (added.length > 0) { parts.push(`added: [${listNames(added)}]`); }
+  if (removed.length > 0) { parts.push(`removed: [${listNames(removed)}]`); }
+  return parts.length > 0 ? parts.join(', ') : `same ${theirsPlain.length} item(s), order differs`;
+}
+
+/**
+ * The changed keys as evidence: scalars by name (`values differ at: "a.x"`),
+ * object entries by what differs inside (`context7: args differ`), arrays by
+ * their elements with the key named in full (`"permissions.allow": added:
+ * [...]`), at most `MAX_NAMES` of each named, the rest counted.
+ */
+function describeChangedKeys(changed: string[], detail: Record<string, string>, arrays: readonly string[] = []): string {
+  const isArray = new Set(arrays);
   const scalars = changed.filter(k => !(k in detail));
-  const objects = changed.filter(k => k in detail);
+  const arrayKeys = changed.filter(k => k in detail && isArray.has(k));
+  const objects = changed.filter(k => k in detail && !isArray.has(k));
   const parts: string[] = [];
   if (scalars.length > 0) { parts.push(`values differ at: ${listNames(scalars)}`); }
+  for (const key of arrayKeys.slice(0, MAX_NAMES)) { parts.push(`"${key}": ${detail[key]}`); }
+  if (arrayKeys.length > MAX_NAMES) { parts.push(`+${arrayKeys.length - MAX_NAMES} more array(s)`); }
   if (objects.length > 0) {
     // The entry's own name: the key minus the registry it sits under.
     const shown = objects.slice(0, MAX_NAMES).map(k => `${k.slice(k.indexOf('.') + 1)}: ${detail[k]}`).join('; ');
@@ -518,6 +734,7 @@ export function configKeyDelta(project: readonly string[] | ReadonlyMap<string, 
   const projectOnly = [...mine.keys()].filter(k => !theirs.has(k));
   const changed: string[] = [];
   const changedDetail: Record<string, string> = {};
+  const changedArrays: string[] = [];
   if (withValues) {
     // A key whose children are entries of their own (a top key holding an
     // object) is judged through them; anything else is compared whole.
@@ -533,9 +750,13 @@ export function configKeyDelta(project: readonly string[] | ReadonlyMap<string, 
       if (stableValue(own) === stableValue(value)) { continue; }
       changed.push(key);
       if (isPlainObject(own) && isPlainObject(value)) { changedDetail[key] = describeObjectDelta(own, value); }
+      else if (Array.isArray(own) && Array.isArray(value)) {
+        changedDetail[key] = describeArrayDelta(own, value);
+        changedArrays.push(key);
+      }
     }
   }
-  return { added, projectOnly, changed, changedDetail };
+  return { added, projectOnly, changed, changedDetail, changedArrays };
 }
 
 export interface WatchedFileEvidence {
@@ -551,9 +772,16 @@ export interface WatchedFileEvidence {
  * lack. `unit` names the structure compared ("key" / "heading"). Never a bare
  * `merge`: the evidence says what to port and what to keep.
  */
-function costSignal(unit: string, added: string[], projectOnly: string[], changed: string[], changedDetail: Record<string, string> = {}): { parts: string[], suggested: ParitySuggestion } {
+function costSignal(
+  unit: string,
+  added: string[],
+  projectOnly: string[],
+  changed: string[],
+  changedDetail: Record<string, string> = {},
+  changedArrays: readonly string[] = [],
+): { parts: string[], suggested: ParitySuggestion } {
   const units = (n: number): string => `${unit}${n === 1 ? '' : 's'}`;
-  const changedNote = unit === 'heading' ? `body differs in ${changed.length}: ${listNames(changed)}` : describeChangedKeys(changed, changedDetail);
+  const changedNote = unit === 'heading' ? `body differs in ${changed.length}: ${listNames(changed)}` : describeChangedKeys(changed, changedDetail, changedArrays);
   if (added.length > 0 && projectOnly.length > 0) {
     const parts = [`port upstream additions only: ${listNames(added)}`, `keep project-only ${units(projectOnly.length)}: ${listNames(projectOnly)}`];
     if (changed.length > 0) { parts.push(changedNote); }
@@ -588,7 +816,7 @@ export function watchedFileEvidence(filePath: string, project: string, upstream:
     if (mine && theirs) {
       const delta = configKeyDelta(mine, theirs);
       projectOnly = delta.projectOnly.length > 0;
-      ({ parts, suggested } = costSignal('key', delta.added, delta.projectOnly, delta.changed, delta.changedDetail));
+      ({ parts, suggested } = costSignal('key', delta.added, delta.projectOnly, delta.changed, delta.changedDetail, delta.changedArrays));
     }
     else {
       // No key structure (a shell hook, a JS config): the hunks are the evidence.
@@ -708,6 +936,8 @@ const COMPAT_GROUP_SURFACE: Record<CompatibilityErrorGroup, ParitySurface> = {
   wrappers: 'commands',
   hooks: 'hooks',
   mcp: 'mcp',
+  // An unwired lint block is a verification gap: the rule ships and enforces nothing.
+  lint: 'gates',
 };
 
 /** Same classifier `bun run agents:compat` groups its output by. */
@@ -722,6 +952,8 @@ export function compatErrorSurface(message: string): ParitySurface {
  */
 export function compatErrorSuggestion(message: string): ParitySuggestion {
   if (WRAPPER_UNDECLARED_RE.test(message)) { return 'add to overlay'; }
+  // The wiring lives in the project-owned `eslint.config.js`: add the block, keep the rest.
+  if (/does not wire \w+ from eslint\.config\.base\.js/.test(message)) { return 'merge'; }
   return /command wrapper|skills alias|\.claude\/skills/i.test(message) ? 'run agents:compat' : 'take upstream';
 }
 
@@ -731,6 +963,7 @@ function compatErrorPath(message: string): string {
   const host = /(claude|opencode|codex)\b/i.exec(message);
   if (host && /MCP/.test(message)) { return MCP_HOST_FILE[host[1].toLowerCase()]; }
   if (/skills alias|\.claude\/skills/.test(message)) { return '.claude/skills'; }
+  if (/^eslint\.config\.js /.test(message)) { return 'eslint.config.js'; }
   return '(compat)';
 }
 
@@ -834,26 +1067,53 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     const upstream = readIfExists(path.join(input.upstreamDir, entry.path));
     if (project === null || upstream === null) { continue; }
     const diff = diffNoIndex(path.join(input.root, entry.path), path.join(input.upstreamDir, entry.path));
+    // Every one of these rows is a KEPT file (a watched path is never
+    // overwritten), and a kept path whose upstream hunk gates another file of
+    // this release says so and blocks.
+    const prerequisite = prerequisiteFor(entry.path, input.prerequisites);
+    const withPrerequisite = (evidence: string): string =>
+      prerequisite === null ? evidence : `${evidence}; ${prerequisiteClause(prerequisite)}`;
     if (entry.structural) {
       const evidence = structuralEvidence(entry.path, project, upstream);
-      if (evidence === null) { continue; }
-      drifted.set(entry.path, { surface: watchedSurface(entry.path, entry.source), path: entry.path, evidence, suggested: 'merge', blocking: false, diff, projectOnly: true });
+      // A MISSING top-level block a shipped skill reads is not informational:
+      // the skill fails at runtime in somebody's session instead of here, where
+      // there is an operator and a prompt. It escalates even when
+      // `structuralEvidence` found nothing else to say.
+      const missingBlocks = missingConfigBlocks(entry.path, project, upstream, input.configBlockReaders);
+      if (evidence === null && missingBlocks.length === 0) { continue; }
+      const structural = [evidence, missingBlocks.length > 0 ? configBlockClause(missingBlocks) : null]
+        .filter((part): part is string => part !== null)
+        .join('; ');
+      drifted.set(entry.path, { surface: watchedSurface(entry.path, entry.source), path: entry.path, evidence: withPrerequisite(structural), suggested: 'merge', blocking: prerequisite !== null || missingBlocks.length > 0, diff, projectOnly: true });
       continue;
     }
     const { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
+    const notes: { clause: string, note: string }[] = [];
+    // No husky hook is ever overwritten, so a consumer only learns about the
+    // gates split if the row says so: without it no gate a future release adds
+    // ever runs there.
+    if (entry.path === HUSKY_PRE_COMMIT || entry.path === HUSKY_PRE_PUSH || entry.path === HUSKY_COMMIT_MSG) {
+      const gates = frameworkGatesNote(project, entry.path);
+      if (gates !== null) {
+        notes.push({ clause: `this hook does not source ${HUSKY_GATES_FILE}, so no gate a future release adds will ever run here`, note: gates });
+      }
+    }
     // An MCP host file still carrying a server upstream moved to harness level
     // or retired: the row explains why; the file is never overwritten.
-    const mcpNotes = [harnessLevelMcpNote(entry.path, project, upstream), retiredMcpNote(entry.path, project, upstream)]
-      .filter((n): n is { clause: string, note: string } => n !== null);
+    for (const mcpNote of [harnessLevelMcpNote(entry.path, project, upstream), retiredMcpNote(entry.path, project, upstream)]) {
+      if (mcpNote !== null) { notes.push(mcpNote); }
+    }
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path, entry.source),
       path: entry.path,
-      evidence: [evidence, ...mcpNotes.map(n => n.clause)].join('; '),
-      suggested,
-      blocking: false,
+      evidence: withPrerequisite([evidence, ...notes.map(n => n.clause)].join('; ')),
+      // A prerequisite row cannot be "reviewed later": the release is
+      // half-delivered until its hunk lands, so it is a merge, and it blocks.
+      suggested: prerequisite === null ? suggested : 'merge',
+      blocking: prerequisite !== null,
       diff,
       projectOnly,
-      ...(mcpNotes.length === 0 ? {} : { note: mcpNotes.map(n => n.note).join('\n\n') }),
+      ...(notes.length === 0 ? {} : { note: notes.map(n => n.note).join('\n\n') }),
     });
   }
 
@@ -920,6 +1180,29 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       blocking: true,
     });
   }
+  // The doctrine ledger: one aggregated row for AGENTS.md sections this project
+  // still lacks. Unlike every other watched-file row it is tracked by CONTENT,
+  // so `keep project` does not retire it: writing the section does. It folds
+  // onto the existing AGENTS.md drift row when there is one, so a run never
+  // shows two rows about the same file.
+  if (typeof input.doctrineDebt === 'string' && input.doctrineDebt !== '') {
+    // The path comes from the caller, not from an import of `updater-doctrine`:
+    // that module imports `markdownSectionDelta` from here, and taking the
+    // constant back would close the cycle.
+    const doctrinePath = input.doctrineFile ?? 'AGENTS.md';
+    const existing = drifted.get(doctrinePath);
+    if (existing) { existing.evidence = `${existing.evidence}; ${input.doctrineDebt}`; }
+    else {
+      findings.push({
+        surface: 'instructions',
+        path: doctrinePath,
+        evidence: input.doctrineDebt,
+        suggested: 'merge',
+        blocking: false,
+      });
+    }
+  }
+
   findings.push(...[...drifted.values()].map(({ projectOnly: _projectOnly, ...finding }) => finding), ...compat);
 
   // 3. Archived skills: the migration kept the legacy copy because upstream owns the name.
@@ -985,6 +1268,21 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       path: '.env',
       evidence: `upstream .env.example added ${input.envNewKeys.length} key(s): ${input.envNewKeys.join(', ')}`,
       suggested: 'decide',
+      blocking: false,
+    });
+  }
+
+  // 6b. The allow-list merge is additive and already decided: it ran, and this
+  //     row says what it added so nothing is a surprise. Informational, never
+  //     blocking: `deny` is untouched and wins, so an entry a project does not
+  //     want is re-expressible there without this row asking anything of it.
+  const allowAdded = input.allowListAdded ?? [];
+  if (allowAdded.length > 0) {
+    findings.push({
+      surface: 'components',
+      path: CLAUDE_SETTINGS_FILE,
+      evidence: `informational: ${allowAdded.length} permission(s) added to permissions.allow (set-union with upstream; deny/ask/hooks/env untouched): ${allowAdded.join(', ')}`,
+      suggested: 'keep project',
       blocking: false,
     });
   }

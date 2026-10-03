@@ -148,7 +148,7 @@ export const AUDIT_RULES: readonly AuditRule[] = [
   // STATE: written by skills, the updater and the human; never regenerated.
   { pattern: /^\.session(\/|$)/, class: 'state', note: 'session plans, progress, locks, run reports' },
   { pattern: /^\.scratch(\/|$)/, class: 'state', note: 'planning notes' },
-  { pattern: /^\.template\/(last-apply\.json|upstream-sha|claude-md\.upstream\.sha|pre-agents-migration)(\/|$)/, class: 'state', note: 'updater markers and safety copies' },
+  { pattern: /^\.template\/(last-apply\.json|upstream-sha|doctrine-ledger\.json|claude-md\.upstream\.sha|pre-agents-migration)(\/|$)/, class: 'state', note: 'updater markers and safety copies' },
   { pattern: /^\.backups[^/]*(\/|$)/, class: 'state', note: 'updater rollback backups' },
   { pattern: /^\.agents\/prompts(\/|$)/, class: 'state', note: 'updater single-use prompts' },
 

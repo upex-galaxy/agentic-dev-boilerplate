@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { COMPONENTS, GATE_SCRIPTS, gatesSummaryLine, parseArgs, resolveProtectedWatchlist, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -33,6 +33,15 @@ describe('component registry', () => {
     // `.claude` itself is never a directory component: `commands` owns
     // `.claude/commands`, the alias `.claude/skills` is generated.
     expect(COMPONENTS.filter(c => c.type !== 'file-list').flatMap(c => c.paths)).not.toContain('.claude');
+  });
+});
+
+describe('synced halves of project-owned configs', () => {
+  // `eslint.config.js` and the husky hooks are watched (never overwritten); the
+  // halves upstream owns reach a project only because these components sync them.
+  test('the tooling component carries the eslint base, the husky component the gates file', () => {
+    expect(COMPONENTS.find(c => c.name === 'tooling')?.files).toContain('eslint.config.base.js');
+    expect(COMPONENTS.find(c => c.name === 'husky')).toMatchObject({ type: 'directory', paths: ['.husky'] });
   });
 });
 
@@ -77,8 +86,12 @@ describe('protected watchlist', () => {
     const watchlist = resolveProtectedWatchlist(root, m => warnings.push(m));
     expect(warnings).toEqual([]);
     const byPath = Object.fromEntries(watchlist.map(e => [e.path, e]));
-    expect(byPath['.husky/pre-commit']).toMatchObject({ reason: 'project gates live here', source: 'upstream' });
-    expect(byPath['.husky/pre-push']).toMatchObject({ reason: 'project gates live here', source: 'upstream' });
+    // Every hook's reason names the synced gates file: that sentence is what the
+    // drift row shows the operator.
+    for (const hook of ['.husky/pre-commit', '.husky/pre-push', '.husky/commit-msg']) {
+      expect(byPath[hook]).toMatchObject({ source: 'upstream' });
+      expect(byPath[hook]?.reason).toContain('.husky/framework-gates.sh');
+    }
     expect(byPath['.agents/project.yaml']?.structural).toBe(true);
     expect(byPath['.agents/jira-required.yaml']?.structural).toBe(true);
     expect(byPath['.claude/settings.json']?.structural).toBeUndefined();
@@ -111,6 +124,12 @@ describe('flags', () => {
 });
 
 describe('post-apply gates', () => {
+  // A release can ship a skill and the vocabulary hunk that admits it in two
+  // files; when the second is protected, only skills:check sees the half.
+  test('skills:check runs after the apply, next to types and lint', () => {
+    expect([...GATE_SCRIPTS]).toEqual(['types:check', 'lint:check', 'skills:check']);
+  });
+
   /** A project whose package.json defines the gate scripts as shell one-liners. */
   function project(scripts: Record<string, string>): string {
     const root = temporaryRoot();
