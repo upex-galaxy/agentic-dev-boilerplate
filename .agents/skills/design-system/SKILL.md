@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: 'Genera un DESIGN.md (formato Google Labs Apache-2.0) en el root del proyecto antes del scaffolding del frontend. Cinco caminos: default automatizable (npx getdesign + LLM-matcher elige 1 brand del catálogo de `npx getdesign list` según Constitution+PRD), manual gallery (designmd.ai/explore), Open Design app local (desktop app), Claude Design (claude.ai/design premium), LLM-authored custom. SEGUNDA FASE, distinta y en otro momento — la fase de PANTALLA: diseña el mockup de UNA historia concreta, just-in-time, cuando desarrollo la levanta (no por adelantado para todo el producto). Se invoca standalone o la rutea el design gate de `/sprint-development`. Comisiona las pantallas por Open Design MCP (Mode A), un prototipador externo (Mode B) o la skill `design` de Claude Code, y las mapea en `.context/design/master-design-plan.md` con specs por-screen + US→screen map. Siempre opt-in, nunca auto-run. Triggers: `/design-system`, `definir design system`, `crear DESIGN.md`, `establecer paleta de colores`, `branding del proyecto`, `rebrandear el proyecto`, `set up theme tokens`, `generate design system`, `elegir paleta`, `setup design tokens`, `mapear screens`, `master design plan`, `screen design`, `US to screen map`, `design brief`, `brief de diseño`, `prepara el prompt para Claude Design`, `no hay mockup para esta historia`, `diseñar esta pantalla`, `design this screen`, `esta historia no tiene diseño`. Composable con /project-foundation (la invoca post-PRD, pre-SRS) y /project-bootstrap (consume el DESIGN.md en frontend-setup). Do NOT use for: scaffolding del frontend code (use /project-bootstrap), definir PRD/personas (use /project-foundation), implementación de componentes UI (use frontend-design community skill), o per-story dev (use /sprint-development).'
+description: 'Genera un DESIGN.md (formato Google Labs Apache-2.0) en el root del proyecto antes del scaffolding del frontend. Cinco caminos: default automatizable (npx getdesign + LLM-matcher elige 1 brand del catálogo de `npx getdesign list` según Constitution+PRD), manual gallery (designmd.ai/explore), Open Design app local (desktop app), Claude Design (claude.ai/design premium), LLM-authored custom. Para una app EXISTENTE que ya tiene su identidad en el código, el modo `extract` escribe el DESIGN.md desde el tema vivo (tailwind config, globals.css, components.json), sin catálogo y sin tocar el código de la app. SEGUNDA FASE, distinta y en otro momento — la fase de PANTALLA: diseña el mockup de UNA historia concreta, just-in-time, cuando desarrollo la levanta (no por adelantado para todo el producto). Se invoca standalone o la rutea el design gate de `/sprint-development`. Comisiona las pantallas por Open Design MCP (Mode A), un prototipador externo (Mode B) o la skill `design` de Claude Code, y las mapea en `.context/design/master-design-plan.md` con specs por-screen + US→screen map. Siempre opt-in, nunca auto-run. Triggers: `/design-system`, `definir design system`, `crear DESIGN.md`, `establecer paleta de colores`, `branding del proyecto`, `rebrandear el proyecto`, `set up theme tokens`, `generate design system`, `elegir paleta`, `setup design tokens`, `mapear screens`, `master design plan`, `screen design`, `US to screen map`, `design brief`, `brief de diseño`, `prepara el prompt para Claude Design`, `no hay mockup para esta historia`, `diseñar esta pantalla`, `design this screen`, `esta historia no tiene diseño`, `extraer el design system del código`, `extract DESIGN.md from the code`, `la app ya tiene su diseño`, `brownfield theme`. Composable con /project-foundation (la invoca post-PRD, pre-SRS) y /project-bootstrap (consume el DESIGN.md en frontend-setup). Do NOT use for: scaffolding del frontend code (use /project-bootstrap), definir PRD/personas (use /project-foundation), implementación de componentes UI (use frontend-design community skill), o per-story dev (use /sprint-development).'
 license: MIT
 compatibility: [claude-code, codex, opencode]
 phase: foundation
@@ -17,6 +17,7 @@ compact_rules: |
   - **D5.** NEVER override design tokens inline (`style={{ color: '#fff' }}`, `className="text-[#1A1C1E]"`) in components — the escape hatch becomes the rule and the token system rots.
   - **D6.** NEVER let a designer hand off a Figma URL alone — require the exported token JSON or a built `DESIGN.md`; design intent must be machine-readable for downstream scaffolds.
   - **D7.** NEVER auto-run the optional screen phase or hand-author screen mockups yourself — the phase is always an explicit user opt-in, and the mockups always come from the external tool: either supplied by the user into `.context/designs/<project>/` (Mode B) or commissioned by the AI through the Open Design MCP and exported there (Mode A — sanctioned delegation, see `references/screen-design-mapping.md` S1). What stays banned is the orchestrating AI writing mockup markup itself.
+  - **D8.** NEVER pick a catalog brand, invent a token, or write application code in `extract` mode — `DESIGN.md` mirrors the LIVE theme (`tailwind.config.*`, the stylesheet the root layout imports, `components.json`), values copied in their own CSS format with a `# <file> <selector>` provenance comment; a kind the code lacks is omitted and reported as a Discovery Gap; only `DESIGN.md` (+ an accepted variant) and `.session/design-system/` may change; lint must reach `errors: 0`, and a sub-AA warning the app ships is reported, never fixed in the token (`references/extract-from-code.md`).
 metadata:
   kind: workflow
   stage_owner: true
@@ -66,7 +67,7 @@ Optionally consumes (informa el matcher y la generación custom):
 - `.context/PRD/personas.md` — target visual, demographic signal.
 - `.context/PRD/executive-summary.md` — positioning, success KPIs.
 
-Si **NO existen** (brownfield / first-time user), la skill cae a modo Q&A interactivo y pregunta los inputs (industria, tone, target, competitors, keywords) directamente al user antes de seguir.
+Si la app ya tiene su tema en el código (brownfield adoptado), ninguno de estos hace falta: es el modo `extract`, que lee el tema vivo. Si **NO existen** y tampoco hay tema en código (first-time user), la skill cae a modo Q&A interactivo y pregunta los inputs (industria, tone, target, competitors, keywords) directamente al user antes de seguir.
 
 ---
 
@@ -101,6 +102,9 @@ Use this skill when:
 
 - A new project just finished the PRD and needs to define visual identity before the SRS architecture phase.
 - An existing project wants to rebrand without touching Constitution / PRD / code.
+- **An existing app adopted agentic-dev and its theme already lives in code** (`tailwind.config.*`,
+  the global stylesheet, `components.json`). That is the `extract` mode: it writes `DESIGN.md` from
+  the live tokens instead of asking for a brand.
 - A team wants to centralize design tokens in a portable format consumable by multiple AI agents.
 - **A specific story needs a screen and no mockup covers it.** This is the screen phase (below), invoked
   standalone, per story, when the story is picked up — NOT up front for the whole product.
@@ -115,11 +119,12 @@ Do NOT use this skill to:
 
 ## Mode routing
 
-Two phases, two modes. The first token of `$ARGUMENTS` names it when it is one of these (`/design-system screen UPEX-123` on Claude Code, "load design-system, mode screen" in prose on OpenCode and Codex); otherwise the request does: a story that needs a screen is `screen`, a brand / token / DESIGN.md request is `tokens`. Still unclear: ask.
+Two phases, three modes. The first token of `$ARGUMENTS` names it when it is one of these (`/design-system screen UPEX-123` on Claude Code, "load design-system, mode screen" in prose on OpenCode and Codex); otherwise the request does: a story that needs a screen is `screen`, an existing app whose identity already lives in its code is `extract`, a brand / token / DESIGN.md request for a product with no theme yet is `tokens`. Still unclear: ask.
 
 | Mode | Trigger phrases | Section |
 |---|---|---|
 | `tokens` | define the design system, DESIGN.md, rebrand, design tokens | Path selection → Default flow (Path B) / Other paths |
+| `extract` | extract DESIGN.md from the code, existing app, adopted app, brownfield theme, extraer el design system del código, la app ya tiene su diseño | The extract mode → `references/extract-from-code.md` |
 | `screen` | no mockup for this story, design this screen, `/sprint-development` missing-row gate | The screen phase |
 
 ---
@@ -130,6 +135,7 @@ Two phases, two modes. The first token of `$ARGUMENTS` names it when it is one o
 - Format: Apache-2.0 spec from Google Labs (`google-labs-code/design.md`). YAML frontmatter with design tokens + markdown prose with rationale.
 - Eight prescribed sections (order matters, sections may be omitted but never reordered): Overview → Colors → Typography → Layout → Elevation & Depth → Shapes → Components → Do's and Don'ts.
 - Validated with `npx @google/design.md lint <path>` before exit (WCAG AA contrast included).
+- In the `extract` mode the frontmatter mirrors the app's live theme files, one provenance comment per value; nothing outside `DESIGN.md` is written.
 - If `DESIGN.md` already exists, the skill offers: **skip** (keep current) / **overwrite** (replace) / **variant** (write `DESIGN.<slug>.md` alongside, e.g. for light/dark or A/B branding).
 - **(Optional, opt-in)** `master-design-plan.md` at `.context/design/` — per-screen fidelity specs + a
   User-Story→Screen map, built from screen mockups in `.context/designs/<project>/`. Only produced
@@ -169,7 +175,7 @@ Phase 0 is inline — no subagent dispatch.
 The path-selection step below also writes `.session/design-system/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6:
 
 - Frontmatter: `topic_key: session/design-system/project/plan`, `skill: design-system`, `scope: project`, `status: draft`, `capture_prompt: true`.
-- Body sections (fixed H2 order): `## Goal` · `## Inputs` (PRD personas, business-model, existing `DESIGN.md` if any) · `## Approach` (the chosen path — A / B / C / D / E — with rationale) · `## Phase breakdown` (the steps from §"Default flow" for Path B, or the path's own checklist for the others) · `## Risks & open questions` · `## Verification checklist` (lint pass, frontmatter parses, 8 sections present, WCAG AA OK) · `## Cross-references` (`.context/business/business-model.md`, `.context/PRD/personas.md`, `DESIGN.md` target path).
+- Body sections (fixed H2 order): `## Goal` · `## Inputs` (PRD personas, business-model, existing `DESIGN.md` if any) · `## Approach` (the chosen path — A / B / C / D / E, or the `extract` mode — with rationale) · `## Phase breakdown` (the steps from §"Default flow" for Path B, or the path's own checklist for the others) · `## Risks & open questions` · `## Verification checklist` (lint pass, frontmatter parses, 8 sections present, WCAG AA OK) · `## Cross-references` (`.context/business/business-model.md`, `.context/PRD/personas.md`, `DESIGN.md` target path).
 
 Dispatch: inline draft is normal — inputs are short. A Single planner subagent is warranted only when the LLM-authored custom path (E) needs to ingest a very long Constitution + PRD.
 
@@ -222,6 +228,31 @@ Summary — full procedure in `references/getdesign-matcher.md`.
 - **Path C (Open Design)**: read `references/open-design-app.md`. Install / launch the desktop app (Docker is an alternative, not a requirement), wait for the user, then convert the produced artifacts to DESIGN.md via Path E as a bridge step.
 - **Path D (Claude Design)**: read `references/claude-design-handoff.md`. Print instructions for `claude.ai/design`, wait for the exported bundle at `design/handoff/`, then convert via Path E as a bridge step.
 - **Path E (LLM-authored custom)**: read `references/llm-authored.md`. Generate DESIGN.md from scratch using the embedded spec + `assets/design-md-spec-summary.md` as reference, with Constitution + PRD as input.
+
+---
+
+## The extract mode — DESIGN.md from a live app
+
+For an app that already has a visual identity in its code (an adopted, brownfield app). The five paths
+above all produce an identity; this mode records the one that exists. Full procedure:
+**`references/extract-from-code.md`**.
+
+1. **Locate the live theme** from evidence: `components.json` → `tailwind.css` / `tailwind.config`, the
+   stylesheet the root layout imports, the installed Tailwind major, the `next/font` calls. Dead copies are
+   listed, never read as tokens.
+2. **Read the tokens** statically (never execute the config): CSS variables → `colors` with the value's
+   own format kept (bare shadcn channels re-wrapped as the config wraps them), fonts, type scale, radius
+   (computed: the linter rejects `calc(...)`), spacing, and the `components/ui/*` default variants as
+   token references. Every value carries a `# <file> <selector>` provenance comment.
+3. **Absent stays absent**: a kind the code does not define is omitted and reported as a Discovery Gap.
+   A dark palette becomes an offered `DESIGN.dark.md` variant.
+4. **Write** only `DESIGN.md` (the stub is overwritten; real content gets a token diff and upsert /
+   variant / skip). Application code is read-only: `git status` must show nothing else.
+5. **Lint** to `errors: 0`. Warnings describe the live app: a sub-AA pair is reported and recorded in
+   Do's and Don'ts, never fixed in the token.
+
+No catalog, no `npx getdesign`, no Q&A on industry or tone, and no hand-off to `/project-bootstrap`
+frontend-setup (it would regenerate the live theme files from their own echo).
 
 ---
 
@@ -313,7 +344,8 @@ Quick shape:
 After `DESIGN.md` is generated:
 
 - **Return to `/project-foundation`** if the invocation came from there (Phase 2.5). Foundation continues with Phase 3 (SRS), which now can consume the design system as input to architecture decisions (e.g. richness of visuals informs stack choices like Framer Motion vs. plain Tailwind).
-- **Available for `/project-bootstrap` frontend-setup**: the bootstrap pre-flight detects `DESIGN.md` and skips the legacy interactive Q&A for palette/typography. Emits `tailwind.config.js` + `globals.css` directly from the frontmatter tokens.
+- **After the `extract` mode, never hand off to `/project-bootstrap` frontend-setup**: the live theme files are the implementation and regenerating them from `DESIGN.md` would overwrite them (`references/extract-from-code.md` §8).
+- **Available for `/project-bootstrap` frontend-setup** (the `tokens` mode on a new project): the bootstrap pre-flight detects `DESIGN.md` and skips the legacy interactive Q&A for palette/typography. Emits `tailwind.config.js` + `globals.css` directly from the frontmatter tokens.
 - **Consumable by any downstream agent** (Claude Code, Cursor, Antigravity, OpenCode, etc.) — by sitting at the root with the standard filename, every agent reads it automatically as design-system context.
 - **(When the screen phase ran) feeds `/sprint-development`**: the produced `master-design-plan.md` is a mandatory input for any UI story — sprint-dev looks the story up in the US→Screen map, opens its screen spec, and builds against the mockup + `DESIGN.md` tokens. Absent it, sprint-dev falls back to `DESIGN.md`-only fidelity.
 
@@ -328,6 +360,7 @@ After generating `DESIGN.md`, confirm:
 - Frontmatter YAML parses correctly (at minimum `colors`, `typography`, `spacing`, `rounded` are present).
 - The 8 prescribed sections are present in the prose (Overview, Colors, Typography, Layout, Elevation, Shapes, Components, Do's/Don'ts).
 - WCAG AA contrast passes for the primary/text pairs reported by the lint output.
+- **`extract` mode differs on three items**: sections and token kinds the code does not define are omitted (reported as Discovery Gaps, not filled); a contrast warning the live app ships is reported and recorded in Do's and Don'ts, not fixed; and `git status --porcelain` lists nothing outside `DESIGN.md`, an accepted variant and `.session/design-system/`.
 
 If any check fails, surface the failure in the report rather than papering over. Do not invent fixes — ask the user how to proceed (retry with a different brand, run lint:check with `--strict false`, or edit by hand).
 
@@ -344,6 +377,7 @@ On successful completion (all verification items pass), the orchestrator runs Ar
 - **D5.** NEVER override design tokens inline (`style={{ color: '#fff' }}`, `className="text-[#1A1C1E]"`) in components — the escape hatch becomes the rule and the token system rots.
 - **D6.** NEVER let a designer hand off a Figma URL alone — require the exported token JSON or a built `DESIGN.md`; design intent must be machine-readable for downstream scaffolds.
 - **D7.** NEVER auto-run the screen phase or hand-author screen mockups yourself — the phase is always an explicit user opt-in, and the mockups always come from the external tool: either supplied by the user into `.context/designs/<project>/` (Mode B) or commissioned by the AI through the Open Design MCP and exported there (Mode A — sanctioned delegation, see `references/screen-design-mapping.md` S1), or produced through Claude Code's own `design` skill where the session has it. What stays banned is the orchestrating AI writing mockup markup itself to fill a gap — when no tool is available the answer is a spec-only build ratified as a §5 divergence, never markup invented here and filed as a design artifact.
+- **D8.** NEVER pick a catalog brand, invent a token, or write application code in `extract` mode — `DESIGN.md` mirrors the LIVE theme (`tailwind.config.*`, the stylesheet the root layout imports, `components.json`), values copied in their own CSS format with a `# <file> <selector>` provenance comment; a kind the code lacks is omitted and reported as a Discovery Gap; only `DESIGN.md` (+ an accepted variant) and `.session/design-system/` may change; lint must reach `errors: 0`, and a sub-AA warning the app ships is reported, never fixed in the token (`references/extract-from-code.md`).
 
 ---
 
@@ -352,6 +386,6 @@ On successful completion (all verification items pass), the orchestrator runs Ar
 - **Schema status: alpha** (Google Labs). Drift risk is mitigated by always validating with the latest `@google/design.md` via `npx` (no version pin). If the schema changes substantially, update `assets/design-md-spec-summary.md` accordingly.
 - **Multi-platform out of scope (v1)**: `DESIGN.md` assumes web. Mobile (React Native, Flutter) can be added later as a variant (`DESIGN.mobile.md`) without breaking the v1 contract.
 - **No `designmd-mcp` in `.mcp.example.json`**: the committed MCP set stays whatever `.mcp.json` declares. If the runtime catalog browse is needed, shell out to `npx designmd search` instead — keeps the token overhead at zero.
-- **Brownfield mode**: the skill detects repos without Constitution / PRD and drops into Q&A mode (five questions: industry, tone, target, competitors, keywords) before matching. Same flow works for projects mid-pivot.
+- **Brownfield**: an existing app whose theme lives in code goes to the `extract` mode, never to a catalog brand. The Q&A fallback (industry, tone, target, competitors, keywords) is for a project with no Constitution / PRD AND no theme in code, or one mid-pivot that wants a new identity.
 - **Config consumed**: `design_md_path` (optional) from `.agents/project.yaml`. Default `./DESIGN.md`.
 - The references are written in mixed ES/EN (mirroring the rest of the repo). The orchestrator file (this one) stays in English for cross-team readability.
