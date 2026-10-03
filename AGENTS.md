@@ -47,7 +47,7 @@ This §2 WINS on content and structure of information. OUTPUT STYLE never contra
 
 **THINK BEFORE CODING.** State assumptions explicit. Multiple interpretations → present them, NEVER pick silently. Simpler approach exists → say so. Unclear → STOP, name confusion, ASK. Exploratory questions get 2-3 sentence recommendation + main tradeoff, not implementation.
 
-**SIMPLICITY FIRST.** Minimum code that solves problem. No features beyond ask. No abstractions for single-use. No "flexibility" not requested. No error handling for impossible scenarios. 200 lines that could be 50 → rewrite. _Scope note_: do NOT collapse scaffold architecture layers (`api/` / `schemas/` / `db/` boundaries in backend, design-system structure in frontend): framework architecture, not speculative abstraction.
+**SIMPLICITY FIRST.** Minimum code that solves problem. No features beyond ask. No abstractions for single-use. No "flexibility" not requested. No error handling for impossible scenarios. 200 lines that could be 50 → rewrite. _Scope note_: do NOT collapse the architecture layers the app already has (on a scaffolded project the `api/` / `schemas/` / `db/` boundaries in backend and the design-system structure in frontend; on an adopted app whatever layering its code shows under `stack.app_root`): framework architecture, not speculative abstraction. Never impose the scaffold's layers on an app that does not have them.
 
 **SURGICAL CHANGES.** Touch only what required. Match existing style even if you'd do it differently. Don't refactor unbroken code. Don't improve adjacent comments/formatting. Notice unrelated dead code → mention, don't delete. Remove imports/vars YOUR changes made unused. _Scope note_: regenerative commands EXEMPT: regen IS task: `/project-foundation`, `/design-system`, `/project-bootstrap`, the docs follow-through (`docs-follow-through.md`), `/sprint-development` impl-plan stage, `/product-management` AC-writing.
 
@@ -171,9 +171,9 @@ The conductor keeps using SUBAGENTS for its own reads and verifications, and kee
 | Foundational definition (PRD/SRS/Discovery) | "define el PRD", "ideando un nuevo producto", "documentar la app existente"                     | `/project-foundation`                              | `business/`, `PRD/`, `SRS/`                                     | Read + Write                                 |
 | Design system (DESIGN.md)                   | "definir design system", "rebrandear el proyecto", "extraer el design system del código"        | `/design-system`                                   | `business/business-model.md`, `PRD/`                            | Write                                        |
 | Screen design for one story (mockup)        | "no hay mockup para esta historia", "diseñar esta pantalla", "design this screen"       | `/design-system` (screen phase)                    | `DESIGN.md`, `design/master-design-plan.md` §2/§4/§8            | Open Design / Claude Design                  |
-| Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap`                               | `SRS/architecture-specs.md`, `DESIGN.md`                        | Code edit                                    |
+| Infra scaffolding (backend/frontend)        | "scaffolding del proyecto", "API routes setup"                                                  | `/project-bootstrap` (base phases greenfield only; add-ons read `stack:`) | `bun run bootstrap:guard` verdict, `SRS/architecture-specs.md`, `DESIGN.md` | Code edit                                    |
 | Adopt an existing app (after the `--adopt` install) | "adopt this app", "adoptar la app existente", "la adopción quedó instalada", "adoption drift check" | `/project-adoption` (`adopt` · `check`) | `.template/installer.lock.json`, `.agents/project.yaml` → `stack:`, the adoption parity rows | Read + `bun run agents:setup --stack` |
-| QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | `app/qa/page.tsx` snapshot, `.agents/project.yaml`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
+| QA testability page + credentials artifact  | "create QA guide page", "guía de testeabilidad", "credenciales para testing", "update /qa page" | `/testability-guide`                               | the `/qa` page snapshot under `stack.app_root` (route per `stack.framework`), `.agents/project.yaml` → `stack:`, `.mcp.json` | Read + Write + `[ISSUE_TRACKER_TOOL]`        |
 | Backlog / story refinement                  | "create epic", "refine acceptance criteria"                                                     | `/product-management`                              | `.context/PBI/epic-tree.md`, `PRD/`, `business/domain-glossary.md` | `[ISSUE_TRACKER_TOOL]`                       |
 | Sprint-development ticket                   | "implementar esta historia", "trabajar UPEX-XXX"                                                | `/sprint-development`                              | `.context/PBI/epics/EPIC-*/stories/STORY-*/`, `business/domain-glossary.md`, `DESIGN.md` + `.context/design/master-design-plan.md` (UI stories: Rule 14) | `[ISSUE_TRACKER_TOOL]` + `[AUTOMATION_TOOL]` |
 | Orchestrate several sessions (fleet of workers) | "orchestrate", "fleet", "one session per story", "parallelize the sprint", "resume the run", "orquestar", "lanza workers", "una sesión por historia", "comunícate con el worker" | `/orca-orchestration` | `.agents/project.yaml` → `orchestration:` block (defaults); the skill self-loads its references | `[ORCHESTRATION_TOOL]` (gate: binary + reachable runtime; silent when absent) |
@@ -384,7 +384,7 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 3. **EXPLAIN DEFECTS**: bug / unexpected behavior → describe observed, explain why problem, suggest impact (severity, affected users, business risk).
 4. **LANGUAGE**: default English. User writes other language → mirror in user-facing communication. Docs + code ALWAYS English.
 
-**ENVIRONMENT SELECTION**: default **staging** unless user specifies otherwise. Ask when ambiguous. URLs from `.agents/project.yaml`. Credentials from `.env`.
+**ENVIRONMENT SELECTION**: default = `testing.default_env` in `.agents/project.yaml` (conventionally `staging`; a project with no staging environment names another one) unless user specifies otherwise. Ask when ambiguous. URLs from `.agents/project.yaml` → `environments`. Credentials from `.env`.
 
 **CONTEXT EFFICIENCY**: main conversation stays lean (no large file reads). Subagents do heavy reading. Skills load only references current phase needs.
 
@@ -451,19 +451,19 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 ## 10. STACK QUICK-REFERENCE (TypeScript + DRY)
 
-> Full TS conventions live in feature dev-guide (Discovery output via `/project-foundation`) if present, else fallback `.agents/skills/agentic-dev-core/references/typescript-patterns.md`. LOAD `/sprint-development` before writing or reviewing feature code.
+> The app's stack is the `stack:` block of `.agents/project.yaml` (framework, `app_root`, package manager, script names, database, UI, hosting, test runner, conventions): read it, never assume Next.js, Supabase, bun or a path where the block decides. An app command is `{{stack.package_manager}} run {{stack.scripts.<name>}}`; a null script is skipped and said so. Full TS conventions live in feature dev-guide (Discovery output via `/project-foundation`) if present, else fallback `.agents/skills/agentic-dev-core/references/typescript-patterns.md`. LOAD `/sprint-development` before writing or reviewing feature code.
 
 | Pattern        | Rule                                                                                                                                       |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Parameters** | Max 2 positional. 3+ → object param                                                                                                        |
 | **Utilities**  | Agnostic only, no domain coupling in shared modules                                                                                        |
-| **Imports**    | Always the aliases `tsconfig.json` `paths` declares (Next.js `@/`, or per-layer `@api/`, `@schemas/`, `@utils/`). No deep relative imports |
+| **Imports**    | Always the aliases the app's `tsconfig.json` `paths` declares (`stack.conventions.import_alias`, e.g. `@/`; per-layer `@api/`, `@schemas/`, `@utils/` on a scaffolded project). No deep relative imports |
 | **Types**      | Declare interfaces at top of file, after imports                                                                                           |
 | **Errors**     | Public methods: fail fast (throw). Utilities: silent fail (return null)                                                                    |
 
 **DRY: context matters**:
 
-- `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`). Single source of truth.
+- `api/schemas/` = OpenAPI type facades (`@schemas/{domain}.types`), when the app has them (scaffolded projects do). Single source of truth. An app without them keeps its own type source; never add the layer to match this line.
 - Shared utilities = framework-agnostic only. No React, no Next, no Bun-specific APIs.
 - Domain logic stays inside feature folder. Move to `shared/` only when ≥2 features import AND abstraction stable.
 
@@ -473,14 +473,14 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 Git / PR work → `/git-flow-master` auto-loads. Full details in `.agents/skills/git-flow-master/` + `docs/workflows/git-flow.md` if present.
 
-> **Active strategy + branch policy = the `git_strategy:` block in `.agents/project.yaml`** (source of truth). This repo operates as `solo-main`.
+> **Active strategy + branch policy = the `git_strategy:` block in `.agents/project.yaml`** (source of truth): `git_strategy.strategy` names the flow, `meta.strategy_source` says whether anyone chose it (`inherited` = shipped default, `/git-flow-master` offers Strategy Setup). An adopted app's real branches and rulesets are read by Strategy Setup, never assumed from this table.
 
-**Branch roles** (names come from `git_strategy.branches`; `staging` below is the conventional integration name):
+**Branch roles** (names come from `git_strategy.branches`; `main` and `staging` below are the conventional names):
 
 | Branch      | Role                                                                                                                                          |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main`      | Production (`git_strategy.branches.production`). PRs merged from the integration branch or `feat/*` after review.                             |
-| `staging`   | Integration branch for AI commits + pre-release validation, ONLY when `git_strategy.branches.integration` names one (null under `solo-main`). |
+| `main`      | Production: whatever `git_strategy.branches.production` names. PRs merged from the integration branch or `feat/*` after review.               |
+| `staging`   | Integration branch for AI commits + pre-release validation: whatever `git_strategy.branches.integration` names (`develop`, `dev`, …), ONLY when it names one (null under `solo-main`). |
 | `feat/*`    | Task-specific. Use `feat/TICKET-ID-desc` (prefix table: `/git-flow-master` §3.1).                                                             |
 | `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                                                                                                   |
 
