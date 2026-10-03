@@ -94,6 +94,8 @@ describe('component registry', () => {
     expect(DEPRECATED_FILES.map(d => d.path)).toEqual(expect.arrayContaining(RETIRED_DOCS_FILES.map(d => d.path)));
     for (const d of RETIRED_DOCS_FILES) {
       expect(d.component).toBe('docs');
+      // Retired by the docs + decks wave, the updater 8.7 release.
+      expect(d.deprecatedSince).toBe('8.7');
       expect(existsSync(join(import.meta.dir, '..', d.path))).toBe(false);
     }
 

@@ -498,7 +498,7 @@
       }
       .fact .big {
         font-family: var(--font-display);
-        font-size: 1.6rem;
+        font-size: 1.25rem;
         color: var(--blue);
         font-variant-numeric: tabular-nums;
       }
@@ -506,6 +506,18 @@
         font-size: 0.82rem;
         color: var(--ink-soft);
         margin-top: 3px;
+      }
+      a.fact {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        transition:
+          transform 0.18s ease,
+          border-color 0.18s ease;
+      }
+      a.fact:hover {
+        transform: translateY(-2px);
+        border-color: var(--blue);
       }
 
       section.band {
@@ -617,6 +629,13 @@
         color: var(--signal);
         background: var(--signal-wash);
       }
+      .dc-aud {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-faint);
+        text-align: right;
+      }
       .deck-card h3 {
         font-size: 1.12rem;
         margin: 2px 0 0;
@@ -698,9 +717,11 @@
         ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
       >
       <nav class="topnav">
+        <a href="./onboarding.html">Empezá acá</a>
         <a href="#nucleo">Núcleo</a>
         <a href="#ciclo">Ciclo de vida</a>
         <a href="#operacion">Operación</a>
+        <a href="#mantenedores">Mantenedores</a>
         <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate">GitHub ↗</a>
       </nav>
       <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
@@ -763,22 +784,28 @@
         </div>
 
         <div class="facts r">
-          <div class="fact">
-            <div class="big">3 / 17</div>
-            <div class="lbl">decks publicados (snapshot)</div>
-          </div>
-          <div class="fact">
-            <div class="big">11</div>
-            <div class="lbl">skills mapeadas en el roadmap (snapshot)</div>
-          </div>
-          <div class="fact">
-            <div class="big">P0</div>
-            <div class="lbl">próximos: product-management + sprint-development</div>
-          </div>
-          <div class="fact">
-            <div class="big">2026-08-22</div>
-            <div class="lbl">última actualización del hub</div>
-          </div>
+          <a class="fact" href="./onboarding.html">
+            <div class="big">Empezá acá</div>
+            <div class="lbl">
+              el recorrido de una sesión: setup, ciclo de vida y dónde vive cada cosa
+            </div>
+          </a>
+          <a class="fact" href="./harnesses.es.html">
+            <div class="big">Tres harnesses</div>
+            <div class="lbl">
+              Claude Code, OpenCode y Codex sobre el mismo <span class="mono">AGENTS.md</span>
+            </div>
+          </a>
+          <a class="fact" href="#ciclo">
+            <div class="big">Una skill, un deck</div>
+            <div class="lbl">
+              cada skill de flujo tiene su "cómo funciona", en el orden del ciclo de vida
+            </div>
+          </a>
+          <a class="fact" href="#mantenedores">
+            <div class="big">Mantenedores</div>
+            <div class="lbl">roadmap de decks, convención y cómo se publica este hub</div>
+          </a>
         </div>
       </div>
     </header>
@@ -790,63 +817,71 @@
           <div class="eyebrow"><span class="num">01</span> — núcleo</div>
           <h2>Cómo piensa el repo, antes de cualquier skill</h2>
           <p class="sub">
-            Doctrina transversal: cómo el agente principal orquesta subagentes, cómo decide su
-            registro de comunicación, y cómo encadenan las skills entre sí. Vale la pena leer esto
-            antes que cualquier "cómo funciona" puntual.
+            Doctrina transversal: cómo el agente principal orquesta subagentes y sesiones, cómo
+            decide su registro de comunicación, dónde vive el backlog y dónde vive el mapa del
+            negocio. Vale la pena leer esto antes que cualquier "cómo funciona" puntual.
           </p>
         </div>
         <div class="decks-grid r">
           <a class="deck-card" href="./harnesses.es.html">
-            <div class="dc-top"><span class="dc-tag">multi-harness</span></div>
+            <div class="dc-top">
+              <span class="dc-tag">multi-harness</span><span class="dc-aud">nuevo · lead</span>
+            </div>
             <h3>Una fuente, tres harnesses</h3>
             <p>
               Claude Code, OpenCode y Codex leen el mismo <span class="mono">AGENTS.md</span> y la
-              misma tienda de skills: qué es canónico, qué se genera, y la paridad con el
-              boilerplate de QA.
+              misma tienda de skills: qué es canónico, qué se genera y cómo llegan las credenciales
+              MCP a cada uno.
             </p>
-            <span class="dc-status live">Disponible →</span>
+            <span class="dc-status live">Abrir →</span>
           </a>
-          <div class="deck-card soon">
-            <div class="dc-top">
-              <span class="dc-tag">agentic-dev-core</span><span class="dc-prio">P1</span>
-            </div>
-            <h3>El comando y sus ejecutores</h3>
-            <p>
-              Orchestration mode: la conversación principal como centro de mando, subagentes como
-              ejecutores, el briefing de 6 componentes.
-            </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
           <a class="deck-card" href="./decks/agentic-dev-core/capa-comportamental.es.html">
-            <div class="dc-top"><span class="dc-tag">agentic-dev-core</span></div>
+            <div class="dc-top">
+              <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">nuevo · dev</span>
+            </div>
             <h3>La capa comportamental</h3>
             <p>
               Butler Pattern, PM Voice, Visual Mapping y el reparto de capas: por qué el repo
               responde como responde, con la misma sesión en los dos estilos.
             </p>
-            <span class="dc-status live">Disponible →</span>
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/orca-orchestration/como-funciona.es.html">
+            <div class="dc-top">
+              <span class="dc-tag">orca-orchestration</span><span class="dc-aud">lead · dev</span>
+            </div>
+            <h3>El comando y sus ejecutores</h3>
+            <p>
+              Dos ejecutores (subagente y worker supervisado), el briefing que sigue
+              <span class="mono">briefing-template.md</span>, conductor / worker / automatización y
+              el <span class="mono">launch.txt</span> que funciona sin runtime.
+            </p>
+            <span class="dc-status live">Abrir →</span>
           </a>
           <a class="deck-card" href="./decks/agentic-dev-core/pbi-jira-cache.es.html">
-            <div class="dc-top"><span class="dc-tag">agentic-dev-core</span></div>
+            <div class="dc-top">
+              <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev · lead</span>
+            </div>
             <h3>PBI como caché de Jira</h3>
             <p>
               Jira es la fuente de verdad, el disco es un caché: los tres tiers, la escalera de
               <span class="mono">.gitignore</span>, <span class="mono">context:hydrate</span> y las
               defensas del workspace compartido.
             </p>
-            <span class="dc-status live">Disponible →</span>
+            <span class="dc-status live">Abrir →</span>
           </a>
-          <div class="deck-card soon">
+          <a class="deck-card" href="./decks/context-skills/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">agentic-dev-core</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">context skills</span><span class="dc-aud">dev · lead</span>
             </div>
-            <h3>Cómo encadenan las skills</h3>
+            <h3>El mapa del negocio adentro de una skill</h3>
             <p>
-              El mapa completo: de <span class="mono">/project-foundation</span> a producción, qué
-              skill le entrega qué a la siguiente.
+              Por qué el mapa de datos, features y API vive en una skill, cómo se lee por sección
+              con <span class="mono">bun run context:map</span> y cómo se corrige de a una sección,
+              con evidencia y tu sí.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
+            <span class="dc-status live">Abrir →</span>
+          </a>
         </div>
       </div>
     </section>
@@ -858,89 +893,101 @@
           <div class="eyebrow"><span class="num">02</span> — ciclo de vida del desarrollo</div>
           <h2>De la idea al sprint, en el orden real</h2>
           <p class="sub">
-            Las skills en el orden en que un producto nuevo realmente las atraviesa. No todas tienen
-            deck todavía — <span class="mono">product-management</span> y
-            <span class="mono">sprint-development</span> son los siguientes en la lista.
+            Las skills en el orden en que un producto nuevo realmente las atraviesa: definir,
+            diseñar, levantar el repo, armar el backlog y entregar historia por historia.
           </p>
         </div>
         <div class="decks-grid r">
-          <div class="deck-card soon">
+          <a class="deck-card" href="./decks/project-foundation/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">project-foundation</span><span class="dc-prio">P1</span>
+              <span class="dc-tag">project-foundation</span
+              ><span class="dc-aud">nuevo · PM/PO · lead</span>
             </div>
-            <h3>Cómo funciona</h3>
-            <p>Constitución del negocio, PRD, SRS y discovery — el porqué antes del qué.</p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <a class="deck-card" href="./decks/design-system/flujo-mockups.es.html">
-            <div class="dc-top"><span class="dc-tag">design-system</span></div>
-            <h3>Del plano al producto</h3>
+            <h3>Definir el producto</h3>
             <p>
-              Flujo de mockups con IA: BRIEF.md, drop zones, Claude Design y Open Design (Modo A/B
-              por MCP).
+              Antes de la primera línea de código: Constitución, PRD, diseño, SRS con ADRs y
+              Discovery.
             </p>
-            <span class="dc-status live">Disponible →</span>
+            <span class="dc-status live">Abrir →</span>
           </a>
-          <div class="deck-card soon">
+          <a class="deck-card" href="./decks/design-system/flujo-mockups.es.html">
             <div class="dc-top">
-              <span class="dc-tag">design-system</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">design-system</span
+              ><span class="dc-aud">dev · nuevo · PM/PO</span>
             </div>
-            <h3>DESIGN.md · los 5 caminos</h3>
+            <h3>Tokens y mockups</h3>
             <p>
-              Gallery manual, getdesign + matcher, Open Design, Claude Design, o custom — cuándo
-              usar cada uno.
+              <span class="mono">DESIGN.md</span> una vez, mockup por historia, y el design gate que
+              rutea entre los dos.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/project-bootstrap/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">project-bootstrap</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">project-bootstrap</span><span class="dc-aud">dev · lead</span>
             </div>
-            <h3>Cómo funciona</h3>
+            <h3>Del SRS a un repo que arranca</h3>
             <p>
-              Scaffolding de backend, frontend, OpenAPI, auth y env vars sobre el DESIGN.md ya
-              definido.
+              Backend, frontend y piezas de integración desde el PRD, el SRS y el
+              <span class="mono">DESIGN.md</span>, antes de la primera historia.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/product-management/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">product-management</span><span class="dc-prio">P0</span>
+              <span class="dc-tag">product-management</span><span class="dc-aud">PM/PO · dev</span>
             </div>
-            <h3>Cómo funciona</h3>
-            <p>Backlog seed, épicas, INVEST + 3 amigos, AC en Gherkin, reporte de sprint.</p>
-            <span class="dc-status soon">Próximamente — siguiente en la lista</span>
-          </div>
-          <div class="deck-card soon">
-            <div class="dc-top">
-              <span class="dc-tag">sprint-development</span><span class="dc-prio">P0</span>
-            </div>
-            <h3>Cómo funciona — las 12 etapas</h3>
+            <h3>Del PRD a historias listas</h3>
             <p>
-              El mega-orquestador: plan → código → review → staging → producción gateada, historia
-              por historia.
+              Cómo el backlog pasa de PRD a historias refinadas en Jira y a un orden de ejecución.
             </p>
-            <span class="dc-status soon">Próximamente — siguiente en la lista</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/project-context/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">sprint-development</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">project-context</span><span class="dc-aud">lead · dev</span>
             </div>
-            <h3>El contrato de fidelidad UI</h3>
+            <h3>Mapas, plan maestro y roadmap</h3>
             <p>
-              Regla 14 en profundidad: Live-UI-first, cuándo un mockup se archiva como tech-story en
-              vez de forzarse.
+              Cómo la IA arma y refresca los mapas de negocio, el plan maestro y el roadmap, un modo
+              por vez y con tu aprobación antes de pisar nada.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/sprint-development/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">unit-testing</span><span class="dc-prio">P1</span>
+              <span class="dc-tag">sprint-development</span
+              ><span class="dc-aud">dev · lead · PM/PO</span>
             </div>
-            <h3>Cómo funciona</h3>
-            <p>TDD red-green-refactor, qué mockear y qué no, cobertura de línea vs. de rama.</p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
+            <h3>Del ticket al deploy</h3>
+            <p>
+              Planning, Implementation, Code Review, Staging y Production con compuerta: plan en
+              Jira, app viva, review adversarial, historia por historia.
+            </p>
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/unit-testing/como-funciona.es.html">
+            <div class="dc-top">
+              <span class="dc-tag">unit-testing</span><span class="dc-aud">dev</span>
+            </div>
+            <h3>Tests que fallan por el motivo correcto</h3>
+            <p>
+              Red-green-refactor, nombres, mocks y cobertura, sola o desde la etapa de
+              Implementation.
+            </p>
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/testability-guide/como-funciona.es.html">
+            <div class="dc-top">
+              <span class="dc-tag">testability-guide</span><span class="dc-aud">dev · lead</span>
+            </div>
+            <h3>La página /qa y sus credenciales</h3>
+            <p>
+              La página <span class="mono">/qa</span> que enseña a testear la app, y las
+              credenciales detrás de una puerta con permisos.
+            </p>
+            <span class="dc-status live">Abrir →</span>
+          </a>
         </div>
       </div>
     </section>
@@ -952,74 +999,142 @@
           <div class="eyebrow"><span class="num">03</span> — operación y entrega</div>
           <h2>Lo que sostiene todo lo anterior</h2>
           <p class="sub">
-            Git, QA, Jira/Confluence y deploy — las skills que se usan todos los días una vez que el
-            ciclo de vida principal ya está rodando.
+            Git, review, sesiones largas, corridas sin nadie mirando, Jira y deploy: lo que se usa
+            todos los días una vez que el ciclo de vida principal ya está rodando.
           </p>
         </div>
         <div class="decks-grid r">
-          <div class="deck-card soon">
+          <a class="deck-card" href="./decks/git-flow-master/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">git-flow-master</span><span class="dc-prio">P1</span>
+              <span class="dc-tag">git-flow-master</span><span class="dc-aud">dev · lead</span>
             </div>
-            <h3>Cómo funciona</h3>
+            <h3>Ramas, pushes y PRs</h3>
             <p>
-              Auto-detección de estrategia, commits, branches, PRs y resolución de conflictos, para
-              cualquier flujo de git.
+              Estrategia de ramas, compuerta de push por variable, paridad con el host, trailers
+              forenses, PRs encadenados y worktrees.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/pr-review-lead/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">git-flow-master</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">pr-review-lead</span><span class="dc-aud">lead · dev</span>
             </div>
-            <h3>Estrategias de git</h3>
+            <h3>Revisar el PR de otro con evidencia</h3>
             <p>
-              <span class="mono">solo-main</span> vs. multi-branch enterprise vs. trunk-based — cómo
-              elegir y cómo se materializa cada una.
+              Rigor elegido antes de leer, hallazgos citados en Real / Pattern / Positive, y nada se
+              postea sin tu OK.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/session-handoff/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">testability-guide</span><span class="dc-prio">P2</span>
+              <span class="dc-tag">session-handoff</span><span class="dc-aud">dev · lead</span>
             </div>
-            <h3>Cómo funciona</h3>
+            <h3>Pasar la sesión entera a su sucesor</h3>
             <p>
-              La página <span class="mono">/qa</span> in-app y el artefacto de credenciales,
-              publicado donde QA ya vive (Jira, Confluence, etc.).
+              Cuando la ventana de contexto se llena: un archivo que deja a una sesión nueva seguir
+              exactamente donde paró la anterior, en el mismo worktree y el mismo harness.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/autonomous-delivery/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">acli</span><span class="dc-prio">P3</span>
+              <span class="dc-tag">autonomous-delivery</span
+              ><span class="dc-aud">lead · PM/PO</span>
             </div>
-            <h3>Cookbook de Jira/Confluence</h3>
+            <h3>Corridas programadas sin nadie mirando</h3>
             <p>
-              Issues, transiciones, bulk-ops y Confluence desde la terminal, sin salir del flujo de
-              <span class="mono">/sprint-development</span>.
+              Lo que una corrida hace, y nunca hace: lock, git como verdad, corrida vacía correcta,
+              traspaso limpio.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
-          <div class="deck-card soon">
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/jira-administration/como-funciona.es.html">
             <div class="dc-top">
-              <span class="dc-tag">vercel-cli</span><span class="dc-prio">P3</span>
+              <span class="dc-tag">jira-administration</span><span class="dc-aud">lead</span>
             </div>
-            <h3>Cookbook de deploy</h3>
+            <h3>Components y migración de instancia</h3>
             <p>
-              Verificación por SHA, sync de env vars, logs de build y rollback — la caja de
-              herramientas de las etapas 9 y 12.
+              Dos operaciones de admin de Jira, selladas tras lectura previa y aprobación explícita.
             </p>
-            <span class="dc-status soon">Próximamente</span>
-          </div>
+            <span class="dc-status live">Abrir →</span>
+          </a>
+          <a class="deck-card" href="./decks/tooling/como-funciona.es.html">
+            <div class="dc-top">
+              <span class="dc-tag">tooling</span><span class="dc-aud">dev · lead</span>
+            </div>
+            <h3>acli, vercel-cli y el arranque</h3>
+            <p>
+              La skill se carga antes del binario: Jira por CLI sin romper campos, deploys
+              verificados por SHA y credenciales MCP que no fallan en silencio.
+            </p>
+            <span class="dc-status live">Abrir →</span>
+          </a>
         </div>
+      </div>
+    </section>
 
-        <div class="callout agent r">
-          <b>¿Por qué tantas cards "Próximamente"?</b> Este hub se construye deck por deck, no de
-          una — cada uno se re-verifica contra la skill real antes de publicarse (ver
-          <span class="mono">packages/decks/README.md</span>). El orden de construcción está en
-          <span class="mono">packages/decks/ROADMAP.md</span>: los dos
-          <span class="mono">P0</span> pendientes son los siguientes.
+    <!-- ============ MANTENEDORES ============ -->
+    <section class="band" id="mantenedores">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> — para mantenedores</div>
+          <h2>Cómo se arma y se publica este hub</h2>
+          <p class="sub">
+            Para quien agrega un deck, corrige uno o mantiene el boilerplate. Todo vive en GitHub;
+            nada de esto se publica como página.
+          </p>
+        </div>
+        <div class="decks-grid r">
+          <a
+            class="deck-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/packages/decks/README.md"
+          >
+            <div class="dc-top"><span class="dc-tag">convención</span></div>
+            <h3>Cómo agregar un deck</h3>
+            <p>
+              Tokens "Planos", IIFEs compartidos, la regla de nombrar dueños y nunca conteos ni
+              fechas, y el checklist antes de publicar.
+            </p>
+            <span class="dc-status live">GitHub ↗</span>
+          </a>
+          <a
+            class="deck-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/packages/decks/ROADMAP.md"
+          >
+            <div class="dc-top"><span class="dc-tag">roadmap</span></div>
+            <h3>Roadmap de decks</h3>
+            <p>
+              Qué deck enseña qué skill, cuáles se plegaron en otro y cuáles se descartaron, con el
+              motivo.
+            </p>
+            <span class="dc-status live">GitHub ↗</span>
+          </a>
+          <a
+            class="deck-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.github/workflows/pages.yml"
+          >
+            <div class="dc-top"><span class="dc-tag">publicación</span></div>
+            <h3>El workflow de Pages</h3>
+            <p>
+              Qué se copia a <span class="mono">_site/</span> (este hub, los decks y la página de
+              inicio) y qué pushes a <span class="mono">main</span> lo disparan.
+            </p>
+            <span class="dc-status live">GitHub ↗</span>
+          </a>
+          <a
+            class="deck-card"
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/REGISTRY.md"
+          >
+            <div class="dc-top"><span class="dc-tag">skills</span></div>
+            <h3>El catálogo de skills</h3>
+            <p>
+              <span class="mono">REGISTRY.md</span>, generado por
+              <span class="mono">bun run skills:registry</span>: la lista real de skills y sus
+              reglas compactas. Los decks nombran ese archivo en vez de copiar la lista.
+            </p>
+            <span class="dc-status live">GitHub ↗</span>
+          </a>
         </div>
       </div>
     </section>
@@ -1033,11 +1148,14 @@
             <span class="mono">packages/decks/</span> del propio repo — carpetas boilerplate-only,
             podadas por el scaffolder (<span class="mono">create-agentic-dev</span>) antes de llegar
             a un proyecto consumidor. Cada deck es un HTML autocontenido, sin build, sin requests
-            externos. Publicado por <span class="mono">.github/workflows/pages.yml</span> en cada
-            push a <span class="mono">main</span>.
+            externos. La página de inicio sale de <span class="mono">docs/onboarding.html</span>.
+            Publicado por <span class="mono">.github/workflows/pages.yml</span> en cada push a
+            <span class="mono">main</span> que toca alguna de esas fuentes.
           </p>
         </div>
         <div class="sig">
+          <span><a href="./onboarding.html">Empezá acá</a></span>
+          <span>·</span>
           <span
             ><a href="https://github.com/upex-galaxy/agentic-dev-boilerplate"
               >Repositorio ↗</a

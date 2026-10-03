@@ -155,9 +155,19 @@ export const PUBLISHED_MOUNTS: ReadonlyArray<readonly [site: string, repo: strin
   ['', 'packages/pages-home/'],
 ];
 
+/**
+ * Single files the Pages workflow copies outside the mounts above: site path ->
+ * repo path. `docs/` is not published, only its start-here page is.
+ */
+export const PUBLISHED_FILES: ReadonlyArray<readonly [site: string, repo: string]> = [
+  ['onboarding.html', 'docs/onboarding.html'],
+];
+
 /** Repo path (posix, relative) -> site path, or null when the file is not published HTML. */
 export function sitePathOf(rel: string): string | null {
   if (!rel.endsWith('.html')) { return null; }
+  const file = PUBLISHED_FILES.find(([, repo]) => repo === rel);
+  if (file) { return file[0]; }
   for (const [site, repo] of PUBLISHED_MOUNTS) {
     if (repo !== '' && rel.startsWith(repo)) { return site + rel.slice(repo.length); }
   }
@@ -181,6 +191,8 @@ export function resolvePublishedLink(siteFile: string, target: string): string |
     parts.push(seg);
   }
   const site = parts.join('/') + (target.endsWith('/') && parts.length > 0 ? '/' : '');
+  const file = PUBLISHED_FILES.find(([sitePath]) => sitePath === site);
+  if (file) { return file[1]; }
   const sorted = [...PUBLISHED_MOUNTS].sort((a, b) => b[0].length - a[0].length);
   for (const [prefix, repo] of sorted) {
     const bare = prefix.replace(/\/$/, '');
