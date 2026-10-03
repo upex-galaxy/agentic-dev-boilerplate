@@ -58,6 +58,16 @@ describe('ADOPT_REPO_ONLY_PATTERNS', () => {
     expect(excluded('.context/ADR/README.md')).toBe(false);
     expect(excluded('.context/ADR/ADR-NNNN-template.md')).toBe(false);
   });
+
+  test('the tooling\'s own tests stay out; the code they test travels', () => {
+    const excluded = (p: string): boolean => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(p));
+    expect(excluded('cli/lib/updater-core.test.ts')).toBe(true);
+    expect(excluded('scripts/lint-skills.test.ts')).toBe(true);
+    expect(excluded('.agents/skills/acli/scripts/md-to-adf.test.ts')).toBe(true);
+    expect(excluded('cli/lib/updater-core.ts')).toBe(false);
+    expect(excluded('scripts/lint-skills.ts')).toBe(false);
+    expect(excluded('.agents/skills/acli/scripts/md-to-adf.ts')).toBe(false);
+  });
 });
 
 describe('.env.example', () => {

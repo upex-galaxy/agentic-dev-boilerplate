@@ -47,11 +47,19 @@ import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 
 /**
  * Upstream paths an adopted app never receives, on the `--adopt` run and on
- * every plain run after it (`UpdaterConfig.repoOnlyPatterns`): the
- * boilerplate's own numbered ADRs would land in the app's decision log and
- * take its numbers. The ADR README and the `ADR-NNNN-template.md` still travel.
+ * every plain run after it (`UpdaterConfig.repoOnlyPatterns`):
+ *  - the boilerplate's own numbered ADRs would land in the app's decision log
+ *    and take its numbers (the ADR README and `ADR-NNNN-template.md` travel);
+ *  - the tooling's own test files: they verify the boilerplate in its CI, and
+ *    an app's test runner picks them up (measured: `bun test lib` matched
+ *    `cli/lib/*.test.ts` and the app's suite went red on the boilerplate's
+ *    self-checks).
  */
-export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [/^\.context\/ADR\/ADR-\d{4}-/];
+export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [
+  /^\.context\/ADR\/ADR-\d{4}-/,
+  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
+  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
+];
 
 /**
  * Agentic files the `--adopt` run delivers when the app lacks them. Each is on
