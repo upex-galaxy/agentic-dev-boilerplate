@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T02:03:18.091Z`
+> Generated: `2026-10-03T02:05:40.130Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 16
+Skills indexed: 18
 
 ---
 ## Skill: acli
@@ -175,6 +175,29 @@ Skills indexed: 16
 
 ---
 
+## Skill: pr-review-lead
+
+**Purpose**: Acts as a Tech Lead reviewing a teammate's pull request against this repo's development doctrine (or the target repo's own doctrine, if i...
+
+**Compact Rules**:
+- DO: run the strictness preflight (Flexible / Standard / Strict) before reading a single line of diff, unless the invocation already answered it; never re-ask what was given.
+- WHEN strictness is Flexible or Standard: doctrine-pattern deviations are observations framed as a comparison, never errors, and they must not move the score the way a Real defect does. Strict widens what counts as a finding; it still does not turn a pattern note into an error.
+- DO: load the target repo's OWN doctrine before analyzing when it ships one (`AGENTS.md`, `.agents/skills/`, `.context/`). Only when it has none does this repo's doctrine become the reference standard, and say so once, up front.
+- DO NOT: state a "best practice" as if the repo required it without a `file §section` citation. An ungrounded call is labeled as opinion, in those words.
+- DO: bucket every finding into exactly one of Real, Pattern, or Positive, with a severity from the shared scale in `sprint-development/references/review-pr.md` §"Adjudication contract" (`BLOCKER` / `MAJOR` / `MINOR` / `NIT`).
+- DO: always populate the Positive bucket. A review with zero positives on a PR that clearly has some is uncalibrated, not rigorous.
+- DO: read the actual diffs, never the PR description. On a PR too large for one diff, page the per-file patches; check commit headlines first so a lockfile, generated-types or vendor-sync commit is not reviewed line by line.
+- DO: present the findings table + positives + a score out of 10 as a CHECKPOINT, then let the user triage and re-classify. The user's context decides what ships; do not defend the first-pass severity.
+- DO NOT: post anything to GitHub without an explicit go-ahead on the final draft. Approval for a DIFFERENT PR does not carry over, and silence is not approval.
+- DO NOT: delegate drafting or posting the feedback to a subagent: tone decisions and externally-visible actions stay with the orchestrator.
+- DO: write the posted comment in English (Critical Rule #12) unless the user asked for another language for that specific comment.
+
+**Read full SKILL.md when**: applying the severity rubric or score weighting, probing an external repo for its doctrine, or drafting the posting flow itself.
+
+> Source: `.agents/skills/pr-review-lead/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
+
+---
+
 ## Skill: product-management
 
 **Purpose**: Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refin...
@@ -271,6 +294,25 @@ Skills indexed: 16
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.agents/skills/project-foundation/SKILL.md` · phase: `foundation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: session-handoff
+
+**Purpose**: Compact an entire agent session into a handoff document so a NEW session resumes exactly where this one stopped, as if the context window...
+
+**Compact Rules**:
+- **The file lives in the PRIMARY checkout**: `<<PRIMARY_ROOT>>/.session/handoffs/<predecessor-session-name>-handoff-NN.md`, also when the session runs in a linked worktree (`.agents/README.md` §"Checkout roots"). Never derive the root from `pwd`.
+- **`NN` comes from listing that directory**, two digits from `01`, counted across the whole lineage. The successor's session name is the handoff basename without the extension.
+- **All ten sections of the capture contract, in order.** An empty one is an explicit `none` line with a reason, never omitted.
+- **Label every claim `measured` or `predicted`; mark live state `PERISHABLE` with the wall-clock time it was measured** and the exact command that re-verifies it. Perishable beats priority.
+- **Ids are copied verbatim in backticks** (PR number, tracker key, SHA, deploy id, session id, terminal handle); every path is absolute.
+- **Write the file BEFORE launching the successor**, then launch it in the same worktree and the same harness. Never delete a predecessor's handoff.
+- **A handoff is a repo artifact**: English, no AI attribution (Critical Rules #3 and #12), never committed (`.session/` is gitignored).
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.agents/skills/session-handoff/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
 
 ---
 
