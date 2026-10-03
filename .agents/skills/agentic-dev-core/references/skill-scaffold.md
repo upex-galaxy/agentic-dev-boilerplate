@@ -50,9 +50,9 @@ Judgment vs fact inside a context skill: would two competent sessions write it d
 
 | Content | Home |
 |---|---|
-| Entities, relationships, RLS, migrations, state machines (synthesis) | the business data map `project-context` mode `data` writes |
-| CRUD matrix, UI inventory, feature flows (synthesis) | the business feature map mode `features` writes |
-| Auth model, route groups, OpenAPI surface (synthesis) | the business API map mode `api` writes |
+| Entities, relationships, RLS, migrations, state machines (synthesis) | the data map inside `business-data-context`, written by `project-context` mode `data` |
+| CRUD matrix, UI inventory, feature flows (synthesis) | the feature map inside `business-feature-context`, written by mode `features` |
+| Auth model, route groups, OpenAPI surface (synthesis) | the API map inside `business-api-context`, written by mode `api` |
 | The rule for READING a map ("profiles are soft-deleted; a count without `deleted_at IS NULL` is wrong") | the context skill's `## Rules` or `references/gotchas.md` |
 | Jira mirror | `.context/PBI/` (never hand-written, `AGENTS.md` §9) |
 | An architecture decision | `.context/ADR/` |
@@ -61,11 +61,11 @@ Judgment vs fact inside a context skill: would two competent sessions write it d
 
 **Hard rule: a `-context` skill CITES `.context/` paths, it does not copy them.** A context skill that restates a `.context/` fact is a second source of truth and fails review. A generated map held inside a context skill is not a copy: it is the ONLY copy of that synthesis. `STALE-PATH` (`scripts/lint-skills.ts`) enforces the citing half with a kind-scoped rule: inside a `metadata.kind: context` skill every `.context/` cite must exist on disk (the map is born before the skill; only the gitignored `.context/PBI/` cache is exempt). The "does not copy" half stays a review rule.
 
-**Ownership rule.** A project's context skills (`billing-context`, `auth-context`, ...) are project-owned and NEVER shipped upstream. The updater enforces it: any `.agents/skills/<slug>-context/` other than the ones upstream owns (the grandfathered workflow slug `project-context`) is project-local by construction, never delivered, overwritten or deleted by `bun run up`, even if upstream ever ships a same-slug example (`isProjectLocalSkillPath` in `cli/lib/updater-core.ts`). A context skill this boilerplate ever ships on purpose needs its own explicit exception there, named by slug.
+**Ownership rule.** A project's context skills (`billing-context`, `auth-context`, ...) are project-owned and NEVER shipped upstream. The updater enforces it: any `.agents/skills/<slug>-context/` other than the ones upstream owns (the grandfathered workflow slug `project-context`) is project-local by construction, never delivered, overwritten or deleted by `bun run up`, even if upstream ever ships a same-slug example (`isProjectLocalSkillPath` in `cli/lib/updater-core.ts`). The context skills this boilerplate ships on purpose are the business map skills, and their exception is explicit and delivery-only: `CONTEXT_MAP_SKILLS` (`cli/lib/context-maps.ts`) names them, `collectContextMapBootstrap` delivers each folder once when it is absent, and after that they are project-owned like any other (`business-context-maps.md` §9).
 
 **The write-scope amendment.** A context skill that holds a generated map keeps it honest: when a session observes something that contradicts a section, it PROPOSES the one-section edit (to the user, or to the conductor for a supervised worker) and applies it on approval, under its own `references/` and nowhere else. It declares that in frontmatter (`metadata.writes: [references/]`), carries the procedure in `references/refresh.md`, and `CONTEXT-WRITES` (`scripts/lint-skills.ts`) gates it. It never runs a stage, never touches Jira or Confluence (`[ISSUE_TRACKER_TOOL]` / `[KNOWLEDGE_BASE_TOOL]` are forbidden in it) and never edits another skill.
 
-**Who proposes, who creates.** The business maps have an owner already: `project-context` modes `data` / `features` / `api` generate them, and their reading rules accrue next to them through those modes' refresh paths. For any OTHER aspect, `project-context` mode `context-skill` CREATES the skill, always through `skill-creator`. UPDATE appends dated rules; it never rewrites one.
+**Who proposes, who creates.** The business maps have an owner already: `project-context` modes `data` / `features` / `api` generate them inside `business-data-context`, `business-feature-context` and `business-api-context`, and their reading rules accrue in those skills through their refresh paths (`business-context-maps.md`). For any OTHER aspect, `project-context` mode `context-skill` CREATES the skill, always through `skill-creator`. UPDATE appends dated rules; it never rewrites one.
 
 **Who loads them.** A context skill triggers by its `description` in the main thread. In a subagent briefing the Skill Resolver injects only the context skills whose ASPECT the dispatch touches (`skill-resolver.md`, rule 5), never all of them.
 
