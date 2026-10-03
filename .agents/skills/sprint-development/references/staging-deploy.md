@@ -19,6 +19,8 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 ## 📥 INPUT REQUERIDO
 
 > **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo, y nunca escribas el literal `staging` ni `develop` en un comando. Si vale `null` (`solo-main`, `github-flow`, `trunk-based`) no hay rama de integración: no hay merge a staging, Stage 4 verifica el Preview deployment de Vercel de la rama del PR, y el merge a `git_strategy.branches.production` es Stage 5.
+>
+> **Stack**: los comandos de la app son sus propios scripts (`{{stack.package_manager}} run {{stack.scripts.<role>}}` desde `{{stack.app_root}}`; un rol null se omite y se reporta), el CI es el que la app ya corre (`{{stack.ci}}`, cualquier workflow bajo `.github/workflows/`) y el hosting es `{{stack.hosting}}`: con un valor distinto de `vercel`, los pasos de Vercel de abajo se reemplazan por la verificación equivalente de ese host, y si el host no expone una, el deploy se reporta como no verificado (Critical Rule #16). `../SKILL.md` → `## Stack parameters`.
 
 ### 1. Estado del PR/Feature
 
@@ -33,7 +35,7 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 **Leer:**
 
-- `.github/workflows/ci.yml` - **CRÍTICO** - Workflow de GitHub Actions
+- Los workflows de CI de la app (`.github/workflows/*.yml`, cualquier nombre) - **CRÍTICO** - qué corre en cada push / PR y qué dispara el deploy
 - `.context/ci-cd-setup.md` - Documentación del CI/CD
 
 **Qué identificar:**
@@ -145,14 +147,15 @@ git pull origin [feature-branch]
 ### Paso 1.2: Validar Localmente
 
 ```bash
+# Desde {{stack.app_root}}; un rol null se omite y se reporta
 # Lint
-npm run lint:check
+{{stack.package_manager}} run {{stack.scripts.lint}}
 
 # Tests
-npm run test
+{{stack.package_manager}} run {{stack.scripts.test}}
 
 # Build
-npm run build
+{{stack.package_manager}} run {{stack.scripts.build}}
 ```
 
 **Verificar:**
@@ -242,7 +245,7 @@ git push origin <integration>
 
 **Lint fails:**
 
-- Ejecuta `npm run lint:check -- --fix` localmente
+- Ejecuta `{{stack.package_manager}} run {{stack.scripts.lint}}` localmente y corrige (con el fixer de la app si tiene uno, por ejemplo un script `lint:fix`)
 - Commit fix
 - Push → CI re-ejecuta
 
@@ -254,7 +257,7 @@ git push origin <integration>
 
 **Build fails:**
 
-- Ejecuta `npm run build` localmente
+- Ejecuta `{{stack.package_manager}} run {{stack.scripts.build}}` localmente
 - Revisa errores de compilación
 - Corrige y push
 
@@ -304,7 +307,7 @@ https://[project]-staging.vercel.app
 **Instalar Vercel CLI (si no está):**
 
 ```bash
-npm install -g vercel
+bun add -g vercel
 ```
 
 **Login:**
@@ -331,7 +334,7 @@ vercel
 **Instalar Railway CLI:**
 
 ```bash
-npm install -g @railway/cli
+bun add -g @railway/cli
 ```
 
 **Login:**
@@ -515,7 +518,7 @@ Lista para QA y exploratory testing.
 
 ```bash
 # Antes de merge/deploy:
-npm run lint:check && npm run test && npm run build
+{{stack.package_manager}} run {{stack.scripts.lint}} && {{stack.package_manager}} run {{stack.scripts.test}} && {{stack.package_manager}} run {{stack.scripts.build}}
 ```
 
 ### **2. Merge via Pull Request**

@@ -46,7 +46,7 @@ Serialized through the conductor and NEVER done by a worker, because each one mu
 |---|---|
 | Stage 4: merge into the integration branch + staging deploy + its verification | one staging environment, one correct merge order; two workers deploying is a race neither can see. Merge in dependency order, one ticket at a time, and verify the deployment for each merge SHA reads `READY` before the next (Critical Rule #16) |
 | Stage 5: production deploy | always manual per ticket, exactly as in N=1 |
-| Applying a migration to a shared database | irreversible and hits every worker at once. The migration number comes from the live ledger at apply time; a worker sends its SQL and waits |
+| Applying a migration to a shared database | irreversible and hits every worker at once. The conductor reads the DB MCP's migration history at apply time and applies per `{{stack.database.migrations_tool}}` (`database-changes.md`); a worker sends its SQL and waits |
 | Regenerating output from a live instance (Supabase types, `bun run api:sync` into `api/schemas/`) | one writer, after the last migration lands; a worker's regeneration silently absorbs a sibling's unmerged schema |
 | The sprint report `.context/reports/SPRINT-{N}-DEVELOPMENT.md` | one writer, rows ordered by close time |
 | Bulk tracker pull (`bun run context:hydrate`, `jira:sync-issues pull` / `jql`) | rewrites the whole `.context/PBI/` cache; a worker's own `get <KEY>` is fine |
@@ -103,7 +103,7 @@ The brief extends the 7-component briefing (`agentic-dev-core/references/briefin
 label: <W1> · task: <task id or "-"> · dispatch: <dispatch id or "-">
 ticket: <KEY> · type: <story|bug> · priority: <priority> · execution sprint: <n> · round: <n>
 sprint scope (absolute path): <<PRIMARY_ROOT>>/.session/sprint-development/sprint-<N>/
-worktree: <abs path> · branch: <feature/KEY-slug> · base: <integration branch>
+worktree: <abs path> · branch: <feature/KEY-slug> · base: <integration branch, or production when it is null>
 environment: <env> · web: <url> · api: <url>
 execution mode: Orchestrated | Solo
 automation identity: <slot name from testing.automation_identity, or "none: no live-UI validation in this round">

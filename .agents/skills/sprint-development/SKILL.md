@@ -29,6 +29,7 @@ compact_rules: |
   - **Ticket availability is queried, never read from prose.** Before planning or recommending a ticket, query the tracker live for that ticket and its direct blockers. `.context/dev-roadmap.md` is authoritative for dependency edges and mockup gates, never for current status — a recent timestamp on that file says nothing about a ticket's live status.
   - **Config claims cite the file they came from.** Read `.agents/project.yaml` / `package.json` / `.env.example` before asserting what the project is configured to do. Never quote a value from a skill reference or worked example as project state.
   - **Product docs are the PRD/SRS OR the business maps.** Fast-fail only when NEITHER set exists (Pre-requisites); never author a PRD, an SRS or a Constitution to satisfy the check: an existing app's product docs are its business maps + domain glossary + dev guide. Which files each case reads: `## Inputs` → "Product docs: PRD/SRS or business maps".
+  - **The app's stack is read, never assumed.** An app command is `{{stack.package_manager}} run {{stack.scripts.<role>}}` from `{{stack.app_root}}` (null role → skip that check and say so, never invent or add the script); branches come from `git_strategy.branches` (integration null → base and merge target are the production branch, never a literal `staging` / `develop`); a schema change goes through the DB MCP per `{{stack.database.migrations_tool}}`, after reading the migration history through it (`references/database-changes.md`); capability `db` binds only a story that touches the database; the app's existing conventions (import alias, structure, test ids) win over this skill's defaults, and an existing test id is never renamed. See `## Stack parameters`.
   - **Technical decisions are yours to make — but read the record before you make one.** Search the run's decision/escalation log, `.context/ADR/`, and the ticket plus its siblings BEFORE deciding OR asking. A decision already made is followed and cited, never re-derived; re-asking a settled question — even to a human, asked cold without the prior ruling in front of them — yields a contradiction, not an override. Genuinely unsettled and technical → decide it yourself via a scored judge panel of 3-5 independent lenses, then record the decision AND its scoring rationale where the next agent's search will find it. Escalate ONLY product/business calls, a novel security posture not already ratified, irreversible or destructive actions, and whatever the operator explicitly reserved. See `agentic-dev-core/references/decision-protocol.md`. **Product calls are the one configurable category**: a project that sets `decision_authority.product: decide` in `.agents/project.yaml` (no human PO in the loop) routes them to a scored, attributed decision subagent instead of escalating — read the block, then `decision-protocol.md` §5.1.
   - **Tracker moves are named by slug, verified at the destination, never guessed.** Fire only the transitions `agentic-dev-core/references/artifact-lifecycle.md` §1 gives this stage (Stage 1 `start_working`; Stage 3 `pull_request` / `ready`; Stage 4 `deployed` / `fixed_and_deployed`; the bug-triage slugs) and re-read the status after every Stage 3 / Stage 4 event, firing the slug yourself when automation did not. Read `assignee` before and after every transition: merge automation reassigns to the developer. Slug missing for the work type → list the LIVE transitions, ask ONE question, fire the live id, recommend `bun run jira:sync-workflows`; never a remembered or cross-project id, never a hand-edited `.agents/jira-workflows.json`, never a silent skip.
   - **A fleet worker stops at an open PR.** Batch-sprint with N>1 executors (`references/fleet-mode.md`): a worker is detected from its prompt (`/sprint-development <KEY> fleet worker` + a brief path), never from the environment; it runs Stages 1-3 on its one ticket without human checkpoints and without returning to its prompt; merge, staging deploy, shared-DB migrations, live-instance regeneration and the sprint report stay with the conductor. N=1 is unchanged byte for byte, and when the orchestration gate fails the launch file is still written and the orchestrator is never named.
@@ -78,6 +79,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 - **Ticket availability is queried, never read from prose.** Before planning or recommending a ticket, query the tracker live for that ticket and its direct blockers. `.context/dev-roadmap.md` is authoritative for dependency edges and mockup gates, never for current status — a recent timestamp on that file says nothing about a ticket's live status.
 - **Config claims cite the file they came from.** Read `.agents/project.yaml` / `package.json` / `.env.example` before asserting what the project is configured to do. Never quote a value from a skill reference or worked example as project state.
 - **Product docs are the PRD/SRS OR the business maps.** Fast-fail only when NEITHER set exists (Pre-requisites); never author a PRD, an SRS or a Constitution to satisfy the check: an existing app's product docs are its business maps + domain glossary + dev guide. Which files each case reads: `## Inputs` → "Product docs: PRD/SRS or business maps".
+- **The app's stack is read, never assumed.** An app command is `{{stack.package_manager}} run {{stack.scripts.<role>}}` from `{{stack.app_root}}` (null role → skip that check and say so, never invent or add the script); branches come from `git_strategy.branches` (integration null → base and merge target are the production branch, never a literal `staging` / `develop`); a schema change goes through the DB MCP per `{{stack.database.migrations_tool}}`, after reading the migration history through it (`references/database-changes.md`); capability `db` binds only a story that touches the database; the app's existing conventions (import alias, structure, test ids) win over this skill's defaults, and an existing test id is never renamed. See `## Stack parameters`.
 - **Technical decisions are yours to make — but read the record before you make one.** Search the run's decision/escalation log, `.context/ADR/`, and the ticket plus its siblings BEFORE deciding OR asking. A decision already made is followed and cited, never re-derived; re-asking a settled question — even to a human, asked cold without the prior ruling in front of them — yields a contradiction, not an override. Genuinely unsettled and technical → decide it yourself via a scored judge panel of 3-5 independent lenses, then record the decision AND its scoring rationale where the next agent's search will find it. Escalate ONLY product/business calls, a novel security posture not already ratified, irreversible or destructive actions, and whatever the operator explicitly reserved. See `agentic-dev-core/references/decision-protocol.md`. **Product calls are the one configurable category**: a project that sets `decision_authority.product: decide` in `.agents/project.yaml` (no human PO in the loop) routes them to a scored, attributed decision subagent instead of escalating — read the block, then `decision-protocol.md` §5.1.
 - **Tracker moves are named by slug, verified at the destination, never guessed.** Fire only the transitions `agentic-dev-core/references/artifact-lifecycle.md` §1 gives this stage (Stage 1 `start_working`; Stage 3 `pull_request` / `ready`; Stage 4 `deployed` / `fixed_and_deployed`; the bug-triage slugs) and re-read the status after every Stage 3 / Stage 4 event, firing the slug yourself when automation did not. Read `assignee` before and after every transition: merge automation reassigns to the developer. Slug missing for the work type → list the LIVE transitions, ask ONE question, fire the live id, recommend `bun run jira:sync-workflows`; never a remembered or cross-project id, never a hand-edited `.agents/jira-workflows.json`, never a silent skip.
 - **A fleet worker stops at an open PR.** Batch-sprint with N>1 executors (`references/fleet-mode.md`): a worker is detected from its prompt (`/sprint-development <KEY> fleet worker` + a brief path), never from the environment; it runs Stages 1-3 on its one ticket without human checkpoints and without returning to its prompt; merge, staging deploy, shared-DB migrations, live-instance regeneration and the sprint report stay with the conductor. N=1 is unchanged byte for byte, and when the orchestration gate fails the launch file is still written and the orchestrator is never named.
@@ -128,7 +130,7 @@ If any of the above is missing, fast-fail and hand off to the appropriate setup 
 
 Canonical reading order for any AI starting cold on a sprint-development workflow. Read in order; stop earlier when the ticket is small enough that later inputs add no signal.
 
-1. `.agents/project.yaml` — project identity, env URLs, project key, MCP names, `git_strategy` (branch policy), and `testing.automation_identity` (the account any live-UI or authenticated-probe step logs in as).
+1. `.agents/project.yaml` — project identity, env URLs, project key, MCP names, `git_strategy` (branch policy), `stack:` (the app's root, scripts, database, CI and conventions: `## Stack parameters`), and `testing.automation_identity` (the account any live-UI or authenticated-probe step logs in as).
 2. `.agents/jira-required.yaml` — canonical slug catalog (custom fields, statuses, link types) for the active workspace.
 3. `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping for `{{jira.<slug>}}` resolution.
 4. `.agents/jira-workflows.json` — workflow + transition catalog (resolves Ready For Dev → In Progress → In Review → Ready For QA); which stage fires which slug, and the unmapped-status fallback: `agentic-dev-core/references/artifact-lifecycle.md`.
@@ -155,6 +157,30 @@ The Pre-requisites accept either set. What each Stage 1 / Stage 2 need reads fro
 | Scope + copy voice (UI text) | PRD `executive-summary.md`, `user-personas.md`, `mvp-scope.md` + the glossary | `.context/business/domain-glossary.md`, `business-feature-context` `overview` + `module-<slug>`, and the copy the live UI already uses |
 
 `.context/ADR/` and the glossary (input 6) are read in both cases. With both sets present, the PRD/SRS state intent and the maps state what the code does: when they disagree the code wins and the plan names the mismatch. On a business-maps project the maps are required inputs, not optional ones: a placeholder feature or API map the story needs is a `missing_input` in the plan, and the plan recommends `/project-context <mode>` rather than a PRD or SRS.
+
+---
+
+## Stack parameters
+
+The app this skill builds is described by the `stack:` block of `.agents/project.yaml` (leaves are `{{stack.<path>}}`) and its branches by `git_strategy`. Read both once per run, with input 1, and let them parametrize every stage; a reference that shows a literal command, branch or tool is showing the greenfield default those values resolve to. Block missing → the defaults of `.agents/project.schema.yaml`, said once in the Stage 1 plan with `bun run agents:setup --stack` as the fix.
+
+| Value | What it decides | How each stage uses it |
+|---|---|---|
+| `{{stack.app_root}}` | where the app's `package.json` and code live | every app command runs from it and every app path a reference names resolves under it; the agentic tooling (`bun run jira:*`, `skills:*`, `context:map`) stays at the repo root |
+| `{{stack.scripts.<role>}}` | the app's own script NAMES (`dev`, `build`, `lint`, `types`, `test`, `db_types`) | an app command is `{{stack.package_manager}} run {{stack.scripts.<role>}}`. Verification cap=3 = the `lint`, `types` and `test` roles; the live-UI dev server = `dev`; Stage 2 build check = `build`. A null role means the app has no such script: skip that check and say so in the report, never invent the script, never add one to the app's `package.json` inside a story |
+| `git_strategy.branches.*` | where work branches from and merges to | base = `integration`, or `production` when `integration` is null (`solo-main`, `github-flow`, `trunk-based`); never the literal `staging` or `develop` in a command. Null integration: Stage 4 verifies the PR's preview deployment and the merge to production is Stage 5 (`references/staging-deploy.md`) |
+| `{{stack.database.*}}` | how a schema change is read and applied | through the DB MCP, with `{{stack.database.migrations_tool}}` naming who keeps the ledger; migration history read through the MCP before any schema work. Full doctrine: `references/database-changes.md`. `{{stack.database.engine}}` = `none`: a story that needs a database is a finding, not a step |
+| capability `db` | the DB MCP | required only by a story whose plan touches the schema, RLS, a database function or the data (input 9's mechanical trigger); a story that does not is never stopped for it (`agentic-dev-core/references/mcp-capabilities.md` §4, optional steps) |
+| `{{stack.ci}}` + `{{stack.hosting}}` | the CI the app already runs and where it deploys | `references/ci-cd-setup.md` is additive: an existing workflow is never replaced, only complemented with the user's OK |
+| `{{stack.conventions.import_alias}}`, `{{stack.conventions.testid_style}}` | the app's own conventions | see "Existing conventions win" below |
+
+### Existing conventions win
+
+The conventions in `references/code-standards.md`, `references/error-handling.md` and `references/data-testid-standards.md` are the DEFAULT for an app that has none yet. Where the app already has a convention (folder layout, import alias, naming, error-handling shape, state or data-fetching library, test runner, test-id attribute and case), the story follows the app's, and a reference rule that contradicts it does not apply. Read the convention from the code the story touches and its neighbours, not from this skill.
+
+- **Test ids**: `{{stack.conventions.testid_style}}` set → use that attribute and case. Null on an app whose code already carries test ids → infer the style from them and keep it. Null with none in the code → `references/data-testid-standards.md`. Never rename, re-case or remove an existing test id: other tooling (a QA suite, an analytics tag) may select on it.
+- **A convention you would change** is a tech-debt note in the plan or the PR, never a rewrite inside the story (scope discipline).
+- **Review**: a departure from the app's convention is a finding; a departure from a reference's default where the app has its own convention is not.
 
 ---
 
@@ -227,7 +253,7 @@ Solo trades context isolation for fewer round-trips and one legible transcript �
 | Trigger / context-load (epic precheck)    | inline                 | orchestrator reads epic artifacts + ticket; no subagent yet                                   |
 | Stage 1 — Plan creation                   | Single                 | dedicated planner subagent: read story + AC, decompose tasks, output `implementation-plan.md` |
 | Stage 2 — Implementation (multi-file)     | Sequential or Parallel | impl agent(s); split by file or feature slice per the implementation plan                     |
-| Stage 2 — Verification (lint+types+tests) | Parallel cap=3         | three verifiers in parallel: `bun run lint:check`, `bun run build` / `tsc`, unit tests        |
+| Stage 2 — Verification (lint+types+tests) | Parallel cap=3         | three verifiers in parallel: the app's `lint`, `types` and `test` scripts (`{{stack.package_manager}} run {{stack.scripts.<role>}}`; a null role is skipped and reported) |
 | Stage 3 — Code review                     | Single                 | **independent adversarial** reviewer subagent: severity-tagged findings (BLOCKER/MAJOR/MINOR/NIT) vs AC + code-standards; orchestrator adjudicates each |
 | Stage 3 — Fix-and-iterate (if review red) | Sequential             | impl agent picks up review notes via `fix-issues.md`; re-runs verification                    |
 | Stage 4 — Deploy to staging               | Single + Background    | deploy agent kicks off; background monitor watches health/smoke                               |
@@ -290,7 +316,7 @@ Per `complementary_categories` in this skill's frontmatter and the matching rule
 - **UI work in any stage** → `frontend-ui` category match (T3 or T4 — ASK if T4). **Required at the step**: `frontend-design` + `shadcn` + `tailwind-css-patterns` before the first component or layout write (`references/implement-story.md` Paso 1 item 5).
 - **Next.js / React patterns** → `frontend-framework` category match (T3 silent if matched).
 - **Forms work** → `forms-validation` category match (T3 silent).
-- **DB work** → `backend-db` category match (T3 silent). **Required at the step**: `supabase` + `supabase-postgres-best-practices` before any DB-MCP schema, RLS or migration call (`references/implement-story.md` Paso 2).
+- **DB work** → `backend-db` category match (T3 silent). **Required at the step**: `supabase` + `supabase-postgres-best-practices` before any DB-MCP schema, RLS or migration call (`references/implement-story.md` Paso 2, `references/database-changes.md`).
 - **Deploy (Stages 4-5)** → `deploy` category: `deploy-to-vercel` (method) next to T1 `vercel-cli` (verification), required in `references/staging-deploy.md` and `references/production-deploy.md`.
 - **Email-feature work** → `email` category: `resend-cli`, required when the story sends or templates email, at implementation and at deploy.
 - **Public-page work** → `seo` category: `seo` (or `nextjs-seo`), required when the story adds or changes a public, indexable page.
@@ -472,7 +498,7 @@ UI stories are validated against the **running app**, never against a static rea
 
 **Light path (Tier 0)**: an authenticated HTTP probe (`[API_TOOL]`: log in through the app's own endpoint with the declared identity, keep the session in the scratch dir, fetch routes, assert on status / redirects / server-rendered markup, delete the session file before reporting) is **sanctioned** for route reachability, auth-redirect behaviour, presence of server-rendered content, data correctness in markup, and fast regression re-checks. It is **NOT sufficient** for layout, computed tokens, client-rendered loading/empty/error states, responsive breakpoints, interactive AC flows, or screenshot evidence. Tier 0 may carry the Stage 2 inner loop; the **Stage 3 final pass on a UI story is always browser-based**. Boundary + shape: `references/live-ui-validation.md` §7.
 
-**Hard rules**: NEVER validate against a production build — use the running dev server (read `package.json` for its script). Log in as the declared automation identity, resolved by variable name from `.env`, never hardcoded, never through a privileged bypass. Session material goes to the scratch dir and is deleted before reporting (`secrets_materialized:` / `cleaned:` in the report). **Gate**: a UI story cannot reach merge with an open, unratified live-UI gap — any gap → fix immediately (dispatch a fix subagent in Orchestrated / fix inline in Solo) → re-validate. Non-UI stories skip live-UI validation entirely.
+**Hard rules**: NEVER validate against a production build — use the running dev server (`{{stack.package_manager}} run {{stack.scripts.dev}}` from `{{stack.app_root}}`; confirm the name in the app's `package.json`). Log in as the declared automation identity, resolved by variable name from `.env`, never hardcoded, never through a privileged bypass. Session material goes to the scratch dir and is deleted before reporting (`secrets_materialized:` / `cleaned:` in the report). **Gate**: a UI story cannot reach merge with an open, unratified live-UI gap — any gap → fix immediately (dispatch a fix subagent in Orchestrated / fix inline in Solo) → re-validate. Non-UI stories skip live-UI validation entirely.
 
 Mechanics — the identity contract (§0), `[AUTOMATION_TOOL]` resolution (§1), browser sessions (§3: the anonymous-vs-identity question before `open`, session rules, the `playwright-cli` login recipe with the fail-closed guard, session material as a secret, fleets and namespaces), the per-screen checklist, the real-time-during-implementation vs final-verification patterns, the fix loop, the pre-report session checklist (§6) and the Tier 0 capability boundary (§7) — live in `references/live-ui-validation.md` and `references/live-ui-identity.md`.
 
@@ -491,13 +517,13 @@ Pick the right entry point based on ticket type:
 - **Resuming after interruption** -> `references/continue-implementation.md` (re-orient, identify last completed step, resume).
 - **PR feedback / lint or CI red** -> `references/fix-issues.md` (address comments without rewriting history).
 
-Read inline for style + standards:
+Read inline for style + standards (defaults for an app that has none of its own; where the app already has a convention it wins: `## Stack parameters` → "Existing conventions win"):
 
 - `references/code-standards.md` — TS patterns, imports, error handling
 - `references/error-handling.md` — public-method fail-fast vs utility silent-fail
 - `references/data-testid-standards.md` — naming + placement of test ids
 
-Verification runs in **parallel cap=3**: lint, typecheck/build, unit tests. Each subagent reports red/green; the orchestrator iterates only when something is red. **Atomic commits**: one commit per logical step, never one giant dump.
+Verification runs in **parallel cap=3**: the app's `lint`, `types` and `test` scripts (`## Stack parameters`; a null role is skipped and reported, never replaced by an invented command). Each subagent reports red/green; the orchestrator iterates only when something is red. **Atomic commits**: one commit per logical step, never one giant dump.
 
 **Live-UI check while building (UI stories)**: per the active flow mode (subagent if Orchestrated, inline if Solo), open the running dev server via `[AUTOMATION_TOOL]` and confirm what you build renders correctly against the live UI + design system **as you code** — not after. See the Live-UI validation subsection above. Non-UI stories skip this.
 
@@ -513,7 +539,7 @@ Review checklist (driven by `references/review-pr.md`):
 
 - All Acceptance Criteria covered by code paths
 - Lint + build green; types clean
-- Code-standards conformance (imports via aliases, no relative paths, parameter limits, etc.)
+- Conventions conformance: the app's own where it has one (import alias `{{stack.conventions.import_alias}}`, structure, test ids, never renamed), `references/code-standards.md` where it has none (parameter limits, etc.)
 - Security checks (no secrets in diff, auth handled, input validation)
 - **RPC authorization (when the diff touches database migrations)**: for every function taking a caller-supplied identity or scope parameter, confirm THREE things separately — (a) an actor bind exists and sits at step 0, before any table read; (b) every returned row is explicitly scoped to the asserted boundary (a correct membership assert does NOT scope the result set); (c) a DB-integration test attempts the spoof against the REAL database, since a mocked `db.rpc` proves nothing about the function. Also challenge whether `SECURITY DEFINER` was needed at all. Treat a missing bind as BLOCKER, not MAJOR. Full doctrine + the canonical guard: `references/rpc-authorization.md`
 - UI/UX fidelity (where applicable): matches the story's screen — `DESIGN.md` tokens plus the per-screen spec in `.context/design/master-design-plan.md` when the project maintains one; the fidelity reference is the live UI + `DESIGN.md` tokens (Critical Rule #14), so an unratified divergence from THEM is a defect, while following the improved live UI where the mockup differs is not
@@ -635,6 +661,7 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 | "review this PR"                                     | `references/review-pr.md`               |
 | "setup eslint+prettier+typecheck for the first time" | `references/setup-linting.md`           |
 | "setup CI (first time)"                              | `references/ci-cd-setup.md`             |
+| "change the schema" / "add a migration" / "RLS policy" | `references/database-changes.md`        |
 | "deploy to staging"                                  | `references/staging-deploy.md`          |
 | "configure env vars"                                 | `references/environment-config.md`      |
 | "pre-deploy-to-prod checklist"                       | `references/pre-deploy-checklist.md`    |
@@ -671,7 +698,7 @@ If the prerequisite check at the top of this skill fails (no `.agents/project.ya
 | Tag                    | Resolves to                                       | Defined in                  |
 | ---------------------- | ------------------------------------------------- | --------------------------- |
 | `[ISSUE_TRACKER_TOOL]` | `acli`, Atlassian MCP, or `{{ISSUE_TRACKER_CLI}}` | `AGENTS.md` Tool Resolution |
-| `[DB_TOOL]`            | capability `db` (Supabase MCP; DBHub if the project adds it); raw SQL only when the user chooses it | `AGENTS.md` Tool Resolution |
+| `[DB_TOOL]`            | capability `db` (Supabase MCP; DBHub if the project adds it); raw SQL only when the user chooses it. Needed only by a story that touches the database; how a change is applied per `{{stack.database.migrations_tool}}`: `references/database-changes.md` | `AGENTS.md` Tool Resolution |
 | `[API_TOOL]`           | OpenAPI MCP, Postman, or `curl`                   | `AGENTS.md` Tool Resolution |
 | `[AUTOMATION_TOOL]`    | Playwright CLI (`/playwright-cli`), the only browser path | `AGENTS.md` Tool Resolution |
 | `[ORCHESTRATION_TOOL]` | the multi-session orchestration layer, used ONLY in fleet mode (batch-sprint, N>1 executors); gate fails → the `launch.txt` fallback, never named | `orca-orchestration/SKILL.md` (the tool owner; this skill names verbs, never commands) |
@@ -685,6 +712,7 @@ Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolv
 - `{{PROJECT_KEY}}`, `{{ISSUE_TRACKER}}`, `{{ATLASSIAN_URL}}` — issue tracker
 - `{{WEB_URL}}`, `{{API_URL}}` — env-scoped, active env from `.agents/project.yaml`
 - `{{BACKEND_STACK}}`, `{{FRONTEND_STACK}}`, `{{DB_TYPE}}` — stack-specific patterns
+- `{{stack.<path>}}` — the app's root, script names, database, CI, hosting and conventions (`## Stack parameters`)
 - `{{jira.*}}` — story custom fields (acceptance_criteria, business_rules, acceptance_test_plan, etc.)
 
 If any required var is unset, ensure `.agents/project.yaml` exists (clone the full boilerplate — foundation files ship with the repo) and run `/project-foundation` to fill in stack values.
@@ -716,6 +744,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 - [ ] Pre-requisites green (project.yaml, story exists, AC clear, .env populated)
 - [ ] **Phase 0b live query run** for this ticket + its direct blockers; no blocker open; ticket not already past dev
 - [ ] **Automation identity resolved** from `testing.automation_identity` (UI stories) — or STOPPED and reported if the slot is unset
+- [ ] **Stack resolved**: `stack:` and `git_strategy.branches` read (or the schema defaults named in the plan); every null script role the run skipped is in the report
 - [ ] **Execution mode resolved** (Orchestrated default, or Solo if the user opted in) and stated back
 - [ ] **Batch mode resolved**: if the trigger phrase implies a sprint loop, sprint report (`SPRINT-{N}-DEVELOPMENT.md`) exists or has been generated
 - [ ] Sprint report row updated at each Jira transition (IN_PROGRESS / IN_REVIEW / MERGED / STAGING_DEPLOYED / PROD_DEPLOYED)

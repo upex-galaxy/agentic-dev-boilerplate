@@ -63,6 +63,8 @@ references/data-testid-standards.md
 - Reglas de manejo de errores
 - Estándares de data-testid para identidad de componentes
 
+Son los defaults para una app sin convención propia. Donde la app ya tiene una (alias `{{stack.conventions.import_alias}}`, estructura, manejo de errores, test ids `{{stack.conventions.testid_style}}`), se revisa contra la de la app: apartarse de la convención de la app es un hallazgo; apartarse de un default de estas references donde la app tiene la suya, no (`../SKILL.md` → `## Stack parameters` → "Existing conventions win").
+
 ### 3. Design System + Screen Design (si hay UI):
 
 ```
@@ -104,8 +106,9 @@ DESIGN.md                              # token + component-system authority
 **Ejecutar (si es posible):**
 
 ```bash
-npm run lint:check    # o: bun run lint:check
-npm run build   # o: bun run build
+# Scripts de la app, desde {{stack.app_root}}; un rol null se omite y se reporta
+{{stack.package_manager}} run {{stack.scripts.lint}}
+{{stack.package_manager}} run {{stack.scripts.build}}
 ```
 
 **Revisar:**
@@ -372,7 +375,7 @@ import { Button } from '@/components/ui/button';
 
 ### 8. 🧪 **Data-TestID para Identidad de Componentes**
 
-**Revisar según `references/data-testid-standards.md`:**
+**Revisar según la convención de test ids de la app** (`{{stack.conventions.testid_style}}`, o la que ya usa su código); sin ninguna, según `references/data-testid-standards.md`. Un test id existente renombrado, re-caseado o borrado es un hallazgo MAJOR: otra herramienta puede seleccionar por él.
 
 - [ ] **Componentes de dominio** (MentorCard, LoginForm, etc.) tienen `data-testid` en su **definición**
 - [ ] **Componentes UI base** (Button, Card, Input de shadcn) reciben `data-testid` donde se **usan**, NO en su definición
