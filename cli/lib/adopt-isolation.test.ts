@@ -82,12 +82,12 @@ describe('tsconfigIsolation', () => {
 describe('eslintIsolation', () => {
   test('a flat config without ignores misses every tooling path', () => {
     const e = eslintIsolation(tempRoot({ 'eslint.config.mjs': 'export default [];\n' }));
-    expect(e).toEqual({ path: 'eslint.config.mjs', kind: 'flat', missing: ['cli/**', 'scripts/**', 'eslint.config.base.js', 'eslint.config.tooling.mjs'] });
+    expect(e).toEqual({ path: 'eslint.config.mjs', kind: 'flat', missing: ['cli/**', 'scripts/**', '.agents/**', '.opencode/**', 'eslint.config.base.js', 'eslint.config.tooling.mjs'] });
   });
 
   test('quoted literals in the config or lines of .eslintignore count; prose and comments do not', () => {
     const root = tempRoot({
-      'eslint.config.mjs': '// cli/** is ignored below? no\nexport default [{ ignores: [\'cli/**\', "./scripts/", \'eslint.config.base.js\'] }];\n',
+      'eslint.config.mjs': '// cli/** is ignored below? no\nexport default [{ ignores: [\'cli/**\', "./scripts/", \'.agents/**\', \'.opencode\', \'eslint.config.base.js\'] }];\n',
       '.eslintignore': 'eslint.config.tooling.mjs\n',
     });
     expect(eslintIsolation(root)).toBeNull();

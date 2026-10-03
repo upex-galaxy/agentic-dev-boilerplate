@@ -32,6 +32,14 @@ import { readUpstreamOwned } from './tooling-scope.ts';
 /** The tooling directories an app's own checks must not reach. Dot-directories (`.agents/`) are never matched by tsconfig wildcards. */
 export const TOOLING_DIRS = ['cli', 'scripts'] as const;
 
+/**
+ * Agentic dot-directories with JavaScript / TypeScript an app's flat ESLint
+ * config lints too (ESLint 9 skips only `node_modules` and `.git`; measured:
+ * `.opencode/plugins/` failed upexgalaxy-webapp's `eslint .`). tsconfig
+ * wildcards never enter them, so they are an ESLint concern only.
+ */
+export const TOOLING_DOT_DIRS = ['.agents', '.opencode'] as const;
+
 /** Root-level tooling config files an app's own ESLint would otherwise lint. */
 export const TOOLING_ROOT_FILES = ['eslint.config.base.js', 'eslint.config.tooling.mjs'] as const;
 
@@ -231,6 +239,8 @@ export function eslintIsolation(root: string, owned: UpstreamOwned | null = read
   const wanted = [
     ...TOOLING_DIRS.filter(d => !(d === 'scripts' && sharedScripts)).map(d => `${d}/**`),
     ...(sharedScripts && !configText.includes(OWNED_SCRIPTS_TOKEN) ? ownedScriptFiles(owned) : []),
+    // Legacy `.eslintrc` ESLint skips dot-directories by itself.
+    ...(config.kind === 'flat' ? TOOLING_DOT_DIRS.map(d => `${d}/**`) : []),
     ...TOOLING_ROOT_FILES,
   ];
   // A path counts as ignored under any of its usual spellings (`cli`, `cli/`,
