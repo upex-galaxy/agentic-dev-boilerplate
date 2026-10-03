@@ -1,9 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { parseArgs } from './update-boilerplate.ts';
+import { ADOPT_INSTRUCTIONS_HEADING, ADOPT_INSTRUCTIONS_PROMPT, INSTALLER_LOCK_FILE } from './lib/updater-adopt.ts';
+import { ADOPT_NEXT_STEP, parseArgs } from './update-boilerplate.ts';
 
 const UPDATER = join(import.meta.dir, 'update-boilerplate.ts');
 const roots: string[] = [];
@@ -50,5 +51,26 @@ describe('--adopt flag', () => {
     const greenfield = run(cwd, ['--adopt']);
     expect(greenfield.status).toBe(1);
     expect(greenfield.out).toContain('solo para la primera corrida');
+  });
+});
+
+describe('--adopt closing line', () => {
+  const skillDir = join(import.meta.dir, '..', '.agents', 'skills', 'project-adoption');
+
+  test('hands off to the project-adoption skill, which ships in the synced skills tree', () => {
+    expect(ADOPT_NEXT_STEP).toContain('project-adoption');
+    expect(existsSync(join(skillDir, 'SKILL.md'))).toBe(true);
+  });
+
+  test('the skill names the same lock file and saved instruction merge the install writes', () => {
+    const skill = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+    const workflow = readFileSync(join(skillDir, 'references', 'adoption-workflow.md'), 'utf8');
+    // `path.join` builds the prompt path; the skill prose always uses forward slashes.
+    const prompt = ADOPT_INSTRUCTIONS_PROMPT.replaceAll('\\', '/');
+    expect(skill).toContain(INSTALLER_LOCK_FILE);
+    expect(skill).toContain('adopted: true');
+    expect(skill).toContain(prompt);
+    expect(workflow).toContain(prompt);
+    expect(workflow).toContain(ADOPT_INSTRUCTIONS_HEADING.replace(/^## /, ''));
   });
 });

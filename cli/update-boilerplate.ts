@@ -87,6 +87,14 @@ const GATE_TIMEOUT_MS = 120_000;
  */
 export const GATE_SCRIPTS = ['types:check', 'lint:check', 'skills:check'] as const;
 
+/**
+ * The line a finished `--adopt` run closes with. The install layer stops here:
+ * teaching the agentic layer the app (identity, the `stack:` block, tracker
+ * catalogs, protected paths) is the `project-adoption` skill's job, behind its
+ * own analysis and approval gate.
+ */
+export const ADOPT_NEXT_STEP = 'Adopción instalada: nada de la app se sobrescribió. Siguiente: revisa la tabla, commitea la adopción y carga la skill `project-adoption` (`/project-adoption` en Claude Code; en OpenCode y Codex, pídelo por su nombre): analiza la app sin escribir, propone un plan y solo con tu aprobación completa identidad, `stack:` y Jira.';
+
 // `eslint.config.base.js` is the SYNCED half of the lint config: the shared
 // options and the `cli/` import-closure block the updater's self-update depends
 // on. The project-owned `eslint.config.js` (watchlisted) spreads it.
@@ -1826,7 +1834,7 @@ async function main(): Promise<void> {
   const aborted = summary.aborted === true;
   if (!aborted) { printEndOfRun(summary, parsed.dryRun); }
   if (parsed.adopt && !aborted && !parsed.dryRun) {
-    tui.log.info('Adopción instalada: nada de la app se sobrescribió. Siguiente: revisa la tabla, commitea la adopción y completa la identidad con `bun run agents:setup`.');
+    tui.log.info(ADOPT_NEXT_STEP);
   }
 
   const verdict = runVerdict({ aborted, dryRun: parsed.dryRun, strict: parsed.strict }, runFacts.parity?.findings ?? []);
