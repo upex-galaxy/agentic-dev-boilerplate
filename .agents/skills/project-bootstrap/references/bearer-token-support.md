@@ -22,7 +22,7 @@ Agregar soporte de **autenticación Bearer Token** a las API routes de Next.js p
 
 **Leer estos archivos:**
 
-- `AGENTS.md` - Supabase Project ID y stack tecnológico
+- `.agents/project.yaml` → `environments.<env>.db_project_ref` (`{{DB_PROJECT_REF}}` del ambiente activo) - Supabase project ref; stack en `.context/SRS/architecture-specs.md`
 - `src/lib/supabase/server.ts` - Server client actual
 - `src/app/api/` - Endpoints existentes
 - `src/lib/config.ts` - Configuración de Supabase
@@ -331,6 +331,41 @@ registry.registerComponent('securitySchemes', 'bearerAuth', {
 
 ---
 
+### FASE 3.5: Rate limiting + rotación de secretos (OBLIGATORIA, B7)
+
+Bearer auth abre las API routes a clientes fuera del browser (scripts, Postman, integraciones). Sin límite de tasa ni plan de rotación el feature queda a medias (SKILL.md, anti-pattern **B7**), así que ambos se entregan en el mismo scaffold.
+
+**Paso 3.5.1: Rate limiting en las rutas protegidas**
+
+**Pseudocódigo (verificar la API con Context7 antes de escribir código):**
+
+```
+1. Preguntar al usuario dónde vive el límite:
+   a) En la plataforma (reglas de firewall / rate limit del hosting, ej. Vercel Firewall)
+   b) En código (helper `rateLimit(request)` con un store compartido, ej. Redis)
+   NO usar un contador en memoria: cada instancia serverless tiene el suyo.
+
+2. Clave del límite: user_id del token cuando existe, IP como fallback.
+
+3. Aplicarlo en las rutas que aceptan Bearer y en el login proxy si existe.
+
+4. Respuesta al exceder: 429 Too Many Requests + header Retry-After,
+   con el mismo formato de error que el resto de la API.
+
+5. Valores (requests por ventana) en `.env` / config, nunca hardcodeados (B4).
+```
+
+**Paso 3.5.2: Guía de rotación de secretos**
+
+Documentar en `.context/api-auth.md` (o en `info.description` si hay OpenAPI) cómo se rota cada secreto que este feature toca:
+
+- **`SUPABASE_SECRET_KEY`** (y cualquier API key propia, ej. `X-API-Key`): generar la nueva en el dashboard de Supabase, actualizar `.env` y los scopes de Vercel (`/vercel-cli`, sync de env vars), redeploy, revocar la anterior.
+- **Claves de firma de JWT de Supabase**: rotarlas desde el dashboard; los tokens emitidos con la clave anterior dejan de validar, así que avisar a los clientes externos.
+- **Tokens de usuario**: vida corta del `access_token`, renovación con `refresh_token`, y `signOut` global para invalidar las sesiones de un usuario comprometido.
+- **Cuándo rotar**: ante un secreto expuesto (log, commit, captura), al salir alguien con acceso, y con la frecuencia que fije el equipo.
+
+---
+
 ### FASE 4: Validación
 
 **Paso 4.1: TypeScript check**
@@ -376,6 +411,12 @@ curl "http://localhost:3000/api/[endpoint]" \
 - [ ] Parámetro `request` usado (no `_request`)
 - [ ] (Si existe) `src/lib/api/auth.ts` actualizado a `createServerFromRequest` y recibe `request`
 - [ ] Endpoints que usan el helper pasan `request` a `getAuthenticatedUser(request)` / `requireAuth(request)`
+
+### Rate limiting + rotación (B7):
+
+- [ ] Rate limiting aplicado a las rutas con Bearer (store compartido o plataforma, nunca en memoria)
+- [ ] Exceso devuelve 429 + `Retry-After`
+- [ ] Guía de rotación de secretos documentada
 
 ### Validación:
 
@@ -442,6 +483,8 @@ Headers:
 - Token expira en 1 hora (3600 segundos)
 - Múltiples tokens pueden coexistir
 - Para renovar, usar refresh_token con grant_type=refresh_token
+- Rate limit: [N] requests por [ventana], exceso → 429
+- Rotación de secretos: ver `.context/api-auth.md`
 ```
 
 ---
@@ -498,4 +541,6 @@ Los tipos de `Database` deben estar disponibles en `@/types/supabase` para el ty
 
 4. **Documentar cambios**. Si existe OpenAPI/`/api/docs`, actualizar `securitySchemes` + `info.description` en `registry.ts` es parte del feature.
 
-5. **Usar el request parameter**. Cambiar `_request` a `request` en los handlers es necesario para pasar el header.
+5. **Rate limiting y rotación no son opcionales** (B7). Si el usuario no elige dónde vive el límite, el feature no se da por terminado.
+
+6. **Usar el request parameter**. Cambiar `_request` a `request` en los handlers es necesario para pasar el header.
