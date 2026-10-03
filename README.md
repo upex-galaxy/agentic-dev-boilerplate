@@ -144,7 +144,7 @@ N8N_API_URL · N8N_API_KEY
 
 ## What this is
 
-A starter for teams that want AI agents driving the dev workflow — not just autocomplete in the editor, but the whole loop. Define the product, scaffold the stack, refine the backlog, ship every story, deploy to staging. Sixteen workflow skills cover the phases. Eight slash commands are thin aliases onto them. It runs on Claude Code, OpenCode and Codex from one copy of every instruction and skill (see [Multi-harness architecture](#multi-harness-architecture-one-source-three-consumers)). The testing half (sprint testing, regression, automation) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — pair them or use one.
+A starter for teams that want AI agents driving the dev workflow — not just autocomplete in the editor, but the whole loop. Define the product, scaffold the stack, refine the backlog, ship every story, deploy to staging. Workflow skills cover the phases, each invoked by its name plus a mode (no command files ship). It runs on Claude Code, OpenCode and Codex from one copy of every instruction and skill (see [Multi-harness architecture](#multi-harness-architecture-one-source-three-consumers)). The testing half (sprint testing, regression, automation) lives in [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) — pair them or use one.
 
 <br />
 
@@ -379,7 +379,6 @@ packages/
 └── create-agentic-dev/   # Official npm scaffolder (bunx create-agentic-dev …) — own README + tests
 cli/                      # install.ts, update-boilerplate.ts, doctor, agent-compatibility engine, helpers
 scripts/                  # CLI tooling: lint-vars, jira-sync, agent-compatibility, etc.
-templates/                # Files copied into bootstrapped projects by /project-bootstrap
 AGENTS.md                 # AI memory: the ONLY instruction body, loaded by all three harnesses
 CLAUDE.md                 # One-line shim (`@AGENTS.md`) so Claude Code reaches it. Generated, never holds prose
 .mcp.json                 # MCP config: Claude Code

@@ -35,7 +35,7 @@ Configurar GitHub Actions workflow que automatice linting, testing, build, y dep
 **Leer TODOS estos archivos:**
 
 - `package.json` - **CRÍTICO** - Scripts disponibles (lint, test, build)
-- `.context/infrastructure-setup.md` - URLs de Vercel, configuración de deploy
+- `.agents/project.yaml` → `environments` - URLs por ambiente; `.vercel/project.json` - proyecto de Vercel vinculado
 - `.context/SRS/architecture-specs.md` - Tech stack, requirements
 - `.eslintrc.js` o `eslint.config.js` - Configuración de linting
 
@@ -215,7 +215,7 @@ Leer `package.json` completo
 
 ### Paso 1.3: Identificar Hosting Provider
 
-**Leer:** `.context/infrastructure-setup.md`
+**Leer:** `.context/SRS/architecture-specs.md` (hosting) y `.vercel/project.json` (si existe)
 
 **Identificar:**
 

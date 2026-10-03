@@ -18,7 +18,7 @@ Configurar variables de entorno separadas por ambiente (Development, Staging, Pr
 
 **Leer:**
 
-- `.context/infrastructure-setup.md` - **CRÍTICO** - URLs, credenciales, configuración de servicios
+- `.agents/project.yaml` → `environments` - **CRÍTICO** - URLs por ambiente (las credenciales viven en `.env`, nunca en un doc)
 - `.env.example` - Template de variables necesarias
 - `package.json` - Framework usado (Next.js, etc.)
 
@@ -111,7 +111,7 @@ Configurar environment variables en:
 
 ## 📋 PASO 1: IDENTIFICAR VARIABLES NECESARIAS
 
-**Leer `.env.example` y `.context/infrastructure-setup.md`**
+**Leer `.env.example` y `.agents/project.yaml` → `environments`**
 
 **Clasificar variables en:**
 

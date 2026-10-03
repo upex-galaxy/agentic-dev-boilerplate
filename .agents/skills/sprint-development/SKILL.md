@@ -497,7 +497,7 @@ Review notes are dev-authored (non-Jira) and persist at `.context/PBI/epics/EPIC
 
 **Glossary check**: if the story introduced new domain terms or exposed an ambiguous/banned term, flag it in the review notes / PR description for the PM to add to `.context/business/domain-glossary.md` per its change protocol — do NOT edit the glossary from inside implementation.
 
-**Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`. When the story moved a fact the repo docs quote (a skill mode, a script, a path, an MCP, an env var), run the docs follow-through in the same branch: `agentic-dev-core/references/docs-follow-through.md`.
+**Docs update before merge**: every doc change the story needs goes **inside the same PR branch** — never pushed straight to `staging`. When the story moved a fact the repo docs quote (a skill mode, a script, a path, an MCP, an env var), run the docs follow-through in the same branch: `agentic-dev-core/references/docs-follow-through.md`.
 
 Hand-off: `/git-flow-master` for PR creation, merge ops, and conflict resolution.
 
@@ -669,7 +669,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 3. **Atomic commits**: one commit per logical step. Lint + build must pass before each push.
 4. **No AI attribution in commits**: never include "Generated with Claude Code", "Co-Authored-By: Claude", or similar lines.
 5. **Confirm before push to main**: never push to `main`/`master` without explicit user confirmation. PR flow targets `staging`; production promotions are a separate gated event (Stage 5).
-6. **Docs travel with the PR**: status-report and release-notes updates go in the feature branch, not pushed direct to `staging`.
+6. **Docs travel with the PR**: doc updates go in the feature branch, not pushed direct to `staging`.
 7. **Jira automation verification**: after PR open and after merge, wait ~30s and verify the auto-transition fired. If not, fire the mapped slug and surface the gap. A slug the catalog lacks follows the unmapped-status fallback in `agentic-dev-core/references/artifact-lifecycle.md` §4, never a guessed transition.
 8. **ATP source-of-truth** (modality-aware): jira-native detailed read = `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `acceptance-test-plan.md`; jira-xray detailed read = `bun run jira:sync-issues get <ATP_KEY>` (Test Plan issue `description`), then read the synced `test-plans/TESTPLAN-<KEY>-<slug>.md`. Never read the ATP custom field via `[ISSUE_TRACKER_TOOL]` `view`. Final fallback = `comments.md` / the issue description (where the `## Acceptance Test Plan` fallback comment lands when the custom field is absent).
 9. **Verification cap=3**: lint + types + unit tests in parallel; do not balloon to 5+ verifiers.
@@ -700,7 +700,7 @@ If any required var is unset, ensure `.agents/project.yaml` exists (clone the fu
 - [ ] **Forecast gate honoured**: `risk=High` proceeded only with a `Decision trace` produced by `/git-flow-master`
 - [ ] Stage 3 PR opened via `/git-flow-master`; Jira auto-transition to `In Review` verified
 - [ ] **Stage 3 findings adjudicated** (legitimate vs false-positive with a reason); only legitimate ones fixed
-- [ ] Stage 3 docs (status-report + release-notes) updated in the PR branch
+- [ ] Stage 3 doc updates (docs follow-through) made in the PR branch
 - [ ] Stage 4 PR merged to `staging`; CI green; auto-deploy fired; Jira to `Ready For QA`; QA notified in comment
 - [ ] **Ready-For-QA story re-assigned** to its shift-left QA owner (or left unassigned if none); assignee verified
 - [ ] Stage 5 (only if applicable): pre-deploy checklist green; rollback plan loaded; monitoring window observed

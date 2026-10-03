@@ -20,9 +20,8 @@ Crear el **Design System base** y **scaffolding del proyecto frontend** que ser�
 
 - `.context/PRD/executive-summary.md` - **CRÍTICO** - Nombre del proyecto, descripción, industry
 - `.context/PRD/mvp-scope.md` - Épicas principales del MVP, features
-- `.context/PRD/success-metrics.md` - KPIs, métricas de negocio (inspiran dashboard)
 - `.context/SRS/architecture-specs.md` - Tech stack frontend, frameworks, librerías
-- `.context/SRS/design-specs.md` - Wireframes, paleta de colores, estilos visuales
+- `DESIGN.md` - Paleta, tipografía, estilos visuales (lo produce `/design-system`)
 - `.context/SRS/functional-specs.md` - Features principales (inspiran páginas demo)
 - `.context/PBI/epic-tree.md` - (Opcional) Épicas y estructura general para contexto
 

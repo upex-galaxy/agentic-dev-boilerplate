@@ -116,8 +116,7 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 .agents/skills/sprint-development/references/
 ├── code-standards.md           # Estándares de código (DRY, naming, TypeScript)
 ├── error-handling.md           # Manejo de errores estructurado
-├── data-testid-standards.md    # Atributos data-testid para testing E2E
-└── spec-driven-development.md  # Principio de desarrollo guiado por specs
+└── data-testid-standards.md    # Atributos data-testid para testing E2E
 ```
 
 **Propósito:**
@@ -125,12 +124,13 @@ Puedo continuar, pero usaré conocimiento interno (puede estar desactualizado).
 - Estándares de código (DRY, naming, TypeScript)
 - Manejo de errores estructurado
 - **Atributos `data-testid` para testing E2E**
-- Principios de Spec-Driven Development
 
 ### 3. Design System (Si story tiene UI):
 
 ```
-.context/design-system.md
+DESIGN.md                                  # tokens congelados (ruta: frontend.design_md_path en .agents/project.yaml)
+.context/design/master-design-plan.md      # §8 US→Screen, §4 spec de pantalla (AGENTS.md Rule 14)
+.context/design-system.md                  # guía de componentes, si frontend-setup la creó
 ```
 
 **Propósito:**
@@ -506,8 +506,8 @@ Implementa STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre} siguiendo estos pasos:
 
 **Contexto a leer:**
 1. .context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/implementation-plan.md
-2. .agents/skills/sprint-development/references/ (code-standards, error-handling, data-testid-standards, spec-driven-development)
-3. .context/design-system.md
+2. .agents/skills/sprint-development/references/ (code-standards, error-handling, data-testid-standards)
+3. DESIGN.md + .context/design/master-design-plan.md (si la story tiene UI)
 
 **Proceso:**
 1. Analiza el implementation plan

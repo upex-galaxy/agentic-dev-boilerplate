@@ -58,7 +58,6 @@ agentic-dev-boilerplate/
 │   ├── business/                   Authored business knowledge (Constitution + glossary)
 │   │   ├── business-model.md       /project-foundation Phase 1 — Business Model Canvas
 │   │   ├── market-context.md       /project-foundation Phase 1 — Industry, competitors
-│   │   ├── legacy-analysis.md      /project-foundation Phase 1 (optional, legacy projects)
 │   │   └── domain-glossary.md      /project-foundation Phase 4 Step 6 — hand-maintained, append-only
 │   ├── PRD/                        /project-foundation Phase 2 — Product Requirements
 │   ├── SRS/                        /project-foundation Phase 2 — Software Requirements
@@ -75,7 +74,6 @@ agentic-dev-boilerplate/
 │
 ├── scripts/                        Build/sync scripts (skill registry, OpenAPI, env validation)
 ├── cli/                            Installer + template updater
-├── templates/                      Templated files copied by the installer
 └── package.json                    Bun runtime + npm scripts (lint, format, api:sync, etc.)
 ```
 

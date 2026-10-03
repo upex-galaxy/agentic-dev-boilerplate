@@ -321,7 +321,6 @@ sorprenden o causan problemas..."
 [Referencias a otros documentos o recursos del proyecto]
 
 - `bun run context:map business-data-context` - Para entender los flujos
-- `.context/project-test-guide.md` - Para saber qué validar
 - [Otros recursos relevantes]
 ```
 
