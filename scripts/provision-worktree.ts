@@ -24,8 +24,9 @@
  * inside a worktree dies with it on removal.
  *
  * Exit code: 0 on success (including a clean --dry-run), 1 on any hard
- * failure (not a git repo, target IS the primary checkout, `bun install`
- * fails, `bun run agents:compat` fails).
+ * failure (not a git repo, target IS the primary checkout, the repo installs
+ * with a package manager other than bun, `bun install` fails, `bun run
+ * agents:compat` fails).
  */
 
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, realpathSync, statSync } from 'node:fs';
@@ -34,7 +35,7 @@ import { dirname, join, resolve } from 'node:path';
 
 // Node built-ins only on the other side, so this static import works before
 // `bun install` has run in the worktree being provisioned.
-import { PROVISION_COPIES } from '../cli/lib/worktree.ts';
+import { PROVISION_COPIES, provisionPackageManager } from '../cli/lib/worktree.ts';
 
 const PREFIX = '[provision-worktree]';
 
@@ -59,7 +60,9 @@ function showHelp(): void {
   -h, --help   Show this help
 
 \x1B[1mWHAT IT DOES\x1B[0m
-  1. Refuses to run if [path] resolves to the PRIMARY checkout.
+  1. Refuses to run if [path] resolves to the PRIMARY checkout, or if the
+     repo installs with a package manager other than bun
+     (stack.package_manager in .agents/project.yaml, else the lockfiles).
   2. Copies every gitignored input a worktree cannot rebuild, each only when
      the primary has it: .env, .env.local, .envrc.local,
      .env.sentry-build-plugin, .claude/settings.local.json, .vercel/, the
@@ -148,6 +151,17 @@ if (realpathSync(TARGET) === realpathSync(PRIMARY)) {
 
 log(`Primary checkout: ${PRIMARY}`);
 log(`Target worktree:  ${TARGET}${dryRun ? ' (dry run, nothing will be written)' : ''}`);
+
+// bun only: refused BEFORE anything is copied, so a refusal leaves the
+// worktree exactly as git created it.
+{
+  const pm = provisionPackageManager(TARGET);
+  if (!pm.ok) {
+    log(`Refusing to provision: ${pm.reason}`, 'error');
+    process.exit(1);
+  }
+  if (pm.note !== null) { log(pm.note, 'warn'); }
+}
 
 // ============================================
 // Copies from PROVISION_COPIES; secrets at mode 0600 / 0700

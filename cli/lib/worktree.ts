@@ -111,6 +111,67 @@ export function worktreeIncludeLine(copy: ProvisionCopy): string {
 }
 
 // ----------------------------------------------------------------------------
+// Package manager: provisioning installs with bun, so it refuses any other
+// ----------------------------------------------------------------------------
+
+/** Lockfile -> the package manager that writes it. */
+const LOCKFILES: ReadonlyArray<readonly [string, string]> = [
+  ['bun.lock', 'bun'],
+  ['bun.lockb', 'bun'],
+  ['pnpm-lock.yaml', 'pnpm'],
+  ['yarn.lock', 'yarn'],
+  ['package-lock.json', 'npm'],
+  ['npm-shrinkwrap.json', 'npm'],
+];
+
+export type ProvisionPackageManager
+  = | { ok: true, note: string | null }
+    | { ok: false, reason: string };
+
+/** `stack.package_manager` from `.agents/project.yaml`, regex-read (no YAML parser before `bun install`). null = absent or null. */
+export function declaredPackageManager(projectYaml: string): string | null {
+  const lines = projectYaml.split(/\r?\n/);
+  const start = lines.findIndex(l => l.startsWith('stack:'));
+  if (start === -1) { return null; }
+  // The block is every indented (or blank) line after `stack:`, up to the next top-level key.
+  const end = lines.findIndex((l, i) => i > start && /^\S/.test(l));
+  const block = lines.slice(start + 1, end === -1 ? undefined : end).join('\n');
+  const value = /^ {2}package_manager:\s*([\w-]+)/m.exec(block)?.[1] ?? null;
+  return value === null || value === 'null' ? null : value;
+}
+
+/**
+ * Whether `root` may be provisioned. The agentic tooling runs on bun and the
+ * provisioner runs `bun install --frozen-lockfile`: in a pnpm / npm / yarn app
+ * that would write a second lockfile and a second `node_modules` layout next to
+ * the app's own. So any other package manager is REFUSED with the reason,
+ * before anything is copied. The declared `stack.package_manager` wins; with
+ * none, the lockfiles decide, and two package managers' lockfiles with nothing
+ * declared are refused as ambiguous.
+ */
+export function provisionPackageManager(root: string): ProvisionPackageManager {
+  let yaml = '';
+  try { yaml = readFileSync(join(root, '.agents', 'project.yaml'), 'utf8'); }
+  catch {}
+  const declared = declaredPackageManager(yaml);
+  const found = LOCKFILES.filter(([file]) => existsSync(join(root, file)));
+  const others = found.filter(([, pm]) => pm !== 'bun').map(([file]) => file);
+  const hasBun = found.some(([, pm]) => pm === 'bun');
+  const refuse = (why: string): ProvisionPackageManager => ({
+    ok: false,
+    reason: `${why}. The agentic tooling requires bun: provisioning would run \`bun install\` and write a second lockfile beside the app's. Migrate the app to bun, or wire this worktree by hand with the app's own package manager.`,
+  });
+
+  if (declared !== null && declared !== 'bun') { return refuse(`stack.package_manager is ${declared} (.agents/project.yaml)`); }
+  if (declared === 'bun') {
+    return { ok: true, note: others.length > 0 ? `lockfiles of another package manager are present (${others.join(', ')}) although stack.package_manager is bun` : null };
+  }
+  if (others.length > 0 && !hasBun) { return refuse(`the app installs with ${others.join(', ')}`); }
+  if (others.length > 0) { return refuse(`lockfiles of two package managers (${found.map(([f]) => f).join(', ')}) and no stack.package_manager to choose between them; declare it with bun run agents:setup --stack`); }
+  return { ok: true, note: null };
+}
+
+// ----------------------------------------------------------------------------
 // Audit: classify what a worktree still holds
 // ----------------------------------------------------------------------------
 
