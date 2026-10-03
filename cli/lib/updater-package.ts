@@ -6,7 +6,8 @@
  * appends them at the END of each section while preserving the user's existing
  * key order. Same-key/different-value drift is reported as FYI and NEVER
  * overwritten. Top-level keys outside the configured sections (`name`,
- * `version`, `dependencies`, `lint-staged`, etc.) stay byte-identical.
+ * `version`, `engines`, etc.) stay byte-identical. A `lint-staged` value (a
+ * command or an array of commands) travels as JSON text (`getSection`).
  *
  * Contract:
  *  - Compare upstream `package.json` against local section-by-section.
@@ -90,18 +91,41 @@ export function stringifyPackageJson(parsed: ParsedPackageJson): string {
 }
 
 /**
+ * Sections whose values are not plain strings. A `lint-staged` glob maps to a
+ * command string OR an array of commands, so every value of such a section
+ * travels through the delta, the state (`keptKeys`) and the report as its
+ * canonical JSON text, and is decoded back only when written to the file.
+ * Encoding the whole section (strings included) keeps the round trip
+ * unambiguous: a raw command that happens to start with `[` is never mistaken
+ * for an array.
+ */
+const JSON_VALUED_SECTIONS = new Set<string>(['lint-staged']);
+
+/**
+ * The value written to the file for a delta value of `section`: decoded JSON
+ * for a JSON-valued section, the string itself otherwise.
+ */
+export function decodeSectionValue(section: string, value: string): unknown {
+  return JSON_VALUED_SECTIONS.has(section) ? JSON.parse(value) as unknown : value;
+}
+
+/**
  * Extract a string-keyed object section. Returns empty object when section is
- * missing or not an object. Non-string values are skipped (defensive — scripts
- * and devDependencies are always string maps).
+ * missing or not an object. In a plain section non-string values are skipped
+ * (scripts and dependency maps are string maps); in a JSON-valued section
+ * (`lint-staged`) every value is kept as its canonical JSON text, arrays
+ * included, so upstream changes there reach every consumer.
  */
 export function getSection(data: Record<string, unknown>, section: string): Record<string, string> {
   const raw = data[section];
   if (raw === null || raw === undefined || typeof raw !== 'object') {
     return {};
   }
+  const jsonValued = JSON_VALUED_SECTIONS.has(section);
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof v === 'string') { out[k] = v; }
+    if (jsonValued) { out[k] = JSON.stringify(v); }
+    else if (typeof v === 'string') { out[k] = v; }
   }
   return out;
 }
@@ -263,7 +287,7 @@ export function applyPackageJsonAppend(
     const writtenForSection: string[] = [];
     for (const key of keys) {
       if (key in localMap) { continue; } // never overwrite (drift is FYI only)
-      localMap[key] = values[key];
+      localMap[key] = decodeSectionValue(section, values[key]);
       writtenForSection.push(key);
     }
 
@@ -329,7 +353,7 @@ export function applyPackageJsonOverride(
     const writtenForSection: string[] = [];
     for (const key of keys) {
       if (!(key in localMap)) { continue; } // append handles brand-new keys
-      localMap[key] = overrides[key];
+      localMap[key] = decodeSectionValue(section, overrides[key]);
       writtenForSection.push(key);
     }
 
