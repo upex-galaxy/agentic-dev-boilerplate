@@ -300,6 +300,8 @@ The subagent treats `plan.md` and `progress.md` as read-only context. Only the o
 
 ### Skills adopting the progress-only variant (no plan.md)
 
+`project-adoption`. The canonical plan is the committed `.context/reports/project-adoption-plan.md` (the team reviews it in the same PR as the adoption writes; recovery = git). Under `.session/project-adoption/` the skill writes `progress.md` only.
+
 `sprint-development`. The canonical plan lives in the Jira `spec_implementation_plan` field, read locally via its `[SYNC]` cache at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` (gitignored; recovery = re-sync). No `plan.md` is written under `.session/`: besides `progress.md`, the session folder holds only Stage 2-3 working artifacts (`notes.md`, `bug-fix.md`, `review.md`, `compliance-matrix.md`, `evidence/`), whose durable copies live on the PR or in Jira.
 
 ### Skills explicitly excluded
