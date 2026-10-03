@@ -8,7 +8,7 @@ A handoff transfers ownership of a whole session. There is no task, no dispatch,
 
 The correct family is the plain terminal-and-worktree one. When a runtime's command grammar is needed, ask its binary for its own CLI guide; never copy command grammar into this repo, because a copy desynchronizes on the next release.
 
-| | Handoff (this skill) | Orchestration |
+| | Handoff (this skill) | Orchestration (`/orca-orchestration`) |
 |---|---|---|
 | what moves | the whole session | one scoped task |
 | the predecessor | ends | keeps working and supervises |
@@ -32,11 +32,11 @@ It runs in the **same worktree** as the predecessor: the working directory is `<
 
 Preconditions, all three, verified before launching:
 
-1. the runtime is reachable (its binary answers and, where the prompt hook reports runtime availability on a line of its own, that line is present this turn)
+1. the runtime is reachable: the binary is present and its runtime answers (the three-state gate in `/orca-orchestration`, §The gate), and, where the prompt hook reports runtime availability on a line of its own, that line is present this turn
 2. the handoff file exists at its final path and is complete
 3. the successor's target is the **same worktree** the predecessor is in, and the **same harness**
 
-Then create one terminal in the active worktree whose command is the launch line above.
+Then create one terminal in the active worktree whose command is the launch line above. That is a plain terminal create, never a supervised worker launch: the terminal verbs and their traps (the screen read, the delivered-is-not-run receipt) are in `/orca-orchestration` (`references/gotchas.md` G11, G13), and the grammar is the binary's own guide.
 
 **Announce the launch to the owner before firing it**, and say which terminal will carry it. The owner is about to have a second session appear on their board.
 
