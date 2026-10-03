@@ -65,7 +65,7 @@ When the primary tier is unavailable or fails, follow this protocol:
 2. **Log the degradation** in the workflow output so the user can see which tier ran. Format: `tool_layer: primary | fallback | last_resort` plus a one-line reason (e.g. primary CLI not installed, MCP not opted in, primary returned 5xx).
 3. **Surface semantic degradation explicitly** when the tier change loses meaning:
    - Issue-link fallback from `dependencies` to symmetric `relates` — direction is lost. The workflow MUST tell the user this happened and recommend creating the canonical `Dependencies` link type in the workspace.
-   - Status transition skipped because the slug resolves to an absent workspace status — workflow MUST report `transition_skipped: <slug>` and continue without halting.
+   - Status transition whose slug resolves to an absent workspace status — run the unmapped-status fallback in `agentic-dev-core/references/artifact-lifecycle.md` §4 (list the live transitions, ONE question for the whole batch, fire the live id, recommend `bun run jira:sync-workflows`). Only a skip the user chose is reported as `transition_skipped: <slug>`; the batch continues without halting either way.
 4. **Halt only on hard failures**, not on tier degradation. A hard failure is: all three tiers exhausted, or a write operation that cannot be retried safely.
 
 ---
