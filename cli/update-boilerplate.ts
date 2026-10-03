@@ -63,7 +63,7 @@ import { checkoutRoots } from './lib/worktree.ts';
 // --- CONFIGURATION ---
 // Not tied to the lock schema (`schemaVersion: 7` stays): it stamps the lock's
 // `cliVersion` and the ignore-file sentinel header, which is matched by prefix.
-const CLI_VERSION = '8.6';
+const CLI_VERSION = '8.7';
 // `UPEX_TEMPLATE_REPO` points the updater at another source: a fork, or a LOCAL
 // clone (absolute path / file:// URL, cloned with plain git, no gh session) to
 // exercise an unpublished boilerplate branch against a consumer repo.
@@ -189,10 +189,10 @@ export const RETIRED_SKILL_FILES: DeprecatedFile[] = [
 const RETIRED_HOST_REASON = 'host outside the three-host contract (AGENTS.md section 5.5)';
 export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
   ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
-    .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.6' })),
-  { path: 'docs/setup/jira-setup-guide.md', component: 'docs', reason: 'Xray test-management setup belongs to the QA boilerplate; dev-side Jira setup is in docs/setup/README.md', deprecatedSince: '8.6' },
+    .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.7' })),
+  { path: 'docs/setup/jira-setup-guide.md', component: 'docs', reason: 'Xray test-management setup belongs to the QA boilerplate; dev-side Jira setup is in docs/setup/README.md', deprecatedSince: '8.7' },
   ...['docs/methodology/early-game-testing.md', 'docs/methodology/mid-game-testing.md', 'docs/methodology/late-game-testing.md']
-    .map(path => ({ path, component: 'docs', reason: 'QA methodology lives in the QA boilerplate; the dev-to-QA handoff is docs/methodology/IQL-methodology.md', deprecatedSince: '8.6' })),
+    .map(path => ({ path, component: 'docs', reason: 'QA methodology lives in the QA boilerplate; the dev-to-QA handoff is docs/methodology/IQL-methodology.md', deprecatedSince: '8.7' })),
 ];
 
 export const DEPRECATED_FILES: DeprecatedFile[] = [
