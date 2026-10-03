@@ -166,6 +166,8 @@ export interface ParityInput {
   configBlockReaders?: Record<string, Record<string, ConfigBlockReader>>
   /** Business context map states; defaults to reading them from `root` (`contextMapStatuses`). */
   contextMaps?: MapStatus[]
+  /** `bun run up --adopt` only: the rows `runAdopt` built (`./updater-adopt.ts`), listed before the git-strategy row. */
+  adoptFindings?: Omit<ParityFinding, 'id'>[]
 }
 
 export interface PbiCacheInput {
@@ -1368,7 +1370,11 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     });
   }
 
-  // 10. Git strategy provenance: a shipped default nobody chose is a pending decision.
+  // 10. `--adopt`: app files kept, the instructions proposal, the scripts the
+  //     app kept under a name upstream also defines. Built by `runAdopt`.
+  findings.push(...(input.adoptFindings ?? []));
+
+  // 11. Git strategy provenance: a shipped default nobody chose is a pending decision.
   const stamp = readGitStrategyStamp(readIfExists(path.join(input.root, '.agents', 'project.yaml')));
   if (fs.existsSync(path.join(input.root, '.agents', 'project.yaml'))) {
     if (!stamp.present) {

@@ -224,6 +224,16 @@ export interface PackageJsonKeptKey {
   resolution: 'skip' | 'mine'
 }
 
+/**
+ * `--adopt` only: a path upstream would deliver that the adopting app already
+ * carries with different content. Never written: the wrapper reports it and
+ * protects it (`updater.protected_paths`) so a later sync never overwrites it.
+ */
+export interface AdoptCollision {
+  path: string
+  component: string
+}
+
 export interface RunSummary {
   applied: AppliedFile[]
   skipped: DeltaEntry[]
@@ -248,6 +258,8 @@ export interface RunSummary {
   lastApplyPaths?: number
   /** Set by the wrapper's parity hook when it saved the prompt file (`UpdaterConfig.promptFile`). */
   promptSaved?: boolean
+  /** `--adopt` only: app files kept because upstream ships a different file at the same path. */
+  adoptCollisions?: AdoptCollision[]
 }
 
 export interface MergeResult {
@@ -535,6 +547,13 @@ export interface UpdaterConfig {
    */
   sparseExtraPaths?: string[]
   agentsFrameworkFiles?: string[]
+  /**
+   * `--adopt` only, on top of `repoOnlyPaths`: upstream paths an EXISTING app
+   * adopting the boilerplate never receives, matched against the repo-relative
+   * path (e.g. the boilerplate's own numbered ADRs, which would land in the
+   * app's decision log and numbering). Ignored on every other run.
+   */
+  adoptRepoOnlyPatterns?: RegExp[]
   /**
    * Optional component name (e.g. `'cli'`) whose files contain the updater itself.
    * When set, runUpdate performs a Phase 0 self-update: if any file under this

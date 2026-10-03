@@ -344,3 +344,70 @@ export function applyPackageJsonOverride(
   fs.writeFileSync(filePath, stringifyPackageJson(parsed));
   return written;
 }
+
+// ============================================================================
+// ADOPT (`--adopt` first run on an existing app)
+// ============================================================================
+
+/** Every section an app may already declare a package in. */
+const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+
+export interface AdoptPackageJsonFold {
+  delta: PackageJsonDelta
+  /**
+   * Upstream keys this run must remember as handled in their UPSTREAM section
+   * (`appliedKeys`) although nothing is written there: a package the app
+   * already declares in another section, or a `dependencies` key redirected
+   * to `devDependencies`. Without them the next plain `bun run up` would add
+   * the same package to a second section.
+   */
+  satisfied: Record<string, string[]>
+}
+
+/**
+ * Reshape a package.json delta for an app adopting the boilerplate:
+ *
+ *  - a package the app already declares in ANY dependency section is never
+ *    added to another one (no duplicate, no version the app did not choose);
+ *  - the tooling's runtime packages (`dependencies` upstream) go to the app's
+ *    `devDependencies`: they run the agentic tooling, not the app, and must
+ *    not ship in its production install.
+ *
+ * Same-key drift (`localOverrideKeys`) is left as is: the caller keeps the
+ * app's value. Pure: the input delta is not mutated.
+ */
+export function adoptPackageJsonDelta(delta: PackageJsonDelta, local: Record<string, unknown>): AdoptPackageJsonFold {
+  const declared = new Set<string>();
+  for (const section of DEPENDENCY_SECTIONS) {
+    for (const key of Object.keys(getSection(local, section))) { declared.add(key); }
+  }
+
+  const sections: Record<string, PackageJsonSectionDelta> = {};
+  for (const [name, sec] of Object.entries(delta.sections)) {
+    sections[name] = { ...sec, upstreamOnlyKeys: { ...sec.upstreamOnlyKeys } };
+  }
+  const satisfied: Record<string, string[]> = {};
+  const remember = (section: string, key: string): void => { (satisfied[section] ??= []).push(key); };
+
+  for (const section of DEPENDENCY_SECTIONS) {
+    const sec = sections[section];
+    if (!sec) { continue; }
+    for (const key of Object.keys(sec.upstreamOnlyKeys)) {
+      if (!declared.has(key)) { continue; }
+      delete sec.upstreamOnlyKeys[key];
+      remember(section, key);
+    }
+  }
+
+  const deps = sections.dependencies;
+  const dev = sections.devDependencies;
+  if (deps && dev) {
+    for (const [key, value] of Object.entries(deps.upstreamOnlyKeys)) {
+      delete deps.upstreamOnlyKeys[key];
+      remember('dependencies', key);
+      if (!(key in dev.upstreamOnlyKeys)) { dev.upstreamOnlyKeys[key] = value; }
+    }
+  }
+
+  return { delta: { file: delta.file, sections }, satisfied };
+}
