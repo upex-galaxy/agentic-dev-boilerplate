@@ -274,7 +274,41 @@ export function composeAdoptedInstructions(upstreamAgents: string, sources: read
  */
 export function seedAdoptedProjectYaml(delivered: string, schema: string | null): string {
   const seeded = schema === null ? null : seedFromSchema(schema);
-  return seeded ?? resetGitStrategyProvenance(delivered).content;
+  return blankStackValues(seeded ?? resetGitStrategyProvenance(delivered).content);
+}
+
+/**
+ * Every value of the top-level `stack:` block set to `null`, comments and
+ * layout kept (a line splice, never a re-serialisation). The schema carries the
+ * boilerplate's own greenfield stack (`lint: lint:check`, a `src/types/` path,
+ * Vercel); seeded into an app, a value detection cannot confirm would stay as a
+ * claim about the app with no evidence behind it (measured on
+ * upexgalaxy-webapp). `null` means "not known yet": `project-adoption` fills
+ * what `agents:setup --stack` detects, and asks for the rest.
+ */
+export function blankStackValues(yaml: string): string {
+  const lines = yaml.split('\n');
+  const start = lines.findIndex(l => /^stack:\s*(?:#.*)?$/.test(l));
+  if (start === -1) { return yaml; }
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (line.trim() !== '' && !/^\s/.test(line)) { break; }
+    // `  key: value  # comment` -> `  key: null  # comment`; a mapping key (no value) is left alone.
+    const key = /^(\s+[\w-]+:)[ \t]/.exec(line);
+    if (!key) { continue; }
+    const rest = line.slice(key[1].length);
+    const hash = rest.search(/[ \t]#/);
+    const value = (hash === -1 ? rest : rest.slice(0, hash)).trim();
+    if (value === '' || value.startsWith('#') || value === 'null') { continue; }
+    lines[i] = `${key[1]} null${hash === -1 ? '' : rest.slice(hash)}`;
+  }
+  const next = lines.join('\n');
+  try {
+    const stack = (parseYaml(next) as { stack?: unknown } | null)?.stack;
+    const leaves = (v: unknown): unknown[] => v !== null && typeof v === 'object' ? Object.values(v as Record<string, unknown>).flatMap(leaves) : [v];
+    return leaves(stack).every(v => v === null) ? next : yaml;
+  }
+  catch { return yaml; }
 }
 
 /**

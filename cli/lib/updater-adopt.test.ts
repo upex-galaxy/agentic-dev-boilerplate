@@ -16,6 +16,7 @@ import {
   ADOPT_REPO_ONLY_PATTERNS,
   adoptFindings,
   appendEnvExampleBlock,
+  blankStackValues,
   CANONICAL_TEMPLATE,
   composeAdoptedInstructions,
   envDeclaredKeys,
@@ -442,5 +443,19 @@ describe('the parity table on an --adopt run', () => {
     const found = collectParityFindings({ ...base(root, upstream), adoptFindings: [row], adopting: true }).find(f => f.path === '.agents/skills/acli/')!;
     expect(found.suggested).toBe('take upstream');
     expect(found.evidence).not.toContain('never replace it');
+  });
+});
+
+describe('blankStackValues', () => {
+  test('the schema\'s greenfield stack is seeded as unknown, comments and the rest of the file kept', () => {
+    const yaml = 'project:\n  project_name: null\n\nstack:\n  app_root: . # where the app lives\n  scripts: # names\n    lint: lint:check\n    types: null\n  conventions:\n    import_alias: \'@/\' # alias\n\nissue_tracker:\n  issue_tracker: Jira\n';
+    const out = blankStackValues(yaml);
+    expect(out).toContain('  app_root: null # where the app lives');
+    expect(out).toContain('    lint: null');
+    expect(out).toContain('  scripts: # names');
+    expect(out).toContain('    import_alias: null # alias');
+    expect(out).toContain('issue_tracker: Jira');
+    expect(blankStackValues(out)).toBe(out);
+    expect(blankStackValues('project:\n  a: 1\n')).toBe('project:\n  a: 1\n');
   });
 });
