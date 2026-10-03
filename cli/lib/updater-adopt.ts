@@ -46,6 +46,7 @@ import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
 import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
+import { CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook } from './updater-settings.ts';
 
 /**
  * Upstream paths an adopted app never receives, on the `--adopt` run and on
@@ -694,6 +695,19 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
       instructions.where = ADOPT_INSTRUCTIONS_PROMPT.replace(/\\/g, '/');
       input.warn(`Instrucciones de la app sin componer: propuesta guardada en ${instructions.where} para revisión.`);
     }
+  }
+
+  // 2b. The agent-context hook in the app's own .claude/settings.json, when
+  //     the app wires no UserPromptSubmit at all (`mergeAdoptPromptHook`).
+  const promptHook = mergeAdoptPromptHook(root, upstreamDir);
+  if (promptHook.merged !== null && !dryRun) {
+    const backupDir = input.backupDir ?? createBackupDir(root);
+    fs.mkdirSync(path.dirname(path.join(backupDir, CLAUDE_SETTINGS_FILE)), { recursive: true });
+    fs.copyFileSync(path.join(root, CLAUDE_SETTINGS_FILE), path.join(backupDir, CLAUDE_SETTINGS_FILE));
+    fs.writeFileSync(path.join(root, CLAUDE_SETTINGS_FILE), promptHook.merged);
+  }
+  if (promptHook.added) {
+    input.step(`${dryRun ? '[dry-run] se añadiría' : 'Añadido'} el hook UserPromptSubmit del framework a ${CLAUDE_SETTINGS_FILE} (la app no tenía ninguno); sus otros hooks y claves no cambian.`);
   }
 
   // 3. Agentic files no synced component creates (the MCP registries).
