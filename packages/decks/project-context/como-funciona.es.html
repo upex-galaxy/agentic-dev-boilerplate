@@ -1,0 +1,2669 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project context: mapas, plan maestro y roadmap</title>
+    <meta
+      name="description"
+      content="Cómo /project-context genera y refresca los mapas de negocio, el plan maestro de implementación y el roadmap de desarrollo, un modo por vez, con gates de dependencia, Discovery Gaps y aprobación explícita antes de pisar lo que ya existe; y cómo arma una skill de contexto propia del proyecto."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">Cuándo</a>
+        <a href="#mapa">Modos</a>
+        <a href="#crear">Crear o actualizar</a>
+        <a href="#gates">Gates</a>
+        <a href="#refresh">refresh-all</a>
+        <a href="#plan">Plan</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#skill">context-skill</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · contexto del proyecto</div>
+        <h1>El contexto que la IA lee antes de planear, <em>escrito</em> con evidencia y <span class="sig">aprobado</span> por vos.</h1>
+        <p class="lede">
+          <span class="mono">/project-context</span> genera y refresca los artefactos de contexto que
+          las demás skills dan por hechos: los mapas de negocio (datos, features, API), el plan maestro
+          de implementación y el roadmap de desarrollo. También arma una skill de contexto propia del
+          proyecto para un aspecto que los mapas no cubren. Corre un modo por vez, y cuando el
+          artefacto ya existe nunca lo pisa sin mostrarte el diff y esperar tu sí.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> para quien <b>lidera</b> y quien <b>desarrolla</b></span>
+          <span class="chip"><span class="dot"></span> un <b>modo</b> por corrida</span>
+          <span class="chip agent"
+            ><span class="dot"></span> lo que no se pudo verificar va a <b>Discovery Gaps</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Modo</div>
+            <h3>Uno solo</h3>
+            <p>El que nombrás. Sin modo claro, la IA pregunta; nunca supone <span class="mono">refresh-all</span>.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Gate</div>
+            <h3>Dependencias</h3>
+            <p>Un gate duro faltante para la corrida. Uno blando queda anotado como hueco.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fuentes</div>
+            <h3>Leer todo</h3>
+            <p>Código, esquema, contrato, PRD, tracker: lo que pida la referencia del modo.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Candidato</div>
+            <h3>Crear o actualizar</h3>
+            <p>Si no existe, lo escribe. Si existe, arma el candidato y te muestra el diff.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Cierre</div>
+            <h3>Tu sí, y verificar</h3>
+            <p>Escribe solo lo aprobado y relee el resultado con el comando del artefacto.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
+          <h2>Cuando el modelo mental del proyecto falta o quedó viejo</h2>
+          <p class="sub">
+            Cada artefacto que produce es una síntesis: alguien leyó el código, el esquema y el backlog
+            y escribió qué significa. Esta skill es la que hace esa lectura, y la vuelve a hacer cuando
+            las fuentes cambian.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Usala cuando</div>
+            <h3>Hay que mapear, priorizar o secuenciar</h3>
+            <ul>
+              <li>
+                "Mapeá el dominio" · "inventario de features" · "cómo funciona el API": falta un mapa
+                de negocio, o el código cambió y el mapa no.
+              </li>
+              <li>"Plan maestro de implementación" · "qué construimos primero": orden de épicas y por qué.</li>
+              <li>"Roadmap de desarrollo" · "qué historia sigue": orden de tickets y qué destraba qué.</li>
+              <li>
+                "Armá una skill de contexto para billing": un aspecto del producto que ningún mapa
+                cubre y que una sesión leería mal sin reglas.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No la uses para</div>
+            <h3>Lo que tiene otro dueño</h3>
+            <ul>
+              <li>
+                <b>El plan de una historia</b>, archivo por archivo: eso es la etapa de planning de
+                <span class="mono">/sprint-development</span>.
+              </li>
+              <li>
+                <b>El catálogo completo de endpoints</b> o los tipos del contrato: los da
+                <span class="mono">bun run api:sync</span> sobre el spec OpenAPI.
+              </li>
+              <li>
+                <b>Una skill <span class="mono">data-context</span>, <span class="mono">feature-context</span>
+                o <span class="mono">api-context</span></b>: esos aspectos ya tienen dueño, las skills de
+                mapa de negocio. El pedido se responde señalándolas.
+              </li>
+              <li><b>Fechas de entrega</b>: el plan maestro ordena trabajo, no lo estima.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA DE MODOS ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · el mapa de modos</div>
+          <h2>Cada modo es un flujo completo con su propia referencia</h2>
+          <p class="sub">
+            La IA carga solo la referencia del modo elegido y nunca abre una segunda en la misma pasada.
+            No hay comandos de terminal para ellos: los viejos nombres
+            (<span class="mono">business-data-map</span>, <span class="mono">master-implementation-plan</span>,
+            <span class="mono">dev-roadmap</span>) sobreviven solo como frases que disparan el modo.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Mapas de negocio</div>
+            <a class="wf" href="#crear"
+              ><span class="lt">1</span
+              ><span><b>data</b><span>Entidades, RLS, migraciones, flujos, máquinas de estado, integraciones.</span></span></a
+            >
+            <a class="wf" href="#crear"
+              ><span class="lt">2</span
+              ><span><b>features</b><span>Catálogo de features, matriz CRUD, inventario de UI, flags.</span></span></a
+            >
+            <a class="wf" href="#crear"
+              ><span class="lt">3</span
+              ><span><b>api</b><span>Modelo de auth, recorridos críticos, arquitectura detrás del API.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Estrategia y secuencia</div>
+            <a class="wf" href="#plan"
+              ><span class="lt">4</span
+              ><span><b>master-plan</b><span>Qué construir, en qué orden de épicas, y por qué ese orden.</span></span></a
+            >
+            <a class="wf" href="#roadmap"
+              ><span class="lt">5</span
+              ><span><b>dev-roadmap</b><span>Qué ticket sigue y qué lo bloquea.</span></span></a
+            >
+            <a class="wf" href="#refresh"
+              ><span class="lt sig">∗</span
+              ><span><b>refresh-all</b><span>data → features → api → master-plan → dev-roadmap, uno por vez.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Andamiaje</div>
+            <a class="wf" href="#skill"
+              ><span class="lt">6</span
+              ><span><b>context-skill</b><span>Una skill <span class="mono">&lt;aspect&gt;-context</span> propia del proyecto.</span></span></a
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Lee</th>
+                <th>Escribe</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">data</span></th>
+                <td><span class="mono">references/data.md</span></td>
+                <td><span class="mono">business-data-context/references/business-data-map.html</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">features</span></th>
+                <td><span class="mono">references/features.md</span></td>
+                <td><span class="mono">business-feature-context/references/business-feature-map.html</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">api</span></th>
+                <td><span class="mono">references/api.md</span></td>
+                <td><span class="mono">business-api-context/references/business-api-map.html</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">master-plan</span></th>
+                <td><span class="mono">references/master-plan.md</span></td>
+                <td><span class="mono">.context/master-implementation-plan.md</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">dev-roadmap</span></th>
+                <td><span class="mono">references/dev-roadmap.md</span></td>
+                <td><span class="mono">.context/dev-roadmap.md</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">context-skill</span></th>
+                <td><span class="mono">references/context-skill.md</span></td>
+                <td><span class="mono">.agents/skills/&lt;aspect&gt;-context/</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          la tabla canónica es <span class="mono">## Mode routing</span> en
+          <span class="mono">.agents/skills/project-context/SKILL.md</span>; las rutas de los mapas son
+          relativas a <span class="mono">.agents/skills/</span>
+        </p>
+
+        <div class="callout r">
+          <b>Los mapas viven dentro de una skill, no en <span class="mono">.context/</span>.</b> Cada
+          modo de mapa escribe solo el <span class="mono">references/&lt;map&gt;.html</span> de su
+          skill, y lo lee y verifica con <span class="mono">bun run context:map &lt;skill&gt;</span>.
+          La skill del mapa ya existe (la entrega <span class="mono">bun run up</span>); este modo nunca
+          la crea. Qué es un mapa por dentro, cómo se lee por sección y cómo se mantiene honesto es
+          tema del deck de las skills de contexto.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 CONTRATO ============ -->
+    <section class="band" id="contrato">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · el contrato</div>
+          <h2>Las reglas que valen en cualquier modo</h2>
+          <p class="sub">
+            Viven en <span class="mono">## Compact Rules</span> y
+            <span class="mono">## Shared contract</span> de la skill. Las compactas viajan a los
+            subagentes a través de <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Un modo por corrida.</b> La primera palabra de los argumentos es el modo si coincide
+              con uno; si no, sale de la frase; si tampoco, la IA pregunta. Un "refrescá el contexto" a
+              secas nunca es <span class="mono">refresh-all</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca inventa hechos de negocio.</b> Lee cada fuente que pide la referencia, y lo que
+              no pudo verificar va a la sección obligatoria <span class="mono">## Discovery Gaps</span>
+              del artefacto, no al cuerpo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca pisa sin aprobación.</b> Un artefacto existente se actualiza con candidato, diff
+              y tu sí explícito. Un mapa generado nunca se regenera entero.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>El mapa viejo en markdown se lee, no se borra.</b> Un
+              <span class="mono">.context/business/business-*-map.md</span> de una versión anterior entra
+              como insumo (la lista <span class="mono">legacy</span> de
+              <span class="mono">CONTEXT_MAP_SKILLS</span>, en
+              <span class="mono">cli/lib/context-maps.ts</span>) y queda donde estaba.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Capacidad faltante = parada en el punto de uso.</b> Necesita
+              <span class="mono">db</span>, <span class="mono">library-docs</span>,
+              <span class="mono">web-search</span> y <span class="mono">diagrams</span> (las figuras de
+              los mapas, resuelta por la presencia de la skill
+              <span class="mono">diagram-design</span>). Sin una, nombra la capacidad y espera; nunca un
+              sustituto silencioso.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Después de escribir, solo agrega el puntero que falte.</b> Si el artefacto no figura en
+              Key paths de <span class="mono">AGENTS.md</span>, lo suma. Nunca escribe prosa operativa en
+              <span class="mono">CLAUDE.md</span>, que es el shim generado.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>El resto de los argumentos viaja tal cual.</b> Ruta del proyecto, filtro de módulo,
+              clave de épica o nombre de Master Sprint: lo que defina cada referencia.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 CREAR O ACTUALIZAR ============ -->
+    <section class="band" id="crear">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · crear o actualizar</div>
+          <h2>Si no existe, lo escribe. Si existe, te lo propone.</h2>
+          <p class="sub">
+            El modo CREATE o UPDATE no lo elegís vos: sale del estado del artefacto. Lo que cambia entre
+            artefactos es qué parte se regenera en un UPDATE.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Artefacto</th>
+                <th>Cómo detecta el estado</th>
+                <th>CREATE</th>
+                <th>UPDATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Mapa de negocio</th>
+                <td><span class="mono">bun run context:map &lt;skill&gt; --list</span>: aviso de placeholder o lista de secciones</td>
+                <td>Construye cada sección desde las fuentes y escribe el archivo una vez</td>
+                <td>
+                  Chequeo de frescura por sección, regenera <b>solo las secciones viejas</b>, muestra un
+                  diff por sección y espera. Nunca cambia el <span class="mono">id</span> de una sección.
+                </td>
+              </tr>
+              <tr>
+                <th>Plan maestro</th>
+                <td>¿existe <span class="mono">.context/master-implementation-plan.md</span>?</td>
+                <td>Lo genera de cero</td>
+                <td>
+                  Versión nueva, resumen del diff, confirmación. Resalta lo que sube o baja de Master
+                  Sprint.
+                </td>
+              </tr>
+              <tr>
+                <th>Roadmap de desarrollo</th>
+                <td>¿existe <span class="mono">.context/dev-roadmap.md</span>?</td>
+                <td>El documento completo</td>
+                <td>
+                  <b>Quirúrgico</b>: regenera solo la sección de execution sprints y conserva lo escrito
+                  a mano (columna, aristas, gates, bloqueos locales).
+                </td>
+              </tr>
+              <tr>
+                <th>Skill de contexto</th>
+                <td>¿existe <span class="mono">.agents/skills/&lt;aspect&gt;-context/</span>?</td>
+                <td>El andamio, después del análisis</td>
+                <td>Candidato, diff, espera. Suma reglas con fecha; nunca reescribe una existente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r" style="margin-top: 26px">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Detecta el estado, lee las fuentes, arma el candidato y lo compara con lo que hay.</p>
+            <p>Si un mapa cambió, revisa las <span class="mono">## Rules</span> y los gotchas de su skill contra el mapa nuevo.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Si el diff entra. Sin tu sí, el artefacto existente no se toca.</p>
+            <p>Qué hacer con una regla que el mapa nuevo contradice: la IA la <b>propone</b> para "No longer true", nunca la borra.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>Solo lo aprobado, más la sección <span class="mono">discovery-gaps</span>, aunque esté vacía: prueba que se buscó.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> para un mapa: <span class="mono">bun run context:map &lt;skill&gt; --list</span>
+          imprime cada sección, con la fecha de la corrida en las escritas, y ningún aviso de placeholder.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 GATES ============ -->
+    <section class="band" id="gates">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · gates de dependencia</div>
+          <h2>Un gate duro para la corrida. Uno blando deja un hueco anotado.</h2>
+          <p class="sub">
+            Cada referencia es dueña de la redacción exacta de su gate. La regla general: si sin la
+            entrada el artefacto sería una lista de deseos, el gate es duro; si solo queda más pobre, es
+            blando y la falta se registra como Discovery Gap.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Gate duro (para)</th>
+                <th>Gates blandos (Discovery Gap)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">data</span></th>
+                <td>ninguno: se invoca sola</td>
+                <td>PRD y SRS bajo <span class="mono">.context/</span> (sugiere <span class="mono">/project-foundation</span>)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">features</span></th>
+                <td>ninguno</td>
+                <td>el mapa de datos</td>
+              </tr>
+              <tr>
+                <th><span class="mono">api</span></th>
+                <td>sin spec OpenAPI <b>y</b> sin backend con rutas para escanear</td>
+                <td>el mapa de datos, el mapa de features</td>
+              </tr>
+              <tr>
+                <th><span class="mono">master-plan</span></th>
+                <td>un mapa de datos generado</td>
+                <td>el mapa de features</td>
+              </tr>
+              <tr>
+                <th><span class="mono">dev-roadmap</span></th>
+                <td>al menos una épica con historias hijas (y sus links de dependencia) en el tracker</td>
+                <td>el mapa de datos, <span class="mono">master-design-plan.md</span>, <span class="mono">master-implementation-plan.md</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">context-skill</span></th>
+                <td>lo que la skill va a cubrir tiene que existir: un mapa, un módulo, un contrato</td>
+                <td>ninguno</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>"Mapa generado" se mide, no se supone</b
+            ><span
+              ><span class="mono">bun run context:map business-data-context</span> tiene que imprimir
+              secciones. Un aviso de placeholder cuenta como "no hay mapa", nunca como un sistema
+              vacío.</span
+            >
+          </div>
+          <div class="g">
+            <b>El mensaje de parada es literal</b
+            ><span
+              >Un gate duro corta con el texto exacto de su referencia, que nombra el paso que falta
+              (por ejemplo, correr <span class="mono">/project-context data</span> antes del plan
+              maestro).</span
+            >
+          </div>
+          <div class="g">
+            <b>Blando no es opcional en silencio</b
+            ><span
+              >La corrida sigue, avisa, y la limitación queda escrita en el artefacto con la sugerencia
+              de qué modo correr después.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 REFRESH-ALL ============ -->
+    <section class="band" id="refresh">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · refresh-all</div>
+          <h2>Todo el contexto, en un orden que no se negocia</h2>
+          <p class="sub">
+            Solo corre si lo pedís explícitamente. Cada paso cierra su propia validación y su propia
+            aprobación antes de que se cargue la referencia siguiente.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3><span class="mono">data</span></h3>
+            <p>Primero, porque los demás lo usan: features y api lo leen, el plan maestro lo exige.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">features</span></h3>
+            <p>Cruza cada entidad del mapa de datos con su cobertura CRUD.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">api</span></h3>
+            <p>Apunta sus recorridos a entidades del mapa de datos y a features del mapa de features.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">master-plan</span></h3>
+            <p>Convierte los mapas en un orden de épicas por valor, bloqueo y urgencia.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">dev-roadmap</span></h3>
+            <p>Baja ese orden a tickets, con el grafo de dependencias del tracker.</p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Se detiene</div>
+            <h3>Ante una parada dura o un no</h3>
+            <ul>
+              <li>Un gate duro que falla corta la cadena entera.</li>
+              <li>Un diff que rechazás también: no salta al paso siguiente.</li>
+              <li>Un gate blando faltante no la corta: queda como Discovery Gap, como en cada modo suelto.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Fuera de la cadena</div>
+            <h3><span class="mono">context-skill</span> nunca entra</h3>
+            <ul>
+              <li>Andamiar una skill de contexto es una decisión por aspecto, no un refresco.</li>
+              <li>
+                <span class="mono">/project-foundation</span>, en su fase de Discovery, corre los mapas
+                en el mismo orden (<span class="mono">data</span> → <span class="mono">features</span> →
+                <span class="mono">api</span>) y deja el plan maestro para el final.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 MAPAS ============ -->
+    <section class="band" id="mapas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · modos data, features, api</div>
+          <h2>Cada mapa, una mirada distinta sobre el mismo sistema</h2>
+          <p class="sub">
+            Cada mapa responde una pregunta distinta y cita a los otros por id de sección en vez de
+            copiarlos. La regla de oro de todos: sintetizar, no volcar. El esquema lo sirve la base
+            en vivo; el mapa escribe qué significa.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">data · "¿dónde vive X y qué lo toca?"</div>
+            <h3>Mapa de datos</h3>
+            <p>
+              Lee esquema, RLS y migraciones por la capacidad <span class="mono">db</span>, más backend,
+              frontend, PRD y SRS. Escribe entidades con su rol de negocio, quién lee y escribe cada
+              tabla, las migraciones que cambiaron el significado de una entidad, todos los flujos
+              importantes (sin tope), máquinas de estado, procesos automáticos e integraciones.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">features · "¿qué puede hacer el sistema?"</div>
+            <h3>Mapa de features</h3>
+            <p>
+              Una feature es cualquier capacidad: endpoint, acción de UI, proceso de fondo, integración.
+              Escribe el catálogo por dominio con su estado, la matriz CRUD por entidad, rutas, UI,
+              integraciones y flags. Si el PRD y el código discrepan, gana el código y la diferencia va
+              a Discovery Gaps.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">api · "¿cómo opera el negocio a través del API?"</div>
+            <h3>Mapa del API</h3>
+            <p>
+              Narrativo, no un catálogo de endpoints: modelo de auth por niveles, recorridos de negocio
+              críticos trazados de punta a punta, arquitectura detrás del API e integraciones con su modo
+              de falla visible. Lo que el spec OpenAPI ya expresa se enlaza, no se repite.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">todos · antes de la primera figura</div>
+            <h3>Figuras con <span class="mono">diagram-design</span></h3>
+            <p>
+              Chequeo de la capacidad <span class="mono">diagrams</span> en el punto de uso. Cada hecho
+              que muestra una figura también está en el texto: la IA lee solo el texto. Si la skill no
+              está, para; nunca un SVG o un ASCII dibujado a mano en su lugar.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Cuando un mapa cambia, la judgment layer también se revisa.</b> Después de escribir, la IA
+          contrasta las <span class="mono">## Rules</span> y <span class="mono">references/gotchas.md</span>
+          de la skill del mapa con lo nuevo y propone cambios. Y si una skill de contexto del proyecto
+          se apoya en ese mapa, ofrece correr <span class="mono">context-skill</span> en UPDATE: los
+          hechos acaban de cambiar y ya hay un humano mirando un diff.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 MASTER-PLAN ============ -->
+    <section class="band" id="plan">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · modo master-plan</div>
+          <h2>Qué construir, en qué orden, y por qué ese orden importa</h2>
+          <p class="sub">
+            La capa de estrategia que se apoya sobre los mapas. Escrita con voz de ingeniero senior
+            hablándole a un tech lead que recién llega: guía, no catálogo.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Gate y lectura</h3>
+            <p>
+              Sin mapa de datos generado, para: un plan sin mapa de entidades y flujos es una lista de
+              deseos. Sin mapa de features, avisa y sigue. Suma PRD, SRS, glosario y el log de git para
+              saber qué ya se entregó.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Puntaje interno</h3>
+            <p>
+              Valor para el usuario × factor de bloqueo × urgencia. El producto ubica cada unidad en
+              Master Sprint 0 (fundacional), 1 (MVP), 2 (posterior) o la deja diferida. La tabla de
+              puntaje no se publica: se publican las conclusiones.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Dependencias y acoples ocultos</h3>
+            <p>
+              Traza qué destraba cada ítem fundacional y marca siempre las features que comparten una
+              entidad pero viven en épicas distintas: el origen típico de un rediseño de esquema a mitad
+              de sprint.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Ordena cada prioridad citando evidencia: un flujo del mapa de datos, una fila del de features, una prioridad del PRD o una integración con nombre.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Si el orden propuesto entra. En UPDATE, mirá primero lo que sube o baja de Master Sprint: son los cambios de más peso.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p><span class="mono">.context/master-implementation-plan.md</span>, con huecos de implementación escritos como spikes.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Nunca</b> fechas, código, payloads ni el plan de una historia. Después de un cambio en la
+          estructura de Master Sprints, sigue <span class="mono">/project-context dev-roadmap</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 DEV-ROADMAP ============ -->
+    <section class="band" id="roadmap">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · modo dev-roadmap</div>
+          <h2>Qué ticket sigue, y qué lo está bloqueando</h2>
+          <p class="sub">
+            La capa de secuencia. Convierte el grafo de links de dependencia del tracker y el contexto
+            de diseño local en un orden de ejecución. Es dueño de las aristas y los gates; nunca del
+            estado vivo de un ticket.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># tres documentos, tres altitudes</span>
+.context/master-implementation-plan.md   <span class="s">épica / estrategia</span>   "qué construir y por qué ese orden"   <span class="c">← master-plan</span>
+.context/dev-roadmap.md                  <span class="s">ticket / secuencia</span>   "qué destraba qué, en qué sprint"     <span class="c">← dev-roadmap</span>
+.context/PBI/.../implementation-plan.md  <span class="s">historia / archivos</span>  "cómo se construye un ticket"        <span class="c">← /sprint-development</span></pre>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Sección</th>
+                <th>Qué guarda</th>
+                <th>En un UPDATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Columna de épicas</th>
+                <td>Qué épica va antes de cuál, forzado por la topología de entidades del mapa de datos</td>
+                <td>Se conserva lo escrito a mano</td>
+              </tr>
+              <tr>
+                <th>Grafo de historias</th>
+                <td>Cada arista dura o blanda <b>con su razón</b>: lo que ningún otro lugar guarda</td>
+                <td>Se conserva; lo nuevo se agrega y un conflicto se marca</td>
+              </tr>
+              <tr>
+                <th>Execution sprints</th>
+                <td>Lotes paralelos por orden topológico (Kahn)</td>
+                <td><b>Se regenera</b> desde el grafo vivo</td>
+              </tr>
+              <tr>
+                <th>Gates de mockup</th>
+                <td>Historias que no arrancan hasta que llegue su mockup</td>
+                <td>Se conserva</td>
+              </tr>
+              <tr>
+                <th>Estado vivo</th>
+                <td>Una receta de consulta, nunca una tabla de estado</td>
+                <td>Solo se editan a mano las listas locales: bloqueos previos al desarrollo y aristas pendientes de mapear</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Orden, no disponibilidad</b
+            ><span
+              >Prohibido "listo", "disponible" o "se puede arrancar ya". Se escribe "trabajable una vez
+              que PROJ-38 esté dev-done" o "sin aristas previas". Si se puede tomar depende del estado
+              vivo, que esta página no conoce.</span
+            >
+          </div>
+          <div class="g">
+            <b>Dos fechas, nunca una</b
+            ><span
+              >"Edges last updated" y "Mockup gates last updated" por separado, más la línea "Status
+              snapshot: none". Una sola fecha haría parecer fresco al estado.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un ciclo frena todo</b
+            ><span
+              >Si el grafo tiene un ciclo, la corrida se detiene, nombra las claves y te pide reorientar
+              un link. Nunca rompe un ciclo sola.</span
+            >
+          </div>
+          <div class="g">
+            <b>Catálogo de links al día</b
+            ><span
+              ><span class="mono">bun run jira:sync-link-types</span> antes de ordenar: un catálogo viejo
+              confunde dependencias con relaciones y corrompe el orden.</span
+            >
+          </div>
+          <div class="g">
+            <b>Ninguna arista inventada</b
+            ><span
+              >Una dependencia que "se siente" es una señal de refinamiento: se agrega el link en el
+              tracker y se vuelve a correr.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Quién lo usa.</b> <span class="mono">/sprint-development</span> lo consulta en su Phase 0b
+          antes de tomar un ticket, y consulta el tracker en vivo para el candidato y sus bloqueadores
+          directos. <span class="mono">/product-management</span> le delega el orden de sprints: el
+          algoritmo sigue definido en su <span class="mono">references/sprint-sequencing.md</span>, y la
+          escritura pasa por este modo.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CONTEXT-SKILL ============ -->
+    <section class="band" id="skill">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · modo context-skill</div>
+          <h2>Las reglas para leer bien un aspecto que nadie mapeó</h2>
+          <p class="sub">
+            Una skill <span class="mono">&lt;aspect&gt;-context</span> (<span class="mono">billing</span>,
+            <span class="mono">auth</span>, una integración como <span class="mono">stripe</span>) es la
+            judgment layer sobre ese aspecto. Las fuentes guardan los hechos; la skill guarda las reglas
+            para leerlos sin equivocarse.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Antes de escribir</h3>
+            <p>
+              Lee completo lo que va a cubrir y lista cada lugar donde una sesión competente leería mal:
+              borrados lógicos, columnas derivadas, RLS que esconde filas a un rol, estados con nombres
+              distintos en base, API y UI, comportamiento que cambia entre staging y producción.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Filtro de tres preguntas</h3>
+            <p>
+              Si se puede regenerar, se queda en el mapa o el código. Si es un hecho, también. Solo el
+              criterio que tiene que llegar sin que nadie lo pida se vuelve regla, con fecha y con cómo
+              se midió. Sin medición, no hay regla.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Construir con <span class="mono">skill-creator</span></h3>
+            <p>
+              <span class="mono">SKILL.md</span> desde la plantilla de
+              <span class="mono">agentic-dev-core/references/skill-scaffold.md</span>, con
+              <span class="mono">metadata.kind: context</span>, más
+              <span class="mono">references/gotchas.md</span>. Si el builder no está instalado, arma el
+              andamio desde la plantilla y lo dice en el reporte.
+            </p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Gate de validación</div>
+            <h3>Lo que tiene que dar verde</h3>
+            <ul>
+              <li>
+                <span class="mono">bun run skills:check</span>: <span class="mono">KIND-SUFFIX</span> y
+                <span class="mono">STALE-PATH</span>, estricto para una skill de contexto (cada ruta de
+                <span class="mono">.context/</span> que cita tiene que existir).
+              </li>
+              <li><span class="mono">bun run skills:registry</span>: el bloque nuevo aparece en <span class="mono">REGISTRY.md</span> con <span class="mono">kind: context</span>.</li>
+              <li>Una fila en la sección de skills de <span class="mono">AGENTS.md</span>, que agrega el proyecto.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Nunca</div>
+            <h3>Copiar ni salir de su lugar</h3>
+            <ul>
+              <li>Copiar una tabla, una lista de entidades o de endpoints de un mapa: la skill cita, no duplica.</li>
+              <li>
+                Subirla al boilerplate: es del proyecto por construcción, y
+                <span class="mono">bun run up</span> nunca la entrega, la pisa ni la borra.
+              </li>
+              <li>Escribir en Jira o Confluence, o editar otra skill.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            El nombre de la skill más el modo. La primera palabra después del nombre elige el modo, y el
+            resto llega intacto a su referencia.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-context data</span>
+            <p>Barra de la skill más el modo. Sin modo, la IA lo saca de la frase o pregunta.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill project-context, modo master-plan</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill project-context, modo dev-roadmap</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># un mapa acotado a un módulo</span>
+/project-context data <span class="s">module=billing</span>
+
+<span class="c"># el roadmap de una sola épica (o un nombre de Master Sprint)</span>
+/project-context dev-roadmap <span class="s">{{PROJECT_KEY}}-12</span>
+
+<span class="c"># una skill de contexto propia, sobre algo que ya existe</span>
+/project-context context-skill <span class="s">billing</span>
+
+<span class="c"># todo, en orden, con una aprobación por paso</span>
+/project-context refresh-all
+
+<span class="c"># leer un mapa ya generado: el reader, nunca el HTML crudo</span>
+bun run context:map business-data-context <span class="k">--section</span> <span class="s">entities</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ §12 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Al entrar resuelve sus categorías complementarias (<span class="mono">backend-db</span>,
+            <span class="mono">issue-tracker</span>, <span class="mono">meta-skill</span>) desde
+            <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Antes · la fundación</div>
+            <h3>/project-foundation</h3>
+            <p>
+              Su fase de Discovery orquesta los modos de esta skill para dejar armado el modelo mental
+              que las demás dan por hecho. Deck:
+              <a href="../project-foundation/como-funciona.es.html">cómo funciona project-foundation</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Antes · el backlog</div>
+            <h3>/product-management</h3>
+            <p>
+              Siembra las épicas e historias que el roadmap necesita, y le delega la escritura del orden
+              de sprints. Deck:
+              <a href="../product-management/como-funciona.es.html">cómo funciona product-management</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Después · cada historia</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Lee los mapas por sección al planear y consulta el roadmap en su Phase 0b. Deck:
+              <a href="../sprint-development/como-funciona.es.html">cómo funciona sprint-development</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al lado · los mockups</div>
+            <h3>/design-system</h3>
+            <p>
+              El mapa US→Screen de <span class="mono">master-design-plan.md</span> alimenta los gates de
+              mockup del roadmap (el contrato de fidelidad de UI de <span class="mono">AGENTS.md</span>).
+              Deck: <a href="../design-system/flujo-mockups.es.html">flujo de mockups</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al entrar · composables</div>
+            <h3>supabase · /acli</h3>
+            <p>
+              <span class="mono">supabase</span> para leer el esquema vivo en los modos de mapa;
+              <span class="mono">/acli</span> antes de cualquier lectura de Jira en el roadmap y el plan
+              maestro.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al entrar · constructores</div>
+            <h3>skill-creator · diagram-design</h3>
+            <p>
+              <span class="mono">skill-creator</span> construye cada skill de contexto;
+              <span class="mono">diagram-design</span> dibuja las figuras de los mapas.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-context/SKILL.md"
+            >.agents/skills/project-context/SKILL.md</a
+          >
+          y sus referencias en <span class="mono">references/</span>, una por modo. La anatomía de un
+          mapa, su lectura por sección, el chequeo de frescura y la auto-actualización están en
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/business-context-maps.md"
+            >business-context-maps.md</a
+          >.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Este contexto es síntesis: dos sesiones
+            lo escribirían distinto y rehacerlo cuesta caro. Por eso cada modo lee todas sus fuentes,
+            anota lo que no pudo verificar en vez de inventarlo, y nunca reemplaza lo que ya existe sin
+            mostrarte el diff.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/project-context/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
