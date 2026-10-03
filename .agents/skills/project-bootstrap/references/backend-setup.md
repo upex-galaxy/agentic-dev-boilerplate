@@ -48,6 +48,11 @@ Crear la **infraestructura de backend base** (Database + Auth + API Layer) que s
    - Para verificar paquetes y APIs actualizadas
    - Consultar ANTES de instalar cualquier dependencia
 
+### Required skills (load BEFORE installing anything or making any DB-MCP call)
+
+- **`/supabase` + `/supabase-postgres-best-practices`** (category `backend-db`): load both before Paso 0.3 (CLI install) and before the first schema, RLS or migration call through the Supabase MCP. They carry the Supabase and Postgres rules (RLS shape, indexes, migration hygiene) this phase writes against.
+- Not installed → say so once, point at `bun run setup` (project-level list in `cli/install.ts`) or the single `bunx skills add` line from that list, then continue. Never a silent skip, never a hard STOP (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+
 ### CLIs Requeridos:
 
 - Supabase CLI (se instalará si falta)

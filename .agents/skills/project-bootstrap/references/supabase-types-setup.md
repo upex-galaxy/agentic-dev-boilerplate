@@ -115,6 +115,8 @@ El project ref tiene formato: xxxxxxxxxxxxxxxxxxxx (20 caracteres)
 
 ### FASE 1: Generar Tipos de Supabase
 
+**Paso 1.0: Load the Supabase skills.** Load `/supabase` + `/supabase-postgres-best-practices` before generating (they cover the type generator, the `Database` type wiring and the schema the types mirror). Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+
 **Paso 1.1: Ejecutar generación**
 
 ```bash

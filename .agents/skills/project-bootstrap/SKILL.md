@@ -22,6 +22,7 @@ compact_rules: |
   - **B6.** NEVER skip Supabase types generation when scaffolding the DB layer. Runtime TypeScript types must match the live schema; drift is a silent bug factory.
   - **B7.** NEVER ship bearer-token auth without rate-limiting + secret-rotation guidance in the same scaffold. Auth without those two is a half-finished feature.
   - **B8.** NEVER scaffold OpenAPI without the Scalar UI route at `/api/docs` (the `@scalar/nextjs-api-reference` route handler). The contract surface must be browsable from day one or downstream consumers won't trust it. Do NOT ship Redoc/Swagger instead — Scalar is the standard for this stack.
+  - **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; `frontend-design` + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun run setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
   kind: workflow
@@ -79,10 +80,12 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `frontend-framework` | `next-best-practices`, `next-cache-components`                                                                                                                     |
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
-| `backend-db`         | `supabase-postgres-best-practices`                                                                                                                                 |
+| `backend-db`         | `supabase`, `supabase-postgres-best-practices` (REQUIRED at the backend and types steps, not only matched: §3.5 of the strategy doc)                               |
 | `runtime`            | `bun`                                                                                                                                                              |
 | `language`           | `typescript-advanced-types`                                                                                                                                        |
 | `ci-cd`              | `github-actions-docs`                                                                                                                                              |
+
+**Step-required, not only matched.** Some of these load at a named step whatever the entry scan decided (`agentic-dev-core/references/skill-composition-strategy.md` §3.5): `supabase` + `supabase-postgres-best-practices` in `references/backend-setup.md` (before install and any DB-MCP call) and `references/supabase-types-setup.md` (generate step); `frontend-design` + `shadcn` + `tailwind-css-patterns` in `references/frontend-setup.md` Fase 1.6.
 
 Skip step only if the registry cache is missing AND no session-start skill list is available (rare; pre-init or non-Claude-Code runtime). When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
@@ -252,6 +255,7 @@ On successful completion (Verification checklist from `plan.md` passes), the orc
 - **B6.** NEVER skip Supabase types generation when scaffolding the DB layer. Runtime TypeScript types must match the live schema; drift is a silent bug factory.
 - **B7.** NEVER ship bearer-token auth without rate-limiting + secret-rotation guidance in the same scaffold. Auth without those two is a half-finished feature.
 - **B8.** NEVER scaffold OpenAPI without the Scalar UI route at `/api/docs` (the `@scalar/nextjs-api-reference` route handler). The contract surface must be browsable from day one or downstream consumers won't trust it. Do NOT ship Redoc/Swagger instead — Scalar is the standard for this stack.
+- **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; `frontend-design` + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun run setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 
 ---
 
