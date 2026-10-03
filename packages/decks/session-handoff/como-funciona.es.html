@@ -1,0 +1,2573 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Session handoff: pasar la sesión entera a su sucesor</title>
+    <meta
+      name="description"
+      content="Cómo /session-handoff compacta una sesión de agente en un archivo de diez secciones bajo .session/handoffs/ del checkout primario y lanza al sucesor en el mismo worktree y el mismo harness, para seguir como si la ventana de contexto se hubiera agrandado."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      .steps,
+      .step {
+        min-width: 0;
+      }
+      .step .mono,
+      .check .mono,
+      .alt .mono,
+      .g .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.sections tbody th {
+        width: 3em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#no-es">Qué no es</a>
+        <a href="#cuando">Cuándo</a>
+        <a href="#contrato">Contrato</a>
+        <a href="#frescura">Frescura</a>
+        <a href="#ubicacion">Ubicación</a>
+        <a href="#sucesor">Sucesor</a>
+        <a href="#reglas">Reglas</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · continuidad de sesión</div>
+        <h1>Contexto <em>trasplantado</em>, no <span class="sig">resumido</span>.</h1>
+        <p class="lede">
+          <span class="mono">/session-handoff</span> compacta una sesión entera de agente en un
+          archivo, para que una sesión <b>nueva</b> retome exactamente donde esta se detuvo, como si
+          la ventana de contexto se hubiera agrandado en vez de reiniciarse. El sucesor no es un
+          lector al que se le cuenta el trabajo de otro: <b>es esta misma sesión</b>, con una
+          ventana nueva. Todo lo que necesita para actuar tiene que estar en disco, direccionable y
+          ser cierto cuando lo lea.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para quien <b>desarrolla</b> y quien <b>mantiene</b></span
+          >
+          <span class="chip"><span class="dot"></span> disparo <b>manual</b>, por diseño</span>
+          <span class="chip agent"
+            ><span class="dot"></span> mismo <b>worktree</b>, mismo <b>harness</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Disparo</div>
+            <h3>El humano lo pide</h3>
+            <p>Nota que la ventana se llena, o que el trabajo sigue más allá de esta sesión.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Capturar</div>
+            <h3>Diez secciones</h3>
+            <p>
+              Todas, en orden. Una vacía se escribe como <span class="mono">none</span> con su
+              razón.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Escribir</div>
+            <h3>En el checkout primario</h3>
+            <p>
+              Bajo <span class="mono">.session/handoffs/</span>, con el número que sigue en el
+              linaje.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Lanzar</div>
+            <h3>El sucesor</h3>
+            <p>
+              Recién con el archivo completo. Solo, si hay runtime; si no, una línea para pegar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 QUÉ NO ES ============ -->
+    <section class="band" id="no-es">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · qué no es</div>
+          <h2>Lo que se le parece y no es esta skill</h2>
+          <p class="sub">
+            Un handoff mueve la sesión <b>entera</b> a su propio sucesor. Cada vecino de esta tabla
+            mueve otra cosa, y tiene su propia puerta.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Se parece a</th>
+                <th>En realidad es</th>
+                <th>Se usa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Pasarle una tarea acotada a otra sesión y supervisarla</td>
+                <td>Orquestación: una tarea sale, el trabajo vuelve</td>
+                <td><span class="mono">/orca-orchestration</span></td>
+              </tr>
+              <tr>
+                <td>Despachar un subagente para una pieza de trabajo</td>
+                <td>Un ejecutor con briefing, adentro de ESTA sesión</td>
+                <td>
+                  <span class="mono">AGENTS.md</span> §3,
+                  <span class="mono">briefing-template.md</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Retomar el pipeline de una historia después de una pausa</td>
+                <td>Estado de una skill, por ticket</td>
+                <td>
+                  <span class="mono">/sprint-development</span> fase 0,
+                  <span class="mono">session-management.md</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Recordar una decisión para el mes que viene</td>
+                <td>Un hecho durable entre sesiones, del proyecto</td>
+                <td>Engram (<span class="mono">mem_save</span>), un ADR o el tracker</td>
+              </tr>
+              <tr>
+                <td>Achicar la ventana y seguir</td>
+                <td>La compactación del harness: con pérdida, no direccionable, no la controlás</td>
+                <td>Nada que hacer</td>
+              </tr>
+              <tr>
+                <th>Pasar la SESIÓN entera a su sucesor</th>
+                <th>Esta skill</th>
+                <th><span class="mono">/session-handoff</span></th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue r">
+          <b>La diferencia que importa.</b> La compactación guarda lo que un resumidor juzgó
+          relevante. Un handoff guarda lo que el <b>próximo actor</b> necesita, que es otro
+          conjunto, y lo escribe la única parte que conoce la diferencia.
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Se componen</div>
+            <h3>Con los <span class="mono">progress.md</span> de cada skill</h3>
+            <ul>
+              <li>
+                El <span class="mono">progress.md</span> de una skill dice dónde está UN workflow.
+                El handoff no lo copia: lo apunta, en su lista de lectura y en su estado vivo.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No es un briefing</div>
+            <h3>Los 7 componentes no aplican</h3>
+            <ul>
+              <li>
+                Un briefing acota una tarea. Un handoff trasplanta una sesión. Por eso tiene su
+                propio contrato, de diez secciones.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 CUÁNDO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · cuándo escribir uno</div>
+          <h2>El disparo es manual, y eso es a propósito</h2>
+          <p class="sub">
+            El humano ve que la ventana se llena, lo dice, y la skill corre. Sin polling, sin
+            recordatorios, sin gastar tokens adivinando.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Escribilo cuando</div>
+            <h3>Algo de esto es cierto</h3>
+            <ul>
+              <li>
+                <b>~500k tokens</b><!-- volatile-ok: owner judgement --> de ventana usados: el umbral del dueño, salvo que nombre otro. Es su juicio sobre dónde este modelo empieza a
+                degradarse, no configuración del proyecto: vive en la conversación, no en una clave
+                de yaml.
+              </li>
+              <li>
+                La sesión está por terminar con trabajo en vuelo: un PR abierto, un deploy a staging
+                sin verificar, una migración escrita pero no aplicada.
+              </li>
+              <li>
+                Lo próximo va a comerse una tajada grande de la ventana (un diff enorme, un archivo
+                largo, el log de toda la suite) y lo que queda no alcanza para el trabajo de
+                después.
+              </li>
+              <li>Lo pide el dueño.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No lo escribas</div>
+            <h3>Si lo que falta entra cómodo</h3>
+            <ul>
+              <li>
+                Producir un handoff cuesta una tajada real de contexto. Un sucesor lanzado antes de
+                tiempo paga el costo de arranque por nada.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">¿Y un disparo automático?</h2>
+          <p class="sub">
+            La respuesta, con citas, está en <span class="mono">references/auto-trigger.md</span>.
+            Veredicto: <b>parcialmente factible</b>, y el manual sigue siendo el disparo principal.
+          </p>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Ningún harness le pasa el tamaño al agente</b
+            ><span
+              >Dos de los tres lo exponen afuera del loop del modelo. Un disparo automático se puede
+              construir, pero es cableado nuevo, no un campo esperando a ser leído.</span
+            >
+          </div>
+          <div class="g">
+            <b>La compactación es el momento equivocado</b
+            ><span
+              >Los tres harnesses avisan que la compactación es inminente, pero ahí la ventana ya
+              está llena: el handoff lo escribiría una sesión a punto de truncarse, con el juicio
+              degradado del que el handoff existe para escapar.</span
+            >
+          </div>
+          <div class="g">
+            <b>Si alguna vez se activa</b
+            ><span
+              >Pregunta una vez, en dos líneas, y acepta un no sin volver a preguntar en esa sesión.
+              Nunca escribe un handoff sin que se lo pidan.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>La posición del dueño, registrada:</b> "prefiero que el humano lo haga de manera
+          manual". Lo que dice <span class="mono">auto-trigger.md</span> responde a "¿se podría?",
+          no es un plan.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 CONTRATO ============ -->
+    <section class="band" id="contrato">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · el contrato de captura</div>
+          <h2>Diez secciones, en este orden, ninguna omitida</h2>
+          <p class="sub">
+            Una sección sin nada que decir se escribe con una línea <span class="mono">none</span> y
+            su razón. Una omitida y una olvidada se ven idénticas, y el sucesor no puede preguntar
+            cuál pasó. El orden no es decorativo: se lee de arriba abajo con apuro, así que abre con
+            lo único que hay que hacer y cierra con lo que siempre es cierto.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp sections">
+            <thead>
+              <tr>
+                <th>§</th>
+                <th>Sección</th>
+                <th>Qué guarda</th>
+                <th>Qué evita</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>0</th>
+                <td><b>Tu PRIMERA tarea</b></td>
+                <td>
+                  Una tarea, no un menú. Los criterios del dueño citados, numerados, sin
+                  parafrasear. Los de una historia se citan por ruta del PBI sincronizado.
+                </td>
+                <td>Un sucesor que redecide lo que ya estaba decidido, y elige distinto</td>
+              </tr>
+              <tr>
+                <th>1</th>
+                <td><b>Identidad y autoridad</b></td>
+                <td>
+                  Qué delegó el dueño y qué se reservó; harness, worktree, trailers; la estrategia
+                  de git y la política de push con sus <b>valores resueltos</b> de
+                  <span class="mono">git_strategy:</span>, no el nombre de la clave
+                </td>
+                <td>Volver a preguntar algo delegado, o asumir un permiso que no existe</td>
+              </tr>
+              <tr>
+                <th>2</th>
+                <td><b>Qué se construyó</b></td>
+                <td>
+                  Un párrafo por unidad de trabajo, con SHAs, PRs, deploys y rutas. Pusheado o
+                  local, mergeado o abierto, desplegado o solo compilado
+                </td>
+                <td>Rehacer trabajo que ya estaba terminado</td>
+              </tr>
+              <tr>
+                <th>3</th>
+                <td><b>Decisiones, cada una con su porqué</b></td>
+                <td>
+                  Alternativas descartadas, la razón, y quién decidió. Lo arquitectónico cita su ADR
+                </td>
+                <td>Revertir una elección deliberada creyendo que fue un descuido</td>
+              </tr>
+              <tr>
+                <th>4</th>
+                <td><b>Gotchas y observaciones</b></td>
+                <td>
+                  Lo aprendido a los golpes, cada uno marcado <span class="mono">measured</span> o
+                  <span class="mono">read</span>, con la versión para la que vale
+                </td>
+                <td>
+                  Pagar dos veces el mismo costo. Es la sección más valiosa y la que más flaca sale
+                </td>
+              </tr>
+              <tr>
+                <th>5</th>
+                <td><b>Skills, herramientas y MCPs</b></td>
+                <td>
+                  Una tabla con la columna <span class="mono">Load next session?</span> respondida
+                  fila por fila con una razón
+                </td>
+                <td>
+                  Recargar todo y quemar la ventana nueva, o no cargar nada y adivinar sintaxis
+                </td>
+              </tr>
+              <tr>
+                <th>6</th>
+                <td><b>Archivos a leer, en orden</b></td>
+                <td>
+                  Lista numerada, rutas absolutas, para qué sirve cada uno. Los
+                  <span class="mono">progress.md</span> de skills, antes que el código que describen
+                </td>
+                <td>Que el sucesor tenga que buscar lo que el predecesor ya encontró</td>
+              </tr>
+              <tr>
+                <th>7</th>
+                <td><b>Estado vivo que heredás</b></td>
+                <td>La sección perecedera. Ver <a href="#frescura">frescura</a></td>
+                <td>Actuar sobre un mundo que ya no existe. Acá es donde los handoffs se rompen</td>
+              </tr>
+              <tr>
+                <th>8</th>
+                <td><b>Trabajo pendiente, por prioridad</b></td>
+                <td>
+                  Ítems con letra, en el orden del dueño, con el próximo paso exacto. Separa lo
+                  decidido de lo que espera una decisión
+                </td>
+                <td>Empezar por el ítem interesante en vez del importante</td>
+              </tr>
+              <tr>
+                <th>9</th>
+                <td><b>Convenciones que le importan al dueño</b></td>
+                <td>
+                  Cómo se presentan decisiones, qué se anuncia, idioma, registro, memoria. Cierra
+                  con el umbral al que el sucesor escribe su propio handoff
+                </td>
+                <td>Reaprender preferencias equivocándose primero. Y un linaje que muere</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>
+              Recorre <span class="mono">capture-contract.md</span> sección por sección y llena
+              <span class="mono">templates/handoff.md</span>.
+            </p>
+            <p>
+              Antes de escribir: lista el directorio de handoffs y re-verifica todo lo que va a §7.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p><b>Cuándo</b>: el disparo es tuyo.</p>
+            <p>
+              Un <b>nombre</b> para la sesión, si la identidad dice
+              <span class="mono">unknown</span>.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>Un markdown en inglés, gitignorado, desechable por diseño.</p>
+            <p>Lo durable no va acá: va a Engram, al repo o al tracker, y el handoff lo cita.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> las diez secciones presentes, en orden; ninguna vacía sin su línea
+          <span class="mono">none</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 FRESCURA ============ -->
+    <section class="band" id="frescura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · medido, predicho, perecedero</div>
+          <h2>Lo que era cierto al escribir ya cambió al leer</h2>
+          <p class="sub">
+            Las conjeturas del predecesor sobre lo que va a encontrar el sucesor son útiles, y son
+            lo primero que se vuelve viejo. Por eso cada afirmación lleva su etiqueta.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">measured</div>
+            <h3>Esta sesión lo corrió y leyó la salida</h3>
+            <ul>
+              <li>Se puede usar como punto de partida, con la hora en que se midió.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">predicted</div>
+            <h3>Nadie lo observó</h3>
+            <ul>
+              <li>
+                "Si CI falla en lint, hacé X" es <span class="mono">predicted</span>. Una rama
+                predicha presentada como hecho manda al sucesor por un camino que ya no existe.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">§7, la sección <span class="mono">PERISHABLE</span></h2>
+          <p class="sub">
+            Todo lo que sigue en movimiento: PRs abiertos y sus checks, deploys sin confirmar
+            <span class="mono">READY</span> para el SHA pusheado, subagentes o comandos en segundo
+            plano, transiciones de Jira en vuelo, migraciones escritas sin aplicar, sesiones
+            reanudables.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Cada ítem marcado <span class="mono">PERISHABLE</span></b
+              >, con la hora de reloj en que se midió por última vez.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Cada ítem con el comando exacto que lo re-verifica</b>:
+              <span class="mono">gh pr checks &lt;N&gt;</span>,
+              <span class="mono">bun run jira:sync-issues get &lt;KEY&gt;</span>, el poll de deploy
+              de <span class="mono">/vercel-cli</span>. La instrucción es
+              <b>re-verificar, después actuar</b>, nunca al revés.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Los ids se copian tal cual, en backticks</b>: número de PR, clave del tracker,
+              SHA, id de deploy, id de sesión, handle de terminal. "El PR de antes" no es un
+              id.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lo perecedero le gana a la prioridad.</b> Si algo de §7 necesita atención antes
+              del orden de §8, el ítem lo dice. El sucesor no lo puede inferir.</span
+            >
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># forma de un ítem de §7 (templates/handoff.md)</span>
+- <span class="k">**staging deploy**</span>: `PERISHABLE`, measured <span class="s">&lt;HH:MM&gt;</span>. Ids: `<span class="s">&lt;sha&gt;</span>` `<span class="s">&lt;deployment-id&gt;</span>`.
+  Re-verify: `<span class="s">&lt;the exact command&gt;</span>`. Then: <span class="s">&lt;what to do with each outcome&gt;</span>.</pre>
+
+        <div class="callout r">
+          <b>Un recibo no es un resultado.</b> Esto es la Critical Rule #16 de
+          <span class="mono">AGENTS.md</span> aplicada al traspaso: un
+          <span class="mono">201</span> o un "deploy aceptado" anotado en el handoff no dice que la
+          cosa pasó. El sucesor lee el destino antes de actuar.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 UBICACIÓN ============ -->
+    <section class="band" id="ubicacion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · dónde vive y cómo se llama</div>
+          <h2>Siempre en el checkout primario, aunque la sesión corra en un worktree</h2>
+          <p class="sub">
+            <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span> se resuelve igual desde el
+            primario y desde cada worktree (<span class="mono">.agents/README.md</span>, sección
+            "Checkout roots"). Nunca se deriva de <span class="mono">pwd</span>.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># la ruta</span>
+<span class="k">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>/.session/handoffs/<span class="s">&lt;predecessor-session-name&gt;</span>-handoff-<span class="s">NN</span>.md
+
+<span class="c"># cómo se resuelve PRIMARY_ROOT</span>
+dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
+
+<span class="c"># el linaje se lee en la lista de archivos: el nombre del sucesor es el basename sin extensión</span>
+<span class="s">&lt;base&gt;</span>
+<span class="s">&lt;base&gt;</span>-handoff-01
+<span class="s">&lt;base&gt;</span>-handoff-01-handoff-02</pre>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Por qué el primario</h3>
+            <p>
+              Un handoff escrito adentro de un worktree muere con el worktree. Y dos worktrees del
+              mismo linaje contarían <span class="mono">NN</span> cada uno desde su propio
+              directorio vacío.
+            </p>
+            <p>
+              Si alguno quedó por error en el <span class="mono">.session/</span> de un worktree, lo
+              rescata <span class="mono">bun run worktree:audit --rescue</span> antes de que el
+              worktree se vaya.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cómo se elige <span class="mono">NN</span></h3>
+            <p>
+              Listando <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;/.session/handoffs/</span>.
+              Dos dígitos desde <span class="mono">01</span>, contados en todo el linaje. Nunca se
+              asume. Dos handoffs con el mismo número son un linaje que no se puede leer.
+            </p>
+          </div>
+          <div class="step">
+            <h3>De dónde sale el nombre</h3>
+            <p>
+              Del valor <span class="mono">session=</span> de la línea
+              <span class="mono">AGENT IDENTITY:</span> que inyecta el hook (la misma etiqueta que
+              llevan los trailers de commit), con espacios y paréntesis cambiados por
+              <span class="mono">-</span>. Si dice <span class="mono">unknown</span>, la IA te pide
+              un nombre en vez de inventarlo.
+            </p>
+            <p>
+              Los nombres largos son el punto: un linaje que no se lee es un linaje que no se
+              audita.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Por qué gitignorado</h3>
+            <p>
+              <span class="mono">.session/</span> está ignorado. Un handoff describe el estado de
+              una sesión, no es un registro del proyecto: commitearlo pondría una foto que se pudre
+              bajo control de versiones.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 SUCESOR ============ -->
+    <section class="band" id="sucesor">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · lanzar al sucesor</div>
+          <h2>Primero el archivo completo, después la sesión nueva</h2>
+          <p class="sub">
+            El orden no se invierte: un sucesor que arranca primero lee un archivo que todavía no
+            existe. Corre en el <b>mismo worktree</b> que el predecesor (<span class="mono"
+              >&lt;&lt;REPO_ROOT&gt;&gt;</span
+            >) y en el <b>mismo harness</b>. Solo el archivo vive en el primario.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Con un runtime alcanzable</div>
+            <a class="wf" href="#sucesor"
+              ><span class="lt">1</span
+              ><span
+                ><b>Tres precondiciones</b
+                ><span
+                  >Runtime responde, archivo completo en su ruta final, mismo worktree y
+                  harness.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#sucesor"
+              ><span class="lt sig">2</span
+              ><span
+                ><b>Avisarte antes</b
+                ><span
+                  >Qué terminal lo va a llevar: va a aparecer una segunda sesión en tu
+                  tablero.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#sucesor"
+              ><span class="lt">3</span
+              ><span
+                ><b>Una terminal simple</b
+                ><span
+                  >En el worktree activo, con la línea de lanzamiento como comando. Nunca un worker
+                  supervisado.</span
+                ></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Sin runtime</div>
+            <a class="wf" href="#sucesor"
+              ><span class="lt">1</span
+              ><span><b>Imprimir la línea</b><span>Y decir dónde quedó el handoff.</span></span></a
+            >
+            <a class="wf" href="#sucesor"
+              ><span class="lt sig">2</span
+              ><span
+                ><b>Vos la pegás</b
+                ><span>En una terminal nueva abierta en el mismo worktree.</span></span
+              ></a
+            >
+            <a class="wf" href="#sucesor"
+              ><span class="lt">=</span
+              ><span
+                ><b>Mismo prompt, byte a byte</b
+                ><span>El camino que nadie ejercita es el que se rompe en silencio.</span></span
+              ></a
+            >
+          </div>
+        </div>
+
+        <pre
+          class="code r"
+          style="margin-top: 26px"
+        ><span class="c"># siempre por el wrapper de package.json: fuerza que .env le gane a una variable heredada</span>
+bun run <span class="s">claude</span>     <span class="c"># o: bun run opencode · bun run codex, el mismo harness del predecesor</span>
+
+<span class="c"># el primer prompt, idéntico en los dos caminos</span>
+Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom and continue that session exactly where it stopped.</pre>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>El nombre de la sesión viaja</b
+            ><span
+              >Por el flag del propio harness (se lee en su <span class="mono">--help</span>, no se
+              copia acá). En Claude Code el hook también titula una sesión sin nombre a partir de un
+              <span class="mono">--name &lt;valor&gt;</span> en el primer prompt.</span
+            >
+          </div>
+          <div class="g">
+            <b>Si §0 impone un orden, va en el prompt</b
+            ><span
+              >Un puntero a un archivo se lee como material de referencia; una instrucción en el
+              prompt se lee como instrucción.</span
+            >
+          </div>
+          <div class="g">
+            <b>La gramática del runtime no se copia</b
+            ><span
+              >Cuando hace falta, se le pide su guía al binario. Una copia se desincroniza en la
+              próxima versión.</span
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Handoff (esta skill)</th>
+                <th>Orquestación (<span class="mono">/orca-orchestration</span>)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Qué se mueve</th>
+                <td>La sesión entera</td>
+                <td>Una tarea acotada</td>
+              </tr>
+              <tr>
+                <th>El predecesor</th>
+                <td>Termina</td>
+                <td>Sigue trabajando y supervisa</td>
+              </tr>
+              <tr>
+                <th>Canal después</th>
+                <td>Ninguno, por diseño</td>
+                <td>Buzón, preguntas, respuestas</td>
+              </tr>
+              <tr>
+                <th>Objetos del runtime</th>
+                <td>Una terminal</td>
+                <td>Run, task, dispatch, worker</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout agent r">
+          <b>Los últimos actos del predecesor, en orden:</b> confirmar en pantalla que el sucesor
+          arrancó y tiene el archivo; persistir lo durable en memoria (<span class="mono"
+            >mem_session_summary</span
+          >), porque el handoff es desechable y la memoria no; y parar. No cierra su propia
+          terminal: terminar al predecesor es decisión del dueño, y una sesión que se cierra a mitad
+          de una verificación no puede avisar que el handoff falló.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 REGLAS ============ -->
+    <section class="band" id="reglas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · reglas duras</div>
+          <h2>Las barandas que no se negocian</h2>
+          <p class="sub">
+            Viven en el bloque <span class="mono">## Compact Rules</span> y en "Hard rules" de la
+            skill; las compactas son las que viajan a los subagentes por
+            <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Sin secretos en el archivo.</b> Nombra la clave de
+              <span class="mono">.env</span> donde vive una credencial, nunca su valor. Cookies,
+              tokens y rutas de <span class="mono">storageState.json</span> quedan afuera.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca se borra el handoff del predecesor.</b> El linaje es la pista de auditoría:
+              escribir <span class="mono">-handoff-02</span> no quita
+              <span class="mono">-handoff-01</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nombra lo que NO está hecho, y por qué.</b> Un handoff que se lee como un éxito
+              sin fisuras escondió algo, y lo escondido es siempre lo que muerde.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Cada ruta es absoluta.</b> El sucesor puede arrancar en otro directorio.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Paridad de harness.</b> Un handoff armado para las convenciones de un agente y
+              entregado a otro es un problema de traducción que nadie pidió.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Es un artefacto del repo:</b> en inglés aunque la conversación no lo sea, sin
+              atribución de IA (Critical Rules #3 y #12), y nunca commiteado.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            No tiene modos: una sola corrida, tres pasos. Alcanza con nombrarla, o con frases como
+            "hagamos el handoff", "pasá el contexto a otra sesión" o "hand this session over".
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/session-handoff</span>
+            <p>La barra de la skill, sin argumentos.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill session-handoff</span>
+            <p>Sin barra: nombrás la skill en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill session-handoff</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>El sucesor sale del mismo host.</b> Un predecesor de Claude Code lanza un Claude Code;
+          OpenCode lanza OpenCode; Codex lanza Codex. La línea de lanzamiento es del harness, no del
+          runtime.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Es chica a propósito: el artefacto pesado es el markdown que produce, y todo el contrato
+            vive en <span class="mono">references/capture-contract.md</span>.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Al lado · otra forma de mover trabajo</div>
+            <h3>/orca-orchestration</h3>
+            <p>
+              Para delegar una tarea acotada y supervisarla mientras seguís. Sus verbos de terminal
+              y sus trampas son los que usa el lanzamiento con runtime.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Apuntada · estado por historia</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Su fase 0 retoma una historia desde
+              <span class="mono">.session/sprint-development/&lt;KEY&gt;/progress.md</span>. El
+              handoff apunta a ese archivo, no lo copia.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Citada · lo que dura</div>
+            <h3>Engram, ADRs y el tracker</h3>
+            <p>
+              Los hechos que sobreviven a la sesión van ahí. El handoff los cita; el predecesor
+              cierra con <span class="mono">mem_session_summary</span>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/session-handoff/SKILL.md"
+            >.agents/skills/session-handoff/SKILL.md</a
+          >, sus tres referencias en <span class="mono">references/</span> y el esqueleto en
+          <span class="mono">templates/handoff.md</span>. Doctrina relacionada:
+          <span class="mono">agentic-dev-core/references/session-management.md</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Una sesión larga sabe cosas que no
+            están en ningún archivo: qué se decidió y por qué, qué sigue en vuelo, qué ya se probó y
+            falló. El handoff las pone en disco, con su fecha de vencimiento a la vista, para que la
+            sesión siguiente las use sin creerlas a ciegas.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/session-handoff/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
