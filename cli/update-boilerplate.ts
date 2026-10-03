@@ -1038,6 +1038,13 @@ function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => 
     const adoptInstructions = runFacts.adopt?.instructions;
     if (adoptInstructions?.kind === 'compose' && !adoptInstructions.applied) {
       sink.step('Superficies de Claude/OpenCode/Codex sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
+      // The alias waits with them (it needs AGENTS.md): deferred, not missing,
+      // so the adoption itself can be committed through the gates.
+      // Only the real run's chain carries this hook, so nothing here is a dry run.
+      const marker = path.join(process.cwd(), SKILLS_ALIAS_DEFERRED_MARKER);
+      fs.mkdirSync(path.dirname(marker), { recursive: true });
+      fs.writeFileSync(marker, `${new Date().toISOString()}\n`);
+      runFacts.aliasDeferred = true;
       return;
     }
     const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());

@@ -60,6 +60,25 @@ export const SKILLS_ALIAS_MISSING_ERROR = 'Claude skills alias missing: .claude/
  */
 export const SKILLS_ALIAS_DEFERRED_MARKER = '.template/upstream-sha/claude-skills-alias.deferred';
 
+/**
+ * Where an `--adopt` run that could not ask (`--auto`) leaves the composed
+ * `AGENTS.md` for review (`ADOPT_INSTRUCTIONS_PROMPT` in `./updater-adopt.ts`,
+ * same path). While it waits there and `AGENTS.md` does not exist yet, the
+ * missing instructions are a pending adoption step (`project-adoption` Phase
+ * 6), not a broken contract: otherwise the pre-commit gate refuses the very
+ * commit of the adoption that step needs first.
+ */
+export const ADOPT_INSTRUCTIONS_PENDING_FILE = '.agents/prompts/adopt-instructions.md';
+
+/** True on an adopted repo whose `AGENTS.md` waits for its composition (see `ADOPT_INSTRUCTIONS_PENDING_FILE`). */
+export function adoptInstructionsPending(root: string): boolean {
+  if (existsSync(join(root, 'AGENTS.md')) || !existsSync(join(root, ADOPT_INSTRUCTIONS_PENDING_FILE))) { return false; }
+  try {
+    return (JSON.parse(readFileSync(join(root, '.template', 'installer.lock.json'), 'utf8')) as { adopted?: unknown }).adopted === true;
+  }
+  catch { return false; }
+}
+
 export interface CompatibilityPaths {
   root: string
   instructions: string
@@ -348,7 +367,12 @@ export function checkAgentCompatibility(
   const warnings: string[] = [];
 
   try {
-    assertCanonicalSources(paths);
+    if (adoptInstructionsPending(paths.root)) {
+      warnings.push(`AGENTS.md pending: the app's instructions wait for their composition in ${ADOPT_INSTRUCTIONS_PENDING_FILE} (project-adoption Phase 6, then \`bun run agents:compat\`).`);
+    }
+    else {
+      assertCanonicalSources(paths);
+    }
     errors.push(...validateNoShadowingCommands(paths.root));
     errors.push(...validateHookCompatibility(paths.root));
     const mcp = validateMcpParityFindings(paths.root);
