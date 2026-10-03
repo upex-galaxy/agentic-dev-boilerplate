@@ -77,4 +77,5 @@ Login Usuario → Supabase Auth → JWT Token → Usar para ambas APIs
 
 **Ver También:**
 
-- `docs/testing/api/authentication.md` - Patrones genéricos de autenticación
+- Skill `/project-bootstrap`: scaffolding de auth, rutas de API, OpenAPI y tipos de Supabase (`.agents/skills/project-bootstrap/references/`)
+- `.agents/skills/sprint-development/references/live-ui-identity.md`: con qué cuenta se valida la UI en vivo (`testing.automation_identity` en `.agents/project.yaml`)
