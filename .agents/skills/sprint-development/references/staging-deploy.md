@@ -18,6 +18,8 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 ## 📥 INPUT REQUERIDO
 
+> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo.
+
 ### 1. Estado del PR/Feature
 
 **Verificar:**
@@ -38,7 +40,7 @@ Desplegar código a staging environment (automático via CI/CD o manual si neces
 
 1. ¿GitHub Actions está configurado?
 2. ¿Deploy automático a staging funciona?
-3. ¿Qué branch trigger el deploy? (`develop`)
+3. ¿Qué branch trigger el deploy? (`staging`)
 
 ---
 
@@ -60,7 +62,7 @@ Desplegar código a staging environment:
 
 **Incluye:**
 
-- ✅ Merge feature branch a `develop`
+- ✅ Merge feature branch a `staging`
 - ✅ GitHub Actions ejecuta: lint → test → build → deploy
 - ✅ Vercel/Railway despliega automáticamente
 - ✅ URL de staging disponible
@@ -80,10 +82,10 @@ Desplegar código a staging environment:
 
 ### Deployment:
 
-- ✅ Feature branch merged a `develop`
+- ✅ Feature branch merged a `staging`
 - ✅ GitHub Actions workflow ejecutado exitosamente
 - ✅ Deployment en Vercel/Railway completado
-- ✅ Staging URL: `https://[project]-develop.vercel.app`
+- ✅ Staging URL: `https://[project]-staging.vercel.app`
 
 ### Validación:
 
@@ -199,17 +201,17 @@ npm run build
 **Alternatively, via CLI:**
 
 ```bash
-# Asegúrate de estar en develop
-git checkout develop
+# Asegúrate de estar en staging
+git checkout staging
 
 # Pull latest
-git pull origin develop
+git pull origin staging
 
 # Merge feature branch
 git merge [feature-branch]
 
 # Push to trigger CI/CD
-git push origin develop
+git push origin staging
 ```
 
 ---
@@ -265,10 +267,10 @@ git push origin develop
 **Una vez que GitHub Actions complete exitosamente:**
 
 1. Ve a Vercel dashboard: `https://vercel.com/[org]/[project]`
-2. En "Deployments", busca el deployment más reciente de `develop`
+2. En "Deployments", busca el deployment más reciente de `staging`
 3. Copia la URL:
-   - URL: `https://[project]-develop-[hash].vercel.app`
-   - O URL stable: `https://[project]-develop.vercel.app`
+   - URL: `https://[project]-staging-[hash].vercel.app`
+   - O URL stable: `https://[project]-staging.vercel.app`
 
 **Mostrar al usuario:**
 
@@ -276,11 +278,11 @@ git push origin develop
 ## 🎉 Deployment Exitoso
 
 **Staging URL:**
-https://[project]-develop.vercel.app
+https://[project]-staging.vercel.app
 
 **Deployment Details:**
 
-- Branch: develop
+- Branch: staging
 - Commit: [hash corto]
 - Status: Ready
 - Duration: [X] minutos
@@ -351,7 +353,7 @@ railway up
 ```markdown
 ## 🔥 Smoke Test - Staging
 
-**URL:** https://[project]-develop.vercel.app
+**URL:** https://[project]-staging.vercel.app
 
 ### Validaciones Básicas:
 
@@ -430,7 +432,7 @@ railway logs
 
 ## Deployment Details:
 
-**Staging URL:** https://[project]-develop.vercel.app
+**Staging URL:** https://[project]-staging.vercel.app
 
 **Status:** ✅ Ready
 
@@ -457,7 +459,7 @@ _QA verification on staging is out of scope here._
 
 ## 📊 Deployment Summary:
 
-- Branch: `develop`
+- Branch: `staging`
 - Commit: [hash]
 - Duration: [X] minutos
 - CI/CD: [Automático / Manual]
@@ -482,7 +484,7 @@ Lista para QA y exploratory testing.
 
 ### Deploy:
 
-- [ ] Feature branch merged a develop
+- [ ] Feature branch merged a staging
 - [ ] GitHub Actions ejecutado (o deploy manual)
 - [ ] Deployment completado en Vercel/Railway
 - [ ] URL de staging obtenida
@@ -514,7 +516,7 @@ npm run lint:check && npm run test && npm run build
 
 - ✅ Code review obligatorio
 - ✅ CI checks must pass
-- ❌ No direct push a develop
+- ❌ No direct push a staging
 
 ### **3. Monitor GitHub Actions**
 

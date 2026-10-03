@@ -469,14 +469,14 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.agents/skills
 
 > **Active strategy + branch policy = the `git_strategy:` block in `.agents/project.yaml`** (source of truth). This repo operates as `solo-main`.
 
-**Protected branches**:
+**Branch roles** (names come from `git_strategy.branches`; `staging` below is the conventional integration name):
 
-| Branch      | Role                                                               |
-| ----------- | ------------------------------------------------------------------ |
-| `main`      | Production. PRs merged from `staging` or `feature/*` after review. |
-| `staging`   | Integration branch for AI commits + pre-release validation.        |
-| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`.                       |
-| `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                        |
+| Branch      | Role                                                                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main`      | Production (`git_strategy.branches.production`). PRs merged from the integration branch or `feature/*` after review.                          |
+| `staging`   | Integration branch for AI commits + pre-release validation, ONLY when `git_strategy.branches.integration` names one (null under `solo-main`). |
+| `feature/*` | Task-specific. Use `feature/TICKET-ID-desc`.                                                                                                  |
+| `fix/*`     | Bug-fix branches. Use `fix/TICKET-ID-desc`.                                                                                                   |
 
 **Critical commit rules**:
 

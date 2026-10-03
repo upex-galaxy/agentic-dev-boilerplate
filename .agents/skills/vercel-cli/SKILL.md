@@ -29,7 +29,7 @@ metadata:
 
 # Vercel CLI (`vercel`)
 
-`vercel` is Vercel's official command-line client. In this boilerplate it is the primary verification + env-management surface for our standard stack: **Next.js + Supabase + Vercel + Resend**, with branch-based auto-deploys (`develop` → Vercel Preview / staging, `main` → Vercel Production).
+`vercel` is Vercel's official command-line client. In this boilerplate it is the primary verification + env-management surface for our standard stack: **Next.js + Supabase + Vercel + Resend**, with branch-based auto-deploys (the integration branch, `git_strategy.branches.integration` in `.agents/project.yaml`, e.g. `staging` → Vercel Preview / staging; `main` → Vercel Production).
 
 This skill teaches the operations that live AROUND a deploy — confirming it actually shipped, pushing the right env vars before it ships, tailing logs when it breaks, rolling back when it breaks badly. The act of TRIGGERING a deploy (choosing between git push, `vercel deploy`, or first-time `vercel link`) is owned by the community skill `/deploy-to-vercel`. This skill points at it; it does not duplicate it.
 
@@ -64,8 +64,8 @@ Resolution steps (per `agentic-dev-core/references/skill-composition-strategy.md
 | DEV moment                                                       | What this skill does                                                                                                          |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `/sprint-development` Stage 9 — pre-deploy env audit             | `vercel env ls preview` → diff against `.env.example` keys; push the missing ones                                              |
-| `/sprint-development` Stage 9 — after merging `feature/*` → `develop` | Poll `vercel ls -m githubCommitSha=$(git rev-parse develop)` → `vercel inspect <url> --wait` until READY → smoke test          |
-| `/sprint-development` Stage 12 — after merging `develop` → `main`    | Same poll + inspect, on the production deployment                                                                              |
+| `/sprint-development` Stage 9 — after merging `feature/*` → `staging` | Poll `vercel ls -m githubCommitSha=$(git rev-parse staging)` → `vercel inspect <url> --wait` until READY → smoke test          |
+| `/sprint-development` Stage 12 — after merging `staging` → `main`    | Same poll + inspect, on the production deployment                                                                              |
 | `/sprint-development` Stage 12 — production blew up               | `vercel rollback <previous-prod-url>` (or dashboard "Promote to Production" on the prior good deploy)                          |
 | Any session, after a deploy fails                                | `vercel inspect <url> --logs` to grab the build log; `vercel logs <url>` for runtime logs                                       |
 | First-time onboarding to a new Vercel project                    | Defer to `/deploy-to-vercel` for `vercel link`; come back here for `vercel env pull .env.local`                                |

@@ -14,18 +14,20 @@ Configurar GitHub Actions workflow que automatice linting, testing, build, y dep
 
 ## 📥 INPUT REQUERIDO
 
+> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo.
+
 ### 1. Repositorio del Proyecto
 
 **Verificar:**
 
 - `.git/` - Repositorio Git inicializado
 - GitHub repository existente (verificar remotes)
-- Branch strategy: `main` (production) y `develop` (staging)
+- Branch strategy: `main` (production) y la rama de integración (`git_strategy.branches.integration` en `.agents/project.yaml`, por convención `staging`)
 
 **Qué identificar:**
 
 1. ¿El proyecto tiene remote origin en GitHub?
-2. ¿Existen branches `main` y `develop`?
+2. ¿Existen branches `main` y `staging`?
 3. ¿El repo es público o privado?
 
 ### 2. Configuración del Proyecto
@@ -89,11 +91,11 @@ Crear un workflow de GitHub Actions que:
 
 **Incluye:**
 
-- ✅ Se ejecuta automáticamente en push/PR a `main` y `develop`
+- ✅ Se ejecuta automáticamente en push/PR a `main` y `staging`
 - ✅ **Linting:** Valida code style (ESLint + Prettier)
 - ✅ **Unit Tests:** Ejecuta tests y genera coverage
 - ✅ **Build:** Valida que el proyecto compila sin errores
-- ✅ **Deploy to Staging:** Despliega a Vercel staging cuando merge a `develop`
+- ✅ **Deploy to Staging:** Despliega a Vercel staging cuando merge a `staging`
 - ✅ **Deploy to Production:** (Opcional) Despliega a Vercel production cuando merge a `main`
 - ✅ Notifica fallos claramente en PRs
 
@@ -179,7 +181,7 @@ git branch -a
 **Analizar:**
 
 - ¿El proyecto está en GitHub?
-- ¿Existen branches `main` y `develop`?
+- ¿Existen branches `main` y `staging`?
 - ¿Qué branch está activo?
 
 ---
@@ -229,7 +231,7 @@ Leer `package.json` completo
 ### Git Repository:
 
 - ✅ GitHub remote: https://github.com/[org]/[repo]
-- ✅ Branches: main, develop
+- ✅ Branches: main, staging
 
 ### Scripts npm disponibles:
 
@@ -240,13 +242,13 @@ Leer `package.json` completo
 ### Hosting Provider:
 
 - Provider: Vercel
-- Staging URL: https://[project]-develop.vercel.app
+- Staging URL: https://[project]-staging.vercel.app
 - Production URL: https://[project].vercel.app
 
 ### Workflow a crear:
 
 1. CI job: lint → test → build
-2. Deploy to staging: cuando push a `develop`
+2. Deploy to staging: cuando push a `staging`
 3. (Opcional) Deploy to production: cuando push a `main`
 ```
 
@@ -278,9 +280,9 @@ name: CI/CD Pipeline
 # Triggers
 on:
   push:
-    branches: [main, develop]
+    branches: [main, staging]
   pull_request:
-    branches: [main, develop]
+    branches: [main, staging]
 
 # Jobs
 jobs:
@@ -314,11 +316,11 @@ jobs:
       - install dependencies
       - run build
 
-  # Job 4: Deploy Staging (needs: build, only on develop)
+  # Job 4: Deploy Staging (needs: build, only on staging)
   deploy-staging:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     steps:
       - checkout código
       - deploy to Vercel (usando secrets)
@@ -340,9 +342,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, staging]
   pull_request:
-    branches: [main, develop]
+    branches: [main, staging]
 
 jobs:
   lint:
@@ -418,10 +420,10 @@ jobs:
     name: 🚀 Deploy to Staging
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     environment:
       name: staging
-      url: https://${{ secrets.VERCEL_PROJECT_NAME }}-develop.vercel.app
+      url: https://${{ secrets.VERCEL_PROJECT_NAME }}-staging.vercel.app
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -516,7 +518,7 @@ Para que el workflow funcione, necesitas agregar estos secrets en GitHub:
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci: add GitHub Actions CI/CD workflow"
-git push origin develop
+git push origin staging
 ```
 
 ---
@@ -539,7 +541,7 @@ git push origin develop
 - ✅ Lint: Debe pasar (verde)
 - ✅ Test: Debe pasar (verde)
 - ✅ Build: Debe pasar (verde)
-- ✅ Deploy Staging: Debe ejecutarse solo si push a `develop`
+- ✅ Deploy Staging: Debe ejecutarse solo si push a `staging`
 
 ### 3️⃣ Si algún job falla:
 
@@ -591,8 +593,8 @@ git push origin develop
 El workflow se ejecuta automáticamente en:
 
 - ✅ Push a `main` branch
-- ✅ Push a `develop` branch
-- ✅ Pull requests a `main` o `develop`
+- ✅ Push a `staging` branch
+- ✅ Pull requests a `main` o `staging`
 
 ### Jobs
 
@@ -617,9 +619,9 @@ El workflow se ejecuta automáticamente en:
 
 #### 4️⃣ Deploy Staging (🚀)
 
-- **Solo ejecuta si:** Push a `develop` branch
+- **Solo ejecuta si:** Push a `staging` branch
 - Despliega a Vercel staging environment
-- URL: https://[project]-develop.vercel.app
+- URL: https://[project]-staging.vercel.app
 - Duración: ~30 segundos
 
 ### Secrets Configurados
@@ -637,7 +639,7 @@ main (production)
 ↑
 merge después de QA
 ↑
-develop (staging)
+staging (integración)
 ↑
 merge PRs aquí
 ↑
@@ -654,20 +656,20 @@ feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
    git push origin feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
 ````
 
-2. **Pull Request a develop:**
+2. **Pull Request a staging:**
    - CI runs: lint → test → build
    - Si todo pasa → merge
    - Auto-deploy a staging
 
 3. **QA en staging:**
-   - QA valida en https://[project]-develop.vercel.app
+   - QA valida en https://[project]-staging.vercel.app
    - Si bugs → fix → repeat
 
 4. **Release a production:**
 
    ```bash
    git checkout main
-   git merge develop
+   git merge staging
    git push origin main
    ```
 
@@ -703,7 +705,7 @@ feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
 # [Proyecto]
 
 [![CI/CD Pipeline](https://github.com/[org]/[repo]/actions/workflows/ci.yml/badge.svg)](https://github.com/[org]/[repo]/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/[org]/[repo]/branch/develop/graph/badge.svg)](https://codecov.io/gh/[org]/[repo])
+[![Coverage](https://codecov.io/gh/[org]/[repo]/branch/staging/graph/badge.svg)](https://codecov.io/gh/[org]/[repo])
 ````
 
 ---
@@ -753,10 +755,10 @@ git add .
 git commit -m "ci: add GitHub Actions CI/CD workflow
 
 - Lint, test, build jobs
-- Auto-deploy to staging on develop push
+- Auto-deploy to staging on staging push
 - Documentation in .context/ci-cd-setup.md
 "
-git push origin develop
+git push origin staging
 ```
 ````
 
@@ -774,7 +776,7 @@ Luego verifica en: https://github.com/[org]/[repo]/actions
 
 **🎊 CI/CD automatizado exitosamente!**
 
-Ahora cada push a `develop` despliega automáticamente a staging.
+Ahora cada push a `staging` despliega automáticamente a staging.
 
 ````
 
@@ -787,7 +789,7 @@ Ahora cada push a `develop` despliega automáticamente a staging.
 ### Análisis:
 - [ ] package.json leído y scripts identificados
 - [ ] Hosting provider identificado (Vercel)
-- [ ] Branches strategy confirmada (main + develop)
+- [ ] Branches strategy confirmada (main + staging)
 
 ### Workflow:
 - [ ] Archivo `.github/workflows/ci.yml` creado

@@ -238,11 +238,11 @@ https://vercel.com/[org]/[project]/settings/environment-variables
 | `NEXT_PUBLIC_SUPABASE_URL`             | https://[staging-project].supabase.co | Preview     |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | sb_publishable_...                    | Preview     |
 | `SUPABASE_SECRET_KEY`                  | sb_secret_...                         | Preview     |
-| `NEXT_PUBLIC_APP_URL`                  | https://[project]-develop.vercel.app  | Preview     |
+| `NEXT_PUBLIC_APP_URL`                  | https://[project]-staging.vercel.app  | Preview     |
 
 **⚠️ IMPORTANTE:**
 
-- **Scope "Preview"** = Solo para staging (develop branch)
+- **Scope "Preview"** = Solo para staging (rama de integración)
 - **Scope "Production"** = Configurar en Fase 12
 - **Encrypted** = Vercel encripta automáticamente los valores
 
@@ -304,14 +304,14 @@ Click en "New Variable" y agrega:
 
 **Platform:** Vercel Dashboard → Settings → Environment Variables
 
-**Scope:** Preview (solo deploy de `develop` branch)
+**Scope:** Preview (solo deploy de `staging` branch)
 
 | Variable                               | Valor                                 | Notas                           |
 | -------------------------------------- | ------------------------------------- | ------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`             | https://[staging-project].supabase.co | Proyecto de staging en Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | [publishable key staging]             | Diferente de production         |
 | `SUPABASE_SECRET_KEY`                  | [secret key staging]                  | Solo server-side                |
-| `NEXT_PUBLIC_APP_URL`                  | https://[project]-develop.vercel.app  | URL auto-generada por Vercel    |
+| `NEXT_PUBLIC_APP_URL`                  | https://[project]-staging.vercel.app  | URL auto-generada por Vercel    |
 
 ---
 
@@ -407,9 +407,9 @@ npm run dev
 **Trigger deploy a staging:**
 
 ```bash
-git checkout develop
+git checkout staging
 git commit --allow-empty -m "test: trigger staging deploy to validate env vars"
-git push origin develop
+git push origin staging
 ```
 
 **Verificar en Vercel Dashboard:**
@@ -443,7 +443,7 @@ git push origin develop
 
 - [x] variables configuradas en Vercel con scope "Preview"
 - Deploy de staging validado
-- URL: https://[project]-develop.vercel.app
+- URL: https://[project]-staging.vercel.app
 
 ### ⏭️ Production (Fase 12)
 
@@ -511,7 +511,7 @@ API_SECRET_KEY=secret123
 
 ```
 Development:  NEXT_PUBLIC_APP_URL=http://localhost:3000
-Staging:      NEXT_PUBLIC_APP_URL=https://[project]-develop.vercel.app
+Staging:      NEXT_PUBLIC_APP_URL=https://[project]-staging.vercel.app
 Production:   NEXT_PUBLIC_APP_URL=https://[domain].com
 ```
 

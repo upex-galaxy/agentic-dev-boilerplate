@@ -12,7 +12,7 @@ Deploy gradual con feature flags si es posible.
 # 1. Merge a main
 git checkout main
 git pull origin main
-git merge develop
+git merge staging   # rama de integración: git_strategy.branches.integration
 git push origin main
 
 # 2. Vercel auto-deploya a producción

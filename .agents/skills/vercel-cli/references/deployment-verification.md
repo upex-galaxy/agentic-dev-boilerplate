@@ -57,7 +57,7 @@ Filter examples:
 
 ```bash
 # What's currently building on this branch?
-vercel ls -m githubCommitBranch=develop --status BUILDING --format json
+vercel ls -m githubCommitBranch=staging --status BUILDING --format json
 
 # Last 5 production deploys that errored
 vercel ls --prod --status ERROR --format json | jq '.deployments[:5]'
@@ -102,7 +102,7 @@ A `READY` deploy that returns 5xx on every route usually means an env var is mis
 If the 60s poll loop completes with `URL=""`:
 
 1. **Vercel webhook didn't fire.** Check the GitHub Settings → Webhooks page for the Vercel webhook delivery. Re-deliver if it shows a 4xx/5xx.
-2. **Wrong branch in Vercel project settings.** If `develop` is set as the production branch but you pushed to `staging`, no preview is created.
+2. **Wrong branch in Vercel project settings.** If `staging` is set as the production branch in Vercel, a push to it builds a production deploy instead of a preview.
 3. **Vercel project not linked to the repo.** Check `.vercel/project.json` / `.vercel/repo.json` exist; if not, defer to `/deploy-to-vercel`.
 
 ## Reference
