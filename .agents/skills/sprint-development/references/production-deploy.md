@@ -4,6 +4,10 @@
 
 Deploy gradual con feature flags si es posible.
 
+## Required skills
+
+**Required skills (load before the promotion):** `/deploy-to-vercel` (deploy method, category `deploy`) next to T1 `/vercel-cli` (deployment verification by commit SHA, env sync, logs, rollback). When the story sends or templates email, also `/resend-cli` (category `email`) before checking the sender and the templates on the target environment. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+
 ## Proceso
 
 ### Automático (Vercel/Railway)

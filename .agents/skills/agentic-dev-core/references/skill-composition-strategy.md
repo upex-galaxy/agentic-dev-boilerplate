@@ -126,6 +126,31 @@ When a referenced skill is not in the available list (deprecated, uninstalled, v
 3. Flag in result envelope: `skill_resolution: "fallback-inline" + missing: [list]`.
 4. Suggest reinstall via `bun run setup` or `bunx skills add <name>` in the user-facing summary.
 
+### 3.5 Step-required skills (named at the step that needs them)
+
+The entry-time scan (§3.1) loads a community skill only when the task domain "matches", which is
+too soft for the steps where a stack skill carries the real rules. So a workflow step that writes in
+a domain a stack skill owns NAMES that skill and requires it at that step. The owners:
+
+| Step does | Load first | Category |
+| --------- | ---------- | -------- |
+| Any database schema, RLS, function or migration change (through the DB MCP or the `supabase` CLI) | `supabase` + `supabase-postgres-best-practices` | `backend-db` |
+| Screen, component or layout work | `frontend-design` + `shadcn` + `tailwind-css-patterns` | `frontend-ui` |
+| A deploy to a Vercel environment | `deploy-to-vercel` (method), next to T1 `vercel-cli` (verification) | `deploy` |
+| Sending or templating transactional email | `resend-cli` | `email` |
+| A public, indexable page | `seo` | `seo` |
+
+Contract, identical at every step that cites this section:
+
+1. **Load the named skills before the first write of the step**, not after.
+2. **Not installed** → say so ONCE in the session (which skill, which step) and point at the install
+   path: `bun run setup` installs the project-level list (`PROJECT_LEVEL_SKILLS` in `cli/install.ts`),
+   or one `bunx skills add <package> --skill <name> --yes` with the package from that list;
+   `bun run setup:doctor` checks the machine. Then CONTINUE with the step: a missing community skill
+   is never a hard STOP and never a silent skip (record it as `skill_resolution: "fallback-inline"`, §3.4).
+3. The skill guides HOW; the step's own rules (the project's ADRs, `DESIGN.md` tokens, Critical Rules)
+   still win on a conflict.
+
 ---
 
 ## 4. Category Vocabulary (for community skill auto-match)

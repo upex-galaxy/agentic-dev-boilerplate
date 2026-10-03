@@ -685,6 +685,8 @@ Basándome en `DESIGN.md`, tus respuestas y el análisis del proyecto, aquí est
 
 **CRÍTICO:** Esta decisión afecta significativamente el tiempo y esfuerzo de desarrollo.
 
+**Required skills (load before Paso 1.6.1):** `/frontend-design` + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They own component composition, the shadcn CLI and registry, and the Tailwind patterns every component below is written with; the shadcn MCP, when present, is the catalog, not a substitute. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+
 ---
 
 ### Paso 1.6.1: Pregunta - Estrategia de Componentes UI

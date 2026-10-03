@@ -407,9 +407,12 @@ npm run dev
 **Trigger deploy a staging:**
 
 ```bash
-git checkout staging
+# <integration> = git_strategy.branches.integration (.agents/project.yaml); null under
+#   solo-main / github-flow / trunk-based: there, trigger the Preview deploy from a work branch instead
+# Direct push to a protected branch: resolved by git_strategy.policy.direct_push_to_protected (/git-flow-master)
+git checkout <integration>
 git commit --allow-empty -m "test: trigger staging deploy to validate env vars"
-git push origin staging
+git push origin <integration>
 ```
 
 **Verificar en Vercel Dashboard:**

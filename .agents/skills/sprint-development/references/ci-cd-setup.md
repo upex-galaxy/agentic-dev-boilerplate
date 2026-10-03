@@ -14,7 +14,7 @@ Configurar GitHub Actions workflow que automatice linting, testing, build, y dep
 
 ## 📥 INPUT REQUERIDO
 
-> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo.
+> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; los comandos de git de abajo lo escriben `<integration>` (y la rama de producción, `git_strategy.branches.production`, `<production>`); el workflow YAML usa `staging`, el nombre por convención: sustitúyelo por el valor real al generarlo. Léelo antes de ejecutar cualquier comando de git de abajo.
 
 ### 1. Repositorio del Proyecto
 
@@ -518,7 +518,9 @@ Para que el workflow funcione, necesitas agregar estos secrets en GitHub:
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci: add GitHub Actions CI/CD workflow"
-git push origin staging
+# <integration> = git_strategy.branches.integration, <production> = git_strategy.branches.production (.agents/project.yaml)
+# Direct push to a protected branch: resolved by git_strategy.policy.direct_push_to_protected (/git-flow-master)
+git push origin <integration>
 ```
 
 ---
@@ -668,9 +670,11 @@ feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}
 4. **Release a production:**
 
    ```bash
-   git checkout main
-   git merge staging
-   git push origin main
+   # <production> / <integration>: git_strategy.branches.* in .agents/project.yaml
+   # Promotion method: git_strategy.decisions.promote_method, via /git-flow-master
+   git checkout <production>
+   git merge <integration>
+   git push origin <production>
    ```
 
    - CI runs nuevamente
@@ -758,7 +762,8 @@ git commit -m "ci: add GitHub Actions CI/CD workflow
 - Auto-deploy to staging on staging push
 - Documentation in .context/ci-cd-setup.md
 "
-git push origin staging
+# <integration> = git_strategy.branches.integration, <production> = git_strategy.branches.production (.agents/project.yaml)
+git push origin <integration>
 ```
 ````
 

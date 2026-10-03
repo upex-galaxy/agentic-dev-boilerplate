@@ -12,11 +12,14 @@ complementary_categories:
   - testing-e2e
   - accessibility
   - seo
+  - deploy
+  - email
   - ci-cd
 # compact_rules is consumed VERBATIM by scripts/build-skill-registry.ts (frontmatter-first,
 # no truncation). Keep in sync with the "## Compact Rules" section in the body below.
 compact_rules: |
   - **Automation identity is declared, never chosen.** Log into a running app ONLY as the account named in `.agents/project.yaml` → `testing.automation_identity` (variable NAMES there, values in `.env`). Slot unset or variable missing → STOP and report; never substitute another account, query the DB for one, create one, or reuse the human's browser session. See `references/live-ui-identity.md`.
+  - **Stack skills load at the step that writes in their domain.** DB-MCP schema / RLS / migration call → `supabase` + `supabase-postgres-best-practices` first; component or layout write → `frontend-design` + `shadcn` + `tailwind-css-patterns` first; Stage 4/5 deploy → `deploy-to-vercel` next to `vercel-cli`; email work → `resend-cli`; public page → `seo`. Not installed → say so once with the install path (`bun run setup`), then continue: never a silent skip, never a hard STOP (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
   - **Never bypass the app's own login path.** No service-role / secret / admin keys, no admin user-management APIs (list / create / mutate users), no generated magic or password-reset links, no locally-signed JWTs, no hand-crafted session cookies, no impersonation of any account — including "just to see the admin view". Surface the need as a finding instead.
   - **Session material is ephemeral.** Cookie jars, `storageState.json`, token files, `.har` captures: session scratch directory only (never the repo tree), deleted BEFORE reporting, disclosed as `secrets_materialized:` + `cleaned:` in the report. Never echo a credential into a report, plan, commit, PR body, or tracker comment.
   - **Live-UI validation is browser-based at the gate.** A UI story cannot be approved on HTTP-probe evidence alone; Tier 0 probes carry the inner loop and non-visual assertions only (`references/live-ui-validation.md` §7). Never validate against a production build.
@@ -64,6 +67,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 > Extracted verbatim into `.agents/skills/REGISTRY.md` by `scripts/build-skill-registry.ts` and copied into every subagent briefing. These are the rules that must BIND an executor, not just inform the orchestrator (`agentic-dev-core/references/orchestration-doctrine.md` → "Rule reachability"). Keep this list short and imperative; rationale lives in the referenced files.
 
 - **Automation identity is declared, never chosen.** Log into a running app ONLY as the account named in `.agents/project.yaml` → `testing.automation_identity` (variable NAMES there, values in `.env`). Slot unset or variable missing → STOP and report; never substitute another account, query the DB for one, create one, or reuse the human's browser session. See `references/live-ui-identity.md`.
+- **Stack skills load at the step that writes in their domain.** DB-MCP schema / RLS / migration call → `supabase` + `supabase-postgres-best-practices` first; component or layout write → `frontend-design` + `shadcn` + `tailwind-css-patterns` first; Stage 4/5 deploy → `deploy-to-vercel` next to `vercel-cli`; email work → `resend-cli`; public page → `seo`. Not installed → say so once with the install path (`bun run setup`), then continue: never a silent skip, never a hard STOP (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - **Never bypass the app's own login path.** No service-role / secret / admin keys, no admin user-management APIs (list / create / mutate users), no generated magic or password-reset links, no locally-signed JWTs, no hand-crafted session cookies, no impersonation of any account — including "just to see the admin view". Surface the need as a finding instead.
 - **Session material is ephemeral.** Cookie jars, `storageState.json`, token files, `.har` captures: session scratch directory only (never the repo tree), deleted BEFORE reporting, disclosed as `secrets_materialized:` + `cleaned:` in the report. Never echo a credential into a report, plan, commit, PR body, or tracker comment.
 - **Live-UI validation is browser-based at the gate.** A UI story cannot be approved on HTTP-probe evidence alone; Tier 0 probes carry the inner loop and non-visual assertions only (`references/live-ui-validation.md` §7). Never validate against a production build.
@@ -126,7 +130,7 @@ Canonical reading order for any AI starting cold on a sprint-development workflo
 6. `.context/business/domain-glossary.md` — canonical domain terminology; consult BEFORE planning so the impl plan, code identifiers, PR prose, and Jira comments use canonical terms and avoid anti-glossary banned terms.
 7. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — story-level context (dev-authored, non-Jira): session notes, open questions.
 8. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md` — canonical story-level technical plan, synced from the Jira `spec_implementation_plan` field (read-only cache; read before Stage 2 resume).
-9. `.context/SRS/` architecture-specs and `.context/ADR/` — read existing ADRs so the plan honors a settled architectural decision instead of silently violating it. **Mechanical trigger (answer from the Stage 1 plan, not the story title): does the plan forecast adding or modifying a database migration, or touching an authentication, authorization, session, or tenancy path? Either answer of yes makes this input mandatory.** Beyond that, read them whenever the story touches a cross-cutting concern (data model, infra). The mechanical trigger exists because the stories that most need a settled invariant are the ones nobody would classify as architectural work from their title.
+9. `.context/SRS/` architecture-specs and `.context/ADR/` — read existing ADRs so the plan honors a settled architectural decision instead of silently violating it. **Mechanical trigger (answer from the Stage 1 plan, not the story title): does the plan forecast adding or modifying a database migration, or touching an authentication, authorization, session, or tenancy path? Either answer of yes makes this input mandatory.** Beyond that, read them whenever the story touches a cross-cutting concern (data model, infra). The mechanical trigger exists because the stories that most need a settled invariant are the ones nobody would classify as architectural work from their title. A yes on the migration half also loads `/supabase` + `/supabase-postgres-best-practices` before the first DB-MCP schema, RLS or migration call (`references/implement-story.md` Paso 2; `agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 10. `DESIGN.md` (+ `.context/design/master-design-plan.md` when the project keeps per-screen specs) — **mandatory whenever the story has UI**. `DESIGN.md` is the token + component-system contract; a master design plan, when present, adds per-screen fidelity specs and a US→Screen map. Procedure: look the story up in **§8** (US→Screen map) → open that screen's spec in **§4** + the frozen-token contract in **§2** → use the mockup in `.context/designs/<project-slug>/<batch-slug>/` as inspiration. The fidelity reference is the CURRENT live UI + `DESIGN.md` tokens (Critical Rule #14, UI fidelity contract, LIVE-UI-FIRST): reuse the live components, never invent UI, and ratify in §5 any deliberate departure from the live UI or the tokens before coding. **When the story has no screen to build against, see "The design gate" below — that decision does not belong in this input list.**
 11. The business maps, read with `bun run context:map business-data-context` · `business-feature-context` · `business-api-context` (`--section <id>` for one section) — impact assessment when the story touches multiple domains.
 
@@ -263,11 +267,16 @@ rules, rounds, claims, blocked lines, liveness, failure modes): `references/flee
 
 Per `complementary_categories` in this skill's frontmatter and the matching rule in `agentic-dev-core/references/skill-composition-strategy.md` §3:
 
-- **UI work in any stage** → `frontend-ui` category match (T3 or T4 — ASK if T4).
+- **UI work in any stage** → `frontend-ui` category match (T3 or T4 — ASK if T4). **Required at the step**: `frontend-design` + `shadcn` + `tailwind-css-patterns` before the first component or layout write (`references/implement-story.md` Paso 1 item 5).
 - **Next.js / React patterns** → `frontend-framework` category match (T3 silent if matched).
 - **Forms work** → `forms-validation` category match (T3 silent).
-- **DB work** → `backend-db` category match (T3 silent).
+- **DB work** → `backend-db` category match (T3 silent). **Required at the step**: `supabase` + `supabase-postgres-best-practices` before any DB-MCP schema, RLS or migration call (`references/implement-story.md` Paso 2).
+- **Deploy (Stages 4-5)** → `deploy` category: `deploy-to-vercel` (method) next to T1 `vercel-cli` (verification), required in `references/staging-deploy.md` and `references/production-deploy.md`.
+- **Email-feature work** → `email` category: `resend-cli`, required when the story sends or templates email, at implementation and at deploy.
+- **Public-page work** → `seo` category: `seo` (or `nextjs-seo`), required when the story adds or changes a public, indexable page.
 - **E2E tests if in scope** → `testing-e2e` category match (T4 — ASK before load).
+
+"Required at the step" follows `agentic-dev-core/references/skill-composition-strategy.md` §3.5: load before the first write; not installed → say so once with the install path, then continue (never a silent skip, never a hard STOP).
 
 When delegating to a sub-agent, inject a `## Composable Skills` block into the sub-agent prompt listing the resolved skills + project standards per `agentic-dev-core/references/skill-composition-strategy.md` §6.2.
 
