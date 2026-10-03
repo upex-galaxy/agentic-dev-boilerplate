@@ -132,6 +132,7 @@ N8N_API_URL · N8N_API_KEY
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Start a new project — magic command (recommended)**              | `bunx create-agentic-dev@latest <your-repo-name>` — official scaffolder ([npm](https://www.npmjs.com/package/create-agentic-dev))                                                                       |
 | **Start a new project — GitHub "Use this template"**               | Click [**Use this template**](https://github.com/upex-galaxy/agentic-dev-boilerplate/generate) → clone your new repo → `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start)) |
+| **Adopt an existing app** (Next.js + Postgres family, on bun)      | From the app's repo root: `bunx create-agentic-dev@latest --adopt`, then the `project-adoption` skill (see [Adopt an existing app](#adopt-an-existing-app))                                              |
 | **Contribute to the boilerplate itself**                           | `git clone …` then `bun install && bun run setup` (see [Other ways to start](#other-ways-to-start))                                                                                                     |
 | **See the repo's mental model before touching anything** (~30 min) | `bun run onboarding` — opens `docs/onboarding.html` with sidebar nav (also published as the hub's [start-here page](https://upex-galaxy.github.io/agentic-dev-boilerplate/onboarding.html)) |
 | **Read the visual docs hub** (one deck per workflow skill)         | [https://upex-galaxy.github.io/agentic-dev-boilerplate/](https://upex-galaxy.github.io/agentic-dev-boilerplate/)                                                                                                                                  |
@@ -206,6 +207,24 @@ bunx -y ccstatusline@latest
 > Don't chain `bun run onboarding && bun run setup` — the onboarding server is blocking and the chain deadlocks. Run them as separate steps.
 
 > `bunx -y ccstatusline@latest` is Claude Code-only and optional. Run it from a plain terminal with NO agent running — concurrent TUIs fight over stdin and the configurator silently breaks. OpenCode users skip this: the `opencode-subagent-statusline` plugin is already wired into `opencode.jsonc`.
+
+<br />
+
+## Adopt an existing app
+
+Already running an application with its own code, schema, CI and conventions? Install the agentic layer into it instead of starting a new project. v1 adopts a Next.js app on the Postgres family (Supabase or plain Postgres) that uses bun as its package manager. One app is adopted at a time; in a monorepo, `stack.app_root` names which one.
+
+```bash
+cd <your-app>                                          # the repo root, with a clean working tree
+bunx create-agentic-dev@latest --doctor --preflight    # read-only: can this app be adopted?
+bunx create-agentic-dev@latest --adopt
+```
+
+`--adopt` first runs the same preflight and stops, with nothing written, when a required check fails: the directory is not the root of a git repository, there is uncommitted work, the repo is already an agentic-dev project, `gh` is not authenticated, the app uses a package manager other than bun, or its stack is outside Next.js + Postgres. It then downloads the template to a temp directory (never into your app) and runs that template's updater with `--adopt`, with your app as the working directory. Running `bun <boilerplate clone>/cli/update-boilerplate.ts --adopt` yourself does the same install without the scaffolder.
+
+The updater delivers what the app lacks and never overwrites what it has. A file the app already owns at the same path stays as it is, becomes a `merge` row in the parity table and gets an `updater.protected_paths` entry, so no later `bun run up` replaces it. `package.json` only gains the tooling `devDependencies` and the scripts the app does not declare; a script name the app already uses is kept and reported as a blocking row. `.gitignore` and `.env.example` get a sentinel block. Existing instructions in `AGENTS.md` or `CLAUDE.md` are proposed verbatim inside the new `AGENTS.md` and applied only when you say yes. There is no history scrub, no rename, no `git init`, and no database is touched. Running `--adopt` again on an adopted repo does nothing.
+
+After the install, review the parity table, run `bun install`, and commit the adoption as one change. Then open an agent session (`bun claude` or `bun opencode`) and load the [`project-adoption`](.agents/skills/project-adoption/SKILL.md) skill. It reads the app without writing anything, proposes one plan, and only after you approve it fills the project identity, the `stack:` block, the tracker catalogs and the protected paths. Install details: [`INSTALLER.md`](INSTALLER.md#adopt-an-existing-app).
 
 <br />
 

@@ -34,6 +34,9 @@ That single command:
 | `--no-setup`                   | off                                   | Skip `bun run setup` — only download + git init.                                                                      |
 | `--no-git`                     | off                                   | Skip `git init` + initial commit.                                                                                     |
 | `--non-interactive`            | auto on no-TTY                        | Forwarded to the installer. Prompts use safe defaults.                                                                |
+| `--adopt`                      | off                                   | Install into the EXISTING app in the current directory. See [Adopt an existing app](#adopt-an-existing-app).          |
+| `--doctor`                     | off                                   | Print the prerequisite checks and exit (`0` all required rows pass, `1` otherwise).                                   |
+| `--preflight`                  | off                                   | With `--doctor`: also run the `--adopt` checks against the current directory.                                         |
 | `--help`, `-h`                 |                                       | Print help and exit.                                                                                                  |
 | `--version`, `-v`              |                                       | Print CLI version and exit.                                                                                           |
 
@@ -49,6 +52,41 @@ bunx create-agentic-dev --here
 
 The CLI detects the `.template/installer.lock.json` sentinel, skips the download
 stage entirely, and jumps straight to the installer.
+
+## Adopt an existing app
+
+For an application that already exists, with its own code, schema, CI and
+conventions, run the CLI from the app's repo root:
+
+```bash
+cd my-existing-app
+bunx create-agentic-dev --doctor --preflight   # read-only: can this app be adopted?
+bunx create-agentic-dev --adopt
+```
+
+`--adopt` checks the app first and stops with nothing written (exit `13`) when
+the directory is not a git repo root, the tree has uncommitted work, the repo
+is already an agentic-dev project, `gh` is not authenticated, the app's package
+manager is not bun, or the stack is not Next.js on the Postgres family. A
+monorepo with several Next apps gets a warning: one app is adopted at a time.
+
+Then it downloads the template into a temp directory, installs that copy's
+dependencies, and runs its updater with `--adopt` inside your app. The updater
+delivers what the app lacks and never overwrites a file the app already has;
+each collision becomes a parity row and a protected path. There is no history
+scrub, no rename, no `git init`, and no `bun install` or `bun run setup` in the
+app. A second `--adopt` on an adopted repo is a no-op.
+
+`--adopt` takes `--template-repo` and `--non-interactive` (passed to the
+updater as `UPEX_TEMPLATE_REPO` and `--auto`). It refuses a project name,
+`--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup` and a
+`--template` other than `main`.
+
+Next: review the parity table, run `bun install`, commit the adoption, and load
+the `project-adoption` skill in an agent session. The boilerplate's
+[README](https://github.com/upex-galaxy/agentic-dev-boilerplate#adopt-an-existing-app)
+and [INSTALLER](https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md#adopt-an-existing-app)
+cover the whole flow.
 
 ## Requirements
 
@@ -102,9 +140,11 @@ mapping, and the order in which each layer surfaces what's missing.
 | 10   | Environment error (no bun / no tar / no git)                      |
 | 11   | Network error (template download failed)                          |
 | 12   | Target directory already exists and is not an agentic-dev project |
+| 13   | `--adopt` preflight failed (nothing was installed)                |
 | 20   | Bootstrap error (extract / scrub / git init failed)               |
 | 30   | `bun install` failed                                              |
 | 31   | `bun run setup` failed                                            |
+| 32   | The updater's `--adopt` run failed                                |
 | 130  | User cancelled (Ctrl+C)                                           |
 
 ## Local development / testing without npm publish
