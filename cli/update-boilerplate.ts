@@ -8,6 +8,7 @@
  */
 
 import type { CompatibilityCheck } from './lib/agent-compatibility.ts';
+import type { AdoptOutcome } from './lib/updater-adopt.ts';
 import type { ProtectedWatchEntry } from './lib/updater-drift';
 import type { HarnessMigrationResult } from './lib/updater-harness-migration.ts';
 import type { GateResult, HeldBackComponent, ParityFinding, ParityReport } from './lib/updater-parity';
@@ -23,6 +24,7 @@ import { parseEnvFile } from './install';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
 import * as tui from './lib/tui';
+import { ADOPT_REPO_ONLY_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
 import {
   cleanupTempDir,
   createBackupDir,
@@ -260,13 +262,15 @@ interface ParsedArgs {
   noGates: boolean
   /** Keep the prompts even when stdin is not a TTY (the default there is `--auto`). */
   interactive: boolean
+  /** First run on an EXISTING app: never overwrite what it already has (see `cli/lib/updater-adopt.ts`). */
+  adopt: boolean
   updateMcpTemplate: McpAgent | null
 }
 
 const isMcpAgent = (v: string): v is McpAgent => (MCP_TEMPLATE_AGENTS as readonly string[]).includes(v);
 
 export function parseArgs(args: string[]): ParsedArgs {
-  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, noGates: false, interactive: false, updateMcpTemplate: null };
+  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, noGates: false, interactive: false, adopt: false, updateMcpTemplate: null };
   const valid = new Set(COMPONENTS.map(c => c.name).concat(['all', 'help', 'rollback']));
   // Pre-cross-harness component names still typed from muscle memory.
   const aliases: Record<string, string> = {
@@ -287,6 +291,7 @@ export function parseArgs(args: string[]): ParsedArgs {
     else if (a === '--strict') { out.strict = true; }
     else if (a === '--no-gates') { out.noGates = true; }
     else if (a === '--interactive') { out.interactive = true; }
+    else if (a === '--adopt') { out.adopt = true; }
     else if (a === '--update-mcp-template') {
       const n = args[i + 1];
       if (!n || !isMcpAgent(n)) {
@@ -377,6 +382,25 @@ RE-EJECUCION SEGURA:
   ruta ajena, o una sincronizada que editaste despues, sigue abortando (con el
   commit sugerido y la ruta del prompt).
 
+ADOPTAR UNA APP EXISTENTE (--adopt, solo la primera corrida):
+  Para un repo de aplicacion que todavia no tiene ${VERSION_FILE}. Una ruta
+  que upstream envia y la app NO tiene se entrega; una identica se marca vista;
+  una que la app ya tiene con otro contenido NUNCA se sobrescribe: queda como
+  fila de paridad y, si esta corrida sembro .agents/project.yaml, en
+  updater.protected_paths. package.json solo agrega claves (los paquetes de la
+  herramienta van a devDependencies; un script con el mismo nombre que uno de
+  upstream se mantiene y es fila BLOQUEANTE). .env.example de la app recibe las
+  variables de la herramienta en un bloque sentinel. .agents/project.yaml se
+  siembra desde .agents/project.schema.yaml (identidad null, git_strategy
+  inherited). Si la app trae su propio AGENTS.md o CLAUDE.md, se propone UN
+  AGENTS.md = upstream + ese texto literal bajo "## 0. Project instructions
+  (pre-adoption)", con CLAUDE.md como shim: se aplica solo con un si explicito
+  (con --auto queda guardado para revision y la fila bloquea). .mcp.json y
+  opencode.jsonc se entregan si la app no los tiene. Los ADR numerados del
+  boilerplate no viajan, ni en esa corrida ni en las siguientes. Escribe
+  ${INSTALLER_LOCK_FILE} con adopted: true. Incompatible con --force y con subcomandos. Un repo que ya
+  tiene lock: --adopt no hace nada (sale 0 si estaba adoptado).
+
 --dry-run CON SELF-UPDATE PENDIENTE:
   Si upstream trae un updater mas nuevo, --dry-run no escribe cli/: ejecuta el
   updater nuevo directamente desde el clon upstream contra este proyecto, asi
@@ -407,6 +431,9 @@ FLAGS:
   --no-gates                      No corre types:check / lint:check /
                                   skills:check tras aplicar
   --interactive                   Mantiene los prompts aunque stdin no sea TTY
+  --adopt                         Primera corrida sobre una app existente:
+                                  nunca sobrescribe lo que la app ya tiene
+                                  (ver ADOPTAR UNA APP EXISTENTE)
   --rollback                      Restaura backup mas reciente
   --update-mcp-template <agent>   Refresca docs/mcp/<agent>.template.*
                                   (agentes: ${MCP_TEMPLATE_AGENTS.join(', ')})
@@ -429,6 +456,7 @@ EJEMPLOS:
   bun up --auto --strict                    # CI: falla si queda un contrato roto
   bun up --auto --no-gates                  # Sin gates (types / lint / skills) al final
   bun up --rollback                         # Restaurar backup
+  bun <clon>/cli/update-boilerplate.ts --adopt   # Adoptar una app existente
   bun up --update-mcp-template claude       # Refrescar MCP template
 `;
 
@@ -547,9 +575,11 @@ interface RunFacts {
   allowListAdded: string[]
   /** One-line evidence for the unresolved-doctrine ledger row, when AGENTS.md carries debt. */
   doctrineDebt: string | null
+  /** `--adopt` only: what the adopt hook did, and its parity rows. */
+  adopt: AdoptOutcome | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -945,6 +975,14 @@ function migrationCommitPending(cwd: string): boolean {
 
 function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
+    // --adopt with the app's instructions still waiting for their composition:
+    // CLAUDE.md is the app's own text, which the repair refuses by contract.
+    // The BLOCKING instructions row already says what to do; repair after it.
+    const adoptInstructions = runFacts.adopt?.instructions;
+    if (adoptInstructions?.kind === 'compose' && !adoptInstructions.applied) {
+      sink.step('Superficies de Claude/OpenCode/Codex sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
+      return;
+    }
     const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());
     sink.step(deferSkillsAlias
       ? 'Revisando superficies de Claude/OpenCode/Codex (el alias .claude/skills espera al commit de la migración)…'
@@ -964,6 +1002,29 @@ function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => 
       return;
     }
     sink.warn(`La compatibilidad agéntica quedó incompleta: ${repair.check.errors.length} contrato(s) roto(s). Detalle en la tabla de paridad al final (filas BLOCKING).`);
+  };
+}
+
+// --- ADOPT (afterApply hook, `--adopt` only) ---
+//
+// FIRST in the chain: the compatibility repair reads the instruction files and
+// the parity hook folds in the rows this hook builds. On --dry-run it writes
+// nothing and reports what the real run would do.
+function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolean): (summary: RunSummary) => Promise<void> {
+  return async (summary: RunSummary): Promise<void> => {
+    runFacts.adopt = await runAdopt({
+      root: process.cwd(),
+      upstreamDir: UPSTREAM_DIR,
+      dryRun,
+      nonInteractive,
+      appliedPaths: summary.applied.filter(a => a.resolution === 'theirs').map(a => a.entry.path),
+      collisions: summary.adoptCollisions ?? [],
+      packageJsonKept: summary.packageJsonKept ?? [],
+      backupDir: summary.backupDir ?? null,
+      confirm: async message => sink.confirm(message, false),
+      step: message => sink.step(message),
+      warn: message => sink.warn(message),
+    });
   };
 }
 
@@ -1212,7 +1273,10 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
         ...edit,
         backupPath: summary.backupDir ? path.join(summary.backupDir, edit.path) : null,
       })),
-      packageJsonKept: summary.packageJsonKept ?? [],
+      // On --adopt a kept script is the adopt hook's BLOCKING row instead.
+      packageJsonKept: (summary.packageJsonKept ?? []).filter(k => !(runFacts.adopt !== null && k.section === 'scripts')),
+      adoptFindings: runFacts.adopt?.findings ?? [],
+      adopting: runFacts.adopt !== null,
       gates: runFacts.gates,
       shadowingCommandsMoved: runFacts.shadowingCommandsMoved,
       pbiCache: runFacts.pbiCache,
@@ -1303,8 +1367,8 @@ function printEndOfRun(summary: RunSummary, dryRun: boolean): void {
  * message when it refuses. Nothing is deleted either way: content moves to its
  * canonical home or is archived under `.template/pre-agents-migration/`.
  */
-function runHarnessMigration(sink: ReportSink, dryRun: boolean): HarnessMigrationResult | null {
-  const plan = planHarnessMigration();
+function runHarnessMigration(sink: ReportSink, dryRun: boolean, adopt: boolean): HarnessMigrationResult | null {
+  const plan = planHarnessMigration(process.cwd(), { adopt });
   if (!plan.needed && plan.blockers.length === 0) { return null; }
 
   tui.log.info('Migración cross-harness (Claude → Claude + OpenCode + Codex):');
@@ -1579,6 +1643,24 @@ async function main(): Promise<void> {
     tui.outro('Abortado.');
     process.exit(1);
   }
+  if (parsed.adopt) {
+    if (parsed.force || parsed.rollback || parsed.updateMcpTemplate || parsed.commands.length > 0) {
+      tui.log.error('--adopt no se combina con --force, --rollback, --update-mcp-template ni subcomandos: adopta el boilerplate completo, sin sobrescribir nada.');
+      process.exit(1);
+    }
+    // First-run only. A repo with a lock already went through a sync; on an
+    // adopted one a second --adopt is the documented no-op.
+    if (fs.existsSync(VERSION_FILE)) {
+      if (isAdopted(process.cwd())) {
+        tui.log.info(`Este repo ya está adoptado (${INSTALLER_LOCK_FILE}: adopted: true): nada que hacer. Para actualizarlo: bun run up.`);
+        tui.outro('Sin cambios.');
+        process.exit(0);
+      }
+      tui.log.error(`--adopt es solo para la primera corrida y este repo ya tiene ${VERSION_FILE}. Usa bun run up.`);
+      tui.outro('Abortado.');
+      process.exit(1);
+    }
+  }
   if (parsed.rollback) { rollbackFromBackup(); process.exit(0); }
   if (parsed.updateMcpTemplate) { await updateMcpTemplateForAgent(parsed.updateMcpTemplate); process.exit(0); }
 
@@ -1613,7 +1695,7 @@ async function main(): Promise<void> {
   // a migrated repo plans nothing. Under --dry-run it reports the plan only.
   // In the self-update re-exec child the plan is empty (already migrated), and
   // the parent's result arrives through the environment instead.
-  const migration = runHarnessMigration(sink, parsed.dryRun) ?? readHarnessMigrationResultFromEnv();
+  const migration = runHarnessMigration(sink, parsed.dryRun, parsed.adopt) ?? readHarnessMigrationResultFromEnv();
   if (migration?.applied && runFacts.migration === null) { runFacts.migration = migration; }
   // What the preflight just wrote is the updater's own dirt: the dirty-tree
   // guard in runUpdate (and in the self-update re-exec child) must not refuse
@@ -1660,6 +1742,9 @@ async function main(): Promise<void> {
     // in TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts); see
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.
     repoOnlyPaths: REPO_ONLY_PATHS,
+    // An adopted app (this --adopt run, or any run after one): the
+    // boilerplate's own numbered ADRs stay out of the app's decision log.
+    ...(parsed.adopt || isAdopted(process.cwd()) ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),
@@ -1674,6 +1759,7 @@ async function main(): Promise<void> {
       afterApply: parsed.dryRun
         ? composeHooks(
             sink,
+            ...(parsed.adopt ? [makeAdoptHook(sink, true, true)] : []),
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
             makeAllowListHook(UPSTREAM_DIR, sink, true),
             // A dry run neither ages nor writes the doctrine ledger.
@@ -1684,6 +1770,9 @@ async function main(): Promise<void> {
           )
         : composeHooks(
             sink,
+            // --adopt: before everything else (instructions, project.yaml,
+            // .env.example, installer lock), so the hooks below see the result.
+            ...(parsed.adopt ? [makeAdoptHook(sink, false, parsed.auto)] : []),
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
@@ -1730,11 +1819,15 @@ async function main(): Promise<void> {
     rollback: false,
     force: parsed.force,
     updaterOwnedPaths,
+    adopt: parsed.adopt,
   });
 
   // An aborted run has nothing to report: no table, no box, no success line.
   const aborted = summary.aborted === true;
   if (!aborted) { printEndOfRun(summary, parsed.dryRun); }
+  if (parsed.adopt && !aborted && !parsed.dryRun) {
+    tui.log.info('Adopción instalada: nada de la app se sobrescribió. Siguiente: revisa la tabla, commitea la adopción y completa la identidad con `bun run agents:setup`.');
+  }
 
   const verdict = runVerdict({ aborted, dryRun: parsed.dryRun, strict: parsed.strict }, runFacts.parity?.findings ?? []);
   if (verdict.reason) { tui.log.error(verdict.reason); }

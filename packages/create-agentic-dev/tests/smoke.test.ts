@@ -4,6 +4,9 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
+// The updater's twin (repo-side; `packages/` is pruned from consumers, so a
+// test here may read it). See `resetGitStrategyMeta` in `../src/prepare.ts`.
+import { resetGitStrategyProvenance } from '../../../cli/lib/git-strategy-provenance.ts';
 import { parseArgs } from '../src/args.ts';
 import { buildTarArgs } from '../src/download.ts';
 import { CliError } from '../src/errors.ts';
@@ -198,6 +201,14 @@ describe('resetGitStrategyMeta', () => {
     rmSync(join(dir, '.agents', 'project.yaml'));
     await resetGitStrategyMeta(dir);
     expect(existsSync(join(dir, '.agents', 'project.yaml'))).toBe(false);
+  });
+
+  test('matches its twin in cli/lib byte for byte (the updater --adopt path uses that one)', async () => {
+    for (const yaml of [TEMPLATE_YAML, 'project:\n  project_name: null\n']) {
+      writeFileSync(join(dir, '.agents', 'project.yaml'), yaml);
+      await resetGitStrategyMeta(dir);
+      expect(readYaml()).toBe(resetGitStrategyProvenance(yaml).content);
+    }
   });
 });
 

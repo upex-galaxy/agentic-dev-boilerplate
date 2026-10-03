@@ -266,14 +266,20 @@ function planInstructions(root: string, blockers: string[]): InstructionsAction 
 
 /**
  * Read-only. Safe to call on any repo, in any state, including a fully migrated one.
+ *
+ * `adopt`: the run is `--adopt` on an existing app, whose instruction files
+ * are the app's own text, not a Claude-era boilerplate memory. The adopt hook
+ * handles them (`planAdoptInstructions` in `./updater-adopt.ts`: preserved
+ * verbatim, applied only on approval), so this preflight plans nothing for
+ * them and never refuses over them.
  */
-export function planHarnessMigration(root = process.cwd()): HarnessMigrationPlan {
+export function planHarnessMigration(root = process.cwd(), opts: { adopt?: boolean } = {}): HarnessMigrationPlan {
   const resolvedRoot = resolve(root);
   const canonicalSkills = join(resolvedRoot, '.agents', 'skills');
   const claudeSkills = join(resolvedRoot, '.claude', 'skills');
   const blockers: string[] = [];
 
-  const instructions = planInstructions(resolvedRoot, blockers);
+  const instructions = opts.adopt === true ? 'none' : planInstructions(resolvedRoot, blockers);
 
   const skillsToMove: string[] = [];
   const skillsToArchive: string[] = [];

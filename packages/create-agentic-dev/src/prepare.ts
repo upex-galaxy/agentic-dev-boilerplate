@@ -199,6 +199,11 @@ export async function seedProjectYamlFromSchema(projectDir: string): Promise<boo
  * Same regex-line-edit pattern as the project_name rewrite: zero-dep, preserves
  * comments and formatting, and a template without the block (older tag) is a
  * silent no-op per field.
+ *
+ * Twin of `resetGitStrategyProvenance` in `cli/lib/git-strategy-provenance.ts`,
+ * which the updater's `--adopt` path uses (this package is published
+ * separately and cannot import from the repo). `tests/smoke.test.ts` runs both
+ * over the same input and requires the same output: change them together.
  */
 export async function resetGitStrategyMeta(projectDir: string): Promise<void> {
   const yamlPath = join(projectDir, '.agents', 'project.yaml');

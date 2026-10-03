@@ -24,6 +24,7 @@
  */
 
 import type {
+  AdoptCollision,
   AppliedFile,
   ChangeStatus,
   Component,
@@ -57,7 +58,7 @@ import * as path from 'node:path';
 
 import { CONTEXT_MAP_SKILLS } from './context-maps';
 import { applyIgnoreAppend, computeBlobSha, detectIgnoreDelta } from './updater-ignore';
-import { applyPackageJsonAppend, applyPackageJsonOverride, detectPackageJsonDelta } from './updater-package';
+import { adoptPackageJsonDelta, applyPackageJsonAppend, applyPackageJsonOverride, detectPackageJsonDelta, parsePackageJson } from './updater-package';
 import { ComponentOverlapError, CorruptStateError } from './updater-types';
 
 // ============================================================================
@@ -615,6 +616,32 @@ export function classifyFile(
   }
 
   return 'locally-diverged';
+}
+
+/** How a path upstream would deliver relates to an adopting app's copy (`--adopt`). */
+export type AdoptPathState = 'absent' | 'identical' | 'collision';
+
+/**
+ * `--adopt` classification of one upstream path against the app. `identical`
+ * (byte-equal, or equal once whitespace is normalised) is simply marked seen;
+ * `collision` is the app's own file at a path upstream also ships, and the
+ * adopt policy NEVER writes it.
+ */
+export function adoptPathState(localPath: string, upstreamPath: string): AdoptPathState {
+  if (!fs.existsSync(localPath)) { return 'absent'; }
+  let local: Buffer;
+  let upstream: Buffer;
+  try {
+    local = fs.readFileSync(localPath);
+    upstream = fs.readFileSync(upstreamPath);
+  }
+  catch {
+    return 'collision'; // unreadable on either side: never overwrite what we cannot compare.
+  }
+  if (Buffer.compare(local, upstream) === 0) { return 'identical'; }
+  return normalizeWhitespace(local.toString('utf8')) === normalizeWhitespace(upstream.toString('utf8'))
+    ? 'identical'
+    : 'collision';
 }
 
 // ============================================================================
@@ -2355,7 +2382,21 @@ export function cleanupDeprecated(
 export async function runUpdate(
   cfg: UpdaterConfig,
   sink: ReportSink,
-  opts: { auto: boolean, dryRun: boolean, rollback: boolean, force?: boolean, updaterOwnedPaths?: string[] },
+  opts: {
+    auto: boolean
+    dryRun: boolean
+    rollback: boolean
+    force?: boolean
+    updaterOwnedPaths?: string[]
+    /**
+     * First run on an EXISTING app (`--adopt`): every upstream path the app
+     * already carries with different content is kept and reported
+     * (`RunSummary.adoptCollisions`), never overwritten; `package.json` merges
+     * stay append-only with the tooling's packages in `devDependencies`.
+     * Refused when the repo already has a lock.
+     */
+    adopt?: boolean
+  },
 ): Promise<RunSummary> {
   if (opts.rollback) {
     // Wrapper handles rollback; reaching runUpdate with rollback=true is a contract error.
@@ -2520,6 +2561,14 @@ export async function runUpdate(
     v7State.packageJsonSync = {};
   }
 
+  // `--adopt` is a FIRST-run policy. A repo with a lock already went through
+  // a sync (greenfield or adopted): switching policy on it would skip
+  // deliveries the lock cursor assumes happened.
+  if (opts.adopt === true && rawState !== null) {
+    sink.error(`--adopt es solo para la primera corrida y este repo ya tiene ${cfg.versionFile}. Usa \`bun run up\` sin --adopt.`);
+    return abortedSummary;
+  }
+
   // --- PHASE 1 — FETCH ---
   sink.phase(1, 'FETCH');
   // Sparse-checkout must include component paths, ignore-file paths AND
@@ -2619,6 +2668,15 @@ export async function runUpdate(
         if (localSha !== upstreamSha) {
           stale.push(relPath);
         }
+      }
+      // An adopting app with its own file at a path the updater itself lives
+      // at: the self-update would overwrite it, and the updater cannot run
+      // without that file. Refuse by name instead (adopt never overwrites).
+      const ownCollisions = opts.adopt === true ? stale.filter(p => fs.existsSync(path.join(repoRoot, p))) : [];
+      if (ownCollisions.length > 0) {
+        sink.error(`--adopt: la app ya tiene archivo(s) en rutas del propio updater (${ownCollisions.join(', ')}). El updater no puede instalarse sin sobrescribirlos: renómbralos o muévelos y vuelve a ejecutar.`);
+        if (!prefetched) { cleanupTempDir(cfg.tempDir); }
+        return abortedSummary;
       }
       if (stale.length > 0 && opts.dryRun) {
         // The running script, located inside the self-update component: by its
@@ -2728,6 +2786,15 @@ export async function runUpdate(
   const isFreshInstall = v7State === null
     || Object.keys(v7State.perComponentCommit).length === 0;
 
+  // `--adopt` only: the app's own files at paths upstream also ships.
+  const adoptCollisions: AdoptCollision[] = [];
+  const adoptExcluded = (relPath: string): boolean => {
+    const rel = relPath.replace(/\\/g, '/');
+    return (cfg.excludePaths ?? []).some(p => p.replace(/\\/g, '/') === rel)
+      || isRepoOnlyPath(rel, cfg.repoOnlyPaths ?? [])
+      || (cfg.repoOnlyPatterns ?? []).some(re => re.test(rel));
+  };
+
   const collectBootstrapEntries = (comps: readonly Component[]): DeltaEntry[] => {
     const out: DeltaEntry[] = [];
     for (const component of comps) {
@@ -2737,6 +2804,15 @@ export async function runUpdate(
         const localPath = path.join(repoRoot, relPath);
         if (isBootstrapFile && fs.existsSync(localPath)) {
           continue;
+        }
+        // ADOPT: absent -> deliver; present and identical -> seen; present
+        // and different -> the app's file, kept and reported, NEVER written.
+        // A greenfield first run (no --adopt) keeps delivering every path.
+        if (opts.adopt === true) {
+          if (adoptExcluded(relPath)) { continue; }
+          const state = adoptPathState(localPath, path.join(templateDir, relPath));
+          if (state === 'collision') { adoptCollisions.push({ path: relPath, component: component.name }); }
+          if (state !== 'absent') { continue; }
         }
         out.push(bootstrapEntry(component.name, relPath, templateDir));
       }
@@ -2832,6 +2908,10 @@ export async function runUpdate(
   if (cfg.repoOnlyPaths && cfg.repoOnlyPaths.length > 0) {
     entries = entries.filter(e => !isRepoOnlyPath(e.path, cfg.repoOnlyPaths ?? []));
   }
+  if (cfg.repoOnlyPatterns && cfg.repoOnlyPatterns.length > 0) {
+    const patterns = cfg.repoOnlyPatterns;
+    entries = entries.filter(e => !patterns.some(re => re.test(e.path.replace(/\\/g, '/'))));
+  }
 
   // A deprecated file leaves through cleanupDeprecated (Phase 5), not the delete prompt.
   entries = dropDeprecatedDeletes(entries, cfg.deprecatedFiles);
@@ -2868,9 +2948,20 @@ export async function runUpdate(
   // are empty. A delta is "non-empty" when ANY section has either upstream-only
   // keys (append candidates) or local-override keys (FYI warns).
   const pkgJsonDeltasPre: PackageJsonDelta[] = [];
+  // `--adopt` only: keys recorded as handled in their upstream section although
+  // nothing is written there (see `adoptPackageJsonDelta`).
+  const adoptSatisfiedKeys = new Map<string, Record<string, string[]>>();
   for (const spec of cfg.packageJsonSpecs ?? []) {
-    const delta = detectPackageJsonDelta(spec, repoRoot, templateDir, v7State);
-    let hasSomething = false;
+    let delta = detectPackageJsonDelta(spec, repoRoot, templateDir, v7State);
+    if (opts.adopt === true) {
+      let localData: Record<string, unknown> = {};
+      try { localData = parsePackageJson(path.join(repoRoot, spec.path)).data; }
+      catch { localData = {}; }
+      const folded = adoptPackageJsonDelta(delta, localData);
+      delta = folded.delta;
+      if (Object.keys(folded.satisfied).length > 0) { adoptSatisfiedKeys.set(spec.path, folded.satisfied); }
+    }
+    let hasSomething = adoptSatisfiedKeys.has(spec.path);
     for (const secDelta of Object.values(delta.sections)) {
       if (Object.keys(secDelta.upstreamOnlyKeys).length > 0
         || Object.keys(secDelta.localOverrideKeys).length > 0) {
@@ -2921,7 +3012,7 @@ export async function runUpdate(
   };
   if (visible.length === 0 && ignoreDeltasPre.length === 0 && pkgJsonDeltasPre.length === 0 && settledBootstrap.length === 0) {
     sink.step('Sin cambios detectados respecto al upstream. Nada que sincronizar.');
-    return finish({ ...emptySummary, newHeadSha });
+    return finish({ ...emptySummary, newHeadSha, ...(opts.adopt === true ? { adoptCollisions } : {}) });
   }
   if (visible.length > 0) {
     let suffix = '';
@@ -3233,7 +3324,14 @@ export async function runUpdate(
       for (const [section, secDelta] of Object.entries(delta.sections)) {
         for (const [key, drift] of Object.entries(secDelta.localOverrideKeys)) {
           let resolution: 'theirs' | 'mine' | 'skip';
-          if (opts.force === true) {
+          if (opts.adopt === true) {
+            // ADOPT: the app's script, dependency version or lint-staged
+            // entry is the app's decision. Kept and recorded ('mine'), never
+            // offered for overwrite: the parity report names the collision.
+            resolution = 'mine';
+            sink.step(`[adopt] ${delta.file} ${section}.${key}: se mantiene el valor de la app`);
+          }
+          else if (opts.force === true) {
             resolution = 'theirs';
             sink.step(`[force] ${delta.file} ${section}.${key}: usando versión upstream`);
           }
@@ -3296,7 +3394,8 @@ export async function runUpdate(
 
       const hasWork = Object.keys(selectedKeys).length > 0
         || Object.keys(overrides).length > 0
-        || Object.keys(kept).length > 0;
+        || Object.keys(kept).length > 0
+        || adoptSatisfiedKeys.has(delta.file);
       if (hasWork) {
         pkgJsonSelections.set(delta.file, { selectedKeys, values, overrides, kept });
       }
@@ -3353,7 +3452,9 @@ export async function runUpdate(
     const hasAppends = Object.keys(selection.selectedKeys).length > 0;
     const hasOverrides = Object.keys(selection.overrides).length > 0;
     const hasKept = Object.keys(selection.kept).length > 0;
-    if (!hasAppends && !hasOverrides && !hasKept) { continue; }
+    const satisfied = adoptSatisfiedKeys.get(spec.path) ?? {};
+    const hasSatisfied = Object.keys(satisfied).length > 0;
+    if (!hasAppends && !hasOverrides && !hasKept && !hasSatisfied) { continue; }
 
     // Back up the local file BEFORE write (pre-write backup contract).
     const localPath = path.join(repoRoot, spec.path);
@@ -3423,7 +3524,7 @@ export async function runUpdate(
       }
       newFileState[section] = {
         lastSyncedSha: upstreamBlobSha,
-        appliedKeys: Array.from(new Set([...prevKeys, ...writtenForSection])),
+        appliedKeys: Array.from(new Set([...prevKeys, ...writtenForSection, ...(satisfied[section] ?? [])])),
         ...(Object.keys(mergedKept).length > 0 ? { keptKeys: mergedKept } : {}),
       };
     }
@@ -3472,6 +3573,7 @@ export async function runUpdate(
     backupDir,
     localEditsOverwritten,
     packageJsonKept,
+    ...(opts.adopt === true ? { adoptCollisions } : {}),
   };
 
   // State write
