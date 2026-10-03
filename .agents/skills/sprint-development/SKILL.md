@@ -27,6 +27,7 @@ compact_rules: |
   - **Config claims cite the file they came from.** Read `.agents/project.yaml` / `package.json` / `.env.example` before asserting what the project is configured to do. Never quote a value from a skill reference or worked example as project state.
   - **Technical decisions are yours to make — but read the record before you make one.** Search the run's decision/escalation log, `.context/ADR/`, and the ticket plus its siblings BEFORE deciding OR asking. A decision already made is followed and cited, never re-derived; re-asking a settled question — even to a human, asked cold without the prior ruling in front of them — yields a contradiction, not an override. Genuinely unsettled and technical → decide it yourself via a scored judge panel of 3-5 independent lenses, then record the decision AND its scoring rationale where the next agent's search will find it. Escalate ONLY product/business calls, a novel security posture not already ratified, irreversible or destructive actions, and whatever the operator explicitly reserved. See `agentic-dev-core/references/decision-protocol.md`. **Product calls are the one configurable category**: a project that sets `decision_authority.product: decide` in `.agents/project.yaml` (no human PO in the loop) routes them to a scored, attributed decision subagent instead of escalating — read the block, then `decision-protocol.md` §5.1.
   - **Tracker moves are named by slug, verified at the destination, never guessed.** Fire only the transitions `agentic-dev-core/references/artifact-lifecycle.md` §1 gives this stage (Stage 1 `start_working`; Stage 3 `pull_request` / `ready`; Stage 4 `deployed` / `fixed_and_deployed`; the bug-triage slugs) and re-read the status after every Stage 3 / Stage 4 event, firing the slug yourself when automation did not. Read `assignee` before and after every transition: merge automation reassigns to the developer. Slug missing for the work type → list the LIVE transitions, ask ONE question, fire the live id, recommend `bun run jira:sync-workflows`; never a remembered or cross-project id, never a hand-edited `.agents/jira-workflows.json`, never a silent skip.
+  - **A fleet worker stops at an open PR.** Batch-sprint with N>1 executors (`references/fleet-mode.md`): a worker is detected from its prompt (`/sprint-development <KEY> fleet worker` + a brief path), never from the environment; it runs Stages 1-3 on its one ticket without human checkpoints and without returning to its prompt; merge, staging deploy, shared-DB migrations, live-instance regeneration and the sprint report stay with the conductor. N=1 is unchanged byte for byte, and when the orchestration gate fails the launch file is still written and the orchestrator is never named.
   - **Plan before code.** Stage 1 always runs; even a bug fix gets a one-paragraph root-cause analysis before the diff.
   - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
   - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
@@ -72,6 +73,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 - **Config claims cite the file they came from.** Read `.agents/project.yaml` / `package.json` / `.env.example` before asserting what the project is configured to do. Never quote a value from a skill reference or worked example as project state.
 - **Technical decisions are yours to make — but read the record before you make one.** Search the run's decision/escalation log, `.context/ADR/`, and the ticket plus its siblings BEFORE deciding OR asking. A decision already made is followed and cited, never re-derived; re-asking a settled question — even to a human, asked cold without the prior ruling in front of them — yields a contradiction, not an override. Genuinely unsettled and technical → decide it yourself via a scored judge panel of 3-5 independent lenses, then record the decision AND its scoring rationale where the next agent's search will find it. Escalate ONLY product/business calls, a novel security posture not already ratified, irreversible or destructive actions, and whatever the operator explicitly reserved. See `agentic-dev-core/references/decision-protocol.md`. **Product calls are the one configurable category**: a project that sets `decision_authority.product: decide` in `.agents/project.yaml` (no human PO in the loop) routes them to a scored, attributed decision subagent instead of escalating — read the block, then `decision-protocol.md` §5.1.
 - **Tracker moves are named by slug, verified at the destination, never guessed.** Fire only the transitions `agentic-dev-core/references/artifact-lifecycle.md` §1 gives this stage (Stage 1 `start_working`; Stage 3 `pull_request` / `ready`; Stage 4 `deployed` / `fixed_and_deployed`; the bug-triage slugs) and re-read the status after every Stage 3 / Stage 4 event, firing the slug yourself when automation did not. Read `assignee` before and after every transition: merge automation reassigns to the developer. Slug missing for the work type → list the LIVE transitions, ask ONE question, fire the live id, recommend `bun run jira:sync-workflows`; never a remembered or cross-project id, never a hand-edited `.agents/jira-workflows.json`, never a silent skip.
+- **A fleet worker stops at an open PR.** Batch-sprint with N>1 executors (`references/fleet-mode.md`): a worker is detected from its prompt (`/sprint-development <KEY> fleet worker` + a brief path), never from the environment; it runs Stages 1-3 on its one ticket without human checkpoints and without returning to its prompt; merge, staging deploy, shared-DB migrations, live-instance regeneration and the sprint report stay with the conductor. N=1 is unchanged byte for byte, and when the orchestration gate fails the launch file is still written and the orchestrator is never named.
 - **Plan before code.** Stage 1 always runs; even a bug fix gets a one-paragraph root-cause analysis before the diff.
 - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
@@ -205,6 +207,7 @@ Solo trades context isolation for fewer round-trips and one legible transcript �
 | Stage 4 — Deploy to staging               | Single + Background    | deploy agent kicks off; background monitor watches health/smoke                               |
 | Pre-prod gate                             | inline                 | orchestrator gates with the user; never auto-promote                                          |
 | Stage 5 — Deploy to production            | Single + Background    | same pattern as staging, prod target, plus rollback ready                                     |
+| Fleet fan-out (batch-sprint, N>1 executors ONLY) | Parallel        | NOT subagents of this turn: one launchable worker session per ticket of the round, each running this skill single-ticket through Stages 1-3; the conductor keeps Stage 4 per `references/fleet-mode.md` |
 
 > **Sequential, not Parallel, across stages**: each stage feeds the next (Stage 1's plan is read by Stage 2; Stage 2's diff is read by Stage 3; Stage 3's approval gates Stage 4). Parallelism happens _inside_ a stage (e.g., parallel verification, multi-file impl).
 
@@ -230,6 +233,29 @@ the latest sprint report (if present) at Stage 1 entry for queue/dependency cont
 awareness, but does NOT update it. In batch mode, the orchestrator updates the report
 row at each Jira transition (Stage 1 → Stage 4). Stage 5 (production deploy) is
 **always** manual per ticket — batch mode loops Stages 1–4 only.
+
+### Executors: one session or a fleet (batch-sprint only)
+
+Scope is one axis (single-ticket | batch-sprint); **executors** is the other (1 | N). One executor is
+the default and is unchanged in every detail: the ticket loop above, in this session. N>1 ("fleet
+mode") applies to batch-sprint only, when the user asks for it or `.agents/project.yaml` →
+`orchestration.max_workers` is greater than 1 (an explicit user number wins; no `orchestration:`
+block means N=1). The conductor (this session) seeds one brief per unblocked ticket of the round and
+writes `<<PRIMARY_ROOT>>/.session/sprint-development/sprint-<N>/launch.txt` ALWAYS; each worker runs
+this skill in single-ticket mode on one ticket, in its own worktree, through Stages 1-3, and stops at
+an open PR. Merging, the staging deploy and every other shared-state write stay with the conductor.
+
+**How the sessions get launched is decided by the orchestration gate, and only that.** Gate passes →
+`[ORCHESTRATION_TOOL]` launches and supervises them and the workers also report to its mailbox. Gate
+fails → the user pastes the `launch.txt` lines into terminals, and nothing names, recommends or
+reports the orchestrator.
+
+**Worker mode is detected from the prompt, not from the environment.** A worker's launch prompt opens
+with `/sprint-development <KEY> fleet worker` and names its brief; that token plus the brief are the
+only signal.
+
+Everything fleet mode adds (conductor-only operations, worker detection, brief seeding, `launch.txt`
+rules, rounds, claims, blocked lines, liveness, failure modes): `references/fleet-mode.md`.
 
 ### Composable callees
 
@@ -584,6 +610,7 @@ Dispatch is **Single + Background**: one subagent runs the deploy, a background 
 | "deploy to production"                               | `references/production-deploy.md`       |
 | "rollback production deploy"                         | `references/rollback-plan.md`           |
 | "process sprint N" / "continue sprint"               | `references/sprint-report.md`           |
+| "parallelize the sprint" / "one session per story"   | `references/fleet-mode.md` (the HOW: `/orca-orchestration`) |
 
 ---
 
@@ -616,6 +643,7 @@ If the prerequisite check at the top of this skill fails (no `.agents/project.ya
 | `[DB_TOOL]`            | capability `db` (Supabase MCP; DBHub if the project adds it); raw SQL only when the user chooses it | `AGENTS.md` Tool Resolution |
 | `[API_TOOL]`           | OpenAPI MCP, Postman, or `curl`                   | `AGENTS.md` Tool Resolution |
 | `[AUTOMATION_TOOL]`    | Playwright CLI (`/playwright-cli`), the only browser path | `AGENTS.md` Tool Resolution |
+| `[ORCHESTRATION_TOOL]` | the multi-session orchestration layer, used ONLY in fleet mode (batch-sprint, N>1 executors); gate fails → the `launch.txt` fallback, never named | `orca-orchestration/SKILL.md` (the tool owner; this skill names verbs, never commands) |
 
 Concrete tools (`bun`, `git`, `gh`) are used literally. Project variables resolve from `.agents/project.yaml` (env-scoped vars resolve to the active environment).
 
