@@ -26,7 +26,7 @@ Why this shape:
 - **`-m githubCommitSha=<sha>`** is the only filter that uniquely identifies "this commit's deploy". Branch filters mix old + new deploys; URL parsing is fragile.
 - **`--format json` + `jq`** sidesteps ANSI color codes and column-width truncation in the default human table.
 - **Outer poll loop** because Vercel takes 5–15 seconds after a push to register the deployment in `vercel ls`. Without the loop, the first call returns an empty array and the script aborts.
-- **`vercel inspect --wait`** blocks until terminal state. The default (no `--wait`) returns immediately with whatever state the deploy is in RIGHT NOW — usually `BUILDING`, which tells you nothing.
+- **`vercel inspect --wait`** blocks until terminal state. The default (no `--wait`) returns immediately with whatever state the deploy is in AT CALL TIME — usually `BUILDING`, which tells you nothing.
 - **`--timeout=10m`** because Next.js + Supabase builds occasionally exceed 5 minutes on first cold cache.
 
 ## Stream the build log while waiting

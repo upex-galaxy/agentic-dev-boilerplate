@@ -17,7 +17,7 @@ compact_rules: |
   - **Multi-team accounts need `--scope <team-slug>` on EVERY mutating command.** Otherwise the operation hits the wrong team's project, or fails with a confusing 404.
   - **Always `--format json`** on `ls`, `env ls`, `teams ls`. Human tables include ANSI color and lose columns at narrow widths.
   - **Always `--no-wait` on `vercel deploy`** in scripts. Capture the URL, then poll with `vercel inspect --wait` separately.
-  - **Always `--wait --timeout=10m`** on `vercel inspect` when verifying. Default behavior returns immediately with whatever state the deploy is currently in — usually `BUILDING`, which tells you nothing.
+  - **Always `--wait --timeout=10m`** on `vercel inspect` when verifying. Default behavior returns immediately with whatever state the deploy is in when the command runs — usually `BUILDING`, which tells you nothing.
   - **Always pass `--scope <team-slug>`** if `vercel teams ls` shows more than one team. If the project is already linked, the `orgId` in `.vercel/project.json` / `.vercel/repo.json` resolves the team automatically and you can omit `--scope`.
   - **Never grep `vercel ls` output for URLs.** Use metadata filters (`-m githubCommitSha=$SHA`) + `--format json` + `jq`. ANSI codes will break naive regex.
   - **Never commit `.env.local`** produced by `vercel env pull`. It's gitignored; keep it that way.
@@ -190,7 +190,7 @@ Load the reference that matches the user's current need. Do not preload all of t
 
 - **Always `--format json`** on `ls`, `env ls`, `teams ls`. Human tables include ANSI color and lose columns at narrow widths.
 - **Always `--no-wait` on `vercel deploy`** in scripts. Capture the URL, then poll with `vercel inspect --wait` separately.
-- **Always `--wait --timeout=10m`** on `vercel inspect` when verifying. Default behavior returns immediately with whatever state the deploy is currently in — usually `BUILDING`, which tells you nothing.
+- **Always `--wait --timeout=10m`** on `vercel inspect` when verifying. Default behavior returns immediately with whatever state the deploy is in when the command runs — usually `BUILDING`, which tells you nothing.
 - **Always pass `--scope <team-slug>`** if `vercel teams ls` shows more than one team. If the project is already linked, the `orgId` in `.vercel/project.json` / `.vercel/repo.json` resolves the team automatically and you can omit `--scope`.
 - **Never grep `vercel ls` output for URLs.** Use metadata filters (`-m githubCommitSha=$SHA`) + `--format json` + `jq`. ANSI codes will break naive regex.
 - **Never commit `.env.local`** produced by `vercel env pull`. It's gitignored; keep it that way.

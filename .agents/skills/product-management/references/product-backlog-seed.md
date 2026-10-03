@@ -412,7 +412,7 @@ This step runs once before the link-creation loop below.
 
 **Pre-condition**: Phase 3 complete (all dependency links published in Jira).
 
-**Goal**: derive an Execution Sprint plan (topological sort of the dependency graph) so the team has a concrete answer to "which stories can start in parallel today?". This is an **input artifact to the human sprint-planning meeting** — never a commitment.
+**Goal**: derive an Execution Sprint plan (topological sort of the dependency graph) so the team has a concrete answer to "which stories can start in parallel?". This is an **input artifact to the human sprint-planning meeting** — never a commitment.
 
 **Operation**: run Kahn's algorithm against the `dependencies` (and `blocks`) link graph as described in `references/sprint-sequencing.md`. Cycle detection is mandatory — a cycle halts the algorithm and is reported to the user as a methodology bug to fix before sequencing can complete.
 

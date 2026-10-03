@@ -1027,7 +1027,7 @@ _Please provide additional details to help us investigate._
 After investigation, this is **not a bug** but rather a **feature request/enhancement**.
 
 **Current Behavior:**
-[What the system currently does - correctly]
+[What the system does - correctly]
 
 **Requested Behavior:**
 [What the reporter wants it to do]

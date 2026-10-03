@@ -196,7 +196,7 @@ alternatives, write it down. Do not read `decide` as permission to skip any of t
 **A decision that is not recorded did not happen.** The next agent searches step 1, finds nothing, and
 re-asks — which is the loop this whole protocol exists to break.
 
-At the moment the decision is made, not at the end of the session (a session that runs out of room cannot
+When the decision is made, not at the end of the session (a session that runs out of room cannot
 write up what it decided), append to **the artifact step 1 searches**:
 
 - The question, in the shape a later agent would search for.

@@ -101,7 +101,7 @@ The returned JSON is the **execution contract**. Execute what it says.
   actually approved.
 - Quoted phrases the human highlighted weigh more than the rest of their free text. They chose those
   words on purpose.
-- **Write the answers down** where `./decision-protocol.md` §6 says, at the moment they arrive. An
+- **Write the answers down** where `./decision-protocol.md` §6 says, as they arrive. An
   architectural answer that passes both ADR gates becomes an ADR written `Accepted` (the human already
   decided): `./adr-doctrine.md` §3 step 4.
 

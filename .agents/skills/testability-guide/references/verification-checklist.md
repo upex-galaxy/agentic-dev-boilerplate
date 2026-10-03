@@ -97,7 +97,7 @@ Open the generated page file. Verify the snapshot comment at the top:
 
 - Contains every field from `idempotency-snapshot.md`.
 - `content-hash` matches the rendered credentials-content body.
-- `generated` is today's date.
+- `generated` is the date of the run.
 - `publisher` matches Q1.
 - `credentials-source` is the actual destination URL.
 
