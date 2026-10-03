@@ -232,6 +232,11 @@ export interface PackageJsonKeptKey {
 export interface AdoptCollision {
   path: string
   component: string
+  /**
+   * The app carries a file at a path upstream RETIRED (`deprecatedFiles`):
+   * kept and protected like any collision, never deleted by the adopt run.
+   */
+  retired?: boolean
 }
 
 export interface RunSummary {

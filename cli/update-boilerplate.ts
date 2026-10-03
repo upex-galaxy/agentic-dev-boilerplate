@@ -872,6 +872,17 @@ export function resolveProtectedWatchlist(cwd: string, warn: (message: string) =
  * exclude, an ignore) is `cli/lib/adopt-isolation.ts`'s row. The entries stay
  * on the watchlist (never overwritten); only the drift row is dropped.
  */
+/**
+ * The retired paths `cleanupDeprecated` may delete: every entry, minus the
+ * ones the project protects. An adopted app keeps its own copy of a file at a
+ * path upstream retired (`--adopt` lists it in `updater.protected_paths`), and
+ * a protected path is never overwritten, so never deleted either.
+ */
+export function deprecatedFilesToClean<T extends { path: string }>(deprecated: readonly T[], watchlist: readonly ProtectedWatchEntry[]): T[] {
+  const kept = new Set(watchlist.map(e => e.path.replace(/\\/g, '/')));
+  return deprecated.filter(d => !kept.has(d.path.replace(/\\/g, '/')));
+}
+
 export const ADOPTED_APP_CONFIGS: readonly string[] = ['tsconfig.json', 'eslint.config.js'];
 
 /** The watchlist entries whose drift is reported: all of them, minus the app's own configs on an adopted repo. */
@@ -1755,7 +1766,9 @@ async function main(): Promise<void> {
     packageJsonSpecs: [
       { path: 'package.json', sections: ['scripts', 'devDependencies', 'dependencies', 'lint-staged'] },
     ],
-    deprecatedFiles: DEPRECATED_FILES,
+    // A retired path the project protects is its own file (an adopted app kept
+    // its copy at that path): `cleanupDeprecated` never deletes it.
+    deprecatedFiles: deprecatedFilesToClean(DEPRECATED_FILES, watchlist),
     // Every watched path is project-owned inside a synced component too:
     // delivered once when missing, never overwritten (`.husky/pre-push`, a
     // path from `updater.protected_paths`). Paths no component owns are

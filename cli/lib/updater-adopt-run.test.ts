@@ -231,6 +231,28 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(existsSync(join(app, '.context/ADR/ADR-0002-multi-harness.md'))).toBe(false);
   });
 
+  test('an app file at a path upstream retired is kept and protected, never deleted', async () => {
+    const { template, app } = setup();
+    write(app, '.claude/commands/old-alias.md', 'the app copy of a retired alias\n');
+    git(app, ['add', '-A']);
+    git(app, ['commit', '--quiet', '-m', 'alias']);
+    process.chdir(app);
+    let adopt: AdoptOutcome | null = null;
+    const retired = [{ path: '.claude/commands/old-alias.md', component: 'retired-aliases', reason: 'retired', deprecatedSince: '1.0' }];
+    const cfg = { ...config(template, [], async (summary: RunSummary) => {
+      adopt = await runAdopt({ root: app, upstreamDir: cfg.tempDir, dryRun: false, nonInteractive: true, appliedPaths: summary.applied.map(a => a.entry.path), collisions: summary.adoptCollisions ?? [], packageJsonKept: [], backupDir: null, confirm: async () => false, step: () => {}, warn: () => {} });
+    }), deprecatedFiles: retired };
+    const summary = await runUpdate(cfg, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
+
+    expect(summary.aborted).toBeUndefined();
+    expect(read(app, '.claude/commands/old-alias.md')).toBe('the app copy of a retired alias\n');
+    expect(summary.adoptCollisions).toContainEqual({ path: '.claude/commands/old-alias.md', component: 'retired-aliases', retired: true });
+    expect(readProjectProtectedPaths(app).paths).toContain('.claude/commands/old-alias.md');
+    const row = (adopt as AdoptOutcome | null)?.findings.find(f => f.path === '.claude/commands/old-alias.md');
+    expect(row?.evidence).toContain('path upstream retired');
+    expect(row?.blocking).toBe(false);
+  });
+
   test('--dry-run writes nothing and still reports the collisions', async () => {
     const { template, app } = setup();
     process.chdir(app);

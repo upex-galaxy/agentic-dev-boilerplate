@@ -3551,7 +3551,18 @@ export async function runUpdate(
 
   // Deprecated cleanup runs AFTER apply, BEFORE state write (and before the
   // afterApply hooks). A dry-run lists what it would remove and writes nothing.
-  cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
+  // `--adopt`: a file at a retired path is the APP's (upstream never delivered
+  // it here), so it is kept and reported as a collision, never deleted.
+  if (opts.adopt === true) {
+    for (const dep of cfg.deprecatedFiles) {
+      if (fs.existsSync(path.join(repoRoot, dep.path))) {
+        adoptCollisions.push({ path: dep.path.replace(/\\/g, '/'), component: dep.component, retired: true });
+      }
+    }
+  }
+  else {
+    cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
+  }
 
   // Compute advancement
   const advancement = computeComponentAdvancement(

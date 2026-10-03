@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 import { ADOPT_INSTRUCTIONS_HEADING, ADOPT_INSTRUCTIONS_PROMPT, INSTALLER_LOCK_FILE } from './lib/updater-adopt.ts';
-import { ADOPT_NEXT_STEP, parseArgs } from './update-boilerplate.ts';
+import { ADOPT_NEXT_STEP, deprecatedFilesToClean, parseArgs } from './update-boilerplate.ts';
 
 const UPDATER = join(import.meta.dir, 'update-boilerplate.ts');
 const roots: string[] = [];
@@ -72,5 +72,14 @@ describe('--adopt closing line', () => {
     expect(skill).toContain(prompt);
     expect(workflow).toContain(prompt);
     expect(workflow).toContain(ADOPT_INSTRUCTIONS_HEADING.replace(/^## /, ''));
+  });
+});
+
+describe('retired paths a project protects', () => {
+  test('are never handed to the deprecated cleanup; the rest still are', () => {
+    const retired = [{ path: '.claude/commands/a.md' }, { path: '.claude/commands/b.md' }];
+    const watchlist = [{ path: '.claude/commands/a.md', reason: 'project', source: 'project' as const }];
+    expect(deprecatedFilesToClean(retired, watchlist)).toEqual([{ path: '.claude/commands/b.md' }]);
+    expect(deprecatedFilesToClean(retired, [])).toEqual(retired);
   });
 });

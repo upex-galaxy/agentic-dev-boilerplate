@@ -326,6 +326,8 @@ export interface AdoptRowsInput {
   upstreamDir: string
   /** Collisions other than `.env.example` (that one has its own row). */
   collisions: readonly string[]
+  /** App files at paths upstream retired (`deprecatedFiles`): kept, never deleted. */
+  retired?: readonly string[]
   /** True when `collisions` are listed in `updater.protected_paths` (this run, or would be on a real run). */
   protectedWritten: boolean
   envAdded: readonly string[]
@@ -384,6 +386,21 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       note: input.protectedWritten
         ? 'To take upstream\'s copy later: remove the path from updater.protected_paths in .agents/project.yaml, then run bun run up.'
         : protectNote(single ? group : files[0]),
+    });
+  }
+
+  for (const file of input.retired ?? []) {
+    rows.push({
+      surface: surfaceFor(file),
+      path: file,
+      evidence: `app file kept at a path upstream retired (--adopt never deletes what the app already has); ${input.protectedWritten
+        ? 'listed in updater.protected_paths, so no later sync deletes it'
+        : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun run up\` deletes it`}`,
+      suggested: 'keep project',
+      blocking: !input.protectedWritten,
+      note: input.protectedWritten
+        ? 'Upstream no longer ships this path. Delete it by hand when the app no longer needs it, and drop it from updater.protected_paths.'
+        : protectNote(file),
     });
   }
 
@@ -575,7 +592,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   const findings = adoptFindings({
     root,
     upstreamDir,
-    collisions: collisionPaths.filter(p => p !== ENV_EXAMPLE),
+    collisions: input.collisions.filter(c => c.retired !== true && c.path !== ENV_EXAMPLE).map(c => c.path),
+    retired: input.collisions.filter(c => c.retired === true).map(c => c.path),
     protectedWritten: protectedPaths.length > 0,
     envAdded,
     envCollision,
