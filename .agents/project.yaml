@@ -245,8 +245,8 @@ environments:
   local:
     web_url: null # TODO: fill per project — Frontend URL for local env (e.g. http://localhost:3000)
     api_url: null # TODO: fill per project — API base URL for local env (e.g. http://localhost:3000/api)
-    db_project_ref: null # TODO: fill per project — Supabase project ref for local (e.g. czuusjchqpgvanvbdrnz — visible in your Supabase dashboard URL)
+    db_project_ref: null # TODO: fill per project — Supabase project ref for local (the 20-character id in your Supabase dashboard URL: supabase.com/dashboard/project/<ref>)
   staging:
     web_url: null # TODO: fill per project — Frontend URL for staging env (e.g. https://staging.myproject.com)
     api_url: null # TODO: fill per project — API base URL for staging env (e.g. https://api-staging.myproject.com)
-    db_project_ref: null # TODO: fill per project — Supabase project ref for staging (e.g. czuusjchqpgvanvbdrnz — visible in your Supabase dashboard URL)
+    db_project_ref: null # TODO: fill per project — Supabase project ref for staging (the 20-character id in your Supabase dashboard URL: supabase.com/dashboard/project/<ref>)

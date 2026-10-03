@@ -960,7 +960,7 @@ function renderCommentForEnvLeaf(envName: string, sf: EnvScopedFieldSpec, filled
   const descriptions: Record<string, string> = {
     web_url: `Frontend URL for ${envName} env (e.g. https://example.com)`,
     api_url: `API base URL for ${envName} env (e.g. https://api.example.com)`,
-    db_project_ref: `Supabase project ref for ${envName} (e.g. czuusjchqpgvanvbdrnz — visible in your Supabase dashboard URL)`,
+    db_project_ref: `Supabase project ref for ${envName} (the 20-character id in your Supabase dashboard URL: supabase.com/dashboard/project/<ref>)`,
   };
   const desc = descriptions[sf.key];
   if (!desc) { return ''; }
