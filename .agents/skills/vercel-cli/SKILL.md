@@ -50,12 +50,12 @@ This skill is a CLI companion, not a deploy orchestrator. Other skills own the s
 | Companion skill         | What it owns                                                                                                          | When to defer to it                                                       |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `/deploy-to-vercel`     | Deploy method selection (git push vs `vercel deploy`), first-time `vercel link`, team scope selection (community v3.0.0+, author: vercel)             | The user has NOT deployed yet, or `.vercel/project.json` + `.vercel/repo.json` are both absent. Load FIRST in those cases.       |
-| `/sprint-development`   | Per-story deploy stages — Stage 4 (environment config + staging deploy), Stage 5 (production deploy + rollback)        | The deploy is part of a story workflow (Jira ticket open, branch `feature/UPEX-*`). Let it drive; this skill provides the verbs. |
+| `/sprint-development`   | Per-story deploy stages — Stage 4 (environment config + staging deploy), Stage 5 (production deploy + rollback)        | The deploy is part of a story workflow (Jira ticket open, branch `feat/UPEX-*`). Let it drive; this skill provides the verbs. |
 | `/git-flow-master`      | `git push` mechanics, branch protection, PR creation — the push that TRIGGERS the Vercel webhook                       | Any git-shaped step. Push first, then come back here to verify.            |
 
 Resolution steps (per `agentic-dev-core/references/skill-composition-strategy.md`):
 
-1. Read `complementary_categories` from this skill's frontmatter (`deploy-vercel`).
+1. Read `complementary_categories` from this skill's frontmatter (`deploy`).
 2. Look up the local skill-registry script (`scripts/build-skill-registry.ts` → `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. If `/deploy-to-vercel` is installed (default project-level community skill per `cli/install.ts`), prefer it for any "I haven't deployed this project yet" intent.
 
@@ -127,7 +127,7 @@ vercel env pull .env.local --environment=preview
 # Push a new key
 echo "$NEXT_PUBLIC_APP_URL" | vercel env add NEXT_PUBLIC_APP_URL preview
 
-# Bulk: see references/env-vars.md for the loop pattern across the ~15 boilerplate keys
+# Bulk: see references/env-vars.md for the loop pattern across the boilerplate keys
 ```
 
 ### 3. Tail logs to debug a failing build / runtime
