@@ -25,6 +25,18 @@
       "category": "positive"
     },
     {
+      "name": "should-run-discovery-only-on-adopted-app",
+      "prompt": "We adopted our existing Next.js app last week and the maps are done. Write the dev guide and the domain glossary for it.",
+      "expected_behavior": "Detects an existing app (`.template/installer.lock.json` records `adopted: true`) and follows \"Existing app: Discovery-only foundation\". Phases 1, 2, 2.5 and 3 do not run: no Constitution, PRD or SRS is drafted (F9). Phase 0.5 writes the plan with `discovery-only` in Approach and Phase 4 alone in Phase breakdown. Checks the maps with `bun run context:map <skill> --list` and does not regenerate a generated one. Step 4 writes `.context/business/project-dev-guide.md` from the app's code, package.json and the `stack:` block; Step 6 seeds `.context/business/domain-glossary.md` from the maps, code identifiers, live UI copy, ADRs and the tracker's epic names (skipped if the file exists). Hands off to /product-management and /sprint-development, never /project-bootstrap; no missing-PRD/SRS gap is reported.",
+      "category": "positive"
+    },
+    {
+      "name": "should-keep-full-chain-on-new-product",
+      "prompt": "/project-foundation for a new marketplace we are designing from scratch; there is no code yet.",
+      "expected_behavior": "New-product path, unchanged: no installer lock with `adopted: true` and no existing code, so the Discovery-only section does not apply. Runs the full chain Phase 1 Constitution -> Phase 2 PRD -> Phase 2.5 /design-system hand-off -> Phase 3 SRS (with seeded ADRs) -> Phase 4 Steps 1-6, with the stakeholder brief as the seed input. Hand-off is /project-bootstrap then /product-management.",
+      "category": "positive"
+    },
+    {
       "name": "should-not-trigger-openapi-setup",
       "prompt": "Setup OpenAPI in the backend and configure the Scalar UI.",
       "expected_behavior": "Does NOT activate project-foundation. Should route to /project-bootstrap (openapi-setup.md reference) because the request is infrastructure scaffolding (code/config), not architectural definition. project-foundation produces SRS docs; project-bootstrap implements them.",
