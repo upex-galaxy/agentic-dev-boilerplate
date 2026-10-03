@@ -4,6 +4,7 @@ import { statfsSync } from 'node:fs';
 import figuresModule from 'figures';
 import pc from 'picocolors';
 
+import { adoptPreflight } from './preflight.ts';
 import * as tui from './tui.ts';
 
 const figures = figuresModule as unknown as Record<string, string>;
@@ -76,7 +77,12 @@ function checkNodeVersion(): { ok: boolean, hint: string } {
   return { ok: true, hint: `node ${raw}` };
 }
 
-export async function runDoctor(): Promise<{ allPassed: boolean, rows: DoctorRow[] }> {
+export interface DoctorOptions {
+  /** Also run the `--adopt` checks against this directory (the existing app). */
+  preflightDir?: string
+}
+
+export async function runDoctor(opts: DoctorOptions = {}): Promise<{ allPassed: boolean, rows: DoctorRow[] }> {
   const rows: DoctorRow[] = [];
 
   // 1. bun
@@ -136,6 +142,11 @@ export async function runDoctor(): Promise<{ allPassed: boolean, rows: DoctorRow
     hint: disk.hint,
     required: false,
   });
+
+  // 7. adopt preflight (only with --preflight / --adopt)
+  if (opts.preflightDir) {
+    rows.push(...adoptPreflight(opts.preflightDir));
+  }
 
   // Render table
   const tableRows = rows.map(r => [

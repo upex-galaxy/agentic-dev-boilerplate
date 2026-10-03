@@ -133,3 +133,57 @@ export function runBunSetup(cwd: string, opts: { nonInteractive: boolean }): voi
     );
   }
 }
+
+/** The updater entry inside a downloaded template. */
+export const UPDATER_ENTRY = join('cli', 'update-boilerplate.ts');
+
+/**
+ * Argv + environment for the updater's `--adopt` run, kept pure for the tests.
+ *
+ * `UPEX_TEMPLATE_REPO` is only set for a non-default `--template-repo`: the
+ * updater's own default is the same repository, and an override already in the
+ * user's environment must keep working.
+ */
+export function adoptUpdaterCommand(opts: {
+  updaterDir: string
+  nonInteractive: boolean
+  templateRepo: string
+  defaultTemplateRepo: string
+}): { args: string[], env: Record<string, string> } {
+  const args = [join(opts.updaterDir, UPDATER_ENTRY), '--adopt'];
+  if (opts.nonInteractive) { args.push('--auto'); }
+  const env: Record<string, string> = opts.templateRepo === opts.defaultTemplateRepo ? {} : { UPEX_TEMPLATE_REPO: opts.templateRepo };
+  return { args, env };
+}
+
+/**
+ * Install the downloaded template's own dependencies, so its updater can run
+ * from there. Happens in the temp copy, never in the app.
+ */
+export function installUpdaterDeps(updaterDir: string): void {
+  const res = spawnBun(['install'], { cwd: updaterDir });
+  assertLaunched(res, 'bun install');
+  if (res.status !== 0) {
+    throw new CliError('ADOPT', `bun install of the downloaded template failed (exit ${res.status}).`, 'Nothing was written to the app. Check the network and run --adopt again.');
+  }
+}
+
+/**
+ * Hand the existing app over to the boilerplate updater's first-run ADOPT
+ * policy (`cli/lib/updater-adopt.ts` in the template): absent paths are
+ * delivered, the app's own files are never overwritten, collisions become
+ * parity rows. The updater runs with the app as its working directory.
+ */
+export function runAdoptUpdater(appDir: string, opts: { updaterDir: string, nonInteractive: boolean, templateRepo: string, defaultTemplateRepo: string }): void {
+  log.info('Handing off to the boilerplate updater (--adopt)…');
+  const { args, env } = adoptUpdaterCommand(opts);
+  const res = spawnBun(args, { cwd: appDir, env: { ...process.env, ...env } });
+  assertLaunched(res, 'the updater');
+  if (res.status !== 0) {
+    throw new CliError(
+      'ADOPT',
+      `The updater's --adopt run failed (exit ${res.status}).`,
+      'Its output above says why. It backs up whatever it touched under .backups/; review git status before running --adopt again.',
+    );
+  }
+}

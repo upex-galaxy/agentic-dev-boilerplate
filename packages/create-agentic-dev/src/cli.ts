@@ -1,13 +1,16 @@
 #!/usr/bin/env node
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import type { Args } from './args.ts';
+
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 import figuresModule from 'figures';
 import pc from 'picocolors';
 
 import pkg from '../package.json' with { type: 'json' };
 
-import { parseArgs, printHelp } from './args.ts';
+import { DEFAULT_TEMPLATE_REPO, parseArgs, printHelp } from './args.ts';
 import { isAgenticDevRepo, isDirectoryEmpty } from './detect.ts';
 import { runDoctor } from './doctor.ts';
 import { downloadTemplate } from './download.ts';
@@ -15,6 +18,7 @@ import { CliError } from './errors.ts';
 import { runInspect } from './inspect.ts';
 import { log } from './log.ts';
 import { runMenu } from './menu.ts';
+import { installState } from './preflight.ts';
 import {
   initGitRepo,
   pruneBootstrapExcludes,
@@ -26,7 +30,7 @@ import {
   seedProjectYamlFromSchema,
 } from './prepare.ts';
 import { rollback } from './rollback.ts';
-import { ensureBunAvailable, ensureGitAvailable, runBunInstall, runBunSetup } from './runners.ts';
+import { ensureBunAvailable, ensureGitAvailable, installUpdaterDeps, runAdoptUpdater, runBunInstall, runBunSetup } from './runners.ts';
 import * as tui from './tui.ts';
 
 const figures = figuresModule as unknown as Record<string, string>;
@@ -48,6 +52,15 @@ async function main(): Promise<number> {
   // Print logo unless suppressed
   if (!args.noBanner) {
     process.stdout.write(`${tui.logo()}\n`);
+  }
+
+  if (args.doctor) {
+    const { allPassed } = await runDoctor({ preflightDir: args.preflight ? process.cwd() : undefined });
+    return allPassed ? 0 : 1;
+  }
+
+  if (args.adopt) {
+    return runAdopt(args);
   }
 
   // -----------------------------------------------------------------------
@@ -239,6 +252,85 @@ async function main(): Promise<number> {
   ];
   process.stdout.write(`${tui.successBox(nextLines)}\n`);
 
+  return 0;
+}
+
+/**
+ * `--adopt`: install the agentic layer into the EXISTING app in the current
+ * directory. No download into the app, no scrub, no rename, no `git init`:
+ * the template goes to a temp dir and its own updater runs `--adopt` with the
+ * app as its working directory. Understanding the app is the next step, the
+ * `project-adoption` skill, inside an agent session.
+ */
+async function runAdopt(args: Args): Promise<number> {
+  ensureBunAvailable();
+  ensureGitAvailable();
+  const appDir = process.cwd();
+
+  if (installState(appDir) === 'adopted') {
+    log.success('This repo is already adopted: nothing to install. To update it: bun run up');
+    return 0;
+  }
+
+  tui.section('Adoption preflight');
+  const { allPassed } = await runDoctor({ preflightDir: appDir });
+  if (!allPassed) {
+    throw new CliError(
+      'PREFLIGHT',
+      'Adoption preflight failed: nothing was installed.',
+      'Fix the failed rows above, then run --adopt again (--doctor --preflight re-checks without installing).',
+    );
+  }
+
+  const updaterDir = mkdtempSync(join(tmpdir(), 'create-agentic-dev-adopt-'));
+  try {
+    const s1 = tui.spinner();
+    s1.start(`Downloading template (${args.templateRepo}@${args.template})…`);
+    try {
+      await downloadTemplate({ repo: args.templateRepo, ref: args.template, targetDir: updaterDir });
+      s1.stop('Template downloaded (temp dir, outside the app)');
+    }
+    catch (err) {
+      s1.error(`Failed to download template: ${(err as Error).message}`);
+      throw err;
+    }
+
+    const s2 = tui.spinner();
+    s2.start('Installing the updater\'s dependencies (temp dir)…');
+    try {
+      installUpdaterDeps(updaterDir);
+      s2.stop('Updater ready');
+    }
+    catch (err) {
+      s2.error(`Failed to prepare the updater: ${(err as Error).message}`);
+      throw err;
+    }
+
+    tui.section('Running the boilerplate updater (--adopt)');
+    runAdoptUpdater(appDir, {
+      updaterDir,
+      nonInteractive: args.nonInteractive,
+      templateRepo: args.templateRepo,
+      defaultTemplateRepo: DEFAULT_TEMPLATE_REPO,
+    });
+  }
+  finally {
+    rmSync(updaterDir, { recursive: true, force: true });
+  }
+
+  const nextLines = [
+    pc.green(`${figures.tick ?? '✔'}  Agentic layer installed into ${appDir}`),
+    pc.dim('   Nothing of the app was overwritten; collisions are rows in the table above.'),
+    '',
+    pc.bold('Next steps (in order):'),
+    `  1.  Review the parity table (${pc.cyan('.agents/prompts/parity-plan.md')} when it saved one)`,
+    `  2.  ${pc.cyan('bun install')}     ${pc.dim('# the tooling devDependencies it appended')}`,
+    '  3.  Commit the adoption as one change',
+    `  4.  ${pc.cyan('bun claude')}      ${pc.dim('# or: bun opencode')}, then load the ${pc.cyan('project-adoption')} skill`,
+    '',
+    pc.dim('Full guide: README.md → "Adopt an existing app"'),
+  ];
+  process.stdout.write(`${tui.successBox(nextLines)}\n`);
   return 0;
 }
 
