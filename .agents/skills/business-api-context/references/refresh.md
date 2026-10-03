@@ -8,6 +8,7 @@
 |---|---|---|
 | `openapi:<tag or path>` | the contract changed after `data-updated` | `bun run api:sync` output, or the spec file's `git log` |
 | `route:<path>` / a route handler or server action path | a commit touched it after the date | `git log --since=<data-updated> --oneline -- <path>` |
+| `rpc:<function>` / `db:<table>` on a Supabase-direct domain | the function or the table's RLS policies changed, or a calling module did | the schema source `stack.database.schema_source` names (new migrations, or `[DB_TOOL]` read-only), then `git log` on the calling module |
 | `auth:<scheme>` | the auth middleware, the Supabase Auth config or a role definition changed | `git log` on the middleware or config file |
 | an observed response | a real request answers a status, field or error the section does not describe | the request evidence (`curl` command and response, session label) |
 

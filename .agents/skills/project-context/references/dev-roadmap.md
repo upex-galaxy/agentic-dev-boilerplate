@@ -44,14 +44,15 @@ Earlier boilerplate versions persisted the Kahn topological sort to `.context/PB
 
 | Source | Status | What to extract | Tool |
 | ------ | ------ | --------------- | ---- |
-| Issue tracker — epics + child stories + **full `issuelinks` array** | **HARD REQUIREMENT** | Story membership, `dependencies` / `blocks` / `relates` links — the edges the §4 sort consumes | `[ISSUE_TRACKER_TOOL]` |
-| `.agents/jira-link-types.json` | **must be current** | Link-type slugs. Refresh with `bun run jira:sync-link-types` BEFORE sorting — a stale catalog silently misclassifies edges | Read + `bun run jira:sync-link-types` |
+| Issue tracker — epics + child stories | **HARD REQUIREMENT** | Story membership and tracker rank | `[ISSUE_TRACKER_TOOL]` |
+| Issue tracker — the stories' full `issuelinks` array | Soft — warn if empty | `dependencies` / `blocks` / `relates` links — the edges the §4 sort consumes | `[ISSUE_TRACKER_TOOL]` |
+| `.agents/jira-link-types.json` | **must be current** when any story carries a link | Link-type slugs. Refresh with `bun run jira:sync-link-types` BEFORE sorting — a stale catalog silently misclassifies edges | Read + `bun run jira:sync-link-types` |
 | The data map (`business-data-context`), `entities` + `access-control` sections | Soft — warn if missing | Entity topology → the §2 epic backbone (no entity ships before the entities + RLS it depends on) | `bun run context:map business-data-context` |
 | `.context/design/master-design-plan.md` §8 | Soft — warn if missing | US→Screen map + per-screen mockup status → the §5 mockup-gate registry (Critical Rule #14, UI fidelity contract) | Read file |
 | `.context/master-implementation-plan.md` §4–§5 | Soft | Master Sprint grouping — to tag each Execution Sprint with its parent Master Sprint | Read file |
 | `.context/PBI/epic-tree.md` + `epics/` | If available | Local story-membership mirror + any hand-authored `context.md` notes (pre-dev blockers, open Qs) | Read files |
 
-**Golden rule**: every §3 edge MUST cite a real source — a Jira `dependencies`/`blocks` link, a data-map entity dependency, or a `master-design-plan.md` mockup-gate. NEVER invent an edge because it "feels like" a dependency — that is a refinement signal: go add the link in the tracker via `product-management/references/dependency-linking.md`, then re-run.
+**Golden rule**: every §3 edge MUST cite a real source — a Jira `dependencies`/`blocks` link, a data-map entity dependency, or a `master-design-plan.md` mockup-gate. A backlog with no links yields a sparse graph (§1.2b), never an invented one. NEVER invent an edge because it "feels like" a dependency — that is a refinement signal: go add the link in the tracker via `product-management/references/dependency-linking.md`, then re-run.
 
 ---
 
@@ -82,14 +83,20 @@ When the existing file was hand-authored (e.g. migrated from a project that wrot
 #### 1.1 Issue-tracker reachability (HARD)
 If no epic with child stories is reachable via `[ISSUE_TRACKER_TOOL]` → **STOP**:
 
-> This command needs at least one epic with child stories (and their dependency links) in the issue tracker to compute an execution sequence. Seed the backlog with `/product-management` first, then re-invoke `/project-context dev-roadmap`.
+> This command needs at least one epic with child stories in the issue tracker to compute an execution sequence. Seed the backlog with `/product-management` first, then re-invoke `/project-context dev-roadmap`.
 
-#### 1.2 Link-catalog freshness (HARD-ish)
-Run `bun run jira:sync-link-types` so `.agents/jira-link-types.json` is current before building the graph. A stale catalog misclassifies `dependencies` vs `relates` and corrupts the sort.
+#### 1.2 Link-catalog freshness (HARD-ish, only when links exist)
+When any in-scope story carries an issue link, run `bun run jira:sync-link-types` so `.agents/jira-link-types.json` is current before building the graph. A stale catalog misclassifies `dependencies` vs `relates` and corrupts the sort.
+
+#### 1.2b No dependency links (SOFT)
+A backlog with epics and stories but no dependency links is normal for a team that never used them, and common in an app adopted mid-life. It is not a stop: WARN and proceed.
+- §3 holds only the edges a cited source forces (a data-map entity dependency, a `master-design-plan.md` mockup-gate); every in-scope story with no edge goes to §6 Edge-mapping TODO.
+- §4 is still the Kahn sort, over that sparse graph: stories with no upstream edges share the first Execution Sprint in tracker rank order, and the section says the sort ran without tracker links.
+- The report recommends linking the stories through `product-management/references/dependency-linking.md` before the next run. Never invent a link to make the graph look complete.
 
 #### 1.3 Soft-input checks
 For each missing soft input, WARN and proceed, logging the gap in §6 edge-mapping TODO:
-- Data map not generated (placeholder notice) → §2 epic backbone is built from Jira epic-links only (less reliable); note the limitation.
+- Data map not generated (placeholder notice) → §2 epic backbone is built from Jira epic-links only (less reliable); note the limitation. With neither a data map nor epic links, §2 lists the epics in tracker rank order and says no dependency forces that order.
 - No `master-design-plan.md` → §5 mockup-gate registry is empty; note that mockup-gating is unenforced until the design plan exists.
 
 ### Phase 2 — Epic backbone (§2)

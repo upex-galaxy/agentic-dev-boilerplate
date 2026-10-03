@@ -31,7 +31,7 @@ This is the **narrative** complement to:
 
 ## Sources (use ALL available)
 
-Exhaust every source. Prefer existing context files over re-deriving from code.
+Exhaust every source. Prefer existing context files over re-deriving from code. App paths resolve under `{{stack.app_root}}` (SKILL.md § Stack parameters).
 
 | Source                                      | What to extract                                                           | Tool                                                                                |
 | ------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -49,7 +49,7 @@ Exhaust every source. Prefer existing context files over re-deriving from code.
 
 **Golden rule**: This is a _narrative_ document. If OpenAPI already expresses a fact as a schema, link to it — do NOT restate it in prose.
 
-**Stack hints**: `bun run api:sync` syncs the OpenAPI spec and regenerates types under `api/schemas/`. Run it (or ask the user to run it) before reading routes if the spec is stale or missing. The `db`, `library-docs` and `web-search` capabilities are available for cross-checks (DB schema, library docs, integration patterns) but should not replace reading the codebase first.
+**Stack hints**: `bun run api:sync` syncs the OpenAPI spec and regenerates types under `api/schemas/`. Run it (or ask the user to run it) before reading routes if the spec is stale or missing. A Supabase-direct app has no spec to sync: skip `api:sync` and read the surface below. The `db`, `library-docs` and `web-search` capabilities are available for cross-checks (DB schema, library docs, integration patterns) but should not replace reading the codebase first.
 
 ---
 
@@ -75,7 +75,23 @@ Both context-file gates are **soft** — this command produces value even in spa
 
 - **Data map still a placeholder** (`bun run context:map business-data-context` prints the placeholder notice) → warn the user ("journeys will be weaker without entity context"), proceed, log the limitation in §Discovery Gaps. Suggest running `/project-context data` afterwards.
 - **Feature map still a placeholder** → warn the user ("journey selection will rely on code scan alone"), proceed, log the limitation in §Discovery Gaps. Suggest running `/project-context features` afterwards.
-- **No OpenAPI spec AND no route-scannable backend** → hard stop. Ask the user to expose a spec or run `bun run api:sync`; you cannot produce an API map without either.
+- **No OpenAPI spec AND no route-scannable backend AND no Supabase-direct API** → hard stop. Ask the user to expose a spec or run `bun run api:sync`; you cannot produce an API map without one of the three.
+
+---
+
+## Supabase-direct API
+
+An app whose `{{stack.database.provider}}` is `supabase` often has no API of its own for some or all domains: the browser and the server components call Supabase through its client, and the API is what Supabase exposes over the schema. Detect it by the client calls in the app code, not by the absence of an `api/` folder; an app can mix both (route handlers for billing, direct table access for profiles), and then each domain is mapped by what it really uses.
+
+| Surface | Find it with | Maps to |
+|---|---|---|
+| tables and views through PostgREST | `.from('<table>')` calls | a route group per domain; the operation (`select`, `insert`, `update`, `upsert`, `delete`) is the method |
+| RPC functions | `.rpc('<function>')` calls, plus the function's definition in the schema source | an endpoint each; sections cite `rpc:<function>` |
+| Auth | `supabase.auth.*` calls, the auth callback route, the middleware or proxy that refreshes the session | the `auth-model` tiers |
+| Storage | `.storage.from('<bucket>')` calls and the bucket policies | a route group per bucket |
+| Edge Functions | `functions.invoke('<name>')` calls and `supabase/functions/` | an endpoint each |
+
+Enforcement lives in the database: the `auth-model` section's "Where enforced" column names the RLS policy (the data map's `access-control` section id) or the function's `security definer` check, not a middleware file. Sections cite the calling modules (repo paths), `db:<table>`, `rpc:<function>` and `auth:<scheme>`. The `cross-references` section says there is no OpenAPI spec and no `api/schemas/` output for these domains, instead of pointing at them.
 
 ---
 
@@ -88,7 +104,7 @@ Identify tiers and how a caller reaches each one.
 - What authentication schemes exist? (JWT, session cookie, API key, OAuth, bearer service token — treat each as its own tier, not a generic "Protected")
 - How does a user obtain a token? (login endpoint, SSO flow, refresh recipe, service-to-service exchange)
 - What roles/scopes/claims gate higher tiers? (admin, owner, tenant-scoped, service principal)
-- Where does validation live? (middleware, guard, decorator, edge function, API gateway)
+- Where does validation live? (middleware, guard, decorator, edge function, API gateway, or an RLS policy on a Supabase-direct domain)
 
 **Outcome**: a taxonomy (Public / Authenticated / Role-based / Owner-scoped / Service) anchored to concrete code paths. Do NOT list endpoints per tier here — that is feature-map's job.
 
@@ -188,6 +204,7 @@ The "Why it matters for dev" column answers questions like: _where do new endpoi
 - Feature-map features this API backs → `business-feature-context` section ids.
 - OpenAPI spec location (file path or URL) for full endpoint specs.
 - `bun run api:sync` output path (`api/schemas/`) for TypeScript types.
+- Supabase-direct domains: no spec and no `api/schemas/` types; the generated database types (`{{stack.database.types_path}}`) are the contract instead.
 - Downstream consumers: `/project-context master-plan` (sequences API-backed work), `/sprint-development` (per-story implementation reads this map for context).
 
 Purpose: make it obvious where each flavor of API info lives so nothing gets re-documented here.
