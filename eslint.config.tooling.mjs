@@ -20,5 +20,12 @@ import { BASE_ESLINT_OPTIONS, CLI_IMPORT_CLOSURE } from './eslint.config.base.js
 
 export default antfu({
   ...BASE_ESLINT_OPTIONS,
-  typescript: { tsconfigPath: 'tsconfig.tooling.json' },
+  typescript: {
+    tsconfigPath: 'tsconfig.tooling.json',
+    // The type-aware parser must read `tsconfig.tooling.json` for every file,
+    // never the nearest `tsconfig.json`: that one is the APP's, and an app
+    // that excludes `scripts/**` there (measured) leaves every tooling script
+    // "not found by the project service".
+    parserOptions: { projectService: false, project: ['./tsconfig.tooling.json'], tsconfigRootDir: process.cwd() },
+  },
 }, CLI_IMPORT_CLOSURE);
