@@ -32,6 +32,7 @@
 import type { HiddenPath, ReincludeOutcome } from './adopt-gitignore.ts';
 import type { ParityFinding, ParitySurface } from './updater-parity';
 import type { AdoptCollision, PackageJsonKeptKey } from './updater-types';
+import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -84,6 +85,70 @@ export const ADOPT_INSTRUCTIONS_HEADING = '## 0. Project instructions (pre-adopt
 
 /** Where a composed `AGENTS.md` waits for review when it was not applied (gitignored, single-use). */
 export const ADOPT_INSTRUCTIONS_PROMPT = path.join('.agents', 'prompts', 'adopt-instructions.md');
+
+/**
+ * Where `--adopt` saves upstream's copy of each framework skill the app had
+ * copied in by hand (gitignored with `.agents/prompts/`, single-use):
+ * `project-adoption` replaces the app's copy from here on its own approval
+ * line, after backing the app's copy up.
+ */
+export const ADOPT_UPSTREAM_SKILLS_DIR = path.join('.agents', 'prompts', 'adopt-upstream');
+
+/** A framework skill the app already carried (an older hand copy): kept this run, `take upstream` proposed. */
+export interface FrameworkSkillCollision {
+  name: string
+  /** Files of upstream's copy that differ in the app's copy. */
+  differing: string[]
+  /** Files only the app's copy has (they move to the backup when upstream's copy is taken). */
+  appOnly: string[]
+  /** `git diff --no-index --shortstat` of the app copy against upstream's. */
+  shortstat: string
+  /** Where upstream's copy was saved (null on --dry-run). */
+  saved: string | null
+}
+
+function filesOf(dir: string): string[] {
+  const out: string[] = [];
+  const walk = (abs: string): void => {
+    let entries: fs.Dirent[];
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); }
+    catch { return; }
+    for (const e of entries) {
+      const child = path.join(abs, e.name);
+      if (e.isDirectory()) { walk(child); }
+      else if (e.isFile()) { out.push(path.relative(dir, child).replace(/\\/g, '/')); }
+    }
+  };
+  walk(dir);
+  return out.sort();
+}
+
+/**
+ * The collisions that sit inside a skill folder upstream ships: the app's
+ * hand copy of a FRAMEWORK skill, not an app file. Grouped by skill.
+ */
+export function frameworkSkillGroups(collisions: readonly string[], upstreamDir: string): Map<string, string[]> {
+  const groups = new Map<string, string[]>();
+  for (const p of collisions) {
+    const m = /^\.agents\/skills\/([^/]+)\//.exec(p);
+    if (!m || !fs.existsSync(path.join(upstreamDir, '.agents', 'skills', m[1], 'SKILL.md'))) { continue; }
+    groups.set(m[1], [...(groups.get(m[1]) ?? []), p]);
+  }
+  return groups;
+}
+
+function describeFrameworkSkill(root: string, upstreamDir: string, name: string, files: readonly string[]): Omit<FrameworkSkillCollision, 'saved'> {
+  const appDir = path.join(root, '.agents', 'skills', name);
+  const upDir = path.join(upstreamDir, '.agents', 'skills', name);
+  const upstreamFiles = new Set(filesOf(upDir));
+  const stat = spawnSync('git', ['diff', '--no-index', '--shortstat', '--', appDir, upDir], { encoding: 'utf8' });
+  return {
+    name,
+    differing: files.map(f => f.slice(`.agents/skills/${name}/`.length)).sort(),
+    appOnly: filesOf(appDir).filter(f => !upstreamFiles.has(f)),
+    shortstat: (stat.stdout ?? '').trim(),
+  };
+}
 
 /** Scripts whose collision gets a composition proposal: both halves must run for setup to work. */
 const COMPOSABLE_SCRIPTS = new Set(['prepare', 'setup']);
@@ -338,6 +403,8 @@ export interface AdoptRowsInput {
   collisions: readonly string[]
   /** App files at paths upstream retired (`deprecatedFiles`): kept, never deleted. */
   retired?: readonly string[]
+  /** The app's hand copies of framework skills (`frameworkSkillGroups`). */
+  frameworkSkills?: readonly FrameworkSkillCollision[]
   /** True when `collisions` are listed in `updater.protected_paths` (this run, or would be on a real run). */
   protectedWritten: boolean
   envAdded: readonly string[]
@@ -400,6 +467,25 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       note: input.protectedWritten
         ? 'To take upstream\'s copy later: remove the path from updater.protected_paths in .agents/project.yaml, then run bun run up.'
         : protectNote(single ? group : files[0]),
+    });
+  }
+
+  for (const skill of input.frameworkSkills ?? []) {
+    const detail = [
+      `differs from upstream: ${skill.differing.join(', ')}`,
+      ...(skill.appOnly.length > 0 ? [`only in the app's copy (moves to the backup when upstream's is taken): ${skill.appOnly.join(', ')}`] : []),
+      ...(skill.shortstat ? [skill.shortstat] : []),
+    ].join('\n');
+    rows.push({
+      surface: 'skills',
+      path: `.agents/skills/${skill.name}/`,
+      evidence: `the app carries its own copy of the framework skill \`${skill.name}\` (${skill.differing.length} file(s) differ from upstream${skill.appOnly.length > 0 ? `, ${skill.appOnly.length} only in the app's copy` : ''}${skill.shortstat ? `; ${skill.shortstat}` : ''}); kept this run and NOT protected, so it does not freeze on this copy`,
+      suggested: 'take upstream',
+      blocking: false,
+      detail,
+      note: skill.saved
+        ? `Upstream's copy is saved in ${skill.saved}/. \`project-adoption\` applies it on its own approval line: the app's copy goes to .backups/project-adoption/ first. Review the detail for app-specific edits before approving.`
+        : 'On the real run upstream\'s copy is saved under .agents/prompts/adopt-upstream/ for project-adoption to apply.',
     });
   }
 
@@ -513,6 +599,8 @@ export interface AdoptOutcome {
   installerLockWritten: boolean
   /** Where the tooling-isolation snippets were saved (null: nothing pending, or --dry-run). */
   isolationPrompt: string | null
+  /** The app's hand copies of framework skills: kept, unprotected, upstream's copy saved. */
+  frameworkSkills: FrameworkSkillCollision[]
 }
 
 function readOrNull(file: string): string | null {
@@ -527,7 +615,23 @@ function relPosix(root: string, abs: string): string {
 /** Everything `--adopt` does after the sync landed. On --dry-run it writes nothing and reports what it would do. */
 export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   const { root, upstreamDir, dryRun } = input;
-  const collisionPaths = input.collisions.map(c => c.path);
+  // The app's hand copies of framework skills are NOT protected: protecting
+  // them would freeze the app on a stale framework forever. Upstream's copy is
+  // saved for `project-adoption` to apply on its own approval line.
+  const frameworkGroups = frameworkSkillGroups(input.collisions.filter(c => c.retired !== true).map(c => c.path), upstreamDir);
+  const inFrameworkSkill = new Set([...frameworkGroups.values()].flat());
+  const collisionPaths = input.collisions.map(c => c.path).filter(p => !inFrameworkSkill.has(p));
+  const frameworkSkills: FrameworkSkillCollision[] = [];
+  for (const [name, files] of frameworkGroups) {
+    let saved: string | null = null;
+    if (!dryRun) {
+      const dest = path.join(root, ADOPT_UPSTREAM_SKILLS_DIR, name);
+      fs.rmSync(dest, { recursive: true, force: true });
+      fs.cpSync(path.join(upstreamDir, '.agents', 'skills', name), dest, { recursive: true });
+      saved = relPosix(root, dest);
+    }
+    frameworkSkills.push({ ...describeFrameworkSkill(root, upstreamDir, name, files), saved });
+  }
 
   // 1. .env.example: the app's file stays, the tooling's variables are appended.
   const envCollision = collisionPaths.includes(ENV_EXAMPLE);
@@ -641,7 +745,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   const findings = adoptFindings({
     root,
     upstreamDir,
-    collisions: input.collisions.filter(c => c.retired !== true && c.path !== ENV_EXAMPLE).map(c => c.path),
+    collisions: input.collisions.filter(c => c.retired !== true && c.path !== ENV_EXAMPLE && !inFrameworkSkill.has(c.path)).map(c => c.path),
+    frameworkSkills,
     retired: input.collisions.filter(c => c.retired === true).map(c => c.path),
     protectedWritten: protectedPaths.length > 0,
     envAdded,
@@ -653,5 +758,5 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     hiddenDelivered: dryRun ? [] : hiddenPaths(root, [...input.appliedPaths, ...delivered]),
   });
   findings.push(...isolationFindings(isolation, isolationSaved));
-  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved };
+  return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved, frameworkSkills };
 }

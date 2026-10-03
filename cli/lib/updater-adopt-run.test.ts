@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { ADOPT_REPO_ONLY_PATTERNS, isAdopted, runAdopt } from './updater-adopt.ts';
+import { ADOPT_REPO_ONLY_PATTERNS, ADOPT_UPSTREAM_SKILLS_DIR, isAdopted, runAdopt } from './updater-adopt.ts';
 import { runUpdate } from './updater-core.ts';
 import { readProjectProtectedPaths } from './updater-drift.ts';
 
@@ -268,6 +268,40 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(row?.evidence).toContain('`new-tool.ts` (.gitignore:2)');
     expect(row?.blocking).toBe(false);
     expect(read(app, '.gitignore').startsWith('node_modules/\nnew-tool.ts\n')).toBe(true);
+  });
+
+  test('the app\'s hand copy of a framework skill is kept, not protected, and upstream\'s copy is saved for take-upstream', async () => {
+    const { template, app } = setup();
+    write(template, '.agents/skills/acli/SKILL.md', '---\nname: acli\n---\n\n# acli v2\n');
+    write(template, '.agents/skills/acli/references/new.md', 'new upstream reference\n');
+    git(template, ['add', '-A']);
+    git(template, ['commit', '--quiet', '-m', 'skill']);
+    write(app, '.agents/skills/acli/SKILL.md', '---\nname: acli\n---\n\n# acli v1 (hand copy)\n');
+    write(app, '.agents/skills/acli/references/app-notes.md', 'app-only notes\n');
+    git(app, ['add', '-A']);
+    git(app, ['commit', '--quiet', '-m', 'hand-copied skill']);
+    process.chdir(app);
+    let adopt: AdoptOutcome | null = null;
+    const cfg = { ...config(template, [], async (summary: RunSummary) => {
+      adopt = await runAdopt({ root: app, upstreamDir: cfg.tempDir, dryRun: false, nonInteractive: true, appliedPaths: summary.applied.map(a => a.entry.path), collisions: summary.adoptCollisions ?? [], packageJsonKept: [], backupDir: null, confirm: async () => false, step: () => {}, warn: () => {} });
+    }), components: [...COMPONENTS, { name: 'skills', type: 'directory' as const, paths: ['.agents/skills'] }] };
+    await runUpdate(cfg, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
+
+    // Kept this run, the missing upstream file delivered beside it.
+    expect(read(app, '.agents/skills/acli/SKILL.md')).toContain('v1 (hand copy)');
+    expect(read(app, '.agents/skills/acli/references/new.md')).toBe('new upstream reference\n');
+    // Not frozen: no protected path inside the framework skill.
+    expect(readProjectProtectedPaths(app).paths.filter(p => p.startsWith('.agents/skills/'))).toEqual([]);
+    // Upstream's copy saved for project-adoption.
+    expect(read(app, `${ADOPT_UPSTREAM_SKILLS_DIR}/acli/SKILL.md`)).toContain('v2');
+    const outcome = adopt as AdoptOutcome | null;
+    expect(outcome?.frameworkSkills.map(f => ({ name: f.name, differing: f.differing, appOnly: f.appOnly }))).toEqual([
+      { name: 'acli', differing: ['SKILL.md'], appOnly: ['references/app-notes.md'] },
+    ]);
+    const row = outcome?.findings.find(f => f.path === '.agents/skills/acli/');
+    expect(row?.suggested).toBe('take upstream');
+    expect(row?.evidence).toContain('1 file(s) differ from upstream, 1 only in the app\'s copy');
+    expect(row?.blocking).toBe(false);
   });
 
   test('--dry-run writes nothing and still reports the collisions', async () => {

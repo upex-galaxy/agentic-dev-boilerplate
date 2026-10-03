@@ -18,7 +18,7 @@ The mutation phases NEVER:
 - push;
 - write a credential value anywhere but `.env`, or echo one into the plan, a report or a commit.
 
-The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env`; `.agents/jira-*.json` catalogs; `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the per-harness credential files `bun run harness:env` derives from `.env`; `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
+The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env`; `.agents/jira-*.json` catalogs; a framework skill folder `.agents/skills/<name>/` the app had copied in by hand, replaced ONLY by upstream's copy the adoption saved under `.agents/prompts/adopt-upstream/<name>/` (the app's copy backed up under `.backups/project-adoption/` first); `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the per-harness credential files `bun run harness:env` derives from `.env`; `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
 
 ---
 
@@ -31,6 +31,7 @@ Each row is a command or read plus a pass condition. `ADOPTED` when the conditio
 | install | `.template/installer.lock.json` | `adopted: true` (else the entry gate STOPS) |
 | instructions | `CLAUDE.md` | byte-equal to the `@AGENTS.md` shim, and `.agents/prompts/adopt-instructions.md` absent or already applied |
 | protected paths | every app-owned collision of the adoption run (the `merge` rows of `.agents/prompts/parity-plan.md`, or the paths whose content differs from upstream) | listed in `updater.protected_paths` of `.agents/project.yaml` |
+| framework skills | `.agents/prompts/adopt-upstream/` (upstream's copy of each framework skill the app had copied in by hand, saved by the adoption install) | absent or empty: each one was taken or the plan records the team kept its copy |
 | identity | `grep -n 'null # TODO' .agents/project.yaml` restricted to `project`, `backend`, `frontend`, `database`, `issue_tracker`, `testing.default_env` and the `environments` the project runs | no line left (team-owed blocks are NOT in this row, see §Team-owed prerequisites) |
 | stack | `readStack` over `.agents/project.yaml` (`bun run setup:doctor --json`, key `stack`) | block present, no validation issue, no v1 issue, no drift against the repo |
 | harness | `bun run agents:compat:check` | exit 0 |
@@ -127,8 +128,9 @@ Re-read the approved plan first. Each step writes only its approved rows.
 
 1. **Stack.** `bun run agents:setup --stack`: one prompt per field whose detected value differs from the yaml; answer with the approved plan values. It inserts a missing block at the schema's position and re-reads it (`writeStack`).
 2. **Identity + environments.** `bun run agents:setup` for the identity and environment leaves in the plan (interactive; `--non-interactive` reads the env mapping in its header). Environments the project does not run are removed from the yaml only when the plan says so.
-3. **Protected paths.** Add every app-owned collision not yet listed to `updater.protected_paths` in `.agents/project.yaml` (block style, one path per line, a splice that keeps the rest of the file byte-identical: never `parseDocument(...).toString()` on a file under `.agents/`).
-4. **Verify at the destination:** re-read the yaml; `bun run setup:doctor --json` `stack` shows no issue; `bun run vars:check` exits 0.
+3. **Framework skills.** For each skill saved under `.agents/prompts/adopt-upstream/<name>/` whose `take upstream` row carries its OWN approval line in the plan (the row's detail lists the files that differ and the ones only the app's copy has: an app-specific edit there is the reason to keep it): copy `.agents/skills/<name>/` to `.backups/project-adoption/<date>/skills/<name>/`, replace the folder with the saved copy, verify with `diff -r .agents/prompts/adopt-upstream/<name> .agents/skills/<name>` (no output), then delete the saved copy. A skill the team keeps: add its folder's files to `updater.protected_paths` (next step) and delete the saved copy; the plan records the decision. Then `bun run skills:registry`.
+4. **Protected paths.** Add every app-owned collision not yet listed to `updater.protected_paths` in `.agents/project.yaml` (block style, one path per line, a splice that keeps the rest of the file byte-identical: never `parseDocument(...).toString()` on a file under `.agents/`).
+5. **Verify at the destination:** re-read the yaml; `bun run setup:doctor --json` `stack` shows no issue; `bun run vars:check` exits 0.
 
 ## Phase 4: credential slots (writes `.env` only)
 
