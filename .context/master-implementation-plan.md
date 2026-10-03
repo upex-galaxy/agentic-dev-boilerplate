@@ -1,6 +1,6 @@
 # Master Implementation Plan — placeholder
 
-> **Run `/master-implementation-plan` (Claude Code command) to populate or refresh this file.**
+> **Run `/project-context master-plan` to populate or refresh this file (skill `project-context`; Claude Code slash form shown, other harnesses invoke the skill and mode in prose).**
 
 This file is the canonical high-level dev roadmap for this repo — the macro view of "what to build, in what order, and why that order matters." It sits **on top of** `business-data-map.md` and `business-feature-map.md` and converts them into a ranked implementation strategy.
 

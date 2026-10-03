@@ -9,8 +9,8 @@
  *
  * Besides env vars / direnv / deps it diagnoses the cross-harness contract
  * (`agent_compatibility`): AGENTS.md + the CLAUDE.md shim, the canonical
- * `.agents/skills` store + its Claude alias, the generated command wrappers,
- * the three hook adapters and MCP parity across `.mcp.json` / `opencode.jsonc`
+ * `.agents/skills` store + its Claude alias, the commands that would shadow a
+ * skill, the three hook adapters and MCP parity across `.mcp.json` / `opencode.jsonc`
  * / `.codex/config.toml`. Codex repository TRUST is runtime state no file
  * check can verify, so it is always a WARN row, never a FAIL.
  *
@@ -50,7 +50,6 @@ import {
 } from './lib/agent-compatibility-contracts.ts';
 import {
   checkAgentCompatibility,
-  commandWrapperCounts,
   describeAliasStatus,
   groupCompatibilityErrors,
   validateCanonicalSources,
@@ -265,7 +264,7 @@ interface DirenvState {
 }
 
 export interface AgentCompatibilityDiagnostic {
-  /** Every file-verifiable part of the contract holds (alias, wrappers, hooks, MCP parity, shim). */
+  /** Every file-verifiable part of the contract holds (alias, hooks, MCP parity, shim). */
   file_correct: boolean
   errors: string[]
   /** Errors bucketed per surface, so "alias pending" and "MCP drift" never read as one flat failure. */
@@ -278,7 +277,6 @@ export interface AgentCompatibilityDiagnostic {
     canonical_skills: boolean
     claude_alias: boolean
   }
-  command_wrappers: { expected: number, claude: number, opencode: number, ok: boolean }
   hooks: { claude: boolean, opencode: boolean, codex: boolean, ok: boolean }
   mcp: { expected_servers: number, claude: boolean, opencode: boolean, codex: boolean, parity: boolean }
   codex: {
@@ -510,9 +508,6 @@ export function diagnoseAgentCompatibility(
   const canonicalErrors = validateCanonicalSources(root);
   const hookErrors = validateHookCompatibility(root);
   const mcpErrors = validateMcpParity(root);
-  let wrappers = { expected: 0, claude: 0, opencode: 0 };
-  try { wrappers = commandWrapperCounts(root); }
-  catch { /* compatibility.errors already carries the manifest diagnostics */ }
   let expectedServers = 0;
   try { expectedServers = declaredMcpIds(root).length; }
   catch { /* mcpErrors already carries the .mcp.json diagnostics */ }
@@ -535,12 +530,6 @@ export function diagnoseAgentCompatibility(
       claude_shim: !claudeShimError,
       canonical_skills: !skillsError,
       claude_alias: compatibility.alias.status === 'valid',
-    },
-    command_wrappers: {
-      ...wrappers,
-      ok: wrappers.expected > 0
-        && wrappers.claude === wrappers.expected
-        && wrappers.opencode === wrappers.expected,
     },
     hooks: {
       claude: !hasHookError('.claude/settings.json'),
@@ -770,7 +759,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun run agents:compat',
-      hint: `Repair the generated compatibility artifacts (Claude skills alias + command wrappers), then restore any canonical/config file doctor still reports: ${report.agent_compatibility.errors.join('; ')}`,
+      hint: `Repair the generated compatibility artifacts (Claude skills alias; a command that shadows a skill moves to .backups/shadowing-commands/), then restore any canonical/config file doctor still reports: ${report.agent_compatibility.errors.join('; ')}`,
     });
   }
 
@@ -817,7 +806,6 @@ function printHuman(report: DoctorReport): void {
     ['.codex/config.toml', report.codex_config_exists ? tui.statusIcon('ok') : tui.statusIcon('fail')],
     ['AGENTS.md + CLAUDE.md shim', compat.instructions.agents_md && compat.instructions.claude_shim ? tui.statusIcon('ok') : tui.statusIcon('fail')],
     ['Canonical .agents/skills + Claude alias', compat.instructions.canonical_skills && compat.instructions.claude_alias ? tui.statusIcon('ok') : tui.statusIcon('fail')],
-    [`Command wrappers (${compat.command_wrappers.expected} Claude + ${compat.command_wrappers.expected} OpenCode)`, compat.command_wrappers.ok ? tui.statusIcon('ok') : `${tui.statusIcon('fail')} ${compat.command_wrappers.claude}/${compat.command_wrappers.opencode} of ${compat.command_wrappers.expected}`],
     ['Hook adapters (Claude/OpenCode/Codex)', compat.hooks.ok ? tui.statusIcon('ok') : `${tui.statusIcon('fail')} ${hostList(compat.hooks)}`],
     [`MCP parity (${compat.mcp.expected_servers} servers x 3 harnesses)`, compat.mcp.parity ? tui.statusIcon('ok') : `${tui.statusIcon('fail')} ${hostList(compat.mcp)}`],
     ['Codex repository config (config.toml + hooks.json)', compat.codex.repository_configured ? tui.statusIcon('ok') : tui.statusIcon('fail')],

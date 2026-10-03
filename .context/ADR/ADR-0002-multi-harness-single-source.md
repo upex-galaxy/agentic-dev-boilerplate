@@ -1,11 +1,11 @@
 # ADR-0002 — One instruction source and one skill store for three harnesses
 
-- **Status:** Accepted (decision item 8 superseded by ADR-0004)
+- **Status:** Accepted (decision item 8 superseded by ADR-0004; item 3 and the wrapper half of item 6 superseded by ADR-0006)
 - **Date:** 2026-09-03
 - **Deciders:** Boilerplate maintainer (upex-galaxy), mirroring the decision already ratified in `agentic-qa-boilerplate`
 - **Tags:** harness-compatibility, agents, skills, cross-cutting-invariant, tooling
 - **Supersedes:** —
-- **Superseded by:** ADR-0004 (item 8, commit provenance, only)
+- **Superseded by:** ADR-0004 (item 8, commit provenance, only); ADR-0006 (item 3 and the wrapper half of item 6, command aliases, and the `sync-ai-memory` references in items 1-2)
 
 ---
 

@@ -12,8 +12,8 @@ Repoint this repository at a new Atlassian instance and regenerate everything th
 **Inputs**: `$ARGUMENTS` — the source instance and the target instance, in that order. Both may be omitted; Phase 0 resolves them.
 
 ```
-/jira-instance-migration oldsite.atlassian.net newsite.atlassian.net
-/jira-instance-migration                         # -> Phase 0 detects and asks
+/jira-administration instance-migration oldsite.atlassian.net newsite.atlassian.net
+/jira-administration instance-migration       # -> Phase 0 detects and asks
 ```
 
 ---

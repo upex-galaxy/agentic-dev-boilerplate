@@ -46,9 +46,8 @@ agentic-dev-boilerplate/
 │   ├── jira-fields.json            Workspace-resolved Jira field IDs
 │   ├── jira-workflows.json         Workspace-resolved Jira statuses + transitions
 │   ├── README.md                   Variable contract docs
-│   ├── skills/                     THE skill store: 16 workflow skills + REGISTRY.md, read by all three harnesses
-│   ├── hooks/                      personality-reinject.mjs: one emitter, three adapters
-│   └── compatibility/              command-aliases.json: source of every generated slash-command wrapper
+│   ├── skills/                     THE skill store: workflow skills + REGISTRY.md, read by all three harnesses
+│   └── hooks/                      personality-reinject.mjs: one emitter, three adapters
 │
 ├── .claude/                        Claude Code adapter: settings.json (hook) + generated commands/ + skills alias (gitignored)
 ├── .opencode/                      OpenCode adapter: plugins/personality-reinject.js + generated commands/
@@ -60,9 +59,9 @@ agentic-dev-boilerplate/
 │   │   ├── business-model.md       /project-foundation Phase 1 — Business Model Canvas
 │   │   ├── market-context.md       /project-foundation Phase 1 — Industry, competitors
 │   │   ├── legacy-analysis.md      /project-foundation Phase 1 (optional, legacy projects)
-│   │   ├── business-data-map.md    Generated on demand by /business-data-map
-│   │   ├── business-feature-map.md Generated on demand by /business-feature-map
-│   │   ├── business-api-map.md     Generated on demand by /business-api-map
+│   │   ├── business-data-map.md    Generated on demand by /project-context data
+│   │   ├── business-feature-map.md Generated on demand by /project-context features
+│   │   ├── business-api-map.md     Generated on demand by /project-context api
 │   │   └── domain-glossary.md      /project-foundation Phase 4 Step 6 — hand-maintained, append-only
 │   ├── PRD/                        /project-foundation Phase 2 — Product Requirements
 │   ├── SRS/                        /project-foundation Phase 2 — Software Requirements
@@ -91,8 +90,7 @@ This is the load-bearing distinction in the repo. They look adjacent but serve o
 | ------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `.context/`                                 | Facts about the system (what exists, how it works)                  | When the AI needs to understand the system                    |
 | `.agents/skills/`                           | Workflow instructions (what to do, step by step)                    | Auto-triggered on intent by every harness                     |
-| `.claude/commands/` + `.opencode/commands/` | Generated slash-command aliases (`/<name>` → skill + mode)          | When the user explicitly invokes them (Codex: skill directly) |
-| `.agents/` (rest)                           | Variable resolution + Jira manifest + hook emitter + alias manifest | Read by linters, skills and the harness adapters at runtime   |
+| `.agents/` (rest)                           | Variable resolution + Jira manifest + hook emitter                  | Read by linters, skills and the harness adapters at runtime   |
 | `docs/`                                     | Learning material for humans                                        | When humans need to learn                                     |
 | `AGENTS.md`                                 | Operational rules + project state                                   | Every session, automatically, on every supported harness      |
 
@@ -106,15 +104,15 @@ The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is 
 | ---------------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
 | **Instructions** | `CLAUDE.md` → `@AGENTS.md` **[generated shim]** | `AGENTS.md` (native)                        | `AGENTS.md` (native)                     |
 | **Skills**       | `.claude/skills` **[generated alias]**          | `.agents/skills/` (native)                  | `.agents/skills/` (native)               |
-| **Commands**     | `.claude/commands/*.md` **[generated]**         | `.opencode/commands/*.md` **[generated]**   | none: invoke the skill + mode directly   |
+| **Commands**     | none: `/<skill> <mode>` (the skill slash)       | none: skill + mode in prose                 | none: skill + mode in prose              |
 | **Hook**         | `.claude/settings.json` → `UserPromptSubmit`    | `.opencode/plugins/personality-reinject.js` | `.codex/hooks.json` → `UserPromptSubmit` |
 | **MCP**          | `.mcp.json`                                     | `opencode.jsonc`                            | `.codex/config.toml`                     |
 
-**Instructions.** `AGENTS.md` is the only instruction body. OpenCode and Codex load it natively. Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline: a documented import rather than a symlink, so it survives a Windows checkout. Writing operational prose into `CLAUDE.md` is structural drift, and `/sync-ai-memory` stops rather than propagating it.
+**Instructions.** `AGENTS.md` is the only instruction body. OpenCode and Codex load it natively. Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline: a documented import rather than a symlink, so it survives a Windows checkout. Writing operational prose into `CLAUDE.md` is structural drift, and `agents:compat:check` fails on it.
 
-**Skills.** All 16 skills live committed under `.agents/skills/`, and project-level community skills install into the same store. OpenCode and Codex discover that directory natively. Claude Code reaches the same tree through `.claude/skills`, a POSIX symlink (Windows junction) that is **generated and gitignored**: never committed, never hand-edited.
+**Skills.** Every repo skill lives committed under `.agents/skills/`, and project-level community skills install into the same store. OpenCode and Codex discover that directory natively. Claude Code reaches the same tree through `.claude/skills`, a POSIX symlink (Windows junction) that is **generated and gitignored**: never committed, never hand-edited.
 
-**Commands.** The 8 slash commands carry no workflow body. `.claude/commands/*.md` and `.opencode/commands/*.md` are short wrappers generated from `.agents/compatibility/command-aliases.json`; each names a target skill plus a mode and forwards `$ARGUMENTS` unchanged. Codex has no wrapper layer and invokes the skill directly. A wrapper that grows a body fails the compatibility check as `contains workflow prose`.
+**Commands.** None ship ([ADR-0006](.context/ADR/ADR-0006-skill-plus-mode-invocation.md)): a skill is invoked by its own name plus a mode on every harness (`/project-context data` on Claude Code, in prose on OpenCode and Codex). A project may keep its own command files under `.claude/commands/` or `.opencode/commands/`; one named like a skill hides the skill's instructions, so the compatibility check fails on it and `bun run agents:compat` moves it to `.backups/shadowing-commands/`.
 
 **Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once. Claude Code and Codex run it as a `UserPromptSubmit` command hook (the Codex adapter ships a POSIX and a PowerShell command); OpenCode imports the same lines from a thin plugin. The contract is enforced by `cli/lib/agent-compatibility-contracts.ts`: no absolute personal paths, no duplicated hook file.
 
@@ -126,11 +124,10 @@ The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is 
 | --------------------------------------------------- | -------------------------------------------- | ----------------------- |
 | `CLAUDE.md` (one-line `@AGENTS.md` shim)            | `AGENTS.md`                                  | `bun run agents:compat` |
 | `.claude/skills` (POSIX symlink / Windows junction) | `.agents/skills/`                            | `bun run agents:compat` |
-| 8 Claude + 8 OpenCode command wrappers              | `.agents/compatibility/command-aliases.json` | `bun run agents:compat` |
 
-`bun run agents:compat:check` validates the whole contract (shim bytes, alias target, both wrapper sets byte-for-byte against the merged manifest, hook adapters, MCP parity). It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit when a harness surface is staged.
+`bun run agents:compat:check` validates the whole contract (shim bytes, alias target, no command named like a skill, hook adapters, MCP parity, eslint block wiring). It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit when a harness surface is staged.
 
-**Project-owned commands and the updater.** A project declares its own slash commands in `.agents/compatibility/command-aliases.project.json` (same schema, optional, never synced): upstream aliases first, overlay overrides by `alias` name or adds, `wrapperHosts` from upstream. A wrapper file no manifest produced fails the check by name instead of being ignored. `bun run up` closes with one "Estado por superficie" table (10 rows, `package.json` and `Verificación` included since 8.1) and ONE parity prompt saved to `.agents/prompts/parity-plan.md`: numbered rows with evidence, one per path, each awaiting `keep project | take upstream | merge` before the AI edits anything; `take upstream` is suggested only where the project lacks the content entirely. `--strict` turns compat errors or blocking findings into exit 1; an aborted run prints `Abortado.` and exits 1; `.claude/settings.json` ships once when missing and then sits on the protected watchlist, never overwritten. On the migration run the `.claude/skills` alias waits for the migration commit (`bun run agents:compat` creates it). Since 8.2 the watchlist also holds `.husky/pre-commit` and `.husky/pre-push` plus whatever a project lists under `updater.protected_paths` in `.agents/project.yaml` (never overwritten, delivered once when missing, drift row per upstream change); every `merge` row on a watched file says what to port and what to keep, and the identity files (`project.yaml`, `jira-required.yaml`) compare structure only (`informational` rows).
+**The updater.** `bun run up` never generates or syncs a command file, removes the ones the retired alias layer generated, and names a leftover `.agents/compatibility/command-aliases.project.json` once as an informational row. It closes with one "Estado por superficie" table (one row per surface, `SURFACE_ORDER` in `cli/lib/updater-parity.ts`) and ONE parity prompt saved to `.agents/prompts/parity-plan.md`: numbered rows with evidence, one per path, each awaiting `keep project | take upstream | merge` before the AI edits anything; `take upstream` is suggested only where the project lacks the content entirely. `--strict` turns compat errors or blocking findings into exit 1; an aborted run prints `Abortado.` and exits 1; `.claude/settings.json` ships once when missing and then sits on the protected watchlist, never overwritten. On the migration run the `.claude/skills` alias waits for the migration commit (`bun run agents:compat` creates it). Since 8.2 the watchlist also holds `.husky/pre-commit` and `.husky/pre-push` plus whatever a project lists under `updater.protected_paths` in `.agents/project.yaml` (never overwritten, delivered once when missing, drift row per upstream change); every `merge` row on a watched file says what to port and what to keep, and the identity files (`project.yaml`, `jira-required.yaml`) compare structure only (`informational` rows).
 
 **Harness-specific facts worth knowing.** Codex loads project `.codex/` config and hooks only in a repository marked trusted, and `bun run setup:doctor` reports that trust as WARN because it is runtime state no file read can verify. Codex Desktop consumes the same repository config as the CLI: no second convention, no extra directory. Engram and caveman are Claude Code plugins; the rules that mention them are no-ops on a host where the plugin is absent. Every agent commit, on every harness, ends with the `Worktree:` + `Session:` trailers copied from the hook's `AGENT IDENTITY:` line; harness-branded trailers such as `Claude-Session:` are forbidden (ADR-0004).
 
@@ -149,19 +146,18 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `.agents/project.yaml`                       | Project variable values (single source of truth for `{{VAR_NAME}}`)                                                                                         |
 | `.agents/jira-required.yaml`                 | Required Jira custom field manifest                                                                                                                         |
 | `.agents/jira-fields.json`                   | Workspace-resolved Jira field IDs                                                                                                                           |
-| `.context/business/business-data-map.md`     | Entities + business flows (generated by `/business-data-map`)                                                                                               |
-| `.context/business/business-feature-map.md`  | Feature inventory (generated by `/business-feature-map`)                                                                                                    |
-| `.context/business/business-api-map.md`      | API as journey-enabler (generated by `/business-api-map`)                                                                                                   |
+| `.context/business/business-data-map.md`     | Entities + business flows (generated by `/project-context data`)                                                                                            |
+| `.context/business/business-feature-map.md`  | Feature inventory (generated by `/project-context features`)                                                                                                |
+| `.context/business/business-api-map.md`      | API as journey-enabler (generated by `/project-context api`)                                                                                                |
 | `.context/business/domain-glossary.md`       | Canonical domain terminology — hand-maintained, append-only; wins over older docs                                                                           |
-| `.context/master-implementation-plan.md`     | Prioritized feature roadmap — EPIC/strategy (generated by `/master-implementation-plan`)                                                                    |
-| `.context/dev-roadmap.md`                    | Ticket-level dependency execution roadmap — TICKET/sequence (generated by `/dev-roadmap`; subsumes `sprint-sequence.md`)                                    |
+| `.context/master-implementation-plan.md`     | Prioritized feature roadmap — EPIC/strategy (generated by `/project-context master-plan`)                                                                   |
+| `.context/dev-roadmap.md`                    | Ticket-level dependency execution roadmap — TICKET/sequence (generated by `/project-context dev-roadmap`; subsumes `sprint-sequence.md`)                    |
 | `.context/design/master-design-plan.md`      | Per-screen fidelity specs + US→Screen map (opt-in, generated by `/design-system` screen-mapping; consumed by `/sprint-development` per `AGENTS.md` Rule 14) |
 | `.context/designs/<project>/<batch>/`        | Screen-mockup drop zone: `BRIEF.md` (generated design brief) + bundle exported from Claude Design / Open Design                                             |
 | `.context/ADR/README.md`                     | ADR convention — when to write one, status lifecycle, index (append-only)                                                                                   |
 | `.agents/skills/REGISTRY.md`                 | Compact-rules cache (auto-generated)                                                                                                                        |
 | `.agents/skills/<name>/SKILL.md`             | Skill entry point (auto-loaded by trigger words)                                                                                                            |
 | `.agents/hooks/personality-reinject.mjs`     | Shared hook emitter; the three harness adapters call into it                                                                                                |
-| `.agents/compatibility/command-aliases.json` | Alias manifest: source of every generated slash-command wrapper                                                                                             |
 
 ### Skill entry points (most-used)
 
@@ -176,27 +172,15 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `/unit-testing`        | Standalone or composable mid-flight from `/sprint-development` for TDD slices                                                                                                                                 |
 | `/autonomous-delivery` | Scheduled / unattended: audits real state (git is truth), selects genuinely unblocked work, dispatches the owning pipeline skill, reports. Modes: `story` (1 per run), `bug` (up to 3), `discovery` (no code) |
 | `/git-flow-master`     | Any git/PR work — auto-detects branching strategy and adapts                                                                                                                                                  |
-| `/project-context`     | Business maps + master plan + dev roadmap, one mode per run (`data` · `features` · `api` · `master-plan` · `dev-roadmap`); the slash commands below alias into it                                             |
-| `/sync-ai-memory`      | Audit + sync `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/` and the onboarding HTML; stops on prose in the `CLAUDE.md` shim                                                                                  |
+| `/project-context`     | Business maps + master plan + dev roadmap, one mode per run (`data` · `features` · `api` · `master-plan` · `dev-roadmap`): `/project-context data`                                                           |
 | `/jira-administration` | Jira admin, one mode per run: `components` or `instance-migration`; sealed behind explicit approval                                                                                                           |
 | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                                                                                                                                                      |
 | `/vercel-cli`          | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env sync, debug, rollback. Auto-loads on `vercel` Bash calls                                                               |
 | `/agentic-dev-onboard` | Walk a new user through the repo's dev flow, MCPs, env vars, skills                                                                                                                                           |
 
-### Utility slash commands (transport aliases)
+### Skill modes
 
-Each command is a generated wrapper (`.claude/commands/`, `.opencode/commands/`) declared in `.agents/compatibility/command-aliases.json`; it names a target skill plus a mode and forwards `$ARGUMENTS`. Codex has no wrapper layer: invoke the skill and mode directly.
-
-| Command                       | Alias of                                        | Purpose                                                                                                                                                |
-| ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/sync-ai-memory`             | `sync-ai-memory`                                | Audit + sync `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/`, and onboarding HTML against current repo state                                           |
-| `/business-data-map`          | `project-context` mode `data`                   | Generate/update `.context/business/business-data-map.md`                                                                                               |
-| `/business-feature-map`       | `project-context` mode `features`               | Generate/update `.context/business/business-feature-map.md`                                                                                            |
-| `/business-api-map`           | `project-context` mode `api`                    | Generate/update `.context/business/business-api-map.md`                                                                                                |
-| `/master-implementation-plan` | `project-context` mode `master-plan`            | Generate/update `.context/master-implementation-plan.md` (EPIC/strategy roadmap)                                                                       |
-| `/dev-roadmap`                | `project-context` mode `dev-roadmap`            | Generate/update `.context/dev-roadmap.md` (TICKET/sequence roadmap — dependency edges, execution sprints, mockup-gates; subsumes `sprint-sequence.md`) |
-| `/jira-instance-migration`    | `jira-administration` mode `instance-migration` | Repoint the repo at a new Atlassian instance (`.agents/project.yaml` + `acli` session) and regenerate the `.agents/` catalogs                          |
-| `/jira-components`            | `jira-administration` mode `components`         | Reconcile a Jira project's Components against the app's real modules, plan-first with explicit approval                                                |
+A multi-mode skill lists its modes in its own `## Mode routing` section; the first word after the skill name picks the mode (`/jira-administration components`, `/project-context dev-roadmap`). The former command names (`business-data-map`, `master-implementation-plan`, `jira-components`, ...) survive as trigger phrases. Keeping docs in step with a change is the docs follow-through (`.agents/skills/agentic-dev-core/references/docs-follow-through.md`) plus `bun run docs:check`, not a skill.
 
 ---
 
@@ -358,8 +342,8 @@ Curated, repo-specific. The full list of generic rules lives in `AGENTS.md` — 
 3. **Reference values via `{{VAR_NAME}}` in prompts**, never hardcode URLs/keys/paths.
 4. **Treat skills as the workflow source of truth** — if a workflow lives in a doc but not a skill, the doc is wrong.
 5. **Save decisions to engram** as you make them (`mem_save`) — they survive sessions and compactions.
-6. **Re-run a generator instead of hand-editing** any auto-generated file (e.g. `.agents/skills/REGISTRY.md`, anything under `.context/business/`, and every harness surface: `CLAUDE.md`, `.claude/skills`, `.claude/commands/*.md`, `.opencode/commands/*.md` via `bun run agents:compat`).
-7. **Use `/sync-ai-memory` after a major repo change** — keeps `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/`, and the onboarding HTML in sync.
+6. **Re-run a generator instead of hand-editing** any auto-generated file (e.g. `.agents/skills/REGISTRY.md`, anything under `.context/business/`, and every harness surface: `CLAUDE.md` and `.claude/skills` via `bun run agents:compat`).
+7. **Patch the docs in the change that moved the fact** — the docs follow-through (`agentic-dev-core/references/docs-follow-through.md`) keeps `README.md`, `AGENTS.md`, `CONTEXT.md`, `docs/` and the onboarding HTML in step; `bun run docs:check` proves the router, links and quoted scripts.
 8. **Run `bun run agents:compat:check` after touching `AGENTS.md`, `.agents/`, `.claude/`, `.opencode/`, `.codex/` or an MCP config** — it is the gate pre-push runs anyway; failing it early is cheaper.
 
 ### DON'T
@@ -372,7 +356,7 @@ Curated, repo-specific. The full list of generic rules lives in `AGENTS.md` — 
 6. **Don't include AI attribution in commits** (`Co-Authored-By: Claude`, etc.) — commits must look human-authored.
 7. **Don't push to `main` without explicit user confirmation.**
 8. **Don't conflate `.context/` (facts) with `.agents/skills/` (workflows)** — adding a workflow under `.context/` will not auto-trigger.
-9. **Don't write prose into `CLAUDE.md` or hand-edit a generated wrapper** — `CLAUDE.md` is the `@AGENTS.md` shim, `.claude/skills` is an alias, and `.claude/commands/*.md` / `.opencode/commands/*.md` come from the alias manifest. Edit the source and run `bun run agents:compat` (`AGENTS.md` Critical Rule #15).
+9. **Don't write prose into `CLAUDE.md` or name a command like a skill** — `CLAUDE.md` is the `@AGENTS.md` shim, `.claude/skills` is an alias, and a command with a skill's name hides that skill. Edit the source and run `bun run agents:compat` (`AGENTS.md` Critical Rule #15).
 
 ---
 
@@ -382,20 +366,19 @@ Use this table to decide what to re-generate after what kind of change.
 
 | Change                                    | Update                                                                                                                           | How                                                                                                                     |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Project identity (name, key, URLs)        | `.agents/project.yaml`, then `AGENTS.md`                                                                                         | Edit YAML; run `/sync-ai-memory`                                                                                        |
-| New MCP added/removed                     | `AGENTS.md` § MCPs, `.mcp.json` + `opencode.jsonc` + `.codex/config.toml` (all three, parity-checked)                            | Edit manually; `bun run agents:compat:check`; run `/sync-ai-memory`                                                     |
+| Project identity (name, key, URLs)        | `.agents/project.yaml`, then `AGENTS.md`                                                                                         | Edit YAML; docs follow-through for any doc that quotes it                                                               |
+| New MCP added/removed                     | `AGENTS.md` § MCPs, `.mcp.json` + `opencode.jsonc` + `.codex/config.toml` (all three, parity-checked)                            | Edit manually; `bun run agents:compat:check`; docs follow-through                                                       |
 | New skill added/removed                   | `.agents/skills/REGISTRY.md`                                                                                                     | `bun run skills:registry` (OpenCode and Codex read the store directly; Claude Code sees it through the generated alias) |
-| New or renamed slash command              | `.agents/compatibility/command-aliases.json`, then both wrapper sets                                                             | Edit the manifest; `bun run agents:compat`                                                                              |
 | Hook contract text changes                | `.agents/hooks/personality-reinject.mjs`                                                                                         | Edit the emitter; `bun run agents:compat:check`                                                                         |
 | Stack/conventions evolve                  | `.agents/skills/<name>/references/`                                                                                              | Edit skill references directly                                                                                          |
-| Domain model pivots                       | `.context/business/business-data-map.md`                                                                                         | `/business-data-map`                                                                                                    |
-| Feature surface changes                   | `.context/business/business-feature-map.md`                                                                                      | `/business-feature-map`                                                                                                 |
-| API auth or topology changes              | `.context/business/business-api-map.md`                                                                                          | `/business-api-map`                                                                                                     |
+| Domain model pivots                       | `.context/business/business-data-map.md`                                                                                         | `/project-context data`                                                                                                 |
+| Feature surface changes                   | `.context/business/business-feature-map.md`                                                                                      | `/project-context features`                                                                                             |
+| API auth or topology changes              | `.context/business/business-api-map.md`                                                                                          | `/project-context api`                                                                                                  |
 | Hard-to-reverse architecture decision     | `.context/ADR/ADR-NNNN-<slug>.md` (new file; supersede, never edit)                                                              | Author per `.context/ADR/README.md` (human, or `/project-foundation` SRS / `/sprint-development` Stage 1)               |
 | New epic / story refinement               | `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/*` (or `.context/PBI/epics/EPIC-<KEY>-<slug>/*` for epic-level) | `/product-management` (authors content in Jira) + `bun run context:hydrate` (pulls the gitignored local cache)          |
 | Major rebrand / new visual identity       | `DESIGN.md` at repo root                                                                                                         | `/design-system`                                                                                                        |
 | New UI screens need mockups (per feature) | `.context/designs/<project>/<batch>/` (brief + bundle) + `.context/design/master-design-plan.md` (UPSERT)                        | `/design-system` screen-mapping phase (opt-in)                                                                          |
-| This file (`CONTEXT.md`) drifts from repo | Update sections that no longer match the filesystem                                                                              | Edit manually or `/sync-ai-memory` if covered                                                                           |
+| This file (`CONTEXT.md`) drifts from repo | Update sections that no longer match the filesystem                                                                              | Edit manually, per the docs follow-through                                                                              |
 
 ---
 
@@ -421,4 +404,4 @@ Use this table to decide what to re-generate after what kind of change.
 
 ---
 
-**Maintenance**: If you find yourself in the codebase and notice that this file no longer matches reality, update the affected section directly or run `/sync-ai-memory` if the drift is covered there. The cost of stale context is paid by every future session — keep it honest.
+**Maintenance**: If you find yourself in the codebase and notice that this file no longer matches reality, update the affected section directly, following `agentic-dev-core/references/docs-follow-through.md`. The cost of stale context is paid by every future session — keep it honest.

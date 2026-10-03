@@ -284,7 +284,7 @@
       },
       {
         "path": ".claude/commands/ + .opencode/commands/",
-        "what": "Already committed, then re-rendered from .agents/compatibility/command-aliases.json — thin slash-command wrappers that forward to a skill mode."
+        "what": "Not shipped: a skill is invoked by its own name plus a mode (`/project-context data` on Claude Code, in prose elsewhere). A project may add its own commands there; one named like a skill is moved to .backups/shadowing-commands/ by agents:compat."
       },
       {
         "path": ".opencode/plugins/",

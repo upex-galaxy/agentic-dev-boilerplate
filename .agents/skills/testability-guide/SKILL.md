@@ -260,9 +260,9 @@ Each sub-agent briefing must follow the 7-component template in `agentic-dev-cor
 
 After the skill completes, the page + artifact are live. Hand off to:
 
-- **`/sync-ai-memory`** — registers the new `/qa` page + credentials-artifact URL in the AI persistent memory so future skills know they exist.
+- **Docs follow-through** (`agentic-dev-core/references/docs-follow-through.md`) — adds the new `/qa` page + credentials-artifact location to `AGENTS.md` Key paths (and any doc that lists the app's pages) so future skills know they exist.
 - **`/sprint-development`** — QA-found bugs that touch the page itself become normal stories.
-- **`/business-feature-map`** — flag the `/qa` page so future map refreshes record it as an internal-only operational page (no PRD coverage required).
+- **`/project-context features`** — flag the `/qa` page so future map refreshes record it as an internal-only operational page (no PRD coverage required).
 
 ---
 

@@ -67,8 +67,8 @@ Does .context/business/business-api-map.md exist?
 
 Both context-file gates are **soft** — this command produces value even in sparse repos; missing inputs become Discovery Gaps, not hard stops.
 
-- **`business-data-map.md` missing** → warn the user ("journeys will be weaker without entity context"), proceed, log the limitation in §Discovery Gaps. Suggest running `/business-data-map` afterwards.
-- **`business-feature-map.md` missing** → warn the user ("journey selection will rely on code scan alone"), proceed, log the limitation in §Discovery Gaps. Suggest running `/business-feature-map` afterwards.
+- **`business-data-map.md` missing** → warn the user ("journeys will be weaker without entity context"), proceed, log the limitation in §Discovery Gaps. Suggest running `/project-context data` afterwards.
+- **`business-feature-map.md` missing** → warn the user ("journey selection will rely on code scan alone"), proceed, log the limitation in §Discovery Gaps. Suggest running `/project-context features` afterwards.
 - **No OpenAPI spec AND no route-scannable backend** → hard stop. Ask the user to expose a spec or run `bun run api:sync`; you cannot produce an API map without either.
 
 ---
@@ -182,7 +182,7 @@ The "Why it matters for dev" column answers questions like: _where do new endpoi
 - Feature-map features this API backs → pointers to `.context/business/business-feature-map.md` anchors.
 - OpenAPI spec location (file path or URL) for full endpoint specs.
 - `bun run api:sync` output path (`api/schemas/`) for TypeScript types.
-- Downstream consumers: `/master-implementation-plan` (sequences API-backed work), `/sprint-development` (per-story implementation reads this map for context).
+- Downstream consumers: `/project-context master-plan` (sequences API-backed work), `/sprint-development` (per-story implementation reads this map for context).
 
 Purpose: make it obvious where each flavor of API info lives so nothing gets re-documented here.
 
@@ -218,10 +218,10 @@ This command does one thing: narrate the **business-level API story** for develo
 | Exhaustive endpoint catalog (every route with request/response)             | `bun run api:sync` + OpenAPI spec               |
 | TypeScript types for request/response shapes                                | `api/schemas/*.types.ts` via `bun run api:sync` |
 | Per-endpoint cURL / DevTools recipes                                        | OpenAPI spec viewer / Scalar UI                 |
-| CRUD matrix per entity                                                      | `/business-feature-map`                         |
-| UI component inventory                                                      | `/business-feature-map`                         |
-| Entity schemas, state machines, business rules                              | `/business-data-map`                            |
-| Risk-ranked implementation roadmap ("what to build and why, in what order") | `/master-implementation-plan`                   |
+| CRUD matrix per entity                                                      | `/project-context features`                         |
+| UI component inventory                                                      | `/project-context features`                         |
+| Entity schemas, state machines, business rules                              | `/project-context data`                            |
+| Risk-ranked implementation roadmap ("what to build and why, in what order") | `/project-context master-plan`                   |
 | Per-story implementation plan and code                                      | `/sprint-development`                           |
 | Unit-test design (TDD red-green for a function)                             | `/unit-testing`                                 |
 | QA test cases, regression suites, automation                                | sister repo `agentic-qa-boilerplate`            |

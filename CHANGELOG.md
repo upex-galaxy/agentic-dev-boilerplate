@@ -5,6 +5,41 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-02 — Skills by name plus mode; command aliases and sync-ai-memory retired (updater 8.5)
+
+Port of the sibling `agentic-qa-boilerplate` retirements (its PRs #52 and #55),
+adapted to this repo. Decision record: ADR-0006.
+
+### Removed
+
+- **BREAKING**: the command-alias layer. `.agents/compatibility/command-aliases.json`,
+  the project overlay contract and every generated wrapper under
+  `.claude/commands/` and `.opencode/commands/` are gone, with the `commands`
+  updater component and the `Commands` parity surface. Invoke a skill by its
+  name plus a mode instead: `/project-context data`, `/jira-administration
+  components` on Claude Code, the skill and mode in prose on OpenCode and Codex.
+- **BREAKING**: the `sync-ai-memory` skill. `bun run docs:check` and
+  `agents:compat:check` cover its mechanical half; the judgment half is
+  `agentic-dev-core/references/docs-follow-through.md`, run in the same PR as
+  the change.
+
+### Added
+
+- `agents:compat:check` fails on a harness command named like a repo skill (it
+  hides the skill's instructions); `agents:compat`, `bun run up` and `bun run
+  setup` move it to `.backups/shadowing-commands/`, never delete it.
+- A `## Mode routing` section in every multi-mode skill: the first token of
+  `$ARGUMENTS` is the mode.
+
+### Upgrading a project
+
+`bun run up` removes the retired manifest, the wrappers it generated and the
+`sync-ai-memory` skill folder through `deprecatedFiles` (listed on `--dry-run`;
+regenerable files, no backup). A command the project declared itself stays as a
+plain harness command it edits by hand; a leftover
+`command-aliases.project.json` gets one informational parity row. A lock that
+still carries the `commands` cursor is ignored.
+
 ## 2026-08-22 — PBI-as-Jira-cache port (PR #22)
 
 Port of the sibling `agentic-qa-boilerplate` release of the same model: the

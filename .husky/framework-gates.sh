@@ -47,16 +47,16 @@ framework_gates_pre_commit() {
   fi
 
   # cross-harness compatibility gate — only runs when staged files affect it.
-  # Covers the generated Claude skills alias, the command wrappers, the three hook
-  # adapters, MCP parity across the three host configs and the eslint block
+  # Covers the generated Claude skills alias, a harness command that shadows a
+  # skill, the three hook adapters, MCP parity across the three host configs and the eslint block
   # wiring. Everything it guards is generated or mirrored, so a hand-edit is
   # invisible to every other check.
-  if echo "$_fg_staged" | grep -qE '^(\.agents/compatibility/|\.agents/hooks/|\.claude/commands/|\.opencode/commands/|\.opencode/plugins/|\.codex/|\.claude/settings\.json$|\.mcp\.json$|opencode\.jsonc$|eslint\.config(\.base)?\.js$|cli/lib/agent-compatibility.*\.ts$|scripts/agent-compatibility.*\.ts$|AGENTS\.md$|CLAUDE\.md$)'; then
+  if echo "$_fg_staged" | grep -qE '^(\.agents/hooks/|\.claude/commands/|\.opencode/commands/|\.opencode/plugins/|\.codex/|\.claude/settings\.json$|\.mcp\.json$|opencode\.jsonc$|eslint\.config(\.base)?\.js$|cli/lib/agent-compatibility.*\.ts$|scripts/agent-compatibility.*\.ts$|AGENTS\.md$|CLAUDE\.md$)'; then
     bun run agents:compat:check || {
       echo ""
       echo "❌ Cross-harness compatibility is out of contract. Fix:"
-      echo "   bun run agents:compat   # regenerates wrappers + repairs the Claude skills alias"
-      echo "   then re-stage whatever it rewrote under .claude/commands/ and .opencode/commands/"
+      echo "   bun run agents:compat   # repairs the Claude skills alias, moves a command that shadows a skill to .backups/"
+      echo "   then stage the deletion of any command it moved"
       echo "   (an unwired eslint block is fixed by hand in eslint.config.js)"
       exit 1
     }
@@ -79,8 +79,8 @@ framework_gates_pre_commit() {
 #   - skills:registry:check      unconditional safety net — a commit in the push range may
 #                                have changed the registry without pre-commit catching it.
 #   - agents:compat:check        unconditional safety net for the cross-harness contract:
-#                                the generated `.claude/skills` alias, the command wrappers
-#                                against the alias manifests, the three hook adapters, the
+#                                the generated `.claude/skills` alias, no harness command
+#                                named like a skill, the three hook adapters, the
 #                                CLAUDE.md shim, MCP parity across `.mcp.json` /
 #                                `opencode.jsonc` / `.codex/config.toml`, and that
 #                                eslint.config.js wires every block the synced base exports.
