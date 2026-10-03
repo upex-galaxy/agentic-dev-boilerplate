@@ -2,7 +2,7 @@
 name: product-management
 description: "Orchestrates continuous product management work — initial backlog seed from PRD, incremental feature addition, epic creation, story refinement (INVEST + 3-amigos), AC quality refinement (Gherkin), edge-case enumeration, and sprint reporting (PM visibility snapshot). Triggers on: 'create epic', 'crear épica', 'agregar historia al backlog', 'add feature', 'refine acceptance criteria', 'enumerar edge cases', 'INVEST a esta historia', '3 amigos', 'story refinement', 'product backlog seed', 'epic creation', 'ready for development checklist', 'sprint report', 'reporte de sprint', 'estado del sprint', 'reporte de épicas y stories', 'qué hay en el sprint', 'progress report', 'dashboard del backlog', 'in-flight stories snapshot'. Does NOT own design — a story is refined and made ready with no mockup; screens come later from `/sprint-development`'s design gate. Do NOT use for: authoring screens or mockups (use `/design-system` screen phase), foundational product definition (use `/project-foundation`), infrastructure scaffolding (use `/project-bootstrap`), per-story implementation (use `/sprint-development`), unit testing (use `/unit-testing`), or formal QA test cases / TMS workflows (out of scope here)."
 license: MIT
-compatibility: [claude-code, copilot, cursor, codex, opencode]
+compatibility: [claude-code, codex, opencode]
 phase: management
 complementary_categories:
   - issue-tracker
@@ -292,7 +292,7 @@ When a story has rough acceptance criteria — vague conditions, missing data, n
 
 Read `references/acceptance-criteria.md`.
 
-Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/spec.md` with topic_key `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
+Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists in Jira: the refined scenarios go to `{{jira.acceptance_criteria}}` and unresolved questions to a structured story comment (`## Open questions`); re-sync with `bun run jira:sync-issues get <KEY> --include-comments` to read them back (`AGENTS.md` §9: never hand-write a cache file). Memory topic_key `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### F. Edge-case enumeration (per feature/epic)
 
@@ -300,7 +300,7 @@ When designing or refining a feature and you need to systematically enumerate fa
 
 Read `references/edge-cases-enumeration.md`.
 
-Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists at `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/edge-cases.md` with topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
+Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists in Jira: promoted edge cases become scenarios in `{{jira.acceptance_criteria}}`, test-only ones go to a structured comment (`## Edge cases (test-only)`) on the story or epic for the QA hand-off; re-sync to read them back (`AGENTS.md` §9). Memory topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### G. Sprint reporting (read-only PM snapshot)
 

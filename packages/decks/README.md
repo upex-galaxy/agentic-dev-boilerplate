@@ -25,17 +25,21 @@ browse the published site instead.
    "Design tokens" below for why). Spanish decks use `.es.html`; if an English
    version is ever needed, `<slug>.en.html` in the same folder.
 2. Before writing content, re-read the actual skill (`SKILL.md` + `references/`)
-   — never write a deck from memory of a previous session. Skills evolve (see
-   the Open Design MCP flow commits from 2026-07); a stale deck is worse than
-   no deck. Stamp a "verificado contra el repo — <fecha>" line in the footer.
+   — never write a deck from memory of a previous session. Skills evolve; a
+   stale deck is worse than no deck. **No dated stamp, no count, no version**
+   anywhere in the deck (`AGENTS.md` Critical Rule #17 covers the decks and the
+   Pages home): no "verificado contra el repo — <fecha>" footer, no "N skills" /
+   "N decks" tile, no present-tense status claim. Name the source of truth instead
+   (a file, a command such as `bun run skills:registry`, a generated artifact
+   such as `REGISTRY.md`) and let the reader resolve the current value.
 3. Register a card in `packages/pages-home/index.html` (the homepage catalog is
    hardcoded HTML, same as QA's). Move it from "Próximamente" to a live link.
 4. Flip its row from `todo` to `hecho` in `ROADMAP.md`.
-5. Update the three narrative summaries that don't auto-derive from the table/cards
-   and will otherwise silently go stale: `ROADMAP.md`'s "Próximo a construir"
-   paragraph, `pages-home/index.html`'s hero facts tile (deck count, the "P0 /
-   próximos" line, last-updated date), and the closing callout in whichever
-   homepage section the new deck lived in if it named that deck as pending.
+5. Update the narrative that names the new deck as pending: `ROADMAP.md`'s
+   "Próximo a construir" paragraph and the closing callout of whichever homepage
+   section listed it. Never add or refresh a deck count or a last-updated date on
+   the homepage: a number that moves with every deck is exactly what Rule #17
+   forbids, and the card grid already shows what exists.
 6. Nothing else: `pages.yml` copies this whole directory verbatim, so the new
    file publishes automatically at
    `https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/<skill>/<file>`.
@@ -120,7 +124,7 @@ both directions — copy that block too, not just the media query.
 point.** `--blue`/`--signal`/`--agent` lighten in dark mode (correct for links
 and body text on the dark paper), but that same lighter value drops white-text
 solid fills (chat bubbles, `::selection`, filled buttons) below WCAG AA
-contrast — measured as low as 2.26:1 in an earlier draft of this hub. Any
+contrast. Any
 component that puts white text on a solid `--blue`/`--signal`/`--agent`
 background must use the matching `-solid` variant instead, which stays fixed
 across both themes precisely so it never needs a dark-mode override.

@@ -36,7 +36,7 @@ Implementar la story **STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}** siguiendo su i
 Para implementar con documentación oficial verificada y actualizada, necesito que conectes el MCP de Context7.
 
 **¿Cómo conectarlo?**
-1. Revisa: `docs/setup/mcp/[claude-code|gemini-cli|copilot-cli|vscode].md`
+1. Revisa: `docs/setup/mcp/README.md` (guías por harness: `claude-code.md`, `codex.md`)
 2. Agrega Context7 a tu configuración MCP
 3. Reinicia la sesión de chat
 

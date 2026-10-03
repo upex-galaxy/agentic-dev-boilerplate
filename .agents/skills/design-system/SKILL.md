@@ -1,8 +1,8 @@
 ---
 name: design-system
-description: 'Genera un DESIGN.md (formato Google Labs Apache-2.0) en el root del proyecto antes del scaffolding del frontend. Cinco caminos: default automatizable (npx getdesign + LLM-matcher elige 1 de 72 brands según Constitution+PRD), manual gallery (designmd.ai/explore), Open Design app local (desktop app), Claude Design (claude.ai/design premium), LLM-authored custom. SEGUNDA FASE, distinta y en otro momento — la fase de PANTALLA: diseña el mockup de UNA historia concreta, just-in-time, cuando desarrollo la levanta (no por adelantado para todo el producto). Se invoca standalone o la rutea el design gate de `/sprint-development`. Comisiona las pantallas por Open Design MCP (Mode A), un prototipador externo (Mode B) o la skill `design` de Claude Code, y las mapea en `.context/design/master-design-plan.md` con specs por-screen + US→screen map. Siempre opt-in, nunca auto-run. Triggers: `/design-system`, `definir design system`, `crear DESIGN.md`, `establecer paleta de colores`, `branding del proyecto`, `rebrandear el proyecto`, `set up theme tokens`, `generate design system`, `elegir paleta`, `setup design tokens`, `mapear screens`, `master design plan`, `screen design`, `US to screen map`, `design brief`, `brief de diseño`, `prepara el prompt para Claude Design`, `no hay mockup para esta historia`, `diseñar esta pantalla`, `design this screen`, `esta historia no tiene diseño`. Composable con /project-foundation (la invoca post-PRD, pre-SRS) y /project-bootstrap (consume el DESIGN.md en frontend-setup). Do NOT use for: scaffolding del frontend code (use /project-bootstrap), definir PRD/personas (use /project-foundation), implementación de componentes UI (use frontend-design community skill), o per-story dev (use /sprint-development).'
+description: 'Genera un DESIGN.md (formato Google Labs Apache-2.0) en el root del proyecto antes del scaffolding del frontend. Cinco caminos: default automatizable (npx getdesign + LLM-matcher elige 1 brand del catálogo de `npx getdesign list` según Constitution+PRD), manual gallery (designmd.ai/explore), Open Design app local (desktop app), Claude Design (claude.ai/design premium), LLM-authored custom. SEGUNDA FASE, distinta y en otro momento — la fase de PANTALLA: diseña el mockup de UNA historia concreta, just-in-time, cuando desarrollo la levanta (no por adelantado para todo el producto). Se invoca standalone o la rutea el design gate de `/sprint-development`. Comisiona las pantallas por Open Design MCP (Mode A), un prototipador externo (Mode B) o la skill `design` de Claude Code, y las mapea en `.context/design/master-design-plan.md` con specs por-screen + US→screen map. Siempre opt-in, nunca auto-run. Triggers: `/design-system`, `definir design system`, `crear DESIGN.md`, `establecer paleta de colores`, `branding del proyecto`, `rebrandear el proyecto`, `set up theme tokens`, `generate design system`, `elegir paleta`, `setup design tokens`, `mapear screens`, `master design plan`, `screen design`, `US to screen map`, `design brief`, `brief de diseño`, `prepara el prompt para Claude Design`, `no hay mockup para esta historia`, `diseñar esta pantalla`, `design this screen`, `esta historia no tiene diseño`. Composable con /project-foundation (la invoca post-PRD, pre-SRS) y /project-bootstrap (consume el DESIGN.md en frontend-setup). Do NOT use for: scaffolding del frontend code (use /project-bootstrap), definir PRD/personas (use /project-foundation), implementación de componentes UI (use frontend-design community skill), o per-story dev (use /sprint-development).'
 license: MIT
-compatibility: [claude-code, copilot, cursor, codex, opencode]
+compatibility: [claude-code, codex, opencode]
 phase: foundation
 complementary_categories:
   - frontend-ui
@@ -45,7 +45,9 @@ SYSTEM (`DESIGN.md` = tokens/components) vs SCREEN design (`master-design-plan.m
 auto-runs it — and the mockups always come from the external tool (the AI never hand-writes them).
 When the **Open Design MCP** is available, the delegation is autonomous: the AI commissions the runs
 itself, QAs and exports the results into the drop zone (Mode A); otherwise it hands the user a brief
-and pauses (Mode B). Full procedure: `references/screen-design-mapping.md`.
+and pauses (Mode B). Either way a human ratifies every mockup before it is mapped (step 4 below), and
+the mockup stays inspiration: at build time the live UI plus `DESIGN.md` tokens are the fidelity
+reference (`AGENTS.md` Critical Rule #14). Full procedure: `references/screen-design-mapping.md`.
 
 ---
 
@@ -205,7 +207,7 @@ Summary — full procedure in `references/getdesign-matcher.md`.
 
 1. **Pre-flight**: verify `npx` is available; warn if not.
 2. **Context load**: read `.context/business/business-model.md` + `.context/PRD/personas.md` + `.context/PRD/executive-summary.md`. If none exist, fall back to interactive Q&A (industry / tone / target / competitors / keywords).
-3. **Catalog fetch**: `npx getdesign list --json` → 72 brands with tags and descriptions.
+3. **Catalog fetch**: `npx getdesign list --json` → the brand catalog it returns, with tags and descriptions.
 4. **Matching**: invoke `scripts/match-brand.ts` with the context JSON. Returns top-3 ranked candidates with score and reason.
 5. **User confirmation**: AskUserQuestion with the 3 candidates (name + tagline + preview hint). User picks one — or asks "more options" → next batch of 3.
 6. **Download**: `npx getdesign add <slug>` → `DESIGN.md` lands at root.
@@ -296,12 +298,13 @@ Quick shape:
    brief (`references/screen-design-brief.md`) and save it as `BRIEF.md` in the batch folder, then:
    **Mode A (preferred)** — Open Design MCP available (or preflight can bring it up,
    `references/open-design-app.md`): the AI commissions one run per screen itself, QAs and exports
-   the results into the batch folder; user pulled in only for early review. **Mode B (fallback)** —
+   the results into the batch folder; the user ratifies the exported screens at step 4. **Mode B (fallback)** —
    hand the brief to the user to paste into Claude Design / Open Design, PAUSE with session-resume
    (mirrors Paths C/D).
 3. **Build** `.context/design/master-design-plan.md` from the mockups + backlog: per-screen specs,
    a frozen-token reference to `DESIGN.md`, a US→Screen map, a divergence register.
-4. **Confirm** with the user before writing; re-runs UPSERT (incremental / just-in-time per feature).
+4. **Ratify + confirm** with the user before writing: a human approves every mockup (commissioned or
+   supplied) before it enters the map; re-runs UPSERT (incremental / just-in-time per feature).
 
 ---
 
