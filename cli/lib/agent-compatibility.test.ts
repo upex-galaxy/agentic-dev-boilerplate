@@ -589,6 +589,44 @@ describe('MCP semantic parity', () => {
     expect(validateMcpParity(root).some(error => error.includes('MCP tavily env contract differs between claude and opencode') && error.includes('TAVILY_TOKEN'))).toBe(true);
   });
 
+  test('reads OpenCode {file:dir/VAR} as the same dependency as {env:VAR}', () => {
+    // `scripts/harness-env.ts` rewrites every credential in `opencode.jsonc` to a
+    // `{file:.auth/opencode/<VAR>}` pointer, because `{env:}` resolves only from a
+    // process environment a desktop launch does not have. Same .env dependency by
+    // a different route, so parity (and the pinned per-host shape) must hold.
+    const root = contractFixture();
+    const configPath = join(root, 'opencode.jsonc');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('{env:SUPABASE_ACCESS_TOKEN}', '{file:.auth/opencode/SUPABASE_ACCESS_TOKEN}')
+      .replace('{env:N8N_API_KEY}', '{file:.auth/opencode/N8N_API_KEY}'));
+
+    expect(validateMcpParity(root)).toEqual([]);
+  });
+
+  test('a renamed {file:dir/VAR} still fails parity, so the form is checked and not merely tolerated', () => {
+    const root = contractFixture();
+    const configPath = join(root, 'opencode.jsonc');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('{env:N8N_API_KEY}', '{file:.auth/opencode/N8N_TOKEN}'));
+
+    expect(validateMcpParity(root).some(error =>
+      error.includes('MCP n8n env contract differs between claude and opencode') && error.includes('N8N_TOKEN'))).toBe(true);
+  });
+
+  test('a {file:} path whose final segment is NOT all-caps stays a literal', () => {
+    // The guardrail on the pattern: `{file:certs/ca.pem}` is a file, not a
+    // credential named after a variable. Widening the regex has to break this.
+    const root = contractFixture();
+    const configPath = join(root, 'opencode.jsonc');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('{env:N8N_API_URL}', '{file:certs/ca.pem}'));
+
+    const errors = validateMcpParity(root);
+    expect(errors.some(error => error.includes('opencode MCP n8n mismatch'))).toBe(true);
+    expect(errors.some(error => error.includes('certs/ca.pem'))).toBe(true);
+    expect(errors.some(error => error.toLowerCase().includes('"pem"'))).toBe(false);
+  });
+
   test('reports a literal setting that differs on one host', () => {
     const root = contractFixture();
     const configPath = join(root, '.codex/config.toml');
