@@ -46,6 +46,7 @@
  *   bun run agents:setup --non-interactive        # env-driven, no prompts
  *   bun run agents:setup --dry-run                # print result, do not write
  *   bun run agents:setup --reset                  # set every field back to null
+ *   bun run agents:setup --reseed                 # consent (non-interactive) to replace a copied maintainer yaml
  *   bun run agents:setup --help                   # show help
  *
  * ENV-VAR MAPPING (--non-interactive):
@@ -88,10 +89,13 @@
  * ============================================================================
  */
 
+import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { confirm, input, select } from '@inquirer/prompts';
 import { parse as parseYaml } from 'yaml';
+
+import { classifyProjectYaml, SCHEMA_FILE, seedFromSchema } from '../cli/lib/agents-schema.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -212,6 +216,8 @@ interface CliFlags {
   nonInteractive: boolean
   dryRun: boolean
   reset: boolean
+  /** Consent, in --non-interactive mode, to replace a copied maintainer yaml. */
+  reseed: boolean
   help: boolean
 }
 
@@ -220,6 +226,7 @@ function parseArgs(argv: string[]): CliFlags {
     nonInteractive: false,
     dryRun: false,
     reset: false,
+    reseed: false,
     help: false,
   };
   for (const arg of argv) {
@@ -232,6 +239,9 @@ function parseArgs(argv: string[]): CliFlags {
         break;
       case '--reset':
         flags.reset = true;
+        break;
+      case '--reseed':
+        flags.reseed = true;
         break;
       case '--help':
       case '-h':
@@ -262,6 +272,12 @@ FLAGS:
   --reset              Reset every field back to \`null\` and restore the
                        original \`# TODO:\` prefix on each comment. Asks for
                        confirmation. Useful for re-onboarding.
+  --reseed             Consent, with --non-interactive, to replace a
+                       .agents/project.yaml that is the boilerplate
+                       maintainers' own copy (its header carries
+                       \`MAINTAINER COPY:\` and origin is not the
+                       boilerplate) with the blank template from
+                       .agents/project.schema.yaml. Interactive runs ask.
   --help, -h           Show this help.
 
 VARIABLE MODEL:
@@ -1255,6 +1271,56 @@ async function runReset(loaded: LoadedConfig): Promise<void> {
 }
 
 // ============================================================================
+// COPIED MAINTAINER YAML
+// ============================================================================
+
+function gitOrigin(): string | null {
+  try {
+    return execSync('git remote get-url origin', { cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null;
+  }
+  catch { return null; }
+}
+
+/**
+ * Replace a `.agents/project.yaml` copied from the boilerplate with the blank
+ * template, BEFORE any field is read: the file carries the maintainers'
+ * git_strategy (their ruleset notes, their standing push authorization), so a
+ * walkthrough over it would mix their answers into this project. Asks once;
+ * `--non-interactive` needs `--reseed` as its consent; a refusal exits 1
+ * before anything else runs.
+ */
+async function reseedCopiedTemplate(flags: CliFlags): Promise<void> {
+  if (!existsSync(PROJECT_YAML_PATH)) { return; }
+  const current = readFileSync(PROJECT_YAML_PATH, 'utf8');
+  if (classifyProjectYaml(current, gitOrigin()) !== 'copied-template') { return; }
+
+  const schemaPath = join(REPO_ROOT, SCHEMA_FILE);
+  const seeded = existsSync(schemaPath) ? seedFromSchema(readFileSync(schemaPath, 'utf8')) : null;
+  if (seeded === null) {
+    log.error(`.agents/project.yaml is the boilerplate maintainers' copy, and ${SCHEMA_FILE} is missing or malformed, so there is no template to reseed it from. Restore it from upstream (bun run up), then re-run.`);
+    process.exit(1);
+  }
+
+  log.warn('.agents/project.yaml is the boilerplate maintainers\' own copy (copied by hand or through GitHub "Use this template"): their git_strategy, their ruleset notes, their standing push authorization.');
+  if (flags.dryRun) {
+    log.info(`Dry run: would replace it with the blank template from ${SCHEMA_FILE}. Nothing written.`);
+    return;
+  }
+  let proceed = flags.reseed;
+  if (!proceed && !flags.nonInteractive) {
+    proceed = await confirm({ message: `Replace it with the blank template from ${SCHEMA_FILE}? (any value you already filled is re-asked next)`, default: true });
+  }
+  if (!proceed) {
+    log.error(flags.nonInteractive
+      ? 'Refusing to fill the maintainers\' copy. Re-run with --reseed to replace it with the template first.'
+      : 'Kept as is. Nothing else ran: filling the maintainers\' copy would mix their answers into this project. Re-run when ready.');
+    process.exit(1);
+  }
+  writeFileSync(PROJECT_YAML_PATH, seeded, 'utf8');
+  log.success(`Reseeded ${relative(process.cwd(), PROJECT_YAML_PATH)} from ${SCHEMA_FILE}: every identity field is null, git_strategy is inherited.`);
+}
+
+// ============================================================================
 // MAIN
 // ============================================================================
 
@@ -1272,6 +1338,7 @@ async function main(): Promise<void> {
     process.exit(1);
   });
 
+  await reseedCopiedTemplate(flags);
   const loaded = loadProjectYaml();
 
   if (flags.reset) {
