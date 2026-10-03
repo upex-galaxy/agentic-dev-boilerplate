@@ -536,6 +536,7 @@
         border-radius: 10px;
         padding: 15px 18px 15px 58px;
         position: relative;
+        min-width: 0;
         color: var(--ink-soft);
         font-size: 14.5px;
       }
@@ -667,11 +668,11 @@
         <h1>El backlog no se commitea: PBI como <em>caché</em> de Jira</h1>
         <p class="lede">
           <code>.context/PBI/</code> espeja las épicas, historias y bugs de Jira en markdown local.
-          Durante mucho tiempo ese espejo se commiteaba, y dos sesiones que re-sincronizaban en
-          momentos distintos producían commits en conflicto del mismo texto generado. El modelo
-          nuevo lo dice sin rodeos: <strong>Jira es la fuente de verdad, el disco es un caché</strong>.
-          Este deck explica los tres tiers, la escalera de <code>.gitignore</code> que los protege,
-          y las defensas que evitan que el caché mienta.
+          Ese espejo no se commitea: dos sesiones que re-sincronizan en momentos distintos
+          producirían commits en conflicto del mismo texto generado. La regla, sin rodeos:
+          <strong>Jira es la fuente de verdad, el disco es un caché</strong>. Este deck explica los
+          tres tiers, la escalera de <code>.gitignore</code> que los protege, y las defensas que
+          evitan que el caché mienta.
         </p>
         <div class="meta">
           <span class="tag">AGENTS.md §9</span>
@@ -689,19 +690,20 @@
           regenerado, y el merge de 3 vías sobre una reescritura completa
           <strong>no significa nada</strong>: git no puede fusionar dos fotos de la misma base de
           datos tomadas con minutos de diferencia. Jira ya ES la copia versionada, compartida y en
-          la nube — commitearla duplica la base de datos dentro del repo y no compra nada.
+          la nube: commitearla duplica la base de datos dentro del repo y no compra nada.
         </p>
         <div class="callout warn">
           <span class="ic">Incidente</span>
           <div>
-            La clase de incidente real que este modelo cierra: un <strong>host stale</strong>. Tras
-            una migración de sitio de Atlassian, una copia vieja de la URL suelta en el entorno
-            apuntaba el sync al workspace anterior — y como el sync <strong>SOBREESCRIBE</strong>
+            La clase de incidente que este modelo cierra: un <strong>host stale</strong>. Tras una
+            migración de sitio de Atlassian, una copia vieja de la URL suelta en el entorno apunta
+            el sync al workspace anterior. Como el sync <strong>SOBREESCRIBE</strong>
             <code>.context/PBI/</code>, un host desactualizado corrompe el caché con contenido de
-            otro sitio <em>reportando éxito</em>. Con el caché commiteado, esa corrupción entraba a
-            git en silencio. Por eso el host vive solo en
+            otro sitio <em>reportando éxito</em>, y con el caché commiteado esa corrupción entraría
+            a git en silencio. Por eso el host vive solo en
             <code>.agents/project.yaml</code> → <code>issue_tracker.atlassian_url</code> y el
-            resolver avisa si una copia de entorno discrepa.
+            resolver (<code>cli/lib/atlassian-instance.ts</code>) avisa con los dos valores si una
+            copia de entorno discrepa.
           </div>
         </div>
       </section>
@@ -710,7 +712,7 @@
         <h2><span class="num">02</span>El modelo: tres tiers, una pregunta</h2>
         <p class="sub">
           Cada path bajo <code>.context/PBI/</code> es exactamente <strong>uno</strong> de tres
-          tiers. Antes de crear cualquier archivo ahí, se decide el tier — no hay archivos "más o
+          tiers. Antes de crear cualquier archivo ahí, se decide el tier: no hay archivos "más o
           menos versionados".
         </p>
         <div class="tbl-scroll">
@@ -740,7 +742,7 @@
                 <td>[LOCAL]</td>
                 <td>Nada durable</td>
                 <td><span class="not">No</span></td>
-                <td>No se recupera — desechable por diseño</td>
+                <td>No se recupera: desechable por diseño</td>
               </tr>
             </tbody>
           </table>
@@ -750,8 +752,9 @@
           <div>
             <strong>¿Un PM podría leerlo y opinar?</strong> Va a Jira (campo o comentario).
             <strong>¿Maneja un resume o un workflow entre sesiones?</strong> Va a
-            <code>.session/sprint-development/&lt;KEY&gt;/progress.md</code> — el contrato de
-            resume lee eso, nunca la copia del PBI. <strong>¿Ninguna de las dos?</strong> Es
+            <code>.session/sprint-development/&lt;KEY&gt;/progress.md</code>: el contrato de
+            resume lee eso, nunca la copia del PBI. La evidencia durable va a Jira, como adjunto o
+            comentario. <strong>¿Ninguna de las dos?</strong> Es
             <code>[LOCAL]</code> (<code>context.md</code>, <code>progress.md</code>,
             <code>evidence/</code>): vive solo en esta máquina y perderlo tiene que costar cero.
             Nada downstream puede depender de que un <code>[LOCAL]</code> exista.
@@ -800,7 +803,7 @@
       <section id="hidratar" class="r">
         <h2><span class="num">04</span>Clon frío e hidratación</h2>
         <p class="sub">
-          Un clon fresco trae un <code>.context/PBI/</code> casi vacío — solo el README y
+          Un clon fresco trae un <code>.context/PBI/</code> casi vacío: solo el README y
           <code>templates/</code>. <strong>Ese es el estado intencional, no un checkout roto.</strong>
           El caché completo se reconstruye con un comando:
         </p>
@@ -809,7 +812,8 @@
           <li>
             Requiere <code>ATLASSIAN_EMAIL</code> y <code>ATLASSIAN_API_TOKEN</code> en
             <code>.env</code>; el host sale de <code>.agents/project.yaml</code> →
-            <code>issue_tracker.atlassian_url</code>.
+            <code>issue_tracker.atlassian_url</code>. <code>bun run jira:check</code> valida el
+            setup completo.
           </li>
           <li>
             Quien no tiene acceso a Jira no puede hidratar y conserva el caché vacío: puede
@@ -820,7 +824,8 @@
             Las lecturas puntuales van por el mismo script:
             <code>bun run jira:sync-issues get PROJ-42 --include-comments</code> trae UN issue con
             todos sus custom fields (<code>acli view</code> devuelve null para
-            <code>customfield_*</code>).
+            <code>customfield_*</code>). En lote: <code>jira:sync-issues jql "&lt;query&gt;"</code>;
+            acotado: <code>pull --epic &lt;KEY&gt;</code> o <code>pull --story &lt;KEY&gt;</code>.
           </li>
         </ul>
       </section>
@@ -828,7 +833,7 @@
       <section id="altitudes" class="r">
         <h2><span class="num">05</span>Dos altitudes de plan, un solo flujo</h2>
         <p class="sub">
-          Los planes de implementación viven en Jira como custom fields — así el bucle de
+          Los planes de implementación viven en Jira como custom fields: así el bucle de
           desarrollo sobrevive resets de sesión y pérdidas de contexto local. Hay exactamente dos
           altitudes:
         </p>
@@ -846,14 +851,14 @@
               <tr>
                 <td><code>feature_implementation_plan</code></td>
                 <td>el Epic</td>
-                <td>macro — plan técnico de la feature entera; lo escribe el precheck de épica de
-                  <code>/sprint-development</code></td>
+                <td>macro: plan técnico de la feature entera; si falta, el precheck de épica de
+                  <code>/sprint-development</code> ofrece generarlo</td>
                 <td><code>epics/EPIC-PROJ-20-.../feature-implementation-plan.md</code></td>
               </tr>
               <tr>
                 <td><code>spec_implementation_plan</code></td>
                 <td>la Story</td>
-                <td>micro — la tajada por historia del plan padre</td>
+                <td>micro: la tajada por historia del plan padre</td>
                 <td><code>stories/STORY-PROJ-42-.../implementation-plan.md</code></td>
               </tr>
             </tbody>
@@ -918,8 +923,9 @@
             <h4>Un STP nunca se disfraza de ATP</h4>
             <p>
               La escalera QA pone <code>ATP:</code> / <code>ATR:</code> / <code>ATS:</code> a
-              altitud de Story; <code>FTP:</code> (feature), <code>STP:</code> /
-              <code>STR:</code> (sprint) y <code>MTP:</code> (master) viven más arriba. Un link a
+              altitud de Story; <code>FTP:</code> / <code>FTR:</code> (feature),
+              <code>STP:</code> / <code>STR:</code> (sprint) y <code>MTP:</code> (master) viven más
+              arriba. Un link a
               un artefacto de altitud mayor se <strong>nombra en un INFO y jamás se
               materializa</strong> dentro de la carpeta de la Story.
             </p>
@@ -929,11 +935,12 @@
             <h4>El alcance vive en yaml, no en el script</h4>
             <p>
               Qué work types barre <code>pull</code> lo declara
-              <code>.agents/jira-required.yaml</code> (<code>sync: default</code>). El default de
-              fábrica resuelve a <strong>Bug solamente</strong> — Defect, Improvement o Tech Story
-              son tipos custom y se piden con <code>--types</code>. Los tipos presentes en Jira que
-              la corrida no tocará se nombran, para que una carpeta vacía se lea como configuración
-              y no como bug.
+              <code>.agents/jira-required.yaml</code> → <code>work_types</code>. Epic, Story y Bug
+              llevan <code>sync: default</code>: Epic y Story llegan recorriendo las épicas, Bug
+              tiene su propio barrido. Improvement, Tech Story y Tech Debt son tipos custom
+              (<code>sync: optional</code>) y se piden con <code>--types</code>; los Defects llegan
+              anidados bajo su padre coverable. Los tipos presentes en Jira que la corrida no tocará
+              se nombran, para que una carpeta vacía se lea como configuración y no como bug.
             </p>
           </div>
           <div class="card agt">
@@ -952,17 +959,18 @@
       <section id="consumidor" class="r">
         <h2><span class="num">07</span>Qué vive un proyecto consumidor</h2>
         <p class="sub">
-          Un proyecto scaffoldeado <em>antes</em> de esta regla todavía trackea archivos
-          <code>[SYNC]</code> en git. Al correr <code>bun run up</code>, un hook post-apply lista lo
-          que git trackea bajo <code>.context/PBI/</code>, resta el allowlist commiteado
-          (<code>README.md</code> + <code>templates/**</code>) y — si sobra algo — persiste un
-          <strong>prompt de migración para el agente de IA</strong> del consumidor. El hook jamás
-          toca el índice de git: destrackear es trabajo destructivo-adyacente que el agente hace con
-          un punto de recuperación puesto.
+          Un proyecto consumidor puede seguir trackeando archivos <code>[SYNC]</code> en git. Al
+          correr <code>bun run up</code>, un hook post-apply lista lo que git trackea bajo
+          <code>.context/PBI/</code>, resta el allowlist commiteado (<code>README.md</code> +
+          <code>templates/**</code>) y, si sobra algo, guarda una
+          <strong>receta de migración para el agente de IA</strong> del consumidor en
+          <code>.agents/prompts/pbi-cache-migration.md</code> (gitignorada, de un solo uso) y la
+          señala con una fila de la tabla final. El hook jamás toca el índice de git: destrackear
+          es trabajo destructivo-adyacente que el agente hace con un punto de recuperación puesto.
         </p>
         <ol class="steps">
           <li>
-            <strong>Tag de recuperación total</strong>, antes de destrackear nada — todo lo que
+            <strong>Tag de recuperación total</strong>, antes de destrackear nada: todo lo que
             sigue depende de este punto.
             <span class="cmd">git tag pbi-pre-cache-migration</span>
           </li>
@@ -982,9 +990,11 @@
           </li>
           <li>
             <strong>Diffear el tag contra el caché reconstruido</strong> y empujar a Jira cualquier
-            contenido que solo existía en git y nunca llegó a Jira — el sync sobreescribe con la
-            verdad de Jira, así que eso ahora solo es visible por el tag. Recién después de este
-            paso la migración puede reportarse como hecha.
+            contenido que solo existía en git y nunca llegó a Jira (al campo, o a su comentario
+            fallback), y volver a correr el <code>pull</code>. El sync sobreescribe con la verdad de
+            Jira, así que ese contenido ahora solo es visible por el tag. Recién después de este
+            paso la migración puede reportarse como hecha, y el tag se conserva hasta que el equipo
+            confirme que no se perdió nada.
             <span class="cmd">git diff pbi-pre-cache-migration -- .context/PBI</span>
           </li>
         </ol>
@@ -1004,17 +1014,20 @@
             <h4>Lo del mantenedor nunca viaja</h4>
             <p>
               El updater filtra los paths solo-del-boilerplate antes de ofrecer nada:
-              <code>.github/workflows/pages.yml</code> y <code>ci.yml</code>, los mapas
-              <code>business-*-map.md</code> generados, y los catálogos
-              <code>jira-fields.json</code> / <code>jira-workflows.json</code> por instancia. Un
-              consumidor regenera los suyos; el update solo toca framework.
+              <code>.github/workflows/pages.yml</code> y <code>ci.yml</code>, el
+              <code>.context/master-implementation-plan.md</code> del propio boilerplate, y los
+              catálogos <code>jira-fields.json</code> / <code>jira-workflows.json</code> por
+              instancia. La lista vive en <code>REPO_ONLY_PATHS</code>
+              (<code>cli/update-boilerplate.ts</code>). Un consumidor regenera los suyos; el update
+              solo toca framework.
             </p>
           </div>
         </div>
       </section>
 
       <footer>
-        <span>Verificado contra el repo — 2026-08-22</span>
+        <span>Fuente de verdad: <code>AGENTS.md</code> §9 · <code>.context/PBI/README.md</code> ·
+          <code>scripts/sync-jira-issues.ts</code></span>
         <span><a href="../../index.html">← volver a Planos</a></span>
         <span><code>packages/decks/agentic-dev-core/pbi-jira-cache.es.html</code></span>
       </footer>
