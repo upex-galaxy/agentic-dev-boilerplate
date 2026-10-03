@@ -101,7 +101,7 @@ If the primary tier (CLI) lacks page CRUD (e.g. the bundled Confluence CLI is on
 | Tier cannot find the space                              | Wrong space key                          | Ask user. Do NOT auto-create a space.                       |
 | Page created but code blocks render without copy button | Used `<pre>` instead of the `code` macro | Re-convert + update the page.                               |
 | View restrictions can't be applied                      | Account lacks `space admin`              | Surface to user. Recommend escalating to a workspace admin. |
-| Tier returns 401 / 403                                  | Expired token                            | STOP, fix env var, restart session. AGENTS.md Rule #11.     |
+| Tier returns 401 / 403                                  | Expired token                            | STOP, fix env var, restart session. AGENTS.md Critical Rule #9.     |
 
 ---
 
