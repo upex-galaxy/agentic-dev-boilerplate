@@ -231,6 +231,8 @@ Every retrofitted SKILL.md MUST include this banner at the top of its "Subagent 
 
 > **Orchestration & Session contracts**: this skill follows `./orchestration-doctrine.md` (mandatory subagent dispatch — main thread is command center) AND `./session-management.md` (Phase 0 resume check, plan-first persistence at `.session/<skill-slug>/<scope>/`, archive on completion). Phase 0 (resume check) and Phase 1 (plan write) are NOT optional.
 
+The banner's PREFIX (up to `archive on completion).`) is what the lint checks; its tail names the skill's own phase numbers. A skill whose walkthrough already owns a step numbered 1 (for example `project-bootstrap`, whose Phase 1 is the backend) names its plan phase **Phase 0.5** and writes `Phase 0.5 (plan write)` in the tail, so one number never means two things.
+
 The banner anchors both doctrines side by side so a skill author cannot adopt one without the other. The two contracts are designed to compose: orchestration says HOW to dispatch; session says HOW to persist around the dispatch.
 
 Skills that adopt the progress-only variant (§13) replace the banner's last sentence with:

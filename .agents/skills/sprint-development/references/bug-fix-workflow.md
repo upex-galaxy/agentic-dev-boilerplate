@@ -271,10 +271,10 @@ Check issue links for:
 
 **Default branching pattern (user can override):**
 
-| Type       | Branch Pattern                           | Target  |
-| ---------- | ---------------------------------------- | ------- |
-| **Bugfix** | `fix/{ISSUE_KEY}/{short-description}`    | staging |
-| **Hotfix** | `hotfix/{ISSUE_KEY}/{short-description}` | main    |
+| Type       | Branch Pattern                           | Target                                                                                 |
+| ---------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Bugfix** | `fix/{ISSUE_KEY}/{short-description}`    | `git_strategy.branches.integration` (production branch when integration is null)       |
+| **Hotfix** | `hotfix/{ISSUE_KEY}/{short-description}` | `git_strategy.branches.production`                                                     |
 
 **Ask user if they have a different git strategy before creating branches.**
 
@@ -476,7 +476,7 @@ Slugs resolve through `{{jira.transition.bug.<slug>}}` (same slugs for `defect` 
 **Decision:**
 
 - [ ] **HOTFIX** → Use `hotfix/*` branch, PR to main
-- [ ] **BUGFIX** → Use `fix/*` branch, PR to staging
+- [ ] **BUGFIX** → Use `fix/*` branch, PR to the integration branch (`git_strategy.branches.integration`)
 ```
 
 **For "Not a Bug" scenarios:**
@@ -693,7 +693,8 @@ git push -u origin [branch-name]
 **Step 3: Create Pull Request**
 
 ```bash
-# For BUGFIX (to the integration branch: git_strategy.branches.integration, e.g. staging)
+# For BUGFIX (to the integration branch: <integration> = git_strategy.branches.integration;
+#   when it is null, the PR targets git_strategy.branches.production)
 gh pr create \
   --title "fix(ISSUE_KEY): brief description" \
   --body "$(cat <<'EOF'
@@ -732,7 +733,7 @@ Fixes [ISSUE_KEY]: [Bug summary from Jira]
 Fixes: [ISSUE_KEY]
 EOF
 )" \
-  --base staging
+  --base <integration>
 
 # For HOTFIX (to main)
 gh pr create \
@@ -1103,11 +1104,12 @@ Fixes: ISSUE_KEY"
 git push -u origin hotfix/[ISSUE_KEY]/[description]
 gh pr create --base main --title "fix(ISSUE_KEY): description [HOTFIX]"
 
-# 5. After merge to main, backport to staging
-git checkout staging
-git pull origin staging
+# 5. After merge to <production>, backport to <integration> (git_strategy.branches.*;
+#    skip when integration is null). Hotfix policy: git_strategy.decisions.hotfix_policy
+git checkout <integration>
+git pull origin <integration>
 git cherry-pick [hotfix-commit-hash]
-git push origin staging
+git push origin <integration>
 ```
 
 ### Hotfix PR Template
@@ -1282,7 +1284,7 @@ Is Crítica + Production? ───Yes──> HOTFIX Flow
 ┌───────────────────┐
 │ Phase 4: Fix      │
 │ Implementation    │
-│ (fix/* → staging) │
+│ (fix/* → integ.)  │
 └─────────┬─────────┘
           │
           v

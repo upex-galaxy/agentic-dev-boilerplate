@@ -513,7 +513,7 @@ A failure to deliver either one never becomes a second failure that swallows the
 
 This is exactly why `discovery` skips worktree isolation entirely (Phase 0a): `created-log.md` must be the one real file the next fire reads, not a copy trapped inside a worktree that gets removed before that fire ever sees it.
 
-**DO NOT REINTRODUCE the approval gate.** Until 2026-08-18, `discovery` was allowed to end its turn on an open proposal and wait for the operator to answer in that routine's own chat (`pending-decision.md`, `status: awaiting_reply`). The operator removed it by explicit decision, on evidence: ONE unanswered proposal produced FOUR consecutive fires (2026-08-14 through 2026-08-18) that created nothing at all, because the re-surface rule correctly forbade stacking a new proposal on a pending one — and during that same gated period the mode opened a pull request its own contract forbade, unnoticed for five days. The gate cost four days of idle runs and did not bound the blast radius; the per-run cap does. A future run or edit must not restore the gate, and must not invent a softer version of it — a confirm-first flag for "big" items, a pause-on-epic rule, or any other synchronous wait — as a safety improvement.
+**DO NOT REINTRODUCE the approval gate**, and do not invent a softer version of it (a confirm-first flag for "big" items, a pause-on-epic rule, any other synchronous wait): the decision and the evidence that settled it are in `.context/ADR/ADR-0007-discovery-runs-without-approval-gate.md`.
 
 ---
 
