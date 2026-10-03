@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T02:20:10.790Z`
+> Generated: `2026-10-03T02:22:11.332Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 18
+Skills indexed: 17
 
 ---
 ## Skill: acli
@@ -45,7 +45,7 @@ Skills indexed: 18
 - Create or modify `.context/` files (that belongs to `/agentic-dev-onboard` and `/project-foundation`).
 - Generate or scaffold tests, fixtures, or test components (that belongs to `/unit-testing` and test-automation skills).
 - Adapt the framework to a specific stack (that belongs to `/project-bootstrap`).
-- Sync project-specific facts in `AGENTS.md` (that belongs to `/sync-ai-memory`).
+- Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
 
@@ -266,7 +266,7 @@ Skills indexed: 18
 - Artifact missing = CREATE mode: may write once the analysis completes. Artifact exists = UPDATE mode: generate a candidate, show the diff summary, WAIT for explicit approval. NEVER overwrite an existing artifact without that approval.
 - Dependency gates are the selected reference's: `master-plan` hard-requires `.context/business/business-data-map.md` (soft: feature map); `dev-roadmap` hard-requires at least one epic with child stories in the issue tracker (soft: data map, master design plan, master implementation plan); `features` and `api` soft-depend on the data map. A hard gate failure STOPS the run with the reference's exact message; a missing SOFT dependency is a Discovery Gap, never a stop.
 - NEVER invent business facts. Read every source the selected reference requires; anything unverified belongs under the output's mandatory `## Discovery Gaps` section, not asserted in the body.
-- After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing. NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
+- After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing (the docs follow-through, `agentic-dev-core/references/docs-follow-through.md`). NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
 - Forward the rest of `$ARGUMENTS` (everything after the mode token) unchanged to the selected mode (project path, module filter, epic key, or Master Sprint name, as each reference defines).
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
@@ -336,32 +336,13 @@ Skills indexed: 18
 - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
 - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
+- **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
 - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
 **Read full SKILL.md when**: the stage you are running needs its full walkthrough, a gate fires, or the briefing tells you to load the full skill.
 
 > Source: `.agents/skills/sprint-development/SKILL.md` · phase: `implementation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
-
----
-
-## Skill: sync-ai-memory
-
-**Purpose**: Audit and sync all AI-consumed documentation in this repo against the current repo state: AGENTS.md (canonical AI memory), README.md, CON...
-
-**Compact Rules**:
-- Single mode: `sync` → `references/sync.md`. Legacy `/sync-ai-memory` invocations and the aliases `refresh memory` / `refresh ai memory` / `actualizar memoria` route to `sync`. Forward `$ARGUMENTS` unchanged.
-- Shim guard (Step 0, before anything else): `AGENTS.md` is the canonical AI memory and the target of every sync. `CLAUDE.md` must be exactly `@AGENTS.md` plus one newline. Operational prose found in `CLAUDE.md` is STRUCTURAL DRIFT: STOP, report it, never propagate it into `AGENTS.md` or any other doc. Missing `AGENTS.md` → STOP, never create it from a template.
-- Targets: `AGENTS.md`, `README.md`, `CONTEXT.md`, `INSTALLER.md`, `docs/**` (per audit), `docs/onboarding.html` (standalone HTML, text nodes only). Never targets: `CLAUDE.md`, `.claude/commands/*.md`, `.opencode/commands/*.md`, `.claude/skills` alias, `.agents/skills/*/SKILL.md`, `.agents/skills/*/references/*`, `.agents/skills/REGISTRY.md`, `.context/` outputs owned by `project-context`.
-- Patch, never rewrite: the current file IS the base; `Edit` only, never `Write` on an existing file. Preserve headers, prose, examples, table widths byte-for-byte except the changed cell. Structural drift (obsolete section, forbidden section reappearing) is flagged, never auto-applied.
-- Approval gate before any write: audit (delegated sub-agent) → prioritized list → wait for `proceed` / `adjust` / `abort`.
-- Cross-doc consistency before writing: a fact that appears in several docs must agree everywhere; patch the lagging copy in the same run.
-- Credential redaction scan in memory before every write; every redaction is surfaced in the report.
-- This skill synchronizes repository documents only. It does not read, write, merge, or replace Engram observations.
-
-**Read full SKILL.md when**: the audit scope is disputed, a structural-drift flag needs the preserve-list, or the standalone-HTML patch rules are needed.
-
-> Source: `.agents/skills/sync-ai-memory/SKILL.md` · phase: `unknown` · kind: `workflow` · extraction strategy: A
 
 ---
 

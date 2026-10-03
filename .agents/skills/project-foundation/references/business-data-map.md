@@ -27,7 +27,7 @@ During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-ma
 
 Keeping the playbook in one place (`.agents/skills/project-context/references/data.md`) means:
 
-- `/sprint-development`, `/sync-ai-memory`, and ad-hoc discovery all share the same generator.
+- `/sprint-development`, `/project-foundation` and ad-hoc discovery all share the same generator.
 - Changes to entity-mapping heuristics happen in one file.
 - Phase 4 of `project-foundation` stays an orchestrator, not a duplicate of the command.
 

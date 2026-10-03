@@ -2448,9 +2448,9 @@ function printClosingSummary(state: InstallState): void {
   process.stdout.write(`    ${COLORS.dim}First defines the PRD/SRS, then scaffolds backend + frontend.${COLORS.reset}\n\n`);
   stepNum++;
 
-  process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Sync project memory${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}/sync-ai-memory${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.dim}AFTER foundation + bootstrap exist. Updates README, AGENTS.md, and other docs from the new project state.${COLORS.reset}\n\n`);
+  process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Keep the docs in step${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun run docs:check${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.dim}Each change patches the docs that name what it moved (agentic-dev-core/references/docs-follow-through.md); docs:check proves links, the skill router and quoted scripts.${COLORS.reset}\n\n`);
 
   // 4c.1 — NEXT STEPS (non-critical vars). Critical tool creds (Atlassian,
   // Resend) were prompted above. These are NOT asked at install and NOT

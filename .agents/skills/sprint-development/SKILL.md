@@ -31,6 +31,7 @@ compact_rules: |
   - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
   - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
   - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
+  - **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
   - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
@@ -76,6 +77,7 @@ The same pipeline runs whether the input is a new story, a bug fix, or a resume 
 - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch, never push to `main` without explicit confirmation.
 - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
+- **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
 - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
@@ -469,7 +471,7 @@ Review notes are dev-authored (non-Jira) and persist at `.context/PBI/epics/EPIC
 
 **Glossary check**: if the story introduced new domain terms or exposed an ambiguous/banned term, flag it in the review notes / PR description for the PM to add to `.context/business/domain-glossary.md` per its change protocol — do NOT edit the glossary from inside implementation.
 
-**Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`.
+**Docs update before merge**: update `shift-left-status-report.md` and (optional) `release-notes.md` **inside the same PR branch** — never push docs straight to `staging`. When the story moved a fact the repo docs quote (a skill mode, a script, a path, an MCP, an env var), run the docs follow-through in the same branch: `agentic-dev-core/references/docs-follow-through.md`.
 
 Hand-off: `/git-flow-master` for PR creation, merge ops, and conflict resolution.
 
