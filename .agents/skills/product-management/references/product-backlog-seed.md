@@ -22,12 +22,12 @@ Read each input before drafting any backlog content. Skip silently any optional 
 9. **`.context/PRD/user-journeys.md`** — flow-level expectations. (Required — source of foundational stories per epic.)
 10. **`.context/SRS/functional-specs.md`** — FR catalog. (Required — source of `**Source spec:**` references.)
 11. **`.context/SRS/non-functional-specs.md`** — NFRs (perf, security, a11y). (Optional — informs business-rules slug content.)
-12. **`.context/business/business-data-map.md`** — entity graph. (Optional — source of cross-epic entity dependencies.)
-13. **`.context/business/business-feature-map.md`** — CRUD matrix. (Optional.)
-14. **`.context/business/business-api-map.md`** — endpoint catalog (auth model, journey breakdown). (Optional.)
+12. **`bun run context:map business-data-context`** — entity graph. (Optional — source of cross-epic entity dependencies.)
+13. **`bun run context:map business-feature-context`** — CRUD matrix. (Optional.)
+14. **`bun run context:map business-api-context`** — endpoint catalog (auth model, journey breakdown). (Optional.)
 15. **`.context/PBI/epic-tree.md`** — current backlog state (likely absent at seed time; the workflow creates it). (Optional input, mandatory output.)
 
-**Optional inputs note**: items 11–14 are products of mature projects. At seed time they may not exist yet — the business maps in particular arrive after `/business-*-map` runs. Continue without them; cite their absence in the planning narrative so the user can decide whether to defer the seed until they exist.
+**Optional inputs note**: items 11–14 are products of mature projects. At seed time they may not exist yet — the business maps in particular arrive after `/project-context` modes `data` / `features` / `api` run. Continue without them; cite their absence in the planning narrative so the user can decide whether to defer the seed until they exist.
 
 ---
 
@@ -376,16 +376,16 @@ Wait for the user's decision per overlap before continuing. Never silently dedup
 
 **Pre-condition**: all epics + their foundational stories from Phase 2 exist in Jira with real keys and are materialized in the synced cache.
 
-**Goal**: publish the `Blocked by` / `Blocks` / `Related` dependencies (surfaced by the active discovery pass below, sourced from PRD/SRS sequencing, master-plan, business-data-map, and explicit author intent) as real Jira issue links so the dependency graph is queryable and the next phase (sprint sequencing) has live data. Once links exist in Jira, a re-sync materializes each story's `## Dependencies` block — those blocks are read-only cache, never hand-authored.
+**Goal**: publish the `Blocked by` / `Blocks` / `Related` dependencies (surfaced by the active discovery pass below, sourced from PRD/SRS sequencing, master-plan, the data map (`business-data-context`), and explicit author intent) as real Jira issue links so the dependency graph is queryable and the next phase (sprint sequencing) has live data. Once links exist in Jira, a re-sync materializes each story's `## Dependencies` block — those blocks are read-only cache, never hand-authored.
 
 ### Phase 3.0 — Active Dependency Discovery (MANDATORY, before any link write)
 
 Anti-pattern `I18` in `SKILL.md` requires an **active** discovery pass before any link is created. Passive "only link if obviously needed" is rejected.
 
 1. Refresh the full backlog tree first — `bun run jira:sync-issues pull` — then read the materialized `.context/PBI/epic-tree.md` (live Jira backlog graph) alongside the Phase 1 planning draft.
-2. Read `.context/business/business-data-map.md` if present (entity foreign-key graph).
+2. Read the data map (`bun run context:map business-data-context`) when it is generated (a placeholder notice means no map) (entity foreign-key graph).
 3. For every epic and story created in Phase 2, query its current Jira link graph via `[ISSUE_TRACKER_TOOL]` so the discovery pass sees any links that may already exist.
-4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` is one of: `prd-sequencing`, `srs-sequencing`, `master-implementation-plan`, `business-data-map`, `local-declaration`.
+4. Build a candidate matrix `(from, to, link_type_slug, source-of-decision)` where `source-of-decision` is one of: `prd-sequencing`, `srs-sequencing`, `master-implementation-plan`, `business-data-context`, `local-declaration`.
 5. **Filter noise**: discard candidates whose only justification is a global / infrastructural prerequisite (auth exists, DB exists, framework is wired up, observability is set up). Those are properties of the project as a whole, not of one story over another. Keep ONLY feature-level, observable, explicit dependencies between specific work items.
 6. **Heuristic**: would the candidate dependency disappear if we reordered sprints? YES → it is global noise, drop. NO → it is a real feature-level dependency, keep.
 7. Surface the filtered matrix to the user and wait for confirmation before any link is written. Never auto-create.
@@ -398,7 +398,7 @@ This step runs once before the link-creation loop below.
 
 **Hard rules** (full list in `references/dependency-linking.md`):
 
-- Never invent dependencies. Sources of truth: PRD/SRS sequencing, master-implementation-plan Master Sprints, business-data-map entity relationships, explicit author intent surfaced during this session (these become Jira issue links here, then sync back into each story's `## Dependencies` block on the next pull). When a dependency is not observable from these inputs, ask the user or skip — never guess.
+- Never invent dependencies. Sources of truth: PRD/SRS sequencing, master-implementation-plan Master Sprints, the data map (`business-data-context`) entity relationships, explicit author intent surfaced during this session (these become Jira issue links here, then sync back into each story's `## Dependencies` block on the next pull). When a dependency is not observable from these inputs, ask the user or skip — never guess.
 - Never use the symmetric fallback (`Relates`) for ordering-sensitive dependencies. Symmetric → direction is lost; the topological sort in Phase 4 collapses.
 - If `{{jira.link_types.dependencies}}` resolves to its fallback (degraded to `Relates`), report the degradation to the user before proceeding.
 
@@ -510,7 +510,7 @@ When the seed completes, verify in order:
 
 - `.agents/jira-link-types.json` — falls back per `references/dependency-linking.md`.
 - `.context/master-implementation-plan.md` — Master Sprint tags omitted on epics when absent.
-- `.context/business/business-data-map.md` + sibling business maps — cross-epic entity dependencies inferred from PRD/SRS only when business maps are absent.
+- The data map (`bun run context:map business-data-context`) + sibling business maps — cross-epic entity dependencies inferred from PRD/SRS only when the business maps are placeholders.
 
 ---
 

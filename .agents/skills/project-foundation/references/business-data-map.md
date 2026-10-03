@@ -2,15 +2,15 @@
 
 > **This reference is a thin pointer.** The full generation logic lives in skill `project-context` mode `data`.
 
-During Phase 4 (Discovery), `project-foundation` does NOT embed business-data-map generation logic — it **invokes the command** so the same playbook is reusable from any session (sprint-development planning, mid-project rediscovery, brownfield audits, etc.).
+During Phase 4 (Discovery), `project-foundation` does NOT embed data map generation logic — it **invokes the command** so the same playbook is reusable from any session (sprint-development planning, mid-project rediscovery, brownfield audits, etc.).
 
 ---
 
 ## How `project-foundation` uses this
 
 - Skill orchestrator hands off to skill `project-context` mode `data` (see `.agents/skills/project-context/references/data.md`).
-- Command output: `.context/business/business-data-map.md` (entities, business flows, state machines, automatic processes, external integrations).
-- The command auto-detects CREATE vs UPDATE mode based on whether the output file already exists.
+- Command output: the data map inside `business-data-context` (`references/business-data-map.html`: entities, business flows, state machines, automatic processes, external integrations).
+- The command auto-detects CREATE vs UPDATE mode from the map's state: an absent or placeholder map gets CREATE, a generated map gets UPDATE (stale sections only).
 
 ## Inputs the command expects (provided by Phase 4 context)
 

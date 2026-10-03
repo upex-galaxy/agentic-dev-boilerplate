@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-03T02:44:01.153Z`
+> Generated: `2026-10-03T02:47:20.156Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 18
+Skills indexed: 21
 
 ---
 ## Skill: acli
@@ -104,6 +104,63 @@ Skills indexed: 18
 **Read full SKILL.md when**: you are running any phase of a scheduled run, a gate fires, or the briefing tells you to load the full skill.
 
 > Source: `.agents/skills/autonomous-delivery/SKILL.md` · phase: `implementation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-api-context
+
+**Purpose**: What the API of the product under development MEANS to the business: the auth model (Supabase Auth, sessions, roles), every route group (...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). NEVER read `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `api`; never add a route as if the API were empty.
+- DO: take field names, types and required flags from the OpenAPI types (`bun run api:sync`, `@schemas/{domain}.types`), and the MEANING from the map. On a conflict the spec wins for shape, the running API wins for behaviour.
+- WHEN a session observes something that contradicts a section (a status, a field, an auth rule): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no generated types, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a route, OpenAPI or auth dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-api-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-data-context
+
+**Purpose**: What the product under development IS at the data level: business entities and why they exist, their relationships, RLS policies and who...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). NEVER read `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `data`; never plan a migration as if the schema were empty.
+- DO: cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
+- WHEN a session observes something that contradicts a section (a column, a policy, a trigger): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no migration, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment (a rule for READING the data) goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `db` (verifying a section) or `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a migration, RLS or seed dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-data-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: business-feature-context
+
+**Purpose**: What the product under development DOES for its users, feature by feature: the feature catalog grouped by module, the CRUD matrix (which...
+
+**Compact Rules**:
+- DO: read the map through `bun run context:map business-feature-context` (or `--section <id>` for one feature or module). NEVER read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
+- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `features`; never place a story as if the product had no features.
+- DO: take how a screen LOOKS from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature DOES from the map. On a conflict the running app wins for behaviour.
+- WHEN a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
+- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no design file, no product code.
+- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
+
+**Read full SKILL.md when**: building a briefing for a UI, CRUD or navigation dispatch, deciding whether a section is stale, or proposing an edit to the map.
+
+> Source: `.agents/skills/business-feature-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 
@@ -253,7 +310,7 @@ Skills indexed: 18
 - **I15.** NEVER include implementation surface in `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}`, or `{{jira.workflow}}`. Disallowed surface: API/endpoint paths, HTTP status codes, DB table/column names, error-code identifiers (e.g. `VALIDATION_ERROR`), framework or library names, transaction/locking patterns, internal algorithms. Those describe HOW; AC/Scope/Workflow describe WHAT the persona observes/does/receives. Implementation belongs in the impl-plan generated by `/sprint-development`. `{{jira.business_rules_specification}}` tolerates domain rules (boundaries, role gates, retry semantics, audit guarantees) but NOT internal algorithms. **Exception**: when the persona is an API consumer (DevEx, integration agent, headless client), endpoint paths and response shapes ARE part of their observable UX. **Heuristic**: if the criterion stays true after a stack swap → business voice; if a stack swap breaks it → implementation, rewrite.
 - **I16.** NEVER populate `{{jira.story_points}}` on create or edit by default. Story Points stay EMPTY unless the user explicitly requests estimation in the current session ("estimate this", "size this story", "story points", or equivalent in the user's language). Rationale: PO/BA role does not estimate; estimation belongs to the team that will build the work (Design + Dev + Test). When opted-in by the user, use Fibonacci (1, 2, 3, 5, 8); 13+ is a smell → split instead.
 - **I17.** NEVER write `{{jira.acceptance_criteria}}` as plain text. Every scenario MUST be wrapped in a fenced ```gherkin code block. Applies on initial create AND on every edit/re-format pass. Reason: Jira ADF renders the fenced block as monospaced + syntax-highlighted, which is the only readable shape for Given/When/Then in the Jira UI. When refining EXISTING AC that was written unfenced, rewrite the field in full to apply the fence.
-- **I18.** NEVER create or edit a story (or epic) without first running an **active dependency discovery** pass against the current backlog graph (`.context/PBI/epic-tree.md` + live Jira link graph + `.context/business/business-data-map.md` when present). Default state is "no global/infrastructural dependencies surface as story links" — generic prerequisites (auth exists, DB exists, framework is set up) are filtered out as noise. Only feature-level, observable, explicit dependencies become candidate links. Output: a `(from, to, source-of-decision)` matrix surfaced to the user for confirmation BEFORE writing any Jira link. Passive "only link if obviously needed" is rejected — discovery is an active step.
+- **I18.** NEVER create or edit a story (or epic) without first running an **active dependency discovery** pass against the current backlog graph (`.context/PBI/epic-tree.md` + live Jira link graph + the data map, `bun run context:map business-data-context`, when generated). Default state is "no global/infrastructural dependencies surface as story links" — generic prerequisites (auth exists, DB exists, framework is set up) are filtered out as noise. Only feature-level, observable, explicit dependencies become candidate links. Output: a `(from, to, source-of-decision)` matrix surfaced to the user for confirmation BEFORE writing any Jira link. Passive "only link if obviously needed" is rejected — discovery is an active step.
 - **I19.** NEVER use generic actors ("the user", "the customer", "the system") in the `As a` line of a user story. The persona MUST resolve to a named entity in `.context/PRD/user-personas.md`. If the matching persona is absent → surface as `gap`, ask the user, never invent.
 - **I20.** NEVER write the `As a … I want to … so that …` sentence as the story summary. The summary MUST be `{Feature} | {Action}` (see §Story title format); the full sentence lives ONLY in the description `## User story` section. Persona and benefit NEVER appear in the title. Domain-entity feature prefixes that collide with agile/QA vocabulary carry the `TMS-` (project-domain) tag; cross-cutting features stay plain. Epics keep noun-phrase titles (no pipe, no verb).
 - **I21.** NEVER publish Jira content whose domain entity/process/state names diverge from `.context/business/domain-glossary.md`, and NEVER use a term its anti-glossary bans — use the prescribed replacement. A needed term missing from the glossary → surface as `gap` for the PM to add per the glossary's change protocol; never invent terminology mid-story.
@@ -288,20 +345,21 @@ Skills indexed: 18
 
 ## Skill: project-context
 
-**Purpose**: Generate or refresh the canonical project-context artifacts for development: business data map, business feature map, business API map, m...
+**Purpose**: Generate or refresh the canonical project-context artifacts for development: the business data, feature and API maps (HTML maps inside bu...
 
 **Compact Rules**:
 - Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all` · `context-skill`. The first token of `$ARGUMENTS` IS the mode when it matches one of these; otherwise resolve it from the trigger phrases in Mode routing. Load only that mode's reference; never open a second one in the same pass.
 - `context-skill` scaffolds a project-owned `<aspect>-context` (`references/context-skill.md`, contract `agentic-dev-core/references/skill-scaffold.md` §3-§5) THROUGH `skill-creator` (T3) for an aspect the business maps do not cover. It cites its sources and never copies them; `refresh-all` never includes it.
-- Mode → reference → output: `data` → `references/data.md` → `.context/business/business-data-map.md` · `features` → `references/features.md` → `.context/business/business-feature-map.md` · `api` → `references/api.md` → `.context/business/business-api-map.md` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
+- Mode → reference → output: `data` → `references/data.md` → `business-data-context`'s `references/business-data-map.html` · `features` → `references/features.md` → `business-feature-context`'s `references/business-feature-map.html` · `api` → `references/api.md` → `business-api-context`'s `references/business-api-map.html` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
 - User did not name a mode → ASK. NEVER infer `refresh-all` from a generic "refresh the context" request.
 - `refresh-all` runs strictly `data` → `features` → `api` → `master-plan` → `dev-roadmap`, one at a time. Each reference's own validation and approval gate must close before the next is loaded. Never skip ahead.
-- Artifact missing = CREATE mode: may write once the analysis completes. Artifact exists = UPDATE mode: generate a candidate, show the diff summary, WAIT for explicit approval. NEVER overwrite an existing artifact without that approval.
-- Dependency gates are the selected reference's: `master-plan` hard-requires `.context/business/business-data-map.md` (soft: feature map); `dev-roadmap` hard-requires at least one epic with child stories in the issue tracker (soft: data map, master design plan, master implementation plan); `features` and `api` soft-depend on the data map. A hard gate failure STOPS the run with the reference's exact message; a missing SOFT dependency is a Discovery Gap, never a stop.
+- A map mode writes ONLY its own skill's `references/<map>.html`, read and checked through `bun run context:map <skill>`. A project's legacy `.context/business/business-*-map.md` (the skill's `legacy` list in `CONTEXT_MAP_SKILLS`, `cli/lib/context-maps.ts`) is read as input and never deleted. The map skill already exists (delivered by `bun run up`, never scaffolded here).
+- Artifact missing (or a placeholder map) = CREATE mode: may write once the analysis completes. Artifact exists = UPDATE mode: generate a candidate (for a map: only its stale sections), show the diff summary, WAIT for explicit approval. NEVER overwrite an existing artifact without that approval, and NEVER regenerate a whole generated map.
+- Dependency gates are the selected reference's: `master-plan` hard-requires a generated data map (`bun run context:map business-data-context` prints sections, not the placeholder notice; soft: feature map); `dev-roadmap` hard-requires at least one epic with child stories in the issue tracker (soft: data map, master design plan, master implementation plan); `features` and `api` soft-depend on the data map. A hard gate failure STOPS the run with the reference's exact message; a missing SOFT dependency is a Discovery Gap, never a stop.
 - NEVER invent business facts. Read every source the selected reference requires; anything unverified belongs under the output's mandatory `## Discovery Gaps` section, not asserted in the body.
-- After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing (the docs follow-through, `agentic-dev-core/references/docs-follow-through.md`). NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
+- After a map write, review that skill's `## Rules` and `references/gotchas.md` against the new map and PROPOSE any change; never rewrite a rule. After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing (the docs follow-through, `agentic-dev-core/references/docs-follow-through.md`). NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
 - Forward the rest of `$ARGUMENTS` (everything after the mode token) unchanged to the selected mode (project path, module filter, epic key, or Master Sprint name, as each reference defines).
-- **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
+- **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix (`diagrams`, for the maps' figures, by the `diagram-design` skill's presence); none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
 **Read full SKILL.md when**: the requested mode is ambiguous, a `refresh-all` chain fails mid-sequence, or you need the selected reference's own analysis steps and validation gate.
 

@@ -8,14 +8,11 @@ This directory is what makes a fresh AI session productive on day one. Every fil
 .context/
 ├── README.md                      This file — index + generator map
 │
-├── business/                      Single source of business knowledge (Constitution + Maps)
-│   ├── README.md                  Folder index (Constitution + Maps layers)
+├── business/                      Authored business knowledge (Constitution + glossary)
+│   ├── README.md                  Folder index
 │   ├── business-model.md          Business Model Canvas, value prop (/project-foundation Phase 1)
 │   ├── market-context.md          Industry, competitors, positioning (/project-foundation Phase 1)
 │   ├── legacy-analysis.md         Legacy stack + doc-gap analysis    (/project-foundation Phase 1, optional)
-│   ├── business-data-map.md       Entities, flows, state machines    (/project-context data)
-│   ├── business-feature-map.md    Feature catalog, CRUD matrix       (/project-context features)
-│   ├── business-api-map.md        Auth model, critical journeys      (/project-context api)
 │   ├── project-dev-guide.md       How to build features here         (/project-foundation Phase 4 embedded)
 │   └── domain-glossary.md         Canonical domain terminology       (/project-foundation Phase 4 Step 6; hand-maintained, append-only)
 │
@@ -39,6 +36,8 @@ This directory is what makes a fresh AI session productive on day one. Every fil
     └── README.md                  Backlog layout (see file)
 ```
 
+The business maps (data, feature, API) are not under `.context/`: they are HTML maps inside the `business-data-context`, `business-feature-context` and `business-api-context` skills under `.agents/skills/`. Read one with `bun run context:map <slug>`.
+
 ## Who generates what
 
 Every file in `.context/` has an owner. Do not edit auto-generated files by hand — re-run the owner.
@@ -48,9 +47,6 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `business/business-model.md`                        | `/project-foundation` (Phase 1)         | Business Model Canvas, value proposition               |
 | `business/market-context.md`                        | `/project-foundation` (Phase 1)         | Industry, competitors, positioning                     |
 | `business/legacy-analysis.md`                       | `/project-foundation` (Phase 1, optional) | Legacy stack + doc-gap analysis (legacy projects only) |
-| `business/business-data-map.md`                     | `project-context` mode `data`           | Invoked by `/project-foundation` Phase 4 Step 1        |
-| `business/business-feature-map.md`                  | `project-context` mode `features`       | Invoked by `/project-foundation` Phase 4 Step 2        |
-| `business/business-api-map.md`                      | `project-context` mode `api`            | Invoked by `/project-foundation` Phase 4 Step 3        |
 | `business/project-dev-guide.md`                     | `/project-foundation` (Phase 4 Step 4)  | Embedded skill logic; re-run if architecture changes   |
 | `business/domain-glossary.md`                       | `/project-foundation` (Phase 4 Step 6); updated when new terms surface (via `/product-management` flag) | Hand-maintained, append-only, never regenerated        |
 | `master-implementation-plan.md`                     | `project-context` mode `master-plan`    | Invoked by `/project-foundation` Phase 4 Step 5. EPIC/strategy layer. |
@@ -65,6 +61,8 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/comments.md`         | **[SYNC]** — `bun run context:hydrate` (`--include-comments`)    | Gitignored cache, not committed.                       |
 | `PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md`, `progress.md`, `evidence/` | **[LOCAL]** — dev-authored, hand-written     | Machine-local, disposable; nothing downstream may depend on these existing. Durable session state lives under `.session/` instead; durable evidence goes to Jira. |
 | `PBI/README.md`, `PBI/templates/`      | Hand-maintained     | **[COMMIT]** — the only paths under `PBI/` actually tracked in git                  |
+
+The business maps live outside this table: `project-context` modes `data`, `features` and `api` (invoked by `/project-foundation` Phase 4 Steps 1, 2 and 3) write them inside `business-data-context`, `business-feature-context` and `business-api-context`.
 
 Plan history for a story lives in the Jira field's own edit history (plus engram), not in git log — the files above are a regenerable read cache, never a commit target. Full tier rules: `.context/PBI/README.md` and `AGENTS.md` §9. Full topic-key conventions: `.agents/skills/agentic-dev-core/references/topic-key-conventions.md`.
 

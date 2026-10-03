@@ -315,14 +315,14 @@ describe('pruneBootstrapExcludes', () => {
     expect(existsSync(join(dir, '.github', 'workflows', 'keep.yml'))).toBe(true);
   });
 
-  test('removes business map files when present', async () => {
+  test('removes the maintainer\'s master implementation plan, keeps the rest of .context', async () => {
     mkdirSync(join(dir, '.context', 'business'), { recursive: true });
-    writeFileSync(join(dir, '.context', 'business', 'business-data-map.md'), '# map');
+    writeFileSync(join(dir, '.context', 'master-implementation-plan.md'), '# plan');
     writeFileSync(join(dir, '.context', 'business', 'keep-me.md'), '# keep');
 
     await pruneBootstrapExcludes(dir);
 
-    expect(existsSync(join(dir, '.context', 'business', 'business-data-map.md'))).toBe(false);
+    expect(existsSync(join(dir, '.context', 'master-implementation-plan.md'))).toBe(false);
     expect(existsSync(join(dir, '.context', 'business', 'keep-me.md'))).toBe(true);
   });
 });

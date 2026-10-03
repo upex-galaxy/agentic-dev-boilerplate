@@ -39,7 +39,7 @@ Dependencies derive ONLY from observable evidence. Never invent — if no source
 
 - **PRD/SRS sequencing** — `.context/PRD/user-journeys.md` and `.context/SRS/functional-specs.md` ordering. Functional Requirement `FR-X.2` typically depends on `FR-X.1` when both share a journey and the spec orders them sequentially.
 - **Master Sprint ordering** — `.context/master-implementation-plan.md` declares Master Sprint groupings. A story whose `**Source spec:**` lives in Master Sprint N depends on the foundational stories of Master Sprint N-1 when the data or auth model requires it.
-- **Data-model dependencies** — `.context/business/business-data-map.md` declares entity relationships. If entity B has a foreign-key dependency on entity A, the story that creates entity B depends on the story that creates entity A.
+- **Data-model dependencies** — the data map (`bun run context:map business-data-context`) declares entity relationships. If entity B has a foreign-key dependency on entity A, the story that creates entity B depends on the story that creates entity A.
 - **Explicit author intent** — `**Blocked By:**` / `**Blocks:**` lines inside the story's local `story.md`. These are the strongest signal because a human author committed them.
 
 If two or more sources disagree (e.g. PRD orders A → B but data-map orders B → A), surface the conflict to the user and ask for resolution before creating any link. Do not silently pick one.
@@ -116,7 +116,7 @@ After all links exist, surface the dependency matrix to the user. The matrix is 
 
 | From         | To           | Link type                                       | Source of decision                                  |
 | ------------ | ------------ | ----------------------------------------------- | --------------------------------------------------- |
-| {{story_a}}  | {{story_b}}  | `{{jira.link_types.dependencies.name}}`         | business-data-map.md — entity B foreign-keys to A   |
+| {{story_a}}  | {{story_b}}  | `{{jira.link_types.dependencies.name}}`         | `business-data-context`: entity B FK to A           |
 | ...          | ...          | ...                                             | ...                                                 |
 
 ### Degradations (if any)

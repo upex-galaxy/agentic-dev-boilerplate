@@ -30,12 +30,12 @@ A cold-start refinement needs the following files loaded in this exact sequence.
 9. `.context/PRD/user-journeys.md` — flow-level expectations.
 10. `.context/SRS/functional-specs.md` — FR catalog (source of `**Source spec:**` references).
 11. `.context/SRS/non-functional-specs.md` — NFRs (perf, security, a11y).
-12. `.context/business/business-data-map.md` — entity graph (source of entity-level dependencies).
-13. `.context/business/business-feature-map.md` — CRUD matrix.
-14. `.context/business/business-api-map.md` — endpoint catalog (auth model, journey breakdown).
+12. `bun run context:map business-data-context` — entity graph (source of entity-level dependencies).
+13. `bun run context:map business-feature-context` — CRUD matrix.
+14. `bun run context:map business-api-context` — endpoint catalog (auth model, journey breakdown).
 15. `.context/PBI/epic-tree.md` — current backlog state.
 
-Optional inputs (present in mature projects, may be missing at seed time): business maps (12–14) arrive after `/business-*-map` runs; treat as soft prerequisites and continue refining with the rest if absent.
+Optional inputs (present in mature projects, may be missing at seed time): business maps (12–14) arrive after `/project-context` modes `data` / `features` / `api` run; treat as soft prerequisites and continue refining with the rest if absent.
 
 ---
 
@@ -218,7 +218,7 @@ A story is Ready when **all** of these are true:
 - [ ] **Persona grounded** — `As a` line names a persona that exists in `.context/PRD/user-personas.md`; no generic "user" / "system" actors (anti-pattern `I19`).
 - [ ] **Deduplication audit passed** — run the dedup audit per `references/description-custom-field-dedup.md`. Confirm the description body excludes AC / Scope / OOS H2 sections and that those contents live in `{{jira.acceptance_criteria}}`, `{{jira.scope}}`, `{{jira.out_of_scope}}` respectively. If a duplicate is found, strip from the description and keep the custom field as canonical.
 - [ ] **Story Points** — leave `{{jira.story_points}}` EMPTY by default. Populate ONLY if the user explicitly requested estimation in this session. Estimation belongs to the team that will build the story (Design + Dev + Test), not to the PO/BA. When opted-in: Fibonacci (1, 2, 3, 5, 8); 13+ → split. See anti-pattern `I16`.
-- [ ] **Dependency Discovery executed** — active pass over the current backlog graph (epic-tree + Jira link graph + business-data-map) ran BEFORE creation/edit. Candidate `(from, to, source)` matrix surfaced to the user; global/infrastructural noise filtered out; only feature-level explicit dependencies kept. See anti-pattern `I18`.
+- [ ] **Dependency Discovery executed** — active pass over the current backlog graph (epic-tree + Jira link graph + the data map in `business-data-context`) ran BEFORE creation/edit. Candidate `(from, to, source)` matrix surfaced to the user; global/infrastructural noise filtered out; only feature-level explicit dependencies kept. See anti-pattern `I18`.
 - [ ] **Dependencies declared locally** — Blocked By / Blocks / Related sections present in `story.md`
 - [ ] **Dependencies published to Jira** — see the "Dependency-link verification" step below
 - [ ] **Mockups linked** if a UI change (or "N/A — no UI change" stated)
