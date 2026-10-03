@@ -127,6 +127,29 @@ orchestration:
 
 **An explicit user instruction in the conductor session always overrides these defaults for that run**: they are the fallback only when the user says nothing ("launch 3 workers" beats `max_workers` for that dispatch).
 
+## `stack` (block inside `project.yaml`)
+
+The application's **real stack, structured**, so a skill reads a value instead of hardcoding one: where the app lives, which package manager runs it, the NAMES of its scripts, where its schema comes from, how a schema change is applied, its UI kit, hosting, CI and test runner. The field list, each field's allowed values and which values the skills support in v1 live in one place, `STACK_FIELDS` and `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`; the yaml's inline comments repeat the allowed values for the reader.
+
+```yaml
+stack:
+  app_root: .                    # monorepo: apps/web
+  package_manager: bun
+  scripts:                       # script NAMES in the app's package.json; null = the app has none
+    lint: lint:check
+  database:
+    schema_source: live          # live | migrations
+    migrations_tool: supabase-mcp
+```
+
+**Defaults.** The block ships the GREENFIELD defaults, what `/project-bootstrap` scaffolds. They travel through `.agents/project.schema.yaml` as methodology (non-null leaves are kept, never blanked), so a new project is seeded with them. An existing application replaces them with what it actually runs.
+
+**Who writes it.** `bun run agents:setup --stack` detects the stack from the repo (`package.json`, the lockfile, the migration directory, `tsconfig.json`, CI and hosting files) and proposes each field that differs, with the file it read it from; `--non-interactive` writes every detected value and leaves the rest alone. A field the repo says nothing about is never guessed. A project that lacks the block gets it inserted from the schema first, at the schema's position (`bun run up` offers the same insertion). `/project-bootstrap` runs it once the app exists.
+
+**Who checks it.** `bun run setup:doctor` validates the block's shape and reports drift between what it declares and what the repo shows, in its own section; never a failure. Before the app exists it stays silent: the defaults are expected.
+
+**How a skill reads it.** By path: `{{stack.package_manager}}`, `{{stack.scripts.lint}}`; `bun run vars:check` fails on a `{{stack.<path>}}` that is not a leaf of the block, and the leaves are never bare `{{VAR}}` names. An app command is `<package_manager> run <scripts.X>`; a null script means the app has none, so the step is skipped and said so, never invented. Tooling commands (`bun run agents:compat:check`, `bun run skills:check`, ...) are the boilerplate's own and do not go through the block.
+
 ## `testing.automation_identity` (block inside `project.yaml`)
 
 Declares WHICH account browser and HTTP automation logs in as when validating a story against the running app (`/sprint-development` live-UI validation and Tier 0 probes). It holds **variable NAMES only** — values live in `.env`, which is gitignored; `project.yaml` is committed.
@@ -148,12 +171,13 @@ Like `git_strategy`, this block is read directly by skills and is **not** a `{{V
 
 ## Variable syntax conventions
 
-Seven syntaxes coexist across skills, commands, and docs. Each resolves from a different place:
+Several syntaxes coexist across skills, commands, and docs. Each resolves from a different place:
 
 | Syntax                         | Meaning                                                                                                                                                                                                                                                                                   | Resolves from                                                                                                                                                                            | Validated by                                                                                                                                     |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `{{VAR_NAME}}`                 | **Project variable** — static, per-repo value configured once. Two flavours: **flat** (top-level section, e.g. `{{PROJECT_KEY}}` → `project.project_key`) and **env-scoped** (`{{WEB_URL}}`, `{{API_URL}}`, `{{DB_PROJECT_REF}}`) which resolve to the active environment's value. | `.agents/project.yaml`. Flat keys are looked up lexically (`{{PROJECT_NAME}}` → `project.project_name`). Env-scoped keys resolve via the active env (see below).                         | `bun run vars:check` (key must exist either at top level or under at least one environment).                                                     |
 | `{{environments.<env>.<var>}}` | **Explicit env-scoped reference** — bypasses active-env resolution and always points at a specific environment. Used in multi-env documents (e.g. a comparison table that shows local AND staging URLs side-by-side).                                                                     | `.agents/project.yaml` → `environments.<env>.<var>` directly.                                                                                                                            | `bun run vars:check` (env must be declared under `environments:` and var must exist under it).                                                   |
+| `{{stack.<path>}}`             | **Stack descriptor reference** — a leaf of the `stack:` block (`{{stack.scripts.lint}}`), read by path. | `.agents/project.yaml` → `stack.<path>` directly. | `bun run vars:check` (the path must be a leaf of the block). |
 | `<<VAR_NAME>>`                 | **Session variable** — computed at runtime by the calling prompt (e.g. `<<ISSUE_KEY>>` extracted from a git branch name) or used as a sentinel marker (`<<PLACEHOLDER>>`, `<<REDACTED>>`). Never persisted.                                                                               | The prompt's runtime context.                                                                                                                                                            | Linter only counts them — never declared.                                                                                                        |
 | `{{jira.<slug>}}`              | **Jira custom field reference** — portable pointer to a Jira custom field.                                                                                                                                                                                                                | `.agents/jira-required.yaml` (canonical declaration of expected fields) AND `.agents/jira-fields.json` (workspace-resolved IDs). Skills and commands never hardcode `customfield_XXXXX`. | `bun run vars:check` (slug must be declared in the manifest) AND `bun run jira:check` (slug must resolve to a real field in `jira-fields.json`). |
 | `{{jira.<slug>.<option>}}` | **Jira option-value reference** — portable pointer to a single option value of a select-type custom field. Use the two-segment form for plain `option` and `array`-of-option fields. For cascading-select (`option-with-child`) fields, use the three-segment form `{{jira.<slug>.<parent>.<child>}}` to reach a child option. | `.agents/jira-fields.json` → `<slug>.options.<option>` for plain options, or `<slug>.options.<parent>.children.<child>` for cascading. The slug must also be declared in `.agents/jira-required.yaml`. | `bun run vars:check` (slug must be declared in the manifest AND the option must exist in the catalog). |

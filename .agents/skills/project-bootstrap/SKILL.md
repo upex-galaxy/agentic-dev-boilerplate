@@ -234,6 +234,7 @@ After running any phase, confirm:
 - TypeScript compiles with no errors across the whole monorepo or split repos.
 - New env vars are documented in `.env.example`.
 - Generated artefacts (OpenAPI schema, Supabase types) are committed. The references never commit on their own: they recommend the commit and the user (or `/git-flow-master`) makes it.
+- The `stack:` block of `.agents/project.yaml` describes the app that now exists: run `bun run agents:setup --stack` (detects it from the scaffolded repo, one prompt per field that differs from the shipped greenfield defaults) and keep `bun run setup:doctor` free of stack drift. Block contract: `.agents/README.md` → `stack`.
 
 If any check fails, surface the failure in the report rather than papering over it. Do not invent fixes for unfamiliar stacks — ask the user.
 

@@ -30,6 +30,43 @@ frontend:
 database:
   db_type: null # TODO: fill per project — Database engine (e.g. PostgreSQL)
 
+# The application's REAL stack, structured, so a skill reads a value instead of
+# hardcoding one. Ships the GREENFIELD defaults (what /project-bootstrap scaffolds:
+# Next.js App Router + Supabase on bun, deployed to Vercel); an existing app replaces
+# them with what it actually runs. Re-detected and written by
+# `bun run agents:setup --stack`; checked against the repo by `bun run setup:doctor`.
+# Rule for a skill: an app command is `<package_manager> run <scripts.X>`; a null script
+# means the app has none, so the step is skipped and said so, never invented.
+# Read by path (`stack.database.schema_source`), never as a bare {{VAR}}.
+stack:
+  app_root: . # directory holding the app's package.json, relative to the repo root (monorepo: e.g. apps/web)
+  framework: nextjs-app-router # nextjs-app-router | nextjs-pages | other
+  package_manager: bun # bun | pnpm | npm | yarn
+  scripts: # script NAMES in the app's package.json; null = the app has no such script
+    dev: dev
+    build: build
+    lint: lint:check
+    types: types:check
+    test: test
+    db_types: db:types
+  database:
+    engine: postgres # postgres | other | none
+    provider: supabase # supabase | other | none
+    schema_source: live # live | migrations. Which one project-context trusts: the database itself (through the db MCP) or the migration files in migrations_dir
+    migrations_dir: null # directory of migration files, relative to app_root; null = none in the repo (the db MCP's migration list is the ledger)
+    migrations_tool: supabase-mcp # supabase-mcp | supabase-cli | prisma | drizzle | none. How a schema change is applied
+    types_path: src/types/supabase.ts # generated database types, relative to app_root; null = none
+  ui:
+    css: tailwind-v3 # tailwind-v3 | tailwind-v4 | css-modules | other
+    kit: shadcn # shadcn | other | none
+    icons: lucide # lucide | other | none
+  hosting: vercel # vercel | netlify | other | none
+  ci: github-actions # github-actions | gitlab | other | none
+  test_runner: null # vitest | jest | bun | playwright | other | none; null = not chosen yet (/unit-testing picks one)
+  conventions:
+    import_alias: '@/' # path alias the app's tsconfig declares for its source root; null = none
+    testid_style: null # the app's existing test-id attribute and case (e.g. data-testid kebab-case); null = not established. Skills never rename an existing test id
+
 issue_tracker:
   issue_tracker: null # TODO: fill per project — Issue tracking tool (e.g. Jira)
   issue_tracker_cli: null # TODO: fill per project — CLI command to query tickets (e.g. acli (Jira) / gh issue (GitHub))
