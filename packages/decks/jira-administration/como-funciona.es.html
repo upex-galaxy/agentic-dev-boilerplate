@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jira administration: Components y migración de instancia</title>
+    <meta
+      name="description"
+      content="Cómo /jira-administration reconcilia los Components de un proyecto de Jira con los módulos reales de la app, o repunta el repo a otra instancia de Atlassian y regenera sus catálogos, siempre leyendo primero y esperando aprobación explícita."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">Cuándo</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#contrato">Contrato</a>
+        <a href="#components">Components</a>
+        <a href="#migracion">Migración</a>
+        <a href="#catalogos">Catálogos</a>
+        <a href="#host">Host</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · administración de Jira</div>
+        <h1>Dos operaciones de admin que <em>no</em> se deshacen con un <span class="sig">undo</span>.</h1>
+        <p class="lede">
+          <span class="mono">/jira-administration</span> cubre dos trabajos de administración del
+          proyecto de Jira: reconciliar sus <b>Components</b> con los módulos reales de la app, o
+          <b>repuntar el repo a otra instancia</b> de Atlassian después de una migración de sitio.
+          Los dos escriben fuera del repo (en Jira, o en la sesión de <span class="mono">acli</span>
+          de toda la máquina), así que los dos pasan por la misma secuencia: leer primero, mostrar el
+          plan y esperar tu aprobación antes de tocar nada.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> para quien <b>mantiene</b> el repo</span>
+          <span class="chip"><span class="dot"></span> un <b>modo</b> por corrida, nunca los dos</span>
+          <span class="chip agent"
+            ><span class="dot"></span> nada se escribe sin tu <b>sí</b> explícito</span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Modo</div>
+            <h3>Uno solo</h3>
+            <p><span class="mono">components</span> o <span class="mono">instance-migration</span>. Si no está claro, pregunta.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Leer</div>
+            <h3>El estado vivo</h3>
+            <p>Los Components actuales, o las dos instancias y todo lo que nombra la vieja.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Proponer</div>
+            <h3>Plan o auditoría</h3>
+            <p>Una tabla que ves completa: qué cambia, qué no, y qué está en juego.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Aplicar</div>
+            <h3>Recién con tu sí</h3>
+            <p>Escribe, y después verifica leyendo el destino, no el código de salida.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
+          <h2>Administrar el proyecto, no operar tickets</h2>
+          <p class="sub">
+            Es una skill de uso raro y consecuencias grandes. El día a día con Jira (crear,
+            transicionar, comentar) pasa por otra puerta.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Usala cuando</div>
+            <h3>El proyecto o la instancia cambian de forma</h3>
+            <ul>
+              <li>
+                "Sincronizá los Components de Jira" · "jira-components": el módulo de Components del
+                proyecto quedó desalineado con lo que la app realmente tiene.
+              </li>
+              <li>
+                "Cambió la URL de Jira" · "repoint jira" · "jira-instance-migration": la empresa movió
+                el sitio de Atlassian y el repo sigue apuntando al viejo.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No la uses para</div>
+            <h3>Lo que pertenece a otra herramienta</h3>
+            <ul>
+              <li>
+                <b>Poner un component en un ticket</b> u otra operación sobre issues: eso es
+                <span class="mono">/acli</span>.
+              </li>
+              <li>
+                <b>Refrescar los catálogos sin cambio de instancia</b>: se corren los
+                <span class="mono">bun run jira:sync-*</span> directamente.
+              </li>
+              <li>
+                <b>Configurar Jira por primera vez</b>: está en
+                <span class="mono">docs/setup/README.md</span>, sección "Jira (lado dev)".
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · el mapa</div>
+          <h2>Dos carriles que nunca se cruzan</h2>
+          <p class="sub">
+            Cada corrida elige exactamente un modo y carga solo su referencia. Nunca combina los dos
+            ni cae de uno en el otro. Un "arreglá Jira" a secas no alcanza para elegir: la IA te
+            pregunta.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Modo components</div>
+            <a class="wf" href="#components"
+              ><span class="lt">1</span
+              ><span><b>Derivar módulos</b><span>Del código de la app y del backlog que viene.</span></span></a
+            >
+            <a class="wf" href="#components"
+              ><span class="lt">2</span
+              ><span><b>Leer Components vivos</b><span>Con la cantidad de issues de cada uno.</span></span></a
+            >
+            <a class="wf" href="#components"
+              ><span class="lt">3</span
+              ><span><b>Plan + dry run</b><span>Renames separados de creates. Esperar aprobación.</span></span></a
+            >
+            <a class="wf" href="#components"
+              ><span class="lt sig">4</span
+              ><span><b>Aplicar y verificar</b><span>Recién con tu sí; después, listar de nuevo.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Modo instance-migration</div>
+            <a class="wf" href="#migracion"
+              ><span class="lt">0</span
+              ><span><b>Resolver las dos instancias</b><span>Origen detectado, destino preguntado.</span></span></a
+            >
+            <a class="wf" href="#migracion"
+              ><span class="lt">1</span
+              ><span><b>Auditar</b><span>Tabla de qué cambia y qué no, antes de editar.</span></span></a
+            >
+            <a class="wf" href="#migracion"
+              ><span class="lt sig">2-3</span
+              ><span><b>Aplicar y verificar</b><span>Host, contaminación, sesión de acli.</span></span></a
+            >
+            <a class="wf" href="#catalogos"
+              ><span class="lt sig">4-5</span
+              ><span><b>Catálogos y commit</b><span>Regenerar los IDs que la migración invalidó.</span></span></a
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Frases que lo disparan</th>
+                <th>Lee</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">components</span></th>
+                <td>"jira-components" · reconcile / sync Jira Components</td>
+                <td><span class="mono">references/components.md</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">instance-migration</span></th>
+                <td>"jira-instance-migration" · changed / repoint Jira instance</td>
+                <td><span class="mono">references/instance-migration.md</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          los viejos nombres de comando (<span class="mono">jira-components</span>,
+          <span class="mono">jira-instance-migration</span>) sobreviven solo como frases disparadoras
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §03 CONTRATO ============ -->
+    <section class="band" id="contrato">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · el contrato sellado</div>
+          <h2>Las reglas que valen en cualquiera de los dos modos</h2>
+          <p class="sub">
+            Viven en el bloque <span class="mono">## Compact Rules</span> de la skill, que es lo que
+            viaja a los subagentes a través de <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lee antes de cada mutación.</b> El plan se escribe después de mirar el estado vivo,
+              nunca de memoria.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Aprobación dentro de la misma corrida.</b> Nada se crea, aplica, borra ni repunta sin
+              tu sí explícito. Silencio o ambigüedad significan parar y preguntar.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Credenciales faltantes = parada dura.</b> Nombra la variable exacta, te manda a
+              <span class="mono">.env</span> / <span class="mono">.env.example</span> y pide reiniciar
+              la sesión del agente. Sin atajos ni corrida parcial.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Carga <span class="mono">/acli</span> antes de cualquier operación de Jira</b>, en los
+              dos modos. Otras skills dueñas de herramientas, solo si la referencia elegida las
+              pide.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Verifica solo con los pasos de su modo.</b> Nunca corre la verificación del otro.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Reenvía el resto de los argumentos tal cual</b>: todo lo que viene después de la
+              palabra del modo llega intacto a la referencia.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 COMPONENTS ============ -->
+    <section class="band" id="components">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · modo components</div>
+          <h2>Un component es un módulo de la app que corre</h2>
+          <p class="sub">
+            No una épica. Una épica es una unidad de trabajo; un component es una unidad del sistema
+            en marcha, más fina a propósito, porque un filtro sirve tanto como discrimina. Es un campo
+            <b>nativo</b> de Jira (se setea directo, nunca a través de
+            <span class="mono">{{jira.*}}</span>) y es el eje de agrupación de filtros JQL, métricas
+            y dashboards.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Fase 1 · derivar el mapa de módulos</h3>
+            <p>
+              Dos entradas. <b>Lo que existe</b>: el árbol de rutas de la app
+              (<span class="mono">app/**/page.tsx</span> y <span class="mono">app/api/**/route.ts</span>
+              en Next.js App Router), agrupado con el vocabulario del producto.
+              <b>Lo que viene</b>: épicas e historias del backlog que todavía no tienen ruta.
+            </p>
+            <p>
+              Un component se puede declarar <b>antes que el código</b>: una feature en refinamiento ya
+              tiene historias que necesitan dónde colgarse. La IA propone, no decide.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 2 · leer los Components vivos</h3>
+            <p>
+              Lista cada component con su <b>cantidad de issues</b>. Ese número es el punto: borrar y
+              recrear uno con nombre nuevo dejaría huérfanos a todos sus issues.
+            </p>
+            <p>Cada módulo propuesto queda clasificado: ya existe (skip), existe con otro nombre (rename) o falta (create).</p>
+          </div>
+          <div class="step">
+            <h3>Fase 3 · plan y aprobación</h3>
+            <p>
+              Escribe el plan en <span class="mono">.context/reports/jira-components-plan.json</span>,
+              te lo muestra como tabla (renames aparte, cada uno con su cantidad de issues) y corre el
+              dry run. Si querés cambiar nombres o agrupación, regenera y vuelve a mostrar.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 4 · aplicar y verificar</h3>
+            <p>
+              Solo después de tu sí: <span class="mono">--apply</span>, y enseguida otro
+              <span class="mono">--list</span>. La lista viva tiene que coincidir con el plan aprobado.
+            </p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># fase 2 · estado actual, con cantidad de issues</span>
+bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_KEY}}</span>
+
+<span class="c"># fase 3 · dry run (es el default: no escribe nada)</span>
+bun scripts/sync-jira-components.ts .context/reports/jira-components-plan.json
+
+<span class="c"># fase 4 · solo con aprobación explícita</span>
+bun scripts/sync-jira-components.ts .context/reports/jira-components-plan.json <span class="k">--apply</span>
+bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_KEY}}</span></pre>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Lee el código y el backlog, agrupa rutas en módulos y arma el plan.</p>
+            <p>
+              Avisa si el vocabulario del producto choca con nombres genéricos (Tests, Runs, Bugs) y
+              propone prefijar cada component con el nombre del producto.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>La <b>agrupación</b> y los <b>nombres</b> de cada módulo.</p>
+            <p>Si se aplica el <b>prefijo</b>: nunca va en silencio, es parte del plan.</p>
+            <p>El <b>sí</b> que habilita el <span class="mono">--apply</span>.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>El plan en <span class="mono">.context/reports/</span>.</p>
+            <p>
+              El módulo de Components del proyecto reconciliado, y un reporte de lo renombrado, creado
+              y salteado.
+            </p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> la lista viva de Components coincide con el plan aprobado.</div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Rename no es create</b
+            ><span
+              >Un rename conserva todas las asignaciones existentes. Así migra un component a una
+              convención nueva sin editar issues en masa.</span
+            >
+          </div>
+          <div class="g">
+            <b>Re-correr es normal</b
+            ><span
+              >Un rename cuyo origen ya no está, o cuyo destino ya existe, se degrada a un skip
+              documentado. Un plan aplicado a medias se puede volver a correr.</span
+            >
+          </div>
+          <div class="g">
+            <b>Por qué un script REST</b
+            ><span
+              ><span class="mono">acli</span> no puede crear, renombrar ni borrar Components. Es un
+              límite documentado de la herramienta, no un atajo.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 MIGRACIÓN ============ -->
+    <section class="band" id="migracion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · modo instance-migration</div>
+          <h2>Por qué no es un buscar y reemplazar</h2>
+          <p class="sub">
+            Una migración de sitio <b>reasigna</b> los IDs de los campos personalizados. El ID viejo
+            suele seguir existiendo en la instancia nueva, apuntando a <b>otro campo</b>. La falla no
+            es un 404: es un <span class="mono">200 OK</span> que escribe tus datos en el campo
+            equivocado, en silencio.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Mitad fácil</div>
+            <h3>Repuntar el host</h3>
+            <ul>
+              <li>Una línea en <span class="mono">.agents/project.yaml</span>.</li>
+              <li>
+                Re-login de <span class="mono">acli</span>. Las credenciales REST y la sesión de
+                <span class="mono">acli</span> son independientes: si cambiás una sola, REST le pega a
+                la instancia nueva y <span class="mono">acli</span> sigue leyendo la vieja, sin error.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Mitad que evita corrupción</div>
+            <h3>Regenerar los catálogos</h3>
+            <ul>
+              <li>
+                Los catálogos de <span class="mono">.agents/</span> describen una instancia que ya no
+                existe. Ver <a href="#catalogos">catálogos</a>.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>Fase 0 · resolver las dos instancias</h3>
+            <p>
+              <b>Origen</b>: lo detecta leyendo <span class="mono">.agents/project.yaml</span>, la sesión
+              de <span class="mono">acli</span> y lo que resuelve <span class="mono">bun run jira:url</span>.
+              Si no coinciden, el repo ya está a medio migrar: lo trata como una reparación y te pregunta
+              cuál es el "antes" real. <b>Destino</b>: nunca lo adivina, te lo pide.
+            </p>
+            <p>
+              Confirma los dos hosts en una línea, y antes de seguir comprueba que el destino responde
+              <span class="mono">200</span> en <span class="mono">/rest/api/3/myself</span>. Migrar a una
+              instancia vacía publica catálogos vacíos.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 1 · auditar antes de editar</h3>
+            <p>
+              Barre el repo buscando el host viejo y clasifica cada hallazgo en "cambia" o "no cambia".
+              Te muestra la tabla antes de tocar nada. Lo que no encaja en ninguna lista (un workflow de
+              CI, un README, <span class="mono">.mcp.json</span>) lo pregunta.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 2 · aplicar</h3>
+            <p>
+              Primero <span class="mono">atlassian_url</span> en <span class="mono">.agents/project.yaml</span>,
+              que es lo que todo lo demás lee. Después <b>borra</b> cualquier
+              <span class="mono">ATLASSIAN_URL</span> suelto. Al final, el re-login de
+              <span class="mono">acli</span> con el host leído de vuelta del yaml.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 3 · verificar</h3>
+            <p>
+              Cinco chequeos en una tabla: el yaml, lo que resuelve <span class="mono">jira:url</span> y la
+              sesión de <span class="mono">acli</span> nombran el destino; <span class="mono">printenv
+              ATLASSIAN_URL</span> sale vacío; la llamada REST devuelve <span class="mono">200</span>.
+              Cualquier cosa menos que eso es una migración fallida.
+            </p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Cambia</th>
+                <th>No cambia</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="mono">.agents/project.yaml</span> →
+                  <span class="mono">atlassian_url</span>: el único lugar donde se escribe el host
+                </td>
+                <td>
+                  Un dominio alias de la organización: suele redirigir a la instancia activa. Pero no se
+                  ve desde el repo, así que lo confirmás a mano
+                </td>
+              </tr>
+              <tr>
+                <td>Un <span class="mono">ATLASSIAN_URL</span> viejo en <span class="mono">.env</span> o en el proceso: se borra, no se actualiza</td>
+                <td>Registros históricos: reportes de sprint, retros, changelogs. Reescribirlos falsea el pasado</td>
+              </tr>
+              <tr>
+                <td>La sesión de <span class="mono">acli</span>: re-login por máquina</td>
+                <td>Código que ya matchea con una regex general, y el caché regenerable de <span class="mono">.context/PBI/</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout r">
+          <b>La sesión de <span class="mono">acli</span> es de toda la máquina.</b> Vive en
+          <span class="mono">~/.config/acli</span>, no en el repo: el re-login repunta cada proyecto del
+          equipo, no solo este. Si todavía necesitás la instancia vieja para otro repo, la IA para y te
+          avisa; vas a alternar con la operación de cambio de sesión de <span class="mono">/acli</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 CATÁLOGOS ============ -->
+    <section class="band" id="catalogos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · fases 4 y 5</div>
+          <h2>Regenerar los catálogos y probar que los IDs se movieron</h2>
+          <p class="sub">
+            Las variables de los agentes nunca guardan IDs de Jira: resuelven <b>slugs</b> contra tres
+            catálogos propios de cada workspace. Es la parte que la gente saltea, y la que corrompe
+            datos.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Catálogo</th>
+                <th>Se regenera con</th>
+                <th>Guarda</th>
+                <th>Ojo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">.agents/jira-fields.json</span></th>
+                <td><span class="mono">bun run jira:sync-fields --force</span></td>
+                <td>IDs de campos personalizados y sus opciones</td>
+                <td>sin <span class="mono">--force</span> frena: el catálogo ya está poblado</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/jira-workflows.json</span></th>
+                <td><span class="mono">bun run jira:sync-workflows</span></td>
+                <td>estados y transiciones por tipo de trabajo</td>
+                <td>idempotente; <span class="mono">--force</span> no suma nada</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/jira-link-types.json</span></th>
+                <td><span class="mono">bun run jira:sync-link-types</span></td>
+                <td>tipos de vínculo entre issues</td>
+                <td>no tiene <span class="mono">--force</span>, y lo traga sin avisar</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>Antes: el manifiesto pone el techo</h3>
+            <p>
+              <span class="mono">.agents/jira-required.yaml</span> no guarda IDs, pero es la
+              <b>entrada</b> de la regeneración: <span class="mono">jira:sync-workflows</span> cataloga
+              solo los tipos de trabajo que declara. Un manifiesto viejo produce un catálogo amputado
+              que sale con código <span class="mono">0</span>.
+            </p>
+            <p>
+              Se compara contra el de upstream y, si hay diferencia, la IA <b>para y te deja elegir</b>
+              tipo por tipo: el archivo es co-propiedad del upstream y del proyecto.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Después: un ID cambiado no es un ID correcto</h3>
+            <p>
+              Un diff sin cambios de ID significa que el sync no llegó a la instancia nueva. Pero dos
+              slugs pueden <b>intercambiar</b> IDs y sobrevivir a ese chequeo. Por eso pregunta a la
+              instancia viva qué es cada ID catalogado y lo compara con el nombre registrado.
+            </p>
+            <p>
+              Revisa también campos que quedaron con opciones vacías, IDs literales fuera de los
+              catálogos y cualquier variable que fije un ID por encima del catálogo.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Commit: responsabilidades separadas</h3>
+            <p>
+              Un commit para el repunte de <span class="mono">atlassian_url</span>, otro para los tres
+              catálogos. Si el manifiesto cambió, va antes, en un tercero. Todo a través de
+              <span class="mono">/git-flow-master</span>, y sin push sin tu confirmación.
+            </p>
+          </div>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b><span class="mono">--upex</span> casi nunca</b
+            ><span
+              >Baja un catálogo de referencia generado contra el workspace de los autores del
+              boilerplate. Si migrás tu propia instancia, sus IDs no son los tuyos. Solo sirve como
+              andamio sin permiso de Administer, y queda marcado como dato incorrecto.</span
+            >
+          </div>
+          <div class="g">
+            <b>Sin backup del <span class="mono">.env</span> en el repo</b
+            ><span
+              >Un <span class="mono">.env.bak</span> queda sin ignorar, con un token vivo adentro, a un
+              <span class="mono">git add</span> de distancia. La edición es de una línea y se revierte
+              sola.</span
+            >
+          </div>
+          <div class="g">
+            <b>Nunca leer el <span class="mono">.env</span> entero</b
+            ><span
+              >Se filtra por la clave exacta. Si un token llega a imprimirse, la IA lo dice y recomienda
+              rotarlo.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Tres cosas quedan para un humano</b> en el reporte de cierre: confirmar que el dominio
+          alias ya resuelve al destino, saber que un manifiesto que se atrasó se va a volver a atrasar
+          (el updater no lo vigila), y avisar al equipo que cada uno rehaga el login de
+          <span class="mono">acli</span> en su máquina.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 HOST ============ -->
+    <section class="band" id="host">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · el ancla del host</div>
+          <h2>El host vive en un solo lugar</h2>
+          <p class="sub">
+            <span class="mono">.agents/project.yaml</span> → <span class="mono">issue_tracker.atlassian_url</span>,
+            y en ningún otro lado del repo. Una segunda copia es lo que se pone viejo: tras una
+            migración, un host suelto en el entorno apunta los scripts al sitio anterior y reporta
+            éxito.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Cómo se lee</div>
+            <h3>Siempre a través del resolver</h3>
+            <ul>
+              <li>
+                Desde código: <span class="mono">cli/lib/atlassian-instance.ts</span>, nunca
+                <span class="mono">process.env.ATLASSIAN_URL</span>.
+              </li>
+              <li>
+                Desde la terminal: <span class="mono">bun run --silent jira:url</span> (URL base) o
+                <span class="mono">--slug</span> (el host pelado que pide
+                <span class="mono">acli --site</span>).
+              </li>
+              <li>
+                Si una variable de entorno vieja discrepa, gana el yaml y el resolver avisa con los dos
+                valores.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Contaminación</div>
+            <h3>Un <span class="mono">ATLASSIAN_URL</span> suelto se borra</h3>
+            <ul>
+              <li>
+                No es una variable local de este repo: un hit en <span class="mono">.env</span> o en el
+                proceso es un resto de antes de la separación.
+              </li>
+              <li>
+                Un valor heredado del proceso sobrevive a cada reinicio.
+                <span class="mono">bun run vars:env:check</span> y
+                <span class="mono">bun run setup:doctor</span> lo reportan.
+              </li>
+              <li>Actualizarlo en vez de borrarlo recrea la copia que se va a poner vieja en la próxima migración.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Repo plantilla, valores en <span class="mono">null</span>.</b> Si
+          <span class="mono">project.project_name</span> es <span class="mono">null</span>, el repo es
+          una plantilla sin onboarding: <span class="mono">atlassian_url</span> y
+          <span class="mono">project_key</span> se quedan en <span class="mono">null</span>, el reporte
+          lo dice, y no se fabrica un commit vacío para disimularlo.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            La primera palabra después del nombre de la skill elige el modo, y el resto viaja tal cual a
+            la referencia: la clave del proyecto y la ruta de la app, o las dos instancias.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/jira-administration components</span>
+            <p>Barra de la skill más el modo. Sin modo, la IA lo saca de la frase o pregunta.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill jira-administration, modo instance-migration</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill jira-administration, modo components</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># components: clave y fuente explícitas, o vacío para que la fase 1 las resuelva</span>
+/jira-administration components <span class="s">BK ../bunkai</span>
+
+<span class="c"># instance-migration: origen y destino, en ese orden, o vacío para que la fase 0 detecte y pregunte</span>
+/jira-administration instance-migration <span class="s">oldsite.atlassian.net newsite.atlassian.net</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ §09 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Al entrar resuelve sus categorías complementarias (<span class="mono">issue-tracker</span>,
+            <span class="mono">meta-skill</span>) desde <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Siempre · los dos modos</div>
+            <h3>/acli</h3>
+            <p>
+              Dueña de cada lectura de Jira, del estado de autenticación y del cambio de sitio. Se carga
+              antes de cualquier operación. También es la puerta para el trabajo diario con tickets.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Después · migración, fase 5</div>
+            <h3>/git-flow-master</h3>
+            <p>
+              Dueña del contrato de commit, branch y push con el que se publican el repunte y los
+              catálogos. Nunca empuja sin confirmación.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al lado · el caché de Jira</div>
+            <h3>.context/PBI/</h3>
+            <p>
+              El espejo local del backlog, y por qué un host viejo lo corrompe reportando éxito. Deck:
+              <a href="../agentic-dev-core/pbi-jira-cache.es.html">PBI como caché de Jira</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/jira-administration/SKILL.md"
+            >.agents/skills/jira-administration/SKILL.md</a
+          >
+          y sus dos referencias en <span class="mono">references/</span>, una por modo. El ancla del
+          host está en <span class="mono">AGENTS.md</span> §7.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> Las dos operaciones escriben donde un
+            error no se ve: un component borrado deja issues huérfanos, un ID de campo viejo escribe en
+            el campo equivocado con un <span class="mono">200</span>. Por eso cada corrida lee primero,
+            te muestra el plan entero y verifica leyendo el destino.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/jira-administration/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
