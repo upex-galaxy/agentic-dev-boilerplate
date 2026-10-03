@@ -25,6 +25,12 @@
       "category": "positive"
     },
     {
+      "name": "records-stack-descriptor-after-base-scaffold",
+      "prompt": "The backend and frontend base scaffold just finished and the build passes. Wrap up the bootstrap.",
+      "expected_behavior": "Runs the Verification checklist, including the stack step: runs `bun run agents:setup --stack` so the `stack:` block of `.agents/project.yaml` describes the scaffolded app (proposals shown with their evidence, greenfield defaults kept where the repo agrees), then confirms `bun run setup:doctor` reports no stack drift. Does NOT hand-edit the block from memory and does NOT invent a script name the app's package.json lacks.",
+      "category": "positive"
+    },
+    {
       "name": "should-not-trigger-prd-definition",
       "prompt": "Define the PRD for this product — personas, user journeys, MVP scope.",
       "expected_behavior": "Does NOT activate project-bootstrap. Should route to /project-foundation (phase-2-prd references) because the request is product definition, not infrastructure scaffolding. project-bootstrap implements infra after the PRD/SRS exist.",
