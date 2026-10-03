@@ -1,0 +1,2984 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orca orchestration: un conductor y una flota de sesiones</title>
+    <meta
+      name="description"
+      content="Cómo /orca-orchestration coordina trabajo que no entra en una sola sesión: dos ejecutores, el gate silencioso, los modos conductor, worker y automatización, el fallback con launch.txt pegado a mano, la provisión de worktrees, los claims y el bloque orchestration de .agents/project.yaml."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lanes.two {
+        grid-template-columns: repeat(2, 1fr);
+        margin: 26px 0;
+      }
+      @media (max-width: 860px) {
+        .lanes.two {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      .steps,
+      .step {
+        min-width: 0;
+      }
+      .step .mono,
+      .check .mono,
+      .alt .mono,
+      .g .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.sections tbody th {
+        width: 3em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#ejecutores">Ejecutores</a>
+        <a href="#arbol">¿Orquestación?</a>
+        <a href="#gate">Gate</a>
+        <a href="#modos">Modos</a>
+        <a href="#fallback">Fallback</a>
+        <a href="#provision">Worktrees</a>
+        <a href="#claims">Claims</a>
+        <a href="#bloque">Bloque</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> tema
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · orquestación multi-sesión</div>
+        <h1>Un <em>director</em>, una flota de <span class="sig">sesiones</span>.</h1>
+        <p class="lede">
+          <span class="mono">/orca-orchestration</span> coordina trabajo que no entra en una sola
+          sesión: una sesión <b>conductor</b> habla con el dueño y reparte; cada <b>worker</b> es una
+          sesión persistente que se queda con un alcance de punta a punta (una historia, un módulo,
+          un racimo de bugs), reporta por un buzón y se puede interrumpir, consultar y retomar. La
+          skill pone el CÓMO. El QUÉ sigue siendo de la skill de workflow que la llama.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> para quien <b>lidera</b> y quien <b>desarrolla</b></span
+          >
+          <span class="chip"><span class="dot"></span> <b>opcional</b> por construcción</span>
+          <span class="chip agent"
+            ><span class="dot"></span> sin runtime: <b>las mismas líneas, pegadas a mano</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Gate</div>
+            <h3>Binario + runtime</h3>
+            <p>Tres estados. En las skills de workflow, los que fallan son silencio total.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Planear</div>
+            <h3>Topología y claims</h3>
+            <p>Se decide por lo que el trabajo ESCRIBE, no por cuántos workers hay.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Lanzar</div>
+            <h3>Provisionar, lanzar, briefear</h3>
+            <p>Una sola operación indivisible, verificada en la pantalla del worker.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Cerrar</div>
+            <h3>En el mismo turno</h3>
+            <p>Integración verificada, costo leído, worker liberado, auditoría de huérfanos.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 EJECUTORES ============ -->
+    <section class="band" id="ejecutores">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · dos ejecutores</div>
+          <h2>El subagente sigue siendo el default</h2>
+          <p class="sub">
+            <span class="mono">AGENTS.md</span> §3 está siempre activo: la conversación principal es
+            el centro de comando y el subagente de un solo uso es el ejecutor por defecto. Esta
+            skill agrega un SEGUNDO ejecutor y declara la excepción por escrito, porque un worker
+            supervisado rompe tres supuestos del contrato de un solo uso: un agente nuevo por
+            despacho, ningún canal hasta que termina, y el orquestador como único que le pregunta
+            al usuario.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Subagente de un solo uso (default)</th>
+                <th>Worker supervisado (esta skill)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Vive</td>
+                <td>Adentro del turno</td>
+                <td>Hasta que lo cerrás</td>
+              </tr>
+              <tr>
+                <td>Contexto</td>
+                <td>Se pierde cuando reporta</td>
+                <td>Persiste; le seguís hablando</td>
+              </tr>
+              <tr>
+                <td>Canal</td>
+                <td>Ninguno hasta que termina; no se puede pausar</td>
+                <td>Mensajes, preguntas bloqueantes y respuestas en cualquier momento</td>
+              </tr>
+              <tr>
+                <td>El dueño lo ve</td>
+                <td>No</td>
+                <td>Sí: tablero, terminal, teléfono</td>
+              </tr>
+              <tr>
+                <td>Git</td>
+                <td>El del orquestador</td>
+                <td>Su propio worktree, o el checkout compartido con dueños de archivo explícitos</td>
+              </tr>
+              <tr>
+                <td>Sirve para</td>
+                <td>Leer, verificar, mapear</td>
+                <td>Escribir e integrar por su cuenta: una historia entera, trabajo largo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue r">
+          <b>La regla práctica:</b> el subagente explora y devuelve un mapa; el worker ejecuta un
+          alcance completo. El conductor sigue usando subagentes para SUS propias lecturas, que es
+          lo que mantiene liviano su contexto.
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Despachar un subagente</div>
+            <h3>El briefing de 7 componentes</h3>
+            <ul>
+              <li>
+                Objetivo, documentos de contexto, estándares del proyecto (de
+                <span class="mono">REGISTRY.md</span>), skills a cargar, instrucciones exactas,
+                formato de reporte y reglas. Obligatorio en cada despacho (<span class="mono"
+                  >briefing-template.md</span
+                >).
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Lanzar un worker</div>
+            <h3>El mismo briefing, extendido para la flota</h3>
+            <ul>
+              <li>
+                <span class="mono">COMMON.md</span> más un <span class="mono">W-&lt;label&gt;.md</span>
+                por worker: dueños de archivo, canal, roster de hermanos, claims, ruta del reporte,
+                label de sesión (<span class="mono">references/brief-template.md</span>).
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 ÁRBOL ============ -->
+    <section class="band" id="arbol">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · antes de empezar</div>
+          <h2>¿Esto es orquestación siquiera?</h2>
+          <p class="sub">
+            Casi todo el trabajo no lo es. El árbol de decisión de la skill corta temprano.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>¿Entra en este turno y es una lectura, una verificación o un mapa?</h3>
+            <p>Subagente de un solo uso. Fin. Esto es la mayoría del trabajo.</p>
+          </div>
+          <div class="step">
+            <h3>¿Querés pasar el trabajo y desentenderte?</h3>
+            <p>
+              Eso es un <b>handoff</b>, transferencia de dueño: sin Task, sin Dispatch, sin buzón.
+              Una tarea suelta va por la guía <span class="mono">orca-cli</span> del binario; la
+              sesión entera, porque la ventana se llena, va por
+              <span class="mono">/session-handoff</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>¿Necesitás supervisar, esperar resultados, responder preguntas o un grafo de dependencias?</h3>
+            <p>Orquestación. Seguí.</p>
+          </div>
+          <div class="step">
+            <h3>¿El trabajo escribe código?</h3>
+            <p>
+              Un worktree de Orca por worker. ¿No escribe código? Flota en el mismo checkout
+              (<span class="mono">references/topologies.md</span>).
+            </p>
+          </div>
+          <div class="step">
+            <h3>¿Querés los workers SUPERVISADOS?</h3>
+            <p>
+              Lanzamiento nativo, y nada más: el runtime solo reconoce agentes que arrancó él. Si a
+              la máquina le faltan los argumentos por defecto del agente o las credenciales no
+              llegan al worker, la flota corre igual, sin supervisión, y se le avisa al dueño antes
+              de lanzar.
+            </p>
+          </div>
+          <div class="step">
+            <h3>¿No hay nadie al volante?</h3>
+            <p>
+              <span class="mono">references/automations.md</span>. Para entrega desatendida,
+              <span class="mono">/autonomous-delivery</span> decide qué corre y esta skill lo lanza.
+            </p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Situación</th>
+                <th>Se usa en cambio</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Una historia, una sesión, sus etapas corridas por subagentes</td>
+                <td>
+                  <span class="mono">/sprint-development</span> en modo de un ticket. Una flota es
+                  su modo batch-sprint con más de un ejecutor
+                </td>
+              </tr>
+              <tr>
+                <td>Decidir QUÉ puede trabajar una corrida desatendida</td>
+                <td><span class="mono">/autonomous-delivery</span>: auditoría, selección, topes</td>
+              </tr>
+              <tr>
+                <td>Rama, commit, push, PR, o un <span class="mono">git worktree</span> sin flota</td>
+                <td><span class="mono">/git-flow-master</span></td>
+              </tr>
+              <tr>
+                <td>Una tarea larga, una sesión, sin hermanos</td>
+                <td>Hacer la tarea</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 GATE ============ -->
+    <section class="band" id="gate">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · el gate</div>
+          <h2>Tres estados, y el silencio como regla</h2>
+          <p class="sub">
+            El gate mira el <b>binario</b> más un <b>runtime alcanzable</b>. Nunca mira si la skill
+            del proveedor está instalada: una máquina con el binario y sin esas guías es igual de
+            capaz, porque esta skill sabe pedirle la gramática al binario.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># el gate de SKILL.md: el flag de alcance está ANIDADO</span>
+command -v orca &gt;/dev/null 2&gt;&amp;1 \
+  &amp;&amp; [ "$(orca status --json &lt;/dev/null 2&gt;/dev/null | jq -r '.result.runtime.reachable' 2&gt;/dev/null)" = "true" ]</pre>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Estado</th>
+                <th>En una skill de workflow</th>
+                <th>En esta skill</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>A</b> · sin binario</td>
+                <td>
+                  <b>Silencio total.</b> No se nombra, no se recomienda, no es prerequisito, no
+                  aparece en un PR ni en un plan. El flujo escribe su
+                  <span class="mono">launch.txt</span> y el humano pega las líneas
+                </td>
+                <td>Una línea, y solo porque el usuario PIDIÓ orquestación; después, el fallback</td>
+              </tr>
+              <tr>
+                <td><b>B</b> · binario, runtime inalcanzable</td>
+                <td>Silencio (el mismo fallback)</td>
+                <td>
+                  <span class="mono">orca open --json</span> una vez, se vuelve a chequear una vez;
+                  sigue sin responder, se trata como A
+                </td>
+              </tr>
+              <tr>
+                <td><b>C</b> · listo</td>
+                <td>
+                  El refuerzo se activa sin anunciarse: el runtime lanza los workers con el prompt
+                  idéntico, y reportan al buzón ADEMÁS de los tokens en archivo
+                </td>
+                <td>Modo completo: conductor, worker, automatización</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout r">
+          <b>La recomendación de una línea (estados A o B, solo acá):</b> la orquestación de nivel 1
+          ya está en la sesión, con los subagentes de <span class="mono">AGENTS.md</span> §3. La
+          profesional (sesiones persistentes con las que se habla, un buzón, un tablero, el
+          teléfono) necesita Orca instalado. Sin Orca, igual se escribe
+          <span class="mono">launch.txt</span> con una línea lista para pegar por worker.
+        </div>
+
+        <div class="callout blue r">
+          <b>La prueba que decide cualquier edición futura:</b> ¿esta línea tendría sentido, sin
+          cambios, para un desarrollador que nunca oyó hablar de Orca? Si no, va en esta skill y no
+          en la de workflow. La prohibición real siempre fue que la ausencia del orquestador no
+          cueste nada y nunca se reporte; un gate silencioso la cumple, y por eso una skill de
+          workflow puede llevar unas pocas líneas detrás del gate.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 CAPAS ============ -->
+    <section class="band" id="capas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · tres capas</div>
+          <h2>La skill del repo apunta; no copia</h2>
+          <p class="sub">
+            Si la guía del binario ya lo dice, esta skill lleva un puntero. Una copia se
+            desincroniza en silencio con la próxima versión.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c">CAPA 3 · DOCTRINA DEL REPO</span>   .agents/skills/orca-orchestration/   <span class="c">(T1, versionada)</span>
+   cuándo partir el trabajo · topología por actividad · provisión · brief · gotchas medidos · frases del dueño
+        <span class="k">^ apunta a v</span>
+<span class="c">CAPA 2 · GRAMÁTICA + MÁQUINA</span>  orca skills get orchestration   <span class="c">(buzón, Run, Task, ciclo del worker)</span>
+                               orca skills get orca-cli        <span class="c">(terminales, worktrees, tablero, navegador)</span>
+   la sirve EL BINARIO, versionada con él
+        <span class="k">^ opera sobre v</span>
+<span class="c">CAPA 1 · APP</span>                  la app corriendo · runtime alcanzable · tablero · teléfono</pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Se cargan juntas</div>
+            <h3>Las guías del proveedor, al lado de esta skill</h3>
+            <ul>
+              <li>
+                La lista es <span class="mono">orchestration.orchestrator_skills</span> en
+                <span class="mono">.agents/project.yaml</span>. Son chicas, y se cargan desde el
+                principio, en el conductor y en el worker: una gramática que nadie cargó produce
+                flags inventados.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Lista vacía</div>
+            <h3>Igual funciona</h3>
+            <ul>
+              <li>
+                Sin guías instaladas, la skill le pide la gramática al binario. Los temas PROFUNDOS
+                se piden a demanda siempre (<span class="mono">orca skills get &lt;topic&gt;</span>),
+                solo cuando una guía apunta a uno.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 MODOS ============ -->
+    <section class="band" id="modos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · modos</div>
+          <h2>Quién carga qué</h2>
+          <p class="sub">
+            Los modos son roles, no subcomandos: cada sesión carga lo justo para el suyo.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Quién</th>
+                <th>Carga</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>CONDUCTOR</b></td>
+                <td>La sesión que habla con el dueño</td>
+                <td>
+                  <span class="mono">SKILL.md</span> +
+                  <span class="mono">references/coordinator-playbook.md</span> + las guías del
+                  proveedor. Sus lecturas van por subagentes
+                </td>
+              </tr>
+              <tr>
+                <td><b>WORKER</b></td>
+                <td>Cada sesión lanzada</td>
+                <td>
+                  Las guías del proveedor + <span class="mono">worker-contract.md</span> +
+                  <span class="mono">channel-discipline.md</span> + su skill de dominio
+                  (<span class="mono">/sprint-development</span>,
+                  <span class="mono">/product-management</span>)
+                </td>
+              </tr>
+              <tr>
+                <td><b>AUTOMATION</b></td>
+                <td>Una rutina programada, desatendida</td>
+                <td>
+                  <span class="mono">references/automations.md</span> + esta skill en modo
+                  conductor. <b>El despachador nunca produce</b>: producen sus workers
+                </td>
+              </tr>
+              <tr>
+                <td><b>OWNER</b></td>
+                <td>El dueño, por chat o desde el teléfono</td>
+                <td>Las frases de abajo; el conductor traduce</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="lanes two r">
+          <div class="lane">
+            <div class="lane-head">El ciclo del conductor (camino nativo)</div>
+            <a class="wf" href="#provision"
+              ><span class="lt">1</span
+              ><span
+                ><b>Run y briefs</b
+                ><span
+                  >Un Run por corrida; los briefs se escriben ANTES que las Tasks, porque la spec de
+                  la Task los cita por ruta.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#provision"
+              ><span class="lt">2</span
+              ><span
+                ><b>Lanzamiento nativo</b
+                ><span
+                  >El runtime arranca el agente (task, worktree, agente, modelo, esfuerzo). Una
+                  terminal con nuestra línea de comando nunca se puede supervisar.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#provision"
+              ><span class="lt sig">3</span
+              ><span
+                ><b>Leer la pantalla</b
+                ><span
+                  >Worker listo y credenciales cargadas, antes de mandarle trabajo.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#fallback"
+              ><span class="lt">4</span
+              ><span
+                ><b>Mandar el prompt</b
+                ><span>El mismo texto del fallback, apuntando a su brief.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Esperar y cerrar</div>
+            <a class="wf" href="#modos"
+              ><span class="lt">5</span
+              ><span
+                ><b>Un solo waiter por Run</b
+                ><span
+                  >Ventanas de 540 s como máximo (el harness mata un comando a los 600 s), cada una
+                  rearmada con el ack verificado en el mismo comando. Sin monitores caseros.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#modos"
+              ><span class="lt sig">6</span
+              ><span
+                ><b>Verificar la integración</b
+                ><span
+                  >Commits aterrizados, PR abierto, artefactos del tracker en su estado.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#modos"
+              ><span class="lt">7</span
+              ><span
+                ><b>Leer el costo, liberar</b
+                ><span
+                  >El pie de tokens solo existe en la pantalla del worker y muere con la terminal.
+                  Después se libera por dispatch.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#provision"
+              ><span class="lt">8</span
+              ><span
+                ><b>Auditoría de huérfanos</b
+                ><span>Recién después se borra el worktree.</span></span
+              ></a
+            >
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">El worker manda</span>
+            <p>
+              Tres cosas, ninguna más: <span class="mono">worker_done</span> (una vez, con
+              <span class="mono">--outcome</span> explícito), <span class="mono">ask</span>
+              (bloqueante) y <span class="mono">escalation</span>.
+            </p>
+            <p>
+              <b>Nada de heartbeats</b>, aunque el preámbulo inyectado los pida: cada uno despierta
+              al conductor para leer "vivo".
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>El alcance: el conductor decide alcance, el worker decide ejecución.</p>
+            <p>
+              Lo que cambia el brief: un archivo nuevo, otro ticket, otra rama o un esquema
+              compartido frena al worker y se escala.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>
+              Un PR por worker, que se detiene ahí, y un reporte largo escrito ANTES de
+              <span class="mono">worker_done</span>, por ruta absoluta al checkout primario.
+            </p>
+            <p>El reporte es un CONTEO, no una narración.</p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Gate</b> una etapa no es un checkpoint: el worker corre todas sin volver al prompt hasta
+          mandar <span class="mono">worker_done</span>. Y si su medición contradice al conductor,
+          frena y pregunta con las dos lecturas; nunca obedece ni se desvía en silencio.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FALLBACK ============ -->
+    <section class="band" id="fallback">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · el fallback, completo</div>
+          <h2><span class="mono">launch.txt</span> es el contrato; el runtime es el atajo</h2>
+          <p class="sub">
+            Sin binario y sin runtime el trabajo no cambia. Cambia quién lanza y cómo se lee el
+            estado.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Paso</th>
+                <th>Sin runtime</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Plan</td>
+                <td>Idéntico: misma topología, mismo chequeo de colisiones, mismas rondas</td>
+              </tr>
+              <tr>
+                <td>Brief</td>
+                <td>
+                  Idéntico: <span class="mono">COMMON.md</span> +
+                  <span class="mono">W-&lt;label&gt;.md</span>, citados por ruta absoluta
+                </td>
+              </tr>
+              <tr>
+                <td>Lanzar</td>
+                <td>
+                  El conductor imprime <span class="mono">launch.txt</span>; el humano abre las
+                  terminales y pega una línea en cada una
+                </td>
+              </tr>
+              <tr>
+                <td>Identidad</td>
+                <td>
+                  El flag de nombre de la línea; donde el harness no tiene uno, el humano escribe
+                  <span class="mono">/rename &lt;KEY&gt;</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Estado</td>
+                <td>Los tokens de bloqueo del workflow, más el tracker y git</td>
+              </tr>
+              <tr>
+                <td>Preguntas</td>
+                <td>
+                  En el reporte, con opciones y una recomendación; el worker sigue con lo que no
+                  depende de la respuesta
+                </td>
+              </tr>
+              <tr>
+                <td>Cerrar</td>
+                <td>El humano cierra las terminales</td>
+              </tr>
+              <tr>
+                <td>Claims</td>
+                <td>El ledger degradado, solo de anexado, con rondas más chicas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <pre class="code r"><span class="c"># una línea de launch.txt (Claude Code). El prompt entre comillas simples es el PAYLOAD:</span>
+<span class="c"># idéntico, byte por byte, al que el camino supervisado manda al worker nativo.</span>
+bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&lt;KEY&gt;" \
+  <span class="s">'/&lt;workflow-skill&gt; &lt;KEY&gt; fleet worker. Read &lt;ABS&gt;/.../COMMON.md then &lt;ABS&gt;/.../W-&lt;label&gt;.md
+  and execute your brief. Run every stage without returning to the prompt until worker_done is sent;
+  stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'</span></pre>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Se escribe siempre</b
+            ><span
+              >Con o sin runtime, en el scope de la skill de workflow que reparte el trabajo. Se
+              regenera entero en cada pasada de planificación: lo cerrado se cae, nada se edita en
+              el lugar.</span
+            >
+          </div>
+          <div class="g">
+            <b>El token de apertura carga peso</b
+            ><span
+              ><span class="mono">/&lt;workflow-skill&gt; &lt;KEY&gt; fleet worker</span> titula la
+              sesión (en el camino supervisado no hay flag de nombre) y le dice a la skill que corre
+              como worker de flota.</span
+            >
+          </div>
+          <div class="g">
+            <b>La frase de continuación tampoco es adorno</b
+            ><span
+              >Workers medidos frenaron en un límite de etapa con briefs que ya prohibían
+              checkpoints. La instrucción funciona como prompt y falla como puntero a un
+              archivo.</span
+            >
+          </div>
+          <div class="g">
+            <b>Cada línea es autosuficiente y se valida</b
+            ><span
+              >El prompt va entero entre comillas simples, sin apóstrofes adentro, y el archivo
+              pasa <span class="mono">sh -n</span> antes de lanzar nada. Un error de comillas mató
+              una flota entera con terminales que se veían perfectas.</span
+            >
+          </div>
+          <div class="g">
+            <b>Nunca detectar la flota por una variable de entorno</b
+            ><span
+              >Un prefijo de entorno no llega a un worker nativo y se midió vacío incluso en el
+              camino pegado. La flota se detecta por el token del prompt y el brief.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 PROVISIÓN ============ -->
+    <section class="band" id="provision">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · topología y provisión</div>
+          <h2>Un worktree recién creado no tiene lo que la sesión necesita</h2>
+          <p class="sub">
+            La topología sale de lo que el trabajo escribe. Y un hueco de provisión nunca se
+            anuncia como tal: se disfraza de otra falla, y el worker depura lo que no es durante
+            una hora.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Actividad</th>
+                <th>Topología</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Batch-sprint de <span class="mono">/sprint-development</span></td>
+                <td>
+                  Un worktree de Orca por worker, un worker por historia. Dos sesiones en un
+                  checkout chocan en el índice de git aunque nunca toquen el mismo archivo
+                </td>
+              </tr>
+              <tr>
+                <td>Bugs independientes</td>
+                <td>Un worktree por RACIMO: tres bugs con una causa raíz son un worker</td>
+              </tr>
+              <tr>
+                <td>Refinamiento con <span class="mono">/product-management</span></td>
+                <td>Flota en el MISMO checkout: escribe en Jira, no en código</td>
+              </tr>
+              <tr>
+                <td>Mapas, auditorías, investigación</td>
+                <td>No es flota: subagentes de un solo uso</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout r">
+          <b>Sin excepciones:</b> nunca dos workers en el mismo módulo, y nunca dos migraciones en la
+          misma ronda.
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Falta en el worktree</th>
+                <th>Cómo falla sin eso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">.env</span></td>
+                <td>
+                  En silencio en todo host menos Codex: el servidor MCP arranca y muere en su
+                  primera llamada autenticada (Critical Rule #9)
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">node_modules/</span> y los shims de husky</td>
+                <td>
+                  <span class="mono">Cannot find module</span>, que se lee como un import roto; sin
+                  hooks, un commit se salta todos los gates
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">.context/PBI/</span></td>
+                <td>
+                  En silencio: el worker no ve la historia sincronizada y trabaja con el título del
+                  ticket
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">.session/</span></td>
+                <td>
+                  No se copia: el prompt cita rutas ABSOLUTAS al checkout primario
+                  (<span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>). Lo escrito adentro de un
+                  worktree muere con él
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Provisionar</h3>
+            <p>
+              <span class="mono">bun run worktree:provision [&lt;ruta&gt;]</span> cierra los huecos
+              reparables de una vez: copia lo gitignorado desde el primario (la lista es
+              <span class="mono">PROVISION_COPIES</span> en
+              <span class="mono">cli/lib/worktree.ts</span>), instala dependencias, corre
+              <span class="mono">bun run agents:compat</span> y no copia
+              <span class="mono">.session/</span>. Hidratar el cache del tracker queda para una
+              decisión humana.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Como hook de Orca</h3>
+            <p>
+              El repo commitea <span class="mono">orca.yaml</span>:
+              <span class="mono">scripts.setup</span> provisiona cada worktree que Orca crea y
+              <span class="mono">scripts.archive</span> corre
+              <span class="mono">bun run worktree:audit --rescue</span> antes de borrarlo. Confianza
+              y política de hooks se deciden por máquina.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Credenciales en el camino nativo</h3>
+            <p>
+              Sin línea de lanzamiento no corre el wrapper que carga <span class="mono">.env</span>.
+              Claude Code y OpenCode leen lo que escribe
+              <span class="mono">bun run harness:env</span>; Codex carga
+              <span class="mono">.env</span> con su propio loader; las CLIs de shell
+              (<span class="mono">acli</span>, <span class="mono">supabase</span>,
+              <span class="mono">vercel</span>) necesitan direnv. El conductor confirma en pantalla
+              antes de mandar trabajo.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Antes de borrar</h3>
+            <p>
+              Cambios sin commitear, commits sin integrar,
+              <span class="mono">bun run worktree:audit &lt;wt&gt;</span> (STATE, CACHE,
+              DISPOSABLE, UNKNOWN; exit 0 es el gate) y si alguien va a retomar esa sesión. Recién
+              ahí se borra.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 CLAIMS ============ -->
+    <section class="band" id="claims">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · claims y operaciones del conductor</div>
+          <h2>Un solo escritor para lo compartido</h2>
+          <p class="sub">
+            Un claim es un MENSAJE con un prefijo reservado en el asunto, y el conductor lleva el
+            ledger. No hay comando de claim ni demonio de locks. Los archivos no se reclaman: sus
+            choques se evitan al asignar dueños.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Qué se reclama</div>
+            <h3>Recursos mutables que dos workers tocarían a la vez</h3>
+            <ul>
+              <li>
+                <span class="mono">identity</span> (una identidad = un navegador vivo),
+                <span class="mono">seed</span>, <span class="mono">record</span>,
+                <span class="mono">schema</span>, <span class="mono">env-resource</span> y
+                <span class="mono">tracker-artifact</span>, cada uno al id más chico defendible.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Tres intenciones</div>
+            <h3><span class="mono">read</span> · <span class="mono">write</span> · <span class="mono">enumerate</span></h3>
+            <ul>
+              <li>
+                <span class="mono">write</span> es exclusivo; los otros dos se apilan.
+                <span class="mono">enumerate</span> es listar una colección que muestra entidades de
+                los hermanos: nadie afirma sobre su tamaño, contenido u orden.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Lo que está en el brief ya está concedido</b
+            ><span
+              >El conductor lo decidió en el triage y lo anota como
+              <span class="mono">pre-granted</span> al lanzar. El worker lo anuncia y trabaja. Solo
+              espera un claim descubierto a mitad de corrida.</span
+            >
+          </div>
+          <div class="g">
+            <b>Gana el primer mensaje</b
+            ><span
+              >El orden es el de llegada al buzón. Una negación sin alternativa es un bug del
+              protocolo. <span class="mono">worker_done</span> libera todo lo que el worker
+              tenía.</span
+            >
+          </div>
+          <div class="g">
+            <b>Sin runtime, convención</b
+            ><span
+              >El mismo <span class="mono">claims.md</span>, solo de anexado, con grep antes de
+              tocar. Tiene una ventana de carrera real: mejor que nada y peor que un árbitro.</span
+            >
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># .session/orchestration/&lt;slug&gt;/claims.md: del conductor, solo de anexado</span>
+[09:30] W1 record:orders@staging enumerate pre-granted   -&gt; no assertion on the collection
+[09:41] W2 seed:checkout-cart write granted
+[09:44] W3 seed:checkout-cart write denied      -&gt; seeds own cart</pre>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Migraciones sobre la base compartida.</b> El número sale del ledger vivo; un
+              worker que necesita una manda <span class="mono">BLOCKED: migration</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Salida generada desde una instancia viva:</b> tipos de Supabase,
+              <span class="mono">api/schemas/</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Merge a la rama de integración y deploy a staging,</b> de a una historia, en orden
+              de dependencias, verificado en destino.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Escrituras al tracker a altura de flota</b> y registros generados como
+              <span class="mono">REGISTRY.md</span>; un conflicto de archivo generado se regenera,
+              nunca se mergea a mano.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 BLOQUE ============ -->
+    <section class="band" id="bloque">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · el bloque <span class="mono">orchestration:</span></div>
+          <h2>Defaults, no política</h2>
+          <p class="sub">
+            Vive en <span class="mono">.agents/project.yaml</span> y lo documenta
+            <span class="mono">.agents/README.md</span>. Los valores se leen ahí; esta página no los
+            repite.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="k">orchestration:</span>
+  max_workers:          <span class="c"># workers concurrentes por ronda       {{MAX_WORKERS}}</span>
+  default_agent:        <span class="c"># claude | codex | opencode            {{DEFAULT_AGENT}}</span>
+  default_model:        <span class="c"># id completo; vacío = el del harness  {{DEFAULT_MODEL}}</span>
+  default_effort:       <span class="c"># esfuerzo, si el harness lo soporta   {{DEFAULT_EFFORT}}</span>
+  orchestrator_name:    <span class="c"># la app, como la nombra el operador</span>
+  orchestrator_cli:     <span class="c"># el binario; vacío = no hay orquestador en esta máquina</span>
+  message_verb:         <span class="c"># mensajes ENTRE sesiones, intactos</span>
+  terminal_verb:        <span class="c"># comandos y teclas, NUNCA conversación</span>
+  orchestrator_skills:  <span class="c"># guías del proveedor, cargadas AL LADO de esta skill</span></pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Gana el usuario</div>
+            <h3>Una instrucción explícita pisa el default</h3>
+            <ul>
+              <li>
+                "Corré seis", "usá el modelo chico", "codex para este": vale para esa corrida. No
+                se le pide confirmar un default que nunca mencionó.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Sin bloque</div>
+            <h3>Degrada, no rompe</h3>
+            <ul>
+              <li>
+                Tope 1, los defaults del harness, ningún orquestador nombrado.
+                <span class="mono">/sprint-development</span> en modo de un ticket nunca lee el
+                bloque.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Los dos verbos no son intercambiables.</b> Si lo va a LEER una persona, no va por
+          <span class="mono">terminal_verb</span>: trunca sin avisar, se queda con la COLA y reporta
+          éxito igual. Si lo va a EJECUTAR un shell o una TUI, para eso está. La única excepción es
+          el primer prompt de un worker supervisado, corto y apuntando a un archivo, porque el
+          lanzamiento nativo no tiene argv. Y una <b>ronda</b> es concurrencia ("Sprint 42, ronda
+          2"); un sprint de ejecución de <span class="mono">.context/dev-roadmap.md</span> es un
+          orden, y puede necesitar varias rondas.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 AUTOMATIZACIÓN ============ -->
+    <section class="band" id="automatizacion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · rutinas desatendidas</div>
+          <h2>El despachador nunca produce</h2>
+          <p class="sub">
+            Una automatización corre un prompt versionado sobre un disparador tipo cron, sin humano.
+            No produce ningún artefacto, ni un borrador ni un plan: crea al worker que produce y
+            cierra su sesión. Ante algo ambiguo, lo reporta en vez de adivinar.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Rutina de entrega</div>
+            <h3>Es <span class="mono">/autonomous-delivery &lt;mode&gt;</span></h3>
+            <ul>
+              <li>
+                Su lock, auditoría, selección, topes y peligros son de esa skill; acá no se repiten
+                ni se duplican. Esta skill solo lanza y cierra sus workers, y
+                <span class="mono">orchestration.max_workers</span> solo puede bajar el tope del
+                modo, nunca subirlo.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Cualquier otra rutina</div>
+            <h3>Toma su propio lock primero</h3>
+            <ul>
+              <li>
+                <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;/.session/orchestration/automations/&lt;routine&gt;/lock.json</span>,
+                creado sin pisar y releído. Un lock vivo es salir con una línea; uno vencido se
+                reclama y se reporta; sin ventana declarada, falla cerrado.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Una ronda, con tope</b
+            ><span
+              >Como máximo <span class="mono">orchestration.max_workers</span> workers en total; el
+              resto va al reporte como diferido, en el orden en que el próximo disparo debería
+              tomarlos.</span
+            >
+          </div>
+          <div class="g">
+            <b>Una corrida vacía es correcta</b
+            ><span
+              >Elegir un ítem marginal para que el reporte no quede vacío gasta un worker en trabajo
+              que nadie pidió.</span
+            >
+          </div>
+          <div class="g">
+            <b>El reporte se escribe en cada límite de paso</b
+            ><span
+              >Si la corrida muere a mitad de camino, es el único lugar donde quedaron anotados los
+              workers que siguen corriendo.</span
+            >
+          </div>
+          <div class="g">
+            <b>Git es la verdad, el tracker es una pista</b
+            ><span
+              >Algo se envió cuando su merge commit es ancestro de la rama de integración tras un
+              fetch, y está vivo cuando el deploy de ese SHA lee <span class="mono">READY</span>.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 FRASES ============ -->
+    <section class="band" id="frases">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · lo que dice el dueño</div>
+          <h2>Lenguaje natural, traducido por el conductor</h2>
+          <p class="sub">
+            El <span class="mono">roster.md</span> del Run es lo que convierte "el de BK-123" en una
+            task, un dispatch, una terminal y un worktree.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>El dueño dice</th>
+                <th>El conductor hace</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"¿cómo van?"</td>
+                <td>Una tabla: KEY · etapa · estado · último mensaje</td>
+              </tr>
+              <tr>
+                <td>"decile al de BK-123 que…"</td>
+                <td>
+                  El MENSAJE va al buzón; a la terminal, como mucho, un aviso de una línea para que
+                  revise su correo
+                </td>
+              </tr>
+              <tr>
+                <td>"pausá a X"</td>
+                <td>
+                  Una interrupción en su terminal, verificada en pantalla: no hay pausa nativa
+                </td>
+              </tr>
+              <tr>
+                <td>"cerrá a X"</td>
+                <td>
+                  Liberar por dispatch; sin dispatch, contar las terminales del worktree antes,
+                  porque el verbo de stop tiene radio de worktree entero
+                </td>
+              </tr>
+              <tr>
+                <td>"retomá el run de anoche"</td>
+                <td>Atar esta sesión al Run id de <span class="mono">run.md</span> y listar tasks</td>
+              </tr>
+              <tr>
+                <td>"mergeá la historia de W2"</td>
+                <td>
+                  Checks y review del PR, merge en orden de dependencias, deploy de staging
+                  verificado para ese SHA. Solo el conductor
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 REGLAS ============ -->
+    <section class="band" id="reglas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · barandas</div>
+          <h2>Las que más cuestan cuando se olvidan</h2>
+          <p class="sub">
+            La lista completa está en "Hard rules" de la skill; las compactas viajan a los
+            subagentes por <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Un código de éxito describe la llamada, nunca el resultado.</b> Un lanzamiento
+              que murió en el shell, un <span class="mono">terminal send</span> que entregó la cola,
+              un mensaje aceptado y sin leer: todos devolvieron éxito. Se verifica en el
+              destino.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Un mensaje que empieza a mitad de frase es un truncamiento.</b> No se contesta ni
+              se reconstruye: se pide el puntero.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Un nombre no es una dirección.</b> Se firma con el handle de la terminal más el Run
+              id, y quien recibe un mensaje sin autor identificable pregunta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b><span class="mono">ok: false</span> en un <span class="mono">terminal send</span>
+              significa que un humano está escribiendo ahí.</b> Nunca se reintenta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Permisos en modo automático, nunca solo-ediciones:</b> los comandos quedarían
+              esperando a un humano que no mira.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Critical Rule #13 cuenta doble</b> en una flota en el mismo checkout, y los commits
+              de un worker llevan los trailers <span class="mono">Worktree:</span> y
+              <span class="mono">Session:</span>, que son forense y no atribución (Critical Rule
+              #3).</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §13 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            No tiene modos de invocación: el rol sale del contexto. Alcanza con nombrarla o con
+            frases como "orquestá", "lanzá workers", "una sesión por historia", "estado de la
+            flota" o "retomá el run". En modo WORKER se carga sola cuando un brief la nombra.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/orca-orchestration</span>
+            <p>La barra de la skill, sin argumentos.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill orca-orchestration</span>
+            <p>Sin barra: nombrás la skill en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill orca-orchestration</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Un worker puede ser de cualquiera de los tres.</b> El harness sale de
+          <span class="mono">orchestration.default_agent</span> o de lo que diga el dueño. En
+          OpenCode y Codex el conductor escribe <span class="mono">/rename &lt;KEY&gt;</span> en la
+          terminal del worker, porque una sesión no puede renombrarse sola.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">14</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Cada skill de workflow es dueña de su QUÉ; esta pone el CÓMO, y el único lugar donde una
+            skill de workflow menciona la orquestación es
+            <span class="mono">references/launch-seam.md</span>.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">La llama · flota de historias</div>
+            <h3><a href="../sprint-development/como-funciona.es.html">/sprint-development</a></h3>
+            <p>
+              Su modo batch-sprint con más de un ejecutor es la flota; el QUÉ vive en
+              <span class="mono">sprint-development/references/fleet-mode.md</span>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">La llama · entrega desatendida</div>
+            <h3>/autonomous-delivery</h3>
+            <p>
+              Decide qué corre (auditoría, selección, topes); esta skill lanza y cierra sus
+              workers.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al lado · transferir la sesión</div>
+            <h3><a href="../session-handoff/como-funciona.es.html">/session-handoff</a></h3>
+            <p>
+              Pasa la sesión entera a su sucesor en el mismo worktree. Es un handoff, no
+              orquestación.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Debajo · git</div>
+            <h3>/git-flow-master</h3>
+            <p>
+              Ramas, commits, PR, trailers y la mecánica de worktrees
+              (<span class="mono">git-flow-master/references/worktrees.md</span>).
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Para leer más:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/orca-orchestration/SKILL.md"
+            >.agents/skills/orca-orchestration/SKILL.md</a
+          >, el ciclo completo en <span class="mono">references/coordinator-playbook.md</span>, el
+          contrato del worker en <span class="mono">references/worker-contract.md</span> y las
+          plantillas de un Run en <span class="mono">templates/</span>. Doctrina relacionada:
+          <span class="mono">agentic-dev-core/references/orchestration-doctrine.md</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">La idea de fondo.</b> El camino sin runtime es el contrato
+            y el runtime es el atajo. Por eso el prompt es idéntico en los dos: el camino que nadie
+            ejercita es el que se rompe en silencio a las tres semanas.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/orca-orchestration/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← volver a Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+  </body>
+</html>
