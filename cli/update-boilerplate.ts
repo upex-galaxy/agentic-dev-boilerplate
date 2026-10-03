@@ -1068,6 +1068,7 @@ function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolea
       packageJsonKept: summary.packageJsonKept ?? [],
       backupDir: summary.backupDir ?? null,
       reinclude: runFacts.reinclude,
+      ignoreLinesWithheld: summary.ignoreLinesWithheld ?? [],
       confirm: async message => sink.confirm(message, false),
       step: message => sink.step(message),
       warn: message => sink.warn(message),
@@ -1829,7 +1830,7 @@ async function main(): Promise<void> {
     repoOnlyPaths: REPO_ONLY_PATHS,
     // An adopted app (this --adopt run, or any run after one): the
     // boilerplate's own numbered ADRs stay out of the app's decision log.
-    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
+    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS, adopted: true } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),

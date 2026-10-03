@@ -111,7 +111,7 @@ function config(template: string, extraBootstrapOnly: string[] = [], afterApply?
     excludePaths: ['CLAUDE.md'],
     repoOnlyPaths: [],
     // What the wrapper sets for an adopted app (the --adopt run and every run after it).
-    ...(adopted ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS } : {}),
+    ...(adopted ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS, adopted: true } : {}),
     sparseExtraPaths: ['AGENTS.md'],
     ...(afterApply ? { hooks: { afterApply } } : {}),
   };
@@ -302,6 +302,28 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(row?.suggested).toBe('take upstream');
     expect(row?.evidence).toContain('1 file(s) differ from upstream, 1 only in the app\'s copy');
     expect(row?.blocking).toBe(false);
+  });
+
+  test('an upstream ignore line that matches files the app tracks is withheld, the rest appended', async () => {
+    const { template, app } = setup();
+    write(template, '.gitignore', '.backups/\nbuild/\n');
+    git(template, ['commit', '--quiet', '-am', 'ignore build output']);
+    write(app, 'app/build/page.tsx', 'export default function Build() { return null; }\n');
+    git(app, ['add', '-A']);
+    git(app, ['commit', '--quiet', '-m', 'a /build route']);
+    process.chdir(app);
+    let adopt: AdoptOutcome | null = null;
+    const cfg = config(template, [], async (summary: RunSummary) => {
+      adopt = await runAdopt({ root: app, upstreamDir: cfg.tempDir, dryRun: false, nonInteractive: true, appliedPaths: summary.applied.map(a => a.entry.path), collisions: summary.adoptCollisions ?? [], packageJsonKept: [], backupDir: null, ignoreLinesWithheld: summary.ignoreLinesWithheld ?? [], confirm: async () => false, step: () => {}, warn: () => {} });
+    });
+    const summary = await runUpdate(cfg, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
+
+    expect(summary.ignoreLinesWithheld).toEqual([{ file: '.gitignore', line: 'build/', tracked: ['app/build/page.tsx'] }]);
+    const ignore = read(app, '.gitignore');
+    expect(ignore).toContain('.backups/');
+    expect(ignore.split('\n')).not.toContain('build/');
+    const row = (adopt as AdoptOutcome | null)?.findings.find(f => f.path === '.gitignore' && f.evidence.includes('`build/`'));
+    expect(row?.evidence).toContain('app/build/page.tsx');
   });
 
   test('--dry-run writes nothing and still reports the collisions', async () => {

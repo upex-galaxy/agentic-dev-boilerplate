@@ -36,6 +36,7 @@ import type {
   GitVersion,
   IgnoreDelta,
   IgnoreLineOption,
+  IgnoreLineWithheld,
   LocalEditOverwritten,
   PackageJsonDelta,
   PackageJsonKeptKey,
@@ -2315,6 +2316,16 @@ function pruneEmptyParents(repoRoot: string, relPath: string): void {
 }
 
 /**
+ * Files git tracks that the ignore `pattern` would match (a fresh file at the
+ * same place would be ignored). Empty outside a repo or with git missing.
+ */
+export function trackedFilesMatching(repoRoot: string, pattern: string): string[] {
+  const res = spawnSync('git', ['-C', repoRoot, 'ls-files', '--cached', '--ignored', `--exclude=${pattern}`], { encoding: 'utf8' });
+  if (res.status !== 0) { return []; }
+  return (res.stdout ?? '').split('\n').filter(Boolean);
+}
+
+/**
  * Drop the `deleted-upstream` entries of files `cleanupDeprecated` removes in
  * Phase 5 anyway. Left in, the interactive run asks about the same delete
  * twice and `--auto` defers it, which holds the whole component back.
@@ -2937,8 +2948,25 @@ export async function runUpdate(
   // Pre-detect ignore-line deltas so we know whether to early-exit. If file delta
   // is empty but ignore-line delta is non-empty, we still proceed to Phase 4.5.
   const ignoreDeltasPre: IgnoreDelta[] = [];
+  const ignoreLinesWithheld: IgnoreLineWithheld[] = [];
   for (const spec of cfg.ignoreFiles) {
     const delta = detectIgnoreDelta(spec, repoRoot, templateDir, v7State);
+    // Adopted app: a generic upstream line (`build/`) can match a folder the
+    // app tracks (`app/build/`), and every new file there would be ignored in
+    // silence. Such a line is withheld, never appended. Filtered HERE, before
+    // the early exit, so a run with nothing else to do stays a no-op.
+    if (cfg.adopted === true && path.basename(spec.path) === '.gitignore') {
+      const keep: string[] = [];
+      for (const line of delta.upstreamOnlyLines) {
+        const tracked = line.startsWith('!') ? [] : trackedFilesMatching(repoRoot, line);
+        if (tracked.length > 0) {
+          ignoreLinesWithheld.push({ file: spec.path, line, tracked: tracked.slice(0, 3) });
+          sink.warn(`${spec.path}: línea "${line}" retenida, ocultaría archivos que la app versiona (${tracked.slice(0, 3).join(', ')}).`);
+        }
+        else { keep.push(line); }
+      }
+      delta.upstreamOnlyLines = keep;
+    }
     if (delta.upstreamOnlyLines.length > 0) {
       ignoreDeltasPre.push(delta);
     }
@@ -3586,6 +3614,7 @@ export async function runUpdate(
     localEditsOverwritten,
     packageJsonKept,
     ...(opts.adopt === true ? { adoptCollisions } : {}),
+    ...(ignoreLinesWithheld.length > 0 ? { ignoreLinesWithheld } : {}),
   };
 
   // State write

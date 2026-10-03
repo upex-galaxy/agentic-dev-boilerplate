@@ -31,7 +31,7 @@
 
 import type { HiddenPath, ReincludeOutcome } from './adopt-gitignore.ts';
 import type { ParityFinding, ParitySurface } from './updater-parity';
-import type { AdoptCollision, PackageJsonKeptKey } from './updater-types';
+import type { AdoptCollision, IgnoreLineWithheld, PackageJsonKeptKey } from './updater-types';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -417,6 +417,7 @@ export interface AdoptRowsInput {
   reinclude?: ReincludeOutcome | null
   /** Delivered paths the app's `.gitignore` still hides (teammates never receive them). */
   hiddenDelivered?: readonly HiddenPath[]
+  ignoreLinesWithheld?: readonly IgnoreLineWithheld[]
 }
 
 export interface AdoptInstructionsOutcome {
@@ -526,6 +527,17 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
         });
   }
 
+  for (const w of input.ignoreLinesWithheld ?? []) {
+    rows.push({
+      surface: 'components',
+      path: w.file,
+      evidence: `upstream line \`${w.line}\` NOT appended: it matches files the app tracks (${w.tracked.join(', ')}), so every new file there would be ignored`,
+      suggested: 'keep project',
+      blocking: false,
+      note: `Upstream ignores its own \`${w.line}\` output; the app's folder of that name is source. If the app has build output there too, ignore it with a path the app's source does not share.`,
+    });
+  }
+
   for (const h of input.hiddenDelivered ?? []) {
     rows.push({
       surface: surfaceFor(h.path),
@@ -582,6 +594,8 @@ export interface AdoptHookInput {
   backupDir: string | null
   /** The app's `.gitignore` hid the agentic store and the wrapper re-included it (`./adopt-gitignore.ts`). */
   reinclude?: ReincludeOutcome | null
+  /** Upstream ignore lines the core withheld: they would hide files the app tracks. */
+  ignoreLinesWithheld?: readonly IgnoreLineWithheld[]
   confirm: (message: string) => Promise<boolean>
   step: (message: string) => void
   warn: (message: string) => void
@@ -755,6 +769,7 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     instructions,
     foreignHooks: hooks.foreign,
     reinclude: input.reinclude ?? null,
+    ignoreLinesWithheld: input.ignoreLinesWithheld ?? [],
     hiddenDelivered: dryRun ? [] : hiddenPaths(root, [...input.appliedPaths, ...delivered]),
   });
   findings.push(...isolationFindings(isolation, isolationSaved));
