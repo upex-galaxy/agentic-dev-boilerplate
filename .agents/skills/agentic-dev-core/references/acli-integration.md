@@ -74,10 +74,10 @@ Slug syntax (per `AGENTS.md` §7):
 
 - `{{jira.<slug>}}` — custom field ID (e.g. `{{jira.acceptance_criteria}}` → numeric workspace-specific ID)
 - `{{jira.status.<work_type>.<slug>}}` — status name (`{{jira.status.story.in_progress}}` → `"In Progress"`)
-- `{{jira.transition.<work_type>.<slug>}}` — transition name (`{{jira.transition.story.start_progress}}` → `"Start progress"`)
+- `{{jira.transition.<work_type>.<slug>}}` — transition name (`{{jira.transition.story.start_working}}` → `"Start working"`)
 - `{{jira.work_type.<slug>}}` — Jira issue-type name (`{{jira.work_type.story}}` → `"Story"`)
 
-The sync scripts call `acli` under the hood. Stale auth poisons the output silently — see anti-pattern D1 below. If a slug fails to resolve at runtime, STOP — do not fall back to a literal. Report the missing entry and re-run the matching sync script.
+The sync scripts call `acli` under the hood. Stale auth poisons the output silently — see anti-pattern D1 below. If a slug fails to resolve at runtime, STOP — do not fall back to a literal. Report the missing entry and re-run the matching sync script. A missing TRANSITION or STATUS slug has its own protocol (list the live transitions, ask ONE question, fire the live id, then re-sync): `artifact-lifecycle.md` §4, which also maps which stage fires which slug.
 
 ---
 

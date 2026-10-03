@@ -448,14 +448,16 @@ Which would you prefer?
 
 **Decision Matrix:**
 
-| Finding                       | Action                     | Jira Transition                |
-| ----------------------------- | -------------------------- | ------------------------------ |
-| Real bug, reproducible        | Proceed to fix             | → In Progress                  |
-| Duplicate of existing bug     | Link and close             | → Duplicate                    |
-| Not a bug (works as designed) | Document reasoning         | → Won't Fix (WAD)              |
-| Enhancement request           | Reclassify as enhancement  | → Enhancement / Backlog        |
-| Cannot reproduce              | Request more info or close | → Need Info / Cannot Reproduce |
-| Deferred (low priority/risk)  | Document and defer         | → Deferred                     |
+| Finding                       | Action                     | Jira Transition (slug → status)        |
+| ----------------------------- | -------------------------- | -------------------------------------- |
+| Real bug, reproducible        | Proceed to fix             | `start_fixing` → `in_progress`         |
+| Duplicate of existing bug     | Link and close             | `is_duplicated` → `duplicated`         |
+| Not a bug (works as designed) | Document reasoning         | `is_wad` → `rejected`                  |
+| Enhancement request           | Reclassify as enhancement  | `is_not_a_bug` → `enhancement`         |
+| Cannot reproduce              | Request more info or close | comment, then `is_cnr` → `cannot_reproduce` (or leave `open`) |
+| Deferred (low priority/risk)  | Document and defer         | `defer` → `deferred`                   |
+
+Slugs resolve through `{{jira.transition.bug.<slug>}}` (same slugs for `defect` / `improvement`). A slug this project's catalog lacks follows the unmapped-status fallback in `agentic-dev-core/references/artifact-lifecycle.md` §4: never a remembered id, never a status name typed from memory.
 
 **For "Real Bug" - Check if Hotfix needed:**
 
@@ -505,7 +507,7 @@ Do you want me to:
 ```
 Use [ISSUE_TRACKER_TOOL] to transition issue:
   issue_key: "[BUG_ID]"
-  transition: "In Progress"
+  transition: {{jira.transition.bug.start_fixing}}
 ```
 
 ---
@@ -791,7 +793,7 @@ Use [ISSUE_TRACKER_TOOL] to add comment to issue:
 ```
 Use [ISSUE_TRACKER_TOOL] to transition issue:
   issue_key: "[BUG_ID]"
-  transition: "Ready For QA"  // or appropriate transition name
+  transition: {{jira.transition.bug.fixed_and_deployed}}  // from in_review; urgent hotfix with no review: hard_pushed
 ```
 
 **Step 4: Assign to QA (if known)**
@@ -1209,7 +1211,7 @@ Fixes: [ISSUE_KEY]
 **Action:**
 
 1. Add Jira comment with specific questions
-2. Transition to "Need Info" status
+2. Leave the bug `open` with the questions in the comment, or `is_cnr` → `cannot_reproduce` if the user chooses to close it (the bug workflow has no "Need Info" status; a project that added one is the `artifact-lifecycle.md` §4 case)
 3. List exactly what information is needed
 4. Do NOT guess or assume
 
@@ -1464,7 +1466,7 @@ Add this banner at the top:
 | Aspecto      | Detalle                      |
 | ------------ | ---------------------------- |
 | Issue Key    | [ISSUE_KEY]                  |
-| Estado Final | Need Info / Cannot Reproduce |
+| Estado Final | Open (pending info) / Cannot Reproduce |
 | Intentos     | [N] intentos de reproducción |
 | URL Jira     | [Jira URL]                   |
 
@@ -1474,7 +1476,7 @@ Add this banner at the top:
 | ----------------- | --------------------------------- |
 | Jira - Read       | `bun run jira:sync-issues get` [ISSUE_KEY] `--include-comments`      |
 | Jira - Comment    | Preguntas específicas al reporter |
-| Jira - Transition | [Status] → Need Info              |
+| Jira - Transition | none (stays Open) / `is_cnr` → Cannot Reproduce |
 
 **Análisis:**
 [Qué se intentó, qué información falta, preguntas para el reporter]
@@ -1535,26 +1537,28 @@ Before presenting the final report, verify:
 | Take screenshot       | `[AUTOMATION_TOOL]` (if available)         |
 | Check library docs    | `[DOCS_TOOL]`                              |
 
-## Quick Reference: Jira Transition IDs (UPEX Galaxy)
+## Quick Reference: Jira Transitions (by slug)
 
-> **Note:** Transition IDs may vary by workspace. Use `[ISSUE_TRACKER_TOOL]` to get available transitions for a specific issue.
+> Transition IDs differ per workspace, so this file names slugs only. Each resolves through `{{jira.transition.bug.<slug>}}` against `.agents/jira-workflows.json` (refreshed by `bun run jira:sync-workflows`). Who fires each one, and what to do when a slug is missing: `agentic-dev-core/references/artifact-lifecycle.md`.
 
-| ID  | Transition Name | From → To                  |
-| --- | --------------- | -------------------------- |
-| 121 | start fixing    | OPEN → In Progress         |
-| 5   | Hard pushed     | In Progress → Ready For QA |
-| 141 | is not a Bug    | OPEN → Enhancement         |
-| 71  | is duplicated   | OPEN → Duplicated          |
-| 8   | is CNR          | OPEN → Cannot Reproduce    |
-| 111 | is WAD          | OPEN → Working As Designed |
-| 51  | defer           | OPEN → Deferred            |
+| Slug                 | From → To                       |
+| -------------------- | ------------------------------- |
+| `start_fixing`       | `open` → `in_progress`          |
+| `pull_request`       | `in_progress` → `in_review`     |
+| `fixed_and_deployed` | `in_review` → `ready_for_qa`    |
+| `hard_pushed`        | `in_progress` → `ready_for_qa`  |
+| `is_not_a_bug`       | `open` → `enhancement`          |
+| `is_duplicated`      | `open` → `duplicated`           |
+| `is_cnr`             | `open` → `cannot_reproduce`     |
+| `is_wad`             | `open` → `rejected`             |
+| `defer`              | `open` → `deferred`             |
 
 **Usage:**
 
 ```
 Use [ISSUE_TRACKER_TOOL] to transition issue:
   issue_key: "PROJ-123"
-  transition_id: "121"  // or transition name: "start fixing"
+  transition: {{jira.transition.bug.start_fixing}}
 ```
 
 ## Quick Reference: Git Commands
