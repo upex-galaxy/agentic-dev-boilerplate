@@ -131,12 +131,14 @@ Critical Rule 14 — UI Fidelity Contract):
     iterate, export the bundle into .context/designs/<project>/<batch>/
   → the skill maps the mockups into .context/design/master-design-plan.md
     (per-screen specs + US→Screen map)
-  → /sprint-development builds every UI story against its mapped screen;
-    unratified divergence from the mockup = review defect
+  → /sprint-development builds every UI story with the mockup as inspiration;
+    the fidelity reference is the live UI + DESIGN.md tokens, and an
+    unratified divergence from THEM = review defect
 ```
 
-The AI never generates mockups itself — it generates the brief, you design in the external tool
-(which keeps project memory across batches, so later briefs are light "follow-up" deltas). Entirely
+The AI never hand-authors mockups: it either commissions them through a design tool (Open Design
+MCP or equivalent) or hands you the brief to design in the external tool (which keeps project memory
+across batches, so later briefs are light "follow-up" deltas). Either way you ratify every mockup. Entirely
 optional: without a master design plan, UI fidelity degrades gracefully to `DESIGN.md` tokens only.
 
 ---

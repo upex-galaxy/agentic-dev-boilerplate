@@ -17,7 +17,7 @@ compact_rules: |
   - **`require_code_owner_review: true` with no `CODEOWNERS` file is unsatisfiable, not strict.** Nobody outside the bypass list can clear it, so every merge becomes a bypass. Treat that combination as drift with a named remedy: add the file, or turn the flag off.
   - **Config examples in `references/` are examples.** Quoting one as a project's real configuration is a defect. Open the project's own file and cite it.
   - **The chained-PR decision travels with its trace.** Return `Chain strategy` + `Decision trace` (verbatim tree answers, each with the reason from this change) + `Decided by`. Callers reject a bare label. This skill is the ONLY authority that may fill those lines.
-  - **Never push to `main` without explicit confirmation**; honour `direct_push_to_protected` on every protected branch.
+  - **Push to a protected branch = resolve `git_strategy.policy.direct_push_to_protected`** (Critical Rule #4): `allowed` is standing authorization, push without asking (asking anyway collapses it into `confirm`); `confirm` asks before every push; `forbidden` refuses and routes through a PR. A missing or null block behaves as `confirm`.
   - **Never** `--force`, `--force-with-lease`, `--no-verify`, amend, or rebase pushed history on a shared branch unless the user explicitly asks AND the branch is unshared.
   - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
   - **Stop at PR creation.** Never auto-merge.
@@ -73,7 +73,7 @@ If the user is asking about feature implementation, test design, product backlog
 - **`require_code_owner_review: true` with no `CODEOWNERS` file is unsatisfiable, not strict.** Nobody outside the bypass list can clear it, so every merge becomes a bypass. Treat that combination as drift with a named remedy: add the file, or turn the flag off.
 - **Config examples in `references/` are examples.** Quoting one as a project's real configuration is a defect. Open the project's own file and cite it.
 - **The chained-PR decision travels with its trace.** Return `Chain strategy` + `Decision trace` (verbatim tree answers, each with the reason from this change) + `Decided by`. Callers reject a bare label. This skill is the ONLY authority that may fill those lines.
-- **Never push to `main` without explicit confirmation**; honour `direct_push_to_protected` on every protected branch.
+- **Push to a protected branch = resolve `git_strategy.policy.direct_push_to_protected`** (Critical Rule #4): `allowed` is standing authorization, push without asking (asking anyway collapses it into `confirm`); `confirm` asks before every push; `forbidden` refuses and routes through a PR. A missing or null block behaves as `confirm`.
 - **Never** `--force`, `--force-with-lease`, `--no-verify`, amend, or rebase pushed history on a shared branch unless the user explicitly asks AND the branch is unshared.
 - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
 - **Stop at PR creation.** Never auto-merge.
@@ -349,9 +349,10 @@ Push command depends on Step 1 output:
 
 **Consult `git_strategy.policy.direct_push_to_protected`** to decide how strict the gate is:
 
-- `allowed` → proceed with the direct push, but still confirm once: _"You are about to push directly to the protected branch `{branch}` in a `{strategy}` flow. Confirm?"_ Wait for explicit yes.
-- `confirm` (default) → **always ask** the same confirmation. Wait for explicit yes.
+- `allowed` → **standing authorization**: push WITHOUT a per-push confirm. The recorded value IS the authorization (stamped by Strategy Setup with the user); asking anyway collapses `allowed` into `confirm` and empties the third state.
+- `confirm` (default) → **always ask**: _"You are about to push directly to the protected branch `{branch}` in a `{strategy}` flow. Confirm?"_ Wait for explicit yes.
 - `forbidden` → **refuse the direct push.** Do not push to the protected branch. Route the work through a PR instead (branch off the strategy's default base → push the work-branch → open a PR via 3.4).
+- **Missing or null `git_strategy` block** (fresh scaffold, project never onboarded) → behave as `confirm`: the safe default is to ask, never to assume standing authorization.
 
 **Admin bypass (rare, opt-in).** A bypass of a `forbidden`/`confirm` gate may be **OFFERED only when `git_strategy.policy.admin_bypass: true`**. Even then, before bypassing, re-confirm at runtime BOTH: (a) the operator is actually a repo admin — ASK them, the skill cannot know the GitHub role; AND (b) the specific irreversible action. If `git_strategy.policy.admin_bypass: false`, **never offer a bypass** under any circumstance.
 
@@ -473,7 +474,7 @@ git_strategy:
 **Non-negotiables**
 
 - **Never `--force`** (not `--force-with-lease` either) during a setup sync. Sync only on a true fast-forward; if the integration/production pair has diverged both ways → STOP and hand to conflict resolution (3.5).
-- **Confirm before any push to a protected branch.** A setup ff-sync push is still a push to a protected branch — ask first.
+- **A setup ff-sync push is still a push to a protected branch.** Ask first: Strategy Setup runs before the user has ratified the new `policy:` values, so `allowed` does not authorize its own setup push.
 - **Propose, don't auto-execute** branch creation. Show the plan (which branch, off what, why) and wait for OK before `git checkout -b` / `git branch`.
 - **No AI attribution** in any commit the setup makes (see this skill's "Critical rules" section and the project `AGENTS.md`).
 
@@ -539,7 +540,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 1. **Diagnose before acting.** Step 1 always runs. Never assume repo state.
 2. **One commit = one responsibility.** Never bundle unrelated changes.
 3. **No AI attribution** in commits or PR bodies. Commits look human-authored. (Critical Rule #3 in `AGENTS.md`.) The two forensic trailers of 3.2 (`Worktree:` / `Session:`) always close a commit message, and the PR body carries the same pair: they name a working tree and a session, never a tool, so they are provenance, not attribution, and not optional. Harness-branded trailers stay forbidden.
-4. **Confirm before pushing to any protected branch.** Strategy-driven; see Step 3.3. (Critical Reminder #4 in `AGENTS.md`.)
+4. **Resolve `direct_push_to_protected` before pushing to any protected branch.** `allowed` pushes, `confirm` asks, `forbidden` routes through a PR; see Step 3.3. (Critical Rule #4 in `AGENTS.md`.)
 5. **Never force-push, never rewrite pushed history, never `--no-verify`** unless the user explicitly authorises it AND the branch is unshared. (Critical Reminder #5 in `AGENTS.md`.)
 6. **No `git add -A` / `git add .`** — always list explicit paths.
 7. **Show proposed commits / branches / PR body and wait for OK** before executing. The user can accept, modify, or reject any item.
@@ -557,7 +558,7 @@ The branch plan that comes out of the decision is the **contract** for execution
 - **G2.** NEVER amend or rebase a pushed commit — creates orphan commits in others' clones and rewrites history that was already replicated.
 - **G3.** NEVER commit secrets, credentials, `.env` contents, or auth tokens — git history is forever; a single commit leaks the secret permanently.
 - **G4.** NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-attribution line in commit messages or PR bodies (Critical Rule #3). Commits look human-authored. The `Worktree:` / `Session:` forensic trailers are NOT attribution and are mandatory (§3.2); a `Claude-Session:` or any other harness-branded trailer IS forbidden.
-- **G5.** NEVER push to `main` without explicit user confirmation (Critical Rule #4). Strategy-driven protection applies to every protected branch, not just `main`.
+- **G5.** NEVER push to a protected branch without resolving `git_strategy.policy.direct_push_to_protected` (Critical Rule #4): never ask under `allowed`, never skip the ask under `confirm`, never push under `forbidden`. Strategy-driven protection applies to every protected branch, not just `main`.
 - **G6.** NEVER bypass pre-commit / pre-push hooks with `--no-verify` to "ship faster" — hooks exist to catch the bug you didn't notice. Fix the hook failure and create a new commit.
 - **G7.** NEVER mix concerns in a single commit (feat + refactor + lint fix bundled together) — atomic commits enable surgical revert and clean blame.
 - **G8.** NEVER stack PRs without naming the dependency chain in the PR body — reviewers can't tell which PR to read first or what each one depends on.

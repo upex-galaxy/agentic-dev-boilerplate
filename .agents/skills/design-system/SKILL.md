@@ -45,7 +45,9 @@ SYSTEM (`DESIGN.md` = tokens/components) vs SCREEN design (`master-design-plan.m
 auto-runs it — and the mockups always come from the external tool (the AI never hand-writes them).
 When the **Open Design MCP** is available, the delegation is autonomous: the AI commissions the runs
 itself, QAs and exports the results into the drop zone (Mode A); otherwise it hands the user a brief
-and pauses (Mode B). Full procedure: `references/screen-design-mapping.md`.
+and pauses (Mode B). Either way a human ratifies every mockup before it is mapped (step 4 below), and
+the mockup stays inspiration: at build time the live UI plus `DESIGN.md` tokens are the fidelity
+reference (`AGENTS.md` Critical Rule #14). Full procedure: `references/screen-design-mapping.md`.
 
 ---
 
@@ -296,12 +298,13 @@ Quick shape:
    brief (`references/screen-design-brief.md`) and save it as `BRIEF.md` in the batch folder, then:
    **Mode A (preferred)** — Open Design MCP available (or preflight can bring it up,
    `references/open-design-app.md`): the AI commissions one run per screen itself, QAs and exports
-   the results into the batch folder; user pulled in only for early review. **Mode B (fallback)** —
+   the results into the batch folder; the user ratifies the exported screens at step 4. **Mode B (fallback)** —
    hand the brief to the user to paste into Claude Design / Open Design, PAUSE with session-resume
    (mirrors Paths C/D).
 3. **Build** `.context/design/master-design-plan.md` from the mockups + backlog: per-screen specs,
    a frozen-token reference to `DESIGN.md`, a US→Screen map, a divergence register.
-4. **Confirm** with the user before writing; re-runs UPSERT (incremental / just-in-time per feature).
+4. **Ratify + confirm** with the user before writing: a human approves every mockup (commissioned or
+   supplied) before it enters the map; re-runs UPSERT (incremental / just-in-time per feature).
 
 ---
 
