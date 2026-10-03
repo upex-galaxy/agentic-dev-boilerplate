@@ -1,31 +1,32 @@
 ---
 name: project-context
-description: "Generate or refresh the canonical project-context artifacts for development: business data map, business feature map, business API map, master implementation plan and dev roadmap. Use for business-data-map, business-feature-map, business-api-map, master-implementation-plan, dev-roadmap, roadmap de desarrollo, mapear el dominio, inventario de features, cómo funciona el API, plan maestro de implementación, qué historia sigue, refresh project context, refresh all context. Also scaffolds a project-owned <aspect>-context skill for any aspect the business maps do not cover (context-skill mode: context skill, scaffold a context skill, judgment layer over X). Routes exactly one mode at a time unless refresh-all is explicit. UPDATE mode always shows a diff and waits for approval before overwriting."
+description: "Generate or refresh the canonical project-context artifacts for development: the business data, feature and API maps (HTML maps inside business-data-context, business-feature-context and business-api-context), the master implementation plan and the dev roadmap. Use for business-data-map, business-feature-map, business-api-map, master-implementation-plan, dev-roadmap, roadmap de desarrollo, mapear el dominio, inventario de features, cómo funciona el API, plan maestro de implementación, qué historia sigue, refresh project context, refresh all context. Also scaffolds a project-owned <aspect>-context skill for any aspect the business maps do not cover (context-skill mode: context skill, scaffold a context skill, judgment layer over X). Routes exactly one mode at a time unless refresh-all is explicit. UPDATE regenerates only stale map sections and always shows a diff and waits for approval before writing."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [backend-db, issue-tracker, meta-skill]
 metadata:
   kind: workflow
-  requires_capabilities: [db, library-docs, web-search]
+  requires_capabilities: [db, library-docs, web-search, diagrams]
 ---
 
 # Project Context
 
-Own the five regenerative project-context artifacts, and scaffold a project's own context skills. Each mode is a full workflow. There are no harness commands for them: the skill is invoked by its own name plus a mode (`/project-context data` on Claude Code, "load project-context, mode data" in prose on OpenCode and Codex).
+Own the five regenerative project-context artifacts, and scaffold a project's own context skills. The three business maps live inside their context skills as HTML (`agentic-dev-core/references/business-context-maps.md`); this skill generates them and updates their stale sections. Each mode is a full workflow. There are no harness commands for them: the skill is invoked by its own name plus a mode (`/project-context data` on Claude Code, "load project-context, mode data" in prose on OpenCode and Codex).
 
 ## Compact Rules
 
 - Exactly ONE mode per run: `data` · `features` · `api` · `master-plan` · `dev-roadmap` · `refresh-all` · `context-skill`. The first token of `$ARGUMENTS` IS the mode when it matches one of these; otherwise resolve it from the trigger phrases in Mode routing. Load only that mode's reference; never open a second one in the same pass.
 - `context-skill` scaffolds a project-owned `<aspect>-context` (`references/context-skill.md`, contract `agentic-dev-core/references/skill-scaffold.md` §3-§5) THROUGH `skill-creator` (T3) for an aspect the business maps do not cover. It cites its sources and never copies them; `refresh-all` never includes it.
-- Mode → reference → output: `data` → `references/data.md` → `.context/business/business-data-map.md` · `features` → `references/features.md` → `.context/business/business-feature-map.md` · `api` → `references/api.md` → `.context/business/business-api-map.md` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
+- Mode → reference → output: `data` → `references/data.md` → `business-data-context`'s `references/business-data-map.html` · `features` → `references/features.md` → `business-feature-context`'s `references/business-feature-map.html` · `api` → `references/api.md` → `business-api-context`'s `references/business-api-map.html` · `master-plan` → `references/master-plan.md` → `.context/master-implementation-plan.md` · `dev-roadmap` → `references/dev-roadmap.md` → `.context/dev-roadmap.md`.
 - User did not name a mode → ASK. NEVER infer `refresh-all` from a generic "refresh the context" request.
 - `refresh-all` runs strictly `data` → `features` → `api` → `master-plan` → `dev-roadmap`, one at a time. Each reference's own validation and approval gate must close before the next is loaded. Never skip ahead.
-- Artifact missing = CREATE mode: may write once the analysis completes. Artifact exists = UPDATE mode: generate a candidate, show the diff summary, WAIT for explicit approval. NEVER overwrite an existing artifact without that approval.
-- Dependency gates are the selected reference's: `master-plan` hard-requires `.context/business/business-data-map.md` (soft: feature map); `dev-roadmap` hard-requires at least one epic with child stories in the issue tracker (soft: data map, master design plan, master implementation plan); `features` and `api` soft-depend on the data map. A hard gate failure STOPS the run with the reference's exact message; a missing SOFT dependency is a Discovery Gap, never a stop.
+- A map mode writes ONLY its own skill's `references/<map>.html`, read and checked through `bun run context:map <skill>`. A project's legacy `.context/business/business-*-map.md` (the skill's `legacy` list in `CONTEXT_MAP_SKILLS`, `cli/lib/context-maps.ts`) is read as input and never deleted. The map skill already exists (delivered by `bun run up`, never scaffolded here).
+- Artifact missing (or a placeholder map) = CREATE mode: may write once the analysis completes. Artifact exists = UPDATE mode: generate a candidate (for a map: only its stale sections), show the diff summary, WAIT for explicit approval. NEVER overwrite an existing artifact without that approval, and NEVER regenerate a whole generated map.
+- Dependency gates are the selected reference's: `master-plan` hard-requires a generated data map (`bun run context:map business-data-context` prints sections, not the placeholder notice; soft: feature map); `dev-roadmap` hard-requires at least one epic with child stories in the issue tracker (soft: data map, master design plan, master implementation plan); `features` and `api` soft-depend on the data map. A hard gate failure STOPS the run with the reference's exact message; a missing SOFT dependency is a Discovery Gap, never a stop.
 - NEVER invent business facts. Read every source the selected reference requires; anything unverified belongs under the output's mandatory `## Discovery Gaps` section, not asserted in the body.
-- After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing (the docs follow-through, `agentic-dev-core/references/docs-follow-through.md`). NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
+- After a map write, review that skill's `## Rules` and `references/gotchas.md` against the new map and PROPOSE any change; never rewrite a rule. After a successful artifact write, add the pointer to `AGENTS.md` (Key paths) ONLY when that pointer is missing (the docs follow-through, `agentic-dev-core/references/docs-follow-through.md`). NEVER write operational prose into `CLAUDE.md`: it is the generated `@AGENTS.md` shim.
 - Forward the rest of `$ARGUMENTS` (everything after the mode token) unchanged to the selected mode (project path, module filter, epic key, or Master Sprint name, as each reference defines).
-- **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
+- **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix (`diagrams`, for the maps' figures, by the `diagram-design` skill's presence); none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 
 **Read full SKILL.md when**: the requested mode is ambiguous, a `refresh-all` chain fails mid-sequence, or you need the selected reference's own analysis steps and validation gate.
 
@@ -35,9 +36,9 @@ Resolve one mode from the invocation: the first token of `$ARGUMENTS` when it na
 
 | Mode | Trigger phrases | Reference | Output |
 |---|---|---|---|
-| `data` | `business-data-map`, entity/data map, mapear el dominio | `references/data.md` | `.context/business/business-data-map.md` |
-| `features` | `business-feature-map`, feature inventory, inventario de features | `references/features.md` | `.context/business/business-feature-map.md` |
-| `api` | `business-api-map`, API business map, cómo funciona el API | `references/api.md` | `.context/business/business-api-map.md` |
+| `data` | `business-data-map`, entity/data map, mapear el dominio | `references/data.md` | `.agents/skills/business-data-context/references/business-data-map.html` |
+| `features` | `business-feature-map`, feature inventory, inventario de features | `references/features.md` | `.agents/skills/business-feature-context/references/business-feature-map.html` |
+| `api` | `business-api-map`, API business map, cómo funciona el API | `references/api.md` | `.agents/skills/business-api-context/references/business-api-map.html` |
 | `master-plan` | `master-implementation-plan`, master plan, what to build first | `references/master-plan.md` | `.context/master-implementation-plan.md` |
 | `dev-roadmap` | `dev-roadmap`, roadmap de desarrollo, qué historia sigue, execution order | `references/dev-roadmap.md` | `.context/dev-roadmap.md` |
 | `refresh-all` | refresh all project context | all five references, one at a time | all five outputs |
@@ -62,17 +63,17 @@ Stop on a hard dependency failure or rejected overwrite. Do not skip ahead. Miss
 | Mode | Hard gate (STOP) | Soft gates (Discovery Gap) |
 |---|---|---|
 | `data` | none (invocable standalone) | PRD / SRS under `.context/` |
-| `features` | none | `business-data-map.md` |
-| `api` | none | `business-data-map.md`, `business-feature-map.md` |
-| `master-plan` | `.context/business/business-data-map.md` | `business-feature-map.md` |
-| `dev-roadmap` | at least one epic with child stories (and dependency links) in the issue tracker | `business-data-map.md`, `master-design-plan.md`, `master-implementation-plan.md` |
+| `features` | none | the data map |
+| `api` | none | the data map, the feature map |
+| `master-plan` | a generated data map | the feature map |
+| `dev-roadmap` | at least one epic with child stories (and dependency links) in the issue tracker | the data map, `master-design-plan.md`, `master-implementation-plan.md` |
 | `context-skill` | what the skill sits over must exist (a map, a module, a contract) | none |
 
 ## Shared contract
 
 - Read every available source required by the selected reference. Never invent business facts.
-- CREATE mode may write the missing artifact after analysis.
-- UPDATE mode must generate a candidate, show the diff summary, and wait for explicit approval before overwriting. `dev-roadmap` UPDATE is surgical: regenerate the sort section, preserve hand-authored edges and gates, as its reference defines.
+- CREATE mode may write the missing artifact (or replace a placeholder map) after analysis.
+- UPDATE mode must generate a candidate, show the diff summary, and wait for explicit approval before overwriting. For a map, the candidate is its stale sections only (`business-context-maps.md` §4-§5). `dev-roadmap` UPDATE is surgical: regenerate the sort section, preserve hand-authored edges and gates, as its reference defines.
 - Each output includes `## Discovery Gaps` for unverified facts.
 - After a successful artifact write, update the Key paths pointers in `AGENTS.md` only when a pointer is missing. Never add operational prose to `CLAUDE.md`.
 - The rest of `$ARGUMENTS`, after the mode token, is forwarded unchanged to the selected mode.
@@ -98,3 +99,4 @@ Expected matches in this repo:
 | `backend-db` | `supabase` | Modes data, features and api read the live schema through `[DB_TOOL]` (Supabase MCP); the community skill owns query and schema-reading patterns. |
 | `issue-tracker` | `/acli` | Mode dev-roadmap reads epics, stories and dependency links through `[ISSUE_TRACKER_TOOL]`; mode master-plan cross-checks epics. Load before any Jira read. |
 | `meta-skill` | `skill-creator` (T3) | Mode context-skill builds every `<aspect>-context` through it: draft loop, description pass, three test prompts. |
+| `meta-skill` | `diagram-design` (T3) | Modes data, features and api draw the maps' figures with it (the diagrams capability, business-context-maps.md §7 in agentic-dev-core). |

@@ -9,7 +9,7 @@ Generate or update `.context/master-implementation-plan.md` — a business-deriv
 
 ## What this produces
 
-A conversational, senior-engineer-voice document that sits **on top of** `business-data-map.md` and `business-feature-map.md` and converts them into a ranked implementation strategy.
+A conversational, senior-engineer-voice document that sits **on top of** the data map (`business-data-context`) and the feature map (`business-feature-context`) and converts them into a ranked implementation strategy.
 
 The output contains:
 
@@ -24,7 +24,7 @@ The output contains:
 - Explicit out-of-scope section (to stop scope creep into the master plan)
 - Implementation gaps — spike candidates and unknowns to investigate before building
 
-This is **NOT** a story-level implementation plan (→ `/sprint-development` Planning stage), a flow description (→ `business-data-map.md`), a feature inventory (→ `business-feature-map.md`), nor a per-epic ROADMAP (→ `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md`). It is the **implementation-strategy layer** above those maps.
+This is **NOT** a story-level implementation plan (→ `/sprint-development` Planning stage), a flow description (→ the data map in `business-data-context`), a feature inventory (→ the feature map in `business-feature-context`), nor a per-epic ROADMAP (→ `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md`). It is the **implementation-strategy layer** above those maps.
 
 ---
 
@@ -32,8 +32,8 @@ This is **NOT** a story-level implementation plan (→ `/sprint-development` Pla
 
 | Source                                      | Status                     | What to extract                                                                                                         | Tool                               |
 | ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `.context/business/business-data-map.md`    | **HARD REQUIREMENT**       | Critical flows, state machines, automatic processes, integrations, business rules — every feature inherits one of these | Read file                          |
-| `.context/business/business-feature-map.md` | Optional — warn if missing | Feature catalog, CRUD matrix, feature flags, dependency tags, MVP-relevance matrix                                      | Read file                          |
+| The data map (`business-data-context`)      | **HARD REQUIREMENT**       | Critical flows, state machines, automatic processes, integrations, business rules — every feature inherits one of these | `bun run context:map business-data-context` |
+| The feature map (`business-feature-context`) | Optional — warn if missing | Feature catalog, CRUD matrix, feature flags, dependency tags, MVP-relevance matrix                                      | `bun run context:map business-feature-context` |
 | Existing context                            | If available               | PRD priorities, SRS architecture, user journeys, domain glossary                                                        | `.context/PRD/`, `.context/SRS/`, `.context/business/domain-glossary.md` |
 | Git history                                 | If signals needed          | Already-shipped modules (skip), recently-touched modules (in-flight)                                                    | `git log --oneline -90 --stat`     |
 | PBI epics                                   | If available               | Existing epic/story breakdowns to align the plan with current backlog                                                   | `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md` |
@@ -60,19 +60,19 @@ In UPDATE mode, the most likely triggers are: scope shift, post-architecture-dec
 
 ### Phase 1 — Validation gate
 
-#### 1.1 `business-data-map.md` check (HARD)
+#### 1.1 Data map check (HARD)
 
-If `.context/business/business-data-map.md` does NOT exist → **STOP** with:
+If `bun run context:map business-data-context` prints the placeholder notice (or fails: the skill is missing) → **STOP** with:
 
-> This command needs `.context/business/business-data-map.md` to reason about dependencies, blocking factors, and value. Run `/project-context data` first, then re-invoke `/project-context master-plan`.
+> This command needs a generated data map (`business-data-context`) to reason about dependencies, blocking factors, and value. Run `/project-context data` first, then re-invoke `/project-context master-plan`.
 
 Do not proceed with assumptions. An implementation plan without an entity / flow map is wishlist, not plan.
 
-#### 1.2 `business-feature-map.md` check (SOFT)
+#### 1.2 Feature map check (SOFT)
 
-If `.context/business/business-feature-map.md` does NOT exist → **WARN and proceed**. Log in §11 Implementation Gaps:
+If `bun run context:map business-feature-context` prints the placeholder notice → **WARN and proceed**. Log in §11 Implementation Gaps:
 
-> The feature-map was not available at generation time. This plan reflects `business-data-map.md` only. Angles missed: per-feature MVP-relevance scoring, CRUD-completeness signals, feature-flag staging, third-party-dependency tagging. Run `/project-context features` and re-run `/project-context master-plan` for the complete picture.
+> The feature-map was not available at generation time. This plan reflects the data map only. Angles missed: per-feature MVP-relevance scoring, CRUD-completeness signals, feature-flag staging, third-party-dependency tagging. Run `/project-context features` and re-run `/project-context master-plan` for the complete picture.
 
 #### 1.3 Read and extract
 
@@ -126,14 +126,14 @@ Write `.context/master-implementation-plan.md` with this structure.
 
 **Tone**: conversational, senior-engineer voice, second person ("you will want to ship X before Y because…"). Assume the reader is a tech-lead onboarding to the project — guide them, do not lecture. Use the same feature / flow names as the data-map and feature-map.
 
-**What NOT to include**: feature catalogs (live in feature-map), flow diagrams (live in data-map), per-story implementation plans (live in `/sprint-development`), API endpoint definitions (live in `business-api-map.md` or `api/openapi-types.ts`), code snippets, payloads, fixtures.
+**What NOT to include**: feature catalogs (live in feature-map), flow diagrams (live in data-map), per-story implementation plans (live in `/sprint-development`), API endpoint definitions (live in the API map in `business-api-context` or `api/openapi-types.ts`), code snippets, payloads, fixtures.
 
 ### 0. Header block
 
 ```markdown
 > **Generated by**: skill `project-context` mode `master-plan`
 > **Last update**: YYYY-MM-DD
-> **Derived from**: business-data-map.md, business-feature-map.md (if present), PRD, SRS, git log
+> **Derived from**: data map (`business-data-context`), feature map (`business-feature-context`, if generated), PRD, SRS, git log
 > **Update frequency**: Re-run when scope shifts, after major architectural decisions, when a Master Sprint 0 / Master Sprint 1 feature ships, or at the start of each quarter / milestone.
 ```
 
@@ -238,7 +238,7 @@ Short, action-oriented. No more than 12 items. Ordered by what is most often ski
 - Verify the feature is covered by the master-test-plan's risk map (or document why it is not).
 - Verify env vars consumed by the feature are documented in `.env.example` and `.agents/project.yaml`.
 - Verify the feature is wired behind a feature flag if it is part of a partial-Master-Sprint rollout.
-- Verify the implementation matches the entity definition in `business-data-map.md` (no schema drift).
+- Verify the implementation matches the entity definition in the data map (`business-data-context`; no schema drift).
 - Verify external integrations have a documented degradation mode.
 - Verify the feature has been demoed against staging before requesting review.
 ```
@@ -251,8 +251,8 @@ Explicit delegation to stop scope creep into this plan:
 
 ```markdown
 - Per-story implementation plan, file-by-file design → `/sprint-development` Planning stage, written to `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/implementation-plan.md`
-- Feature catalog, CRUD matrix, feature flags → `.context/business/business-feature-map.md`
-- Flow diagrams and state-machine transitions → `.context/business/business-data-map.md`
+- Feature catalog, CRUD matrix, feature flags → the feature map (`bun run context:map business-feature-context`)
+- Flow diagrams and state-machine transitions → the data map (`bun run context:map business-data-context`)
 - API endpoint inventory / contracts → `bun run api:sync` + `/project-context api` (when available)
 - Test strategy and risk map → `.context/master-test-plan.md` (sister repo: `/master-test-plan`)
 - Sprint-level execution order → `.context/PBI/epics/EPIC-<KEY>-<slug>/ROADMAP.md` (per-epic) or sprint planning artifacts
@@ -266,7 +266,7 @@ Finish §11 with a short "Deferred / won't-do" subsection listing anything expli
 
 MANDATORY. List anything you could not ground in evidence — these are spike candidates, not unknowns to ignore:
 
-- Features mentioned in the PRD but missing from `business-data-map.md` (no entity / flow yet)
+- Features mentioned in the PRD but missing from the data map (no entity / flow yet)
 - Integrations without a documented provider choice
 - Architectural decisions implied but never recorded (sync vs async, transport, deployment unit)
 - Capacity / performance targets that affect implementation choice but have no number attached
@@ -300,5 +300,5 @@ Each gap should be phrased as a one-line spike: "Spike: choose payment provider 
 - Never invent priorities. Every Master Sprint 0 / Master Sprint 1 claim cites a data-map flow, a feature-map row, a PRD priority, or a named integration constraint.
 - Never collapse this plan into a story-level plan. If the reader needs file-level detail, point them at `/sprint-development`.
 - Never include dates. Order matters; estimates do not belong here.
-- If neither `business-data-map.md` nor `business-feature-map.md` are present, STOP — the hard gate is non-negotiable.
+- If the data map is not generated, STOP — the hard gate is non-negotiable.
 - Prose first, tables when they help, ASCII when narrative cannot carry the structure. No code blocks beyond the cascade graph and the markdown table examples shown above.
