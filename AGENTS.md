@@ -252,8 +252,8 @@ A multi-mode skill lists its modes in its own `## Mode routing` section, and tha
 | ---------- | ----------- | ---- |
 | `library-docs` | committed `context7` (`resolve-library-id` → `query-docs`) | `[DOCS_TOOL]`. **MANDATORY** for any library / framework / SDK / API / CLI doc lookup ("how to use X") before writing code against it. |
 | `web-search` | HARNESS level, never `.mcp.json`: Exa first (`web_search_exa`), Tavily second (`tavily_search`); connect once per machine (`bun run setup:doctor` shows what this machine declares) | `[WEB_SEARCH_TOOL]`. **MANDATORY** for community fixes, error-message lookups, "how to solve X", non-doc research. |
-| `db` | committed `supabase` (`execute_sql`, `list_tables`) | `[DB_TOOL]`: schema, migration ledger, read-only data checks. |
-| `automation-flows` | committed `n8n` | `[AUTOMATION_FLOWS_TOOL]`: workflow automation, integrations. |
+| `db` | the DB MCP `stack.database` names: committed `supabase` (`execute_sql`, `list_tables`) when `provider: supabase`; a Postgres-family server the project declares in `.mcp.json` otherwise; none when `engine: none` | `[DB_TOOL]`: schema, migration ledger, read-only data checks. How a change is applied follows `stack.database.migrations_tool` (`db-change-doctrine.md`). |
+| `automation-flows` | committed `n8n`, when the project's `.mcp.json` declares it | `[AUTOMATION_FLOWS_TOOL]`: workflow automation, integrations. |
 | `diagrams` | the `diagram-design` skill (T3, `cli/install.ts`), resolved by skill presence, not a tool suffix | the figures inside the business maps (`business-context-maps.md` §7). |
 
 **Missing capability = STOP at the point of use**: name the capability, the server that normally provides it, and how to enable it; then wait. Built-in `WebSearch` / `WebFetch` (or any other substitute) only when the user explicitly chooses it after the STOP, for that step.
@@ -320,8 +320,8 @@ Three consumers, three severities: `bun run up` offers to INSERT what a project 
 | `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | none: the only browser path            |
-| `[DB_TOOL]`             | Database                          | capability `db` (Supabase MCP: `execute_sql`, `list_tables`) | raw SQL via Supabase CLI, only when the user chooses it after the STOP |
-| `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`) | Postman manual                         |
+| `[DB_TOOL]`             | Database                          | capability `db`, resolved from `stack.database` (§5; Supabase MCP: `execute_sql`, `list_tables`) | the database's own CLI (Supabase CLI, `psql`), only when the user chooses it after the STOP |
+| `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`, writes `api/` at the repo root, outside `stack.app_root` on a monorepo; an app with its own client types keeps them) | Postman manual                         |
 | `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | capability `library-docs`: any tool ending in `resolve-library-id` / `query-docs` | none: STOP (see below) |
 | `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | capability `web-search`: any tool ending in `web_search_exa` / `web_fetch_exa` (preferred) or `tavily_search` / `tavily_extract` / `tavily_research` | none: STOP (see below) |
 | `[AUTOMATION_FLOWS_TOOL]` | n8n workflow automation          | capability `automation-flows` (n8n MCP)   | none: STOP (see below)                 |
@@ -392,7 +392,7 @@ Project values live in **`.agents/project.yaml`**: load once per session. NEVER 
 
 ## 9. LOCAL CONTEXT (PBI)
 
-> **`.context/PBI/` is a GITIGNORED CACHE of Jira, owned by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1). Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file: author the plan/content, push it to the Jira field (or fallback), then run the sync. Rebuild the whole tree with `bun run context:hydrate`.
+> **`.context/PBI/` is a GITIGNORED CACHE of Jira, owned by `scripts/sync-jira-issues.ts`.** Module = Epic (1:1) for the epics this pipeline creates; an adopted tracker keeps the epic shape it already has. Jira is the source of truth; local `.md` files are a **read-only cache**. NEVER hand-write a Jira-mirrored file: author the plan/content, push it to the Jira field (or fallback), then run the sync. Rebuild the whole tree with `bun run context:hydrate`; on a large or adopted project pull only what the work touches (`pull --epic <KEY>`, `--story <KEY>`, `jql`, below), and the adoption itself never hydrates (`/project-adoption`).
 >
 > **WHY NOT COMMITTED**: synced content regenerates. Two sessions re-syncing at different times produce conflicting commits of the same generated text; a 3-way merge over a full-file rewrite is meaningless. Jira already IS the versioned, shared, cloud-hosted copy — committing the cache duplicates the database into git and buys nothing.
 

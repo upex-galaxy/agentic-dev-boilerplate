@@ -1374,6 +1374,7 @@
       <nav class="topnav">
         <a href="#modelo">Modelo</a>
         <a href="#tokens">Tokens</a>
+        <a href="#extract">Extract</a>
         <a href="#bucle">Gate</a>
         <a href="#handoff">Handoff</a>
         <a href="#claude">Claude Design</a>
@@ -1399,7 +1400,9 @@
           construirla, encarga el <b>mockup</b> de esa pantalla a una herramienta de diseño, vos lo
           ratificás, y la IA lo mapea en el plan que <b>guía
           <span class="mono">/sprint-development</span></b> (modo
-          <span class="mono">screen</span>).
+          <span class="mono">screen</span>). Si la app ya existe y tiene su propia cara, el modo
+          <span class="mono">extract</span> escribe ese <span class="mono">DESIGN.md</span> desde el
+          tema vivo en lugar de elegirlo.
         </p>
 
         <div class="hero-meta">
@@ -1408,7 +1411,7 @@
             codea</span
           >
           <span class="chip"
-            ><span class="dot"></span> modos: <b>tokens · screen</b></span
+            ><span class="dot"></span> modos: <b>tokens · extract · screen</b></span
           >
           <span class="chip"
             ><span class="dot"></span> herramientas:
@@ -1474,7 +1477,8 @@
               <li>
                 Lo genera <b>/design-system</b> en modo <span class="mono">tokens</span>, por uno
                 de cinco caminos, A a E (gallery manual, <span class="mono">getdesign</span> +
-                matcher, Open Design, Claude Design o custom). Detalle en §02.
+                matcher, Open Design, Claude Design o custom). Detalle en §02. En una app que ya
+                existe, lo escribe el modo <span class="mono">extract</span> desde su tema vivo (§02·c).
               </li>
               <li>Formato abierto (Google Labs), lo lee cualquier agente.</li>
               <li>Lo consume <b>/project-bootstrap</b> al montar el frontend.</li>
@@ -1604,8 +1608,9 @@
             <h3>Lee el contexto del negocio</h3>
             <p>
               <span class="mono">business-model.md</span>, <span class="mono">personas.md</span> y
-              <span class="mono">executive-summary.md</span>. Si no existen (brownfield), te hace
-              cinco preguntas: industria, tono, target, competidores y keywords.
+              <span class="mono">executive-summary.md</span>. Si no existen y la app tampoco tiene un
+              tema en el código, te hace cinco preguntas: industria, tono, target, competidores y
+              keywords. Con tema en el código, el camino es el modo <span class="mono">extract</span>.
             </p>
           </div>
           <div class="step">
@@ -1689,6 +1694,99 @@
           <span class="mono">DESIGN.md</span> al montar el frontend, y sin él se detiene. Y la IA te
           pregunta si además querés mapear pantallas: eso ya es la fase
           <span class="mono">screen</span>, siempre opt-in.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02·c MODO EXTRACT ============ -->
+    <section class="band" id="extract">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02·c</span> · modo extract</div>
+          <h2>Tres modos, no dos: la app ya tiene cara</h2>
+          <p class="sub">
+            Una app que adopta agentic-dev ya se ve de alguna manera. Elegir una marca del catálogo
+            contradiría lo que sus usuarios ven todos los días. <span class="mono">/design-system
+            extract</span> lee el tema vivo (la config de Tailwind, la hoja de estilos que importa el
+            layout, <span class="mono">components.json</span>) y lo escribe como
+            <span class="mono">DESIGN.md</span>, valor por valor, cada uno con el archivo de donde
+            salió.
+          </p>
+        </div>
+
+        <div class="tablewrap r" style="margin-bottom: 30px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Cuándo</th>
+                <th>Qué deja</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">tokens</span></th>
+                <td>Producto nuevo: elegir o escribir una identidad.</td>
+                <td><span class="mono">DESIGN.md</span> por uno de los cinco caminos (§02).</td>
+              </tr>
+              <tr>
+                <th><span class="mono">extract</span></th>
+                <td>App existente: registrar la identidad que ya tiene.</td>
+                <td><span class="mono">DESIGN.md</span> espejo del tema vivo, con su origen en cada valor.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">screen</span></th>
+                <td>Una historia, un mockup, justo antes de construirla.</td>
+                <td>La spec y la fila Historia → Pantalla del master design plan (§03).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Qué hace</div>
+            <h3>Código → <span class="mono">DESIGN.md</span>, en un solo sentido</h3>
+            <ul>
+              <li>
+                Resuelve los archivos <b>vivos</b> por evidencia: una copia muerta (un
+                <span class="mono">globals.css</span> que nadie importa) se lista y se ignora.
+              </li>
+              <li>
+                Copia cada valor en su propio formato de color: el linter acepta
+                <span class="mono">oklch()</span> y <span class="mono">hsl()</span>, así que no hay
+                conversión ni redondeo.
+              </li>
+              <li>
+                Calcula los radios derivados (<span class="mono">calc(...)</span>) a una dimensión
+                plana, porque el linter los rechaza, y deja la expresión original en el comentario.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Qué nunca hace</div>
+            <h3>Tocar la app o inventar</h3>
+            <ul>
+              <li>
+                No toca el código de la app: solo puede cambiar <span class="mono">DESIGN.md</span>,
+                una variante aceptada y <span class="mono">.session/design-system/</span>.
+              </li>
+              <li>No inventa un token que no encuentra: lo que falta queda como Discovery Gap.</li>
+              <li>
+                No "arregla" un par de bajo contraste: lo reporta, porque el arreglo es un cambio de UI
+                con su propia historia.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Después de extract, nunca <span class="mono">/project-bootstrap</span> frontend.</b> Esa
+          fase genera la config de Tailwind y la hoja de estilos desde los tokens; sobre una app cuyo
+          tema es la fuente, pisaría la config viva con su propio eco. El archivo extraído se consume
+          leyéndolo: <span class="mono">/sprint-development</span> lo usa como contrato de tokens en
+          cada historia de UI. Detalle:
+          <span class="mono">.agents/skills/design-system/references/extract-from-code.md</span>.
         </div>
       </div>
     </section>

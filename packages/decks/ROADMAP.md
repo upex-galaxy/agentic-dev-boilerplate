@@ -31,9 +31,10 @@ Una skill de flujo nueva sin deck es la próxima fila `todo`. La lista real de s
 | Deck                                                   | Archivo                                           | Estado     | Nota |
 | ------------------------------------------------------ | ------------------------------------------------- | ---------- | ---- |
 | Project foundation · cómo funciona                     | `project-foundation/como-funciona.es.html`        | **hecho**  | |
-| Del plano al producto — tokens y mockups con IA        | `design-system/flujo-mockups.es.html`             | **hecho**  | fase de tokens y fase de pantallas en un solo deck; URL publicada sin cambios |
+| Del plano al producto — tokens y mockups con IA        | `design-system/flujo-mockups.es.html`             | **hecho**  | fase de tokens (con el modo `extract` de una app existente) y fase de pantallas en un solo deck; URL publicada sin cambios |
 | DESIGN.md · los 5 caminos                              | `design-system/design-md.es.html`                 | plegado    | dentro de `flujo-mockups.es.html` (fase de tokens) |
 | Project bootstrap · cómo funciona                      | `project-bootstrap/como-funciona.es.html`         | **hecho**  | |
+| Project adoption · adoptar una app existente           | `project-adoption/como-funciona.es.html`          | **hecho**  | entrada de una app existente, en lugar de `project-bootstrap` |
 | Product management · cómo funciona                     | `product-management/como-funciona.es.html`        | **hecho**  | |
 | Project context · mapas, plan maestro y roadmap        | `project-context/como-funciona.es.html`           | **hecho**  | |
 | Sprint development · del ticket al deploy              | `sprint-development/como-funciona.es.html`        | **hecho**  | |

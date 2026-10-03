@@ -5,6 +5,79 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-03 — Brownfield adoption: install the agentic layer into an existing app (updater 8.8)
+
+An application that already has its own code, schema, CI and conventions can
+now take the agentic layer without being overwritten (#80 to #91 and the
+sweep PR that closes the wave). There are two install paths: a new project
+starts with `bunx create-agentic-dev@latest <name>`, an existing app runs
+`bunx create-agentic-dev@latest --adopt` from its repo root and then the
+`project-adoption` skill. The install layer (the updater's `--adopt`) never
+writes over what the app owns; the understanding layer (`project-adoption`)
+reads the app, proposes one plan, and writes only agentic surfaces after
+approval. v1 supports a Next.js app on the Postgres family that uses bun, one
+app per adoption; the set is `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`.
+
+### Added
+
+- **Stack descriptor** (#81): the `stack:` block of `.agents/project.yaml`
+  (app root, framework, package manager, script names, database layout and
+  how a schema change lands, UI, hosting, CI, test runner, conventions),
+  detected and written by `bun run agents:setup --stack`, validated and
+  drift-checked by `bun run setup:doctor`. Owner: `cli/lib/stack-descriptor.ts`.
+- **`--adopt` first-run policy in the updater** (#82): absent paths are
+  delivered, identical ones marked seen, app-owned ones never written and
+  protected through `updater.protected_paths`; `package.json` is append-only;
+  app instructions are composed verbatim into `AGENTS.md` only on an explicit
+  yes. Owner: `cli/lib/updater-adopt.ts` plus the `adopt` option of
+  `runUpdate` (`cli/lib/updater-core.ts`).
+- **Scaffolder `--adopt` and `--doctor --preflight`** (#86): a read-only
+  preflight, then the template's updater run with `--adopt` from a temp
+  directory. Owner: `packages/create-agentic-dev/`.
+- **`project-adoption` skill** (#84): sealed analysis, one plan file waiting
+  for approval, writes to agentic surfaces only, then the app's own build,
+  lint, types and test compared against their baseline; mode `check` is a
+  read-only drift report. Owner: `.agents/skills/project-adoption/`.
+- **Tooling isolation** (#89): `tsconfig.tooling.json`,
+  `eslint.config.tooling.mjs` and the `tooling:types:check` /
+  `tooling:lint:check` scripts scope the tooling to `cli/` + `scripts/`; a
+  foreign hook manager is detected and never replaced. Owners:
+  `cli/lib/adopt-isolation.ts`, `cli/lib/hook-manager.ts`.
+- **Greenfield guard for `project-bootstrap`** (#88): `bun run
+  bootstrap:guard` refuses the base phases on an existing app and routes to
+  `project-adoption`; the add-ons stay. Owner: `cli/lib/bootstrap-guard.ts`.
+- **`design-system` mode `extract`** (#80): `DESIGN.md` written from the live
+  theme, with provenance on every value and no change to app code. Owner:
+  `.agents/skills/design-system/references/extract-from-code.md`.
+- **DB change doctrine** (#88, owner decision OD4 = C): agents keep applying
+  schema changes through the DB MCP, read the migration history first, and
+  follow `stack.database.migrations_tool`; the adoption itself never touches
+  a database. Owner:
+  `.agents/skills/agentic-dev-core/references/db-change-doctrine.md`.
+- **Decks**: `packages/decks/project-adoption/como-funciona.es.html` with its
+  hub card, the `extract` band in the design-system deck, and the greenfield
+  guard band in the project-bootstrap deck.
+
+### Changed
+
+- **Skills read the app's stack instead of greenfield literals**:
+  `project-context` (#83), `project-foundation` Discovery-only and the
+  business maps as an adopted app's product docs (#87), `sprint-development`
+  and `autonomous-delivery` (#91), `agentic-dev-onboard`, `unit-testing` and
+  `testability-guide` (#90). Stack skills are required at the step that
+  needs them, and a DB-MCP mutation loads the Supabase skills first (#85).
+- **`AGENTS.md`**: the `db` capability resolves from `stack.database`, `n8n`
+  applies when `.mcp.json` declares it, `api:sync` is documented as writing
+  `api/` at the repo root, and the PBI cache is pulled by scope on an adopted
+  tracker (sweep PR). §5.5 documents `--adopt` and the tooling isolation.
+- **Install paths named everywhere**: the "clone the full boilerplate" lines
+  in `agentic-dev-core`, `git-flow-master`, `product-management`,
+  `project-foundation`, `sprint-development` and `.context/README.md` now name
+  the two install paths (sweep PR). `agentic-dev-core` → "Install model"
+  carries the table.
+- **Updater CLI version** `8.7` → `8.8` (`CLI_VERSION` in
+  `cli/update-boilerplate.ts`).
+
 ## 2026-10-03 — Docs hub and one deck per workflow skill; behaviour layer recorded (updater 8.7)
 
 The human-docs wave that follows the parity wave (#52 to #77, and the portal

@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Project bootstrap: del SRS a un repo que arranca</title>
+    <title>Project adoption: la capa agéntica sobre una app viva</title>
     <meta
       name="description"
-      content="Cómo /project-bootstrap convierte el PRD, el SRS y el DESIGN.md en la base técnica del proyecto: backend con base de datos, auth y tipos, frontend con el design system, y piezas de integración a demanda."
+      content="Cómo /project-adoption le enseña la capa agéntica a una app existente después de la instalación con --adopt: lee la app sin escribir, propone un plan, espera tu aprobación, escribe solo superficies agénticas y verifica que la app quedó igual."
     />
     <style>
       /* ============================================================
@@ -1295,7 +1295,7 @@
       }
 
       /* ============================================================
-     Deck-local: project-bootstrap (shell compartido con product-management).
+     Deck-local: shell compartido con project-bootstrap y product-management.
      ============================================================ */
       .pipe.five {
         grid-template-columns: repeat(5, 1fr);
@@ -1593,13 +1593,12 @@
       >
       <nav class="topnav">
         <a href="#cuando">Cuándo</a>
-        <a href="#guard">Guard</a>
+        <a href="#capas">Capas</a>
         <a href="#mapa">Mapa</a>
-        <a href="#plan">Plan</a>
-        <a href="#backend">Backend</a>
-        <a href="#frontend">Frontend</a>
-        <a href="#incrementales">Incrementales</a>
+        <a href="#sellado">Sellado</a>
+        <a href="#escritura">Escritura</a>
         <a href="#verificar">Verificar</a>
+        <a href="#rieles">Rieles</a>
         <a href="#invocar">Invocar</a>
       </nav>
       <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
@@ -1610,55 +1609,47 @@
     <!-- ============ HERO ============ -->
     <header class="hero">
       <div class="wrap">
-        <div class="kicker eyebrow"><span class="num">00</span> · de la especificación al repo</div>
-        <h1>Un repo que <em>arranca</em> antes de la primera <span class="sig">historia</span>.</h1>
+        <div class="kicker eyebrow"><span class="num">00</span> · adoptar una app existente</div>
+        <h1>Una app que ya existe <em>no</em> se reescribe: se <span class="sig">lee</span>.</h1>
         <p class="lede">
-          <span class="mono">/project-bootstrap</span> toma lo que dejó
-          <span class="mono">/project-foundation</span> (PRD, SRS) y el
-          <span class="mono">DESIGN.md</span>, y levanta la base técnica: <b>backend</b> con base de
-          datos, auth y tipos, <b>frontend</b> con el design system, y las piezas de integración que
-          el proyecto pida. Corre una vez por proyecto; después, cada historia construye encima.
+          <span class="mono">/project-adoption</span> le enseña la capa agéntica a una aplicación que
+          ya tiene código, schema, CI y convenciones propias. Lee la app sin escribir nada, propone un
+          solo plan, espera tu aprobación y recién ahí completa las superficies agénticas, para que
+          cada skill trabaje con el stack real de la app y no con los defaults del boilerplate. El
+          código, el schema, el CI y las dependencias de la app no cambian.
         </p>
 
         <div class="hero-meta">
-          <span class="chip"><span class="dot"></span> para quien <b>codea</b> y para el <b>tech lead</b></span>
-          <span class="chip"
-            ><span class="dot"></span> orden fijo: <b>backend primero</b>, frontend después</span
-          >
+          <span class="chip"><span class="dot"></span> para quien <b>adopta</b> una app viva</span>
+          <span class="chip"><span class="dot"></span> se corre <b>después</b> de la instalación</span>
           <span class="chip agent"
-            ><span class="dot"></span> sale listo para <b>features</b>, no para producción</span
+            ><span class="dot"></span> nada se escribe sin el <b>plan aprobado</b></span
           >
         </div>
 
-        <div class="pipe five" id="pipe">
+        <div class="pipe" id="pipe">
           <div class="node">
-            <div class="n">Entrada</div>
-            <h3>PRD + SRS + DESIGN.md</h3>
-            <p>Producto, arquitectura y tokens visuales.</p>
+            <div class="n">Instalar</div>
+            <h3>Con <span class="mono">--adopt</span></h3>
+            <p>La herramienta llega sin pisar nada de la app. Se commitea como un solo cambio.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 0.5</div>
-            <h3>Plan</h3>
-            <p>Qué se monta y qué features suma. Lo aprobás vos.</p>
+            <div class="n">Leer</div>
+            <h3>Sellado</h3>
+            <p>Stack, scripts, schema, CI, hooks, tracker y la línea de base de la app.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 1</div>
-            <h3>Backend</h3>
-            <p>Esquema, RLS, auth, clientes y tipos.</p>
+            <div class="n">Proponer</div>
+            <h3>Un plan</h3>
+            <p>Un archivo, <span class="mono">PENDING APPROVAL</span>, y la IA espera.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 2</div>
-            <h3>Frontend</h3>
-            <p>Design system desde <span class="mono">DESIGN.md</span>, layout, páginas demo.</p>
-            <div class="arw">→</div>
-          </div>
-          <div class="node">
-            <div class="n">Fase 3</div>
-            <h3>Incrementales</h3>
-            <p>OpenAPI, rutas, bearer, URLs, tipos. Solo las que hagan falta.</p>
+            <div class="n">Escribir</div>
+            <h3>Y comparar</h3>
+            <p>Solo superficies agénticas, y la app tiene que salir igual que entró.</p>
           </div>
         </div>
       </div>
@@ -1669,695 +1660,165 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
-          <h2>Después de definir el producto, antes de la primera historia</h2>
+          <h2>Después de instalar, antes de trabajar historias</h2>
           <p class="sub">
-            <span class="mono">/project-foundation</span> responde qué se construye. Esta skill
-            responde cómo se para el repo para empezar a construirlo.
+            Es la puerta de entrada de una app existente. Un proyecto nuevo entra por otra, y cada cosa
+            que viene después tiene su propia skill.
           </p>
         </div>
 
         <div class="planes r">
           <div class="plane">
             <div class="tag">Usala cuando</div>
-            <h3>Hay especificación y no hay código</h3>
+            <h3>La adopción quedó instalada y falta enseñarle la app</h3>
             <ul>
               <li>
-                Un repo nuevo ya tiene su fundación (<span class="mono">/project-foundation</span>
-                corrió) pero <b>todavía no tiene código</b>.
+                "Adoptá esta app" · "la adopción quedó instalada" · "adoptar la app existente": el
+                instalador con <span class="mono">--adopt</span> ya corrió y está commiteado.
               </li>
               <li>
-                Un repo existente necesita <b>una pieza de infraestructura</b> más: "agregá OpenAPI a
-                la API", "sumá auth por bearer token", "conectá los tipos de Supabase al frontend".
-                Solo las piezas incrementales: la base no corre sobre una app que ya existe (§01·b).
+                "¿La adopción sigue siendo correcta?" · "adoption drift check": modo
+                <span class="mono">check</span>, solo lectura.
               </li>
             </ul>
           </div>
           <div class="plane sig">
             <div class="tag">No la uses para</div>
-            <h3>Lo que pertenece a otra skill</h3>
+            <h3>Lo que pertenece a otra skill o a otro paso</h3>
             <ul>
               <li>
-                <b>Definir el producto</b> (PRD, journeys, decisiones de arquitectura): eso es
-                <span class="mono">/project-foundation</span>.
+                <b>Un proyecto desde cero</b>: <span class="mono">/project-foundation</span> y después
+                <span class="mono">/project-bootstrap</span>.
               </li>
               <li>
-                <b>Sembrar el backlog</b> en Jira: eso es
-                <span class="mono">/product-management</span>.
+                <b>Instalar los archivos en la app</b>: eso es la corrida del updater con
+                <span class="mono">--adopt</span>, que esta skill nunca reemplaza.
               </li>
               <li>
-                <b>Implementar una historia</b> de punta a punta: eso es
-                <span class="mono">/sprint-development</span>.
-              </li>
-              <li>
-                <b>Tests unitarios</b> y su framework: eso es <span class="mono">/unit-testing</span>.
+                <b>Los mapas de negocio</b> (<span class="mono">/project-context</span>), la
+                <b>estrategia de branches</b> (<span class="mono">/git-flow-master</span> Strategy
+                Setup), la <b>identidad visual</b> (<span class="mono">/design-system extract</span>) o
+                <b>crear campos, workflows o issues de Jira</b>
+                (<span class="mono">/jira-administration</span>,
+                <span class="mono">/product-management</span>).
               </li>
             </ul>
           </div>
         </div>
-
-        <div class="callout blue r">
-          <b>Antes de arrancar:</b> el stack del backend, el del frontend y el motor de base de datos
-          se leen de <span class="mono">.agents/project.yaml</span>. Si esos valores están vacíos, la
-          skill te manda primero a <span class="mono">/project-foundation</span>, porque las
-          decisiones de infraestructura salen de la arquitectura del SRS.
-        </div>
       </div>
     </section>
 
-    <!-- ============ §01·b GUARD GREENFIELD ============ -->
-    <section class="band" id="guard">
+    <!-- ============ §02 DOS CAPAS ============ -->
+    <section class="band" id="capas">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">01·b</span> · solo greenfield para la base</div>
-          <h2>La base no corre sobre una app que ya existe</h2>
+          <div class="eyebrow"><span class="num">02</span> · instalar y entender</div>
+          <h2>Dos capas, dos momentos</h2>
           <p class="sub">
-            Las fases base (backend y frontend) crean: tablas, RLS, seeds, clientes, middleware,
-            layout, tema, la config de Tailwind, páginas y credenciales de demo. Sobre una app viva,
-            cada uno de esos pasos pisaría algo. Por eso el veredicto lo da un script, nunca la IA
-            mirando el árbol: un gate que el agente puede satisfacer escribiendo un valor creíble no es
-            un gate.
+            Instalar la herramienta y entender la app son trabajos distintos. El primero lo hace un
+            comando que no pregunta nada sobre la app; el segundo lo hace esta skill, que pregunta todo
+            lo que los archivos no contestan.
           </p>
         </div>
 
-        <pre class="code r"><span class="c"># al entrar, antes del plan de la sesión; el veredicto y el exit code van a plan.md</span>
-bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app existente (con las señales) · --json</span></pre>
-
         <div class="planes r">
           <div class="plane">
-            <div class="tag">exit 0 · greenfield</div>
-            <h3>Todo corre como está escrito</h3>
+            <div class="tag">Capa de instalación</div>
+            <h3>El updater con <span class="mono">--adopt</span></h3>
             <ul>
-              <li>Las fases base y las piezas incrementales.</li>
               <li>
-                Una corrida retomada conserva el veredicto que registró su plan: para entonces, lo que
-                el guard vería es la propia salida de la skill.
+                Entrega lo que la app no tiene y <b>nunca pisa</b> lo que tiene: un archivo propio de
+                la app en la misma ruta queda como está, aparece como fila <span class="mono">merge</span>
+                y entra en <span class="mono">updater.protected_paths</span>.
+              </li>
+              <li>
+                <span class="mono">package.json</span> solo suma las
+                <span class="mono">devDependencies</span> de la herramienta y los scripts que la app no
+                declara. Un nombre de script que ya existe se conserva y se reporta.
+              </li>
+              <li>
+                No reescribe la historia de git, no renombra, no hace <span class="mono">git init</span>
+                y no toca ninguna base de datos.
               </li>
             </ul>
           </div>
-          <div class="plane sig">
-            <div class="tag">exit 2 · app existente</div>
-            <h3>La base se rechaza</h3>
+          <div class="plane agent">
+            <div class="tag">Capa de entendimiento</div>
+            <h3>Esta skill</h3>
             <ul>
               <li>
-                Cualquier señal alcanza: el lock de adopción, un <span class="mono">package.json</span>
-                que declara <span class="mono">next</span> o <span class="mono">react</span>, o archivos
-                de app (rutas, middleware, config de Tailwind, <span class="mono">components.json</span>,
-                migraciones).
+                Lee la app y escribe identidad, el bloque <span class="mono">stack:</span>, entornos,
+                catálogos del tracker y rutas protegidas.
               </li>
               <li>
-                La IA cita las señales, nombra qué habría pisado y te manda a
-                <span class="mono">/project-adoption</span> (y a
-                <span class="mono">/design-system extract</span> si el pedido era sobre cómo se ve la
-                UI).
+                Con eso, el resto de las skills lee el stack real de la app en vez de los defaults del
+                boilerplate.
               </li>
-              <li>Las piezas incrementales siguen disponibles y leen el bloque <span class="mono">stack:</span>.</li>
+              <li>Nunca reemplaza al instalador: sin su lock, se detiene.</li>
             </ul>
           </div>
         </div>
 
+        <pre class="code r"><span class="c"># desde la raíz del repo de la app, con el árbol limpio</span>
+bunx create-agentic-dev@latest --doctor --preflight   <span class="c"># solo lectura: ¿se puede adoptar?</span>
+bunx create-agentic-dev@latest <span class="k">--adopt</span>
+
+<span class="c"># revisar la tabla de paridad, bun install, commitear la adopción; después, en una sesión:</span>
+/project-adoption</pre>
+
         <div class="callout r">
-          <b>Fail-closed.</b> Sin veredicto registrado, o con uno ilegible, la base no corre. Decir "esto
-          es greenfield" no lo destraba: el arreglo de una lectura equivocada es quitar la señal que el
-          script citó y volver a correrlo. Deck de la otra puerta:
-          <a href="../project-adoption/como-funciona.es.html">Project adoption</a>.
+          <b>Qué soporta la primera versión.</b> Una app Next.js sobre la familia Postgres (Supabase
+          o Postgres plano) que usa bun, una app por adopción. El conjunto vive en
+          <span class="mono">V1_SUPPORTED</span> (<span class="mono">cli/lib/stack-descriptor.ts</span>):
+          algo afuera detiene el preflight o el análisis con el campo y el valor que fallaron, y no se
+          escribe nada. Detalle de la instalación: <span class="mono">INSTALLER.md</span>, sección
+          "Adopt an existing app".
         </div>
       </div>
     </section>
 
-    <!-- ============ §02 MAPA ============ -->
+    <!-- ============ §03 MAPA ============ -->
     <section class="band" id="mapa">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">02</span> · el mapa</div>
-          <h2>Una base en orden, y piezas que se suman encima</h2>
+          <div class="eyebrow"><span class="num">03</span> · el mapa</div>
+          <h2>Una caja sellada y una caja de escritura</h2>
           <p class="sub">
-            La base (backend y después frontend) se monta siempre y en ese orden. Las piezas
-            incrementales son independientes entre sí: se eligen por necesidad y el resto se salta.
+            Entre las dos hay una sola puerta: tu aprobación explícita del plan, dentro de la misma
+            corrida. Un plan de una corrida anterior se retoma, nunca se reescribe.
           </p>
         </div>
 
         <div class="lanes r">
           <div class="lane">
-            <div class="lane-head">Arranque · en el hilo principal</div>
-            <a class="wf" href="#plan"
+            <div class="lane-head">Sellado: sin escrituras</div>
+            <a class="wf" href="#sellado"
               ><span class="lt">0</span
-              ><span
-                ><b>¿Hay una sesión previa?</b
-                ><span>Retomar, reiniciar o abortar.</span></span
-              ></a
+              ><span><b>Reanudar + puerta de entrada</b><span>Lock adoptado, árbol limpio, señales.</span></span></a
             >
-            <a class="wf" href="#plan"
-              ><span class="lt">0.5</span
-              ><span><b>Plan</b><span>Qué se monta, con qué features, cómo se verifica.</span></span></a
+            <a class="wf" href="#sellado"
+              ><span class="lt">1</span
+              ><span><b>Análisis</b><span>Huella del stack, gate v1, línea de base, cuestionario.</span></span></a
             >
-          </div>
-          <div class="lane">
-            <div class="lane-head">Base · subagentes en secuencia</div>
-            <a class="wf" href="#backend"
-              ><span class="lt sig">1</span
-              ><span
-                ><b>Backend</b><span>Base de datos, RLS, auth, clientes, tipos generados.</span></span
-              ></a
-            >
-            <a class="wf" href="#frontend"
+            <a class="wf" href="#sellado"
               ><span class="lt sig">2</span
-              ><span
-                ><b>Frontend</b
-                ><span>Lee los tipos del backend y los tokens de DESIGN.md.</span></span
-              ></a
+              ><span><b>El plan</b><span>Un archivo en PENDING APPROVAL. Esperar.</span></span></a
             >
           </div>
           <div class="lane">
-            <div class="lane-head">Incremental · a demanda</div>
-            <a class="wf" href="#incrementales"
-              ><span class="lt agent">3</span
-              ><span
-                ><b>Piezas de integración</b
-                ><span>OpenAPI, rutas de API, bearer token, URLs por ambiente, tipos de Supabase.</span></span
-              ></a
+            <div class="lane-head">Escritura: solo superficies agénticas</div>
+            <a class="wf" href="#escritura"
+              ><span class="lt">3-4</span
+              ><span><b>Identidad, stack, entornos, credenciales</b><span>Yaml y <span class="mono">.env</span>.</span></span></a
+            >
+            <a class="wf" href="#escritura"
+              ><span class="lt">5-7</span
+              ><span><b>Tracker, instrucciones, contrato de API</b><span>Cada uno con su fila aprobada.</span></span></a
             >
             <a class="wf" href="#verificar"
-              ><span class="lt agent">✓</span
-              ><span><b>Verificación y archivo</b><span>Build, tipos, servidor arriba, sesión archivada.</span></span></a
+              ><span class="lt sig">8-9</span
+              ><span><b>Verificar y cerrar</b><span>Fail-fast, la app igual que antes, hand-off.</span></span></a
             >
-          </div>
-        </div>
-
-        <div class="callout r">
-          <b>El hilo principal no escribe código.</b> Coordina: cada fase de la base y cada pieza
-          incremental va a su propio subagente, con un briefing de siete componentes que nombra la
-          referencia exacta que tiene que leer. Al entrar, la skill además resuelve qué skills
-          complementarias tenés instaladas para las categorías que declara su frontmatter:
-          las del repo se cargan solas, las de tu usuario te las pregunta una vez.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §03 ENTRADAS ============ -->
-    <section class="band" id="entradas">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">03</span> · qué lee</div>
-          <h2>Lo que lee, en este orden</h2>
-          <p class="sub">
-            Es el orden canónico para una IA que arranca en frío. Cada una alimenta una decisión
-            distinta del scaffolding.
-          </p>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3><span class="mono">.context/PRD/</span></h3>
-            <p>El inventario de features y el alcance del MVP: deciden <b>qué</b> se monta.</p>
-          </div>
-          <div class="step">
-            <h3><span class="mono">.context/SRS/</span></h3>
-            <p>
-              Las decisiones de infraestructura: base de datos, hosting, proveedor de auth, runtime.
-              El esquema de la base sale del ERD de la arquitectura.
-            </p>
-          </div>
-          <div class="step">
-            <h3><span class="mono">DESIGN.md</span> en la raíz</h3>
-            <p>
-              Paleta, tipografía y tokens. Es la entrada obligatoria del frontend: tiene que existir
-              antes de la fase 2.
-            </p>
-          </div>
-          <div class="step">
-            <h3><span class="mono">.agents/project.yaml</span></h3>
-            <p>Identidad del proyecto, stack del backend y del frontend, motor de base de datos y las URLs de cada ambiente.</p>
-          </div>
-          <div class="step">
-            <h3>Lo que ya existe en <span class="mono">app/</span>, <span class="mono">lib/</span>, <span class="mono">db/</span></h3>
-            <p>
-              Si hay scaffolding previo, se detecta y se parchea en el lugar. Nunca se pisa lo que
-              alguien ya editó.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §04 SESIÓN + PLAN ============ -->
-    <section class="band" id="plan">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">04</span> · fases 0 y 0.5</div>
-          <h2>Primero se fija si hay trabajo a medias, después escribe el plan</h2>
-          <p class="sub">
-            Las dos corren en el hilo principal, sin subagentes, incluso la primera vez: así
-            "retomar o empezar" es siempre una decisión explícita.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">La IA hace</span>
-            <p>
-              Busca <span class="mono">.session/project-bootstrap/progress.md</span>. Si existe, lee
-              el plan y las últimas entradas y te muestra el objetivo, la última fase cerrada y la
-              próxima.
-            </p>
-            <p>
-              Si no existe, redacta <span class="mono">plan.md</span>: objetivo, entradas, enfoque,
-              fases, riesgos y checklist de verificación.
-            </p>
-          </div>
-          <div class="hum">
-            <span class="k">Vos decidís</span>
-            <p>
-              Con sesión previa: <b>retomar</b>, <b>reiniciar</b> (lo anterior se archiva) o
-              <b>abortar</b> (no se toca nada).
-            </p>
-            <p>
-              Con plan nuevo: <b>qué piezas incrementales</b> se suman sobre la base. Sin tu
-              aprobación, no arranca la fase 1.
-            </p>
-          </div>
-          <div class="out">
-            <span class="k">Sale</span>
-            <p>
-              <span class="mono">.session/project-bootstrap/plan.md</span> en estado
-              <span class="mono">draft</span>, que pasa a <span class="mono">approved</span> cuando
-              lo aprobás.
-            </p>
-            <p>
-              Cada fase que termina deja una entrada en <span class="mono">progress.md</span>: si la
-              sesión se corta, se retoma desde ahí.
-            </p>
-          </div>
-        </div>
-        <div class="gate r"><b>Gate</b> plan aprobado, con las piezas incrementales elegidas.</div>
-      </div>
-    </section>
-
-    <!-- ============ §05 BACKEND ============ -->
-    <section class="band" id="backend">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">05</span> · fase 1</div>
-          <h2>Backend: la base que reusan todas las historias</h2>
-          <p class="sub">
-            Levanta la base de datos, la auth y la capa de acceso, y fija las convenciones que va a
-            seguir cada endpoint futuro. Se hace una sola vez, antes de los sprints.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">La IA hace</span>
-            <p>
-              Verifica el estado de git y las herramientas. <b>Sin el MCP de Supabase se detiene
-              todo</b>: crea tablas y políticas con él, no con scripts SQL a mano.
-            </p>
-            <p>
-              Crea las tablas fundacionales (no el ERD entero), índices, RLS por tabla y datos semilla
-              realistas. Arma los clientes de Supabase, el middleware de sesión y la configuración
-              centralizada. Consulta la documentación oficial antes de instalar cada dependencia.
-            </p>
-          </div>
-          <div class="hum">
-            <span class="k">Vos decidís</span>
-            <p>
-              El <b>proyecto de Supabase</b>: uno existente (das su ID) o uno nuevo.
-            </p>
-            <p>
-              Cómo se manejan los archivos de entorno: la IA no crea un <span class="mono">.env</span>
-              sin consultarte. Los commits los hacés vos.
-            </p>
-          </div>
-          <div class="out">
-            <span class="k">Sale</span>
-            <p>
-              Tablas con RLS en la base, clientes en <span class="mono">src/lib/supabase/</span>,
-              configuración en <span class="mono">src/lib/config.ts</span>, tipos generados en
-              <span class="mono">src/types/supabase.ts</span>.
-            </p>
-            <p>
-              Documentación en <span class="mono">.context/backend-setup.md</span> y
-              <span class="mono">.context/api-auth.md</span>.
-            </p>
-          </div>
-        </div>
-        <div class="gate r">
-          <b>Gate</b> tipos generados del esquema vivo, TypeScript sin errores y build completo en
-          verde.
-        </div>
-
-        <div class="planes r" style="margin-top: 26px">
-          <div class="plane">
-            <div class="tag">Capas que no se colapsan</div>
-            <h3><span class="mono">api/</span> · <span class="mono">schemas/</span> · <span class="mono">db/</span></h3>
-            <ul>
-              <li>
-                Los límites entre capas son <b>arquitectura del framework</b>, no abstracción
-                especulativa: la regla de simplicidad de <span class="mono">AGENTS.md</span> los
-                exime a propósito.
-              </li>
-              <li>
-                <span class="mono">api/schemas/</span> son las fachadas de tipos de OpenAPI: una sola
-                fuente de verdad por dominio.
-              </li>
-              <li>
-                Después, en review, una violación de capa es un hallazgo citable:
-                <span class="mono">/pr-review-lead</span> las revisa contra esta doctrina.
-              </li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">Secretos y configuración</div>
-            <h3>Dos lugares, nunca el código</h3>
-            <ul>
-              <li>
-                Credenciales en <span class="mono">.env</span>; configuración no secreta en
-                <span class="mono">.agents/project.yaml</span>.
-              </li>
-              <li>
-                <span class="mono">.env.example</span> no se reescribe: está en paridad con
-                <span class="mono">cli/lib/variables-manifest.ts</span>. Una variable nueva va en los
-                dos, en el mismo commit.
-              </li>
-              <li>Las variables se validan al arrancar con un esquema (Zod o equivalente).</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §06 FRONTEND ============ -->
-    <section class="band" id="frontend">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">06</span> · fase 2</div>
-          <h2>Frontend: el design system sale de DESIGN.md</h2>
-          <p class="sub">
-            Monta el proyecto, el design system, el layout y unas pocas páginas demo que prueban que
-            todo encaja. No implementa features: eso queda para cada historia.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">La IA hace</span>
-            <p>
-              Antes de nada, <b>confirma que el backend existe</b>: lee
-              <span class="mono">src/types/supabase.ts</span> y los clientes de Supabase, y se
-              detiene si faltan. Con ellos arma helpers de tipos para los componentes.
-            </p>
-            <p>
-              Mapea los tokens de <span class="mono">DESIGN.md</span> a la configuración de Tailwind y
-              a variables CSS <b>sin preguntarte colores</b>: el archivo ya es la fuente. Monta el
-              proyecto en el directorio actual, sin generadores que crean subcarpetas.
-            </p>
-          </div>
-          <div class="hum">
-            <span class="k">Vos decidís</span>
-            <p>El <b>package manager</b>.</p>
-            <p>
-              La <b>estrategia de componentes</b>: shadcn/ui, componentes desde cero o Headless UI con
-              estilos propios. Esa pregunta sigue en pie aunque haya DESIGN.md.
-            </p>
-            <p>Qué <b>páginas demo</b> se construyen (dos o tres, las más representativas del dominio).</p>
-          </div>
-          <div class="out">
-            <span class="k">Sale</span>
-            <p>
-              Componentes en <span class="mono">src/components/ui/</span>, layout en
-              <span class="mono">src/components/layout/</span>, páginas demo, estilos globales.
-            </p>
-            <p>
-              <span class="mono">.context/design-system.md</span> documenta paleta, componentes y uso.
-            </p>
-          </div>
-        </div>
-        <div class="gate r">
-          <b>Gate</b> build en verde y revisión visual: con <span class="mono">/playwright-cli</span>
-          en una sesión con nombre, o la hacés vos con el servidor corriendo.
-        </div>
-
-        <div class="callout r">
-          <b>Sin DESIGN.md, no hay fase 2.</b> Los tokens de diseño son el contrato de entrada del
-          frontend. Si el archivo no existe, primero se corre
-          <span class="mono">/design-system</span> y después se vuelve acá. La ruta por defecto es
-          la raíz del repo; un proyecto con otra estructura la declara en
-          <span class="mono">.agents/project.yaml</span>.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §07 INCREMENTALES ============ -->
-    <section class="band" id="incrementales">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">07</span> · fase 3</div>
-          <h2>Piezas incrementales: se elige, no se instala todo</h2>
-          <p class="sub">
-            Cada pieza suma una capacidad sobre la base. Son independientes entre sí y cada una corre
-            en su propio subagente. Antes de escribir, cada una mira qué hay en el repo y decide su
-            alcance: completo si ya hay endpoints o estructura previa, parcial si el terreno está
-            vacío.
-          </p>
-        </div>
-
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th>Pieza</th>
-                <th>Qué agrega</th>
-                <th>Dónde queda</th>
-                <th>Requiere</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>OpenAPI</th>
-                <td>
-                  Spec generada desde schemas Zod en <span class="mono">/api/openapi</span> y la UI de
-                  Scalar en <span class="mono">/api/docs</span>. El schema se define una vez, junto al
-                  tipo: la documentación no se duplica.
-                </td>
-                <td><span class="mono">src/lib/openapi/</span></td>
-                <td>backend base</td>
-              </tr>
-              <tr>
-                <th>Rutas de API</th>
-                <td>
-                  Carpetas por dominio, validación con Zod, errores estandarizados y un endpoint de
-                  ejemplo; con OpenAPI presente, los endpoints del SRS quedan registrados en la spec.
-                </td>
-                <td><span class="mono">src/app/api/</span></td>
-                <td>backend base</td>
-              </tr>
-              <tr>
-                <th>Bearer token</th>
-                <td>
-                  Auth por header <span class="mono">Authorization</span> para Postman, curl o apps
-                  externas, sin romper la auth por cookies del navegador.
-                </td>
-                <td><span class="mono">src/lib/supabase/server.ts</span> y las rutas protegidas</td>
-                <td>backend base</td>
-              </tr>
-              <tr>
-                <th>URLs por ambiente</th>
-                <td>
-                  Un helper que detecta el ambiente (development, staging, production) y arma la URL
-                  base correcta. Te pregunta las URLs de staging y producción.
-                </td>
-                <td><span class="mono">src/lib/urls.ts</span></td>
-                <td>backend base</td>
-              </tr>
-              <tr>
-                <th>Tipos de Supabase</th>
-                <td>
-                  El pipeline esquema → TypeScript, un script de regeneración en
-                  <span class="mono">package.json</span> y los clientes tipados con
-                  <span class="mono">Database</span>.
-                </td>
-                <td><span class="mono">src/types/supabase.ts</span></td>
-                <td>frontend base</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="gotchas r" style="margin-top: 22px">
-          <div class="g">
-            <b>OpenAPI siempre con su UI</b
-            ><span
-              >La spec sin la ruta de Scalar en <span class="mono">/api/docs</span> no se entrega:
-              el contrato tiene que poder recorrerse desde el primer día. Ni Redoc ni Swagger en su
-              lugar.</span
-            >
-          </div>
-          <div class="g">
-            <b>Bearer token nunca a medias</b
-            ><span
-              >La auth por token viaja junto con rate limiting y una guía de rotación del secreto. Sin
-              esas dos, la feature está incompleta.</span
-            >
-          </div>
-          <div class="g">
-            <b>Tipos que siguen al esquema vivo</b
-            ><span
-              >Si el esquema de la base cambia, se regeneran los tipos y TypeScript marca dónde
-              ajustar. Saltarse la generación deja una deriva silenciosa.</span
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §08 VERIFICAR ============ -->
-    <section class="band" id="verificar">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · cierre de cada fase</div>
-          <h2>Verificar en el destino, después archivar</h2>
-          <p class="sub">
-            Cada fase cierra con el verificador liviano de etapa y la sesión termina con el pie de
-            herramientas usadas. Un chequeo que falla se reporta tal cual: nada de arreglos
-            inventados para un stack desconocido, la IA te pregunta.
-          </p>
-        </div>
-
-        <div class="check r">
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Build en verde.</b> El build del stack elegido termina sin error.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Servidor arriba.</b> Responde la home del frontend y la ruta de salud del
-              backend.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span><b>TypeScript compila</b> sin errores en todo el repo.</span>
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Variables documentadas.</b> Cada variable nueva figura en
-              <span class="mono">.env.example</span>.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Artefactos generados commiteados</b> (spec de OpenAPI, tipos de Supabase). La skill
-              recomienda el commit; lo hacés vos o
-              <span class="mono">/git-flow-master</span>.</span
-            >
-          </div>
-        </div>
-
-        <div class="callout blue r">
-          <b>Con el checklist del plan en verde,</b> la carpeta
-          <span class="mono">.session/project-bootstrap/</span> se mueve a
-          <span class="mono">.session/.archive/</span> y queda un resumen en la memoria persistente
-          con la ruta del archivo, para encontrarlo después.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §09 RIELES ============ -->
-    <section class="band" id="rieles">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> · rieles de seguridad</div>
-          <h2>Lo que la skill nunca hace</h2>
-          <p class="sub">
-            Los antipatrones completos viven en <span class="mono">SKILL.md</span> y viajan en el
-            registro compacto que reciben los subagentes (<span class="mono">.agents/skills/REGISTRY.md</span>).
-          </p>
-        </div>
-
-        <div class="check r">
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No pisa scaffolding existente.</b> Detecta lo que hay y parchea en el lugar,
-              preservando lo que editaste.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No hardcodea</b> credenciales, URLs ni valores de un ambiente en el código
-              generado.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No se saltea la validación de variables</b> al arrancar: una variable faltante
-              silenciosa explota en producción, lejos de la causa.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No colapsa las capas</b> del backend ni la estructura del design system en el
-              frontend.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No arranca el frontend sin DESIGN.md</b>, ni la base de datos sin generar sus
-              tipos.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No sigue sin la documentación oficial</b> cuando la necesita: si no hay herramienta
-              de documentación de librerías disponible, se detiene y te dice cuál falta, sin un
-              sustituto silencioso.</span
-            >
-          </div>
-        </div>
-
-        <div class="callout agent r">
-          <b>Sale listo para features, no para producción.</b> Deploy, CI y endurecimiento de
-          observabilidad se suman después, con otras skills, a medida que el producto madura.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §10 INVOCAR ============ -->
-    <section class="band" id="invocar">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · qué le decís a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
-          <p class="sub">
-            Esta skill no tiene modos con nombre: lo que pedís elige la referencia. Nombrás la skill
-            y describís la pieza, en español o en inglés.
-          </p>
-        </div>
-
-        <div class="hosts r">
-          <div class="host">
-            <h3>Claude Code</h3>
-            <span class="say">/project-bootstrap scaffolding del proyecto</span>
-            <p>La barra carga la skill; el resto de la frase elige la fase o la pieza.</p>
-          </div>
-          <div class="host">
-            <h3>OpenCode</h3>
-            <span class="say">cargá la skill project-bootstrap: configurar OpenAPI</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
-          </div>
-          <div class="host">
-            <h3>Codex</h3>
-            <span class="say">cargá la skill project-bootstrap: bearer token authentication</span>
-            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
 
@@ -2365,97 +1826,444 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si decís algo como…</th>
-                <th>La IA lee</th>
+                <th>Modo</th>
+                <th>Frases que lo disparan</th>
+                <th>Escribe</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>"setup del backend" · "scaffold the server"</th>
-                <td><span class="mono">backend-setup.md</span></td>
+                <th><span class="mono">adopt</span></th>
+                <td>"adoptá esta app" · "adopción" · "after --adopt" · "project adoption"</td>
+                <td>solo después de aprobar el plan, solo superficies agénticas</td>
               </tr>
               <tr>
-                <th>"inicializar el frontend" · "design system + project skeleton"</th>
-                <td><span class="mono">frontend-setup.md</span></td>
-              </tr>
-              <tr>
-                <th>"configurar OpenAPI" · "API docs UI"</th>
-                <td><span class="mono">openapi-setup.md</span></td>
-              </tr>
-              <tr>
-                <th>"API routes setup" · "middleware"</th>
-                <td><span class="mono">api-routes-setup.md</span></td>
-              </tr>
-              <tr>
-                <th>"bearer token authentication" · "protect routes"</th>
-                <td><span class="mono">bearer-token-support.md</span></td>
-              </tr>
-              <tr>
-                <th>"env vars setup" · "URL builder"</th>
-                <td><span class="mono">env-url-setup.md</span></td>
-              </tr>
-              <tr>
-                <th>"supabase types generation"</th>
-                <td><span class="mono">supabase-types-setup.md</span></td>
+                <th><span class="mono">check</span></th>
+                <td>"adoption drift check" · "is the adoption still accurate"</td>
+                <td>nada: tabla de señales más la sección de stack de <span class="mono">setup:doctor</span></td>
               </tr>
             </tbody>
           </table>
         </div>
         <p class="figcap">
-          las referencias viven en <span class="mono">.agents/skills/project-bootstrap/references/</span>
-          · si el pedido no coincide con ninguna fila, la IA cae en backend o frontend según el lado
-          del stack, y te lo avisa
+          un modo por corrida; <span class="mono">check</span> con señales pendientes termina nombrando
+          <span class="mono">adopt</span>, nunca lo arranca
         </p>
       </div>
     </section>
 
-    <!-- ============ §11 HANDOFFS ============ -->
+    <!-- ============ §04 SELLADO ============ -->
+    <section class="band" id="sellado">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · fases 0 a 2</div>
+          <h2>Leer todo antes de tocar nada</h2>
+          <p class="sub">
+            El sello se mide, no se promete: después de la fase 2,
+            <span class="mono">git status --porcelain</span> solo puede diferir del de la fase 0 por el
+            archivo del plan.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Fase 0 · reanudar, puerta y señales</h3>
+            <p>
+              Si hay una corrida a medias, ofrece reanudar, reiniciar o abortar, y espera. La puerta
+              exige que <span class="mono">.template/installer.lock.json</span> diga
+              <span class="mono">adopted: true</span> y que el árbol esté limpio. Sin lock, los archivos
+              nunca se instalaron; con un lock greenfield, el repo fue scaffoldeado y le toca a
+              <span class="mono">/project-bootstrap</span>.
+            </p>
+            <p>
+              Después corre las <b>señales de detección</b>: cada subsistema queda
+              <span class="mono">PENDING</span> o <span class="mono">ADOPTED</span>. Las pendientes son
+              la lista de trabajo de esta corrida.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 1 · análisis</h3>
+            <p>
+              La huella del stack sale de <span class="mono">bun run agents:setup --stack --dry-run
+              --non-interactive</span>: cada valor trae el archivo de donde se leyó, y lo que no se
+              detecta queda ausente, nunca adivinado. Fuera de <span class="mono">V1_SUPPORTED</span>,
+              la corrida para acá sin escribir ni siquiera el plan.
+            </p>
+            <p>
+              Lee las convenciones del repo (paridad de la adopción, hooks, aislamiento de la
+              herramienta, archivos de entorno solo por nombre, CI, branches), prueba el tracker en
+              solo lectura y corre los scripts de la app para la <b>línea de base</b>. Lo que los
+              archivos no contestan va en un solo cuestionario.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 2 · el plan</h3>
+            <p>
+              Escribe <span class="mono">.context/reports/project-adoption-plan.md</span> con cabecera
+              <span class="mono">Status: PENDING APPROVAL</span>, verifica el sello y se detiene. Un
+              cambio que pidas edita el plan y vuelve a preguntar.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Corre las señales, despacha tres analistas de solo lectura y mide la línea de base.</p>
+            <p>Arma el plan con los hechos de los analistas y tus respuestas.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Identidad del proyecto, entornos, tracker y qué app cubre la adopción en un monorepo.</p>
+            <p>Si el <span class="mono">test</span> de la app es seguro de correr para la línea de base.</p>
+            <p>El <b>sí</b> que pasa el plan a <span class="mono">APPROVED</span>.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>La tabla de señales y el plan en <span class="mono">.context/reports/</span>, que lee todo el equipo.</p>
+            <p>Lo que quedó sin respuesta, como <span class="mono">## Discovery Gaps</span>.</p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> el plan aprobado en esta corrida, con quién lo aprobó y la fecha en la cabecera.</div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Detectar no es adivinar</b
+            ><span
+              >Un valor sin evidencia en la app es una pregunta o una brecha, nunca un default del
+              boilerplate.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un script que escribe</b
+            ><span
+              >Si la línea de base cambia archivos versionados, la IA lo registra, no revierte nada por
+              su cuenta y pregunta.</span
+            >
+          </div>
+          <div class="g">
+            <b>Varias apps Next.js</b
+            ><span
+              >En un monorepo pregunta cuál cubre esta adopción y la fija en
+              <span class="mono">stack.app_root</span>. Nunca dos en una corrida.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 ESCRITURA ============ -->
+    <section class="band" id="escritura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · fases 3 a 7</div>
+          <h2>Escribir solo lo que el plan aprobó</h2>
+          <p class="sub">
+            Un escritor por fase, cada uno con las filas aprobadas de su fase y nada más. Cada escritura
+            se verifica leyendo el destino.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Fase 3 · identidad, stack, entornos, rutas protegidas</h3>
+            <p>
+              <span class="mono">bun run agents:setup --stack</span> escribe el bloque
+              <span class="mono">stack:</span> con los valores del plan;
+              <span class="mono">bun run agents:setup</span> completa identidad y entornos. Cada
+              colisión que la app ya poseía entra en <span class="mono">updater.protected_paths</span>,
+              con un empalme que deja el resto del yaml byte por byte.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 4 · credenciales</h3>
+            <p>
+              Solo <span class="mono">.env</span>, solo valores que vos das en esta corrida, sin
+              repetirlos nunca. Después <span class="mono">bun run harness:env</span> y reiniciar la
+              sesión: el entorno se lee cuando arranca el servidor MCP.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fase 5 · catálogos del tracker</h3>
+            <p>
+              Carga <span class="mono">/acli</span> y sincroniza los catálogos contra la instancia
+              propia de la app, nunca con la bandera de referencia de UPEX. Un campo faltante no se
+              crea: el plan nombra el fallback y que crearlo es decisión de un admin de Jira. Y la
+              adopción no hidrata el proyecto entero: el caché del backlog se llena por historia.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Fases 6 y 7 · instrucciones y contrato de API</h3>
+            <p>
+              Si el instalador dejó una fusión de instrucciones pendiente, se aplica <b>tal cual</b>,
+              con su propia línea de aprobación y respaldo previo; el texto de la app nunca se resume
+              ni se reordena. El contrato de API se sincroniza solo si la app sirve una spec y las rutas
+              de salida no existían antes.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Relee el plan aprobado antes de cada fase y escribe solo sus filas.</p>
+            <p>Re-lee el yaml, re-corre la señal, re-parsea el archivo: un "listo" no alcanza.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Los valores de credenciales, que se tipean solo en <span class="mono">.env</span>.</p>
+            <p>La fusión de instrucciones, con una aprobación aparte de la del plan.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p><span class="mono">.agents/project.yaml</span> con la app descrita, los catálogos <span class="mono">.agents/jira-*.json</span> y el <span class="mono">AGENTS.md</span> fusionado.</p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> cada fase verificada en el destino antes de pasar a la siguiente.</div>
+      </div>
+    </section>
+
+    <!-- ============ §06 VERIFICAR ============ -->
+    <section class="band" id="verificar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · fases 8 y 9</div>
+          <h2>La app tiene que salir como entró</h2>
+          <p class="sub">
+            La verificación es fail-fast y en orden: para en el primer fallo, lo reporta con su salida,
+            propone el arreglo y espera. Nunca arregla sola.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># fase 8, en este orden</span>
+bun run agents:compat:check
+bun run vars:check
+bun run vars:env:check
+bun run harness:env:check
+bun run jira:check                 <span class="c"># salteado si el plan registró "sin tracker"</span>
+bun run setup:doctor               <span class="c"># sección stack: sin issues, sin drift</span>
+bun run tooling:types:check        <span class="c"># el alcance propio de la herramienta, nunca el tsconfig de la app</span>
+bun run tooling:lint:check
+<span class="s">build / lint / types / test de la app</span>   <span class="c"># exit codes == línea de base de la fase 1</span></pre>
+
+        <div class="planes r">
+          <div class="plane sig">
+            <div class="tag">El fallo que más importa</div>
+            <h3>Un script de la app que cambió</h3>
+            <ul>
+              <li>
+                Si el <span class="mono">build</span>, el <span class="mono">lint</span>, los
+                <span class="mono">types</span> o el <span class="mono">test</span> de la app no dan el
+                mismo exit code que en la línea de base, la corrida no terminó.
+              </li>
+              <li>El reporte nombra el script, los dos códigos y el primer error nuevo.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Fase 9 · cierre</div>
+            <h3>Las señales como reporte</h3>
+            <ul>
+              <li>Re-corre las señales de la fase 0 e imprime la tabla final.</li>
+              <li>
+                Marca el plan <span class="mono">Status: COMPLETED</span> con su bloque de resultados.
+              </li>
+              <li>
+                Propone el commit a través de <span class="mono">/git-flow-master</span>. Nunca lo hace
+                en silencio.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout blue r">
+          <b>Idempotente.</b> Las mismas señales son la lista de trabajo al entrar y el reporte al salir.
+          Una segunda corrida sobre una app ya adoptada dice que no hay nada que hacer.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · rieles</div>
+          <h2>Una lista de rechazos y una lista de permisos</h2>
+          <p class="sub">
+            La capa agéntica vive dentro del árbol de la app, así que no alcanza con "el repo destino
+            es de solo lectura". La lista de rechazos viaja literal en cada briefing de subagente.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca escribe ni borra un archivo de la app</b> bajo
+              <span class="mono">stack.app_root</span> que existía antes de la adopción.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca una base de datos</b>: ni migraciones, ni SQL, ni RLS, ni seeds, ni una
+              conexión, en ningún entorno. El schema vivo lo lee después
+              <span class="mono">/project-context data</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca cambia dependencias</b>, el package manager ni el lockfile.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca edita</b> el CI, el <span class="mono">README.md</span>, el
+              <span class="mono">tsconfig.json</span>, la config de eslint o prettier,
+              <span class="mono">.gitattributes</span>, el middleware ni un script del
+              <span class="mono">package.json</span> de la app.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca git ni Jira por su cuenta</b>: ni historia, remotos, protección de branches
+              o rulesets, ni proyectos, campos, workflows o issues. Nunca hace push.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Una credencial solo va a <span class="mono">.env</span></b>, nunca al plan, a un
+              reporte o a un commit.</span
+            >
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Puede escribir</div>
+            <h3>Solo con su fila aprobada</h3>
+            <ul>
+              <li><span class="mono">.agents/project.yaml</span>, <span class="mono">.env</span> y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
+              <li><span class="mono">AGENTS.md</span> + <span class="mono">CLAUDE.md</span>, solo a través de la fusión que guardó el instalador.</li>
+              <li>El plan, <span class="mono">.session/project-adoption/</span> y los archivos de credenciales que deriva <span class="mono">bun run harness:env</span>.</li>
+            </ul>
+            <div class="path">lista completa: references/adoption-workflow.md §Refusal list</div>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Lo que debe el equipo</div>
+            <h3>Se reporta, nunca se crea</h3>
+            <ul>
+              <li>Una identidad dedicada para la automatización (<span class="mono">testing.automation_identity</span>).</li>
+              <li>La cuenta de GitHub de la entrega autónoma (<span class="mono">autonomous_delivery.automation_gh_account</span>).</li>
+              <li>Un rol de base de datos dedicado para chequeos de solo lectura.</li>
+            </ul>
+            <div class="path">el plan nombra la skill que lo necesita y qué tiene que aportar el equipo</div>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Sin PRD inventado.</b> Los documentos de producto de una app adoptada son los mapas de
+          negocio y el glosario. <span class="mono">/sprint-development</span> los acepta en lugar de un
+          PRD o un SRS, y ninguna skill escribe uno para pasar una puerta.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
+          <p class="sub">
+            Sin modo, la skill lo saca de la frase y, si no puede, corre
+            <span class="mono">adopt</span>.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-adoption</span>
+            <p>Barra de la skill. Para el chequeo de drift: <span class="mono">/project-adoption check</span>.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">cargá la skill project-adoption, modo check</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">cargá la skill project-adoption, modo adopt</span>
+            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 HANDOFFS ============ -->
     <section class="band" id="handoffs">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> · antes y después de esta skill</div>
-          <h2>A quién le pasa la posta</h2>
+          <div class="eyebrow"><span class="num">09</span> · después de adoptar</div>
+          <h2>El hand-off, en orden y nunca encadenado solo</h2>
+          <p class="sub">
+            Al cerrar, la skill te deja cada paso siguiente con la frase que lo dispara. Ninguno arranca
+            por su cuenta.
+          </p>
         </div>
 
         <div class="alts r">
           <div class="alt">
-            <div class="kk">Antes · producto</div>
-            <h3>/project-foundation</h3>
-            <p>Deja el PRD y el SRS con las decisiones de arquitectura de las que sale el stack.</p>
-          </div>
-          <div class="alt">
-            <div class="kk">Antes · diseño</div>
-            <h3>/design-system</h3>
+            <div class="kk">Primero · sesión nueva</div>
+            <h3>/project-context refresh-all</h3>
             <p>
-              Produce el <span class="mono">DESIGN.md</span> que el frontend necesita. El flujo de
-              pantallas por historia está en el deck
-              <a href="../design-system/flujo-mockups.es.html">Del plano al producto</a>.
+              Los mapas de negocio leídos del código y el schema de la app. Van en una sesión aparte
+              porque pesan en tokens. Deck:
+              <a href="../project-context/como-funciona.es.html">Project context</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Después · backlog</div>
-            <h3>/product-management</h3>
+            <div class="kk">Después de los mapas</div>
+            <h3>/project-foundation, solo Discovery</h3>
             <p>
-              Convierte el PRD en épicas e historias en Jira. Deck:
-              <a href="../product-management/como-funciona.es.html">Product management</a>.
+              La guía de desarrollo y el glosario del dominio, que completan los documentos de producto
+              de la app. Deck: <a href="../project-foundation/como-funciona.es.html">Project foundation</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Después · historias</div>
-            <h3>/sprint-development</h3>
-            <p>Lleva cada historia de plan a código, review y deploy, sobre esta base.</p>
+            <div class="kk">Su propia sesión</div>
+            <h3>/git-flow-master Strategy Setup</h3>
+            <p>
+              La estrategia de branches propia del proyecto y la protección del host, en solo lectura
+              primero. Deck: <a href="../git-flow-master/como-funciona.es.html">Git flow master</a>.
+            </p>
           </div>
           <div class="alt">
-            <div class="kk">Cuando quieras</div>
-            <h3>/unit-testing</h3>
-            <p>Un tema aparte; puede correr en cualquier momento después de la base.</p>
+            <div class="kk">Opcional</div>
+            <h3>/design-system extract</h3>
+            <p>
+              <span class="mono">DESIGN.md</span> escrito desde el tema vivo de la app. Deck:
+              <a href="../design-system/flujo-mockups.es.html#extract">Design system</a>.
+            </p>
           </div>
           <div class="alt">
-            <div class="kk">Opcional · QA</div>
+            <div class="kk">Opcional</div>
             <h3>/testability-guide</h3>
             <p>
-              Con la infraestructura arriba, genera la página <span class="mono">/qa</span> y un
-              artefacto de credenciales para probar la app por base de datos, API y UI.
+              La página <span class="mono">/qa</span> dentro de la app y el artefacto de credenciales.
+              Deck: <a href="../testability-guide/como-funciona.es.html">Testability guide</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Opcional</div>
+            <h3>/project-bootstrap, add-on de tipos</h3>
+            <p>
+              Los tipos de la base en <span class="mono">stack.database.types_path</span> cuando faltan.
+              Las fases base de bootstrap no corren sobre una app adoptada. Deck:
+              <a href="../project-bootstrap/como-funciona.es.html">Project bootstrap</a>.
             </p>
           </div>
         </div>
@@ -2463,11 +2271,13 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
         <div class="callout blue r">
           <b>Para leer más:</b>
           <a
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-bootstrap/SKILL.md"
-            >.agents/skills/project-bootstrap/SKILL.md</a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-adoption/SKILL.md"
+            >.agents/skills/project-adoption/SKILL.md</a
           >
-          y su carpeta <span class="mono">references/</span>, una referencia por fase y por pieza
-          incremental.
+          y sus referencias: <span class="mono">references/adoption-workflow.md</span> (las fases, las
+          señales y la lista de rechazos) y <span class="mono">references/plan-template.md</span> (las
+          secciones del plan). La instalación está en <span class="mono">README.md</span>, sección
+          "Adopt an existing app".
         </div>
       </div>
     </section>
@@ -2476,20 +2286,19 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
       <div class="wrap">
         <div class="prose">
           <p>
-            <b style="color: var(--ink)">La idea de fondo.</b> La base se monta una vez y bien: capas
-            que no se mezclan, secretos fuera del código, tipos que siguen al esquema vivo. La IA
-            monta y verifica; vos elegís el proyecto de Supabase, las piezas y los componentes, y
-            hacés los commits.
+            <b style="color: var(--ink)">La idea de fondo.</b> Una app viva ya tomó sus
+            decisiones. La adopción las registra para que las demás skills las respeten: lee antes de
+            escribir, escribe solo lo agéntico y demuestra al final que la app compila, lintea y testea
+            igual que antes.
           </p>
         </div>
         <div class="sig">
-          <span>Fuente: <span class="mono">.agents/skills/project-bootstrap/</span></span>
+          <span>Fuente: <span class="mono">.agents/skills/project-adoption/</span></span>
           <span>·</span>
           <span><a href="../../index.html">← volver a Planos</a></span>
         </div>
       </div>
     </footer>
-
 
     <script>
       // theme toggle
