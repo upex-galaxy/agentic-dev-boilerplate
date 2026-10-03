@@ -600,7 +600,7 @@ git checkout -b hotfix/[ISSUE_KEY]/[short-description]
 
 ```bash
 # TypeScript check (adjust command per project)
-npm run typecheck  # or: bun run typecheck
+npm run types:check  # or: bun run types:check
 
 # Linting
 npm run lint:check  # or: bun run lint:check
@@ -1575,12 +1575,12 @@ Use [ISSUE_TRACKER_TOOL] to transition issue:
 
 ## Quick Reference: Code Quality Commands
 
-| Check      | Command (npm)        | Command (bun)        |
-| ---------- | -------------------- | -------------------- |
-| TypeScript | `npm run typecheck`  | `bun run typecheck`  |
-| Lint       | `npm run lint:check` | `bun run lint:check` |
-| Build      | `npm run build`      | `bun run build`      |
-| Test       | `npm run test`       | `bun run test`       |
+| Check      | Command (npm)         | Command (bun)         |
+| ---------- | --------------------- | --------------------- |
+| TypeScript | `npm run types:check` | `bun run types:check` |
+| Lint       | `npm run lint:check`  | `bun run lint:check`  |
+| Build      | `npm run build`       | `bun run build`       |
+| Test       | `npm run test`        | `bun run test`        |
 
 ---
 

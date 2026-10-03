@@ -197,7 +197,7 @@ Leer `package.json` completo
    ```json
    {
      "scripts": {
-       "lint": "eslint .", // ✅
+       "lint:check": "eslint .", // ✅
        "test": "jest", // ✅
        "build": "next build" // ✅
      }

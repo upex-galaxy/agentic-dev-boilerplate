@@ -336,7 +336,7 @@ registry.registerComponent('securitySchemes', 'bearerAuth', {
 **Paso 4.1: TypeScript check**
 
 ```bash
-bun run typecheck
+bun run types:check
 ```
 
 **Paso 4.2: Lint check**
@@ -379,7 +379,7 @@ curl "http://localhost:3000/api/[endpoint]" \
 
 ### Validación:
 
-- [ ] `bun run typecheck` pasa
+- [ ] `bun run types:check` pasa
 - [ ] `bun run lint:check` pasa sin nuevos errores
 - [ ] Endpoints siguen funcionando con cookies (browser)
 - [ ] Endpoints funcionan con Bearer token (Postman)

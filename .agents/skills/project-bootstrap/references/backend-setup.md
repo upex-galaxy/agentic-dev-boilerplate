@@ -1161,7 +1161,7 @@ type [Entity] = Database['public']['Tables']['[table_name]']['Row']
 ### Paso 5.3: Validar TypeScript
 
 ```bash
-[package-manager] run typecheck
+[package-manager] run types:check
 # O: npx tsc --noEmit
 ```
 

@@ -281,7 +281,7 @@ bun run db:types
 **Paso 4.1: TypeScript Check**
 
 ```bash
-bun run typecheck
+bun run types:check
 # O: npx tsc --noEmit
 ```
 
@@ -326,7 +326,7 @@ const { data } = await supabase
 
 ### Validaciones:
 
-- [ ] `bun run typecheck` pasa sin errores
+- [ ] `bun run types:check` pasa sin errores
 - [ ] `bun run db:types` regenera tipos correctamente
 - [ ] Autocompletado funciona en queries
 
@@ -408,7 +408,7 @@ R: No recomendado. Los cambios se perderán al regenerar. Si necesitas tipos cus
 bun run db:types
 
 # 2. Verificar TypeScript
-bun run typecheck
+bun run types:check
 
 # 3. Commit
 git add src/types/supabase.ts

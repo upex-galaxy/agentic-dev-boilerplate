@@ -615,7 +615,7 @@ Los patterns de API ya están documentados en el código:
 
 ### Validaciones:
 
-- [ ] `bun run typecheck` pasa
+- [ ] `bun run types:check` pasa
 - [ ] `/api/health` retorna status
 - [ ] Endpoints protegidos requieren auth
 

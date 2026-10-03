@@ -23,7 +23,7 @@
 
 ```bash
 # Read the actual command from package.json — do NOT trust this example
-bun run typecheck
+bun run types:check
 ```
 
 Expected: exit 0, no new errors. Pre-existing errors that the run didn't touch are OK but flag them.

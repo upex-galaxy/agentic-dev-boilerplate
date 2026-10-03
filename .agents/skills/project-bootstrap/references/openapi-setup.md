@@ -973,7 +973,7 @@ grep -r "\.openapi\(" src/lib/openapi/schemas/ --include="*.ts" | grep -v "commo
 **Paso 6.1: TypeScript check**
 
 ```bash
-bun run typecheck
+bun run types:check
 ```
 
 **Paso 6.2: Verificar endpoint**
