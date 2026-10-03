@@ -638,7 +638,11 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     if (!dryRun) {
       const dest = path.join(root, ADOPT_UPSTREAM_SKILLS_DIR, name);
       fs.rmSync(dest, { recursive: true, force: true });
-      fs.cpSync(path.join(upstreamDir, '.agents', 'skills', name), dest, { recursive: true });
+      // What an adopted app never receives (the skill's own tests) stays out of the saved copy too.
+      fs.cpSync(path.join(upstreamDir, '.agents', 'skills', name), dest, {
+        recursive: true,
+        filter: src => !ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(relPosix(upstreamDir, src))),
+      });
       saved = relPosix(root, dest);
     }
     frameworkSkills.push({ ...describeFrameworkSkill(root, upstreamDir, name, files), saved });

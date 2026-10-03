@@ -274,6 +274,7 @@ describe('runUpdate --adopt on an existing app', () => {
     const { template, app } = setup();
     write(template, '.agents/skills/acli/SKILL.md', '---\nname: acli\n---\n\n# acli v2\n');
     write(template, '.agents/skills/acli/references/new.md', 'new upstream reference\n');
+    write(template, '.agents/skills/acli/scripts/md-to-adf.test.ts', 'test("x", () => {});\n');
     git(template, ['add', '-A']);
     git(template, ['commit', '--quiet', '-m', 'skill']);
     write(app, '.agents/skills/acli/SKILL.md', '---\nname: acli\n---\n\n# acli v1 (hand copy)\n');
@@ -294,6 +295,8 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(readProjectProtectedPaths(app).paths.filter(p => p.startsWith('.agents/skills/'))).toEqual([]);
     // Upstream's copy saved for project-adoption.
     expect(read(app, `${ADOPT_UPSTREAM_SKILLS_DIR}/acli/SKILL.md`)).toContain('v2');
+    // The skill's own tests never reach an adopted app, saved copy included.
+    expect(existsSync(join(app, ADOPT_UPSTREAM_SKILLS_DIR, 'acli/scripts/md-to-adf.test.ts'))).toBe(false);
     const outcome = adopt as AdoptOutcome | null;
     expect(outcome?.frameworkSkills.map(f => ({ name: f.name, differing: f.differing, appOnly: f.appOnly }))).toEqual([
       { name: 'acli', differing: ['SKILL.md'], appOnly: ['references/app-notes.md'] },
