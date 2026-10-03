@@ -50,6 +50,8 @@ ELIF skill is in install.ts USER_LEVEL_SKILLS    → T4
 ELSE → T4 (unknown community)
 ```
 
+**Orchestration vendor stubs are T4 but NOT in `USER_LEVEL_SKILLS`.** `orca-cli` and `orchestration` are guides bundled with the orchestration binary, which installs them user-level itself. They are optional and never required: T1 `orca-orchestration` loads the stubs named in `orchestration.orchestrator_skills` (`.agents/project.yaml`) alongside itself, and asks the binary for its grammar when none is installed, so the availability gate is the binary plus a reachable runtime and never an installed stub. Do not add them to `cli/install.ts`; per-machine setup lives in `orca-orchestration/references/orca-machine-setup.md`.
+
 **Builder skills are T3, not T4.** A community skill that a T1 workflow DEPENDS on (not one it merely borrows by category) is installed at project level, so a clone never silently skips it. `skill-creator` sits there because `project-context` mode `context-skill` and every new T1 skill are built through it (`skill-scaffold.md`). A user-level install of the same skill still satisfies it. A builder joins `PROJECT_LEVEL_SKILLS` in the same change as the T1 flow that loads it: an install nothing loads should not exist.
 
 ---
@@ -151,6 +153,7 @@ Project-owned skills are named explicitly. Community skills (T3, T4) are matched
 | `meta-skill`         | `skill-creator`, `find-skills`                                                                                                                                | `project-context` mode `context-skill` (`skill-creator`, the builder); otherwise only on user request (find-skills auto-invoked per §6.2 as last-resort) |
 | `automation`         | `n8n-skills`                                                                                                                                                  | only on user request                                                                  |
 | `presentation`       | `html-ppt`, `presentation-designer`                                                                                                                           | only on user request (HTML decks, slideshows)                                         |
+| `orchestration`      | `orca-cli`, `orchestration` (the orchestration binary's own guides, named in `orchestration.orchestrator_skills`; optional to HAVE, loaded alongside `/orca-orchestration` when present, never a gate) | `orca-orchestration` (self-tag); cited as the transport by `sprint-development` (fleet mode) and `autonomous-delivery` (Phase 3 workers) |
 
 ### 4.2 Matching rule
 
