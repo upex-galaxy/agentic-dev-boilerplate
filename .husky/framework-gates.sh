@@ -46,6 +46,26 @@ framework_gates_pre_commit() {
     }
   fi
 
+  # project-schema freshness gate — only runs when staged files affect it.
+  #
+  # TWO guards, both load-bearing. The package.json grep honours this file's
+  # contract ("no script key that does not already exist in every project"): a
+  # project synced to this release's husky but not its package.json would
+  # otherwise have every commit touching `.agents/` killed by a missing script.
+  # And `agents:schema:check` itself exits 0 with a note in any repo that is NOT
+  # the boilerplate, because the schema is SYNCED there rather than generated,
+  # so even where the key IS present downstream this gate cannot fail for a
+  # reason the project can do nothing about.
+  if echo "$_fg_staged" | grep -qE '^(\.agents/project\.yaml$|\.agents/project\.schema\.yaml$|cli/lib/agents-schema\.ts$|scripts/agents-schema\.ts$)' \
+    && grep -q '"agents:schema:check"' package.json 2>/dev/null; then
+    bun run agents:schema:check || {
+      echo ""
+      echo "❌ .agents/project.schema.yaml is stale. Fix:"
+      echo "   bun run agents:schema && git add .agents/project.schema.yaml"
+      exit 1
+    }
+  fi
+
   # cross-harness compatibility gate — only runs when staged files affect it.
   # Covers the generated Claude skills alias, a harness command that shadows a
   # skill, the three hook adapters, MCP parity across the three host configs and the eslint block
@@ -68,7 +88,8 @@ framework_gates_pre_commit() {
 #
 # pre-commit covers (every commit): types:check, vars:check, skills:check
 #   + conditional skills:registry:check (when staged files affect the registry)
-#   + conditional agents:compat:check (when staged files affect the contract).
+#   + conditional agents:compat:check (when staged files affect the contract)
+#   + conditional agents:schema:check (when staged files affect the project schema).
 # pre-push adds the full-repo checks pre-commit skips for speed:
 #   - format:check / lint:check  full repo (lint-staged only touches staged files at commit)
 #   - vars:env:check             not run at commit time. Runs with
