@@ -786,12 +786,14 @@
           <h2>Una sola copia de cada instrucción, leída por tres harnesses</h2>
           <div class="prose">
             <p>
-              El repo tiene una única fuente de reglas, <code>AGENTS.md</code>, y una única carpeta
-              de workflows, <code>.agents/skills/</code>. Claude Code, OpenCode y Codex leen las
-              dos. Claude Code entra por <code>CLAUDE.md</code>, que es solo un import de una línea
-              (<code>@AGENTS.md</code>), y por <code>.claude/skills</code>, un alias generado. Nada
-              se duplica: lo que difiere entre harnesses (formato de MCP, API de hooks) vive en
-              adaptadores finos.
+              El repo tiene una única fuente de reglas, <code>AGENTS.md</code> con sus secciones en
+              <code>.agents/instructions/</code>, y una única carpeta de workflows,
+              <code>.agents/skills/</code>. Claude Code, OpenCode y Codex leen las dos.
+              <code>AGENTS.md</code> es el núcleo que carga en cada sesión; cada sección se lee
+              cuando el pedido la necesita. Claude Code entra por <code>CLAUDE.md</code>, que es
+              solo un import de una línea (<code>@AGENTS.md</code>), y por
+              <code>.claude/skills</code>, un alias generado. Nada se duplica: lo que difiere entre
+              harnesses (formato de MCP, API de hooks) vive en adaptadores finos.
             </p>
             <p>
               La segunda idea es la del nombre de la casa, <b>Planos</b>: el agente escribe un plan
@@ -947,8 +949,9 @@
               <a
                 href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/REGISTRY.md"
                 >GitHub</a
-              >. El ruteo por tarea (qué skill para qué pedido) está en <code>AGENTS.md</code>,
-              secciones 4 y 5.
+              >. El ruteo por tarea (qué skill para qué pedido) está en
+              <code>.agents/instructions/15-context-map.md</code> y
+              <code>.agents/instructions/20-skills-and-mcps.md</code>.
             </p>
             <p>
               Para leer el registro conviene saber que hay cuatro clases de skill: de
@@ -1555,7 +1558,10 @@
             </div>
             <div class="card agent">
               <h3>Las reglas del agente</h3>
-              <p>Lo que el agente carga en cada sesión. Denso, escrito para máquinas.</p>
+              <p>
+                Lo que el agente carga en cada sesión, con el router a sus secciones. Denso, escrito
+                para máquinas.
+              </p>
               <a
                 class="go"
                 href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/AGENTS.md"

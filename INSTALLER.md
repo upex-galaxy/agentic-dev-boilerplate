@@ -353,12 +353,13 @@ The installer configures whichever of **Claude Code, OpenCode, and Codex** you s
 | Surface          | Claude Code                                     | OpenCode                                    | Codex CLI + Desktop                      |
 | ---------------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
 | **Instructions** | `CLAUDE.md` → `@AGENTS.md` **[generated shim]** | `AGENTS.md` (native)                        | `AGENTS.md` (native)                     |
+| **Instruction sections** | `.agents/instructions/` (on demand, via the L0 router) | `.agents/instructions/` (on demand)   | `.agents/instructions/` (on demand)      |
 | **Skills**       | `.claude/skills` **[generated alias]**          | `.agents/skills/` (native)                  | `.agents/skills/` (native)               |
 | **Commands**     | none: `/<skill> <mode>` (the skill slash)       | none: skill + mode in prose                 | none: skill + mode in prose              |
 | **Hook**         | `.claude/settings.json` → `UserPromptSubmit`    | `.opencode/plugins/personality-reinject.js` | `.codex/hooks.json` → `UserPromptSubmit` |
 | **MCP**          | `.mcp.json`                                     | `opencode.jsonc`                            | `.codex/config.toml`                     |
 
-- **Instructions.** `AGENTS.md` is the only instruction body. OpenCode and Codex load it natively; Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline. A documented import rather than a symlink, so it survives a Windows checkout.
+- **Instructions.** `AGENTS.md` is the always-on core (L0: binding rules, behaviour, orchestration core, a fixed router); each topic lives in its own file under `.agents/instructions/`, read on demand when the router or a hook `ROUTE:` line names it ([ADR-0009](.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md)). OpenCode and Codex load `AGENTS.md` natively; Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline. A documented import rather than a symlink, so it survives a Windows checkout. L0 also imports `package.json` and `.agents/project.yaml` for Claude Code; `bun run instructions:check` keeps L0 under Codex's 32 KiB `project_doc_max_bytes` cut.
 - **Skills.** Every committed skill lives in `.agents/skills/`, and the community project-level skills install into the same store. Claude Code reaches that tree through `.claude/skills`, a POSIX symlink (Windows junction) that is generated and gitignored: never committed, never hand-edited.
 - **Commands.** None ship. A project may keep its own command files under `.claude/commands/` or `.opencode/commands/`; one named like a skill hides that skill's instructions, so the compatibility check fails on it and the repair moves it to `.backups/shadowing-commands/`.
 - **Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once. Claude Code and Codex run it as a command hook (`.claude/settings.json` and `.codex/hooks.json`, the latter with a POSIX and a PowerShell command); OpenCode imports the same lines from `.opencode/plugins/personality-reinject.js`.
@@ -475,7 +476,7 @@ Three reasons:
 - **Codex ignores `.codex/config.toml` and the hook never fires** — the repository is not marked trusted. Codex loads project `.codex/` config and hooks only in a trusted repo, and that is runtime state no file check can see. `bun run setup:doctor` reports it on its own WARN line; approve trust in Codex, then restart the session.
 - **The skills alias disappeared after an edit** — you probably hand-edited the `.claude/skills` alias. Fix the source instead (`.agents/skills/`), then run `bun run agents:compat`. Verify with `bun run agents:compat:check`.
 - **A project command vanished into `.backups/shadowing-commands/`** — it had the name of a repo skill, which hides that skill's instructions. Port anything worth keeping into the skill, or rename the command, then restore it.
-- **`agents:compat:check` fails on `CLAUDE.md`** — it holds more than the one-line `@AGENTS.md` shim. Move the prose into the owning skill (or into `AGENTS.md`) and regenerate.
+- **`agents:compat:check` fails on `CLAUDE.md`** — it holds more than the one-line `@AGENTS.md` shim. Move the prose into the owning skill (or into its instruction section under `.agents/instructions/`) and regenerate.
 - **`direnv allow` produced `dotenv_if_exists: command not found`** — this would mean the `.envrc` is using a newer direnv feature than your version supports. The committed `.envrc` uses portable POSIX loading (works on direnv 2.21+), so if you see this, your `.envrc` has been edited locally — restore it from `git checkout .envrc`.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup. On Claude Code specifically, also confirm the `.claude/skills` alias exists; if a checkout dropped it, `bun run agents:compat` recreates it.
 - **How do I uninstall Engram?** — `gentle-ai uninstall --agent <agent> --components engram --yes` removes Engram for that agent. `gentle-ai uninstall --all --yes` removes everything gentle-ai-managed for every supported agent. Backups are created automatically before uninstall.
@@ -500,7 +501,7 @@ What you keep: every workflow skill committed in this repo (`/sprint-development
 ## See also
 
 - [Docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/) — the visual start-here page and one deck per workflow skill
-- [AGENTS.md](./AGENTS.md) — the single instruction body every harness loads; §5.5 covers the multi-harness contract
+- [AGENTS.md](./AGENTS.md) — the always-on core every harness loads, with the router to `.agents/instructions/`; `.agents/instructions/10-harnesses.md` §5.5 covers the multi-harness contract
 - [CONTEXT.md](./CONTEXT.md) — context-engineering strategy and the surface-by-harness map (§2.1)
 - [README.md](./README.md) — project overview and Quick Start
 - [docs/setup/README.md](./docs/setup/README.md) — index of remaining setup guides (Jira, MCPs)

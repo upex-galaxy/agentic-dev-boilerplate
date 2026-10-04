@@ -6,7 +6,7 @@ Bienvenido a la documentación del **AI-Driven Project Starter**.
 
 Esta documentación está orientada a **humanos** — para aprender conceptos, entender metodologías y seguir guías paso a paso.
 
-> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `AGENTS.md` y `CONTEXT.md` en la raíz del repo (`CLAUDE.md` es solo un shim de una línea, `@AGENTS.md`, para que Claude Code llegue al mismo archivo). El resto del comportamiento de la AI vive en skills (`.agents/skills/`, leídas por Claude Code, OpenCode y Codex) No hay archivos de comando: una skill se invoca por su nombre más un modo (`/project-context data` en Claude Code; "cargá `project-context`, modo `data`" en OpenCode y Codex). Decisión en [ADR-0006](../.context/ADR/ADR-0006-skill-plus-mode-invocation.md).
+> **Nota**: Para el contexto **operativo** que la AI carga cada sesión, consulta `AGENTS.md` y `CONTEXT.md` en la raíz del repo (`CLAUDE.md` es solo un shim de una línea, `@AGENTS.md`, para que Claude Code llegue al mismo archivo). `AGENTS.md` es el núcleo que carga siempre; el detalle vive en una sección por tema bajo `.agents/instructions/`, que la AI lee a pedido cuando el router o una línea `ROUTE:` del hook la nombra. El resto del comportamiento de la AI vive en skills (`.agents/skills/`, leídas por Claude Code, OpenCode y Codex) No hay archivos de comando: una skill se invoca por su nombre más un modo (`/project-context data` en Claude Code; "cargá `project-context`, modo `data`" en OpenCode y Codex). Decisión en [ADR-0006](../.context/ADR/ADR-0006-skill-plus-mode-invocation.md).
 
 ---
 
@@ -122,7 +122,8 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 | `.context/`                         | AI        | Memoria persistente del proyecto (PRD, SRS, PBI, ADR). Los business maps viven en las skills `business-*-context` y se leen con `bun run context:map <skill>` |
 | `.agents/skills/`                   | AI        | Workflows ejecutables: la única copia, leída por los tres harnesses                                                                                           |
 | `.claude/`, `.opencode/`, `.codex/` | AI        | Adapters por harness (hook, MCP). Generado solo `.claude/skills`; nunca una segunda copia del contenido                                                       |
-| `AGENTS.md`                         | AI        | Operational context cargado en cada sesión, en cualquier harness                                                                                              |
+| `AGENTS.md`                         | AI        | Núcleo operativo (L0) cargado en cada sesión, en cualquier harness, con el router a `.agents/instructions/`                                                   |
+| `.agents/instructions/`             | AI        | Una sección por tema (git, PBI, herramientas, variables...), leída a pedido; `project.md` guarda las reglas propias del proyecto                               |
 | `CLAUDE.md`                         | AI        | Shim de una línea (`@AGENTS.md`) para Claude Code. Generado, nunca lleva prosa                                                                                |
 
 **Regla general**:
