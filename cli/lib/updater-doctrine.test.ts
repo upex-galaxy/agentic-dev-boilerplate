@@ -126,3 +126,25 @@ describe('the unresolved-doctrine ledger tracks content, not the sha marker', ()
     expect(runDoctrineLedger(root, upstream)).toBeNull();
   });
 });
+
+describe('the ledger is retargeted to L0 headings', () => {
+  test('a ledgered heading the split moved out of L0 is retired as retargeted, never reported as written', () => {
+    const l0 = '# Memory\n\n<!-- router:start -->\n<!-- router:end -->\n\n## LOAD PROTOCOL + ROUTER\n\nread the router\n\n## 1. RULES\n\nstuff\n';
+    const project = '# Memory\n\n## 1. RULES\n\nstuff\n';
+    const previous = { '6.5 CLI → SKILL AUTO-LOAD MAPPING': { runs: 3, since: '2026-01-01' } };
+    const debt = reconcileDoctrineLedger(project, l0, previous, '2026-02-01');
+    expect(debt.retargeted).toEqual(['6.5 CLI → SKILL AUTO-LOAD MAPPING']);
+    expect(debt.resolved).toEqual([]);
+    // What is left is the L0 heading the project lacks, nothing else.
+    expect(debt.outstanding).toEqual(['LOAD PROTOCOL + ROUTER']);
+  });
+
+  test('a numbered heading upstream still carries stays ordinary debt, and writing it resolves it', () => {
+    const upstream = '# Memory\n\n## 9. DOCTRINE\n\nnew rule\n';
+    const previous = { '9. DOCTRINE': { runs: 1, since: '2026-01-01' } };
+    expect(reconcileDoctrineLedger('# Memory\n', upstream, previous, '2026-01-02').outstanding).toEqual(['9. DOCTRINE']);
+    const written = reconcileDoctrineLedger('# Memory\n\n## 9. DOCTRINE\n\nmine\n', upstream, previous, '2026-01-02');
+    expect(written.resolved).toEqual(['9. DOCTRINE']);
+    expect(written.retargeted).toEqual([]);
+  });
+});
