@@ -99,3 +99,8 @@ Not yet measured: model compliance with `ROUTE:` (share of routed sessions that 
 - `.agents/hooks/personality-reinject.mjs` (`routeLines`, `IMPORT_ROW_TRIGGERS`), `.claude/settings.json` and `.codex/hooks.json` (`SessionStart` matcher `compact`), `.opencode/plugins/personality-reinject.js`
 - Human explanation: `packages/decks/progressive-disclosure/como-funciona.es.html`
 - ADR-0002 (one instruction source for three harnesses; this ADR keeps its shim contract and changes only how much of the source loads always)
+
+## Amendments
+
+- 2026-10-04: the routes re-arm on `SessionStart` source `clear` as well as `compact`, on Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`); `bun run agents:compat:check` requires both groups on both hosts. OpenCode 1 still re-arms on compaction only; OpenCode 2 stays router-only. Decision 5 and the hook reference above keep their original text.
+- 2026-10-04: a skill the project creates for itself (an `<aspect>-context`) is routed from the "Project context skills" table of `.agents/instructions/project.md` (between `<!-- project-skills:start -->` and `<!-- project-skills:end -->`), not from the synced `20-skills-and-mcps.md`, which `bun run up` overwrites. The prompt hook reads that table's triggers next to the L0 router, `bun run instructions:check` validates its rows, and `bun run docs:check` (`roster`) counts them.
