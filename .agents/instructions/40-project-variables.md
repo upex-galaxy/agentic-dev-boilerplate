@@ -2,7 +2,7 @@
 id: project-variables
 title: "Project variables"
 load_when: "a skill reads a {{VAR}} or <<VAR>>, an environment URL or the active env is needed, .agents/project.yaml is read or edited, or the Atlassian host is resolved"
-triggers: ["\\{\\{", "<<[A-Z_]+>>", "project\\.yaml", "\\benvironments?\\b", "\\bentorno", "\\bstaging\\b", "\\bproduction\\b", "producci[oó]n", "atlassian", "jira url", "vars:check"]
+triggers: ["\\{\\{", "<<[A-Z_]+>>", "project\\.yaml", "\\benvironments?\\b", "\\bentorno", "\\burls?\\b", "\\bdeploy", "despleg", "default_env", "\\b(?:staging|production|prod|producci[oó]n)\\s+(?:url|env|environment|entorno|db|database|domain|dominio)", "atlassian", "jira url", "vars:check"]
 paths: [".agents/project.yaml", ".agents/README.md", ".env.example"]
 ---
 
