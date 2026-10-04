@@ -4,7 +4,7 @@ Verified 2026-09-18 against Claude Code 2.1.276 and OpenCode 1.18.30 via officia
 
 ## Verdict: PARTIALLY FEASIBLE, and manual stays the primary trigger
 
-No harness hands the current context size to the agent. Two of the three expose it somewhere OUTSIDE the model loop, which means an automatic trigger is buildable but is **new wiring, not a field waiting to be read**. This repo's hook adapters (`.agents/hooks/personality-reinject.mjs` and its three host wrappers, `.agents/instructions/10-harnesses.md` §5.5) do not tap these mechanisms; check before assuming.
+No harness hands the current context size to the agent. Two of the three expose it somewhere OUTSIDE the model loop, which means an automatic trigger is buildable but is **new wiring, not a field waiting to be read**. This repo's hook adapters (`.agents/hooks/personality-reinject.mjs` and its three host wrappers, `.agents/instructions/agent-harnesses.md` §5.5) do not tap these mechanisms; check before assuming.
 
 The owner's position, recorded: manual is preferred (*"prefiero que el humano lo haga de manera manual"*). Treat everything below as the answer to "could we", not as a plan.
 

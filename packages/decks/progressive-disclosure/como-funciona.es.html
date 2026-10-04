@@ -812,13 +812,13 @@
             <text class="s" x="40" y="72">siempre, en cada host · reglas que atan, §2 entero, router, LOAD PROTOCOL</text>
             <rect class="box l1" x="20" y="125" width="220" height="70" rx="10" />
             <text class="t" x="38" y="155">L1 · una sección</text>
-            <text class="m" x="38" y="177">80-git.md</text>
+            <text class="m" x="38" y="177">agent-git.md</text>
             <rect class="box l1" x="270" y="125" width="220" height="70" rx="10" />
             <text class="t" x="288" y="155">L1 · otra sección</text>
-            <text class="m" x="288" y="177">60-local-context-pbi.md</text>
+            <text class="m" x="288" y="177">agent-local-context-pbi.md</text>
             <rect class="box l1" x="520" y="125" width="220" height="70" rx="10" />
             <text class="t" x="538" y="155">L1 · del proyecto</text>
-            <text class="m" x="538" y="177">project.md</text>
+            <text class="m" x="538" y="177">agent-project.md</text>
             <rect class="box l2" x="20" y="225" width="470" height="56" rx="10" />
             <text class="t" x="38" y="250">L2 · references/ de las skills</text>
             <text class="s" x="38" y="270">a pedido, nombradas por la sección o la skill</text>
@@ -908,7 +908,7 @@
                   los archivos a leer, como rutas entre <code>backticks</code>; el primero es el
                   <strong>ancla</strong> de la fila
                 </td>
-                <td><code>.agents/instructions/80-git.md</code></td>
+                <td><code>.agents/instructions/agent-git.md</code></td>
               </tr>
               <tr>
                 <td>Also</td>
@@ -955,7 +955,7 @@
           <li>
             <strong>Una sección se edita en su archivo</strong>, nunca pegando su prosa en
             <code>AGENTS.md</code>. Una regla que solo tiene este proyecto va a
-            <code>.agents/instructions/project.md</code>.
+            <code>.agents/instructions/agent-project.md</code>.
           </li>
         </ol>
       </section>
@@ -992,7 +992,7 @@
         </div>
         <div class="hookline">
           <span class="c"># una línea por archivo nuevo, después de AGENT IDENTITY: y ORCA:</span><br />
-          <span class="k">ROUTE:</span> read .agents/instructions/80-git.md (git)<br />
+          <span class="k">ROUTE:</span> read .agents/instructions/agent-git.md (git)<br />
           <span class="k">ROUTE:</span> read package.json
         </div>
         <div class="tbl-scroll">
@@ -1091,7 +1091,7 @@
         <div class="hookline">
           <span class="c"># cada regla en L0: su frase obligatoria, textual, y un puntero</span><br />
           6. <span class="k">**QUALITY VERIFICATION**</span>: After code changes, verify in order:
-          tests → types → lint. No skip steps. Full: 01-critical-rules.md#6
+          tests → types → lint. No skip steps. Full: agent-critical-rules.md#6
         </div>
         <div class="cards">
           <div class="card">
@@ -1106,7 +1106,7 @@
             <span class="n">En L1</span>
             <h4>El texto entero en un archivo</h4>
             <p>
-              <code>.agents/instructions/01-critical-rules.md</code> tiene cada regla bajo
+              <code>.agents/instructions/agent-critical-rules.md</code> tiene cada regla bajo
               <code>## N. NOMBRE</code>, con su fundamento y sus casos borde. El router tiene una fila
               para leerlo cuando el agente está por romper una regla, duda o le preguntan por ella.
             </p>
@@ -1115,7 +1115,7 @@
             <span class="n">Al editar</span>
             <h4>Dos lugares, a propósito</h4>
             <p>
-              Cambiar una regla es tocar su texto completo en <code>01-critical-rules.md</code> y su
+              Cambiar una regla es tocar su texto completo en <code>agent-critical-rules.md</code> y su
               frase en <code>AGENTS.md</code>, que tiene que seguir textual.
               <code>bun run instructions:check</code> compara las dos.
             </p>
@@ -1214,9 +1214,9 @@
         <h2><span class="num">09</span>Cómo se edita</h2>
         <p class="sub">
           Las secciones son doctrina compartida: <code>bun run up</code> las mantiene al día con el
-          boilerplate. <code>project.md</code> es lo propio de cada proyecto y ninguna sincronización
+          boilerplate. <code>agent-project.md</code> es lo propio de cada proyecto y ninguna sincronización
           lo toca; un proyecto que no lo tiene lo recibe una sola vez desde
-          <code>.agents/instructions/project.md.template</code>. La regla de oro: el texto va al
+          <code>.agents/instructions/agent-project.md.template</code>. La regla de oro: el texto va al
           archivo dueño, nunca de vuelta a <code>AGENTS.md</code>.
         </p>
         <div class="tbl-scroll">
@@ -1239,13 +1239,13 @@
               <tr>
                 <td>una regla crítica</td>
                 <td>
-                  su texto en <code>01-critical-rules.md</code> y su frase textual en
+                  su texto en <code>agent-critical-rules.md</code> y su frase textual en
                   <code>AGENTS.md</code>
                 </td>
               </tr>
               <tr>
                 <td>una regla que solo tiene este proyecto</td>
-                <td><code>.agents/instructions/project.md</code></td>
+                <td><code>.agents/instructions/agent-project.md</code></td>
               </tr>
               <tr>
                 <td>una línea con NEVER o MUST en una sección</td>
@@ -1302,7 +1302,7 @@
               <tr>
                 <td>Con agregados del proyecto · 28 KiB</td>
                 <td><code>L0_PROJECT_BUDGET</code></td>
-                <td>error: el texto del proyecto va a <code>project.md</code> o a una context skill</td>
+                <td>error: el texto del proyecto va a <code>agent-project.md</code> o a una context skill</td>
               </tr>
               <tr>
                 <td>Tope de Codex · 32 KiB</td>

@@ -38,7 +38,7 @@ orca skills installed
 ```
 
 These are **optional and never required**. The stubs teach WHEN, not HOW; the grammar is served by
-the binary on demand (`orca skills get <topic>`), which is what this repo's references ask for on the DEEP topics; the stubs themselves are loaded, not fetched (`.agents/instructions/20-skills-and-mcps.md` §5).
+the binary on demand (`orca skills get <topic>`), which is what this repo's references ask for on the DEEP topics; the stubs themselves are loaded, not fetched (`.agents/instructions/agent-skills-and-mcps.md` §5).
 Install them if you want the user-level trigger words; skip them and nothing breaks.
 
 Note `orca skills install --local` installs into the current project instead of globally. In THIS
@@ -90,7 +90,7 @@ machine can tell whether you did it, which is the whole problem with a non-versi
 A launch line can export variables; the native launch cannot, because it has no argv, so the
 `bun run <harness>` wrappers (`dotenv -o -e .env`) never run for a supervised worker. That does not
 leave it without MCP credentials: `bun run harness:env` derives from `.env` a per-harness surface the
-harness reads at startup with NO shell involved (`.agents/instructions/10-harnesses.md` §5.5, `cli/lib/harness-env.ts`).
+harness reads at startup with NO shell involved (`.agents/instructions/agent-harnesses.md` §5.5, `cli/lib/harness-env.ts`).
 
 - **Claude Code workers** read the `env` block of `.claude/settings.local.json`. On macOS/Linux the
   harness reads the MAIN checkout's copy even inside a worktree (measured: a session launched in a
@@ -103,7 +103,7 @@ harness reads at startup with NO shell involved (`.agents/instructions/10-harnes
   does NOT copy `.auth/`: it copies `.env` and REGENERATES these files from it; `bun install` creates
   empty placeholders on a fresh clone so the config still loads.
 - **Codex workers**: their stdio MCP servers start through the `.env` loader declared in
-  `.codex/config.toml` (`.agents/instructions/10-harnesses.md` §5.5), so the MCP leg works without a shell and `harness:env`
+  `.codex/config.toml` (`.agents/instructions/agent-harnesses.md` §5.5), so the MCP leg works without a shell and `harness:env`
   emits nothing for Codex. A Codex server that lacks the loader reads the process environment only;
   `bun run harness:env:check` names it.
 - **Every worker, any harness**: a CLI it runs that reads a shell-exported variable (`acli`,

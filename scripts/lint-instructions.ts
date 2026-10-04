@@ -18,22 +18,23 @@
  *     `<!-- router:end -->` exists, every row has a kind and at least one load
  *     target, every target resolves (a backticked repo path or a bare
  *     `@path` import), and every section file is the target of some row.
- *     The "Project context skills" table of `project.md` (between
+ *     The "Project context skills" table of `agent-project.md` (between
  *     `<!-- project-skills:start -->` and `<!-- project-skills:end -->`, the
  *     home of a project-created skill's row, which `bun run up` never
  *     overwrites) is checked the same way: each row names a skill whose
  *     `.agents/skills/<slug>/SKILL.md` exists, says when to load it, and
- *     carries at least one trigger that compiles. A `project.md` without the
- *     markers has no project rows and passes.
- *   - `frontmatter`: a numbered section (`NN-<id>.md`) opens with `id` (its
- *     file stem without the number), `title`, `load_when`, `triggers` (a
- *     non-empty list of strings that compile as case-insensitive regexes) and
- *     `paths` (a list of repo-relative prefixes); `project.md` carries `id:
- *     project`, `title`, `load_when` and the same two lists, the only file
- *     whose `triggers` may be empty (`triggers: []`); `README.md` carries
- *     none. No other file lives in the folder.
+ *     carries at least one trigger that compiles. An `agent-project.md`
+ *     without the markers has no project rows and passes.
+ *   - `frontmatter`: every file but `README.md` is named `agent-<id>.md` and
+ *     opens with `id` (its file stem without `agent-`), `title`, `load_when`,
+ *     `triggers` (a non-empty list of strings that compile as
+ *     case-insensitive regexes) and `paths` (a list of repo-relative
+ *     prefixes); `agent-project.md` (`id: project`) is the only file whose
+ *     `triggers` may be empty (`triggers: []`); `README.md` carries none. No
+ *     other file lives in the folder, and file names carry no order: the
+ *     router rows do.
  *   - `rules`: every L0 Critical Rule (`N. **NAME**: text … Full: …`) has a
- *     `## N. NAME` heading in `01-critical-rules.md`, every rule there has its
+ *     `## N. NAME` heading in `agent-critical-rules.md`, every rule there has its
  *     L0 line, and each L0 excerpt (`…` joins excerpts) appears verbatim in
  *     the full text. The binding sentence never exists only in a section.
  *   - `binding`: a line of a section that says `NEVER` or `MUST` names what
@@ -42,8 +43,8 @@
  *     executor (`` `slug` `` or `/slug`), a bold contract label L0 also
  *     carries, or an explicit `<!-- binds-in-section: <reason> -->` that
  *     declares the rule binding only on the work that routes to the section.
- *     `01-critical-rules.md` and `project.md` are exempt (the first holds the
- *     full text of rules L0 carries, the second is project-owned).
+ *     `agent-critical-rules.md` and `agent-project.md` are exempt (the first
+ *     holds the full text of rules L0 carries, the second is project-owned).
  *   - `import`: a bare `@path` outside code in L0 is a Claude Code import
  *     (loaded in full at launch); only `ALLOWED_IMPORTS` may appear, and each
  *     must exist.
@@ -65,7 +66,6 @@ import { isMaintainerCopy } from '../cli/lib/agents-schema';
 import {
   coreBytes,
   L0_FILE,
-  NUMBERED_SECTION,
   parseFrontmatter,
   parseFullRules,
   parseL0Rules,
@@ -74,6 +74,7 @@ import {
   PROJECT_FILE,
   README_FILE,
   RULES_FILE,
+  SECTION_FILE,
   SECTIONS_DIR,
   SKILL_SLUG,
   withoutCode,
@@ -163,17 +164,12 @@ export function lintFrontmatter(rel: string, name: string, text: string): Instru
     if (typeof meta[key] !== 'string' || !meta[key].trim()) { return bad(`\`${key}\` must be a non-empty string`); }
   }
   const isProject = name === PROJECT_FILE;
-  if (isProject) {
-    if (meta.id !== 'project') { return bad('`id` must be `project`'); }
-  }
-  else {
-    const numbered = NUMBERED_SECTION.exec(name);
-    if (!numbered) { return bad('file name must be `NN-<id>.md`, `project.md` or `README.md`'); }
-    if (meta.id !== numbered[2]) { return bad(`\`id\` must be \`${numbered[2]}\` (the file stem without the number)`); }
-  }
+  const section = SECTION_FILE.exec(name);
+  if (!section) { return bad('file name must be `agent-<id>.md` (every file but README.md carries the `agent-` prefix)'); }
+  if (meta.id !== section[1]) { return bad(`\`id\` must be \`${section[1]}\` (the file stem without \`agent-\`)`); }
   const triggers = meta.triggers;
   if (!Array.isArray(triggers) || triggers.some(t => typeof t !== 'string')) { return bad('`triggers` must be a list of strings'); }
-  if (triggers.length === 0 && !isProject) { return bad('`triggers` is empty: the hook can never route here (only project.md may leave it empty)'); }
+  if (triggers.length === 0 && !isProject) { return bad('`triggers` is empty: the hook can never route here (only agent-project.md may leave it empty)'); }
   for (const trigger of triggers as string[]) {
     try { void new RegExp(trigger, 'i'); }
     catch { return bad(`trigger does not compile: ${trigger}`); }
@@ -205,7 +201,7 @@ export function lintRouter(root: string, l0: string, sections: string[]): Instru
   return findings;
 }
 
-/** `router` findings for the project's own skill rows in `project.md`. */
+/** `router` findings for the project's own skill rows in `agent-project.md`. */
 export function lintProjectSkills(root: string, projectText: string): InstructionFinding[] {
   const rel = `${SECTIONS_DIR}/${PROJECT_FILE}`;
   const findings: InstructionFinding[] = [];

@@ -8,7 +8,7 @@
  * Now the text moves, verbatim, to `.agents/skills/<app>-context/references/
  * app-instructions.md`; the skill's description routes by the app's domain;
  * `AGENTS.md` gains ONE router row pointing at it; and the project overlay
- * (`.agents/instructions/project.md`) gains a short pointer. The `-context`
+ * (`.agents/instructions/agent-project.md`) gains a short pointer. The `-context`
  * suffix makes the folder project-local (`isProjectLocalSkillPath`), so no
  * later `bun run up` writes or deletes it.
  *
@@ -23,7 +23,7 @@ import * as path from 'node:path';
 export const APP_CONTEXT_SUFFIX = '-context';
 /** The preserved text, relative to the skill folder. */
 export const APP_INSTRUCTIONS_REFERENCE = 'references/app-instructions.md';
-/** The heading `withAppContextPointer` adds to `project.md`. */
+/** The heading `withAppContextPointer` adds to `agent-project.md`. */
 export const APP_CONTEXT_POINTER_HEADING = '## This application\'s own instructions';
 const ROUTER_END = '<!-- router:end -->';
 /** Agent Skills spec: the description field caps at 1024 characters. */
@@ -129,7 +129,7 @@ export function appInstructionsReference(app: AppIdentity, sources: readonly Ado
   const out = [
     `# ${app.name}: instructions carried over at adoption`,
     '',
-    `> Preserved verbatim by \`bun run up --adopt\` from the instruction file(s) ${app.name} carried before adoption${archiveRel ? ` (originals archived in \`${archiveRel}/\`)` : ''}. This is the app team's own text: edit it as a rule change of theirs, never to summarize or reorder it. Where it disagrees with the boilerplate's doctrine, \`.agents/instructions/project.md\` says which rule wins.`,
+    `> Preserved verbatim by \`bun run up --adopt\` from the instruction file(s) ${app.name} carried before adoption${archiveRel ? ` (originals archived in \`${archiveRel}/\`)` : ''}. This is the app team's own text: edit it as a rule change of theirs, never to summarize or reorder it. Where it disagrees with the boilerplate's doctrine, \`.agents/instructions/agent-project.md\` says which rule wins.`,
     '',
   ];
   for (const source of sources) {
@@ -156,7 +156,7 @@ export function appContextSkillMd(slug: string, app: AppIdentity, sources: reado
     '',
     `- Read \`${APP_INSTRUCTIONS_REFERENCE}\` whole before acting on a task in ${app.name}'s code or domain: it is the app team's rulebook, and nothing of it was summarized.`,
     '- Never rewrite, summarize or reorder the preserved text. A change to it is the team\'s own rule change, made like any edit to a project file.',
-    '- Where the app\'s text and the boilerplate doctrine disagree, `.agents/instructions/project.md` records which one wins; a Critical Rule in `AGENTS.md` always holds.',
+    '- Where the app\'s text and the boilerplate doctrine disagree, `.agents/instructions/agent-project.md` records which one wins; a Critical Rule in `AGENTS.md` always holds.',
     '- This folder is project-local (its slug ends in `-context`): `bun run up` never writes or deletes it.',
     '',
   ].join('\n');
@@ -190,7 +190,7 @@ export function composeAdoptedL0(upstreamAgents: string, slug: string, appName: 
   return [...lines.slice(0, end), row, ...lines.slice(end)].join('\n');
 }
 
-/** `project.md` with the pointer section appended once (idempotent). */
+/** `agent-project.md` with the pointer section appended once (idempotent). */
 export function withAppContextPointer(projectMd: string, slug: string, appName: string): string {
   if (projectMd.includes(APP_CONTEXT_POINTER_HEADING)) { return projectMd; }
   const body = [

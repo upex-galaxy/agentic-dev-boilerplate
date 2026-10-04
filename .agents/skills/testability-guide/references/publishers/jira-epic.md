@@ -2,7 +2,7 @@
 
 > **When this adapter runs**: Q1 answered with `Jira Epic` (or the user accepted the default).
 >
-> **Tool**: `[ISSUE_TRACKER_TOOL]` per `.agents/instructions/30-tool-resolution.md` §6. Resolves to `/acli` primary, Atlassian MCP fallback. This adapter owns the WHEN/WHAT — for the HOW (exact syntax, auth, flags, ADF), load `.agents/skills/acli/SKILL.md` §Jira and §Publishing rich text.
+> **Tool**: `[ISSUE_TRACKER_TOOL]` per `.agents/instructions/agent-tool-resolution.md` §6. Resolves to `/acli` primary, Atlassian MCP fallback. This adapter owns the WHEN/WHAT — for the HOW (exact syntax, auth, flags, ADF), load `.agents/skills/acli/SKILL.md` §Jira and §Publishing rich text.
 >
 > **Body**: `references/credentials-content-template.md`. This adapter ONLY describes how to convert + publish; it does not duplicate content.
 

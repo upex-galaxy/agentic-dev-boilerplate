@@ -164,7 +164,7 @@ Options: (a) update .agents/project.yaml to match the host, (b) change the host
 configuration, (c) accept the divergence and record WHY.
 ```
 
-**Option (c) needs a durable home, or it re-litigates itself every session.** Record an accepted divergence in `git_strategy.policy.accepted_divergences` (`.agents/project.yaml`; one entry per `verify` finding field, with a reason — `references/ruleset-parity.md` §2b). `verify` then reports it as ACCEPTED and exits 0, so a later session stops re-raising the same drift. Prose context, when it helps, goes in the project's own `.agents/instructions/project.md` → `## Git Strategy (this repository)` section — per-project, never synced from any template. Legitimate reasons exist and are project-specific: a template / boilerplate repository whose maintainer is the only committer and for whom the review requirement is ceremony; a repo whose ruleset is inherited from an org policy nobody local can change. What is NOT legitimate is inferring the exception: the skill never decides on its own that a bypass is fine, and never treats "the push went through" as the reason. The user states the exception once, in writing, and it holds until they change it.
+**Option (c) needs a durable home, or it re-litigates itself every session.** Record an accepted divergence in `git_strategy.policy.accepted_divergences` (`.agents/project.yaml`; one entry per `verify` finding field, with a reason — `references/ruleset-parity.md` §2b). `verify` then reports it as ACCEPTED and exits 0, so a later session stops re-raising the same drift. Prose context, when it helps, goes in the project's own `.agents/instructions/agent-project.md` → `## Git Strategy (this repository)` section — per-project, never synced from any template. Legitimate reasons exist and are project-specific: a template / boilerplate repository whose maintainer is the only committer and for whom the review requirement is ceremony; a repo whose ruleset is inherited from an org policy nobody local can change. What is NOT legitimate is inferring the exception: the skill never decides on its own that a bypass is fine, and never treats "the push went through" as the reason. The user states the exception once, in writing, and it holds until they change it.
 
 Editing `.agents/project.yaml` requires the user's choice, exactly like Strategy Setup. Once verified, stamp the outcome so later runs know how much the block can be trusted:
 
@@ -220,7 +220,7 @@ git_strategy:
 
 The `git_strategy:` block is the source of truth; its `description:` field is the one-paragraph human summary. The user can edit it; the next invocation re-reads it.
 
-The `## Git Strategy` section of `.agents/instructions/80-git.md` is **just a pointer** to this block — NEVER write strategy policy or branch decisions into `AGENTS.md` or an instruction section.
+The `## Git Strategy` section of `.agents/instructions/agent-git.md` is **just a pointer** to this block — NEVER write strategy policy or branch decisions into `AGENTS.md` or an instruction section.
 
 If the strategy uses an integration branch with a non-default name (anything other than `staging`), record it under `git_strategy.branches.integration` so commits don't have to re-detect.
 

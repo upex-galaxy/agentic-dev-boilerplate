@@ -328,7 +328,7 @@ fi
 # Nombre del proyecto
 grep -i "title\|name\|proyecto" .context/PRD/executive-summary.md | head -3
 
-# Supabase project ref (`.agents/instructions/40-project-variables.md` §7: la identidad del proyecto vive en el yaml)
+# Supabase project ref (`.agents/instructions/agent-project-variables.md` §7: la identidad del proyecto vive en el yaml)
 yq '.environments.<env>.db_project_ref' .agents/project.yaml
 ```
 

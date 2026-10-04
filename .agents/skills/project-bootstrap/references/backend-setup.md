@@ -267,7 +267,7 @@ git status
 1. **Tengo un proyecto existente** → Pedir el ref
 2. **Necesito crear un proyecto nuevo** → Mostrar instrucciones
 
-**Guardar el ref en `.agents/project.yaml` (`environments.<env>.db_project_ref`) con OK del usuario**, nunca en `AGENTS.md` ni en un archivo aparte (`.agents/instructions/40-project-variables.md` §7).
+**Guardar el ref en `.agents/project.yaml` (`environments.<env>.db_project_ref`) con OK del usuario**, nunca en `AGENTS.md` ni en un archivo aparte (`.agents/instructions/agent-project-variables.md` §7).
 
 ---
 

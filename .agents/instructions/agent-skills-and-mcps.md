@@ -45,7 +45,7 @@ paths: [".agents/skills/"]
 >
 > **T4 (community user-level)**: repo-agnostic skills, auto-discovered at runtime, **ASK before load** per strategy §3.2.
 >
-> Layout convention: T1 repo skills → `.agents/skills/<slug>/` (committed source). T3 community skills (`bunx skills add`) install into the SAME `.agents/skills/` store; T4 user-level skills stay harness-specific (`~/.claude/skills/`, and the equivalent for each host). Claude Code discovers the whole store through the generated `.claude/skills` alias (`10-harnesses.md` §5.5); OpenCode and Codex read `.agents/skills/` natively.
+> Layout convention: T1 repo skills → `.agents/skills/<slug>/` (committed source). T3 community skills (`bunx skills add`) install into the SAME `.agents/skills/` store; T4 user-level skills stay harness-specific (`~/.claude/skills/`, and the equivalent for each host). Claude Code discovers the whole store through the generated `.claude/skills` alias (`agent-harnesses.md` §5.5); OpenCode and Codex read `.agents/skills/` natively.
 
 ### Skill modes
 

@@ -62,16 +62,16 @@ function l0(extra = ''): string {
     '<!-- router:start -->',
     '| Kind | Load | Also |',
     '|---|---|---|',
-    '| unsure about a Critical Rule | `.agents/instructions/01-critical-rules.md` | - |',
-    '| git work | `.agents/instructions/80-git.md` | `git-flow-master` |',
+    '| unsure about a Critical Rule | `.agents/instructions/agent-critical-rules.md` | - |',
+    '| git work | `.agents/instructions/agent-git.md` | `git-flow-master` |',
     '| scripts: whenever any of these apply, read it fresh | @package.json | Rule 10 |',
     '<!-- router:end -->',
     '',
     extra,
     '## 1. CRITICAL RULES: ALWAYS APPLY',
     '',
-    '1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Full: 01-critical-rules.md#1',
-    '2. **GIT HISTORY**: NEVER rewrite pushed history. … NEVER force-push to shared branches. Full: 01-critical-rules.md#2',
+    '1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Full: agent-critical-rules.md#1',
+    '2. **GIT HISTORY**: NEVER rewrite pushed history. … NEVER force-push to shared branches. Full: agent-critical-rules.md#2',
     '',
     '## 2. BEHAVIOR',
     '',
@@ -83,8 +83,8 @@ function l0(extra = ''): string {
 function scaffold(): void {
   write('package.json', '{}');
   write('AGENTS.md', l0());
-  write('.agents/instructions/01-critical-rules.md', RULES);
-  write('.agents/instructions/80-git.md', GIT);
+  write('.agents/instructions/agent-critical-rules.md', RULES);
+  write('.agents/instructions/agent-git.md', GIT);
   write('.agents/instructions/README.md', '# Sections\n');
   write('.agents/skills/git-flow-master/SKILL.md', '---\nname: git-flow-master\n---\n\n## Compact Rules\n\n- x\n');
 }
@@ -103,9 +103,9 @@ describe('lint-instructions', () => {
     expect(lintInstructions(root)).toEqual([]);
   });
 
-  test('project.md skill rows: an existing skill with compiling triggers passes, each defect fails by name', () => {
+  test('agent-project.md skill rows: an existing skill with compiling triggers passes, each defect fails by name', () => {
     scaffold();
-    write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/project.md` | - |\n<!-- router:end -->'));
+    write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/agent-project.md` | - |\n<!-- router:end -->'));
     write('.agents/skills/billing-context/SKILL.md', '---\nname: billing-context\n---\n');
     const project = (rows: string[]): string => [
       '---',
@@ -123,57 +123,64 @@ describe('lint-instructions', () => {
       '<!-- project-skills:end -->',
       '',
     ].join('\n');
-    write('.agents/instructions/project.md', project(['| `billing-context` | invoices | `\\binvoice`, `pay(?:out\\|ment)` | `sprint-development` |']));
+    write('.agents/instructions/agent-project.md', project(['| `billing-context` | invoices | `\\binvoice`, `pay(?:out\\|ment)` | `sprint-development` |']));
     expect(lintInstructions(root)).toEqual([]);
-    write('.agents/instructions/project.md', project([
+    write('.agents/instructions/agent-project.md', project([
       '| `gone-context` | x | `gone` | - |',
       '| `billing-context` |  |  | - |',
       '| `billing-context` | x | `(unclosed` | - |',
       '| Billing | x | `b` | - |',
     ]));
     expect(lintInstructions(root).map(tag)).toEqual([
-      'error:router:.agents/instructions/project.md:project skill row: .agents/skills/gone-context/SKILL.md does not exist',
-      'error:router:.agents/instructions/project.md:project skill row `billing-context` has no Load when',
-      'error:router:.agents/instructions/project.md:project skill row `billing-context` has no trigger: the hook can never route to it',
-      'error:router:.agents/instructions/project.md:project skill row `billing-context`: trigger does not compile: (unclosed',
-      'error:router:.agents/instructions/project.md:project skill row: `Billing` is not a skill slug (write it backticked, e.g. `billing-context`)',
+      'error:router:.agents/instructions/agent-project.md:project skill row: .agents/skills/gone-context/SKILL.md does not exist',
+      'error:router:.agents/instructions/agent-project.md:project skill row `billing-context` has no Load when',
+      'error:router:.agents/instructions/agent-project.md:project skill row `billing-context` has no trigger: the hook can never route to it',
+      'error:router:.agents/instructions/agent-project.md:project skill row `billing-context`: trigger does not compile: (unclosed',
+      'error:router:.agents/instructions/agent-project.md:project skill row: `Billing` is not a skill slug (write it backticked, e.g. `billing-context`)',
     ]);
   });
 
   test('a section no router row loads fails by name', () => {
     scaffold();
-    write('.agents/instructions/70-code-quickref.md', GIT.replace('id: git', 'id: code-quickref'));
+    write('.agents/instructions/agent-code-quickref.md', GIT.replace('id: git', 'id: code-quickref'));
     expect(lintInstructions(root).map(tag)).toEqual([
-      'error:router:.agents/instructions/70-code-quickref.md:section is not the load target of any router row',
+      'error:router:.agents/instructions/agent-code-quickref.md:section is not the load target of any router row',
     ]);
   });
 
   test('a router target that does not resolve fails', () => {
     scaffold();
-    write('AGENTS.md', l0().replace('80-git.md` | `git', '85-gone.md` | `git'));
+    write('AGENTS.md', l0().replace('agent-git.md` | `git', 'agent-gone.md` | `git'));
     const tags = lintInstructions(root).map(tag);
-    expect(tags).toContain('error:router:AGENTS.md:load target does not resolve: .agents/instructions/85-gone.md');
-    expect(tags).toContain('error:router:.agents/instructions/80-git.md:section is not the load target of any router row');
+    expect(tags).toContain('error:router:AGENTS.md:load target does not resolve: .agents/instructions/agent-gone.md');
+    expect(tags).toContain('error:router:.agents/instructions/agent-git.md:section is not the load target of any router row');
   });
 
   test('frontmatter: id must match the file stem and triggers must compile', () => {
     scaffold();
-    write('.agents/instructions/80-git.md', GIT.replace('id: git', 'id: gitflow'));
-    expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/80-git.md:`id` must be `git` (the file stem without the number)']);
-    write('.agents/instructions/80-git.md', GIT.replace('"\\\\bcommit"', '"(unclosed"'));
-    expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/80-git.md:trigger does not compile: (unclosed']);
+    write('.agents/instructions/agent-git.md', GIT.replace('id: git', 'id: gitflow'));
+    expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/agent-git.md:`id` must be `git` (the file stem without `agent-`)']);
+    write('.agents/instructions/agent-git.md', GIT.replace('"\\\\bcommit"', '"(unclosed"'));
+    expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/agent-git.md:trigger does not compile: (unclosed']);
   });
 
-  test('project.md may leave triggers empty, no other section may; README carries no frontmatter', () => {
+  test('every file but README.md carries the agent- prefix: a numbered name fails', () => {
     scaffold();
-    write('.agents/instructions/project.md', '---\nid: project\ntitle: "P"\nload_when: "project things"\ntriggers: []\npaths: []\n---\n');
-    write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/project.md` | - |\n<!-- router:end -->'));
+    write('.agents/instructions/80-git.md', GIT);
+    write('AGENTS.md', l0().replace('<!-- router:end -->', '| old git | `.agents/instructions/80-git.md` | - |\n<!-- router:end -->'));
+    expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/80-git.md:file name must be `agent-<id>.md` (every file but README.md carries the `agent-` prefix)']);
+  });
+
+  test('agent-project.md may leave triggers empty, no other section may; README carries no frontmatter', () => {
+    scaffold();
+    write('.agents/instructions/agent-project.md', '---\nid: project\ntitle: "P"\nload_when: "project things"\ntriggers: []\npaths: []\n---\n');
+    write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/agent-project.md` | - |\n<!-- router:end -->'));
     expect(lintInstructions(root)).toEqual([]);
-    write('.agents/instructions/80-git.md', GIT.replace('triggers: ["\\\\bgit\\\\b", "\\\\bcommit"]', 'triggers: []'));
+    write('.agents/instructions/agent-git.md', GIT.replace('triggers: ["\\\\bgit\\\\b", "\\\\bcommit"]', 'triggers: []'));
     write('.agents/instructions/README.md', '---\nid: readme\n---\n');
     expect(lintInstructions(root).map(tag)).toEqual([
-      'error:frontmatter:.agents/instructions/80-git.md:`triggers` is empty: the hook can never route here (only project.md may leave it empty)',
       'error:frontmatter:.agents/instructions/README.md:README.md carries no frontmatter',
+      'error:frontmatter:.agents/instructions/agent-git.md:`triggers` is empty: the hook can never route here (only agent-project.md may leave it empty)',
     ]);
   });
 
@@ -202,16 +209,16 @@ describe('lint-instructions', () => {
     scaffold();
     write('AGENTS.md', l0().replace('NEVER hardcode/guess.', 'NEVER hardcode or guess.'));
     expect(lintInstructions(root).map(tag)).toEqual([
-      'error:rules:AGENTS.md:rule 1 excerpt is not verbatim in 01-critical-rules.md: "ALWAYS read from `.env`. NEVER hardcode or guess.…"',
+      'error:rules:AGENTS.md:rule 1 excerpt is not verbatim in agent-critical-rules.md: "ALWAYS read from `.env`. NEVER hardcode or guess.…"',
     ]);
   });
 
   test('a full-text rule with no L0 line, and a renamed rule, fail', () => {
     scaffold();
-    write('.agents/instructions/01-critical-rules.md', `${RULES.replace('## 2. GIT HISTORY', '## 2. HISTORY')}## 3. EXTRA\n\nNEVER x.\n`);
+    write('.agents/instructions/agent-critical-rules.md', `${RULES.replace('## 2. GIT HISTORY', '## 2. HISTORY')}## 3. EXTRA\n\nNEVER x.\n`);
     expect(lintInstructions(root).map(tag)).toEqual([
-      'error:rules:AGENTS.md:rule 2 is `GIT HISTORY` in L0 but `HISTORY` in 01-critical-rules.md',
-      'error:rules:.agents/instructions/01-critical-rules.md:rule 3 has no binding line in L0',
+      'error:rules:AGENTS.md:rule 2 is `GIT HISTORY` in L0 but `HISTORY` in agent-critical-rules.md',
+      'error:rules:.agents/instructions/agent-critical-rules.md:rule 3 has no binding line in L0',
     ]);
   });
 
@@ -226,8 +233,8 @@ describe('lint-instructions', () => {
   test('the router reads backticked targets and bare imports', () => {
     const rows = parseRouter(l0());
     expect(rows?.map(r => r.targets)).toEqual([
-      ['.agents/instructions/01-critical-rules.md'],
-      ['.agents/instructions/80-git.md'],
+      ['.agents/instructions/agent-critical-rules.md'],
+      ['.agents/instructions/agent-git.md'],
       ['package.json'],
     ]);
     expect(parseRouter('# no markers')).toBeNull();
@@ -279,8 +286,8 @@ describe('skillTableSource', () => {
     expect(skillTableSource(root)).toBeNull();
     write('AGENTS.md', 'a');
     expect(skillTableSource(root)?.file).toBe('AGENTS.md');
-    write('.agents/instructions/20-skills-and-mcps.md', 's');
-    expect(skillTableSource(root)?.file).toBe('.agents/instructions/20-skills-and-mcps.md');
+    write('.agents/instructions/agent-skills-and-mcps.md', 's');
+    expect(skillTableSource(root)?.file).toBe('.agents/instructions/agent-skills-and-mcps.md');
   });
 });
 
@@ -301,7 +308,7 @@ describe('parseProjectSkills', () => {
 
   test('no markers is null; the shipped stub carries the table, empty', () => {
     expect(parseProjectSkills('# no table\n')).toBeNull();
-    const stub = readFileSync(resolve(import.meta.dir, '..', '.agents/instructions/project.md.template'), 'utf8');
+    const stub = readFileSync(resolve(import.meta.dir, '..', '.agents/instructions/agent-project.md.template'), 'utf8');
     expect(parseProjectSkills(stub)).toEqual([]);
   });
 });

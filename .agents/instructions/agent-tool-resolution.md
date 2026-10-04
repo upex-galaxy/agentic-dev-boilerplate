@@ -19,7 +19,7 @@ paths: ["supabase/"]
 | `[ISSUE_TRACKER_TOOL]`  | Jira Cloud (story/bug/epic)       | `/acli`                                   | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base/docs)  | `/acli` (Confluence subcommands)          | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[AUTOMATION_TOOL]`     | Browser automation                | `/playwright-cli`                         | none: the only browser path            |
-| `[DB_TOOL]`             | Database                          | capability `db`, resolved from `stack.database` (`20-skills-and-mcps.md` §5; Supabase MCP: `execute_sql`, `list_tables`) | the database's own CLI (Supabase CLI, `psql`), only when the user chooses it after the STOP |
+| `[DB_TOOL]`             | Database                          | capability `db`, resolved from `stack.database` (`agent-skills-and-mcps.md` §5; Supabase MCP: `execute_sql`, `list_tables`) | the database's own CLI (Supabase CLI, `psql`), only when the user chooses it after the STOP |
 | `[API_TOOL]`            | API exploration                   | curl + OpenAPI types (`bun run api:sync`, writes `api/` at the repo root, outside `stack.app_root` on a monorepo; an app with its own client types keeps them) | Postman manual                         |
 | `[DOCS_TOOL]`           | Library / framework / SDK / API / CLI official docs | capability `library-docs`: any tool ending in `resolve-library-id` / `query-docs` | none: STOP (see below) |
 | `[WEB_SEARCH_TOOL]`     | General web search, community fixes, troubleshooting, non-doc research | capability `web-search`: any tool ending in `web_search_exa` / `web_fetch_exa` (preferred) or `tavily_search` / `tavily_extract` / `tavily_research` | none: STOP (see below) |

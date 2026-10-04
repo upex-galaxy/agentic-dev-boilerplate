@@ -1,6 +1,6 @@
 # MCP Capabilities: Declare by Capability, Resolve by Suffix
 
-> Cited by `.agents/instructions/20-skills-and-mcps.md` §5 (MCP table) and `.agents/instructions/30-tool-resolution.md` §6 (tool resolution), and by every skill whose frontmatter declares `metadata.requires_capabilities`. The vocabulary in §2 is owned HERE: a lint check that validates declared names must mirror it, and a new name lands here first. Decision record: `.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`.
+> Cited by `.agents/instructions/agent-skills-and-mcps.md` §5 (MCP table) and `.agents/instructions/agent-tool-resolution.md` §6 (tool resolution), and by every skill whose frontmatter declares `metadata.requires_capabilities`. The vocabulary in §2 is owned HERE: a lint check that validates declared names must mirror it, and a new name lands here first. Decision record: `.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`.
 
 ## 1. Why capabilities, not servers
 

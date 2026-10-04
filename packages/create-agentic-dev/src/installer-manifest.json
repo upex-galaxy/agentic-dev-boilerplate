@@ -277,7 +277,7 @@
       },
       {
         "path": ".agents/instructions/",
-        "what": "Already committed. One instruction section per topic, read on demand when the AGENTS.md router or a hook ROUTE: line names it; project.md holds the project's own rules."
+        "what": "Already committed. One instruction section per topic, read on demand when the AGENTS.md router or a hook ROUTE: line names it; agent-project.md holds the project's own rules."
       },
       {
         "path": "CLAUDE.md",

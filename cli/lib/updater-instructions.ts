@@ -9,11 +9,11 @@
  * backed up under `.backups/` and reported as an overwritten edit, a path the
  * project lists in `updater.protected_paths` kept as its own).
  *
- * WHAT IS NOT. `.agents/instructions/project.md` is the project-owned overlay.
+ * WHAT IS NOT. `.agents/instructions/agent-project.md` is the project-owned overlay.
  * The boilerplate's own copy carries THIS repository's exceptions (its git
  * strategy divergence, its push authorization), so it never travels: the sync
  * excludes it, and a project that has none receives a GENERIC stub instead,
- * rendered from `project.md.template` (a non-`.md` name on purpose, so the
+ * rendered from `agent-project.md.template` (a non-`.md` name on purpose, so the
  * `instructions:check` gate and every `*.md` section reader ignore it).
  * Delivered once, never touched again. Same idea as `.agents/project.schema.yaml`
  * standing in for the maintainer's `.agents/project.yaml`, and the same answer
@@ -23,7 +23,7 @@
  * THE MIGRATION. A project scaffolded before the split still has the single
  * monolithic `AGENTS.md`, which is protected (never rewritten). The parity row
  * for it maps each legacy heading to the section file that now ships it, and
- * names the headings that are the project's own so they move into `project.md`
+ * names the headings that are the project's own so they move into `agent-project.md`
  * (`LEGACY_SECTION_HOMES`, consumed by `updater-parity.ts`). This module imports
  * nothing from the parity module: the parity module imports from here.
  */
@@ -34,10 +34,10 @@ import * as path from 'node:path';
 /** The component's folder: L1 of the project instructions. */
 export const INSTRUCTIONS_DIR = '.agents/instructions';
 /** The project-owned overlay. Excluded from the sync; delivered once as a stub. */
-export const PROJECT_INSTRUCTIONS_FILE = `${INSTRUCTIONS_DIR}/project.md`;
-/** The generic stub a project receives in place of the boilerplate's own `project.md`. */
-export const PROJECT_INSTRUCTIONS_TEMPLATE = `${INSTRUCTIONS_DIR}/project.md.template`;
-/** The heading the boilerplate's own `project.md` keeps its git exception under (Addendum 1). */
+export const PROJECT_INSTRUCTIONS_FILE = `${INSTRUCTIONS_DIR}/agent-project.md`;
+/** The generic stub a project receives in place of the boilerplate's own `agent-project.md`. */
+export const PROJECT_INSTRUCTIONS_TEMPLATE = `${INSTRUCTIONS_DIR}/agent-project.md.template`;
+/** The heading the boilerplate's own `agent-project.md` keeps its git exception under (Addendum 1). */
 export const PROJECT_GIT_HEADING = '## Git Strategy (this repository)';
 
 // ============================================================================
@@ -45,7 +45,7 @@ export const PROJECT_GIT_HEADING = '## Git Strategy (this repository)';
 // ============================================================================
 
 /**
- * Text that only the boilerplate's OWN `project.md` has any reason to carry:
+ * Text that only the boilerplate's OWN `agent-project.md` has any reason to carry:
  * the vocabulary of its accepted ruleset divergence and its standing push
  * authorization. A stub that matches one of these is the maintainer's file, or
  * a copy of it, and is refused. The verbatim-line check below catches the next
@@ -88,7 +88,7 @@ function bodyLines(text: string): Array<{ line: number, text: string }> {
 
 /**
  * Why `stub` must not ship. Empty when it is safe. `ownProjectMd` is the
- * boilerplate's own `project.md` (the file the stub replaces): a body line the
+ * boilerplate's own `agent-project.md` (the file the stub replaces): a body line the
  * two share verbatim is a leak, because the stub is generic by contract and the
  * boilerplate's file is not. Frontmatter and headings are exempt: the stub
  * keeps the overlay's `id`, `title` and `load_when` on purpose.
@@ -99,7 +99,7 @@ export function findStubLeaks(stub: string, ownProjectMd: string | null): StubLe
   for (const { line, text } of bodyLines(stub)) {
     const pattern = STUB_LEAK_PATTERNS.find(p => p.re.test(text));
     if (pattern) { leaks.push({ line, why: pattern.name, text }); continue; }
-    if (own.has(text)) { leaks.push({ line, why: 'a line copied from the boilerplate\'s own project.md', text }); }
+    if (own.has(text)) { leaks.push({ line, why: 'a line copied from the boilerplate\'s own agent-project.md', text }); }
   }
   return leaks;
 }
@@ -120,7 +120,7 @@ function readOrNull(file: string): string | null {
 }
 
 /**
- * Give a project that has no `project.md` the generic stub, once. A project
+ * Give a project that has no `agent-project.md` the generic stub, once. A project
  * that has one keeps it untouched, whatever it says. An upstream that predates
  * the template delivers nothing, and a template that fails the leak gate is
  * refused (the caller reports it). A dry run reports what it would write.
@@ -173,24 +173,24 @@ const S = (file: string): string => `${INSTRUCTIONS_DIR}/${file}`;
  */
 export const LEGACY_SECTION_HOMES: ReadonlyArray<{ match: RegExp, home: LegacyHome }> = [
   { match: /^0\.\s/, home: { kind: 'app', files: ['AGENTS.md'] } },
-  { match: /^1\.\s/, home: { kind: 'split', files: ['AGENTS.md', S('01-critical-rules.md')] } },
+  { match: /^1\.\s/, home: { kind: 'split', files: ['AGENTS.md', S('agent-critical-rules.md')] } },
   { match: /^2\.\s/, home: { kind: 'stays', files: ['AGENTS.md'] } },
-  { match: /^3\.\s/, home: { kind: 'split', files: ['AGENTS.md', S('90-orchestration-detail.md')] } },
-  { match: /^4\.\s/, home: { kind: 'moved', files: [S('15-context-map.md')] } },
-  { match: /^5\.\s/, home: { kind: 'moved', files: [S('20-skills-and-mcps.md')] } },
-  { match: /^Skills T1\b/i, home: { kind: 'moved', files: [S('20-skills-and-mcps.md')] } },
-  { match: /^Skill modes\b/i, home: { kind: 'moved', files: [S('20-skills-and-mcps.md')] } },
-  { match: /^MCPs\b/i, home: { kind: 'moved', files: [S('20-skills-and-mcps.md')] } },
-  { match: /^5\.5\s/, home: { kind: 'moved', files: [S('10-harnesses.md')] } },
-  { match: /^6\.5?\s/, home: { kind: 'moved', files: [S('30-tool-resolution.md')] } },
-  { match: /^7\.\s/, home: { kind: 'moved', files: [S('40-project-variables.md')] } },
-  { match: /^8\.\s/, home: { kind: 'moved', files: [S('50-ticket-work.md')] } },
-  { match: /^9\.\s/, home: { kind: 'moved', files: [S('60-local-context-pbi.md')] } },
-  { match: /^10\.\s/, home: { kind: 'moved', files: [S('70-code-quickref.md')] } },
-  { match: /^11\.\s/, home: { kind: 'moved', files: [S('80-git.md')] } },
-  // The generic pointer moved to 80-git.md; a project's OWN exception under it
-  // belongs in project.md (Addendum 1), which the row says.
-  { match: /^Git Strategy$/i, home: { kind: 'moved', files: [S('80-git.md'), PROJECT_INSTRUCTIONS_FILE] } },
+  { match: /^3\.\s/, home: { kind: 'split', files: ['AGENTS.md', S('agent-orchestration-detail.md')] } },
+  { match: /^4\.\s/, home: { kind: 'moved', files: [S('agent-context-map.md')] } },
+  { match: /^5\.\s/, home: { kind: 'moved', files: [S('agent-skills-and-mcps.md')] } },
+  { match: /^Skills T1\b/i, home: { kind: 'moved', files: [S('agent-skills-and-mcps.md')] } },
+  { match: /^Skill modes\b/i, home: { kind: 'moved', files: [S('agent-skills-and-mcps.md')] } },
+  { match: /^MCPs\b/i, home: { kind: 'moved', files: [S('agent-skills-and-mcps.md')] } },
+  { match: /^5\.5\s/, home: { kind: 'moved', files: [S('agent-harnesses.md')] } },
+  { match: /^6\.5?\s/, home: { kind: 'moved', files: [S('agent-tool-resolution.md')] } },
+  { match: /^7\.\s/, home: { kind: 'moved', files: [S('agent-project-variables.md')] } },
+  { match: /^8\.\s/, home: { kind: 'moved', files: [S('agent-ticket-work.md')] } },
+  { match: /^9\.\s/, home: { kind: 'moved', files: [S('agent-local-context-pbi.md')] } },
+  { match: /^10\.\s/, home: { kind: 'moved', files: [S('agent-code-quickref.md')] } },
+  { match: /^11\.\s/, home: { kind: 'moved', files: [S('agent-git.md')] } },
+  // The generic pointer moved to agent-git.md; a project's OWN exception under it
+  // belongs in agent-project.md (Addendum 1), which the row says.
+  { match: /^Git Strategy$/i, home: { kind: 'moved', files: [S('agent-git.md'), PROJECT_INSTRUCTIONS_FILE] } },
   { match: /^12\.\s/, home: { kind: 'stays', files: ['AGENTS.md'] } },
 ];
 

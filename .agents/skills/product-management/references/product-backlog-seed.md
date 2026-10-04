@@ -4,7 +4,7 @@
 > **Use when**: User says "seed the backlog", "create the initial PBI tree", "bootstrap the epics from the PRD", or equivalent.
 > **Not on an existing app without a PRD**: its product docs are the business maps (`../SKILL.md` → "Product docs: PRD/SRS or business maps"); there is no MVP to seed, and its backlog grows through add-feature and epic-creation. Never write a PRD to run this workflow.
 > **Persona**: Act as Scrum Master + Product Owner. Decompose the MVP into epics, decompose each epic into INVEST-validated foundational stories, create everything **in Jira** incrementally (per-epic), then materialize the local read-only cache with `bun run jira:sync-issues`, and emit a dependency graph + execution-sprint sequence as the closing artifact.
-> **No local authoring**: `epic.md`, `story.md`, `epic-tree.md`, and every per-field file are Jira-mirrored read-only caches — NEVER hand-written (`.agents/instructions/60-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Author content in Jira (field or `fallback:` comment per `.agents/jira-required.yaml`), then `bun run jira:sync-issues` materializes the cache.
+> **No local authoring**: `epic.md`, `story.md`, `epic-tree.md`, and every per-field file are Jira-mirrored read-only caches — NEVER hand-written (`.agents/instructions/agent-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Author content in Jira (field or `fallback:` comment per `.agents/jira-required.yaml`), then `bun run jira:sync-issues` materializes the cache.
 
 ---
 
@@ -327,7 +327,7 @@ If any criterion fails, split or rewrite the story before creating it. Never pus
 
 ### 2.5 — Materialize the epic + story read-only cache (sync, do NOT hand-write)
 
-**Goal**: materialize the canonical read-only cache for the epic and all its child stories in one pass. The epic + every story already live in Jira (2.1 + 2.3); the sync creates the canonical folders, `epic.md`, every `story.md`, and one Markdown file per non-empty rich-text custom field (`acceptance-criteria.md`, `scope.md`, `out-of-scope.md`, `business-rules.md`, `workflow.md`, `mockup.md`, …). You NEVER hand-create folders or files (`.agents/instructions/60-local-context-pbi.md` §9; `agentic-dev-core/references/acli-integration.md` D9).
+**Goal**: materialize the canonical read-only cache for the epic and all its child stories in one pass. The epic + every story already live in Jira (2.1 + 2.3); the sync creates the canonical folders, `epic.md`, every `story.md`, and one Markdown file per non-empty rich-text custom field (`acceptance-criteria.md`, `scope.md`, `out-of-scope.md`, `business-rules.md`, `workflow.md`, `mockup.md`, …). You NEVER hand-create folders or files (`.agents/instructions/agent-local-context-pbi.md` §9; `agentic-dev-core/references/acli-integration.md` D9).
 
 **Operation**:
 

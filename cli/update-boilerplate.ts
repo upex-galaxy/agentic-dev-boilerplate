@@ -168,12 +168,12 @@ const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 
 // Project-owned files INSIDE a synced component: each repo keeps its own copy
 // and the sync never delivers, overwrites, deletes or reports it. Today only the
-// project instructions overlay: the boilerplate's own `project.md` carries this
+// project instructions overlay: the boilerplate's own `agent-project.md` carries this
 // repository's exceptions, so a project that has none gets the generic stub
-// (`project.md.template`, behind a leak gate) from `makeProjectInstructionsHook`.
+// (`agent-project.md.template`, behind a leak gate) from `makeProjectInstructionsHook`.
 const PROJECT_OWNED_PATHS = [PROJECT_INSTRUCTIONS_FILE];
 
-// One opt-in template per supported host (`.agents/instructions/10-harnesses.md` section 5.5: three hosts).
+// One opt-in template per supported host (`.agents/instructions/agent-harnesses.md` section 5.5: three hosts).
 export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
 export const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
@@ -199,7 +199,7 @@ const RETIRED_ALIAS_NAMES = [
   'master-implementation-plan',
   'sync-ai-memory',
 ];
-const RETIRED_ALIAS_REASON = 'command aliases retired: invoke the skill by name plus its mode (`.agents/instructions/20-skills-and-mcps.md` section 5)';
+const RETIRED_ALIAS_REASON = 'command aliases retired: invoke the skill by name plus its mode (`.agents/instructions/agent-skills-and-mcps.md` section 5)';
 export const RETIRED_COMMAND_WRAPPERS: DeprecatedFile[] = [
   { path: '.agents/compatibility/command-aliases.json', component: 'agent-compatibility', reason: RETIRED_ALIAS_REASON, deprecatedSince: '8.5' },
   ...['.claude/commands', '.opencode/commands'].flatMap(dir => RETIRED_ALIAS_NAMES.map(name => ({
@@ -223,7 +223,7 @@ export const RETIRED_SKILL_FILES: DeprecatedFile[] = [
 // Docs pages removed upstream. `docs` is a synced directory component, so
 // without these `--auto` would defer their `deleted-upstream` entries and hold
 // the whole component back.
-const RETIRED_HOST_REASON = 'host outside the three-host contract (`.agents/instructions/10-harnesses.md` section 5.5)';
+const RETIRED_HOST_REASON = 'host outside the three-host contract (`.agents/instructions/agent-harnesses.md` section 5.5)';
 export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
   ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
     .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.7' })),
@@ -256,7 +256,7 @@ export const COMPONENTS: Component[] = [
   // The on-demand sections of the project instructions (L1 of progressive
   // disclosure; `AGENTS.md` is the always-on L0, on the watchlist). Shared
   // doctrine, synced like skills: overwritten on update, a project edit backed
-  // up and reported, a path in `updater.protected_paths` kept. `project.md` is
+  // up and reported, a path in `updater.protected_paths` kept. `agent-project.md` is
   // the project's own (PROJECT_OWNED_PATHS) and never travels.
   { name: 'instructions', type: 'directory', paths: [INSTRUCTIONS_DIR] },
   { name: 'scripts', type: 'directory', paths: ['scripts'] },
@@ -387,7 +387,7 @@ INSTRUCCIONES POR SECCIONES (componente instructions):
   ${PROJECT_INSTRUCTIONS_TEMPLATE} (stub generico; un stub con texto propio
   del boilerplate se rechaza). Un AGENTS.md anterior a la division (un solo
   archivo) recibe una fila con el mapa encabezado -> archivo de seccion y lo
-  que va a project.md; nunca se reescribe solo.
+  que va a agent-project.md; nunca se reescribe solo.
 
 REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   Una tabla "Estado por superficie" (9 filas: instrucciones y config, skills,
@@ -447,7 +447,7 @@ ADOPTAR UNA APP EXISTENTE (--adopt, solo la primera corrida):
   inherited). Si la app trae su propio AGENTS.md o CLAUDE.md, ese texto pasa
   literal al skill local .agents/skills/<app>-context/ (references/
   app-instructions.md, fuera de la carga de cada sesion) con un puntero en
-  .agents/instructions/project.md, y se propone UN AGENTS.md = upstream + una
+  .agents/instructions/agent-project.md, y se propone UN AGENTS.md = upstream + una
   fila de router hacia ese skill, con CLAUDE.md como shim: se aplica solo con
   un si explicito (con --auto queda guardado para revision y la fila bloquea). .mcp.json y
   opencode.jsonc se entregan si la app no los tiene. Los ADR numerados del
@@ -1022,11 +1022,11 @@ function makeSkillsRegistryHook(sink: ReportSink): (summary: RunSummary) => Prom
 
 // --- PROJECT INSTRUCTIONS OVERLAY (afterApply hook) ---
 //
-// `.agents/instructions/project.md` is excluded from the sync (PROJECT_OWNED_PATHS).
+// `.agents/instructions/agent-project.md` is excluded from the sync (PROJECT_OWNED_PATHS).
 // A project that has none (scaffolded before the split, or an app adopted with
 // `--adopt`) receives upstream's GENERIC stub once, never the boilerplate's own
 // file; a stub that fails the leak gate is refused and named, nothing written.
-// An existing `project.md` is never read, compared or touched.
+// An existing `agent-project.md` is never read, compared or touched.
 function makeProjectInstructionsHook(sink: ReportSink, dryRun: boolean): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
     const outcome = deliverProjectInstructionsStub(process.cwd(), UPSTREAM_DIR, { dryRun });
@@ -1944,7 +1944,7 @@ async function main(): Promise<void> {
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
-            // Before the gates: `instructions:check` reads `project.md`'s frontmatter.
+            // Before the gates: `instructions:check` reads `agent-project.md`'s frontmatter.
             makeProjectInstructionsHook(sink, false),
             makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS

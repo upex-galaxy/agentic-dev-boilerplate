@@ -9,7 +9,7 @@
  *   3. `--rescue` copies STATE to the same path in the primary, never
  *      overwrites (identical bytes = rescued, different bytes = conflict), and
  *      leaves the worktree untouched. `--dry-run` writes nothing.
- *   4. PBI [LOCAL] files and session material are DISPOSABLE (`.agents/instructions/60-local-context-pbi.md` §9,
+ *   4. PBI [LOCAL] files and session material are DISPOSABLE (`.agents/instructions/agent-local-context-pbi.md` §9,
  *      ephemeral-artifact contract), and Next.js / Vercel output is CACHE.
  */
 

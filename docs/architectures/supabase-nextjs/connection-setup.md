@@ -113,7 +113,7 @@ const PROJECT_REF = SUPABASE_URL.split('//')[1].split('.')[0];
 
 ## Cómo llega la AI a la base de datos
 
-La AI no usa un connection string. Pide la capability `db` (`.agents/instructions/20-skills-and-mcps.md` §5, "MCPs"), que en este repo la provee el servidor MCP `supabase` declarado en `.mcp.json`, `opencode.jsonc` y `.codex/config.toml`. Lee las credenciales de `.env` (`SUPABASE_ACCESS_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, las keys); no hay archivo TOML ni rol de base de datos que crear.
+La AI no usa un connection string. Pide la capability `db` (`.agents/instructions/agent-skills-and-mcps.md` §5, "MCPs"), que en este repo la provee el servidor MCP `supabase` declarado en `.mcp.json`, `opencode.jsonc` y `.codex/config.toml`. Lee las credenciales de `.env` (`SUPABASE_ACCESS_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, las keys); no hay archivo TOML ni rol de base de datos que crear.
 
 Para verificar que está activo, dentro de la sesión:
 

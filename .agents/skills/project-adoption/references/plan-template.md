@@ -129,7 +129,7 @@ A missing PRD / SRS is not a gap here: the business maps, dev guide and glossary
 | 3 | §2, §3, §4 | .agents/project.yaml |
 | 4 | §5 | .env, harness credential files |
 | 5 | §6 | .agents/jira-*.json |
-| 6 | §7 | AGENTS.md, CLAUDE.md (+ backups), `.agents/skills/<app>-context/`, the `project.md` pointer |
+| 6 | §7 | AGENTS.md, CLAUDE.md (+ backups), `.agents/skills/<app>-context/`, the `agent-project.md` pointer |
 | 7 | §8 | api/openapi.json, api/openapi-types.ts |
 
 ## 15. Approval checklist

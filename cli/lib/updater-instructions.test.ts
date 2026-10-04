@@ -60,7 +60,7 @@ const legacyAgents = (extra: string[] = []): string =>
   [...LEGACY_HEADINGS, ...extra].map(h => `${h}\n\nbody of ${h}\n`).join('\n');
 
 describe('the shipped stub', () => {
-  test('passes the leak gate against the boilerplate\'s own project.md, which fails it', () => {
+  test('passes the leak gate against the boilerplate\'s own agent-project.md, which fails it', () => {
     const stub = readRepo(PROJECT_INSTRUCTIONS_TEMPLATE);
     const own = readRepo(PROJECT_INSTRUCTIONS_FILE);
     expect(findStubLeaks(stub, own)).toEqual([]);
@@ -69,7 +69,7 @@ describe('the shipped stub', () => {
     expect(findStubLeaks(own, null).length).toBeGreaterThan(0);
   });
 
-  test('carries the overlay frontmatter instructions:check expects of project.md (id, title, load_when, empty triggers and paths)', () => {
+  test('carries the overlay frontmatter instructions:check expects of agent-project.md (id, title, load_when, empty triggers and paths)', () => {
     const stub = readRepo(PROJECT_INSTRUCTIONS_TEMPLATE);
     const match = /^---\n([\s\S]*?)\n---\n/.exec(stub);
     expect(match).not.toBeNull();
@@ -88,10 +88,10 @@ describe('the shipped stub', () => {
 });
 
 describe('findStubLeaks', () => {
-  test('a body line copied from the boilerplate\'s project.md is a leak; frontmatter and headings are not', () => {
+  test('a body line copied from the boilerplate\'s agent-project.md is a leak; frontmatter and headings are not', () => {
     const own = '---\nid: project\n---\n\n# Project instructions\n\nThis line is long enough to identify the maintainer copy verbatim.\n';
     const stub = '---\nid: project\n---\n\n# Project instructions\n\nThis line is long enough to identify the maintainer copy verbatim.\n';
-    expect(findStubLeaks(stub, own)).toEqual([{ line: 7, why: 'a line copied from the boilerplate\'s own project.md', text: 'This line is long enough to identify the maintainer copy verbatim.' }]);
+    expect(findStubLeaks(stub, own)).toEqual([{ line: 7, why: 'a line copied from the boilerplate\'s own agent-project.md', text: 'This line is long enough to identify the maintainer copy verbatim.' }]);
     expect(findStubLeaks('---\nid: project\n---\n\n# Project instructions\n\nGeneric text.\n', own)).toEqual([]);
   });
 
@@ -104,7 +104,7 @@ describe('findStubLeaks', () => {
 describe('deliverProjectInstructionsStub', () => {
   const STUB = '---\nid: project\ntitle: "Project instructions"\nload_when: "x"\n---\n\n# Project instructions\n';
 
-  test('a project without project.md gets the stub once; a dry run writes nothing', () => {
+  test('a project without agent-project.md gets the stub once; a dry run writes nothing', () => {
     const upstream = tempRoot();
     const repo = tempRoot();
     write(upstream, PROJECT_INSTRUCTIONS_TEMPLATE, STUB);
@@ -115,7 +115,7 @@ describe('deliverProjectInstructionsStub', () => {
     expect(readFileSync(join(repo, PROJECT_INSTRUCTIONS_FILE), 'utf8')).toBe(STUB);
   });
 
-  test('an existing project.md is never touched, whatever it says', () => {
+  test('an existing agent-project.md is never touched, whatever it says', () => {
     const upstream = tempRoot();
     const repo = tempRoot();
     write(upstream, PROJECT_INSTRUCTIONS_TEMPLATE, STUB);
@@ -145,19 +145,19 @@ describe('legacy AGENTS.md heading map', () => {
     }
     expect(legacyHeadingHome('## 13. ACME DEPLOY RULES')).toBeNull();
     // Number match, not substring: 5.5 is the harness section, not the skills one.
-    expect(legacyHeadingHome('## 5.5 MULTI-HARNESS')?.files).toEqual([`${INSTRUCTIONS_DIR}/10-harnesses.md`]);
+    expect(legacyHeadingHome('## 5.5 MULTI-HARNESS')?.files).toEqual([`${INSTRUCTIONS_DIR}/agent-harnesses.md`]);
   });
 
   test('this repo\'s AGENTS.md is the split L0', () => {
     expect(isSplitL0(readRepo('AGENTS.md'))).toBe(true);
   });
 
-  test('a pre-split project gets a row that maps moved headings to sections and its own headings to project.md', () => {
+  test('a pre-split project gets a row that maps moved headings to sections and its own headings to agent-project.md', () => {
     const upstream = readRepo('AGENTS.md');
     const project = legacyAgents(['## 13. ACME DEPLOY RULES']);
     const rows = legacyInstructionsMap(project, upstream);
     expect(rows.find(r => r.heading === '13. ACME DEPLOY RULES')).toMatchObject({ kind: 'own', files: [PROJECT_INSTRUCTIONS_FILE] });
-    expect(rows.find(r => r.heading.startsWith('9. LOCAL CONTEXT'))).toMatchObject({ kind: 'moved', files: [`${INSTRUCTIONS_DIR}/60-local-context-pbi.md`] });
+    expect(rows.find(r => r.heading.startsWith('9. LOCAL CONTEXT'))).toMatchObject({ kind: 'moved', files: [`${INSTRUCTIONS_DIR}/agent-local-context-pbi.md`] });
     expect(rows.find(r => r.heading === 'Git Strategy')?.files).toContain(PROJECT_INSTRUCTIONS_FILE);
     // The shared title maps to nothing.
     expect(rows.some(r => r.heading.startsWith('AGENTS.md'))).toBe(false);
@@ -165,10 +165,10 @@ describe('legacy AGENTS.md heading map', () => {
     const note = legacyInstructionsNote('AGENTS.md', project, upstream);
     expect(note).not.toBeNull();
     expect(note!.clause).toContain('legacy single-file AGENTS.md: 14 heading(s) now ship as synced sections');
-    expect(note!.clause).toContain('1 heading(s) are this project\'s own and move into .agents/instructions/project.md');
+    expect(note!.clause).toContain('1 heading(s) are this project\'s own and move into .agents/instructions/agent-project.md');
     expect(note!.clause).toContain('LOAD PROTOCOL + ROUTER');
     expect(note!.clause).toContain('never rewritten automatically');
-    expect(note!.note).toContain('| 13. ACME DEPLOY RULES | `.agents/instructions/project.md` |');
+    expect(note!.note).toContain('| 13. ACME DEPLOY RULES | `.agents/instructions/agent-project.md` |');
   });
 
   test('no row once the project\'s AGENTS.md is the split L0, nor for another file', () => {

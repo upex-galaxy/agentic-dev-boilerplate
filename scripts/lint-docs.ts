@@ -26,10 +26,10 @@
  *     marked `volatile-ok: <reason>` is kept;
  *   - `roster`: a repo skill (a committed `.agents/skills/<slug>/SKILL.md` that
  *     is not a community install) missing from the section 5 skill router
- *     (`.agents/instructions/20-skills-and-mcps.md`, or `AGENTS.md` on a
+ *     (`.agents/instructions/agent-skills-and-mcps.md`, or `AGENTS.md` on a
  *     project that still carries the single-file layout: `skillTableSource`).
  *     A skill the PROJECT created counts as listed when its row sits in the
- *     "Project context skills" table of `.agents/instructions/project.md`, or
+ *     "Project context skills" table of `.agents/instructions/agent-project.md`, or
  *     when an `AGENTS.md` router row loads its `SKILL.md` (the adopted app's
  *     `<app>-context`): both are project-owned files `bun run up` never
  *     overwrites, unlike the synced skills section.
@@ -389,7 +389,7 @@ function repoSkills(root: string): string[] {
 
 /**
  * Slugs of the skills the project routes from its own files: rows of the
- * "Project context skills" table of `project.md`, and `AGENTS.md` router rows
+ * "Project context skills" table of `agent-project.md`, and `AGENTS.md` router rows
  * that load a `.agents/skills/<slug>/SKILL.md`.
  */
 export function projectRoutedSlugs(root: string): Set<string> {

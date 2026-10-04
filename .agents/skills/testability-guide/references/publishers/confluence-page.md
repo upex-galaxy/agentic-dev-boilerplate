@@ -2,7 +2,7 @@
 
 > **When this adapter runs**: Q1 answered with `Confluence page`.
 >
-> **Tool**: `[KNOWLEDGE_BASE_TOOL]` per `.agents/instructions/30-tool-resolution.md` §6. Resolves to `/acli` Confluence subcommands when available, Atlassian MCP otherwise. This adapter owns the WHEN/WHAT — for the HOW (exact syntax, auth, flags), load `.agents/skills/acli/SKILL.md` §Confluence.
+> **Tool**: `[KNOWLEDGE_BASE_TOOL]` per `.agents/instructions/agent-tool-resolution.md` §6. Resolves to `/acli` Confluence subcommands when available, Atlassian MCP otherwise. This adapter owns the WHEN/WHAT — for the HOW (exact syntax, auth, flags), load `.agents/skills/acli/SKILL.md` §Confluence.
 >
 > **Body**: `references/credentials-content-template.md`.
 
@@ -85,7 +85,7 @@ If the primary tier already handles the markdown→storage conversion → skip m
 
 ## Tier degradation
 
-If the primary tier (CLI) lacks page CRUD (e.g. the bundled Confluence CLI is on a version where `page` is read-only) or is unauthenticated, degrade to the fallback tier per `.agents/instructions/30-tool-resolution.md` §6:
+If the primary tier (CLI) lacks page CRUD (e.g. the bundled Confluence CLI is on a version where `page` is read-only) or is unauthenticated, degrade to the fallback tier per `.agents/instructions/agent-tool-resolution.md` §6:
 
 1. Re-invoke the same `[KNOWLEDGE_BASE_TOOL] create_page` / `update_page` operation against the fallback tier (Atlassian MCP).
 2. The body format depends on the tier's accepted input — usually accepts markdown directly when the tier is MCP-based.

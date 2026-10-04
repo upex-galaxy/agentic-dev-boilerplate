@@ -30,7 +30,7 @@ afterEach(() => {
   while (roots.length > 0) { rmSync(roots.pop()!, { recursive: true, force: true }); }
 });
 
-const L0 = '# AGENTS.md\n\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/80-git.md` | - |\n<!-- router:end -->\n\n## 1. CRITICAL RULES\n';
+const L0 = '# AGENTS.md\n\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/agent-git.md` | - |\n<!-- router:end -->\n\n## 1. CRITICAL RULES\n';
 const APP = { name: 'shop-web', description: 'Storefront for Acme.' };
 const SOURCES: AdoptInstructionSource[] = [
   { file: 'AGENTS.md', text: '# Shop agents\n\n## 1. Checkout rules\n\nNever charge twice.\n\n```md\n## not a heading\n```\n\n## **Inventory** sync\n\nShipped today.\n\n' },
