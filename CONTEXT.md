@@ -3,7 +3,7 @@
 > **Last update**: 2026-09-03
 > **Purpose**: Canonical, operational explanation of how `agentic-dev-boilerplate` structures context so AI agents work effectively against it.
 > **Audience**: Humans onboarding the repo, and AI agents that need to understand "where things live and why".
-> **Companion files**: `README.md` (overview for humans), `AGENTS.md` (operational rules loaded each session on every supported harness; `CLAUDE.md` is a one-line `@AGENTS.md` shim that Claude Code follows to reach it, see §2.1), `docs/agentic-development-engineering.md` (methodology deep dive).
+> **Companion files**: `README.md` (overview for humans), `AGENTS.md` (the always-on core of the operational rules, loaded each session on every supported harness, with a router to the sections under `.agents/instructions/`; `CLAUDE.md` is a one-line `@AGENTS.md` shim that Claude Code follows to reach it, see §2.1), `docs/agentic-development-engineering.md` (methodology deep dive).
 
 ---
 
@@ -33,7 +33,7 @@ For the theory behind these principles and the broader Agentic Development Engin
 ```
 agentic-dev-boilerplate/
 │
-├── AGENTS.md                       Project memory: the only instruction body (loaded every session, every harness)
+├── AGENTS.md                       Project memory, always-on L0: binding rules, behaviour, router (every session, every harness)
 ├── CLAUDE.md                       One-line shim (`@AGENTS.md`) so Claude Code reaches it. Generated, never holds prose
 ├── README.md                       Project overview (humans)
 ├── CONTEXT.md                      This file — Context Engineering in this repo
@@ -91,7 +91,8 @@ This is the load-bearing distinction in the repo. They look adjacent but serve o
 | `.agents/skills/`                           | Workflow instructions (what to do, step by step)                    | Auto-triggered on intent by every harness                     |
 | `.agents/` (rest)                           | Variable resolution + Jira manifest + hook emitter                  | Read by linters, skills and the harness adapters at runtime   |
 | `docs/`                                     | Learning material for humans                                        | When humans need to learn                                     |
-| `AGENTS.md`                                 | Operational rules + project state                                   | Every session, automatically, on every supported harness      |
+| `AGENTS.md`                                 | Always-on core of the operational rules + the router                | Every session, automatically, on every supported harness      |
+| `.agents/instructions/`                     | One file per instruction section (git, PBI, tools, variables, ...)  | On demand, when the router or a hook `ROUTE:` line names it   |
 
 ### 2.1 Host harnesses: one source, three consumers
 
@@ -102,18 +103,19 @@ The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is 
 | Surface          | Claude Code                                     | OpenCode                                    | Codex CLI + Desktop                      |
 | ---------------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
 | **Instructions** | `CLAUDE.md` → `@AGENTS.md` **[generated shim]** | `AGENTS.md` (native)                        | `AGENTS.md` (native)                     |
+| **Instruction sections** | `.agents/instructions/` (on demand, via the L0 router) | `.agents/instructions/` (on demand)   | `.agents/instructions/` (on demand)      |
 | **Skills**       | `.claude/skills` **[generated alias]**          | `.agents/skills/` (native)                  | `.agents/skills/` (native)               |
 | **Commands**     | none: `/<skill> <mode>` (the skill slash)       | none: skill + mode in prose                 | none: skill + mode in prose              |
 | **Hook**         | `.claude/settings.json` → `UserPromptSubmit`    | `.opencode/plugins/personality-reinject.js` | `.codex/hooks.json` → `UserPromptSubmit` |
 | **MCP**          | `.mcp.json`                                     | `opencode.jsonc`                            | `.codex/config.toml`                     |
 
-**Instructions.** `AGENTS.md` is the only instruction body. OpenCode and Codex load it natively. Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline: a documented import rather than a symlink, so it survives a Windows checkout. Writing operational prose into `CLAUDE.md` is structural drift, and `agents:compat:check` fails on it.
+**Instructions.** The instructions load in layers, progressive disclosure ([ADR-0009](.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md)). `AGENTS.md` is the always-on core (L0): the binding sentence of each Critical Rule, the behavioural layer, the orchestration core, the LOAD PROTOCOL and a fixed router table. Each topic lives in one file under `.agents/instructions/` (L1), read on demand when the router or a hook `ROUTE:` line names it; a rule only this project has goes in `.agents/instructions/project.md`. L0 also imports `package.json` and `.agents/project.yaml` for Claude Code (bare `@` tokens in their router rows); OpenCode and Codex follow the rows' reinforced instruction to read them. OpenCode and Codex load `AGENTS.md` natively. Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline: a documented import rather than a symlink, so it survives a Windows checkout. Writing operational prose into `CLAUDE.md` is structural drift, and `agents:compat:check` fails on it.
 
 **Skills.** Every repo skill lives committed under `.agents/skills/`, and project-level community skills install into the same store. OpenCode and Codex discover that directory natively. Claude Code reaches the same tree through `.claude/skills`, a POSIX symlink (Windows junction) that is **generated and gitignored**: never committed, never hand-edited.
 
 **Commands.** None ship ([ADR-0006](.context/ADR/ADR-0006-skill-plus-mode-invocation.md)): a skill is invoked by its own name plus a mode on every harness (`/project-context data` on Claude Code, in prose on OpenCode and Codex). A project may keep its own command files under `.claude/commands/` or `.opencode/commands/`; one named like a skill hides the skill's instructions, so the compatibility check fails on it and `bun run agents:compat` moves it to `.backups/shadowing-commands/`.
 
-**Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once. Claude Code and Codex run it as a `UserPromptSubmit` command hook (the Codex adapter ships a POSIX and a PowerShell command); OpenCode imports the same lines from a thin plugin. The contract is enforced by `cli/lib/agent-compatibility-contracts.ts`: no absolute personal paths, no duplicated hook file.
+**Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once, and emits one `ROUTE: read <file>` line per instruction file the prompt needs and the session has not been routed to yet (classified with the L0 router and each section's `triggers:`). Claude Code and Codex run it as a `UserPromptSubmit` command hook (the Codex adapter ships a POSIX and a PowerShell command) and on `SessionStart` with the `compact` matcher to re-arm the routes; OpenCode imports the same lines from a thin plugin. The contract is enforced by `cli/lib/agent-compatibility-contracts.ts`: no absolute personal paths, no duplicated hook file.
 
 **MCP.** The canonical server set is whatever `.mcp.json` declares (local servers only; web search runs at harness level); every server there must exist in the other two configs. Parity is checked semantically: each native format (JSON / JSONC / TOML) is normalized into a common shape and compared on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The four boilerplate-known ids additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only. Codex cannot expand `${VAR}` inside `args`, so `.codex/config.toml` passes `supabase` env-only auth.
 
@@ -138,7 +140,7 @@ These files have stable names and locations. Any skill, command, or doc can refe
 
 | File                                         | Purpose                                                                                                                                                     |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AGENTS.md`                                  | Project memory, loaded every session on every harness (the only instruction body)                                                                           |
+| `AGENTS.md`                                  | Project memory, always-on L0: loaded every session on every harness; its router names the section to read under `.agents/instructions/`                    |
 | `CLAUDE.md`                                  | One-line shim (`@AGENTS.md`) so Claude Code reaches `AGENTS.md`. Never holds prose of its own                                                               |
 | `CONTEXT.md`                                 | This file — Context Engineering canonical map                                                                                                               |
 | `README.md`                                  | Project overview for humans                                                                                                                                 |
@@ -264,7 +266,7 @@ The agent should load only what the current step needs. Use this table to decide
 | **Plan a story**      | Story `context.md` + data map (`business-data-context`) | `PRD/*`, `SRS/*`, relevant skill                                           |
 | **Write a unit test** | `/unit-testing` skill                                   | Existing tests in repo                                                     |
 | **Understand system** | data map (`business-data-context`) + `PRD/*`            | `SRS/*`, `docs/architectures/`                                             |
-| **Use an MCP tool**   | `AGENTS.md` § Tool Resolution                           | Specific MCP doc in `docs/setup/`                                          |
+| **Use an MCP tool**   | `.agents/instructions/30-tool-resolution.md`            | Specific MCP doc in `docs/setup/`                                          |
 | **Define project**    | `/project-foundation`                                   | `/design-system`, `/project-bootstrap`                                     |
 | **Code review**       | `/sprint-development` (Stage 3) + PR diff               | `compliance-matrix.md` if exists                                           |
 
@@ -337,7 +339,7 @@ The main conversation is a **command center**, not an executor. Sub-agents do th
 
 ### One source, three harnesses
 
-Instructions and skills exist exactly once (`AGENTS.md`, `.agents/skills/`); Claude Code, OpenCode and Codex each reach them through a generated shim, alias or native discovery, and only the surfaces where hosts genuinely differ (MCP format, hook API, slash-command existence) carry a thin adapter. The alternative, one copy per harness, was tried implicitly (the repo was Claude-only with `.claude/` as the source) and rejected because every duplicated instruction drifts. Rationale, alternatives and the migration path for older projects: [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md); wiring: §2.1 above.
+Instructions and skills exist exactly once (`AGENTS.md` with its sections under `.agents/instructions/`, and `.agents/skills/`); Claude Code, OpenCode and Codex each reach them through a generated shim, alias or native discovery, and only the surfaces where hosts genuinely differ (MCP format, hook API, slash-command existence) carry a thin adapter. The alternative, one copy per harness, was tried implicitly (the repo was Claude-only with `.claude/` as the source) and rejected because every duplicated instruction drifts. Rationale, alternatives and the migration path for older projects: [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md); wiring: §2.1 above.
 
 ### One generator per file under `.context/`
 
@@ -349,7 +351,7 @@ Every file under `.context/` is owned by either a manual editor, a script, or a 
 
 ## 7. Operational Rules (DO's and DON'Ts)
 
-Curated, repo-specific. The full list of generic rules lives in `AGENTS.md` — this section is the short list of things that go wrong in practice.
+Curated, repo-specific. The full list of generic rules lives in `AGENTS.md` (each rule's binding sentence) and `.agents/instructions/01-critical-rules.md` (full text) — this section is the short list of things that go wrong in practice.
 
 ### DO
 
@@ -383,9 +385,10 @@ Use this table to decide what to re-generate after what kind of change.
 | Change                                    | Update                                                                                                                           | How                                                                                                                     |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Project identity (name, key, URLs)        | `.agents/project.yaml`, then `AGENTS.md`                                                                                         | Edit YAML; docs follow-through for any doc that quotes it                                                               |
-| New MCP added/removed                     | `AGENTS.md` § MCPs, `.mcp.json` + `opencode.jsonc` + `.codex/config.toml` (all three, parity-checked)                            | Edit manually; `bun run agents:compat:check`; docs follow-through                                                       |
+| New MCP added/removed                     | `.agents/instructions/20-skills-and-mcps.md` § MCPs, `.mcp.json` + `opencode.jsonc` + `.codex/config.toml` (all three, parity-checked)                            | Edit manually; `bun run agents:compat:check`; docs follow-through                                                       |
 | New skill added/removed                   | `.agents/skills/REGISTRY.md`                                                                                                     | `bun run skills:registry` (OpenCode and Codex read the store directly; Claude Code sees it through the generated alias) |
 | Hook contract text changes                | `.agents/hooks/personality-reinject.mjs`                                                                                         | Edit the emitter; `bun run agents:compat:check`                                                                         |
+| An instruction section changes            | its file under `.agents/instructions/` (a project-only rule: `project.md`); a Critical Rule also keeps its verbatim sentence in `AGENTS.md` | Edit the section, never paste it into `AGENTS.md`; `bun run instructions:check`                                        |
 | Stack/conventions evolve                  | `.agents/skills/<name>/references/`                                                                                              | Edit skill references directly                                                                                          |
 | Domain model pivots                       | the data map inside `business-data-context`                                                                                      | `/project-context data`                                                                                                 |
 | Feature surface changes                   | the feature map inside `business-feature-context`                                                                                | `/project-context features`                                                                                             |
@@ -403,7 +406,8 @@ Use this table to decide what to re-generate after what kind of change.
 | File                                                                                         | What you get there                                                                            |
 | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `README.md`                                                                                  | Project overview for humans (start here for visitors)                                         |
-| `AGENTS.md`                                                                                  | Operational context loaded each session, on every supported harness (`CLAUDE.md` is its shim) |
+| `AGENTS.md`                                                                                  | Always-on core loaded each session, on every supported harness (`CLAUDE.md` is its shim)      |
+| `.agents/instructions/README.md`                                                             | How the instruction sections load on demand (progressive disclosure) and how to edit them    |
 | `.context/ADR/ADR-0002-multi-harness-single-source.md`                                       | Why instructions and skills exist once and how each harness reaches them                      |
 | `docs/agentic-development-engineering.md`                                                    | Deep dive on the Agentic Development Engineering philosophy                                   |
 | `docs/onboarding.html`                                                                       | Start-here page for new contributors (served by `bun run onboarding`, published on the docs hub) |

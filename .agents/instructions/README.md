@@ -13,8 +13,9 @@ L0 keeps what must bind on every turn: the binding sentence of each Critical Rul
 ## How a section is reached
 
 1. The router in `AGENTS.md` (between `<!-- router:start -->` and `<!-- router:end -->`) maps request kinds to files in this folder.
-2. Each section's frontmatter declares `triggers:` (case-insensitive regexes) and `paths:` (repo prefixes); the prompt hook classifies each prompt with them and the router, so the table the model reads is the table the classifier uses.
+2. Each section's frontmatter declares `triggers:` (case-insensitive regexes) and `paths:` (repo prefixes); the prompt hook (`.agents/hooks/personality-reinject.mjs`) classifies each prompt with them and the router, so the table the model reads is the table the classifier uses. A row fires on its first Load target (its anchor) and routes every target in it. The hook emits one `ROUTE: read <file> (<id>)` line per file this session has not been routed to yet (a per-session state file dedupes, so a prompt that needs nothing new adds nothing), and a `SessionStart` with source `compact` re-arms the routes. OpenCode 1 routes from `chat.message`; OpenCode 2 has no per-message hook with the prompt text and relies on the router alone.
 3. The load protocol in `AGENTS.md` makes a routed read binding, and "unsure → read" the default.
+4. Two router rows also name data files as Claude Code imports, `@package.json` and `@.agents/project.yaml`, written as plain text so Claude Code loads them at launch; OpenCode and Codex do not expand imports and follow the rows' reinforced instruction instead. No other bare `@` token may appear in `AGENTS.md`.
 
 ## Frontmatter
 

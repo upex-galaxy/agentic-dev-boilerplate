@@ -273,7 +273,11 @@
       },
       {
         "path": "AGENTS.md",
-        "what": "Already committed. The ONE instruction body every harness reads (OpenCode and Codex natively). Edit this file, never CLAUDE.md."
+        "what": "Already committed. The always-on core of the instructions every harness reads (OpenCode and Codex natively): binding rules, behaviour, a router to the sections. Edit this file, never CLAUDE.md."
+      },
+      {
+        "path": ".agents/instructions/",
+        "what": "Already committed. One instruction section per topic, read on demand when the AGENTS.md router or a hook ROUTE: line names it; project.md holds the project's own rules."
       },
       {
         "path": "CLAUDE.md",
