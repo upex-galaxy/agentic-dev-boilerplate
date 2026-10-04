@@ -14,8 +14,10 @@
  *    never left as the maintainer's filled copy, and every collision is listed
  *    under `updater.protected_paths` so no later `bun run up` overwrites it.
  *  - Instructions: an app that carries its own `AGENTS.md` and/or `CLAUDE.md`
- *    gets ONE proposal (upstream `AGENTS.md` with the app's text verbatim under
- *    a top `## 0.` block, `CLAUDE.md` as the `@AGENTS.md` shim, originals in
+ *    gets its text, verbatim, in a project-local `<app>-context` skill
+ *    (`./adopt-app-context.ts`) plus a pointer in `project.md`, and ONE
+ *    proposal for the always-on file (upstream `AGENTS.md` with one router
+ *    row to that skill, `CLAUDE.md` as the `@AGENTS.md` shim, originals in
  *    the run's backup), applied only on an explicit yes. Otherwise the
  *    composed file is saved for review and the row blocks.
  *  - `.template/installer.lock.json` records `adopted: true`, which
@@ -37,6 +39,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
+import { appContextSlug, appIdentity, buildAppContextSkill, composeAdoptedL0, withAppContextPointer } from './adopt-app-context.ts';
 import { hiddenPaths } from './adopt-gitignore.ts';
 import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
@@ -45,6 +48,7 @@ import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
 import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
 import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
+import { deliverProjectInstructionsStub, PROJECT_INSTRUCTIONS_FILE } from './updater-instructions.ts';
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 import { CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook } from './updater-settings.ts';
 
@@ -252,33 +256,9 @@ export function planAdoptInstructions(root: string, upstreamAgents: string | nul
 }
 
 /**
- * Upstream `AGENTS.md` with the app's text, verbatim, in a top `## 0.` block
- * placed before the first numbered section (`## 1.`).
- */
-export function composeAdoptedInstructions(upstreamAgents: string, sources: readonly AdoptInstructionSource[], archiveRel: string | null): string {
-  const block: string[] = [
-    ADOPT_INSTRUCTIONS_HEADING,
-    '',
-    `> Preserved verbatim by \`bun run up --adopt\` from the instruction file(s) this application carried before adoption${archiveRel ? ` (originals archived in \`${archiveRel}/\`)` : ''}. The numbered sections after this block are the boilerplate's. Where the two disagree, decide which rule wins and say so here.`,
-    '',
-  ];
-  for (const source of sources) {
-    block.push(`### From \`${source.file}\``, '', source.text.replace(/\s+$/, ''), '');
-  }
-  block.push('---', '');
-
-  const lines = upstreamAgents.split('\n');
-  let at = lines.findIndex(l => /^## 1[.\s]/.test(l));
-  if (at === -1) {
-    const h1 = lines.findIndex(l => l.startsWith('# '));
-    at = h1 === -1 ? 0 : h1 + 1;
-    if (at > 0) { block.unshift(''); }
-  }
-  return [...lines.slice(0, at), ...block, ...lines.slice(at)].join('\n');
-}
-
-/**
- * `text` with the app's preserved instruction block blanked line for line
+ * LEGACY LAYOUT: an app adopted before the `<app>-context` skill carries its
+ * text in a `## 0.` block of `AGENTS.md`, and keeps it until the team moves it.
+ * `text` with that preserved block blanked line for line
  * (line numbers kept): from `ADOPT_INSTRUCTIONS_HEADING` to the boilerplate's
  * own section 1, the LAST `## 1` heading in the file (the app's text comes
  * first and may carry its own). That text is the app's, verbatim by contract
@@ -485,31 +465,46 @@ export interface AdoptRowsInput {
 
 export interface AdoptInstructionsOutcome {
   kind: AdoptInstructionsPlan['kind']
-  /** compose only: true = written, false = waiting for approval. */
+  /** compose only: true = `AGENTS.md` / `CLAUDE.md` written, false = waiting for approval. */
   applied: boolean
   files: string[]
   /** compose: where the originals were archived (applied) or the composed file was saved (pending). */
   where: string | null
+  /** compose: the `<app>-context` skill folder holding the app's text (on --dry-run: the one it would be). */
+  skill?: string | null
+  /** compose: that folder already existed with other content, so nothing was written to it. */
+  skillConflict?: boolean
 }
 
 export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[] {
   const rows: Omit<ParityFinding, 'id'>[] = [];
 
   const ins = input.instructions;
-  if (ins.kind === 'compose') {
+  if (ins.kind === 'compose' && ins.skillConflict === true) {
+    rows.push({
+      surface: 'instructions',
+      path: ins.skill ?? AGENTS_FILE,
+      evidence: `the app's instructions (${ins.files.map(f => `\`${f}\``).join(' and ')}) were NOT moved: ${ins.skill ?? 'the <app>-context folder'} already exists with other content, and --adopt never overwrites an app file`,
+      suggested: 'decide',
+      blocking: true,
+      note: `Rename or merge the existing folder, then copy the app text verbatim into \`${ins.skill ?? '.agents/skills/<app>-context'}/references/app-instructions.md\`, add its router row to ${AGENTS_FILE} and write ${CLAUDE_FILE} as \`@AGENTS.md\`.`,
+    });
+  }
+  else if (ins.kind === 'compose') {
     const files = ins.files.map(f => `\`${f}\``).join(' and ');
+    const home = ins.skill ? `the project-local skill ${ins.skill}` : 'an <app>-context skill';
     rows.push(ins.applied
       ? {
           surface: 'instructions',
           path: AGENTS_FILE,
-          evidence: `the app's instructions (${files}) preserved verbatim under "${ADOPT_INSTRUCTIONS_HEADING}"; originals in ${ins.where ?? 'the run backup'}; ${CLAUDE_FILE} is now the @AGENTS.md shim`,
+          evidence: `the app's instructions (${files}) preserved verbatim in ${home} (one ${AGENTS_FILE} router row, a pointer in ${PROJECT_INSTRUCTIONS_FILE}); originals in ${ins.where ?? 'the run backup'}; ${CLAUDE_FILE} is now the @AGENTS.md shim`,
           suggested: 'keep project',
           blocking: false,
         }
       : {
           surface: 'instructions',
           path: AGENTS_FILE,
-          evidence: `the app's instructions (${files}) are not merged yet: the proposal (upstream ${AGENTS_FILE} with the app text verbatim under "${ADOPT_INSTRUCTIONS_HEADING}", ${CLAUDE_FILE} as the @AGENTS.md shim) needs an explicit yes; ${ins.where ? `saved for review in ${ins.where}` : 'not saved (--dry-run)'}`,
+          evidence: `the app's instructions (${files}) ${ins.where ? `are in ${home}, but` : `would move to ${home}, and`} ${AGENTS_FILE} is not replaced yet: the proposal (upstream ${AGENTS_FILE} with one router row to that skill, ${CLAUDE_FILE} as the @AGENTS.md shim) needs an explicit yes; ${ins.where ? `saved for review in ${ins.where}` : 'not saved (--dry-run)'}`,
           suggested: 'decide',
           blocking: true,
           note: `Review the composed file, copy it over ${AGENTS_FILE}, write ${CLAUDE_FILE} as the single line \`@AGENTS.md\`, then run \`bun run agents:compat\`. --adopt is first-run only, so this step is by hand.`,
@@ -747,24 +742,57 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   }
   else if (plan.kind === 'compose' && upstreamAgents !== null) {
     instructions.files = plan.sources.map(s => s.file);
-    const ask = `La app tiene instrucciones propias (${instructions.files.join(' y ')}). ¿Componer ${AGENTS_FILE} = upstream + ese texto literal bajo "${ADOPT_INSTRUCTIONS_HEADING}", con ${CLAUDE_FILE} como shim y los originales en el backup?`;
-    const approved = !dryRun && !input.nonInteractive && await input.confirm(ask);
-    if (approved) {
-      const backupDir = input.backupDir ?? createBackupDir(root);
-      for (const source of plan.sources) { fs.copyFileSync(path.join(root, source.file), path.join(backupDir, source.file)); }
-      const archiveRel = relPosix(root, backupDir);
-      fs.writeFileSync(path.join(root, AGENTS_FILE), composeAdoptedInstructions(upstreamAgents, plan.sources, archiveRel));
-      fs.writeFileSync(path.join(root, CLAUDE_FILE), CLAUDE_INSTRUCTIONS_SHIM);
-      instructions.applied = true;
-      instructions.where = archiveRel;
-      input.step(`${AGENTS_FILE} compuesto; originales en ${archiveRel}/ (restaurables con --rollback).`);
+    // The app's text leaves the always-on file: it moves, verbatim, to a
+    // project-local `<app>-context` skill (`./adopt-app-context.ts`).
+    const app = appIdentity(root);
+    const slug = appContextSlug(app.name, upstreamDir);
+    const skillRel = `.agents/skills/${slug}`;
+    instructions.skill = skillRel;
+    const skillDir = path.join(root, skillRel);
+    const fresh = buildAppContextSkill(slug, app, plan.sources, null);
+    // A rerun finds its own folder (same text); any other folder is the app's and is never overwritten.
+    const existing = readOrNull(path.join(skillDir, 'references', 'app-instructions.md'));
+    const preserved = (text: string): string => normalizeWhitespace(text.slice(text.indexOf('\n## From ')));
+    instructions.skillConflict = fs.existsSync(skillDir) && (existing === null || preserved(existing) !== preserved(fresh.reference));
+    if (instructions.skillConflict) {
+      input.warn(`${skillRel} ya existe con otro contenido: las instrucciones de la app no se movieron (fila bloqueante).`);
     }
-    else if (!dryRun) {
-      const out = path.join(root, ADOPT_INSTRUCTIONS_PROMPT);
-      fs.mkdirSync(path.dirname(out), { recursive: true });
-      fs.writeFileSync(out, composeAdoptedInstructions(upstreamAgents, plan.sources, null));
-      instructions.where = ADOPT_INSTRUCTIONS_PROMPT.replace(/\\/g, '/');
-      input.warn(`Instrucciones de la app sin componer: propuesta guardada en ${instructions.where} para revisión.`);
+    else {
+      const ask = `La app tiene instrucciones propias (${instructions.files.join(' y ')}). Su texto pasa literal al skill local ${slug}, que no se carga en cada sesión. ¿Reemplazar ${AGENTS_FILE} por el de upstream con una fila de router hacia ese skill, con ${CLAUDE_FILE} como shim y los originales en el backup?`;
+      const approved = !dryRun && !input.nonInteractive && await input.confirm(ask);
+      let archiveRel: string | null = null;
+      if (approved) {
+        const backupDir = input.backupDir ?? createBackupDir(root);
+        for (const source of plan.sources) { fs.copyFileSync(path.join(root, source.file), path.join(backupDir, source.file)); }
+        archiveRel = relPosix(root, backupDir);
+      }
+      const composed = composeAdoptedL0(upstreamAgents, slug, app.name);
+      if (!dryRun) {
+        const skill = buildAppContextSkill(slug, app, plan.sources, archiveRel);
+        fs.mkdirSync(path.join(skillDir, 'references'), { recursive: true });
+        fs.writeFileSync(path.join(skillDir, 'SKILL.md'), skill.skillMd);
+        fs.writeFileSync(path.join(skillDir, 'references', 'app-instructions.md'), skill.reference);
+        // The overlay is delivered here when absent (the later stub hook then finds it), so the pointer has a home.
+        deliverProjectInstructionsStub(root, upstreamDir);
+        const projectMd = path.join(root, PROJECT_INSTRUCTIONS_FILE);
+        const overlay = readOrNull(projectMd);
+        if (overlay !== null) { fs.writeFileSync(projectMd, withAppContextPointer(overlay, slug, app.name)); }
+      }
+      input.step(`${dryRun ? '[dry-run] Se movería' : 'Movido'} el texto de la app (${instructions.files.join(' y ')}) literal a ${skillRel}/references/app-instructions.md, con un puntero en ${PROJECT_INSTRUCTIONS_FILE}.`);
+      if (approved) {
+        fs.writeFileSync(path.join(root, AGENTS_FILE), composed);
+        fs.writeFileSync(path.join(root, CLAUDE_FILE), CLAUDE_INSTRUCTIONS_SHIM);
+        instructions.applied = true;
+        instructions.where = archiveRel;
+        input.step(`${AGENTS_FILE} compuesto (upstream + una fila de router a ${slug}); originales en ${archiveRel}/ (restaurables con --rollback).`);
+      }
+      else if (!dryRun) {
+        const out = path.join(root, ADOPT_INSTRUCTIONS_PROMPT);
+        fs.mkdirSync(path.dirname(out), { recursive: true });
+        fs.writeFileSync(out, composed);
+        instructions.where = ADOPT_INSTRUCTIONS_PROMPT.replace(/\\/g, '/');
+        input.warn(`${AGENTS_FILE} sin reemplazar: propuesta guardada en ${instructions.where} para revisión.`);
+      }
     }
   }
 
