@@ -843,11 +843,20 @@ const ADOPTED_BLOCK_HEADING = '## 0. Project instructions (pre-adoption)';
 /** The OpenCode 2 degradation, declared in the adapter in so many words. */
 export const OPENCODE_ROUTER_ONLY_MARKER = 'ROUTER-ONLY';
 
-function hasCompactSessionStart(settings: JsonObject, command: string, windows?: string): boolean {
+/**
+ * `SessionStart` sources after which the routed sections are gone from the
+ * context while the per-session route state still lists them: `compact`
+ * (the messages that carried them were summarized) and `clear` (`/clear`
+ * wiped the conversation). Claude Code and Codex both emit the two sources;
+ * each needs its own matcher group, because a group matches one source.
+ */
+export const REARM_SESSION_START_SOURCES = ['compact', 'clear'] as const;
+
+function hasRearmSessionStart(settings: JsonObject, source: string, command: string, windows?: string): boolean {
   const groups = settings.hooks && typeof settings.hooks === 'object' ? (settings.hooks as JsonObject).SessionStart : undefined;
   if (!Array.isArray(groups)) { return false; }
   return groups.some((group) => {
-    if (!group || typeof group !== 'object' || (group as JsonObject).matcher !== 'compact') { return false; }
+    if (!group || typeof group !== 'object' || (group as JsonObject).matcher !== source) { return false; }
     const hooks = (group as JsonObject).hooks;
     return Array.isArray(hooks) && hooks.some(hook => hook && typeof hook === 'object'
       && (hook as JsonObject).command === command
@@ -857,8 +866,8 @@ function hasCompactSessionStart(settings: JsonObject, command: string, windows?:
 
 /**
  * Binds once `AGENTS.md` carries the router markers (a repo still on the
- * single-file layout has nothing to route). Each host must re-arm the routes
- * after a compaction, the OpenCode adapter must classify in `chat.message`
+ * single-file layout has nothing to route). Each command host must re-arm the
+ * routes on every `REARM_SESSION_START_SOURCES` source, the OpenCode adapter must classify in `chat.message`
  * (OpenCode 1) and declare its OpenCode 2 degradation, and the always-on file
  * must fit the Codex project-doc budget whole.
  */
@@ -882,11 +891,15 @@ export function validateInstructionRouterHooks(root = process.cwd()): string[] {
     }
   }
 
-  if (!hasCompactSessionStart(parseJson(join(resolvedRoot, '.claude', 'settings.json')), CLAUDE_HOOK_COMMAND)) {
-    errors.push(`claude must re-arm the routes after compaction: a SessionStart group with matcher "compact" running ${CLAUDE_HOOK_COMMAND}`);
-  }
-  if (!hasCompactSessionStart(parseJson(join(resolvedRoot, '.codex', 'hooks.json')), CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS)) {
-    errors.push('codex must re-arm the routes after compaction: a SessionStart group with matcher "compact" running the Codex hook command (and its Windows variant).');
+  const claudeSettings = parseJson(join(resolvedRoot, '.claude', 'settings.json'));
+  const codexHooks = parseJson(join(resolvedRoot, '.codex', 'hooks.json'));
+  for (const source of REARM_SESSION_START_SOURCES) {
+    if (!hasRearmSessionStart(claudeSettings, source, CLAUDE_HOOK_COMMAND)) {
+      errors.push(`claude must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running ${CLAUDE_HOOK_COMMAND}`);
+    }
+    if (!hasRearmSessionStart(codexHooks, source, CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS)) {
+      errors.push(`codex must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running the Codex hook command (and its Windows variant).`);
+    }
   }
 
   const plugin = readFileSync(join(resolvedRoot, '.opencode', 'plugins', 'personality-reinject.js'), 'utf8');

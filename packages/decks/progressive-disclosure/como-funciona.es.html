@@ -1028,11 +1028,12 @@
                 </td>
               </tr>
               <tr>
-                <td>Re-armado tras compactar</td>
+                <td>Re-armado tras compactar o <code>/clear</code></td>
                 <td>
-                  Un <code>SessionStart</code> con <code>matcher: "compact"</code> vuelve a correr el
-                  emisor, que borra el estado y no imprime nada: lo que la compactación sacó del
-                  contexto se vuelve a rutear la próxima vez que haga falta.
+                  Un <code>SessionStart</code> con <code>matcher: "compact"</code> o
+                  <code>matcher: "clear"</code> vuelve a correr el emisor, que borra el estado y no
+                  imprime nada: lo que la compactación o el <code>/clear</code> sacó del contexto se
+                  vuelve a rutear la próxima vez que haga falta.
                 </td>
               </tr>
             </tbody>
@@ -1051,7 +1052,7 @@
                 <td>Claude Code</td>
                 <td>
                   <code>.claude/settings.json</code>: <code>UserPromptSubmit</code> ejecuta el emisor;
-                  <code>SessionStart</code> con <code>compact</code> lo re-arma.
+                  <code>SessionStart</code> con <code>compact</code> o <code>clear</code> lo re-arma.
                 </td>
               </tr>
               <tr>
@@ -1065,7 +1066,8 @@
                 <td>OpenCode 1</td>
                 <td>
                   <code>.opencode/plugins/personality-reinject.js</code> clasifica en
-                  <code>chat.message</code>, empuja la línea al system prompt y re-arma al compactar.
+                  <code>chat.message</code>, empuja la línea al system prompt y re-arma solo al compactar (no
+                  registra nada para <code>/clear</code>).
                 </td>
               </tr>
               <tr>

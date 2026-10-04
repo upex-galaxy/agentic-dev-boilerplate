@@ -798,7 +798,7 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
 
   // 2b. The agent-context hook in the app's own .claude/settings.json, when
   //     the app wires no UserPromptSubmit at all, and its SessionStart
-  //     `compact` re-arm when the app has no compact group (`mergeAdoptPromptHook`).
+  //     `compact` / `clear` re-arm groups the app lacks (`mergeAdoptPromptHook`).
   const promptHook = mergeAdoptPromptHook(root, upstreamDir);
   if (promptHook.merged !== null && !dryRun) {
     const backupDir = input.backupDir ?? createBackupDir(root);
@@ -809,8 +809,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   if (promptHook.added) {
     input.step(`${dryRun ? '[dry-run] se añadiría' : 'Añadido'} el hook UserPromptSubmit del framework a ${CLAUDE_SETTINGS_FILE} (la app no tenía ninguno); sus otros hooks y claves no cambian.`);
   }
-  if (promptHook.compactAdded) {
-    input.step(`${dryRun ? '[dry-run] se añadiría' : 'Añadido'} el grupo SessionStart "compact" del framework a ${CLAUDE_SETTINGS_FILE} (re-arma las rutas tras compactar; la app no tenía ninguno); sus grupos SessionStart no cambian.`);
+  for (const source of promptHook.rearmAdded) {
+    input.step(`${dryRun ? '[dry-run] se añadiría' : 'Añadido'} el grupo SessionStart "${source}" del framework a ${CLAUDE_SETTINGS_FILE} (re-arma las rutas tras ${source === 'clear' ? '/clear' : 'compactar'}; la app no tenía ninguno); sus grupos SessionStart no cambian.`);
   }
 
   // 3. Agentic files no synced component creates (the MCP registries).
