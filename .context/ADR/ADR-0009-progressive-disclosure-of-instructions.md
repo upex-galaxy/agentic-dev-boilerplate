@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-04
-- **Deciders:** Boilerplate owner (upex-galaxy): owner decisions OD1-OD7 on the context-tiers spike (2026-10-04, every recommended option, with binding notes on OD6 and OD7); conductor rulings of the dev-sync fleet on the shared design (ids, frontmatter, Git Strategy split, two-level budget). Implemented by D-U1 (#95, section split + `instructions:check`) and D-U2 (#96, hook router)
+- **Deciders:** Boilerplate owner (upex-galaxy): owner decisions OD1-OD7 on the context-tiers spike (2026-10-04, every recommended option, with binding notes on OD6 and OD7); conductor rulings of the dev-sync fleet on the shared design (ids, frontmatter, Git Strategy split, two-level budget). Implemented by D-U1 (#95, section split + `instructions:check`), D-U2 (#96, hook router) and D-U3 (#97, the updater's `instructions` component)
 - **Tags:** instructions, multi-harness, hooks, cross-cutting-invariant
 - **Supersedes:** —
 - **Superseded by:** —
@@ -79,7 +79,7 @@ Not yet measured: model compliance with `ROUTE:` (share of routed sessions that 
 
 - **Positive:** every host loads a fraction of the old always-on text, and Codex now sees all of it. Recall no longer depends on the model remembering to consult a table: on Claude Code, Codex and OpenCode 1 a deterministic classifier names the file. Doctrine outside L0 can ship as upstream-owned files instead of hand-merged parity rows (OD4), and the rows of the router stay fixed by design.
 - **Negative / trade-offs:** recall is still soft on OpenCode 2, which exposes no per-message hook with the prompt text: it relies on the router and the LOAD PROTOCOL alone (declared degradation). A routed read costs a tool call the old file did not. The two imports make Claude Code's session start heavier than the other hosts'. A Critical Rule now lives in two places that must agree, which the lint enforces.
-- **Neutral / follow-ups:** the updater component that delivers the sections downstream and seeds `project.md` from a generic stub is its own change; so is moving an adopted app's instruction block into an `<app>-context` skill (OD5). Triggers are tuned in section frontmatter, never in L0, and every miss is added to the labelled set.
+- **Neutral / follow-ups:** `bun run up` syncs the sections as the `instructions` component (`cli/lib/updater-instructions.ts`) and never touches `project.md`; a project that has none receives it once from the generic `.agents/instructions/project.md.template`, behind a leak gate that refuses the boilerplate's own text, and the greenfield scaffolder seeds it the same way. Moving an adopted app's instruction block into an `<app>-context` skill (OD5) is its own change. Triggers are tuned in section frontmatter, never in L0, and every miss is added to the labelled set.
 
 ## Alternatives considered
 
@@ -95,6 +95,7 @@ Not yet measured: model compliance with `ROUTE:` (share of routed sessions that 
 - `AGENTS.md` (L0: LOAD PROTOCOL, router, rule excerpts) and `.agents/instructions/README.md` (layers, frontmatter, editing)
 - `.agents/instructions/10-harnesses.md` (INSTRUCTIONS and HOOK paragraphs)
 - `scripts/lint-instructions.ts`, `scripts/lib/instructions.ts` (the gate and the shared parsers)
+- `cli/lib/updater-instructions.ts` and `.agents/instructions/project.md.template` (delivery downstream)
 - `.agents/hooks/personality-reinject.mjs` (`routeLines`, `IMPORT_ROW_TRIGGERS`), `.claude/settings.json` and `.codex/hooks.json` (`SessionStart` matcher `compact`), `.opencode/plugins/personality-reinject.js`
 - Human explanation: `packages/decks/progressive-disclosure/como-funciona.es.html`
 - ADR-0002 (one instruction source for three harnesses; this ADR keeps its shim contract and changes only how much of the source loads always)
