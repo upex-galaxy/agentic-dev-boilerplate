@@ -69,7 +69,7 @@ describe('the shipped stub', () => {
     expect(findStubLeaks(own, null).length).toBeGreaterThan(0);
   });
 
-  test('carries the overlay frontmatter instructions:check expects of project.md (id, title, load_when, no triggers)', () => {
+  test('carries the overlay frontmatter instructions:check expects of project.md (id, title, load_when, empty triggers and paths)', () => {
     const stub = readRepo(PROJECT_INSTRUCTIONS_TEMPLATE);
     const match = /^---\n([\s\S]*?)\n---\n/.exec(stub);
     expect(match).not.toBeNull();
@@ -77,7 +77,8 @@ describe('the shipped stub', () => {
     expect(meta.id).toBe('project');
     expect(typeof meta.title).toBe('string');
     expect(typeof meta.load_when).toBe('string');
-    expect('triggers' in meta).toBe(false);
+    expect(meta.triggers).toEqual([]);
+    expect(meta.paths).toEqual([]);
   });
 
   test('is not a `.md` file, so no section reader or instructions:check ever treats it as a section', () => {

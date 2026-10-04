@@ -2,6 +2,8 @@
 id: project
 title: "Project instructions"
 load_when: "anything specific to this project: its own rules, conventions, exceptions and its reading of shared doctrine"
+triggers: []
+paths: []
 ---
 
 # Project instructions
