@@ -189,7 +189,7 @@ NO status table. Instead:
 
 ## After generation
 
-- Update `AGENTS.md` (never the `CLAUDE.md` shim) "Key paths" to reference `.context/dev-roadmap.md` (ticket-level sequence) alongside `.context/master-implementation-plan.md` (strategy), if not already present.
+- Key paths pointer: the shared Key paths in `.agents/instructions/15-context-map.md` already name `.context/dev-roadmap.md` (ticket-level sequence) alongside `.context/master-implementation-plan.md` (strategy). Only when this project's copy lacks it, add it to `.agents/instructions/project.md` (`## Key paths (this project)`); never write it into `AGENTS.md`, a shared section or the `CLAUDE.md` shim.
 - In UPDATE mode: show a diff summary scoped per section. Loudly flag any §3 edge or §5 gate that the regenerated graph would DROP — those are hand-authored and must be confirmed, never silently removed.
 - Report:
   - Epics in backbone: N

@@ -21,6 +21,7 @@ Close the change with this follow-through when it adds, renames or retires any o
 | Surface | What to patch | Never |
 |---|---|---|
 | `AGENTS.md` + `.agents/instructions/` | `AGENTS.md`: a router row only when a new request KIND appears; the sections: `15-context-map.md` task-map row and Key paths, `20-skills-and-mcps.md` skill router row, `10-harnesses.md` surface tables | inline a `bun run` script in a table (Rule #10); restate a count or a mutable list (Rule #17); paste section prose into `AGENTS.md` (its byte budget, `bun run instructions:check`) |
+| `.agents/instructions/project.md` | a fact true only for this project: a Key path only it has (`## Key paths (this project)`), its own exception, its reading of shared doctrine | write it into `AGENTS.md` (the boilerplate-owned always-on layer) or a shared section (`bun run up` overwrites those) |
 | `README.md`, `CONTEXT.md`, `INSTALLER.md` | the command, path or skill name the change moved, and the sentence around it | enumerate the skill set: point to `.agents/skills/REGISTRY.md` |
 | `docs/**` | the same facts; `docs/onboarding.html` is hand-maintained HTML: patch text nodes only (`<code>`, `<td>`, inline spans, a repo-file `href`), never `<head>`, `<script>`, `<style>`, the sidebar or attributes | regenerate a page |
 | `CLAUDE.md` | nothing: operational prose found there is structural drift, report it and run `bun run agents:compat` | propagate that prose anywhere |
