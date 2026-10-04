@@ -95,7 +95,7 @@ Render this trio everywhere the page tells a tester to "verify the env var" — 
 
 ### §4.0 — Which DB MCP the page documents (resolved from `stack:`)
 
-The testers' DB MCP is NOT the agent's `db` capability. The agent's server (AGENTS.md §6, `[DB_TOOL]`; on Supabase, `@supabase/mcp-server-supabase` with `SUPABASE_ACCESS_TOKEN`) authenticates with a personal access token that carries its holder's whole Supabase account. That token never reaches the page or the credentials artifact. Testers get a connection whose reach the database itself limits: a `qa_*` read-only role.
+The testers' DB MCP is NOT the agent's `db` capability. The agent's server (`.agents/instructions/30-tool-resolution.md` §6, `[DB_TOOL]`; on Supabase, `@supabase/mcp-server-supabase` with `SUPABASE_ACCESS_TOKEN`) authenticates with a personal access token that carries its holder's whole Supabase account. That token never reaches the page or the credentials artifact. Testers get a connection whose reach the database itself limits: a `qa_*` read-only role.
 
 Read `stack.database` from `.agents/project.yaml`, confirm it against the code (Phase 1), then pick:
 

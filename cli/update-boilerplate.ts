@@ -165,7 +165,7 @@ const SKILLS_CANONICAL_DIR = '.agents/skills';
 // boilerplate ships no command file (a skill is invoked by name plus mode).
 const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 
-// One opt-in template per supported host (AGENTS.md section 5.5: three hosts).
+// One opt-in template per supported host (`.agents/instructions/10-harnesses.md` section 5.5: three hosts).
 export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
 export const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
@@ -191,7 +191,7 @@ const RETIRED_ALIAS_NAMES = [
   'master-implementation-plan',
   'sync-ai-memory',
 ];
-const RETIRED_ALIAS_REASON = 'command aliases retired: invoke the skill by name plus its mode (AGENTS.md, section 5)';
+const RETIRED_ALIAS_REASON = 'command aliases retired: invoke the skill by name plus its mode (`.agents/instructions/20-skills-and-mcps.md` section 5)';
 export const RETIRED_COMMAND_WRAPPERS: DeprecatedFile[] = [
   { path: '.agents/compatibility/command-aliases.json', component: 'agent-compatibility', reason: RETIRED_ALIAS_REASON, deprecatedSince: '8.5' },
   ...['.claude/commands', '.opencode/commands'].flatMap(dir => RETIRED_ALIAS_NAMES.map(name => ({
@@ -215,7 +215,7 @@ export const RETIRED_SKILL_FILES: DeprecatedFile[] = [
 // Docs pages removed upstream. `docs` is a synced directory component, so
 // without these `--auto` would defer their `deleted-upstream` entries and hold
 // the whole component back.
-const RETIRED_HOST_REASON = 'host outside the three-host contract (AGENTS.md section 5.5)';
+const RETIRED_HOST_REASON = 'host outside the three-host contract (`.agents/instructions/10-harnesses.md` section 5.5)';
 export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
   ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
     .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.7' })),

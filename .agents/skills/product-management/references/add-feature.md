@@ -51,7 +51,7 @@ Jira numeric IDs (`customfield_NNNNN`) vary per workspace and DO NOT live in thi
 - `{{jira.weblink}}` — app/feature URL. Populate ONLY when the domain is known with certainty; when in doubt, omit.
 - `{{jira.story_points}}` — **OPT-IN ONLY**. Leave EMPTY by default. Populate only when the user explicitly requests estimation in this session. PO/BA do not estimate; the team that will build it does (Design + Dev + Test). When opted-in: Fibonacci (1, 2, 3, 5, 8); 13+ → split. See anti-pattern `I16`.
 
-**Operation → tool layer.** Every read/write against Jira is expressed as `[ISSUE_TRACKER_TOOL]` pseudo-code. The consuming skill (AI runtime) resolves the tool via the `AGENTS.md` §6 table (primary `/acli`, fallback Atlassian MCP, last resort REST). For the operation → tool-layer matrix, see `references/jira-operations.md`. For rich-text (ADF) publishing gotchas, see `references/jira-publishing-gotchas.md`.
+**Operation → tool layer.** Every read/write against Jira is expressed as `[ISSUE_TRACKER_TOOL]` pseudo-code. The consuming skill (AI runtime) resolves the tool via the `.agents/instructions/30-tool-resolution.md` §6 table (primary `/acli`, fallback Atlassian MCP, last resort REST). For the operation → tool-layer matrix, see `references/jira-operations.md`. For rich-text (ADF) publishing gotchas, see `references/jira-publishing-gotchas.md`.
 
 > **Note on `{{jira.weblink}}`.** It is optional and should only be populated when: (a) the AI knows the app domain under test with certainty (system prompt or explicit project context), or (b) the user provided the URL. When in doubt → DO NOT populate.
 
@@ -318,7 +318,7 @@ Anti-pattern `I18` requires an **active** discovery pass before any link is crea
 
 ### Step 5: Materialize the Local Story Cache (sync, do NOT hand-write)
 
-**Action:** The story already lives in Jira (Step 2 created it; Step 4 linked it). The local `.md` is a **read-only cache** — never hand-authored (`AGENTS.md` §9; `references/jira-operations.md` → "No local authoring"). Materialize it with the sync script:
+**Action:** The story already lives in Jira (Step 2 created it; Step 4 linked it). The local `.md` is a **read-only cache** — never hand-authored (`.agents/instructions/60-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"). Materialize it with the sync script:
 
 ```
 bun run jira:sync-issues get {PROJECT_KEY}-{ISSUE_NUM}
@@ -578,7 +578,7 @@ The regenerated tree reflects the live Jira backlog graph (epics → child stori
 
 ### Step 4: Local Epic Folder Name (the sync in Step 5 creates it)
 
-**Naming:** `EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{descriptive-name}/`. Never `mkdir` it: the folder is part of the `.context/PBI/` cache (`AGENTS.md` §9).
+**Naming:** `EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{descriptive-name}/`. Never `mkdir` it: the folder is part of the `.context/PBI/` cache (`.agents/instructions/60-local-context-pbi.md` §9).
 
 **Example:**
 
@@ -596,7 +596,7 @@ The sync writes:
 
 ### Step 5: Materialize the Epic Cache (sync, do NOT hand-write)
 
-**Action:** The Epic already lives in Jira (Step 2). `epic.md` is a read-only mirror — never hand-authored (`AGENTS.md` §9; `references/jira-operations.md` → "No local authoring"). Materialize it with the sync script:
+**Action:** The Epic already lives in Jira (Step 2). `epic.md` is a read-only mirror — never hand-authored (`.agents/instructions/60-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"). Materialize it with the sync script:
 
 ```
 bun run jira:sync-issues get {PROJECT_KEY}-{EPIC_NUM}
@@ -1135,7 +1135,7 @@ STORY-{PROJECT}-{NUMBER}-{descriptive-name}/
 
 ## 📚 GENERATED FILES
 
-Depending on the level, `bun run jira:sync-issues` materializes the following read-only cache (`AGENTS.md` §9: never hand-written):
+Depending on the level, `bun run jira:sync-issues` materializes the following read-only cache (`.agents/instructions/60-local-context-pbi.md` §9: never hand-written):
 
 ### Level 1 (Individual Story)
 
@@ -1190,7 +1190,7 @@ Depending on the level, `bun run jira:sync-issues` materializes the following re
 **Required:**
 
 - Existing and configured Jira project.
-- `[ISSUE_TRACKER_TOOL]` resolved and operational (primary `/acli`, fallback Atlassian MCP — see `AGENTS.md` §6).
+- `[ISSUE_TRACKER_TOOL]` resolved and operational (primary `/acli`, fallback Atlassian MCP — see `.agents/instructions/30-tool-resolution.md` §6).
 - `.agents/project.yaml`, `.agents/jira-required.yaml`, `.agents/jira-fields.json`, `.agents/jira-workflows.json` present and synced (`bun run jira:sync-fields` executed at least once).
 - `.context/PBI/epic-tree.md` up to date (to review existing epics).
 

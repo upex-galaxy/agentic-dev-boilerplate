@@ -72,7 +72,7 @@ The convention is **UPSERT, not append**: writing `pbi/UPEX-123/implementation-p
 
 1. Most artifacts represent the **current state of the work**, not its history. A re-plan after PR feedback should replace the stale plan, not coexist with it.
 2. The Engram CLI itself is upsert-by-`topic_key` (matching keys overwrite); we mirror that behavior file-side so the two stay consistent.
-3. If you need history: `.context/PBI/` is a **gitignored cache** (`AGENTS.md` §9), so `git log` on a file there shows nothing. For Jira-synced artifacts (`implementation-plan`, `epic`, …) the **Jira field's own edit history** is the record — the field is the source of truth; re-sync materializes the latest. For everything else, distinct engram topic keys per round (`review-r1`, `review-r2`, …) preserve prior states.
+3. If you need history: `.context/PBI/` is a **gitignored cache** (`.agents/instructions/60-local-context-pbi.md` §9), so `git log` on a file there shows nothing. For Jira-synced artifacts (`implementation-plan`, `epic`, …) the **Jira field's own edit history** is the record — the field is the source of truth; re-sync materializes the latest. For everything else, distinct engram topic keys per round (`review-r1`, `review-r2`, …) preserve prior states.
 
 When **not** to UPSERT — start a new artifact name instead:
 
@@ -128,7 +128,7 @@ The PBI tree is rooted at the epic (Module = Epic, 1:1). Epic-level files live i
 
 Notes:
 
-- The file is **the** local read surface; Engram is a mirror, not a primary store. Tier discipline applies per `AGENTS.md` §9: the whole PBI tree is gitignored, so a `[SYNC]` file recovers via re-sync (its truth is the Jira field), while a non-synced artifact written here (`spec.md`, `edge-cases.md`, …) is `[LOCAL]` — machine-local and disposable; nothing downstream may depend on it existing. Content that must survive the machine goes to a Jira field/comment; durable session state goes to `.session/` (where `sprint-development` keeps `review.md`, `compliance-matrix.md` and `bug-fix.md`).
+- The file is **the** local read surface; Engram is a mirror, not a primary store. Tier discipline applies per `.agents/instructions/60-local-context-pbi.md` §9: the whole PBI tree is gitignored, so a `[SYNC]` file recovers via re-sync (its truth is the Jira field), while a non-synced artifact written here (`spec.md`, `edge-cases.md`, …) is `[LOCAL]` — machine-local and disposable; nothing downstream may depend on it existing. Content that must survive the machine goes to a Jira field/comment; durable session state goes to `.session/` (where `sprint-development` keeps `review.md`, `compliance-matrix.md` and `bug-fix.md`).
 - Files are kebab-case-named; the trailing `.md` is conventional.
 - Existing `.context/PBI/` projects already follow this layout (`spec.md`, `implementation-plan.md`, etc.); the only change is the topic-key tag we associate with each file.
 - `implementation-plan.md` and `feature-implementation-plan.md` are **Jira-synced caches**: the plan is authored, written to the Jira `spec_implementation_plan` / `feature_implementation_plan` field (fallback: a comment), then materialized read-only by `bun run jira:sync-issues get <KEY>`. Treat the materialized file as read-only; edit the Jira field, then re-sync.

@@ -138,7 +138,7 @@ Once branches are materialized and decisions captured, persist in this order:
    Per-strategy field values: `references/branching-strategies.md` → "git_strategy field rules (per strategy)".
 2. **Set up local tracking** for any newly-ensured branch (`git branch --set-upstream-to=origin/<branch> <branch>` or `git checkout -b <branch> origin/<branch>`), so later operations don't re-detect.
 
-AGENTS.md's `## Git Strategy` section is a shipped pointer to this block — NEVER write strategy policy there. The `git_strategy:` block is the source of truth; its `description:` field is the human summary. A later Strategy Setup re-run re-reads the block and only fills the `git_strategy.decisions.*` fields still at `n/a`.
+The `## Git Strategy` section of `.agents/instructions/80-git.md` is a shipped pointer to this block — NEVER write strategy policy there. The `git_strategy:` block is the source of truth; its `description:` field is the human summary. A later Strategy Setup re-run re-reads the block and only fills the `git_strategy.decisions.*` fields still at `n/a`.
 
 ---
 
@@ -164,7 +164,7 @@ Three rules for this step:
 
 1. **Show the dry run before proposing the write.** The payload is the proposal; a described change is not a reviewed one.
 2. **A refusal to loosen is a result, not an obstacle.** `apply` blocks any change that removes a guard, lowers the approval bar, turns off code-owner review, or widens the allowed merge methods. If `--allow-loosening` is needed, say exactly which guard is being given up and get an explicit yes for that specific thing.
-3. **Drift has three resolutions, and the host is only one of them.** The yaml may be the wrong side. Or the divergence may be intended, in which case it is recorded in `git_strategy.policy.accepted_divergences` (`.agents/project.yaml`, one entry per `verify` finding field, with a reason; `references/ruleset-parity.md` §2b), so `verify` reports it as ACCEPTED and a later session stops re-raising it. The project's own `AGENTS.md` → `## Git Strategy` may add prose context; it is never where the acceptance lives.
+3. **Drift has three resolutions, and the host is only one of them.** The yaml may be the wrong side. Or the divergence may be intended, in which case it is recorded in `git_strategy.policy.accepted_divergences` (`.agents/project.yaml`, one entry per `verify` finding field, with a reason; `references/ruleset-parity.md` §2b), so `verify` reports it as ACCEPTED and a later session stops re-raising it. The project's own `.agents/instructions/project.md` → `## Git Strategy (this repository)` may add prose context; it is never where the acceptance lives.
 
 Mapping table, the derived fields, and what the tool deliberately does not manage (`bypass_actors`, `CODEOWNERS`, org-level rulesets): `references/ruleset-parity.md`.
 

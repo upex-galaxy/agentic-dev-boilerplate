@@ -125,7 +125,7 @@ Usa el alias de import que declare tu `tsconfig.json` (`paths`); `@/` es el de N
 
 ### Opcion B: Explorar la API con la AI
 
-La AI explora una API con `curl` más los tipos generados (`[API_TOOL]` en `AGENTS.md` §6); no necesita un MCP de OpenAPI. Pásale el endpoint y el ambiente, y lee las URLs de `.agents/project.yaml` → `environments`.
+La AI explora una API con `curl` más los tipos generados (`[API_TOOL]` en `.agents/instructions/30-tool-resolution.md` §6); no necesita un MCP de OpenAPI. Pásale el endpoint y el ambiente, y lee las URLs de `.agents/project.yaml` → `environments`.
 
 ---
 

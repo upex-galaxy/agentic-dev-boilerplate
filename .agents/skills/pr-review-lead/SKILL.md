@@ -37,7 +37,7 @@ Requires `agentic-dev-core`. Loads on demand:
 
 - `agentic-dev-core/references/briefing-template.md`, `agentic-dev-core/references/dispatch-patterns.md`, `agentic-dev-core/references/orchestration-doctrine.md`: when a PR is large enough to warrant subagent fan-out (Step 2).
 - The default doctrine set for this repo, read fresh every invocation (never from memory of a prior session), widened or narrowed to what the PR touches: see `references/evidence-and-doctrine-lookup.md` §"Doctrine map".
-- `/git-flow-master` before the first `gh` call (AGENTS.md §6.5).
+- `/git-flow-master` before the first `gh` call (`.agents/instructions/30-tool-resolution.md` §6.5).
 - `references/severity-and-scoring.md`, `references/evidence-and-doctrine-lookup.md`, `references/output-and-posting-flow.md`: this skill's own reference material, read at the step noted below.
 
 ## When to use this vs. a sibling

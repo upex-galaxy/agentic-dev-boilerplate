@@ -55,7 +55,7 @@ _(none yet: each rule carries `YYYY-MM-DD · rule · measured: how`)_
 - Column lists and raw DDL → the database itself, on demand through `[DB_TOOL]`.
 - Route handlers, auth levels, payloads → `business-api-context`.
 - Screens, CRUD actions and the feature catalog → `business-feature-context`.
-- Domain vocabulary → the domain glossary `/project-foundation` seeds under `.context/business/` (hand-kept, append-only; `AGENTS.md` §4 Key paths).
+- Domain vocabulary → the domain glossary `/project-foundation` seeds under `.context/business/` (hand-kept, append-only; `.agents/instructions/15-context-map.md` §4 Key paths).
 - Jira stories and their ACs → `.context/PBI/` (synced cache).
 
 ## References

@@ -4,7 +4,7 @@
  * Two defects, one test file:
  *
  * 1. ACCEPTED DIVERGENCES. `.agents/project.yaml` lists
- *    `git_strategy.policy.accepted_divergences`, and `AGENTS.md` → "Git Strategy"
+ *    `git_strategy.policy.accepted_divergences`, and `.agents/instructions/project.md` → "Git Strategy (this repository)"
  *    promises that `verify` reports a listed divergence as ACCEPTED and exits 0.
  *    The script never read the list: `main.direct_push_to_protected` stayed a
  *    DRIFT and `verify` exited 1 on a divergence the project had signed off.

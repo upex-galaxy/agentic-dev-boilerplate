@@ -70,7 +70,7 @@ Before showing the draft to the user, run the prose through the `humanizer` skil
 
 The confirmation has to be unambiguous and about *this* draft. "Se ve bien" while severity is still being discussed is not "postealo" once the final draft is shown. When in doubt, show the full draft one more time and ask directly rather than inferring.
 
-Posting commands (load `/git-flow-master` first if this session has not, AGENTS.md §6.5):
+Posting commands (load `/git-flow-master` first if this session has not, `.agents/instructions/30-tool-resolution.md` §6.5):
 
 ```bash
 # Save the draft to the session scratch dir first (avoids shell-escaping issues with markdown/backticks)
