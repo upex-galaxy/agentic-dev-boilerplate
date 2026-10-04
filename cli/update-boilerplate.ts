@@ -444,10 +444,12 @@ ADOPTAR UNA APP EXISTENTE (--adopt, solo la primera corrida):
   upstream se mantiene y es fila BLOQUEANTE). .env.example de la app recibe las
   variables de la herramienta en un bloque sentinel. .agents/project.yaml se
   siembra desde .agents/project.schema.yaml (identidad null, git_strategy
-  inherited). Si la app trae su propio AGENTS.md o CLAUDE.md, se propone UN
-  AGENTS.md = upstream + ese texto literal bajo "## 0. Project instructions
-  (pre-adoption)", con CLAUDE.md como shim: se aplica solo con un si explicito
-  (con --auto queda guardado para revision y la fila bloquea). .mcp.json y
+  inherited). Si la app trae su propio AGENTS.md o CLAUDE.md, ese texto pasa
+  literal al skill local .agents/skills/<app>-context/ (references/
+  app-instructions.md, fuera de la carga de cada sesion) con un puntero en
+  .agents/instructions/project.md, y se propone UN AGENTS.md = upstream + una
+  fila de router hacia ese skill, con CLAUDE.md como shim: se aplica solo con
+  un si explicito (con --auto queda guardado para revision y la fila bloquea). .mcp.json y
   opencode.jsonc se entregan si la app no los tiene. Los ADR numerados del
   boilerplate no viajan, ni en esa corrida ni en las siguientes. Escribe
   ${INSTALLER_LOCK_FILE} con adopted: true. Incompatible con --force y con subcomandos. Un repo que ya

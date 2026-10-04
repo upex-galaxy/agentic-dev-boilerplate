@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { coreBytes, parseL0Rules, parseRouter, skillTableSource } from './lib/instructions';
-import { L0_BUDGET, L0_PROJECT_BUDGET, L0_TARGET, lintBinding, lintBudget, lintInstructions } from './lint-instructions';
+import { isPendingMigration, L0_BUDGET, L0_PROJECT_BUDGET, L0_TARGET, lintBinding, lintBudget, lintInstructions } from './lint-instructions';
 
 let root: string;
 
@@ -126,15 +126,38 @@ describe('lint-instructions', () => {
     expect(lintInstructions(root).map(tag)).toEqual(['error:frontmatter:.agents/instructions/80-git.md:trigger does not compile: (unclosed']);
   });
 
-  test('project.md carries no triggers; README carries no frontmatter', () => {
+  test('project.md may leave triggers empty, no other section may; README carries no frontmatter', () => {
     scaffold();
-    write('.agents/instructions/project.md', '---\nid: project\ntitle: "P"\nload_when: "project things"\ntriggers: ["x"]\n---\n');
+    write('.agents/instructions/project.md', '---\nid: project\ntitle: "P"\nload_when: "project things"\ntriggers: []\npaths: []\n---\n');
     write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/project.md` | - |\n<!-- router:end -->'));
+    expect(lintInstructions(root)).toEqual([]);
+    write('.agents/instructions/80-git.md', GIT.replace('triggers: ["\\\\bgit\\\\b", "\\\\bcommit"]', 'triggers: []'));
     write('.agents/instructions/README.md', '---\nid: readme\n---\n');
     expect(lintInstructions(root).map(tag)).toEqual([
+      'error:frontmatter:.agents/instructions/80-git.md:`triggers` is empty: the hook can never route here (only project.md may leave it empty)',
       'error:frontmatter:.agents/instructions/README.md:README.md carries no frontmatter',
-      'error:frontmatter:.agents/instructions/project.md:project.md carries no `triggers`',
     ]);
+  });
+
+  test('a project that received the sections but still runs its pre-split AGENTS.md is pending, not broken', () => {
+    scaffold();
+    write('AGENTS.md', `# AGENTS.md\n\n## 9. LOCAL CONTEXT (PBI)\n\n${'x'.repeat(L0_PROJECT_BUDGET * 2)}\n`);
+    expect(isPendingMigration(root)).toBe(true);
+    expect(lintInstructions(root)).toEqual([]);
+    // The maintainers' copy never gets that pass: a missing router there is a defect.
+    write('.agents/project.yaml', '# MAINTAINER COPY: the boilerplate\'s own file.\nproject: {}\n');
+    expect(isPendingMigration(root)).toBe(false);
+    expect(lintInstructions(root).map(f => f.kind)).toContain('router');
+  });
+
+  test('an adopted app whose AGENTS.md waits for its saved merge is pending; without the saved file it is missing', () => {
+    scaffold();
+    rmSync(join(root, 'AGENTS.md'));
+    write('.template/installer.lock.json', '{"adopted":true}\n');
+    expect(lintInstructions(root).map(tag)).toEqual(['error:router:AGENTS.md:AGENTS.md missing']);
+    write('.agents/prompts/adopt-instructions.md', l0());
+    expect(isPendingMigration(root)).toBe(true);
+    expect(lintInstructions(root)).toEqual([]);
   });
 
   test('an L0 rule excerpt that is not verbatim in the full text fails', () => {

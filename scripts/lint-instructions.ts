@@ -22,7 +22,8 @@
  *     file stem without the number), `title`, `load_when`, `triggers` (a
  *     non-empty list of strings that compile as case-insensitive regexes) and
  *     `paths` (a list of repo-relative prefixes); `project.md` carries `id:
- *     project`, `title` and `load_when` and no `triggers`; `README.md` carries
+ *     project`, `title`, `load_when` and the same two lists, the only file
+ *     whose `triggers` may be empty (`triggers: []`); `README.md` carries
  *     none. No other file lives in the folder.
  *   - `rules`: every L0 Critical Rule (`N. **NAME**: text … Full: …`) has a
  *     `## N. NAME` heading in `01-critical-rules.md`, every rule there has its
@@ -40,11 +41,20 @@
  *     (loaded in full at launch); only `ALLOWED_IMPORTS` may appear, and each
  *     must exist.
  *
+ * A project whose `AGENTS.md` has no ROUTER yet still runs its pre-split
+ * monolith (the sync delivers the sections; moving AGENTS.md is the project's
+ * own merge, named in the parity report of `bun run up`): the gate prints a
+ * note and passes, because being behind upstream is not a broken repo; so does
+ * an adopted app with no `AGENTS.md` while its saved merge waits for approval.
+ * The maintainers' copy never gets that pass.
+ *
  * Usage: bun scripts/lint-instructions.ts   (exit 1 on any error)
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ADOPT_INSTRUCTIONS_PENDING_FILE, adoptInstructionsPending } from '../cli/lib/agent-compatibility';
+import { isMaintainerCopy } from '../cli/lib/agents-schema';
 import {
   coreBytes,
   L0_FILE,
@@ -143,17 +153,18 @@ export function lintFrontmatter(rel: string, name: string, text: string): Instru
   for (const key of ['id', 'title', 'load_when']) {
     if (typeof meta[key] !== 'string' || !meta[key].trim()) { return bad(`\`${key}\` must be a non-empty string`); }
   }
-  if (name === PROJECT_FILE) {
+  const isProject = name === PROJECT_FILE;
+  if (isProject) {
     if (meta.id !== 'project') { return bad('`id` must be `project`'); }
-    return 'triggers' in meta ? bad('project.md carries no `triggers`') : [];
   }
-  const numbered = NUMBERED_SECTION.exec(name);
-  if (!numbered) { return bad('file name must be `NN-<id>.md`, `project.md` or `README.md`'); }
-  if (meta.id !== numbered[2]) { return bad(`\`id\` must be \`${numbered[2]}\` (the file stem without the number)`); }
+  else {
+    const numbered = NUMBERED_SECTION.exec(name);
+    if (!numbered) { return bad('file name must be `NN-<id>.md`, `project.md` or `README.md`'); }
+    if (meta.id !== numbered[2]) { return bad(`\`id\` must be \`${numbered[2]}\` (the file stem without the number)`); }
+  }
   const triggers = meta.triggers;
-  if (!Array.isArray(triggers) || triggers.length === 0 || triggers.some(t => typeof t !== 'string')) {
-    return bad('`triggers` must be a non-empty list of strings');
-  }
+  if (!Array.isArray(triggers) || triggers.some(t => typeof t !== 'string')) { return bad('`triggers` must be a list of strings'); }
+  if (triggers.length === 0 && !isProject) { return bad('`triggers` is empty: the hook can never route here (only project.md may leave it empty)'); }
   for (const trigger of triggers as string[]) {
     try { void new RegExp(trigger, 'i'); }
     catch { return bad(`trigger does not compile: ${trigger}`); }
@@ -240,8 +251,23 @@ export function lintBinding(
   return findings;
 }
 
+/**
+ * A project (never the maintainers' copy) whose `AGENTS.md` has no ROUTER: it
+ * received the sections but has not moved to the L0 layout yet. An adopted
+ * app whose `AGENTS.md` still waits for its approved merge
+ * (`adoptInstructionsPending`) is pending the same way.
+ */
+export function isPendingMigration(root: string): boolean {
+  const l0Path = join(root, L0_FILE);
+  if (!existsSync(l0Path)) { return adoptInstructionsPending(root); }
+  if (parseRouter(readFileSync(l0Path, 'utf8')) !== null) { return false; }
+  const yamlPath = join(root, '.agents', 'project.yaml');
+  return !(existsSync(yamlPath) && isMaintainerCopy(readFileSync(yamlPath, 'utf8')));
+}
+
 export function lintInstructions(root: string): InstructionFinding[] {
   const l0Path = join(root, L0_FILE);
+  if (isPendingMigration(root)) { return []; }
   if (!existsSync(l0Path)) { return [finding('router', L0_FILE, 1, 'AGENTS.md missing')]; }
   const l0 = readFileSync(l0Path, 'utf8');
   const dir = join(root, SECTIONS_DIR);
@@ -266,6 +292,12 @@ export function lintInstructions(root: string): InstructionFinding[] {
 
 if (import.meta.main) {
   const root = process.cwd();
+  if (isPendingMigration(root)) {
+    console.log(existsSync(join(root, L0_FILE))
+      ? `- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun run up\``
+      : `- instructions:check skipped: ${L0_FILE} waits for the adoption merge saved in ${ADOPT_INSTRUCTIONS_PENDING_FILE} (\`project-adoption\` Phase 6)`);
+    process.exit(0);
+  }
   const findings = lintInstructions(root);
   const l0Path = join(root, L0_FILE);
   const bytes = existsSync(l0Path) ? coreBytes(readFileSync(l0Path, 'utf8')) : 0;

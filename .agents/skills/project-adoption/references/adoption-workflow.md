@@ -18,7 +18,7 @@ The mutation phases NEVER:
 - push;
 - write a credential value anywhere but `.env`, or echo one into the plan, a report or a commit.
 
-The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env`; `.agents/jira-*.json` catalogs; a framework skill folder `.agents/skills/<name>/` the app had copied in by hand, replaced ONLY by upstream's copy the adoption saved under `.agents/prompts/adopt-upstream/<name>/` (the app's copy backed up under `.backups/project-adoption/` first); `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the per-harness credential files `bun run harness:env` derives from `.env`; `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
+The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env`; `.agents/jira-*.json` catalogs; a framework skill folder `.agents/skills/<name>/` the app had copied in by hand, replaced ONLY by upstream's copy the adoption saved under `.agents/prompts/adopt-upstream/<name>/` (the app's copy backed up under `.backups/project-adoption/` first); `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the app's `<app>-context` skill the adoption wrote (`.agents/skills/<app>-context/`): its `SKILL.md` `description` only, never the preserved text in `references/app-instructions.md`, plus the one-time move of a legacy `## 0. Project instructions (pre-adoption)` block into it (Phase 6); the pointer section of `.agents/instructions/project.md` that names that skill; the per-harness credential files `bun run harness:env` derives from `.env`; `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
 
 ---
 
@@ -29,7 +29,7 @@ Each row is a command or read plus a pass condition. `ADOPTED` when the conditio
 | Subsystem | Signal | ADOPTED when |
 |---|---|---|
 | install | `.template/installer.lock.json` | `adopted: true` (else the entry gate STOPS) |
-| instructions | `CLAUDE.md` | byte-equal to the `@AGENTS.md` shim, and `.agents/prompts/adopt-instructions.md` absent or already applied |
+| instructions | `CLAUDE.md`, `AGENTS.md`, `.agents/skills/*-context/references/app-instructions.md` | `CLAUDE.md` byte-equal to the `@AGENTS.md` shim; `.agents/prompts/adopt-instructions.md` absent or already applied; `AGENTS.md` carries no `## 0. Project instructions (pre-adoption)` block (the legacy layout); the app's text, when it had any, sits in its `<app>-context` skill with one router row in `AGENTS.md` pointing at it |
 | protected paths | every app-owned collision of the adoption run (the `merge` rows of `.agents/prompts/parity-plan.md`, or the paths whose content differs from upstream) | listed in `updater.protected_paths` of `.agents/project.yaml` |
 | framework skills | `.agents/prompts/adopt-upstream/` (upstream's copy of each framework skill the app had copied in by hand, saved by the adoption install) | absent or empty: each one was taken or the plan records the team kept its copy |
 | identity | `grep -n 'null # TODO' .agents/project.yaml` restricted to `project`, `backend`, `frontend`, `database`, `issue_tracker`, `testing.default_env` and the `environments` the project runs | no line left (team-owed blocks are NOT in this row, see §Team-owed prerequisites) |
@@ -83,7 +83,7 @@ Run `bun run agents:setup --stack --dry-run --non-interactive`. It calls `detect
 Read, never edit:
 
 - Adoption parity: `.agents/prompts/parity-plan.md` (rows the adoption run left: app-owned collisions, script collisions with their composition proposal, the instruction merge). Missing file = take the collisions from `git diff` of the adoption commit.
-- Instructions: whether `.agents/prompts/adopt-instructions.md` exists and whether `CLAUDE.md` is already the shim.
+- Instructions: whether `.agents/prompts/adopt-instructions.md` exists, whether `CLAUDE.md` is already the shim, which `<app>-context` skill holds the app's own text (the adoption run names it in its instructions row), and whether `AGENTS.md` still carries the legacy `## 0. Project instructions (pre-adoption)` block of an app adopted before that skill existed.
 - Hooks: `.husky/`, `lefthook.yml`, `simple-git-hooks` in `package.json`, `.pre-commit-config.yaml`, husky v4 config, `git config --local core.hooksPath` (detector: `detectHookManager` in `cli/lib/hook-manager.ts`). A foreign manager is never replaced: the adoption run installed no husky over it, and the wiring snippet that makes it call the framework gates sits in `.agents/prompts/adopt-tooling-isolation.md` as a team decision.
 - Tooling isolation: `.agents/prompts/adopt-tooling-isolation.md` (the exact `exclude` / ignore lines for the app's own `tsconfig.json` and ESLint config). A stock Next.js tsconfig type-checks `cli/` and `scripts/` and fails on Bun-only syntax, so the app's own `tsc` / `next build` stay red until the team applies them.
 - Env files: `.env`, `.env.local`, `.env.example` (the sentinel block the adoption appended). Variable NAMES only; never print a value.
@@ -147,14 +147,14 @@ Skip with a recorded gap when the plan says no tracker.
 2. `bun run jira:check`. A missing required field is never created here: the plan names the field, the fallback (`.agents/jira-required.yaml` -> `fallback:`, a structured comment) and that creating fields is a Jira admin's decision.
 3. Do NOT hydrate the whole project (`context:hydrate`) as part of adoption: the PBI cache is filled per story by `/sprint-development`.
 
-## Phase 6: pending instruction merge + harness compat
+## Phase 6: the app's instructions + harness compat
 
-Only when `.agents/prompts/adopt-instructions.md` exists and the plan's instruction row carries its OWN approval line.
+The app's own instruction text never loads at session start: `--adopt` moved it, verbatim, to the project-local skill `.agents/skills/<app>-context/` (`references/app-instructions.md`, the slug from the app's `package.json` name), added a pointer to `.agents/instructions/project.md`, and composed an `AGENTS.md` that is upstream's plus ONE router row to that skill. Each step below runs only on its OWN approval line in the plan.
 
-1. Show the head of the saved file and the `## 0. Project instructions (pre-adoption)` block (the app's text verbatim). Copy the current `AGENTS.md` and `CLAUDE.md` to `.backups/project-adoption/<date>/` first.
-2. Write the saved file to `AGENTS.md` byte for byte; write `CLAUDE.md` as the shim. Never re-compose, summarize or reorder the app's text.
-3. Delete `.agents/prompts/adopt-instructions.md` only after the write verified (re-read, byte-compare).
-4. `bun run agents:compat` then `bun run agents:compat:check` exits 0.
+1. **Pending merge** (only when `.agents/prompts/adopt-instructions.md` exists). Show the saved file's router row and the head of `references/app-instructions.md`. Copy the current `AGENTS.md` and `CLAUDE.md` to `.backups/project-adoption/<date>/` first. Write the saved file to `AGENTS.md` byte for byte; write `CLAUDE.md` as the shim. Delete the saved file only after the write verified (re-read, byte-compare).
+2. **Legacy layout** (only when `AGENTS.md` carries `## 0. Project instructions (pre-adoption)`: an app adopted before the skill existed). Back up `AGENTS.md`, move the block's text between that heading and the closing `---` verbatim into `.agents/skills/<app>-context/references/app-instructions.md` (same shape `cli/lib/adopt-app-context.ts` writes: one `## From` heading per original file), write its `SKILL.md`, replace the block in `AGENTS.md` with the router row, add the `project.md` pointer. Prove nothing was lost before deleting the block: every original line and heading is in the reference, byte for byte.
+3. **Description.** The skill's `description` the CLI wrote is mechanical (the app's name, its `package.json` description, its own section titles). Rewrite that ONE field from the Phase 1 analysis so it routes by the app's real domain (entities, flows, the words its team uses), under 1024 characters. Never touch the preserved text: it is the app team's, and the anti-pattern A5 binds.
+4. `bun run agents:compat` then `bun run agents:compat:check` exits 0; `bun run instructions:check` passes (the router row resolves, `AGENTS.md` stays under its budget with the row).
 
 Without the merge row approved the instruction signal stays `PENDING` and the plan says so: a plain `bun run up` refuses at its cross-harness preflight until the merge is applied.
 

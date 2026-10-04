@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
+import { APP_INSTRUCTIONS_REFERENCE } from './lib/adopt-app-context.ts';
 import { ADOPT_INSTRUCTIONS_HEADING, ADOPT_INSTRUCTIONS_PROMPT, INSTALLER_LOCK_FILE } from './lib/updater-adopt.ts';
 import { ADOPT_NEXT_STEP, deprecatedFilesToClean, parseArgs } from './update-boilerplate.ts';
 
@@ -71,6 +72,8 @@ describe('--adopt closing line', () => {
     expect(skill).toContain('adopted: true');
     expect(skill).toContain(prompt);
     expect(workflow).toContain(prompt);
+    // The app's text lands in its `<app>-context` skill; the legacy `## 0.` block is still named for the move.
+    expect(workflow).toContain(APP_INSTRUCTIONS_REFERENCE);
     expect(workflow).toContain(ADOPT_INSTRUCTIONS_HEADING.replace(/^## /, ''));
   });
 });
