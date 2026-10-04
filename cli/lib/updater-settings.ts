@@ -60,11 +60,20 @@ function readAllowList(data: Record<string, unknown>): string[] {
  *
  * Returns `merged: null` when there is nothing to add, when either file is
  * missing or unparseable, or when the project's file declares no `permissions`
- * object at all. That last case is deliberate: a settings file with no
- * permissions block is not a project that dropped an entry, it is a shape this
- * merge does not understand, and guessing at it would be a rewrite.
+ * object at all. That last case is deliberate on a project the boilerplate
+ * delivered the file to: a settings file with no permissions block is not a
+ * project that dropped an entry, it is a shape this merge does not understand,
+ * and guessing at it would be a rewrite.
+ *
+ * `createMissing` is the `--adopt` run's exception. An adopted app's own
+ * settings file (kept, never overwritten) commonly declares hooks and env but
+ * no permissions at all, and without the upstream `Skill(<name>)` entries
+ * every framework skill prompts instead of running (measured on the dogfood
+ * app). There the absent `permissions` object, or an absent `allow` array in
+ * one that exists, is created with upstream's entries; a value of another
+ * shape is still left alone. Greenfield and every plain update pass nothing.
  */
-export function mergeAllowList(repoRoot: string, templateDir: string): AllowListMerge {
+export function mergeAllowList(repoRoot: string, templateDir: string, opts: { createMissing?: boolean } = {}): AllowListMerge {
   const localPath = path.join(repoRoot, CLAUDE_SETTINGS_FILE);
   const upstreamPath = path.join(templateDir, CLAUDE_SETTINGS_FILE);
   const nothing: AllowListMerge = { added: [], merged: null };
@@ -80,16 +89,20 @@ export function mergeAllowList(repoRoot: string, templateDir: string): AllowList
     return nothing; // unparseable on either side: never rewrite a file we cannot read
   }
 
+  const create = opts.createMissing === true;
+  if (create && local.data.permissions === undefined) { local.data.permissions = {}; }
   const permissions = local.data.permissions;
   if (permissions === null || typeof permissions !== 'object' || Array.isArray(permissions)) { return nothing; }
+  const block = permissions as Record<string, unknown>;
+  if (create && block.allow === undefined) { block.allow = []; }
   const localAllow = readAllowList(local.data);
-  if (!Array.isArray((permissions as Record<string, unknown>).allow)) { return nothing; }
+  if (!Array.isArray(block.allow)) { return nothing; }
 
   const have = new Set(localAllow);
   const added = readAllowList(upstream.data).filter(entry => !have.has(entry));
   if (added.length === 0) { return nothing; }
 
-  (permissions as Record<string, unknown>).allow = [...localAllow, ...added];
+  block.allow = [...localAllow, ...added];
   return { added, merged: stringifyPackageJson(local) };
 }
 

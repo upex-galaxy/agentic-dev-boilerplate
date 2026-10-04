@@ -248,6 +248,20 @@ export interface WorktreeSetupState {
  * (`cp .env.example .env`) is the wrong one here: it leaves the worktree with
  * an empty template while the filled `.env` sits one directory away.
  */
+/**
+ * Split the retired credential names set in `.env` into the ones to remove
+ * and the ones an adopted app declares as its own (`appOwned`: the keys of the
+ * app's part of `.env.example`, empty on a greenfield repo). Telling the app
+ * to delete its own variable would break whatever in the app reads it.
+ */
+export function legacyCredentialKeys(envValues: Record<string, string>, appOwned: ReadonlySet<string>): { remove: string[], appOwned: string[] } {
+  const set = LEGACY_JIRA_CRED_KEYS.filter((key) => {
+    const value = envValues[key];
+    return value !== undefined && value.trim().length > 0;
+  });
+  return { remove: set.filter(k => !appOwned.has(k)), appOwned: set.filter(k => appOwned.has(k)) };
+}
+
 export function worktreeSetupAction(state: WorktreeSetupState): PendingAction | null {
   const missing = [
     state.envFile ? null : '.env',
@@ -322,6 +336,8 @@ interface DoctorReport {
    */
   atlassian_host: AtlassianHostState
   legacy_jira_cred_keys: string[]
+  /** Retired tooling names an adopted app declares as its own variables: kept, never a removal. */
+  app_owned_retired_keys: string[]
   mcp_json_exists: boolean
   opencode_jsonc_exists: boolean
   codex_config_exists: boolean
@@ -614,7 +630,26 @@ function toolingIsolationDiagnostic(): { adopted: boolean, pending: string[] } {
   for (const t of a.tsconfigs) { pending.push(`${t.path} type-checks ${t.reached.map(d => `${d}/`).join(', ')}: add them to its "exclude" (snippet: .agents/prompts/adopt-tooling-isolation.md)`); }
   if (a.eslint !== null) { pending.push(`${a.eslint.path} lints the tooling: ignore ${a.eslint.missing.join(', ')}`); }
   if (a.hooksPending) { pending.push(`${a.hooks.manager} (${a.hooks.evidence}) does not call .husky/framework-gates.sh: the framework gates never run`); }
+  const repoCheck = (() => {
+    try { return (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { scripts?: Record<string, unknown> }).scripts?.['repo:check']; }
+    catch { return undefined; }
+  })();
+  if (repoCheckRunsAppWideLegs(repoCheck)) {
+    pending.push('package.json "repo:check" runs the app-wide format:check / lint:check / types:check: take upstream\'s value (`bun run up`, row scripts.repo:check), which opens with `bun scripts/tooling-check.ts repo` and scopes them to the tooling');
+  }
   return { adopted, pending };
+}
+
+/**
+ * Whether a `repo:check` script still opens with the legs that judge the whole
+ * repo (`format:check`, `lint:check`, `types:check`). On an adopted app those
+ * are the app's own scripts or tools run over the app's root configs; the
+ * scoped form is `bun scripts/tooling-check.ts repo`. An app without the
+ * script, or with its own composition, is not reported.
+ */
+export function repoCheckRunsAppWideLegs(script: unknown): boolean {
+  if (typeof script !== 'string') { return false; }
+  return /\bbun run (?:format:check|lint:check|types:check)\b/.test(script) && !script.includes('tooling-check.ts repo');
 }
 
 // ----------------------------------------------------------------------------
@@ -698,6 +733,7 @@ async function runDoctor(): Promise<DoctorReport> {
     env_vars: {},
     atlassian_host: { status: 'missing' },
     legacy_jira_cred_keys: [],
+    app_owned_retired_keys: [],
     mcp_json_exists: existsSync(MCP_PATH),
     opencode_jsonc_exists: existsSync(OPENCODE_PATH),
     codex_config_exists: existsSync(CODEX_CONFIG_PATH),
@@ -797,13 +833,13 @@ async function runDoctor(): Promise<DoctorReport> {
   // JIRA_URL / JIRA_USERNAME / JIRA_API_TOKEN still in `.env` is leftover from
   // before the DRY rename and should be removed. Nothing reads them anymore;
   // acli and the sync scripts read ATLASSIAN_* directly, and the Atlassian
-  // MCP server is opt-in via docs/mcp/.
-  for (const key of LEGACY_JIRA_CRED_KEYS) {
-    const value = envValues[key];
-    if (value !== undefined && value.trim().length > 0) {
-      report.legacy_jira_cred_keys.push(key);
-    }
-  }
+  // MCP server is opt-in via docs/mcp/. On an adopted app a retired name the
+  // app declares in its own part of `.env.example` is the app's variable:
+  // reported, never a removal (same rule as `vars:env:check`).
+  const { appOwnedExampleKeys } = await import('./lib/updater-adopt.ts');
+  const legacy = legacyCredentialKeys(envValues, appOwnedExampleKeys(REPO_ROOT));
+  report.legacy_jira_cred_keys = legacy.remove;
+  report.app_owned_retired_keys = legacy.appOwned;
   if (report.legacy_jira_cred_keys.length > 0) {
     report.pending_actions.push({
       type: 'shell_command',
@@ -1084,6 +1120,13 @@ function printHuman(report: DoctorReport): void {
       process.stdout.write(`  ${tui.statusIcon('warn')} ${key} — remove (replaced by ATLASSIAN_* family)\n`);
     }
     process.stdout.write(`  ${COLORS.dim}acli and the sync scripts read ATLASSIAN_* directly; the Atlassian MCP server is opt-in via docs/mcp/.${COLORS.reset}\n\n`);
+  }
+  if (report.app_owned_retired_keys.length > 0) {
+    tui.section('Retired tooling names the app declares as its own');
+    for (const key of report.app_owned_retired_keys) {
+      process.stdout.write(`  ${tui.statusIcon('info')} ${key}: the app's own variable (declared above the tooling block of .env.example), kept; the tooling does not read it\n`);
+    }
+    process.stdout.write('\n');
   }
 
   if (compat.errors.length > 0) {

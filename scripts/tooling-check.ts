@@ -6,6 +6,15 @@
  * Usage:
  *   bun scripts/tooling-check.ts types   # tsc over tsconfig.tooling.json
  *   bun scripts/tooling-check.ts lint    # eslint with eslint.config.tooling.mjs
+ *   bun scripts/tooling-check.ts repo    # the format / lint / types legs of `repo:check`
+ *
+ * `repo` is what `repo:check` opens with. On a greenfield repo it runs
+ * `format:check`, `lint:check` and `types:check`, in that order, stopping at
+ * the first failure: the commands it replaced. On an adopted app those three
+ * are app-wide (the app's own scripts, or eslint / tsc / prettier over the
+ * app's root configs), so it runs the two tooling checks above instead and
+ * skips the format leg, as the hook gates do (`.husky/framework-gates.sh`):
+ * the app's formatting is its own.
  *
  * On an adopted app the tooling shares `scripts/` and `.agents/skills/` with
  * the app's own code. The installer lock lists what upstream owns there
@@ -21,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-import { isToolingPath, readUpstreamOwned } from '../cli/lib/tooling-scope.ts';
+import { isAdoptedRepo, isToolingPath, readUpstreamOwned } from '../cli/lib/tooling-scope.ts';
 
 const ROOT = process.cwd();
 const LINT_EXTENSIONS = /\.(?:ts|mts|cts|js|mjs|cjs)$/;
@@ -96,10 +105,30 @@ function lint(): number {
   return spawnSync('bunx', [...base, ...files], { stdio: 'inherit' }).status ?? 1;
 }
 
+/** The legs `repo` runs, in order: script names on greenfield, scoped checks on an adopted app. */
+export function repoLegs(adopted: boolean): Array<{ name: string, run: () => number }> {
+  const script = (name: string) => ({ name, run: () => spawnSync('bun', ['run', name], { stdio: 'inherit' }).status ?? 1 });
+  if (!adopted) { return [script('format:check'), script('lint:check'), script('types:check')]; }
+  return [{ name: 'tooling:lint:check', run: lint }, { name: 'tooling:types:check', run: types }];
+}
+
+function repo(): number {
+  const adopted = isAdoptedRepo(ROOT);
+  if (adopted) {
+    console.log('ℹ️  Adopted app: format:check skipped (the app\'s formatting is its own); lint and types scoped to the tooling. The app checks its code with its own scripts.');
+  }
+  for (const leg of repoLegs(adopted)) {
+    const status = leg.run();
+    if (status !== 0) { return status; }
+  }
+  return 0;
+}
+
 if (import.meta.main) {
   const mode = process.argv[2];
   if (mode === 'types') { process.exit(types()); }
   if (mode === 'lint') { process.exit(lint()); }
-  console.error('Usage: bun scripts/tooling-check.ts <types|lint>');
+  if (mode === 'repo') { process.exit(repo()); }
+  console.error('Usage: bun scripts/tooling-check.ts <types|lint|repo>');
   process.exit(2);
 }

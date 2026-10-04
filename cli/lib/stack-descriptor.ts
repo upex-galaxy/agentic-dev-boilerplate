@@ -5,7 +5,9 @@
  * Three consumers share this module:
  *
  *   - `bun run agents:setup --stack` DETECTS the stack from the repo and writes
- *     it into the block (interactive: one prompt per field that differs).
+ *     it into the block (interactive: one prompt per field that differs), then
+ *     fills the identity leaves that restate it (`backend_stack`, `db_type`,
+ *     the entry points) where they are still null (`writeDerivedIdentity`).
  *   - `bun run setup:doctor` VALIDATES the block and reports drift between
  *     what it declares and what the repo shows. Informational, never a failure.
  *   - the schema gate in `agents-schema.test.ts` reads `STACK_FIELDS` to know
@@ -463,6 +465,131 @@ export function writeStack(projectText: string, schemaText: string | null, updat
     }
   }
   return { text, changed, inserted, error: null };
+}
+
+// ============================================================================
+// IDENTITY LEAVES DERIVED FROM THE STACK
+// ============================================================================
+
+/**
+ * The identity leaves that restate what `stack:` already says, as free text
+ * for a human reader. Dotted paths from the yaml root.
+ */
+export const DERIVED_IDENTITY_PATHS = [
+  'backend.backend_stack',
+  'backend.backend_entry',
+  'frontend.frontend_stack',
+  'frontend.frontend_entry',
+  'database.db_type',
+] as const;
+
+const FRAMEWORK_LABEL: Readonly<Record<string, string>> = {
+  'nextjs-app-router': 'Next.js (App Router)',
+  'nextjs-pages': 'Next.js (Pages Router)',
+};
+const BACKEND_LABEL: Readonly<Record<string, string>> = {
+  'nextjs-app-router': 'Next.js route handlers + server actions',
+  'nextjs-pages': 'Next.js API routes',
+};
+const CSS_LABEL: Readonly<Record<string, string>> = {
+  'tailwind-v3': 'Tailwind CSS v3',
+  'tailwind-v4': 'Tailwind CSS v4',
+  'css-modules': 'CSS Modules',
+};
+const KIT_LABEL: Readonly<Record<string, string>> = { shadcn: 'shadcn/ui' };
+
+/** The router directory the framework reads, relative to `app_root`, when it exists. */
+function routerDir(repoRoot: string, appRoot: string, framework: string): string | null {
+  const names = framework === 'nextjs-app-router' ? ['src/app', 'app'] : ['src/pages', 'pages'];
+  return names.find(name => isDir(join(repoRoot, appRoot, name))) ?? null;
+}
+
+/**
+ * Derive the identity leaves from the `stack:` values. A leaf is derived only
+ * from values that name something (`other`, `none` and null say nothing), and
+ * an entry point only from a directory that exists on disk: nothing guessed.
+ * Pure apart from the directory checks under `repoRoot`.
+ */
+export function deriveIdentity(values: StackValues, repoRoot: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const framework = values.framework ?? null;
+  const provider = values['database.provider'] ?? null;
+  const supabase = provider === 'supabase' ? ' + Supabase' : '';
+
+  if (framework !== null && framework in FRAMEWORK_LABEL) {
+    const ui = [CSS_LABEL[values['ui.css'] ?? ''], KIT_LABEL[values['ui.kit'] ?? '']].filter(Boolean);
+    out['frontend.frontend_stack'] = [FRAMEWORK_LABEL[framework], ...ui].join(' + ');
+    out['backend.backend_stack'] = `${BACKEND_LABEL[framework]}${supabase}`;
+
+    const appRoot = values.app_root ?? '.';
+    const prefix = appRoot === '.' || appRoot === '' ? '' : `${appRoot.replace(/\/+$/, '')}/`;
+    const dir = routerDir(repoRoot, appRoot, framework);
+    if (dir !== null) {
+      out['frontend.frontend_entry'] = `${prefix}${dir}/`;
+      const api = `${dir}/api`;
+      out['backend.backend_entry'] = isDir(join(repoRoot, appRoot, api)) ? `${prefix}${api}/` : `${prefix}${dir}/`;
+    }
+  }
+
+  if (values['database.engine'] === 'postgres') {
+    out['database.db_type'] = provider === 'supabase' ? 'PostgreSQL (Supabase)' : 'PostgreSQL';
+  }
+  return out;
+}
+
+export interface IdentityWrite {
+  text: string
+  /** Leaf path -> the value written. Only leaves that were null before. */
+  filled: Record<string, string>
+  error: string | null
+}
+
+/**
+ * Fill the identity leaves that are still null with what `deriveIdentity`
+ * reads from the `stack:` block of `projectText`. A filled leaf is never
+ * overwritten, an absent one is never inserted. Same splice and read-back
+ * contract as `writeStack`.
+ */
+export function writeDerivedIdentity(projectText: string, repoRoot: string): IdentityWrite {
+  const stack = readStack(projectText);
+  if (stack.error) { return { text: projectText, filled: {}, error: stack.error }; }
+  if (!stack.present) { return { text: projectText, filled: {}, error: null }; }
+
+  let root: unknown;
+  try { root = parseYaml(projectText); }
+  catch (e) { return { text: projectText, filled: {}, error: (e as Error).message }; }
+
+  const derived = deriveIdentity(stack.values, repoRoot);
+  const edits: SpliceEdit[] = [];
+  const filled: Record<string, string> = {};
+  for (const path of DERIVED_IDENTITY_PATHS) {
+    const value = derived[path];
+    if (value === undefined) { continue; }
+    const segments = path.split('.');
+    const have = getIn(root, segments);
+    if (!have.found || (have.value !== null && have.value !== undefined)) { continue; }
+    const located = locateLeaf(projectText, segments);
+    if (!located) { return { text: projectText, filled: {}, error: `could not locate \`${path}\` in .agents/project.yaml` }; }
+    edits.push({ range: located.value, text: renderScalar(value) });
+    if (located.trailingComment) {
+      const comment = projectText.slice(located.trailingComment[0], located.trailingComment[1]);
+      const cleaned = comment.replace(/^#\s*TODO:\s*(?:fill per project\s*(?:—|-)\s*)?/, '# ');
+      if (cleaned !== comment) { edits.push({ range: located.trailingComment, text: cleaned }); }
+    }
+    filled[path] = value;
+  }
+  if (edits.length === 0) { return { text: projectText, filled: {}, error: null }; }
+
+  const text = applySplices(projectText, edits);
+  let after: unknown;
+  try { after = parseYaml(text); }
+  catch (e) { return { text: projectText, filled: {}, error: `the write produced a file that does not parse: ${(e as Error).message}` }; }
+  for (const [path, value] of Object.entries(filled)) {
+    if (getIn(after, path.split('.')).value !== value) {
+      return { text: projectText, filled: {}, error: `read-back mismatch on \`${path}\`` };
+    }
+  }
+  return { text, filled, error: null };
 }
 
 // ============================================================================
