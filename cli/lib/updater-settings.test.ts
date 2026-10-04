@@ -174,7 +174,49 @@ describe('--adopt: the agent-context hook joins an app settings file that has no
     const upstream = temporaryRoot();
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read']).replace('node hook.mjs', 'the app hook'));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read']));
-    expect(mergeAdoptPromptHook(root, upstream)).toEqual({ added: false, merged: null });
+    expect(mergeAdoptPromptHook(root, upstream)).toEqual({ added: false, compactAdded: false, merged: null });
     expect(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf8')).toContain('the app hook');
+  });
+
+  const COMPACT = { matcher: 'compact', hooks: [{ type: 'command', command: 'node hook.mjs', timeout: 5 }] };
+  const upstreamWithCompact = () => settings(['Read'], { hooks: {
+    UserPromptSubmit: [{ hooks: [{ type: 'command', command: 'node hook.mjs' }] }],
+    SessionStart: [COMPACT],
+  } });
+
+  test('the compact re-arm group is appended after the app\'s own SessionStart groups', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, APP);
+    write(upstream, CLAUDE_SETTINGS_FILE, upstreamWithCompact());
+    const { added, compactAdded, merged } = mergeAdoptPromptHook(root, upstream);
+    expect({ added, compactAdded }).toEqual({ added: true, compactAdded: true });
+    const out = JSON.parse(merged!) as Record<string, any>;
+    expect(out.hooks.SessionStart).toEqual([...JSON.parse(APP).hooks.SessionStart, COMPACT]);
+    expect(out.enabledPlugins).toEqual({ 'caveman@caveman': false });
+  });
+
+  test('an app that already wires UserPromptSubmit still gets the compact group; its hook is kept', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settings(['Read']).replace('node hook.mjs', 'the app hook'));
+    write(upstream, CLAUDE_SETTINGS_FILE, upstreamWithCompact());
+    const { added, compactAdded, merged } = mergeAdoptPromptHook(root, upstream);
+    expect({ added, compactAdded }).toEqual({ added: false, compactAdded: true });
+    const out = JSON.parse(merged!) as Record<string, any>;
+    expect(out.hooks.UserPromptSubmit).toEqual([{ hooks: [{ type: 'command', command: 'the app hook' }] }]);
+    expect(out.hooks.SessionStart).toEqual([COMPACT]);
+  });
+
+  test('an app with its own compact group keeps it; nothing is written', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    const own = { matcher: 'compact', hooks: [{ type: 'command', command: 'the app re-arm' }] };
+    write(root, CLAUDE_SETTINGS_FILE, settings(['Read'], { hooks: {
+      UserPromptSubmit: [{ hooks: [{ type: 'command', command: 'node hook.mjs' }] }],
+      SessionStart: [own],
+    } }));
+    write(upstream, CLAUDE_SETTINGS_FILE, upstreamWithCompact());
+    expect(mergeAdoptPromptHook(root, upstream)).toEqual({ added: false, compactAdded: false, merged: null });
   });
 });
