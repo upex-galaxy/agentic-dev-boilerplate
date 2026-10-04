@@ -305,7 +305,7 @@ When a story has rough acceptance criteria — vague conditions, missing data, n
 
 Read `references/acceptance-criteria.md`.
 
-Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists in Jira: the refined scenarios go to `{{jira.acceptance_criteria}}` and unresolved questions to a structured story comment (`## Open questions`); re-sync with `bun run jira:sync-issues get <KEY> --include-comments` to read them back (`AGENTS.md` §9: never hand-write a cache file). Memory topic_key `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
+Output: refined AC in Gherkin with concrete data, error scenarios, and boundary scenarios; ambiguities surfaced as open questions if not resolvable from PRD/SRS. Persists in Jira: the refined scenarios go to `{{jira.acceptance_criteria}}` and unresolved questions to a structured story comment (`## Open questions`); re-sync with `bun run jira:sync-issues get <KEY> --include-comments` to read them back (`.agents/instructions/60-local-context-pbi.md` §9: never hand-write a cache file). Memory topic_key `pbi/{ticket}/spec`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### F. Edge-case enumeration (per feature/epic)
 
@@ -313,7 +313,7 @@ When designing or refining a feature and you need to systematically enumerate fa
 
 Read `references/edge-cases-enumeration.md`.
 
-Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists in Jira: promoted edge cases become scenarios in `{{jira.acceptance_criteria}}`, test-only ones go to a structured comment (`## Edge cases (test-only)`) on the story or epic for the QA hand-off; re-sync to read them back (`AGENTS.md` §9). Memory topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
+Output: cataloged edge cases with criticality + decision (high-criticality + clearly-defined behavior → promote into AC; otherwise → test-only, hand off to QA). Persists in Jira: promoted edge cases become scenarios in `{{jira.acceptance_criteria}}`, test-only ones go to a structured comment (`## Edge cases (test-only)`) on the story or epic for the QA hand-off; re-sync to read them back (`.agents/instructions/60-local-context-pbi.md` §9). Memory topic_key `pbi/{ticket}/edge-cases`. See `agentic-dev-core/references/topic-key-conventions.md`.
 
 ### G. Sprint reporting (read-only PM snapshot)
 
@@ -355,7 +355,7 @@ For projects with concurrent devs on the same feature, compliance/audit requirem
 - **Source-of-truth specs** at `.context/specs/{capability}/{feature}.md` (canonical, always-current behavior — RFC 2119 + Gherkin)
 - **Delta specs** per change at `.context/specs/changes/{ticket}/spec.md` with explicit `## ADDED Requirements`, `## MODIFIED Requirements`, and `## REMOVED Requirements` sections
 - **Archive process** that merges deltas back into the source-of-truth on story close and moves the change folder under `.context/specs/archive/YYYY-MM-DD-{ticket}/`
-- All three live in the committed `.context/specs/` tree, never under the gitignored Jira cache `.context/PBI/` (`AGENTS.md` §9)
+- All three live in the committed `.context/specs/` tree, never under the gitignored Jira cache `.context/PBI/` (`.agents/instructions/60-local-context-pbi.md` §9)
 
 See `references/delta-specs.md` for the full pattern: when to adopt it, requirement format, the **copy-full-then-edit rule** for MODIFIED requirements, the archive protocol, and migration guidance.
 

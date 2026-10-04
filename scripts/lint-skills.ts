@@ -212,7 +212,7 @@ const KIND_SUFFIX_RULES: ReadonlyArray<{ kind: string, suffixes: readonly string
 const KNOWN_CAPABILITIES = new Set(['library-docs', 'web-search', 'db', 'automation-flows', 'diagrams']);
 
 /**
- * Resolution tag → capability it resolves to (AGENTS.md §6). Drives the
+ * Resolution tag → capability it resolves to (`.agents/instructions/30-tool-resolution.md` §6). Drives the
  * CAPABILITY-UNDECLARED heuristic (check 22). `[ISSUE_TRACKER_TOOL]` and
  * `[AUTOMATION_TOOL]` are absent on purpose: they resolve to CLIs.
  */

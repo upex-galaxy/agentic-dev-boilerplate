@@ -61,6 +61,7 @@ const JIRA_REQUIRED_YAML = join(REPO_ROOT, '.agents', 'jira-required.yaml');
 const SCAN_ROOTS = [
   '.context',
   '.agents/skills',
+  '.agents/instructions', // the on-demand sections of AGENTS.md
 ];
 
 // Single root-level file to also scan.
@@ -115,6 +116,14 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['PROJECT_VARIABLE', 'REGISTRY.md'],
   // AGENTS.md §Pseudocode value types: documents {{PROJECT_VAR}} as syntax meta-marker
   ['PROJECT_VAR', 'AGENTS.md'],
+  // The AGENTS.md sections moved to .agents/instructions/ carry the same
+  // syntax meta-markers: the Critical Rules full text, Tool Resolution's
+  // pseudocode value types, Project Variables' syntax table, the context map.
+  ['VARIABLES', '.agents/instructions/01-critical-rules.md'],
+  ['PROJECT_VAR', '.agents/instructions/30-tool-resolution.md'],
+  ['VAR', '.agents/instructions/40-project-variables.md'],
+  ['VAR_NAME', '.agents/instructions/40-project-variables.md'],
+  ['VAR', '.agents/instructions/15-context-map.md'],
   // testability-guide credentials-content-template.md: documents {{VAR_NAME}} / {{environments.<env>.<var>}} syntax for publishers
   ['VAR_NAME', 'credentials-content-template.md'],
   // resend-cli (vendored community skill) reference docs use Resend's own

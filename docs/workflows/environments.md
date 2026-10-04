@@ -163,7 +163,7 @@ Aquí desarrollas y corres los tests unitarios.
 
 ### Staging
 
-Ambiente de integración donde todos los cambios son validados antes de producción. Es el ambiente por defecto de las skills cuando no indicas otro (`AGENTS.md` §8). Con una estrategia `main-integration` le corresponde la branch `staging`; con `solo-main` es un deploy de Vercel sin branch propia.
+Ambiente de integración donde todos los cambios son validados antes de producción. Es el ambiente por defecto de las skills cuando no indicas otro (`.agents/instructions/50-ticket-work.md` §8). Con una estrategia `main-integration` le corresponde la branch `staging`; con `solo-main` es un deploy de Vercel sin branch propia.
 
 ### Production (branch `main`)
 

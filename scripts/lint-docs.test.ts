@@ -153,6 +153,22 @@ describe('lint-docs roster and scripts', () => {
     expect(findings.map(tag)).toEqual(['error:AGENTS.md:1:roster:ghost-flow']);
   });
 
+  test('the skills section wins over AGENTS.md when it exists', () => {
+    skill('alpha-flow');
+    skill('ghost-flow');
+    write('AGENTS.md', router(['alpha-flow', 'ghost-flow']));
+    write('.agents/instructions/20-skills-and-mcps.md', router(['alpha-flow']));
+    const findings = lintDocs(root).findings.filter(f => f.kind === 'roster');
+    expect(findings.map(tag)).toEqual(['error:.agents/instructions/20-skills-and-mcps.md:1:roster:ghost-flow']);
+  });
+
+  test('a bun run citation inside an instruction section is checked like AGENTS.md', () => {
+    write('package.json', JSON.stringify({ scripts: { 'docs:check': 'y' } }));
+    write('.agents/instructions/80-git.md', 'Run `bun run docs:check`, never `bun run gone-script`.');
+    const findings = lintDocs(root).findings.filter(f => f.kind === 'script');
+    expect(findings.map(tag)).toEqual(['warning:.agents/instructions/80-git.md:1:script:gone-script']);
+  });
+
   test('a missing router table is one roster finding', () => {
     skill('alpha-flow');
     write('AGENTS.md', '# No router here');

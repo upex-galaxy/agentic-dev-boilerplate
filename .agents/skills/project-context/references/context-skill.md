@@ -37,7 +37,7 @@ What it sits over MUST exist. Missing → run the owning step first (a map mode 
 
 - `bun run skills:check` → `KIND-SUFFIX` and `STALE-PATH` green. STALE-PATH is STRICT for a context skill: every `.context/` path it cites must exist on disk (only `.context/PBI/` is exempt), which is why what it sits over must exist first
 - `bun run skills:registry` → the new block appears in `REGISTRY.md` with `kind: context`
-- `AGENTS.md` §5 row added by the project (T1), naming the loader: the workflow skills that touch the aspect
+- `.agents/instructions/20-skills-and-mcps.md` §5 row added by the project (T1), naming the loader: the workflow skills that touch the aspect
 - The skill body contains no sentence that is also in the map or the code comments (spot-check three rules)
 
 ## Never

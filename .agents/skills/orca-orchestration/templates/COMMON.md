@@ -135,7 +135,7 @@ fails rather than the command, so you go mute while believing you reported.
 - Project variables: `.agents/project.yaml`. Variable syntax: `.agents/README.md`.
 - Tracker catalogs: `.agents/jira-fields.json`, `.agents/jira-workflows.json`,
   `.agents/jira-required.yaml`.
-- Story context: the synced Jira cache under `.context/PBI/` (read-only; `AGENTS.md` §9), the
+- Story context: the synced Jira cache under `.context/PBI/` (read-only; `.agents/instructions/60-local-context-pbi.md` §9), the
   dependency edges in `.context/dev-roadmap.md`, the design plan for UI stories
   (`.context/design/master-design-plan.md`). CLI: `cli/`.
 - Scripts: read `package.json` directly. Never quote a command from a doc.

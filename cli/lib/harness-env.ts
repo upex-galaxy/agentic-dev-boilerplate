@@ -215,7 +215,7 @@ export interface EnvSnapshot {
 /**
  * Read `.env` from disk. Deliberately NOT `process.env`: an inherited value can
  * be stale, and the whole point of the generated surfaces is to make the FILE
- * authoritative (AGENTS.md section 5.5, "Launch with the `bun run <harness>`
+ * authoritative (`.agents/instructions/10-harnesses.md` section 5.5, "Launch with the `bun run <harness>`
  * wrappers").
  */
 export function readEnvSnapshot(root = REPO_ROOT): EnvSnapshot {

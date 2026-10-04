@@ -27,7 +27,7 @@ Rules:
 
 - Omit the block when the session captured nothing; no empty headings.
 - List only files verified on disk (`ls` the directory): never claim a capture a subagent only *said* it took.
-- The session folder is working state at `<<PRIMARY_ROOT>>`, never the gitignored `.context/PBI/` cache (`AGENTS.md` §9): a capture that another machine or a reviewer needs goes to the PR (comment) or to Jira (attachment), and the footer says where.
+- The session folder is working state at `<<PRIMARY_ROOT>>`, never the gitignored `.context/PBI/` cache (`.agents/instructions/60-local-context-pbi.md` §9): a capture that another machine or a reviewer needs goes to the PR (comment) or to Jira (attachment), and the footer says where.
 
 ## Part 2 — Session footer: tools used + dev surfaces touched
 

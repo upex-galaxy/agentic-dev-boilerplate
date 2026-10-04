@@ -139,7 +139,7 @@ env_vars = [
 ]
 
 # Atlassian through mcp-remote: OAuth in the browser, no token in .env.
-# Opt-in only: acli is the default Jira / Confluence path (AGENTS.md section 6).
+# Opt-in only: acli is the default Jira / Confluence path (`.agents/instructions/30-tool-resolution.md` section 6).
 [mcp_servers.atlassian]
 command = "bunx"
 startup_timeout_sec = 30

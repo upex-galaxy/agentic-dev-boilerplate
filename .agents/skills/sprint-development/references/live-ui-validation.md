@@ -20,14 +20,14 @@ When live-UI work is dispatched to a subagent, these rules travel in briefing co
 
 ## 1. Tool resolution
 
-`[AUTOMATION_TOOL]` resolves to **`/playwright-cli`** (AGENTS.md §6 Tool Resolution). It is the only browser path: it spawns its own browser per named session, logs in with the declared automation identity, is not bound to the Claude session, and runs the same inside a stage subagent, in Solo mode and on any of the three hosts. The boilerplate ships no browser MCP, so there is nothing to rank it against.
+`[AUTOMATION_TOOL]` resolves to **`/playwright-cli`** (`.agents/instructions/30-tool-resolution.md` §6 Tool Resolution). It is the only browser path: it spawns its own browser per named session, logs in with the declared automation identity, is not bound to the Claude session, and runs the same inside a stage subagent, in Solo mode and on any of the three hosts. The boilerplate ships no browser MCP, so there is nothing to rank it against.
 
 | Tier | Tool | Use | Session-bound? |
 | ---- | ---- | --- | -------------- |
 | 0 (COMPLEMENT) | **Authenticated HTTP probe** (`[API_TOOL]`) | No browser. Fast inner loop + server-rendered assertions only. **Cannot replace the browser tier**: §7 has the capability boundary. | No |
 | 1 (BROWSER) | **Playwright CLI** (`/playwright-cli`) | Every rendered, interactive or visual check, and every screenshot cited as evidence. | No |
 
-Load the owning skill before invoking the binary (AGENTS.md §6.5): `playwright-cli` → `/playwright-cli`. That skill owns the HOW of each verb (flags, syntax); §3 owns WHICH session, WHICH identity and how sessions stay apart, because the vendor skill cannot carry this repo's rules.
+Load the owning skill before invoking the binary (`.agents/instructions/30-tool-resolution.md` §6.5): `playwright-cli` → `/playwright-cli`. That skill owns the HOW of each verb (flags, syntax); §3 owns WHICH session, WHICH identity and how sessions stay apart, because the vendor skill cannot carry this repo's rules.
 
 ---
 

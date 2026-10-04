@@ -219,7 +219,7 @@ Agregar sección de URLs al final de `.env.example`:
 
 **Paso 2.2: Actualizar `.agents/project.yaml`**
 
-Las URLs por ambiente viven en `.agents/project.yaml` → `environments:` y en ningún otro lugar versionado (`AGENTS.md` §7). Con OK del usuario:
+Las URLs por ambiente viven en `.agents/project.yaml` → `environments:` y en ningún otro lugar versionado (`.agents/instructions/40-project-variables.md` §7). Con OK del usuario:
 
 - Completar `environments.staging.web_url` / `api_url` y `environments.local.*` si están en `null`.
 - Si el proyecto tiene producción y no existe `environments.production`, agregar el bloque con las tres claves (`web_url`, `api_url`, `db_project_ref`).

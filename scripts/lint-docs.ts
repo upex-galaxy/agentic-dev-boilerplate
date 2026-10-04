@@ -25,11 +25,14 @@
  *     `<code class="block">`, `<script>` and `<style>` are skipped; a line
  *     marked `volatile-ok: <reason>` is kept;
  *   - `roster`: a repo skill (a committed `.agents/skills/<slug>/SKILL.md` that
- *     is not a community install) missing from the `AGENTS.md` section 5 skill
- *     router. The human pages are NOT checked for a skill list: they point to
+ *     is not a community install) missing from the section 5 skill router
+ *     (`.agents/instructions/20-skills-and-mcps.md`, or `AGENTS.md` on a
+ *     project that still carries the single-file layout: `skillTableSource`).
+ *     The human pages are NOT checked for a skill list: they point to
  *     the generated `REGISTRY.md`, because enumerating the skills there is the
  *     mutable-set copy Critical Rule #17 forbids;
- *   - `script`: a `bun run <name>` quoted in `AGENTS.md` or in the doc surface
+ *   - `script`: a `bun run <name>` quoted in `AGENTS.md`, an instruction
+ *     section (`.agents/instructions/*.md`) or the doc surface
  *     (fenced blocks, decks and the Pages home included) whose name
  *     `package.json` does not declare. Placeholders, file runs
  *     (`bun run scripts/x.ts`) and prose that only names the command are
@@ -60,6 +63,7 @@
 import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { SECTIONS_DIR, skillTableSource } from './lib/instructions';
 import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 /** Repo roots an inline-code path must start with to be checked. */
@@ -343,7 +347,7 @@ export function lintDocFile(root: string, file: string): DocFinding[] {
 
 const ROUTER_HEADING = /^### Skills T1\b/m;
 
-/** Slugs in the first column of the AGENTS.md section 5 skill router table, or null when the table is missing. */
+/** Slugs in the first column of the section 5 skill router table, or null when the table is missing. */
 export function routerSlugs(agentsMd: string): Set<string> | null {
   const start = agentsMd.search(ROUTER_HEADING);
   if (start < 0) { return null; }
@@ -378,16 +382,23 @@ function repoSkills(root: string): string[] {
   return candidates.filter(slug => !ignored.has(`.agents/skills/${slug}/SKILL.md`)).sort();
 }
 
-/** `roster` findings: repo skills missing from the AGENTS.md section 5 router. */
+/** `roster` findings: repo skills missing from the section 5 skill router. */
 export function lintRoster(root: string): DocFinding[] {
-  const agentsFile = join(root, 'AGENTS.md');
+  const source = skillTableSource(root);
   const skills = repoSkills(root);
-  if (!existsSync(agentsFile) || skills.length === 0) { return []; }
-  const router = routerSlugs(readFileSync(agentsFile, 'utf8'));
+  if (source === null || skills.length === 0) { return []; }
+  const router = routerSlugs(source.text);
   if (router === null) {
-    return [{ file: 'AGENTS.md', line: 1, kind: 'roster', target: 'section 5 skill router table (### Skills T1 heading not found)' }];
+    return [{ file: source.file, line: 1, kind: 'roster', target: 'section 5 skill router table (### Skills T1 heading not found)' }];
   }
-  return skills.filter(slug => !router.has(slug)).map(slug => ({ file: 'AGENTS.md', line: 1, kind: 'roster' as const, target: slug }));
+  return skills.filter(slug => !router.has(slug)).map(slug => ({ file: source.file, line: 1, kind: 'roster' as const, target: slug }));
+}
+
+/** The instruction sections (`.agents/instructions/*.md`): their `bun run` citations are checked like `AGENTS.md`'s. */
+function instructionFiles(root: string): string[] {
+  const dir = join(root, SECTIONS_DIR);
+  if (!existsSync(dir)) { return []; }
+  return readdirSync(dir).filter(name => name.endsWith('.md')).sort().map(name => join(dir, name));
 }
 
 const BUN_RUN = /\bbun run(?:\s+--silent)?\s+([^\s`'"<>()[\]|,;\\]+)/g;
@@ -442,7 +453,8 @@ export function lintDocs(root: string): { files: number, findings: DocFinding[] 
   const findings = raw.filter(f => !isRef(f) || !ignored.has(resolvedOf(f)));
   const agentsFile = join(root, 'AGENTS.md');
   findings.push(...lintRoster(root));
-  findings.push(...lintScripts(root, existsSync(agentsFile) ? [agentsFile, ...files] : files));
+  const instructions = [...(existsSync(agentsFile) ? [agentsFile] : []), ...instructionFiles(root)];
+  findings.push(...lintScripts(root, [...instructions, ...files]));
   return { files: files.length, findings };
 }
 

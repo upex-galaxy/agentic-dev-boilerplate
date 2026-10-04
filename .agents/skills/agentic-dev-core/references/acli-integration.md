@@ -23,7 +23,7 @@ Workflow skills MUST NOT invoke `acli` directly. They invoke the pseudocode tag,
 | **WRITE** (create / transition / comment / link / assign / custom-field update, bulk-create) | `/acli` | The sync is read-only (pull). All mutations stay on `acli`. |
 | **Trivial lookup / sprint search** (key / summary / status only — no custom fields) | `/acli` search is fine | No materialization needed. |
 
-Rule: **if you need the content of a custom field (ACs, impl plan, bug fields), NEVER `acli` `view` — sync it.** Synced files live under `.context/PBI/` per `AGENTS.md` §9 (Jira = source of truth; local `.md` = read-only cache). When a field is absent, the sync emits a pointer stub and the content lives in the issue's comments/description per `.agents/jira-required.yaml` → `fallback:`. This matches the already-correct doctrine in `product-management/references/jira-operations.md` + `acceptance-criteria.md`.
+Rule: **if you need the content of a custom field (ACs, impl plan, bug fields), NEVER `acli` `view` — sync it.** Synced files live under `.context/PBI/` per `.agents/instructions/60-local-context-pbi.md` §9 (Jira = source of truth; local `.md` = read-only cache). When a field is absent, the sync emits a pointer stub and the content lives in the issue's comments/description per `.agents/jira-required.yaml` → `fallback:`. This matches the already-correct doctrine in `product-management/references/jira-operations.md` + `acceptance-criteria.md`.
 
 ### Concrete `/sprint-development` integration
 
@@ -70,7 +70,7 @@ Slug resolution rule: anything wrapped in `{{jira.<slug>}}` MUST be resolved aga
 | `.agents/jira-link-types.json` | Issue-link-type slug map | `bun run jira:sync-link-types` |
 | `.agents/jira-required.yaml` | Which fields are required per work type | Hand-curated; aligns with `jira-fields.json` |
 
-Slug syntax (per `AGENTS.md` §7):
+Slug syntax (per `.agents/instructions/40-project-variables.md` §7):
 
 - `{{jira.<slug>}}` — custom field ID (e.g. `{{jira.acceptance_criteria}}` → numeric workspace-specific ID)
 - `{{jira.status.<work_type>.<slug>}}` — status name (`{{jira.status.story.in_progress}}` → `"In Progress"`)
@@ -93,7 +93,7 @@ These are repo-flavored companions to the tool-level anti-patterns T1-T4 in `acl
 - **D6. NEVER assume teammates run the same `acli` version.** Pin a minimum version in CI and document it in `docs/`. Subcommand surfaces (e.g. `workitem` vs legacy `issue`) and flag shapes have shifted across minor releases.
 - **D7. NEVER hardcode Jira `customfield_NNNNN` IDs** in skills, scripts, prompts, or AI output. Resolve via the slug catalog (`{{jira.<slug>}}` against `.agents/jira-required.yaml` + `.agents/jira-fields.json`). IDs differ per workspace; slugs travel. Regenerate the catalog with `bun run jira:sync-fields` if a field is missing.
 - **D8. NEVER read a custom field via `acli` `view`.** It returns `null` for `customfield_*` (ACs, Gherkin, Scope, impl plans, bug fields). For ANY detailed read use `bun run jira:sync-issues get <KEY> [--include-comments]` / `jql "<query>"` and read the synced `.md` under `.context/PBI/`. `acli` view/search is allowed ONLY for trivial summary/status/key-list lookups. See "Reads vs writes" above.
-- **D9. NEVER hand-write a Jira-mirrored file in `.context/PBI/`** (`story.md`, `epic.md`, `epic-tree.md`, `acceptance-*.md`, `scope.md`, `out-of-scope.md`, `implementation-plan.md`, `feature-implementation-plan.md`, per-field files). Author content → push to the Jira field (or `fallback:` comment) → run the sync → read the materialized file. Only the `[LOCAL]` non-Jira files of `AGENTS.md` §9 (`context.md`, `progress.md`, `evidence/`) are hand-authored there. The sync OVERWRITES `[SYNC]` files every run (NO files are hard-protected — Jira is the source of truth; the sync overwrites every `[SYNC]` file every run). This is the doctrine `product-management/references/jira-operations.md` already enforces — it is now repo-wide.
+- **D9. NEVER hand-write a Jira-mirrored file in `.context/PBI/`** (`story.md`, `epic.md`, `epic-tree.md`, `acceptance-*.md`, `scope.md`, `out-of-scope.md`, `implementation-plan.md`, `feature-implementation-plan.md`, per-field files). Author content → push to the Jira field (or `fallback:` comment) → run the sync → read the materialized file. Only the `[LOCAL]` non-Jira files of `.agents/instructions/60-local-context-pbi.md` §9 (`context.md`, `progress.md`, `evidence/`) are hand-authored there. The sync OVERWRITES `[SYNC]` files every run (NO files are hard-protected — Jira is the source of truth; the sync overwrites every `[SYNC]` file every run). This is the doctrine `product-management/references/jira-operations.md` already enforces — it is now repo-wide.
 - **D10. NEVER publish ADF rich text to a Jira field without first reading `product-management/references/jira-publishing-gotchas.md`** — the two converter / API edges (inline `code` co-occurring with `strong`/`em`, and the MCP variant of `[ISSUE_TRACKER_TOOL]` silently dropping ADF on batched custom-field updates) both surface as HTTP 400 only at publish time. Pre-empt both. AND for any field whose content is naturally mappable, format it per `acli/references/adf-authoring-style.md` (tables / panels / nested lists) instead of flat prose — richness with purpose, never decoration; the field's hard-rule wins (AC stays fenced Gherkin, `I17`).
 
 ---
@@ -121,6 +121,6 @@ This file evolves whenever:
 - New Jira custom field is added to `.agents/jira-fields.json` and a DEV workflow needs to read or write it.
 - A new sync script lands under `scripts/sync-jira-*.ts`.
 - A new anti-pattern surfaces from a real DEV session and applies repo-wide.
-- The slug syntax in `AGENTS.md` §7 evolves.
+- The slug syntax in `.agents/instructions/40-project-variables.md` §7 evolves.
 
 Do NOT push tool-binary changes here — those belong in `acli/SKILL.md` (and therefore propagate to both DEV and QA boilerplates identically). Boundary rule: if the change is about `acli` the binary, it goes in `acli/SKILL.md`. If it's about how DEV uses `acli`, it goes here.

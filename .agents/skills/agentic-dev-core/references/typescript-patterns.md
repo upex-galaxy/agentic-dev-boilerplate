@@ -1,6 +1,6 @@
 # TypeScript Patterns — Full Reference
 
-> Loaded on demand. AGENTS.md §10 holds the 5-row quick-reference + 3-bullet DRY block. Full conventions and rationale live here. If a feature dev-guide (produced by `/project-foundation` Discovery) exists, prefer that — this file is the always-present fallback.
+> Loaded on demand. `.agents/instructions/70-code-quickref.md` §10 holds the 5-row quick-reference + 3-bullet DRY block. Full conventions and rationale live here. If a feature dev-guide (produced by `/project-foundation` Discovery) exists, prefer that — this file is the always-present fallback.
 
 ---
 

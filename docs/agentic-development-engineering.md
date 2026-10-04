@@ -240,9 +240,9 @@ Every skill declares its kind in `SKILL.md` frontmatter (`metadata.kind`), and `
 - **`core`**: `agentic-dev-core`, a passive reference host (briefing template, dispatch patterns, orchestration doctrine, skill-composition strategy, MCP capabilities, artifact lifecycle). Loaded on demand by other skills, never invoked directly.
 - **`workflow`**: the skills that own a stage of the lifecycle, from product definition and scaffolding through backlog, per-story delivery, git, PR review, unattended runs, session handoff and multi-session orchestration.
 - **`context`**: the `business-*-context` skills, each holding one synthesized business map as HTML, read with `bun run context:map <skill>` and refreshed by `/project-context`.
-- **`utility`**: a CLI's grammar (`acli`, `vercel-cli`), auto-loaded when that binary is called (`AGENTS.md` §6.5).
+- **`utility`**: a CLI's grammar (`acli`, `vercel-cli`), auto-loaded when that binary is called (`.agents/instructions/30-tool-resolution.md` §6.5).
 
-The roster itself is not copied here: `.agents/skills/REGISTRY.md` (built by `bun run skills:registry`) lists every skill with its kind and compact rules, and `AGENTS.md` §5 says when each one triggers.
+The roster itself is not copied here: `.agents/skills/REGISTRY.md` (built by `bun run skills:registry`) lists every skill with its kind and compact rules, and `.agents/instructions/20-skills-and-mcps.md` §5 says when each one triggers.
 
 On top of the project-shipped skills, the boilerplate composes with **external skill catalogs** installed via `bun run setup`:
 
@@ -396,7 +396,7 @@ Validated via `bun run vars:check`, `bun run jira:sync-fields`, and `bun run jir
 
 Static documentation is only half the picture. Before every meaningful action, the AI also pulls from **live** sources: the frontend codebase, backend routes, the Supabase database (via `[DB_TOOL]`), the OpenAPI spec (via `[API_TOOL]`), the Jira tracker (via `acli`), engram memory, official library docs (`[DOCS_TOOL]`) and the web (`[WEB_SEARCH_TOOL]`).
 
-Skills ask for a **capability**, never a server: `library-docs`, `web-search`, `db`, `automation-flows`, `diagrams`. Each resolves by tool-name suffix, whatever prefix the harness gave the server. The project MCP files declare the local servers (whatever `.mcp.json` declares); web search runs at harness level, connected once per machine (Exa first, Tavily second), and never lives in the project files (ADR-0005). When no tool provides a capability, the AI stops at the point of use, names the capability and how to enable it, and waits: no silent fallback. Vocabulary and rules: `agentic-dev-core/references/mcp-capabilities.md`. The Tool Resolution table in `AGENTS.md` §6 is the canonical mapping from each `[TAG_TOOL]` pseudocode tag to its concrete implementation, CLI first and MCP as fallback.
+Skills ask for a **capability**, never a server: `library-docs`, `web-search`, `db`, `automation-flows`, `diagrams`. Each resolves by tool-name suffix, whatever prefix the harness gave the server. The project MCP files declare the local servers (whatever `.mcp.json` declares); web search runs at harness level, connected once per machine (Exa first, Tavily second), and never lives in the project files (ADR-0005). When no tool provides a capability, the AI stops at the point of use, names the capability and how to enable it, and waits: no silent fallback. Vocabulary and rules: `agentic-dev-core/references/mcp-capabilities.md`. The Tool Resolution table in `.agents/instructions/30-tool-resolution.md` §6 is the canonical mapping from each `[TAG_TOOL]` pseudocode tag to its concrete implementation, CLI first and MCP as fallback.
 
 ### Why it matters
 
@@ -690,7 +690,7 @@ There are no command files: a skill is invoked by its name plus a mode, on every
 ### 11.5 Adding a new MCP
 
 1. Configure the server in all three runtime configs: `.mcp.json` (Claude Code, `${VAR}`), `opencode.jsonc` (OpenCode, `{file:.auth/opencode/VAR}`, value files written from `.env` by `bun run harness:env`) and `.codex/config.toml` (Codex; stdio servers start through the `.env` loader with a startup budget). `bun run agents:compat:check` normalizes the three and fails when a server exists in one host only or depends on a different set of `.env` variables. See `docs/mcp/README.md` for the per-host syntax.
-2. Decide which **capability** it provides. An existing one (`db`, `library-docs`, …) needs only the server; a new one needs a row in `AGENTS.md` §5 "MCPs (decision rules)", in §6 Tool Resolution, and in `agentic-dev-core/references/mcp-capabilities.md`, and the skills that use it declare it in `metadata.requires_capabilities`.
+2. Decide which **capability** it provides. An existing one (`db`, `library-docs`, …) needs only the server; a new one needs a row in `.agents/instructions/20-skills-and-mcps.md` §5 "MCPs (decision rules)", in `.agents/instructions/30-tool-resolution.md` §6 Tool Resolution, and in `agentic-dev-core/references/mcp-capabilities.md`, and the skills that use it declare it in `metadata.requires_capabilities`.
 3. Web search never goes in the project files: it is connected per machine, at harness level (ADR-0005).
 4. Add the server's variables to `.env.example`, and remember that a missing credential fails silently on every harness but Codex (Critical Rule #9): `/mcp` inside a Claude Code session is the check, and a 401/403 is the signal.
 
@@ -721,7 +721,7 @@ These hooks are documented but not implemented. Reopen when there is concrete de
 - **A foundation reference host (`agentic-dev-core`)** — passive library that hosts the canonical orchestration doctrine, briefing template, dispatch patterns, model-routing table, topic-key conventions, and skill-resolver protocol cited by every workflow skill. Loaded on demand; not invoked directly. Foundation files (`AGENTS.md`, `.agents/`, `scripts/`) ship with the cloned repository.
 - **A roster of phase-aware AI skills** — auto-triggered by user intent, orchestrated with human-in-the-loop checkpoints. Each tier of the lifecycle has its own skill. The current roster is enumerated in [onboarding.html §9 Skills catalog](onboarding.html).
 - **Skills with modes** — a multi-mode skill is invoked by name plus mode (`/project-context data`), the same entry point on every harness; no command files to keep in sync.
-- **One source, three harnesses** — `AGENTS.md` + `.agents/skills/` are read natively by OpenCode and Codex and through generated shims by Claude Code; the MCP inventory exists once per host format and is parity-checked. Full wiring in `AGENTS.md` §5.5.
+- **One source, three harnesses** — `AGENTS.md` + `.agents/skills/` are read natively by OpenCode and Codex and through generated shims by Claude Code; the MCP inventory exists once per host format and is parity-checked. Full wiring in `.agents/instructions/10-harnesses.md` §5.5.
 - **Orchestration and parallel work** — one-shot subagents by default; optional supervised workers in their own worktrees through `/orca-orchestration`; `bun run worktree:provision` and `bun run worktree:audit` for any parallel checkout; `/session-handoff` when a session must continue in a fresh one.
 - **Live system integrations** — capabilities resolved through MCPs (the local servers `.mcp.json` declares, plus web search at harness level and engram for memory); first-party CLIs for Jira (acli), GitHub (gh), deploys (vercel, supabase), browser automation (`playwright-cli`).
 - **A structured context layer** — project, module, and story-level knowledge, on disk. Project-level docs (product specs, design tokens, discovery docs) are version-controlled; per-ticket memory under `.context/PBI/` is a gitignored cache hydrated from Jira, not a git-tracked artefact.

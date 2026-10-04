@@ -1,6 +1,6 @@
 # Guía de Configuración MCP por host
 
-Referencia de sintaxis para los tres hosts del contrato (`AGENTS.md` §5.5): **Claude Code**, **OpenCode** y **Codex CLI + Desktop**. Qué servidores corre el repo, cómo llegan las credenciales y cómo sumar uno opt-in está en [`README.md`](./README.md); esta página es el detalle por host.
+Referencia de sintaxis para los tres hosts del contrato (`.agents/instructions/10-harnesses.md` §5.5): **Claude Code**, **OpenCode** y **Codex CLI + Desktop**. Qué servidores corre el repo, cómo llegan las credenciales y cómo sumar uno opt-in está en [`README.md`](./README.md); esta página es el detalle por host.
 
 ---
 
@@ -190,7 +190,7 @@ DBHub nombra sus tools con el id de la fuente (`execute_sql_<source_id>`); una v
 
 ## OpenAPI
 
-Opt-in, para explorar la API de la app desde el agente. Para llamadas puntuales alcanza con `curl` y los tipos de `bun run api:sync` (`AGENTS.md` §6, `[API_TOOL]`).
+Opt-in, para explorar la API de la app desde el agente. Para llamadas puntuales alcanza con `curl` y los tipos de `bun run api:sync` (`.agents/instructions/30-tool-resolution.md` §6, `[API_TOOL]`).
 
 Requisitos: URL base de la API, URL del spec OpenAPI (JSON o YAML) y un bearer token ([abajo](#token-de-supabase-para-llamar-a-la-api)).
 

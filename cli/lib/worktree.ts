@@ -214,8 +214,8 @@ export const AUDIT_RULES: readonly AuditRule[] = [
   { pattern: /^\.agents\/prompts(\/|$)/, class: 'state', note: 'updater single-use prompts' },
 
   // DISPOSABLE by doctrine: PBI [LOCAL] files are machine-local by design
-  // (AGENTS.md §9); their durable copies live in Jira or in `.session/`.
-  { pattern: /^\.context\/PBI\/(.*\/)?(evidence\/|(context|progress)\.md$)/, class: 'disposable', note: 'PBI [LOCAL] note or evidence; durable copies belong in Jira or .session/ (AGENTS.md §9)' },
+  // (`.agents/instructions/60-local-context-pbi.md` §9); their durable copies live in Jira or in `.session/`.
+  { pattern: /^\.context\/PBI\/(.*\/)?(evidence\/|(context|progress)\.md$)/, class: 'disposable', note: 'PBI [LOCAL] note or evidence; durable copies belong in Jira or .session/ (`.agents/instructions/60-local-context-pbi.md` §9)' },
 
   // CACHE: a command brings it back.
   { pattern: /(^|\/)node_modules(\/|$)/, class: 'cache', note: '`bun install`' },

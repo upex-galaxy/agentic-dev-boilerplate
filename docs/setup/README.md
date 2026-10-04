@@ -28,7 +28,7 @@
 
 El repo habla con Jira por `acli` y por scripts propios; Jira es la fuente de verdad de las historias y `.context/PBI/` es solo una caché local. Pasos, en orden:
 
-1. **Host.** `bun run agents:setup` completa `.agents/project.yaml`, incluido `issue_tracker.atlassian_url`. Ese es el ÚNICO lugar del host: no va en `.env` (`AGENTS.md` §7). `bun run --silent jira:url` lo imprime.
+1. **Host.** `bun run agents:setup` completa `.agents/project.yaml`, incluido `issue_tracker.atlassian_url`. Ese es el ÚNICO lugar del host: no va en `.env` (`.agents/instructions/40-project-variables.md` §7). `bun run --silent jira:url` lo imprime.
 2. **Credenciales.** `ATLASSIAN_EMAIL` y `ATLASSIAN_API_TOKEN` en `.env` (el instalador las pide en `bun run setup`). Nunca en el yaml versionado.
 3. **Catálogos.** `bun run jira:sync-fields`, `bun run jira:sync-workflows` y `bun run jira:sync-link-types` generan los catálogos de `.agents/` con los ids de TU instancia.
 4. **Validación.** `bun run jira:check` compara esos catálogos contra el manifiesto `.agents/jira-required.yaml` y falla si falta un campo requerido. Un campo que tu instancia no tiene usa el fallback a comentario que declara el manifiesto.
@@ -42,4 +42,4 @@ Para operar tickets desde el agente: skill `/acli`. Para administrar el proyecto
 
 - `docs/architectures/` - Configuración específica por arquitectura
 - `docs/mcp/` - Templates MCP opt-in y guía de sintaxis por host
-- `AGENTS.md` §5.5 - Un solo origen, tres harnesses (qué se genera y qué se versiona)
+- `.agents/instructions/10-harnesses.md` §5.5 - Un solo origen, tres harnesses (qué se genera y qué se versiona)

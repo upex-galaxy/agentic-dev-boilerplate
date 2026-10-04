@@ -1,6 +1,6 @@
 # Epic Creation
 
-> **Purpose**: Create a well-formed epic — naming, structure, decomposition into stories — in Jira, then materialize the read-only `epic.md` cache via the sync script. `epic.md` is a Jira mirror, NEVER hand-authored (`AGENTS.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9).
+> **Purpose**: Create a well-formed epic — naming, structure, decomposition into stories — in Jira, then materialize the read-only `epic.md` cache via the sync script. `epic.md` is a Jira mirror, NEVER hand-authored (`.agents/instructions/60-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9).
 > **Use when**: A new feature is too big for a single story (3+ stories needed) or you are seeding a brand-new product backlog.
 > **Companion references**:
 >
@@ -175,7 +175,7 @@ Use `[ISSUE_TRACKER_TOOL]` with the transition resolved from `{{jira.statuses.ep
 
 ### Step 2 — Materialize the Local Epic Cache (sync, do NOT hand-write)
 
-**Action:** The epic already lives in Jira (Step 1). Its local `epic.md` is a **read-only cache** — never hand-authored (`AGENTS.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Materialize it with the sync script using the Jira Key captured in Step 1:
+**Action:** The epic already lives in Jira (Step 1). Its local `epic.md` is a **read-only cache** — never hand-authored (`.agents/instructions/60-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Materialize it with the sync script using the Jira Key captured in Step 1:
 
 ```
 bun run jira:sync-issues get {PROJECT_KEY}-{ISSUE_NUM}

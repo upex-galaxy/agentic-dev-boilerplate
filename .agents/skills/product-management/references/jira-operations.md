@@ -12,7 +12,7 @@
 
 ## Tool Resolution recap
 
-Routing follows the canonical table in `AGENTS.md` §6 (Tool Resolution). For Jira:
+Routing follows the canonical table in `.agents/instructions/30-tool-resolution.md` §6 (Tool Resolution). For Jira:
 
 `[ISSUE_TRACKER_TOOL]` resolves to a three-tier stack:
 
