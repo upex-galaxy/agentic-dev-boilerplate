@@ -2,7 +2,7 @@
 id: context-map
 title: "Context loading map: task to what to load"
 load_when: "starting a task and deciding which skill to load and which context to read, or locating a key path (business maps, ADRs, design plan, roadmaps, PBI tree)"
-triggers: ["\\bonboard", "\\bPRD\\b", "\\bSRS\\b", "design system", "mockup", "scaffold", "\\badopt", "testability", "\\bepic\\b", "[ée]pica", "backlog", "\\bstory\\b", "historia", "roadmap", "\\bADR\\b", "business map", "\\bmapa\\b", "glossary", "glosario"]
+triggers: ["\\bonboard", "\\bPRD\\b", "\\bSRS\\b", "design system", "mockup", "scaffold", "\\badopt", "testability", "\\bepic\\b", "[ée]pica", "backlog", "roadmap", "\\bADR\\b", "business[- ](?:data |feature |api )?maps?", "\\bmapa\\b", "glossary", "glosario"]
 paths: [".context/"]
 ---
 

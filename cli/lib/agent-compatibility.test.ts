@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { IDENTITY_PREFIX, PERSONALITY_CONTRACT } from '../../.agents/hooks/personality-reinject.mjs';
+import { IDENTITY_PREFIX, PERSONALITY_CONTRACT, ROUTE_PREFIX, routeStatePath } from '../../.agents/hooks/personality-reinject.mjs';
 import opencodePlugin from '../../.opencode/plugins/personality-reinject.js';
 import {
   CLAUDE_HOOK_COMMAND,
@@ -13,6 +13,7 @@ import {
   CODEX_ENV_LOADER_COMMAND,
   CODEX_HOOK_COMMAND,
   CODEX_HOOK_COMMAND_WINDOWS,
+  CODEX_PROJECT_DOC_MAX_BYTES,
   CODEX_STARTUP_TIMEOUT_SEC,
   declaredMcpIds,
   EXPECTED_MCP,
@@ -21,6 +22,7 @@ import {
   unwrapCodexEnvLoader,
   validateEslintBlockWiring,
   validateHookCompatibility,
+  validateInstructionRouterHooks,
   validateMcpParity,
   validateMcpParityFindings,
   validateOpenCodePluginEntrypoints,
@@ -483,6 +485,92 @@ describe('hook adapters', () => {
 
   test('accepts the shipped dual-entrypoint OpenCode adapter', () => {
     expect(validateOpenCodePluginEntrypoints(readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8'))).toEqual([]);
+  });
+});
+
+describe('instruction router hooks', () => {
+  const ROUTER_L0 = '# L0\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/80-git.md` | - |\n<!-- router:end -->\n';
+
+  function compactSettings(command: string, windows?: string): string {
+    const hook: Record<string, unknown> = { type: 'command', command, timeout: 5 };
+    if (windows) { hook.commandWindows = windows; }
+    return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }], SessionStart: [{ matcher: 'compact', hooks: [hook] }] } }, null, 2)}\n`;
+  }
+
+  function routerFixture(): string {
+    const root = contractFixture('agent compatibility router ');
+    write(root, 'AGENTS.md', ROUTER_L0);
+    write(root, '.claude/settings.json', compactSettings(CLAUDE_HOOK_COMMAND));
+    write(root, '.codex/hooks.json', compactSettings(CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS));
+    return root;
+  }
+
+  test('the real repository routes on every host it can', () => {
+    expect(validateInstructionRouterHooks(REPO_ROOT)).toEqual([]);
+  });
+
+  test('binds only once AGENTS.md carries the router', () => {
+    const root = contractFixture();
+    expect(validateInstructionRouterHooks(root)).toEqual([]);
+    write(root, 'AGENTS.md', '# single-file layout\n');
+    expect(validateInstructionRouterHooks(root)).toEqual([]);
+    write(root, 'AGENTS.md', ROUTER_L0);
+    const errors = validateInstructionRouterHooks(root);
+    expect(errors.some(e => e.startsWith('claude must re-arm the routes after compaction'))).toBe(true);
+    expect(errors.some(e => e.startsWith('codex must re-arm the routes after compaction'))).toBe(true);
+    expect(validateHookCompatibility(root)).toEqual(errors);
+  });
+
+  test('accepts a compact SessionStart on both command hosts', () => {
+    expect(validateInstructionRouterHooks(routerFixture())).toEqual([]);
+  });
+
+  test('rejects an OpenCode adapter that stopped classifying the prompt or declaring OpenCode 2', () => {
+    const root = routerFixture();
+    const plugin = readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8')
+      .replace('\'chat.message\'', '\'chat.params\'')
+      .replaceAll('ROUTER-ONLY', 'router only');
+    write(root, '.opencode/plugins/personality-reinject.js', plugin);
+    expect(validateInstructionRouterHooks(root)).toEqual([
+      'OpenCode personality adapter must classify the prompt in chat.message with the shared routeLines (OpenCode 1).',
+      'OpenCode personality adapter must declare the OpenCode 2 degradation (ROUTER-ONLY: no hook carries the prompt).',
+    ]);
+  });
+
+  test('rejects an emitter that lost the classifier', () => {
+    const root = routerFixture();
+    const emitter = readFileSync(join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs'), 'utf8')
+      .replace('export function routeLines', 'function routeLines');
+    write(root, '.agents/hooks/personality-reinject.mjs', emitter);
+    expect(validateInstructionRouterHooks(root)).toEqual(['Shared hook emitter must export routeLines(): the ROUTE: lines have one classifier.']);
+  });
+
+  test('rejects an always-on file Codex would cut, except an adopted app\'s composed one', () => {
+    const root = routerFixture();
+    write(root, 'AGENTS.md', `${ROUTER_L0}${'x'.repeat(CODEX_PROJECT_DOC_MAX_BYTES)}\n`);
+    expect(validateInstructionRouterHooks(root)[0]).toContain(`Codex cuts the always-on file at ${CODEX_PROJECT_DOC_MAX_BYTES} bytes`);
+    write(root, 'AGENTS.md', `## 0. Project instructions (pre-adoption)\n${ROUTER_L0}${'x'.repeat(CODEX_PROJECT_DOC_MAX_BYTES)}\n`);
+    expect(validateInstructionRouterHooks(root)).toEqual([]);
+  });
+
+  test('OpenCode 1 classifies in chat.message, routes through the system transform once, re-arms on compaction', async () => {
+    const sessionID = `compat-route-${process.pid}-${Date.now()}`;
+    const plugin = await opencodePlugin.server({ worktree: REPO_ROOT });
+    const turn = async (text: string) => {
+      await plugin['chat.message']({ sessionID }, { message: {}, parts: [{ type: 'text', text }] });
+      const output = { system: [] as string[] };
+      await plugin['experimental.chat.system.transform']({ sessionID, model: {} }, output);
+      return output.system.filter(line => line.startsWith(ROUTE_PREFIX));
+    };
+    try {
+      expect(await turn('commit and push')).toEqual([`${ROUTE_PREFIX} .agents/instructions/80-git.md (git)`]);
+      expect(await turn('push again')).toEqual([]);
+      await plugin['experimental.session.compacting']({ sessionID });
+      expect(await turn('push again')).toEqual([`${ROUTE_PREFIX} .agents/instructions/80-git.md (git)`]);
+    }
+    finally {
+      rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
+    }
   });
 });
 
