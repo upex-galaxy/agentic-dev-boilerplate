@@ -7,10 +7,11 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 // The updater's twin (repo-side; `packages/` is pruned from consumers, so a
 // test here may read it). See `resetGitStrategyMeta` in `../src/prepare.ts`.
 import { resetGitStrategyProvenance } from '../../../cli/lib/git-strategy-provenance.ts';
+import { findStubLeaks } from '../../../cli/lib/updater-instructions.ts';
 import { parseArgs } from '../src/args.ts';
 import { buildTarArgs } from '../src/download.ts';
 import { CliError } from '../src/errors.ts';
-import { pruneBootstrapExcludes, resetGitStrategyMeta, rewriteProjectYaml, sanitizeProjectName, seedProjectYamlFromSchema } from '../src/prepare.ts';
+import { countStubLeaks, pruneBootstrapExcludes, resetGitStrategyMeta, rewriteProjectYaml, sanitizeProjectName, seedProjectInstructions, seedProjectYamlFromSchema } from '../src/prepare.ts';
 
 describe('buildTarArgs', () => {
   // `--force-local` is GNU-only; bsdtar (macOS, and C:\Windows\System32\tar.exe
@@ -446,5 +447,44 @@ describe('seedProjectYamlFromSchema', () => {
     expect(yaml).toContain('    direct_push_to_protected: confirm #');
     expect(yaml).toContain('    strategy_source: inherited #');
     expect(yaml).not.toContain('ProtectPublic');
+  });
+});
+
+describe('seedProjectInstructions', () => {
+  const REPO = join(import.meta.dir, '..', '..', '..');
+  const OWN = readFileSync(join(REPO, '.agents', 'instructions', 'project.md'), 'utf8');
+  const STUB = readFileSync(join(REPO, '.agents', 'instructions', 'project.md.template'), 'utf8');
+  let dir: string;
+  const target = (): string => join(dir, '.agents', 'instructions', 'project.md');
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'cad-seed-instructions-'));
+    mkdirSync(join(dir, '.agents', 'instructions'), { recursive: true });
+  });
+  afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
+
+  test('the extracted boilerplate overlay is replaced by the generic stub', async () => {
+    writeFileSync(target(), OWN);
+    writeFileSync(join(dir, '.agents', 'instructions', 'project.md.template'), STUB);
+    expect(await seedProjectInstructions(dir)).toBe('seeded');
+    expect(readFileSync(target(), 'utf8')).toBe(STUB);
+  });
+
+  test('fails closed: a leaking stub is not written and the maintainer file is removed', async () => {
+    writeFileSync(target(), OWN);
+    writeFileSync(join(dir, '.agents', 'instructions', 'project.md.template'), OWN);
+    expect(await seedProjectInstructions(dir)).toBe('removed');
+    expect(existsSync(target())).toBe(false);
+  });
+
+  test('a template from before the split is a no-op', async () => {
+    expect(await seedProjectInstructions(dir)).toBe('absent');
+  });
+
+  test('same verdict as the updater\'s leak gate (twins: change them together)', () => {
+    const cases: Array<[string, string | null]> = [[STUB, OWN], [OWN, OWN], [OWN, null], [STUB, null], ['Plain generic text that is long enough to count.\n', null]];
+    for (const [stub, own] of cases) {
+      expect(countStubLeaks(stub, own)).toBe(findStubLeaks(stub, own).length);
+    }
   });
 });

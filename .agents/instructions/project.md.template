@@ -1,0 +1,15 @@
+---
+id: project
+title: "Project instructions"
+load_when: "anything specific to this project: its own rules, conventions, exceptions and its reading of shared doctrine"
+---
+
+# Project instructions
+
+> Section `project` of the project instructions: the PROJECT-OWNED overlay. Every other file in `.agents/instructions/` is shared doctrine that `bun run up` keeps in step with the boilerplate; this one holds what is true only for this repository, and no sync ever touches it. A rule here may narrow a shared rule for this project and must say which one; it never silently contradicts a Critical Rule.
+
+<!-- Add one `##` heading per topic. Name the source of truth for any value that changes (Critical Rule #17); keep values themselves in `.agents/project.yaml` or the tracker. -->
+
+## Git Strategy (this repository)
+
+None recorded yet. `git-flow-master` reads the strategy and its policy from the `git_strategy:` block of `.agents/project.yaml`; an exception this project accepts on purpose (a host rule it bypasses, a divergence it keeps) is written here, with its reason, by the people who decided it.

@@ -29,6 +29,12 @@
  *  - It clears itself with no ceremony: write the section, and the next run
  *    finds it and drops it from the ledger.
  *
+ * L0 HEADINGS ONLY. Since the progressive-disclosure split, everything outside
+ * the always-on L0 ships as synced section files under `.agents/instructions/`
+ * and reaches the project on its own. A heading the pre-split single file had
+ * and the split moved out (`legacyHeadingHome(...).kind === 'moved'`) is never
+ * debt: it is dropped from the ledger as `retargeted`, not reported as resolved.
+ *
  * SCOPED TO `AGENTS.md` ONLY. The argument for the ledger is that this one file
  * is loaded by every session and cited by every skill, so its divergence is
  * silent and compounding. No other watched file has that property: a tsconfig,
@@ -38,7 +44,8 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { markdownSectionDelta } from './updater-parity.ts';
+import { legacyHeadingHome } from './updater-instructions.ts';
+import { markdownSectionDelta, markdownSections } from './updater-parity.ts';
 
 /** The one file this ledger is scoped to (see the file header). */
 export const DOCTRINE_FILE = 'AGENTS.md';
@@ -100,6 +107,13 @@ export interface DoctrineDebt {
   outstanding: string[]
   /** Sections that were in the ledger and are now present: cleared this run. */
   resolved: string[]
+  /** Ledgered sections that moved out of L0 into a synced section file: dropped, never debt. */
+  retargeted: string[]
+}
+
+/** True when `heading` names a section the split moved out of L0 (it now arrives synced). */
+function relocatedOutOfL0(heading: string): boolean {
+  return legacyHeadingHome(heading)?.kind === 'moved';
 }
 
 /**
@@ -116,11 +130,17 @@ export function reconcileDoctrineLedger(
   previous: DoctrineLedger,
   today: string,
 ): DoctrineDebt {
+  // Upstream's AGENTS.md IS the L0, so its headings are the only debt there is.
   const absent = new Set(markdownSectionDelta(project, upstream).added);
+  const inUpstream = new Set(markdownSections(upstream).keys());
   const ledger: DoctrineLedger = {};
   const resolved: string[] = [];
+  const retargeted: string[] = [];
   for (const [heading, entry] of Object.entries(previous)) {
     if (absent.has(heading)) { ledger[heading] = { runs: entry.runs + 1, since: entry.since }; }
+    // Gone from upstream's L0 because it now arrives as a synced section:
+    // retired, not written by the project.
+    else if (!inUpstream.has(heading) && relocatedOutOfL0(heading)) { retargeted.push(heading); }
     else { resolved.push(heading); }
   }
   for (const heading of absent) {
@@ -128,7 +148,7 @@ export function reconcileDoctrineLedger(
   }
   // Oldest debt first: the section that has been missing longest leads the row.
   const outstanding = Object.keys(ledger).sort((a, b) => ledger[b].runs - ledger[a].runs);
-  return { ledger, outstanding, resolved };
+  return { ledger, outstanding, resolved, retargeted };
 }
 
 /**

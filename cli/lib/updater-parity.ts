@@ -33,16 +33,18 @@
 
 import type { CompatibilityErrorGroup } from './agent-compatibility.ts';
 import type { MapStatus } from './context-maps.ts';
+import type { LegacyHomeKind } from './updater-instructions.ts';
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
+
 import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
-
 import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OVERLAY, SHADOWING_COMMANDS_BACKUP_DIR } from './agent-compatibility.ts';
 import { contextMapAdvice, contextMapStatuses, mapRelPath } from './context-maps.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
+import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE } from './updater-instructions.ts';
 import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
 // ============================================================================
@@ -946,6 +948,79 @@ export function describeWatchedFile(filePath: string, project: string, upstream:
   return watchedFileEvidence(filePath, project, upstream, diff).evidence;
 }
 
+/** One line of the legacy-AGENTS.md heading map. */
+export interface LegacyHeadingRow {
+  heading: string
+  /** `own` = no shipped heading matches: the project's own text. */
+  kind: LegacyHomeKind | 'own'
+  files: string[]
+  action: string
+}
+
+const LEGACY_ACTION: Record<LegacyHomeKind | 'own', string> = {
+  moved: 'ships as a synced section now: move anything of yours out of it into .agents/instructions/project.md, then delete the heading from AGENTS.md',
+  split: 'take upstream\'s L0 text for this heading; the full text lives in the section file, synced',
+  stays: 'still in L0: port upstream\'s wording, keep your own additions',
+  app: 'the app\'s preserved instructions: leave the block where it is',
+  own: 'your own text: move it into .agents/instructions/project.md (or a project context skill), then delete it from AGENTS.md',
+};
+
+/**
+ * The heading map for a project whose `AGENTS.md` is still the pre-split single
+ * file while upstream ships the progressive-disclosure L0. Every heading of the
+ * project's copy, with where its text lives now and what to do with it. Empty
+ * when upstream is not the split L0, when the project's copy already is, or
+ * when the project carries none of the relocated headings.
+ */
+export function legacyInstructionsMap(project: string, upstream: string): LegacyHeadingRow[] {
+  if (!isSplitL0(upstream) || isSplitL0(project)) { return []; }
+  const headings = [...markdownSections(project).keys()].filter(h => h !== '');
+  const rows: LegacyHeadingRow[] = [];
+  const upstreamTitle = [...markdownSections(upstream).keys()].find(h => h !== '');
+  for (const heading of headings) {
+    // The file's own title is shared by both copies; it maps to nothing.
+    if (heading === upstreamTitle) { continue; }
+    const home = legacyHeadingHome(heading);
+    const kind = home?.kind ?? 'own';
+    rows.push({ heading, kind, files: home?.files ?? [PROJECT_INSTRUCTIONS_FILE], action: LEGACY_ACTION[kind] });
+  }
+  return rows.some(r => r.kind === 'moved') ? rows : [];
+}
+
+/**
+ * The migration clause + note for the `AGENTS.md` drift row of a project
+ * scaffolded before the split. The file is protected and is NEVER rewritten
+ * automatically: the row says which headings now arrive as synced section
+ * files, which are the project's own (they move into `project.md`), and that
+ * the router + load protocol are what to port from upstream.
+ */
+export function legacyInstructionsNote(filePath: string, project: string, upstream: string): { clause: string, note: string } | null {
+  if (filePath !== 'AGENTS.md') { return null; }
+  const rows = legacyInstructionsMap(project, upstream);
+  if (rows.length === 0) { return null; }
+  const moved = rows.filter(r => r.kind === 'moved').map(r => r.heading);
+  const own = rows.filter(r => r.kind === 'own').map(r => r.heading);
+  const added = markdownSectionDelta(project, upstream).added;
+  const clause = [
+    `legacy single-file ${filePath}: ${moved.length} heading(s) now ship as synced sections under ${INSTRUCTIONS_DIR}/ (${listNames(moved)})`,
+    own.length > 0 ? `${own.length} heading(s) are this project's own and move into ${PROJECT_INSTRUCTIONS_FILE} (${listNames(own)})` : 'no project-only heading',
+    added.length > 0 ? `port upstream's L0 additions: ${listNames(added)}` : null,
+    'never rewritten automatically; the heading map is in the saved file',
+  ].filter((part): part is string => part !== null).join('; ');
+  const cell = (text: string): string => text.replace(/\|/g, '\\|');
+  const note = [
+    `${filePath} here is the pre-split single file; upstream now ships it as a small always-on L0 (load protocol, router, Critical Rules as binding sentences, behavioural layer, orchestration core, memory triggers) plus on-demand sections in ${INSTRUCTIONS_DIR}/, which \`bun run up\` keeps in step for you. ${filePath} is yours and is never rewritten automatically. Rebuild it from upstream's L0, carrying over only what is this project's own:`,
+    '',
+    '| Your heading | Lives now in | What to do |',
+    '|---|---|---|',
+    ...rows.map(r => `| ${cell(r.heading)} | ${r.files.map(f => `\`${f}\``).join(' + ')} | ${r.action} |`),
+    ...added.map(h => `| (upstream only) ${cell(h)} | \`${filePath}\` | copy from upstream's ${filePath} |`),
+    '',
+    `Done when \`bun run instructions:check\` passes: L0 under its byte budget, every section routed. A rule only this project has lives in ${PROJECT_INSTRUCTIONS_FILE}, which no sync touches.`,
+  ].join('\n');
+  return { clause, note };
+}
+
 // ============================================================================
 // COMPAT ERROR CLASSIFICATION
 // ============================================================================
@@ -1102,8 +1177,18 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       drifted.set(entry.path, { surface: watchedSurface(entry.path, entry.source), path: entry.path, evidence: withPrerequisite(structural), suggested: 'merge', blocking: prerequisite !== null || missingBlocks.length > 0, diff, projectOnly: true });
       continue;
     }
-    const { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
+    let { evidence, projectOnly, suggested } = watchedFileEvidence(entry.path, project, upstream, diff);
     const notes: { clause: string, note: string }[] = [];
+    // A pre-split AGENTS.md: the generic heading delta would say "keep
+    // project-only headings" for sections that now arrive synced. The heading
+    // map replaces it; the file itself is never rewritten.
+    const legacy = legacyInstructionsNote(entry.path, project, upstream);
+    if (legacy !== null) {
+      evidence = `${legacy.clause}; ${formatStats(diffStats(diff))}`;
+      projectOnly = true;
+      suggested = 'merge';
+      notes.push({ clause: '', note: legacy.note });
+    }
     // No husky hook is ever overwritten, so a consumer only learns about the
     // gates split if the row says so: without it no gate a future release adds
     // ever runs there.
@@ -1121,7 +1206,7 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     drifted.set(entry.path, {
       surface: watchedSurface(entry.path, entry.source),
       path: entry.path,
-      evidence: withPrerequisite([evidence, ...notes.map(n => n.clause)].join('; ')),
+      evidence: withPrerequisite([evidence, ...notes.map(n => n.clause).filter(c => c !== '')].join('; ')),
       // A prerequisite row cannot be "reviewed later": the release is
       // half-delivered until its hunk lands, so it is a merge, and it blocks.
       suggested: prerequisite === null ? suggested : 'merge',
