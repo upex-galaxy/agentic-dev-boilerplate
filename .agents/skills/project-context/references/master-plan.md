@@ -295,7 +295,7 @@ Each gap should be phrased as a one-line spike: "Spike: choose payment provider 
 ## After generation
 
 - **Cascade to `/project-context dev-roadmap`** (strategy → sequence): after the Master Sprint structure changes, invoke `/project-context dev-roadmap` so the ticket-level execution roadmap re-reconciles against the updated Master Sprint grouping. This is the strategy→sequence handoff — the two docs live at different altitudes (this one = "why this epic order"; `dev-roadmap.md` = "what ticket next + what unblocks it"). Skip only if no stories/links exist yet (nothing to sequence).
-- Update `AGENTS.md` (never the `CLAUDE.md` shim) Context System section to reference `.context/master-implementation-plan.md` if not already present.
+- Key paths pointer: the shared Key paths in `.agents/instructions/15-context-map.md` already name `.context/master-implementation-plan.md`. Only when this project's copy lacks it, add it to `.agents/instructions/project.md` (`## Key paths (this project)`); never write it into `AGENTS.md`, a shared section or the `CLAUDE.md` shim.
 - In UPDATE mode: show diff summary, wait for explicit confirmation before overwriting. Highlight changes that promote / demote a feature across Master Sprints — those are the high-attention deltas.
 - Report:
   - Master Sprint 0 features identified: N

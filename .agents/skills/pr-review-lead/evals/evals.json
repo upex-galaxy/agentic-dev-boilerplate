@@ -3,7 +3,7 @@
     {
       "name": "should-trigger-review-teammate-pr",
       "prompt": "Revisa el PR #57 de Ana, actúa de tech lead.",
-      "expected_behavior": "Activates pr-review-lead. Asks the strictness question (Flexible / Standard / Strict) through the harness prompt before reading any diff, loads /git-flow-master before gh, loads AGENTS.md plus the doctrine files the PR touches, reads the real diff with gh pr diff, and presents a findings table bucketed Real / Pattern / Positive with BLOCKER/MAJOR/MINOR/NIT severities, citations, and a score out of 10. Posts nothing.",
+      "expected_behavior": "Activates pr-review-lead. Asks the strictness question (Flexible / Standard / Strict) through the harness prompt before reading any diff, loads /git-flow-master before gh, loads AGENTS.md and the sections its router names plus the doctrine files the PR touches, reads the real diff with gh pr diff, and presents a findings table bucketed Real / Pattern / Positive with BLOCKER/MAJOR/MINOR/NIT severities, citations, and a score out of 10. Posts nothing.",
       "category": "positive"
     },
     {

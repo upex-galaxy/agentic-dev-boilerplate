@@ -22,18 +22,23 @@
  *   5. `ROUTE: read <file>` lines: the instruction files the prompt needs and
  *      this session has not been routed to yet, classified with the router of
  *      `AGENTS.md` and each section's frontmatter (see `routeLines`). 0 bytes
- *      when nothing new matches. A `SessionStart` with source `compact`
- *      re-arms them and prints nothing.
+ *      when nothing new matches. A `SessionStart` with source `compact` or
+ *      `clear` re-arms them and prints nothing (which host sends which
+ *      source: the adapter list below).
  *
  * The text lives HERE and nowhere else. Each harness reaches it through a thin
  * adapter:
  *   - Claude Code: `.claude/settings.json` UserPromptSubmit runs this file, and
- *     SessionStart (matcher `compact`) runs it again to re-arm the routes.
- *   - Codex: `.codex/hooks.json` does the same from the Git root (trusted
- *     project only: an untrusted one loads neither AGENTS.md nor hooks).
+ *     two SessionStart groups (matcher `compact`, matcher `clear`) run it
+ *     again to re-arm the routes after a compaction or a `/clear`.
+ *   - Codex: `.codex/hooks.json` does the same from the Git root, with the
+ *     same two SessionStart groups (`compact`, `clear`; trusted project only:
+ *     an untrusted one loads neither AGENTS.md nor hooks).
  *   - OpenCode: `.opencode/plugins/personality-reinject.js` imports
  *     `agentContextLines` and pushes the same lines into the system prompt;
- *     OpenCode 1 also routes from `chat.message`, OpenCode 2 is router-only.
+ *     OpenCode 1 also routes from `chat.message` and re-arms on
+ *     `experimental.session.compacting` only (the adapter registers no `/clear` hook);
+ *     OpenCode 2 is router-only, so it has nothing to re-arm.
  * `bun run agents:compat:check` pins the three adapters to this emitter.
  *
  * Hook wire (verified against the vendor docs): Claude Code pipes a JSON
@@ -426,8 +431,9 @@ export function worktreeUnprovisioned(options = {}) {
  *
  * One line per newly routed file. The per-session state (keyed by session id)
  * remembers what was routed, so a prompt that needs nothing new costs 0 bytes;
- * `SessionStart` with source `compact` or `clear` re-arms it, because the
- * routed files left the context with the compacted messages.
+ * `SessionStart` with source `compact` or `clear` re-arms it (Claude Code and
+ * Codex; OpenCode 1 on compaction only), because the routed files left the
+ * context with the compacted or cleared messages.
  */
 export const ROUTE_PREFIX = 'ROUTE: read';
 export const ROUTER_START = '<!-- router:start -->';
@@ -783,7 +789,7 @@ export function renderHookOutput(options = {}) {
   const { env = process.env, hookInput = {}, home = homedir() } = options;
   const event = text(hookInput.hook_event_name) || 'UserPromptSubmit';
   if (event === 'SessionStart') {
-    // Wired with the `compact` matcher only: re-arm the routes, add nothing.
+    // Wired with the `compact` and `clear` matchers: re-arm the routes, add nothing.
     if (text(hookInput.source) === 'compact' || text(hookInput.source) === 'clear') {
       rearmRoutes({ ...options, env, hookInput, sessionId: text(hookInput.session_id) });
     }

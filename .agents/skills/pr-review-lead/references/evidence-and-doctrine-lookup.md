@@ -14,7 +14,7 @@ Every finding either points at a line of code, points at a line of doctrine, or 
 
 ## Doctrine map (this repo)
 
-Load `AGENTS.md` in full, then the files the PR actually touches. Widen or narrow per PR; do not load the whole set for a three-line fix.
+Load `AGENTS.md` and the sections its router names for this review (`.agents/instructions/`, at least `01-critical-rules.md` and `70-code-quickref.md`), then the files the PR actually touches. Widen or narrow per PR; do not load the whole set for a three-line fix.
 
 | The PR touches | Read |
 |---|---|

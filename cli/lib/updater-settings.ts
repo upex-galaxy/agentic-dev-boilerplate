@@ -32,6 +32,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { REARM_SESSION_START_SOURCES } from './agent-compatibility-contracts.ts';
 import { parsePackageJson, stringifyPackageJson } from './updater-package.ts';
 
 /** The file whose allow list is merged, and the array inside it. */
@@ -121,17 +122,17 @@ export function applyAllowListMerge(repoRoot: string, templateDir: string): stri
 export interface PromptHookMerge {
   /** True when the project's file had no `hooks.UserPromptSubmit` and upstream's groups were added. */
   added: boolean
-  /** True when the project's `hooks.SessionStart` had no `compact` group and upstream's was appended. */
-  compactAdded: boolean
+  /** The re-arm sources (`compact`, `clear`) whose upstream group was appended because the project's `hooks.SessionStart` had none of its own. */
+  rearmAdded: string[]
   /** The file's new contents, or null when nothing changes (no write). */
   merged: string | null
 }
 
-/** `matcher: "compact"` groups of a hooks object's `SessionStart` (none when the event is absent or malformed). */
-function compactGroups(hooks: Record<string, unknown> | undefined): unknown[] {
+/** `matcher: <source>` groups of a hooks object's `SessionStart` (none when the event is absent or malformed). */
+function sourceGroups(hooks: Record<string, unknown> | undefined, source: string): unknown[] {
   const groups = hooks?.SessionStart;
   if (!Array.isArray(groups)) { return []; }
-  return groups.filter(group => group !== null && typeof group === 'object' && (group as Record<string, unknown>).matcher === 'compact');
+  return groups.filter(group => group !== null && typeof group === 'object' && (group as Record<string, unknown>).matcher === source);
 }
 
 /**
@@ -143,18 +144,19 @@ function compactGroups(hooks: Record<string, unknown> | undefined): unknown[] {
  * upexgalaxy-webapp). Added only when the event is ABSENT: an app that wires
  * its own `UserPromptSubmit` keeps it, and the contract row says what to add.
  *
- * The same contract requires a `SessionStart` group with matcher `compact`
- * running that hook, so the instruction routes re-arm after a compaction.
- * An app often has its own `SessionStart` (upexgalaxy-webapp does), so the
- * test is one level down: upstream's `compact` group is APPENDED when the
- * app has no `compact` group of its own; the app's groups keep their order
- * and an app `compact` group of its own is kept as is.
+ * The same contract requires a `SessionStart` group per re-arm source
+ * (`compact`, `clear`) running that hook, so the instruction routes re-arm
+ * after a compaction or a `/clear`. An app often has its own `SessionStart`
+ * (upexgalaxy-webapp does), so the test is one level down, per source:
+ * upstream's group is APPENDED when the app has no group of its own for that
+ * source; the app's groups keep their order and an app group of its own is
+ * kept as is.
  * Every other key, and every other hook event, is written back untouched.
  */
 export function mergeAdoptPromptHook(repoRoot: string, templateDir: string): PromptHookMerge {
   const localPath = path.join(repoRoot, CLAUDE_SETTINGS_FILE);
   const upstreamPath = path.join(templateDir, CLAUDE_SETTINGS_FILE);
-  const nothing: PromptHookMerge = { added: false, compactAdded: false, merged: null };
+  const nothing: PromptHookMerge = { added: false, rearmAdded: [], merged: null };
   if (!fs.existsSync(localPath) || !fs.existsSync(upstreamPath)) { return nothing; }
   let local: ReturnType<typeof parsePackageJson>;
   let upstream: ReturnType<typeof parsePackageJson>;
@@ -173,14 +175,20 @@ export function mergeAdoptPromptHook(repoRoot: string, templateDir: string): Pro
   const added = Array.isArray(wanted) && !('UserPromptSubmit' in localHooks);
   if (added) { localHooks.UserPromptSubmit = wanted; }
 
-  const wantedCompact = compactGroups(upstreamHooks);
+  const rearmAdded: string[] = [];
   const localSessionStart = localHooks.SessionStart;
-  const compactAdded = wantedCompact.length > 0
-    && (localSessionStart === undefined || Array.isArray(localSessionStart))
-    && compactGroups(localHooks).length === 0;
-  if (compactAdded) { localHooks.SessionStart = [...(localSessionStart as unknown[] | undefined ?? []), ...wantedCompact]; }
+  if (localSessionStart === undefined || Array.isArray(localSessionStart)) {
+    const appended: unknown[] = [];
+    for (const source of REARM_SESSION_START_SOURCES) {
+      const wanted = sourceGroups(upstreamHooks, source);
+      if (wanted.length === 0 || sourceGroups(localHooks, source).length > 0) { continue; }
+      appended.push(...wanted);
+      rearmAdded.push(source);
+    }
+    if (appended.length > 0) { localHooks.SessionStart = [...(localSessionStart as unknown[] | undefined ?? []), ...appended]; }
+  }
 
-  if (!added && !compactAdded) { return nothing; }
+  if (!added && rearmAdded.length === 0) { return nothing; }
   local.data.hooks = localHooks;
-  return { added, compactAdded, merged: stringifyPackageJson(local) };
+  return { added, rearmAdded, merged: stringifyPackageJson(local) };
 }

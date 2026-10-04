@@ -18,6 +18,7 @@ import {
   declaredMcpIds,
   EXPECTED_MCP,
   KNOWN_MCP_IDS,
+  REARM_SESSION_START_SOURCES,
   stripJsonComments,
   unwrapCodexEnvLoader,
   validateEslintBlockWiring,
@@ -491,17 +492,18 @@ describe('hook adapters', () => {
 describe('instruction router hooks', () => {
   const ROUTER_L0 = '# L0\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/80-git.md` | - |\n<!-- router:end -->\n';
 
-  function compactSettings(command: string, windows?: string): string {
+  function rearmSettings(command: string, windows?: string, sources: readonly string[] = REARM_SESSION_START_SOURCES): string {
     const hook: Record<string, unknown> = { type: 'command', command, timeout: 5 };
     if (windows) { hook.commandWindows = windows; }
-    return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }], SessionStart: [{ matcher: 'compact', hooks: [hook] }] } }, null, 2)}\n`;
+    const sessionStart = sources.map(matcher => ({ matcher, hooks: [hook] }));
+    return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }], SessionStart: sessionStart } }, null, 2)}\n`;
   }
 
   function routerFixture(): string {
     const root = contractFixture('agent compatibility router ');
     write(root, 'AGENTS.md', ROUTER_L0);
-    write(root, '.claude/settings.json', compactSettings(CLAUDE_HOOK_COMMAND));
-    write(root, '.codex/hooks.json', compactSettings(CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS));
+    write(root, '.claude/settings.json', rearmSettings(CLAUDE_HOOK_COMMAND));
+    write(root, '.codex/hooks.json', rearmSettings(CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS));
     return root;
   }
 
@@ -516,13 +518,23 @@ describe('instruction router hooks', () => {
     expect(validateInstructionRouterHooks(root)).toEqual([]);
     write(root, 'AGENTS.md', ROUTER_L0);
     const errors = validateInstructionRouterHooks(root);
-    expect(errors.some(e => e.startsWith('claude must re-arm the routes after compaction'))).toBe(true);
-    expect(errors.some(e => e.startsWith('codex must re-arm the routes after compaction'))).toBe(true);
+    for (const source of REARM_SESSION_START_SOURCES) {
+      expect(errors.some(e => e.startsWith(`claude must re-arm the routes on SessionStart "${source}"`))).toBe(true);
+      expect(errors.some(e => e.startsWith(`codex must re-arm the routes on SessionStart "${source}"`))).toBe(true);
+    }
     expect(validateHookCompatibility(root)).toEqual(errors);
   });
 
-  test('accepts a compact SessionStart on both command hosts', () => {
+  test('accepts a compact and a clear SessionStart on both command hosts', () => {
     expect(validateInstructionRouterHooks(routerFixture())).toEqual([]);
+  });
+
+  test('rejects a host that re-arms on compaction but not on /clear', () => {
+    const root = routerFixture();
+    write(root, '.claude/settings.json', rearmSettings(CLAUDE_HOOK_COMMAND, undefined, ['compact']));
+    expect(validateInstructionRouterHooks(root)).toEqual([
+      `claude must re-arm the routes on SessionStart "clear": a SessionStart group with matcher "clear" running ${CLAUDE_HOOK_COMMAND}`,
+    ]);
   });
 
   test('rejects an OpenCode adapter that stopped classifying the prompt or declaring OpenCode 2', () => {
