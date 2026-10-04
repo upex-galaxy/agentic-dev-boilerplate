@@ -48,6 +48,13 @@ describe('slug and identity', () => {
     expect(appIdentity(root).name).toBe(root.split('/').pop()!);
     writeFileSync(join(root, 'package.json'), '{"name":"@acme/shop-web","description":"Storefront."}');
     expect(appIdentity(root)).toEqual({ name: 'shop-web', description: 'Storefront.' });
+    // A scaffolder's default name names the generator, not the app: the folder wins.
+    for (const placeholder of ['my-v0-project', 'my-app', 'nextjs-app', 'next', 'project']) {
+      writeFileSync(join(root, 'package.json'), JSON.stringify({ name: placeholder }));
+      expect(appIdentity(root).name).toBe(root.split('/').pop()!);
+    }
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'my-shop' }));
+    expect(appIdentity(root).name).toBe('my-shop');
   });
 
   test('the slug ends in -context once, is project-local, and steps aside from a skill upstream ships', () => {

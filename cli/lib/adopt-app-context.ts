@@ -51,8 +51,16 @@ export function kebab(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * `package.json` names a scaffolder leaves behind (`my-v0-project`, `my-app`,
+ * `nextjs-app`...): they name the generator, not the app, so the folder name
+ * wins over them. Measured on the adoption dogfood, whose app still carries
+ * the v0 default.
+ */
+const SCAFFOLD_DEFAULT_NAME = /^(?:my-)?(?:v0-|next-|nextjs-|react-)?(?:app|project)$|^(?:next|nextjs|create-next-app)$/;
+
 export interface AppIdentity {
-  /** Display name: the `package.json` name without its scope, else the folder name. */
+  /** Display name: the `package.json` name without its scope, else (absent or a scaffold default) the folder name. */
   name: string
   description: string | null
 }
@@ -62,7 +70,8 @@ export function appIdentity(root: string): AppIdentity {
   let pkg: { name?: unknown, description?: unknown } = {};
   try { pkg = JSON.parse(readOrNull(path.join(root, 'package.json')) ?? '{}') as typeof pkg; }
   catch { /* an unparsable package.json names nothing */ }
-  const raw = typeof pkg.name === 'string' && pkg.name.trim() !== '' ? pkg.name.trim().replace(/^@[^/]+\//, '') : path.basename(path.resolve(root));
+  const own = typeof pkg.name === 'string' ? pkg.name.trim().replace(/^@[^/]+\//, '') : '';
+  const raw = own !== '' && !SCAFFOLD_DEFAULT_NAME.test(own.toLowerCase()) ? own : path.basename(path.resolve(root));
   const description = typeof pkg.description === 'string' && pkg.description.trim() !== '' ? pkg.description.trim() : null;
   return { name: raw, description };
 }
