@@ -293,3 +293,20 @@ describe('a project that edited a synced section', () => {
     expect(read(app, protectedSection)).not.toContain('upstream addition');
   });
 });
+
+describe('an existing app adopted with --adopt', () => {
+  test('gets the sections and the generic stub, and its own files stay untouched', async () => {
+    const template = tempRoot();
+    initRepo(template);
+    commit(template, { ...PREVIOUS_RELEASE, ...THIS_RELEASE }, 'release N');
+    const app = tempRoot();
+    initRepo(app);
+    commit(app, { 'scripts/tool.ts': 'the app tool\n', 'src/index.ts': 'export const a = 1;\n' }, 'app');
+    process.chdir(app);
+    const summary = await runUpdate({ ...config(template, false), adopted: true }, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
+    expect(summary.aborted).not.toBe(true);
+    expect(read(app, `${INSTRUCTIONS_DIR}/80-git.md`)).toBe(THIS_RELEASE[`${INSTRUCTIONS_DIR}/80-git.md`]);
+    expect(read(app, PROJECT_INSTRUCTIONS_FILE)).toBe(STUB);
+    expect(read(app, 'scripts/tool.ts')).toBe('the app tool\n');
+  });
+});
