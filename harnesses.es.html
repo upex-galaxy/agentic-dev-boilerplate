@@ -6,7 +6,7 @@
     <title>Una fuente, tres harnesses</title>
     <meta
       name="description"
-      content="Cómo se comporta agentic-dev-boilerplate en Claude Code, OpenCode y Codex: un solo cuerpo de instrucciones, skills por nombre y modo, un hook con la línea de identidad, MCP en tres formatos y las credenciales de cada arranque."
+      content="Cómo se comporta agentic-dev-boilerplate en Claude Code, OpenCode y Codex: un solo juego de instrucciones (un núcleo que siempre carga y secciones a pedido), skills por nombre y modo, un hook con la línea de identidad, MCP en tres formatos y las credenciales de cada arranque."
     />
     <style>
       /* ============================================================
@@ -768,9 +768,11 @@
         <h2><span class="num">01</span>Qué lee cada harness</h2>
         <p class="sub">
           OpenCode y Codex leen <code>AGENTS.md</code> y <code>.agents/skills/</code> de forma
-          nativa, así que ahí no hay adaptador. Claude Code necesita dos superficies generadas para
-          llegar al mismo contenido. El hook y el MCP tienen un archivo por host porque cada uno
-          habla un formato distinto.
+          nativa, así que ahí no hay adaptador. Las secciones de
+          <code>.agents/instructions/</code> no las carga ningún host por su cuenta: el router de
+          <code>AGENTS.md</code> dice cuándo leer cada una, igual en los tres. Claude Code necesita
+          dos superficies generadas para llegar al mismo contenido. El hook y el MCP tienen un
+          archivo por host porque cada uno habla un formato distinto.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
@@ -791,6 +793,12 @@
                 </td>
                 <td><code>AGENTS.md</code> nativo</td>
                 <td><code>AGENTS.md</code> nativo</td>
+              </tr>
+              <tr>
+                <td>Secciones de instrucciones</td>
+                <td><code>.agents/instructions/</code> a pedido, por el router de L0</td>
+                <td><code>.agents/instructions/</code> a pedido</td>
+                <td><code>.agents/instructions/</code> a pedido</td>
               </tr>
               <tr>
                 <td>Skills</td>
@@ -819,6 +827,21 @@
             </tbody>
           </table>
         </div>
+        <div class="callout">
+          <span class="ic">Capas</span>
+          <span
+            ><strong><code>AGENTS.md</code> es el núcleo que carga siempre</strong>: la frase que
+            ata de cada regla crítica, la capa comportamental, el núcleo de orquestación y un router
+            fijo. El resto vive en una sección por tema, que el agente lee cuando el router o una
+            línea <code>ROUTE:</code> del hook la nombra. Para Claude Code, el router además importa
+            <code>package.json</code> y <code>.agents/project.yaml</code>; OpenCode y Codex no
+            expanden imports y siguen la instrucción reforzada de la misma fila. Cómo funciona, en
+            detalle:
+            <a href="./decks/progressive-disclosure/como-funciona.es.html"
+              >Las instrucciones, en capas</a
+            >.</span
+          >
+        </div>
       </section>
 
       <section id="generado" class="r">
@@ -832,7 +855,10 @@
           <div class="step">
             <span class="n">Fuente · commiteada</span>
             <h4>Lo que se edita</h4>
-            <p><code>AGENTS.md</code>, <code>.agents/skills/</code>, <code>.agents/hooks/</code></p>
+            <p>
+              <code>AGENTS.md</code>, <code>.agents/instructions/</code>,
+              <code>.agents/skills/</code>, <code>.agents/hooks/</code>
+            </p>
           </div>
           <div class="arrow">→</div>
           <div class="step agt">
@@ -856,7 +882,7 @@
             ><strong><code>CLAUDE.md</code> es un import documentado y no un symlink</strong> porque
             un archivo de una línea (<code>@AGENTS.md</code> más un salto de línea) sobrevive a un
             checkout en Windows. Nunca lleva prosa propia: todo lo que diga va en
-            <code>AGENTS.md</code>.</span
+            <code>AGENTS.md</code> o en su sección de <code>.agents/instructions/</code>.</span
           >
         </div>
       </section>
@@ -938,6 +964,14 @@
           <li>
             <strong>Como mucho un aviso de setup</strong>: falta <code>.env</code> en el checkout, o
             es un worktree enlazado que nunca corrió <code>bun run worktree:provision</code>.
+          </li>
+          <li>
+            <strong>Las líneas <code>ROUTE: read &lt;archivo&gt;</code></strong
+            >: las secciones de instrucciones que el prompt necesita y la sesión todavía no leyó,
+            clasificadas con el router de <code>AGENTS.md</code> y los <code>triggers:</code> de
+            cada sección. Un <code>SessionStart</code> con <code>compact</code> las re-arma en
+            Claude Code y Codex; OpenCode 1 rutea desde <code>chat.message</code> y OpenCode 2 se
+            queda con el router.
           </li>
         </ol>
         <pre
