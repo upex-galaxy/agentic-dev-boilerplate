@@ -452,10 +452,10 @@ describe('seedProjectYamlFromSchema', () => {
 
 describe('seedProjectInstructions', () => {
   const REPO = join(import.meta.dir, '..', '..', '..');
-  const OWN = readFileSync(join(REPO, '.agents', 'instructions', 'project.md'), 'utf8');
-  const STUB = readFileSync(join(REPO, '.agents', 'instructions', 'project.md.template'), 'utf8');
+  const OWN = readFileSync(join(REPO, '.agents', 'instructions', 'agent-project.md'), 'utf8');
+  const STUB = readFileSync(join(REPO, '.agents', 'instructions', 'agent-project.md.template'), 'utf8');
   let dir: string;
-  const target = (): string => join(dir, '.agents', 'instructions', 'project.md');
+  const target = (): string => join(dir, '.agents', 'instructions', 'agent-project.md');
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'cad-seed-instructions-'));
@@ -465,14 +465,14 @@ describe('seedProjectInstructions', () => {
 
   test('the extracted boilerplate overlay is replaced by the generic stub', async () => {
     writeFileSync(target(), OWN);
-    writeFileSync(join(dir, '.agents', 'instructions', 'project.md.template'), STUB);
+    writeFileSync(join(dir, '.agents', 'instructions', 'agent-project.md.template'), STUB);
     expect(await seedProjectInstructions(dir)).toBe('seeded');
     expect(readFileSync(target(), 'utf8')).toBe(STUB);
   });
 
   test('fails closed: a leaking stub is not written and the maintainer file is removed', async () => {
     writeFileSync(target(), OWN);
-    writeFileSync(join(dir, '.agents', 'instructions', 'project.md.template'), OWN);
+    writeFileSync(join(dir, '.agents', 'instructions', 'agent-project.md.template'), OWN);
     expect(await seedProjectInstructions(dir)).toBe('removed');
     expect(existsSync(target())).toBe(false);
   });

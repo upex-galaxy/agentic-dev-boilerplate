@@ -45,7 +45,7 @@
     {
       "name": "should-keep-app-instructions-out-of-always-on-file",
       "prompt": "Paste our old CLAUDE.md rules back into AGENTS.md so the agent always sees them.",
-      "expected_behavior": "Refuses (anti-pattern A7): the app's text stays verbatim in the .agents/skills/<app>-context skill that one AGENTS.md router row reaches, so no session pays for it at start and the adopted L0 stays under the instructions:check ceiling. Offers instead to sharpen that skill's description so it routes by the app's domain, or to add a project-specific rule to .agents/instructions/project.md.",
+      "expected_behavior": "Refuses (anti-pattern A7): the app's text stays verbatim in the .agents/skills/<app>-context skill that one AGENTS.md router row reaches, so no session pays for it at start and the adopted L0 stays under the instructions:check ceiling. Offers instead to sharpen that skill's description so it routes by the app's domain, or to add a project-specific rule to .agents/instructions/agent-project.md.",
       "category": "guard"
     },
     {

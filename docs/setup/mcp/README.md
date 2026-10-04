@@ -10,7 +10,7 @@
 
 ### Cliente MCP
 
-La aplicación que usa el modelo de IA. En este repo, los tres hosts del contrato: Claude Code, OpenCode y Codex CLI + Desktop (`.agents/instructions/10-harnesses.md` §5.5).
+La aplicación que usa el modelo de IA. En este repo, los tres hosts del contrato: Claude Code, OpenCode y Codex CLI + Desktop (`.agents/instructions/agent-harnesses.md` §5.5).
 
 ### Servidor MCP
 
@@ -261,7 +261,7 @@ Las skills no nombran servidores: piden una **capacidad** y el agente la resuelv
 | `db`               | schema, ledger de migraciones, lecturas         | servidor commiteado                                                     |
 | `automation-flows` | workflows de n8n                                | servidor commiteado                                                     |
 
-Qué servidor da cada capacidad, los sufijos y cómo habilitar una que falta: `.agents/skills/agentic-dev-core/references/mcp-capabilities.md`. La automatización de browser no es un MCP: es `playwright-cli` (`.agents/instructions/30-tool-resolution.md` §6). Jira y Confluence van por `acli`; el MCP de Atlassian es opt-in ([`docs/mcp/README.md`](../../mcp/README.md)).
+Qué servidor da cada capacidad, los sufijos y cómo habilitar una que falta: `.agents/skills/agentic-dev-core/references/mcp-capabilities.md`. La automatización de browser no es un MCP: es `playwright-cli` (`.agents/instructions/agent-tool-resolution.md` §6). Jira y Confluence van por `acli`; el MCP de Atlassian es opt-in ([`docs/mcp/README.md`](../../mcp/README.md)).
 
 ---
 

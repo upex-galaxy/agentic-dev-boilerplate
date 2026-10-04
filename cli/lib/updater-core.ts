@@ -2350,6 +2350,9 @@ export function dropDeprecatedDeletes<T extends { path: string, classification: 
 
 /**
  * Remove files in `cfg.deprecatedFiles` from the local repo. Honors dryRun.
+ * An entry marked `backup` is copied under the run's backup folder first
+ * (`ensureBackup`, created on first use; a fresh `.backups/update-*` folder
+ * when the caller passes none).
  * Returns the count of files actually removed (or that would be removed in dry-run).
  */
 export function cleanupDeprecated(
@@ -2357,10 +2360,13 @@ export function cleanupDeprecated(
   repoRoot: string,
   dryRun: boolean,
   logger: CoreLogger = silentLogger,
+  ensureBackup?: () => string,
 ): number {
   const present = cfg.deprecatedFiles.filter(d => fs.existsSync(path.join(repoRoot, d.path)));
   if (present.length === 0) { return 0; }
 
+  let ownBackup: string | null = null;
+  const backupRoot = ensureBackup ?? ((): string => (ownBackup ??= createBackupDir(repoRoot)));
   let removed = 0;
   for (const dep of present) {
     if (dryRun) {
@@ -2369,6 +2375,12 @@ export function cleanupDeprecated(
       continue;
     }
     try {
+      if (dep.backup === true) {
+        const saved = path.join(backupRoot(), dep.path);
+        fs.mkdirSync(path.dirname(saved), { recursive: true });
+        fs.copyFileSync(path.join(repoRoot, dep.path), saved);
+        logger.info(`Respaldo: ${path.relative(repoRoot, saved)}`);
+      }
       fs.unlinkSync(path.join(repoRoot, dep.path));
       pruneEmptyParents(repoRoot, dep.path);
       logger.success(`Eliminado: ${dep.path}`);
@@ -3599,7 +3611,7 @@ export async function runUpdate(
     }
   }
   else {
-    cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink));
+    cleanupDeprecated(cfg, repoRoot, opts.dryRun, makeCoreLoggerFromSink(sink), ensureBackup);
   }
 
   // Compute advancement

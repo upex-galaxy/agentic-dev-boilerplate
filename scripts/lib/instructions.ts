@@ -16,15 +16,20 @@ import { parse as parseYaml } from 'yaml';
 
 export const L0_FILE = 'AGENTS.md';
 export const SECTIONS_DIR = '.agents/instructions';
-export const RULES_FILE = '01-critical-rules.md';
-export const SKILLS_FILE = '20-skills-and-mcps.md';
-export const PROJECT_FILE = 'project.md';
+export const RULES_FILE = 'agent-critical-rules.md';
+export const SKILLS_FILE = 'agent-skills-and-mcps.md';
+export const PROJECT_FILE = 'agent-project.md';
 export const README_FILE = 'README.md';
 /** The heading `bun run up --adopt` puts above an adopted app's preserved instructions (`ADOPT_INSTRUCTIONS_HEADING` in `cli/lib/updater-adopt.ts`). */
 export const APP_BLOCK_HEADING = '## 0. Project instructions (pre-adoption)';
 
-/** A numbered section file: `NN-<id>.md`. */
-export const NUMBERED_SECTION = /^(\d{2})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
+/**
+ * A section file: `agent-<id>.md`. Every file of the folder but `README.md`
+ * carries the `agent-` prefix, so a reader can tell it came with the agent
+ * setup; the id is the stem without it. Order comes from the router rows, not
+ * from file names.
+ */
+export const SECTION_FILE = /^agent-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
 
 export interface RouterRow {
   /** 1-based line in L0. */
@@ -97,7 +102,7 @@ export const PROJECT_SKILLS_END = '<!-- project-skills:end -->';
 export const SKILL_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 export interface ProjectSkillRow {
-  /** 1-based line in `project.md`. */
+  /** 1-based line in `agent-project.md`. */
   line: number
   /** First backticked token of the Skill cell (may be invalid: the lint says so). */
   slug: string
@@ -112,7 +117,7 @@ export function tableCells(line: string): string[] {
 }
 
 /**
- * Rows of the "Project context skills" table of `project.md` (between
+ * Rows of the "Project context skills" table of `agent-project.md` (between
  * `<!-- project-skills:start -->` and `<!-- project-skills:end -->`), or null
  * when the markers are missing. Columns: `Skill | Load when | Triggers |
  * Loaded by`. Same grammar as `parseProjectSkillRows` in

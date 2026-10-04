@@ -123,7 +123,7 @@ El comportamiento operativo (cómo crear historias, cómo planificar, cómo ejec
 | `.agents/skills/`                   | AI        | Workflows ejecutables: la única copia, leída por los tres harnesses                                                                                           |
 | `.claude/`, `.opencode/`, `.codex/` | AI        | Adapters por harness (hook, MCP). Generado solo `.claude/skills`; nunca una segunda copia del contenido                                                       |
 | `AGENTS.md`                         | AI        | Núcleo operativo (L0) cargado en cada sesión, en cualquier harness, con el router a `.agents/instructions/`                                                   |
-| `.agents/instructions/`             | AI        | Una sección por tema (git, PBI, herramientas, variables...), leída a pedido; `project.md` guarda las reglas propias del proyecto                               |
+| `.agents/instructions/`             | AI        | Una sección por tema (git, PBI, herramientas, variables...), leída a pedido; `agent-project.md` guarda las reglas propias del proyecto                               |
 | `CLAUDE.md`                         | AI        | Shim de una línea (`@AGENTS.md`) para Claude Code. Generado, nunca lleva prosa                                                                                |
 
 **Regla general**:

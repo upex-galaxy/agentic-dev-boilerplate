@@ -422,19 +422,19 @@ export function worktreeUnprovisioned(options = {}) {
  * A row fires when the prompt matches its ANCHOR, the first file of its Load
  * cell (backticked paths come before `@` imports); every file of a fired row
  * is routed. Anchoring keeps a file shared by two rows from dragging the
- * other row's files in: `40-project-variables.md` opens the variables row and
+ * other row's files in: `agent-project-variables.md` opens the variables row and
  * rides along in the tracker row, so a prompt about environments loads the
  * variables, not the PBI cache. A target outside the sections folder (the
  * Claude Code imports `@package.json`, `@.agents/project.yaml`) has no
  * frontmatter: it is routed with its row, or by `IMPORT_ROW_TRIGGERS` when it
  * anchors the row alone.
  *
- * The project-owned `project.md` adds rows of its own: its "Project context
+ * The project-owned `agent-project.md` adds rows of its own: its "Project context
  * skills" table (between `PROJECT_SKILLS_START` / `PROJECT_SKILLS_END`) names
  * each `<aspect>-context` skill the project created, with the triggers that
  * route a prompt to its `SKILL.md`. `bun run up` never touches that file, so
  * a project's routing to its own skills survives every update, which a row in
- * the synced `20-skills-and-mcps.md` would not.
+ * the synced `agent-skills-and-mcps.md` would not.
  *
  * One line per newly routed file. The per-session state (keyed by session id)
  * remembers what was routed, so a prompt that needs nothing new costs 0 bytes;
@@ -447,7 +447,7 @@ export const ROUTER_START = '<!-- router:start -->';
 export const ROUTER_END = '<!-- router:end -->';
 export const L0_FILE = 'AGENTS.md';
 export const SECTIONS_DIR = '.agents/instructions';
-export const PROJECT_FILE = `${SECTIONS_DIR}/project.md`;
+export const PROJECT_FILE = `${SECTIONS_DIR}/agent-project.md`;
 export const PROJECT_SKILLS_START = '<!-- project-skills:start -->';
 export const PROJECT_SKILLS_END = '<!-- project-skills:end -->';
 
@@ -605,7 +605,7 @@ function compilePath(prefix, allPrefixes) {
 }
 
 /**
- * Rows of the "Project context skills" table of `project.md`: `{ slug,
+ * Rows of the "Project context skills" table of `agent-project.md`: `{ slug,
  * kind, triggers }`, invalid slugs skipped, or [] without markers. Same
  * grammar as `scripts/lib/instructions.ts` `parseProjectSkills`: columns
  * `Skill | Load when | Triggers | Loaded by`, triggers backticked, a `\|` in a
@@ -632,7 +632,7 @@ export function parseProjectSkillRows(text) {
 
 /**
  * Read the router from the checkout: L0 rows, then the project's own skill
- * rows from `project.md`, plus, for each target, the matchers it brings. Null
+ * rows from `agent-project.md`, plus, for each target, the matchers it brings. Null
  * when `AGENTS.md` or its router markers are absent: a repo without
  * progressive disclosure routes nothing.
  */
@@ -644,7 +644,7 @@ export function loadInstructionRouter(root, read = readFileSync) {
   if (!rows) { return null; }
   let projectSkills = [];
   try { projectSkills = parseProjectSkillRows(read(join(root, PROJECT_FILE), 'utf8')); }
-  catch { /* no project.md: no project rows */ }
+  catch { /* no agent-project.md: no project rows */ }
   const metas = new Map();
   for (const row of rows) {
     for (const path of row.targets) {

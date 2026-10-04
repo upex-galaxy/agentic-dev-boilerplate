@@ -40,7 +40,7 @@ Dependencies derive ONLY from observable evidence. Never invent — if no source
 - **PRD/SRS sequencing** — `.context/PRD/user-journeys.md` and `.context/SRS/functional-specs.md` ordering. Functional Requirement `FR-X.2` typically depends on `FR-X.1` when both share a journey and the spec orders them sequentially.
 - **Master Sprint ordering** — `.context/master-implementation-plan.md` declares Master Sprint groupings. A story whose `**Source spec:**` lives in Master Sprint N depends on the foundational stories of Master Sprint N-1 when the data or auth model requires it.
 - **Data-model dependencies** — the data map (`bun run context:map business-data-context`) declares entity relationships. If entity B has a foreign-key dependency on entity A, the story that creates entity B depends on the story that creates entity A.
-- **Explicit author intent** — `Blocked By` / `Blocks` dependencies the author states in the session or wrote into the Jira description (`author-intent` in the matrix; never a hand-edited local `story.md`, which is a read-only cache per `.agents/instructions/60-local-context-pbi.md` §9). These are the strongest signal because a human author committed them.
+- **Explicit author intent** — `Blocked By` / `Blocks` dependencies the author states in the session or wrote into the Jira description (`author-intent` in the matrix; never a hand-edited local `story.md`, which is a read-only cache per `.agents/instructions/agent-local-context-pbi.md` §9). These are the strongest signal because a human author committed them.
 
 If two or more sources disagree (e.g. PRD orders A → B but data-map orders B → A), surface the conflict to the user and ask for resolution before creating any link. Do not silently pick one.
 

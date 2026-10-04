@@ -2,7 +2,7 @@
 
 **Codex** es el agente de codificación de OpenAI. La CLI y la app de escritorio (Codex Desktop) leen la misma configuración de repositorio, así que todo lo que sigue aplica a las dos.
 
-> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md). Para la arquitectura completa de tres harnesses, `.agents/instructions/10-harnesses.md` §5.5.
+> 💡 Para conceptos generales de MCP, consulta [MCP - Guía General](./README.md). Para la arquitectura completa de tres harnesses, `.agents/instructions/agent-harnesses.md` §5.5.
 
 ---
 
@@ -28,7 +28,7 @@ Codex no necesita ningún shim: consume las dos fuentes canónicas directamente.
 | ------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Instrucciones | `AGENTS.md`                                      | Nativo. Es el mismo archivo que OpenCode lee nativo y que Claude Code lee a través del shim `CLAUDE.md` (`@AGENTS.md` en una línea).                                                                              |
 | Skills        | `.agents/skills/<name>/SKILL.md` + `references/` | Nativo. Una sola copia commiteada; Claude Code llega por el alias generado `.claude/skills`.                                                                                                                      |
-| Comandos      | ninguno                                          | Ningún host trae archivos de comando: una skill se invoca por nombre más modo. Donde en Claude Code tipeás `/project-context dev-roadmap`, acá lo pedís en prosa: "load skill `project-context`, mode `dev-roadmap`". Cada skill lista sus modos en su `## Mode routing` (`.agents/instructions/20-skills-and-mcps.md` §5 "Skill modes"). |
+| Comandos      | ninguno                                          | Ningún host trae archivos de comando: una skill se invoca por nombre más modo. Donde en Claude Code tipeás `/project-context dev-roadmap`, acá lo pedís en prosa: "load skill `project-context`, mode `dev-roadmap`". Cada skill lista sus modos en su `## Mode routing` (`.agents/instructions/agent-skills-and-mcps.md` §5 "Skill modes"). |
 | Hook          | `.codex/hooks.json`                              | `UserPromptSubmit` ejecuta `.agents/hooks/personality-reinject.mjs` (el mismo emisor que usan los otros dos harnesses) desde la raíz de git. Trae `command` POSIX y `commandWindows`. |
 | MCP           | `.codex/config.toml`                             | Los servidores que declara `.mcp.json`, en formato Codex. Paridad con `.mcp.json` y `opencode.jsonc` verificada por `bun run agents:compat:check`. La búsqueda web no está acá: se conecta a nivel harness (`~/.codex/config.toml`). |
 
@@ -129,7 +129,7 @@ No es un MCP del proyecto. Conectá Exa (o Tavily) una vez por máquina en `~/.c
 ## 📚 Recursos
 
 - **Codex MCP**: https://developers.openai.com/codex/mcp/
-- **Arquitectura de tres harnesses**: `.agents/instructions/10-harnesses.md` §5.5 y la página publicada [harnesses.es.html](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (fuente: `packages/pages-home/harnesses.es.html`)
+- **Arquitectura de tres harnesses**: `.agents/instructions/agent-harnesses.md` §5.5 y la página publicada [harnesses.es.html](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (fuente: `packages/pages-home/harnesses.es.html`)
 - **Capacidades MCP y búsqueda web**: `.agents/skills/agentic-dev-core/references/mcp-capabilities.md`
 - **Sintaxis por host**: [`docs/mcp/mcp-configuration-guide.md`](../../mcp/mcp-configuration-guide.md)
 

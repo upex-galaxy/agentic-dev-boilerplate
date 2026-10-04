@@ -207,7 +207,7 @@ If any item is unchecked at the end of the session, schedule a follow-up — do 
 A story is Ready when **all** of these are true:
 
 - [ ] **Jira issue exists** with full key (`{PROJECT_KEY}-{NUM}`, no `TBD`)
-- [ ] **Local cache synced** — `bun run jira:sync-issues get <KEY>` materialized the story folder under its epic (read-only cache, never hand-written: `.agents/instructions/60-local-context-pbi.md` §9)
+- [ ] **Local cache synced** — `bun run jira:sync-issues get <KEY>` materialized the story folder under its epic (read-only cache, never hand-written: `.agents/instructions/agent-local-context-pbi.md` §9)
 - [ ] **Jira description populated** — no `[placeholder]` left (read back in the synced `story.md`)
 - [ ] **User story line** uses real persona, single action, real benefit
 - [ ] **Source spec line** present as the first body line (`**Source spec:** FR-XXX`) when an FR motivates the story, otherwise omitted

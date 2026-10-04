@@ -180,11 +180,11 @@ export async function seedProjectYamlFromSchema(projectDir: string): Promise<boo
 }
 
 /** The project-owned overlay of the project instructions, and the generic stub that stands in for it. */
-const PROJECT_INSTRUCTIONS = ['.agents', 'instructions', 'project.md'] as const;
-const PROJECT_INSTRUCTIONS_TEMPLATE = ['.agents', 'instructions', 'project.md.template'] as const;
+const PROJECT_INSTRUCTIONS = ['.agents', 'instructions', 'agent-project.md'] as const;
+const PROJECT_INSTRUCTIONS_TEMPLATE = ['.agents', 'instructions', 'agent-project.md.template'] as const;
 
 /**
- * Text only the boilerplate's OWN `project.md` has any reason to carry. Twin of
+ * Text only the boilerplate's OWN `agent-project.md` has any reason to carry. Twin of
  * `STUB_LEAK_PATTERNS` + `findStubLeaks` in `cli/lib/updater-instructions.ts`
  * (this package is published separately and cannot import from the repo):
  * `tests/smoke.test.ts` runs both gates over the same inputs and requires the
@@ -216,9 +216,9 @@ export function countStubLeaks(stub: string, ownProjectMd: string | null): numbe
 }
 
 /**
- * Replace the boilerplate's OWN `.agents/instructions/project.md` (it carries
+ * Replace the boilerplate's OWN `.agents/instructions/agent-project.md` (it carries
  * this repository's git-strategy exception) with the generic stub the
- * template ships as `project.md.template`. Same idea as
+ * template ships as `agent-project.md.template`. Same idea as
  * `seedProjectYamlFromSchema`: a new project inherits the template, never the
  * maintainer's file.
  *
@@ -235,14 +235,14 @@ export async function seedProjectInstructions(projectDir: string): Promise<'seed
     const stub = await readFile(templatePath, 'utf8');
     if (countStubLeaks(stub, own) === 0) {
       await writeFile(target, stub, 'utf8');
-      log.dim('  Seeded .agents/instructions/project.md from the upstream stub (no maintainer rules travel).');
+      log.dim('  Seeded .agents/instructions/agent-project.md from the upstream stub (no maintainer rules travel).');
       return 'seeded';
     }
-    log.warn('  .agents/instructions/project.md.template carries the boilerplate\'s own text: not seeded.');
+    log.warn('  .agents/instructions/agent-project.md.template carries the boilerplate\'s own text: not seeded.');
   }
   if (own === null) { return 'absent'; }
   await rm(target, { force: true });
-  log.warn('  Removed the boilerplate\'s own .agents/instructions/project.md; `bun run up` delivers the generic stub.');
+  log.warn('  Removed the boilerplate\'s own .agents/instructions/agent-project.md; `bun run up` delivers the generic stub.');
   return 'removed';
 }
 

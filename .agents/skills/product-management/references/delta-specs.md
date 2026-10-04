@@ -4,7 +4,7 @@
 >
 > **Scope:** Methodology + local-file pattern only. This workflow does NOT push rich-text content to the issue tracker — all artifacts live under `.context/specs/`, a committed tree. If a future extension publishes deltas to Jira, route through `[ISSUE_TRACKER_TOOL]` and see `references/jira-publishing-gotchas.md` for ADF rules.
 >
-> **Why `.context/specs/` and not `.context/PBI/`:** everything under `.context/PBI/` is the gitignored Jira cache (`.agents/instructions/60-local-context-pbi.md` §9): rebuilt by the sync, never committed, and no hand-authored file there may be depended on. Specs, deltas and their archive are hand-authored and must reach git (the pattern's whole value is a git-diffable changelog), so they live in their own committed tree. Never add `.gitignore` negations under `.context/PBI/` for them, and never write, move or archive anything inside a synced story folder.
+> **Why `.context/specs/` and not `.context/PBI/`:** everything under `.context/PBI/` is the gitignored Jira cache (`.agents/instructions/agent-local-context-pbi.md` §9): rebuilt by the sync, never committed, and no hand-authored file there may be depended on. Specs, deltas and their archive are hand-authored and must reach git (the pattern's whole value is a git-diffable changelog), so they live in their own committed tree. Never add `.gitignore` negations under `.context/PBI/` for them, and never write, move or archive anything inside a synced story folder.
 
 ---
 

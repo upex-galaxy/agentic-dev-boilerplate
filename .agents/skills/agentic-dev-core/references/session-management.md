@@ -47,7 +47,7 @@ Rules:
 
 - `<skill-slug>` matches the skill's directory name under `.agents/skills/`.
 - `<scope>` is invocation-specific (see §9 for the naming convention per skill). Project-scope skills omit it entirely — files live directly at `.session/<skill-slug>/{plan.md, progress.md}`.
-- `.session/` is **gitignored** in both repos. The contents are work-in-progress orchestration scaffolding, not committed deliverables. Audit history lives in (a) Engram observations under the `session/...` topic prefix, (b) the canonical domain artifacts each skill already persists — Jira fields materialized as `[SYNC]` files under `.context/PBI/` (a gitignored cache; recovery = re-sync, per `.agents/instructions/60-local-context-pbi.md` §9), plus the committed docs elsewhere under `.context/`.
+- `.session/` is **gitignored** in both repos. The contents are work-in-progress orchestration scaffolding, not committed deliverables. Audit history lives in (a) Engram observations under the `session/...` topic prefix, (b) the canonical domain artifacts each skill already persists — Jira fields materialized as `[SYNC]` files under `.context/PBI/` (a gitignored cache; recovery = re-sync, per `.agents/instructions/agent-local-context-pbi.md` §9), plus the committed docs elsewhere under `.context/`.
 - `.session/.archive/` is also gitignored. The archive exists for local resume-replay and human inspection during the same session; long-term audit is delegated to Engram.
 - A skill MUST NOT write anywhere else under `.session/`. Sibling directories under `.session/` are reserved for future use.
 

@@ -4,7 +4,7 @@ This directory holds **opt-in MCP blocks** the repo does not enable, one templat
 
 ## Runtime configs committed in this repo
 
-The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/skills/`, see `.agents/instructions/10-harnesses.md` §5.5). The MCP inventory is the one surface that genuinely differs per host, so it exists once per format, committed, with the same server set on every host: whatever `.mcp.json` declares. Only LOCAL (stdio) servers are committed; web search is connected at harness level (see [Capabilities](#capabilities-not-server-names)).
+The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/skills/`, see `.agents/instructions/agent-harnesses.md` §5.5). The MCP inventory is the one surface that genuinely differs per host, so it exists once per format, committed, with the same server set on every host: whatever `.mcp.json` declares. Only LOCAL (stdio) servers are committed; web search is connected at harness level (see [Capabilities](#capabilities-not-server-names)).
 
 | Harness             | Committed config     | How a secret is referenced                                                                  | Launcher (loads `.env` first) |
 | ------------------- | -------------------- | ------------------------------------------------------------------------------------------- | ----------------------------- |
@@ -39,7 +39,7 @@ So a 401/403 or a mystery tool failure is the signal, not a parse error. Check w
 Skills never name a server. They declare a CAPABILITY in `metadata.requires_capabilities` (`library-docs`, `web-search`, `db`, `automation-flows`, `diagrams`) and the AI resolves it by tool-name SUFFIX, whatever prefix the host gave the server: `mcp__context7__query-docs` and a claude.ai connector's `mcp__claude_ai_context7__query-docs` are the same capability. When no tool provides a capability the skill needs, the AI stops at that step, names the capability and how to enable it, and waits: it never swaps in another tool on its own.
 
 - **Web search** (`web-search`) is connected once per machine at harness level (Exa first, Tavily second), never in a project file. The recommended servers and their connect commands are in `cli/lib/harness-level-mcps.ts`; `bun run setup` prints them and `bun run setup:doctor` shows what this machine declares.
-- **Browser automation** is not an MCP: it is `playwright-cli` named sessions (`.agents/instructions/30-tool-resolution.md` §6, `[AUTOMATION_TOOL]`).
+- **Browser automation** is not an MCP: it is `playwright-cli` named sessions (`.agents/instructions/agent-tool-resolution.md` §6, `[AUTOMATION_TOOL]`).
 - **Jira / Confluence** go through `acli` by default; the Atlassian MCP is opt-in ([below](#atlassian-mcp-opt-in)).
 
 Vocabulary, suffixes and the stop procedure: `.agents/skills/agentic-dev-core/references/mcp-capabilities.md`. Why web search stays out of the project files: `.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`.

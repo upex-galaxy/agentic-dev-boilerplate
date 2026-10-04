@@ -37,7 +37,7 @@ Requires `agentic-dev-core`. Loads on demand:
 
 - `agentic-dev-core/references/briefing-template.md`, `agentic-dev-core/references/dispatch-patterns.md`, `agentic-dev-core/references/orchestration-doctrine.md`: when a PR is large enough to warrant subagent fan-out (Step 2).
 - The default doctrine set for this repo, read fresh every invocation (never from memory of a prior session), widened or narrowed to what the PR touches: see `references/evidence-and-doctrine-lookup.md` §"Doctrine map".
-- `/git-flow-master` before the first `gh` call (`.agents/instructions/30-tool-resolution.md` §6.5).
+- `/git-flow-master` before the first `gh` call (`.agents/instructions/agent-tool-resolution.md` §6.5).
 - `references/severity-and-scoring.md`, `references/evidence-and-doctrine-lookup.md`, `references/output-and-posting-flow.md`: this skill's own reference material, read at the step noted below.
 
 ## When to use this vs. a sibling
@@ -69,7 +69,7 @@ Confirm scope in the same round if not already given: which PR (`owner/repo#N`, 
 
 Never review against remembered conventions or generic "best practices" you did not just verify are documented. Read first, opine second.
 
-- **This repo**: `AGENTS.md` (§1 Critical Rules, §2 SIMPLICITY / SURGICAL CHANGES) and the sections its router names (`.agents/instructions/01-critical-rules.md` for each rule's full text, `70-code-quickref.md` for §10 Stack quick-reference), plus the doctrine files the PR touches (`references/evidence-and-doctrine-lookup.md` §"Doctrine map"). When the branch names a story key, load that story's acceptance criteria and implementation plan through the synced PBI (`bun run jira:sync-issues get <KEY>`), because "does it do what the story asked" is the first checklist item.
+- **This repo**: `AGENTS.md` (§1 Critical Rules, §2 SIMPLICITY / SURGICAL CHANGES) and the sections its router names (`.agents/instructions/agent-critical-rules.md` for each rule's full text, `agent-code-quickref.md` for §10 Stack quick-reference), plus the doctrine files the PR touches (`references/evidence-and-doctrine-lookup.md` §"Doctrine map"). When the branch names a story key, load that story's acceptance criteria and implementation plan through the synced PBI (`bun run jira:sync-issues get <KEY>`), because "does it do what the story asked" is the first checklist item.
 - **External repo**: probe whether it ships its own `AGENTS.md` / `.agents/skills/` / `.context/` before assuming anything. Many sibling projects are scaffolded from this boilerplate and carry an evolved copy of the same doctrine, but that is a signal, not proof. If it has its own doctrine, that doctrine is authoritative for this review. If it has none, fall back to this repo's doctrine and say so explicitly in the output.
 
 Full lookup protocol (the `gh api` probes and the citation format every finding must use) → `references/evidence-and-doctrine-lookup.md`. Read it now, before Step 2.

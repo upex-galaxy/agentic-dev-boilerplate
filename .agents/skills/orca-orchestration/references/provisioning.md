@@ -43,7 +43,7 @@ has no launch line, so a worker gets credentials only from what reaches it WITHO
   `.env` (it never copies `.auth/`). This is the route by which a Claude Code or OpenCode worker's MCP
   servers get their credentials, with no shell involved.
 - **Codex stdio MCP servers** start through a `.env` loader declared in `.codex/config.toml`
-  (`.agents/instructions/10-harnesses.md` §5.5), so they read the worktree's `.env` themselves. `harness:env` emits nothing for
+  (`.agents/instructions/agent-harnesses.md` §5.5), so they read the worktree's `.env` themselves. `harness:env` emits nothing for
   Codex.
 - **direnv in Orca's interactive shell**, for shell-exported variables only. Orca terminals run an
   interactive shell, so a direnv hook fires and the committed `.envrc` sources `.env` (and
@@ -166,6 +166,6 @@ bun run worktree:audit <wt> --rescue   # copy STATE to the same path in the prim
 It classifies each gitignored path from one table (`AUDIT_RULES` in `cli/lib/worktree.ts`): STATE
 (`.session/`, `.scratch/`, updater state) belongs in the primary; CACHE comes back with a command it
 names (`node_modules/`, `.next/`, the PBI cache, the `.vercel/` link); DISPOSABLE is safe to lose
-(test-run output, browser session material, PBI `[LOCAL]` notes per `.agents/instructions/60-local-context-pbi.md` §9); UNKNOWN matched
+(test-run output, browser session material, PBI `[LOCAL]` notes per `.agents/instructions/agent-local-context-pbi.md` §9); UNKNOWN matched
 no rule and is decided by hand. The committed `orca.yaml` archive hook runs the rescue form; the full
 orphan audit, with uncommitted work and unpushed commits, is `references/coordinator-playbook.md` §6.

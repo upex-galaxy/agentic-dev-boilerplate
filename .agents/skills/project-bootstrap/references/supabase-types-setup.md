@@ -103,7 +103,7 @@ supabase --version
 
 **Paso 0.2: Obtener Project ID**
 
-**Leer de `.agents/project.yaml`** (`.agents/instructions/40-project-variables.md` §7: la identidad del proyecto vive en el yaml):
+**Leer de `.agents/project.yaml`** (`.agents/instructions/agent-project-variables.md` §7: la identidad del proyecto vive en el yaml):
 
 ```bash
 yq '.environments.<env>.db_project_ref' .agents/project.yaml

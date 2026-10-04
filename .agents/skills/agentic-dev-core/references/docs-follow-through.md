@@ -1,6 +1,6 @@
 # Docs follow-through: keeping the docs in step with the change that moved them
 
-> Cited by `sprint-development` (Stage 3, docs before merge), `project-context` (the Key-paths pointer after an artifact write), `testability-guide` (registering the `/qa` page) and `.agents/instructions/15-context-map.md` §4 (the "sync AI memory" row). It replaces the retired `sync-ai-memory` skill.
+> Cited by `sprint-development` (Stage 3, docs before merge), `project-context` (the Key-paths pointer after an artifact write), `testability-guide` (registering the `/qa` page) and `.agents/instructions/agent-context-map.md` §4 (the "sync AI memory" row). It replaces the retired `sync-ai-memory` skill.
 
 ## 1. Why there is no sync skill any more
 
@@ -8,7 +8,7 @@ A doc drifts in the PR that changed the thing it describes, and it stays drifted
 
 | Half | Owner | What it catches |
 |---|---|---|
-| Mechanical | `bun run docs:check` (inside `repo:check`, so CI runs it) | dead links and paths, a repo skill missing from the `.agents/instructions/20-skills-and-mcps.md` §5 router and from the project's own rows (`project.md` "Project context skills", an `AGENTS.md` router row to its `SKILL.md`) (`roster`), a `bun run <name>` quoted in a doc that `package.json` does not declare (`script`), missing page metadata, the volatile-fact families of Critical Rule #17 |
+| Mechanical | `bun run docs:check` (inside `repo:check`, so CI runs it) | dead links and paths, a repo skill missing from the `.agents/instructions/agent-skills-and-mcps.md` §5 router and from the project's own rows (`agent-project.md` "Project context skills", an `AGENTS.md` router row to its `SKILL.md`) (`roster`), a `bun run <name>` quoted in a doc that `package.json` does not declare (`script`), missing page metadata, the volatile-fact families of Critical Rule #17 |
 | Mechanical | `bun run agents:compat:check` | the `CLAUDE.md` shim (exactly `@AGENTS.md` plus one newline), the skills alias, a harness command that shadows a skill, hooks, MCP parity |
 | Judgment | this reference, run by whoever makes the change, in the same PR | the sentence around each fact, a section that still describes the old behaviour, two docs that now disagree |
 
@@ -20,8 +20,8 @@ Close the change with this follow-through when it adds, renames or retires any o
 
 | Surface | What to patch | Never |
 |---|---|---|
-| `AGENTS.md` + `.agents/instructions/` | `AGENTS.md`: a router row only when a new request KIND appears; the sections: `15-context-map.md` task-map row and Key paths, `20-skills-and-mcps.md` skill router row, `10-harnesses.md` surface tables | inline a `bun run` script in a table (Rule #10); restate a count or a mutable list (Rule #17); paste section prose into `AGENTS.md` (its byte budget, `bun run instructions:check`) |
-| `.agents/instructions/project.md` | a fact true only for this project: a Key path only it has (`## Key paths (this project)`), the row of a skill it created (`## Project context skills`), its own exception, its reading of shared doctrine | write it into `AGENTS.md` (the boilerplate-owned always-on layer) or a shared section (`bun run up` overwrites those) |
+| `AGENTS.md` + `.agents/instructions/` | `AGENTS.md`: a router row only when a new request KIND appears; the sections: `agent-context-map.md` task-map row and Key paths, `agent-skills-and-mcps.md` skill router row, `agent-harnesses.md` surface tables | inline a `bun run` script in a table (Rule #10); restate a count or a mutable list (Rule #17); paste section prose into `AGENTS.md` (its byte budget, `bun run instructions:check`) |
+| `.agents/instructions/agent-project.md` | a fact true only for this project: a Key path only it has (`## Key paths (this project)`), the row of a skill it created (`## Project context skills`), its own exception, its reading of shared doctrine | write it into `AGENTS.md` (the boilerplate-owned always-on layer) or a shared section (`bun run up` overwrites those) |
 | `README.md`, `CONTEXT.md`, `INSTALLER.md` | the command, path or skill name the change moved, and the sentence around it | enumerate the skill set: point to `.agents/skills/REGISTRY.md` |
 | `docs/**` | the same facts; `docs/onboarding.html` is hand-maintained HTML: patch text nodes only (`<code>`, `<td>`, inline spans, a repo-file `href`), never `<head>`, `<script>`, `<style>`, the sidebar or attributes | regenerate a page |
 | `CLAUDE.md` | nothing: operational prose found there is structural drift, report it and run `bun run agents:compat` | propagate that prose anywhere |

@@ -71,7 +71,7 @@ Effects:
 - **`verify` flags stale entries**: an accepted divergence that no longer matches any drift is reported as a NOTE, so the list cannot accumulate dead exceptions. A field whose host side could not be read is never called stale.
 - **`apply`** preserves the host's side of the accepted field instead of deriving its own (for `direct_push_to_protected`: the host's `pull_request` rule is carried forward verbatim), so applying never bulldozes an accepted divergence.
 
-Acceptance is per-field and needs a reason. The yaml entry is what the tool reads; the project's `.agents/instructions/project.md` → `## Git Strategy (this repository)` may carry the prose context.
+Acceptance is per-field and needs a reason. The yaml entry is what the tool reads; the project's `.agents/instructions/agent-project.md` → `## Git Strategy (this repository)` may carry the prose context.
 
 ---
 
@@ -107,7 +107,7 @@ A tool that can silently open `main` is a worse problem than the drift it fixes.
 
 **`apply` right after Strategy Setup**, and after any deliberate change to `git_strategy.policy`. Always read the dry run before passing `--yes`.
 
-**Never `apply` to fix a `verify` failure you have not read.** Drift has three legitimate resolutions and only one of them is "change the host": the yaml may be the wrong side, or the divergence may be intended: record it in `git_strategy.policy.accepted_divergences` (§2b) with a reason, and summarize the WHY in the project's `.agents/instructions/project.md` → `## Git Strategy (this repository)` if it needs prose context.
+**Never `apply` to fix a `verify` failure you have not read.** Drift has three legitimate resolutions and only one of them is "change the host": the yaml may be the wrong side, or the divergence may be intended: record it in `git_strategy.policy.accepted_divergences` (§2b) with a reason, and summarize the WHY in the project's `.agents/instructions/agent-project.md` → `## Git Strategy (this repository)` if it needs prose context.
 
 ---
 

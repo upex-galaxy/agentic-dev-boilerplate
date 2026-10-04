@@ -10,51 +10,51 @@
 2. A `ROUTE:` line injected by the prompt hook is binding and wins over your own judgment.
 3. A file once read is not re-read unless compaction removed it.
 4. Unsure whether a row applies → read it. Sections are small; a skipped section is the failure this design guards against.
-5. Edit a section in its own file, never paste section prose into this file. A rule only this project has → `.agents/instructions/project.md`.
+5. Edit a section in its own file, never paste section prose into this file. A rule only this project has → `.agents/instructions/agent-project.md`.
 
 Rows are request KINDS, not features: the table stays fixed while the sections grow. The prompt hook classifies with this same table plus each section's `triggers:`.
 
 <!-- router:start -->
 | Kind | Load | Also |
 |---|---|---|
-| about to break, unsure about, or asked about a Critical Rule | `.agents/instructions/01-critical-rules.md` | - |
-| starting a task: which skill, which context, where a key path lives | `.agents/instructions/15-context-map.md` | the skill it names |
-| skills, modes, the skill table, MCP capabilities | `.agents/instructions/20-skills-and-mcps.md` | `.agents/skills/REGISTRY.md` |
-| a `[TAG_TOOL]`, an MCP call, or a mapped CLI (`bun`, `gh`, `supabase`, `vercel`, `resend`, `acli`, `playwright-cli`, `jq`, `orca`) | `.agents/instructions/30-tool-resolution.md` | the owning skill, loaded first |
-| `{{VAR}}`, `<<VAR>>`, environments, URLs, project identity, Jira host, `stack:`, `git_strategy:`: whenever any of these apply, read both | @.agents/project.yaml `.agents/instructions/40-project-variables.md` | `.agents/README.md` |
-| developing, explaining or fixing a story or a bug, reporting a defect | `.agents/instructions/50-ticket-work.md` `.agents/instructions/60-local-context-pbi.md` | `sprint-development` |
-| tracker work: a Jira issue, the PBI cache, a sync, story state or evidence | `.agents/instructions/60-local-context-pbi.md` `.agents/instructions/40-project-variables.md` | `acli` |
-| writing or reviewing app code | `.agents/instructions/70-code-quickref.md` | `sprint-development` |
-| git: branch, commit, push, PR, merge, conflict | `.agents/instructions/80-git.md` | `git-flow-master` |
-| harness files, hooks, MCP config, the updater, an adoption install, `cli/` | `.agents/instructions/10-harnesses.md` | `bun run agents:compat:check` |
-| fleets, workers, multi-agent dispatch plans, gates | `.agents/instructions/90-orchestration-detail.md` | `orca-orchestration` |
+| about to break, unsure about, or asked about a Critical Rule | `.agents/instructions/agent-critical-rules.md` | - |
+| starting a task: which skill, which context, where a key path lives | `.agents/instructions/agent-context-map.md` | the skill it names |
+| skills, modes, the skill table, MCP capabilities | `.agents/instructions/agent-skills-and-mcps.md` | `.agents/skills/REGISTRY.md` |
+| a `[TAG_TOOL]`, an MCP call, or a mapped CLI (`bun`, `gh`, `supabase`, `vercel`, `resend`, `acli`, `playwright-cli`, `jq`, `orca`) | `.agents/instructions/agent-tool-resolution.md` | the owning skill, loaded first |
+| `{{VAR}}`, `<<VAR>>`, environments, URLs, project identity, Jira host, `stack:`, `git_strategy:`: whenever any of these apply, read both | @.agents/project.yaml `.agents/instructions/agent-project-variables.md` | `.agents/README.md` |
+| developing, explaining or fixing a story or a bug, reporting a defect | `.agents/instructions/agent-ticket-work.md` `.agents/instructions/agent-local-context-pbi.md` | `sprint-development` |
+| tracker work: a Jira issue, the PBI cache, a sync, story state or evidence | `.agents/instructions/agent-local-context-pbi.md` `.agents/instructions/agent-project-variables.md` | `acli` |
+| writing or reviewing app code | `.agents/instructions/agent-code-quickref.md` | `sprint-development` |
+| git: branch, commit, push, PR, merge, conflict | `.agents/instructions/agent-git.md` | `git-flow-master` |
+| harness files, hooks, MCP config, the updater, an adoption install, `cli/` | `.agents/instructions/agent-harnesses.md` | `bun run agents:compat:check` |
+| fleets, workers, multi-agent dispatch plans, gates | `.agents/instructions/agent-orchestration-detail.md` | `orca-orchestration` |
 | scripts and commands, "how do I run / build / test / lint": whenever any of these apply, read it fresh | @package.json | Rule 10 |
-| anything specific to this project, its own exceptions | `.agents/instructions/project.md` | the project's context skills |
+| anything specific to this project, its own exceptions | `.agents/instructions/agent-project.md` | the project's context skills |
 <!-- router:end -->
 
 ---
 
 ## 1. CRITICAL RULES: ALWAYS APPLY
 
-Each line is the rule's binding text, verbatim; `…` joins excerpts of one rule. Full text, rationale and edge cases: `.agents/instructions/01-critical-rules.md`, same number.
+Each line is the rule's binding text, verbatim; `…` joins excerpts of one rule. Full text, rationale and edge cases: `.agents/instructions/agent-critical-rules.md`, same number.
 
-1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Full: 01-critical-rules.md#1
-2. **PLAN BEFORE CODING**: Produce impl plan (`implementation-plan.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review. Full: 01-critical-rules.md#2
-3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", harness branding, or any equivalent authorship/advertising line in commits. Commits look human-authored. **Forensic trailers are the one MANDATORY exception and are NOT attribution**: every commit an agent session writes ends with `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` line the prompt hook injects (`unknown` when unresolved). … `Claude-Session:` and every other harness-branded trailer are FORBIDDEN Full: 01-critical-rules.md#3
-4. **PUSH TO PROTECTED = RESOLVE `git_strategy.policy.direct_push_to_protected`**: `forbidden` → NEVER direct-push, route through a PR. `confirm` → ask explicit user confirmation before EVERY push. `allowed` → standing authorization, push without asking (asking anyway collapses `allowed` into `confirm`). `git_strategy` block missing or null (fresh scaffold) → behave as `confirm`. Full: 01-critical-rules.md#4
-5. **GIT HISTORY**: NEVER rewrite pushed history (rebase/amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. Full: 01-critical-rules.md#5
-6. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. No skip steps. Full: 01-critical-rules.md#6
-7. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading. Full: 01-critical-rules.md#7
-8. **SKILLS-FIRST**: All workflows live in `.agents/skills/`. NEVER paste instructions inline. Invoke matching skill, let it self-load detail. Full: 01-critical-rules.md#8
-9. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: MCP fail auth or env var missing. … **So a 401/403 or a mystery tool failure is the signal**: never wait for a parse error that will not come. NO workaround. STOP, tell user exact env var, point to `.env` / `.env.example`, ask fix `.env` + **RESTART AGENT SESSION** (env cached at MCP-spawn time, no refresh mid-session). Full: 01-critical-rules.md#9
-10. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from `AGENTS.md`, an instruction section or any doc: drift kills. Open `package.json` first, then answer. Full: 01-critical-rules.md#10
-11. **DEFAULT COMMUNICATION MODE: CAVEMAN**: If caveman installed user-level (the `caveman@caveman` Claude Code plugin, §2 layer table), respond caveman level `full` by default … Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. Full: 01-critical-rules.md#11
-12. **LANGUAGE DETECTION + MIRRORING**: At start of every conversation, READ FULL USER MESSAGE (not just opening words) to detect user's working language. Mirror that language in ALL conversational replies (questions, summaries, explanations, status updates). Repo artifacts ALWAYS English regardless of conversation language … Override: if user explicitly request another language for specific artifact ("crea el ticket en español", "write this PR description in Spanish"), honor that request only for that artifact Full: 01-critical-rules.md#12
-13. **NO GLOBAL DISCARDS (MULTI-SESSION SAFETY)**: PROHIBITED to run repo-wide destructive git commands: `git restore .`, `git checkout -- .`, `git reset --hard`, untargeted `git stash`, `git clean -f`. … Discard ONLY explicit paths YOU modified in THIS session (`git restore <path>...` / `git stash push <path>...`). Unsure who modified a file → do NOT restore it: ask the user. Full: 01-critical-rules.md#13
-14. **UI FIDELITY CONTRACT**: … NEVER invent UI. **Fidelity reference = the CURRENT LIVE UI + `DESIGN.md` tokens** … **The AI NEVER hand-authors mockups outside a design skill** … A human ratifies every mockup, whatever produced it Full: 01-critical-rules.md#14
-15. **HARNESS SURFACES ARE GENERATED**: never hand-edit `CLAUDE.md` (shim) or `.claude/skills` (alias). Edit the source (`AGENTS.md`, `.agents/skills/`, `.agents/hooks/`) and run `bun run agents:compat`. Full: 01-critical-rules.md#15
-16. **A SUCCESS CODE DESCRIBES THE CALL, NEVER THE OUTCOME: VERIFY AT THE DESTINATION**: `ok: true`, exit 0, `201`, `accepted`, a returned id or URL all say the REQUEST was well formed. None of them says the thing happened. … So verify by reading the destination back … Where verifying is genuinely expensive, SAY the claim is unverified rather than letting the receipt stand in for it. Full: 01-critical-rules.md#16
-17. **COMMITTED PROSE NAMES THE SOURCE OF TRUTH, NEVER ITS CURRENT VALUE**: … NEVER states a fact that changes with the normal life of the repo, the tracker or the deploy platform. … Write the NAME of the owner instead and let the reader resolve it Full: 01-critical-rules.md#17
+1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Full: agent-critical-rules.md#1
+2. **PLAN BEFORE CODING**: Produce impl plan (`implementation-plan.md` or skill-internal plan) BEFORE code. Flow: Plan → Code → Review. Full: agent-critical-rules.md#2
+3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude", harness branding, or any equivalent authorship/advertising line in commits. Commits look human-authored. **Forensic trailers are the one MANDATORY exception and are NOT attribution**: every commit an agent session writes ends with `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` line the prompt hook injects (`unknown` when unresolved). … `Claude-Session:` and every other harness-branded trailer are FORBIDDEN Full: agent-critical-rules.md#3
+4. **PUSH TO PROTECTED = RESOLVE `git_strategy.policy.direct_push_to_protected`**: `forbidden` → NEVER direct-push, route through a PR. `confirm` → ask explicit user confirmation before EVERY push. `allowed` → standing authorization, push without asking (asking anyway collapses `allowed` into `confirm`). `git_strategy` block missing or null (fresh scaffold) → behave as `confirm`. Full: agent-critical-rules.md#4
+5. **GIT HISTORY**: NEVER rewrite pushed history (rebase/amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. Full: agent-critical-rules.md#5
+6. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. No skip steps. Full: agent-critical-rules.md#6
+7. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading. Full: agent-critical-rules.md#7
+8. **SKILLS-FIRST**: All workflows live in `.agents/skills/`. NEVER paste instructions inline. Invoke matching skill, let it self-load detail. Full: agent-critical-rules.md#8
+9. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: MCP fail auth or env var missing. … **So a 401/403 or a mystery tool failure is the signal**: never wait for a parse error that will not come. NO workaround. STOP, tell user exact env var, point to `.env` / `.env.example`, ask fix `.env` + **RESTART AGENT SESSION** (env cached at MCP-spawn time, no refresh mid-session). Full: agent-critical-rules.md#9
+10. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote build/test/lint commands from `AGENTS.md`, an instruction section or any doc: drift kills. Open `package.json` first, then answer. Full: agent-critical-rules.md#10
+11. **DEFAULT COMMUNICATION MODE: CAVEMAN**: If caveman installed user-level (the `caveman@caveman` Claude Code plugin, §2 layer table), respond caveman level `full` by default … Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. Full: agent-critical-rules.md#11
+12. **LANGUAGE DETECTION + MIRRORING**: At start of every conversation, READ FULL USER MESSAGE (not just opening words) to detect user's working language. Mirror that language in ALL conversational replies (questions, summaries, explanations, status updates). Repo artifacts ALWAYS English regardless of conversation language … Override: if user explicitly request another language for specific artifact ("crea el ticket en español", "write this PR description in Spanish"), honor that request only for that artifact Full: agent-critical-rules.md#12
+13. **NO GLOBAL DISCARDS (MULTI-SESSION SAFETY)**: PROHIBITED to run repo-wide destructive git commands: `git restore .`, `git checkout -- .`, `git reset --hard`, untargeted `git stash`, `git clean -f`. … Discard ONLY explicit paths YOU modified in THIS session (`git restore <path>...` / `git stash push <path>...`). Unsure who modified a file → do NOT restore it: ask the user. Full: agent-critical-rules.md#13
+14. **UI FIDELITY CONTRACT**: … NEVER invent UI. **Fidelity reference = the CURRENT LIVE UI + `DESIGN.md` tokens** … **The AI NEVER hand-authors mockups outside a design skill** … A human ratifies every mockup, whatever produced it Full: agent-critical-rules.md#14
+15. **HARNESS SURFACES ARE GENERATED**: never hand-edit `CLAUDE.md` (shim) or `.claude/skills` (alias). Edit the source (`AGENTS.md`, `.agents/skills/`, `.agents/hooks/`) and run `bun run agents:compat`. Full: agent-critical-rules.md#15
+16. **A SUCCESS CODE DESCRIBES THE CALL, NEVER THE OUTCOME: VERIFY AT THE DESTINATION**: `ok: true`, exit 0, `201`, `accepted`, a returned id or URL all say the REQUEST was well formed. None of them says the thing happened. … So verify by reading the destination back … Where verifying is genuinely expensive, SAY the claim is unverified rather than letting the receipt stand in for it. Full: agent-critical-rules.md#16
+17. **COMMITTED PROSE NAMES THE SOURCE OF TRUTH, NEVER ITS CURRENT VALUE**: … NEVER states a fact that changes with the normal life of the repo, the tracker or the deploy platform. … Write the NAME of the owner instead and let the reader resolve it Full: agent-critical-rules.md#17
 
 ---
 
@@ -147,7 +147,7 @@ Example (same work, different register):
 
 **NO SUBAGENTS FOR**: quick lookups, memory reads/writes, task tracking, ask user, planning.
 
-**TWO EXECUTORS.** One-shot subagents are the DEFAULT executor and nothing below changes that. … Never name it to the user from a workflow skill when the gate fails. (The optional supervised worker, its gate and the execution patterns: `.agents/instructions/90-orchestration-detail.md`.)
+**TWO EXECUTORS.** One-shot subagents are the DEFAULT executor and nothing below changes that. … Never name it to the user from a workflow skill when the gate fails. (The optional supervised worker, its gate and the execution patterns: `.agents/instructions/agent-orchestration-detail.md`.)
 
 **7-COMPONENT BRIEFING (MANDATORY every dispatch)**: canonical template + filled examples: `agentic-dev-core/references/briefing-template.md`.
 

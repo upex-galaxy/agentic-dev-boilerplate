@@ -44,7 +44,7 @@ import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OVERLAY, SHADOWING_COMMANDS_BACKUP_DIR } from './agent-compatibility.ts';
 import { contextMapAdvice, contextMapStatuses, mapRelPath } from './context-maps.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
-import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE } from './updater-instructions.ts';
+import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE, renamedSectionsNote } from './updater-instructions.ts';
 import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
 // ============================================================================
@@ -958,11 +958,11 @@ export interface LegacyHeadingRow {
 }
 
 const LEGACY_ACTION: Record<LegacyHomeKind | 'own', string> = {
-  moved: 'ships as a synced section now: move anything of yours out of it into .agents/instructions/project.md, then delete the heading from AGENTS.md',
+  moved: 'ships as a synced section now: move anything of yours out of it into .agents/instructions/agent-project.md, then delete the heading from AGENTS.md',
   split: 'take upstream\'s L0 text for this heading; the full text lives in the section file, synced',
   stays: 'still in L0: port upstream\'s wording, keep your own additions',
   app: 'the app\'s preserved instructions: leave the block where it is',
-  own: 'your own text: move it into .agents/instructions/project.md (or a project context skill), then delete it from AGENTS.md',
+  own: 'your own text: move it into .agents/instructions/agent-project.md (or a project context skill), then delete it from AGENTS.md',
 };
 
 /**
@@ -991,7 +991,7 @@ export function legacyInstructionsMap(project: string, upstream: string): Legacy
  * The migration clause + note for the `AGENTS.md` drift row of a project
  * scaffolded before the split. The file is protected and is NEVER rewritten
  * automatically: the row says which headings now arrive as synced section
- * files, which are the project's own (they move into `project.md`), and that
+ * files, which are the project's own (they move into `agent-project.md`), and that
  * the router + load protocol are what to port from upstream.
  */
 export function legacyInstructionsNote(filePath: string, project: string, upstream: string): { clause: string, note: string } | null {
@@ -1188,6 +1188,13 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       projectOnly = true;
       suggested = 'merge';
       notes.push({ clause: '', note: legacy.note });
+    }
+    // A split AGENTS.md that still routes to the numbered section names: the
+    // sections arrived renamed, the project's own file never is.
+    const renamed = renamedSectionsNote(entry.path, project);
+    if (renamed !== null) {
+      suggested = 'merge';
+      notes.push(renamed);
     }
     // No husky hook is ever overwritten, so a consumer only learns about the
     // gates split if the row says so: without it no gate a future release adds

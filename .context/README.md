@@ -62,7 +62,7 @@ Every file in `.context/` has an owner. Do not edit auto-generated files by hand
 
 The business maps live outside this table: `project-context` modes `data`, `features` and `api` (invoked by `/project-foundation` Phase 4 Steps 1, 2 and 3) write them inside `business-data-context`, `business-feature-context` and `business-api-context`.
 
-Plan history for a story lives in the Jira field's own edit history (plus engram), not in git log — the files above are a regenerable read cache, never a commit target. Full tier rules: `.context/PBI/README.md` and `.agents/instructions/60-local-context-pbi.md` §9. Full topic-key conventions: `.agents/skills/agentic-dev-core/references/topic-key-conventions.md`.
+Plan history for a story lives in the Jira field's own edit history (plus engram), not in git log — the files above are a regenerable read cache, never a commit target. Full tier rules: `.context/PBI/README.md` and `.agents/instructions/agent-local-context-pbi.md` §9. Full topic-key conventions: `.agents/skills/agentic-dev-core/references/topic-key-conventions.md`.
 
 ## Minimum viable context
 

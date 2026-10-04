@@ -62,7 +62,7 @@ for the real grammar. Only this skill spells out commands, because only this ski
 
   `bun run claude` forwards trailing arguments to the binary through the `dotenv -o -e .env`
   wrapper declared in `package.json`, and the wrapper is what makes the env file win over an
-  inherited variable (`.agents/instructions/10-harnesses.md` §5.5). `<KEY>` is the worker's roster name, the same token the
+  inherited variable (`.agents/instructions/agent-harnesses.md` §5.5). `<KEY>` is the worker's roster name, the same token the
   prompt opens with. On a harness where the launcher cannot set a session name, omit the flag: the
   human types `/rename <KEY>` once the session is up, because a model cannot rename its own session.
 

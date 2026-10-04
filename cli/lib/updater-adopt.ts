@@ -15,7 +15,7 @@
  *    under `updater.protected_paths` so no later `bun run up` overwrites it.
  *  - Instructions: an app that carries its own `AGENTS.md` and/or `CLAUDE.md`
  *    gets its text, verbatim, in a project-local `<app>-context` skill
- *    (`./adopt-app-context.ts`) plus a pointer in `project.md`, and ONE
+ *    (`./adopt-app-context.ts`) plus a pointer in `agent-project.md`, and ONE
  *    proposal for the always-on file (upstream `AGENTS.md` with one router
  *    row to that skill, `CLAUDE.md` as the `@AGENTS.md` shim, originals in
  *    the run's backup), applied only on an explicit yes. Otherwise the

@@ -490,7 +490,7 @@ describe('hook adapters', () => {
 });
 
 describe('instruction router hooks', () => {
-  const ROUTER_L0 = '# L0\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/80-git.md` | - |\n<!-- router:end -->\n';
+  const ROUTER_L0 = '# L0\n<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| git | `.agents/instructions/agent-git.md` | - |\n<!-- router:end -->\n';
 
   function rearmSettings(command: string, windows?: string, sources: readonly string[] = REARM_SESSION_START_SOURCES): string {
     const hook: Record<string, unknown> = { type: 'command', command, timeout: 5 };
@@ -575,10 +575,10 @@ describe('instruction router hooks', () => {
       return output.system.filter(line => line.startsWith(ROUTE_PREFIX));
     };
     try {
-      expect(await turn('commit and push')).toEqual([`${ROUTE_PREFIX} .agents/instructions/80-git.md (git)`]);
+      expect(await turn('commit and push')).toEqual([`${ROUTE_PREFIX} .agents/instructions/agent-git.md (git)`]);
       expect(await turn('push again')).toEqual([]);
       await plugin['experimental.session.compacting']({ sessionID });
-      expect(await turn('push again')).toEqual([`${ROUTE_PREFIX} .agents/instructions/80-git.md (git)`]);
+      expect(await turn('push again')).toEqual([`${ROUTE_PREFIX} .agents/instructions/agent-git.md (git)`]);
     }
     finally {
       rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });

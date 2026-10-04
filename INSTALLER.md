@@ -207,7 +207,7 @@ From the app's repo root:
 
 1. Runs the preflight above.
 2. Downloads the template into a temp directory and installs its dependencies there. Nothing is downloaded into the app.
-3. Runs that copy's `cli/update-boilerplate.ts --adopt` with the app as the working directory (`--non-interactive` becomes the updater's `--auto`; `--template-repo` reaches it as `UPEX_TEMPLATE_REPO`). The first-run adopt policy is described in [`.agents/instructions/10-harnesses.md`](.agents/instructions/10-harnesses.md) §5.5, "UPDATER `--adopt`", and owned by `cli/lib/updater-adopt.ts`.
+3. Runs that copy's `cli/update-boilerplate.ts --adopt` with the app as the working directory (`--non-interactive` becomes the updater's `--auto`; `--template-repo` reaches it as `UPEX_TEMPLATE_REPO`). The first-run adopt policy is described in [`.agents/instructions/agent-harnesses.md`](.agents/instructions/agent-harnesses.md) §5.5, "UPDATER `--adopt`", and owned by `cli/lib/updater-adopt.ts`.
 4. Deletes the temp directory and prints the next steps.
 
 It never scrubs history, renames the project, runs `git init`, runs `bun install` or `bun run setup` inside the app, or touches a database. `--adopt` refuses the greenfield-only inputs (a project name, `--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup`) and a `--template` other than `main`, because the updater syncs the template's default branch. Exit `32` means the updater's own run failed; its output says why, and whatever it touched is backed up under `.backups/`.
@@ -501,7 +501,7 @@ What you keep: every workflow skill committed in this repo (`/sprint-development
 ## See also
 
 - [Docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/) — the visual start-here page and one deck per workflow skill
-- [AGENTS.md](./AGENTS.md) — the always-on core every harness loads, with the router to `.agents/instructions/`; `.agents/instructions/10-harnesses.md` §5.5 covers the multi-harness contract
+- [AGENTS.md](./AGENTS.md) — the always-on core every harness loads, with the router to `.agents/instructions/`; `.agents/instructions/agent-harnesses.md` §5.5 covers the multi-harness contract
 - [CONTEXT.md](./CONTEXT.md) — context-engineering strategy and the surface-by-harness map (§2.1)
 - [README.md](./README.md) — project overview and Quick Start
 - [docs/setup/README.md](./docs/setup/README.md) — index of remaining setup guides (Jira, MCPs)
