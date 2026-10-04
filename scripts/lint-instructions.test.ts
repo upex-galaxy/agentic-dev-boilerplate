@@ -1,9 +1,10 @@
 import type { InstructionFinding } from './lint-instructions';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { coreBytes, parseL0Rules, parseRouter, skillTableSource } from './lib/instructions';
+import { parseProjectSkillRows } from '../.agents/hooks/personality-reinject.mjs';
+import { coreBytes, parseL0Rules, parseProjectSkills, parseRouter, skillTableSource } from './lib/instructions';
 import { isPendingMigration, L0_BUDGET, L0_PROJECT_BUDGET, L0_TARGET, lintBinding, lintBudget, lintInstructions } from './lint-instructions';
 
 let root: string;
@@ -100,6 +101,43 @@ describe('lint-instructions', () => {
   test('a consistent L0 + sections layout passes', () => {
     scaffold();
     expect(lintInstructions(root)).toEqual([]);
+  });
+
+  test('project.md skill rows: an existing skill with compiling triggers passes, each defect fails by name', () => {
+    scaffold();
+    write('AGENTS.md', l0().replace('<!-- router:end -->', '| this project | `.agents/instructions/project.md` | - |\n<!-- router:end -->'));
+    write('.agents/skills/billing-context/SKILL.md', '---\nname: billing-context\n---\n');
+    const project = (rows: string[]): string => [
+      '---',
+      'id: project',
+      'title: "Project"',
+      'load_when: "project facts"',
+      'triggers: []',
+      'paths: []',
+      '---',
+      '',
+      '<!-- project-skills:start -->',
+      '| Skill | Load when | Triggers | Loaded by |',
+      '| --- | --- | --- | --- |',
+      ...rows,
+      '<!-- project-skills:end -->',
+      '',
+    ].join('\n');
+    write('.agents/instructions/project.md', project(['| `billing-context` | invoices | `\\binvoice`, `pay(?:out\\|ment)` | `sprint-development` |']));
+    expect(lintInstructions(root)).toEqual([]);
+    write('.agents/instructions/project.md', project([
+      '| `gone-context` | x | `gone` | - |',
+      '| `billing-context` |  |  | - |',
+      '| `billing-context` | x | `(unclosed` | - |',
+      '| Billing | x | `b` | - |',
+    ]));
+    expect(lintInstructions(root).map(tag)).toEqual([
+      'error:router:.agents/instructions/project.md:project skill row: .agents/skills/gone-context/SKILL.md does not exist',
+      'error:router:.agents/instructions/project.md:project skill row `billing-context` has no Load when',
+      'error:router:.agents/instructions/project.md:project skill row `billing-context` has no trigger: the hook can never route to it',
+      'error:router:.agents/instructions/project.md:project skill row `billing-context`: trigger does not compile: (unclosed',
+      'error:router:.agents/instructions/project.md:project skill row: `Billing` is not a skill slug (write it backticked, e.g. `billing-context`)',
+    ]);
   });
 
   test('a section no router row loads fails by name', () => {
@@ -243,5 +281,27 @@ describe('skillTableSource', () => {
     expect(skillTableSource(root)?.file).toBe('AGENTS.md');
     write('.agents/instructions/20-skills-and-mcps.md', 's');
     expect(skillTableSource(root)?.file).toBe('.agents/instructions/20-skills-and-mcps.md');
+  });
+});
+
+describe('parseProjectSkills', () => {
+  const table = (rows: string[]): string => ['<!-- project-skills:start -->', '| Skill | Load when | Triggers | Loaded by |', '| --- | --- | --- | --- |', ...rows, '<!-- project-skills:end -->', ''].join('\n');
+
+  test('the hook parser and the lint parser read the same rows (escaped pipe included)', () => {
+    const text = table([
+      '| `billing-context` | invoices | `\\bbilling\\b`, `invoice`, `pay(?:out\\|ment)s?` | `sprint-development` |',
+      '| `/auth-context` | sessions | `\\bsso\\b` | - |',
+    ]);
+    const hook = (parseProjectSkillRows(text) as Array<{ slug: string, triggers: string[] }>).map(r => ({ slug: r.slug, triggers: r.triggers }));
+    const lint = (parseProjectSkills(text) ?? []).map(r => ({ slug: r.slug, triggers: r.triggers }));
+    expect(hook).toEqual(lint);
+    expect(lint[0].triggers).toEqual(['\\bbilling\\b', 'invoice', 'pay(?:out|ment)s?']);
+    expect(lint[1].slug).toBe('auth-context');
+  });
+
+  test('no markers is null; the shipped stub carries the table, empty', () => {
+    expect(parseProjectSkills('# no table\n')).toBeNull();
+    const stub = readFileSync(resolve(import.meta.dir, '..', '.agents/instructions/project.md.template'), 'utf8');
+    expect(parseProjectSkills(stub)).toEqual([]);
   });
 });

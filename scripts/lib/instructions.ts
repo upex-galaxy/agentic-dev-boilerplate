@@ -91,6 +91,54 @@ export function parseRouter(l0: string): RouterRow[] | null {
   return rows;
 }
 
+export const PROJECT_SKILLS_START = '<!-- project-skills:start -->';
+export const PROJECT_SKILLS_END = '<!-- project-skills:end -->';
+/** A skill slug as `.agents/skills/<slug>/` names it. */
+export const SKILL_SLUG = /^[a-z0-9][a-z0-9-]*$/;
+
+export interface ProjectSkillRow {
+  /** 1-based line in `project.md`. */
+  line: number
+  /** First backticked token of the Skill cell (may be invalid: the lint says so). */
+  slug: string
+  loadWhen: string
+  /** Backticked regexes of the Triggers cell, `\|` unescaped to `|`. */
+  triggers: string[]
+}
+
+/** Table cells split on unescaped pipes (GFM: `\|` is a literal pipe, inside code spans too). */
+export function tableCells(line: string): string[] {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
+}
+
+/**
+ * Rows of the "Project context skills" table of `project.md` (between
+ * `<!-- project-skills:start -->` and `<!-- project-skills:end -->`), or null
+ * when the markers are missing. Columns: `Skill | Load when | Triggers |
+ * Loaded by`. Same grammar as `parseProjectSkillRows` in
+ * `.agents/hooks/personality-reinject.mjs`.
+ */
+export function parseProjectSkills(text: string): ProjectSkillRow[] | null {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => l.trim() === PROJECT_SKILLS_START);
+  const end = lines.findIndex(l => l.trim() === PROJECT_SKILLS_END);
+  if (start === -1 || end === -1 || end < start) { return null; }
+  const rows: ProjectSkillRow[] = [];
+  for (let i = start + 1; i < end; i += 1) {
+    const line = lines[i].trim();
+    if (!line.startsWith('|') || /^\|[\s:|-]+\|$/.test(line)) { continue; }
+    const cells = tableCells(line);
+    if (cells[0] === 'Skill') { continue; }
+    rows.push({
+      line: i + 1,
+      slug: /`\/?([^`]+)`/.exec(cells[0] ?? '')?.[1] ?? (cells[0] ?? ''),
+      loadWhen: cells[1] ?? '',
+      triggers: [...(cells[2] ?? '').matchAll(/`([^`]+)`/g)].map(m => m[1]),
+    });
+  }
+  return rows;
+}
+
 /** YAML frontmatter of a section file, or null when it has none. */
 export function parseFrontmatter(text: string): Record<string, unknown> | null {
   const match = /^---\n([\s\S]*?)\n---\n/.exec(text);
