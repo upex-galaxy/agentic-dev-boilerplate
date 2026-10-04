@@ -65,6 +65,15 @@
     { "prompt": "run bun run repo:check and fix what fails", "expect": ["package.json"] },
     { "prompt": "¿qué hace el script worktree:provision?", "expect": ["package.json"] },
     {
+      "prompt": "run the full type checks before pushing",
+      "expect": ["git", "package.json"]
+    },
+    {
+      "prompt": "corré la regresión de unit tests antes de mergear",
+      "expect": ["git", "package.json"]
+    },
+    { "prompt": "rerun the e2e suite after the fix", "expect": ["package.json"] },
+    {
       "prompt": "edit the UserPromptSubmit hook in .claude/settings.json",
       "expect": ["harnesses"]
     },

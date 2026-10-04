@@ -121,8 +121,17 @@ export function applyAllowListMerge(repoRoot: string, templateDir: string): stri
 export interface PromptHookMerge {
   /** True when the project's file had no `hooks.UserPromptSubmit` and upstream's groups were added. */
   added: boolean
+  /** True when the project's `hooks.SessionStart` had no `compact` group and upstream's was appended. */
+  compactAdded: boolean
   /** The file's new contents, or null when nothing changes (no write). */
   merged: string | null
+}
+
+/** `matcher: "compact"` groups of a hooks object's `SessionStart` (none when the event is absent or malformed). */
+function compactGroups(hooks: Record<string, unknown> | undefined): unknown[] {
+  const groups = hooks?.SessionStart;
+  if (!Array.isArray(groups)) { return []; }
+  return groups.filter(group => group !== null && typeof group === 'object' && (group as Record<string, unknown>).matcher === 'compact');
 }
 
 /**
@@ -133,12 +142,19 @@ export interface PromptHookMerge {
  * commit itself is refused by the pre-commit gate (measured on
  * upexgalaxy-webapp). Added only when the event is ABSENT: an app that wires
  * its own `UserPromptSubmit` keeps it, and the contract row says what to add.
+ *
+ * The same contract requires a `SessionStart` group with matcher `compact`
+ * running that hook, so the instruction routes re-arm after a compaction.
+ * An app often has its own `SessionStart` (upexgalaxy-webapp does), so the
+ * test is one level down: upstream's `compact` group is APPENDED when the
+ * app has no `compact` group of its own; the app's groups keep their order
+ * and an app `compact` group of its own is kept as is.
  * Every other key, and every other hook event, is written back untouched.
  */
 export function mergeAdoptPromptHook(repoRoot: string, templateDir: string): PromptHookMerge {
   const localPath = path.join(repoRoot, CLAUDE_SETTINGS_FILE);
   const upstreamPath = path.join(templateDir, CLAUDE_SETTINGS_FILE);
-  const nothing: PromptHookMerge = { added: false, merged: null };
+  const nothing: PromptHookMerge = { added: false, compactAdded: false, merged: null };
   if (!fs.existsSync(localPath) || !fs.existsSync(upstreamPath)) { return nothing; }
   let local: ReturnType<typeof parsePackageJson>;
   let upstream: ReturnType<typeof parsePackageJson>;
@@ -149,12 +165,22 @@ export function mergeAdoptPromptHook(repoRoot: string, templateDir: string): Pro
   catch { return nothing; }
 
   const upstreamHooks = upstream.data.hooks as Record<string, unknown> | undefined;
-  const wanted = upstreamHooks?.UserPromptSubmit;
-  if (!Array.isArray(wanted)) { return nothing; }
   const hooks = local.data.hooks;
   if (hooks !== undefined && (hooks === null || typeof hooks !== 'object' || Array.isArray(hooks))) { return nothing; }
-  const localHooks = (hooks ?? {}) as Record<string, unknown>;
-  if ('UserPromptSubmit' in localHooks) { return nothing; }
-  local.data.hooks = { ...localHooks, UserPromptSubmit: wanted };
-  return { added: true, merged: stringifyPackageJson(local) };
+  const localHooks = { ...(hooks ?? {}) as Record<string, unknown> };
+
+  const wanted = upstreamHooks?.UserPromptSubmit;
+  const added = Array.isArray(wanted) && !('UserPromptSubmit' in localHooks);
+  if (added) { localHooks.UserPromptSubmit = wanted; }
+
+  const wantedCompact = compactGroups(upstreamHooks);
+  const localSessionStart = localHooks.SessionStart;
+  const compactAdded = wantedCompact.length > 0
+    && (localSessionStart === undefined || Array.isArray(localSessionStart))
+    && compactGroups(localHooks).length === 0;
+  if (compactAdded) { localHooks.SessionStart = [...(localSessionStart as unknown[] | undefined ?? []), ...wantedCompact]; }
+
+  if (!added && !compactAdded) { return nothing; }
+  local.data.hooks = localHooks;
+  return { added, compactAdded, merged: stringifyPackageJson(local) };
 }
