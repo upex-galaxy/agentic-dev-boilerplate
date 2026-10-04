@@ -53,6 +53,7 @@ import {
   readHarnessMigrationResultFromEnv,
 } from './lib/updater-harness-migration.ts';
 import { groupIgnoreLines } from './lib/updater-ignore';
+import { deliverProjectInstructionsStub, INSTRUCTIONS_DIR, PROJECT_INSTRUCTIONS_FILE, PROJECT_INSTRUCTIONS_TEMPLATE } from './lib/updater-instructions.ts';
 import {
   archivedSkillsToReport,
   collectParityFindings,
@@ -165,6 +166,13 @@ const SKILLS_CANONICAL_DIR = '.agents/skills';
 // boilerplate ships no command file (a skill is invoked by name plus mode).
 const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 
+// Project-owned files INSIDE a synced component: each repo keeps its own copy
+// and the sync never delivers, overwrites, deletes or reports it. Today only the
+// project instructions overlay: the boilerplate's own `project.md` carries this
+// repository's exceptions, so a project that has none gets the generic stub
+// (`project.md.template`, behind a leak gate) from `makeProjectInstructionsHook`.
+const PROJECT_OWNED_PATHS = [PROJECT_INSTRUCTIONS_FILE];
+
 // One opt-in template per supported host (`.agents/instructions/10-harnesses.md` section 5.5: three hosts).
 export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
@@ -245,6 +253,12 @@ export const COMPONENTS: Component[] = [
   // `.claude/skills` is the generated alias.
   { name: 'agent-root-config', type: 'file-list', paths: ['.claude'], files: CLAUDE_ROOT_CONFIG_FILES, bootstrapOnly: true },
   { name: 'agents', type: 'file-list', paths: ['.agents'], files: AGENTS_ROOT_FILES },
+  // The on-demand sections of the project instructions (L1 of progressive
+  // disclosure; `AGENTS.md` is the always-on L0, on the watchlist). Shared
+  // doctrine, synced like skills: overwritten on update, a project edit backed
+  // up and reported, a path in `updater.protected_paths` kept. `project.md` is
+  // the project's own (PROJECT_OWNED_PATHS) and never travels.
+  { name: 'instructions', type: 'directory', paths: [INSTRUCTIONS_DIR] },
   { name: 'scripts', type: 'directory', paths: ['scripts'] },
   { name: 'cli', type: 'directory', paths: ['cli'] },
   { name: 'docs', type: 'directory', paths: ['docs'] },
@@ -363,6 +377,17 @@ SUPERFICIES GENERADAS (nunca se sincronizan ni se reportan como drift):
   .claude/commands/ y .opencode/commands/ son del proyecto: el boilerplate no
   envia comandos (una skill se invoca por su nombre mas un modo). Un comando con
   el nombre de una skill la oculta: se mueve a ${SHADOWING_COMMANDS_BACKUP_DIR}/.
+
+INSTRUCCIONES POR SECCIONES (componente instructions):
+  AGENTS.md es el L0 siempre cargado y es del proyecto (nunca se sobrescribe).
+  Las secciones de ${INSTRUCTIONS_DIR}/ son doctrina compartida y se
+  sincronizan como las skills (edicion local: backup en .backups/ y fila; para
+  conservarla, updater.protected_paths). ${PROJECT_INSTRUCTIONS_FILE} es del
+  proyecto: nunca viaja; si falta, se crea UNA vez desde
+  ${PROJECT_INSTRUCTIONS_TEMPLATE} (stub generico; un stub con texto propio
+  del boilerplate se rechaza). Un AGENTS.md anterior a la division (un solo
+  archivo) recibe una fila con el mapa encabezado -> archivo de seccion y lo
+  que va a project.md; nunca se reescribe solo.
 
 REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   Una tabla "Estado por superficie" (9 filas: instrucciones y config, skills,
@@ -989,6 +1014,26 @@ function makeSkillsRegistryHook(sink: ReportSink): (summary: RunSummary) => Prom
     const res = spawnSync('bun', ['run', 'skills:registry'], { stdio: 'inherit' });
     if (res.status !== 0) {
       sink.warn('No se pudo regenerar REGISTRY.md. Ejecuta `bun run skills:registry` manualmente.');
+    }
+  };
+}
+
+// --- PROJECT INSTRUCTIONS OVERLAY (afterApply hook) ---
+//
+// `.agents/instructions/project.md` is excluded from the sync (PROJECT_OWNED_PATHS).
+// A project that has none (scaffolded before the split, or an app adopted with
+// `--adopt`) receives upstream's GENERIC stub once, never the boilerplate's own
+// file; a stub that fails the leak gate is refused and named, nothing written.
+// An existing `project.md` is never read, compared or touched.
+function makeProjectInstructionsHook(sink: ReportSink, dryRun: boolean): (summary: RunSummary) => Promise<void> {
+  return async (): Promise<void> => {
+    const outcome = deliverProjectInstructionsStub(process.cwd(), UPSTREAM_DIR, { dryRun });
+    if (outcome.kind === 'delivered') {
+      sink.step(`${dryRun ? '[dry-run] Se crearía' : 'Creado'} \`${PROJECT_INSTRUCTIONS_FILE}\` desde \`${PROJECT_INSTRUCTIONS_TEMPLATE}\`: las reglas propias de este proyecto van ahí; ninguna sincronización lo vuelve a tocar.`);
+    }
+    else if (outcome.kind === 'refused') {
+      const first = outcome.leaks[0];
+      sink.warn(`\`${PROJECT_INSTRUCTIONS_TEMPLATE}\` de upstream trae texto propio del boilerplate (${outcome.leaks.length} línea(s); la primera, línea ${first.line}: ${first.why}). No se creó \`${PROJECT_INSTRUCTIONS_FILE}\`: créalo a mano con frontmatter \`id: project\`, \`title\` y \`load_when\`, y reporta el stub a upstream.`);
     }
   };
 }
@@ -1853,7 +1898,8 @@ async function main(): Promise<void> {
     agentsFrameworkFiles: AGENTS_FRAMEWORK_FILES,
     // Generated surfaces (see GENERATED_PATHS): never synced, never reported;
     // the afterApply hooks below rebuild them from their sources.
-    excludePaths: GENERATED_PATHS,
+    // Plus the project-owned files inside synced components (PROJECT_OWNED_PATHS).
+    excludePaths: [...GENERATED_PATHS, ...PROJECT_OWNED_PATHS],
     // The boilerplate's own material — never delivered to consumers. Mirrored
     // in TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts); see
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.
@@ -1878,6 +1924,7 @@ async function main(): Promise<void> {
             ...(parsed.adopt ? [makeAdoptHook(sink, true, true)] : []),
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
             makeAllowListHook(UPSTREAM_DIR, sink, true, parsed.adopt),
+            makeProjectInstructionsHook(sink, true),
             // A dry run neither ages nor writes the doctrine ledger.
             async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
             // Read-only detection so the preview's table matches the real run's.
@@ -1895,6 +1942,8 @@ async function main(): Promise<void> {
             // Alias first: a Claude Code session opened right after
             // the sync must already resolve skills through `.claude/skills`.
             makeAgentCompatibilityHook(sink),
+            // Before the gates: `instructions:check` reads `project.md`'s frontmatter.
+            makeProjectInstructionsHook(sink, false),
             makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS
             // allow entries, which no compatibility contract asserts on.
