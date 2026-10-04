@@ -37,13 +37,15 @@ What it sits over MUST exist. Missing → run the owning step first (a map mode 
 
 - `bun run skills:check` → `KIND-SUFFIX` and `STALE-PATH` green. STALE-PATH is STRICT for a context skill: every `.context/` path it cites must exist on disk (only `.context/PBI/` is exempt), which is why what it sits over must exist first
 - `bun run skills:registry` → the new block appears in `REGISTRY.md` with `kind: context`
-- `.agents/instructions/20-skills-and-mcps.md` §5 row added by the project (T1), naming the loader: the workflow skills that touch the aspect
+- A row in the "Project context skills" table of `.agents/instructions/project.md` (between `<!-- project-skills:start -->` and `<!-- project-skills:end -->`): the skill, when to load it, the triggers that route a prompt to it (backticked, case-insensitive regexes over the aspect's domain words), and the loader: the workflow skills that touch the aspect. A `project.md` without that section gets it first, copied from `.agents/instructions/project.md.template`. Never the shared `20-skills-and-mcps.md` §5: `bun run up` overwrites that file and the row would vanish on the next update
+- `bun run instructions:check` green (the row names an existing skill and its triggers compile) and `bun run docs:check` green (`roster` counts the row)
 - The skill body contains no sentence that is also in the map or the code comments (spot-check three rules)
 
 ## Never
 
 - Copy a table, an entity list or an endpoint list from a map into the skill.
 - Ship a project context skill upstream: it is project-owned by construction, and `bun run up` never delivers, overwrites or deletes one.
+- Register it in a shared instruction section (`20-skills-and-mcps.md` or any other synced file): its row lives in `project.md`, the one instruction file no update touches.
 - Write to Jira or Confluence from the skill, or edit another skill.
 
 ## After its sources change (the UPDATE reminder)

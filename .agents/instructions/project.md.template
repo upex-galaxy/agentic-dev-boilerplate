@@ -15,3 +15,12 @@ paths: []
 ## Git Strategy (this repository)
 
 None recorded yet. `git-flow-master` reads the strategy and its policy from the `git_strategy:` block of `.agents/project.yaml`; an exception this project accepts on purpose (a host rule it bypasses, a divergence it keeps) is written here, with its reason, by the people who decided it.
+
+## Project context skills
+
+The `<aspect>-context` skills this project created (`/project-context context-skill`), one row each. The prompt hook routes a prompt that matches a row's Triggers to that skill's `SKILL.md`, and `bun run docs:check` counts a skill listed here as rostered. This file survives `bun run up`, so a row here keeps routing after every update; the shared skills section does not. Triggers are backticked, case-insensitive regexes separated by commas; write a `|` inside one as `\|`.
+
+<!-- project-skills:start -->
+| Skill | Load when | Triggers | Loaded by |
+| --- | --- | --- | --- |
+<!-- project-skills:end -->

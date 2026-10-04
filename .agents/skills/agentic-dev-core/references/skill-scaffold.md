@@ -102,5 +102,5 @@ One aspect of the product: <aspect>. Loading it changes what the agent KNOWS, no
 
 - `bun run skills:check` green (kind declared, suffix matches, capabilities in the vocabulary, no stale path)
 - `bun run skills:registry` regenerated; `bun run skills:registry:check` green (the Source line prints its `kind:`)
-- `.agents/instructions/20-skills-and-mcps.md` §5 row (T1 only), and a loader: which flow loads it and when. An install nothing loads should not exist
+- A router row and a loader (which flow loads it and when). A skill the boilerplate ships (T1) → `.agents/instructions/20-skills-and-mcps.md` §5. A skill a project creates for itself (an `<aspect>-context`) → the "Project context skills" table of `.agents/instructions/project.md`, with its triggers, because `bun run up` overwrites the shared section. An install nothing loads should not exist
 - `evals/evals.json` for a workflow skill; optional for the other kinds at creation

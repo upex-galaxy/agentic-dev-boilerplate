@@ -28,6 +28,11 @@
  *     is not a community install) missing from the section 5 skill router
  *     (`.agents/instructions/20-skills-and-mcps.md`, or `AGENTS.md` on a
  *     project that still carries the single-file layout: `skillTableSource`).
+ *     A skill the PROJECT created counts as listed when its row sits in the
+ *     "Project context skills" table of `.agents/instructions/project.md`, or
+ *     when an `AGENTS.md` router row loads its `SKILL.md` (the adopted app's
+ *     `<app>-context`): both are project-owned files `bun run up` never
+ *     overwrites, unlike the synced skills section.
  *     The human pages are NOT checked for a skill list: they point to
  *     the generated `REGISTRY.md`, because enumerating the skills there is the
  *     mutable-set copy Critical Rule #17 forbids;
@@ -63,7 +68,7 @@
 import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { SECTIONS_DIR, skillTableSource } from './lib/instructions';
+import { L0_FILE, parseProjectSkills, parseRouter, PROJECT_FILE, SECTIONS_DIR, skillTableSource } from './lib/instructions';
 import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 /** Repo roots an inline-code path must start with to be checked. */
@@ -382,7 +387,30 @@ function repoSkills(root: string): string[] {
   return candidates.filter(slug => !ignored.has(`.agents/skills/${slug}/SKILL.md`)).sort();
 }
 
-/** `roster` findings: repo skills missing from the section 5 skill router. */
+/**
+ * Slugs of the skills the project routes from its own files: rows of the
+ * "Project context skills" table of `project.md`, and `AGENTS.md` router rows
+ * that load a `.agents/skills/<slug>/SKILL.md`.
+ */
+export function projectRoutedSlugs(root: string): Set<string> {
+  const slugs = new Set<string>();
+  const project = join(root, SECTIONS_DIR, PROJECT_FILE);
+  if (existsSync(project)) {
+    for (const row of parseProjectSkills(readFileSync(project, 'utf8')) ?? []) { slugs.add(row.slug); }
+  }
+  const l0 = join(root, L0_FILE);
+  if (existsSync(l0)) {
+    for (const row of parseRouter(readFileSync(l0, 'utf8')) ?? []) {
+      for (const target of row.targets) {
+        const m = /^\.agents\/skills\/([a-z0-9][a-z0-9-]*)\/SKILL\.md$/.exec(target);
+        if (m) { slugs.add(m[1]); }
+      }
+    }
+  }
+  return slugs;
+}
+
+/** `roster` findings: repo skills missing from the section 5 skill router and from the project's own router rows. */
 export function lintRoster(root: string): DocFinding[] {
   const source = skillTableSource(root);
   const skills = repoSkills(root);
@@ -391,7 +419,8 @@ export function lintRoster(root: string): DocFinding[] {
   if (router === null) {
     return [{ file: source.file, line: 1, kind: 'roster', target: 'section 5 skill router table (### Skills T1 heading not found)' }];
   }
-  return skills.filter(slug => !router.has(slug)).map(slug => ({ file: source.file, line: 1, kind: 'roster' as const, target: slug }));
+  const projectRouted = projectRoutedSlugs(root);
+  return skills.filter(slug => !router.has(slug) && !projectRouted.has(slug)).map(slug => ({ file: source.file, line: 1, kind: 'roster' as const, target: slug }));
 }
 
 /** The instruction sections (`.agents/instructions/*.md`): their `bun run` citations are checked like `AGENTS.md`'s. */

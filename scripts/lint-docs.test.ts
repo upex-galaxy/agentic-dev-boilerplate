@@ -162,6 +162,28 @@ describe('lint-docs roster and scripts', () => {
     expect(findings.map(tag)).toEqual(['error:.agents/instructions/20-skills-and-mcps.md:1:roster:ghost-flow']);
   });
 
+  test('a skill the project created counts when project.md lists it or an AGENTS.md router row loads it', () => {
+    skill('alpha-flow');
+    skill('billing-context');
+    skill('shop-context');
+    skill('ghost-context');
+    write('.agents/instructions/20-skills-and-mcps.md', router(['alpha-flow']));
+    write('.agents/instructions/project.md', [
+      '## Project context skills',
+      '',
+      '<!-- project-skills:start -->',
+      '| Skill | Load when | Triggers | Loaded by |',
+      '| --- | --- | --- | --- |',
+      '| `billing-context` | invoices | `invoice` | - |',
+      '<!-- project-skills:end -->',
+      '',
+      'Mentions `ghost-context` outside the table, which does not count.',
+    ].join('\n'));
+    write('AGENTS.md', '<!-- router:start -->\n| Kind | Load | Also |\n|---|---|---|\n| the shop | `.agents/skills/shop-context/SKILL.md` | - |\n<!-- router:end -->\n');
+    const findings = lintDocs(root).findings.filter(f => f.kind === 'roster');
+    expect(findings.map(tag)).toEqual(['error:.agents/instructions/20-skills-and-mcps.md:1:roster:ghost-context']);
+  });
+
   test('a bun run citation inside an instruction section is checked like AGENTS.md', () => {
     write('package.json', JSON.stringify({ scripts: { 'docs:check': 'y' } }));
     write('.agents/instructions/80-git.md', 'Run `bun run docs:check`, never `bun run gone-script`.');

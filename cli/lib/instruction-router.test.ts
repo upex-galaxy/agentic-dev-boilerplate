@@ -132,6 +132,61 @@ describe('router source: AGENTS.md and the section frontmatter, read at runtime'
   });
 });
 
+/** `project.md` with a "Project context skills" table holding `rows`. */
+function projectMd(rows: string[]): string {
+  return [
+    '---',
+    'id: project',
+    'title: "Project instructions"',
+    'load_when: "project"',
+    'triggers: []',
+    'paths: []',
+    '---',
+    '',
+    '## Project context skills',
+    '',
+    '<!-- project-skills:start -->',
+    '| Skill | Load when | Triggers | Loaded by |',
+    '| --- | --- | --- | --- |',
+    ...rows,
+    '<!-- project-skills:end -->',
+    '',
+  ].join('\n');
+}
+
+describe('project skill rows: project.md routes the skills the project created', () => {
+  const billing = '| `billing-context` | invoices, plans and payouts | `\\bbilling\\b`, `invoice`, `pay(?:out\\|ment)s?` | `sprint-development` |';
+
+  test('a prompt matching a row\'s triggers routes that skill\'s SKILL.md, with its slug as id', () => {
+    const root = routerFixture();
+    write(root, '.agents/instructions/project.md', projectMd([billing]));
+    const router = loadInstructionRouter(root);
+    expect(classifyPrompt(router, 'why is the invoice total wrong?')).toEqual(['.agents/skills/billing-context/SKILL.md']);
+    expect(classifyPrompt(router, 'the payouts job stalled')).toEqual(['.agents/skills/billing-context/SKILL.md']);
+    expect(routeLines({ repoRoot: root, router, prompt: 'billing bug', routeState: null })).toEqual([`${ROUTE_PREFIX} .agents/skills/billing-context/SKILL.md (billing-context)`]);
+    expect(classifyPrompt(router, 'commit this')).toEqual(['.agents/instructions/80-git.md']);
+  });
+
+  test('no project.md, no markers, or an invalid slug: nothing extra routes, nothing throws', () => {
+    const root = routerFixture();
+    expect(classifyPrompt(loadInstructionRouter(root), 'billing bug')).toEqual([]);
+    write(root, '.agents/instructions/project.md', '---\nid: project\n---\n\n| `billing-context` | x | `billing` | - |\n');
+    expect(classifyPrompt(loadInstructionRouter(root), 'billing bug')).toEqual([]);
+    write(root, '.agents/instructions/project.md', projectMd(['| Billing Context | x | `billing` | - |']));
+    expect(classifyPrompt(loadInstructionRouter(root), 'billing bug')).toEqual([]);
+  });
+
+  test('a skill an L0 row already loads keeps its row and gains the project triggers', () => {
+    const root = routerFixture();
+    write(root, 'AGENTS.md', readFileSync(join(root, 'AGENTS.md'), 'utf8').replace('<!-- router:end -->', '| the app | `.agents/skills/shop-context/SKILL.md` `.agents/skills/shop-context/references/app-instructions.md` | - |\n<!-- router:end -->'));
+    write(root, '.agents/instructions/project.md', projectMd(['| `shop-context` | the shop | `\\bcheckout\\b` | - |']));
+    expect(classifyPrompt(loadInstructionRouter(root), 'checkout fails')).toEqual([
+      '.agents/skills/shop-context/SKILL.md',
+      '.agents/skills/shop-context/references/app-instructions.md',
+    ]);
+  });
+});
+
 describe('classification', () => {
   test('a row fires on its anchor only: a file shared by two rows does not drag the other row in', () => {
     const router = loadInstructionRouter(routerFixture());

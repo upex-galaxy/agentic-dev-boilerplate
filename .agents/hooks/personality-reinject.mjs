@@ -429,6 +429,13 @@ export function worktreeUnprovisioned(options = {}) {
  * frontmatter: it is routed with its row, or by `IMPORT_ROW_TRIGGERS` when it
  * anchors the row alone.
  *
+ * The project-owned `project.md` adds rows of its own: its "Project context
+ * skills" table (between `PROJECT_SKILLS_START` / `PROJECT_SKILLS_END`) names
+ * each `<aspect>-context` skill the project created, with the triggers that
+ * route a prompt to its `SKILL.md`. `bun run up` never touches that file, so
+ * a project's routing to its own skills survives every update, which a row in
+ * the synced `20-skills-and-mcps.md` would not.
+ *
  * One line per newly routed file. The per-session state (keyed by session id)
  * remembers what was routed, so a prompt that needs nothing new costs 0 bytes;
  * `SessionStart` with source `compact` or `clear` re-arms it (Claude Code and
@@ -440,6 +447,9 @@ export const ROUTER_START = '<!-- router:start -->';
 export const ROUTER_END = '<!-- router:end -->';
 export const L0_FILE = 'AGENTS.md';
 export const SECTIONS_DIR = '.agents/instructions';
+export const PROJECT_FILE = `${SECTIONS_DIR}/project.md`;
+export const PROJECT_SKILLS_START = '<!-- project-skills:start -->';
+export const PROJECT_SKILLS_END = '<!-- project-skills:end -->';
 
 /**
  * Triggers for a router row whose only target is an import with no
@@ -595,9 +605,36 @@ function compilePath(prefix, allPrefixes) {
 }
 
 /**
- * Read the router from the checkout: L0 rows plus, for each target, the
- * matchers it brings. Null when `AGENTS.md` or its router markers are absent:
- * a repo without progressive disclosure routes nothing.
+ * Rows of the "Project context skills" table of `project.md`: `{ slug,
+ * kind, triggers }`, invalid slugs skipped, or [] without markers. Same
+ * grammar as `scripts/lib/instructions.ts` `parseProjectSkills`: columns
+ * `Skill | Load when | Triggers | Loaded by`, triggers backticked, a `\|` in a
+ * cell is a literal pipe (GFM).
+ */
+export function parseProjectSkillRows(text) {
+  const lines = String(text).split(/\r?\n/);
+  const start = lines.findIndex(line => line.trim() === PROJECT_SKILLS_START);
+  const end = lines.findIndex(line => line.trim() === PROJECT_SKILLS_END);
+  if (start === -1 || end === -1 || end < start) { return []; }
+  const rows = [];
+  for (const raw of lines.slice(start + 1, end)) {
+    const line = raw.trim();
+    if (!line.startsWith('|') || /^\|[\s:|-]+\|$/.test(line)) { continue; }
+    const cells = line.replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(cell => cell.trim().replace(/\\\|/g, '|'));
+    if (cells[0] === 'Skill') { continue; }
+    const slug = /`\/?([^`]+)`/.exec(cells[0] ?? '')?.[1] ?? '';
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) { continue; }
+    const triggers = [...(cells[2] ?? '').matchAll(/`([^`]+)`/g)].map(found => found[1]);
+    rows.push({ slug, kind: cells[1] ?? '', triggers });
+  }
+  return rows;
+}
+
+/**
+ * Read the router from the checkout: L0 rows, then the project's own skill
+ * rows from `project.md`, plus, for each target, the matchers it brings. Null
+ * when `AGENTS.md` or its router markers are absent: a repo without
+ * progressive disclosure routes nothing.
  */
 export function loadInstructionRouter(root, read = readFileSync) {
   let l0;
@@ -605,6 +642,9 @@ export function loadInstructionRouter(root, read = readFileSync) {
   catch { return null; }
   const rows = parseRouterRows(l0);
   if (!rows) { return null; }
+  let projectSkills = [];
+  try { projectSkills = parseProjectSkillRows(read(join(root, PROJECT_FILE), 'utf8')); }
+  catch { /* no project.md: no project rows */ }
   const metas = new Map();
   for (const row of rows) {
     for (const path of row.targets) {
@@ -619,6 +659,16 @@ export function loadInstructionRouter(root, read = readFileSync) {
       }
       metas.set(path, meta);
     }
+  }
+  for (const skill of projectSkills) {
+    const path = `.agents/skills/${skill.slug}/SKILL.md`;
+    const prior = metas.get(path) ?? {};
+    metas.set(path, {
+      ...prior,
+      id: typeof prior.id === 'string' ? prior.id : skill.slug,
+      triggers: [...(Array.isArray(prior.triggers) ? prior.triggers : []), ...skill.triggers],
+    });
+    rows.push({ kind: skill.kind, targets: [path] });
   }
   const allPrefixes = [...metas.values()].flatMap(meta => pathPrefixes(meta.paths));
   const targets = new Map();

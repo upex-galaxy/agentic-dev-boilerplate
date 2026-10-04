@@ -18,6 +18,13 @@
  *     `<!-- router:end -->` exists, every row has a kind and at least one load
  *     target, every target resolves (a backticked repo path or a bare
  *     `@path` import), and every section file is the target of some row.
+ *     The "Project context skills" table of `project.md` (between
+ *     `<!-- project-skills:start -->` and `<!-- project-skills:end -->`, the
+ *     home of a project-created skill's row, which `bun run up` never
+ *     overwrites) is checked the same way: each row names a skill whose
+ *     `.agents/skills/<slug>/SKILL.md` exists, says when to load it, and
+ *     carries at least one trigger that compiles. A `project.md` without the
+ *     markers has no project rows and passes.
  *   - `frontmatter`: a numbered section (`NN-<id>.md`) opens with `id` (its
  *     file stem without the number), `title`, `load_when`, `triggers` (a
  *     non-empty list of strings that compile as case-insensitive regexes) and
@@ -62,11 +69,13 @@ import {
   parseFrontmatter,
   parseFullRules,
   parseL0Rules,
+  parseProjectSkills,
   parseRouter,
   PROJECT_FILE,
   README_FILE,
   RULES_FILE,
   SECTIONS_DIR,
+  SKILL_SLUG,
   withoutCode,
 } from './lib/instructions';
 
@@ -196,6 +205,27 @@ export function lintRouter(root: string, l0: string, sections: string[]): Instru
   return findings;
 }
 
+/** `router` findings for the project's own skill rows in `project.md`. */
+export function lintProjectSkills(root: string, projectText: string): InstructionFinding[] {
+  const rel = `${SECTIONS_DIR}/${PROJECT_FILE}`;
+  const findings: InstructionFinding[] = [];
+  for (const row of parseProjectSkills(projectText) ?? []) {
+    const bad = (message: string): void => { findings.push(finding('router', rel, row.line, message)); };
+    if (!SKILL_SLUG.test(row.slug)) {
+      bad(`project skill row: \`${row.slug}\` is not a skill slug (write it backticked, e.g. \`billing-context\`)`);
+      continue;
+    }
+    if (!existsSync(join(root, '.agents', 'skills', row.slug, 'SKILL.md'))) { bad(`project skill row: .agents/skills/${row.slug}/SKILL.md does not exist`); }
+    if (!row.loadWhen) { bad(`project skill row \`${row.slug}\` has no Load when`); }
+    if (row.triggers.length === 0) { bad(`project skill row \`${row.slug}\` has no trigger: the hook can never route to it`); }
+    for (const trigger of row.triggers) {
+      try { void new RegExp(trigger, 'i'); }
+      catch { bad(`project skill row \`${row.slug}\`: trigger does not compile: ${trigger}`); }
+    }
+  }
+  return findings;
+}
+
 /** `rules` findings: L0 binding lines against the full-text rules file. */
 export function lintRules(l0: string, rulesText: string | null): InstructionFinding[] {
   const l0Rules = parseL0Rules(l0);
@@ -274,11 +304,13 @@ export function lintInstructions(root: string): InstructionFinding[] {
   const files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.md')).sort() : [];
   const sections = files.filter(f => f !== README_FILE);
   const rulesPath = join(dir, RULES_FILE);
+  const projectPath = join(dir, PROJECT_FILE);
 
   const findings = [
     ...lintBudget(l0),
     ...lintImports(root, l0),
     ...lintRouter(root, l0, sections),
+    ...(existsSync(projectPath) ? lintProjectSkills(root, readFileSync(projectPath, 'utf8')) : []),
     ...files.flatMap(name => lintFrontmatter(`${SECTIONS_DIR}/${name}`, name, readFileSync(join(dir, name), 'utf8'))),
     ...lintRules(l0, existsSync(rulesPath) ? readFileSync(rulesPath, 'utf8') : null),
   ];
