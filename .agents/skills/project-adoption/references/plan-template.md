@@ -76,10 +76,13 @@ Required fields missing on the instance (never created here; fallback per `.agen
 
 ## 7. Instructions
 
-<None pending | `.agents/prompts/adopt-instructions.md` saved by the adoption run: apply verbatim (Phase 6).>
+<None pending | `.agents/prompts/adopt-instructions.md` saved by the adoption run: apply verbatim (Phase 6). The app's own text already sits, verbatim, in `.agents/skills/<app>-context/references/app-instructions.md`.>
 
-- [ ] Apply the saved instruction merge (own approval line: the app's text moves under
-      `## 0. Project instructions (pre-adoption)`, `CLAUDE.md` becomes the shim, originals backed up)
+- [ ] Apply the saved instruction merge (own approval line: `AGENTS.md` becomes upstream's plus one
+      router row to the `<app>-context` skill, `CLAUDE.md` becomes the shim, originals backed up)
+- [ ] Legacy layout only: move the `## 0. Project instructions (pre-adoption)` block verbatim into the
+      `<app>-context` skill (own approval line, coverage proven before the block is removed)
+- [ ] Rewrite the `<app>-context` skill's `description` from the analysis (the preserved text is never touched)
 
 ## 8. API contract
 
@@ -126,7 +129,7 @@ A missing PRD / SRS is not a gap here: the business maps, dev guide and glossary
 | 3 | §2, §3, §4 | .agents/project.yaml |
 | 4 | §5 | .env, harness credential files |
 | 5 | §6 | .agents/jira-*.json |
-| 6 | §7 | AGENTS.md, CLAUDE.md (+ backups) |
+| 6 | §7 | AGENTS.md, CLAUDE.md (+ backups), `.agents/skills/<app>-context/`, the `project.md` pointer |
 | 7 | §8 | api/openapi.json, api/openapi-types.ts |
 
 ## 15. Approval checklist
