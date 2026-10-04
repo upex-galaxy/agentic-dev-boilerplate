@@ -87,7 +87,7 @@ Read the app's stack from `.agents/project.yaml` → `stack:` and present it as 
 | Tests           | `stack.test_runner` + `stack.scripts.test` (the app's own runner; `/unit-testing` never adds a second one). This repo's own tooling suite runs on Bun's test runner |
 | Hosting / CI    | `stack.hosting`, `stack.ci`                                               |
 | Language        | TypeScript                                                                |
-| AI agent        | Claude Code, OpenCode, Codex (CLI + Desktop): one `AGENTS.md`, one skill store (`.agents/instructions/10-harnesses.md` §5.5) |
+| AI agent        | Claude Code, OpenCode, Codex (CLI + Desktop): one instruction set (always-on `AGENTS.md` + sections under `.agents/instructions/`), one skill store (`.agents/instructions/10-harnesses.md` §5.5) |
 
 The skills support the set named by `V1_SUPPORTED` in `cli/lib/stack-descriptor.ts`: Next.js (App Router or Pages) on the Postgres family, with bun, one app per repo. A stack outside it stops at the adoption preflight or at `/project-adoption`'s analysis with the field and the value that failed; this skill says so plainly instead of touring workflows that would not fit.
 
@@ -219,6 +219,7 @@ Every workflow skill has a deck on the docs hub, at `https://upex-galaxy.github.
 | `decks/tooling/como-funciona.es.html`              | the utility skills (`acli`, `vercel-cli`), CLI → skill auto-load, launch + `harness:env` |
 | `decks/agentic-dev-core/capa-comportamental.es.html` | how the agent writes back (AGENTS.md §2) |
 | `decks/agentic-dev-core/pbi-jira-cache.es.html`    | `.context/PBI/` as a Jira cache (`.agents/instructions/60-local-context-pbi.md` §9) |
+| `decks/progressive-disclosure/como-funciona.es.html` | how the instructions load: always-on `AGENTS.md`, routed sections, the hook's `ROUTE:` line, budgets (ADR-0009) |
 | `harnesses.es.html`                                | the three hosts (`.agents/instructions/10-harnesses.md` §5.5) |
 
 This skill has no deck of its own: the hub and its start-here page are its surface.
@@ -239,8 +240,8 @@ Long sessions: when the context window runs high or work must outlive the sessio
 
 The AI persistent-memory file at the repo root (`AGENTS.md`, always loaded) carries the binding core and a router; the detail lives in one file per section under `.agents/instructions/`, read on demand. Before your first ticket, skim these:
 
-- **`AGENTS.md` router** — which section file each kind of request loads.
-- **§1 CRITICAL RULES** — the rules that override defaults (credentials, plan-before-coding, no AI attribution + forensic trailers, MCP credential failure protocol, `READ package.json DIRECTLY`, UI fidelity contract, verify at the destination, committed prose names the source of truth).
+- **`AGENTS.md` router + LOAD PROTOCOL** — which section file each kind of request loads; a `ROUTE: read <file>` line the prompt hook injects names the same file and is binding. A rule only this project has lives in `.agents/instructions/project.md`; how the sections work and how to edit them: `.agents/instructions/README.md`.
+- **§1 CRITICAL RULES** (binding sentences in `AGENTS.md`, full text in `.agents/instructions/01-critical-rules.md`) — the rules that override defaults (credentials, plan-before-coding, no AI attribution + forensic trailers, MCP credential failure protocol, `READ package.json DIRECTLY`, UI fidelity contract, verify at the destination, committed prose names the source of truth).
 - **§4 CONTEXT LOADING MAP** (`.agents/instructions/15-context-map.md`) — task → trigger phrase → skill → context files → primary tool.
 - **§5 SKILLS + MODES + MCPs REGISTRY** (`.agents/instructions/20-skills-and-mcps.md`) — full T1/T3/T4 skill model, skill modes, MCP capabilities.
 - **§5.5 MULTI-HARNESS** (`.agents/instructions/10-harnesses.md`) — one source, three hosts: what is generated, the hook, MCP parity, launch gotchas.
