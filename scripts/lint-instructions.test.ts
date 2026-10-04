@@ -150,6 +150,16 @@ describe('lint-instructions', () => {
     expect(lintInstructions(root).map(f => f.kind)).toContain('router');
   });
 
+  test('an adopted app whose AGENTS.md waits for its saved merge is pending; without the saved file it is missing', () => {
+    scaffold();
+    rmSync(join(root, 'AGENTS.md'));
+    write('.template/installer.lock.json', '{"adopted":true}\n');
+    expect(lintInstructions(root).map(tag)).toEqual(['error:router:AGENTS.md:AGENTS.md missing']);
+    write('.agents/prompts/adopt-instructions.md', l0());
+    expect(isPendingMigration(root)).toBe(true);
+    expect(lintInstructions(root)).toEqual([]);
+  });
+
   test('an L0 rule excerpt that is not verbatim in the full text fails', () => {
     scaffold();
     write('AGENTS.md', l0().replace('NEVER hardcode/guess.', 'NEVER hardcode or guess.'));

@@ -44,14 +44,16 @@
  * A project whose `AGENTS.md` has no ROUTER yet still runs its pre-split
  * monolith (the sync delivers the sections; moving AGENTS.md is the project's
  * own merge, named in the parity report of `bun run up`): the gate prints a
- * note and passes, because being behind upstream is not a broken repo. The
- * maintainers' copy never gets that pass.
+ * note and passes, because being behind upstream is not a broken repo; so does
+ * an adopted app with no `AGENTS.md` while its saved merge waits for approval.
+ * The maintainers' copy never gets that pass.
  *
  * Usage: bun scripts/lint-instructions.ts   (exit 1 on any error)
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ADOPT_INSTRUCTIONS_PENDING_FILE, adoptInstructionsPending } from '../cli/lib/agent-compatibility';
 import { isMaintainerCopy } from '../cli/lib/agents-schema';
 import {
   coreBytes,
@@ -251,19 +253,22 @@ export function lintBinding(
 
 /**
  * A project (never the maintainers' copy) whose `AGENTS.md` has no ROUTER: it
- * received the sections but has not moved to the L0 layout yet.
+ * received the sections but has not moved to the L0 layout yet. An adopted
+ * app whose `AGENTS.md` still waits for its approved merge
+ * (`adoptInstructionsPending`) is pending the same way.
  */
 export function isPendingMigration(root: string): boolean {
   const l0Path = join(root, L0_FILE);
-  if (!existsSync(l0Path) || parseRouter(readFileSync(l0Path, 'utf8')) !== null) { return false; }
+  if (!existsSync(l0Path)) { return adoptInstructionsPending(root); }
+  if (parseRouter(readFileSync(l0Path, 'utf8')) !== null) { return false; }
   const yamlPath = join(root, '.agents', 'project.yaml');
   return !(existsSync(yamlPath) && isMaintainerCopy(readFileSync(yamlPath, 'utf8')));
 }
 
 export function lintInstructions(root: string): InstructionFinding[] {
   const l0Path = join(root, L0_FILE);
-  if (!existsSync(l0Path)) { return [finding('router', L0_FILE, 1, 'AGENTS.md missing')]; }
   if (isPendingMigration(root)) { return []; }
+  if (!existsSync(l0Path)) { return [finding('router', L0_FILE, 1, 'AGENTS.md missing')]; }
   const l0 = readFileSync(l0Path, 'utf8');
   const dir = join(root, SECTIONS_DIR);
   const files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.md')).sort() : [];
@@ -288,7 +293,9 @@ export function lintInstructions(root: string): InstructionFinding[] {
 if (import.meta.main) {
   const root = process.cwd();
   if (isPendingMigration(root)) {
-    console.log(`- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun run up\``);
+    console.log(existsSync(join(root, L0_FILE))
+      ? `- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun run up\``
+      : `- instructions:check skipped: ${L0_FILE} waits for the adoption merge saved in ${ADOPT_INSTRUCTIONS_PENDING_FILE} (\`project-adoption\` Phase 6)`);
     process.exit(0);
   }
   const findings = lintInstructions(root);
