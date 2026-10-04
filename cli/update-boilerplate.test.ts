@@ -1,11 +1,11 @@
-import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import { cleanupDeprecated, validateComponentRegistry } from './lib/updater-core.ts';
-import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -109,6 +109,27 @@ describe('component registry', () => {
     const cfg = { deprecatedFiles: RETIRED_DOCS_FILES } as Parameters<typeof cleanupDeprecated>[0];
     expect(cleanupDeprecated(cfg, root, false)).toBe(RETIRED_DOCS_FILES.length);
     for (const p of kept) { expect(existsSync(join(root, p))).toBe(true); }
+  });
+});
+
+describe('retired instruction section names', () => {
+  test('the numbered copies leave with a backup each, and the overlay is never one of them', () => {
+    expect(RETIRED_SECTION_FILES.every(d => d.backup === true && d.component === 'instructions')).toBe(true);
+    expect(RETIRED_SECTION_FILES.map(d => d.path)).not.toContain('.agents/instructions/project.md');
+    expect(DEPRECATED_FILES).toEqual(expect.arrayContaining(RETIRED_SECTION_FILES));
+    const root = temporaryRoot();
+    const edited = RETIRED_SECTION_FILES.find(d => d.path.endsWith('/80-git.md'))!.path;
+    for (const d of RETIRED_SECTION_FILES) {
+      mkdirSync(join(root, d.path, '..'), { recursive: true });
+      writeFileSync(join(root, d.path), d.path === edited ? 'project edit\n' : 'x\n');
+    }
+    const cfg = { deprecatedFiles: RETIRED_SECTION_FILES } as Parameters<typeof cleanupDeprecated>[0];
+    expect(cleanupDeprecated(cfg, root, true)).toBe(RETIRED_SECTION_FILES.length);
+    expect(existsSync(join(root, '.backups'))).toBe(false);
+    expect(cleanupDeprecated(cfg, root, false)).toBe(RETIRED_SECTION_FILES.length);
+    for (const d of RETIRED_SECTION_FILES) { expect(existsSync(join(root, d.path))).toBe(false); }
+    const [backup] = readdirSync(join(root, '.backups'));
+    expect(readFileSync(join(root, '.backups', backup, edited), 'utf8')).toBe('project edit\n');
   });
 });
 

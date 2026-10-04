@@ -53,7 +53,7 @@ import {
   readHarnessMigrationResultFromEnv,
 } from './lib/updater-harness-migration.ts';
 import { groupIgnoreLines } from './lib/updater-ignore';
-import { deliverProjectInstructionsStub, INSTRUCTIONS_DIR, PROJECT_INSTRUCTIONS_FILE, PROJECT_INSTRUCTIONS_TEMPLATE } from './lib/updater-instructions.ts';
+import { deliverProjectInstructionsStub, INSTRUCTIONS_DIR, LEGACY_PROJECT_INSTRUCTIONS_FILE, migrateLegacyProjectInstructions, PROJECT_INSTRUCTIONS_FILE, PROJECT_INSTRUCTIONS_TEMPLATE, RENAMED_SECTION_FILES } from './lib/updater-instructions.ts';
 import {
   archivedSkillsToReport,
   collectParityFindings,
@@ -171,7 +171,9 @@ const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 // project instructions overlay: the boilerplate's own `agent-project.md` carries this
 // repository's exceptions, so a project that has none gets the generic stub
 // (`agent-project.md.template`, behind a leak gate) from `makeProjectInstructionsHook`.
-const PROJECT_OWNED_PATHS = [PROJECT_INSTRUCTIONS_FILE];
+// Its pre-rename name, `project.md`, is the same project-owned file: the hook
+// moves it to the new name, so the sync never touches it either.
+const PROJECT_OWNED_PATHS = [PROJECT_INSTRUCTIONS_FILE, LEGACY_PROJECT_INSTRUCTIONS_FILE];
 
 // One opt-in template per supported host (`.agents/instructions/agent-harnesses.md` section 5.5: three hosts).
 export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
@@ -232,12 +234,25 @@ export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
     .map(path => ({ path, component: 'docs', reason: 'QA methodology lives in the QA boilerplate; the dev-to-QA handoff is docs/methodology/IQL-methodology.md', deprecatedSince: '8.7' })),
 ];
 
+// The instruction sections dropped their number for the `agent-` prefix (same
+// frontmatter `id`). The numbered copies leave here, BACKED UP first: a project
+// may have edited one. The overlay (`project.md`) is not here: it is moved,
+// content kept, by `makeProjectInstructionsHook`.
+export const RETIRED_SECTION_FILES: DeprecatedFile[] = Object.entries(RENAMED_SECTION_FILES).map(([from, to]) => ({
+  path: `${INSTRUCTIONS_DIR}/${from}`,
+  component: 'instructions',
+  reason: `renamed to ${INSTRUCTIONS_DIR}/${to} (readable names; the frontmatter id is unchanged)`,
+  deprecatedSince: '2026-10-04',
+  backup: true,
+}));
+
 export const DEPRECATED_FILES: DeprecatedFile[] = [
   { path: '.prompts/setup/kata-framework-setup.md', component: 'prompts', reason: 'renamed to monorepo-for-qa-setup.md', deprecatedSince: '2026-04-28' },
   { path: '.prompts/setup/kata-architecture-adaptation.md', component: 'prompts', reason: 'renamed to test-framework-adaptation.md', deprecatedSince: '2026-04-28' },
   ...RETIRED_COMMAND_WRAPPERS,
   ...RETIRED_SKILL_FILES,
   ...RETIRED_DOCS_FILES,
+  ...RETIRED_SECTION_FILES,
 ];
 
 export const COMPONENTS: Component[] = [
@@ -1029,6 +1044,15 @@ function makeSkillsRegistryHook(sink: ReportSink): (summary: RunSummary) => Prom
 // An existing `agent-project.md` is never read, compared or touched.
 function makeProjectInstructionsHook(sink: ReportSink, dryRun: boolean): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
+    // The `agent-` rename: the overlay moves under its new name first, content
+    // kept byte for byte, so the stub below never stands in for it.
+    const migration = migrateLegacyProjectInstructions(process.cwd(), { dryRun });
+    if (migration.kind === 'moved') {
+      sink.step(`${dryRun ? '[dry-run] Se movería' : 'Movido'} \`${LEGACY_PROJECT_INSTRUCTIONS_FILE}\` a \`${PROJECT_INSTRUCTIONS_FILE}\` (mismo contenido, byte a byte): las secciones ahora llevan el prefijo \`agent-\`.`);
+    }
+    else if (migration.kind === 'both') {
+      sink.warn(`Existen \`${LEGACY_PROJECT_INSTRUCTIONS_FILE}\` y \`${PROJECT_INSTRUCTIONS_FILE}\`: no se movió nada. Pasa lo propio del primero al segundo y borra el primero.`);
+    }
     const outcome = deliverProjectInstructionsStub(process.cwd(), UPSTREAM_DIR, { dryRun });
     if (outcome.kind === 'delivered') {
       sink.step(`${dryRun ? '[dry-run] Se crearía' : 'Creado'} \`${PROJECT_INSTRUCTIONS_FILE}\` desde \`${PROJECT_INSTRUCTIONS_TEMPLATE}\`: las reglas propias de este proyecto van ahí; ninguna sincronización lo vuelve a tocar.`);

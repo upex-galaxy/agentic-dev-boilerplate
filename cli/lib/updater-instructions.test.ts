@@ -10,10 +10,14 @@ import {
   findStubLeaks,
   INSTRUCTIONS_DIR,
   isSplitL0,
+  LEGACY_PROJECT_INSTRUCTIONS_FILE,
   LEGACY_SECTION_HOMES,
   legacyHeadingHome,
+  migrateLegacyProjectInstructions,
   PROJECT_INSTRUCTIONS_FILE,
   PROJECT_INSTRUCTIONS_TEMPLATE,
+  RENAMED_SECTION_FILES,
+  renamedSectionsNote,
 } from './updater-instructions.ts';
 import { collectParityFindings, legacyInstructionsMap, legacyInstructionsNote } from './updater-parity.ts';
 
@@ -202,5 +206,50 @@ describe('legacy AGENTS.md heading map', () => {
     expect(row!.evidence).toContain('legacy single-file AGENTS.md');
     expect(row!.evidence).not.toContain('keep project-only headings');
     expect(row!.note).toContain('| Your heading | Lives now in | What to do |');
+  });
+});
+
+describe('the agent- rename', () => {
+  test('every numbered section maps to an agent- file that ships, with the id its stem had', () => {
+    for (const [from, to] of Object.entries(RENAMED_SECTION_FILES)) {
+      expect(to.startsWith('agent-')).toBe(true);
+      expect(existsSync(join(REPO, INSTRUCTIONS_DIR, from))).toBe(false);
+      expect(existsSync(join(REPO, INSTRUCTIONS_DIR, to))).toBe(true);
+      if (!to.endsWith('.md')) { continue; }
+      const id = (parseYaml(/^---\n([\s\S]*?)\n---/.exec(readRepo(`${INSTRUCTIONS_DIR}/${to}`))![1]) as { id: string }).id;
+      expect(id).toBe(from.replace(/^\d{2}-/, '').replace(/\.md$/, ''));
+    }
+  });
+
+  test('project.md moves to agent-project.md byte for byte; a dry run moves nothing; both names present moves nothing', () => {
+    const repo = tempRoot();
+    expect(migrateLegacyProjectInstructions(repo)).toEqual({ kind: 'none' });
+    const own = '---\nid: project\n---\n\n## ACME\n\nour rule\r\n';
+    write(repo, LEGACY_PROJECT_INSTRUCTIONS_FILE, own);
+    expect(migrateLegacyProjectInstructions(repo, { dryRun: true })).toEqual({ kind: 'moved', dryRun: true });
+    expect(existsSync(join(repo, PROJECT_INSTRUCTIONS_FILE))).toBe(false);
+    expect(migrateLegacyProjectInstructions(repo)).toEqual({ kind: 'moved', dryRun: false });
+    expect(readFileSync(join(repo, PROJECT_INSTRUCTIONS_FILE), 'utf8')).toBe(own);
+    expect(existsSync(join(repo, LEGACY_PROJECT_INSTRUCTIONS_FILE))).toBe(false);
+    write(repo, LEGACY_PROJECT_INSTRUCTIONS_FILE, 'old\n');
+    expect(migrateLegacyProjectInstructions(repo)).toEqual({ kind: 'both' });
+    expect(readFileSync(join(repo, LEGACY_PROJECT_INSTRUCTIONS_FILE), 'utf8')).toBe('old\n');
+    expect(readFileSync(join(repo, PROJECT_INSTRUCTIONS_FILE), 'utf8')).toBe(own);
+  });
+
+  test('the stub never stands in for a legacy project.md waiting to move', () => {
+    const upstream = tempRoot();
+    const repo = tempRoot();
+    write(upstream, PROJECT_INSTRUCTIONS_TEMPLATE, '---\nid: project\n---\n');
+    write(repo, LEGACY_PROJECT_INSTRUCTIONS_FILE, 'mine\n');
+    expect(deliverProjectInstructionsStub(repo, upstream)).toEqual({ kind: 'present' });
+    expect(existsSync(join(repo, PROJECT_INSTRUCTIONS_FILE))).toBe(false);
+  });
+
+  test('the AGENTS.md row names only the stale paths; new names and other files are not stale', () => {
+    expect(renamedSectionsNote('AGENTS.md', readRepo('AGENTS.md'))).toBeNull();
+    expect(renamedSectionsNote('README.md', 'see 80-git.md')).toBeNull();
+    const note = renamedSectionsNote('AGENTS.md', '| git | `.agents/instructions/80-git.md` |\nown rules: `.agents/instructions/project.md`.\nnot `agent-project.md`, not `agent-project.md.template`\n');
+    expect(note?.clause).toBe('AGENTS.md still names 2 instruction file(s) by the pre-rename name: rename 80-git.md -> agent-git.md, project.md -> agent-project.md');
   });
 });

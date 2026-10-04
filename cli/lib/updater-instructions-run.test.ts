@@ -12,9 +12,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { COMPONENTS as WRAPPER_COMPONENTS } from '../update-boilerplate.ts';
+import { RETIRED_SECTION_FILES, COMPONENTS as WRAPPER_COMPONENTS } from '../update-boilerplate.ts';
 import { runUpdate } from './updater-core.ts';
-import { deliverProjectInstructionsStub, INSTRUCTIONS_DIR, PROJECT_INSTRUCTIONS_FILE, PROJECT_INSTRUCTIONS_TEMPLATE } from './updater-instructions.ts';
+import { deliverProjectInstructionsStub, INSTRUCTIONS_DIR, LEGACY_PROJECT_INSTRUCTIONS_FILE, migrateLegacyProjectInstructions, PROJECT_INSTRUCTIONS_FILE, PROJECT_INSTRUCTIONS_TEMPLATE } from './updater-instructions.ts';
 import { collectParityFindings } from './updater-parity.ts';
 
 const REPO = join(import.meta.dir, '..', '..');
@@ -308,5 +308,102 @@ describe('an existing app adopted with --adopt', () => {
     expect(read(app, `${INSTRUCTIONS_DIR}/agent-git.md`)).toBe(THIS_RELEASE[`${INSTRUCTIONS_DIR}/agent-git.md`]);
     expect(read(app, PROJECT_INSTRUCTIONS_FILE)).toBe(STUB);
     expect(read(app, 'scripts/tool.ts')).toBe('the app tool\n');
+  });
+});
+
+describe('a project scaffolded with the numbered section names', () => {
+  const OLD = (name: string): string => `${INSTRUCTIONS_DIR}/${name}`;
+  const NUMBERED_AGENTS = THIS_RELEASE['AGENTS.md']
+    .replaceAll('agent-critical-rules.md', '01-critical-rules.md')
+    .replaceAll('agent-git.md', '80-git.md')
+    .replaceAll('agent-project.md', 'project.md');
+  /** Release N-1: the same sections under their numbered names, the overlay as `project.md`. */
+  const NUMBERED_RELEASE: Record<string, string> = {
+    ...PREVIOUS_RELEASE,
+    'AGENTS.md': NUMBERED_AGENTS,
+    [OLD('README.md')]: THIS_RELEASE[OLD('README.md')],
+    [OLD('01-critical-rules.md')]: THIS_RELEASE[OLD('agent-critical-rules.md')],
+    [OLD('80-git.md')]: THIS_RELEASE[OLD('agent-git.md')],
+    [OLD('project.md')]: OWN_PROJECT_MD,
+    [OLD('project.md.template')]: STUB,
+  };
+  const ACME_OVERLAY = `${STUB}\n## ACME\n\nour own rule, kept byte for byte\n`;
+
+  /** The wrapper's shape after the rename: the numbered copies retired, the legacy overlay excluded and moved. */
+  function renameConfig(template: string, dryRun: boolean): UpdaterConfig {
+    const base = config(template, dryRun);
+    return {
+      ...base,
+      deprecatedFiles: RETIRED_SECTION_FILES,
+      excludePaths: [...(base.excludePaths ?? []), LEGACY_PROJECT_INSTRUCTIONS_FILE],
+      hooks: {
+        afterApply: async () => {
+          migrateLegacyProjectInstructions(process.cwd(), { dryRun });
+          deliverProjectInstructionsStub(process.cwd(), base.tempDir, { dryRun });
+        },
+      },
+    };
+  }
+
+  function setup(): { template: string, app: string } {
+    const template = tempRoot();
+    initRepo(template);
+    const previous = commit(template, NUMBERED_RELEASE, 'release N-1');
+    commit(template, { ...Object.fromEntries(Object.keys(NUMBERED_RELEASE).map(k => [k, null])), ...PREVIOUS_RELEASE, ...THIS_RELEASE }, 'release N');
+    const app = tempRoot();
+    initRepo(app);
+    const { [OLD('project.md')]: _own, ...synced } = NUMBERED_RELEASE;
+    commit(app, {
+      ...synced,
+      [OLD('80-git.md')]: `${NUMBERED_RELEASE[OLD('80-git.md')]}\nproject edit\n`,
+      [OLD('project.md')]: ACME_OVERLAY,
+      [VERSION_FILE]: lock(template, previous, ['scripts', 'instructions']),
+    }, 'scaffold N-1');
+    return { template, app };
+  }
+
+  test('a dry run writes nothing', async () => {
+    const { template, app } = setup();
+    process.chdir(app);
+    const before = tree(app);
+    const summary = await runUpdate(renameConfig(template, true), sink(), { auto: true, dryRun: true, rollback: false });
+    expect(summary.aborted).not.toBe(true);
+    expect(tree(app)).toEqual(before);
+  });
+
+  test('retires the numbered copies with a backup, moves project.md byte for byte, and flags the AGENTS.md paths', async () => {
+    const { template, app } = setup();
+    process.chdir(app);
+    const summary = await runUpdate(renameConfig(template, false), sink(), { auto: true, dryRun: false, rollback: false });
+    expect(summary.aborted).not.toBe(true);
+
+    for (const name of ['01-critical-rules.md', '80-git.md', 'project.md.template', 'project.md']) {
+      expect(existsSync(join(app, OLD(name)))).toBe(false);
+    }
+    expect(read(app, OLD('agent-critical-rules.md'))).toBe(THIS_RELEASE[OLD('agent-critical-rules.md')]);
+    expect(read(app, OLD('agent-git.md'))).toBe(THIS_RELEASE[OLD('agent-git.md')]);
+    expect(read(app, PROJECT_INSTRUCTIONS_TEMPLATE)).toBe(STUB);
+    // The overlay moved, never regenerated from the template.
+    expect(read(app, PROJECT_INSTRUCTIONS_FILE)).toBe(ACME_OVERLAY);
+
+    // The edited numbered copy survives in the run's backup folder.
+    const backups = readdirSync(join(app, '.backups')).map(d => join(app, '.backups', d, OLD('80-git.md'))).filter(f => existsSync(f));
+    expect(backups.length).toBe(1);
+    expect(readFileSync(backups[0], 'utf8')).toContain('project edit');
+
+    // The protected L0 is never rewritten; the drift row names each stale path.
+    expect(read(app, 'AGENTS.md')).toBe(NUMBERED_AGENTS);
+    const evidence = collectParityFindings({
+      root: app,
+      upstreamDir: join(template),
+      drift: [{ path: 'AGENTS.md', reason: 'per-project AI memory', structural: false }],
+      compatErrors: [],
+      archivedSkills: [],
+      archivedSkillsDir: join(app, 'archive'),
+      heldBack: [],
+      envNewKeys: [],
+      contextMaps: [],
+    }).find(f => f.path === 'AGENTS.md')?.evidence ?? '';
+    expect(evidence).toContain('pre-rename name: rename 01-critical-rules.md -> agent-critical-rules.md, 80-git.md -> agent-git.md, project.md -> agent-project.md');
   });
 });

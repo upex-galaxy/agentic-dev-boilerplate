@@ -44,7 +44,7 @@ import { stripJsonComments } from './agent-compatibility-contracts.ts';
 import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OVERLAY, SHADOWING_COMMANDS_BACKUP_DIR } from './agent-compatibility.ts';
 import { contextMapAdvice, contextMapStatuses, mapRelPath } from './context-maps.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
-import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE } from './updater-instructions.ts';
+import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE, renamedSectionsNote } from './updater-instructions.ts';
 import { CLAUDE_SETTINGS_FILE } from './updater-settings.ts';
 
 // ============================================================================
@@ -1188,6 +1188,13 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       projectOnly = true;
       suggested = 'merge';
       notes.push({ clause: '', note: legacy.note });
+    }
+    // A split AGENTS.md that still routes to the numbered section names: the
+    // sections arrived renamed, the project's own file never is.
+    const renamed = renamedSectionsNote(entry.path, project);
+    if (renamed !== null) {
+      suggested = 'merge';
+      notes.push(renamed);
     }
     // No husky hook is ever overwritten, so a consumer only learns about the
     // gates split if the row says so: without it no gate a future release adds
