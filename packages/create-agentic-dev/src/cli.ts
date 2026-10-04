@@ -27,6 +27,7 @@ import {
   rewriteProjectYaml,
   sanitizeProjectName,
   scrubGitHistory,
+  seedProjectInstructions,
   seedProjectYamlFromSchema,
 } from './prepare.ts';
 import { rollback } from './rollback.ts';
@@ -175,6 +176,7 @@ async function main(): Promise<number> {
     try {
       await scrubGitHistory(projectDir);
       await pruneBootstrapExcludes(projectDir);
+      await seedProjectInstructions(projectDir);
       await rewritePackageJson(projectDir, projectName);
       const seeded = await seedProjectYamlFromSchema(projectDir);
       await rewriteProjectYaml(projectDir, {
