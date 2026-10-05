@@ -67,7 +67,7 @@ MCP config files are **committed to git** and contain **no secrets** — they re
 
 The agent process must have the vars at **spawn time**. Three ways:
 
-- **A) Cross-platform wrapper** (default — Windows/Mac/Linux): the project's `package.json` ships `bun run claude` / `bun run opencode` (a `dotenv-cli` wrapper). Launch the agent through it.
+- **A) Cross-platform wrapper** (default — Windows/Mac/Linux): the project's `package.json` ships `bun run claude` / `bun run opencode` (a launcher that loads `.env`: `varlock run` in current scaffolds, a `dotenv-cli` wrapper in older ones; render the one the project's scripts use). Launch the agent through it.
 - **B) Source into the current shell** (Mac/Linux/Git Bash): `set -a; source .env; set +a` exports every `.env` var into your CURRENT shell, then you launch a bare `claude` / `opencode`. **Must be SOURCED** — a `bun run` wrapper runs in a subshell and the exports won't persist to your terminal. Check a var afterwards by name (`[ -n "$DBHUB_HOST" ] && echo set`), never by printing it.
 - **C) direnv** (Mac/Linux, optional): a committed `.envrc` auto-loads `.env` on `cd` into the repo. One-time setup: `brew install direnv` (or distro pkg) → add `eval "$(direnv hook zsh)"` to `~/.zshrc` → `direnv allow`. Then launch `claude` / `opencode` directly.
 
@@ -79,11 +79,11 @@ The agent process must have the vars at **spawn time**. Three ways:
 
 ### Verifying a var loaded — the bare `env | grep` is MISLEADING
 
-A naked `env | grep <PREFIX>` comes back **EMPTY even when everything is correct**: the `dotenv-cli` wrapper (path A) injects vars into the agent **CHILD process**, not your parent shell — so your terminal's `env` never had them. Testers waste hours here. Use the trio instead (`<PREFIX>` = the project's detected MCP env prefix, e.g. `DBHUB`):
+A naked `env | grep <PREFIX>` comes back **EMPTY even when everything is correct**: the wrapper (path A) injects vars into the agent **CHILD process**, not your parent shell — so your terminal's `env` never had them. Testers waste hours here. Use the trio instead (`<PREFIX>` = the project's detected MCP env prefix, e.g. `DBHUB`):
 
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # (a) set in the file? (names only)
-dotenv -e .env -- env | grep '^<PREFIX>' | cut -d= -f1   # (b) what the MCP sees at spawn (names only)
+bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # (b) what the MCP sees at spawn (names only; older dotenv scaffolds: dotenv -e .env -- env)
 set -a; source .env; set +a              # (c) load .env into THIS shell (prints nothing)
 ```
 
@@ -314,6 +314,6 @@ playwright-cli close
 - [ ] DBHub `type` matches the detected engine; both `dbhub.toml` and the URI use the same engine.
 - [ ] Only agent tabs the project supports are rendered (don't show Gemini if the project has no Gemini story — but the 4-tab reference is fine as documentation).
 - [ ] UI driver = `playwright-cli` cookbook (Q7 default); a `@playwright/mcp` block appears ONLY when detection says the project wires the MCP.
-- [ ] Env-verify guidance is the TRIO (`grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1` · `dotenv -e .env -- env | grep '^<PREFIX>' | cut -d= -f1` · `set -a; source .env; set +a`), every leg printing NAMES only (Critical Rule #1: a value printed in a terminal the agent can see lands in its transcript) — never a bare `env | grep` alone.
+- [ ] Env-verify guidance is the TRIO (`grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1` · `bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1` (or the project's own loader) · `set -a; source .env; set +a`), every leg printing NAMES only (Critical Rule #1: a value printed in a terminal the agent can see lands in its transcript) — never a bare `env | grep` alone.
 - [ ] Activation lists only DETECTED paths (wrapper / source-into-shell / direnv); `source .env` is the universal POSIX fallback.
 - [ ] No real password, token, or private host anywhere — only `.env` slot names + `<see credentials source>`.

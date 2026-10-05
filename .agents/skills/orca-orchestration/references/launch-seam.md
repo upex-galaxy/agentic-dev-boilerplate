@@ -60,9 +60,10 @@ for the real grammar. Only this skill spells out commands, because only this ski
     -n "<KEY>" '<prompt>'
   ```
 
-  `bun run claude` forwards trailing arguments to the binary through the `dotenv -o -e .env`
-  wrapper declared in `package.json`, and the wrapper is what makes the env file win over an
-  inherited variable (`.agents/instructions/agent-harnesses.md` §5.5). `<KEY>` is the worker's roster name, the same token the
+  `bun run claude` forwards trailing arguments to the binary through `scripts/launch.ts`
+  (declared in `package.json`), which refuses to launch while an inherited variable differs from
+  the env file and then starts the binary through `varlock run`
+  (`.agents/instructions/agent-harnesses.md` §5.5). `<KEY>` is the worker's roster name, the same token the
   prompt opens with. On a harness where the launcher cannot set a session name, omit the flag: the
   human types `/rename <KEY>` once the session is up, because a model cannot rename its own session.
 

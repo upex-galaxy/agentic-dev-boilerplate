@@ -92,7 +92,7 @@ These are **not optional** for the workflow — each one is required by a specif
 
 | Tool     | What it buys you                                                                                                                                                                                                                                                                                                     | Install                                                                                       |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `direnv` | Loads `.env` automatically when you `cd` into the repo, so the bare `claude` / `opencode` / `codex` binaries see MCP credentials. Without it the project ships `bun run claude` / `bun run opencode` / `bun run codex` wrappers (via `dotenv-cli`) that do the same thing: direnv just removes the `bun run` prefix. | macOS/Linux: `brew install direnv` / `apt install direnv` · [direnv.net](https://direnv.net/) |
+| `direnv` | Loads `.env` automatically when you `cd` into the repo, so the bare `claude` / `opencode` / `codex` binaries see MCP credentials. Without it the project ships `bun run claude` / `bun run opencode` / `bun run codex` wrappers (via `varlock run`) that do the same thing: direnv just removes the `bun run` prefix. | macOS/Linux: `brew install direnv` / `apt install direnv` · [direnv.net](https://direnv.net/) |
 
 > **Windows users**: skip direnv. The `bun run claude` / `bun run opencode` / `bun run codex` wrappers already load `.env` cross-platform with zero setup. direnv on PowerShell needs version 2.37+ and is officially experimental; Git Bash works but at that point the wrapper is simpler. The installer will offer the direnv hook; just decline it.
 
@@ -235,7 +235,7 @@ After the install, review the parity table, run `bun install`, and commit the ad
 `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex) ship with placeholders — real values live in `.env`. Launch the agent via one of these so env vars actually load:
 
 ```bash
-# Cross-platform default (uses dotenv-cli, no extra tooling required):
+# Cross-platform default (uses the varlock devDependency, no extra tooling required):
 bun run claude        # Claude Code
 bun run opencode      # OpenCode
 bun run codex         # Codex CLI (Desktop reads the same repository config)
@@ -249,7 +249,7 @@ set -a; source .env; set +a   # bash/zsh only — exports every .env key into th
 claude                        # now claude / opencode / codex / acli all see the vars
 ```
 
-> The wrappers pass `dotenv -o`, so a value in `.env` wins over a stale variable inherited from the parent shell. The bare binary and the direnv path do not force that: if a server answers 401/403 after you fixed `.env`, check your shell exports first.
+> The wrappers start the binary through `varlock run`, which validates `.env` against `.env.schema` and lets a variable your shell already exports WIN over the file. So they first refuse to launch while an inherited value differs from `.env` / `.env.local`, naming the variables (never the values): `unset` them or launch from a clean shell. The bare binary and the direnv path skip that check: if a server answers 401/403 after you fixed `.env`, check your shell exports first (`bun run vars:env:check`).
 
 A launch with **no command line** (a desktop app, a natively launched supervised worker) has nothing to wrap. `bun run harness:env` covers it: it derives from `.env` the files each harness reads before any hook runs (the `env` block of `.claude/settings.local.json`, and OpenCode's `.auth/opencode/<VAR>` value files). Re-run it after every `.env` change, then restart the session; `bun run harness:env:check` reports drift by variable name. Codex needs neither: its stdio servers start through a `.env` loader declared in `.codex/config.toml`.
 

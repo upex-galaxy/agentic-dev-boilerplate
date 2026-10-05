@@ -766,9 +766,9 @@ import { CodeBlock } from "./CodeBlock";
 import type { QaConfig } from "../qa-config";
 
 // <PREFIX> = the project's MCP env prefix (e.g. DBHUB) — DETECTED, never baked in.
-const wrapperBlock = `# Wrapper (dotenv-cli, cross-platform) — launches the agent with .env preloaded:
-bun run claude       # = dotenv -e .env -- claude
-bun run opencode     # = dotenv -e .env -- opencode`;
+const wrapperBlock = `# Wrapper (cross-platform) — launches the agent with .env preloaded through varlock:
+bun run claude       # = varlock run -- claude, after a stale-variable check
+bun run opencode     # = varlock run -- opencode`;
 const sourceShellBlock = `# Source .env into your CURRENT shell — must be SOURCED (a 'bun run' wrapper
 # runs in a subshell and won't persist). Mac/Linux/Git Bash:
 set -a; source .env; set +a
@@ -805,7 +805,7 @@ export function EnvSetup({ config }: { config: QaConfig }) {
         </p>
         <ul className="ml-5 mt-1 list-disc text-muted-foreground">
           <li><code>grep -E '^&lt;PREFIX&gt;[A-Z0-9_]*=.' .env | cut -d= -f1</code> — is the var set in the file? (names only)</li>
-          <li><code>dotenv -e .env -- env | grep '^&lt;PREFIX&gt;' | cut -d= -f1</code> — what the MCP actually sees (names only).</li>
+          <li><code>bunx varlock run -- env | grep '^&lt;PREFIX&gt;' | cut -d= -f1</code> — what the MCP actually sees (names only).</li>
           <li><code>set -a; source .env; set +a</code> — load into your current shell; check a var by name, never print it.</li>
         </ul>
       </div>
