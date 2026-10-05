@@ -560,6 +560,9 @@ export const IDENTITY_PATHS: readonly string[] = [
   'testing.automation_identity.scope',
   'autonomous_delivery.automation_gh_account',
   'environments.*.*',
+  // Which harnesses THIS repo runs on: the boilerplate checks all three, a
+  // project declares its own or leaves it null to detect (ADR-0013).
+  'harnesses',
 ];
 
 /** Whether a dotted path matches one `IDENTITY_PATHS` pattern, segment by segment. */
@@ -635,6 +638,7 @@ export const FILLED_ELSEWHERE: Readonly<Record<string, string>> = {
   'autonomous_delivery.escalation_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
   'secrets.onepassword.vault': 'the secret-manager choice of `bun run setup` (cli/lib/secret-providers.ts; null while secrets.provider is local)',
   'secrets.onepassword.account': 'the secret-manager choice of `bun run setup` (optional: null = the 1Password CLI default account)',
+  'harnesses': 'the agent selection of `bun run setup` (`recordHarnessSelection` in cli/install.ts; null = detect from the files present, ADR-0013)',
 };
 
 /**

@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { cleanupDeprecated, validateComponentRegistry } from './lib/updater-core.ts';
+import { unusedHarnessPaths } from './lib/harness-selection.ts';
+import { cleanupDeprecated, isRepoOnlyPath, validateComponentRegistry } from './lib/updater-core.ts';
 import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
@@ -139,6 +140,35 @@ describe('synced halves of project-owned configs', () => {
   test('the tooling component carries the eslint base, the husky component the gates file', () => {
     expect(COMPONENTS.find(c => c.name === 'tooling')?.files).toContain('eslint.config.base.js');
     expect(COMPONENTS.find(c => c.name === 'husky')).toMatchObject({ type: 'directory', paths: ['.husky'] });
+  });
+});
+
+describe('one-harness projects (ADR-0013)', () => {
+  test('a Claude-only project gets no OpenCode or Codex file delivered, watched or reported', () => {
+    const root = temporaryRoot();
+    for (const file of ['CLAUDE.md', '.mcp.json', '.claude/settings.json']) {
+      mkdirSync(dirname(join(root, file)), { recursive: true });
+      writeFileSync(join(root, file), '{}\n');
+    }
+    const unused = unusedHarnessPaths(root);
+    expect(unused).toEqual(['opencode.jsonc', '.opencode/plugins', 'docs/mcp/opencode.template.json', '.codex', 'docs/mcp/codex.template.toml']);
+
+    const watched = resolveProtectedWatchlist(root).map(e => e.path);
+    expect(watched).toContain('.mcp.json');
+    expect(watched).not.toContain('opencode.jsonc');
+    expect(watched).not.toContain('.codex/config.toml');
+
+    // `repoOnlyPaths` is the filter every detection path (bootstrap, content
+    // reconcile, git-log delta) goes through: nothing below these is delivered.
+    const shipped = ['.opencode/plugins/personality-reinject.js', '.codex/hooks.json', '.codex/config.toml', '.codex/environments/environment.toml', 'opencode.jsonc', 'docs/mcp/codex.template.toml'];
+    for (const file of shipped) { expect(isRepoOnlyPath(file, unused)).toBe(true); }
+    expect(isRepoOnlyPath('.agents/hooks/personality-reinject.mjs', unused)).toBe(false);
+    expect(isRepoOnlyPath('.opencode/commands/mine.md', unused)).toBe(false);
+    expect(isRepoOnlyPath('docs/mcp/claude.template.json', unused)).toBe(false);
+  });
+
+  test('a project with all three (or none detected) keeps the full delivery', () => {
+    expect(unusedHarnessPaths(temporaryRoot())).toEqual([]);
   });
 });
 

@@ -25,6 +25,7 @@ import { parseEnvFile } from './install';
 import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
 import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
+import { declaredHarnesses, isUnderAny, unusedHarnessPaths } from './lib/harness-selection.ts';
 import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
 import { ADOPT_REPO_ONLY_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
@@ -939,7 +940,10 @@ export function resolveProtectedWatchlist(cwd: string, warn: (message: string) =
   for (const r of declared.rejected) {
     warn(`updater.protected_paths (.agents/project.yaml): entrada ignorada "${r.value}": ${r.reason}.`);
   }
-  return mergeProtectedWatchlist(PROTECTED_WATCHLIST, declared.paths);
+  // A harness the project does not use (ADR-0013): its registries are neither
+  // delivered when missing nor reported when upstream changes them.
+  const unused = unusedHarnessPaths(cwd);
+  return mergeProtectedWatchlist(PROTECTED_WATCHLIST.filter(e => !isUnderAny(e.path, unused)), declared.paths);
 }
 
 /**
@@ -1321,6 +1325,8 @@ function makePermissionListHook(
   adoptRun: boolean,
 ): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
+    // No Claude Code here: its settings file is not this project's (ADR-0013).
+    if (!declaredHarnesses(process.cwd()).harnesses.includes('claude')) { return; }
     const declined = readDeclinedDenies(process.cwd());
     if (declined.error) { sink.warn(`${declined.error}; se ignora y se agregan todas las reglas deny de upstream.`); }
     const opts = { createMissing: adoptRun, declinedDenies: declined.entries };
@@ -1961,7 +1967,9 @@ async function main(): Promise<void> {
     // The boilerplate's own material — never delivered to consumers. Mirrored
     // in TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts); see
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.
-    repoOnlyPaths: REPO_ONLY_PATHS,
+    // Plus the files of a harness this project does not use (ADR-0013): it
+    // deleted them on purpose, so no detection path re-delivers them.
+    repoOnlyPaths: [...REPO_ONLY_PATHS, ...unusedHarnessPaths(process.cwd())],
     // An adopted app (this --adopt run, or any run after one): the
     // boilerplate's own numbered ADRs stay out of the app's decision log.
     ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS, adopted: true } : {}),
