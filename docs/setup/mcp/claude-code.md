@@ -76,7 +76,7 @@ Para un servidor que el equipo comparte. Copiá el bloque del template opt-in ([
 }
 ```
 
-> **Nota**: Claude Code NO soporta el bloque `inputs` / `${input:...}` (eso es sintaxis de VS Code). En un servidor remoto (`type: "http"`) los secretos se referencian como `${VAR}` (o `${VAR:-default}`) y se expanden desde el entorno del proceso, así que solo resuelven en un lanzamiento con `bun run claude` o direnv; un servidor stdio que necesita valores de `.env` usa el loader de `.env` en su lugar, sin `${VAR}` al lado. **Si la variable falta, Claude Code no avisa**: pasa `${VAR}` como texto literal y el servidor falla recién en su primera llamada autenticada. El chequeo es `/mcp` dentro de la sesión (`AGENTS.md` Critical Rule #9).
+> **Nota**: Claude Code NO soporta el bloque `inputs` / `${input:...}` (eso es sintaxis de VS Code). En un servidor remoto (`type: "http"`) los secretos se referencian como `${VAR}` (o `${VAR:-default}`) y se expanden desde el entorno del proceso, así que solo resuelven en un lanzamiento con `bun run claude`; un servidor stdio que necesita valores de `.env` usa el loader de `.env` en su lugar, sin `${VAR}` al lado. **Si la variable falta, Claude Code no avisa**: pasa `${VAR}` como texto literal y el servidor falla recién en su primera llamada autenticada. El chequeo es `/mcp` dentro de la sesión (`AGENTS.md` Critical Rule #9).
 
 ---
 

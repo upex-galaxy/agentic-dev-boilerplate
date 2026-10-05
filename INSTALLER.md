@@ -54,14 +54,6 @@ Each entry is required by one or more skills; install them as you need them.
 | `resend`         | `/resend-cli`                                                                                                        | <https://resend.com/docs/cli>                                            |
 | `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                 | <https://jqlang.org/>                                                    |
 
-### Convenience opt-ins — never required
-
-| Tool     | What it buys you                                                                                                                                                                                                                                                                             | Check                                               |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `direnv` | Bare `claude` / `opencode` / `codex` and shell CLIs (`acli`, `supabase`, `vercel`) see `.env` automatically when you `cd` into the repo (MCP servers do not need it: they read `.env` through the `.env` loader). Without it, use the `bun run claude` / `bun run opencode` / `bun run codex` wrappers (cross-platform, no setup). The installer offers `direnv allow` and a shell hook — safe to decline. | `cli/install.ts` Step 10 (`detectDirenv()` + offer) |
-
-> **Windows users**: skip direnv. PowerShell support is experimental and needs direnv 2.37+; Git Bash works but the `bun run claude` wrapper is simpler everywhere. Decline the installer's direnv prompt — the wrappers already load `.env`.
-
 ### MCP credentials filled into `.env`
 
 The MCP config of every selected harness names the variables, never their values: each server that needs `.env` values starts through the `.env` loader `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`, the same on `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex), which reads `.env` at spawn time and hands the server only those names. The installer resolves required vars by reading each server's `--filter` in those committed configs (`discoverRequiredEnvVars()`) — the list backs the MCP servers those configs declare and the Atlassian CLI (context7 needs none). Web search is not in it: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`); the installer prints how to connect it. With the shipped configs the list reads:
@@ -88,11 +80,11 @@ Optional, for a team that shares its secrets in a vault instead of each person's
 4. Check, redacted: `bunx varlock load --agent`.
 5. CI (team plan): a service account with read access to the vault; its token is the secret `OP_SERVICE_ACCOUNT_TOKEN`, set BESIDE any per-variable secrets a job already passes, never instead. A job reads the vault only in steps that run through `varlock run`; the launcher drops an empty inherited copy of a key the overlay resolves (an unset GitHub secret renders as `""`), so it cannot blank the vault value.
 
-The vault is read only by launches that go through varlock: `bun run claude|codex|opencode`, every MCP server (the `.env` loader) and `bunx varlock run -- <cmd>`. direnv and `source .env` read `.env` alone, so a key served only by the vault is empty in that shell. `bun run setup:doctor` names the provider, the overlay and the vault item names under "Secret source". Non-interactive: `INSTALL_SECRETS_PROVIDER=1password INSTALL_SECRETS_VAULT=<vault> bun run setup --non-interactive`. Other managers varlock supports plug into the same slot (one adapter in `cli/lib/secret-providers.ts`); none ships configured.
+The vault is read only by launches that go through varlock: `bun run claude|codex|opencode`, every MCP server (the `.env` loader) and `bunx varlock run -- <cmd>`. `source .env` reads `.env` alone, so a key served only by the vault is empty in that shell. `bun run setup:doctor` names the provider, the overlay and the vault item names under "Secret source". Non-interactive: `INSTALL_SECRETS_PROVIDER=1password INSTALL_SECRETS_VAULT=<vault> bun run setup --non-interactive`. Other managers varlock supports plug into the same slot (one adapter in `cli/lib/secret-providers.ts`); none ships configured.
 
 ### Where to verify your status
 
-`bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars, direnv state, the plaintext MCP credential copies an older install left on disk ("Plaintext MCP credential copies"), where secret values come from ("Secret source"), and the multi-harness contract: instructions (`AGENTS.md` present, `CLAUDE.md` is the exact shim), the `.claude/skills` alias, any command that shadows a skill, the three hook adapters, MCP parity across the three configs, and **Codex repository trust**. The trust row is WARN, never FAIL: project `.codex/` config and hooks load only in a repository you have marked trusted, and that is runtime state no file read can verify. Use the doctor after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
+`bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars, the plaintext MCP credential copies an older install left on disk ("Plaintext MCP credential copies"), where secret values come from ("Secret source"), and the multi-harness contract: instructions (`AGENTS.md` present, `CLAUDE.md` is the exact shim), the `.claude/skills` alias, any command that shadows a skill, the three hook adapters, MCP parity across the three configs, and **Codex repository trust**. The trust row is WARN, never FAIL: project `.codex/` config and hooks load only in a repository you have marked trusted, and that is runtime state no file read can verify. Use the doctor after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
 
 ---
 
@@ -118,20 +110,18 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
   "shell": "/usr/bin/bash",
   "is_tty": true,
   "env_vars": { "ATLASSIAN_API_TOKEN": "set", "N8N_API_KEY": "missing", ... },
-  "direnv": { "installed": true, "version": "2.25.2", "envrc_allowed": true, "hook_in_rc": true, "rc_file": "/home/user/.bashrc" },
   "pending_actions": [
     { "type": "credential", "target": "N8N_API_KEY", "hint": "n8n API key for the n8n MCP server", "where": "n8n instance → Settings → API" },
-    { "type": "shell_hook", "target": "~/.bashrc", "hint": "Add direnv hook ...", "where": "eval \"$(direnv hook bash)\"" }
+    { "type": "shell_command", "target": "bun install", "hint": "Install project dependencies including varlock ..." }
   ]
 }
 ```
 
-`pending_actions[].type` is one of: `credential` · `shell_hook` · `system_install` · `shell_command`. The AI iterates the list and picks the right tool per type:
+`pending_actions[].type` is one of: `credential` · `system_install` · `shell_command`. The AI iterates the list and picks the right tool per type:
 
 | type             | Who handles it | How                                                                                                                             |
 | ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `credential`     | **User**       | AI asks the user for the value in chat (e.g. "paste your Atlassian API token from https://id.atlassian.com/manage-profile/security/api-tokens"). Then AI writes it to `.env`. |
-| `shell_hook`     | **AI**         | AI appends the `where` line to the `target` rc file with its Edit/Bash tool. Trivial.                                           |
 | `system_install` | **User**       | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password).                                 |
 | `shell_command`  | **AI**         | AI runs the `target` command via Bash.                                                                                          |
 
@@ -168,7 +158,6 @@ Then `bun run setup:doctor --json` to confirm the rest.
 
 | Env var                                     | Effect                                                                        |
 | ------------------------------------------- | ----------------------------------------------------------------------------- |
-| `INSTALL_SKIP_DIRENV=1`                     | Skip direnv detection / autoload                                              |
 | `INSTALL_AGENTS=claude-code,opencode,codex` | Configure exactly these harnesses (any subset), skipping the selection prompt |
 | `INSTALL_SECRETS_PROVIDER=1password`        | Opt in to the secret manager (default `.env`); pair with `INSTALL_SECRETS_VAULT=<vault>` |
 | `INSTALL_SKIP_ENGRAM=1`                     | Treat Engram as skipped: no detection prompt, no `engram setup`               |
@@ -178,21 +167,13 @@ Then `bun run setup:doctor --json` to confirm the rest.
 
 ## Launching the agent after setup
 
-`bun run setup` finishes with two recommended ways to start an agent so MCP env vars (e.g. `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) get loaded from `.env`:
+`bun run setup` finishes by naming the wrapper that starts an agent with `.env` loaded for that session (e.g. `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`). Nothing exports `.env` into your shell: each process loads its own config.
 
-| Method                                                                | Platform                                                                                      | One-time setup                                                                                                                                          | Usage                                                          |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| **`bun run claude` / `bun run opencode` / `bun run codex`** (default) | Windows, macOS, Linux                                                                         | None — `varlock` is a project devDep; each wrapper refuses to launch while an inherited shell variable differs from `.env`, then runs `varlock run` | `bun run claude` from the repo root                            |
-| **direnv autoload** (optional)                                        | macOS, Linux, **Windows** (Git Bash recommended; PowerShell experimental, needs direnv 2.37+) | Install direnv (`brew install direnv` / `apt install direnv` / `winget install direnv`) + add hook to your shell rc, then installer runs `direnv allow` | Just `claude`, `opencode` or `codex` from anywhere in the repo |
-
-### direnv hook per shell
-
-| Shell      | Line to add                               | File                                             |
-| ---------- | ----------------------------------------- | ------------------------------------------------ |
-| bash       | `eval "$(direnv hook bash)"`              | `~/.bashrc` (also works for Git Bash on Windows) |
-| zsh        | `eval "$(direnv hook zsh)"`               | `~/.zshrc`                                       |
-| fish       | `direnv hook fish \| source`              | `~/.config/fish/config.fish`                     |
-| PowerShell | `Invoke-Expression "$(direnv hook pwsh)"` | `$PROFILE` (requires direnv 2.37+, experimental) |
+| Method | Platform | One-time setup | Usage |
+| --- | --- | --- | --- |
+| **`bun run claude` / `bun run opencode` / `bun run codex`** | Windows, macOS, Linux | None: `varlock` is a project devDep; each wrapper refuses to launch while an inherited shell variable differs from `.env`, then runs `varlock run` | `bun run claude` from the repo root |
+| **Bare binary or desktop app** | Windows, macOS, Linux | None | Its MCP servers still read `.env` through the `.env` loader; the session's own shell does not see `.env` |
+| **`bunx varlock run -- <cmd>`** | Windows, macOS, Linux | None | One shell command that needs a value (`curl` with a token, a script) |
 
 All three MCP configs are committed with variable names only: every server that needs `.env` values starts through the `.env` loader (`varlock run --filter <its vars>`) on `.mcp.json`, `opencode.jsonc` and `.codex/config.toml` alike. Real values live in `.env` (gitignored). Step 7d retires the plaintext copies an older install wrote (the `env` block of `.claude/settings.local.json`, `.auth/opencode/<VAR>`): a copy equal to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/<VAR>` and named. If a server returns 401/403 at first call, the matching env var is missing — see `AGENTS.md` Critical Rule #9 (stop, fix `.env`, restart the agent session).
 
@@ -457,12 +438,11 @@ Three reasons:
 - **`--upex` flag** — every `jira:sync-*` script (`fields`, `workflows`, `link-types`) accepts `--upex` to download the UPEX-standard reference JSON from the upstream boilerplate repo. URL is hardcoded per script and pinned to `main`. Bypasses ATLASSIAN_* env vars, `project_key`, `jira-required.yaml` and all Jira REST calls; only network requirement is GitHub raw access. Useful when (a) you have no Jira admin, (b) you want a working catalog without setting up auth, or (c) you want to compare against the canonical UPEX standard before custom-syncing.
 - **engram not detected after install** — re-run `bun run setup`. The detector probes `which engram` plus `engram version`; if the binary is missing the installer offers the install commands, and if `engram version` prints no release version (a local or `go install` build) it asks whether to try anyway. Confirm the binary is on PATH (`which engram` should return a path under a Homebrew prefix or `~/go/bin/`).
 - **MCPs returning 401/403** — the matching env var in `.env` is unset or wrong. All three MCP configs (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`) start their servers through the `.env` loader; real values live in `.env`. A value that fails the schema stops only the server that needs it: `bunx varlock load --agent` shows which, redacted. Open `.env`, fill the var, and **restart the agent session** — env vars are read once at MCP-server spawn time. See `AGENTS.md` Critical Rule #9.
-- **MCPs not loading at all** — confirm you launched the agent via `bun run claude` / `bun run opencode` / `bun run codex` (each starts it through `varlock run`), or that direnv autoload is active (`direnv status` shows your `.envrc` allowed). A launch with no command line (desktop app, supervised worker) needs nothing extra: every MCP server starts through the `.env` loader, whatever launched the harness. Check that the checkout has a `.env` and that the `varlock` devDependency is installed (`bun install`); `bun run harness:env:check` exits 1 while a retired plaintext copy remains.
+- **MCPs not loading at all** — the launch method is not the cause: a wrapper, a bare binary and a launch with no command line (desktop app, supervised worker) all work, because every MCP server starts through the `.env` loader, whatever launched the harness. Check that the checkout has a `.env` and that the `varlock` devDependency is installed (`bun install`); `bun run harness:env:check` exits 1 while a retired plaintext copy remains.
 - **Codex ignores `.codex/config.toml` and the hook never fires** — the repository is not marked trusted. Codex loads project `.codex/` config and hooks only in a trusted repo, and that is runtime state no file check can see. `bun run setup:doctor` reports it on its own WARN line; approve trust in Codex, then restart the session.
 - **The skills alias disappeared after an edit** — you probably hand-edited the `.claude/skills` alias. Fix the source instead (`.agents/skills/`), then run `bun run agents:compat`. Verify with `bun run agents:compat:check`.
 - **A project command vanished into `.backups/shadowing-commands/`** — it had the name of a repo skill, which hides that skill's instructions. Port anything worth keeping into the skill, or rename the command, then restore it.
 - **`agents:compat:check` fails on `CLAUDE.md`** — it holds more than the one-line `@AGENTS.md` shim. Move the prose into the owning skill (or into its instruction section under `.agents/instructions/`) and regenerate.
-- **`direnv allow` produced `dotenv_if_exists: command not found`** — this would mean the `.envrc` is using a newer direnv feature than your version supports. The committed `.envrc` uses portable POSIX loading (works on direnv 2.21+), so if you see this, your `.envrc` has been edited locally — restore it from `git checkout .envrc`.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup. On Claude Code specifically, also confirm the `.claude/skills` alias exists; if a checkout dropped it, `bun run agents:compat` recreates it.
 - **How do I uninstall Engram?** — the Claude Code plugin: `claude plugin uninstall engram@engram`. The MCP registration `engram setup <agent>` wrote lives in that agent's user-level config; the [engram agent-setup docs](https://github.com/Gentleman-Programming/engram/blob/main/docs/AGENT-SETUP.md) name the file per agent. Your memories stay in Engram's local store until you delete them.
 

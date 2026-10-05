@@ -65,13 +65,12 @@ MCP config files are **committed to git** and contain **no secrets** — they re
 
 ### Activating `.env` in the terminal (only if the project uses strategy B)
 
-The agent process must have the vars at **spawn time**. Three ways:
+The agent process must have the vars at **spawn time**, loaded for THAT process only: never export `.env` into the tester's shell (every later command in it, the agent's tool calls included, would inherit the secrets). Two ways:
 
 - **A) Cross-platform wrapper** (default — Windows/Mac/Linux): the project's `package.json` ships `bun run claude` / `bun run opencode` (a launcher that loads `.env`: `varlock run` in current scaffolds, a `dotenv-cli` wrapper in older ones; render the one the project's scripts use). Launch the agent through it.
-- **B) Source into the current shell** (Mac/Linux/Git Bash): `set -a; source .env; set +a` exports every `.env` var into your CURRENT shell, then you launch a bare `claude` / `opencode`. **Must be SOURCED** — a `bun run` wrapper runs in a subshell and the exports won't persist to your terminal. Check a var afterwards by name (`[ -n "$DBHUB_HOST" ] && echo set`), never by printing it.
-- **C) direnv** (Mac/Linux, optional): a committed `.envrc` auto-loads `.env` on `cd` into the repo. One-time setup: `brew install direnv` (or distro pkg) → add `eval "$(direnv hook zsh)"` to `~/.zshrc` → `direnv allow`. Then launch `claude` / `opencode` directly.
+- **B) One process, no script** (any OS with Bun): `bunx varlock run -- claude` (or `opencode`) loads `.env` for that one launch, which is what the wrapper does. Use it when the project ships no wrapper script.
 
-> Only render the mechanisms the project actually ships (detected in Phase 1: `claude`/`opencode` scripts, `.envrc`; `source .env` always applies on a POSIX shell). If the project's runtime auto-loads `.env` (e.g. Bun), say so but note the agent process still needs the vars exported for the MCP launcher.
+> Only render the mechanisms the project actually ships (detected in Phase 1: `claude`/`opencode` scripts, a varlock schema). If the project's runtime auto-loads `.env` (e.g. Bun), say so but note the agent process still needs the vars at spawn for the MCP launcher.
 
 ### CRITICAL rule (render as a warning callout)
 
@@ -84,7 +83,7 @@ A naked `env | grep <PREFIX>` comes back **EMPTY even when everything is correct
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # (a) set in the file? (names only)
 bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # (b) what the MCP sees at spawn (names only; older dotenv scaffolds: dotenv -e .env -- env)
-set -a; source .env; set +a              # (c) load .env into THIS shell (prints nothing)
+bunx varlock load --agent                # (c) does every value pass the schema? (redacted)
 ```
 
 Render this trio everywhere the page tells a tester to "verify the env var" — never the bare `env | grep` alone.
@@ -126,7 +125,7 @@ sslmode = "require"
 
 Declare in `.env` (render the slots, never values): `DBHUB_TYPE`, `DBHUB_HOST`, `DBHUB_PORT`, `DBHUB_DATABASE`, `DBHUB_USER`, `DBHUB_PASSWORD`.
 
-> **DBHub footgun (warning callout)**: DBHub substitutes the literal string `${VAR}` when a var is missing — producing a cryptic auth failure instead of a startup error. Verify before launching with the trio above — a bare `env | grep DBHUB` is misleading (the wrapper injects into the agent child process, not your shell): use `grep -E '^DBHUB[A-Z0-9_]*=.' .env | cut -d= -f1` (set in file), `dotenv -e .env -- env | grep '^DBHUB' | cut -d= -f1` (what the MCP sees), and `set -a; source .env; set +a` (load into your shell).
+> **DBHub footgun (warning callout)**: DBHub substitutes the literal string `${VAR}` when a var is missing — producing a cryptic auth failure instead of a startup error. Verify before launching with the trio above — a bare `env | grep DBHUB` is misleading (the wrapper injects into the agent child process, not your shell): use `grep -E '^DBHUB[A-Z0-9_]*=.' .env | cut -d= -f1` (set in file), `bunx varlock run -- env | grep '^DBHUB' | cut -d= -f1` (what the MCP sees; older dotenv scaffolds: `dotenv -e .env -- env`), and `bunx varlock load --agent` (schema check, redacted).
 >
 > **DBHub takes `[[sources]]`, not a DSN**: DBHub does NOT accept a raw connection string — only the split `[[sources]]` fields (`host` / `port` / `user` / `password` / `database` / `sslmode`), each from its own slot. A raw `postgresql://…` URI is ONLY for a VSCode/Cursor SQL extension (Way 2 below).
 
@@ -314,6 +313,6 @@ playwright-cli close
 - [ ] DBHub `type` matches the detected engine; both `dbhub.toml` and the URI use the same engine.
 - [ ] Only agent tabs the project supports are rendered (don't show Gemini if the project has no Gemini story — but the 4-tab reference is fine as documentation).
 - [ ] UI driver = `playwright-cli` cookbook (Q7 default); a `@playwright/mcp` block appears ONLY when detection says the project wires the MCP.
-- [ ] Env-verify guidance is the TRIO (`grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1` · `bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1` (or the project's own loader) · `set -a; source .env; set +a`), every leg printing NAMES only (Critical Rule #1: a value printed in a terminal the agent can see lands in its transcript) — never a bare `env | grep` alone.
-- [ ] Activation lists only DETECTED paths (wrapper / source-into-shell / direnv); `source .env` is the universal POSIX fallback.
+- [ ] Env-verify guidance is the TRIO (`grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1` · `bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1` (or the project's own loader) · `bunx varlock load --agent`), every leg printing NAMES only (Critical Rule #1: a value printed in a terminal the agent can see lands in its transcript) — never a bare `env | grep` alone.
+- [ ] Activation lists only DETECTED paths (wrapper / `bunx varlock run --`); never a path that exports `.env` into the shell (`source .env`, a shell autoloader).
 - [ ] No real password, token, or private host anywhere — only `.env` slot names + `<see credentials source>`.

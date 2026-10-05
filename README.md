@@ -88,14 +88,6 @@ These are **not optional** for the workflow — each one is required by a specif
 | `resend`         | `/resend-cli` (transactional email development + sending)                                                            | [resend.com/docs/cli](https://resend.com/docs/cli)                                                                                       |
 | `jq`             | `/acli` JSON pipelines (`acli ... --json \| jq ...`)                                                                 | [jqlang.org](https://jqlang.org/)                                                                                                        |
 
-### Convenience opt-ins (pure UX, never required)
-
-| Tool     | What it buys you                                                                                                                                                                                                                                                                                                     | Install                                                                                       |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `direnv` | Loads `.env` automatically when you `cd` into the repo, so the bare `claude` / `opencode` / `codex` binaries and shell CLIs (`acli`, `supabase`, `vercel`) see it (MCP servers do not need it: they read `.env` through the `.env` loader). Without it the project ships `bun run claude` / `bun run opencode` / `bun run codex` wrappers (via `varlock run`) that do the same thing: direnv just removes the `bun run` prefix. | macOS/Linux: `brew install direnv` / `apt install direnv` · [direnv.net](https://direnv.net/) |
-
-> **Windows users**: skip direnv. The `bun run claude` / `bun run opencode` / `bun run codex` wrappers already load `.env` cross-platform with zero setup. direnv on PowerShell needs version 2.37+ and is officially experimental; Git Bash works but at that point the wrapper is simpler. The installer will offer the direnv hook; just decline it.
-
 ### MCP credentials (`.env` keys)
 
 The three MCP configs, `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex), name variables, never values: each server that needs `.env` values starts through the same `.env` loader on all three, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`, which reads `.env` (or the secret manager the schema names) at spawn time and hands the server only the names in its filter. These keys back the MCP servers those configs declare and the Atlassian CLI (context7 needs none); with the shipped configs they read as below. Web search is not among them: it runs at harness level and keeps its key outside `.env` (`.context/ADR/ADR-0005-harness-level-mcps-and-capabilities.md`).
@@ -122,8 +114,7 @@ Quote any value that contains a `#` (`PASSWORD="pass#word"`): varlock cuts an un
 | Step 2 — engram          | Version compare — runs `engram version`, parses semver, requires `>= 3.0.0`.                                                                                                                        | Missing: prints brew + go install commands + docs URL, asks exit-or-continue. Too old or no release version: asks whether to try anyway.                                                                                      |
 | Step 4 — agents          | Detects Claude Code, OpenCode and Codex (config directory, binary on PATH, or `.codex/config.toml`), then prompts which to configure.                                                               | None of the three found: prints all three docs URLs, hard exit 1.                                                                                                                                                              |
 | Step 11 — per-skill CLIs | PATH probe — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check.                                                                                              | Prints `found` / `missing` table; for missing entries adds `quick:` install command (when cross-platform — e.g. `bun add -g vercel`) + `docs:` URL. Non-blocking.                                                              |
-| direnv (optional)        | Presence + `.envrc` allow status + shell-rc hook line.                                                                                                                                              | Pure convenience nudge: the `bun run claude` / `bun run opencode` / `bun run codex` wrappers already work without it. If absent, lists `system_install` action with install command; safe to decline (recommended on Windows). |
-| `bun run setup:doctor`   | Re-runs everything above + the MCP `.env` vars + direnv state + the multi-harness contract (instructions shim, skills alias, commands that would shadow a skill, hook adapters, MCP parity) + Codex repository trust. | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup. Codex trust is reported as WARN, never FAIL: it is runtime state no file read can verify.       |
+| `bun run setup:doctor`   | Re-runs everything above + the MCP `.env` vars + the multi-harness contract (instructions shim, skills alias, commands that would shadow a skill, hook adapters, MCP parity) + Codex repository trust. | Human-readable or `--json` report. Every `pending_action` carries a `where` hint or URL — re-run any time after partial setup. Codex trust is reported as WARN, never FAIL: it is runtime state no file read can verify.       |
 
 > **TL;DR**: install **Bun** plus at least one of **Claude Code, OpenCode, or Codex** before you run setup. Everything else, the installer points you at when you hit it.
 
@@ -171,7 +162,7 @@ What it does:
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, Engram (`engram setup` per agent), community skills, `.env` wiring for every MCP server declared in `.mcp.json` plus the Atlassian CLI, how to connect web search at harness level, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`CLAUDE.md` shim, `.claude/skills` alias) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
+5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, Engram (`engram setup` per agent), community skills, `.env` wiring for every MCP server declared in `.mcp.json` plus the Atlassian CLI, how to connect web search at harness level, optional `gh repo create`, and finally generates the harness surfaces (`CLAUDE.md` shim, `.claude/skills` alias) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -236,40 +227,21 @@ After the install, review the parity table, run `bun install`, and commit the ad
 
 ## Launching the agent
 
-`.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex) name variables, never values: real values live in `.env`, and every MCP server that needs one reads it through the `.env` loader at spawn time. Launch the agent via one of these so the session itself (and the CLIs it runs) sees `.env` too:
+`.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex) name variables, never values: real values live in `.env`, and every MCP server that needs one reads it through the `.env` loader at spawn time, however the agent was launched. Nothing exports `.env` into your shell, so a bare `claude` / `opencode` / `codex` does NOT see it; its MCP servers still do. Launch the agent through the wrapper when the session itself needs the values:
 
 ```bash
-# Cross-platform default (uses the varlock devDependency, no extra tooling required):
+# Cross-platform (uses the varlock devDependency, no extra tooling required):
 bun run claude        # Claude Code
 bun run opencode      # OpenCode
 bun run codex         # Codex CLI (Desktop reads the same repository config)
 
-# Optional: direnv autoload (any OS with direnv installed)
-direnv allow          # one-time per repo (the installer offers to run this)
-claude                # direct binary picks up .env from your shell
-
-# Or load .env into your CURRENT shell once, then run any binary directly:
-set -a; source .env; set +a   # bash/zsh only — exports every .env key into this session
-claude                        # now claude / opencode / codex / acli all see the vars
+# One shell command that needs a value (curl with a token, a script):
+bunx varlock run -- <cmd>
 ```
 
-> The wrappers start the binary through `varlock run`, which validates `.env` against `.env.schema` and lets a variable your shell already exports WIN over the file. So they first refuse to launch while an inherited value differs from `.env` / `.env.local`, naming the variables (never the values): `unset` them or launch from a clean shell. The bare binary and the direnv path skip that check: if a server answers 401/403 after you fixed `.env`, check your shell exports first (`bun run vars:env:check`).
+> The wrappers start the binary through `varlock run`, which validates `.env` against `.env.schema` and lets a variable your shell already exports WIN over the file. So they first refuse to launch while an inherited value differs from `.env` / `.env.local`, naming the variables (never the values): `unset` them or launch from a clean shell. Never `source .env` into your shell: the values then outlive the session and reach every process that shell starts.
 
 A launch with **no command line** (a desktop app, a natively launched supervised worker) has nothing to wrap, and its MCP servers still get their credentials: each one starts through the `.env` loader, which reads `.env` itself whatever launched the harness. After a `.env` change, restart the session (OpenCode: `opencode service restart` too). An older install wrote plaintext copies for those launches (the `env` block of `.claude/settings.local.json`, `.auth/opencode/<VAR>`); `bun run harness:env` retires them (a copy equal to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/<VAR>` and named), and `bun run harness:env:check` exits 1 while one remains.
-
-PowerShell equivalent of that last block:
-
-```powershell
-Get-Content .env | Where-Object { $_ -match '^\s*[^#].*=' } | ForEach-Object {
-  $k, $v = $_ -split '=', 2
-  Set-Item -Path "Env:$($k.Trim())" -Value $v.Trim()
-}
-claude
-```
-
-> Run the snippet **inline** in the shell you are already in. Wrapping it in a script would export into a child process that exits immediately, leaving your terminal untouched — which is why `package.json` ships no env-loading script.
-
-direnv works on macOS / Linux / Windows. On Windows install via `winget install direnv` — Git Bash is recommended; PowerShell support is experimental and requires direnv 2.37+. See [INSTALLER.md § Launching the agent](./INSTALLER.md#launching-the-agent-after-setup) for the per-shell hook lines.
 
 <br />
 

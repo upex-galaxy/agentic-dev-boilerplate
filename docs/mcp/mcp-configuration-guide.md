@@ -56,7 +56,7 @@ Los templates de este directorio usan `{{VARIABLE}}` solo como marcador de busca
 
 **El loader de `.env`.** Es el mismo en los tres hosts (`MCP_ENV_LOADER_*` / `mcpEnvLoaderArgs` en `cli/lib/agent-compatibility-contracts.ts`). Lee el schema de varlock más `.env` / `.env.local` (o el gestor de secretos que nombra el schema) desde la raíz del proyecto al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa **solo** las variables de su `--filter`, que son los nombres exactos que el server lee. `--inject vars` las pasa sueltas, sin blob; `--no-redact-stdout` deja intacto el stream JSON-RPC. Al lado del loader no va ningún `${VAR}`, `{env:}`, `{file:}` ni `env_vars`: un `${VAR}` sin valor rompe un lanzamiento de escritorio y un valor heredado vacío le gana a `.env`. Un server que no necesita valores (context7) arranca sin loader. Un valor que falla el schema frena solo al server que lo necesita: `bunx varlock load --agent` muestra cuál, redactado.
 
-**Un server remoto no puede usar el loader** (no hay comando que envolver): su secreto sale del entorno del proceso del harness, así que solo resuelve en un lanzamiento que lo tenga (`bun run <harness>` o direnv), nunca desde la app de escritorio.
+**Un server remoto no puede usar el loader** (no hay comando que envolver): su secreto sale del entorno del proceso del harness, así que solo resuelve en un lanzamiento que lo tenga (`bun run <harness>`), nunca desde un binario pelado ni desde la app de escritorio.
 
 **Cargar `.env` antes de lanzar.** `bun run claude` / `bun run opencode` / `bun run codex` arrancan el binario a través de `varlock run` (`scripts/launch.ts`) y se niegan a arrancar mientras el shell exporte un valor distinto del de `.env`, porque bajo varlock gana el heredado. Los servers stdio no dependen de eso; la sesión, los servers remotos y los CLIs que corre el agente sí. Después de un cambio de `.env`, reiniciá la sesión. Una instalación vieja escribía copias en texto plano (bloque `env` de `.claude/settings.local.json`, `.auth/opencode/<VAR>`): `bun run harness:env` las retira y `bun run harness:env:check` sale con 1 mientras quede una.
 
@@ -216,7 +216,7 @@ Opt-in, servidor remoto.
 
 1. En https://www.postman.com: avatar → **Settings** → **API Keys** → **Generate API Key** (se muestra una sola vez).
 2. Guardala en `.env` como `POSTMAN_API_KEY`.
-3. Copiá el bloque `postman` de los tres templates y reemplazá `{{POSTMAN_API_KEY}}` por `${POSTMAN_API_KEY}` (Claude Code) o `{env:POSTMAN_API_KEY}` (OpenCode). Codex la envía con `bearer_token_env_var = "POSTMAN_API_KEY"`. Es un server remoto: la key sale del entorno del proceso, así que lanzá con `bun run <harness>` (o direnv).
+3. Copiá el bloque `postman` de los tres templates y reemplazá `{{POSTMAN_API_KEY}}` por `${POSTMAN_API_KEY}` (Claude Code) o `{env:POSTMAN_API_KEY}` (OpenCode). Codex la envía con `bearer_token_env_var = "POSTMAN_API_KEY"`. Es un server remoto: la key sale del entorno del proceso, así que lanzá con `bun run <harness>`.
 
 Las tools cubren colecciones, requests, environments, specs, mocks y workspaces; `/mcp` lista las que expone tu versión.
 
