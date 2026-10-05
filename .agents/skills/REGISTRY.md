@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-05T11:02:27.341Z`
+> Generated: `2026-10-05T11:28:05.854Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -48,7 +48,7 @@ Skills indexed: 22
 - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
-- Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, the `.env` loader's `--filter` in an MCP config); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name); never run `varlock load`, even `--agent`, against a schema `bun run vars:schema:check` has not passed (a scratch schema is banned: `--agent` redacts only `@sensitive` items). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
+- Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, a name in the MCP loader's `--filter` list); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name); never run `varlock load`, even `--agent`, against a schema `bun run vars:schema:check` has not passed (a scratch schema is banned: `--agent` redacts only `@sensitive` items). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 - Instructions maintenance (ADR-0014, binds every skill and subagent): every change to `AGENTS.md`, a section under `.agents/instructions/`, the router or a `triggers:` list follows `references/instructions-doctrine.md`: place each sentence with its §2 decision tree, run its §6 procedure, close with `bun run instructions:check`. NEVER paste section prose into `AGENTS.md`, NEVER add, change or remove a router row without the ADR that decides it (`bun run instructions:check --accept-router ADR-NNNN`), and fix a trigger miss in the section's `triggers:` plus a labelled prompt in `cli/lib/fixtures/instruction-router-eval.json`, never by relabelling the set.
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
