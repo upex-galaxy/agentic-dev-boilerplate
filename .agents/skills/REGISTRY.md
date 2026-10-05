@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-05T05:42:50.603Z`
+> Generated: `2026-10-05T06:49:15.144Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -48,7 +48,7 @@ Skills indexed: 22
 - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
-- Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example`), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
+- Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
