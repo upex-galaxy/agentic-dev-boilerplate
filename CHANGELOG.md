@@ -5,6 +5,28 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — No shell autoloader: secrets stay out of the shell
+
+Each process loads its own config, so nothing exports `.env` into a shell the
+AI uses (ADR-0015, owner decision B8).
+
+### Removed
+
+- **`.envrc`** and every direnv step: the installer's `direnv allow` offer and
+  `INSTALL_SKIP_DIRENV`, the doctor's direnv check (its `direnv` JSON field and
+  the `shell_hook` action type), the `direnv allow` step of
+  `bun run worktree:provision` and its `.envrc.local` copy.
+
+### Changed
+
+- **`/acli` REST fallback**: the `curl` recipes run inside
+  `bunx varlock run --`, which loads `.env` for that one process.
+- **`.gitignore`** ignores `.envrc`, `.envrc.local` and `.direnv/`: a personal
+  autoloader is never committed. The updater never delivers, watches or
+  deletes `.envrc`.
+- **Docs**: README, INSTALLER, `.env.example`, the orca-orchestration and
+  testability-guide references describe per-process loading only.
+
 ## 2026-10-05 — A project on one harness keeps only that harness's files
 
 A project declares the harnesses it uses in `.agents/project.yaml`
