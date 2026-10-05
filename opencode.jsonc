@@ -138,6 +138,30 @@
       "shred *": "deny",
       "dd if=*": "deny",
       "mkfs*": "deny",
+
+      // Secrets by NAME, never by value (Critical Rule #1). Same set as the
+      // Read/Bash denies in .claude/settings.json.
+      "cat *.env": "deny",
+      "cat *.env.local": "deny",
+      "cat *.env.*.local": "deny",
+      "cat *.auth/*": "deny",
+      "cat *settings.local.json": "deny",
+      "printenv*": "deny",
+      "env": "deny",
+      "varlock printenv*": "deny",
+      "varlock reveal*": "deny",
+      "bunx varlock printenv*": "deny",
+      "bunx varlock reveal*": "deny",
+    },
+    // OpenCode's own base policy already asks on `*.env` / `*.env.*` and
+    // allows `*.env.example`; these turn the secret-holding paths into a deny.
+    "read": {
+      "*.env": "deny",
+      "*.env.local": "deny",
+      "*.env.*.local": "deny",
+      "*.envrc.local": "deny",
+      "*.auth/*": "deny",
+      "*settings.local.json": "deny",
     },
   },
 }
