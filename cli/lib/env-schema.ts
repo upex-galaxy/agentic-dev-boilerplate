@@ -40,8 +40,17 @@
  * a silent no-op. `bun run vars:env:check` reports that, and `scripts/launch.ts`
  * refuses to start an agent session on it.
  *
+ * THE OPTIONAL PROVIDER OVERLAY. The core header carries
+ * `@import(./.env.provider.schema, allowMissing=true)`: the hook a project
+ * uses when it keeps its secrets in a manager (ADR-0011). Absent overlay = a
+ * no-op, so every project without one loads unchanged. Placed HERE, in the
+ * synced half, so an existing project gains the hook with `bun run up` and
+ * never has to edit its own `.env.schema`. Measured (agentic-qa, same varlock
+ * pin): an overlay item beats both this file's empty declaration and a project
+ * re-declaration with an empty value. The overlay is `./secret-providers.ts`.
+ *
  * `cli/` is import-closed: this module imports only from
- * `./variables-manifest.ts` and node built-ins. `scripts/env-schema.ts`,
+ * `./variables-manifest.ts`, `./secret-providers.ts` and node built-ins. `scripts/env-schema.ts`,
  * `scripts/launch.ts` and `scripts/check-vars.ts` import FROM here.
  */
 
@@ -51,6 +60,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { PROVIDER_SCHEMA_FILE } from './secret-providers.ts';
 import { DEPRECATED_VARS, parseDotEnvPairs, validateVarManifest, valueSourceOf, VAR_MANIFEST } from './variables-manifest.ts';
 
 // ----------------------------------------------------------------------------
@@ -242,6 +252,11 @@ export function generateCoreSchema(
     '# site yet, and the consumer that reads a variable fails by name when it is',
     '# empty. A project that wants a stronger contract re-declares the item in',
     `# ${PROJECT_SCHEMA_FILE} as required (the importing file wins).`,
+    '#',
+    `# The import below is the OPTIONAL secret-manager overlay (${PROVIDER_SCHEMA_FILE},`,
+    '# references only, written by `bun run setup` when a project opts in). Absent',
+    '# = nothing changes: values come from .env / .env.local.',
+    `# @import(./${PROVIDER_SCHEMA_FILE}, allowMissing=true)`,
     '# @defaultRequired=false',
     '# @defaultSensitive=false',
     '# ---',

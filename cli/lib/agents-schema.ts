@@ -633,6 +633,8 @@ export const FILLED_ELSEWHERE: Readonly<Record<string, string>> = {
   'autonomous_delivery.automation_gh_account': 'the project owner, by hand, when it opts into /autonomous-delivery',
   'autonomous_delivery.report_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
   'autonomous_delivery.escalation_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
+  'secrets.onepassword.vault': 'the secret-manager choice of `bun run setup` (cli/lib/secret-providers.ts; null while secrets.provider is local)',
+  'secrets.onepassword.account': 'the secret-manager choice of `bun run setup` (optional: null = the 1Password CLI default account)',
 };
 
 /**
