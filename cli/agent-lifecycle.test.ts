@@ -20,7 +20,6 @@ import {
   describeAgentDetection,
   detectAgents,
   discoverRequiredEnvVars,
-  launchCommandsForAgents,
   mergedHarnesses,
   migrateAgentIds,
   parseAgentsEnv,
@@ -230,11 +229,6 @@ describe('installer skill and env contracts', () => {
     for (const agent of ['claude-code', 'opencode', 'codex'] as const) {
       expect(await discoverRequiredEnvVars([agent], root)).toEqual(['TOKEN_A', 'URL_B']);
     }
-  });
-
-  test('exposes one launch wrapper per harness', () => {
-    expect(launchCommandsForAgents(['claude-code', 'opencode', 'codex']))
-      .toEqual(['bun run claude', 'bun run opencode', 'bun run codex']);
   });
 });
 

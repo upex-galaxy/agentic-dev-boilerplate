@@ -248,7 +248,7 @@ async function main(): Promise<number> {
     '',
     pc.bold('Next steps (in order):'),
     ...(cdCmd ? [`  1.  ${pc.cyan(cdCmd)}`] : []),
-    `  ${nextStepNum}.  ${pc.cyan('bun claude')}     ${pc.dim('# or: bun opencode')}`,
+    `  ${nextStepNum}.  ${pc.cyan('claude')}     ${pc.dim('# or: opencode, codex')}`,
     '',
     pc.dim('Full guide: README.md → "Getting started"'),
   ];
@@ -328,7 +328,7 @@ async function runAdopt(args: Args): Promise<number> {
     `  1.  Review the parity table (${pc.cyan('.agents/prompts/parity-plan.md')} when it saved one)`,
     `  2.  ${pc.cyan('bun install')}     ${pc.dim('# the tooling devDependencies it appended')}`,
     '  3.  Commit the adoption as one change',
-    `  4.  ${pc.cyan('bun claude')}      ${pc.dim('# or: bun opencode')}, then load the ${pc.cyan('project-adoption')} skill`,
+    `  4.  ${pc.cyan('claude')}      ${pc.dim('# or: opencode, codex')}, then load the ${pc.cyan('project-adoption')} skill`,
     '',
     pc.dim('Full guide: README.md → "Adopt an existing app"'),
   ];

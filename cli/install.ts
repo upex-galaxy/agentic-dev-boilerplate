@@ -1647,10 +1647,6 @@ export function buildInitialState(prior: InstallState | null): InstallState {
   };
 }
 
-export function launchCommandsForAgents(agents: AgentId[]): string[] {
-  return agents.map(agent => agent === 'claude-code' ? 'bun run claude' : `bun run ${agent}`);
-}
-
 // ============================================================================
 // Step 6b — repository compatibility (Claude skills alias + shadowing commands)
 // ============================================================================
@@ -2707,9 +2703,10 @@ function printClosingSummary(state: InstallState): void {
   stepNum++;
 
   process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Open the agent${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run claude${COLORS.reset}      ${COLORS.dim}(varlock loads .env, validated against .env.schema)${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run opencode${COLORS.reset}    ${COLORS.dim}(varlock loads .env)${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run codex${COLORS.reset}       ${COLORS.dim}(CLI; Codex Desktop opens this same repository)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}claude${COLORS.reset}      ${COLORS.dim}(or the desktop app, opened on this folder)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}opencode${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}codex${COLORS.reset}       ${COLORS.dim}(CLI; Codex Desktop opens this same repository)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.dim}No wrapper: each MCP server loads .env itself, so no secret enters the agent session.${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.dim}All three read AGENTS.md + .agents/skills/. Codex Desktop needs repository trust before hooks run.${COLORS.reset}\n\n`);
   stepNum++;
 
