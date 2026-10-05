@@ -118,9 +118,9 @@ path Bun cannot create its bin shims, and `bun install` fails with
 
 | Tier                   | Tool                                                                 | What it does                                                                                                                                                                                   |
 | ---------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hard blocker**       | Claude Code **or** OpenCode                                          | The agent the installer configures. `bun run setup` Step 4 aborts if neither is found. Install [Claude Code](https://docs.claude.com/claude-code) or [OpenCode](https://opencode.ai).          |
+| **Hard blocker**       | Claude Code, OpenCode **or** Codex                                   | The agent the installer configures. `bun run setup` Step 4 aborts if none is found. Install [Claude Code](https://docs.claude.com/claude-code), [OpenCode](https://opencode.ai) or [Codex](https://developers.openai.com/codex/). |
 | **Quasi-required**     | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing → installer prints commands and asks exit-or-continue (no cross-session memory if you continue).                         |
-| **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 11 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
+| **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 8 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
 
 This CLI checks `bun`, `git`, and `tar` up front with a `where` / `which` probe
 (POSIX uses `which`, Windows uses `where`) and prints actionable install hints
@@ -225,8 +225,8 @@ cd "$(mktemp -d)" && bunx create-agentic-dev@latest smoke-test --no-setup
 
 ### What ends up in the tarball
 
-`files` is `["README.md", "dist"]`, so the published package is exactly three
-entries — `README.md`, `dist/cli.js`, `package.json`. Nothing under `src/`,
+The published package is exactly the `files` list in `package.json` plus
+`package.json` itself. Nothing under `src/`,
 `tests/` or `scripts/` ships; `dist/cli.js` is the bundled build of all of them.
 
 ### Gotcha: `npm pack --dry-run` does not rebuild

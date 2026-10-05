@@ -885,7 +885,9 @@
           <code>&lt;!-- router:end --&gt;</code>, con tres columnas: <code>Kind</code>,
           <code>Load</code> y <code>Also</code>. Las filas son <strong>tipos de pedido</strong>, no
           features, así que la tabla no crece con el proyecto: crece la sección y sus
-          <code>triggers:</code>.
+          <code>triggers:</code>. Lo de fijo lo hace cumplir un candado: el comentario
+          <code>&lt;!-- router:lock &lt;huella&gt; &lt;ADR-NNNN&gt; --&gt;</code> guarda la huella de
+          la tabla y el ADR que la decidió, y cualquier cambio de fila falla hasta que un ADR lo cubra.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
@@ -1267,7 +1269,13 @@
           <div>
             <strong><code>bun run instructions:check</code></strong> revisa presupuesto, router,
             frontmatter, frases de las reglas, quién sostiene cada NEVER o MUST, e imports. Corre dentro
-            de <code>bun run repo:check</code>. La guía de edición completa está en
+            de <code>bun run repo:check</code>. Además sostiene tres candados
+            (<code>.context/ADR/ADR-0014-instructions-maintenance-locks.md</code>): el router fijado a su
+            ADR (<code>--accept-router ADR-NNNN</code> registra una decisión nueva), la evaluación del
+            clasificador contra los prompts etiquetados en cada corrida, y que cada sección venga
+            completa (frontmatter, fila en el router, prompts propios). La otra mitad la mide
+            <code>bun run instructions:audit</code>: de las rutas que inyectó el hook, cuántas leyó de
+            verdad el agente. La guía de edición completa está en
             <code>.agents/instructions/README.md</code>.
           </div>
         </div>
@@ -1277,7 +1285,9 @@
         <h2><span class="num">10</span>Presupuestos</h2>
         <p class="sub">
           L0 tiene un techo porque Codex corta sin avisar. Los valores son constantes con nombre en
-          <code>scripts/lint-instructions.ts</code>, decididas con el dueño del repo.
+          <code>scripts/lint-instructions.ts</code>, fijadas por
+          <code>.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md</code>: cambiar una
+          es una decisión nueva, con su ADR.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
