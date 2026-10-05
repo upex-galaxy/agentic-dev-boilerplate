@@ -109,6 +109,22 @@ framework_gates_pre_commit() {
     }
   fi
 
+  # instructions gate — only runs when staged files affect it, and only where
+  # the script exists. Besides the budget, router and frontmatter checks it
+  # holds the three locks of ADR-0013: the router table frozen behind the ADR
+  # that decided it, the labelled-prompt router eval (a `triggers:` edit that
+  # loses a route fails HERE, before any test run), and every section shipped
+  # complete.
+  if echo "$_fg_staged" | grep -qE '^(AGENTS\.md$|\.agents/instructions/|\.agents/hooks/|\.context/ADR/|cli/lib/fixtures/instruction-router-eval\.json$|scripts/lint-instructions\.ts$|scripts/lib/(instructions|router-eval)\.ts$)' \
+    && grep -q '"instructions:check"' package.json 2>/dev/null; then
+    bun run instructions:check || {
+      echo ""
+      echo "❌ The instructions are out of contract (budget, router, sections, router lock or router eval)."
+      echo "   Where each sentence goes: .agents/skills/agentic-dev-core/references/instructions-doctrine.md"
+      exit 1
+    }
+  fi
+
   # cross-harness compatibility gate — only runs when staged files affect it.
   # Covers the generated Claude skills alias, a harness command that shadows a
   # skill, the three hook adapters, MCP parity across the three host configs and the eslint block
@@ -133,6 +149,7 @@ framework_gates_pre_commit() {
 #   + conditional skills:registry:check (when staged files affect the registry)
 #   + conditional vars:schema:check (when staged files affect the env schema)
 #   + conditional agents:compat:check (when staged files affect the contract)
+#   + conditional instructions:check (when staged files affect the instructions)
 #   + conditional agents:schema:check (when staged files affect the project schema).
 # pre-push adds the full-repo checks pre-commit skips for speed:
 #   - format:check / lint:check  full repo (lint-staged only touches staged files at commit)
