@@ -66,6 +66,19 @@ export const CODEX_HOOK_COMMAND = 'root="$(git rev-parse --show-toplevel)" && no
 export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$root = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node (Join-Path $root \'.agents/hooks/personality-reinject.mjs\')"';
 
 /**
+ * The repository-relative script a hook command executes, or null when the
+ * command names none. Every adapter reaches its script through a root
+ * placeholder (`$CLAUDE_PROJECT_DIR` for Claude, `$root` for both Codex
+ * forms), so whatever follows it IS the repository-relative path. The hook
+ * merge of `bun run up` reads it to skip a command whose script the project
+ * lacks (`mergeHookGroups`, `cli/lib/updater-settings.ts`).
+ */
+export function hookScriptPath(command: string): string | null {
+  const match = /(?:\$CLAUDE_PROJECT_DIR\/|\$root\/|\$root\s+')([^"')]+\.m?js)/.exec(command);
+  return match === null ? null : match[1];
+}
+
+/**
  * The `.env` loader every MCP stdio server that needs `.env` values launches
  * through, on all three hosts:
  *
@@ -1051,7 +1064,7 @@ export function validateDocContractHooks(root = process.cwd(), harnesses: readon
  * newly matched instruction file. These are the exports and markers its
  * adapters and the eval rely on.
  */
-export const HOOK_ROUTER_EXPORTS = ['routeLines', 'rearmRoutes', 'loadInstructionRouter', 'classifyPrompt'] as const;
+export const HOOK_ROUTER_EXPORTS = ['routeLines', 'rearmRoutes', 'loadInstructionRouter', 'classifyPrompt', 'pendingRouteReminder'] as const;
 export const HOOK_ROUTE_MARKER = 'ROUTE: read';
 export const ROUTER_START_MARKER = '<!-- router:start -->';
 /** Codex `project_doc_max_bytes` default: the always-on file past it is cut at the byte, silently. */
@@ -1069,6 +1082,33 @@ export const OPENCODE_ROUTER_ONLY_MARKER = 'ROUTER-ONLY';
  * each needs its own matcher group, because a group matches one source.
  */
 export const REARM_SESSION_START_SOURCES = ['compact', 'clear'] as const;
+
+/**
+ * Claude Code re-surfaces an unread route once, on the first tool call that
+ * reads none of the routed sections (`ROUTE-PENDING:`, ADR-0018). Codex and
+ * OpenCode carry no such hook: their agents get the `ROUTE:` cue only.
+ */
+export const ROUTE_RESURFACE_EVENT = 'PostToolUse';
+
+/**
+ * The fix a downstream project reads next to a missing hook group. Its
+ * `.claude/settings.json` is frozen by the sync, but `bun run up` appends the
+ * upstream hook groups it lacks (`mergeHookGroups`, `cli/lib/updater-settings.ts`)
+ * and its `.codex/hooks.json` is rewritten by the sync, so re-running the
+ * update IS the fix. Not said in the boilerplate itself, which has no upstream.
+ */
+export const HOOK_GROUP_FIX = 'run `bun run up`, which adds the upstream hook groups this file lacks';
+
+/** One group of `event` with no matcher (every tool) whose hooks run `command`. */
+function hasUnmatchedGroup(settings: JsonObject, event: string, command: string): boolean {
+  const groups = settings.hooks && typeof settings.hooks === 'object' ? (settings.hooks as JsonObject)[event] : undefined;
+  if (!Array.isArray(groups)) { return false; }
+  return groups.some((group) => {
+    if (!group || typeof group !== 'object' || ((group as JsonObject).matcher ?? '*') !== '*') { return false; }
+    const hooks = (group as JsonObject).hooks;
+    return Array.isArray(hooks) && hooks.some(hook => hook && typeof hook === 'object' && (hook as JsonObject).command === command);
+  });
+}
 
 function hasRearmSessionStart(settings: JsonObject, source: string, command: string, windows?: string): boolean {
   const groups = settings.hooks && typeof settings.hooks === 'object' ? (settings.hooks as JsonObject).SessionStart : undefined;
@@ -1098,6 +1138,7 @@ export function validateInstructionRouterHooks(root = process.cwd(), harnesses: 
   if (!l0.includes(ROUTER_START_MARKER)) { return []; }
 
   const errors: string[] = [];
+  const fix = readSchemaOwner(resolvedRoot) ? '' : `. Fix: ${HOOK_GROUP_FIX}`;
   const shared = readFileSync(join(resolvedRoot, '.agents', 'hooks', 'personality-reinject.mjs'), 'utf8');
   for (const name of HOOK_ROUTER_EXPORTS) {
     if (!shared.includes(`export function ${name}`)) {
@@ -1114,11 +1155,15 @@ export function validateInstructionRouterHooks(root = process.cwd(), harnesses: 
   const codexHooks = harnesses.includes('codex') ? parseJson(join(resolvedRoot, '.codex', 'hooks.json')) : null;
   for (const source of REARM_SESSION_START_SOURCES) {
     if (claudeSettings && !hasRearmSessionStart(claudeSettings, source, CLAUDE_HOOK_COMMAND)) {
-      errors.push(`claude must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running ${CLAUDE_HOOK_COMMAND}`);
+      errors.push(`claude must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running ${CLAUDE_HOOK_COMMAND}${fix}`);
     }
     if (codexHooks && !hasRearmSessionStart(codexHooks, source, CODEX_HOOK_COMMAND, CODEX_HOOK_COMMAND_WINDOWS)) {
-      errors.push(`codex must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running the Codex hook command (and its Windows variant).`);
+      errors.push(`codex must re-arm the routes on SessionStart "${source}": a SessionStart group with matcher "${source}" running the Codex hook command (and its Windows variant)${fix}.`);
     }
+  }
+
+  if (claudeSettings && !hasUnmatchedGroup(claudeSettings, ROUTE_RESURFACE_EVENT, CLAUDE_HOOK_COMMAND)) {
+    errors.push(`claude must re-surface unread routes: a ${ROUTE_RESURFACE_EVENT} group with no matcher running ${CLAUDE_HOOK_COMMAND}${fix}`);
   }
 
   if (harnesses.includes('opencode')) {
