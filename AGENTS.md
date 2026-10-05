@@ -10,9 +10,9 @@
 2. A `ROUTE:` line injected by the prompt hook is binding and wins over your own judgment.
 3. A file once read is not re-read unless compaction removed it.
 4. Unsure whether a row applies → read it. Sections are small; a skipped section is the failure this design guards against.
-5. Edit a section in its own file, never paste section prose into this file. A rule only this project has → `.agents/instructions/agent-project.md`.
+5. Edit a section in its own file, never paste section prose into this file; where each sentence goes: `agentic-dev-core/references/instructions-doctrine.md`. A rule only this project has → `.agents/instructions/agent-project.md`.
 
-Rows are request KINDS, not features: the table stays fixed while the sections grow. The prompt hook classifies with this same table plus each section's `triggers:`.
+Rows are request KINDS, not features: the table stays fixed (locked, ADR-0013) while the sections grow. The prompt hook classifies with this same table plus each section's `triggers:`.
 
 <!-- router:start -->
 | Kind | Load | Also |
@@ -31,6 +31,7 @@ Rows are request KINDS, not features: the table stays fixed while the sections g
 | scripts and commands, "how do I run / build / test / lint": whenever any of these apply, read it fresh | @package.json | Rule 10 |
 | anything specific to this project, its own exceptions | `.agents/instructions/agent-project.md` | the project's context skills |
 <!-- router:end -->
+<!-- router:lock 387f2c89527c ADR-0013 -->
 
 ---
 
