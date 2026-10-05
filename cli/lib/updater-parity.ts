@@ -920,6 +920,37 @@ export function harnessLevelMcpNote(filePath: string, project: string, upstream:
 }
 
 /**
+ * The harness launch scripts upstream shipped until it retired them
+ * (`bun run claude|codex|opencode`, ADR-0016), and the launcher they ran. Each
+ * put every `.env` value into the agent's own process; a harness now opens as
+ * its bare binary and each MCP server loads `.env` itself. Upstream never
+ * re-adds them (the `package.json` sync only appends keys upstream still has)
+ * and never deletes a project's copy: the launcher is in the updater's
+ * `excludePaths`, so not even `--force` removes it. One informational row each.
+ */
+export const RETIRED_HARNESS_SCRIPTS = ['claude', 'codex', 'opencode'] as const;
+export const RETIRED_HARNESS_LAUNCHER = 'scripts/launch.ts';
+
+/** A script that starts its harness with the env files loaded: the launcher, varlock, dotenv, or a sourced `.env`. */
+const ENV_LOADING_LAUNCH = /scripts\/launch\.ts|\bvarlock\b|\bdotenv\b|\.env\b/;
+
+/** The retired launch scripts the project's `package.json` still declares, and whether the launcher file is still there. */
+export function retiredHarnessLaunchers(root: string): { scripts: string[], launcher: boolean } {
+  let scripts: Record<string, unknown> = {};
+  try {
+    scripts = (JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as { scripts?: Record<string, unknown> }).scripts ?? {};
+  }
+  catch {
+    scripts = {};
+  }
+  const found = RETIRED_HARNESS_SCRIPTS.filter((name) => {
+    const value = scripts[name];
+    return typeof value === 'string' && ENV_LOADING_LAUNCH.test(value);
+  });
+  return { scripts: found, launcher: fs.existsSync(path.join(root, RETIRED_HARNESS_LAUNCHER)) };
+}
+
+/**
  * Servers upstream once committed and then RETIRED outright (no harness-level
  * replacement): the capability they served moved to a CLI. Keyed by server
  * id; the value is the one-line reason the row prints.
@@ -1348,6 +1379,28 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       surface: 'skills',
       path: moved,
       evidence: `informational: this command had the name of a skill and would have replaced the skill's instructions; moved to ${SHADOWING_COMMANDS_BACKUP_DIR}/${moved}; port anything worth keeping into the skill, then drop the backup`,
+      suggested: 'keep project',
+      blocking: false,
+    });
+  }
+
+  // 4a. Retired harness launchers (ADR-0016): the scripts and the launcher
+  //     file are reported as removable, never touched.
+  const launchers = retiredHarnessLaunchers(input.root);
+  if (launchers.scripts.length > 0) {
+    findings.push({
+      surface: 'package',
+      path: 'package.json',
+      evidence: `informational: upstream retired the harness launch scripts (${launchers.scripts.map(n => `scripts.${n}`).join(', ')}): each started the agent with every .env value in its own process. Open the agent as its bare binary (${launchers.scripts.join(' / ')}) or desktop app; every MCP server loads .env itself. Left untouched: delete them when convenient`,
+      suggested: 'keep project',
+      blocking: false,
+    });
+  }
+  if (launchers.launcher) {
+    findings.push({
+      surface: 'components',
+      path: RETIRED_HARNESS_LAUNCHER,
+      evidence: 'informational: upstream retired the harness launcher with its scripts (ADR-0016) and no longer ships or updates this file; its stale-variable check lives on in `bun run vars:env:check`. Left untouched: delete it once no script of yours calls it',
       suggested: 'keep project',
       blocking: false,
     });

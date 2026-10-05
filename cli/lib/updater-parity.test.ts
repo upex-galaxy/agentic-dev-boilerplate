@@ -30,6 +30,7 @@ import {
   protectNote,
   readGitStrategyStamp,
   renderParityReport,
+  RETIRED_HARNESS_LAUNCHER,
   retiredMcpNote,
   runVerdict,
   strictVerdict,
@@ -670,6 +671,46 @@ describe('rows the diff-based table could not see before', () => {
     expect(jira.blocking).toBe(false);
     expect(jira.evidence).toBe('informational: upstream added 1 key: "required.priority"; merge = add the new keys, values are project identity and never compared');
     expect(jira.diff).toContain('+  priority:');
+  });
+
+  test('retired harness launchers: one informational row for the scripts, one for the launcher, nothing is touched', () => {
+    const root = temporaryRoot();
+    const findings = (): ParityFinding[] => collectParityFindings({
+      root,
+      upstreamDir: temporaryRoot(),
+      drift: [],
+      compatErrors: [],
+      archivedSkills: [],
+      archivedSkillsDir: join(root, 'archive'),
+      heldBack: [],
+      envNewKeys: [],
+    }).filter(f => f.evidence.includes('ADR-0016') || f.evidence.includes('harness launch scripts'));
+
+    // A project's own `claude` script that loads nothing is not the retired launcher.
+    const pkg = { scripts: { claude: 'claude --model x', dev: 'next dev' } };
+    write(root, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+    expect(findings()).toEqual([]);
+
+    const legacy = {
+      scripts: {
+        claude: 'bun --no-env-file scripts/launch.ts claude',
+        codex: 'dotenv -o -e .env -- codex',
+        opencode: 'bash -c \'set -a; . ./.env; set +a; exec opencode "$@"\' --',
+        dev: 'next dev',
+      },
+    };
+    const legacyText = `${JSON.stringify(legacy, null, 2)}\n`;
+    write(root, 'package.json', legacyText);
+    write(root, RETIRED_HARNESS_LAUNCHER, '// the old launcher\n');
+    const rows = findings();
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ surface: 'package', path: 'package.json', blocking: false, suggested: 'keep project' });
+    expect(rows[0].evidence).toContain('scripts.claude, scripts.codex, scripts.opencode');
+    expect(rows[0].evidence).toContain('Left untouched');
+    expect(rows[1]).toMatchObject({ surface: 'components', path: RETIRED_HARNESS_LAUNCHER, blocking: false, suggested: 'keep project' });
+    expect(rows[1].evidence).toContain('vars:env:check');
+    expect(readFileSync(join(root, 'package.json'), 'utf8')).toBe(legacyText);
+    expect(readFileSync(join(root, RETIRED_HARNESS_LAUNCHER), 'utf8')).toBe('// the old launcher\n');
   });
 
   test('a context map skill with a placeholder map and an old markdown map beside it gets one informational row', () => {
