@@ -19,7 +19,7 @@ compact_rules: |
   - Sync OpenAPI / API schemas (that's `bun run api:sync`).
   - Run any external command — no `bun install`, no `git`, no `gh`.
 
-  Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example`), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
+  Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 metadata:
   kind: core
 ---
@@ -130,6 +130,6 @@ User-facing detail: `README.md` → "Scaffold a new project" and "Adopt an exist
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
 
-Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example`), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
+Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 
 If a user invokes this skill expecting a bootstrap action, route them to the install path that matches their starting point (§Install model): there is no per-skill scaffolding.

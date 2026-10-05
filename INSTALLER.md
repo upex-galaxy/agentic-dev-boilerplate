@@ -76,6 +76,20 @@ The Atlassian **site host** is deliberately not in that list. The installer prom
 
 Generation is interactive (web logins + 2FA), so the installer cannot do it for you. `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — every pending credential carries a `where` URL (Atlassian token page, Supabase project settings, n8n API panel).
 
+A value with a `#` must be quoted in `.env` (`PASSWORD="pass#word"`): varlock cuts an unquoted value at the first `#`, where dotenv kept it.
+
+### Secret manager (advanced)
+
+Optional, for a team that shares its secrets in a vault instead of each person's `.env` (`.context/ADR/ADR-0011-secret-manager-advanced-option.md`). `.env` stays the default and comes first in `bun run setup`; a non-empty `.env` / `.env.local` value always wins over the vault, so a teammate on plain `.env` keeps working.
+
+1. Install the 1Password desktop app and its CLI `op` (macOS: `brew install 1password-cli`), then enable Settings > Developer > "Integrate with 1Password CLI".
+2. Run `bun run setup` and pick 1Password at Step 7. Team: a shared vault (`<project>-dev`). Personal plan: your own vault; it works locally, CI cannot read it. The step records `secrets:` in `.agents/project.yaml` and writes `.env.provider.schema` once (committed `op://` references, never values; never overwritten).
+3. In the vault, one Password item per variable, titled with the variable NAME. In `.env.provider.schema`, uncomment those lines and leave the keys empty in `.env`.
+4. Check, redacted: `bunx varlock load --agent`.
+5. CI (team plan): a service account with read access to the vault; its token is the secret `OP_SERVICE_ACCOUNT_TOKEN`, set BESIDE any per-variable secrets a job already passes, never instead. A job reads the vault only in steps that run through `varlock run`; the launcher drops an empty inherited copy of a key the overlay resolves (an unset GitHub secret renders as `""`), so it cannot blank the vault value.
+
+The vault is read only by launches that go through varlock: `bun run claude|codex|opencode` and the Codex MCP loader. direnv, `source .env` and `bun run harness:env` read `.env` alone, so a key served only by the vault is empty there. Non-interactive: `INSTALL_SECRETS_PROVIDER=1password INSTALL_SECRETS_VAULT=<vault> bun run setup --non-interactive`. Other managers varlock supports plug into the same slot (one adapter in `cli/lib/secret-providers.ts`); none ships configured.
+
 ### Where to verify your status
 
 `bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars, direnv state, and the multi-harness contract: instructions (`AGENTS.md` present, `CLAUDE.md` is the exact shim), the `.claude/skills` alias, any command that shadows a skill, the three hook adapters, MCP parity across the three configs, and **Codex repository trust**. The trust row is WARN, never FAIL: project `.codex/` config and hooks load only in a repository you have marked trusted, and that is runtime state no file read can verify. Use the doctor after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
@@ -156,6 +170,7 @@ Then `bun run setup:doctor --json` to confirm the rest.
 | ------------------------------------------- | ----------------------------------------------------------------------------- |
 | `INSTALL_SKIP_DIRENV=1`                     | Skip direnv detection / autoload                                              |
 | `INSTALL_AGENTS=claude-code,opencode,codex` | Configure exactly these harnesses (any subset), skipping the selection prompt |
+| `INSTALL_SECRETS_PROVIDER=1password`        | Opt in to the secret manager (default `.env`); pair with `INSTALL_SECRETS_VAULT=<vault>` |
 
 ---
 

@@ -110,6 +110,10 @@ N8N_API_URL · N8N_API_KEY
 
 `.env.example` has the full template with per-var comments. Run `bun run setup:doctor` at any time to see which are still missing — it prints `pending_actions[].where` URLs for every credential, and reports the resolved Atlassian host by value.
 
+Quote any value that contains a `#` (`PASSWORD="pass#word"`): varlock cuts an unquoted value at the first `#`.
+
+**Secret manager (advanced, optional).** `.env` stays the default. A team that keeps its secrets in a vault picks 1Password in `bun run setup`, which records `secrets:` in `.agents/project.yaml` and writes `.env.provider.schema`: committed `op://` references, never values, imported by `.env.core.schema` only when present. Desktop-app auth on laptops, a service account (`OP_SERVICE_ACCOUNT_TOKEN`) in CI; a non-empty `.env` value still wins. Steps: [`INSTALLER.md`](INSTALLER.md#secret-manager-advanced); decision: `.context/ADR/ADR-0011-secret-manager-advanced-option.md`.
+
 ### When the installer tells you something is wrong
 
 | Stage                    | Check depth                                                                                                                                                                                         | Behavior                                                                                                                                                                                                                       |

@@ -110,8 +110,26 @@ updater:
 - **Exact entries, per rule.** `Bash(env)`, not a pattern over entries. Every other upstream deny, including one a later release adds, still arrives: listing `.claude/settings.json` in `protected_paths` would not opt out (the file is already watched) and would not be the right size anyway.
 - **It never removes.** A declined entry the file already holds stays until you delete it by hand; the list only stops the updater from adding it back.
 - **A malformed value fails toward more denies.** Anything but a list of strings is reported at the run and ignored.
-- **`opencode.jsonc` is never written.** Its `permission` block is JSONC with ordered rules (the last match wins), so the upstream deny rules it lacks become one parity row on the MCP surface with the block to paste in the saved prompt. To decline one there, list the pattern yourself with another action (`"printenv*": "ask"`): a pattern the project lists, whatever its action, is never reported.
+- **`opencode.jsonc` is never written.** Its `permission` block is JSONC with ordered rules (the last match wins), so the upstream deny rules it lacks become one parity row on the MCP surface with the block to paste in the saved prompt. An upstream exception that follows a missing deny in the same map (`"*.env.example": "allow"` after `"*.env.*": "deny"`) travels in the block right after it, with the project's own action when it lists the pattern, so pasting cannot turn the exception into a deny. To decline one there, list the pattern yourself with another action (`"printenv*": "ask"`): a pattern the project lists, whatever its action, is never reported.
 - **Read directly by the updater** (`readDeclinedDenies` in `cli/lib/updater-settings.ts`); add `declined_denies` to `external_consumers` when you set it.
+
+## `secrets` (block inside `project.yaml`)
+
+Where SECRET values come from. `local` (the default) means `.env` / `.env.local`; a secret manager is the advanced opt-in (`.context/ADR/ADR-0011-secret-manager-advanced-option.md`).
+
+```yaml
+secrets:
+  provider: local # local | 1password
+  onepassword:
+    vault: null # vault the op:// references point at (e.g. myproject-dev; Private on a personal plan)
+    account: null # sign-in shorthand from `op account list`; null = the CLI default account
+    auth: app # app (desktop app locally, service account in CI) | service-account (token only)
+```
+
+- **Written by `bun run setup`** (Step 7, `cli/lib/secret-providers.ts`), which also writes the committed overlay `.env.provider.schema` once (references only, never values, never overwritten). A yaml without the block reads as `local`, and the installer appends it with its comments.
+- **An unknown `provider` or `auth` fails loudly** instead of guessing, so a team is never sent to the wrong source in silence.
+- **Read directly** (`parseSecretsConfig`), never as a `{{VAR}}`; `provider` and `onepassword` are listed in `external_consumers`.
+- Steps for the human: `INSTALLER.md`, "Secret manager (advanced)".
 
 ## `orchestration` (block inside `project.yaml`)
 

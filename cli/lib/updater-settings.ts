@@ -237,6 +237,8 @@ function objectAt(value: unknown): Record<string, unknown> | null {
  * `ask` or `allow` yourself. A tool the project declares as a single action
  * (`"bash": "ask"`) has no map to append to: the block opens that tool's map
  * with `"*": "<that action>"` so pasting it keeps the project's default.
+ * Upstream exceptions that follow a missing deny in the same map travel with
+ * it in the block (not in `missing`), so pasting keeps upstream's order.
  */
 export function opencodeDenyGap(root: string, upstreamDir: string): OpencodeDenyGap | null {
   const localFile = path.join(root, OPENCODE_SETTINGS_FILE);
@@ -258,14 +260,27 @@ export function opencodeDenyGap(root: string, upstreamDir: string): OpencodeDeny
     if (upstreamRules === null) { continue; }
     const localValue = localPermission[tool];
     const localRules = objectAt(localValue) ?? {};
-    const patterns = Object.entries(upstreamRules)
-      .filter(([pattern, action]) => action === 'deny' && !(pattern in localRules))
-      .map(([pattern]) => pattern);
+    const patterns: string[] = [];
+    const entries: [string, string][] = [];
+    for (const [pattern, action] of Object.entries(upstreamRules)) {
+      if (action === 'deny' && !(pattern in localRules)) {
+        patterns.push(pattern);
+        entries.push([pattern, 'deny']);
+      }
+      else if (patterns.length > 0 && action !== 'deny' && typeof action === 'string') {
+        // An exception upstream places AFTER a deny the block appends
+        // (`"*.env.example": "allow"` after `"*.env.*": "deny"`) must follow it
+        // again, or the last-match rule turns the exception into a deny. The
+        // project's own action wins when it lists the pattern.
+        const own = localRules[pattern];
+        entries.push([pattern, typeof own === 'string' ? own : action]);
+      }
+    }
     if (patterns.length === 0) { continue; }
     missing.push({ tool, patterns });
     lines.push(`${JSON.stringify(tool)}: {`);
     if (typeof localValue === 'string') { lines.push(`  "*": ${JSON.stringify(localValue)},`); }
-    for (const pattern of patterns) { lines.push(`  ${JSON.stringify(pattern)}: "deny",`); }
+    for (const [pattern, action] of entries) { lines.push(`  ${JSON.stringify(pattern)}: ${JSON.stringify(action)},`); }
     lines.push('},');
   }
   return missing.length === 0 ? null : { missing, block: lines.join('\n') };

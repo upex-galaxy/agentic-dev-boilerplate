@@ -155,6 +155,8 @@
     },
     // OpenCode's own base policy already asks on `*.env` / `*.env.*` and
     // allows `*.env.example`; these turn the secret-holding paths into a deny.
+    // The committed `.env*.schema` files stay readable without a prompt: they
+    // hold names, types and `op://` references only (Critical Rule #1).
     "read": {
       "*.env": "deny",
       "*.env.local": "deny",
@@ -162,6 +164,8 @@
       "*.envrc.local": "deny",
       "*.auth/*": "deny",
       "*settings.local.json": "deny",
+      "*.env.schema": "allow",
+      "*.env.*.schema": "allow",
     },
   },
 }

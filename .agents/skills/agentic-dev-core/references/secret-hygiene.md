@@ -24,7 +24,7 @@ A secret VALUE that enters the model context also enters the provider request an
 | `.auth/**` | value files written by `bun run harness:env` for OpenCode (`.auth/opencode/<VAR>`), session state written by any login flow |
 | `.claude/settings.local.json` | the `env` block `bun run harness:env` writes for Claude Code |
 
-Readable, and the right place to learn a variable's NAME, type and sensitivity: `.env.example`, `.env.schema` (project-owned) and `.env.core.schema` (generated from `cli/lib/variables-manifest.ts`, the variable routing table).
+Readable, and the right place to learn a variable's NAME, type and sensitivity: `.env.example` and the committed `.env*.schema` files: `.env.schema` (project-owned), `.env.core.schema` (generated from `cli/lib/variables-manifest.ts`, the variable routing table) and, when the project opted into a secret manager, `.env.provider.schema` (references such as `op(op://<vault>/<VAR>/password)`, never a value).
 
 Never `source` a file under `.auth/opencode/`: each one holds a bare value, not a `KEY=value` line, so the shell tries to run the value as a command and prints it in the error.
 

@@ -5,7 +5,11 @@
  *   bun run claude [args...]     = bun --no-env-file scripts/launch.ts claude [args...]
  *   bun run codex | opencode     same, for the other two harnesses
  *
- * What it does, in order:
+ * What it does, in order, after one quiet clean-up: when a secret-manager
+ * overlay exists (`.env.provider.schema`, ADR-0011), the EMPTY inherited copies
+ * of the keys it resolves are dropped, because an empty variable would win over
+ * the vault and CI turns every unset secret into one
+ * (`withoutEmptyProviderShadows`, cli/lib/secret-providers.ts).
  *
  *   1. PREFLIGHT. `varlock run` lets a variable already in the process
  *      environment WIN over `.env` / `.env.local` (measured on the pinned
@@ -33,6 +37,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { inheritedOverrides } from '../cli/lib/env-schema.ts';
+import { withoutEmptyProviderShadows } from '../cli/lib/secret-providers.ts';
 
 const REPO_ROOT = join(import.meta.dir, '..');
 
@@ -66,7 +71,8 @@ function main(argv: string[]): number {
     return 2;
   }
 
-  const refusal = preflightRefusal(REPO_ROOT, process.env);
+  const { env } = withoutEmptyProviderShadows(REPO_ROOT, process.env);
+  const refusal = preflightRefusal(REPO_ROOT, env);
   if (refusal !== null) {
     console.error(refusal);
     return 1;
@@ -75,7 +81,7 @@ function main(argv: string[]): number {
   const child = spawnSync(varlockBin(REPO_ROOT), ['run', '--', bin, ...rest], {
     cwd: process.cwd(),
     stdio: 'inherit',
-    env: process.env,
+    env: env as NodeJS.ProcessEnv,
   });
   if (child.error) {
     console.error(`launch: could not start varlock (${child.error.message}). Run bun install, then retry.`);
