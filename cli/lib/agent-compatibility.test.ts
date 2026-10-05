@@ -15,6 +15,7 @@ import {
   declaredMcpIds,
   DOC_CONTRACTS_HOOK,
   EXPECTED_MCP,
+  HOOK_GROUP_FIX,
   KNOWN_MCP_IDS,
   LEGACY_CODEX_ENV_LOADER_ARGS,
   MCP_ENV_LOADER_COMMAND,
@@ -505,7 +506,7 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
     const hook: Record<string, unknown> = { type: 'command', command, timeout: 5 };
     if (windows) { hook.commandWindows = windows; }
     const sessionStart = sources.map(matcher => ({ matcher, hooks: [hook] }));
-    return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }], SessionStart: sessionStart } }, null, 2)}\n`;
+    return `${JSON.stringify({ hooks: { UserPromptSubmit: [{ hooks: [hook] }], PostToolUse: [{ hooks: [hook] }], SessionStart: sessionStart } }, null, 2)}\n`;
   }
 
   function routerFixture(): string {
@@ -542,7 +543,28 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
     const root = routerFixture();
     write(root, '.claude/settings.json', rearmSettings(CLAUDE_HOOK_COMMAND, undefined, ['compact']));
     expect(validateInstructionRouterHooks(root)).toEqual([
-      `claude must re-arm the routes on SessionStart "clear": a SessionStart group with matcher "clear" running ${CLAUDE_HOOK_COMMAND}`,
+      `claude must re-arm the routes on SessionStart "clear": a SessionStart group with matcher "clear" running ${CLAUDE_HOOK_COMMAND}. Fix: ${HOOK_GROUP_FIX}`,
+    ]);
+  });
+
+  test('rejects a Claude Code config that does not re-surface unread routes after a tool call', () => {
+    const root = routerFixture();
+    const settings = JSON.parse(rearmSettings(CLAUDE_HOOK_COMMAND));
+    delete settings.hooks.PostToolUse;
+    write(root, '.claude/settings.json', `${JSON.stringify(settings)}\n`);
+    expect(validateInstructionRouterHooks(root)).toEqual([
+      `claude must re-surface unread routes: a PostToolUse group with no matcher running ${CLAUDE_HOOK_COMMAND}. Fix: ${HOOK_GROUP_FIX}`,
+    ]);
+  });
+
+  test('names the fix downstream only: the boilerplate itself has no upstream to merge from', () => {
+    const root = routerFixture();
+    const settings = JSON.parse(rearmSettings(CLAUDE_HOOK_COMMAND));
+    delete settings.hooks.PostToolUse;
+    write(root, '.claude/settings.json', `${JSON.stringify(settings)}\n`);
+    write(root, 'package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
+    expect(validateInstructionRouterHooks(root)).toEqual([
+      `claude must re-surface unread routes: a PostToolUse group with no matcher running ${CLAUDE_HOOK_COMMAND}`,
     ]);
   });
 
@@ -584,10 +606,11 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
       return output.system.filter(line => line.startsWith(ROUTE_PREFIX));
     };
     try {
-      expect(await turn('commit and push')).toEqual([`${ROUTE_PREFIX} .agents/instructions/agent-git.md (git)`]);
+      const gitRoute = expect.stringMatching(/^ROUTE: read \.agents\/instructions\/agent-git\.md \(git, \d+ lines\) before acting on this prompt$/);
+      expect(await turn('commit and push')).toEqual([gitRoute]);
       expect(await turn('push again')).toEqual([]);
       await plugin['experimental.session.compacting']({ sessionID });
-      expect(await turn('push again')).toEqual([`${ROUTE_PREFIX} .agents/instructions/agent-git.md (git)`]);
+      expect(await turn('push again')).toEqual([gitRoute]);
     }
     finally {
       rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });

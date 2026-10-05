@@ -7,7 +7,7 @@
 ## LOAD PROTOCOL + ROUTER
 
 1. Before acting on a request, match it against the router. Read every matched file not already in this conversation.
-2. A `ROUTE:` line injected by the prompt hook is binding and wins over your own judgment.
+2. A `ROUTE:` line injected by the prompt hook is binding and wins over your own judgment: read its file before acting. A `ROUTE-OPTIONAL:` line is not binding: read one of its files only when the task needs it. A `ROUTE-PENDING:` line names a binding file still unread: read it before the next step.
 3. A file once read is not re-read unless compaction removed it.
 4. Unsure whether a row applies → read it. Sections are small; a skipped section is the failure this design guards against.
 5. Edit a section in its own file, never paste section prose into this file; where each sentence goes: `agentic-dev-core/references/instructions-doctrine.md`. A rule only this project has → `.agents/instructions/agent-project.md`.

@@ -355,13 +355,17 @@ export function lintLock(root: string, l0: string, maintainer: boolean): Instruc
   return out;
 }
 
-/** `eval` findings: recall and precision hold their targets; every label names a routed id. */
+/** EVAL: recall, binding recall and precision hold their targets; every label names a routed id. */
 export function lintEval(result: RouterEvalResult, severity: InstructionFinding['severity']): InstructionFinding[] {
   const out: InstructionFinding[] = [];
   const pct = (n: number): string => `${(n * 100).toFixed(1)}%`;
   const at = (message: string): InstructionFinding => ({ ...finding('eval', ROUTER_EVAL_FIXTURE, 1, message), severity });
   if (result.recall < result.targets.recall) {
     out.push(at(`router recall ${pct(result.recall)} < ${pct(result.targets.recall)}: fix the section's \`triggers:\`, never the label. ${result.misses.slice(0, 5).join('; ')}`));
+  }
+  else if (result.bindingRecall < result.targets.bindingRecall) {
+    // Binding recall never exceeds recall: reported only when recall itself holds.
+    out.push(at(`router binding recall ${pct(result.bindingRecall)} < ${pct(result.targets.bindingRecall)}: the ranking pushes expected sections past the cap onto the optional line; a weak anchor needs a sharper trigger. ${result.demoted.slice(0, 5).join('; ')}`));
   }
   if (result.precision < result.targets.precision) {
     out.push(at(`router precision ${pct(result.precision)} < ${pct(result.targets.precision)}: a trigger fires on prompts that do not need its section; narrow it`));
@@ -500,7 +504,7 @@ if (import.meta.main) {
   try { evalResult = routerEval(root); }
   catch { /* a malformed fixture is already an `eval` finding */ }
   const lock = existsSync(l0Path) ? routerLock(readFileSync(l0Path, 'utf8')) : null;
-  const evalNote = evalResult ? `; router eval recall ${pct(evalResult.recall)} precision ${pct(evalResult.precision)} over ${evalResult.prompts} prompts` : '';
+  const evalNote = evalResult ? `; router eval recall ${pct(evalResult.recall)} binding ${pct(evalResult.bindingRecall)} precision ${pct(evalResult.precision)} over ${evalResult.prompts} prompts` : '';
   const lockNote = lock ? `; router lock ${lock.fingerprint} (${lock.adr})` : '';
   if (errors.length === 0) {
     console.log(`✓ instructions:check passed (L0 ${bytes} bytes; target ${L0_TARGET}, ceiling ${L0_BUDGET}${evalNote}${lockNote})`);

@@ -5,6 +5,43 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — The agent reads the sections it is routed to
+
+Fewer `ROUTE:` lines per prompt, each saying when to read it, one reminder on
+Claude Code, and a `bun run up` that delivers the hook groups the compat check
+requires (ADR-0018, owner decision B11).
+
+### Changed
+
+- **At most three binding `ROUTE:` lines per prompt**, ranked by how strongly
+  the prompt calls for each section; the rest share one `ROUTE-OPTIONAL:`
+  line. A dispatched worker's prompt routed seven sections before and three
+  now: the hook classifies a prompt's `ROUTE-SCOPE:` sentence, else the task
+  block after an orchestrator preamble, and blanks absolute paths outside the
+  checkout.
+- **The cue names size and moment**: `ROUTE: read <file> (<id>, <n> lines)
+  before acting on this prompt`. The LOAD PROTOCOL in `AGENTS.md` names the
+  three lines.
+- **The router eval scores binding recall** (an expected section kept on a
+  binding line, floor 90%); `instructions:audit` counts reminders and optional
+  lines.
+- **The `hooks` of `.claude/settings.json` only grow, like its permission
+  lists**: an upstream hook command the project lacks under the same event and
+  matcher is appended as a new group after the project's own, after a backup,
+  and BEFORE the compatibility check. A command the project does not want goes
+  in `updater.declined_hooks`; one whose script the project lacks is skipped
+  and reported. A key repeated by a git auto-merge is folded, not lost, and a
+  downstream compat error for a missing hook group names the fix: run
+  `bun run up`.
+
+### Added
+
+- **`ROUTE-PENDING:` on Claude Code**: a `PostToolUse` hook re-surfaces a
+  routed section still unread, once per prompt.
+- **`ROUTE-SCOPE: <section ids>`** closes every worker launch prompt
+  (`orca-orchestration`), and the worker contract gains rule 15: resolve the
+  `ROUTE:` lines before the brief.
+
 ## 2026-10-05 — Documentation contracts: a page that describes the code changes with it
 
 A code region a page describes now names that page, and a push that changes
