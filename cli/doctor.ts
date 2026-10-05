@@ -273,7 +273,7 @@ export function worktreeSetupAction(state: WorktreeSetupState): PendingAction | 
   return {
     type: 'shell_command',
     target: 'bun run worktree:provision',
-    hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here.`,
+    hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here: every MCP server reads this worktree's own .env through the .env loader, and a template one hands them empty values.`,
   };
 }
 
@@ -355,7 +355,18 @@ interface DoctorReport {
    * map, and an old `.context/business/` markdown map beside it is kept as input.
    */
   context_maps: string[]
-  /** `.env` vs the per-harness credential surfaces `bun run harness:env` writes. NAMES only, never a value. */
+  /**
+   * Whether a plaintext copy of an MCP credential is still on disk.
+   *
+   * Every MCP server reads `.env` itself through the `.env` loader (ADR-0012),
+   * so the copies an older `bun run harness:env` generated
+   * (`.claude/settings.local.json` env block, `.auth/opencode/`) are only a
+   * leak surface the AI can read. A stale copy is a pending action
+   * (`bun run harness:env` retires it); a copy a legacy host config still
+   * reads, and a backup waiting for the human, are informational.
+   *
+   * `findings` carries variable NAMES and a verdict only, never a value.
+   */
   harness_env: HarnessEnvDiagnostic
   /**
    * Which key paths upstream's `.agents/project.schema.yaml` declares that this
@@ -434,8 +445,11 @@ interface ProjectSchemaDiagnostic {
 }
 
 interface HarnessEnvDiagnostic {
+  /** false when at least one blocking finding stands. */
   ok: boolean
+  /** One line: how many stale copies remain, or that none does. */
   summary: string
+  /** The MCP credential names the configs declare, for the record. Never their values. */
   allowlist: string[]
   findings: Array<Omit<HarnessEnvFinding, 'kind'> & { kind: HarnessEnvFinding['kind'] | 'check-failed' }>
 }
@@ -558,11 +572,11 @@ function compareVersion(a: readonly number[], b: readonly number[]): number {
 }
 
 // ----------------------------------------------------------------------------
-// Harness credential surfaces
+// Plaintext MCP credential copies
 // ----------------------------------------------------------------------------
 
 /**
- * `.env` against the files Claude Code and OpenCode read at startup
+ * The plaintext MCP credential copies an older install left on disk
  * (`bun run harness:env --check`, as data).
  *
  * DYNAMIC import: `cli/lib/harness-env.ts` imports `cli/install.ts`, which pulls
@@ -890,7 +904,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'system_install',
       target: 'direnv',
-      hint: 'Optional. Claude and OpenCode read their MCP credentials from the files `bun run harness:env` generates, and Codex starts each MCP server through a .env loader; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
+      hint: 'Optional. Every MCP server starts through the .env loader, which reads .env (or the secret manager) itself on every host; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
       where: installCommandForPlatform(),
     });
   }
@@ -937,14 +951,15 @@ async function runDoctor(): Promise<DoctorReport> {
   }
 
   // A missing `.env` (or an unprovisioned worktree) already has its own action
-  // above, and running the generator before that is fixed is refused anyway.
+  // above: the retirement compares each copy with `.env`, so fix that first.
   if (!report.harness_env.ok && report.env_file_exists && worktreeFix === null) {
     const blocking = report.harness_env.findings.filter(f => f.blocking);
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun run harness:env',
-      hint: 'The per-harness credential surfaces disagree with .env, so an MCP server '
-        + `launched without a command line (desktop app, supervised worker) gets no credential: ${
+      hint: 'A plaintext copy of an MCP credential is still on disk, readable by any agent, '
+        + 'although every MCP server now reads .env through the .env loader. The command deletes a copy '
+        + `.env reproduces and backs up the rest, naming them: ${
           blocking.map(f => `${f.kind} (${f.names.join(', ')})`).join('; ')}`,
       where: '.claude/settings.local.json + .auth/opencode/',
     });
@@ -1132,17 +1147,18 @@ function printHuman(report: DoctorReport): void {
   ]);
   process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
 
-  // Per-harness credential surfaces. Its own section because it is per-VARIABLE
-  // and per-surface: an exit code says something is stale, not WHICH credential.
-  tui.section('Harness credential surfaces (.env -> the files a harness reads at startup)');
+  // Plaintext MCP credential copies. Its own section because it is
+  // per-VARIABLE and per-file: an exit code says a copy remains, it does not say
+  // WHICH credential sits in WHICH file.
+  tui.section('Plaintext MCP credential copies (MCP servers read .env through the .env loader)');
   process.stdout.write(`  ${tui.statusIcon(report.harness_env.ok ? 'ok' : 'fail')} ${report.harness_env.summary}\n`);
-  process.stdout.write(`  allowlist: ${report.harness_env.allowlist.join(', ') || '(none)'}\n`);
+  process.stdout.write(`  MCP credentials declared: ${report.harness_env.allowlist.join(', ') || '(none)'}\n`);
   for (const finding of report.harness_env.findings) {
     process.stdout.write(`  ${tui.statusIcon(finding.blocking ? 'fail' : 'warn')} ${finding.kind}: ${finding.names.join(', ') || '-'}\n`);
     process.stdout.write(`    ${finding.detail}\n`);
   }
   if (!report.harness_env.ok) {
-    process.stdout.write('  Fix: bun run harness:env  (values are never printed by the generator or by this report)\n');
+    process.stdout.write('  Fix: bun run harness:env  (retires the copies; values are never printed by it or by this report)\n');
   }
   process.stdout.write('\n');
 

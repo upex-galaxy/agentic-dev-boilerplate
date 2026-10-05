@@ -7,26 +7,42 @@
     "supabase": {
       "command": "bunx",
       "args": [
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "SUPABASE_ACCESS_TOKEN",
+        "--",
+        "bunx",
         "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--access-token",
-        "${SUPABASE_ACCESS_TOKEN}"
-      ],
-      "env": {
-        "SUPABASE_URL": "${NEXT_PUBLIC_SUPABASE_URL}",
-        "SUPABASE_ANON_KEY": "${SUPABASE_PUBLISHABLE_KEY}",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SECRET_KEY}"
-      }
+        "@supabase/mcp-server-supabase@latest"
+      ]
     },
     "n8n": {
-      "command": "npx",
-      "args": ["-y", "n8n-mcp"],
+      "command": "bunx",
+      "args": [
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "N8N_API_URL,N8N_API_KEY",
+        "--",
+        "npx",
+        "-y",
+        "n8n-mcp"
+      ],
       "env": {
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
-        "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "${N8N_API_URL}",
-        "N8N_API_KEY": "${N8N_API_KEY}"
+        "DISABLE_CONSOLE_OUTPUT": "true"
       }
     }
   }

@@ -203,6 +203,24 @@ describe('installer skill and env contracts', () => {
     expect(await discoverRequiredEnvVars([], root)).toEqual([]);
   });
 
+  test('discovers the names a .env loader --filter lists, on every host', async () => {
+    const root = temporaryRoot();
+    const loader = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--inject', 'vars', '--filter'];
+    write(root, '.mcp.json', JSON.stringify({ mcpServers: { a: { command: 'bunx', args: [...loader, 'TOKEN_A,URL_B', '--', 'npx', 'pkg'] } } }));
+    write(root, 'opencode.jsonc', `{\n  // "--filter", "COMMENTED_OUT"\n  "mcp": { "a": { "command": ["bunx", ${[...loader, 'TOKEN_A,URL_B', '--'].map(a => JSON.stringify(a)).join(', ')}, "npx", "pkg",] } },\n}\n`);
+    write(root, '.codex/config.toml', [
+      '# args = ["--filter", "COMMENTED_OUT"]',
+      '[mcp_servers.a]',
+      'command = "bunx"',
+      `args = [${[...loader, 'TOKEN_A,URL_B', '--', 'npx', 'pkg'].map(a => JSON.stringify(a)).join(', ')}]`,
+      '',
+    ].join('\n'));
+
+    for (const agent of ['claude-code', 'opencode', 'codex'] as const) {
+      expect(await discoverRequiredEnvVars([agent], root)).toEqual(['TOKEN_A', 'URL_B']);
+    }
+  });
+
   test('exposes one launch wrapper per harness', () => {
     expect(launchCommandsForAgents(['claude-code', 'opencode', 'codex']))
       .toEqual(['bun run claude', 'bun run opencode', 'bun run codex']);

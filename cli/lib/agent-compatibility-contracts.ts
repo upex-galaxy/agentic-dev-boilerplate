@@ -60,39 +60,97 @@ export const CODEX_HOOK_COMMAND = 'root="$(git rev-parse --show-toplevel)" && no
 export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$root = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node (Join-Path $root \'.agents/hooks/personality-reinject.mjs\')"';
 
 /**
- * The `.env` loader every Codex stdio server launches through.
+ * The `.env` loader every MCP stdio server that needs `.env` values launches
+ * through, on all three hosts:
  *
- * Codex forwards `env_vars` BY NAME from its own process environment. A
- * terminal launch through `bun run codex` has them; Codex Desktop, opened from
- * Finder or the Dock, has none, so every server started with empty variables
- * (Supabase without its access token, n8n without its API URL). The loader
- * reads `.env` from the launch directory (the project root) and then starts
- * the real server, so the values arrive however Codex was opened.
+ *   bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter A,B -- <server>
  *
- * The loader is `varlock run`, the same one `bun run codex` uses: it reads
- * `.env` / `.env.local`, validates them against `.env.schema`, and starts the
- * server with the values in its environment. `-p varlock@<pin>` names the
- * package explicitly and carries the EXACT devDependency version, so a missing
- * `node_modules` never makes `bunx` fetch a different varlock. An inherited
- * variable wins over the files (varlock's precedence; `bun run codex` refuses
- * to launch on a differing one). `--no-redact-stdout` keeps varlock from
- * rewriting the server's stdout, which is the JSON-RPC stream on a pipe.
+ * WHY A LOADER. A harness spawns its MCP servers from a config file, before any
+ * hook runs, with whatever environment the harness process has. A terminal
+ * launch through `bun run claude|codex|opencode` has the `.env` values; a GUI
+ * launch (Claude Desktop, Codex Desktop, OpenCode desktop) or a natively
+ * launched supervised worker has none. The loader reads the varlock schema plus
+ * `.env` / `.env.local` (or the secret manager the schema names) from the
+ * launch directory, which every host sets to the project root, so the values
+ * arrive however the harness was opened, and no plaintext copy of a credential
+ * is written for a harness to read (the retired `harness:env` surfaces,
+ * ADR-0012).
+ *
+ * WHAT EACH FLAG DOES (measured on varlock 1.20.0 in the sibling QA
+ * boilerplate, ADR-0012):
+ *   --filter A,B          injects only these schema items; an INHERITED schema
+ *                         key outside the list is stripped from the child, so a
+ *                         server never sees another server's credential, and
+ *                         validation is scoped to the list (a missing variable
+ *                         another server needs does not stop this one).
+ *   --inject vars         individual variables only, no `__VARLOCK_ENV` blob.
+ *   --no-redact-stdout    the server speaks JSON-RPC on stdio, and varlock
+ *                         redacts piped output by default, which rewrites any
+ *                         message that carries a sensitive value.
+ *   -p varlock@<pin>      names the package and tracks the exact `varlock`
+ *                         devDependency, so the cache already holds it after
+ *                         `bun install` and no standalone binary is needed.
+ *
+ * The filter lists exact variable NAMES (no globs, negations or selectors), so
+ * it is also the server's declared `.env` dependency set: parity compares it
+ * across hosts like any `${VAR}`. A server that launches through the loader
+ * must NOT also reference those names through the host (`${VAR}`, `{env:VAR}`,
+ * `{file:...}`, `env_vars`): an unset `${VAR}` fails the host's config parse on
+ * a desktop launch, and an EMPTY inherited value shadows `.env` and fails
+ * validation (measured). A value that fails the schema stops the server that
+ * needs it: `bunx varlock load --agent` shows which, redacted.
  */
-export const CODEX_ENV_LOADER_COMMAND = 'bunx';
-export const CODEX_ENV_LOADER_ARGS = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--'] as const;
+export const MCP_ENV_LOADER_COMMAND = 'bunx';
+export const MCP_ENV_LOADER_HEAD = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--inject', 'vars', '--filter'] as const;
+
+/** The full loader prefix for a server that needs `names`: head, the comma-joined filter, `--`. */
+export function mcpEnvLoaderArgs(names: readonly string[]): string[] {
+  return [...MCP_ENV_LOADER_HEAD, names.join(','), '--'];
+}
 
 /**
- * Splits a Codex `command` + `args` into the server it actually starts. A
- * server launched through `CODEX_ENV_LOADER_*` reads as the inner command with
- * `envLoader: true`; anything else is returned as-is.
+ * The loader Codex used before the filter existed: every `.env` value, no
+ * `--filter`, names forwarded through `env_vars`. Recognized so a downstream
+ * `.codex/config.toml` (bootstrap-only, never overwritten by a sync) still
+ * parses; parity reports it as out of date.
  */
-export function unwrapCodexEnvLoader(command: string, args: readonly string[]): { command: string, args: string[], envLoader: boolean } {
-  const prefix = CODEX_ENV_LOADER_ARGS;
-  const wrapped = command === CODEX_ENV_LOADER_COMMAND
-    && args.length > prefix.length
-    && prefix.every((entry, index) => args[index] === entry);
-  if (!wrapped) { return { command, args: [...args], envLoader: false }; }
-  return { command: args[prefix.length], args: args.slice(prefix.length + 1), envLoader: true };
+export const LEGACY_CODEX_ENV_LOADER_ARGS = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--'] as const;
+
+const VARIABLE_NAME = /^[A-Z][A-Z0-9_]*$/;
+
+export interface UnwrappedLaunch {
+  command: string
+  args: string[]
+  envLoader: boolean
+  /** The `--filter` names, or null when the server is not behind the filtered loader. */
+  filter: string[] | null
+}
+
+/**
+ * Splits `command` + `args` into the server it actually starts. A server
+ * launched through the loader reads as the inner command with `envLoader: true`
+ * and its filter; the legacy unfiltered Codex loader reads as `envLoader: true`,
+ * `filter: null`; anything else is returned as-is. Throws on a filter entry that
+ * is not a plain variable name, because a glob cannot be compared across hosts.
+ */
+export function unwrapEnvLoader(command: string, args: readonly string[]): UnwrappedLaunch {
+  if (command !== MCP_ENV_LOADER_COMMAND) { return { command, args: [...args], envLoader: false, filter: null }; }
+  const head = MCP_ENV_LOADER_HEAD;
+  const filtered = args.length > head.length + 2
+    && head.every((entry, index) => args[index] === entry)
+    && args[head.length + 1] === '--';
+  if (filtered) {
+    const filter = args[head.length].split(',').map(name => name.trim()).filter(name => name.length > 0);
+    const invalid = filter.filter(name => !VARIABLE_NAME.test(name));
+    if (invalid.length > 0) {
+      throw new Error(`MCP env loader --filter must list exact variable names (no globs, negations or selectors): ${invalid.join(', ')}`);
+    }
+    return { command: args[head.length + 2], args: args.slice(head.length + 3), envLoader: true, filter };
+  }
+  const legacy = LEGACY_CODEX_ENV_LOADER_ARGS;
+  const wrapped = args.length > legacy.length && legacy.every((entry, index) => args[index] === entry);
+  if (!wrapped) { return { command, args: [...args], envLoader: false, filter: null }; }
+  return { command: args[legacy.length], args: args.slice(legacy.length + 1), envLoader: true, filter: null };
 }
 
 export type KnownMcpId = (typeof KNOWN_MCP_IDS)[number];
@@ -109,6 +167,9 @@ type Transport = 'stdio' | 'http';
  * a new dependency: `SUPABASE_URL = "${NEXT_PUBLIC_SUPABASE_URL}"` depends on
  * `NEXT_PUBLIC_SUPABASE_URL`, the same variable Codex forwards by name.
  *
+ * The loader's `--filter` counts as a dependency too: it is the exact list of
+ * names the server receives.
+ *
  * `literalEnv` holds the env entries whose value is a plain string (no
  * placeholder), i.e. settings such as `MCP_MODE = "stdio"`. Those must match
  * across hosts too, otherwise one harness runs the server in a different mode.
@@ -121,13 +182,19 @@ export interface NormalizedMcpServer {
   dependsOn: string[]
   literalEnv: Record<string, string>
   enabled: boolean
-  /** Codex only: the server starts through `CODEX_ENV_LOADER_*`. */
+  /** The server starts through the `.env` loader (`MCP_ENV_LOADER_*`). */
   envLoader?: boolean
+  /**
+   * Names the HOST delivers (`${VAR}`, `{env:VAR}`, `{file:.../VAR}`,
+   * `env_vars`, `bearer_token_env_var`, `env_http_headers`), as opposed to the
+   * loader's `--filter`. `dependsOn` is the union of both.
+   */
+  hostRefs?: string[]
   /** Codex only: `startup_timeout_sec`; absent means Codex's default. */
   startupTimeoutSec?: number
 }
 
-type NormalizedMcpConfig = Record<string, NormalizedMcpServer>;
+export type NormalizedMcpConfig = Record<string, NormalizedMcpServer>;
 
 interface JsonObject {
   [key: string]: unknown
@@ -142,19 +209,19 @@ interface JsonObject {
  * from `.env`, what it is told to do). That generic check applies to every
  * server, known to this boilerplate or not.
  *
- * `transport`, `command` and `args` are NOT compared generically, because Codex
- * cannot expand `${VAR}` inside `args` and a host may legitimately reach the
- * same server another way. For the servers this boilerplate ships they are
- * pinned per host in `EXPECTED_MCP` instead, and that strict shape check runs
- * only when the project declares the server:
+ * `transport`, `command` and `args` are NOT compared generically, because a
+ * host may legitimately reach the same server another way. For the servers
+ * this boilerplate ships they are pinned per host in `EXPECTED_MCP` instead,
+ * and that strict shape check runs only when the project declares the server:
  *
- *   - `supabase`: Claude/OpenCode pass `--access-token ${SUPABASE_ACCESS_TOKEN}`;
- *     Codex forwards `SUPABASE_ACCESS_TOKEN` via `env_vars` and lets the server
- *     read it from the environment (documented behaviour of
- *     `@supabase/mcp-server-supabase`).
- *   - every Codex stdio server (`context7`, `supabase`, `n8n`) starts through
- *     the `.env` loader with a `startup_timeout_sec` budget; the pinned shape
- *     is the server the loader starts, plus both launch details.
+ *   - every stdio server that needs `.env` values (`supabase`, `n8n`) starts
+ *     through the `.env` loader on all three hosts, its `--filter` naming
+ *     exactly what it reads, and takes nothing from the host itself;
+ *   - `context7` needs no value, so it starts bare: wrapping it would only add
+ *     a hop;
+ *   - every Codex stdio server carries a `startup_timeout_sec` budget.
+ *
+ * The pinned shape is the server the loader starts, plus the launch details.
  *
  * Whatever the spelling, the `.env` names each server depends on are identical
  * across the three hosts. That is what the cross-host check enforces.
@@ -165,12 +232,15 @@ const N8N_LITERAL_ENV = {
   DISABLE_CONSOLE_OUTPUT: 'true',
 } as const;
 
-const SUPABASE_DEPENDS_ON = [
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'SUPABASE_ACCESS_TOKEN',
-  'SUPABASE_PUBLISHABLE_KEY',
-  'SUPABASE_SECRET_KEY',
-];
+/**
+ * `@supabase/mcp-server-supabase` reads ONE variable: the personal access token
+ * (`SUPABASE_ACCESS_TOKEN`, its documented fallback when `--access-token` is
+ * absent). Measured on 0.13.0: no other `process.env` read in the package. The
+ * project URL and the publishable / secret keys the older configs mapped into
+ * it were never read, so the filter leaves them out and the server-side secret
+ * key no longer reaches an MCP child at all.
+ */
+const SUPABASE_DEPENDS_ON = ['SUPABASE_ACCESS_TOKEN'];
 
 /** `${NAME}`: the canonical spelling every host's placeholder is normalized to. */
 function ref(name: string): string {
@@ -195,55 +265,48 @@ function canonical(shape: Pick<NormalizedMcpServer, 'transport'> & Partial<Norma
     literalEnv,
     enabled: shape.enabled ?? true,
     envLoader: shape.envLoader ?? false,
+    hostRefs: [...new Set(shape.hostRefs ?? [])].sort(),
     startupTimeoutSec: shape.startupTimeoutSec,
   };
 }
 
 const server = canonical;
 
-const CLAUDE_AND_OPENCODE: Record<KnownMcpId, NormalizedMcpServer> = {
+const EVERY_HOST: Record<KnownMcpId, NormalizedMcpServer> = {
+  // No `.env` dependency, so no loader: wrapping it would only add a hop.
   context7: server({ transport: 'stdio', command: 'bunx', args: ['-y', '@upstash/context7-mcp'] }),
   supabase: server({
     transport: 'stdio',
     command: 'bunx',
-    args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', ref('SUPABASE_ACCESS_TOKEN')],
+    args: ['-y', '@supabase/mcp-server-supabase@latest'],
+    envLoader: true,
     dependsOn: SUPABASE_DEPENDS_ON,
   }),
   n8n: server({
     transport: 'stdio',
     command: 'npx',
     args: ['-y', 'n8n-mcp'],
+    envLoader: true,
     dependsOn: ['N8N_API_URL', 'N8N_API_KEY'],
     literalEnv: { ...N8N_LITERAL_ENV },
   }),
 };
 
 /**
- * Codex's startup budget for every stdio server. Codex waits 10 seconds by
- * default, and every shipped stdio server is fetched by `bunx` / `npx` on first
- * use: a cold cache plus the loader hop can pass 10 seconds before the first
- * handshake.
+ * Codex starts the same servers with a 30-second startup budget. Codex waits
+ * 10 seconds by default, and every shipped stdio server is fetched by `bunx` /
+ * `npx` on first use: a cold cache plus the loader hop can pass 10 seconds
+ * before the first handshake.
  */
 export const CODEX_STARTUP_TIMEOUT_SEC = 30;
-
-/** A Codex stdio server: the same server, launched through the loader with the startup budget. */
-function codexStdio(shape: NormalizedMcpServer): NormalizedMcpServer {
-  return canonical({ ...shape, envLoader: true, startupTimeoutSec: CODEX_STARTUP_TIMEOUT_SEC });
-}
+const CODEX_SHAPE = Object.fromEntries(
+  Object.entries(EVERY_HOST).map(([id, shape]) => [id, canonical({ ...shape, startupTimeoutSec: CODEX_STARTUP_TIMEOUT_SEC })]),
+) as Record<KnownMcpId, NormalizedMcpServer>;
 
 export const EXPECTED_MCP: Record<McpHost, Record<KnownMcpId, NormalizedMcpServer>> = {
-  claude: CLAUDE_AND_OPENCODE,
-  opencode: CLAUDE_AND_OPENCODE,
-  codex: {
-    context7: codexStdio(CLAUDE_AND_OPENCODE.context7),
-    supabase: codexStdio(server({
-      transport: 'stdio',
-      command: 'bunx',
-      args: ['-y', '@supabase/mcp-server-supabase@latest'],
-      dependsOn: SUPABASE_DEPENDS_ON,
-    })),
-    n8n: codexStdio(CLAUDE_AND_OPENCODE.n8n),
-  },
+  claude: EVERY_HOST,
+  opencode: EVERY_HOST,
+  codex: CODEX_SHAPE,
 };
 
 function object(value: unknown, label: string): JsonObject {
@@ -365,8 +428,9 @@ export function stripTrailingCommas(source: string): string {
  *
  * It is a DEPENDENCY, not a literal: `{file:.auth/opencode/N8N_API_KEY}` says
  * the server needs N8N_API_KEY exactly as `{env:N8N_API_KEY}` does; only the
- * delivery route differs, and `scripts/harness-env.ts` generates those files
- * from `.env`. Reading the file form as an opaque literal would report the
+ * delivery route differs (the retired `harness:env` emitter wrote those files
+ * from `.env`; a downstream config may still carry the form until it moves to
+ * the loader). Reading the file form as an opaque literal would report the
  * hosts as disagreeing when they agree.
  *
  * WHAT KEEPS IT SAFE, and do not widen it: only an ALL-CAPS final path segment
@@ -429,14 +493,22 @@ function normalizeClaude(root: JsonObject): NormalizedMcpConfig {
     const server = object(raw, label);
     const transport: Transport = server.type === 'http' || typeof server.url === 'string' ? 'http' : 'stdio';
     const env = server.env === undefined ? undefined : object(server.env, `${label}.env`);
+    const launch = transport === 'stdio'
+      ? unwrapEnvLoader(stringValue(server.command, `${label}.command`), stringArray(server.args ?? [], `${label}.args`))
+      : undefined;
+    // `${VAR}` anywhere in the server (args, env, HTTP headers) is a dependency
+    // the HOST delivers; the loader's filter is one the loader delivers.
+    const hostRefs = placeholderNames(server);
     return [id, {
       transport,
-      command: transport === 'stdio' ? stringValue(server.command, `${label}.command`) : undefined,
-      args: transport === 'stdio' ? stringArray(server.args ?? [], `${label}.args`) : undefined,
+      command: launch?.command,
+      args: launch?.args,
       url: transport === 'http' ? stringValue(server.url, `${label}.url`) : undefined,
-      dependsOn: sorted(placeholderNames(server)),
+      dependsOn: sorted([...hostRefs, ...(launch?.filter ?? [])]),
       literalEnv: literalEntries(env, `${label}.env`),
       enabled: server.enabled !== false,
+      envLoader: launch?.envLoader ?? false,
+      hostRefs: sorted(hostRefs),
     }];
   }));
 }
@@ -453,16 +525,23 @@ function normalizeOpenCode(root: JsonObject): NormalizedMcpConfig {
     const environment = server.environment === undefined
       ? undefined
       : object(server.environment, `${label}.environment`);
+    const launch = transport === 'stdio' && command.length > 0
+      ? unwrapEnvLoader(command[0], command.slice(1))
+      : undefined;
+    // OpenCode spells the placeholder `{env:VAR}` (or the legacy
+    // `{file:.auth/opencode/VAR}`) and, like Claude, expands it in `command`,
+    // `environment` and `headers`.
+    const hostRefs = placeholderNames(server);
     return [id, {
       transport,
-      command: command[0],
-      args: transport === 'stdio' ? command.slice(1).map(canonicalPlaceholders) : undefined,
+      command: launch?.command,
+      args: launch === undefined ? undefined : launch.args.map(canonicalPlaceholders),
       url: transport === 'http' ? canonicalPlaceholders(stringValue(server.url, `${label}.url`)) : undefined,
-      // OpenCode spells the placeholder `{env:VAR}` or `{file:dir/VAR}` and,
-      // like Claude, expands it in both `command` and `environment`.
-      dependsOn: sorted(placeholderNames(server)),
+      dependsOn: sorted([...hostRefs, ...(launch?.filter ?? [])]),
       literalEnv: literalEntries(environment, `${label}.environment`),
       enabled: server.enabled !== false,
+      envLoader: launch?.envLoader ?? false,
+      hostRefs: sorted(hostRefs),
     }];
   }));
 }
@@ -502,19 +581,20 @@ function normalizeCodex(root: JsonObject): NormalizedMcpConfig {
     }
 
     // The loader is a launch detail, not a different server: compare what it
-    // starts, and record that it is there.
+    // starts, and record that it is there. `env_vars` here are host refs.
     const launch = transport === 'stdio'
-      ? unwrapCodexEnvLoader(stringValue(server.command, `${label}.command`), stringArray(server.args ?? [], `${label}.args`))
+      ? unwrapEnvLoader(stringValue(server.command, `${label}.command`), stringArray(server.args ?? [], `${label}.args`))
       : undefined;
     return [id, {
       transport,
       command: launch?.command,
       args: launch?.args,
       url: transport === 'http' ? stringValue(server.url, `${label}.url`) : undefined,
-      dependsOn: sorted(dependsOn),
+      dependsOn: sorted([...dependsOn, ...(launch?.filter ?? [])]),
       literalEnv: literalEntries(env, `${label}.env`),
       enabled: server.enabled !== false,
       envLoader: launch?.envLoader ?? false,
+      hostRefs: sorted(dependsOn),
       startupTimeoutSec: typeof server.startup_timeout_sec === 'number' ? server.startup_timeout_sec : undefined,
     }];
   }));
@@ -572,13 +652,15 @@ export interface McpParityFindings {
 
 export interface McpParityOptions {
   /**
-   * True in the boilerplate itself (`isSchemaOwner`). There a Codex launch
-   * gap (no `.env` loader, no startup budget) is an ERROR: the boilerplate
-   * ships the fix, so its own copy must carry it. Downstream it is a WARNING
-   * that names the file and what to add: `.codex/config.toml` is
-   * bootstrap-only, so a project scaffolded before the loader existed cannot
-   * receive it from a sync, and a red gate it cannot clear by syncing is how a
-   * team learns `--no-verify`. Defaults to reading `<root>/package.json`.
+   * True in the boilerplate itself (`isSchemaOwner`). There a launch gap (a
+   * server that needs `.env` values but skips the loader, a host-side
+   * reference beside the loader, a missing Codex startup budget) is an ERROR:
+   * the boilerplate ships the fix, so its own copy must carry it. Downstream it
+   * is a WARNING that names the file and what to change: the three MCP configs
+   * are bootstrap-only or protected, so a project scaffolded before the loader
+   * existed cannot receive it from a sync, and a red gate it cannot clear by
+   * syncing is how a team learns `--no-verify`. Defaults to reading
+   * `<root>/package.json`.
    */
   schemaOwner?: boolean
 }
@@ -588,22 +670,37 @@ function readSchemaOwner(root: string): boolean {
   return existsSync(packageJson) && isSchemaOwner(readFileSync(packageJson, 'utf8'));
 }
 
-const LOADER_REASON = 'a Codex Desktop launch has no process environment, so env_vars alone forwards nothing';
+const LOADER_REASON = 'a desktop or natively launched harness has no process environment, and the loader reads .env (or the secret manager) itself, so no plaintext copy is needed';
 
-function loaderFix(): string {
-  return `set command = "${CODEX_ENV_LOADER_COMMAND}" and put ${JSON.stringify(CODEX_ENV_LOADER_ARGS)} before the current command and args`;
+function loaderFix(names: readonly string[]): string {
+  return `launch it as \`${MCP_ENV_LOADER_COMMAND} ${mcpEnvLoaderArgs(names).join(' ')} <the server's own command and args>\``;
+}
+
+function hostRefFix(names: readonly string[]): string {
+  return `drop the host-side reference to ${names.join(', ')} (\${VAR}, {env:}, {file:}, env_vars): the loader's --filter delivers them, an unset \${VAR} breaks a desktop launch and an empty one shadows .env`;
 }
 
 /**
- * What a known server's Codex entry lacks when the ONLY difference from the
- * pinned shape is a launch detail (the loader, the startup budget), or null
- * when anything else differs too. Both details change how Codex starts the
- * server, never which server it starts.
+ * What a known server's entry lacks when the ONLY difference from the pinned
+ * shape is a launch detail (the loader, a host-side reference, the Codex
+ * startup budget), or null when anything else differs too. These details
+ * change how a host starts the server, never which server it starts.
  */
-function codexLaunchGaps(actual: NormalizedMcpServer, expected: NormalizedMcpServer): string[] | null {
-  if (!sameServer({ ...actual, envLoader: expected.envLoader, startupTimeoutSec: expected.startupTimeoutSec }, expected)) { return null; }
+function launchGaps(actual: NormalizedMcpServer, expected: NormalizedMcpServer): string[] | null {
+  if (!sameServer({ ...actual, envLoader: expected.envLoader, hostRefs: expected.hostRefs, startupTimeoutSec: expected.startupTimeoutSec }, expected)) { return null; }
   const gaps: string[] = [];
-  if ((actual.envLoader ?? false) !== (expected.envLoader ?? false)) { gaps.push(`${loaderFix()} (${LOADER_REASON})`); }
+  const hostRefs = (expected.hostRefs ?? []).length === 0 ? actual.hostRefs ?? [] : [];
+  if (expected.envLoader === true && (actual.envLoader !== true || hostRefs.length > 0)) {
+    // A missing loader, or the unfiltered legacy one that still takes its
+    // names from the host: one fix covers both.
+    gaps.push(`${loaderFix(expected.dependsOn)}${hostRefs.length > 0 ? ` and ${hostRefFix(hostRefs)}` : ''} (${LOADER_REASON})`);
+  }
+  else if (expected.envLoader !== true && actual.envLoader === true) {
+    gaps.push('drop the .env loader: the server needs no .env value, and an unfiltered loader hands it every one');
+  }
+  else if (hostRefs.length > 0) {
+    gaps.push(hostRefFix(hostRefs));
+  }
   if (actual.startupTimeoutSec !== expected.startupTimeoutSec) {
     gaps.push(expected.startupTimeoutSec === undefined
       ? 'remove startup_timeout_sec'
@@ -616,6 +713,34 @@ export function validateMcpParity(root = process.cwd(), options: McpParityOption
   return validateMcpParityFindings(root, options).errors;
 }
 
+/** The three hosts' MCP configs, normalized. Throws when a file is missing or malformed. */
+function readNormalizedMcpConfigs(root = process.cwd()): Record<McpHost, NormalizedMcpConfig> {
+  const resolvedRoot = resolve(root);
+  return {
+    claude: normalizeClaude(parseJson(join(resolvedRoot, MCP_CONFIG_FILE.claude))),
+    opencode: normalizeOpenCode(parseJsonc(join(resolvedRoot, MCP_CONFIG_FILE.opencode))),
+    codex: normalizeCodex(parseToml(join(resolvedRoot, MCP_CONFIG_FILE.codex))),
+  };
+}
+
+const NORMALIZE: Record<McpHost, (root: JsonObject) => NormalizedMcpConfig> = {
+  claude: normalizeClaude,
+  opencode: normalizeOpenCode,
+  codex: normalizeCodex,
+};
+const PARSE: Record<McpHost, (path: string) => JsonObject> = {
+  claude: parseJson,
+  opencode: parseJsonc,
+  codex: parseToml,
+};
+
+/** One host's MCP config, normalized; null when its file is absent. Throws when it is malformed. */
+export function readHostMcpConfig(root: string, host: McpHost): NormalizedMcpConfig | null {
+  const path = join(resolve(root), MCP_CONFIG_FILE[host]);
+  if (!existsSync(path)) { return null; }
+  return NORMALIZE[host](PARSE[host](path));
+}
+
 export function validateMcpParityFindings(root = process.cwd(), options: McpParityOptions = {}): McpParityFindings {
   const resolvedRoot = resolve(root);
   const errors: string[] = [];
@@ -623,11 +748,7 @@ export function validateMcpParityFindings(root = process.cwd(), options: McpPari
   const schemaOwner = options.schemaOwner ?? readSchemaOwner(resolvedRoot);
   let configs: Record<McpHost, NormalizedMcpConfig>;
   try {
-    configs = {
-      claude: normalizeClaude(parseJson(join(resolvedRoot, MCP_CONFIG_FILE.claude))),
-      opencode: normalizeOpenCode(parseJsonc(join(resolvedRoot, MCP_CONFIG_FILE.opencode))),
-      codex: normalizeCodex(parseToml(join(resolvedRoot, MCP_CONFIG_FILE.codex))),
-    };
+    configs = readNormalizedMcpConfigs(resolvedRoot);
   }
   catch (error) {
     return { errors: [error instanceof Error ? error.message : String(error)], warnings };
@@ -651,8 +772,8 @@ export function validateMcpParityFindings(root = process.cwd(), options: McpPari
   }
 
   // Strict per-host shape, only for the servers this boilerplate knows AND the
-  // project declares (see PARITY RULE). Downstream, a Codex entry that differs
-  // ONLY in a launch detail is a warning (see `McpParityOptions`).
+  // project declares (see PARITY RULE). Downstream, an entry that differs ONLY
+  // in a launch detail is a warning (see `McpParityOptions`).
   const launchWarned = new Set<string>();
   for (const [host, config] of Object.entries(configs) as Array<[McpHost, NormalizedMcpConfig]>) {
     for (const id of declared) {
@@ -660,27 +781,33 @@ export function validateMcpParityFindings(root = process.cwd(), options: McpPari
       if (!actual || !isKnownMcpId(id)) { continue; }
       const expected = EXPECTED_MCP[host][id];
       if (sameServer(actual, expected)) { continue; }
-      const gaps = host === 'codex' && !schemaOwner ? codexLaunchGaps(actual, expected) : null;
+      const gaps = schemaOwner ? null : launchGaps(actual, expected);
       if (gaps !== null) {
-        warnings.push(`codex MCP ${id} launch is out of date in ${MCP_CONFIG_FILE.codex}: ${gaps.join('; ')}. Upstream never overwrites this file, so add it by hand.`);
-        launchWarned.add(id);
+        warnings.push(`${host} MCP ${id} launch is out of date in ${MCP_CONFIG_FILE[host]}: ${gaps.join('; ')}. Upstream never overwrites this file, so change it by hand.`);
+        launchWarned.add(`${host}:${id}`);
         continue;
       }
       errors.push(`${host} MCP ${id} mismatch: expected ${describeServer(expected)}, found ${describeServer(actual)}`);
     }
   }
 
-  // Codex: a stdio server that needs `.env` values must start through the
-  // loader, known to this boilerplate or not. `env_vars` alone forwards
-  // nothing when Codex Desktop was opened from the Dock.
-  for (const id of declared) {
-    const server = configs.codex[id];
-    if (!server || server.transport !== 'stdio' || server.dependsOn.length === 0 || server.envLoader === true) { continue; }
-    if (schemaOwner) {
-      errors.push(`codex MCP ${id} must launch through the .env loader (command = "${CODEX_ENV_LOADER_COMMAND}", args starting ${JSON.stringify(CODEX_ENV_LOADER_ARGS)}): ${LOADER_REASON}.`);
-    }
-    else if (!launchWarned.has(id)) {
-      warnings.push(`codex MCP ${id} starts without the .env loader in ${MCP_CONFIG_FILE.codex}: ${loaderFix()} (${LOADER_REASON}).`);
+  // Every host, every declared stdio server, known to this boilerplate or not:
+  // one that needs `.env` values starts through the loader, and a loader-launched
+  // one takes nothing from the host. Both are what lets a desktop launch get its
+  // credentials with no plaintext copy on disk.
+  for (const [host, config] of Object.entries(configs) as Array<[McpHost, NormalizedMcpConfig]>) {
+    for (const id of declared) {
+      const server = config[id];
+      if (!server || server.transport !== 'stdio' || server.dependsOn.length === 0 || launchWarned.has(`${host}:${id}`)) { continue; }
+      const hostRefs = server.hostRefs ?? [];
+      const problem = server.envLoader !== true
+        ? `${host} MCP ${id} must launch through the .env loader in ${MCP_CONFIG_FILE[host]}: ${loaderFix(server.dependsOn)} (${LOADER_REASON}).`
+        : hostRefs.length > 0
+          ? `${host} MCP ${id} launches through the .env loader but also takes ${hostRefs.join(', ')} from the host in ${MCP_CONFIG_FILE[host]}: list them in the loader's --filter and ${hostRefFix(hostRefs)}.`
+          : null;
+      if (problem === null) { continue; }
+      if (schemaOwner) { errors.push(problem); }
+      else { warnings.push(problem); }
     }
   }
 
