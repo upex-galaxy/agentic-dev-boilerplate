@@ -236,7 +236,7 @@ bunx create-agentic-dev --adopt   → installs the tooling, overwrites nothing t
 
 ### Meta-SDD (Spec-Driven Development) — for substantial changes
 
-When a change is big enough that you'd want a written spec before coding, you can opt into the SDD bloque. **Not installed by `bun run setup`** — that runs `gentle-ai install --preset minimal` which provisions Engram only. To use SDD, install it separately at user-level (e.g. `gentle-ai install sdd` or via the agent's skill manager). Once installed, the `/sdd-*` commands become available:
+When a change is big enough that you'd want a written spec before coding, you can opt into the SDD bloque. **Not installed by `bun run setup`** — that wires Engram only, with `engram setup <agent>`. To use SDD, install it separately at user-level (e.g. `gentle-ai install sdd` or via the agent's skill manager). Once installed, the `/sdd-*` commands become available:
 
 ```
 /sdd-init       → Detect stack, bootstrap persistence backend
@@ -415,7 +415,7 @@ Use this table to decide what to re-generate after what kind of change.
 | `.context/README.md`                                                                         | Generator map for `.context/` artifacts                                                       |
 | `.context/ADR/README.md`                                                                     | Architecture Decision Records — when to write one, status lifecycle, index (append-only)      |
 | `.agents/README.md`                                                                          | Variable contract: `{{VAR}}`, `{{jira.*}}`, validation scripts                                |
-| `INSTALLER.md`                                                                               | What `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out    |
+| `INSTALLER.md`                                                                               | What `bun run setup` configures: Engram, community skills, MCPs, external CLIs, opt-out       |
 | `docs/methodology/jira-platform.md`                                                          | Jira and Xray from the dev side: instance anchor, fields dev writes, what the sync reads      |
 | Sister repo: [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) | QA-side workflows (sprint testing, automation, regression)                                    |
 

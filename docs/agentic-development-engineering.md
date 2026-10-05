@@ -85,7 +85,7 @@ The practice rests on three load-bearing strategic choices.
 
 ### 3.1 Spec-Driven Development (SDD) before code
 
-> **Note**: from gentle-ai, `bun run setup` installs only Engram (`gentle-ai install --preset minimal`). The optional `sdd-*` skill bundle is not part of the shipped skill set; §11.6 covers adopting it.
+> **Note**: `bun run setup` wires only Engram, with the engram binary's own `engram setup <agent>`. The optional `sdd-*` skill bundle is not part of the shipped skill set; §11.6 covers adopting it.
 
 Code is the last artefact produced, not the first. Before any line of TypeScript is written, the AI walks the project through:
 
@@ -248,7 +248,7 @@ On top of the project-shipped skills, the boilerplate composes with **external s
 
 - **Community skills** (installed via `bunx skills add`): stack-aware skills that ship the canonical "how to do X in framework Y" knowledge, so the project-shipped skills can stay stack-agnostic; plus CLI companions such as `supabase` and `deploy-to-vercel`. The list is `PROJECT_LEVEL_SKILLS` in `cli/install.ts`; they land in the same `.agents/skills/` store.
 - **User-level skills** (cross-cutting, repo-agnostic, they follow the user across every project): the list is `USER_LEVEL_SKILLS` in `cli/install.ts`.
-- **Gentle-AI skills** (installed by `gentle-ai install --preset minimal`): the `engram` MCP for persistent memory.
+- **Engram** (wired by `engram setup <agent>`): the `engram` MCP for persistent memory.
 
 All skills share the **Knowledge Layer** (the `.context/` directory and the engram MCP): product specs, design tokens, discovery docs, per-ticket memory.
 
@@ -748,7 +748,7 @@ The rest is execution.
 - `docs/methodology/IQL-methodology.md` — phased lifecycle deep-dive.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.
 - `docs/workflows/` — environments, git-flow, OpenAPI sync.
-- `INSTALLER.md` — what `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out.
+- `INSTALLER.md` — what `bun run setup` configures: Engram, community skills, MCPs, external CLIs, opt-out.
 - `.agents/skills/agentic-dev-core/SKILL.md` — foundation reference host (passive; shared references cited by other skills).
 - `.agents/skills/agentic-dev-core/references/orchestration-doctrine.md` — canonical orchestration doctrine cited by every workflow skill.
 - `.agents/skills/project-foundation/SKILL.md` — Constitution + PRD + SRS + Discovery skill internals.
