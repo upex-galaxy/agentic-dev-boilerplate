@@ -161,7 +161,7 @@ feature/y ──────────────●───●
 
 Un worktree es una segunda carpeta de trabajo del mismo repo, sobre su propia branch. Sirve para correr dos sesiones de AI en paralelo sin que una pise los cambios sin commitear de la otra.
 
-- Un worktree nuevo trae solo los archivos versionados. `bun run worktree:provision` (corrido desde el worktree) copia lo que falta: `.env`, `.vercel/`, settings locales, `node_modules`, el alias `.claude/skills` y las credenciales MCP
+- Un worktree nuevo trae solo los archivos versionados. `bun run worktree:provision` (corrido desde el worktree) copia lo que falta: `.env`, `.vercel/`, settings locales, `node_modules` y el alias `.claude/skills` (los MCP leen ese `.env` con el loader; no se deriva ningún archivo de credenciales)
 - Antes de borrarlo, `bun run worktree:audit` lista lo que el worktree tiene y git no; `--rescue` copia el estado de sesión (`.session/`) a la carpeta principal sin sobrescribir nada
 - En Orca, `orca.yaml` en la raíz corre ambos scripts solo, al crear y al archivar un worktree
 

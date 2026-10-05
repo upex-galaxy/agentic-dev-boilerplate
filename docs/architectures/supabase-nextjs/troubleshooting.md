@@ -33,7 +33,7 @@ If the server behaves as if `.env` were ignored, your shell probably exports a v
 
 ### A server added to one harness only
 
-Every server must exist in all three harness configs with the same `.env` dependencies. `bun run agents:compat:check` fails naming the server and the harness that lacks it.
+Every server must exist in the config of every harness in use (`harnesses:` in `.agents/project.yaml`; the boilerplate checks all three) with the same `.env` dependencies. `bun run agents:compat:check` fails naming the server and the harness that lacks it.
 
 ---
 
