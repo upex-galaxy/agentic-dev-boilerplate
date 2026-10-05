@@ -2,7 +2,7 @@
 
 > **Audience**: developers cloning `agentic-dev-boilerplate` for the first time, anyone deciding whether to wire Engram persistent memory, or anyone trying to understand which CLI / skill / MCP layer does what.
 > **Read time**: 10 minutes.
-> **Status**: updated 2026-09-03: three-harness selection (Claude Code / OpenCode / Codex), compatibility repair at the end of install, doctor rows for the multi-harness contract.
+> **What changed and when**: [`CHANGELOG.md`](CHANGELOG.md).
 
 This doc is the **contract that `cli/install.ts` implements**. It covers the four installer layers — Engram via `engram setup` (~30%), community skills via `bunx skills add` (~25%), locally committed workflow skills (~20%), the canonical MCPs (~15%) — plus the external CLI verification step, the multi-harness compatibility repair that closes the run, and the opt-out path.
 
@@ -37,7 +37,7 @@ The installer detects all three harnesses and lets you pick which to configure. 
 
 ### Per-skill CLIs — lazy-required, non-blocking at setup
 
-`cli/install.ts` Step 11 (`verifyExternalClis()` in `cli/install.ts`) does a **PATH probe only** — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check. For each missing entry the installer prints:
+`cli/install.ts` Step 8 (`verifyExternalClis()` in `cli/install.ts`) does a **PATH probe only** — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check. For each missing entry the installer prints:
 
 - `quick:` line — a cross-platform install command (only when one exists, e.g. `bun add -g vercel` or `bun add -g @playwright/cli@latest`).
 - `docs:` line — the upstream install guide URL.
@@ -84,7 +84,7 @@ The vault is read only by processes that go through varlock: every MCP server (t
 
 ### Where to verify your status
 
-`bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars, the plaintext MCP credential copies an older install left on disk ("Plaintext MCP credential copies"), where secret values come from ("Secret source"), and the multi-harness contract: instructions (`AGENTS.md` present, `CLAUDE.md` is the exact shim), the `.claude/skills` alias, any command that shadows a skill, the three hook adapters, MCP parity across the three configs, and **Codex repository trust**. The trust row is WARN, never FAIL: project `.codex/` config and hooks load only in a repository you have marked trusted, and that is runtime state no file read can verify. Use the doctor after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
+`bun run setup:doctor` re-runs every check above (read-only) plus the MCP `.env` vars, the plaintext MCP credential copies an older install left on disk ("Plaintext MCP credential copies"), where secret values come from ("Secret source"), and the multi-harness contract: instructions (`AGENTS.md` present, `CLAUDE.md` is the exact shim), the `.claude/skills` alias, any command that shadows a skill, the hook adapters and MCP parity of the harnesses in use (`harnesses:` in `.agents/project.yaml`; the others read `not used`), and **Codex repository trust**. The trust row is WARN, never FAIL: project `.codex/` config and hooks load only in a repository you have marked trusted, and that is runtime state no file read can verify. Use the doctor after a partial setup to confirm a fix without re-running the full installer. JSON mode (`--json`) emits `pending_actions[]` with `type` / `target` / `hint` / `where` so an AI agent can iterate the list and pick the right tool per item.
 
 ---
 
@@ -121,7 +121,7 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
 
 | type             | Who handles it | How                                                                                                                             |
 | ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `credential`     | **User**       | AI asks the user for the value in chat (e.g. "paste your Atlassian API token from https://id.atlassian.com/manage-profile/security/api-tokens"). Then AI writes it to `.env`. |
+| `credential`     | **User**       | The AI names the variable and shows the `where` link; the user types the value into `.env` (or the secret manager) in their own terminal, never in the chat. A NON-sensitive value (URL, project key, flag) the AI may write itself with `bun run env:set KEY=value`. Rule: `AGENTS.md` Critical Rule #1, full text in `.agents/instructions/agent-critical-rules.md` §1. |
 | `system_install` | **User**       | AI shows the `where` command; the user runs it (brew/winget/apt may prompt for admin password).                                 |
 | `shell_command`  | **AI**         | AI runs the `target` command via Bash.                                                                                          |
 
@@ -136,14 +136,10 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
 The installer auto-detects no-TTY (an agent invoking it without a terminal) and silently switches to `--non-interactive`. Prompts skip with their default answer. The closing summary lists pending env vars and next steps — same data the doctor exposes. Use this path when the AI wants to run the full setup batch:
 
 ```bash
-INSTALL_AGENTS=claude-code,opencode,codex \
-  ATLASSIAN_EMAIL=... \
-  ATLASSIAN_API_TOKEN=... \
-  SUPABASE_ACCESS_TOKEN=... \
-  bun run setup --non-interactive
+INSTALL_AGENTS=claude-code,opencode,codex bun run setup --non-interactive
 ```
 
-`INSTALL_AGENTS` is optional: without it the non-interactive run configures every harness it detected.
+`INSTALL_AGENTS` is optional: without it the non-interactive run configures every harness it detected. The command line carries no secret: an AI-run command lands in the transcript, so secret values are the human's (typed into `.env` or the secret manager, or passed on a line the human runs in their own terminal) or CI's (Critical Rule #1).
 
 The Atlassian host cannot be passed this way, by design: `agents:setup` refuses to seed `issue_tracker.atlassian_url` from the environment, so a stale inherited value can never overwrite the versioned one on an unattended run. Set it once, interactively:
 
@@ -162,6 +158,10 @@ Then `bun run setup:doctor --json` to confirm the rest.
 | `INSTALL_SECRETS_PROVIDER=1password`        | Opt in to the secret manager (default `.env`); pair with `INSTALL_SECRETS_VAULT=<vault>` |
 | `INSTALL_SKIP_ENGRAM=1`                     | Treat Engram as skipped: no detection prompt, no `engram setup`               |
 | `INSTALL_FORCE_ENGRAM=1`                    | Re-run `engram setup` even when the state file says it ran (legacy alias: `INSTALL_FORCE_AGENTS_SETUP=1`) |
+| `INSTALL_FORCE_COMMUNITY_SKILLS=1`          | Re-run the community skills install even when the state file says it ran      |
+| `INSTALL_FORCE_GITHUB_REMOTE=1`             | Re-run the GitHub repository step (Step 7b) even when a remote is recorded    |
+
+The header of `cli/install.ts` owns the full list.
 
 ---
 
@@ -325,11 +325,11 @@ The agents you select are recorded in `.agents/project.yaml` as `harnesses:` (ad
 | **Hook**         | `.claude/settings.json` → `UserPromptSubmit`    | `.opencode/plugins/personality-reinject.js` | `.codex/hooks.json` → `UserPromptSubmit` |
 | **MCP**          | `.mcp.json`                                     | `opencode.jsonc`                            | `.codex/config.toml`                     |
 
-- **Instructions.** `AGENTS.md` is the always-on core (L0: binding rules, behaviour, orchestration core, a fixed router); each topic lives in its own file under `.agents/instructions/`, read on demand when the router or a hook `ROUTE:` line names it ([ADR-0009](.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md)). OpenCode and Codex load `AGENTS.md` natively; Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline. A documented import rather than a symlink, so it survives a Windows checkout. L0 also imports `package.json` and `.agents/project.yaml` for Claude Code; `bun run instructions:check` keeps L0 under Codex's 32 KiB `project_doc_max_bytes` cut.
+- **Instructions.** `AGENTS.md` is the always-on core (L0: binding rules, behaviour, orchestration core, a fixed router); each topic lives in its own file under `.agents/instructions/`, read on demand when the router or a hook `ROUTE:` line names it ([ADR-0009](.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md)). OpenCode and Codex load `AGENTS.md` natively; Claude Code loads `CLAUDE.md`, which is exactly `@AGENTS.md` plus one newline. A documented import rather than a symlink, so it survives a Windows checkout. L0 also imports `package.json` and `.agents/project.yaml` for Claude Code; `bun run instructions:check` keeps L0 under Codex's 32 KiB `project_doc_max_bytes` cut, and three locks keep the split from eroding ([ADR-0014](.context/ADR/ADR-0014-instructions-maintenance-locks.md)): the router table is frozen behind the ADR that decided it (`--accept-router ADR-NNNN` records a new decision), the labelled-prompt router eval runs on every call, and every section ships complete. `bun run instructions:audit` measures, from local transcripts, how often the agent actually reads a section the hook routed.
 - **Skills.** Every committed skill lives in `.agents/skills/`, and the community project-level skills install into the same store. Claude Code reaches that tree through `.claude/skills`, a POSIX symlink (Windows junction) that is generated and gitignored: never committed, never hand-edited.
 - **Commands.** None ship. A project may keep its own command files under `.claude/commands/` or `.opencode/commands/`; one named like a skill hides that skill's instructions, so the compatibility check fails on it and the repair moves it to `.backups/shadowing-commands/`.
 - **Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once. Claude Code and Codex run it as a command hook (`.claude/settings.json` and `.codex/hooks.json`, the latter with a POSIX and a PowerShell command); OpenCode imports the same lines from `.opencode/plugins/personality-reinject.js`.
-- **MCP.** The canonical server set is whatever `.mcp.json` declares (local servers only; web search runs at harness level); every server there must exist in the other two configs. Parity is checked semantically: each native format is normalized before comparison and matched on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The boilerplate-known ids (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only, so a downstream project may add or drop servers freely. A server that needs `.env` values starts through the `.env` loader on every host and its `--filter` is the dependency set parity compares; a `${VAR}`, `{env:}`, `{file:}` or `env_vars` beside the loader fails the check in the boilerplate and is a warning downstream naming the exact launch. `docs/mcp/*.template.*` stay as opt-in templates for hosts without a runtime adapter (Gemini CLI, Cursor).
+- **MCP.** The canonical server set is whatever `.mcp.json` declares (the first declared harness's file when Claude is not in use; local servers only, web search runs at harness level); every server there must exist in the other configs in use. Parity is checked semantically: each native format is normalized before comparison and matched on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The boilerplate-known ids (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only, so a downstream project may add or drop servers freely. A server that needs `.env` values starts through the `.env` loader on every host and its `--filter` is the dependency set parity compares; a `${VAR}`, `{env:}`, `{file:}` or `env_vars` beside the loader fails the check in the boilerplate and is a warning downstream naming the exact launch. `docs/mcp/*.template.*` stay as opt-in templates for hosts without a runtime adapter (Gemini CLI, Cursor).
 
 ### Regenerating and verifying
 
@@ -342,7 +342,7 @@ Bold `[generated]` cells above are output. Edit the source, then regenerate:
 
 You rarely run either command by hand. `bun run setup` and `bun run up` both call the same repair internally at the end of their run: they create or fix the alias, move any command that shadows a skill to `.backups/shadowing-commands/`, and then re-verify, so a clean install and a routine update both leave the contract satisfied without a manual step. The scaffolder (`create-agentic-dev`) ships nothing generated; the alias appears the first time `bun run setup` runs in the new project.
 
-`bun run agents:compat:check` validates the whole contract — shim bytes, alias target, no command named like a skill, hook adapters, MCP parity, eslint block wiring. It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit when a staged path touches `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `.opencode/`, `.codex/`, `.mcp.json` or `opencode.jsonc`. `bun run setup:doctor` reports the same surfaces plus **Codex repository trust**, which is runtime state no file read can verify: project `.codex/` config and hooks load only in a repository you have marked trusted, so the doctor reports it as WARN, never FAIL.
+`bun run agents:compat:check` validates the whole contract for the harnesses in use (it prints a `Harnesses checked:` line and one `NOTE:` per skipped harness; shim and alias only with Claude) — shim bytes, alias target, no command named like a skill, hook adapters, MCP parity, eslint block wiring. It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit when a staged path touches `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `.opencode/`, `.codex/`, `.mcp.json` or `opencode.jsonc`. `bun run setup:doctor` reports the same surfaces plus **Codex repository trust**, which is runtime state no file read can verify: project `.codex/` config and hooks load only in a repository you have marked trusted, so the doctor reports it as WARN, never FAIL.
 
 ### Updating a project created before the multi-harness move
 
@@ -390,12 +390,12 @@ Release history of each behaviour below: `CHANGELOG.md` (the `updater 8.x` secti
 
 ## External CLIs (verified, not auto-installed)
 
-Step 11 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it does a **PATH probe only** (`which <name>` on POSIX, `where <name>` on Windows — presence only, no version check) and prints an install hint (`quick:` line when a cross-platform command exists) plus the official docs URL when something is missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
+Step 8 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it does a **PATH probe only** (`which <name>` on POSIX, `where <name>` on Windows — presence only, no version check) and prints an install hint (`quick:` line when a cross-platform command exists) plus the official docs URL when something is missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
 
 | CLI              | Powers in this repo                                                                             | Quick install (cross-platform only — else use docs) | Official docs                                                            |
 | ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | `bun`            | General-purpose runtime + package manager — this repo runs on bun (scripts, install.ts, dev)    | — (OS-specific — see docs)                          | <https://bun.com/>                                                       |
-| `gh`             | GitHub CLI — `gh repo create`, PR ops, `gh api`. Powers Step 9 of the installer                 | — (OS-specific — see docs)                          | <https://github.com/cli/cli#installation>                                |
+| `gh`             | GitHub CLI — `gh repo create`, PR ops, `gh api`. Powers Step 7b of the installer                | — (OS-specific — see docs)                          | <https://github.com/cli/cli#installation>                                |
 | `supabase`       | Local Supabase stack, migrations, type generation (`supabase gen types`, wired by `/project-bootstrap`)                    | — (OS-specific — see docs)                          | <https://supabase.com/docs/guides/local-development/cli/getting-started> |
 | `vercel`         | Deploy Next.js frontend to Vercel (staging + production via `/sprint-development` deploy steps) + verification, env sync, debug, rollback via `/vercel-cli` | `bun add -g vercel`                                 | <https://vercel.com/docs/cli>                                            |
 | `resend`         | Send transactional email via Resend (used by features that integrate email notifications)       | — (OS-specific — see docs)                          | <https://resend.com/docs/cli>                                            |
