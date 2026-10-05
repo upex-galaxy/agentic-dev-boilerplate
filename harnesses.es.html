@@ -842,6 +842,18 @@
             >.</span
           >
         </div>
+        <div class="callout">
+          <span class="ic">Uno alcanza</span>
+          <span
+            ><strong>Un solo harness alcanza.</strong> La lista <code>harnesses:</code> de
+            <code>.agents/project.yaml</code> dice cuáles usa el proyecto, y cada gate
+            (<code>agents:compat:check</code>, <code>setup:doctor</code>, el instalador,
+            <code>bun run up</code>) revisa solo esos. Sin la lista, o en <code>null</code>, se
+            detectan por los archivos presentes; una lista explícita manda. El boilerplate mismo
+            revisa siempre los tres. Decisión:
+            <code>.context/ADR/ADR-0013-declared-harnesses.md</code>.</span
+          >
+        </div>
       </section>
 
       <section id="generado" class="r">
@@ -1065,9 +1077,10 @@
       <section id="mcp" class="r">
         <h2><span class="num">06</span>MCP: un conjunto declarado, tres formatos</h2>
         <p class="sub">
-          El conjunto canónico de servidores es el que declara <code>.mcp.json</code>. Cada uno
-          tiene que existir también en <code>opencode.jsonc</code> y en
-          <code>.codex/config.toml</code>, con las mismas dependencias de <code>.env</code> y los
+          El conjunto canónico de servidores es el que declara <code>.mcp.json</code> (sin Claude,
+          el archivo del primer harness declarado). Cada uno tiene que existir también en la
+          configuración de los otros harnesses en uso (<code>opencode.jsonc</code>,
+          <code>.codex/config.toml</code>), con las mismas dependencias de <code>.env</code> y los
           mismos valores literales. Los tres archivos declaran solo servidores locales.
         </p>
         <div class="tbl-scroll">
@@ -1274,9 +1287,10 @@
                   Detecta los tres harnesses y pregunta cuáles configurar (<code
                     >INSTALL_AGENTS=claude-code,opencode,codex</code
                   >
-                  para un run sin preguntas). Retira las copias en texto plano de una instalación
-                  vieja y, después de escribir <code>.env</code>, avisa que hay que reiniciar la
-                  sesión.
+                  para un run sin preguntas), guarda la elección en <code>harnesses:</code> y ofrece
+                  borrar los archivos de los que quedaron afuera (por defecto los conserva). Retira
+                  las copias en texto plano de una instalación vieja y, después de escribir
+                  <code>.env</code>, avisa que hay que reiniciar la sesión.
                 </td>
               </tr>
             </tbody>
