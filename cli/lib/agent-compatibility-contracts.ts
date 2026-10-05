@@ -107,6 +107,7 @@ export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$
  * validation (measured). A value that fails the schema stops the server that
  * needs it: `bunx varlock load --agent` shows which, redacted.
  */
+// LINT.IfChange(mcp-env-loader)
 export const MCP_ENV_LOADER_COMMAND = 'bunx';
 export const MCP_ENV_LOADER_HEAD = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--inject', 'vars', '--filter'] as const;
 
@@ -114,6 +115,7 @@ export const MCP_ENV_LOADER_HEAD = ['-p', 'varlock@1.20.0', 'varlock', 'run', '-
 export function mcpEnvLoaderArgs(names: readonly string[]): string[] {
   return [...MCP_ENV_LOADER_HEAD, names.join(','), '--'];
 }
+// LINT.ThenChange(.agents/instructions/agent-critical-rules.md, .agents/instructions/agent-harnesses.md, .agents/skills/testability-guide/references/mcp-and-env-setup.md, .agents/skills/testability-guide/references/pre-flight-discovery.md, docs/mcp/README.md, docs/mcp/mcp-configuration-guide.md, docs/setup/mcp/codex.md, packages/pages-home/harnesses.es.html)
 
 /**
  * The loader Codex used before the filter existed: every `.env` value, no
@@ -746,6 +748,7 @@ export function readHostMcpConfig(root: string, host: McpHost): NormalizedMcpCon
   return NORMALIZE[host](PARSE[host](path));
 }
 
+// LINT.IfChange(mcp-parity)
 export function validateMcpParityFindings(root = process.cwd(), options: McpParityOptions = {}): McpParityFindings {
   const resolvedRoot = resolve(root);
   const errors: string[] = [];
@@ -850,6 +853,7 @@ export function validateMcpParityFindings(root = process.cwd(), options: McpPari
 
   return { errors, warnings };
 }
+// LINT.ThenChange(README.md, CONTEXT.md, INSTALLER.md, .agents/instructions/agent-harnesses.md, docs/agentic-development-engineering.md, docs/architectures/supabase-nextjs/troubleshooting.md, docs/mcp/README.md, docs/mcp/mcp-configuration-guide.md, docs/setup/mcp/claude-code.md, docs/setup/mcp/codex.md, packages/pages-home/harnesses.es.html)
 
 function personalAbsolutePath(command: string): boolean {
   return /(?:^|[\s"'])(?:\/Users\/|\/home\/|[A-Za-z]:[\\/]Users[\\/])/.test(command);
@@ -990,11 +994,54 @@ export function validateHookCompatibility(root = process.cwd(), harnesses: reado
       }
     }
     errors.push(...validateInstructionRouterHooks(resolvedRoot, harnesses));
+    errors.push(...validateDocContractHooks(resolvedRoot, harnesses));
   }
   catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
 
+  return errors;
+}
+
+/**
+ * The documentation-contract edit hook (ADR-0017): `PostToolUse` on file
+ * edits, Claude Code and Codex only (OpenCode relies on the pre-push and CI
+ * gate). Bound in the boilerplate itself (`isSchemaOwner`) and nowhere else:
+ * v1 is maintainer-only, and `.claude/settings.json` / `.codex/hooks.json` are
+ * bootstrap-only, so a sync could never deliver the registration downstream.
+ */
+export const DOC_CONTRACTS_HOOK = '.agents/hooks/doc-contracts.mjs';
+export const CLAUDE_DOC_CONTRACTS_MATCHER = 'Edit|Write|MultiEdit';
+export const CODEX_DOC_CONTRACTS_MATCHER = 'Edit|Write';
+export const CLAUDE_DOC_CONTRACTS_COMMAND = 'node "$CLAUDE_PROJECT_DIR/.agents/hooks/doc-contracts.mjs"';
+export const CODEX_DOC_CONTRACTS_COMMAND = 'root="$(git rev-parse --show-toplevel)" && node "$root/.agents/hooks/doc-contracts.mjs" --root "$root"';
+export const CODEX_DOC_CONTRACTS_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$root = git rev-parse --show-toplevel; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node (Join-Path $root \'.agents/hooks/doc-contracts.mjs\') --root $root"';
+
+function hasPostToolUse(settings: JsonObject, matcher: string, command: string, windows?: string): boolean {
+  const groups = settings.hooks && typeof settings.hooks === 'object' ? (settings.hooks as JsonObject).PostToolUse : undefined;
+  if (!Array.isArray(groups)) { return false; }
+  return groups.some((group) => {
+    if (!group || typeof group !== 'object' || (group as JsonObject).matcher !== matcher) { return false; }
+    const hooks = (group as JsonObject).hooks;
+    return Array.isArray(hooks) && hooks.some(hook => hook && typeof hook === 'object'
+      && (hook as JsonObject).command === command
+      && (windows === undefined || (hook as JsonObject).commandWindows === windows));
+  });
+}
+
+export function validateDocContractHooks(root = process.cwd(), harnesses: readonly Harness[] = declaredHarnesses(root).harnesses, schemaOwner = readSchemaOwner(resolve(root))): string[] {
+  if (!schemaOwner) { return []; }
+  const resolvedRoot = resolve(root);
+  const errors: string[] = [];
+  if (!existsSync(join(resolvedRoot, DOC_CONTRACTS_HOOK))) {
+    return [`Documentation-contract hook missing: ${DOC_CONTRACTS_HOOK}`];
+  }
+  if (harnesses.includes('claude') && !hasPostToolUse(parseJson(join(resolvedRoot, '.claude', 'settings.json')), CLAUDE_DOC_CONTRACTS_MATCHER, CLAUDE_DOC_CONTRACTS_COMMAND)) {
+    errors.push(`claude must register the documentation-contract hook: a PostToolUse group with matcher "${CLAUDE_DOC_CONTRACTS_MATCHER}" running ${CLAUDE_DOC_CONTRACTS_COMMAND}`);
+  }
+  if (harnesses.includes('codex') && !hasPostToolUse(parseJson(join(resolvedRoot, '.codex', 'hooks.json')), CODEX_DOC_CONTRACTS_MATCHER, CODEX_DOC_CONTRACTS_COMMAND, CODEX_DOC_CONTRACTS_COMMAND_WINDOWS)) {
+    errors.push(`codex must register the documentation-contract hook: a PostToolUse group with matcher "${CODEX_DOC_CONTRACTS_MATCHER}" running the Codex command (and its Windows variant)`);
+  }
   return errors;
 }
 

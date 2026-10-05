@@ -42,6 +42,11 @@
  *     `package.json` does not declare. Placeholders, file runs
  *     (`bun run scripts/x.ts`) and prose that only names the command are
  *     ignored.
+ *   - `contract`: a documentation-contract marker (`LINT.IfChange` /
+ *     `LINT.ThenChange`, ADR-0017) is unbalanced, reuses a label, or names a
+ *     page that does not exist. Maintainers' checkout only
+ *     (`contractsEnforced`); the range check itself is
+ *     `scripts/lint-doc-contracts.ts`, at pre-push and in CI.
  *
  * Severity per kind lives in `SEVERITY`: an `error` fails the gate, a
  * `warning` is printed and passes.
@@ -68,13 +73,14 @@
 import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { contractsEnforced, scanContracts } from './lib/doc-contracts';
 import { L0_FILE, parseProjectSkills, parseRouter, PROJECT_FILE, SECTIONS_DIR, skillTableSource } from './lib/instructions';
 import { isVolatileExemptPath, scanVolatile, volatileRemedy } from './lib/volatile-facts';
 
 /** Repo roots an inline-code path must start with to be checked. */
 export const KNOWN_ROOTS = ['docs/', '.agents/', 'scripts/', 'cli/', 'packages/'] as const;
 
-export type DocFindingKind = 'link' | 'path' | 'meta' | 'file-line' | 'current-state' | 'roster' | 'script';
+export type DocFindingKind = 'link' | 'path' | 'meta' | 'file-line' | 'current-state' | 'roster' | 'script' | 'contract';
 
 export interface DocFinding {
   file: string
@@ -98,6 +104,7 @@ export const SEVERITY: Record<DocFindingKind, 'error' | 'warning'> = {
   'script': 'warning',
   'file-line': 'error',
   'current-state': 'error',
+  'contract': 'error',
 };
 
 const VOLATILE_KIND: Record<VolatileKind, DocFindingKind> = {
@@ -484,7 +491,14 @@ export function lintDocs(root: string): { files: number, findings: DocFinding[] 
   findings.push(...lintRoster(root));
   const instructions = [...(existsSync(agentsFile) ? [agentsFile] : []), ...instructionFiles(root)];
   findings.push(...lintScripts(root, [...instructions, ...files]));
+  findings.push(...lintContracts(root));
   return { files: files.length, findings };
+}
+
+/** Documentation-contract markers (ADR-0017): balanced, unique labels, every target on disk. */
+export function lintContracts(root: string): DocFinding[] {
+  if (!contractsEnforced(root)) { return []; }
+  return scanContracts(root).findings.map(f => ({ file: f.file, line: f.line, kind: 'contract' as const, target: f.detail }));
 }
 
 const LABEL: Record<DocFindingKind, string> = {
@@ -495,6 +509,7 @@ const LABEL: Record<DocFindingKind, string> = {
   'current-state': 'CURRENT-STATE',
   'roster': 'skill not listed',
   'script': 'unknown script',
+  'contract': 'doc contract',
 };
 
 if (import.meta.main) {

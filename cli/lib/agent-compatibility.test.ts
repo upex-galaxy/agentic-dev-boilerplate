@@ -13,6 +13,7 @@ import {
   CODEX_PROJECT_DOC_MAX_BYTES,
   CODEX_STARTUP_TIMEOUT_SEC,
   declaredMcpIds,
+  DOC_CONTRACTS_HOOK,
   EXPECTED_MCP,
   KNOWN_MCP_IDS,
   LEGACY_CODEX_ENV_LOADER_ARGS,
@@ -22,6 +23,7 @@ import {
   REARM_SESSION_START_SOURCES,
   stripJsonComments,
   unwrapEnvLoader,
+  validateDocContractHooks,
   validateEslintBlockWiring,
   validateHookCompatibility,
   validateInstructionRouterHooks,
@@ -1377,5 +1379,22 @@ describe.skipIf(!HAS_OPENCODE)('an adopted app whose instructions wait for their
 
   test('the pending path is the one the adopt hook saves', () => {
     expect(ADOPT_INSTRUCTIONS_PENDING_FILE).toBe(ADOPT_INSTRUCTIONS_PROMPT.replace(/\\/g, '/'));
+  });
+});
+
+describe('documentation-contract hook (ADR-0017)', () => {
+  test('the real repository registers it on both command hosts', () => {
+    expect(validateDocContractHooks(REPO_ROOT)).toEqual([]);
+  });
+
+  test('binds only in the boilerplate itself', () => {
+    const root = contractFixture();
+    expect(validateDocContractHooks(root, ['claude', 'codex'], false)).toEqual([]);
+    expect(validateDocContractHooks(root, ['claude', 'codex'], true)).toEqual([`Documentation-contract hook missing: ${DOC_CONTRACTS_HOOK}`]);
+    copyFromRepo(root, DOC_CONTRACTS_HOOK);
+    const errors = validateDocContractHooks(root, ['claude', 'codex'], true);
+    expect(errors.some(e => e.startsWith('claude must register the documentation-contract hook'))).toBe(true);
+    expect(errors.some(e => e.startsWith('codex must register the documentation-contract hook'))).toBe(true);
+    expect(validateDocContractHooks(root, ['opencode'], true)).toEqual([]);
   });
 });

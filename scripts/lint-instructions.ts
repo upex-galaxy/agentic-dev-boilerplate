@@ -329,6 +329,7 @@ function isMaintainer(root: string): boolean {
 
 const ACCEPT_HINT = '`bun run instructions:check --accept-router ADR-NNNN`';
 
+// LINT.IfChange(instruction-locks)
 /** `lock` findings: the ROUTER table matches its lock, and the lock's ADR exists and cites the fingerprint. */
 export function lintLock(root: string, l0: string, maintainer: boolean): InstructionFinding[] {
   const fingerprint = routerFingerprint(l0);
@@ -423,6 +424,7 @@ export function lintLocks(root: string, l0: string, sections: string[]): Instruc
   findings.push(...lintComplete(root, sections, fixture, maintainer));
   return findings;
 }
+// LINT.ThenChange(README.md, INSTALLER.md, .agents/instructions/README.md, .agents/skills/agentic-dev-core/references/instructions-doctrine.md, packages/decks/progressive-disclosure/como-funciona.es.html)
 
 /**
  * `--accept-router ADR-NNNN`: re-lock the ROUTER on a decided change. Refuses

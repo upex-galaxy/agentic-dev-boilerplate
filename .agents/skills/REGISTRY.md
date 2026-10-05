@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-10-05T11:28:05.854Z`
+> Generated: `2026-10-05T12:04:35.672Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -50,6 +50,7 @@ Skills indexed: 22
 - Run any external command — no `bun install`, no `git`, no `gh`.
 - Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, a name in the MCP loader's `--filter` list); never open `.env*` (except `.env.example` and the committed `.env*.schema` files), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name); never run `varlock load`, even `--agent`, against a schema `bun run vars:schema:check` has not passed (a scratch schema is banned: `--agent` redacts only `@sensitive` items). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 - Instructions maintenance (ADR-0014, binds every skill and subagent): every change to `AGENTS.md`, a section under `.agents/instructions/`, the router or a `triggers:` list follows `references/instructions-doctrine.md`: place each sentence with its §2 decision tree, run its §6 procedure, close with `bun run instructions:check`. NEVER paste section prose into `AGENTS.md`, NEVER add, change or remove a router row without the ADR that decides it (`bun run instructions:check --accept-router ADR-NNNN`), and fix a trigger miss in the section's `triggers:` plus a labelled prompt in `cli/lib/fixtures/instruction-router-eval.json`, never by relabelling the set.
+- Documentation contracts (ADR-0017, binds every skill and subagent that changes this boilerplate): close every change that adds, renames or retires a skill, a `package.json` script or a doc path, OR changes a behaviour a page describes, with the docs follow-through (`references/docs-follow-through.md`), decks (`packages/decks/**`) and the Pages home (`packages/pages-home/**`) included, in the same PR. WHEN an edit lands inside a `LINT.IfChange(<label>)` region (the hook prints a `DOCS:` line): update EVERY page its `LINT.ThenChange(...)` names in the same push. Only when the documented behaviour did not change, add `Docs-Checked: <label> <reason>` to a commit message; NEVER add it by reflex or without a reason. Pre-push and CI block otherwise. A drift found later gets a new marker. WHEN the change touches `cli/`, `scripts/`, `.husky/`, `AGENTS.md` or `.agents/instructions/`: run the drift sweep (follow-through §6) after the verification gates, report-only. It greps the doc surface for prose that describes the OLD behaviour and counts the `Docs-Checked:` trailers the change used.
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
@@ -208,6 +209,7 @@ Skills indexed: 22
 - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
 - **Stop at PR creation.** Never auto-merge.
 - **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
+- **WHEN the pre-push or CI documentation-contract gate names a region (ADR-0017)**: update every page it lists in the same push; only if they still hold, add `Docs-Checked: <label> <reason>` above the forensic trailers. NEVER add it by reflex or without the reason.
 
 **Read full SKILL.md when**: running Strategy Setup, resolving conflicts, planning a chain, or when the compact rules above do not settle the operation.
 
@@ -467,7 +469,7 @@ Skills indexed: 22
 - **Verification cap=3**: lint + types + unit tests in parallel; green before any push.
 - **Atomic commits**, semantic prefixes, no AI-attribution lines, never `--no-verify`, never force-push a pushed branch; a push to a protected branch resolves `git_strategy.policy.direct_push_to_protected` (Critical Rule #4: `allowed` pushes, `confirm` asks, `forbidden` routes through a PR).
 - **Scope discipline**: touch only what the story states. No "while I'm here" refactors.
-- **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var patches every doc that names it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
+- **Docs travel with the change.** A story that adds, renames or retires a skill mode, a `package.json` script, a doc or `.context/` path, an MCP server or an env var, or changes a behaviour a page describes, patches every doc that names or describes it in the same PR, per `agentic-dev-core/references/docs-follow-through.md`; `bun run docs:check` proves the mechanical half.
 - **Reviewer findings are adjudicated**, not auto-applied: each is verified against the diff + AC, or dismissed with a one-line reason.
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 

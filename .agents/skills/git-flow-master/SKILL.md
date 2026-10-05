@@ -22,6 +22,7 @@ compact_rules: |
   - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
   - **Stop at PR creation.** Never auto-merge.
   - **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
+  - **WHEN the pre-push or CI documentation-contract gate names a region (ADR-0017)**: update every page it lists in the same push; only if they still hold, add `Docs-Checked: <label> <reason>` above the forensic trailers. NEVER add it by reflex or without the reason.
 metadata:
   kind: workflow
 ---
@@ -78,6 +79,7 @@ If the user is asking about feature implementation, test design, product backlog
 - **Admin bypass may only be OFFERED when `admin_bypass: true`**, and only after re-confirming at runtime that the operator really is an admin and that they accept the specific irreversible action.
 - **Stop at PR creation.** Never auto-merge.
 - **One commit = one responsibility**, conventional prefix, no AI-attribution lines. Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved); harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) are forbidden (§3.2).
+- **WHEN the pre-push or CI documentation-contract gate names a region (ADR-0017)**: update every page it lists in the same push; only if they still hold, add `Docs-Checked: <label> <reason>` above the forensic trailers. NEVER add it by reflex or without the reason.
 
 **Read full SKILL.md when**: running Strategy Setup, resolving conflicts, planning a chain, or when the compact rules above do not settle the operation.
 
@@ -326,6 +328,7 @@ Session: <label>
 - Both values come from the `AGENT IDENTITY:` line the prompt hook (`.agents/hooks/personality-reinject.mjs`) injects into this session's context (`worktree=…`, `session=…`). Copy them; do not re-derive them per commit. The session label may contain spaces and parentheses (`my-session (c0ffee12)`): take everything after `session=` up to the literal ` harness=` token, never split the line on whitespace.
 - `primary` is the correct worktree value when the session runs in the main checkout. When a value could not be resolved at all, write `unknown`: never guess a name, never drop the key. A missing trailer is less recoverable than an honest `unknown`.
 - Nothing goes below them, and nothing is added beside them.
+- **`Docs-Checked: <label> <reason>`** is the one trailer that may sit ABOVE them (ADR-0017). Add it only when the change touched a `LINT.IfChange(<label>)` region, the pages its `LINT.ThenChange(...)` names were NOT updated, and they still describe the behaviour correctly; the reason says why. Never by reflex, never without a reason (a bare label does not count). The pre-push and CI documentation-contract gate block the push without it or the page edits. On an already-pushed range the ack is an empty commit carrying the line, never an amend.
 - **These are forensics, not attribution.** They record WHICH working tree and WHICH session produced the commit, so a bisect, an incident review, or a parallel-session post-mortem can find the right transcript on any harness. They are deliberately harness-agnostic: no tool, vendor, or model is named. The prohibition in Critical Rule #3 is untouched: never `Claude-Session:` or any other `<Tool>-Session:` key, never a `Co-Authored-By:` for an AI, never a "Generated with …" line.
 - `.husky/commit-msg` runs `scripts/check-commit-trailers.ts`, which WARNS (never blocks) when the pair is missing or out of place or a branded trailer is present. A warning on an agent-written commit is a defect to fix in the next commit, not by amending a pushed one.
 
