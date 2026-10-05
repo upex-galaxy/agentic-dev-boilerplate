@@ -146,7 +146,7 @@ Two dedicated inspection roles (read-only + read-write). **There are TWO formats
 <<DB_URI_SCHEME>>://<see secrets store>@<<DB_HOST>>:<<DB_PORT>>/<<DB_NAME>>?sslmode=require
 ```
 
-**2) Driver split fields — what the <<DB_MCP>> MCP reads.** The MCP config is committed with `${VAR}` placeholders; you set these in your `.env` (read-only role):
+**2) Driver split fields — what the <<DB_MCP>> MCP reads.** The MCP config is committed with variable names only (the `.env` loader's `--filter` list; DBHub reads them as `${VAR}` in `dbhub.toml`); you set these in your `.env` (read-only role):
 
 ```bash
 # .env — <<DB_MCP>> read-only (<<DB_RO_ROLE>>)

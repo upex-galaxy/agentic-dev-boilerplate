@@ -35,14 +35,14 @@ Render this as the overview card grid in §3. Each card deep-links to its detail
 
 ## Env-var strategy (the EnvSetup section)
 
-MCP config files are **committed to git** and contain **no secrets** — they reference env vars by expansion. The real values live in `.env` (gitignored). Two strategies:
+MCP config files are **committed to git** and contain **no secrets** — they name env vars, never values. The real values live in `.env` (gitignored). Two strategies:
 
 | Strategy | Replace each `{{...}}` placeholder with | Then | Use when |
 | --- | --- | --- | --- |
 | **A. Literal value** (legacy) | the real secret directly | add the config file to `.gitignore` | personal-only config |
-| **B. Env-var expansion + commit** (recommended) | the agent's native env syntax | store the real value in `.env`, commit the config | team-shared config |
+| **B. `.env` loader + commit** (recommended) | a local (stdio) server: the variable NAME in the loader's `--filter` list (`varlock run --filter <vars> -- <server>`); a remote server only: the agent's native env syntax below | store the real value in `.env`, commit the config | team-shared config |
 
-### Native env-var syntax per agent (strategy B)
+### Native env-var syntax per agent (strategy B, remote servers only)
 
 | Agent | Config file | Syntax | If the var is missing |
 | --- | --- | --- | --- |

@@ -101,7 +101,7 @@ Run the interactive installer once after cloning:
 bun run setup
 ```
 
-This bootstraps `.agents/`, wires Engram (persistent memory) per agent with `engram setup`, wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
+This bootstraps `.agents/`, records the harnesses you pick in `.agents/project.yaml` (`harnesses:`), wires Engram (persistent memory) per agent with `engram setup`, asks where secret values live (`.env` by default, or a secret manager), wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
@@ -179,8 +179,6 @@ The Atlassian MCP is opt-in (`docs/mcp/`): Jira and Confluence go through `/acli
 - Use `web-search` for "how to solve X" — community fixes, troubleshooting
 - Use **Atlassian** only as fallback — prefer `/acli` skill (fewer tokens, faster)
 
-`.mcp.json` lives at the repo root and is **committed** (uses `${VAR}` references to `.env` — no secrets stored in the file).
-
 ---
 
 ## Critical env vars
@@ -199,7 +197,7 @@ Place these in `.env` before running anything that talks to a real environment:
 
 `.mcp.json` is **committed**, like `opencode.jsonc` and `.codex/config.toml`: on all three hosts every server that needs `.env` values starts through the `.env` loader (`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`), which hands it only the variables it names. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
-Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #10.
+Verify which variables are set with `bun run setup:doctor` (or `bunx varlock load --agent`, redacted); `bun run vars:check` validates template-variable references, not `.env`. Always check `package.json` for the canonical script name — Critical Rule #10.
 
 ---
 
