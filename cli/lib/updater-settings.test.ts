@@ -276,7 +276,12 @@ describe('opencode.jsonc deny gap (measured, never rewritten)', () => {
       "printenv*": "deny",
     },
     "read": {
+      "*": "allow",
       "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "*.env.schema": "allow",
+      "*.auth/*": "deny",
     },
   },
 }
@@ -286,22 +291,34 @@ describe('opencode.jsonc deny gap (measured, never rewritten)', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
     write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
-    write(root, OPENCODE_SETTINGS_FILE, '{\n  // mine\n  "permission": {\n    "bash": { "*": "ask", "rm -rf *": "deny", },\n  },\n}\n');
+    write(root, OPENCODE_SETTINGS_FILE, '{\n  // mine\n  "permission": {\n    "bash": { "*": "ask", "rm -rf *": "deny", },\n    "read": { "*": "allow" },\n  },\n}\n');
     const gap = opencodeDenyGap(root, upstream)!;
-    expect(gap.missing).toEqual([{ tool: 'bash', patterns: ['printenv*'] }, { tool: 'read', patterns: ['*.env'] }]);
+    expect(gap.missing).toEqual([{ tool: 'bash', patterns: ['printenv*'] }, { tool: 'read', patterns: ['*.env', '*.env.*', '*.auth/*'] }]);
     expect(gap.block).toContain('"bash": {\n  "printenv*": "deny",\n},');
-    expect(gap.block).toContain('"read": {\n  "*.env": "deny",\n},');
-    // Allows upstream has are never offered: only denies travel.
+    // Allows upstream has are never offered on their own: only denies travel.
     expect(gap.block).not.toContain('git *');
     // The project's file is untouched.
     expect(readFileSync(join(root, OPENCODE_SETTINGS_FILE), 'utf-8')).toContain('// mine');
+  });
+
+  test('an exception after a missing deny travels with it, so the last match keeps it', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
+    // The project already lists the schema file; that action is kept, re-stated after the deny.
+    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "read": { "*": "allow", "*.env.schema": "ask" } } }\n');
+    const gap = opencodeDenyGap(root, upstream)!;
+    expect(gap.missing.find(m => m.tool === 'read')!.patterns).toEqual(['*.env', '*.env.*', '*.auth/*']);
+    expect(gap.block).toContain('"read": {\n  "*.env": "deny",\n  "*.env.*": "deny",\n  "*.env.example": "allow",\n  "*.env.schema": "ask",\n  "*.auth/*": "deny",\n},');
+    // An exception that comes before every missing deny is not repeated.
+    expect(gap.block).not.toContain('"*": "allow"');
   });
 
   test('a pattern the project lists with another action is its opt-out', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
     write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
-    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": { "rm -rf *": "deny", "printenv*": "ask" }, "read": { "*.env": "allow" } } }\n');
+    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": { "rm -rf *": "deny", "printenv*": "ask" }, "read": { "*.env": "allow", "*.env.*": "deny", "*.auth/*": "deny" } } }\n');
     expect(opencodeDenyGap(root, upstream)).toBeNull();
   });
 
@@ -309,7 +326,7 @@ describe('opencode.jsonc deny gap (measured, never rewritten)', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
     write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
-    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": "ask" } }\n');
+    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": "ask", "read": "allow" } }\n');
     const gap = opencodeDenyGap(root, upstream)!;
     expect(gap.block).toContain('"bash": {\n  "*": "ask",\n  "rm -rf *": "deny",\n  "printenv*": "deny",\n},');
   });
