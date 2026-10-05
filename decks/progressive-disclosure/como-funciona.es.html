@@ -944,7 +944,9 @@
           </li>
           <li>
             <strong>Una línea <code>ROUTE:</code></strong> que inyecta el hook es obligatoria y gana
-            sobre el criterio propio del modelo.
+            sobre el criterio propio del modelo: se lee su archivo antes de actuar. Una
+            <code>ROUTE-OPTIONAL:</code> no obliga (se lee uno de sus archivos solo si la tarea lo
+            pide) y una <code>ROUTE-PENDING:</code> nombra un archivo obligatorio que sigue sin leerse.
           </li>
           <li>
             <strong>Un archivo leído no se relee</strong>, salvo que una compactación lo haya sacado
@@ -994,8 +996,10 @@
         </div>
         <div class="hookline">
           <span class="c"># una línea por archivo nuevo, después de AGENT IDENTITY: y ORCA:</span><br />
-          <span class="k">ROUTE:</span> read .agents/instructions/agent-git.md (git)<br />
-          <span class="k">ROUTE:</span> read package.json
+          <span class="k">ROUTE:</span> read .agents/instructions/agent-git.md (git, &lt;n&gt; lines) before acting on this prompt<br />
+          <span class="k">ROUTE:</span> read package.json (&lt;n&gt; lines) before acting on this prompt<br />
+          <span class="c"># lo que pasó el tope, en una sola línea que no obliga</span><br />
+          <span class="k">ROUTE-OPTIONAL:</span> the prompt also touches .agents/instructions/agent-harnesses.md (harnesses); read one only if the task needs it.
         </div>
         <div class="tbl-scroll">
           <table class="plain">
@@ -1020,6 +1024,35 @@
                   Cada sección declara en su frontmatter <code>triggers:</code> (regex sin distinguir
                   mayúsculas, en inglés y en español) y <code>paths:</code> (prefijos del repo). Ajustar
                   el ruteo es editar esas listas, nunca L0.
+                </td>
+              </tr>
+              <tr>
+                <td>Alcance</td>
+                <td>
+                  Una línea <code>ROUTE-SCOPE:</code> en el pedido reemplaza al pedido para clasificar:
+                  cada ítem es un <code>id</code> de sección (se rutea directo) o palabras (se
+                  clasifican); <code>none</code> no rutea nada. Sin ella, un pedido que trae el preámbulo
+                  de un orquestador se clasifica solo por el bloque de tarea que sigue a su marcador. Las
+                  rutas absolutas se neutralizan antes: el nombre de una carpeta no es una intención.
+                </td>
+              </tr>
+              <tr>
+                <td>Ranking y tope</td>
+                <td>
+                  Las filas disparadas se ordenan por la fuerza de su ancla (un <code>id</code> del
+                  alcance, después hits de <code>paths:</code>, después triggers distintos, después la
+                  coincidencia más temprana). Solo las primeras <code>MAX_ROUTED_SECTIONS</code> (3)
+                  secciones reciben un <code>ROUTE:</code> obligatorio; el resto va a una sola línea
+                  <code>ROUTE-OPTIONAL:</code>. Medido: un agente lee una ruta sola mucho más que una
+                  de cinco en el mismo turno (ADR-0018).
+                </td>
+              </tr>
+              <tr>
+                <td>Recordatorio (Claude Code)</td>
+                <td>
+                  Un hook <code>PostToolUse</code> corre el mismo emisor: la primera herramienta que no
+                  lee ninguna sección ruteada, mientras alguna sigue sin leerse, recibe UNA línea
+                  <code>ROUTE-PENDING:</code>. No se repite en el turno y calla para los subagentes.
                 </td>
               </tr>
               <tr>
@@ -1054,7 +1087,8 @@
                 <td>Claude Code</td>
                 <td>
                   <code>.claude/settings.json</code>: <code>UserPromptSubmit</code> ejecuta el emisor;
-                  <code>SessionStart</code> con <code>compact</code> o <code>clear</code> lo re-arma.
+                  <code>SessionStart</code> con <code>compact</code> o <code>clear</code> lo re-arma;
+                  <code>PostToolUse</code> sin matcher recuerda una ruta sin leer.
                 </td>
               </tr>
               <tr>
@@ -1349,12 +1383,14 @@
             </thead>
             <tbody>
               <tr>
-                <td>Recall y precisión del clasificador</td>
+                <td>Recall, recall obligatorio y precisión del clasificador</td>
                 <td>
                   Pedidos etiquetados a mano, en inglés y en español, en
                   <code>cli/lib/fixtures/instruction-router-eval.json</code>; los umbrales son su campo
                   <code>targets</code> y los verifica <code>cli/lib/instruction-router.test.ts</code>
-                  dentro de <code>bun run test</code>.
+                  dentro de <code>bun run test</code>. El recall obligatorio cuenta solo las líneas
+                  <code>ROUTE:</code> (que el tope no haya empujado una sección esperada a la opcional) y
+                  la precisión también: una línea opcional no obliga a nada.
                 </td>
               </tr>
               <tr>
@@ -1372,7 +1408,8 @@
                 <td>Que el modelo obedezca</td>
                 <td>
                   auditoría de transcripciones: cada <code>ROUTE:</code> tendría que ir seguido de una
-                  lectura del archivo ruteado antes de la primera acción
+                  lectura del archivo ruteado antes de la primera acción; también cuenta cuántas
+                  lecturas siguieron a un <code>ROUTE-PENDING:</code>
                 </td>
               </tr>
             </tbody>
