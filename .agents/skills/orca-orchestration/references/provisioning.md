@@ -32,7 +32,7 @@ dependency), `.agents/project.yaml`, the Jira catalogs under `.agents/`, every T
 ## 1b · The env file is present and the supervised worker still has no credentials
 
 A launch line LOADS the env file: the `bun run <harness>` wrappers in `package.json` run the agent
-under `dotenv -o -e .env`, which is why the human-paste path is immune. The supervised native launch
+under `varlock run` (through `scripts/launch.ts`), which is why the human-paste path is immune. The supervised native launch
 has no launch line, so a worker gets credentials only from what reaches it WITHOUT that wrapper:
 
 - **The harness surfaces `bun run harness:env` writes from `.env`.** A Claude Code worker reads the

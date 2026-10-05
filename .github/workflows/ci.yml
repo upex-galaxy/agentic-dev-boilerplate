@@ -22,6 +22,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate env schema (varlock)
+        uses: dmno-dev/varlock-action@v1.0.5
+        with:
+          fail-on-error: true
+          show-summary: true
+        # First gate, before any dependency is installed: loads .env.schema +
+        # .env.core.schema against the job's (empty) environment and writes a
+        # REDACTED summary to the job page. The schema requires nothing
+        # (ADR-0010), so this proves the pair parses and every typed item
+        # accepts an unset value. The action bundles its own varlock; the
+        # devDependency pin in package.json is what the local gates use.
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:

@@ -93,7 +93,7 @@ playwright-cli list                                               # <KEY> is gon
 ```
 
 - **`--raw fill <ref> "$VAR"` is the only way a credential is typed.** `fill` echoes what it typed in its "Ran Playwright code" block; the shell expands the variable, the command text carries only its NAME, and `--raw` suppresses the echo.
-- The variables are in the process environment when the session was launched through the repo's harness wrappers (`bun run claude` / `opencode` / `codex` wrap `dotenv -o -e .env`). Launched bare, prefix the one command: `bunx dotenv -e .env -- sh -c 'playwright-cli -s=<KEY> --raw fill <ref> "$QA_E2E_USER_PASSWORD"'`.
+- The variables are in the process environment when the session was launched through the repo's harness wrappers (`bun run claude` / `opencode` / `codex` start it through `varlock run`). Launched bare, prefix the one command: `bunx varlock run -- sh -c 'playwright-cli -s=<KEY> --raw fill <ref> "$QA_E2E_USER_PASSWORD"'`.
 - After the login, verify WHICH account is signed in (a profile menu, `/me`, the user's email on screen) before trusting any result. A login page after `goto` means the session expired: log in again through the same form, never through a shortcut from `live-ui-identity.md` §3.
 - `{{WEB_URL}}` of the active env comes from `.agents/project.yaml`; the real-time check (§5.1) uses the local dev server: `{{stack.package_manager}} run {{stack.scripts.dev}}` from `{{stack.app_root}}`, the name confirmed in the app's `package.json` (AGENTS.md Rule #10).
 

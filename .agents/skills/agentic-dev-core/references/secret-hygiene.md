@@ -24,7 +24,7 @@ A secret VALUE that enters the model context also enters the provider request an
 | `.auth/**` | value files written by `bun run harness:env` for OpenCode (`.auth/opencode/<VAR>`), session state written by any login flow |
 | `.claude/settings.local.json` | the `env` block `bun run harness:env` writes for Claude Code |
 
-Readable, and the right place to learn a variable's NAME and purpose: `.env.example` (and `.env.schema` once the repo ships varlock). The variable routing table is `cli/lib/variables-manifest.ts`.
+Readable, and the right place to learn a variable's NAME, type and sensitivity: `.env.example`, `.env.schema` (project-owned) and `.env.core.schema` (generated from `cli/lib/variables-manifest.ts`, the variable routing table).
 
 Never `source` a file under `.auth/opencode/`: each one holds a bare value, not a `KEY=value` line, so the shell tries to run the value as a command and prints it in the error.
 
@@ -33,23 +33,26 @@ Never `source` a file under `.auth/opencode/`: each one holds a bare value, not 
 **Is the variable set?** Ask a tool that answers by name:
 
 ```bash
+bunx varlock load --agent      # every schema item; @sensitive ones redacted to a 2-char prefix
 bun run setup:doctor --json    # env_vars: { NAME: "set" | "missing" } for the required set
-bun run vars:env:check         # process-vs-.env drift; secrets masked as ******** (N chars)
+bun run vars:env:check         # inherited process value vs .env / .env.local; lengths only
 [ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && echo "SUPABASE_ACCESS_TOKEN set" || echo "SUPABASE_ACCESS_TOKEN unset"
 ```
 
-The last form checks the CURRENT process environment, which is what a launch through `bun run claude|codex|opencode` populated. This repo does not ship varlock yet: never `bunx varlock ...` here, because with no schema nothing is marked sensitive and the redaction has nothing to act on. Once varlock lands, `bunx varlock load --agent` is the presence check.
+The last form checks the CURRENT process environment, which is what a launch through `bun run claude|codex|opencode` populated. `bunx varlock load --agent` redacts only what the schema marks `@sensitive` and prints every other value in full: a secret declared without `@sensitive` (a project variable added to `.env.schema` in a hurry) is exposed by it, so mark it first. Never `varlock load` without `--agent`, nor `--format env|shell|json-full` without `--agent`.
 
 **The variable is in `.env` but not in this session's environment** (the session was launched without the loader). Run the command THROUGH the loader in a subprocess; the loader reads the file, the AI never does:
 
 ```bash
-bunx dotenv -e .env -- sh -c 'curl -sS -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" https://api.supabase.com/v1/projects'
+bunx varlock run -- sh -c 'curl -sS -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" https://api.supabase.com/v1/projects'
 ```
+
+On a pipe (any agent tool call) `varlock run` also redacts `@sensitive` values in the child's own output, a second net under the command shape.
 
 **Pushing values to a platform** (Vercel env, GitHub Actions secrets): the AI chooses the NAMES; a subprocess moves each value from the loader to the platform's stdin:
 
 ```bash
-bunx dotenv -e .env -- bash -c 'v="${!1}"; [ -n "$v" ] || { echo "skip $1 (empty)"; exit 0; }; printf "%s" "$v" | gh secret set "$1"' _ SUPABASE_ACCESS_TOKEN
+bunx varlock run -- bash -c 'v="${!1}"; [ -n "$v" ] || { echo "skip $1 (empty)"; exit 0; }; printf "%s" "$v" | gh secret set "$1"' _ SUPABASE_ACCESS_TOKEN
 ```
 
 `${!1}` is bash indirect expansion: the value is read by name inside the child and piped, never printed. The `vercel-cli` skill (`references/env-vars.md`) carries the Vercel variant.

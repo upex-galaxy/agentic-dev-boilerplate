@@ -37,7 +37,7 @@ import type { CompatibilityCheck, CompatibilityErrorGroup } from './lib/agent-co
 import type { AtlassianUrlSource } from './lib/atlassian-instance.ts';
 import type { CheckFinding as HarnessEnvFinding } from './lib/harness-env.ts';
 import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
@@ -60,6 +60,7 @@ import {
   resolveAtlassianInstance,
 } from './lib/atlassian-instance.ts';
 import { contextMapAdvice, contextMapStatuses } from './lib/context-maps.ts';
+import { CORE_SCHEMA_FILE, deprecatedEnvKeysIn, neutralizeDeprecatedKeys, PROJECT_SCHEMA_FILE, varlockInstalled } from './lib/env-schema.ts';
 import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
 import { detectHookManager } from './lib/hook-manager.ts';
 import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
@@ -79,7 +80,7 @@ const ENV_PATH = join(REPO_ROOT, '.env');
 const MCP_PATH = join(REPO_ROOT, '.mcp.json');
 const OPENCODE_PATH = join(REPO_ROOT, 'opencode.jsonc');
 const CODEX_CONFIG_PATH = join(REPO_ROOT, '.codex', 'config.toml');
-const NODE_MODULES_DOTENV = join(REPO_ROOT, 'node_modules', 'dotenv-cli');
+const NODE_MODULES_VARLOCK = join(REPO_ROOT, 'node_modules', 'varlock', 'package.json');
 // --preflight mode resolves install.ts's only third-party import.
 const INQUIRER_MARKER = join(REPO_ROOT, 'node_modules', '@inquirer', 'prompts', 'package.json');
 
@@ -380,7 +381,32 @@ interface DoctorReport {
    * saying so. NEVER a failure: the fix is a hand edit of the app's file.
    */
   tooling_isolation: { adopted: boolean, pending: string[] }
+  /**
+   * The developer's `.env` against the committed varlock schema
+   * (`.env.schema` + `.env.core.schema`), plus which varlock is reachable.
+   * The verdict comes from `varlock load --agent`, whose output is redacted:
+   * `errors` carries varlock's own diagnostic lines, item NAMES only.
+   */
+  env_schema: EnvSchemaDiagnostic
   pending_actions: PendingAction[]
+}
+
+export interface EnvSchemaDiagnostic {
+  /** Both schema files present at the repo root. */
+  schema_present: boolean
+  /**
+   * `standalone`: a `varlock` binary on PATH (what a harness-spawned process finds).
+   * `devDependency`: only `node_modules/varlock` (what the gates and `bun run claude` use).
+   * `missing`: neither.
+   */
+  binary: 'standalone' | 'devDependency' | 'missing'
+  binary_version: string | null
+  /** `skipped` when the schema or the devDependency is absent. */
+  validation: 'ok' | 'invalid' | 'skipped'
+  /** Resolved item count on `ok`; names only ever reach this report. */
+  items: number
+  /** varlock's redacted diagnostic lines on `invalid`. */
+  errors: string[]
 }
 
 interface StackDiagnosticReport {
@@ -738,7 +764,7 @@ async function runDoctor(): Promise<DoctorReport> {
     opencode_jsonc_exists: existsSync(OPENCODE_PATH),
     codex_config_exists: existsSync(CODEX_CONFIG_PATH),
     agent_compatibility: diagnoseAgentCompatibility(REPO_ROOT),
-    deps_installed: existsSync(NODE_MODULES_DOTENV),
+    deps_installed: existsSync(NODE_MODULES_VARLOCK),
     worktree_of: ((): string | null => {
       const roots = checkoutRoots(REPO_ROOT);
       return roots !== null && roots.linked ? roots.primaryRoot : null;
@@ -750,6 +776,7 @@ async function runDoctor(): Promise<DoctorReport> {
     project_schema: await projectSchemaDiagnostic(),
     stack: await stackDiagnostic(),
     tooling_isolation: toolingIsolationDiagnostic(),
+    env_schema: envSchemaDiagnostic(),
     pending_actions: [],
   };
 
@@ -848,12 +875,12 @@ async function runDoctor(): Promise<DoctorReport> {
     });
   }
 
-  // node_modules / dotenv-cli
+  // node_modules / varlock
   if (!report.deps_installed && worktreeFix === null) {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun install',
-      hint: 'Install project dependencies including dotenv-cli (needed for `bun claude`).',
+      hint: 'Install project dependencies including varlock (the loader behind `bun run claude | codex | opencode`).',
     });
   }
 
@@ -933,10 +960,103 @@ async function runDoctor(): Promise<DoctorReport> {
     });
   }
 
+  // The env schema verdict. Only an INVALID load is an action: the schema
+  // requires nothing (ADR-0010), so this fires on a malformed typed value.
+  if (report.env_schema.validation === 'invalid') {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bunx varlock load --agent',
+      hint: 'Your .env does not satisfy the committed env schema (.env.schema + .env.core.schema). '
+        + 'The command names the failing items with sensitive values redacted; fix them in .env and re-run doctor.',
+      where: report.env_schema.errors[0],
+    });
+  }
+
   if (report.pending_actions.length > 0) {
     report.status = 'needs-action';
   }
   return report;
+}
+
+// The SGR escape (`ESC [ ... m`) built from its code point: a literal control
+// character in a regex trips `no-control-regex`, and that rule is right that a
+// reader cannot see it.
+const ANSI_SGR = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
+
+/**
+ * Runs `bunx varlock load --agent` at the repo root. `--agent` is the mode
+ * built for exactly this consumer: JSON, sensitive values redacted. Stdout is
+ * parsed for the item COUNT and discarded; the redacted lines are kept as the
+ * diagnosis when the load fails. Skipped when the schema or the pinned
+ * devDependency is absent, so a repo synced to this doctor but not to this
+ * package.json is not told its env is broken.
+ */
+function envSchemaDiagnostic(): EnvSchemaDiagnostic {
+  const schemaPresent = existsSync(join(REPO_ROOT, PROJECT_SCHEMA_FILE)) && existsSync(join(REPO_ROOT, CORE_SCHEMA_FILE));
+  const devDep = varlockInstalled(REPO_ROOT);
+
+  let binary: EnvSchemaDiagnostic['binary'] = 'missing';
+  let binaryVersion: string | null = null;
+  // `bun run setup:doctor` prepends node_modules/.bin to PATH, so a bare probe
+  // would find the devDependency's shim and call it "standalone". Strip every
+  // such segment: the question is what a process spawned outside the repo's
+  // scripts finds.
+  const pathSep = process.platform === 'win32' ? ';' : ':';
+  const binMarker = join('node_modules', '.bin');
+  const outsidePath = (process.env.PATH ?? '').split(pathSep).filter(seg => !seg.includes(binMarker)).join(pathSep);
+  const candidates = process.platform === 'win32' ? ['varlock', 'varlock.cmd'] : ['varlock'];
+  for (const name of candidates) {
+    const probe = spawnSync(name, ['--version'], { encoding: 'utf8', env: { ...process.env, PATH: outsidePath }, stdio: ['ignore', 'pipe', 'pipe'] });
+    if (!probe.error && probe.status === 0) {
+      binary = 'standalone';
+      binaryVersion = (probe.stdout ?? '').trim() || null;
+      break;
+    }
+  }
+  if (binary === 'missing' && devDep) {
+    binary = 'devDependency';
+    try {
+      const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'node_modules', 'varlock', 'package.json'), 'utf8')) as { version?: string };
+      binaryVersion = pkg.version ?? null;
+    }
+    catch {
+      binaryVersion = null;
+    }
+  }
+
+  const base: EnvSchemaDiagnostic = { schema_present: schemaPresent, binary, binary_version: binaryVersion, validation: 'skipped', items: 0, errors: [] };
+  if (!schemaPresent || !devDep) { return base; }
+
+  // A deprecated key still in `.env` is not declared, and an undeclared EMPTY
+  // key fails varlock: neutralize them so this verdict is about the declared
+  // items. The "Legacy JIRA_* credential keys" section asks for their removal.
+  const deprecatedInFile = existsSync(ENV_PATH) ? deprecatedEnvKeysIn(readFileSync(ENV_PATH, 'utf8')) : [];
+  const run = spawnSync('bunx', ['varlock', 'load', '--agent'], {
+    cwd: REPO_ROOT,
+    env: neutralizeDeprecatedKeys({ ...process.env }, deprecatedInFile),
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (run.error) {
+    return { ...base, validation: 'invalid', errors: [`could not run bunx varlock: ${run.error.message}`] };
+  }
+  if (run.status !== 0) {
+    // Only stderr: varlock's diagnostics name the failing items, while stdout
+    // carries the (redacted) values blob this report never needs.
+    const lines = (run.stderr ?? '')
+      .split(/\r?\n/)
+      .map(l => l.replace(ANSI_SGR, '').trim())
+      .filter(l => l !== '' && !l.startsWith('💥') && !l.startsWith('🚨'));
+    return { ...base, validation: 'invalid', errors: lines.slice(0, 20) };
+  }
+  let items = 0;
+  try {
+    items = Object.keys(JSON.parse(run.stdout) as Record<string, unknown>).filter(name => !deprecatedInFile.includes(name)).length;
+  }
+  catch {
+    // A non-JSON success is still a success; the count is informational.
+  }
+  return { ...base, validation: 'ok', items };
 }
 
 // ----------------------------------------------------------------------------
@@ -1023,6 +1143,32 @@ function printHuman(report: DoctorReport): void {
   }
   if (!report.harness_env.ok) {
     process.stdout.write('  Fix: bun run harness:env  (values are never printed by the generator or by this report)\n');
+  }
+  process.stdout.write('\n');
+
+  // Env schema (varlock). Its own section because it carries three facts: is
+  // the schema there, which varlock can run, does the developer's .env satisfy
+  // it. Nothing here prints a value; `--agent` redacts and this report keeps
+  // only names.
+  tui.section('Env schema (varlock: .env.schema + .env.core.schema)');
+  const es = report.env_schema;
+  const binaryNote = es.binary === 'standalone'
+    ? `standalone binary${es.binary_version ? ` ${es.binary_version}` : ''}`
+    : es.binary === 'devDependency'
+      ? `devDependency only${es.binary_version ? ` (${es.binary_version})` : ''}; enough for bun run claude / codex / opencode and the gates`
+      : 'not found; run bun install (devDependency)';
+  process.stdout.write(`  ${tui.statusIcon(es.schema_present ? 'ok' : 'fail')} schema files ${es.schema_present ? 'present' : 'missing (bun run vars:schema)'}\n`);
+  process.stdout.write(`  ${tui.statusIcon(es.binary === 'missing' ? 'fail' : 'ok')} varlock: ${binaryNote}\n`);
+  if (es.validation === 'ok') {
+    process.stdout.write(`  ${tui.statusIcon('ok')} .env satisfies the schema (${es.items} items resolved, values redacted)\n`);
+  }
+  else if (es.validation === 'invalid') {
+    process.stdout.write(`  ${tui.statusIcon('fail')} .env does not satisfy the schema:\n`);
+    for (const line of es.errors) { process.stdout.write(`    ${line}\n`); }
+    process.stdout.write('  Fix: correct the named items in .env, then: bunx varlock load --agent\n');
+  }
+  else {
+    process.stdout.write(`  ${tui.statusIcon('warn')} validation skipped (schema or devDependency absent)\n`);
   }
   process.stdout.write('\n');
 

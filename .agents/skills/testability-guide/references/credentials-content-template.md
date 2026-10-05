@@ -188,7 +188,7 @@ API_TOKEN=
 The MCP config files carry `${VAR}` / `{env:VAR}` placeholders — no secrets. Real values live in your `.env` (gitignored). The agent reads vars when it spawns each MCP, so the `.env` must be injected into the process that launches the agent:
 
 ```bash
-bun run claude      # agent with the .env injected (= dotenv -e .env -- claude)
+bun run claude      # agent with the .env injected (through varlock run)
 bun run opencode
 ```
 
@@ -196,7 +196,7 @@ Verify the vars are actually present BEFORE launching. The wrapper injects the `
 
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # set in the file? (names only)
-dotenv -e .env -- env | grep '^<PREFIX>' | cut -d= -f1   # injected? (what the MCP will see, names only)
+bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # injected? (what the MCP will see, names only)
 set -a; source .env; set +a              # load into THIS shell, then run claude/opencode bare
 ```
 

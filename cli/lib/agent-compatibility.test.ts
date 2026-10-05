@@ -872,10 +872,10 @@ describe('Codex .env loader', () => {
     expect(unwrapCodexEnvLoader('bunx', [...CODEX_ENV_LOADER_ARGS]).envLoader).toBe(false);
   });
 
-  test('pins the loader to the dotenv-cli major the repo installs', () => {
+  test('pins the loader to the exact varlock version the repo installs', () => {
     const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { devDependencies: Record<string, string> };
-    const pinned = CODEX_ENV_LOADER_ARGS[1].replace('dotenv-cli@', '');
-    expect(pkg.devDependencies['dotenv-cli'].replace(/^[\^~]/, '').split('.')[0]).toBe(pinned.split('.')[0]);
+    expect(String(CODEX_ENV_LOADER_ARGS[1])).toBe(`varlock@${pkg.devDependencies.varlock}`);
+    expect(pkg.devDependencies.varlock).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
 

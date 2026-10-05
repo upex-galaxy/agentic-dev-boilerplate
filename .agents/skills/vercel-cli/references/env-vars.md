@@ -78,11 +78,11 @@ LOCAL_KEYS=$(grep -oE '^[A-Z_][A-Z0-9_]+' .env.example | grep -vE '^(ATLASSIAN_|
 REMOTE_KEYS=$(vercel env ls preview --format json | jq -r '.envs[].key' | sort -u)
 comm -23 <(echo "$LOCAL_KEYS") <(echo "$REMOTE_KEYS")    # documented, not in Vercel
 
-# Push each missing key (review the list FIRST — never blind-push). The dotenv
-# loader reads .env inside a subprocess; `${!1}` expands the value by NAME and
+# Push each missing key (review the list FIRST — never blind-push). varlock
+# reads .env inside a subprocess; `${!1}` expands the value by NAME and
 # pipes it to Vercel, so it never reaches the terminal or the transcript.
 for KEY in $(comm -23 <(echo "$LOCAL_KEYS") <(echo "$REMOTE_KEYS")); do
-  bunx dotenv -e .env -- bash -c 'v="${!1}"; [ -n "$v" ] || { echo "skip $1 (empty in .env)"; exit 0; }; printf "%s" "$v" | vercel env add "$1" preview' _ "$KEY"
+  bunx varlock run -- bash -c 'v="${!1}"; [ -n "$v" ] || { echo "skip $1 (empty in .env)"; exit 0; }; printf "%s" "$v" | vercel env add "$1" preview' _ "$KEY"
 done
 ```
 

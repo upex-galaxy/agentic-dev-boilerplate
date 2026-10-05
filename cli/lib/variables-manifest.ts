@@ -72,6 +72,26 @@ export type VarValueSource = 'env-file' | 'atlassian-instance';
  */
 export type VarRequired = boolean | { ifEnv: string };
 
+/**
+ * What the generated varlock schema (`.env.core.schema`, see
+ * `cli/lib/env-schema.ts`) says about a variable beyond its name and its
+ * sensitivity (`secret` becomes `@sensitive`). Documentation and typing only:
+ * the schema requires nothing (ADR-0010), so there is no `required` here.
+ *
+ *   - `type`     an env-spec type expression, e.g. `email`, `url`. Omitted = string.
+ *   - `example`  placeholder printed as `@example` (documentation only).
+ *   - `docs`     URL printed as `@docs(...)`.
+ *
+ * No schema DEFAULT on purpose: `varlock run` injects a default into every
+ * process it launches, the agent session included, and a value nobody typed is
+ * the kind of copy this design removes.
+ */
+export interface VarSchemaHints {
+  type?: string
+  example?: string
+  docs?: string
+}
+
 export interface VarSpec {
   /** UPPER_SNAKE_CASE env-var name, exactly as it appears in `.env.example`. */
   name: string
@@ -122,6 +142,8 @@ export interface VarSpec {
   pulledFromInfra?: true
   /** Human note (provenance / where to get the value / why it's tracked). */
   note: string
+  /** Schema-only hints for `.env.core.schema`. See `VarSchemaHints`. */
+  schema?: VarSchemaHints
 }
 
 export interface DeprecatedVar {
@@ -175,6 +197,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: true,
     note: 'Atlassian account email (acli + scripts/sync-jira-*.ts). Critical tool credential — prompted at install.',
+    schema: { type: 'email', docs: 'https://id.atlassian.com/manage-profile/security/api-tokens' },
   },
   {
     name: 'ATLASSIAN_API_TOKEN',
@@ -183,6 +206,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: true,
     note: 'Atlassian API token (acli + scripts/sync-jira-*.ts). Critical tool credential — prompted at install.',
+    schema: { docs: 'https://id.atlassian.com/manage-profile/security/api-tokens' },
   },
   {
     name: 'RESEND_API_KEY',
@@ -192,6 +216,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: true,
     note: 'Resend API key (transactional email + resend CLI auth). Critical tool credential — prompted at install; app runtime → also reaches Vercel.',
+    schema: { docs: 'https://resend.com/api-keys' },
   },
   // --- Supabase project backend (auto-provisioned; pulled from Vercel) ---
   {
@@ -204,6 +229,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     pulledFromInfra: true,
     obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
     note: 'Supabase project URL (browser-safe). App runtime. Vercel+Supabase integration generates only this var.',
+    schema: { type: 'url', example: 'https://<project-ref>.supabase.co' },
   },
   {
     name: 'SUPABASE_PUBLISHABLE_KEY',
@@ -270,6 +296,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     pulledFromInfra: true,
     obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
     note: 'Postgres user (default: postgres).',
+    schema: { example: 'postgres' },
   },
   {
     name: 'POSTGRES_PASSWORD',
@@ -292,6 +319,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     pulledFromInfra: true,
     obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
     note: 'Postgres database name (default: postgres).',
+    schema: { example: 'postgres' },
   },
   {
     name: 'POSTGRES_URL',
@@ -337,6 +365,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     pulledFromInfra: true,
     obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`. Defaults to http://localhost:3000 locally.',
     note: 'Base URL for auth redirects, OAuth callbacks, email links. Referenced in code; previously untracked by installer AND doctor.',
+    schema: { type: 'url', example: 'http://localhost:3000' },
   },
   // --- Automation identity (live-UI validation + authenticated HTTP probes) ---
   // The account browser/HTTP automation logs in as while validating a story
@@ -359,6 +388,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     critical: false,
     obtainHint: 'Provision a DEDICATED non-production account (no real data, minimum privileges), then declare its var name in `.agents/project.yaml` → testing.automation_identity.email_var. Never a real user, admin, or production account.',
     note: 'Email of the automation identity used by live-UI validation / authenticated HTTP probes. Local only.',
+    schema: { type: 'email', example: 'qa.automation@example.test' },
   },
   {
     name: 'QA_E2E_USER_PASSWORD',
@@ -378,6 +408,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     critical: false,
     obtainHint: 'Your n8n instance → Settings → API (e.g. https://n8n.yourapp.com/api/v1). Only needed if you use the n8n MCP server.',
     note: 'n8n instance API URL for the n8n MCP server (project-bound). Local only.',
+    schema: { type: 'url', example: 'https://n8n.example.test/api/v1' },
   },
   {
     name: 'N8N_API_KEY',

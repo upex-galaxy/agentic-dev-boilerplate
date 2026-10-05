@@ -14,8 +14,8 @@
     "agents:setup": "bun scripts/agents-setup.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
     "bootstrap:guard": "bun scripts/bootstrap-guard.ts",
-    "claude": "dotenv -o -e .env -- claude",
-    "codex": "dotenv -o -e .env -- codex",
+    "claude": "bun --no-env-file scripts/launch.ts claude",
+    "codex": "bun --no-env-file scripts/launch.ts codex",
     "context:hydrate": "bun scripts/sync-jira-issues.ts pull --include-comments",
     "context:map": "bun scripts/context-map.ts",
     "docs:check": "bun scripts/lint-docs.ts",
@@ -35,10 +35,10 @@
     "lint:check": "eslint .",
     "lint:fix": "eslint --fix .",
     "onboarding": "bun scripts/onboarding.ts",
-    "opencode": "dotenv -o -e .env -- opencode",
+    "opencode": "bun --no-env-file scripts/launch.ts opencode",
     "prepare": "husky && bun scripts/harness-env.ts --placeholders",
-    "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check && bun run agents:schema:check",
-    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check",
+    "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run vars:schema:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check && bun run agents:schema:check",
+    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run vars:schema && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check",
     "setup:doctor": "bun cli/doctor.ts",
     "setup": "bun cli/doctor.ts --preflight && bun cli/install.ts",
     "skills:check": "bun scripts/lint-skills.ts",
@@ -53,7 +53,9 @@
     "worktree:provision": "bun scripts/provision-worktree.ts",
     "vars:check": "bun scripts/lint-vars.ts",
     "git:policy": "bun scripts/git-policy.ts",
-    "vars:env:check": "bun scripts/check-vars.ts"
+    "vars:env:check": "bun scripts/check-vars.ts",
+    "vars:schema": "bun scripts/env-schema.ts",
+    "vars:schema:check": "bun scripts/env-schema.ts --check"
   },
   "dependencies": {
     "@clack/prompts": "^1.4.0",
@@ -68,12 +70,12 @@
     "@antfu/eslint-config": "^4.16.0",
     "@types/bun": "^1.3.5",
     "@types/node": "^25.0.3",
-    "dotenv-cli": "^8.0.0",
     "eslint": "^9.28.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "varlock": "1.20.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

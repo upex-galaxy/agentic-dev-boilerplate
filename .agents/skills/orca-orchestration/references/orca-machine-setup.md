@@ -88,7 +88,7 @@ machine can tell whether you did it, which is the whole problem with a non-versi
 ### 3.2 · Credentials for a supervised worker: the harness surfaces, and direnv only for shell CLIs
 
 A launch line can export variables; the native launch cannot, because it has no argv, so the
-`bun run <harness>` wrappers (`dotenv -o -e .env`) never run for a supervised worker. That does not
+`bun run <harness>` wrappers (`scripts/launch.ts` -> `varlock run`) never run for a supervised worker. That does not
 leave it without MCP credentials: `bun run harness:env` derives from `.env` a per-harness surface the
 harness reads at startup with NO shell involved (`.agents/instructions/agent-harnesses.md` §5.5, `cli/lib/harness-env.ts`).
 

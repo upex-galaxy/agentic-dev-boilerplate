@@ -15,16 +15,19 @@
 inherit = "core"
 
 # EVERY stdio server below starts through a .env loader: `bunx -p
-# dotenv-cli@8.0.0 dotenv -o -e .env -- <the real command>`. `env_vars` forwards
-# variables BY NAME from Codex's own process environment, and Codex Desktop
-# opened from Finder or the Dock has none, so without the loader those servers
-# started empty. The loader reads .env from the project root whatever launched
-# Codex; `-o` lets .env win over a stale inherited value, like `bun run codex`.
+# varlock@1.20.0 varlock run --no-redact-stdout -- <the real command>`.
+# `env_vars` forwards variables BY NAME from Codex's own process environment,
+# and Codex Desktop opened from Finder or the Dock has none, so without the
+# loader those servers started empty. varlock reads .env / .env.local from the
+# project root, validated against .env.schema, whatever launched Codex. An
+# inherited variable wins over the files (varlock's precedence), which is why
+# `bun run codex` refuses to launch on a differing one. `--no-redact-stdout`
+# keeps varlock from rewriting the server's JSON-RPC stream on the stdio pipe.
 # `env_vars` stays: it is what `bun run agents:compat:check` compares across
 # the three hosts.
 #
-# Needs `bun install` once (the dotenv-cli devDependency) and a .env in the
-# checkout.
+# Needs `bun install` once (the varlock devDependency, same exact pin) and a
+# .env in the checkout.
 #
 # `startup_timeout_sec = 30` on each: Codex waits 10 s by default, and a cold
 # `bunx` / `npx` fetch plus the loader hop can pass that before the first
@@ -36,11 +39,10 @@ enabled = true
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "bunx",
   "-y",
@@ -58,11 +60,10 @@ enabled = true
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "bunx",
   "-y",
@@ -81,11 +82,10 @@ enabled = true
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",

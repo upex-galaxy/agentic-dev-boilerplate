@@ -1319,7 +1319,7 @@ async function offerDirenvAutoload(): Promise<void> {
 
   if (!info.installed) {
     log.info('direnv not installed (optional).');
-    log.dim('  Launch agents with: bun claude  /  bun opencode  /  bun codex  (dotenv-cli loads .env automatically).');
+    log.dim('  Launch agents with: bun run claude  /  bun run opencode  /  bun run codex  (varlock loads .env automatically).');
     log.dim(`  Or install direnv for shell autoload: ${installHintForPlatform()}`);
     return;
   }
@@ -1865,7 +1865,7 @@ async function jiraAuthLoop(): Promise<'authenticated' | 'skipped'> {
           '     ATLASSIAN_EMAIL=your-email@example.com',
           '     ATLASSIAN_API_TOKEN=...',
           '     (Get a token at https://id.atlassian.com/manage-profile/security/api-tokens)',
-          '3. Save. dotenv auto-loads on the next probe — no shell reload needed.',
+          '3. Save. The next probe reads .env again — no shell reload needed.',
         ].join('\n'),
         'Fix Atlassian credentials',
       );
@@ -2455,8 +2455,8 @@ function printClosingSummary(state: InstallState): void {
   stepNum++;
 
   process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Open the agent${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run claude${COLORS.reset}      ${COLORS.dim}(dotenv-cli loads .env — works without direnv)${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run opencode${COLORS.reset}    ${COLORS.dim}(dotenv-cli loads .env)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun run claude${COLORS.reset}      ${COLORS.dim}(varlock loads .env, validated against .env.schema — works without direnv)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun run opencode${COLORS.reset}    ${COLORS.dim}(varlock loads .env)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.cyan}bun run codex${COLORS.reset}       ${COLORS.dim}(CLI; Codex Desktop opens this same repository)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.dim}All three read AGENTS.md + .agents/skills/. Codex Desktop needs repository trust before hooks run.${COLORS.reset}\n\n`);
   stepNum++;

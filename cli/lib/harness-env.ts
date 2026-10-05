@@ -180,8 +180,9 @@ export function claudeSettingsRoot(root = REPO_ROOT): string {
  * `parseEnvFile` (reused from the installer) does not do this, and a project's
  * `.env` may carry lines such as `N8N_API_URL=   # https://n8n.example`. Left
  * alone, the generator would emit that comment text as the credential. Both
- * `dotenv-cli` (the `bun run claude` wrapper) and Bun's own autoload treat
- * whitespace + `#` as the start of a comment on an unquoted value, so stripping
+ * varlock (the `bun run claude` loader; measured on 1.20.0) and Bun's own
+ * autoload treat whitespace + `#` as the start of a comment on an unquoted
+ * value, so stripping
  * here makes the generated surface agree with the launcher instead of disagreeing
  * with it. A quoted value is left entirely alone, and a `#` with no whitespace
  * before it (`pass#word`) is part of the value.

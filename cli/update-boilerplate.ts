@@ -150,6 +150,13 @@ const ORCA_CONFIG_FILES = ['orca.yaml'];
 // `playwright-cli` session defaults: in memory, headless, no shared profile, so a
 // session name is the isolation (sprint-development/references/live-ui-validation.md).
 const PLAYWRIGHT_CLI_CONFIG_FILES = ['cli.config.json'];
+// The varlock env schema, in two halves: `.env.core.schema` is GENERATED from
+// cli/lib/variables-manifest.ts by `bun run vars:schema` and plainly synced;
+// `.env.schema` imports it, carries the root decorators and the project's own
+// variables, and is delivered ONCE (PROTECTED_WATCHLIST below folds it into
+// bootstrapOnlyPaths). Neither file holds a value. `env-template` stays
+// alongside: `.env.example` is still the file a human copies into `.env`.
+const ENV_SCHEMA_FILES = ['.env.schema', '.env.core.schema'];
 
 /** Canonical cross-harness skill source. Claude consumes it through an alias. */
 const SKILLS_CANONICAL_DIR = '.agents/skills';
@@ -293,6 +300,7 @@ export const COMPONENTS: Component[] = [
   // env-var drift detection in the afterApply hook — we can only diff a target's
   // .env against an .env.example we actually delivered.
   { name: 'env-template', type: 'file-list', paths: ['.'], files: ['.env.example'] },
+  { name: 'env-schema', type: 'file-list', paths: ['.'], files: ENV_SCHEMA_FILES },
   // Delivered once when missing, then project-owned: a project appends its own
   // gitignored inputs (and its own hook lines), and a later sync must not drop
   // them. Without `.worktreeinclude` a Codex-managed worktree starts with no
@@ -889,6 +897,10 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   { path: 'opencode.jsonc', reason: 'OpenCode MCP registry (paired with .mcp.json)' },
   { path: '.codex/config.toml', reason: 'Codex MCP registry (paired with .mcp.json / opencode.jsonc; `agents:compat:check` enforces parity across the three)' },
   { path: '.claude/settings.json', reason: 'project permissions and hook wiring; never overwritten' },
+  // Same split as the husky gates: the boilerplate half (`.env.core.schema`) is
+  // generated and synced; this importer holds the project's own variables and
+  // root decorators, so it is delivered once and then only reported on.
+  { path: '.env.schema', reason: 'project-owned half of the varlock env schema (root decorators + the project\'s own variables). The boilerplate half is the synced, generated `.env.core.schema` it imports.' },
   // Synced component (`husky`) files that carry the project's own gates. Before
   // 8.2 every run force-applied upstream's copy over a committed merge and
   // re-raised the same row forever. Same delivery as `.claude/settings.json`:

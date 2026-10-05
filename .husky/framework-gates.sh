@@ -91,6 +91,21 @@ framework_gates_pre_commit() {
     }
   fi
 
+  # env-schema freshness gate — only runs when staged files affect it, and only
+  # where the script exists (same two guards as the project-schema gate above).
+  # `.env.core.schema` is GENERATED from cli/lib/variables-manifest.ts; the check
+  # also loads the committed schema pair through the pinned varlock, so a
+  # varlock bump that breaks the import fails here, not in someone's session.
+  if echo "$_fg_staged" | grep -qE '^(cli/lib/variables-manifest\.ts$|cli/lib/env-schema\.ts$|scripts/env-schema\.ts$|\.env\.core\.schema$|\.env\.schema$|package\.json$)' \
+    && grep -q '"vars:schema:check"' package.json 2>/dev/null; then
+    bun run vars:schema:check || {
+      echo ""
+      echo "❌ .env.core.schema is stale or the schema pair does not load. Fix:"
+      echo "   bun run vars:schema && git add .env.core.schema"
+      exit 1
+    }
+  fi
+
   # cross-harness compatibility gate — only runs when staged files affect it.
   # Covers the generated Claude skills alias, a harness command that shadows a
   # skill, the three hook adapters, MCP parity across the three host configs and the eslint block
@@ -113,6 +128,7 @@ framework_gates_pre_commit() {
 #
 # pre-commit covers (every commit): types:check, vars:check, skills:check
 #   + conditional skills:registry:check (when staged files affect the registry)
+#   + conditional vars:schema:check (when staged files affect the env schema)
 #   + conditional agents:compat:check (when staged files affect the contract)
 #   + conditional agents:schema:check (when staged files affect the project schema).
 # pre-push adds the full-repo checks pre-commit skips for speed:
@@ -130,6 +146,15 @@ framework_gates_pre_commit() {
 #                                CLAUDE.md shim, MCP parity across `.mcp.json` /
 #                                `opencode.jsonc` / `.codex/config.toml`, and that
 #                                eslint.config.js wires every block the synced base exports.
+#   - varlock load               the developer's own .env against the committed env schema
+#                                (.env.schema + .env.core.schema). WARN-ONLY: it describes the
+#                                developer's machine, like vars:env:check's drift rule, and the
+#                                schema requires nothing, so only a malformed typed value can
+#                                fail it. Runs only when the schema and the pinned
+#                                devDependency are both present, so a project synced to this
+#                                gates file but not to this package.json is untouched. Output
+#                                is redacted by varlock (`--agent`); we still send it to
+#                                /dev/null and name the command to rerun.
 #
 # NOT here, on purpose: `bun run git:policy verify`. This repo's doctrine keeps the
 # declared-vs-host reconciliation agent-driven (git-flow-master Step 1b: once per
@@ -150,7 +175,22 @@ framework_gates_pre_push() {
     && _fg_scoped lint:check tooling:lint:check \
     && VARS_ENV_CHECK_DRIFT=warn bun run vars:env:check \
     && bun run skills:registry:check \
-    && bun run agents:compat:check
+    && bun run agents:compat:check \
+    && framework_gate_varlock_warn
+}
+
+# The warn-only env-schema validation described above. A function so the
+# `&&` chain in framework_gates_pre_push stays one expression: this never
+# returns non-zero, because a red here is advice about this machine's .env.
+framework_gate_varlock_warn() {
+  if [ -f .env.schema ] && [ -f node_modules/varlock/package.json ]; then
+    if ! bunx varlock load --agent >/dev/null 2>&1; then
+      echo ""
+      echo "⚠️  varlock: your .env does not satisfy .env.schema (warn-only)."
+      echo "   See which items fail (values redacted):  bunx varlock load --agent"
+    fi
+  fi
+  return 0
 }
 
 _fg_format_check() {

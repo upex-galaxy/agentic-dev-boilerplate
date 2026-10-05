@@ -16,9 +16,9 @@ The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/
 
 ### Getting `.env` into the MCP servers
 
-- **Terminal launch:** `bun run claude` / `bun run opencode` / `bun run codex` (`dotenv -o -e .env` wrappers in `package.json`; `-o` makes `.env` win over a stale inherited shell variable).
+- **Terminal launch:** `bun run claude` / `bun run opencode` / `bun run codex` (`scripts/launch.ts` in `package.json`: it refuses to launch while an inherited shell variable differs from `.env`, because varlock lets the inherited value win, then starts the binary through `varlock run`).
 - **Launch with no command line** (desktop app, a natively launched supervised worker): run `bun run harness:env` after every `.env` change. It writes the `env` block of `.claude/settings.local.json` (on macOS/Linux Claude Code reads the MAIN checkout's copy, so from a worktree the command writes there) and the `.auth/opencode/<VAR>` value files. `bun run harness:env:check` reports drift by variable name, never by value.
-- **Codex** needs neither: each stdio server in `.codex/config.toml` starts through `bunx -p dotenv-cli@<pinned> dotenv -o -e .env -- <command>` (the pin lives in `.codex/config.toml`) with `startup_timeout_sec = 30`, so Codex Desktop opened from the Dock gets the same credentials as the CLI.
+- **Codex** needs neither: each stdio server in `.codex/config.toml` starts through `bunx -p varlock@<pinned> varlock run --no-redact-stdout -- <command>` (the pin lives in `.codex/config.toml` and equals the devDependency) with `startup_timeout_sec = 30`, so Codex Desktop opened from the Dock gets the same credentials as the CLI.
 - **OpenCode** caches the resolved config per directory: after `harness:env` rewrites a value file, run `opencode service restart` (or quit every OpenCode session).
 - A worktree carries its own `.env` and `.auth/opencode/`; `bun run worktree:provision` copies the one and regenerates the other.
 
