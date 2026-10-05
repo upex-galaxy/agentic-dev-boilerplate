@@ -37,8 +37,8 @@
     "onboarding": "bun scripts/onboarding.ts",
     "opencode": "dotenv -o -e .env -- opencode",
     "prepare": "husky && bun scripts/harness-env.ts --placeholders",
-    "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check && bun run agents:schema:check",
-    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check",
+    "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run vars:schema:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check && bun run agents:schema:check",
+    "repo:fix": "bun run format:fix && bun run lint:fix && bun run types:check && bun run vars:check && bun run vars:env:check && bun run vars:schema && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run instructions:check && bun run agents:compat:check",
     "setup:doctor": "bun cli/doctor.ts",
     "setup": "bun cli/doctor.ts --preflight && bun cli/install.ts",
     "skills:check": "bun scripts/lint-skills.ts",
@@ -53,7 +53,9 @@
     "worktree:provision": "bun scripts/provision-worktree.ts",
     "vars:check": "bun scripts/lint-vars.ts",
     "git:policy": "bun scripts/git-policy.ts",
-    "vars:env:check": "bun scripts/check-vars.ts"
+    "vars:env:check": "bun scripts/check-vars.ts",
+    "vars:schema": "bun scripts/env-schema.ts",
+    "vars:schema:check": "bun scripts/env-schema.ts --check"
   },
   "dependencies": {
     "@clack/prompts": "^1.4.0",
@@ -73,7 +75,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "varlock": "1.20.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
