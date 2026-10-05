@@ -106,4 +106,4 @@ It is a plan, an edit and a verifier cut to the size of a text change.
 
 ## 7. Measuring the routes
 
-The router eval proves the hook names the right section; `bun run instructions:audit` measures whether the agent then read it, from this machine's Claude Code transcripts (OpenCode and Codex transcripts are not parsed yet). It prints file names and counts only, never transcript text. A team that wants a trend can run it monthly (an Orca automation or a calendar reminder); the repo ships no routine for it.
+The router eval proves the hook names the right section and keeps it on a binding `ROUTE:` line under the cap (binding recall); `bun run instructions:audit` measures whether the agent then read it, and how many reads followed a `ROUTE-PENDING:` reminder, from this machine's Claude Code transcripts (OpenCode and Codex transcripts are not parsed yet). It prints file names and counts only, never transcript text. A team that wants a trend can run it monthly (an Orca automation or a calendar reminder); the repo ships no routine for it.
