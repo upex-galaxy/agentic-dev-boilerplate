@@ -185,41 +185,37 @@ curl -X POST '<LOGIN_ENDPOINT>' \
 curl '<API_BASE_URL>/<endpoint>' -H 'Authorization: Bearer <ACCESS_TOKEN>'
 ```
 
-**RECOMMENDED API-auth bootstrap — the `api-login`-style mini-CLI.** When the project ships (or can ship) a small CLI like `bun run api:login` — or a headless signup/signin endpoint that mints a Personal Access Token — promote it as the FIRST-CLASS path for API auth, above hand-running curl. It logs in and writes the token into `.env` (e.g. `API_TOKEN`), so the OpenAPI MCP can authenticate. Key properties to document (all adaptive — the script name + shape are per-project):
+**RECOMMENDED API-auth bootstrap — the `api-login`-style mini-CLI.** When the project ships (or can ship) a small CLI like `bun run api:login` — or a headless signup/signin endpoint that mints a Personal Access Token — promote it as the FIRST-CLASS path for API auth, above hand-running curl. It logs the tester in and stores the token where the tester's testing project keeps it (the QA boilerplate's `bun run api:login` writes `.auth/tokens.env`, gitignored, never `.env`), and curl reads it from there. Key properties to document (all adaptive — the script name + shape are per-project):
 
-- **Per-tester token**: each tester mints their OWN token into their OWN `.env` — no shared secret on the page, no token in git. The credentials artifact holds the login it bootstraps from; the minted token never leaves the tester's machine.
-- **Restart after write**: env vars are cached at MCP spawn time — after the CLI writes the token, **exit and re-enter the agent** so the MCP picks it up (same rule as any `.env` change).
+- **Per-tester token**: each tester mints their OWN token on their OWN machine — no shared secret on the page, no token in git. The credentials artifact holds the login it bootstraps from; the minted token never leaves the tester's machine.
+- **The token is a secret, used by name**: it never goes into an MCP config, the page, the credentials artifact or a chat, and the AI never types or writes its value. A command that needs it reads it by name through the loader for that one process (`bunx varlock run -- sh -c '<curl using "$VAR">'`, or the testing project's own token file).
+- **No restart for API auth**: the OpenAPI MCP carries no token (Way 1 below), so minting or refreshing one never needs an agent restart. Only `API_BASE_URL` / `OPENAPI_SPEC_PATH` are read at MCP spawn time.
 - **Adaptive shape**: if the project has no such CLI but DOES have a headless token issuer (a signup/signin or `POST …/tokens` endpoint), document that as the bootstrap and recommend wrapping it in a one-command script. If the project has NO programmatic token path at all, fall back to the detected manual login + raise the API testability flag (`testability-assessment.md`) — never fabricate a token endpoint.
 
 Render the auth requests as Postman-style RequestCards (default — `page-structure.md` §5; plain-curl `AuthMethods` only as the Q8 fallback) for every method detected (Supabase token / Bearer / cookie `sb-<ref>-auth-token` / `X-API-Key` / custom JWT). Only render methods the project actually exposes.
 
-### Way 1 — OpenAPI MCP (agentic, invoke endpoints)
+### Way 1 — OpenAPI MCP (agentic, schema-read-only)
 
 > The `--tools dynamic` flag is **mandatory** (without it the server errors 400) — this is documented behavior of `@ivotoby/openapi-mcp-server`, not an assumption.
+
+The MCP is used ONLY to discover endpoints and read their schemas. Authenticated requests run with curl and the tester's own token (the auth flow above), so the server gets no `API_TOKEN` and no `API_HEADERS`. Its `.env` loader hands it exactly two non-secret variables:
+
+- `API_BASE_URL` — the backend under test (curl's base, and the MCP's request base).
+- `OPENAPI_SPEC_PATH` — the FULL spec URL, origin + DETECTED route (e.g. `http://localhost:3000/api/openapi`), OR a repo-root-relative synced file (e.g. `./api/openapi.json`). NEVER the route alone: the server reads a value that is not a URL as a file path and exits at start (ENOENT on `/api/openapi`).
 
 ```jsonc
 // Claude Code → .mcp.json
 "openapi": {
   "command": "bunx",
-  "args": ["-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"],
-  "env": {
-    "API_BASE_URL": "${API_BASE_URL}",
-    "OPENAPI_SPEC_PATH": "${OPENAPI_SPEC_PATH}",
-    "API_HEADERS": "Authorization:Bearer ${API_TOKEN}"
-  }
+  "args": ["-p", "varlock@1.20.0", "varlock", "run", "--no-redact-stdout", "--inject", "vars", "--filter", "API_BASE_URL,OPENAPI_SPEC_PATH", "--", "bunx", "-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
 }
 ```
 
 ```jsonc
-// OpenCode → opencode.jsonc  (env key is "environment", {env:VAR} syntax)
+// OpenCode → opencode.jsonc
 "openapi": {
   "type": "local",
-  "command": ["bunx", "-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"],
-  "environment": {
-    "API_BASE_URL": "{env:API_BASE_URL}",
-    "OPENAPI_SPEC_PATH": "{env:OPENAPI_SPEC_PATH}",
-    "API_HEADERS": "Authorization:Bearer {env:API_TOKEN}"
-  },
+  "command": ["bunx", "-p", "varlock@1.20.0", "varlock", "run", "--no-redact-stdout", "--inject", "vars", "--filter", "API_BASE_URL,OPENAPI_SPEC_PATH", "--", "bunx", "-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"],
   "enabled": true
 }
 ```
@@ -228,27 +224,18 @@ Render the auth requests as Postman-style RequestCards (default — `page-struct
 # Codex → config.toml
 [mcp_servers.openapi]
 command = "bunx"
-args = ["-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
-[mcp_servers.openapi.env]
-API_BASE_URL = "${API_BASE_URL}"
-OPENAPI_SPEC_PATH = "${OPENAPI_SPEC_PATH}"
-API_HEADERS = "Authorization:Bearer ${API_TOKEN}"
+args = ["-p", "varlock@1.20.0", "varlock", "run", "--no-redact-stdout", "--inject", "vars", "--filter", "API_BASE_URL,OPENAPI_SPEC_PATH", "--", "bunx", "-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
 ```
 
 ```json
-// Gemini → settings.json  ($VAR syntax)
+// Gemini → settings.json
 "openapi": {
   "command": "bunx",
-  "args": ["-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"],
-  "env": {
-    "API_BASE_URL": "$API_BASE_URL",
-    "OPENAPI_SPEC_PATH": "$OPENAPI_SPEC_PATH",
-    "API_HEADERS": "Authorization:Bearer $API_TOKEN"
-  }
+  "args": ["-p", "varlock@1.20.0", "varlock", "run", "--no-redact-stdout", "--inject", "vars", "--filter", "API_BASE_URL,OPENAPI_SPEC_PATH", "--", "bunx", "-y", "@ivotoby/openapi-mcp-server", "--tools", "dynamic"]
 }
 ```
 
-Tools it exposes (per the canonical guide): `list-api-endpoints`, `get-api-endpoint-schema`, `invoke-api-endpoint`. Env slots: `API_BASE_URL`, `OPENAPI_SPEC_PATH`, `API_TOKEN`.
+Tools to render: `list-api-endpoints`, `get-api-endpoint-schema`. The server also ships `invoke-api-endpoint`; the page does not teach it, because execution is curl's job. Env slots: `API_BASE_URL`, `OPENAPI_SPEC_PATH`.
 
 ### Way 2 — Postman MCP (formal API test documentation)
 
@@ -310,7 +297,8 @@ playwright-cli close
 ## Substitution checklist (publish/render time)
 
 - [ ] Every `${VAR}` / `{env:VAR}` / `$VAR` matches the agent tab it's under.
-- [ ] `API_BASE_URL`, `OPENAPI_SPEC_PATH`, docs route, spec route = DETECTED values, not the examples above.
+- [ ] `API_BASE_URL`, `OPENAPI_SPEC_PATH`, docs route, spec route = DETECTED values, not the examples above. `OPENAPI_SPEC_PATH` is a full URL (origin + route) or a repo-root-relative file, never a bare route.
+- [ ] The OpenAPI MCP block filters `API_BASE_URL,OPENAPI_SPEC_PATH` only: no `API_TOKEN`, no `API_HEADERS`, no token anywhere in an MCP config.
 - [ ] DBHub `type` matches the detected engine; both `dbhub.toml` and the URI use the same engine.
 - [ ] Only agent tabs the project supports are rendered (don't show Gemini if the project has no Gemini story — but the 4-tab reference is fine as documentation).
 - [ ] UI driver = `playwright-cli` cookbook (Q7 default); a `@playwright/mcp` block appears ONLY when detection says the project wires the MCP.

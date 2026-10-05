@@ -59,7 +59,7 @@ A single multi-line comment at the very top of the generated page file. Format i
 | `language`           | Q5 / pre-flight i18n signal                     | All visible copy. Code identifiers untouched.                                                                    |
 | `publisher`          | Q1                                              | Credentials CTA href + button copy.                                                                              |
 | `credentials-source` | publish step (Phase 6)                          | Credentials CTA href.                                                                                            |
-| `openapi-spec`       | pre-flight detection                            | §5 OpenAPI MCP `OPENAPI_SPEC_PATH` + docs UI link. DETECTED route, never assume `.json`.                         |
+| `openapi-spec`       | pre-flight detection                            | §5 OpenAPI MCP `OPENAPI_SPEC_PATH` (full URL: origin + DETECTED route) + docs UI link. Never assume `.json`.                         |
 | `default-branch`     | pre-flight `git` detection                      | `/git-flow-master` base branch for the patch PR.                                                                 |
 | `build-sha-source`   | pre-flight detection (deployed build SHA source) | Hero build stamp (`qaConfig.build.shaEnvVars`). Comma-separated env var NAMES, or `none`. See "Build stamp is runtime-only" below. |
 | `generated`          | wall-clock at write time                        | Audit field. Does NOT trigger patch.                                                                             |
