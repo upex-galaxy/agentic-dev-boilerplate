@@ -5,8 +5,9 @@
  * worktree shares every TRACKED file with the primary checkout (same repo,
  * different branch) but starts with none of the gitignored inputs a session
  * needs: `.env`, the `.vercel/` link, the `.claude/skills` alias, gitignored
- * community skills, `node_modules/`, the `.husky/_` hook shims and the
- * OpenCode credential files under `.auth/opencode/` (regenerated, not copied).
+ * community skills, `node_modules/` and the `.husky/_` hook shims. MCP
+ * servers read the copied `.env` themselves through the `.env` loader, so no
+ * credential file is derived from it.
  *
  * Usage:
  *   bun run worktree:provision              # target = $PWD
@@ -278,36 +279,28 @@ for (const name of ignoredSkillDirs) {
 }
 
 // ============================================
-// OpenCode credential files: regenerated from the copied .env, never copied
+// Legacy OpenCode {file:} targets: empty placeholders only
 // ============================================
 
-// `opencode.jsonc` reads its credentials through `{file:.auth/opencode/<VAR>}`
-// references resolved against THIS worktree, and a MISSING target invalidates
-// the whole config. `.auth/` is not copied (it is disposable session material),
-// so the files are regenerated from the `.env` copied above, then any target a
-// `.env`-less worktree still lacks gets an empty placeholder. Only the
-// worktree's own surface: the Claude env block lives in the MAIN checkout and
-// stays `bun run harness:env`'s business there. Names only, never a value.
+// Every MCP server reads `.env` itself through the `.env` loader (ADR-0012), so
+// nothing is derived from the copied `.env` any more and `.auth/` is never
+// copied. Only a LEGACY `opencode.jsonc` that still points at
+// `{file:.auth/opencode/<VAR>}` needs something here: a MISSING target
+// invalidates its whole config, so it gets an EMPTY placeholder (never a value).
+// A config on the loader has no such reference, and this creates nothing.
 //
 // Dynamic import, placed AFTER `bun install`: `cli/lib/harness-env.ts` imports
 // `cli/install.ts`, which needs third-party packages, and as an Orca setup hook
 // this script runs from the fresh worktree, whose node_modules did not exist
 // until the install above.
 if (dryRun) {
-  log('Would regenerate .auth/opencode/<VAR> from the copied .env (empty placeholders for any {file:} reference it cannot fill)', 'info');
+  log('Would create empty .auth/opencode/<VAR> placeholders for a legacy {file:} opencode.jsonc (none on the .env loader shape)', 'info');
 }
 else {
-  const { ensureOpencodePlaceholders, writeOpencodeSurface } = await import('../cli/lib/harness-env.ts');
-  const plan = writeOpencodeSurface(TARGET);
-  if (plan === null) {
-    log('OpenCode credential files: no .env in the worktree, placeholders only (run `bun run harness:env` once .env is in place)', 'warn');
-  }
-  else {
-    log(`OpenCode credential files: ${plan.write.length} written, ${plan.unchanged.length} unchanged (${[...plan.write, ...plan.unchanged].join(', ') || 'none'})`, 'success');
-  }
+  const { ensureOpencodePlaceholders } = await import('../cli/lib/harness-env.ts');
   const placeholders = ensureOpencodePlaceholders(TARGET);
   if (placeholders.error) { log(`opencode.jsonc could not be scanned for {file:} references: ${placeholders.error}`, 'warn'); }
-  if (placeholders.created.length > 0) { log(`OpenCode placeholders created empty: ${placeholders.created.join(', ')}`, 'info'); }
+  if (placeholders.created.length > 0) { log(`Legacy opencode.jsonc: empty placeholders created for ${placeholders.created.join(', ')}; move its servers to the .env loader (bun run agents:compat:check names the change)`, 'warn'); }
 }
 
 // ============================================

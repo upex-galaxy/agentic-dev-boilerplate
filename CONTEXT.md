@@ -38,7 +38,7 @@ agentic-dev-boilerplate/
 ├── README.md                       Project overview (humans)
 ├── CONTEXT.md                      This file — Context Engineering in this repo
 ├── .mcp.json                       MCP config: Claude Code
-├── opencode.jsonc                  MCP config: OpenCode (reads `.auth/opencode/<VAR>` files that `bun run harness:env` writes)
+├── opencode.jsonc                  MCP config: OpenCode
 ├── orca.yaml                       Worktree hooks for Orca: `bun run worktree:provision` on create, `worktree:audit --rescue` before remove
 │
 ├── .agents/                        Shared, harness-agnostic substrate (agentskills.io layout)
@@ -117,7 +117,7 @@ The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is 
 
 **Hook.** `.agents/hooks/personality-reinject.mjs` holds the output contract and the `AGENT IDENTITY:` line (the source of the `Worktree:` / `Session:` commit trailers) once, and emits one `ROUTE: read <file>` line per instruction file the prompt needs and the session has not been routed to yet (classified with the L0 router and each section's `triggers:`). Claude Code and Codex run it as a `UserPromptSubmit` command hook (the Codex adapter ships a POSIX and a PowerShell command) and on `SessionStart` with the `compact` and `clear` matchers to re-arm the routes; OpenCode imports the same lines from a thin plugin. The contract is enforced by `cli/lib/agent-compatibility-contracts.ts`: no absolute personal paths, no duplicated hook file.
 
-**MCP.** The canonical server set is whatever `.mcp.json` declares (local servers only; web search runs at harness level); every server there must exist in the other two configs. Parity is checked semantically: each native format (JSON / JSONC / TOML) is normalized into a common shape and compared on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The four boilerplate-known ids additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only. Codex cannot expand `${VAR}` inside `args`, so `.codex/config.toml` passes `supabase` env-only auth.
+**MCP.** The canonical server set is whatever `.mcp.json` declares (local servers only; web search runs at harness level); every server there must exist in the other two configs. Parity is checked semantically: each native format (JSON / JSONC / TOML) is normalized into a common shape and compared on the `.env` variables each server depends on, so a server missing from one host, or present in one host only, is a failure. The boilerplate-known ids (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check when the project declares them; any other server gets the generic check only. A server that needs `.env` values starts on all three hosts through the `.env` loader (`varlock run --filter <its vars>`, `MCP_ENV_LOADER_*` in the same file), so no host-side `${VAR}` / `{file:}` / `env_vars` reference exists and the filter is the dependency set parity compares.
 
 **Generated versus versioned (hard rule, `AGENTS.md` Critical Rule #15).** Every bold `[generated]` cell above is output. Edit the source, then regenerate:
 

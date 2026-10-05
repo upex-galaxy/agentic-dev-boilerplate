@@ -9,8 +9,6 @@ import { IDENTITY_PREFIX, PERSONALITY_CONTRACT, ROUTE_PREFIX, routeStatePath } f
 import opencodePlugin from '../../.opencode/plugins/personality-reinject.js';
 import {
   CLAUDE_HOOK_COMMAND,
-  CODEX_ENV_LOADER_ARGS,
-  CODEX_ENV_LOADER_COMMAND,
   CODEX_HOOK_COMMAND,
   CODEX_HOOK_COMMAND_WINDOWS,
   CODEX_PROJECT_DOC_MAX_BYTES,
@@ -18,9 +16,13 @@ import {
   declaredMcpIds,
   EXPECTED_MCP,
   KNOWN_MCP_IDS,
+  LEGACY_CODEX_ENV_LOADER_ARGS,
+  MCP_ENV_LOADER_COMMAND,
+  MCP_ENV_LOADER_HEAD,
+  mcpEnvLoaderArgs,
   REARM_SESSION_START_SOURCES,
   stripJsonComments,
-  unwrapCodexEnvLoader,
+  unwrapEnvLoader,
   validateEslintBlockWiring,
   validateHookCompatibility,
   validateInstructionRouterHooks,
@@ -93,6 +95,17 @@ const BOILERPLATE_IDS = ['context7', 'supabase', 'n8n'];
 /** A downstream set: no `n8n`, keeps `tavily`, plus a server the contract has no shape for. */
 const PROJECT_IDS = ['context7', 'tavily', 'supabase', 'playwright'];
 
+/** Each stdio server that needs `.env` values starts through the `.env` loader (MCP_ENV_LOADER_*). */
+const SUPABASE_VARS = ['SUPABASE_ACCESS_TOKEN'];
+const N8N_VARS = ['N8N_API_URL', 'N8N_API_KEY'];
+function loader(names: string[]): string[] {
+  return mcpEnvLoaderArgs(names);
+}
+/** A host array literal (JSONC / TOML) for the loader args. */
+function loaderLiteral(names: string[]): string {
+  return loader(names).map(arg => JSON.stringify(arg)).join(', ');
+}
+
 const MCP_SERVERS: Record<string, unknown> = {
   context7: { command: 'bunx', args: ['-y', '@upstash/context7-mcp'] },
   tavily: {
@@ -101,22 +114,15 @@ const MCP_SERVERS: Record<string, unknown> = {
   },
   supabase: {
     command: 'bunx',
-    args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', '${SUPABASE_ACCESS_TOKEN}'],
-    env: {
-      SUPABASE_URL: '${NEXT_PUBLIC_SUPABASE_URL}',
-      SUPABASE_ANON_KEY: '${SUPABASE_PUBLISHABLE_KEY}',
-      SUPABASE_SERVICE_ROLE_KEY: '${SUPABASE_SECRET_KEY}',
-    },
+    args: [...loader(SUPABASE_VARS), 'bunx', '-y', '@supabase/mcp-server-supabase@latest'],
   },
   n8n: {
-    command: 'npx',
-    args: ['-y', 'n8n-mcp'],
+    command: 'bunx',
+    args: [...loader(N8N_VARS), 'npx', '-y', 'n8n-mcp'],
     env: {
       MCP_MODE: 'stdio',
       LOG_LEVEL: 'error',
       DISABLE_CONSOLE_OUTPUT: 'true',
-      N8N_API_URL: '${N8N_API_URL}',
-      N8N_API_KEY: '${N8N_API_KEY}',
     },
   },
   playwright: { command: 'bunx', args: ['@playwright/mcp@latest', '--extension'] },
@@ -143,28 +149,21 @@ const OPENCODE_SERVERS: Record<string, string> = {
       "type": "local",
       "command": [
         "bunx",
+        ${loaderLiteral(SUPABASE_VARS)},
+        "bunx",
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--access-token",
-        "{env:SUPABASE_ACCESS_TOKEN}",
       ],
       "enabled": true,
-      "environment": {
-        "SUPABASE_URL": "{env:NEXT_PUBLIC_SUPABASE_URL}",
-        "SUPABASE_ANON_KEY": "{env:SUPABASE_PUBLISHABLE_KEY}",
-        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SECRET_KEY}",
-      },
     },`,
   n8n: `    "n8n": {
       "type": "local",
-      "command": ["npx", "-y", "n8n-mcp"],
+      "command": ["bunx", ${loaderLiteral(N8N_VARS)}, "npx", "-y", "n8n-mcp"],
       "enabled": true,
       "environment": {
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "{env:N8N_API_URL}",
-        "N8N_API_KEY": "{env:N8N_API_KEY}",
       },
     },`,
   playwright: `    "playwright": {
@@ -174,24 +173,25 @@ const OPENCODE_SERVERS: Record<string, string> = {
     },`,
 };
 
-/** The `.env` loader prefix every Codex stdio fixture starts through (CODEX_ENV_LOADER_*). */
-const CODEX_LOADER = CODEX_ENV_LOADER_ARGS.map(arg => JSON.stringify(arg)).join(', ');
-
 /**
- * A Codex stdio launch: through the loader (the boilerplate shape) or the bare
- * command (a project scaffolded before the loader existed). The startup budget
- * is there either way, so a test that drops the loader changes nothing else.
+ * A Codex stdio launch: through the filtered `.env` loader (the boilerplate
+ * shape, `names` in its filter) or the bare command forwarding `names` through
+ * `env_vars` (a project scaffolded before the loader existed). The startup
+ * budget is there either way, so a test that drops the loader changes nothing
+ * else. A server with no `names` never takes the loader.
  */
-function codexLaunch(command: string, args: string, loader: boolean): string {
-  return loader
-    ? `command = "${CODEX_ENV_LOADER_COMMAND}"\nenabled = true\nstartup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC}\nargs = [${CODEX_LOADER}, "${command}", ${args}]`
-    : `command = "${command}"\nenabled = true\nstartup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC}\nargs = [${args}]`;
+function codexLaunch(command: string, args: string, names: string[], useLoader: boolean): string {
+  const head = `enabled = true\nstartup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC}`;
+  if (names.length === 0) { return `command = "${command}"\n${head}\nargs = [${args}]`; }
+  return useLoader
+    ? `command = "${MCP_ENV_LOADER_COMMAND}"\n${head}\nargs = [${loaderLiteral(names)}, "${command}", ${args}]`
+    : `command = "${command}"\n${head}\nargs = [${args}]\nenv_vars = ${JSON.stringify(names)}`;
 }
 
-function codexServers(loader: boolean): Record<string, string> {
+function codexServers(useLoader: boolean): Record<string, string> {
   return {
     context7: `[mcp_servers.context7]
-${codexLaunch('bunx', '"-y", "@upstash/context7-mcp"', loader)}
+${codexLaunch('bunx', '"-y", "@upstash/context7-mcp"', [], useLoader)}
 `,
     tavily: `[mcp_servers.tavily]
 url = "https://mcp.tavily.com/mcp/"
@@ -199,12 +199,10 @@ bearer_token_env_var = "TAVILY_API_KEY"
 enabled = true
 `,
     supabase: `[mcp_servers.supabase]
-${codexLaunch('bunx', '"-y", "@supabase/mcp-server-supabase@latest"', loader)}
-env_vars = ["SUPABASE_ACCESS_TOKEN", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY"]
+${codexLaunch('bunx', '"-y", "@supabase/mcp-server-supabase@latest"', SUPABASE_VARS, useLoader)}
 `,
     n8n: `[mcp_servers.n8n]
-${codexLaunch('npx', '"-y", "n8n-mcp"', loader)}
-env_vars = ["N8N_API_URL", "N8N_API_KEY"]
+${codexLaunch('npx', '"-y", "n8n-mcp"', N8N_VARS, useLoader)}
 
 [mcp_servers.n8n.env]
 MCP_MODE = "stdio"
@@ -612,18 +610,18 @@ describe('MCP semantic parity', () => {
     expect(JSON.parse(stripJsonComments('{ // c\n "a": "http://x/*y*/" /* b */ }'))).toEqual({ a: 'http://x/*y*/' });
   });
 
-  test('renamed Supabase keys resolve to the same .env variables Codex forwards', () => {
-    // Claude/OpenCode set SUPABASE_URL from ${NEXT_PUBLIC_SUPABASE_URL}; Codex
-    // forwards NEXT_PUBLIC_SUPABASE_URL by name. Same dependency, no error.
+  test('a loader filter is a dependency like any host reference', () => {
+    // The Codex supabase reads SUPABASE_ACCESS_TOKEN through its --filter; a
+    // different name there is a different dependency on that host.
     const root = contractFixture();
     expect(validateMcpParity(root)).toEqual([]);
 
     const config = readFileSync(join(root, '.codex/config.toml'), 'utf8')
-      .replace('"NEXT_PUBLIC_SUPABASE_URL"', '"SUPABASE_URL"');
+      .replace('"--filter", "SUPABASE_ACCESS_TOKEN"', '"--filter", "SUPABASE_TOKEN"');
     writeFileSync(join(root, '.codex/config.toml'), config);
 
     const errors = validateMcpParity(root);
-    expect(errors.some(error => error.includes('codex MCP supabase mismatch') && error.includes('SUPABASE_URL'))).toBe(true);
+    expect(errors.some(error => error.includes('codex MCP supabase mismatch') && error.includes('SUPABASE_TOKEN'))).toBe(true);
     expect(errors.some(error => error.includes('MCP supabase env contract differs between claude and codex'))).toBe(true);
   });
 
@@ -666,28 +664,26 @@ describe('MCP semantic parity', () => {
     expect(validateMcpParity(root).some(error => error.includes('MCP tavily env contract differs between claude and opencode') && error.includes('TAVILY_TOKEN'))).toBe(true);
   });
 
-  test('reads OpenCode {file:dir/VAR} as the same dependency as {env:VAR}', () => {
-    // `scripts/harness-env.ts` rewrites every credential in `opencode.jsonc` to a
-    // `{file:.auth/opencode/<VAR>}` pointer, because `{env:}` resolves only from a
-    // process environment a desktop launch does not have. Same .env dependency by
-    // a different route, so parity (and the pinned per-host shape) must hold.
-    const root = contractFixture();
+  test('reads a legacy OpenCode {file:dir/VAR} as the same dependency as {env:VAR}', () => {
+    // The retired `harness:env` generator rewrote credentials to
+    // `{file:.auth/opencode/<VAR>}` pointers, and a downstream config may still
+    // carry them. Same .env dependency by a different route: parity holds.
+    const root = contractFixture(undefined, PROJECT_IDS);
     const configPath = join(root, 'opencode.jsonc');
     writeFileSync(configPath, readFileSync(configPath, 'utf8')
-      .replace('{env:SUPABASE_ACCESS_TOKEN}', '{file:.auth/opencode/SUPABASE_ACCESS_TOKEN}')
-      .replace('{env:N8N_API_KEY}', '{file:.auth/opencode/N8N_API_KEY}'));
+      .replace('{env:TAVILY_API_KEY}', '{file:.auth/opencode/TAVILY_API_KEY}'));
 
     expect(validateMcpParity(root)).toEqual([]);
   });
 
   test('a renamed {file:dir/VAR} still fails parity, so the form is checked and not merely tolerated', () => {
-    const root = contractFixture();
+    const root = contractFixture(undefined, PROJECT_IDS);
     const configPath = join(root, 'opencode.jsonc');
     writeFileSync(configPath, readFileSync(configPath, 'utf8')
-      .replace('{env:N8N_API_KEY}', '{file:.auth/opencode/N8N_TOKEN}'));
+      .replace('{env:TAVILY_API_KEY}', '{file:.auth/opencode/TAVILY_TOKEN}'));
 
     expect(validateMcpParity(root).some(error =>
-      error.includes('MCP n8n env contract differs between claude and opencode') && error.includes('N8N_TOKEN'))).toBe(true);
+      error.includes('MCP tavily env contract differs between claude and opencode') && error.includes('TAVILY_TOKEN'))).toBe(true);
   });
 
   test('a {file:} path whose final segment is NOT all-caps stays a literal', () => {
@@ -696,7 +692,7 @@ describe('MCP semantic parity', () => {
     const root = contractFixture();
     const configPath = join(root, 'opencode.jsonc');
     writeFileSync(configPath, readFileSync(configPath, 'utf8')
-      .replace('{env:N8N_API_URL}', '{file:certs/ca.pem}'));
+      .replace('"n8n-mcp"],', '"n8n-mcp", "{file:certs/ca.pem}"],'));
 
     const errors = validateMcpParity(root);
     expect(errors.some(error => error.includes('opencode MCP n8n mismatch'))).toBe(true);
@@ -784,8 +780,8 @@ describe('project-declared MCP set', () => {
   });
 });
 
-describe('Codex .env loader', () => {
-  test('in the boilerplate, requires the loader on a Codex server that needs .env values, known or not', () => {
+describe('MCP .env loader', () => {
+  test('in the boilerplate, requires the loader on a stdio server that needs .env values, known or not', () => {
     const root = contractFixture(undefined, PROJECT_IDS);
     // An unknown server that needs a variable, on every host.
     const mcp = JSON.parse(readFileSync(join(root, '.mcp.json'), 'utf8'));
@@ -796,15 +792,19 @@ describe('Codex .env loader', () => {
     write(root, '.codex/config.toml', `${codexToml(PROJECT_IDS, false)}env_vars = ["PLAYWRIGHT_BROWSERS_PATH"]\n`);
 
     const errors = validateMcpParity(root, { schemaOwner: true });
-    expect(errors.some(e => e.startsWith('codex MCP playwright must launch through the .env loader'))).toBe(true);
-    expect(errors.some(e => e.startsWith('codex MCP supabase must launch through the .env loader'))).toBe(true);
+    for (const host of ['claude', 'opencode', 'codex']) {
+      expect(errors.some(e => e.startsWith(`${host} MCP playwright must launch through the .env loader`))).toBe(true);
+      // tavily (stdio through mcp-remote) needs its key the same way.
+      expect(errors.some(e => e.startsWith(`${host} MCP tavily must launch through the .env loader`) || e.startsWith(`${host} MCP tavily `))).toBe(host !== 'codex');
+    }
+    expect(errors.some(e => e.startsWith('codex MCP supabase mismatch'))).toBe(true);
     // A server with nothing to load is left alone by the generic rule.
-    expect(errors.some(e => e.startsWith('codex MCP context7 must launch'))).toBe(false);
-    // The remote server has no launch at all.
-    expect(errors.some(e => e.includes('MCP tavily'))).toBe(false);
+    expect(errors.some(e => e.includes('MCP context7 must launch'))).toBe(false);
+    // The remote Codex server has no launch at all.
+    expect(errors.some(e => e.startsWith('codex MCP tavily'))).toBe(false);
   });
 
-  test('downstream, a missing Codex loader is a warning that names the file and what to add', () => {
+  test('downstream, a missing loader is a warning that names the file and the exact launch', () => {
     const root = contractFixture();
     write(root, '.codex/config.toml', codexToml(BOILERPLATE_IDS, false));
 
@@ -813,14 +813,37 @@ describe('Codex .env loader', () => {
     // A known server gets ONE launch warning, never a second one from the generic rule.
     const supabase = warnings.filter(w => w.startsWith('codex MCP supabase '));
     expect(supabase).toHaveLength(1);
-    expect(supabase[0]).toStartWith('codex MCP supabase launch is out of date in .codex/config.toml: ');
-    expect(supabase[0]).toContain(`set command = "${CODEX_ENV_LOADER_COMMAND}"`);
-    expect(supabase[0]).toContain(JSON.stringify(CODEX_ENV_LOADER_ARGS));
+    expect(supabase[0]).toStartWith(`codex MCP supabase launch is out of date in .codex/config.toml: launch it as \`${MCP_ENV_LOADER_COMMAND} ${mcpEnvLoaderArgs(SUPABASE_VARS).join(' ')}`);
+    expect(supabase[0]).toContain('drop the host-side reference to SUPABASE_ACCESS_TOKEN');
     expect(warnings.filter(w => w.startsWith('codex MCP n8n '))).toHaveLength(1);
-    // context7 needs no variable, but it is a known server: its pinned shape
-    // carries the loader, so it is warned about too.
-    expect(warnings.some(w => w.startsWith('codex MCP context7 launch is out of date'))).toBe(true);
+    // context7 needs no variable and its pinned shape has no loader: nothing to say.
+    expect(warnings.some(w => w.startsWith('codex MCP context7'))).toBe(false);
     expect(warnings.some(w => w.includes('tavily'))).toBe(false);
+  });
+
+  test('downstream, the legacy unfiltered Codex loader is out of date too', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace(`args = [${loaderLiteral(N8N_VARS)}, "npx"`, `args = [${LEGACY_CODEX_ENV_LOADER_ARGS.map(a => JSON.stringify(a)).join(', ')}, "npx"`)
+      .replace('[mcp_servers.n8n.env]', `env_vars = ${JSON.stringify(N8N_VARS)}\n\n[mcp_servers.n8n.env]`));
+
+    const { errors, warnings } = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(errors).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toStartWith('codex MCP n8n launch is out of date in .codex/config.toml: launch it as');
+    expect(warnings[0]).toContain('--filter N8N_API_KEY,N8N_API_URL');
+  });
+
+  test('downstream, a loader on a server that needs no value is out of date', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.codex/config.toml');
+    writeFileSync(configPath, readFileSync(configPath, 'utf8')
+      .replace('args = ["-y", "@upstash/context7-mcp"]', `args = [${LEGACY_CODEX_ENV_LOADER_ARGS.map(a => JSON.stringify(a)).join(', ')}, "bunx", "-y", "@upstash/context7-mcp"]`));
+
+    const { errors, warnings } = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(errors).toEqual([]);
+    expect(warnings).toEqual(['codex MCP context7 launch is out of date in .codex/config.toml: drop the .env loader: the server needs no .env value, and an unfiltered loader hands it every one. Upstream never overwrites this file, so change it by hand.']);
   });
 
   test('ownership comes from package.json: the boilerplate errors, any other name warns', () => {
@@ -831,7 +854,7 @@ describe('Codex .env loader', () => {
     write(root, 'package.json', JSON.stringify({ name: 'my-product' }));
     expect(validateMcpParity(root)).toEqual([]);
     write(root, 'package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
-    expect(validateMcpParity(root).some(e => e.includes('must launch through the .env loader'))).toBe(true);
+    expect(validateMcpParity(root).some(e => e.includes('must launch through the .env loader') || e.startsWith('codex MCP supabase mismatch'))).toBe(true);
   });
 
   test('in the boilerplate, pins the Codex startup budget of a known server', () => {
@@ -855,7 +878,7 @@ describe('Codex .env loader', () => {
     const budget = validateMcpParityFindings(root, { schemaOwner: false });
     expect(budget.errors).toEqual([]);
     expect(budget.warnings).toEqual([
-      `codex MCP n8n launch is out of date in .codex/config.toml: set startup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC} (Codex's 10-second default is too short for a server fetched on a cold cache). Upstream never overwrites this file, so add it by hand.`,
+      `codex MCP n8n launch is out of date in .codex/config.toml: set startup_timeout_sec = ${CODEX_STARTUP_TIMEOUT_SEC} (Codex's 10-second default is too short for a server fetched on a cold cache). Upstream never overwrites this file, so change it by hand.`,
     ]);
 
     writeFileSync(configPath, readFileSync(configPath, 'utf8').replace('"n8n-mcp"]', '"n8n-mcp", "--debug"]'));
@@ -865,17 +888,59 @@ describe('Codex .env loader', () => {
     expect(shape.errors[0]).toStartWith('codex MCP n8n mismatch: expected ');
   });
 
-  test('reads a loader-wrapped Codex command as the server it starts', () => {
-    expect(unwrapCodexEnvLoader('bunx', [...CODEX_ENV_LOADER_ARGS, 'npx', '-y', 'pkg'])).toEqual({ command: 'npx', args: ['-y', 'pkg'], envLoader: true });
-    expect(unwrapCodexEnvLoader('bunx', ['-y', 'pkg'])).toEqual({ command: 'bunx', args: ['-y', 'pkg'], envLoader: false });
+  test('reads a loader-wrapped command as the server it starts, with its filter', () => {
+    expect(unwrapEnvLoader('bunx', [...mcpEnvLoaderArgs(['A_X', 'B_Y']), 'npx', '-y', 'pkg'])).toEqual({ command: 'npx', args: ['-y', 'pkg'], envLoader: true, filter: ['A_X', 'B_Y'] });
+    expect(unwrapEnvLoader('bunx', ['-y', 'pkg'])).toEqual({ command: 'bunx', args: ['-y', 'pkg'], envLoader: false, filter: null });
+    // The unfiltered loader Codex used before: still a loader, no filter.
+    expect(unwrapEnvLoader('bunx', [...LEGACY_CODEX_ENV_LOADER_ARGS, 'npx', '-y', 'pkg'])).toEqual({ command: 'npx', args: ['-y', 'pkg'], envLoader: true, filter: null });
     // A prefix with nothing after it is not a launch.
-    expect(unwrapCodexEnvLoader('bunx', [...CODEX_ENV_LOADER_ARGS]).envLoader).toBe(false);
+    expect(unwrapEnvLoader('bunx', mcpEnvLoaderArgs(['A_X'])).envLoader).toBe(false);
+    expect(unwrapEnvLoader('bunx', [...LEGACY_CODEX_ENV_LOADER_ARGS]).envLoader).toBe(false);
+  });
+
+  test('a filter must list exact names: a glob cannot be compared across hosts', () => {
+    expect(() => unwrapEnvLoader('bunx', [...mcpEnvLoaderArgs(['STRIPE_*']), 'bunx', 'pkg'])).toThrow('exact variable names');
   });
 
   test('pins the loader to the exact varlock version the repo installs', () => {
     const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { devDependencies: Record<string, string> };
-    expect(String(CODEX_ENV_LOADER_ARGS[1])).toBe(`varlock@${pkg.devDependencies.varlock}`);
+    expect(MCP_ENV_LOADER_HEAD[1] as string).toBe(`varlock@${pkg.devDependencies.varlock}`);
+    expect(LEGACY_CODEX_ENV_LOADER_ARGS[1] as string).toBe(`varlock@${pkg.devDependencies.varlock}`);
     expect(pkg.devDependencies.varlock).toMatch(/^\d+\.\d+\.\d+$/);
+    // JSON-RPC on stdio: varlock must not redact (rewrite) the server's output.
+    expect(MCP_ENV_LOADER_HEAD).toContain('--no-redact-stdout');
+    // Least privilege: only the named variables, and no blob holding them all.
+    expect(MCP_ENV_LOADER_HEAD.slice(-3)).toEqual(['--inject', 'vars', '--filter']);
+  });
+
+  test('a loader-launched server that also takes a variable from the host fails in the boilerplate, warns downstream', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.mcp.json');
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    config.mcpServers.supabase.env = { SUPABASE_ACCESS_TOKEN: '${SUPABASE_ACCESS_TOKEN}' };
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+    const owner = validateMcpParity(root, { schemaOwner: true });
+    expect(owner.some(e => e.startsWith('claude MCP supabase launches through the .env loader but also takes SUPABASE_ACCESS_TOKEN from the host'))).toBe(true);
+    const downstream = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(downstream.errors).toEqual([]);
+    expect(downstream.warnings.some(w => w.startsWith('claude MCP supabase launch is out of date in .mcp.json') && w.includes('drop the host-side reference to SUPABASE_ACCESS_TOKEN'))).toBe(true);
+  });
+
+  test('downstream, the pre-loader Supabase shape is one warning naming the exact launch', () => {
+    const root = contractFixture();
+    const configPath = join(root, '.mcp.json');
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    config.mcpServers.supabase = {
+      command: 'bunx',
+      args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', '${SUPABASE_ACCESS_TOKEN}'],
+    };
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+    // The old `--access-token` argument is a shape difference beyond the
+    // launch detail, so it is a mismatch, never silently a warning.
+    const { errors } = validateMcpParityFindings(root, { schemaOwner: false });
+    expect(errors.some(e => e.startsWith('claude MCP supabase mismatch'))).toBe(true);
   });
 });
 

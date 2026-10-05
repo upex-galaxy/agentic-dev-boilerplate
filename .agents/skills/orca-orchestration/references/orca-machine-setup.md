@@ -85,48 +85,46 @@ Until that override exists on a machine, a native worker launches in whatever mo
 per-agent default gives it, which is the trap gotcha G27 describes. Neither the repo nor a teammate's
 machine can tell whether you did it, which is the whole problem with a non-versionable setting.
 
-### 3.2 · Credentials for a supervised worker: the harness surfaces, and direnv only for shell CLIs
+### 3.2 · Credentials for a supervised worker: the MCP `.env` loader, and direnv only for shell CLIs
 
 A launch line can export variables; the native launch cannot, because it has no argv, so the
 `bun run <harness>` wrappers (`scripts/launch.ts` -> `varlock run`) never run for a supervised worker. That does not
-leave it without MCP credentials: `bun run harness:env` derives from `.env` a per-harness surface the
-harness reads at startup with NO shell involved (`.agents/instructions/agent-harnesses.md` §5.5, `cli/lib/harness-env.ts`).
+leave it without MCP credentials: on all three hosts every MCP server that needs `.env` values starts
+through the `.env` loader (`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`,
+`.agents/instructions/agent-harnesses.md` §5.5, `MCP_ENV_LOADER_*` in `cli/lib/agent-compatibility-contracts.ts`).
+It reads the varlock schema plus `.env` / `.env.local` (or the secret manager the schema names) from
+the checkout the harness was launched in, at spawn time, with NO shell involved, and hands each server
+only the variables in its filter.
 
-- **Claude Code workers** read the `env` block of `.claude/settings.local.json`. On macOS/Linux the
-  harness reads the MAIN checkout's copy even inside a worktree (measured: a session launched in a
-  worktree gave its MCP child the main checkout's value; the worktree's own copy was ignored). So
-  `bun run harness:env` writes the main checkout's file even when run from a worktree, and refuses
-  when the worktree's `.env` is missing or would strip credentials the main file already carries.
-  Every worktree inherits it with no action.
-- **OpenCode workers** read `.auth/opencode/<VAR>` through the `{file:}` references in
-  `opencode.jsonc`, relative to the worktree (mode `0600`, gitignored). `bun run worktree:provision`
-  does NOT copy `.auth/`: it copies `.env` and REGENERATES these files from it; `bun install` creates
-  empty placeholders on a fresh clone so the config still loads.
-- **Codex workers**: their stdio MCP servers start through the `.env` loader declared in
-  `.codex/config.toml` (`.agents/instructions/agent-harnesses.md` §5.5), so the MCP leg works without a shell and `harness:env`
-  emits nothing for Codex. A Codex server that lacks the loader reads the process environment only;
-  `bun run harness:env:check` names it.
+- **Every harness, MCP leg**: the worker's checkout needs its own `.env`. `bun run worktree:provision`
+  copies it from the primary checkout; nothing else is derived from it.
+- **Plaintext copies from the retired generator** (the `env` block of `.claude/settings.local.json`,
+  `.auth/opencode/<VAR>`): no host reads them any more. `bun run harness:env` retires them (a copy equal
+  to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/` and named),
+  and `bun run harness:env:check` exits 1 while one remains.
 - **Every worker, any harness**: a CLI it runs that reads a shell-exported variable (`acli`,
   `supabase`, `vercel`, `curl`) sees credentials only from the process environment. For those, and
   only those, direnv in Orca's **interactive shell** is the seam: with it installed and hooked, the
   committed `.envrc` sources `.env` (and `.envrc.local`) when the worker's terminal opens, and a direnv
   export line on the worker's screen is the evidence (G45).
 
-The failure is silent on every leg. A surface not regenerated after a `.env` change carries the old
-value (or an empty placeholder) and the MCP server dies on its first authenticated call (Critical
-Rule #9); a shell CLI without direnv fails much later with an error that reads like a broken tool.
+The failure is silent on every leg. A worktree with no `.env`, or a value the schema rejects, leaves
+the MCP server without its credential and it dies on its first authenticated call (Critical Rule #9;
+`bunx varlock load --agent` shows which value fails, redacted); a shell CLI without direnv fails much
+later with an error that reads like a broken tool.
 
 ```bash
-bun run harness:env                              # after every .env change; then restart the agent session
-bun run harness:env:check                        # drift by variable NAME, never a value
+bun run worktree:provision                       # a new worktree: copies .env, runs direnv allow when it can
+bun run harness:env:check                        # exit 1 while a retired plaintext copy remains
 command -v direnv                                # shell-exported CLI vars only: installed
 grep -n "direnv hook" ~/.zshrc ~/.bashrc         # ... and hooked into the shell Orca runs
 direnv allow                                     # once per checkout, per machine
 bun run setup:doctor                             # reports what this machine declares, both seams included
 ```
 
-OpenCode caches the resolved config per directory: after `harness:env` rewrites `.auth/opencode/*`,
-restart its background service too (`opencode service restart`). `bun run worktree:provision` runs
+After a `.env` change nothing needs re-running: restart the agent session, and for OpenCode its
+background service too (`opencode service restart`), because it caches the resolved config per
+directory. `bun run worktree:provision` runs
 `direnv allow <worktree>` for you, but only when direnv is installed AND the primary checkout's
 `.envrc` is already allowed, and it prints what it did (or why it skipped). It never approves an
 `.envrc` on a machine that never approved the primary.
@@ -185,8 +183,8 @@ find out during a real fleet, and record it in `references/gotchas.md`.
 [ ] Settings -> Agents: `claude` default args include `--permission-mode auto`
     (prerequisite of the SUPERVISED native launch; a pasted custom-argv line needs nothing)
 [ ] other agents: their documented equivalent, verified, not guessed
-[ ] `bun run harness:env` run after the last `.env` change (Claude Code and OpenCode workers read
-    the generated surfaces; Codex stdio MCP servers load `.env` themselves; no direnv needed for MCP)
+[ ] a `.env` in every worker checkout (MCP servers read it through the `.env` loader on every host;
+    no direnv needed for MCP); `bun run harness:env:check` exits 0 (no retired plaintext copy left)
 [ ] direnv installed, hooked into the shell Orca runs, `direnv allow` run in the primary
     (only shell-exported CLI vars ride on it: `acli`, `supabase`, `vercel`, `curl`; verify on the
     worker's screen at launch)

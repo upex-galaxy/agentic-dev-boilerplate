@@ -6,7 +6,7 @@
     <title>Herramientas: acli, vercel-cli y el arranque</title>
     <meta
       name="description"
-      content="Cómo el repo usa sus binarios: la skill dueña se carga antes del comando, /acli para Jira (auth, Markdown a ADF, presupuesto de tamaño, slugs, vínculos), los scripts jira:*, /vercel-cli para verificar un deploy por SHA, env vars y rollback, y el arranque con harness:env y setup:doctor."
+      content="Cómo el repo usa sus binarios: la skill dueña se carga antes del comando, /acli para Jira (auth, Markdown a ADF, presupuesto de tamaño, slugs, vínculos), los scripts jira:*, /vercel-cli para verificar un deploy por SHA, env vars y rollback, y el arranque con el loader de .env y setup:doctor."
     />
     <style>
       /* ============================================================
@@ -1624,9 +1624,9 @@
           <span class="mono">utility</span>: no manejan un flujo, le enseñan a la IA a usar bien un
           binario que el flujo necesita. Este deck junta esas dos, los scripts
           <span class="mono">bun run jira:*</span> que viven alrededor de <span class="mono">acli</span>, y
-          los comandos de arranque y credenciales (<span class="mono">harness:env</span>,
-          <span class="mono">setup:doctor</span>) que deciden si un servidor MCP arranca con su clave o
-          sin ella.
+          el loader de <span class="mono">.env</span> y los comandos de arranque y credenciales
+          (<span class="mono">setup:doctor</span>, <span class="mono">harness:env</span>) que deciden si un
+          servidor MCP arranca con su clave o sin ella.
         </p>
 
         <div class="hero-meta">
@@ -2167,9 +2167,11 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
           <div class="eyebrow"><span class="num">08</span> · arranque y credenciales</div>
           <h2>Una credencial faltante no avisa: hay que salir a buscarla</h2>
           <p class="sub">
-            El harness lee su config y lanza los servidores MCP antes de que corra cualquier hook. Si la
-            clave no está ahí en ese momento, el servidor arranca igual y falla recién en su primera
-            llamada autenticada (Critical Rule #9). Codex es el único que falla fuerte.
+            El harness lee su config y lanza los servidores MCP antes de que corra cualquier hook. Cada
+            servidor que necesita una clave arranca con el loader de <span class="mono">.env</span>
+            (<span class="mono">varlock run --filter</span>), que la lee del <span class="mono">.env</span> en
+            ese momento, se haya lanzado el harness como sea. Si la clave falta, el servidor arranca igual
+            y falla recién en su primera llamada autenticada (Critical Rule #9).
           </p>
         </div>
 
@@ -2185,22 +2187,22 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
             <tbody>
               <tr>
                 <th><span class="mono">bun run claude</span> · <span class="mono">opencode</span> · <span class="mono">codex</span></th>
-                <td>Envuelven el binario con <span class="mono">dotenv -o -e .env</span>: <span class="mono">.env</span> le gana a una variable vieja heredada del proceso</td>
+                <td>Arrancan el binario con <span class="mono">varlock run</span>, y se niegan a arrancar mientras el shell exporte un valor distinto del de <span class="mono">.env</span> (bajo varlock gana el heredado)</td>
                 <td>Cada vez que arrancás desde la terminal</td>
               </tr>
               <tr>
                 <th><span class="mono">bun run harness:env</span></th>
-                <td>Deriva de <span class="mono">.env</span> los archivos que cada harness lee al arrancar: el bloque <span class="mono">env</span> de <span class="mono">.claude/settings.local.json</span> y <span class="mono">.auth/opencode/&lt;VAR&gt;</span>. Solo las variables que alguna config MCP referencia, y nunca imprime un valor</td>
-                <td>Para un arranque sin línea de comandos (app de escritorio, worker lanzado nativo), y después de cada cambio en <span class="mono">.env</span></td>
+                <td>Retira las copias en texto plano que escribía una instalación vieja (el bloque <span class="mono">env</span> de <span class="mono">.claude/settings.local.json</span>, <span class="mono">.auth/opencode/&lt;VAR&gt;</span>): si coincide con <span class="mono">.env</span> la borra, si no la mueve a <span class="mono">.auth/harness-env-backup/</span> y la nombra. Nunca imprime un valor</td>
+                <td>Una vez, en una máquina que corrió la versión vieja. Después de un cambio en <span class="mono">.env</span> alcanza con reiniciar la sesión</td>
               </tr>
               <tr>
                 <th><span class="mono">bun run harness:env:check</span></th>
-                <td>Diferencias entre <span class="mono">.env</span> y esas superficies, por nombre de variable</td>
-                <td>Cuando sospechás que una superficie quedó vieja</td>
+                <td>Sale con 1 mientras quede una de esas copias</td>
+                <td>Para confirmar que no queda ninguna</td>
               </tr>
               <tr>
                 <th><span class="mono">bun run setup:doctor</span></th>
-                <td>Chequeo de solo lectura: env vars, el host de Atlassian, dependencias, el contrato entre harnesses, la deriva de <span class="mono">harness:env</span>, los MCP de nivel harness que declara esta máquina. Con <span class="mono">--json</span>, una lista de acciones pendientes</td>
+                <td>Chequeo de solo lectura: env vars, el host de Atlassian, dependencias, el contrato entre harnesses, las copias en texto plano que quedan, de dónde salen los secretos (<span class="mono">.env</span> o el gestor de secretos), los MCP de nivel harness que declara esta máquina. Con <span class="mono">--json</span>, una lista de acciones pendientes</td>
                 <td>Al configurar, y ante cualquier fallo raro de herramienta</td>
               </tr>
             </tbody>
@@ -2214,8 +2216,9 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
             <ul>
               <li>No hay que esperar un error de parseo: no va a llegar.</li>
               <li>
-                En Claude Code, un <span class="mono">${VAR}</span> sin definir en <span class="mono">.mcp.json</span>
-                pasa literal al servidor. El chequeo es <span class="mono">/mcp</span> dentro de la sesión.
+                El loader le pasa al servidor la variable vacía o sin definir, y nadie avisa. El chequeo es
+                <span class="mono">/mcp</span> dentro de la sesión; <span class="mono">bunx varlock load --agent</span>
+                muestra, redactado, qué valor falla el schema.
               </li>
             </ul>
           </div>

@@ -35,8 +35,9 @@ Referencia de sintaxis para los tres hosts del contrato (`.agents/instructions/a
 | -------------- | --------------- | --------------------------- | -------------------------------------------------------- |
 | Root key       | `mcpServers`    | `mcp`                       | `mcp_servers`                                            |
 | Command        | string + `args` | array                       | string + `args`                                          |
-| Env vars key   | `env`           | `environment`               | `env_vars` (por nombre) + `[mcp_servers.X.env]` (literales) |
-| Secreto        | `${VAR}`        | `{file:.auth/opencode/VAR}` | por nombre: `env_vars` / `bearer_token_env_var`          |
+| Env literal    | `env`           | `environment`               | `[mcp_servers.X.env]`                                    |
+| Secreto stdio  | loader de `.env` | loader de `.env`           | loader de `.env` + `startup_timeout_sec = 30`            |
+| Secreto remoto | `${VAR}`        | `{env:VAR}`                 | `bearer_token_env_var`                                   |
 | Remote type    | `type: "http"`  | `type: "remote"`            | `url`                                                    |
 | Enable/disable | N/A             | `enabled`                   | `enabled`                                                |
 
@@ -44,19 +45,22 @@ Referencia de sintaxis para los tres hosts del contrato (`.agents/instructions/a
 
 ## Variables y secretos
 
-Los templates de este directorio usan `{{VARIABLE}}` solo como marcador de buscar y reemplazar: ningún host lo entiende en runtime. Un secreto se reemplaza por la referencia nativa del host y su valor vive en `.env` (gitignored):
+Los templates de este directorio usan `{{VARIABLE}}` solo como marcador de buscar y reemplazar: ningún host lo entiende en runtime. Un secreto no se escribe en el config: su valor vive en `.env` (gitignored) y llega al server así:
 
-| Host        | Referencia                                                                                   | Dónde funciona                                    | Si la variable falta                                   |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------ |
-| Claude Code | `${VAR}` o `${VAR:-default}`                                                                  | `command`, `args`, `env`, `url`, `headers`        | pasa `${VAR}` literal; el server falla en su primera llamada autenticada |
-| OpenCode    | `{file:.auth/opencode/VAR}` (valor que escribe `bun run harness:env`); `{env:VAR}` lee el entorno del proceso | cualquier string del config (sustitución textual) | archivo vacío → `""`; archivo inexistente → el config ENTERO es inválido |
-| Codex       | `env_vars = ["VAR"]` (stdio) / `bearer_token_env_var = "VAR"` (HTTP). NO expande `${VAR}`     | ninguno: el secreto viaja por nombre              | la variable no se reenvía; el server falla en auth (401/403) |
+| Server            | Cómo llega el secreto                                                                                         | Si la variable falta                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| stdio (los tres hosts) | el loader de `.env`: `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter A,B -- <server>` | el server la recibe vacía o sin definir y falla en su primera llamada autenticada |
+| remoto, Claude Code | `${VAR}` en `url` / `headers`, desde el entorno del proceso                                                  | sin aviso claro: el server falla en su primera llamada, o el config no carga en un lanzamiento de escritorio |
+| remoto, OpenCode  | `{env:VAR}`, desde el entorno del proceso                                                                     | `""`                                                              |
+| remoto, Codex     | `bearer_token_env_var = "VAR"`, desde el entorno del proceso                                                  | error al arrancar que nombra el server                            |
 
-**Por qué `{file:}` y no `{env:}` en OpenCode.** `{env:VAR}` se resuelve desde el entorno del proceso OpenCode, que no existe cuando se lanza desde la app de escritorio o como worker supervisado. `{file:}` lee el contenido de un archivo y no depende del entorno. `bun install` crea un placeholder vacío por cada referencia para que un clon fresco cargue; `bun run harness:env` los llena desde `.env`.
+**El loader de `.env`.** Es el mismo en los tres hosts (`MCP_ENV_LOADER_*` / `mcpEnvLoaderArgs` en `cli/lib/agent-compatibility-contracts.ts`). Lee el schema de varlock más `.env` / `.env.local` (o el gestor de secretos que nombra el schema) desde la raíz del proyecto al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa **solo** las variables de su `--filter`, que son los nombres exactos que el server lee. `--inject vars` las pasa sueltas, sin blob; `--no-redact-stdout` deja intacto el stream JSON-RPC. Al lado del loader no va ningún `${VAR}`, `{env:}`, `{file:}` ni `env_vars`: un `${VAR}` sin valor rompe un lanzamiento de escritorio y un valor heredado vacío le gana a `.env`. Un server que no necesita valores (context7) arranca sin loader. Un valor que falla el schema frena solo al server que lo necesita: `bunx varlock load --agent` muestra cuál, redactado.
 
-**Cargar `.env` antes de lanzar.** `bun run claude` / `bun run opencode` / `bun run codex` envuelven `dotenv -o -e .env` (el `-o` hace que `.env` gane sobre una variable heredada del shell). Un lanzamiento sin línea de comando (app de escritorio, worker supervisado) necesita `bun run harness:env` después de cada cambio de `.env`. Codex no lo necesita: sus servers stdio arrancan con un loader de `.env` (ver [Codex](#codex-cli--desktop)).
+**Un server remoto no puede usar el loader** (no hay comando que envolver): su secreto sale del entorno del proceso del harness, así que solo resuelve en un lanzamiento que lo tenga (`bun run <harness>` o direnv), nunca desde la app de escritorio.
 
-> **Regla crítica:** ningún host se niega a arrancar por una variable faltante. Un 401/403 o una falla misteriosa de una tool ES la señal. Verificá con `/mcp` dentro de la sesión, corregí `.env` y reiniciá la sesión: las variables se leen al spawnear el MCP (`AGENTS.md` Critical Rule #9).
+**Cargar `.env` antes de lanzar.** `bun run claude` / `bun run opencode` / `bun run codex` arrancan el binario a través de `varlock run` (`scripts/launch.ts`) y se niegan a arrancar mientras el shell exporte un valor distinto del de `.env`, porque bajo varlock gana el heredado. Los servers stdio no dependen de eso; la sesión, los servers remotos y los CLIs que corre el agente sí. Después de un cambio de `.env`, reiniciá la sesión. Una instalación vieja escribía copias en texto plano (bloque `env` de `.claude/settings.local.json`, `.auth/opencode/<VAR>`): `bun run harness:env` las retira y `bun run harness:env:check` sale con 1 mientras quede una.
+
+> **Regla crítica:** ningún server stdio se niega a arrancar por una variable faltante (el único error temprano es el `bearer_token_env_var` de un server remoto en Codex). Un 401/403 o una falla misteriosa de una tool ES la señal. Verificá con `/mcp` dentro de la sesión, corregí `.env` y reiniciá la sesión: las variables se leen al spawnear el MCP (`AGENTS.md` Critical Rule #9).
 
 ---
 
@@ -68,11 +72,12 @@ Los templates de este directorio usan `{{VARIABLE}}` solo como marcador de busca
 {
   "mcpServers": {
     "server-name": {
-      "command": "npx",
-      "args": ["-y", "package-name"],
-      "env": {
-        "API_KEY": "${API_KEY}"
-      }
+      "command": "bunx",
+      "args": [
+        "-p", "varlock@<pin>", "varlock", "run", "--no-redact-stdout",
+        "--inject", "vars", "--filter", "API_KEY", "--",
+        "npx", "-y", "package-name"
+      ]
     },
     "remote-server": {
       "type": "http",
@@ -107,17 +112,18 @@ Un server que solo agregás vos (por ejemplo búsqueda web) va al scope `user` o
   "mcp": {
     "server-name": {
       "type": "local",
-      "command": ["npx", "-y", "package-name"],
-      "environment": {
-        "API_KEY": "{file:.auth/opencode/API_KEY}",
-      },
+      "command": [
+        "bunx", "-p", "varlock@<pin>", "varlock", "run", "--no-redact-stdout",
+        "--inject", "vars", "--filter", "API_KEY", "--",
+        "npx", "-y", "package-name",
+      ],
       "enabled": true,
     },
     "remote-server": {
       "type": "remote",
       "url": "https://mcp.example.com/mcp",
       "headers": {
-        "Authorization": "Bearer {file:.auth/opencode/API_TOKEN}",
+        "Authorization": "Bearer {env:API_TOKEN}",
       },
       "oauth": false,
       "enabled": true,
@@ -127,9 +133,9 @@ Un server que solo agregás vos (por ejemplo búsqueda web) va al scope `user` o
 ```
 
 - `command` es un array (`["npx", "-y", "package"]`), nunca un string.
-- Las rutas de `{file:}` son relativas a `opencode.jsonc`, así que en un worktree leen su propio `.auth/opencode/` (`bun run worktree:provision` lo regenera).
+- El loader corre en el directorio de `opencode.jsonc`, así que en un worktree lee el `.env` de ese worktree (`bun run worktree:provision` lo copia).
 - `enabled: false` desactiva un server sin borrarlo.
-- El servicio en background cachea el config resuelto por directorio: después de reescribir un valor, `opencode service restart` (o cerrá todas las sesiones).
+- El servicio en background cachea el config resuelto por directorio: después de cambiar `.env` o el config, `opencode service restart` (o cerrá todas las sesiones).
 
 ---
 
@@ -137,13 +143,11 @@ Un server que solo agregás vos (por ejemplo búsqueda web) va al scope `user` o
 
 **Archivo de proyecto:** `.codex/config.toml`. Solo se carga si Codex confía en el repositorio; la confianza es estado de runtime, así que `bun run setup:doctor` la reporta como WARN. Codex CLI y Codex Desktop leen el mismo archivo. Guía del host: [`docs/setup/mcp/codex.md`](../setup/mcp/codex.md).
 
-Codex no interpola placeholders dentro de `args` ni de `[mcp_servers.X.env]`: un `${VAR}` ahí llega al server como texto literal. Un secreto se pasa **por nombre**:
+Codex no interpola placeholders dentro de `args` ni de `[mcp_servers.X.env]`: un `${VAR}` ahí llega al server como texto literal. No hace falta:
 
-- `env_vars = ["NOMBRE", ...]` en un server stdio: reenvía esas variables al proceso hijo.
-- `bearer_token_env_var = "NOMBRE"` en un server HTTP: envía `Authorization: Bearer <valor>`.
+- un server stdio que necesita valores arranca con el loader de `.env` (arriba), igual que en los otros dos hosts, más `startup_timeout_sec = 30` (un `bunx` en frío más el salto del loader puede pasar los 10 s por defecto);
+- `bearer_token_env_var = "NOMBRE"` en un server HTTP envía `Authorization: Bearer <valor>` desde el entorno del proceso;
 - `[mcp_servers.X.env]` queda para settings literales (`MCP_MODE = "stdio"`).
-
-**El loader de `.env`.** `env_vars` reenvía desde el entorno del proceso Codex, y Codex Desktop abierto desde Finder o el Dock no tiene ninguno. Por eso cada server stdio del repo arranca envuelto en `bunx -p dotenv-cli@<versión> dotenv -o -e .env -- <comando real>` (la versión fijada está en `.codex/config.toml`), con `startup_timeout_sec = 30` (un `bunx` en frío más el salto del loader puede pasar los 10 s por defecto):
 
 ```toml
 [mcp_servers.server-name]
@@ -151,17 +155,17 @@ command = "bunx"
 enabled = true
 startup_timeout_sec = 30
 args = [
-  "-p", "dotenv-cli@8.0.0", "dotenv", "-o", "-e", ".env", "--",
+  "-p", "varlock@<pin>", "varlock", "run", "--no-redact-stdout",
+  "--inject", "vars", "--filter", "API_KEY", "--",
   "npx", "-y", "package-name",
 ]
-env_vars = ["API_KEY"]
 
 [mcp_servers.remote-server]
 url = "https://mcp.example.com/mcp"
 bearer_token_env_var = "API_TOKEN"
 ```
 
-`bun run agents:compat:check` compara **los nombres de variables de `.env`** de los que depende cada host, no la forma del comando, así que el loader y `env_vars` pasan el gate. Un server stdio sin loader o sin `startup_timeout_sec` falla el check en el boilerplate y es WARNING en un proyecto derivado. Los bloques reales están en `.codex/config.toml`; los opt-in, ya envueltos, en [`codex.template.toml`](./codex.template.toml).
+`<pin>` es la versión exacta de la devDependency `varlock` (la que usan los configs commiteados). `bun run agents:compat:check` compara **los nombres de variables de `.env`** de los que depende cada host (el `--filter`) y la existencia de cada server. Un server stdio sin loader, con `env_vars` al lado del loader o sin `startup_timeout_sec` falla el check en el boilerplate y es WARNING en un proyecto derivado, con el lanzamiento exacto. Los bloques reales están en `.codex/config.toml`; los opt-in, ya con el loader, en [`codex.template.toml`](./codex.template.toml).
 
 ```bash
 # Server global (fuera de este repo)
@@ -179,8 +183,8 @@ codex mcp login remote-name
 
 Opt-in. La capacidad `db` del repo la da el MCP `supabase` commiteado; DBHub se suma solo cuando un proyecto necesita SQL contra una base que ese MCP no cubre.
 
-1. Copiá [`dbhub.example.toml`](./dbhub.example.toml) a `dbhub.toml` en el root. Usa `${VAR}`, que DBHub interpola desde el entorno al cargar, así que `dbhub.toml` se puede commitear sin secretos. Credenciales literales solo en `dbhub.local.toml` (ya gitignored).
-2. Agregá `DB_HOST`, `DB_USER` y `DB_PASSWORD` a `.env` (y vacías a `.env.example`).
+1. Copiá [`dbhub.example.toml`](./dbhub.example.toml) a `dbhub.toml` en el root. Usa `${VAR}`, que DBHub interpola desde su entorno al cargar (el loader de `.env` del bloque `sql` lo llena con su `--filter`), así que `dbhub.toml` se puede commitear sin secretos. Credenciales literales solo en `dbhub.local.toml` (ya gitignored).
+2. Declará `DB_HOST`, `DB_USER` y `DB_PASSWORD` en `.env.schema` (`@sensitive` en la contraseña), agregalas vacías a `.env.example` y con valor a `.env`. Una variable más en `dbhub.toml` va también al `--filter` del bloque `sql` en los tres hosts.
 3. Copiá el bloque `sql` de los tres templates a `.mcp.json`, `opencode.jsonc` y `.codex/config.toml`, y corré `bun run agents:compat:check`.
 4. Reiniciá la sesión y verificá con `/mcp`.
 
@@ -196,7 +200,7 @@ Requisitos: URL base de la API, URL del spec OpenAPI (JSON o YAML) y un bearer t
 
 > **IMPORTANTE:** el flag `--tools dynamic` es obligatorio. Sin él, el server responde 400.
 
-Bloques en los tres templates (`openapi`). Reemplazá `{{API_BASE_URL}}` y `{{OPENAPI_SPEC_URL}}` por las URLs de tu entorno. El header `API_HEADERS` lleva el token dentro del valor: en Claude Code y OpenCode referenciá la variable con la sintaxis del host; en Codex poné el valor entero (`API_HEADERS=Authorization:Bearer <token>`) en `.env` y reenvialo por nombre.
+Bloques en los tres templates (`openapi`). Reemplazá `{{API_BASE_URL}}` y `{{OPENAPI_SPEC_URL}}` por las URLs de tu entorno. El header `API_HEADERS` lleva el token dentro del valor y ningún host lo interpola: poné el valor entero (`API_HEADERS=Authorization:Bearer <token>`) en `.env`; el loader del bloque se lo pasa al server con `--filter API_HEADERS` en los tres hosts.
 
 | Tool                      | Descripción                           |
 | ------------------------- | ------------------------------------- |
@@ -212,7 +216,7 @@ Opt-in, servidor remoto.
 
 1. En https://www.postman.com: avatar → **Settings** → **API Keys** → **Generate API Key** (se muestra una sola vez).
 2. Guardala en `.env` como `POSTMAN_API_KEY`.
-3. Copiá el bloque `postman` de los tres templates. Codex la envía con `bearer_token_env_var = "POSTMAN_API_KEY"`.
+3. Copiá el bloque `postman` de los tres templates y reemplazá `{{POSTMAN_API_KEY}}` por `${POSTMAN_API_KEY}` (Claude Code) o `{env:POSTMAN_API_KEY}` (OpenCode). Codex la envía con `bearer_token_env_var = "POSTMAN_API_KEY"`. Es un server remoto: la key sale del entorno del proceso, así que lanzá con `bun run <harness>` (o direnv).
 
 Las tools cubren colecciones, requests, environments, specs, mocks y workspaces; `/mcp` lista las que expone tu versión.
 
@@ -254,13 +258,13 @@ El token dura lo que dice `expires_in` en la respuesta (en segundos). Ante un 40
 
 ### 401 / 403 o una tool que falla sin explicación
 
-Variable faltante o vacía (ver [Variables y secretos](#variables-y-secretos)). Corregí `.env`, corré `bun run harness:env` si el lanzamiento no fue por terminal, y reiniciá la sesión.
+Variable faltante o vacía (ver [Variables y secretos](#variables-y-secretos)). Corregí `.env` (`bunx varlock load --agent` muestra, redactado, qué valor falla el schema) y reiniciá la sesión.
 
 ### El MCP no aparece en `/mcp`
 
 - Revisá la sintaxis del archivo (root key, `command` como array en OpenCode).
 - Codex: confirmá que el repo es trusted.
-- OpenCode: un `{file:}` que apunta a un archivo inexistente invalida todo el config; `bun install` recrea los placeholders.
+- OpenCode: un `{file:}` que apunta a un archivo inexistente invalida todo el config (solo en un config viejo; los de este repo usan el loader de `.env`).
 - Reiniciá la sesión después de cada cambio.
 
 ### `bun run agents:compat:check` falla después de agregar un server

@@ -1979,8 +1979,8 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>
             <h3>Fase 4 · credenciales</h3>
             <p>
               Solo <span class="mono">.env</span>, solo valores que vos das en esta corrida, sin
-              repetirlos nunca. Después <span class="mono">bun run harness:env</span> y reiniciar la
-              sesión: el entorno se lee cuando arranca el servidor MCP.
+              repetirlos nunca. Después, reiniciar la sesión: cada servidor MCP lee el
+              <span class="mono">.env</span> con su loader cuando arranca.
             </p>
           </div>
           <div class="step">
@@ -2147,7 +2147,7 @@ bun run tooling:lint:check
             <ul>
               <li><span class="mono">.agents/project.yaml</span>, <span class="mono">.env</span> y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
               <li><span class="mono">AGENTS.md</span> + <span class="mono">CLAUDE.md</span>, solo a través de la fusión que guardó el instalador.</li>
-              <li>El plan, <span class="mono">.session/project-adoption/</span> y los archivos de credenciales que deriva <span class="mono">bun run harness:env</span>.</li>
+              <li>El plan, <span class="mono">.session/project-adoption/</span> y las copias en texto plano de credenciales MCP que retira <span class="mono">bun run harness:env</span>.</li>
             </ul>
             <div class="path">lista completa: references/adoption-workflow.md §Refusal list</div>
           </div>

@@ -105,7 +105,7 @@ This bootstraps `.agents/`, installs Engram (persistent memory) via gentle-ai `-
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
-**Launch the agent through the wrappers** `bun run claude`, `bun run opencode` or `bun run codex` (names in `package.json`): each loads `.env` so the MCP servers get their credentials. A launch with no command line (desktop app, a supervised worker) gets them from `bun run harness:env`, re-run after every `.env` change. A second working tree (`git worktree add`) needs `bun run worktree:provision` before its first session (`/git-flow-master`, `references/worktrees.md`).
+**Launch the agent through the wrappers** `bun run claude`, `bun run opencode` or `bun run codex` (names in `package.json`): each loads `.env` into the session. MCP servers get their credentials from the `.env` loader they start through (`varlock run --filter <its vars>`), so a launch with no command line (desktop app, a supervised worker) gets them too; after a `.env` change, restart the agent session. A second working tree (`git worktree add`) needs `bun run worktree:provision` before its first session (`/git-flow-master`, `references/worktrees.md`).
 
 > **Critical Rule #10** (AGENTS.md §1): for build/test/lint commands, **READ `package.json` DIRECTLY** — never trust a hardcoded list in a doc. Scripts drift; `package.json` is canonical.
 
@@ -192,12 +192,12 @@ Place these in `.env` before running anything that talks to a real environment:
 | `QA_E2E_USER_EMAIL` / `QA_E2E_USER_PASSWORD`   | **Automation identity** — the account live-UI validation and authenticated probes log in as. Declare the names in `.agents/project.yaml` → `testing.automation_identity`. Must be a DEDICATED non-production account; a missing slot STOPS the sprint instead of improvising a login. See `sprint-development/references/live-ui-identity.md` |
 | `LOCAL_USER_EMAIL` / `LOCAL_USER_PASSWORD`     | Local dev login (manual / ad-hoc)      |
 | `STAGING_USER_EMAIL` / `STAGING_USER_PASSWORD` | Staging smoke tests, manual login      |
-| `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, MCP atlassian, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
-| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime + Supabase MCP, when `stack.database.provider` is `supabase` (the full set is `.env.example`; an adopted app keeps its own variable names, inside or beside the sentinel block the adoption appended) |
+| `ATLASSIAN_EMAIL` / `ATLASSIAN_API_TOKEN` | `acli` Jira CLI, scripts/sync-jira-* (the site HOST is not here — it lives in `.agents/project.yaml` -> `issue_tracker.atlassian_url`; read it with `bun run --silent jira:url`) |
+| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` | App runtime, when `stack.database.provider` is `supabase` (the full set is `.env.example`; an adopted app keeps its own variable names, inside or beside the sentinel block the adoption appended) |
 | `SUPABASE_ACCESS_TOKEN`                        | Supabase MCP (personal access token), same condition |
 | `N8N_API_URL` / `N8N_API_KEY`                  | n8n MCP (`automation-flows`)           |
 
-`.mcp.json` is **committed** — it references env vars via `${VAR}` placeholders (Claude Code); OpenCode reads `{file:.auth/opencode/VAR}` files that `bun run harness:env` writes from `.env`, and Codex starts its servers through a `.env` loader. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
+`.mcp.json` is **committed**, like `opencode.jsonc` and `.codex/config.toml`: on all three hosts every server that needs `.env` values starts through the `.env` loader (`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`), which hands it only the variables it names. The actual secret values live in `.env` (gitignored). Never inline a real token in `.mcp.json`.
 
 Verify your config by running the linter declared in `package.json` (typically `bun run vars:check`). Always check `package.json` for the canonical script name — Critical Rule #10.
 
@@ -216,7 +216,7 @@ Every workflow skill has a deck on the docs hub, at `https://upex-galaxy.github.
 | `decks/<skill>/como-funciona.es.html`              | the workflow skill `<skill>`: every `kind: workflow` skill in `REGISTRY.md`, except `design-system` (next row) and this skill |
 | `decks/design-system/flujo-mockups.es.html`        | `design-system`: token phase and screen phase |
 | `decks/context-skills/como-funciona.es.html`       | the business context skills (`business-data-context`, `business-feature-context`, `business-api-context`) and `bun run context:map` |
-| `decks/tooling/como-funciona.es.html`              | the utility skills (`acli`, `vercel-cli`), CLI → skill auto-load, launch + `harness:env` |
+| `decks/tooling/como-funciona.es.html`              | the utility skills (`acli`, `vercel-cli`), CLI → skill auto-load, launch + the MCP `.env` loader |
 | `decks/agentic-dev-core/capa-comportamental.es.html` | how the agent writes back (AGENTS.md §2) |
 | `decks/agentic-dev-core/pbi-jira-cache.es.html`    | `.context/PBI/` as a Jira cache (`.agents/instructions/agent-local-context-pbi.md` §9) |
 | `decks/progressive-disclosure/como-funciona.es.html` | how the instructions load: always-on `AGENTS.md`, routed sections, the hook's `ROUTE:` line, budgets (ADR-0009) |
@@ -256,7 +256,7 @@ Run through this checklist before you reach for your first ticket:
 - [ ] Adopted app only: is the adoption committed, and does `/project-adoption check` report every signal `ADOPTED`?
 - [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `SUPABASE_*`, `N8N_*`)? Did you connect a web-search provider at harness level (`bun run setup:doctor`)?
-- [ ] Did you launch the agent through `bun run claude|opencode|codex` (or run `bun run harness:env` for a launch with no command line)?
+- [ ] Did you launch the agent through `bun run claude|opencode|codex` (a desktop or native launch also works: MCP servers read `.env` through the loader)?
 - [ ] Does the agents linter (`bun run vars:check` per `package.json`) exit clean (0 errors)?
 - [ ] Does Engram appear in the active MCP list (restart your agent if not)?
 - [ ] Did you open the docs hub (`https://upex-galaxy.github.io/agentic-dev-boilerplate/`) and the deck of the skill you are about to use?

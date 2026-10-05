@@ -273,7 +273,7 @@ export function worktreeSetupAction(state: WorktreeSetupState): PendingAction | 
   return {
     type: 'shell_command',
     target: 'bun run worktree:provision',
-    hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here.`,
+    hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here: every MCP server reads this worktree's own .env through the .env loader, and a template one hands them empty values.`,
   };
 }
 
@@ -355,8 +355,24 @@ interface DoctorReport {
    * map, and an old `.context/business/` markdown map beside it is kept as input.
    */
   context_maps: string[]
-  /** `.env` vs the per-harness credential surfaces `bun run harness:env` writes. NAMES only, never a value. */
+  /**
+   * Whether a plaintext copy of an MCP credential is still on disk.
+   *
+   * Every MCP server reads `.env` itself through the `.env` loader (ADR-0012),
+   * so the copies an older `bun run harness:env` generated
+   * (`.claude/settings.local.json` env block, `.auth/opencode/`) are only a
+   * leak surface the AI can read. A stale copy is a pending action
+   * (`bun run harness:env` retires it); a copy a legacy host config still
+   * reads, and a backup waiting for the human, are informational.
+   *
+   * `findings` carries variable NAMES and a verdict only, never a value.
+   */
   harness_env: HarnessEnvDiagnostic
+  /**
+   * Where secret VALUES come from (`.agents/project.yaml` -> `secrets:`,
+   * ADR-0011) and whether the committed overlay agrees. NAMES only.
+   */
+  secrets_provider: SecretsProviderDiagnostic
   /**
    * Which key paths upstream's `.agents/project.schema.yaml` declares that this
    * project's `.agents/project.yaml` does not have.
@@ -434,10 +450,26 @@ interface ProjectSchemaDiagnostic {
 }
 
 interface HarnessEnvDiagnostic {
+  /** false when at least one blocking finding stands. */
   ok: boolean
+  /** One line: how many stale copies remain, or that none does. */
   summary: string
+  /** The MCP credential names the configs declare, for the record. Never their values. */
   allowlist: string[]
   findings: Array<Omit<HarnessEnvFinding, 'kind'> & { kind: HarnessEnvFinding['kind'] | 'check-failed' }>
+}
+
+export interface SecretsProviderDiagnostic {
+  /** `secrets.provider`, or null when the block could not be read (see `note`). */
+  provider: string | null
+  /** `.env.provider.schema` (references only) is on disk. */
+  overlay_present: boolean
+  /** NAMES the overlay resolves from the manager (active item lines). */
+  vault_items: string[]
+  /** The manager's CLI is on PATH; null when the provider needs none. */
+  cli_installed: boolean | null
+  /** Set when the yaml block could not be parsed. */
+  note: string | null
 }
 
 // ----------------------------------------------------------------------------
@@ -558,11 +590,11 @@ function compareVersion(a: readonly number[], b: readonly number[]): number {
 }
 
 // ----------------------------------------------------------------------------
-// Harness credential surfaces
+// Plaintext MCP credential copies
 // ----------------------------------------------------------------------------
 
 /**
- * `.env` against the files Claude Code and OpenCode read at startup
+ * The plaintext MCP credential copies an older install left on disk
  * (`bun run harness:env --check`, as data).
  *
  * DYNAMIC import: `cli/lib/harness-env.ts` imports `cli/install.ts`, which pulls
@@ -589,6 +621,32 @@ async function harnessEnvDiagnostic(): Promise<HarnessEnvDiagnostic> {
         blocking: true,
       }],
     };
+  }
+}
+
+/**
+ * Where secret values come from. `local` is the default and needs nothing; a
+ * manager needs its committed overlay (references only) and, for 1Password,
+ * the `op` CLI on a developer machine. NAMES only: the overlay holds `op://`
+ * references and this reads only which keys it activates.
+ *
+ * DYNAMIC import: `secret-providers.ts` pulls the `yaml` package, and this
+ * module must stay loadable with node built-ins only for `--preflight`.
+ */
+async function secretsProviderDiagnostic(): Promise<SecretsProviderDiagnostic> {
+  try {
+    const { PROVIDER_SCHEMA_FILE, providerResolvedKeysIn, readSecretsConfig } = await import('./lib/secret-providers.ts');
+    const overlay_present = existsSync(join(REPO_ROOT, PROVIDER_SCHEMA_FILE));
+    const vault_items = providerResolvedKeysIn(REPO_ROOT);
+    let provider: string | null = null;
+    let note: string | null = null;
+    try { provider = readSecretsConfig(join(REPO_ROOT, '.agents', 'project.yaml')).provider; }
+    catch (err) { note = (err as Error).message; }
+    const cli_installed = provider === '1password' ? tryRun('op', ['--version']).ok : null;
+    return { provider, overlay_present, vault_items, cli_installed, note };
+  }
+  catch (err) {
+    return { provider: null, overlay_present: false, vault_items: [], cli_installed: null, note: `provider check could not run: ${(err as Error).message}` };
   }
 }
 
@@ -773,6 +831,7 @@ async function runDoctor(): Promise<DoctorReport> {
     harness_level_mcps: harnessLevelMcpReport(),
     context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
     harness_env: await harnessEnvDiagnostic(),
+    secrets_provider: await secretsProviderDiagnostic(),
     project_schema: await projectSchemaDiagnostic(),
     stack: await stackDiagnostic(),
     tooling_isolation: toolingIsolationDiagnostic(),
@@ -890,7 +949,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'system_install',
       target: 'direnv',
-      hint: 'Optional. Claude and OpenCode read their MCP credentials from the files `bun run harness:env` generates, and Codex starts each MCP server through a .env loader; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
+      hint: 'Optional. Every MCP server starts through the .env loader, which reads .env (or the secret manager) itself on every host; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
       where: installCommandForPlatform(),
     });
   }
@@ -937,16 +996,54 @@ async function runDoctor(): Promise<DoctorReport> {
   }
 
   // A missing `.env` (or an unprovisioned worktree) already has its own action
-  // above, and running the generator before that is fixed is refused anyway.
+  // above: the retirement compares each copy with `.env`, so fix that first.
   if (!report.harness_env.ok && report.env_file_exists && worktreeFix === null) {
     const blocking = report.harness_env.findings.filter(f => f.blocking);
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun run harness:env',
-      hint: 'The per-harness credential surfaces disagree with .env, so an MCP server '
-        + `launched without a command line (desktop app, supervised worker) gets no credential: ${
+      hint: 'A plaintext copy of an MCP credential is still on disk, readable by any agent, '
+        + 'although every MCP server now reads .env through the .env loader. The command deletes a copy '
+        + `.env reproduces and backs up the rest, naming them: ${
           blocking.map(f => `${f.kind} (${f.names.join(', ')})`).join('; ')}`,
       where: '.claude/settings.local.json + .auth/opencode/',
+    });
+  }
+
+  // Secret manager: a provider without its overlay resolves nothing from the
+  // vault, and an overlay with `provider: local` still does. Both are the yaml
+  // and the committed file disagreeing; `bun run setup` rewrites the pair.
+  const sp = report.secrets_provider;
+  if (sp.note !== null && sp.provider === null) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `The secrets: block of .agents/project.yaml could not be read (${sp.note}). Fix it, or re-run the secret-manager step of setup.`,
+      where: '.agents/project.yaml',
+    });
+  }
+  else if (sp.provider !== null && sp.provider !== 'local' && !sp.overlay_present) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `secrets.provider is ${sp.provider} but .env.provider.schema is missing, so nothing resolves from the vault and every launch reads .env alone. Re-run the secret-manager step of setup to write the overlay.`,
+      where: '.env.provider.schema',
+    });
+  }
+  else if (sp.provider === 'local' && sp.overlay_present && sp.vault_items.length > 0) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `secrets.provider is local but .env.provider.schema still resolves ${sp.vault_items.join(', ')} from a vault. Pick one: re-run the secret-manager step of setup, or delete the overlay.`,
+      where: '.env.provider.schema',
+    });
+  }
+  if (sp.provider === '1password' && sp.cli_installed === false) {
+    report.pending_actions.push({
+      type: 'system_install',
+      target: 'op',
+      hint: 'secrets.provider is 1password and the 1Password CLI is not on PATH, so every vault-backed item resolves empty on this machine (CI uses OP_SERVICE_ACCOUNT_TOKEN instead).',
+      where: 'https://developer.1password.com/docs/cli/get-started/',
     });
   }
 
@@ -1132,17 +1229,39 @@ function printHuman(report: DoctorReport): void {
   ]);
   process.stdout.write(`${tui.table(['Variable', 'Status', 'Value'], envRows)}\n`);
 
-  // Per-harness credential surfaces. Its own section because it is per-VARIABLE
-  // and per-surface: an exit code says something is stale, not WHICH credential.
-  tui.section('Harness credential surfaces (.env -> the files a harness reads at startup)');
+  // Plaintext MCP credential copies. Its own section because it is
+  // per-VARIABLE and per-file: an exit code says a copy remains, it does not say
+  // WHICH credential sits in WHICH file.
+  tui.section('Plaintext MCP credential copies (MCP servers read .env through the .env loader)');
   process.stdout.write(`  ${tui.statusIcon(report.harness_env.ok ? 'ok' : 'fail')} ${report.harness_env.summary}\n`);
-  process.stdout.write(`  allowlist: ${report.harness_env.allowlist.join(', ') || '(none)'}\n`);
+  process.stdout.write(`  MCP credentials declared: ${report.harness_env.allowlist.join(', ') || '(none)'}\n`);
   for (const finding of report.harness_env.findings) {
     process.stdout.write(`  ${tui.statusIcon(finding.blocking ? 'fail' : 'warn')} ${finding.kind}: ${finding.names.join(', ') || '-'}\n`);
     process.stdout.write(`    ${finding.detail}\n`);
   }
   if (!report.harness_env.ok) {
-    process.stdout.write('  Fix: bun run harness:env  (values are never printed by the generator or by this report)\n');
+    process.stdout.write('  Fix: bun run harness:env  (retires the copies; values are never printed by it or by this report)\n');
+  }
+  process.stdout.write('\n');
+
+  // Secret source. Names where values come from and what reads them: only a
+  // varlock launch (`bun run claude|codex|opencode`, the MCP .env loader, the
+  // gates) reaches the vault; a shell that sourced .env (direnv) does not.
+  tui.section('Secret source (.agents/project.yaml -> secrets:)');
+  const sp = report.secrets_provider;
+  if (sp.provider === null) {
+    process.stdout.write(`  ${tui.statusIcon('fail')} provider unknown: ${sp.note ?? 'not read'}\n`);
+  }
+  else if (sp.provider === 'local') {
+    process.stdout.write(`  ${tui.statusIcon(sp.overlay_present && sp.vault_items.length > 0 ? 'warn' : 'ok')} local: values come from .env / .env.local${sp.overlay_present && sp.vault_items.length > 0 ? ` (but .env.provider.schema still resolves ${sp.vault_items.join(', ')})` : ''}\n`);
+  }
+  else {
+    process.stdout.write(`  ${tui.statusIcon(sp.overlay_present ? 'ok' : 'fail')} ${sp.provider}: overlay ${sp.overlay_present ? `present, ${sp.vault_items.length} item(s) from the vault: ${sp.vault_items.join(', ') || '(none active)'}` : 'MISSING (nothing resolves from the vault)'}\n`);
+    if (sp.cli_installed !== null) {
+      process.stdout.write(`  ${tui.statusIcon(sp.cli_installed ? 'ok' : 'warn')} manager CLI ${sp.cli_installed ? 'on PATH' : 'not on PATH (vault items resolve empty here; CI uses its service-account token)'}\n`);
+    }
+    process.stdout.write('  Vault values reach: bun run claude | codex | opencode, every MCP server (.env loader), and `bunx varlock run -- <cmd>`.\n');
+    process.stdout.write('  They do NOT reach a shell that sourced .env (direnv, `source .env`): run a shell CLI as `bunx varlock run -- <cmd>` instead.\n');
   }
   process.stdout.write('\n');
 

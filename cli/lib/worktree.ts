@@ -87,6 +87,14 @@ export interface ProvisionCopy {
 }
 
 /**
+ * `.auth/` children left by the retired `harness:env` generator. Declared here,
+ * Node built-ins only, because `scripts/provision-worktree.ts` needs them
+ * before `bun install` has run; `cli/lib/harness-env.ts` re-exports them.
+ */
+export const OPENCODE_SECRET_DIR = '.auth/opencode';
+export const HARNESS_ENV_BACKUP_DIR = '.auth/harness-env-backup';
+
+/**
  * Every gitignored path a fresh worktree cannot rebuild by itself. Each one is
  * optional: absent in the primary means skipped, never an error.
  *
@@ -237,7 +245,7 @@ export const AUDIT_RULES: readonly AuditRule[] = [
 
   // DISPOSABLE: run output, session material and editor litter.
   { pattern: /^(test-results|playwright-report|blob-report)(\/|$)/, class: 'disposable', note: 'test run output' },
-  { pattern: /^(\.auth|playwright\/\.auth)(\/|$)/, class: 'disposable', note: 'browser session material and the OpenCode credential files `bun run harness:env` regenerates from .env; never durable (ephemeral-artifact contract)' },
+  { pattern: /^(\.auth|playwright\/\.auth)(\/|$)/, class: 'disposable', note: 'browser session material, plus the plaintext MCP credential copies `bun run harness:env` retires (the .env loader made them obsolete); never durable (ephemeral-artifact contract)' },
   { pattern: /(^|\/)[^/]*(storage-state|storageState)[^/]*\.json$|\.cookies$|(^|\/)cookies\.txt$|\.har$/, class: 'disposable', note: 'session material; never durable (ephemeral-artifact contract)' },
   { pattern: /^\.playwright(\/|$)|^\.playwright-mcp(\/|$)|^\.playwright-cli(\/|$)|(^|\/)storage-state-[^/]*\.json$/, class: 'disposable', note: 'browser output and sessions' },
   { pattern: /(^|\/)(npm-debug|yarn-debug|yarn-error|\.pnpm-debug)\.log/, class: 'disposable', note: 'debug logs' },

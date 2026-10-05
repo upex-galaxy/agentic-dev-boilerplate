@@ -7,9 +7,11 @@
 # project needs raw SQL against a database the Supabase MCP does not cover.
 # Documentation: https://dbhub.ai/config/toml
 #
-# Credentials never live in this file. DBHub interpolates `${VAR}` from the
-# process environment at load time, so a dbhub.toml written with `${VAR}` can
-# be committed (same convention as .mcp.json) while the values stay in .env.
+# Credentials never live in this file. DBHub interpolates `${VAR}` from its
+# process environment at load time, which the opt-in `sql` block fills through
+# the .env loader (`varlock run --filter DB_HOST,DB_USER,DB_PASSWORD`), so a
+# dbhub.toml written with `${VAR}` can be committed while the values stay in
+# .env. A name added here goes into that block's --filter on all three hosts.
 # Literal credentials go in dbhub.local.toml, which .gitignore already covers.
 #
 # An unset variable is left as the literal `${VAR}` text and DBHub raises no

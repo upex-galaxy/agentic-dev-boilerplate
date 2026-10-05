@@ -18,7 +18,7 @@ The mutation phases NEVER:
 - push;
 - write a secret value anywhere (`.env` included: the human types secrets, the plan lists the missing NAMES), open `.env*` (except `.env.example`) or `.auth/**`, or echo a value into the plan, a report or a commit (Critical Rule #1, `agentic-dev-core/references/secret-hygiene.md`).
 
-The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env` for NON-sensitive values only (a URL, a project key, a flag, a port) through `bun run env:set KEY=value`, never a secret; `.agents/jira-*.json` catalogs; a framework skill folder `.agents/skills/<name>/` the app had copied in by hand, replaced ONLY by upstream's copy the adoption saved under `.agents/prompts/adopt-upstream/<name>/` (the app's copy backed up under `.backups/project-adoption/` first); `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the app's `<app>-context` skill the adoption wrote (`.agents/skills/<app>-context/`): its `SKILL.md` `description` only, never the preserved text in `references/app-instructions.md`, plus the one-time move of a legacy `## 0. Project instructions (pre-adoption)` block into it (Phase 6); the pointer section of `.agents/instructions/agent-project.md` that names that skill; the per-harness credential files `bun run harness:env` derives from `.env`; `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
+The ALLOWLIST (what a write phase may touch, each only when its plan row is approved): `.agents/project.yaml`; `.env` for NON-sensitive values only (a URL, a project key, a flag, a port) through `bun run env:set KEY=value`, never a secret; `.agents/jira-*.json` catalogs; a framework skill folder `.agents/skills/<name>/` the app had copied in by hand, replaced ONLY by upstream's copy the adoption saved under `.agents/prompts/adopt-upstream/<name>/` (the app's copy backed up under `.backups/project-adoption/` first); `api/openapi.json` + `api/openapi-types.ts` when both were absent before adoption; `AGENTS.md` + `CLAUDE.md` through the updater's saved merge only (backups under `.backups/project-adoption/`, the saved `.agents/prompts/adopt-instructions.md` removed once applied); the app's `<app>-context` skill the adoption wrote (`.agents/skills/<app>-context/`): its `SKILL.md` `description` only, never the preserved text in `references/app-instructions.md`, plus the one-time move of a legacy `## 0. Project instructions (pre-adoption)` block into it (Phase 6); the pointer section of `.agents/instructions/agent-project.md` that names that skill; the plaintext MCP credential copies `bun run harness:env` retires (an app machine that ran the old generator: deleted, or moved to `.auth/harness-env-backup/` and named); `.context/reports/project-adoption-plan.md`; `.session/project-adoption/`.
 
 ---
 
@@ -136,7 +136,7 @@ Re-read the approved plan first. Each step writes only its approved rows.
 
 1. `.env` absent -> copy `.env.example`. Never overwrite an existing `.env`; an app that keeps `.env.local` keeps it, and the plan says which file the tooling reads.
 2. Fill only values the user supplies in this run (tracker credentials, DB MCP token when the team wants the later map session to read the live schema). Never echo a value back.
-3. `bun run harness:env`, then tell the user to restart the agent session before any MCP-backed hand-off (the env is read when the MCP server spawns).
+3. Tell the user to restart the agent session before any MCP-backed hand-off: each MCP server reads `.env` through the `.env` loader when it spawns, so nothing is derived or copied.
 4. Verify: `bun run vars:env:check` and `bun run harness:env:check` exit 0.
 
 ## Phase 5: issue-tracker catalogs (writes `.agents/jira-*.json` only)
@@ -193,7 +193,7 @@ Stop at the first failure, report it with its output, propose the fix, and wait:
 |---|---|---|---|
 | 1 | An app script named like a tooling script (`test`, `lint:fix`) | `bun run test` runs the app's suite, not the tooling's | report the collision; the tooling gate runs through its own script names in the plan |
 | 2 | Adoption install not committed | entry gate refuses on a dirty tree | commit the install through `/git-flow-master`, then rerun |
-| 3 | `.env` value changed mid-run | MCP still uses the old value | `bun run harness:env`, restart the session |
+| 3 | `.env` value changed mid-run | MCP still uses the old value | restart the session (OpenCode: `opencode service restart` too) |
 | 4 | App keeps `.env.local`, tooling reads `.env` | `vars:env:check` passes, app secrets unseen | expected: tooling and app read different files; the plan says so |
 | 5 | Several Next.js apps in `apps/*` | `detectStack` picks the first | ask in 1.6, set `stack.app_root` explicitly |
 | 6 | Instruction merge left pending with `--auto` | plain `bun run up` refuses at preflight | Phase 6 with its own approval line |

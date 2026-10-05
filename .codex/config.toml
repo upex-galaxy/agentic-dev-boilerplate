@@ -5,29 +5,26 @@
 # compares the three semantically, so a server added to one host only fails.
 # Web search runs at harness level (~/.codex/config.toml), never here: see
 # .agents/skills/agentic-dev-core/references/mcp-capabilities.md.
-#
-# Codex never expands `${VAR}` in args or env values. Every secret is therefore
-# forwarded BY NAME (`env_vars`): the stdio servers read them through the .env
-# loader below; `[mcp_servers.X.env]` tables hold literal settings only. The parity check compares the .env variable names each host
-# depends on, so the command shape may differ from .mcp.json where Codex needs it.
 
 [shell_environment_policy]
 inherit = "core"
 
-# EVERY stdio server below starts through a .env loader: `bunx -p
-# varlock@1.20.0 varlock run --no-redact-stdout -- <the real command>`.
-# `env_vars` forwards variables BY NAME from Codex's own process environment,
-# and Codex Desktop opened from Finder or the Dock has none, so without the
-# loader those servers started empty. varlock reads .env / .env.local from the
-# project root, validated against .env.schema, whatever launched Codex. An
-# inherited variable wins over the files (varlock's precedence), which is why
-# `bun run codex` refuses to launch on a differing one. `--no-redact-stdout`
-# keeps varlock from rewriting the server's JSON-RPC stream on the stdio pipe.
-# `env_vars` stays: it is what `bun run agents:compat:check` compares across
-# the three hosts.
+# EVERY server below that needs .env values starts through the .env loader:
+# `bunx -p varlock@1.20.0 varlock run --no-redact-stdout --inject vars --filter
+# A,B -- <the real command>`. Codex Desktop opened from Finder or the Dock has
+# no process environment, so the values cannot come from Codex: the loader
+# reads the varlock schema plus .env / .env.local (or the secret manager the
+# schema names) from the project root whatever launched Codex, and hands the
+# server ONLY the variables in its --filter. `--no-redact-stdout` keeps the
+# JSON-RPC stream byte-intact (varlock redacts piped output otherwise). No
+# `env_vars` beside it: the filter IS the server's dependency list, and
+# `bun run agents:compat:check` compares it across the three hosts. Same loader
+# on every host: MCP_ENV_LOADER_* in cli/lib/agent-compatibility-contracts.ts
+# (ADR-0012). context7 needs no value, so it starts without the loader.
 #
 # Needs `bun install` once (the varlock devDependency, same exact pin) and a
-# .env in the checkout.
+# .env in the checkout. A value that fails the schema stops the server that
+# needs it: `bunx varlock load --agent` shows which, redacted.
 #
 # `startup_timeout_sec = 30` on each: Codex waits 10 s by default, and a cold
 # `bunx` / `npx` fetch plus the loader hop can pass that before the first
@@ -38,22 +35,13 @@ command = "bunx"
 enabled = true
 startup_timeout_sec = 30
 args = [
-  "-p",
-  "varlock@1.20.0",
-  "varlock",
-  "run",
-  "--no-redact-stdout",
-  "--",
-  "bunx",
   "-y",
   "@upstash/context7-mcp",
 ]
 
-# @supabase/mcp-server-supabase reads SUPABASE_ACCESS_TOKEN from the environment
-# when --access-token is absent (documented fallback), so the token is forwarded
-# instead of interpolated. The URL and the two keys travel under their .env
-# names; the SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY aliases
-# that .mcp.json sets are the same three variables, renamed.
+# @supabase/mcp-server-supabase reads one variable, SUPABASE_ACCESS_TOKEN (its
+# documented fallback when --access-token is absent), so that is the whole
+# filter: the project URL and the publishable / secret keys never reach it.
 [mcp_servers.supabase]
 command = "bunx"
 enabled = true
@@ -64,16 +52,14 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "SUPABASE_ACCESS_TOKEN",
   "--",
   "bunx",
   "-y",
   "@supabase/mcp-server-supabase@latest",
-]
-env_vars = [
-  "SUPABASE_ACCESS_TOKEN",
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "SUPABASE_PUBLISHABLE_KEY",
-  "SUPABASE_SECRET_KEY",
 ]
 
 [mcp_servers.n8n]
@@ -86,14 +72,14 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "N8N_API_URL,N8N_API_KEY",
   "--",
   "npx",
   "-y",
   "n8n-mcp",
-]
-env_vars = [
-  "N8N_API_URL",
-  "N8N_API_KEY",
 ]
 
 [mcp_servers.n8n.env]

@@ -10,7 +10,7 @@ A secret VALUE that enters the model context also enters the provider request an
 |---|---|---|
 | `curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" ...` | no | the command text carries the NAME; the shell expands it inside the child process |
 | `printf '%s' "$ATLASSIAN_API_TOKEN" \| <cli> login --token-stdin` (the tracker login: `[ISSUE_TRACKER_TOOL] Authenticate`, owned by `/acli`) | no | the value goes into a pipe, never to the output |
-| `${SUPABASE_SECRET_KEY}` in `.mcp.json`, `{file:.auth/opencode/VAR}` in `opencode.jsonc`, `env_vars` in `.codex/config.toml` | no | the harness resolves it outside the transcript |
+| `--filter SUPABASE_ACCESS_TOKEN` on the `.env` loader of an MCP server in `.mcp.json`, `opencode.jsonc` or `.codex/config.toml` | no | the loader resolves it in the server's own process, outside the transcript |
 | `Read(.env)`, `cat .env`, `grep KEY .env`, `awk 1 .env` | **yes** | the file content becomes tool output |
 | `printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v` | **yes** | the value (or the `Authorization:` header) is printed |
 | `varlock printenv`, `varlock reveal`, `varlock load` without `--agent` | **yes** | these print raw values by design |
@@ -21,12 +21,12 @@ A secret VALUE that enters the model context also enters the provider request an
 | Path | What it holds |
 |---|---|
 | `.env`, `.env.local`, `.env.*.local`, `.envrc.local` | the values themselves |
-| `.auth/**` | value files written by `bun run harness:env` for OpenCode (`.auth/opencode/<VAR>`), session state written by any login flow |
-| `.claude/settings.local.json` | the `env` block `bun run harness:env` writes for Claude Code |
+| `.auth/**` | session state written by any login flow; on a machine set up before the `.env` loader, the plaintext MCP copies `bun run harness:env` retires (`.auth/opencode/<VAR>`) and the backup it moves the unmatched ones to (`.auth/harness-env-backup/`) |
+| `.claude/settings.local.json` | per-developer settings; on an older machine, an `env` block of MCP credentials until `bun run harness:env` retires it |
 
 Readable, and the right place to learn a variable's NAME, type and sensitivity: `.env.example` and the committed `.env*.schema` files: `.env.schema` (project-owned), `.env.core.schema` (generated from `cli/lib/variables-manifest.ts`, the variable routing table) and, when the project opted into a secret manager, `.env.provider.schema` (references such as `op(op://<vault>/<VAR>/password)`, never a value).
 
-Never `source` a file under `.auth/opencode/`: each one holds a bare value, not a `KEY=value` line, so the shell tries to run the value as a command and prints it in the error.
+Never `source` a file under `.auth/`: a retired copy holds a bare value, not a `KEY=value` line, so the shell tries to run the value as a command and prints it in the error.
 
 ## 3. Safe command shapes
 
@@ -40,6 +40,8 @@ bun run vars:env:check         # inherited process value vs .env / .env.local; l
 ```
 
 The last form checks the CURRENT process environment, which is what a launch through `bun run claude|codex|opencode` populated. `bunx varlock load --agent` redacts only what the schema marks `@sensitive` and prints every other value in full: a secret declared without `@sensitive` (a project variable added to `.env.schema` in a hurry) is exposed by it, so mark it first. Never `varlock load` without `--agent`, nor `--format env|shell|json-full` without `--agent`.
+
+Never run `varlock load` (even `--agent`) against a schema you have not checked for `@sensitive` coverage: `--agent` redacts only the items the schema marks sensitive and prints every other value in clear, including one inherited from the shell. Scratch schemas are banned. The committed ones are checked by `bun run vars:schema:check`, which fails on any secret-looking key (`SECRET_NAME_PATTERNS` in `cli/lib/env-schema.ts`) without `@sensitive`. The same goes for any CLI that lists a harness's MCP config (`codex mcp list`, `claude mcp list`): it prints user-level server arguments, API keys included.
 
 **The variable is in `.env` but not in this session's environment** (the session was launched without the loader). Run the command THROUGH the loader in a subprocess; the loader reads the file, the AI never does:
 

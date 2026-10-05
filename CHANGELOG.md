@@ -5,6 +5,46 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — MCP servers read `.env` through a filtered loader; no plaintext credential copies
+
+Every MCP server that needs `.env` values now starts through
+`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`
+on Claude Code, OpenCode and Codex, so a desktop or natively launched harness
+gets its credentials (from `.env` or the secret manager) with nothing copied to
+disk, and each server sees only its own variables (ADR-0012).
+
+### Changed
+
+- **One filtered loader on every host**: `.mcp.json`, `opencode.jsonc`,
+  `.codex/config.toml`; `agents:compat:check` treats the `--filter` as the
+  server's dependency set and rejects a host-side reference beside it (warning
+  downstream, naming the exact launch). context7 launches bare. The Supabase
+  server receives `SUPABASE_ACCESS_TOKEN` only: it never read the URL or the
+  publishable / secret key the old configs mapped into it.
+- **`bun run harness:env` retires instead of generating**: the `.claude/settings.local.json`
+  env block and `.auth/opencode/` copies are deleted when `.env` holds the same
+  value, otherwise moved to `.auth/harness-env-backup/` and named. `setup`
+  retires in Step 7d, `setup --variables` prints a restart notice, and
+  `worktree:provision` derives nothing from `.env`.
+- **`.envrc`** loads `.env` then `.env.local` (varlock's order) with
+  `watch_file`, and is only for shell CLIs.
+
+### Added
+
+- **Sensitivity lint** in `bun run vars:schema:check` (so `repo:check` and the
+  pre-commit gate): a key matching `SECRET_NAME_PATTERNS` without `@sensitive`
+  in any schema varlock loads fails the gate, because `varlock load --agent`
+  prints unmarked values in clear.
+- **`setup:doctor` "Secret source"**: the provider, its overlay, the names it
+  resolves from the vault, the manager CLI, and where vault values reach.
+
+### Migration
+
+Run `bun run harness:env` in the main checkout (and in each worktree) to retire
+the old copies, then restart the agent session. A downstream project on the old
+config shape gets one `agents:compat:check` warning per server naming the launch
+to paste.
+
 ## 2026-10-03 — Brownfield adoption: install the agentic layer into an existing app (updater 8.8)
 
 An application that already has its own code, schema, CI and conventions can

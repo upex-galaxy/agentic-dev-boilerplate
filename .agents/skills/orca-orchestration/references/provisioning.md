@@ -13,7 +13,7 @@ gap. It disguises itself as something else, and the worker then debugs the wrong
 
 | Missing | Git state | How it fails without it | How it is restored |
 |---|---|---|---|
-| `.env` (and `.env.local`, `.envrc.local`) | ignored | **silent on every host but Codex** (Critical Rule #9): `.mcp.json` uses `${VAR}` placeholders, and an unset `${VAR}` is passed through as the LITERAL string, so the server starts and dies on its first authenticated call (401/403), not at parse time. Any script needing credentials fails on missing variables | copied from the primary checkout, mode `0600`. On the SUPERVISED path the file existing is not enough — see §1b |
+| `.env` (and `.env.local`, `.envrc.local`) | ignored | **silent on every host** (Critical Rule #9): every MCP server that needs `.env` values starts through the `.env` loader, which reads THIS checkout's `.env`; with no file the server starts without its credential and dies on its first authenticated call (401/403), not at parse time. Any script needing credentials fails on missing variables | copied from the primary checkout, mode `0600`. On the SUPERVISED path the file existing is not enough — see §1b |
 | `.vercel/` (the `vercel link` output) | ignored | loud with the wrong message: the Vercel CLI asks to link a project, and `/vercel-cli` deploy verification cannot find the project id | copied from the primary checkout |
 | `.claude/settings.local.json`, `.mcp.local.json`, `opencode.local.jsonc` | ignored | quiet: per-developer permissions and MCP overrides are missing, so the worker prompts for permissions nobody answers or runs without an override the owner relies on | copied from the primary checkout, mode `0600` |
 | the `.claude/skills` alias → `.agents/skills` | ignored | loud, on Claude Code only: `Skill` answers `Unknown skill`. OpenCode and Codex read `.agents/skills/` natively and do not need it | `bun run agents:compat` inside the worktree (it creates a POSIX symlink or a Windows junction) |
@@ -23,8 +23,8 @@ gap. It disguises itself as something else, and the worker then debugs the wrong
 | `.session/` | ignored | the brief, the roster and the run files are simply absent inside the worktree | do NOT copy it. Cite ABSOLUTE paths into the PRIMARY checkout (`<<PRIMARY_ROOT>>`, `.agents/README.md` §"Checkout roots") from the prompt. Anything written inside a worktree dies with it; `bun run worktree:audit --rescue` (§5) copies what a worker wrote there anyway |
 
 **Present in a fresh worktree because they are committed**: everything `git ls-files` lists, which
-includes the MCP config of each host (with its host-specific env placeholders, hence the `.env`
-dependency), `.agents/project.yaml`, the Jira catalogs under `.agents/`, every T1 skill under
+includes the MCP config of each host (each server that needs values starts through the `.env` loader,
+hence the `.env` dependency), `.agents/project.yaml`, the Jira catalogs under `.agents/`, every T1 skill under
 `.agents/skills/`, `.envrc`, `.worktreeinclude` and `orca.yaml`.
 
 ---
@@ -35,30 +35,27 @@ A launch line LOADS the env file: the `bun run <harness>` wrappers in `package.j
 under `varlock run` (through `scripts/launch.ts`), which is why the human-paste path is immune. The supervised native launch
 has no launch line, so a worker gets credentials only from what reaches it WITHOUT that wrapper:
 
-- **The harness surfaces `bun run harness:env` writes from `.env`.** A Claude Code worker reads the
-  `env` block of `.claude/settings.local.json`; on macOS/Linux the harness reads the MAIN checkout's
-  copy even inside a worktree, so the command writes there from any checkout and every worktree
-  inherits it. An OpenCode worker reads `.auth/opencode/<VAR>` through the `{file:}` references in
-  `opencode.jsonc`; those files are worktree-local, and provisioning regenerates them from the copied
-  `.env` (it never copies `.auth/`). This is the route by which a Claude Code or OpenCode worker's MCP
-  servers get their credentials, with no shell involved.
-- **Codex stdio MCP servers** start through a `.env` loader declared in `.codex/config.toml`
-  (`.agents/instructions/agent-harnesses.md` §5.5), so they read the worktree's `.env` themselves. `harness:env` emits nothing for
-  Codex.
+- **The MCP `.env` loader, on every host.** Each MCP server that needs `.env` values starts through
+  `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`
+  in `.mcp.json`, `opencode.jsonc` and `.codex/config.toml` (`.agents/instructions/agent-harnesses.md`
+  §5.5), so it reads the worktree's `.env` (or the secret manager the schema names) at spawn time and
+  gets only its own variables. This is the route by which any worker's MCP servers get their
+  credentials, with no shell involved. Provisioning derives nothing from the copied `.env` and never
+  copies `.auth/`; the plaintext copies the retired `harness:env` generator wrote are no longer read.
 - **direnv in Orca's interactive shell**, for shell-exported variables only. Orca terminals run an
   interactive shell, so a direnv hook fires and the committed `.envrc` sources `.env` (and
   `.envrc.local`) into the process environment. That is the only route for anything a worker runs
   that reads a shell-exported variable (`acli`, `supabase`, `vercel`, `curl`), whatever its harness.
 
-Both failures are silent. A surface not regenerated after a `.env` change carries the old value (or
-an empty placeholder); a machine without direnv gives a worker's shell CLIs no credentials. Either
+Both failures are silent. A worktree whose `.env` is missing, or a session not restarted after a
+`.env` change, leaves the MCP server without its current credential; a machine without direnv gives a worker's shell CLIs no credentials. Either
 way the worker is fully provisioned, starts cleanly, and nothing says so until its first
 authenticated call fails with an error that reads like a broken tool (gotcha G45).
 
 So for every worker launched on the native path, in this order:
 
-1. `bun run harness:env` up to date in the primary (re-run after every `.env` change, then restart
-   the agent session; `bun run harness:env:check` reports drift by variable NAME). For a brief that
+1. A `.env` in the worker's checkout (provisioning copies it; after a `.env` change, restart the
+   agent session; `bun run harness:env:check` exits 1 while a retired plaintext copy remains). For a brief that
    calls shell-exported CLIs: direnv installed and hooked into the shell Orca runs, `direnv allow`
    run once per checkout (`references/orca-machine-setup.md` §3.2). Provisioning runs
    `direnv allow <worktree>` itself when direnv is installed AND the primary's `.envrc` is already
@@ -68,7 +65,7 @@ So for every worker launched on the native path, in this order:
    export line for shell CLIs, or the worker's own first probe is the evidence. No evidence → fix the
    machine, do not dispatch work.
 
-No direnv on this machine → Claude Code and OpenCode workers still run supervised with their MCP
+No direnv on this machine → workers on every harness still run supervised with their MCP
 credentials. A worker whose brief needs a shell-exported CLI runs on a pasted `launch.txt` line
 instead, which carries its own env loading through the wrapper, and is unsupervised
 (`references/launch-seam.md` §1). Say so to the owner before launching.

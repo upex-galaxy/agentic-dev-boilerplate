@@ -9,20 +9,26 @@
 #   1. copy the block into `.codex/config.toml`,
 #   2. add the same server to `.mcp.json` and `opencode.jsonc`
 #      (docs/mcp/claude.template.json, docs/mcp/opencode.template.json),
-#   3. add its variables to `.env` (and `.env.example`), run
-#      `bun run harness:env`, then `bun run agents:compat:check`.
+#   3. declare its variables in `.env.schema` (`@sensitive` on a secret), add
+#      them empty to `.env.example` and set them in `.env`, then run
+#      `bun run agents:compat:check`.
 #
 # Project `.codex/` config loads only in a repository Codex trusts.
 #
-# SECRETS: Codex never expands `${VAR}` in `args` or in `[X.env]`. Secrets travel
-# BY NAME: `env_vars = ["VAR"]` (stdio) or `bearer_token_env_var = "VAR"` (HTTP).
-#
-# LOADER: every stdio block starts through `bunx -p varlock@1.20.0 varlock run
-# --no-redact-stdout -- <real command>`, the same loader `.codex/config.toml`
-# uses: Codex Desktop opened from Finder or the Dock has no process environment
-# for `env_vars` to forward, and varlock reads `.env` / `.env.local` (validated
-# against `.env.schema`) whatever launched Codex.
+# LOADER: every stdio block that needs `.env` values starts through the same
+# `.env` loader the committed configs use on all three hosts:
+#   bunx -p varlock@1.20.0 varlock run --no-redact-stdout --inject vars --filter A,B -- <real command>
+# (`MCP_ENV_LOADER_*` in cli/lib/agent-compatibility-contracts.ts, ADR-0012).
+# It reads `.env` / `.env.local` (or the secret manager the schema names)
+# whatever launched Codex, and hands the server ONLY the names in --filter,
+# which are the exact variable names the server reads. No `env_vars` beside it.
+# A block that needs no value (shadcn, atlassian) launches bare.
 # `startup_timeout_sec = 30` covers a cold package fetch plus the loader hop.
+#
+# SECRETS: Codex never expands `${VAR}` in `args` or in `[X.env]`. A remote
+# (HTTP) server cannot start through the loader: it names its token with
+# `bearer_token_env_var = "VAR"`, read from Codex's own process environment,
+# so it resolves only on a launch that has one (`bun run codex`, direnv).
 #
 # `{{VARIABLE}}` marks a NON-secret value to paste by hand (a URL, an org slug).
 #
@@ -32,8 +38,8 @@
 # LOCAL (STDIO) SERVERS
 # ============================================
 
-# API_HEADERS carries the bearer inside the value and Codex does not
-# interpolate it: put the whole `API_HEADERS="Authorization:Bearer <token>"` in .env.
+# API_HEADERS carries the bearer inside the value, and no host interpolates it:
+# put the whole `API_HEADERS="Authorization:Bearer <token>"` in .env.
 [mcp_servers.openapi]
 command = "bunx"
 startup_timeout_sec = 30
@@ -43,6 +49,10 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "API_HEADERS",
   "--",
   "npx",
   "-y",
@@ -50,15 +60,14 @@ args = [
   "--tools",
   "dynamic",
 ]
-env_vars = [
-  "API_HEADERS",
-]
 
 [mcp_servers.openapi.env]
 API_BASE_URL = "{{API_BASE_URL}}"
 OPENAPI_SPEC_PATH = "{{OPENAPI_SPEC_URL}}"
 
-# DBHub reads its sources from dbhub.toml (start from docs/mcp/dbhub.example.toml).
+# DBHub reads its sources from dbhub.toml (start from docs/mcp/dbhub.example.toml)
+# and interpolates its `${VAR}` from the environment the loader fills: the
+# filter lists the names that file references.
 [mcp_servers.sql]
 command = "bunx"
 startup_timeout_sec = 30
@@ -68,6 +77,10 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "DB_HOST,DB_USER,DB_PASSWORD",
   "--",
   "npx",
   "-y",
@@ -77,17 +90,9 @@ args = [
 ]
 
 [mcp_servers.shadcn]
-command = "bunx"
+command = "npx"
 startup_timeout_sec = 30
 args = [
-  "-p",
-  "varlock@1.20.0",
-  "varlock",
-  "run",
-  "--no-redact-stdout",
-  "--",
-  "npx",
-  "-y",
   "shadcn@latest",
   "mcp",
 ]
@@ -101,15 +106,16 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "SLACK_MCP_XOXP_TOKEN",
   "--",
   "npx",
   "-y",
   "slack-mcp-server@latest",
   "--transport",
   "stdio",
-]
-env_vars = [
-  "SLACK_MCP_XOXP_TOKEN",
 ]
 
 [mcp_servers.slack.env]
@@ -126,27 +132,22 @@ args = [
   "varlock",
   "run",
   "--no-redact-stdout",
+  "--inject",
+  "vars",
+  "--filter",
+  "GEMINI_API_KEY",
   "--",
   "uvx",
   "nanobanana-mcp-server@latest",
 ]
-env_vars = [
-  "GEMINI_API_KEY",
-]
 
-# Atlassian through mcp-remote: OAuth in the browser, no token in .env.
+# Atlassian through mcp-remote: OAuth in the browser, no token in .env, so it
+# launches bare (same block on the three hosts).
 # Opt-in only: acli is the default Jira / Confluence path (`.agents/instructions/agent-tool-resolution.md` section 6).
 [mcp_servers.atlassian]
-command = "bunx"
+command = "npx"
 startup_timeout_sec = 30
 args = [
-  "-p",
-  "varlock@1.20.0",
-  "varlock",
-  "run",
-  "--no-redact-stdout",
-  "--",
-  "npx",
   "-y",
   "mcp-remote",
   "https://mcp.atlassian.com/v1/sse",
