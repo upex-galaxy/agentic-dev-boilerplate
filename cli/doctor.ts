@@ -369,6 +369,11 @@ interface DoctorReport {
    */
   harness_env: HarnessEnvDiagnostic
   /**
+   * Where secret VALUES come from (`.agents/project.yaml` -> `secrets:`,
+   * ADR-0011) and whether the committed overlay agrees. NAMES only.
+   */
+  secrets_provider: SecretsProviderDiagnostic
+  /**
    * Which key paths upstream's `.agents/project.schema.yaml` declares that this
    * project's `.agents/project.yaml` does not have.
    *
@@ -452,6 +457,19 @@ interface HarnessEnvDiagnostic {
   /** The MCP credential names the configs declare, for the record. Never their values. */
   allowlist: string[]
   findings: Array<Omit<HarnessEnvFinding, 'kind'> & { kind: HarnessEnvFinding['kind'] | 'check-failed' }>
+}
+
+export interface SecretsProviderDiagnostic {
+  /** `secrets.provider`, or null when the block could not be read (see `note`). */
+  provider: string | null
+  /** `.env.provider.schema` (references only) is on disk. */
+  overlay_present: boolean
+  /** NAMES the overlay resolves from the manager (active item lines). */
+  vault_items: string[]
+  /** The manager's CLI is on PATH; null when the provider needs none. */
+  cli_installed: boolean | null
+  /** Set when the yaml block could not be parsed. */
+  note: string | null
 }
 
 // ----------------------------------------------------------------------------
@@ -603,6 +621,32 @@ async function harnessEnvDiagnostic(): Promise<HarnessEnvDiagnostic> {
         blocking: true,
       }],
     };
+  }
+}
+
+/**
+ * Where secret values come from. `local` is the default and needs nothing; a
+ * manager needs its committed overlay (references only) and, for 1Password,
+ * the `op` CLI on a developer machine. NAMES only: the overlay holds `op://`
+ * references and this reads only which keys it activates.
+ *
+ * DYNAMIC import: `secret-providers.ts` pulls the `yaml` package, and this
+ * module must stay loadable with node built-ins only for `--preflight`.
+ */
+async function secretsProviderDiagnostic(): Promise<SecretsProviderDiagnostic> {
+  try {
+    const { PROVIDER_SCHEMA_FILE, providerResolvedKeysIn, readSecretsConfig } = await import('./lib/secret-providers.ts');
+    const overlay_present = existsSync(join(REPO_ROOT, PROVIDER_SCHEMA_FILE));
+    const vault_items = providerResolvedKeysIn(REPO_ROOT);
+    let provider: string | null = null;
+    let note: string | null = null;
+    try { provider = readSecretsConfig(join(REPO_ROOT, '.agents', 'project.yaml')).provider; }
+    catch (err) { note = (err as Error).message; }
+    const cli_installed = provider === '1password' ? tryRun('op', ['--version']).ok : null;
+    return { provider, overlay_present, vault_items, cli_installed, note };
+  }
+  catch (err) {
+    return { provider: null, overlay_present: false, vault_items: [], cli_installed: null, note: `provider check could not run: ${(err as Error).message}` };
   }
 }
 
@@ -787,6 +831,7 @@ async function runDoctor(): Promise<DoctorReport> {
     harness_level_mcps: harnessLevelMcpReport(),
     context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
     harness_env: await harnessEnvDiagnostic(),
+    secrets_provider: await secretsProviderDiagnostic(),
     project_schema: await projectSchemaDiagnostic(),
     stack: await stackDiagnostic(),
     tooling_isolation: toolingIsolationDiagnostic(),
@@ -962,6 +1007,43 @@ async function runDoctor(): Promise<DoctorReport> {
         + `.env reproduces and backs up the rest, naming them: ${
           blocking.map(f => `${f.kind} (${f.names.join(', ')})`).join('; ')}`,
       where: '.claude/settings.local.json + .auth/opencode/',
+    });
+  }
+
+  // Secret manager: a provider without its overlay resolves nothing from the
+  // vault, and an overlay with `provider: local` still does. Both are the yaml
+  // and the committed file disagreeing; `bun run setup` rewrites the pair.
+  const sp = report.secrets_provider;
+  if (sp.note !== null && sp.provider === null) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `The secrets: block of .agents/project.yaml could not be read (${sp.note}). Fix it, or re-run the secret-manager step of setup.`,
+      where: '.agents/project.yaml',
+    });
+  }
+  else if (sp.provider !== null && sp.provider !== 'local' && !sp.overlay_present) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `secrets.provider is ${sp.provider} but .env.provider.schema is missing, so nothing resolves from the vault and every launch reads .env alone. Re-run the secret-manager step of setup to write the overlay.`,
+      where: '.env.provider.schema',
+    });
+  }
+  else if (sp.provider === 'local' && sp.overlay_present && sp.vault_items.length > 0) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: 'bun run setup',
+      hint: `secrets.provider is local but .env.provider.schema still resolves ${sp.vault_items.join(', ')} from a vault. Pick one: re-run the secret-manager step of setup, or delete the overlay.`,
+      where: '.env.provider.schema',
+    });
+  }
+  if (sp.provider === '1password' && sp.cli_installed === false) {
+    report.pending_actions.push({
+      type: 'system_install',
+      target: 'op',
+      hint: 'secrets.provider is 1password and the 1Password CLI is not on PATH, so every vault-backed item resolves empty on this machine (CI uses OP_SERVICE_ACCOUNT_TOKEN instead).',
+      where: 'https://developer.1password.com/docs/cli/get-started/',
     });
   }
 
@@ -1159,6 +1241,27 @@ function printHuman(report: DoctorReport): void {
   }
   if (!report.harness_env.ok) {
     process.stdout.write('  Fix: bun run harness:env  (retires the copies; values are never printed by it or by this report)\n');
+  }
+  process.stdout.write('\n');
+
+  // Secret source. Names where values come from and what reads them: only a
+  // varlock launch (`bun run claude|codex|opencode`, the MCP .env loader, the
+  // gates) reaches the vault; a shell that sourced .env (direnv) does not.
+  tui.section('Secret source (.agents/project.yaml -> secrets:)');
+  const sp = report.secrets_provider;
+  if (sp.provider === null) {
+    process.stdout.write(`  ${tui.statusIcon('fail')} provider unknown: ${sp.note ?? 'not read'}\n`);
+  }
+  else if (sp.provider === 'local') {
+    process.stdout.write(`  ${tui.statusIcon(sp.overlay_present && sp.vault_items.length > 0 ? 'warn' : 'ok')} local: values come from .env / .env.local${sp.overlay_present && sp.vault_items.length > 0 ? ` (but .env.provider.schema still resolves ${sp.vault_items.join(', ')})` : ''}\n`);
+  }
+  else {
+    process.stdout.write(`  ${tui.statusIcon(sp.overlay_present ? 'ok' : 'fail')} ${sp.provider}: overlay ${sp.overlay_present ? `present, ${sp.vault_items.length} item(s) from the vault: ${sp.vault_items.join(', ') || '(none active)'}` : 'MISSING (nothing resolves from the vault)'}\n`);
+    if (sp.cli_installed !== null) {
+      process.stdout.write(`  ${tui.statusIcon(sp.cli_installed ? 'ok' : 'warn')} manager CLI ${sp.cli_installed ? 'on PATH' : 'not on PATH (vault items resolve empty here; CI uses its service-account token)'}\n`);
+    }
+    process.stdout.write('  Vault values reach: bun run claude | codex | opencode, every MCP server (.env loader), and `bunx varlock run -- <cmd>`.\n');
+    process.stdout.write('  They do NOT reach a shell that sourced .env (direnv, `source .env`): run a shell CLI as `bunx varlock run -- <cmd>` instead.\n');
   }
   process.stdout.write('\n');
 
