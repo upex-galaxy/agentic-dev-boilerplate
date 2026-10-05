@@ -6,11 +6,11 @@ This directory holds **opt-in MCP blocks** the repo does not enable, one templat
 
 The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/skills/`, see `.agents/instructions/agent-harnesses.md` §5.5). The MCP inventory is the one surface that genuinely differs per host, so it exists once per format, committed, with the same server set on every host: whatever `.mcp.json` declares. Only LOCAL (stdio) servers are committed; web search is connected at harness level (see [Capabilities](#capabilities-not-server-names)).
 
-| Harness             | Committed config     | How a server gets its `.env` values                     | Launcher (loads `.env` first) |
+| Harness             | Committed config     | How a server gets its `.env` values                     | How to open it                |
 | ------------------- | -------------------- | ------------------------------------------------------- | ----------------------------- |
-| Claude Code         | `.mcp.json`          | the `.env` loader, `--filter` = the names it reads      | `bun run claude`              |
-| OpenCode            | `opencode.jsonc`     | the same loader, same filter                            | `bun run opencode`            |
-| Codex CLI + Desktop | `.codex/config.toml` | the same loader, same filter, `startup_timeout_sec = 30` | `bun run codex`               |
+| Claude Code         | `.mcp.json`          | the `.env` loader, `--filter` = the names it reads      | `claude`, or the desktop app  |
+| OpenCode            | `opencode.jsonc`     | the same loader, same filter                            | `opencode`                    |
+| Codex CLI + Desktop | `.codex/config.toml` | the same loader, same filter, `startup_timeout_sec = 30` | `codex`, or Codex Desktop     |
 
 `bun run agents:compat:check` normalizes the three files into one shape (transport, command, args, url, env vars, enabled) and compares them; a server behind the loader is read as its own command, with its `--filter` as its `.env` dependencies. The canonical set is whatever `.mcp.json` declares: a server missing from another host, present in one host only, or depending on a different set of `.env` variables, fails the check (it runs inside `repo:check` and the pre-push hook). The servers the boilerplate ships (`KNOWN_MCP_IDS` in `cli/lib/agent-compatibility-contracts.ts`) additionally get a strict per-host shape check when the project declares them; a project that declares a different set passes on the generic check alone. `.codex/config.toml` is read only in a repository Codex trusts; `bun run setup:doctor` warns about that.
 
@@ -18,7 +18,8 @@ The boilerplate runs on three harnesses from one source (`AGENTS.md` + `.agents/
 
 - **Every host, every launch:** a stdio server that needs `.env` values starts through the `.env` loader, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <command>` (`MCP_ENV_LOADER_*` / `mcpEnvLoaderArgs` in `cli/lib/agent-compatibility-contracts.ts`, ADR-0012; the pin equals the `varlock` devDependency). It reads the varlock schema plus `.env` / `.env.local` (or the secret manager the schema names, ADR-0011) from the project root at spawn time, however the harness was launched (terminal, desktop app, a natively launched supervised worker), and hands the server ONLY the names in its filter. `--no-redact-stdout` keeps the JSON-RPC stream byte-intact. A server that needs no value (context7) launches bare.
 - **Nothing beside the loader:** no `${VAR}`, `{env:VAR}`, `{file:...}` or `env_vars` for the names the filter delivers. An unset `${VAR}` breaks a desktop launch, and an empty inherited value shadows `.env`. `bun run agents:compat:check` fails on either in the boilerplate and warns downstream with the exact launch to use.
-- **Terminal launch:** `bun run claude` / `bun run opencode` / `bun run codex` (`scripts/launch.ts` in `package.json`: it refuses to launch while an inherited shell variable differs from `.env`, because varlock lets the inherited value win, then starts the binary through `varlock run`). The MCP servers do not depend on it; the session and the CLIs it runs do.
+- **Opening the agent:** its own binary in the project folder (`claude`, `opencode`, `codex`) or its desktop app. There is no wrapper script: nothing loads `.env` into the agent's process, so no secret reaches the AI's shell (ADR-0016). A command the agent runs that needs a value runs it through the loader in a subprocess, `bunx varlock run -- sh -c '<command using "$VAR">'`; `bun` scripts load `.env` themselves.
+- **An MCP that behaves as if `.env` were ignored:** varlock lets a variable your shell already exports win over `.env`. `bun run vars:env:check` names the variables whose inherited value differs (names and lengths only); `unset` them or open a clean shell.
 - **After a `.env` change:** restart the agent session. OpenCode caches the resolved config per directory, so also run `opencode service restart` (or quit every OpenCode session).
 - **A worktree** carries its own `.env`; `bun run worktree:provision` copies it and derives nothing from it.
 - **Plaintext copies from an older install** (the `env` block of `.claude/settings.local.json`, `.auth/opencode/<VAR>`): no host reads them. `bun run harness:env` retires them (equal to `.env`: deleted; different: moved to `.auth/harness-env-backup/<VAR>` and named), and `bun run harness:env:check` exits 1 while one remains.
@@ -72,7 +73,7 @@ The one secret marker left is on a REMOTE (HTTP) server, which cannot start thro
 | OpenCode    | `{env:POSTMAN_API_KEY}`                             |
 | Codex       | `bearer_token_env_var = "POSTMAN_API_KEY"` (already in the template) |
 
-Those three resolve from the harness's own process environment, so a remote server's secret is there only on a launch that has one (`bun run <harness>`), never from a bare binary or a desktop app.
+Those three resolve from the harness's own process environment, which `.env` reaches on no launch. Prefer the server's OAuth login (as the Atlassian remote MCP through `mcp-remote` does). A token-only remote server means you export that ONE variable in the shell before launching, which knowingly puts it in the agent's environment.
 
 Non-secret placeholders (`{{API_BASE_URL}}`, `{{OPENAPI_SPEC_URL}}`, `{{SENTRY_ORG}}`, `{{SENTRY_PROJECT}}`) are pasted as literal values.
 

@@ -13,14 +13,14 @@
 La primera vez que uses Claude Code basta con lanzarlo: el login y la inicialización son automáticos.
 
 ```bash
-bun run claude
+claude
 ```
 
 > ⚠️ El flag `--dangerously-skip-permissions` NO es parte del setup: desactiva TODOS los prompts de permisos y solo tiene sentido en sandboxes desechables. No lo uses en tu máquina de trabajo.
 
-**En este boilerplate**: `bun run claude` arranca Claude Code a través de `varlock run` (`scripts/launch.ts`), validado contra `.env.schema`, y se niega a arrancar mientras el shell exporte un valor distinto del de `.env` (bajo varlock gana el heredado). Los servidores MCP no dependen de eso: cada uno que necesita valores de `.env` arranca con el loader de `.env`, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <sus variables> -- <servidor>`, que lee `.env` al arrancar el servidor y le pasa solo las variables de su filtro.
+**En este boilerplate**: Claude Code se abre con su propio binario en la carpeta del proyecto (`claude`) o con la app de escritorio. No hay script envoltorio: nada carga `.env` en el proceso del agente, así que ningún secreto llega al shell de la IA (ADR-0016). Cada servidor MCP que necesita valores de `.env` arranca con el loader de `.env`, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <sus variables> -- <servidor>`, que lee `.env` al arrancar el servidor y le pasa solo las variables de su filtro, sin importar quién lanzó el harness. Un comando que corre el agente y necesita un valor lo corre por el loader en un subproceso: `bunx varlock run -- sh -c '<comando que usa "$VAR">'` (los scripts de `bun` cargan `.env` solos). Si un MCP se comporta como si `.env` no existiera, `bun run vars:env:check` nombra la variable que el shell exporta con otro valor (varlock deja ganar al heredado; muestra solo nombres y largos).
 
-**Lanzamientos sin línea de comando** (la app de escritorio, un worker supervisado): no pasan por el wrapper y no necesitan nada extra, porque el loader lee `.env` igual. Después de un cambio de `.env`, reiniciá la sesión. Una instalación vieja escribía una copia en texto plano en el bloque `env` de `.claude/settings.local.json`; `bun run harness:env` la retira (si coincide con `.env` la borra, si no la mueve a `.auth/harness-env-backup/` y la nombra) y `bun run harness:env:check` sale con 1 mientras quede una.
+**Lanzamientos sin línea de comando** (la app de escritorio, un worker supervisado): no necesitan nada extra, porque el loader lee `.env` igual. Después de un cambio de `.env`, reiniciá la sesión. Una instalación vieja escribía una copia en texto plano en el bloque `env` de `.claude/settings.local.json`; `bun run harness:env` la retira (si coincide con `.env` la borra, si no la mueve a `.auth/harness-env-backup/` y la nombra) y `bun run harness:env:check` sale con 1 mientras quede una.
 
 **Tres harnesses, un solo inventario**: los servidores que declara `.mcp.json` viven también en `opencode.jsonc` (OpenCode) y en `.codex/config.toml` (Codex CLI + Desktop, ver [codex.md](./codex.md)). `bun run agents:compat:check` toma `.mcp.json` como conjunto canónico, normaliza los tres formatos y falla si un servidor falta en otro host, existe en un solo host o depende de otras variables de `.env`. Si agregás un servidor acá, agregalo en los otros dos. Las instrucciones (`AGENTS.md`, que Claude Code lee vía el shim `CLAUDE.md`) y las skills (`.agents/skills/`, alias generado `.claude/skills`) también son una sola copia: ver `.agents/instructions/agent-harnesses.md` §5.5.
 
@@ -76,7 +76,7 @@ Para un servidor que el equipo comparte. Copiá el bloque del template opt-in ([
 }
 ```
 
-> **Nota**: Claude Code NO soporta el bloque `inputs` / `${input:...}` (eso es sintaxis de VS Code). En un servidor remoto (`type: "http"`) los secretos se referencian como `${VAR}` (o `${VAR:-default}`) y se expanden desde el entorno del proceso, así que solo resuelven en un lanzamiento con `bun run claude`; un servidor stdio que necesita valores de `.env` usa el loader de `.env` en su lugar, sin `${VAR}` al lado. **Si la variable falta, Claude Code no avisa**: pasa `${VAR}` como texto literal y el servidor falla recién en su primera llamada autenticada. El chequeo es `/mcp` dentro de la sesión (`AGENTS.md` Critical Rule #9).
+> **Nota**: Claude Code NO soporta el bloque `inputs` / `${input:...}` (eso es sintaxis de VS Code). En un servidor remoto (`type: "http"`) los secretos se referencian como `${VAR}` (o `${VAR:-default}`) y se expanden desde el entorno del proceso del harness, donde `.env` ya no llega en ningún lanzamiento: preferí el login OAuth del servidor (como el MCP remoto de Atlassian vía `mcp-remote`); si el servidor solo acepta token, exportá esa ÚNICA variable en el shell antes de lanzar, sabiendo que queda en el entorno del agente; un servidor stdio que necesita valores de `.env` usa el loader de `.env` en su lugar, sin `${VAR}` al lado. **Si la variable falta, Claude Code no avisa**: pasa `${VAR}` como texto literal y el servidor falla recién en su primera llamada autenticada. El chequeo es `/mcp` dentro de la sesión (`AGENTS.md` Critical Rule #9).
 
 ---
 

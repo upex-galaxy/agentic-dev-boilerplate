@@ -2234,7 +2234,8 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
 
         <pre class="code r"><span class="c"># una línea de launch.txt (Claude Code). El prompt entre comillas simples es el PAYLOAD:</span>
 <span class="c"># idéntico, byte por byte, al que el camino supervisado manda al worker nativo.</span>
-bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&lt;KEY&gt;" \
+<span class="c"># Es el binario pelado: sus MCPs leen .env por el loader de .env.</span>
+claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&lt;KEY&gt;" \
   <span class="s">'/&lt;workflow-skill&gt; &lt;KEY&gt; fleet worker. Read &lt;ABS&gt;/.../COMMON.md then &lt;ABS&gt;/.../W-&lt;label&gt;.md
   and execute your brief. Run every stage without returning to the prompt until worker_done is sent;
   stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'</span></pre>
@@ -2401,8 +2402,8 @@ bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode 
           <div class="step">
             <h3>Credenciales en el camino nativo</h3>
             <p>
-              Sin línea de lanzamiento no corre el wrapper que carga <span class="mono">.env</span>.
-              Los servidores MCP no lo necesitan: en los tres harnesses cada uno lee el
+              Ningún lanzamiento carga <span class="mono">.env</span> en el proceso del agente, con o
+              sin línea de lanzamiento. Los servidores MCP no lo necesitan: en los tres harnesses cada uno lee el
               <span class="mono">.env</span> del worktree con el loader de
               <span class="mono">.env</span>; las CLIs
               (<span class="mono">acli</span>, <span class="mono">supabase</span>,

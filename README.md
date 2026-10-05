@@ -221,27 +221,26 @@ bunx create-agentic-dev@latest --adopt
 
 The updater delivers what the app lacks and never overwrites what it has. A file the app already owns at the same path stays as it is, becomes a `merge` row in the parity table and gets an `updater.protected_paths` entry, so no later `bun run up` replaces it. `package.json` only gains the tooling `devDependencies` and the scripts the app does not declare; a script name the app already uses is kept and reported as a blocking row. `.gitignore` and `.env.example` get a sentinel block. Existing instructions in `AGENTS.md` or `CLAUDE.md` are proposed verbatim inside the new `AGENTS.md` and applied only when you say yes. There is no history scrub, no rename, no `git init`, and no database is touched. Running `--adopt` again on an adopted repo does nothing.
 
-After the install, review the parity table, run `bun install`, and commit the adoption as one change. Then open an agent session (`bun claude` or `bun opencode`) and load the [`project-adoption`](.agents/skills/project-adoption/SKILL.md) skill. It reads the app without writing anything, proposes one plan, and only after you approve it fills the project identity, the `stack:` block, the tracker catalogs and the protected paths. Its hand-off writes the app's product docs from its code: the business maps (`project-context refresh-all`), then the dev guide and the domain glossary (`project-foundation` Discovery-only). `sprint-development` works from those, with no PRD or SRS. Install details: [`INSTALLER.md`](INSTALLER.md#adopt-an-existing-app).
+After the install, review the parity table, run `bun install`, and commit the adoption as one change. Then open an agent session (`claude`, `opencode` or `codex` in the project folder) and load the [`project-adoption`](.agents/skills/project-adoption/SKILL.md) skill. It reads the app without writing anything, proposes one plan, and only after you approve it fills the project identity, the `stack:` block, the tracker catalogs and the protected paths. Its hand-off writes the app's product docs from its code: the business maps (`project-context refresh-all`), then the dev guide and the domain glossary (`project-foundation` Discovery-only). `sprint-development` works from those, with no PRD or SRS. Install details: [`INSTALLER.md`](INSTALLER.md#adopt-an-existing-app).
 
 <br />
 
 ## Launching the agent
 
-`.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex) name variables, never values: real values live in `.env`, and every MCP server that needs one reads it through the `.env` loader at spawn time, however the agent was launched. Nothing exports `.env` into your shell, so a bare `claude` / `opencode` / `codex` does NOT see it; its MCP servers still do. Launch the agent through the wrapper when the session itself needs the values:
+`.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex) name variables, never values: real values live in `.env`, and every MCP server that needs one reads it through the `.env` loader at spawn time (`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <names> -- <server>`), whoever launched the agent. Open the agent with its own binary in the project folder, or its desktop app (Claude desktop, Codex Desktop). There is no wrapper script: nothing loads `.env` into the agent's process, so no secret reaches the AI's shell (ADR-0016).
 
 ```bash
-# Cross-platform (uses the varlock devDependency, no extra tooling required):
-bun run claude        # Claude Code
-bun run opencode      # OpenCode
-bun run codex         # Codex CLI (Desktop reads the same repository config)
+claude        # Claude Code
+opencode      # OpenCode
+codex         # Codex CLI (Desktop reads the same repository config)
 
-# One shell command that needs a value (curl with a token, a script):
-bunx varlock run -- <cmd>
+# A command that needs a value runs it through the loader, in a subprocess:
+bunx varlock run -- sh -c '<command using "$VAR">'
 ```
 
-> The wrappers start the binary through `varlock run`, which validates `.env` against `.env.schema` and lets a variable your shell already exports WIN over the file. So they first refuse to launch while an inherited value differs from `.env` / `.env.local`, naming the variables (never the values): `unset` them or launch from a clean shell. Never `source .env` into your shell: the values then outlive the session and reach every process that shell starts.
+> `bun` scripts load `.env` themselves. A remote (HTTP) MCP server that takes its token from the harness's own environment (`${VAR}` in `.mcp.json`, `{env:VAR}` in OpenCode, `bearer_token_env_var` in Codex) gets nothing from `.env`: prefer the server's OAuth login (as the Atlassian remote MCP through `mcp-remote` does); for a token-only server, export that ONE variable in the shell before launching, knowing it then sits in the agent's environment. varlock lets a variable your shell already exports WIN over `.env`, so when an MCP behaves as if `.env` were ignored, run `bun run vars:env:check` (names and lengths only) and `unset` what it names, or open a clean shell. Never `source .env` into your shell: the values then outlive the session and reach every process that shell starts.
 
-A launch with **no command line** (a desktop app, a natively launched supervised worker) has nothing to wrap, and its MCP servers still get their credentials: each one starts through the `.env` loader, which reads `.env` itself whatever launched the harness. After a `.env` change, restart the session (OpenCode: `opencode service restart` too). An older install wrote plaintext copies for those launches (the `env` block of `.claude/settings.local.json`, `.auth/opencode/<VAR>`); `bun run harness:env` retires them (a copy equal to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/<VAR>` and named), and `bun run harness:env:check` exits 1 while one remains.
+A launch with **no command line** (a desktop app, a natively launched supervised worker) works the same way: each MCP server starts through the `.env` loader, which reads `.env` itself whatever launched the harness. After a `.env` change, restart the session (OpenCode: `opencode service restart` too). An older install wrote plaintext copies for those launches (the `env` block of `.claude/settings.local.json`, `.auth/opencode/<VAR>`); `bun run harness:env` retires them (a copy equal to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/<VAR>` and named), and `bun run harness:env:check` exits 1 while one remains.
 
 <br />
 

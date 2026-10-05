@@ -19,7 +19,7 @@ The AI reaches the database through the `supabase` server declared in `.mcp.json
 3. A session launched without a command line (desktop app, a supervised worker) needs nothing extra: the loader reads `.env` whatever launched the harness. `bun run harness:env:check` exits 1 while a plaintext copy from an older install remains; `bun run harness:env` retires it
 4. **Restart the agent session.** MCP servers read the environment once, when they spawn. On OpenCode also run `opencode service restart`: its background service caches the resolved config
 
-Launching through the `package.json` wrappers (`bun run claude`, `bun run opencode`, `bun run codex`) refuses to start while your shell exports a value that differs from `.env`, because an inherited value wins under varlock and would also reach the loader.
+If the server behaves as if `.env` were ignored, your shell probably exports a value that differs from `.env`: an inherited value wins under varlock and reaches the loader. `bun run vars:env:check` names it (names and lengths only); `unset` it or open a clean shell, then restart the session.
 
 ### MCP shows as "failed" in Claude Code
 
