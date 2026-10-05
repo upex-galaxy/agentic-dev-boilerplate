@@ -11,7 +11,7 @@
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | [Jira (lado dev)](#jira-lado-dev)            | Conectar el repo a tu sitio de Jira: host, credenciales, catálogos, caché local                   |
 | [mcp/README.md](./mcp/README.md)             | MCP: conceptos, transportes, capacidades y la matriz de configs por harness (Claude Code, OpenCode, Codex) |
-| [mcp/claude-code.md](./mcp/claude-code.md)   | MCP en Claude Code (`.mcp.json`, `bun run claude`, el loader de `.env`)                           |
+| [mcp/claude-code.md](./mcp/claude-code.md)   | MCP en Claude Code (`.mcp.json`, el binario `claude`, el loader de `.env`)                        |
 | [mcp/codex.md](./mcp/codex.md)               | Codex CLI + Desktop: `AGENTS.md`, `.agents/skills/`, `.codex/config.toml`, trust, loader de `.env` |
 
 ---

@@ -120,7 +120,7 @@ Anything that fits neither list — a CI workflow, a README, `.mcp.json`, a depl
   token=$ATLASSIAN_API_TOKEN   (piped by NAME, e.g. echo "$ATLASSIAN_API_TOKEN" | acli ... --token)
 ```
 
-Both variables come from the session environment (`bun run claude|codex|opencode` loads `.env`). If they are unset there, run the login through the loader in a subprocess (`bunx dotenv -e .env -- sh -c '...'`) instead of reading `.env`: `agentic-dev-core/references/secret-hygiene.md` §3.
+Both variables live in `.env`, never in the agent's own process: the harness is opened bare and holds no `.env` value (ADR-0016). Run the login through the loader in a subprocess (`bunx varlock run -- sh -c '...'`) instead of reading `.env`: `agentic-dev-core/references/secret-hygiene.md` §3.
 
 `--site` takes the BARE host, which is what `--slug` prints. Reading it back from
 the yaml rather than retyping `<target>` also proves step 1 actually landed: if

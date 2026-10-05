@@ -19,7 +19,7 @@ The correct family is the plain terminal-and-worktree one. When a runtime's comm
 
 The launch line is the harness's, not the runtime's. A Claude Code predecessor launches a Claude Code successor; OpenCode launches OpenCode; Codex launches Codex.
 
-Start it through the repo's own wrapper from `package.json` (`bun run claude`, `bun run opencode`, `bun run codex`), never the bare executable: each wrapper forces `.env` to win over an inherited process variable (`.agents/instructions/agent-harnesses.md` §5.5), and a successor that boots with a stale inherited value is not the same session.
+Start it with the harness's own binary (`claude`, `opencode`, `codex`), with no wrapper and no env loader in front of it: the harness process holds no `.env` value, and its MCP servers read `.env` through the loader when they spawn (ADR-0016). Never prefix the line with `varlock run`, `dotenv` or `source .env`.
 
 The line carries two things:
 

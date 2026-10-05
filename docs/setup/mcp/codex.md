@@ -11,10 +11,10 @@
 ```bash
 bun install
 bun run setup        # detecta Claude Code / OpenCode / Codex instalados, genera los shims
-bun run codex        # lanza codex con .env cargado
+codex                # abre Codex (o Codex Desktop); sus MCPs leen .env por el loader
 ```
 
-`bun run codex` arranca Codex a través de `varlock run` (`scripts/launch.ts`), validado contra `.env.schema`, y se niega a arrancar mientras el shell exporte un valor distinto del de `.env` (bajo varlock gana el heredado). Los MCPs no dependen de ese wrapper: cada server stdio de `.codex/config.toml` que necesita valores arranca con el loader de `.env` (ver [abajo](#el-loader-de-env)), así que lanzar `codex` a secas o abrir Codex Desktop desde el Dock también les da credenciales. El wrapper sigue sirviendo para el resto del proceso (hooks, comandos que corre el agente).
+Codex se abre con su propio binario en la carpeta del proyecto (`codex`) o con Codex Desktop. No hay script envoltorio: nada carga `.env` en el proceso del agente, así que ningún secreto llega al shell de la IA (ADR-0016). Cada server stdio de `.codex/config.toml` que necesita valores arranca con el loader de `.env` (ver [abajo](#el-loader-de-env)), lance quien lance el harness. Un comando que corre el agente y necesita un valor lo corre por el loader en un subproceso: `bunx varlock run -- sh -c '<comando que usa "$VAR">'` (los scripts de `bun` cargan `.env` solos). Si un MCP se comporta como si `.env` no existiera, corré `bun run vars:env:check`: nombra la variable que el shell exporta con otro valor (bajo varlock gana el heredado).
 
 Si el instalador no detecta Codex (por ejemplo, un binario en una ruta no estándar), forzá la lista con `INSTALL_AGENTS=codex bun run setup`.
 

@@ -244,7 +244,7 @@ Un secreto nunca se escribe en el config y su valor vive en `.env` (gitignored).
 bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter API_KEY -- <server>
 ```
 
-El loader lee `.env` (o el gestor de secretos que nombra el schema) al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa solo las variables de su `--filter`. No se copia ningún valor a otro archivo. Un server remoto (HTTP) no puede usar el loader: referencia su secreto con `${VAR}` (Claude Code), `{env:VAR}` (OpenCode) o `bearer_token_env_var` (Codex), desde el entorno del proceso, así que solo resuelve en un lanzamiento con `bun run <harness>`.
+El loader lee `.env` (o el gestor de secretos que nombra el schema) al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa solo las variables de su `--filter`. No se copia ningún valor a otro archivo. Un server remoto (HTTP) no puede usar el loader: referencia su secreto con `${VAR}` (Claude Code), `{env:VAR}` (OpenCode) o `bearer_token_env_var` (Codex), desde el entorno del proceso del harness, donde `.env` no llega en ningún lanzamiento. Preferí el login OAuth del server (como el MCP remoto de Atlassian vía `mcp-remote`); un server que solo acepta token necesita que exportes esa ÚNICA variable en el shell antes de lanzar, sabiendo que queda en el entorno del agente.
 
 Ningún host avisa cuando falta una variable: el servidor arranca y falla en su primera llamada autenticada. Un 401/403 es la señal; `/mcp` dentro de la sesión es el chequeo (`AGENTS.md` Critical Rule #9).
 
@@ -276,13 +276,13 @@ Qué servidor da cada capacidad, los sufijos y cómo habilitar una que falta: `.
 
 Este boilerplate corre sobre tres harnesses desde una sola fuente de instrucciones y skills (`AGENTS.md` + `.agents/skills/`). El inventario MCP (el que declara `.mcp.json`) existe una vez por formato de host, commiteado en el repo y verificado en paridad por `bun run agents:compat:check`.
 
-| Harness             | Config MCP                                               | Secretos                                          | Launcher           |
-| ------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------ |
-| Claude Code         | `.mcp.json` (commiteada)                                 | loader de `.env` (`--filter`)                     | `bun run claude`   |
-| OpenCode            | `opencode.jsonc` (commiteada)                            | loader de `.env` (`--filter`)                     | `bun run opencode` |
-| Codex CLI + Desktop | `.codex/config.toml` (commiteada; requiere repo trusted) | loader de `.env` (`--filter`) + `startup_timeout_sec` | `bun run codex`    |
+| Harness             | Config MCP                                               | Secretos                                          | Cómo se abre                  |
+| ------------------- | -------------------------------------------------------- | ------------------------------------------------- | ----------------------------- |
+| Claude Code         | `.mcp.json` (commiteada)                                 | loader de `.env` (`--filter`)                     | `claude` o la app de escritorio |
+| OpenCode            | `opencode.jsonc` (commiteada)                            | loader de `.env` (`--filter`)                     | `opencode`                    |
+| Codex CLI + Desktop | `.codex/config.toml` (commiteada; requiere repo trusted) | loader de `.env` (`--filter`) + `startup_timeout_sec` | `codex` o Codex Desktop       |
 
-Un lanzamiento sin línea de comando (app de escritorio, worker supervisado) no necesita nada extra: el loader lee `.env` igual. Después de un cambio de `.env`, reiniciá la sesión (OpenCode: también `opencode service restart`).
+Ningún lanzamiento usa un script envoltorio: el binario pelado, la app de escritorio y un worker supervisado no cargan `.env` en el proceso del agente (ADR-0016), y el loader lo lee igual para cada MCP. Después de un cambio de `.env`, reiniciá la sesión (OpenCode: también `opencode service restart`).
 
 ### Guías por host
 

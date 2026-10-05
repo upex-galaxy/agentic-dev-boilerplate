@@ -1,11 +1,11 @@
 # ADR-0011 — Secret values live in `.env` by default; a secret manager is the advanced, provider-agnostic opt-in
 
-- **Status:** Accepted
+- **Status:** Accepted (decision item 4's launcher drop superseded by ADR-0016)
 - **Date:** 2026-10-05
 - **Deciders:** Boilerplate owner (upex-galaxy): env-secrets spike owner decisions OD1 = b (`.env` stays the default, a secret manager is the ADVANCED option) and OD2 (a personal plan must work too; never 1Password-only, the slot stays generic). Conductor ruling of the implementation fleet on the Critical Rule #1 wording (the readable exception becomes "`.env.example` and the committed `.env*.schema` files"). Ported from agentic-qa-boilerplate ADR-0010 (PR #110) by unit env-d-u4
 - **Tags:** env, secrets, varlock, launch, ci, onboarding
 - **Supersedes:** —
-- **Superseded by:** —
+- **Superseded by:** ADR-0016 (decision item 4, the launcher's drop of empty inherited overlay keys, only)
 
 ---
 

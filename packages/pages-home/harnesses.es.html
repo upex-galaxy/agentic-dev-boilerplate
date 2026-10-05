@@ -1176,14 +1176,14 @@
           </div>
           <div class="card">
             <span class="n">Desde la terminal</span>
-            <h4>
-              <code>bun run claude</code> · <code>bun run opencode</code> ·
-              <code>bun run codex</code>
-            </h4>
+            <h4><code>claude</code> · <code>opencode</code> · <code>codex</code></h4>
             <p>
-              Arrancan el binario con <code>varlock run</code> y se niegan a arrancar mientras el
-              shell exporte un valor distinto del de <code>.env</code>, porque bajo varlock gana el
-              heredado. Le dan <code>.env</code> a la sesión y a las CLIs que corre el agente.
+              El binario pelado, sin script envoltorio: nada carga <code>.env</code> en el proceso
+              del agente, así que ningún secreto llega al shell de la IA. Un comando que necesita un
+              valor lo corre por el cargador en un subproceso,
+              <code>bunx varlock run -- sh -c '&lt;comando&gt;'</code>. Si un servidor se comporta
+              como si <code>.env</code> no existiera, <code>bun run vars:env:check</code> nombra la
+              variable que el shell exporta con otro valor (bajo varlock gana el heredado).
             </p>
           </div>
         </div>

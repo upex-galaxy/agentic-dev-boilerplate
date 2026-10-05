@@ -413,7 +413,7 @@ export interface EnvSchemaDiagnostic {
   schema_present: boolean
   /**
    * `standalone`: a `varlock` binary on PATH (what a harness-spawned process finds).
-   * `devDependency`: only `node_modules/varlock` (what the gates and `bun run claude` use).
+   * `devDependency`: only `node_modules/varlock` (what the gates use).
    * `missing`: neither.
    */
   binary: 'standalone' | 'devDependency' | 'missing'
@@ -877,7 +877,7 @@ async function runDoctor(): Promise<DoctorReport> {
     report.pending_actions.push({
       type: 'shell_command',
       target: 'bun install',
-      hint: 'Install project dependencies including varlock (the loader behind `bun run claude | codex | opencode`).',
+      hint: 'Install project dependencies including varlock (the env schema gates and `bunx varlock run -- <cmd>`).',
     });
   }
 
@@ -1166,7 +1166,7 @@ function printHuman(report: DoctorReport): void {
   process.stdout.write('\n');
 
   // Secret source. Names where values come from and what reads them: only a
-  // varlock launch (`bun run claude|codex|opencode`, the MCP .env loader, the
+  // varlock launch (the MCP .env loader, `bunx varlock run -- <cmd>`, the
   // gates) reaches the vault; a shell that sourced .env does not.
   tui.section('Secret source (.agents/project.yaml -> secrets:)');
   const sp = report.secrets_provider;
@@ -1181,7 +1181,7 @@ function printHuman(report: DoctorReport): void {
     if (sp.cli_installed !== null) {
       process.stdout.write(`  ${tui.statusIcon(sp.cli_installed ? 'ok' : 'warn')} manager CLI ${sp.cli_installed ? 'on PATH' : 'not on PATH (vault items resolve empty here; CI uses its service-account token)'}\n`);
     }
-    process.stdout.write('  Vault values reach: bun run claude | codex | opencode, every MCP server (.env loader), and `bunx varlock run -- <cmd>`.\n');
+    process.stdout.write('  Vault values reach: every MCP server (.env loader) and `bunx varlock run -- <cmd>`. The agent session itself holds none (ADR-0016).\n');
     process.stdout.write('  They do NOT reach a shell that sourced .env (`source .env`): run a shell CLI as `bunx varlock run -- <cmd>` instead.\n');
   }
   process.stdout.write('\n');
@@ -1195,7 +1195,7 @@ function printHuman(report: DoctorReport): void {
   const binaryNote = es.binary === 'standalone'
     ? `standalone binary${es.binary_version ? ` ${es.binary_version}` : ''}`
     : es.binary === 'devDependency'
-      ? `devDependency only${es.binary_version ? ` (${es.binary_version})` : ''}; enough for bun run claude / codex / opencode and the gates`
+      ? `devDependency only${es.binary_version ? ` (${es.binary_version})` : ''}; enough for the gates and bunx varlock run -- <cmd>`
       : 'not found; run bun install (devDependency)';
   process.stdout.write(`  ${tui.statusIcon(es.schema_present ? 'ok' : 'fail')} schema files ${es.schema_present ? 'present' : 'missing (bun run vars:schema)'}\n`);
   process.stdout.write(`  ${tui.statusIcon(es.binary === 'missing' ? 'fail' : 'ok')} varlock: ${binaryNote}\n`);
@@ -1343,7 +1343,7 @@ function printHuman(report: DoctorReport): void {
   else {
     process.stdout.write('\n');
     process.stdout.write(`${tui.successBox([
-      'All file checks green. Launch: bun run claude  /  bun run opencode  /  bun run codex',
+      'All file checks green. Open the agent in this folder: claude  /  opencode  /  codex (or its desktop app)',
       'Codex Desktop reads the same repository config; approve repository trust there before hooks run.',
     ])}\n`);
   }

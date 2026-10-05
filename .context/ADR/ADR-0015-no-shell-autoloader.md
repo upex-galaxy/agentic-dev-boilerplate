@@ -5,7 +5,7 @@
 - **Deciders:** Boilerplate owner (upex-galaxy): decision B8 of handoff 07 (2026-10-05), "remove direnv from both repos; secrets never exported into the AI shell; MCPs keep loading `.env` per process; worktree provisioning keeps copying `.env`, drops `direnv allow`". Twin unit in agentic-qa-boilerplate: b8-q. Ported here by unit b8-d
 - **Tags:** secrets, env, installer, doctor, worktree
 - **Supersedes:** the optional `.envrc` of ADR-0010 and ADR-0012 (the rest of both stands)
-- **Superseded by:** —
+- **Superseded by:** ADR-0016 (the trade-off line sending a bare harness to `bun run <harness>`, only)
 
 ---
 

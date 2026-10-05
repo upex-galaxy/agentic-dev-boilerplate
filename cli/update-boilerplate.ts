@@ -61,6 +61,7 @@ import {
   PARITY_PROMPT_PATH,
   persistArchivedSkillMarkers,
   renderParityReport,
+  RETIRED_HARNESS_LAUNCHER,
   runVerdict,
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
@@ -1963,7 +1964,9 @@ async function main(): Promise<void> {
     // Generated surfaces (see GENERATED_PATHS): never synced, never reported;
     // the afterApply hooks below rebuild them from their sources.
     // Plus the project-owned files inside synced components (PROJECT_OWNED_PATHS).
-    excludePaths: [...GENERATED_PATHS, ...PROJECT_OWNED_PATHS],
+    // The retired harness launcher (ADR-0016) is reported as removable by the
+    // parity table and never deleted, not even under `--force`.
+    excludePaths: [...GENERATED_PATHS, ...PROJECT_OWNED_PATHS, RETIRED_HARNESS_LAUNCHER],
     // The boilerplate's own material — never delivered to consumers. Mirrored
     // in TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts); see
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.

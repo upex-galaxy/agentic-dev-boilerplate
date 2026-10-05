@@ -25,7 +25,7 @@
       "name": "should-trigger-spanish-first-time",
       "prompt": "Es la primer vez que uso este repo, qué tengo que correr primero?",
       "expected_skill": "agentic-dev-onboard",
-      "expected_behavior": "Activates agentic-dev-onboard. Points at `bun run setup` first, then the launch wrappers (`bun run claude|opencode|codex`), the workflow, MCP capabilities, env vars, the docs hub URL, and the next-steps checklist. Hands off to `/sprint-development` once foundation is green. May respond in Spanish to mirror the user.",
+      "expected_behavior": "Activates agentic-dev-onboard. Points at `bun run setup` first, then opening the agent with its own binary in the project folder (`claude`, `opencode`, `codex`, no wrapper), the workflow, MCP capabilities, env vars, the docs hub URL, and the next-steps checklist. Hands off to `/sprint-development` once foundation is green. May respond in Spanish to mirror the user.",
       "category": "positive"
     },
     {

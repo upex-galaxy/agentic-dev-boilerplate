@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import { unusedHarnessPaths } from './lib/harness-selection.ts';
 import { cleanupDeprecated, isRepoOnlyPath, validateComponentRegistry } from './lib/updater-core.ts';
+import { RETIRED_HARNESS_LAUNCHER, RETIRED_HARNESS_SCRIPTS } from './lib/updater-parity.ts';
 import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
@@ -29,7 +30,7 @@ describe('component registry', () => {
   });
 
   test('no shell autoloader travels: .envrc is never delivered, watched, or deleted downstream', () => {
-    // Each process loads its own config (the MCP .env loader, `bun run claude`,
+    // Each process loads its own config (the MCP .env loader,
     // `bunx varlock run --`), so nothing upstream exports .env into a shell. A
     // downstream .envrc is the developer's own file: the updater leaves it alone.
     const autoloaders = ['.envrc', '.envrc.local'];
@@ -46,6 +47,19 @@ describe('component registry', () => {
     finally {
       rmSync(cwd, { recursive: true, force: true });
     }
+  });
+
+  test('the retired harness launchers never travel again and are never deleted downstream (ADR-0016)', () => {
+    // The package.json sync only APPENDS keys upstream declares, so upstream
+    // must not declare them; the launcher file is neither shipped by the
+    // boilerplate nor a deprecation (deletion) candidate.
+    const upstreamScripts = (JSON.parse(readFileSync(join(import.meta.dir, '..', 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts;
+    for (const name of RETIRED_HARNESS_SCRIPTS) {
+      expect(Object.keys(upstreamScripts)).not.toContain(name);
+    }
+    expect(Object.values(upstreamScripts).join('\n')).not.toContain(RETIRED_HARNESS_LAUNCHER);
+    expect(existsSync(join(import.meta.dir, '..', RETIRED_HARNESS_LAUNCHER))).toBe(false);
+    expect(DEPRECATED_FILES.map(d => d.path)).not.toContain(RETIRED_HARNESS_LAUNCHER);
   });
 
   test('.claude/settings.json ships once (bootstrap-only) and stays out of every directory component', () => {

@@ -31,9 +31,9 @@ hence the `.env` dependency), `.agents/project.yaml`, the Jira catalogs under `.
 
 ## 1b · The env file is present and the supervised worker still has no credentials
 
-A launch line LOADS the env file: the `bun run <harness>` wrappers in `package.json` run the agent
-under `varlock run` (through `scripts/launch.ts`), which is why the human-paste path is immune. The supervised native launch
-has no launch line, so a worker gets credentials only from what reaches it WITHOUT that wrapper:
+No launch path loads the env file into the harness (ADR-0016): the supervised native launch and a
+pasted launch line both open the bare harness binary, so the harness process holds no `.env` value
+either way. A worker gets credentials only from processes that load their own config:
 
 - **The MCP `.env` loader, on every host.** Each MCP server that needs `.env` values starts through
   `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`
@@ -44,16 +44,16 @@ has no launch line, so a worker gets credentials only from what reaches it WITHO
   copies `.auth/`; the plaintext copies the retired `harness:env` generator wrote are no longer read.
 - **Nothing in the worker's shell.** No `.env` value is exported into the shell a worker's tool
   calls run in (Critical Rule #1). The CLIs carry their own auth (`acli`, `gh`, `supabase`,
-  `vercel`, logged in once per machine), the repo's bun scripts load `.env` themselves, and a
-  command that needs a `.env` value runs as `bunx varlock run -- <cmd>`, loading it for that
-  process only.
+  `vercel`, logged in once per machine), the repo's bun scripts load `.env` themselves, and any
+  other command that needs a `.env` value runs as `bunx varlock run -- sh -c '<cmd using "$VAR">'`,
+  loading it for that process only.
 
 Both failures are silent. A worktree whose `.env` is missing, or a session not restarted after a
 `.env` change, leaves the MCP server without its current credential; a CLI never logged in on this machine fails the same way. Either
 way the worker is fully provisioned, starts cleanly, and nothing says so until its first
 authenticated call fails with an error that reads like a broken tool (gotcha G45).
 
-So for every worker launched on the native path, in this order:
+So for every worker, on either launch path, in this order:
 
 1. A `.env` in the worker's checkout (provisioning copies it; after a `.env` change, restart the
    agent session; `bun run harness:env:check` exits 1 while a retired plaintext copy remains). For a
@@ -64,11 +64,10 @@ So for every worker launched on the native path, in this order:
    worker's own first probe, is the evidence. No evidence → fix the
    machine, do not dispatch work.
 
-Workers on every harness run supervised with their MCP credentials and no shell setup. A worker
-whose session itself must see `.env` (rare: a command that is not a bun script and cannot run as
-`bunx varlock run -- <cmd>`) runs on a pasted `launch.txt` line instead, which carries its own env
-loading through the wrapper, and is unsupervised (`references/launch-seam.md` §1). Say so to the
-owner before launching.
+Workers on every harness run supervised with their MCP credentials and no shell setup. No launch
+path gives a session `.env` in its own process, and none should: a command that needs a value runs
+through `bunx varlock run -- sh -c '...'` on either path, so credentials are never a reason to
+choose the unsupervised pasted line (`references/launch-seam.md` §1).
 
 ---
 

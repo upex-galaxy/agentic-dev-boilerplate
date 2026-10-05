@@ -105,7 +105,7 @@ This bootstraps `.agents/`, wires Engram (persistent memory) per agent with `eng
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
-**Launch the agent through the wrappers** `bun run claude`, `bun run opencode` or `bun run codex` (names in `package.json`): each loads `.env` into the session. MCP servers get their credentials from the `.env` loader they start through (`varlock run --filter <its vars>`), so a launch with no command line (desktop app, a supervised worker) gets them too; after a `.env` change, restart the agent session. A second working tree (`git worktree add`) needs `bun run worktree:provision` before its first session (`/git-flow-master`, `references/worktrees.md`).
+**Open the agent with its own binary** in the project folder (`claude`, `opencode` or `codex`) or with its desktop app. No wrapper: the agent process holds no `.env` value (ADR-0016). MCP servers get their credentials from the `.env` loader they start through (`varlock run --filter <its vars>`), and a command that needs a `.env` value runs through `bunx varlock run -- sh -c '...'`; after a `.env` change, restart the agent session. A second working tree (`git worktree add`) needs `bun run worktree:provision` before its first session (`/git-flow-master`, `references/worktrees.md`).
 
 > **Critical Rule #10** (AGENTS.md §1): for build/test/lint commands, **READ `package.json` DIRECTLY** — never trust a hardcoded list in a doc. Scripts drift; `package.json` is canonical.
 
@@ -256,7 +256,7 @@ Run through this checklist before you reach for your first ticket:
 - [ ] Adopted app only: is the adoption committed, and does `/project-adoption check` report every signal `ADOPTED`?
 - [ ] Did you run the setup script (`bun run setup` — verify name in `package.json`)?
 - [ ] Did you fill `.env` with your own credentials (`LOCAL_*`, `STAGING_*`, `ATLASSIAN_*`, `SUPABASE_*`, `N8N_*`)? Did you connect a web-search provider at harness level (`bun run setup:doctor`)?
-- [ ] Did you launch the agent through `bun run claude|opencode|codex` (a desktop or native launch also works: MCP servers read `.env` through the loader)?
+- [ ] Did you open the agent in the project folder (`claude`, `opencode`, `codex`, or the desktop app), and do its MCP servers show as connected (they read `.env` through the loader)?
 - [ ] Does the agents linter (`bun run vars:check` per `package.json`) exit clean (0 errors)?
 - [ ] Does Engram appear in the active MCP list (restart your agent if not)?
 - [ ] Did you open the docs hub (`https://upex-galaxy.github.io/agentic-dev-boilerplate/`) and the deck of the skill you are about to use?

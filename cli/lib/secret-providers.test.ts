@@ -11,8 +11,6 @@
  *      appends the block to a project that predates it.
  *   5. The generated `.env.core.schema` imports the overlay with allowMissing.
  *   6. Opting in writes the overlay once and never replaces a project's copy.
- *   7. The launcher's clean-up drops EMPTY inherited copies of the overlay's
- *      active keys only (CI's unset secrets), and nothing without an overlay.
  */
 
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -33,7 +31,6 @@ import {
   providerResolvedKeys,
   providerSchemaTemplate,
   secretsBlockText,
-  withoutEmptyProviderShadows,
   writeSecretsToYamlText,
 } from './secret-providers.ts';
 
@@ -151,42 +148,6 @@ describe('applySecretsChoice', () => {
       const local = applySecretsChoice(join(root, 'other'), yamlPath, DEFAULT_SECRETS_CONFIG);
       expect(local.overlayWritten).toBe(false);
       expect(existsSync(join(root, 'other', PROVIDER_SCHEMA_FILE))).toBe(false);
-    }
-    finally { rmSync(root, { recursive: true, force: true }); }
-  });
-});
-
-describe('withoutEmptyProviderShadows', () => {
-  const overlay = [
-    `# @plugin(${ONEPASSWORD_PLUGIN})`,
-    '# ---',
-    `${OP_TOKEN_VAR}=`,
-    'SUPABASE_SECRET_KEY=op(op://acme-dev/SUPABASE_SECRET_KEY/password)',
-    '# N8N_API_KEY=op(op://acme-dev/N8N_API_KEY/password)',
-    '',
-  ].join('\n');
-
-  test('drops the empty inherited copies of the keys the overlay resolves', () => {
-    const root = mkdtempSync(join(tmpdir(), 'secret-providers-'));
-    try {
-      writeFileSync(join(root, PROVIDER_SCHEMA_FILE), overlay);
-      const env = { SUPABASE_SECRET_KEY: '', [OP_TOKEN_VAR]: '', N8N_API_KEY: '', CI: 'true' };
-      const out = withoutEmptyProviderShadows(root, env);
-      expect(out.dropped).toEqual([OP_TOKEN_VAR, 'SUPABASE_SECRET_KEY']);
-      expect(out.env).toEqual({ N8N_API_KEY: '', CI: 'true' });
-      // The caller's map is never mutated.
-      expect(env.SUPABASE_SECRET_KEY).toBe('');
-    }
-    finally { rmSync(root, { recursive: true, force: true }); }
-  });
-
-  test('keeps a non-empty inherited value, and changes nothing without an overlay', () => {
-    const root = mkdtempSync(join(tmpdir(), 'secret-providers-'));
-    try {
-      writeFileSync(join(root, PROVIDER_SCHEMA_FILE), overlay);
-      expect(withoutEmptyProviderShadows(root, { SUPABASE_SECRET_KEY: 'ci-value' }).env).toEqual({ SUPABASE_SECRET_KEY: 'ci-value' });
-      rmSync(join(root, PROVIDER_SCHEMA_FILE));
-      expect(withoutEmptyProviderShadows(root, { SUPABASE_SECRET_KEY: '' })).toEqual({ env: { SUPABASE_SECRET_KEY: '' }, dropped: [] });
     }
     finally { rmSync(root, { recursive: true, force: true }); }
   });

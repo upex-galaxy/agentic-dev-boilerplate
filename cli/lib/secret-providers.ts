@@ -22,9 +22,10 @@
  *     variable, wins over the vault, and the vault is then not even asked
  *     (items resolve lazily), so one teammate on plain `.env` still works;
  *   - an EMPTY inherited process variable ALSO wins and blanks the item. GitHub
- *     Actions turns every unset `secrets.X` into an empty string, so
- *     `scripts/launch.ts` drops the empty inherited copies of the keys this
- *     overlay resolves (`withoutEmptyProviderShadows`) before it calls varlock;
+ *     Actions turns every unset `secrets.X` into an empty string, so a CI step
+ *     that reads the vault passes a per-variable secret only when the job sets
+ *     it (nothing in this repo launches a process with `.env` loaded for it:
+ *     ADR-0016);
  *   - `-p <file>` drops the `.env.local` ladder (probe P0.1), which is why the
  *     overlay is an import and never a `-p` flag.
  *
@@ -32,7 +33,7 @@
  * ships; `ADAPTERS` holds one entry per manager. 1Password is the only adapter
  * today. Another varlock plugin (the list is in `SUPPORTED_ELSEWHERE`) plugs in
  * by adding its id to `SECRET_PROVIDERS` and one `ProviderAdapter`: the file
- * name, the import, the launcher rule and the CI wiring stay as they are.
+ * name, the import and the CI wiring stay as they are.
  *
  * `cli/` is import-closed: this module imports only from
  * `./variables-manifest.ts`, the `yaml` package and node built-ins.
@@ -272,7 +273,8 @@ export function providerSchemaTemplate(config: SecretsConfig, manifest: readonly
     '# ADVANCED, opt-in. The default home of a value is .env; this file serves the',
     `# secrets a team keeps in ${adapter.label} instead. It holds REFERENCES, never a`,
     '# value, so it is committed: each teammate resolves the same references',
-    '# through their own access when a process starts (bun run claude|codex|opencode).',
+    '# through their own access when a process starts (each MCP server through the',
+    '# .env loader, a command through `bunx varlock run -- <cmd>`).',
     '#',
     '# Written once by `bun run setup` from .agents/project.yaml `secrets:`; yours',
     '# after that. Imported by .env.core.schema with allowMissing=true: delete this',
@@ -303,7 +305,7 @@ export function providerSchemaTemplate(config: SecretsConfig, manifest: readonly
 
 /**
  * Names the overlay resolves from the manager: every ACTIVE item line (the
- * auth token included). Commented lines do not count. Pure, for the launcher.
+ * auth token included). Commented lines do not count. Pure.
  */
 export function providerResolvedKeys(overlayText: string): string[] {
   const keys: string[] = [];
@@ -318,26 +320,6 @@ export function providerResolvedKeys(overlayText: string): string[] {
 export function providerResolvedKeysIn(root: string): string[] {
   const file = join(root, PROVIDER_SCHEMA_FILE);
   return existsSync(file) ? providerResolvedKeys(readFileSync(file, 'utf8')) : [];
-}
-
-/**
- * The environment with the EMPTY inherited copies of the keys the secret
- * manager resolves removed. varlock lets any inherited variable win, an empty
- * one included, and GitHub Actions materializes every unset `secrets.X` as an
- * empty string: without this, a CI job that keeps its per-variable secrets
- * beside `OP_SERVICE_ACCOUNT_TOKEN` would blank every vault value it did not
- * set. Only the overlay's own keys are touched, so a project without the
- * overlay keeps exactly the old behaviour. Returns the dropped NAMES.
- */
-export function withoutEmptyProviderShadows(
-  root: string,
-  env: Record<string, string | undefined>,
-): { env: Record<string, string | undefined>, dropped: string[] } {
-  const dropped = providerResolvedKeysIn(root).filter(name => env[name] === '');
-  if (dropped.length === 0) { return { env, dropped }; }
-  const next = { ...env };
-  for (const name of dropped) { delete next[name]; }
-  return { env: next, dropped };
 }
 
 // ----------------------------------------------------------------------------
