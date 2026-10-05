@@ -21,10 +21,12 @@
  */
 
 import type { Stats } from 'node:fs';
+import type { Harness, HarnessSelection } from './harness-selection.ts';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
 import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings } from './agent-compatibility-contracts.ts';
+import { declaredHarnesses, skippedHarnessNotes } from './harness-selection.ts';
 
 export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md\n';
 
@@ -99,8 +101,20 @@ export interface CompatibilityCheck {
   errors: string[]
   /** Printed, never failing: a downstream gap the sync cannot deliver (see `McpParityOptions`). */
   warnings: string[]
-  /** `deferred`: absent on purpose until the migration commit (see SKILLS_ALIAS_DEFERRED_MARKER). */
-  alias: Omit<AliasStatus, 'status'> & { status: 'missing' | 'invalid' | 'valid' | 'deferred' }
+  /**
+   * Informational, never failing: one line per harness the project does not
+   * use (`codex: not declared ..., skipped`), plus any `harnesses:` value that
+   * could not be used as written. See `declaredHarnesses`.
+   */
+  notes: string[]
+  /** The harnesses this check covered. */
+  harnesses: Harness[]
+  /**
+   * `deferred`: absent on purpose until the migration commit (see
+   * SKILLS_ALIAS_DEFERRED_MARKER). `not-used`: Claude Code is not a harness
+   * this project uses, so neither the alias nor the `CLAUDE.md` shim is checked.
+   */
+  alias: Omit<AliasStatus, 'status'> & { status: 'missing' | 'invalid' | 'valid' | 'deferred' | 'not-used' }
 }
 
 /** The surface a compatibility error belongs to, so a report can group them. */
@@ -119,7 +133,9 @@ export const COMPATIBILITY_GROUP_LABEL: Record<CompatibilityErrorGroup, string> 
 
 /** Classify one error message by its wording (the messages are ours). */
 export function compatibilityErrorGroup(message: string): CompatibilityErrorGroup {
-  if (/\bMCP\b/.test(message)) { return 'mcp'; }
+  // An MCP config error names its file even when the parser's message lacks
+  // the word (e.g. a placeholder Codex refuses).
+  if (/\bMCP\b|\.mcp\.json|opencode\.jsonc|\.codex\/config\.toml/.test(message)) { return 'mcp'; }
   if (/eslint\.config/i.test(message)) { return 'lint'; }
   if (/command shadows skill/i.test(message)) { return 'commands'; }
   if (/skills alias|\.claude\/skills/i.test(message)) { return 'alias'; }
@@ -153,6 +169,7 @@ export function describeAliasStatus(alias: CompatibilityCheck['alias'] | AliasSt
     case 'deferred': return 'Claude skills alias deferred until the migration commit (`bun run agents:compat` creates it afterwards).';
     case 'missing': return `Claude skills alias missing: ${alias.path} (run \`bun run agents:compat\`).`;
     case 'invalid': return `Claude skills alias invalid: ${alias.path} is not the generated ${alias.type} to ${alias.target}.`;
+    case 'not-used': return 'Claude skills alias not checked: Claude Code is not a harness this project uses.';
   }
 }
 
@@ -245,10 +262,10 @@ export function isInside(target: string, parent: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
 }
 
-export function validateCanonicalSources(root = process.cwd()): string[] {
+export function validateCanonicalSources(root = process.cwd(), harnesses: readonly Harness[] = declaredHarnesses(root).harnesses): string[] {
   const paths = compatibilityPaths(root);
   try {
-    assertCanonicalSources(paths);
+    assertCanonicalSources(paths, harnesses.includes('claude'));
     return [];
   }
   catch (error) {
@@ -256,13 +273,15 @@ export function validateCanonicalSources(root = process.cwd()): string[] {
   }
 }
 
-function assertCanonicalSources(paths: CompatibilityPaths): void {
+/** `claudeShim`: false when Claude Code is not in use, so `CLAUDE.md` may be absent (ADR-0013). */
+function assertCanonicalSources(paths: CompatibilityPaths, claudeShim = true): void {
   if (!existsSync(paths.instructions) || !lstatSync(paths.instructions).isFile()) {
     throw new Error(`Canonical instructions missing: ${relative(paths.root, paths.instructions)}`);
   }
   if (!existsSync(paths.canonicalSkills) || !lstatSync(paths.canonicalSkills).isDirectory()) {
     throw new Error(`Canonical skills directory missing: ${relative(paths.root, paths.canonicalSkills)}`);
   }
+  if (!claudeShim) { return; }
   if (!existsSync(paths.claudeShim) || !lstatSync(paths.claudeShim).isFile()) {
     throw new Error(`Claude instruction shim missing: ${relative(paths.root, paths.claudeShim)}`);
   }
@@ -359,23 +378,27 @@ export function claudeSkillsAliasPlan(
 export function checkAgentCompatibility(
   root = process.cwd(),
   platform: NodeJS.Platform = process.platform,
+  selection: HarnessSelection = declaredHarnesses(root),
 ): CompatibilityCheck {
   const paths = compatibilityPaths(root);
   const type = aliasType(platform);
   const target = desiredAliasTarget(paths, platform);
   const errors: string[] = [];
   const warnings: string[] = [];
+  const harnesses = selection.harnesses;
+  const notes = [...skippedHarnessNotes(selection), ...selection.warnings];
+  const usesClaude = harnesses.includes('claude');
 
   try {
     if (adoptInstructionsPending(paths.root)) {
       warnings.push(`AGENTS.md pending: the app's instructions wait for their composition in ${ADOPT_INSTRUCTIONS_PENDING_FILE} (project-adoption Phase 6, then \`bun run agents:compat\`).`);
     }
     else {
-      assertCanonicalSources(paths);
+      assertCanonicalSources(paths, usesClaude);
     }
     errors.push(...validateNoShadowingCommands(paths.root));
-    errors.push(...validateHookCompatibility(paths.root));
-    const mcp = validateMcpParityFindings(paths.root);
+    errors.push(...validateHookCompatibility(paths.root, harnesses));
+    const mcp = validateMcpParityFindings(paths.root, { harnesses });
     errors.push(...mcp.errors);
     warnings.push(...mcp.warnings);
   }
@@ -386,18 +409,29 @@ export function checkAgentCompatibility(
   // unwired lint block. Never throws (an unreadable config is not a finding).
   errors.push(...validateEslintBlockWiring(paths.root));
 
+  const result = (status: CompatibilityCheck['alias']['status']): CompatibilityCheck => ({
+    ok: errors.length === 0,
+    errors,
+    warnings,
+    notes,
+    harnesses,
+    alias: { path: paths.claudeSkills, target, type, status },
+  });
+
+  if (!usesClaude) { return result('not-used'); }
+
   const entry = lstatIfPresent(paths.claudeSkills);
   if (entry === null) {
     if (existsSync(join(paths.root, SKILLS_ALIAS_DEFERRED_MARKER))) {
-      return { ok: errors.length === 0, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'deferred' } };
+      return result('deferred');
     }
     errors.push(SKILLS_ALIAS_MISSING_ERROR);
-    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'missing' } };
+    return result('missing');
   }
 
   if (!entry.isSymbolicLink()) {
     errors.push('Refusing compatibility state: .claude/skills exists but is not a generated symlink or junction.');
-    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+    return result('invalid');
   }
 
   const actualTarget = readlinkSync(paths.claudeSkills);
@@ -406,19 +440,14 @@ export function checkAgentCompatibility(
     : actualTarget === POSIX_CLAUDE_SKILLS_TARGET;
   if (!exactTarget) {
     errors.push(`Claude skills alias has unexpected target: ${actualTarget}`);
-    return { ok: false, errors, warnings, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+    return result('invalid');
   }
 
-  return {
-    ok: errors.length === 0,
-    errors,
-    warnings,
-    alias: { path: paths.claudeSkills, target, type, status: 'valid' },
-  };
+  return result('valid');
 }
 
 export interface AgentSurfaceRepair {
-  /** Null when the alias was deferred (see `deferSkillsAlias`). */
+  /** Null when the alias was deferred (see `deferSkillsAlias`) or Claude Code is not in use. */
   alias: AliasStatus | null
   /** Commands that shadowed a skill, moved to `SHADOWING_COMMANDS_BACKUP_DIR` by this repair. */
   shadowingCommandsMoved: string[]
@@ -447,7 +476,11 @@ export function repairAgentSurfaces(
 ): AgentSurfaceRepair {
   const resolvedRoot = resolve(root);
   let alias: AliasStatus | null = null;
-  if (options.deferSkillsAlias) {
+  const usesClaude = declaredHarnesses(resolvedRoot).harnesses.includes('claude');
+  if (!usesClaude) {
+    // No Claude Code here: no alias to create or defer.
+  }
+  else if (options.deferSkillsAlias) {
     const marker = join(resolvedRoot, SKILLS_ALIAS_DEFERRED_MARKER);
     mkdirSync(join(marker, '..'), { recursive: true });
     writeFileSync(marker, `${new Date().toISOString()}\n`);
@@ -457,7 +490,7 @@ export function repairAgentSurfaces(
   }
   const shadowingCommandsMoved = removeShadowingCommands(resolvedRoot);
   const check = checkAgentCompatibility(resolvedRoot, platform);
-  return { alias, shadowingCommandsMoved, check, aliasDeferred: options.deferSkillsAlias === true };
+  return { alias, shadowingCommandsMoved, check, aliasDeferred: usesClaude && options.deferSkillsAlias === true };
 }
 
 export function repairClaudeSkillsAlias(
