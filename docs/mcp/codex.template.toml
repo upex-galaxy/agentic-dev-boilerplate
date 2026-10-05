@@ -17,10 +17,11 @@
 # SECRETS: Codex never expands `${VAR}` in `args` or in `[X.env]`. Secrets travel
 # BY NAME: `env_vars = ["VAR"]` (stdio) or `bearer_token_env_var = "VAR"` (HTTP).
 #
-# LOADER: every stdio block starts through `bunx -p dotenv-cli@8.0.0 dotenv -o
-# -e .env -- <real command>`, the same loader `.codex/config.toml` uses: Codex
-# Desktop opened from Finder or the Dock has no process environment for
-# `env_vars` to forward, and the loader reads `.env` whatever launched Codex.
+# LOADER: every stdio block starts through `bunx -p varlock@1.20.0 varlock run
+# --no-redact-stdout -- <real command>`, the same loader `.codex/config.toml`
+# uses: Codex Desktop opened from Finder or the Dock has no process environment
+# for `env_vars` to forward, and varlock reads `.env` / `.env.local` (validated
+# against `.env.schema`) whatever launched Codex.
 # `startup_timeout_sec = 30` covers a cold package fetch plus the loader hop.
 #
 # `{{VARIABLE}}` marks a NON-secret value to paste by hand (a URL, an org slug).
@@ -38,11 +39,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",
@@ -64,11 +64,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",
@@ -82,11 +81,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",
@@ -99,11 +97,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",
@@ -125,11 +122,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "uvx",
   "nanobanana-mcp-server@latest",
@@ -145,11 +141,10 @@ command = "bunx"
 startup_timeout_sec = 30
 args = [
   "-p",
-  "dotenv-cli@8.0.0",
-  "dotenv",
-  "-o",
-  "-e",
-  ".env",
+  "varlock@1.20.0",
+  "varlock",
+  "run",
+  "--no-redact-stdout",
   "--",
   "npx",
   "-y",

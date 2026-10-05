@@ -69,15 +69,17 @@ export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$
  * reads `.env` from the launch directory (the project root) and then starts
  * the real server, so the values arrive however Codex was opened.
  *
- * `-p dotenv-cli@<pin>` names the package explicitly: a bare `bunx dotenv`
- * resolves to the `dotenv` LIBRARY when `node_modules` is absent and prints its
- * usage instead of running anything. The pin tracks the `dotenv-cli`
- * devDependency, so the cache already holds it after `bun install`. `-o` makes
- * `.env` win over an inherited value, exactly as the `bun run codex` wrapper
- * does.
+ * The loader is `varlock run`, the same one `bun run codex` uses: it reads
+ * `.env` / `.env.local`, validates them against `.env.schema`, and starts the
+ * server with the values in its environment. `-p varlock@<pin>` names the
+ * package explicitly and carries the EXACT devDependency version, so a missing
+ * `node_modules` never makes `bunx` fetch a different varlock. An inherited
+ * variable wins over the files (varlock's precedence; `bun run codex` refuses
+ * to launch on a differing one). `--no-redact-stdout` keeps varlock from
+ * rewriting the server's stdout, which is the JSON-RPC stream on a pipe.
  */
 export const CODEX_ENV_LOADER_COMMAND = 'bunx';
-export const CODEX_ENV_LOADER_ARGS = ['-p', 'dotenv-cli@8.0.0', 'dotenv', '-o', '-e', '.env', '--'] as const;
+export const CODEX_ENV_LOADER_ARGS = ['-p', 'varlock@1.20.0', 'varlock', 'run', '--no-redact-stdout', '--'] as const;
 
 /**
  * Splits a Codex `command` + `args` into the server it actually starts. A
