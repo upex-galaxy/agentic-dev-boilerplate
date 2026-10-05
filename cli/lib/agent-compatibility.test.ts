@@ -1346,7 +1346,7 @@ describe('compatibility report grouping', () => {
   });
 });
 
-describe('an adopted app whose instructions wait for their composition', () => {
+describe.skipIf(!HAS_OPENCODE)('an adopted app whose instructions wait for their composition', () => {
   /** The --adopt --auto state: AGENTS.md absent, the app's own CLAUDE.md, the composed file saved, the alias deferred. */
   function pendingAdoption(): string {
     const root = contractFixture();
