@@ -28,6 +28,26 @@ describe('component registry', () => {
     expect(() => validateComponentRegistry(COMPONENTS)).not.toThrow();
   });
 
+  test('no shell autoloader travels: .envrc is never delivered, watched, or deleted downstream', () => {
+    // Each process loads its own config (the MCP .env loader, `bun run claude`,
+    // `bunx varlock run --`), so nothing upstream exports .env into a shell. A
+    // downstream .envrc is the developer's own file: the updater leaves it alone.
+    const autoloaders = ['.envrc', '.envrc.local'];
+    const shipped = COMPONENTS.flatMap(c => [...c.paths, ...(c.files ?? []).map(f => c.paths[0] === '.' ? f : `${c.paths[0]}/${f}`)]);
+    const cwd = mkdtempSync(join(tmpdir(), 'updater-envrc-'));
+    try {
+      const watched = resolveProtectedWatchlist(cwd).map(e => e.path);
+      for (const p of autoloaders) {
+        expect(shipped).not.toContain(p);
+        expect(watched).not.toContain(p);
+        expect(DEPRECATED_FILES.map(d => d.path)).not.toContain(p);
+      }
+    }
+    finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test('.claude/settings.json ships once (bootstrap-only) and stays out of every directory component', () => {
     const rootConfig = COMPONENTS.find(c => c.name === 'agent-root-config');
     expect(rootConfig).toMatchObject({ type: 'file-list', paths: ['.claude'], files: ['settings.json'], bootstrapOnly: true });

@@ -362,7 +362,7 @@ This pattern scales cleanly to dozens of items in one run. The bottleneck is aut
 
 This is the **only** working path in the `acli` release this skill was checked against (recorded in `.context/ADR/ADR-0003-forensic-measurements-ledger.md`; re-check `acli jira workitem edit --help` after an upgrade) — there is no acli-native channel for editing custom-field values on existing items. The recipe below is the turnkey workaround.
 
-**Prerequisites.** Two env vars must be exported in the current shell. They are loaded automatically by the project tooling (`bun claude`, `bun opencode`, or `direnv`) from `.env`:
+**Prerequisites.** Two variables in `.env` (or the secret manager). They are NEVER exported into the shell: the `curl` runs inside `bunx varlock run --`, which loads `.env` for that one process only, so the values reach `curl` and never the AI's shell (Critical Rule #1):
 
 - `ATLASSIAN_EMAIL` — the API-token owner's email
 - `ATLASSIAN_API_TOKEN` — the API token paired with the email
@@ -391,13 +391,14 @@ bun .agents/skills/acli/scripts/md-to-adf.ts /tmp/new.md /tmp/new.adf.json
 jq -n --slurpfile adf /tmp/new.adf.json \
   '{fields: {customfield_NNNNN: $adf[0]}}' > /tmp/put.json
 
-# 4. PUT against the issue
-curl -sS -w "\nHTTP %{http_code}\n" \
+# 4. PUT against the issue. Single quotes: the variables expand inside the
+#    varlock child, never in the calling shell.
+bunx varlock run -- sh -c 'curl -sS -w "\nHTTP %{http_code}\n" \
   -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
   -X PUT "$(bun run --silent jira:url)/rest/api/3/issue/{{PROJECT_KEY}}-123" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  --data-binary @/tmp/put.json
+  --data-binary @/tmp/put.json'
 # Expected: HTTP 204 (Jira returns no body on a successful PUT)
 ```
 
@@ -417,14 +418,15 @@ Same ADF doc through REST PUT: HTTP 204 OK.
 **Batch variant.** Loop the recipe per `--data-binary @/tmp/put-N.json` and capture HTTP codes:
 
 ```bash
+bunx varlock run -- sh -c 'host=$(bun run --silent jira:url)
 for KEY in {{PROJECT_KEY}}-1 {{PROJECT_KEY}}-2 {{PROJECT_KEY}}-3; do
   status=$(curl -sS -o /dev/null -w "%{http_code}" \
     -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
-    -X PUT "$(bun run --silent jira:url)/rest/api/3/issue/$KEY" \
+    -X PUT "$host/rest/api/3/issue/$KEY" \
     -H "Content-Type: application/json" \
     --data-binary @/tmp/put-"$KEY".json)
   echo "$KEY -> HTTP $status"
-done
+done'
 ```
 
 **When this becomes unnecessary.** If Atlassian adds an `additionalAttributes`-style channel to `acli workitem edit`, retire this workaround and update the recipe table.

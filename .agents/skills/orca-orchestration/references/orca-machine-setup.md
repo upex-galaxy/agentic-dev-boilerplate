@@ -85,7 +85,7 @@ Until that override exists on a machine, a native worker launches in whatever mo
 per-agent default gives it, which is the trap gotcha G27 describes. Neither the repo nor a teammate's
 machine can tell whether you did it, which is the whole problem with a non-versionable setting.
 
-### 3.2 · Credentials for a supervised worker: the MCP `.env` loader, and direnv only for shell CLIs
+### 3.2 · Credentials for a supervised worker: each process loads its own config
 
 A launch line can export variables; the native launch cannot, because it has no argv, so the
 `bun run <harness>` wrappers (`scripts/launch.ts` -> `varlock run`) never run for a supervised worker. That does not
@@ -102,41 +102,36 @@ only the variables in its filter.
   `.auth/opencode/<VAR>`): no host reads them any more. `bun run harness:env` retires them (a copy equal
   to `.env` is deleted, one `.env` does not reproduce is moved to `.auth/harness-env-backup/` and named),
   and `bun run harness:env:check` exits 1 while one remains.
-- **Every worker, any harness**: a CLI it runs that reads a shell-exported variable (`acli`,
-  `supabase`, `vercel`, `curl`) sees credentials only from the process environment. For those, and
-  only those, direnv in Orca's **interactive shell** is the seam: with it installed and hooked, the
-  committed `.envrc` sources `.env` (and `.envrc.local`) when the worker's terminal opens, and a direnv
-  export line on the worker's screen is the evidence (G45).
+- **Every worker, any harness, shell leg**: nothing exports `.env` into the worker's shell, on
+  purpose: a secret in the shell reaches every tool call the AI makes (Critical Rule #1). The CLIs
+  carry their own auth (`acli`, `gh`, `supabase`, `vercel` log in once per machine), the repo's bun
+  scripts load `.env` themselves, and the one command that needs a `.env` value (a raw `curl` with a
+  token) runs as `bunx varlock run -- <cmd>`, which loads `.env` for that process only (G45).
 
 The failure is silent on every leg. A worktree with no `.env`, or a value the schema rejects, leaves
 the MCP server without its credential and it dies on its first authenticated call (Critical Rule #9;
-`bunx varlock load --agent` shows which value fails, redacted); a shell CLI without direnv fails much
-later with an error that reads like a broken tool.
+`bunx varlock load --agent` shows which value fails, redacted); a CLI that was never logged in on
+this machine fails much later with an error that reads like a broken tool.
 
 ```bash
-bun run worktree:provision                       # a new worktree: copies .env, runs direnv allow when it can
+bun run worktree:provision                       # a new worktree: copies .env and the other gitignored inputs
 bun run harness:env:check                        # exit 1 while a retired plaintext copy remains
-command -v direnv                                # shell-exported CLI vars only: installed
-grep -n "direnv hook" ~/.zshrc ~/.bashrc         # ... and hooked into the shell Orca runs
-direnv allow                                     # once per checkout, per machine
-bun run setup:doctor                             # reports what this machine declares, both seams included
+bunx varlock load --agent                        # which .env value fails the schema, redacted
+bun run setup:doctor                             # reports what this machine declares
 ```
 
 After a `.env` change nothing needs re-running: restart the agent session, and for OpenCode its
 background service too (`opencode service restart`), because it caches the resolved config per
-directory. `bun run worktree:provision` runs
-`direnv allow <worktree>` for you, but only when direnv is installed AND the primary checkout's
-`.envrc` is already allowed, and it prints what it did (or why it skipped). It never approves an
-`.envrc` on a machine that never approved the primary.
+directory.
 
 Two rules that follow from this being per-machine and invisible:
 
 - The conductor **verifies credentials on the worker's screen** before sending it any work
   (`references/coordinator-playbook.md` §1 step 5), whichever surface they came from. Readiness is
   not capability.
-- direnv is a per-machine convenience for shell-exported CLI variables, not a repo contract. Nothing
-  in a workflow skill may depend on it: the pasted `launch.txt` line loads the env file through the
-  repo's own wrapper, and that is why the human-paste path needs none of this.
+- No workflow skill may depend on a shell that exported `.env`. The pasted `launch.txt` line loads
+  the env file through the repo's own wrapper, and that is why the human-paste path needs none of
+  this; a shell autoloader is not a supported seam on either path.
 
 ---
 
@@ -183,11 +178,11 @@ find out during a real fleet, and record it in `references/gotchas.md`.
 [ ] Settings -> Agents: `claude` default args include `--permission-mode auto`
     (prerequisite of the SUPERVISED native launch; a pasted custom-argv line needs nothing)
 [ ] other agents: their documented equivalent, verified, not guessed
-[ ] a `.env` in every worker checkout (MCP servers read it through the `.env` loader on every host;
-    no direnv needed for MCP); `bun run harness:env:check` exits 0 (no retired plaintext copy left)
-[ ] direnv installed, hooked into the shell Orca runs, `direnv allow` run in the primary
-    (only shell-exported CLI vars ride on it: `acli`, `supabase`, `vercel`, `curl`; verify on the
-    worker's screen at launch)
+[ ] a `.env` in every worker checkout (MCP servers read it through the `.env` loader on every host);
+    `bun run harness:env:check` exits 0 (no retired plaintext copy left)
+[ ] the CLIs a brief calls are logged in on this machine (`acli`, `gh`, `supabase`, `vercel`); a
+    command needing a `.env` value runs as `bunx varlock run -- <cmd>` (verify on the worker's
+    screen at launch)
 [ ] `orca.yaml` hooks honoured: source policy not local-only, trust approved, setup run-by-default
 [ ] (optional) phone paired
 [ ] a single test worker launched and released end to end BEFORE a real fleet

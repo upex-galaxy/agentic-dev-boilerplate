@@ -2404,9 +2404,9 @@ bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode 
               Sin línea de lanzamiento no corre el wrapper que carga <span class="mono">.env</span>.
               Los servidores MCP no lo necesitan: en los tres harnesses cada uno lee el
               <span class="mono">.env</span> del worktree con el loader de
-              <span class="mono">.env</span>; las CLIs de shell
+              <span class="mono">.env</span>; las CLIs
               (<span class="mono">acli</span>, <span class="mono">supabase</span>,
-              <span class="mono">vercel</span>) necesitan direnv. El conductor confirma en pantalla
+              <span class="mono">vercel</span>) usan su propio login y nada se exporta a la shell. El conductor confirma en pantalla
               antes de mandar trabajo.
             </p>
           </div>

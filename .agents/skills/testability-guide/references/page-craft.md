@@ -39,7 +39,7 @@ app/qa/
     ├── RequestCards.tsx     # 'use client' — tab group over RequestCards (§5 auth)
     ├── ArchDiagram.tsx      # boxes-and-arrows + MCP layer + Repos (mono/poly)
     ├── TwoWayTabs.tsx       # reusable 2-way tabs (DB: toml|URI · API: OpenAPI|Postman)
-    └── EnvSetup.tsx         # .env slots + activation (3 paths) + missing-var table
+    └── EnvSetup.tsx         # .env slots + activation (per process) + missing-var table
 ```
 
 > **Why the `_lib/` split**: the highlighter is server-only (it loads WASM + grammars — expensive, and must never ship to the browser). Client components (`AgentCodeBlock`, `RequestCard`) cannot import it, so the SERVER pre-highlights every snippet into html-string props (`prepare.ts`) and passes them down. Server components highlight inline via the async `<CodeBlock>`.
@@ -111,7 +111,7 @@ export interface QaConfig {
   };
   mcp: { agents: AgentKey[]; dbhub: Record<AgentKey, string>; openapi: Record<AgentKey, string>;
          postman: Record<AgentKey, string> };        // playwright driven by CLI, not an MCP record (Q7)
-  env: { strategy: "expansion" | "literal"; activation: ("wrapper" | "source-shell" | "direnv" | "auto")[]; slots: string[] };
+  env: { strategy: "expansion" | "literal"; activation: ("wrapper" | "varlock-run" | "auto")[]; slots: string[] };
   demoUsers: { email: string; note: string }[];               // emails only on the page; passwords gated
   playwright: {                                       // §6 fixtures + agentic CLI (Q7)
     loginTestIds: { id: string; purpose: string }[];
@@ -758,7 +758,7 @@ export function TwoWayTabs({ config, domain }: { config: QaConfig; domain: "db" 
 ```
 
 ```tsx
-// EnvSetup.tsx — .env slots (names only) + the THREE activation paths + the
+// EnvSetup.tsx — .env slots (names only) + the per-process activation paths + the
 // CORRECT env verification. Server component (renders <CodeBlock> server-side).
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
@@ -769,12 +769,9 @@ import type { QaConfig } from "../qa-config";
 const wrapperBlock = `# Wrapper (cross-platform) — launches the agent with .env preloaded through varlock:
 bun run claude       # = varlock run -- claude, after a stale-variable check
 bun run opencode     # = varlock run -- opencode`;
-const sourceShellBlock = `# Source .env into your CURRENT shell — must be SOURCED (a 'bun run' wrapper
-# runs in a subshell and won't persist). Mac/Linux/Git Bash:
-set -a; source .env; set +a
-# then launch bare 'claude' / 'opencode' with the vars already exported.`;
-const direnvBlock = `# direnv + .envrc (Mac/Linux) — auto-loads .env on cd into the repo:
-direnv allow         # once; every cd then exports .env automatically`;
+const varlockRunBlock = `# One launch, no script — loads .env for THIS process only (never into your shell):
+bunx varlock run -- claude
+bunx varlock run -- opencode`;
 
 export function EnvSetup({ config }: { config: QaConfig }) {
   return (
@@ -783,12 +780,11 @@ export function EnvSetup({ config }: { config: QaConfig }) {
         {config.env.slots.map(s => <Badge key={s} variant="secondary" className="font-mono">{s}</Badge>)}
       </div>
 
-      {/* Activation — three paths (render only the ones DETECTED in env.activation) */}
+      {/* Activation — per process (render only the ones DETECTED in env.activation) */}
       <div className="space-y-3">
-        <p className="text-sm font-semibold">Activate <code>.env</code> before launching the agent — three paths:</p>
+        <p className="text-sm font-semibold">Load <code>.env</code> into the agent when you launch it (never into your shell):</p>
         {config.env.activation.includes("wrapper") && <CodeBlock language="bash" code={wrapperBlock} title="wrapper" />}
-        {config.env.activation.includes("source-shell") && <CodeBlock language="bash" code={sourceShellBlock} title="source .env (current shell)" />}
-        {config.env.activation.includes("direnv") && <CodeBlock language="bash" code={direnvBlock} title="direnv" />}
+        {config.env.activation.includes("varlock-run") && <CodeBlock language="bash" code={varlockRunBlock} title="varlock run" />}
         {config.env.activation.includes("auto") && (
           <p className="text-sm text-muted-foreground">The runtime auto-loads <code>.env</code> (still export the vars for the MCP launcher).</p>
         )}
@@ -806,7 +802,7 @@ export function EnvSetup({ config }: { config: QaConfig }) {
         <ul className="ml-5 mt-1 list-disc text-muted-foreground">
           <li><code>grep -E '^&lt;PREFIX&gt;[A-Z0-9_]*=.' .env | cut -d= -f1</code> — is the var set in the file? (names only)</li>
           <li><code>bunx varlock run -- env | grep '^&lt;PREFIX&gt;' | cut -d= -f1</code> — what the MCP actually sees (names only).</li>
-          <li><code>set -a; source .env; set +a</code> — load into your current shell; check a var by name, never print it.</li>
+          <li><code>bunx varlock load --agent</code> — does every value pass the schema? (redacted).</li>
         </ul>
       </div>
     </div>

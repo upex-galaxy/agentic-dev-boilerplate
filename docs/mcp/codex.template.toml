@@ -28,7 +28,8 @@
 # SECRETS: Codex never expands `${VAR}` in `args` or in `[X.env]`. A remote
 # (HTTP) server cannot start through the loader: it names its token with
 # `bearer_token_env_var = "VAR"`, read from Codex's own process environment,
-# so it resolves only on a launch that has one (`bun run codex`, direnv).
+# so it resolves only on a launch that has one (`bun run codex`, which loads
+# `.env` through varlock). A bare `codex` launch leaves it empty.
 #
 # `{{VARIABLE}}` marks a NON-secret value to paste by hand (a URL, an org slug).
 #

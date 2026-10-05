@@ -121,7 +121,6 @@ path Bun cannot create its bin shims, and `bun install` fails with
 | **Hard blocker**       | Claude Code **or** OpenCode                                          | The agent the installer configures. `bun run setup` Step 4 aborts if neither is found. Install [Claude Code](https://docs.claude.com/claude-code) or [OpenCode](https://opencode.ai).          |
 | **Quasi-required**     | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing → installer prints commands and asks exit-or-continue (no cross-session memory if you continue).                         |
 | **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 11 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
-| **Convenience opt-in** | `direnv`                                                             | Auto-loads `.env` so the bare `claude` / `opencode` binaries see MCP credentials. Without it, use the cross-platform `bun claude` / `bun opencode` wrappers. **Windows users should skip it.** |
 
 This CLI checks `bun`, `git`, and `tar` up front with a `where` / `which` probe
 (POSIX uses `which`, Windows uses `where`) and prints actionable install hints

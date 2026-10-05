@@ -34,7 +34,7 @@ The artifact goes straight to the point: what the credentials are and which `.en
 3. **Auth at the UI layer (browser)** — the system roles, and how each tester self-provisions. Two variants, conditional (see §UI variants).
 4. **Auth at the DB layer** — raw connection-string (SQL-editor only) VS the DB MCP driver's split-field `.env` block (read-only + read-write). The "two formats, NOT interchangeable" callout.
 5. **Auth at the API layer** — a copy-paste `.env` block (base URL / spec path / token); token left BLANK, tester-minted.
-6. **Activate the MCPs** — inject the `.env` into the agent (wrapper / source / direnv) + the verification trio.
+6. **Activate the MCPs** — inject the `.env` into the agent process (wrapper / `bunx varlock run --`) + the verification trio.
 7. **Security** — what never to publish; rotate-on-leak.
 8. **Footer** — one-line pointer to the `/qa` page (this REPLACES the dropped architecture summary).
 
@@ -197,10 +197,10 @@ Verify the vars are actually present BEFORE launching. The wrapper injects the `
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # set in the file? (names only)
 bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # injected? (what the MCP will see, names only)
-set -a; source .env; set +a              # load into THIS shell, then run claude/opencode bare
+bunx varlock load --agent                # every value passes the schema? (redacted)
 ```
 
-Any change to `.env` → restart the agent (env cached at spawn). Mac/Linux alternative: `direnv allow` with the repo `.envrc`.
+Any change to `.env` → restart the agent (env cached at spawn). No wrapper script in the project: `bunx varlock run -- claude` does the same for one launch.
 
 ## Security
 

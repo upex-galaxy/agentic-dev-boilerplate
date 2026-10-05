@@ -69,10 +69,11 @@ yarn-error.log*
 .env.local
 .env.*.local
 .env.sentry-build-plugin
+# A personal shell autoloader is never committed: it would export secrets into
+# every shell, the AI's included. Each process loads its own config instead.
+.envrc
 .envrc.local
 .direnv/
-# Force-track .envrc (overrides global gitignore, which often blanket-ignores it)
-!.envrc
 
 # ===== IDE & Editor =====
 .idea/

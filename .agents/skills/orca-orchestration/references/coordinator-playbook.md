@@ -87,13 +87,12 @@ orca terminal rename --terminal <handle> --title "<KEY> · task_<first 4 of the 
 #     Prerequisites, both invisible from here: the agent's per-machine default arguments must carry
 #       an auto permission mode, and credentials must reach the worker: on every host the MCP
 #       servers read the worktree's `.env` through the `.env` loader (`varlock run --filter`);
-#       shell-exported CLI variables need direnv in the interactive shell (G45). references/orca-machine-setup.md §3.
+#       CLIs carry their own auth, nothing is exported into the shell (G45). references/orca-machine-setup.md §3.
 
 # 5 · verify readiness AND credentials on the worker's screen, before sending it any work
 orca terminal read --terminal <handle> --screen --json </dev/null
 #     want: the agent's status footer (model, effort) AND evidence credentials loaded
-#     (an MCP tool listed as connected, a direnv export line for shell CLIs, or the worker's own
-#     first probe). No credentials → fix the machine, do not dispatch work to it.
+#     (an MCP tool listed as connected, or the worker's own first probe). No credentials → fix the machine, do not dispatch work to it.
 #     Also the SESSION NAME in the status bar. Claude Code: the identity hook named it from the
 #     prompt token; the bar reads `<KEY>`. OpenCode and Codex have no hook that can: drive the TUI
 #     with `terminal send --enter --text '/rename <KEY>'` once the screen shows it ready, then read
@@ -154,7 +153,7 @@ about each:
 | the session-name flag, and any say over the tab title | the roster, the board card and the `Session:` commit trailer all key off the label, and the runtime titles the tab `worker-<task id>` (G71) | the prompt opens with `/<workflow-skill> <KEY> fleet worker` and the identity hook names a Claude Code session `<KEY>` from it; the conductor sends `/rename <KEY>` to the other harnesses (step 5) and renames the tab (step 4b). `references/session-identity.md` §2b |
 | environment variables in the launch line | a worker cannot be marked as a fleet worker by an exported variable | the brief and the prompt token carry it. `sprint-development` detects worker mode from them, not from the environment |
 | the prompt in the launch itself | the worker starts idle at its prompt | step 6: `terminal send` immediately after readiness. Until it lands, the worker has nothing to do |
-| a launch line that also loads the env file | MCP servers on every host load the worktree's `.env` themselves through the `.env` loader (a `.env` change needs a session restart); a shell-exported CLI variable inside any worker depends on the MACHINE having direnv in the shell Orca runs, and nothing reports either gap | step 5: verify credentials on screen BEFORE dispatching work (G45) |
+| a launch line that also loads the env file | MCP servers on every host load the worktree's `.env` themselves through the `.env` loader (a `.env` change needs a session restart); a CLI inside any worker depends on the MACHINE having it logged in, and nothing reports either gap | step 5: verify credentials on screen BEFORE dispatching work (G45) |
 
 **The custom-argv path** (`terminal create --command '<the line from launch.txt>'` plus
 `terminal wait --for tui-idle`) keeps exactly one role: it is the shape of the line a HUMAN pastes
@@ -405,7 +404,6 @@ that means the env file, the `.vercel/` link, any local session scope, the track
    remove it, mark the roster row `resume: gone (worktree removed)` so nobody tries.
 5. Only then remove, and `git worktree prune`. From the CLI that is `orca worktree rm --run-hooks`:
    without the flag Orca skips the committed `orca.yaml` archive hook (which runs the same rescue).
-   A worktree provisioned with direnv leaves an allow entry behind; `direnv prune` clears it.
 
 Mechanics and the untracked-files gotcha: `git-flow-master/references/worktrees.md`.
 

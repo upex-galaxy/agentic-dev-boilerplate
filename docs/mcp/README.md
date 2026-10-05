@@ -72,7 +72,7 @@ The one secret marker left is on a REMOTE (HTTP) server, which cannot start thro
 | OpenCode    | `{env:POSTMAN_API_KEY}`                             |
 | Codex       | `bearer_token_env_var = "POSTMAN_API_KEY"` (already in the template) |
 
-Those three resolve from the harness's own process environment, so a remote server's secret is there only on a launch that has one (`bun run <harness>` or direnv), never from a desktop app.
+Those three resolve from the harness's own process environment, so a remote server's secret is there only on a launch that has one (`bun run <harness>`), never from a bare binary or a desktop app.
 
 Non-secret placeholders (`{{API_BASE_URL}}`, `{{OPENAPI_SPEC_URL}}`, `{{SENTRY_ORG}}`, `{{SENTRY_PROJECT}}`) are pasted as literal values.
 

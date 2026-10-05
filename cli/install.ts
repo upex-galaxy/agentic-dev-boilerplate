@@ -7,7 +7,7 @@
  *   2. Detect agents (Claude Code / OpenCode / Codex) and prompt selection
  *   3. Optionally wire Engram persistent memory per agent with `engram setup`,
  *      then offer the Engram Claude Code plugin (session hooks)
- *   4. Wire `.env` for MCP servers + offer direnv autoload
+ *   4. Wire `.env` for MCP servers
  *      (`.mcp.json`, `opencode.jsonc` and `.codex/config.toml` are committed
  *      with ${VAR} / {env:VAR} / env-var-name forwarding — installer only
  *      ensures `.env` has the union of values the selected harnesses need)
@@ -21,7 +21,6 @@
  *
  * Env:
  *   INSTALL_AGENTS=claude-code,opencode,codex   Comma-list of agents to configure (non-interactive)
- *   INSTALL_SKIP_DIRENV=1             Skip direnv autoload sub-step
  *   INSTALL_SECRETS_PROVIDER=1password Opt in to a secret manager (default: .env); with
  *   INSTALL_SECRETS_VAULT=<vault>     the vault its references point at
  *   INSTALL_SKIP_ENGRAM=1             Treat Engram as skipped (Steps 2-3, 5)
@@ -392,7 +391,6 @@ const NON_INTERACTIVE
   = process.argv.includes('--non-interactive') || !process.stdin.isTTY;
 const AUTO_NON_INTERACTIVE
   = !process.argv.includes('--non-interactive') && !process.stdin.isTTY;
-const SKIP_DIRENV = process.env.INSTALL_SKIP_DIRENV === '1';
 const SKIP_ENGRAM = process.env.INSTALL_SKIP_ENGRAM === '1';
 const FORCE_ENGRAM = process.env.INSTALL_FORCE_ENGRAM === '1' || process.env.INSTALL_FORCE_AGENTS_SETUP === '1';
 // --sync-skills: standalone repair mode — re-installs community skills so
@@ -960,15 +958,15 @@ async function installCommunitySkills(
 }
 
 // ============================================================================
-// Step 7 — Wire .env for MCP servers (+ direnv autoload offer)
+// Step 7 — Wire .env for MCP servers
 // ============================================================================
 //
 // The three MCP configs are committed with every server that needs `.env`
 // values launched through the `.env` loader (`varlock run --filter <its vars>`),
 // which reads `.env` itself at spawn time. The installer never rewrites those
-// files: it only ensures `.env` contains the required values, then optionally
-// enables direnv for the shell. Step 7d retires the plaintext copies an older
-// install generated.
+// files: it only ensures `.env` contains the required values. Nothing exports
+// `.env` into the shell: every process loads its own config. Step 7d retires
+// the plaintext copies an older install generated.
 
 function isSecretName(name: string): boolean {
   return SECRET_NAME_HINTS.some(hint => name.endsWith(hint) || name.endsWith(`_${hint}`));
@@ -1384,43 +1382,6 @@ async function configureDayZeroCredentials(state: InstallState): Promise<void> {
   void state;
 }
 
-// ----------------------------------------------------------------------------
-// direnv autoload sub-step (still part of Step 7)
-// ----------------------------------------------------------------------------
-
-interface DirenvInfo {
-  installed: boolean
-  version?: string
-  supportsDotenvIfExists: boolean
-  supportsPwshHook: boolean
-  platform: NodeJS.Platform
-}
-
-function detectDirenv(): DirenvInfo {
-  const platform = process.platform;
-  const result = tryRun('direnv', ['version']);
-  if (!result.ok) {
-    return { installed: false, supportsDotenvIfExists: false, supportsPwshHook: false, platform };
-  }
-  const version = result.stdout.trim();
-  const parts = version.split('.').map(n => Number.parseInt(n, 10));
-  const maj = parts[0] ?? 0;
-  const min = parts[1] ?? 0;
-  const supportsDotenvIfExists = maj > 2 || (maj === 2 && min >= 30);
-  const supportsPwshHook = maj > 2 || (maj === 2 && min >= 37);
-  return { installed: true, version, supportsDotenvIfExists, supportsPwshHook, platform };
-}
-
-function installHintForPlatform(): string {
-  if (process.platform === 'win32') {
-    return 'winget install direnv  (then restart Git Bash or PowerShell)';
-  }
-  if (process.platform === 'darwin') {
-    return 'brew install direnv';
-  }
-  return 'sudo apt install direnv  (or: dnf install direnv  /  pacman -S direnv)';
-}
-
 // OS-aware recommendation for installing EXTERNAL_CLIS. Kept for reference;
 // closing summary now links to official docs per-CLI instead of a single pm command.
 // Prefix _ signals intentionally unused per project lint convention.
@@ -1438,26 +1399,6 @@ function _recommendedPackageManager(): { label: string, url: string, install: st
     url: 'https://brew.sh',
     install: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
   };
-}
-
-function shellHookHint(info: DirenvInfo): string {
-  const shell = (process.env.SHELL ?? '').toLowerCase();
-  if (process.platform === 'win32' && shell.length === 0) {
-    if (info.supportsPwshHook) {
-      return 'Invoke-Expression "$(direnv hook pwsh)"  →  add to $PROFILE  (PowerShell)';
-    }
-    return 'eval "$(direnv hook bash)"  →  add to ~/.bashrc  (Git Bash; PowerShell needs direnv 2.37+)';
-  }
-  if (shell.endsWith('zsh')) {
-    return 'eval "$(direnv hook zsh)"  →  add to ~/.zshrc';
-  }
-  if (shell.endsWith('fish')) {
-    return 'direnv hook fish | source  →  add to ~/.config/fish/config.fish';
-  }
-  if (shell.endsWith('bash')) {
-    return 'eval "$(direnv hook bash)"  →  add to ~/.bashrc';
-  }
-  return 'eval "$(direnv hook <your-shell>)"  →  see https://direnv.net/docs/hook.html';
 }
 
 // ----------------------------------------------------------------------------
@@ -1573,43 +1514,6 @@ async function offerSecretManager(): Promise<void> {
   }
   catch (err) {
     log.warn(`Secret manager not configured: ${(err as Error).message} Secrets stay in .env.`);
-  }
-}
-
-async function offerDirenvAutoload(): Promise<void> {
-  if (SKIP_DIRENV) {
-    log.dim('  INSTALL_SKIP_DIRENV=1, skipping direnv setup.');
-    return;
-  }
-  const info = detectDirenv();
-
-  if (!info.installed) {
-    log.info('direnv not installed (optional).');
-    log.dim('  Launch agents with: bun run claude  /  bun run opencode  /  bun run codex  (varlock loads .env automatically).');
-    log.dim(`  Or install direnv for shell autoload: ${installHintForPlatform()}`);
-    return;
-  }
-  log.info(`direnv ${info.version} detected.`);
-  if (info.platform === 'win32') {
-    log.dim('  Tip: direnv on Windows works best in Git Bash. PowerShell support is experimental and requires direnv 2.37+.');
-  }
-
-  const proceed = await maybeConfirm(
-    'Run `direnv allow` so the repo\'s .envrc auto-loads .env into your shell?',
-    true,
-  );
-  if (!proceed) {
-    log.dim('  Skipped. Launch agents with: bun claude  /  bun opencode  /  bun codex.');
-    return;
-  }
-  const result = tryRun('direnv', ['allow', REPO_ROOT]);
-  if (result.ok) {
-    log.success('direnv allow succeeded — .envrc will auto-load .env on cd.');
-    log.dim(`  Reminder: add this to your shell rc if not already done: ${shellHookHint(info)}`);
-  }
-  else {
-    log.warn('direnv allow failed. Launch agents with: bun claude  /  bun opencode  /  bun codex.');
-    log.dim(`  ${(result.stderr || result.stdout).trim().slice(0, 200)}`);
   }
 }
 
@@ -2803,7 +2707,7 @@ function printClosingSummary(state: InstallState): void {
   stepNum++;
 
   process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Open the agent${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run claude${COLORS.reset}      ${COLORS.dim}(varlock loads .env, validated against .env.schema — works without direnv)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun run claude${COLORS.reset}      ${COLORS.dim}(varlock loads .env, validated against .env.schema)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.cyan}bun run opencode${COLORS.reset}    ${COLORS.dim}(varlock loads .env)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.cyan}bun run codex${COLORS.reset}       ${COLORS.dim}(CLI; Codex Desktop opens this same repository)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.dim}All three read AGENTS.md + .agents/skills/. Codex Desktop needs repository trust before hooks run.${COLORS.reset}\n\n`);
@@ -3174,7 +3078,6 @@ async function main(): Promise<void> {
   tui.section('Step 7: Wiring .env for MCP servers');
   await offerSecretManager();
   await configureMcps(agents, state);
-  await offerDirenvAutoload();
 
   tui.section('Step 7c: Day-0 credentials (Atlassian, Resend)');
   await configureDayZeroCredentials(state);

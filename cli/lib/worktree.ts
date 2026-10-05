@@ -104,7 +104,6 @@ export const HARNESS_ENV_BACKUP_DIR = '.auth/harness-env-backup';
 export const PROVISION_COPIES: readonly ProvisionCopy[] = [
   { path: '.env', kind: 'file', secret: true, why: 'values every harness launch and every MCP loader read' },
   { path: '.env.local', kind: 'file', secret: true, why: 'per-developer override; also where `vercel env pull` writes' },
-  { path: '.envrc.local', kind: 'file', secret: true, why: 'sourced by .envrc when present' },
   { path: '.env.sentry-build-plugin', kind: 'file', secret: true, why: 'Sentry auth token the Next.js build plugin reads' },
   { path: '.claude/settings.local.json', kind: 'file', secret: true, why: 'per-developer Claude Code settings and permissions' },
   { path: '.vercel', kind: 'dir', secret: true, why: '`vercel link` output: the project and org ids the Vercel CLI and `/vercel-cli` read' },

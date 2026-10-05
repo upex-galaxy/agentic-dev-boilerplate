@@ -244,7 +244,7 @@ Un secreto nunca se escribe en el config y su valor vive en `.env` (gitignored).
 bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter API_KEY -- <server>
 ```
 
-El loader lee `.env` (o el gestor de secretos que nombra el schema) al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa solo las variables de su `--filter`. No se copia ningún valor a otro archivo. Un server remoto (HTTP) no puede usar el loader: referencia su secreto con `${VAR}` (Claude Code), `{env:VAR}` (OpenCode) o `bearer_token_env_var` (Codex), desde el entorno del proceso, así que solo resuelve en un lanzamiento con `bun run <harness>` o direnv.
+El loader lee `.env` (o el gestor de secretos que nombra el schema) al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa solo las variables de su `--filter`. No se copia ningún valor a otro archivo. Un server remoto (HTTP) no puede usar el loader: referencia su secreto con `${VAR}` (Claude Code), `{env:VAR}` (OpenCode) o `bearer_token_env_var` (Codex), desde el entorno del proceso, así que solo resuelve en un lanzamiento con `bun run <harness>`.
 
 Ningún host avisa cuando falta una variable: el servidor arranca y falla en su primera llamada autenticada. Un 401/403 es la señal; `/mcp` dentro de la sesión es el chequeo (`AGENTS.md` Critical Rule #9).
 
