@@ -119,6 +119,13 @@ describe('the always-on file and the overlay', () => {
     expect(row).toContain('`.agents/skills/shop-web-context/SKILL.md`');
   });
 
+  test('composeAdoptedL0 drops upstream\'s router lock: the added row is the app\'s, not the locked table', () => {
+    const lockedL0 = L0.replace('<!-- router:end -->', '<!-- router:end -->\n<!-- router:lock 0123456789ab ADR-0013 -->');
+    const out = composeAdoptedL0(lockedL0, 'shop-web-context', 'shop-web');
+    expect(out).not.toContain('router:lock');
+    expect(out).toBe(composeAdoptedL0(L0, 'shop-web-context', 'shop-web'));
+  });
+
   test('an upstream without a router is left as it is', () => {
     expect(composeAdoptedL0('# Old\n\n## 1. RULES\n', 's-context', 's')).toBe('# Old\n\n## 1. RULES\n');
   });
