@@ -30,7 +30,7 @@ the failure this rule exists to prevent; the prompt is what must not drift.
 |---|---|---|
 | Launch | the human opens N terminals and pastes N lines from `launch.txt` | `[ORCHESTRATION_TOOL] launch: one native supervised worker per unit of work (agent + model + effort), then send the prompt into it` |
 | Prompt | it is inside the pasted line | delivered as a separate step, same text, opening with `/<workflow-skill> <KEY> fleet worker` |
-| Credentials | the pasted line goes through the `bun run <harness>` wrapper, which loads `.env` | no wrapper and no argv: on every host each MCP server that needs `.env` values starts through the `.env` loader (`varlock run --filter <its vars>`), which reads the worktree's `.env` itself; nothing is exported into the worker's shell (CLIs carry their own auth, a command needing a value runs as `bunx varlock run -- <cmd>`). The conductor VERIFIES credentials on screen before sending work (G45) |
+| Credentials | identical on both paths: the pasted line opens the bare harness binary, so the harness process holds no `.env` value (ADR-0016) | identical on both paths: on every host each MCP server that needs `.env` values starts through the `.env` loader (`varlock run --filter <its vars>`), which reads the worktree's `.env` itself; nothing is exported into the worker's shell (CLIs carry their own auth, a command needing a value runs as `bunx varlock run -- sh -c '<cmd using "$VAR">'`). The conductor VERIFIES credentials on screen before sending work (G45) |
 | State | the workflow's own blocked-state tokens in its session memory, plus the tracker | the mailbox: wait on done / escalation / question |
 | Sibling awareness | each worker knows only its own ticket | the roster in the brief; a worker broadcasts a fact that changes someone else's decision |
 | Close | the human closes terminals | `[ORCHESTRATION_TOOL] close: release the supervised worker by dispatch` |
@@ -56,15 +56,13 @@ for the real grammar. Only this skill spells out commands, because only this ski
 - Shape (Claude Code example; other harnesses use their own binary and their own documented flags):
 
   ```
-  bun run claude -- --model <full-model-id> --effort <level> --permission-mode auto \
+  claude --model <full-model-id> --effort <level> --permission-mode auto \
     -n "<KEY>" '<prompt>'
   ```
 
-  `bun run claude` forwards trailing arguments to the binary through `scripts/launch.ts`
-  (declared in `package.json`), which refuses to launch while an inherited variable differs from
-  the env file and then starts the binary through `varlock run`
-  (`.agents/instructions/agent-harnesses.md` §5.5). `<KEY>` is the worker's roster name, the same token the
-  prompt opens with. On a harness where the launcher cannot set a session name, omit the flag: the
+  The line runs the harness's own binary in the worktree, with no wrapper: the harness process holds
+  no `.env` value, and its MCP servers read `.env` through the loader (ADR-0016). `<KEY>` is the
+  worker's roster name, the same token the prompt opens with. On a harness whose binary cannot set a session name, omit the flag: the
   human types `/rename <KEY>` once the session is up, because a model cannot rename its own session.
 
 **This line is for a human, or for a terminal nobody will supervise.** Two things about it do not

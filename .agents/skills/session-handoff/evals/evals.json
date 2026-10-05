@@ -15,7 +15,7 @@
     {
       "name": "should-trigger-handoff-from-worktree",
       "prompt": "I'm in a linked worktree. Hand this session over to a new one.",
-      "expected_behavior": "Activates session-handoff. Writes the file under the PRIMARY checkout's .session/handoffs/ (never the worktree's own .session/), counts NN from that directory, and launches the successor with the worktree root (git rev-parse --show-toplevel) as its working directory, through the repo's bun run <harness> wrapper.",
+      "expected_behavior": "Activates session-handoff. Writes the file under the PRIMARY checkout's .session/handoffs/ (never the worktree's own .session/), counts NN from that directory, and launches the successor with the worktree root (git rev-parse --show-toplevel) as its working directory, with the harness's own bare binary (no wrapper, no env loader in front of it).",
       "category": "positive"
     },
     {

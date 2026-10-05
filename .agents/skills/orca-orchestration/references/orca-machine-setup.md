@@ -87,9 +87,9 @@ machine can tell whether you did it, which is the whole problem with a non-versi
 
 ### 3.2 · Credentials for a supervised worker: each process loads its own config
 
-A launch line can export variables; the native launch cannot, because it has no argv, so the
-`bun run <harness>` wrappers (`scripts/launch.ts` -> `varlock run`) never run for a supervised worker. That does not
-leave it without MCP credentials: on all three hosts every MCP server that needs `.env` values starts
+No harness process holds a `.env` value, whether it is a supervised native launch or a pasted
+launch line (ADR-0016): both open the bare harness binary. That does not leave a worker without MCP
+credentials: on all three hosts every MCP server that needs `.env` values starts
 through the `.env` loader (`bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <its vars> -- <server>`,
 `.agents/instructions/agent-harnesses.md` §5.5, `MCP_ENV_LOADER_*` in `cli/lib/agent-compatibility-contracts.ts`).
 It reads the varlock schema plus `.env` / `.env.local` (or the secret manager the schema names) from
@@ -105,8 +105,9 @@ only the variables in its filter.
 - **Every worker, any harness, shell leg**: nothing exports `.env` into the worker's shell, on
   purpose: a secret in the shell reaches every tool call the AI makes (Critical Rule #1). The CLIs
   carry their own auth (`acli`, `gh`, `supabase`, `vercel` log in once per machine), the repo's bun
-  scripts load `.env` themselves, and the one command that needs a `.env` value (a raw `curl` with a
-  token) runs as `bunx varlock run -- <cmd>`, which loads `.env` for that process only (G45).
+  scripts load `.env` themselves, and any other command that needs a `.env` value (a raw `curl` with a
+  token) runs as `bunx varlock run -- sh -c '<cmd using "$VAR">'`, which loads `.env` for that
+  process only (G45).
 
 The failure is silent on every leg. A worktree with no `.env`, or a value the schema rejects, leaves
 the MCP server without its credential and it dies on its first authenticated call (Critical Rule #9;
@@ -129,9 +130,9 @@ Two rules that follow from this being per-machine and invisible:
 - The conductor **verifies credentials on the worker's screen** before sending it any work
   (`references/coordinator-playbook.md` §1 step 5), whichever surface they came from. Readiness is
   not capability.
-- No workflow skill may depend on a shell that exported `.env`. The pasted `launch.txt` line loads
-  the env file through the repo's own wrapper, and that is why the human-paste path needs none of
-  this; a shell autoloader is not a supported seam on either path.
+- No workflow skill may depend on a shell that exported `.env`. The pasted `launch.txt` line opens
+  the bare harness exactly like the native launch, so the human-paste path depends on this section
+  too; a shell autoloader is not a supported seam on either path.
 
 ---
 

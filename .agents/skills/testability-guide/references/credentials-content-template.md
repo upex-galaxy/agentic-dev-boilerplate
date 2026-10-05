@@ -34,7 +34,7 @@ The artifact goes straight to the point: what the credentials are and which `.en
 3. **Auth at the UI layer (browser)** — the system roles, and how each tester self-provisions. Two variants, conditional (see §UI variants).
 4. **Auth at the DB layer** — raw connection-string (SQL-editor only) VS the DB MCP driver's split-field `.env` block (read-only + read-write). The "two formats, NOT interchangeable" callout.
 5. **Auth at the API layer** — a copy-paste `.env` block (base URL / spec path / token); token left BLANK, tester-minted.
-6. **Activate the MCPs** — inject the `.env` into the agent process (wrapper / `bunx varlock run --`) + the verification trio.
+6. **Activate the MCPs** — open the agent bare; each MCP server reads `.env` through the loader; a command needing a value runs as `bunx varlock run -- sh -c '...'` + the verification trio.
 7. **Security** — what never to publish; rotate-on-leak.
 8. **Footer** — one-line pointer to the `/qa` page (this REPLACES the dropped architecture summary).
 
@@ -183,24 +183,25 @@ API_TOKEN=
 - Helper (if present): `<<API_LOGIN_HELPER>>` — the project's api-login mini-CLI; mints your token and writes it into your `.env` as `API_TOKEN=`. Restart the terminal/agent after (the MCP caches env at spawn).
 - Manual: `<<API_LOGIN_ENDPOINT>>` with your credentials → returns a token (`<<TOKEN_PREFIX>>…`). Paste it into `API_TOKEN`.
 
-## Activate the MCPs (inject the `.env`)
+## Activate the MCPs (the `.env` loader)
 
-The MCP config files carry `${VAR}` / `{env:VAR}` placeholders — no secrets. Real values live in your `.env` (gitignored). The agent reads vars when it spawns each MCP, so the `.env` must be injected into the process that launches the agent:
+Real values live in your `.env` (gitignored); the MCP config files carry no secrets. Open the agent bare, in the project folder (or its desktop app): it holds no `.env` value. Each MCP server that needs one starts through the `.env` loader in its committed config entry, which reads `.env` when the server spawns and hands it only its own variables:
 
 ```bash
-bun run claude      # agent with the .env injected (through varlock run)
-bun run opencode
+claude      # or: opencode. No wrapper, no env loader in front of the agent
 ```
 
-Verify the vars are actually present BEFORE launching. The wrapper injects the `.env` into the agent CHILD process, NOT your parent shell — so a bare `env | grep <PREFIX>` in your terminal comes back empty even when everything is correct. Use the right check:
+A command that needs a value (a `curl` with your token) runs through the loader for that one process: `bunx varlock run -- sh -c '<command using "$VAR">'`. Never export `.env` into your shell.
+
+A bare `env | grep <PREFIX>` in your terminal comes back empty even when everything is correct: the loader hands the values to each MCP server process, never to the agent or your shell. Use the right check:
 
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # set in the file? (names only)
-bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # injected? (what the MCP will see, names only)
+bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # loadable? (what the MCP will see, names only)
 bunx varlock load --agent                # every value passes the schema? (redacted)
 ```
 
-Any change to `.env` → restart the agent (env cached at spawn). No wrapper script in the project: `bunx varlock run -- claude` does the same for one launch.
+Any change to `.env` → restart the agent (env cached at MCP spawn).
 
 ## Security
 

@@ -155,15 +155,15 @@ Address: `<<PRIMARY_ROOT>>/.session/sprint-development/sprint-<N>/launch.txt`. O
 1. **Always written**, gate or no gate. It is the record of what the fleet was asked to do, and the human-paste path consumes it literally.
 2. **Byte-identical where it is pasted.** A human gets *this exact line*; never paraphrase it. On the supervised path the transport opens the session itself and cannot take a command line, so what travels there is the **prompt payload** of this line, delivered as the session's first message (`orca-orchestration/references/launch-seam.md` §2). The prompt is what must stay identical across both paths.
 3. **Regenerated whole** at every round boundary. Never patched line by line: merged tickets drop out, newly unblocked ones get appended. A stale line relaunches a finished ticket.
-4. **Self-contained**: the harness invocation through the `bun run <harness>` wrapper (it loads `.env`), the session name, and the prompt, in one line that works pasted into a fresh terminal at the worker's worktree root.
+4. **Self-contained**: the bare harness binary (no wrapper: the harness holds no `.env` value and its MCP servers read it through the loader, ADR-0016), the session name, and the prompt, in one line that works pasted into a fresh terminal at the worker's worktree root.
 5. **The whole prompt is single-quoted** and contains no `'` and no unescaped `"`; rephrase instead of switching delimiter.
 6. **Validate every line before launch** with a shell syntax check (`sh -n` on a file holding the lines; `zsh -n` where the user's shell is zsh). A line that does not parse is not launched.
 7. The harness invocation itself (binary, model / effort / permission / session-name flags per harness) and which launch path supervises are owned by `orca-orchestration/references/launch-seam.md`. This skill owns only the payload: the `sprint-development` worker prompt.
 
-Shape (Claude Code; `bun run claude -- <args>` forwards `<args>` through the env-loading wrapper declared in `package.json`):
+Shape (Claude Code; other harnesses use their own binary, `opencode` or `codex`):
 
 ```
-bun run claude -- <harness flags per launch-seam.md> -n "UPEX-123" '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'
+claude <harness flags per launch-seam.md> -n "UPEX-123" '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'
 ```
 
 ---

@@ -39,11 +39,11 @@ bun run vars:env:check         # inherited process value vs .env / .env.local; l
 [ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && echo "SUPABASE_ACCESS_TOKEN set" || echo "SUPABASE_ACCESS_TOKEN unset"
 ```
 
-The last form checks the CURRENT process environment, which is what a launch through `bun run claude|codex|opencode` populated. `bunx varlock load --agent` redacts only what the schema marks `@sensitive` and prints every other value in full: a secret declared without `@sensitive` (a project variable added to `.env.schema` in a hurry) is exposed by it, so mark it first. Never `varlock load` without `--agent`, nor `--format env|shell|json-full` without `--agent`.
+The last form checks the CURRENT process environment, and for a `.env` value it is EXPECTED to say unset: the harness is opened bare and holds no `.env` value (ADR-0016). A hit there is an inherited value, which `bun run vars:env:check` compares against `.env` by name and length. `bunx varlock load --agent` redacts only what the schema marks `@sensitive` and prints every other value in full: a secret declared without `@sensitive` (a project variable added to `.env.schema` in a hurry) is exposed by it, so mark it first. Never `varlock load` without `--agent`, nor `--format env|shell|json-full` without `--agent`.
 
 Never run `varlock load` (even `--agent`) against a schema you have not checked for `@sensitive` coverage: `--agent` redacts only the items the schema marks sensitive and prints every other value in clear, including one inherited from the shell. Scratch schemas are banned. The committed ones are checked by `bun run vars:schema:check`, which fails on any secret-looking key (`SECRET_NAME_PATTERNS` in `cli/lib/env-schema.ts`) without `@sensitive`. The same goes for any CLI that lists a harness's MCP config (`codex mcp list`, `claude mcp list`): it prints user-level server arguments, API keys included.
 
-**The variable is in `.env` but not in this session's environment** (the session was launched without the loader). Run the command THROUGH the loader in a subprocess; the loader reads the file, the AI never does:
+**A command needs a `.env` value.** This is the normal path, because no `.env` value is ever in the session's own environment. Run the command THROUGH the loader in a subprocess; the loader reads the file, the AI never does:
 
 ```bash
 bunx varlock run -- sh -c 'curl -sS -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" https://api.supabase.com/v1/projects'

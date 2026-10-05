@@ -111,7 +111,7 @@ export interface QaConfig {
   };
   mcp: { agents: AgentKey[]; dbhub: Record<AgentKey, string>; openapi: Record<AgentKey, string>;
          postman: Record<AgentKey, string> };        // playwright driven by CLI, not an MCP record (Q7)
-  env: { strategy: "expansion" | "literal"; activation: ("wrapper" | "varlock-run" | "auto")[]; slots: string[] };
+  env: { strategy: "expansion" | "literal"; activation: ("mcp-loader" | "varlock-run" | "auto")[]; slots: string[] };
   demoUsers: { email: string; note: string }[];               // emails only on the page; passwords gated
   playwright: {                                       // §6 fixtures + agentic CLI (Q7)
     loginTestIds: { id: string; purpose: string }[];
@@ -766,12 +766,13 @@ import { CodeBlock } from "./CodeBlock";
 import type { QaConfig } from "../qa-config";
 
 // <PREFIX> = the project's MCP env prefix (e.g. DBHUB) — DETECTED, never baked in.
-const wrapperBlock = `# Wrapper (cross-platform) — launches the agent with .env preloaded through varlock:
-bun run claude       # = varlock run -- claude, after a stale-variable check
-bun run opencode     # = varlock run -- opencode`;
-const varlockRunBlock = `# One launch, no script — loads .env for THIS process only (never into your shell):
-bunx varlock run -- claude
-bunx varlock run -- opencode`;
+const openBareBlock = `# Open the agent bare, in the project folder (or its desktop app). It holds no .env value:
+claude
+opencode`;
+const mcpLoaderBlock = `# Each MCP server that needs a value starts through the .env loader (its committed config entry):
+bunx varlock run --filter <ITS_VARS> -- <server command>`;
+const varlockRunBlock = `# A command that needs a value: loads .env for THAT process only (never into your shell):
+bunx varlock run -- sh -c '<command using "$VAR">'`;
 
 export function EnvSetup({ config }: { config: QaConfig }) {
   return (
@@ -782,11 +783,12 @@ export function EnvSetup({ config }: { config: QaConfig }) {
 
       {/* Activation — per process (render only the ones DETECTED in env.activation) */}
       <div className="space-y-3">
-        <p className="text-sm font-semibold">Load <code>.env</code> into the agent when you launch it (never into your shell):</p>
-        {config.env.activation.includes("wrapper") && <CodeBlock language="bash" code={wrapperBlock} title="wrapper" />}
+        <p className="text-sm font-semibold">Open the agent bare; <code>.env</code> reaches only the process that needs it (never the agent, never your shell):</p>
+        <CodeBlock language="bash" code={openBareBlock} title="open the agent" />
+        {config.env.activation.includes("mcp-loader") && <CodeBlock language="bash" code={mcpLoaderBlock} title="MCP .env loader" />}
         {config.env.activation.includes("varlock-run") && <CodeBlock language="bash" code={varlockRunBlock} title="varlock run" />}
         {config.env.activation.includes("auto") && (
-          <p className="text-sm text-muted-foreground">The runtime auto-loads <code>.env</code> (still export the vars for the MCP launcher).</p>
+          <p className="text-sm text-muted-foreground">The project's own scripts auto-load <code>.env</code> (e.g. Bun); the MCP servers still get theirs through the loader.</p>
         )}
       </div>
 
@@ -796,8 +798,8 @@ export function EnvSetup({ config }: { config: QaConfig }) {
         <p className="mt-1 text-muted-foreground">
           The MCP returns 401/403 (or DBHub: a cryptic auth error because it substitutes the literal <code>{"${VAR}"}</code>).
           Exit the agent, fix <code>.env</code>, re-enter — vars are read once at MCP spawn. A bare
-          {" "}<code>env | grep &lt;PREFIX&gt;</code> comes back EMPTY even when correct, because the wrapper
-          injects vars into the agent CHILD process, not your parent shell. Verify with the trio:
+          {" "}<code>env | grep &lt;PREFIX&gt;</code> comes back EMPTY even when correct, because the loader
+          hands the vars to each MCP server process at spawn, never to the agent or your shell. Verify with the trio:
         </p>
         <ul className="ml-5 mt-1 list-disc text-muted-foreground">
           <li><code>grep -E '^&lt;PREFIX&gt;[A-Z0-9_]*=.' .env | cut -d= -f1</code> — is the var set in the file? (names only)</li>

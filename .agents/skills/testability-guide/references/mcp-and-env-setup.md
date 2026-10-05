@@ -63,14 +63,15 @@ MCP config files are **committed to git** and contain **no secrets** — they re
 | Remote | `type:"http"` | `type:"remote"` | `url` + `bearer_token_env_var` | `httpUrl` |
 | Enable/disable | n/a | `enabled` | `enabled` | n/a |
 
-### Activating `.env` in the terminal (only if the project uses strategy B)
+### Activating `.env` for the agent (only if the project uses strategy B)
 
-The agent process must have the vars at **spawn time**, loaded for THAT process only: never export `.env` into the tester's shell (every later command in it, the agent's tool calls included, would inherit the secrets). Two ways:
+The tester opens the agent **bare**, with its own binary in the project folder (`claude`, `opencode`) or its desktop app: no wrapper, and never `.env` exported into the tester's shell (every later command in it, the agent's tool calls included, would inherit the secrets). The agent process holds no `.env` value, so each piece that needs one gets it by its own route:
 
-- **A) Cross-platform wrapper** (default — Windows/Mac/Linux): the project's `package.json` ships `bun run claude` / `bun run opencode` (a launcher that loads `.env`: `varlock run` in current scaffolds, a `dotenv-cli` wrapper in older ones; render the one the project's scripts use). Launch the agent through it.
-- **B) One process, no script** (any OS with Bun): `bunx varlock run -- claude` (or `opencode`) loads `.env` for that one launch, which is what the wrapper does. Use it when the project ships no wrapper script.
+- **A local (stdio) MCP server** starts through the `.env` loader in its config entry: `bunx varlock run --filter <its vars> -- <server command>` (render the exact entry the project commits). The loader reads `.env` at spawn time and hands that server only its own variables. A config that relies on the agent expanding `${VAR}` / `{env:VAR}` from its own process gets nothing from a bare launch: render the loader form instead.
+- **A remote (HTTP) MCP server** that takes its token from the agent's environment gets none: prefer the server's OAuth flow; a token-only server needs the tester to export that ONE variable in the terminal before opening the agent.
+- **A command that needs a value** (a `curl` with a token, a login typed by the browser driver) runs through the loader in a subprocess: `bunx varlock run -- sh -c '<command using "$VAR">'`.
 
-> Only render the mechanisms the project actually ships (detected in Phase 1: `claude`/`opencode` scripts, a varlock schema). If the project's runtime auto-loads `.env` (e.g. Bun), say so but note the agent process still needs the vars at spawn for the MCP launcher.
+> Only render the mechanisms the project actually ships (detected in Phase 1: the loader entries in the MCP configs, a varlock schema). Never render a launch that loads `.env` into the agent: a `varlock run` or `dotenv` prefix on the agent binary, `source .env`, or a wrapper script.
 
 ### CRITICAL rule (render as a warning callout)
 
@@ -78,11 +79,11 @@ The agent process must have the vars at **spawn time**, loaded for THAT process 
 
 ### Verifying a var loaded — the bare `env | grep` is MISLEADING
 
-A naked `env | grep <PREFIX>` comes back **EMPTY even when everything is correct**: the wrapper (path A) injects vars into the agent **CHILD process**, not your parent shell — so your terminal's `env` never had them. Testers waste hours here. Use the trio instead (`<PREFIX>` = the project's detected MCP env prefix, e.g. `DBHUB`):
+A naked `env | grep <PREFIX>` comes back **EMPTY even when everything is correct**: the loader hands the values to each MCP server process at spawn, never to the agent or to your shell, so your terminal's `env` never has them. Testers waste hours here. Use the trio instead (`<PREFIX>` = the project's detected MCP env prefix, e.g. `DBHUB`):
 
 ```bash
 grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # (a) set in the file? (names only)
-bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # (b) what the MCP sees at spawn (names only; older dotenv scaffolds: dotenv -e .env -- env)
+bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1   # (b) what the MCP sees at spawn (names only)
 bunx varlock load --agent                # (c) does every value pass the schema? (redacted)
 ```
 
@@ -314,5 +315,5 @@ playwright-cli close
 - [ ] Only agent tabs the project supports are rendered (don't show Gemini if the project has no Gemini story — but the 4-tab reference is fine as documentation).
 - [ ] UI driver = `playwright-cli` cookbook (Q7 default); a `@playwright/mcp` block appears ONLY when detection says the project wires the MCP.
 - [ ] Env-verify guidance is the TRIO (`grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1` · `bunx varlock run -- env | grep '^<PREFIX>' | cut -d= -f1` (or the project's own loader) · `bunx varlock load --agent`), every leg printing NAMES only (Critical Rule #1: a value printed in a terminal the agent can see lands in its transcript) — never a bare `env | grep` alone.
-- [ ] Activation lists only DETECTED paths (wrapper / `bunx varlock run --`); never a path that exports `.env` into the shell (`source .env`, a shell autoloader).
+- [ ] Activation opens the agent bare and lists only DETECTED loader paths (the MCP config's loader entry / `bunx varlock run -- sh -c`); never a path that loads `.env` into the agent or the shell (a wrapper script, a `varlock run` prefix on the agent binary, `source .env`, a shell autoloader).
 - [ ] No real password, token, or private host anywhere — only `.env` slot names + `<see credentials source>`.

@@ -48,7 +48,7 @@
 `data-testid="qa-section-trinity"`. Cyan accent.
 
 - Overview: the three layers + the formula `UI (Playwright) + API (OpenAPI/Postman) + DB (DBHub) = Testing Completo`. Three cards (DB / API / UI), each deep-links to §4 / §5 / §6. Content from `mcp-and-env-setup.md` §3.
-- **Env setup** (`data-testid="qa-env-setup"`): the `.env` slots (names only), the strategy-B note (configs committed, secrets in `.env`), the activation mechanisms detected (wrapper `bun run claude`/`opencode` and/or `bunx varlock run -- <agent>`), and the critical "if a var doesn't load → 401/403 → exit, fix `.env`, re-enter" warning. Content from `mcp-and-env-setup.md` §"Env-var strategy".
+- **Env setup** (`data-testid="qa-env-setup"`): the `.env` slots (names only), the strategy-B note (configs committed, secrets in `.env`), the activation mechanisms detected (the agent opened bare, the MCP `.env` loader entries, and `bunx varlock run -- sh -c '...'` for a command needing a value), and the critical "if a var doesn't load → 401/403 → exit, fix `.env`, re-enter" warning. Content from `mcp-and-env-setup.md` §"Env-var strategy".
 
 ### §4 — Backend testing: Database (TWO ways)
 
