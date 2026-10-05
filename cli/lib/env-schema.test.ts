@@ -20,23 +20,30 @@ import * as path from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import {
+  checkSchemaSensitivity,
   CORE_SCHEMA_FILE,
   declaredSchemaKeys,
   deprecatedEnvKeysIn,
   generateCoreSchema,
   inheritedOverrides,
+  isSecretLookingName,
+  lintSchemaSensitivity,
   loadSchemaPairThroughVarlock,
   neutralizeDeprecatedKeys,
+  parseSchemaForSensitivity,
   placeholderEnv,
   placeholderFor,
   PROJECT_SCHEMA_FILE,
   projectSchemaTemplate,
   schemaClassification,
+  schemaFilesIn,
+  SECRET_NAME_PATTERNS,
   seedProjectSchema,
   sensitiveSchemaKeys,
   UNROUTED_VARS,
   writeCoreSchema,
 } from './env-schema.ts';
+import { providerSchemaTemplate } from './secret-providers.ts';
 import { DEPRECATED_VARS, envFileVars, VAR_MANIFEST } from './variables-manifest.ts';
 
 const REPO_ROOT = path.resolve(import.meta.dir, '..', '..');
@@ -274,5 +281,97 @@ describe('inheritedOverrides', () => {
   test('the real manifest marks no secret as non-sensitive in the generated schema', () => {
     const sensitive = sensitiveSchemaKeys();
     expect(VAR_MANIFEST.filter(s => s.secret && !sensitive.has(s.name) && envFileVars().includes(s))).toEqual([]);
+  });
+});
+
+describe('sensitivity lint', () => {
+  const lint = (...texts: string[]) => lintSchemaSensitivity(texts.map((text, i) => ({ file: `f${i}.schema`, text })));
+  const HEADER_OFF = '# @defaultSensitive=false\n# ---\n\n';
+
+  test('secret names match as whole segments, case-insensitive', () => {
+    for (const name of ['GH_TOKEN', 'SLACK_MCP_XOXP_TOKEN', 'slack_xoxb', 'DB_PASSWORD', 'DB_PASSWD', 'GOOGLE_CLIENT_SECRET', 'PORTAL_API_KEY', 'AWS_ACCESS_KEY', 'SSH_PRIVATE_KEY', 'GITHUB_PAT', 'GOOGLE_CREDENTIALS', 'OP_SERVICE_ACCOUNT_TOKEN']) {
+      expect(isSecretLookingName(name)).toBe(true);
+    }
+    for (const name of ['MAX_TOKENS', 'TOKENIZER', 'JIRA_PROJECT_KEY', 'PATH', 'PASSWORDLESS_MODE', 'GOOGLE_CLIENT_ID', 'TEST_ENV']) {
+      expect(isSecretLookingName(name)).toBe(false);
+    }
+    expect(SECRET_NAME_PATTERNS).toContain('XOXP');
+  });
+
+  test('the QA incident: a scratch schema declaring a token without @sensitive fails, naming key and line', () => {
+    const v = lint('SLACK_MCP_REACTION_TOOL=\nSLACK_MCP_XOXP_TOKEN=\n');
+    expect(v).toEqual([{ key: 'SLACK_MCP_XOXP_TOKEN', file: 'f0.schema', line: 2, reason: 'secret-looking name without @sensitive' }]);
+  });
+
+  test('bare @sensitive, @sensitive=true, @sensitive={...} and a post-value comment all pass', () => {
+    expect(lint(`${HEADER_OFF}# @sensitive @docs(https://x.test)\nA_TOKEN=\n# @sensitive=true\nB_TOKEN=\n# @sensitive={preventLeaks=false}\nC_TOKEN=\nD_TOKEN= # @sensitive\nE_TOKEN="a # b" # @sensitive\n`)).toEqual([]);
+  });
+
+  test('a decorator must sit in its own comment block, directly above the item', () => {
+    const v = lint(`${HEADER_OFF}# @sensitive\n\nA_TOKEN=\n# set @sensitive later\nB_TOKEN=\n`);
+    expect(v.map(x => x.key)).toEqual(['A_TOKEN', 'B_TOKEN']);
+  });
+
+  test('a commented-out assignment is not an item', () => {
+    expect(lint(`${HEADER_OFF}# A_TOKEN=op(op://vault/A_TOKEN/password)\n`)).toEqual([]);
+  });
+
+  test('an explicit opt-out anywhere fails, even when another file marks the key @sensitive', () => {
+    const v = lint(`${HEADER_OFF}# @sensitive\nA_TOKEN=\n`, `${HEADER_OFF}# @public\nA_TOKEN=\n`);
+    expect(v).toEqual([{ key: 'A_TOKEN', file: 'f1.schema', line: 5, reason: 'secret-looking name marked non-sensitive (@public / @sensitive=false)' }]);
+    expect(lint(`${HEADER_OFF}# @sensitive=false\nA_TOKEN=\n`)[0].reason).toMatch(/non-sensitive/);
+  });
+
+  test('a re-declaration without a decorator keeps the @sensitive of another file', () => {
+    expect(lint(`${HEADER_OFF}# @sensitive\nA_TOKEN=\n`, `${HEADER_OFF}# @required\nA_TOKEN=\n`)).toEqual([]);
+  });
+
+  test('a non-literal @sensitive fails', () => {
+    expect(lint(`${HEADER_OFF}# @sensitive=forEnv(production)\nA_TOKEN=\n`)[0].reason).toMatch(/literal/);
+  });
+
+  test('@defaultSensitive=true covers a bare item only when every declaring file says so', () => {
+    const overlay = '# @defaultRequired=false\n# @defaultSensitive=true\n# ---\n\nA_TOKEN=op(op://v/A_TOKEN/password)\n';
+    expect(lint(overlay)).toEqual([]);
+    expect(lint(overlay, `${HEADER_OFF}A_TOKEN=\n`).map(x => x.key)).toEqual(['A_TOKEN']);
+    expect(lint('# @defaultSensitive=inferFromPrefix(PUBLIC_)\n# ---\nA_TOKEN=\n')).toEqual([]);
+  });
+
+  test('parse reads root @import targets from the header only', () => {
+    const parsed = parseSchemaForSensitivity('# @import(./.env.core.schema)\n# @import(./.env.x.schema, allowMissing=true)\n# ---\n# @import(./not-a-root.schema)\nA=\n');
+    expect(parsed.imports).toEqual(['./.env.core.schema', './.env.x.schema']);
+    expect(parsed.items.map(i => i.key)).toEqual(['A']);
+  });
+
+  test('the committed schemas pass, and a violation in an imported file is found', () => {
+    const repo = checkSchemaSensitivity(REPO_ROOT);
+    expect(repo.violations).toEqual([]);
+    expect(repo.files).toEqual(expect.arrayContaining([PROJECT_SCHEMA_FILE, CORE_SCHEMA_FILE]));
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-schema-sens-'));
+    try {
+      fs.writeFileSync(path.join(dir, PROJECT_SCHEMA_FILE), '# @import(./.env.extra.schema)\n# @defaultSensitive=false\n# ---\n', 'utf8');
+      fs.writeFileSync(path.join(dir, '.env.extra.schema'), '# @defaultSensitive=false\n# ---\nNPM_TOKEN=\n', 'utf8');
+      expect(schemaFilesIn(dir)).toEqual([PROJECT_SCHEMA_FILE, '.env.extra.schema']);
+      const check = checkSchemaSensitivity(dir);
+      expect(check.ok).toBe(false);
+      expect(check.violations).toEqual([{ key: 'NPM_TOKEN', file: '.env.extra.schema', line: 3, reason: 'secret-looking name without @sensitive' }]);
+    }
+    finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('the secret-manager overlay setup writes passes, every item active or not', () => {
+    const overlay = providerSchemaTemplate({ provider: '1password', onepassword: { vault: 'v', account: null, auth: 'app' } });
+    const allActive = overlay.replace(/^# ([A-Z_]\w*=op\()/gm, '$1');
+    expect(allActive).not.toBe(overlay);
+    expect(lint(overlay)).toEqual([]);
+    expect(lint(allActive)).toEqual([]);
+  });
+
+  test('every secret-looking manifest var is secret: true, so the generated core passes', () => {
+    const unmarked = VAR_MANIFEST.filter(s => isSecretLookingName(s.name) && !s.secret).map(s => s.name);
+    expect(unmarked).toEqual([]);
   });
 });
