@@ -1138,6 +1138,32 @@ describe('the allow-list merge is reported, never silent', () => {
     expect(rows[0].evidence).toContain('ask/hooks/env untouched');
     expect(rows[0].evidence).not.toContain('deny/ask');
   });
+
+  test('hook additions, skips and a folded key share the one settings row', () => {
+    const root = temporaryRoot();
+    const rows = collectParityFindings({
+      ...bareInput(root, temporaryRoot()),
+      hooksAdded: ['PostToolUse(*) node "$CLAUDE_PROJECT_DIR/.agents/hooks/personality-reinject.mjs"'],
+      hooksDeclined: ['PostToolUse(Edit|Write|MultiEdit) node "$CLAUDE_PROJECT_DIR/.agents/hooks/doc-contracts.mjs"'],
+      settingsDuplicatesFolded: ['hooks.PostToolUse'],
+    }).filter(f => f.path === '.claude/settings.json');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].blocking).toBe(false);
+    expect(rows[0].evidence).toContain('1 hook command(s) added as new groups: PostToolUse(*)');
+    expect(rows[0].evidence).toContain('declined via updater.declined_hooks: PostToolUse(Edit|Write|MultiEdit)');
+    expect(rows[0].evidence).toContain('repeated key(s) folded into one list (JSON keeps only the last): hooks.PostToolUse');
+    expect(rows[0].evidence).toContain('deny/ask/env untouched');
+  });
+
+  test('a hook skipped for a missing script raises the row alone; a declined hook alone does not', () => {
+    const root = temporaryRoot();
+    const skipped = collectParityFindings({ ...bareInput(root, temporaryRoot()), hooksSkipped: ['PostToolUse(*) node "$CLAUDE_PROJECT_DIR/.agents/hooks/gone.mjs"'] })
+      .filter(f => f.path === '.claude/settings.json');
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0].evidence).toContain('not added, the script they run is missing: PostToolUse(*)');
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), hooksDeclined: ['PostToolUse(*) node x.mjs'] })
+      .find(f => f.path === '.claude/settings.json')).toBeUndefined();
+  });
 });
 
 describe('the opencode.jsonc deny gap is one paste row, never a rewrite', () => {
