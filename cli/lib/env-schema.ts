@@ -37,8 +37,7 @@
  * the process environment WIN over `.env` (measured on the pinned 1.20.0; no
  * flag inverts it), the opposite of the `dotenv -o` wrappers it replaced. A
  * stale value inherited from a parent shell would then make a corrected `.env`
- * a silent no-op. `bun run vars:env:check` reports that, and `scripts/launch.ts`
- * refuses to start an agent session on it.
+ * a silent no-op. `bun run vars:env:check` reports that.
  *
  * THE OPTIONAL PROVIDER OVERLAY. The core header carries
  * `@import(./.env.provider.schema, allowMissing=true)`: the hook a project
@@ -50,8 +49,8 @@
  * re-declaration with an empty value. The overlay is `./secret-providers.ts`.
  *
  * `cli/` is import-closed: this module imports only from
- * `./variables-manifest.ts`, `./secret-providers.ts` and node built-ins. `scripts/env-schema.ts`,
- * `scripts/launch.ts` and `scripts/check-vars.ts` import FROM here.
+ * `./variables-manifest.ts`, `./secret-providers.ts` and node built-ins. `scripts/env-schema.ts`
+ * and `scripts/check-vars.ts` import FROM here.
  */
 
 import type { VarSpec } from './variables-manifest.ts';

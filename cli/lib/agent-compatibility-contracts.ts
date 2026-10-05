@@ -72,10 +72,11 @@ export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$
  *   bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter A,B -- <server>
  *
  * WHY A LOADER. A harness spawns its MCP servers from a config file, before any
- * hook runs, with whatever environment the harness process has. A terminal
- * launch through `bun run claude|codex|opencode` has the `.env` values; a GUI
+ * hook runs, with whatever environment the harness process has, and no launch
+ * gives it the `.env` values: a terminal launch is the bare binary (the launch
+ * scripts that exported `.env` into the harness are retired, ADR-0016), a GUI
  * launch (Claude Desktop, Codex Desktop, OpenCode desktop) or a natively
- * launched supervised worker has none. The loader reads the varlock schema plus
+ * launched supervised worker has nothing to wrap. The loader reads the varlock schema plus
  * `.env` / `.env.local` (or the secret manager the schema names) from the
  * launch directory, which every host sets to the project root, so the values
  * arrive however the harness was opened, and no plaintext copy of a credential

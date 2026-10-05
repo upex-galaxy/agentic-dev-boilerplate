@@ -21,8 +21,8 @@
  *      that is present and EMPTY in `.env`, so a `.env` copied from the template
  *      would not load. Skipped when neither schema file exists.
  *   5. No variable holds a DIFFERENT value in the process environment than in
- *      the repo's `.env` / `.env.local`. `varlock run` (the `bun run claude |
- *      codex | opencode` launcher) lets the process value win, so a stale one
+ *      the repo's `.env` / `.env.local`. `varlock run` (the MCP `.env` loader,
+ *      `bunx varlock run -- <cmd>`) lets the process value win, so a stale one
  *      makes a corrected `.env` a no-op. Candidates come from varlock's own
  *      `overrideKeys` (`inheritedOverrides` in cli/lib/env-schema.ts); output is
  *      names and lengths only. ERROR by default; WARNING when
@@ -63,8 +63,8 @@ const ENV_FILE = join(REPO_ROOT, '.env');
 
 /**
  * A variable ALREADY present in the process wins over the env files under every
- * loader this repo uses: `varlock run` (the launcher behind `bun run claude |
- * codex | opencode` and the Codex MCP loader) takes the process value, as does
+ * loader this repo uses: `varlock run` (the MCP `.env` loader and
+ * `bunx varlock run -- <cmd>`) takes the process value, as does
  * Bun's own autoload. So a stale value inherited from whatever spawned the shell
  * (or an agent session) silently shadows a corrected `.env`, and a full
  * application restart does not clear it because the value is re-inherited from
@@ -76,7 +76,8 @@ const ENV_FILE = join(REPO_ROOT, '.env');
  * and anchored to `.agents/project.yaml` (see `cli/lib/atlassian-instance.ts`),
  * which is the only real cure — there is no second copy left to go stale. Every
  * other var still lives in `.env`, so this rule attacks the rest of the class.
- * The launcher (`scripts/launch.ts`) runs the same check and refuses to start.
+ * It is the one place the check runs: the harness launcher that also refused
+ * to start on drift was retired with the launch scripts (ADR-0016).
  *
  * SEVERITY IS CALLER-CONTROLLED. Rules 1-4 describe the REPOSITORY and are always
  * fatal. Drift describes the DEVELOPER'S MACHINE, so making it fatal everywhere
@@ -109,7 +110,7 @@ function printDriftRemedy(): void {
   console.log('Testing from the contaminated shell inherits the bad value and gives a false negative.');
   console.log('Restarting the app does NOT fix it: the value is re-inherited from the same parent.');
   console.log('`unset VAR` in the launching shell (or fix its source), then relaunch the agent session:');
-  console.log('`bun run claude | codex | opencode` refuses to start while an inherited value differs.');
+  console.log('its MCP servers inherit the harness environment, and an inherited value wins over .env there too.');
 }
 
 // -----------------------------------------------------------------------------
