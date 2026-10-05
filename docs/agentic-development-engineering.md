@@ -582,7 +582,7 @@ Before any push to a protected branch:
 
 - [ ] Plan presented and approved before coding (skill-internal in `/sprint-development`).
 - [ ] Imports use the aliases `tsconfig.json` `paths` declares (Next.js `@/`). No deep relative imports.
-- [ ] Credentials read from `.env`, never hardcoded.
+- [ ] Credentials referenced by variable name (values in `.env`), never hardcoded or printed.
 - [ ] Unit tests pass (when applicable; see `/unit-testing`).
 - [ ] Lint + types green.
 - [ ] No AI attribution in commits ("Generated with Claude Code", "Co-Authored-By: Claude", any harness-branded trailer are forbidden).

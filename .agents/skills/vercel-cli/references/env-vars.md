@@ -72,16 +72,17 @@ vercel env add NEXT_PUBLIC_APP_URL preview production
 vercel whoami
 cat .vercel/project.json 2>/dev/null || cat .vercel/repo.json 2>/dev/null
 
-# Diff local keys against current Vercel preview keys
-LOCAL_KEYS=$(grep -oE '^[A-Z_][A-Z0-9_]+' .env | sort -u)
+# Diff documented keys against current Vercel preview keys (NAMES only:
+# `.env.example` lists them; `.env` itself is never opened, Critical Rule #1)
+LOCAL_KEYS=$(grep -oE '^[A-Z_][A-Z0-9_]+' .env.example | grep -vE '^(ATLASSIAN_|N8N_|SUPABASE_ACCESS_TOKEN$)' | sort -u)   # devtime credentials stay off Vercel (Hard rules)
 REMOTE_KEYS=$(vercel env ls preview --format json | jq -r '.envs[].key' | sort -u)
-comm -23 <(echo "$LOCAL_KEYS") <(echo "$REMOTE_KEYS")    # in local, not in Vercel
+comm -23 <(echo "$LOCAL_KEYS") <(echo "$REMOTE_KEYS")    # documented, not in Vercel
 
-# Push each missing key (review the list FIRST — never blind-push)
+# Push each missing key (review the list FIRST — never blind-push). The dotenv
+# loader reads .env inside a subprocess; `${!1}` expands the value by NAME and
+# pipes it to Vercel, so it never reaches the terminal or the transcript.
 for KEY in $(comm -23 <(echo "$LOCAL_KEYS") <(echo "$REMOTE_KEYS")); do
-  VALUE=$(grep -E "^${KEY}=" .env | head -1 | cut -d= -f2- | sed 's/^"//; s/"$//')
-  [ -z "$VALUE" ] && { echo "skip $KEY (empty value)"; continue; }
-  echo "$VALUE" | vercel env add "$KEY" preview
+  bunx dotenv -e .env -- bash -c 'v="${!1}"; [ -n "$v" ] || { echo "skip $1 (empty in .env)"; exit 0; }; printf "%s" "$v" | vercel env add "$1" preview' _ "$KEY"
 done
 ```
 
@@ -105,6 +106,7 @@ Env mutations do NOT automatically redeploy. To pick up new values:
 ## Hard rules
 
 - **NEVER commit `.env.local`** produced by `vercel env pull`. It's in `.gitignore` for a reason.
+- **NEVER open `.env` / `.env.local` or print a value to diff or push** (Critical Rule #1). Diff NAMES; move values through the loader subprocess above (`agentic-dev-core/references/secret-hygiene.md`).
 - **NEVER put service-role / secret keys in `NEXT_PUBLIC_*` names.** Anything `NEXT_PUBLIC_` is bundled into the browser JS. The boilerplate's `NEXT_PUBLIC_SUPABASE_*` keys are deliberately the public publishable (or legacy anon) key only.
 - **NEVER push `ATLASSIAN_*`, `N8N_*`, `SUPABASE_ACCESS_TOKEN` to Vercel scopes** unless runtime app code reads them. These are devtime/agent-side credentials; they have no business sitting in production runtime env.
 - **Always re-run `vercel whoami` and check `.vercel/project.json` `orgId`** before bulk-pushing. A misrouted push to the wrong team's project is the most common foot-gun.

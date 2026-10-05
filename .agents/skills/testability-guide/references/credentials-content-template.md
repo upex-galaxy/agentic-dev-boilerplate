@@ -195,8 +195,8 @@ bun run opencode
 Verify the vars are actually present BEFORE launching. The wrapper injects the `.env` into the agent CHILD process, NOT your parent shell — so a bare `env | grep <PREFIX>` in your terminal comes back empty even when everything is correct. Use the right check:
 
 ```bash
-grep <PREFIX> .env                       # is it in the file?
-dotenv -e .env -- env | grep <PREFIX>    # is it injected (what the MCP will see)?
+grep -E '^<PREFIX>[A-Z0-9_]*=.' .env | cut -d= -f1   # set in the file? (names only)
+dotenv -e .env -- env | grep '^<PREFIX>' | cut -d= -f1   # injected? (what the MCP will see, names only)
 set -a; source .env; set +a              # load into THIS shell, then run claude/opencode bare
 ```
 

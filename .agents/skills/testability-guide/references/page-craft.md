@@ -804,9 +804,9 @@ export function EnvSetup({ config }: { config: QaConfig }) {
           injects vars into the agent CHILD process, not your parent shell. Verify with the trio:
         </p>
         <ul className="ml-5 mt-1 list-disc text-muted-foreground">
-          <li><code>grep &lt;PREFIX&gt; .env</code> — is the var in the file?</li>
-          <li><code>dotenv -e .env -- env | grep &lt;PREFIX&gt;</code> — what the MCP actually sees.</li>
-          <li><code>set -a; source .env; set +a</code> — load into your current shell to inspect.</li>
+          <li><code>grep -E '^&lt;PREFIX&gt;[A-Z0-9_]*=.' .env | cut -d= -f1</code> — is the var set in the file? (names only)</li>
+          <li><code>dotenv -e .env -- env | grep '^&lt;PREFIX&gt;' | cut -d= -f1</code> — what the MCP actually sees (names only).</li>
+          <li><code>set -a; source .env; set +a</code> — load into your current shell; check a var by name, never print it.</li>
         </ul>
       </div>
     </div>
