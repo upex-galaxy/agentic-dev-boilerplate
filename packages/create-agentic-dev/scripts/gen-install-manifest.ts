@@ -463,7 +463,6 @@ function buildManifest(src: string): object {
       mcps: mcpEntries,
       envFiles: [
         { path: '.env', what: 'Created from .env.example. Stores all API keys and secrets (gitignored).' },
-        { path: '.envrc', what: 'direnv autoload file — loads .env into the shell on cd (optional, offered interactively).' },
         { path: '.mcp.json', what: 'Already committed. Each server that needs .env values starts through the .env loader (varlock run --filter <its vars>) — installer ensures .env has the values.' },
         { path: 'opencode.jsonc', what: 'Already committed. Same .env loader as .mcp.json — installer ensures .env has the values.' },
         { path: '.codex/config.toml', what: 'Already committed. Codex CLI + Desktop MCP registry, same .env loader as .mcp.json, so a Desktop launch with no environment still gets its values. Loads only in a trusted repository.' },

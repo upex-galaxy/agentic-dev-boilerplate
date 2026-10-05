@@ -52,7 +52,7 @@ export function preflightRefusal(root: string, env: Record<string, string | unde
     '',
     'Fix, then relaunch:',
     `  unset ${report.findings.map(f => f.name).join(' ')}   # in this shell, if the env file holds the right value`,
-    '  # or find who exports it: walk `ps eww -p $PPID` up the chain, check ~/.zshrc and direnv,',
+    '  # or find who exports it: walk `ps eww -p $PPID` up the chain, check ~/.zshrc and any shell autoloader,',
     '  # or launch from a clean shell:  env -i HOME="$HOME" PATH="$PATH" zsh -l',
     'If the inherited value is the right one, put it in .env (or .env.local) instead.',
   ];

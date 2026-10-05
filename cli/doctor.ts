@@ -7,7 +7,7 @@
  * AI agents driving the setup: parse the JSON, take action on each
  * pending_actions entry, then re-run until status === "ok".
  *
- * Besides env vars / direnv / deps it diagnoses the cross-harness contract
+ * Besides env vars / deps it diagnoses the cross-harness contract
  * (`agent_compatibility`): AGENTS.md + the CLAUDE.md shim, the canonical
  * `.agents/skills` store + its Claude alias, the commands that would shadow a
  * skill, the hook adapters and MCP parity across `.mcp.json` / `opencode.jsonc`
@@ -23,7 +23,7 @@
  * --preflight mode: minimal pre-install gate. Checks only the things that
  * would crash `cli/install.ts` at module-load time (Bun runtime present and
  * recent enough, `node_modules/@inquirer/prompts` resolvable). Skips env
- * vars, MCPs, direnv, external CLIs — those are install.ts's job. Uses only
+ * vars, MCPs, external CLIs — those are install.ts's job. Uses only
  * node built-ins so it runs safely before `bun install`. Wired into the
  * `setup` npm script as `bun cli/doctor.ts --preflight && bun cli/install.ts`.
  *
@@ -43,7 +43,6 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 
-import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { analyzeIsolation } from './lib/adopt-isolation.ts';
 import {
@@ -227,7 +226,7 @@ const VAR_HINTS: Record<string, { hint: string, where: string }> = {
 // Types
 // ----------------------------------------------------------------------------
 
-type PendingActionType = 'credential' | 'shell_hook' | 'system_install' | 'shell_command';
+type PendingActionType = 'credential' | 'system_install' | 'shell_command';
 
 interface PendingAction {
   type: PendingActionType
@@ -278,14 +277,6 @@ export function worktreeSetupAction(state: WorktreeSetupState): PendingAction | 
     target: 'bun run worktree:provision',
     hint: `This is a linked worktree missing ${missing.join(', ')}. Provisioning copies .env and the other gitignored inputs from the primary checkout and installs dependencies and git hooks. Do not copy .env.example here: every MCP server reads this worktree's own .env through the .env loader, and a template one hands them empty values.`,
   };
-}
-
-interface DirenvState {
-  installed: boolean
-  version?: string
-  envrc_allowed?: boolean
-  hook_in_rc?: boolean
-  rc_file?: string
 }
 
 export interface AgentCompatibilityDiagnostic {
@@ -357,7 +348,6 @@ interface DoctorReport {
   deps_installed: boolean
   /** Linked worktree: the primary checkout's root; null in the primary itself. */
   worktree_of: string | null
-  direnv: DirenvState
   /** Servers that run at harness level, classified against the user-level configs (never a value). */
   harness_level_mcps: { verdicts: HarnessLevelVerdict[], sources: string[] }
   /**
@@ -518,73 +508,6 @@ function parseEnvFile(content: string): Record<string, string> {
     out[key] = value;
   }
   return out;
-}
-
-async function detectDirenv(): Promise<DirenvState> {
-  const version = tryRun('direnv', ['version']);
-  if (!version.ok) { return { installed: false }; }
-
-  const status = tryRun('direnv', ['status']);
-  // Modern direnv prints `Found RC allowed 0` (0 = Allow); older variants used
-  // `true`. Match the numeric enum and treat 0 (or legacy true) as allowed.
-  const allowMatch = status.stdout.match(/Found RC allowed (\d+|true)/);
-  const envrcAllowed = allowMatch !== null && (allowMatch[1] === '0' || allowMatch[1] === 'true');
-
-  const candidates = ['.bashrc', '.zshrc', '.bash_profile', '.profile'];
-  let hookInRc = false;
-  let rcFile: string | undefined;
-  for (const file of candidates) {
-    const path = join(homedir(), file);
-    if (!existsSync(path)) { continue; }
-    try {
-      const content = await readFile(path, 'utf8');
-      if (/\bdirenv\s+hook\b/.test(content)) {
-        hookInRc = true;
-        rcFile = path;
-        break;
-      }
-    }
-    catch {
-      // skip unreadable files (permissions, broken symlinks)
-    }
-  }
-
-  return {
-    installed: true,
-    version: version.stdout.trim(),
-    envrc_allowed: envrcAllowed,
-    hook_in_rc: hookInRc,
-    rc_file: rcFile,
-  };
-}
-
-function installCommandForPlatform(): string {
-  if (process.platform === 'win32') {
-    return 'winget install direnv';
-  }
-  if (process.platform === 'darwin') {
-    return 'brew install direnv';
-  }
-  return 'sudo apt install direnv  (or: dnf install direnv / pacman -S direnv)';
-}
-
-function shellHookLine(): { line: string, rc: string } {
-  const shell = (process.env.SHELL ?? '').toLowerCase();
-  if (shell.endsWith('zsh')) {
-    return { line: 'eval "$(direnv hook zsh)"', rc: '~/.zshrc' };
-  }
-  if (shell.endsWith('fish')) {
-    return { line: 'direnv hook fish | source', rc: '~/.config/fish/config.fish' };
-  }
-  if (shell.endsWith('bash')) {
-    return { line: 'eval "$(direnv hook bash)"', rc: '~/.bashrc' };
-  }
-  // No POSIX $SHELL (typical on native Windows PowerShell) — advise the pwsh hook
-  // instead of mis-instructing the user to edit ~/.bashrc.
-  if (process.platform === 'win32') {
-    return { line: 'Invoke-Expression "$(direnv hook pwsh)"', rc: '$PROFILE' };
-  }
-  return { line: 'eval "$(direnv hook bash)"', rc: '~/.bashrc' };
 }
 
 function parseBunVersion(v: string): [number, number, number] | null {
@@ -843,7 +766,6 @@ async function runDoctor(): Promise<DoctorReport> {
       const roots = checkoutRoots(REPO_ROOT);
       return roots !== null && roots.linked ? roots.primaryRoot : null;
     })(),
-    direnv: { installed: false },
     harness_level_mcps: harnessLevelMcpReport(),
     context_maps: contextMapStatuses(REPO_ROOT).map(contextMapAdvice).filter((line): line is string => line !== null),
     harness_env: await harnessEnvDiagnostic(),
@@ -957,35 +879,6 @@ async function runDoctor(): Promise<DoctorReport> {
       target: 'bun install',
       hint: 'Install project dependencies including varlock (the loader behind `bun run claude | codex | opencode`).',
     });
-  }
-
-  // direnv (optional — wrapper still works without it)
-  report.direnv = await detectDirenv();
-  if (!report.direnv.installed) {
-    report.pending_actions.push({
-      type: 'system_install',
-      target: 'direnv',
-      hint: 'Optional. Every MCP server starts through the .env loader, which reads .env (or the secret manager) itself on every host; direnv only matters for CLIs that read a shell-exported variable (acli, curl). Launch with `bun run claude` / `bun run opencode` / `bun run codex`, or install direnv for shell autoload.',
-      where: installCommandForPlatform(),
-    });
-  }
-  else {
-    if (!report.direnv.envrc_allowed) {
-      report.pending_actions.push({
-        type: 'shell_command',
-        target: 'direnv allow',
-        hint: 'Approve this repo\'s .envrc so direnv auto-loads .env on cd.',
-      });
-    }
-    if (!report.direnv.hook_in_rc) {
-      const hook = shellHookLine();
-      report.pending_actions.push({
-        type: 'shell_hook',
-        target: hook.rc,
-        hint: `Add the direnv shell hook to ${hook.rc} so 'cd' into this repo auto-loads .env.`,
-        where: hook.line,
-      });
-    }
   }
 
   // .mcp.json / opencode.jsonc presence, only for a harness in use: a project
@@ -1233,12 +1126,7 @@ function printHuman(report: DoctorReport): void {
   checks.push(
     ['node_modules', report.deps_installed ? tui.statusIcon('ok') : tui.statusIcon('fail')],
     ...(report.worktree_of !== null ? [['Linked worktree of', `${tui.statusIcon('info')} ${report.worktree_of}`]] : []),
-    [`direnv binary${report.direnv.version ? ` (${report.direnv.version})` : ''}`, report.direnv.installed ? tui.statusIcon('ok') : tui.statusIcon('warn')],
   );
-  if (report.direnv.installed) {
-    checks.push(['  .envrc allowed', report.direnv.envrc_allowed ? tui.statusIcon('ok') : tui.statusIcon('fail')]);
-    checks.push([`  shell hook${report.direnv.rc_file ? ` (in ${report.direnv.rc_file})` : ''}`, report.direnv.hook_in_rc ? tui.statusIcon('ok') : tui.statusIcon('warn')]);
-  }
   // The host is shown by VALUE, not as a set/missing tick. Reading which site
   // the repo is about to write to is the entire point — a green check that says
   // "configured" is exactly what let a dead instance go unnoticed.
@@ -1279,7 +1167,7 @@ function printHuman(report: DoctorReport): void {
 
   // Secret source. Names where values come from and what reads them: only a
   // varlock launch (`bun run claude|codex|opencode`, the MCP .env loader, the
-  // gates) reaches the vault; a shell that sourced .env (direnv) does not.
+  // gates) reaches the vault; a shell that sourced .env does not.
   tui.section('Secret source (.agents/project.yaml -> secrets:)');
   const sp = report.secrets_provider;
   if (sp.provider === null) {
@@ -1294,7 +1182,7 @@ function printHuman(report: DoctorReport): void {
       process.stdout.write(`  ${tui.statusIcon(sp.cli_installed ? 'ok' : 'warn')} manager CLI ${sp.cli_installed ? 'on PATH' : 'not on PATH (vault items resolve empty here; CI uses its service-account token)'}\n`);
     }
     process.stdout.write('  Vault values reach: bun run claude | codex | opencode, every MCP server (.env loader), and `bunx varlock run -- <cmd>`.\n');
-    process.stdout.write('  They do NOT reach a shell that sourced .env (direnv, `source .env`): run a shell CLI as `bunx varlock run -- <cmd>` instead.\n');
+    process.stdout.write('  They do NOT reach a shell that sourced .env (`source .env`): run a shell CLI as `bunx varlock run -- <cmd>` instead.\n');
   }
   process.stdout.write('\n');
 
