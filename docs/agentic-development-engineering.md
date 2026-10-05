@@ -463,7 +463,7 @@ The practice runs on this combination of tools. Each is replaceable, but the com
 | **Supabase**                        | Database, auth, storage.                                                                                                                                                                                        |
 | **Jira (via `acli`)**               | Issue tracker — stories, bugs, epics.                                                                                                                                                                           |
 
-The harness is the load-bearing piece — it is the orchestrator that triggers skills, dispatches subagents, and accesses MCPs. Everything else is the developer's working surface around it. Claude Code is the reference harness in this document; the Engram and caveman plugins are Claude Code specific, and the rules that mention them are no-ops on the other two.
+The harness is the load-bearing piece — it is the orchestrator that triggers skills, dispatches subagents, and accesses MCPs. Everything else is the developer's working surface around it. Claude Code is the reference harness in this document; the Engram plugin (session hooks) is Claude Code specific, while `engram setup <agent>` wires the Engram MCP server on all three.
 
 ---
 

@@ -1299,8 +1299,10 @@
             verificarla cuando OpenCode se actualiza. Claude Code y Codex usan APIs estables.
           </li>
           <li>
-            <strong>Los plugins de harness siguen siendo de su harness</strong>: Engram y caveman
-            son plugins de Claude Code, y las reglas que los mencionan no hacen nada en otro host.
+            <strong>Los plugins de harness siguen siendo de su harness</strong>: el plugin de Engram
+            (hooks de sesión) es de Claude Code; <code>engram setup &lt;agente&gt;</code> registra
+            el servidor MCP de Engram en los tres hosts, y las reglas de memoria no hacen nada donde
+            ese servidor falta.
           </li>
         </ul>
       </section>

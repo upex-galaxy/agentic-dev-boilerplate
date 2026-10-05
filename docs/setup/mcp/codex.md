@@ -92,7 +92,7 @@ El emisor es `.agents/hooks/personality-reinject.mjs`, el mismo que ejecuta Clau
 
 ## 🧩 Qué NO existe en Codex
 
-- **Plugins de Claude Code** (Engram, caveman): no se instalan. Las reglas de `AGENTS.md` que los mencionan (§1 #11, §12) son no-ops en Codex.
+- **Plugins de Claude Code** (el plugin de Engram con sus hooks de sesión): no se instalan. `engram setup codex` registra el servidor MCP de Engram para Codex, y las reglas de memoria de `AGENTS.md` (§12) aplican cuando ese servidor está.
 - **Archivos de comando**: no existen en ningún host; se pide la skill + modo (ver la tabla de arriba).
 
 ---

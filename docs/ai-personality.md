@@ -54,13 +54,13 @@ If you had to picture the person: an experienced shop foreman with twenty years 
 
 These are explicit speech protocols layered on top of the personality. Each one solves a different problem.
 
-### 3.1 Caveman mode (token compression)
+### 3.1 Concision (no mode plugin)
 
-Drops articles (`a`, `an`, `the`), fillers (`just`, `really`, `basically`, `simply`), pleasantries (`sure`, `certainly`, `of course`), and hedging. Fragments are fine. Technical terms stay exact. Code blocks, commit messages, and security warnings are written in full English.
+Terse by default: no fillers (`just`, `really`, `basically`), no pleasantries (`sure`, `certainly`, `of course`), no restating your question. Technical terms stay exact. Code blocks, commit messages, PR bodies and security warnings are written in full sentences.
 
-Three intensity levels: `lite`, `full` (default), `ultra`. Toggle with `/caveman lite|full|ultra`. Disable with `stop caveman` or `normal mode`.
+Concision comes from the rest of this section (Butler, PM Voice) and the user-level Output Style, never from a communication-mode plugin: the repo assumes none and recommends none (`AGENTS.md` §1 rule 11). Ask for more detail ("más detallado", "be verbose") and you get it for that thread.
 
-**Why it exists**: cuts a large share of output tokens without losing technical accuracy. Faster to read, cheaper to run.
+**Why it exists**: short replies are faster to read. Getting them from the repo's own rules, instead of a plugin, means the same reply on every harness and nothing to install.
 
 ### 3.2 Butler Pattern (information granularity)
 
@@ -73,7 +73,7 @@ Rules:
 
 - Atomicity beats aggregation: 12 specific bullets beats 3 broad buckets.
 - No artificial cap: 2 topics gets 2 bullets, 15 topics gets 15.
-- Each bullet mirrors caveman style: `topic-name: short fragment`, not a paragraph.
+- Each bullet is a hook: `topic-name: short fragment`, not a paragraph.
 
 **Why it exists**: respect your attention. Dumping 800 words when you asked a concrete question is noise. A headline plus a navigable menu lets you steer.
 
@@ -159,7 +159,7 @@ All seven strategies stack at the same time. They control different dimensions, 
 
 | Strategy            | Dimension controlled       | Where it lives                             |
 | ------------------- | -------------------------- | ------------------------------------------ |
-| Caveman             | Word count                 | `caveman@caveman` plugin (user-global)     |
+| Concision           | Word count                 | `AGENTS.md` §1 rule 11 (§2 + Output Style) |
 | Butler              | Information granularity    | `AGENTS.md` §2                             |
 | PM Voice            | Vocabulary register        | `AGENTS.md` §2                             |
 | Visual Mapping      | Form                       | `AGENTS.md` §2                             |
@@ -171,7 +171,7 @@ All seven strategies stack at the same time. They control different dimensions, 
 
 A typical foreground reply with everything active:
 
-> \<headline in PM Voice, in the user's language, caveman-compressed: one line of user-facing value. No hook phrase in front of it.\>
+> \<headline in PM Voice, in the user's language, terse: one line of user-facing value. No hook phrase in front of it.\>
 >
 > \<optional table / ASCII diagram / tree if the content is mappable: replaces a prose paragraph.\>
 >
@@ -183,7 +183,7 @@ A typical foreground reply with everything active:
 
 A typical background reply with everything active:
 
-> `result:` \<headline in PM Voice, in the user's language, caveman-compressed.\>
+> `result:` \<headline in PM Voice, in the user's language, terse.\>
 >
 > \<optional visual.\>
 >
@@ -222,7 +222,7 @@ After the suspension turn, PM Voice resumes automatically.
 - **State your goal, not your implementation idea** if you want the AI to push back when there's a simpler path.
 - **Ask for "PM mode" / "PM voice"** (in any language) to force the default register if a previous turn drifted technical.
 - **Ask for "technical mode" / "developer mode" / "speak technically"** (in any language) to force a technical reply.
-- **Say "normal mode" / "stop caveman"** (or equivalent in your language) to fully disable caveman compression for the rest of the session.
+- **Ask for "more detail" / "más detallado"** (or equivalent in your language) when a terse reply is not enough; it holds for that thread.
 - **Expect a decision deck when there is a lot to decide.** Up to three simple questions arrive as a normal prompt. More than three, or one decision whose tradeoff needs more than two sentences, arrive as an `mkd` deck in your browser: every option says what it buys and what it costs, at most one is recommended and says why. Skipping an item means "decide later". If a question makes no sense to you, say so in its note: the AI will not act on that item and will ask again in plainer words. Canon: `agentic-dev-core/references/decision-elicitation-doctrine.md`.
 
 ---
@@ -231,8 +231,7 @@ After the suspension turn, PM Voice resumes automatically.
 
 | Behavior                                | Toggle phrase                                                                                       | Persistence                                |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Caveman compression                     | "stop caveman" / "normal mode" (in any language)                                                    | Until session ends                         |
-| Caveman intensity                       | `/caveman lite` · `/caveman full` · `/caveman ultra`                                                | Until session ends                         |
+| Concision                               | "more detail" / "be verbose" / "más detallado" (in any language)                                    | For that thread                            |
 | PM Voice (force technical for one turn) | mention any file path, command, error, or library name                                              | One turn                                   |
 | PM Voice (force technical, lasting)     | ask for "technical mode" / "developer mode" / "speak technically" (in any language)                 | Until you say otherwise                    |
 | PM Voice (re-enable mid-session)        | ask for "PM mode" / "PM voice" (in any language)                                                    | Until you say otherwise                    |
@@ -248,11 +247,10 @@ After the suspension turn, PM Voice resumes automatically.
 | `AGENTS.md` (root of this repo, the always-on L0)                      | Critical rules (§1, each rule's binding sentence), behavioral layer + Butler + PM Voice + Visual Mapping Bias (§2, whole), orchestration core (§3) | Every session; OpenCode and Codex read it natively, Claude Code reads it through the generated one-line `CLAUDE.md` shim                |
 | `.agents/instructions/` (this repo)                                    | The rest of the instructions, one file per section: the full text of every Critical Rule (`agent-critical-rules.md`), orchestration detail, git, tools, variables | On demand, when the `AGENTS.md` router or a hook `ROUTE:` line names a file. §2 never moves here: the personality stays always on |
 | `~/.claude/CLAUDE.md` (user-level, Claude Code)                        | The user's personal instructions; the part this contract relies on is `## OUTPUT STYLE` (markdown rendering, human texture, substance) | Every session, automatically                                                                                                            |
-| `caveman@caveman` plugin (user-global, `~/.claude/plugins/`)           | Caveman compression rules and intensity levels. Registers its own SessionStart + UserPromptSubmit hooks                       | Auto-active by default if installed                                                                                                     |
 | `.agents/skills/agentic-dev-core/references/behavioral-layer.md`       | Deep examples and signals for the behavioral layer                                                                            | Loaded on demand by workflow skills                                                                                                     |
-| `.agents/hooks/personality-reinject.mjs` (this repo, UserPromptSubmit) | Re-injects the §2 output contract every turn so PM Voice and Butler do not dilute in long sessions the way caveman never does, plus the `AGENT IDENTITY:` line the commit trailers copy | Every turn, via one thin adapter per harness: `.claude/settings.json`, `.opencode/plugins/personality-reinject.js`, `.codex/hooks.json` |
+| `.agents/hooks/personality-reinject.mjs` (this repo, UserPromptSubmit) | Re-injects the §2 output contract every turn so PM Voice and Butler do not dilute in long sessions, plus the `AGENT IDENTITY:` line the commit trailers copy | Every turn, via one thin adapter per harness: `.claude/settings.json`, `.opencode/plugins/personality-reinject.js`, `.codex/hooks.json` |
 
-Personality is **layered, not monolithic**: removing one source weakens but does not break the others. Disable caveman and the PM Voice + Butler + Visual Mapping personality remains intact.
+Personality is **layered, not monolithic**: removing one source weakens but does not break the others. Without a user-level Output Style, the PM Voice + Butler + Visual Mapping personality remains intact.
 
 **The re-injection hook is one emitter, three adapters.** The contract text lives once, in `.agents/hooks/personality-reinject.mjs`, which exports `PERSONALITY_CONTRACT` and `agentContextLines()`. Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`, with a POSIX command plus a `commandWindows` variant) execute that file as a `UserPromptSubmit` command hook and read its `additionalContext` JSON; OpenCode imports `agentContextLines` from the thin plugin `.opencode/plugins/personality-reinject.js` and appends the lines to the system prompt. `bun run agents:compat:check` pins the three adapters to the emitter, so the text cannot drift between harnesses. The contract itself cites `AGENTS.md §2` plus the active user-level output style.
 
