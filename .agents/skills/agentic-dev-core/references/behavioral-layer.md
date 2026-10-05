@@ -104,17 +104,15 @@ Don't explain WHAT the code does (well-named identifiers already do that). Don't
 
 This repo defaults to two combined conversational behaviors. Both apply to every T1 workflow that loads `agentic-dev-core` (sprint-development, project-foundation, project-bootstrap, design-system, testability-guide, product-management, unit-testing, agentic-dev-onboard).
 
-### Caveman compression (default)
+### Concision without a mode plugin
 
-If the `caveman` skill is installed user-level, respond in caveman level `full`. See `AGENTS.md` §1 #13 for the canonical rule. Brief recap:
+Concision comes from this layer and the user-level OUTPUT STYLE, never from a communication-mode plugin. See `AGENTS.md` §1 #11 for the canonical rule. Brief recap:
 
-- Drop articles, fillers, pleasantries.
-- Fragments OK. Short synonyms.
+- Terse by default: no fillers, no pleasantries, no restating the question.
 - Technical terms exact. Code blocks unchanged. Errors quoted exact.
-- Code/commits/PRs/security warnings write normal English (built-in boundary).
-- Revert triggers (EN + ES): "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado".
-
-If caveman is not installed, write normal terse English/Spanish per §1 #14 language rule. Caveman is multiplier, not requirement.
+- Code/commits/PRs/security warnings always in full sentences.
+- More detail on request ("más detallado", "be verbose", "habla normal"), for that thread.
+- Reply language follows §1 #12.
 
 ### Butler pattern (expandable responses)
 
@@ -122,9 +120,7 @@ Default to a terse headline that answers the user's literal question. Then surfa
 
 - Atomicity over aggregation: 12 specific bullets beats 3 broad ones.
 - No artificial cap: bullet count tracks actual information richness.
-- Bullet style mirrors caveman: 1-line hook per bullet.
+- Bullet style: 1-line hook per bullet (`topic: fragment`).
 - Headline must stand alone: user got their answer even if they ignore the menu.
-
-Caveman compacts WORDS, butler controls INFORMATION GRANULARITY. They compose.
 
 Full canonical text in `AGENTS.md` §2 EXPANDABLE RESPONSES.

@@ -62,9 +62,9 @@ MCP fail auth or env var missing. **The failure is SILENT on every host**: every
 
 NEVER quote build/test/lint commands from `AGENTS.md`, an instruction section or any doc: drift kills. Open `package.json` first, then answer.
 
-## 11. DEFAULT COMMUNICATION MODE: CAVEMAN
+## 11. CONCISION = §2 + OUTPUT STYLE, NO MODE PLUGIN
 
-If caveman installed user-level (the `caveman@caveman` Claude Code plugin, §2 layer table), respond caveman level `full` by default (drop articles, fillers, pleasantries; fragments OK; technical terms exact; code/commits/PRs/security warnings always write normal English: caveman built-in boundary). Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. If caveman not installed, or the host is not Claude Code (`.agents/instructions/agent-harnesses.md` §5.5), rule = no-op.
+Reply concision comes from the behavioural layer (§2: Butler headline + atomic menu, PM Voice register) and the user-level OUTPUT STYLE. No communication-mode plugin is assumed or recommended: a reply never depends on one being installed, so the same rules produce the same reply on every host (`.agents/instructions/agent-harnesses.md` §5.5). Terse is the default; when the user asks for more detail ("más detallado", "be verbose", "habla normal" or a clear equivalent), give it for that thread. Code, commits, PR bodies and security warnings are always written in full sentences.
 
 ## 12. LANGUAGE DETECTION + MIRRORING
 
