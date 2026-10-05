@@ -14,7 +14,7 @@ bun run setup        # detecta Claude Code / OpenCode / Codex instalados, genera
 bun run codex        # lanza codex con .env cargado
 ```
 
-`bun run codex` es un wrapper `dotenv -o -e .env -- codex`. El `-o` hace que `.env` gane sobre una variable heredada del shell. Los MCPs no dependen de ese wrapper: cada server stdio de `.codex/config.toml` arranca con su propio loader de `.env` (ver [abajo](#el-loader-de-env)), así que lanzar `codex` a secas o abrir Codex Desktop desde el Dock también les da credenciales. El wrapper sigue sirviendo para el resto del proceso (hooks, comandos que corre el agente).
+`bun run codex` arranca Codex a través de `varlock run` (`scripts/launch.ts`), validado contra `.env.schema`, y se niega a arrancar mientras el shell exporte un valor distinto del de `.env` (bajo varlock gana el heredado). Los MCPs no dependen de ese wrapper: cada server stdio de `.codex/config.toml` que necesita valores arranca con el loader de `.env` (ver [abajo](#el-loader-de-env)), así que lanzar `codex` a secas o abrir Codex Desktop desde el Dock también les da credenciales. El wrapper sigue sirviendo para el resto del proceso (hooks, comandos que corre el agente).
 
 Si el instalador no detecta Codex (por ejemplo, un binario en una ruta no estándar), forzá la lista con `INSTALL_AGENTS=codex bun run setup`.
 
@@ -46,34 +46,27 @@ Codex carga `.codex/config.toml` y `.codex/hooks.json` **solo en un repositorio 
 
 ## 🔌 MCP en `.codex/config.toml`
 
-### Por qué la forma cambia respecto de `.mcp.json`
+### La misma forma en los tres hosts
 
-Codex **no expande `${VAR}`** dentro de `args` ni dentro de los valores de `[mcp_servers.X.env]`. Un placeholder ahí llega al server como texto literal. Los secretos se reenvían **por nombre** desde el entorno del proceso:
+Codex **no expande `${VAR}`** dentro de `args` ni dentro de los valores de `[mcp_servers.X.env]`: un placeholder ahí llega al server como texto literal. Este repo no lo necesita, porque ningún host lleva secretos en su config:
 
-- `env_vars = ["NOMBRE", ...]` en un server stdio reenvía esas variables al proceso hijo.
-- `bearer_token_env_var = "NOMBRE"` en un server HTTP manda `Authorization: Bearer <valor>`.
-- `[mcp_servers.X.env]` queda para settings literales, nunca para secretos.
+- cada server stdio que necesita valores de `.env` arranca con el **loader de `.env`** (abajo), igual que en `.mcp.json` y `opencode.jsonc`;
+- `bearer_token_env_var = "NOMBRE"` queda solo para un server **remoto** (HTTP), que manda `Authorization: Bearer <valor>` desde el entorno del proceso;
+- `[mcp_servers.X.env]` queda para settings literales (los de `n8n`: `MCP_MODE`, `LOG_LEVEL`, `DISABLE_CONSOLE_OUTPUT`), nunca para secretos.
 
-Eso cambia la forma de dos servidores respecto de `.mcp.json` / `opencode.jsonc`:
-
-| Server     | En `.mcp.json` / `opencode.jsonc`                    | En `.codex/config.toml`                                                                         |
-| ---------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `supabase` | `--access-token` con el token en `args`              | sin flag; `SUPABASE_ACCESS_TOKEN` + URL + keys en `env_vars` (fallback documentado del paquete) |
-| `n8n`      | `env` con `N8N_API_URL` / `N8N_API_KEY` + literales  | `env_vars = ["N8N_API_URL", "N8N_API_KEY"]` + `[mcp_servers.n8n.env]` con los literales         |
-
-`bun run agents:compat:check` compara los **nombres de variables de `.env`** de los que depende cada host y la existencia de cada servidor, no la forma literal del comando, así que estas adaptaciones pasan el gate y un servidor agregado solo acá (o solo en otro host) lo hace fallar.
+`bun run agents:compat:check` compara los **nombres de variables de `.env`** de los que depende cada server (el `--filter` del loader) y la existencia de cada servidor en los tres hosts: un servidor agregado solo acá (o solo en otro host) lo hace fallar.
 
 ### El loader de `.env`
 
-`env_vars` reenvía desde el entorno del proceso Codex, y Codex Desktop abierto desde Finder o el Dock no tiene ninguno. Por eso **cada** server stdio arranca envuelto en un loader:
+Codex Desktop abierto desde Finder o el Dock no tiene entorno de proceso, así que los valores no pueden venir de Codex. Por eso **cada** server stdio que necesita valores arranca envuelto en el loader:
 
 ```toml
 command = "bunx"
 startup_timeout_sec = 30
-args = ["-p", "dotenv-cli@8.0.0", "dotenv", "-o", "-e", ".env", "--", <el comando real>]
+args = ["-p", "varlock@<pin>", "varlock", "run", "--no-redact-stdout", "--inject", "vars", "--filter", "A,B", "--", <el comando real>]
 ```
 
-El loader lee `.env` desde la raíz del proyecto lo haya lanzado quien sea; `-o` hace que `.env` gane sobre un valor heredado, igual que `bun run codex`. `startup_timeout_sec = 30` cubre un `bunx` en frío más el salto del loader (Codex espera 10 s por defecto). Necesita `bun install` una vez y un `.env` en el checkout; un worktree recibe el suyo con `bun run worktree:provision`. Un server stdio sin loader o sin timeout falla `agents:compat:check` en el boilerplate y es WARNING en un proyecto derivado (`.codex/` se entrega una sola vez y un sync no lo corrige).
+El loader lee el schema de varlock más `.env` / `.env.local` (o el gestor de secretos que nombra el schema) desde la raíz del proyecto, lo haya lanzado quien sea, y le pasa al server **solo** las variables de su `--filter`: `supabase` recibe `SUPABASE_ACCESS_TOKEN` y nada más, `n8n` recibe `N8N_API_URL,N8N_API_KEY`. `--no-redact-stdout` deja intacto el stream JSON-RPC. Nada de `env_vars` al lado: el filtro ES la lista de dependencias. `context7` no necesita valores y arranca sin loader. `startup_timeout_sec = 30` cubre un `bunx` en frío más el salto del loader (Codex espera 10 s por defecto). Necesita `bun install` una vez (la devDependency `varlock`, mismo pin) y un `.env` en el checkout; un worktree recibe el suyo con `bun run worktree:provision`. Un valor que falla el schema frena solo al server que lo necesita: `bunx varlock load --agent` muestra cuál, redactado. Un server stdio sin loader, con `env_vars` al lado del loader o sin timeout falla `agents:compat:check` en el boilerplate y es WARNING en un proyecto derivado, con el lanzamiento exacto (`.codex/` se entrega una sola vez y un sync no lo corrige). La versión vieja del loader, sin `--filter` y con `env_vars`, se lee como desactualizada.
 
 El archivo real, con un comentario por adaptación, es `.codex/config.toml`: leelo ahí, no en una copia. `docs/mcp/codex.template.toml` trae solo servidores opt-in (OpenAPI, DBHub, Atlassian, Postman, etc.), ya envueltos en el loader: para sumar uno, copiá su bloque a `.codex/config.toml`, agregalo también a `.mcp.json` y `opencode.jsonc`, y corré `bun run agents:compat:check`.
 

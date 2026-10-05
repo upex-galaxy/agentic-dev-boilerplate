@@ -689,10 +689,10 @@ There are no command files: a skill is invoked by its name plus a mode, on every
 
 ### 11.5 Adding a new MCP
 
-1. Configure the server in all three runtime configs: `.mcp.json` (Claude Code, `${VAR}`), `opencode.jsonc` (OpenCode, `{file:.auth/opencode/VAR}`, value files written from `.env` by `bun run harness:env`) and `.codex/config.toml` (Codex; stdio servers start through the `.env` loader with a startup budget). `bun run agents:compat:check` normalizes the three and fails when a server exists in one host only or depends on a different set of `.env` variables. See `docs/mcp/README.md` for the per-host syntax.
+1. Configure the server in all three runtime configs: `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex, plus `startup_timeout_sec = 30`). A stdio server that needs `.env` values starts through the `.env` loader on all three, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <the exact names it reads> -- <server>` (`mcpEnvLoaderArgs` in `cli/lib/agent-compatibility-contracts.ts`), with no `${VAR}` / `{env:}` / `{file:}` / `env_vars` beside it; one that needs no value launches bare. `bun run agents:compat:check` normalizes the three and fails when a server exists in one host only or depends on a different set of `.env` variables. See `docs/mcp/README.md` for the per-host syntax.
 2. Decide which **capability** it provides. An existing one (`db`, `library-docs`, …) needs only the server; a new one needs a row in `.agents/instructions/agent-skills-and-mcps.md` §5 "MCPs (decision rules)", in `.agents/instructions/agent-tool-resolution.md` §6 Tool Resolution, and in `agentic-dev-core/references/mcp-capabilities.md`, and the skills that use it declare it in `metadata.requires_capabilities`.
 3. Web search never goes in the project files: it is connected per machine, at harness level (ADR-0005).
-4. Add the server's variables to `.env.example`, and remember that a missing credential fails silently on every harness but Codex (Critical Rule #9): `/mcp` inside a Claude Code session is the check, and a 401/403 is the signal.
+4. Add the server's variables to `.env.example`, and remember that a missing credential fails silently on every harness (Critical Rule #9): `/mcp` inside a Claude Code session is the check, and a 401/403 is the signal.
 
 ### 11.6 Adopting Spec-Driven Development (SDD)
 

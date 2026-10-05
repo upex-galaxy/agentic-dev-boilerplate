@@ -4,6 +4,17 @@
     "openapi": {
       "type": "local",
       "command": [
+        "bunx",
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "API_HEADERS",
+        "--",
         "npx",
         "-y",
         "@ivotoby/openapi-mcp-server",
@@ -12,14 +23,24 @@
       ],
       "environment": {
         "API_BASE_URL": "{{API_BASE_URL}}",
-        "OPENAPI_SPEC_PATH": "{{OPENAPI_SPEC_URL}}",
-        "API_HEADERS": "Authorization:Bearer {{API_BEARER_TOKEN}}"
+        "OPENAPI_SPEC_PATH": "{{OPENAPI_SPEC_URL}}"
       },
       "enabled": false
     },
     "sql": {
       "type": "local",
       "command": [
+        "bunx",
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "DB_HOST,DB_USER,DB_PASSWORD",
+        "--",
         "npx",
         "-y",
         "@bytebase/dbhub@latest",
@@ -64,30 +85,46 @@
     "atlassian": {
       "type": "local",
       "command": [
-        "uvx",
-        "mcp-atlassian"
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://mcp.atlassian.com/v1/sse"
       ],
-      "environment": {
-        "JIRA_URL": "{{ATLASSIAN_URL}}",
-        "JIRA_USERNAME": "{{ATLASSIAN_EMAIL}}",
-        "JIRA_API_TOKEN": "{{ATLASSIAN_API_TOKEN}}"
-      },
       "enabled": false
     },
     "nanobanana": {
       "type": "local",
       "command": [
+        "bunx",
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "GEMINI_API_KEY",
+        "--",
         "uvx",
         "nanobanana-mcp-server@latest"
       ],
-      "environment": {
-        "GEMINI_API_KEY": "{{GEMINI_API_KEY}}"
-      },
       "enabled": false
     },
     "slack": {
       "type": "local",
       "command": [
+        "bunx",
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "SLACK_MCP_XOXP_TOKEN",
+        "--",
         "npx",
         "-y",
         "slack-mcp-server@latest",
@@ -95,7 +132,6 @@
         "stdio"
       ],
       "environment": {
-        "SLACK_MCP_XOXP_TOKEN": "{{SLACK_MCP_XOXP_TOKEN}}",
         "SLACK_MCP_ADD_MESSAGE_TOOL": "true",
         "SLACK_MCP_USERS_CACHE": "./.session/mcp/slack/",
         "SLACK_MCP_CHANNELS_CACHE": "./.session/mcp/slack/"

@@ -465,10 +465,9 @@ function buildManifest(src: string): object {
       envFiles: [
         { path: '.env', what: 'Created from .env.example. Stores all API keys and secrets (gitignored).' },
         { path: '.envrc', what: 'direnv autoload file — loads .env into the shell on cd (optional, offered interactively).' },
-        // eslint-disable-next-line no-template-curly-in-string
-        { path: '.mcp.json', what: 'Already committed. Uses ${VAR} placeholders — installer ensures .env has the values.' },
-        { path: 'opencode.jsonc', what: 'Already committed. Uses {env:VAR} placeholders — installer ensures .env has the values.' },
-        { path: '.codex/config.toml', what: 'Already committed. Codex CLI + Desktop MCP registry: secrets are forwarded by name (env_vars) from the .env that `bun run codex` loads. Loads only in a trusted repository.' },
+        { path: '.mcp.json', what: 'Already committed. Each server that needs .env values starts through the .env loader (varlock run --filter <its vars>) — installer ensures .env has the values.' },
+        { path: 'opencode.jsonc', what: 'Already committed. Same .env loader as .mcp.json — installer ensures .env has the values.' },
+        { path: '.codex/config.toml', what: 'Already committed. Codex CLI + Desktop MCP registry, same .env loader as .mcp.json, so a Desktop launch with no environment still gets its values. Loads only in a trusted repository.' },
         { path: 'AGENTS.md', what: 'Already committed. The always-on core of the instructions every harness reads (OpenCode and Codex natively): binding rules, behaviour, a router to the sections. Edit this file, never CLAUDE.md.' },
         { path: '.agents/instructions/', what: 'Already committed. One instruction section per topic, read on demand when the AGENTS.md router or a hook ROUTE: line names it; agent-project.md holds the project\'s own rules.' },
         { path: 'CLAUDE.md', what: 'Already committed. Generated one-line `@AGENTS.md` shim for Claude Code — never holds prose; `bun run agents:compat:check` rejects anything else.' },
@@ -489,9 +488,9 @@ function buildManifest(src: string): object {
           credsFrom: ['ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN'],
         },
         {
-          service: 'Jira (HTTP basic auth via MCP)',
-          method: 'Env vars read at MCP startup — .mcp.json maps ATLASSIAN_* into the server\'s internal JIRA_* keys. The site host is pasted into the config (an MCP config cannot run a command); print it with bun run jira:url.',
-          credsFrom: ['ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN'],
+          service: 'Jira / Confluence via the opt-in Atlassian MCP',
+          method: 'OAuth in the browser through mcp-remote (docs/mcp templates): no token in .env. acli stays the default Jira path.',
+          credsFrom: [],
         },
       ],
       postInstallSteps: [

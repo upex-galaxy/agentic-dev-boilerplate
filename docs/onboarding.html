@@ -1300,19 +1300,20 @@
             <p>
               <b>Si falta una capacidad, el agente se detiene.</b> Te dice cuál es, qué servidor la
               suele proveer y cómo habilitarla. Lo mismo ante un 401 o 403 de un MCP: el fallo de
-              credenciales es silencioso en casi todos los harnesses, así que el agente no improvisa
-              un desvío. Arreglás el <code>.env</code> y reiniciás la sesión.
+              credenciales es silencioso en todos los harnesses, así que el agente no improvisa un
+              desvío. Arreglás el <code>.env</code> y reiniciás la sesión.
             </p>
           </div>
           <div class="prose">
             <p>
               Las credenciales viven en <code>.env</code> (plantilla en <code>.env.example</code>).
-              Para un lanzamiento sin línea de comandos (app de escritorio, worker supervisado),
-              <code>bun run harness:env</code> deriva desde el <code>.env</code> los archivos que
-              cada harness lee al arrancar; <code>bun run harness:env:check</code> detecta la
-              deriva. El host de Atlassian no es una variable de entorno: vive en
-              <code>issue_tracker.atlassian_url</code> del <code>project.yaml</code> y se imprime
-              con <code>bun run jira:url</code>.
+              Cada servidor MCP que las necesita arranca con el loader de <code>.env</code> (<code
+                >varlock run --filter</code
+              >), que lee el <code>.env</code> al arrancar el servidor y le pasa solo sus variables,
+              también en un lanzamiento sin línea de comandos (app de escritorio, worker
+              supervisado). Nada se copia a otro archivo. El host de Atlassian no es una variable de
+              entorno: vive en <code>issue_tracker.atlassian_url</code> del
+              <code>project.yaml</code> y se imprime con <code>bun run jira:url</code>.
             </p>
           </div>
         </section>
@@ -1512,7 +1513,8 @@
                 <tr>
                   <td><code>bun run harness:env:check</code></td>
                   <td>
-                    si los archivos de credenciales por harness se desviaron del <code>.env</code>
+                    que no quede ninguna copia en texto plano de credenciales MCP de una instalación
+                    vieja
                   </td>
                 </tr>
               </tbody>

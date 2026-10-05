@@ -2345,7 +2345,7 @@ bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode 
               <tr>
                 <td><span class="mono">.env</span></td>
                 <td>
-                  En silencio en todo host menos Codex: el servidor MCP arranca y muere en su
+                  En silencio en todos los hosts: el servidor MCP arranca y muere en su
                   primera llamada autenticada (Critical Rule #9)
                 </td>
               </tr>
@@ -2402,9 +2402,9 @@ bun run claude -- --model &lt;full-model-id&gt; --effort high --permission-mode 
             <h3>Credenciales en el camino nativo</h3>
             <p>
               Sin línea de lanzamiento no corre el wrapper que carga <span class="mono">.env</span>.
-              Claude Code y OpenCode leen lo que escribe
-              <span class="mono">bun run harness:env</span>; Codex carga
-              <span class="mono">.env</span> con su propio loader; las CLIs de shell
+              Los servidores MCP no lo necesitan: en los tres harnesses cada uno lee el
+              <span class="mono">.env</span> del worktree con el loader de
+              <span class="mono">.env</span>; las CLIs de shell
               (<span class="mono">acli</span>, <span class="mono">supabase</span>,
               <span class="mono">vercel</span>) necesitan direnv. El conductor confirma en pantalla
               antes de mandar trabajo.

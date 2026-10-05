@@ -113,7 +113,7 @@ const PROJECT_REF = SUPABASE_URL.split('//')[1].split('.')[0];
 
 ## Cómo llega la AI a la base de datos
 
-La AI no usa un connection string. Pide la capability `db` (`.agents/instructions/agent-skills-and-mcps.md` §5, "MCPs"), que en este repo la provee el servidor MCP `supabase` declarado en `.mcp.json`, `opencode.jsonc` y `.codex/config.toml`. Lee las credenciales de `.env` (`SUPABASE_ACCESS_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, las keys); no hay archivo TOML ni rol de base de datos que crear.
+La AI no usa un connection string. Pide la capability `db` (`.agents/instructions/agent-skills-and-mcps.md` §5, "MCPs"), que en este repo la provee el servidor MCP `supabase` declarado en `.mcp.json`, `opencode.jsonc` y `.codex/config.toml`. Lee una sola credencial, `SUPABASE_ACCESS_TOKEN`, que el loader de `.env` (`varlock run --filter SUPABASE_ACCESS_TOKEN`) toma de `.env` al arrancar el servidor; la URL y las keys del proyecto nunca le llegan. No hay archivo TOML ni rol de base de datos que crear.
 
 Para verificar que está activo, dentro de la sesión:
 
@@ -121,7 +121,7 @@ Para verificar que está activo, dentro de la sesión:
 /mcp
 ```
 
-Un `${VAR}` sin valor no rompe el arranque: el servidor recibe el texto literal y falla recién en su primera llamada autenticada (`AGENTS.md` Regla #9). Si ves un 401/403, revisa `.env` y reinicia la sesión. Para lanzamientos sin línea de comandos (app de escritorio, workers supervisados), `bun run harness:env` regenera las credenciales que lee cada harness.
+Un valor faltante en `.env` no rompe el arranque: el servidor arranca sin la variable y falla recién en su primera llamada autenticada (`AGENTS.md` Regla #9). Si ves un 401/403, revisa `.env` y reinicia la sesión. Los lanzamientos sin línea de comandos (app de escritorio, workers supervisados) no necesitan nada extra: el loader lee `.env` igual.
 
 Quien prefiera DBHub para consultas SQL directas puede agregarlo como MCP opt-in: el bloque `sql` de `docs/mcp/` y un `dbhub.toml` que parte de `docs/mcp/dbhub.example.toml`, solo con referencias `${VAR}`; los valores literales van en `dbhub.local.toml` (gitignored). Ver [docs/mcp/README.md](../../mcp/README.md). Un servidor agregado a un harness tiene que existir en los tres, o falla `bun run agents:compat:check`.
 

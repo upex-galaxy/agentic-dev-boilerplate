@@ -6,20 +6,20 @@ Common issues when connecting to a Supabase database, from your own code or thro
 
 ## Supabase MCP Issues
 
-The AI reaches the database through the `supabase` server declared in `.mcp.json`, `opencode.jsonc` and `.codex/config.toml`. It reads `SUPABASE_ACCESS_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` from `.env`.
+The AI reaches the database through the `supabase` server declared in `.mcp.json`, `opencode.jsonc` and `.codex/config.toml`. It reads one variable, `SUPABASE_ACCESS_TOKEN`, which the `.env` loader (`varlock run --filter SUPABASE_ACCESS_TOKEN`) takes from `.env` when the server spawns.
 
 ### A 401 / 403, or a tool call that fails for no visible reason
 
-**Cause:** a credential is missing or stale. The failure is silent at startup: on Claude Code an unset `${VAR}` is passed through as the literal text and the server only dies on its first authenticated call (`AGENTS.md` Critical Rule #9).
+**Cause:** a credential is missing or stale. The failure is silent at startup: the server starts without the variable (or with an empty one) and only dies on its first authenticated call (`AGENTS.md` Critical Rule #9). A value that fails the schema stops the server instead: `bunx varlock load --agent` shows which, redacted.
 
 **Solution:**
 
 1. Run `/mcp` inside the session: it shows whether `supabase` connected and with which tools
 2. Fix the value in `.env` (names are in `.env.example`)
-3. If the session was launched without a command line (desktop app, a supervised worker), run `bun run harness:env` so the per-harness credential files are regenerated from `.env`; `bun run harness:env:check` reports drift by variable name
+3. A session launched without a command line (desktop app, a supervised worker) needs nothing extra: the loader reads `.env` whatever launched the harness. `bun run harness:env:check` exits 1 while a plaintext copy from an older install remains; `bun run harness:env` retires it
 4. **Restart the agent session.** MCP servers read the environment once, when they spawn. On OpenCode also run `opencode service restart`: its background service caches the resolved config
 
-Launching through the `package.json` wrappers (`bun run claude`, `bun run opencode`, `bun run codex`) makes `.env` win over a stale variable inherited from your shell.
+Launching through the `package.json` wrappers (`bun run claude`, `bun run opencode`, `bun run codex`) refuses to start while your shell exports a value that differs from `.env`, because an inherited value wins under varlock and would also reach the loader.
 
 ### MCP shows as "failed" in Claude Code
 
@@ -29,7 +29,7 @@ Launching through the `package.json` wrappers (`bun run claude`, `bun run openco
    claude mcp get supabase
    ```
 
-2. **Test the command directly:** copy the server's command from `.mcp.json`, replace the `${VAR}` references with real values in your terminal (never in the file), and run it to see the actual error.
+2. **Test the command directly:** run the server's command from `.mcp.json` as it is, from the repo root, to see the actual error. The `.env` loader reads `.env` itself, so no value is typed anywhere.
 
 ### A server added to one harness only
 
@@ -174,7 +174,7 @@ DBHub is not part of the committed server set. When a project adds it from the b
 
 - [ ] Does `/mcp` show the `supabase` server connected?
 - [ ] Are the variables it needs set in `.env`, and did you restart the session after changing them?
-- [ ] For a desktop or worker launch, did you run `bun run harness:env`?
+- [ ] Does `bunx varlock load --agent` show every variable the server needs as valid (redacted)?
 - [ ] Are you connecting through a pooler if your network has no IPv6?
 - [ ] Is the pooler user in the `<role>.<project-ref>` format?
 - [ ] Did you use **single quotes** in Bash?

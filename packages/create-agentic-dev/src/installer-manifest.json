@@ -236,12 +236,7 @@
       },
       {
         "name": "supabase",
-        "envVars": [
-          "SUPABASE_ACCESS_TOKEN",
-          "NEXT_PUBLIC_SUPABASE_URL",
-          "SUPABASE_PUBLISHABLE_KEY",
-          "SUPABASE_SECRET_KEY"
-        ],
+        "envVars": ["SUPABASE_ACCESS_TOKEN"],
         "purpose": "Supabase MCP — direct DB queries, schema introspection, project state."
       },
       {
@@ -261,15 +256,15 @@
       },
       {
         "path": ".mcp.json",
-        "what": "Already committed. Uses ${VAR} placeholders — installer ensures .env has the values."
+        "what": "Already committed. Each server that needs .env values starts through the .env loader (varlock run --filter <its vars>) — installer ensures .env has the values."
       },
       {
         "path": "opencode.jsonc",
-        "what": "Already committed. Uses {env:VAR} placeholders — installer ensures .env has the values."
+        "what": "Already committed. Same .env loader as .mcp.json — installer ensures .env has the values."
       },
       {
         "path": ".codex/config.toml",
-        "what": "Already committed. Codex CLI + Desktop MCP registry: secrets are forwarded by name (env_vars) from the .env that `bun run codex` loads. Loads only in a trusted repository."
+        "what": "Already committed. Codex CLI + Desktop MCP registry, same .env loader as .mcp.json, so a Desktop launch with no environment still gets its values. Loads only in a trusted repository."
       },
       {
         "path": "AGENTS.md",
@@ -311,9 +306,9 @@
         "credsFrom": ["ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN"]
       },
       {
-        "service": "Jira (HTTP basic auth via MCP)",
-        "method": "Env vars read at MCP startup — .mcp.json maps ATLASSIAN_* into the server's internal JIRA_* keys. The site host is pasted into the config (an MCP config cannot run a command); print it with bun run jira:url.",
-        "credsFrom": ["ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN"]
+        "service": "Jira / Confluence via the opt-in Atlassian MCP",
+        "method": "OAuth in the browser through mcp-remote (docs/mcp templates): no token in .env. acli stays the default Jira path.",
+        "credsFrom": []
       }
     ],
     "postInstallSteps": [

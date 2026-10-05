@@ -238,13 +238,13 @@ Plantillas predefinidas que el servidor puede ofrecer.
 
 ### Variables de Entorno y Secretos
 
-Un secreto nunca se escribe en el config: se referencia y su valor vive en `.env` (gitignored). Cada host lo referencia distinto:
+Un secreto nunca se escribe en el config y su valor vive en `.env` (gitignored). En los tres hosts, un server stdio que necesita valores arranca con el mismo loader de `.env`:
 
-| Host        | Referencia                                    | Quién escribe el valor                                     |
-| ----------- | --------------------------------------------- | ---------------------------------------------------------- |
-| Claude Code | `${API_KEY}` en `.mcp.json`                   | `bun run claude` carga `.env`; `bun run harness:env` para la app de escritorio |
-| OpenCode    | `{file:.auth/opencode/API_KEY}` en `opencode.jsonc` | `bun run harness:env` (un archivo por variable, gitignored) |
-| Codex       | `env_vars = ["API_KEY"]` en `.codex/config.toml` | el loader de `.env` con el que arranca cada server stdio  |
+```
+bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter API_KEY -- <server>
+```
+
+El loader lee `.env` (o el gestor de secretos que nombra el schema) al arrancar el server, lo haya lanzado quien sea (terminal, app de escritorio, worker supervisado), y le pasa solo las variables de su `--filter`. No se copia ningún valor a otro archivo. Un server remoto (HTTP) no puede usar el loader: referencia su secreto con `${VAR}` (Claude Code), `{env:VAR}` (OpenCode) o `bearer_token_env_var` (Codex), desde el entorno del proceso, así que solo resuelve en un lanzamiento con `bun run <harness>` o direnv.
 
 Ningún host avisa cuando falta una variable: el servidor arranca y falla en su primera llamada autenticada. Un 401/403 es la señal; `/mcp` dentro de la sesión es el chequeo (`AGENTS.md` Critical Rule #9).
 
@@ -278,11 +278,11 @@ Este boilerplate corre sobre tres harnesses desde una sola fuente de instruccion
 
 | Harness             | Config MCP                                               | Secretos                                          | Launcher           |
 | ------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------ |
-| Claude Code         | `.mcp.json` (commiteada)                                 | `${VAR}`                                          | `bun run claude`   |
-| OpenCode            | `opencode.jsonc` (commiteada)                            | `{file:.auth/opencode/VAR}`                       | `bun run opencode` |
-| Codex CLI + Desktop | `.codex/config.toml` (commiteada; requiere repo trusted) | `env_vars` por nombre + loader de `.env`          | `bun run codex`    |
+| Claude Code         | `.mcp.json` (commiteada)                                 | loader de `.env` (`--filter`)                     | `bun run claude`   |
+| OpenCode            | `opencode.jsonc` (commiteada)                            | loader de `.env` (`--filter`)                     | `bun run opencode` |
+| Codex CLI + Desktop | `.codex/config.toml` (commiteada; requiere repo trusted) | loader de `.env` (`--filter`) + `startup_timeout_sec` | `bun run codex`    |
 
-Un lanzamiento sin línea de comando (app de escritorio, worker supervisado) necesita `bun run harness:env` después de cada cambio de `.env`.
+Un lanzamiento sin línea de comando (app de escritorio, worker supervisado) no necesita nada extra: el loader lee `.env` igual. Después de un cambio de `.env`, reiniciá la sesión (OpenCode: también `opencode service restart`).
 
 ### Guías por host
 
