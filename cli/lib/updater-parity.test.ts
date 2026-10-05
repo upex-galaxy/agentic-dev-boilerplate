@@ -1077,5 +1077,63 @@ describe('the allow-list merge is reported, never silent', () => {
   test('a run that added nothing raises no row at all', () => {
     const root = temporaryRoot();
     expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), allowListAdded: [] }).find(f => f.path === '.claude/settings.json')).toBeUndefined();
+    // A declined deny alone is the project's standing decision, not news.
+    expect(collectParityFindings({ ...bareInput(root, temporaryRoot()), denyListDeclined: ['Bash(env)'] }).find(f => f.path === '.claude/settings.json')).toBeUndefined();
+  });
+
+  test('deny additions share the one settings row, with the declined entries named', () => {
+    const root = temporaryRoot();
+    const rows = collectParityFindings({
+      ...bareInput(root, temporaryRoot()),
+      allowListAdded: ['Skill(vercel-cli)'],
+      denyListAdded: ['Read(.env)', 'Bash(printenv*)'],
+      denyListDeclined: ['Bash(env)'],
+    }).filter(f => f.path === '.claude/settings.json');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].blocking).toBe(false);
+    expect(rows[0].evidence).toContain('1 permission(s) added to permissions.allow: Skill(vercel-cli)');
+    expect(rows[0].evidence).toContain('2 rule(s) added to permissions.deny: Read(.env), Bash(printenv*)');
+    expect(rows[0].evidence).toContain('declined via updater.declined_denies: Bash(env)');
+    expect(rows[0].evidence).toContain('ask/hooks/env untouched');
+    expect(rows[0].evidence).not.toContain('deny/ask');
+  });
+});
+
+describe('the opencode.jsonc deny gap is one paste row, never a rewrite', () => {
+  const upstreamOpencode = '{\n  "permission": {\n    "bash": { "*": "ask", "printenv*": "deny", },\n    "read": { "*.env": "deny" },\n  },\n}\n';
+
+  test('a project lacking upstream denies gets one mcp row with the block in its note', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, 'opencode.jsonc', upstreamOpencode);
+    write(root, 'opencode.jsonc', '{ "permission": { "bash": { "*": "ask" } } }\n');
+    const rows = collectParityFindings(bareInput(root, upstream)).filter(f => f.path === 'opencode.jsonc');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].surface).toBe('mcp');
+    expect(rows[0].blocking).toBe(false);
+    expect(rows[0].suggested).toBe('merge');
+    expect(rows[0].evidence).toContain('lacks 2 upstream deny rule(s) (bash: printenv*; read: *.env)');
+    expect(rows[0].note).toContain('```jsonc');
+    expect(rows[0].note).toContain('"printenv*": "deny",');
+  });
+
+  test('folds onto the file\'s existing drift row', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, 'opencode.jsonc', upstreamOpencode);
+    write(root, 'opencode.jsonc', '{ "permission": {} }\n');
+    const rows = collectParityFindings({ ...bareInput(root, upstream), drift: [{ path: 'opencode.jsonc', reason: 'watched' }] })
+      .filter(f => f.path === 'opencode.jsonc');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].evidence).toContain('upstream deny rule(s)');
+    expect(rows[0].diff).toBeTruthy();
+  });
+
+  test('no gap, no row', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, 'opencode.jsonc', upstreamOpencode);
+    write(root, 'opencode.jsonc', upstreamOpencode);
+    expect(collectParityFindings(bareInput(root, upstream)).find(f => f.path === 'opencode.jsonc')).toBeUndefined();
   });
 });
