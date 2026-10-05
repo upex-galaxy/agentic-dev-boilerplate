@@ -2186,9 +2186,14 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
             </thead>
             <tbody>
               <tr>
-                <th><span class="mono">bun run claude</span> · <span class="mono">opencode</span> · <span class="mono">codex</span></th>
-                <td>Arrancan el binario con <span class="mono">varlock run</span>, y se niegan a arrancar mientras el shell exporte un valor distinto del de <span class="mono">.env</span> (bajo varlock gana el heredado)</td>
-                <td>Cada vez que arrancás desde la terminal</td>
+                <th><span class="mono">claude</span> · <span class="mono">opencode</span> · <span class="mono">codex</span></th>
+                <td>El binario pelado, sin script envoltorio: nada carga <span class="mono">.env</span> en el proceso del agente, así que ningún secreto llega al shell de la IA. Cada servidor MCP lee <span class="mono">.env</span> con el loader de <span class="mono">.env</span></td>
+                <td>Cada vez que abrís el agente desde la terminal (o su app de escritorio)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run vars:env:check</span></th>
+                <td>Nombra la variable que el shell exporta con un valor distinto del de <span class="mono">.env</span> (bajo varlock gana el heredado). Solo nombres y largos</td>
+                <td>Cuando un MCP se comporta como si <span class="mono">.env</span> no existiera</td>
               </tr>
               <tr>
                 <th><span class="mono">bun run harness:env</span></th>
