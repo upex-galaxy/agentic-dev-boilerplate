@@ -21,9 +21,11 @@ import {
   detectAgents,
   discoverRequiredEnvVars,
   launchCommandsForAgents,
+  mergedHarnesses,
   migrateAgentIds,
   parseAgentsEnv,
   PROJECT_SKILL_DESTINATION,
+  recordHarnessSelection,
   repairRepositoryCompatibility,
 } from './install.ts';
 import { declaredMcpIds } from './lib/agent-compatibility-contracts.ts';
@@ -51,13 +53,22 @@ function copyFromRepo(root: string, relativePath: string): void {
 }
 
 /**
+ * A project on one harness deletes the other harnesses' files (ADR-0013), so
+ * the fixture copies what this checkout has, and a test that reads a dropped
+ * harness skips.
+ */
+const HAS_CODEX = existsSync(join(REPO_ROOT, '.codex/hooks.json')) && existsSync(join(REPO_ROOT, '.codex/config.toml'));
+const HAS_CLAUDE = existsSync(join(REPO_ROOT, 'CLAUDE.md'));
+const HAS_ALL_HARNESSES = HAS_CODEX && HAS_CLAUDE && existsSync(join(REPO_ROOT, 'opencode.jsonc')) && existsSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'));
+
+/**
  * A repo that satisfies the whole contract EXCEPT the generated `.claude/skills`
  * alias, which `repairRepositoryCompatibility` is expected to create.
  */
 function compatibilityFixture(): string {
   const root = temporaryRoot();
   write(root, 'AGENTS.md', '# AGENTS.md\n\nCanonical instructions.\n');
-  write(root, 'CLAUDE.md', CLAUDE_INSTRUCTIONS_SHIM);
+  if (HAS_CLAUDE) { write(root, 'CLAUDE.md', CLAUDE_INSTRUCTIONS_SHIM); }
   write(root, '.agents/skills/project-context/SKILL.md', '---\nname: project-context\n---\n\nModes: `data`, `dev-roadmap`.\n');
   for (const path of [
     '.agents/hooks/personality-reinject.mjs',
@@ -67,7 +78,7 @@ function compatibilityFixture(): string {
     '.codex/config.toml',
     '.mcp.json',
     'opencode.jsonc',
-  ]) { copyFromRepo(root, path); }
+  ].filter(path => existsSync(join(REPO_ROOT, path)))) { copyFromRepo(root, path); }
   return root;
 }
 
@@ -227,6 +238,39 @@ describe('installer skill and env contracts', () => {
   });
 });
 
+describe('installer harness selection (ADR-0013)', () => {
+  test('the selection is added to the declared list, never shrinks it', () => {
+    expect(mergedHarnesses([], ['claude-code'])).toEqual(['claude']);
+    expect(mergedHarnesses(['codex', 'claude'], ['claude-code', 'opencode'])).toEqual(['codex', 'claude', 'opencode']);
+    expect(mergedHarnesses(['opencode'], [])).toEqual(['opencode']);
+  });
+
+  test('records the selection in project.yaml and keeps the unused files unless the offer is accepted', async () => {
+    const root = temporaryRoot();
+    write(root, 'package.json', JSON.stringify({ name: 'my-dev-project' }));
+    write(root, '.agents/project.yaml', 'project:\n  project_name: X\nharnesses: null # detect\n');
+    for (const path of ['.mcp.json', 'opencode.jsonc', '.codex/config.toml', '.codex/hooks.json']) { write(root, path, '{}\n'); }
+
+    const asked: string[] = [];
+    await recordHarnessSelection(['claude-code'], root, async (message) => {
+      asked.push(message);
+      return message.startsWith('Codex');
+    });
+    expect(readFileSync(join(root, '.agents/project.yaml'), 'utf8')).toBe('project:\n  project_name: X\nharnesses: [claude] # detect\n');
+    expect(asked).toHaveLength(2);
+    expect(existsSync(join(root, 'opencode.jsonc'))).toBe(true);
+    expect(existsSync(join(root, '.codex'))).toBe(false);
+  });
+
+  test('leaves the boilerplate alone: it checks all three', async () => {
+    const root = temporaryRoot();
+    write(root, 'package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
+    write(root, '.agents/project.yaml', 'harnesses: null\n');
+    await recordHarnessSelection(['opencode'], root, async () => { throw new Error('must not ask'); });
+    expect(readFileSync(join(root, '.agents/project.yaml'), 'utf8')).toBe('harnesses: null\n');
+  });
+});
+
 describe('compatibility repair lifecycle', () => {
   test('constructs portable POSIX and Windows alias plans', () => {
     const root = temporaryRoot();
@@ -234,7 +278,7 @@ describe('compatibility repair lifecycle', () => {
     expect(claudeSkillsAliasPlan(root, 'win32')).toMatchObject({ target: join(root, '.agents', 'skills'), type: 'junction' });
   });
 
-  test('creates the alias and generates no command file, then is a no-op on the second run', () => {
+  test.skipIf(!HAS_CLAUDE)('creates the alias and generates no command file, then is a no-op on the second run', () => {
     const root = compatibilityFixture();
     const first = repairRepositoryCompatibility(root, 'linux');
     expect(first).toMatchObject({ shadowingCommandsMoved: [], alias: { status: 'created' } });
@@ -248,7 +292,7 @@ describe('compatibility repair lifecycle', () => {
     expect(second).toMatchObject({ shadowingCommandsMoved: [], alias: { status: 'valid' } });
   });
 
-  test('moves a command that shadows a skill out of the way and keeps a project command', () => {
+  test.skipIf(!HAS_CLAUDE)('moves a command that shadows a skill out of the way and keeps a project command', () => {
     const root = compatibilityFixture();
     write(root, '.claude/commands/project-context.md', 'Do it my way.\n');
     write(root, '.opencode/commands/deploy.md', 'A project command with its own name.\n');
@@ -260,17 +304,17 @@ describe('compatibility repair lifecycle', () => {
     expect(readFileSync(join(root, '.opencode/commands/deploy.md'), 'utf8')).toBe('A project command with its own name.\n');
   });
 
-  test('reclaims the skills CLI per-skill symlink shim without losing a skill body', () => {
+  test.skipIf(!HAS_CLAUDE)('reclaims the skills CLI per-skill symlink shim without losing a skill body', () => {
     const root = compatibilityFixture();
     mkdirSync(join(root, '.claude/skills'), { recursive: true });
     symlinkSync('../../.agents/skills/project-context', join(root, '.claude/skills/project-context'), 'dir');
 
-    expect(repairRepositoryCompatibility(root, 'linux').alias.status).toBe('repaired');
+    expect(repairRepositoryCompatibility(root, 'linux').alias?.status).toBe('repaired');
     expect(readFileSync(join(root, '.agents/skills/project-context/SKILL.md'), 'utf8')).toContain('name: project-context');
     expect(readFileSync(join(root, '.claude/skills/project-context/SKILL.md'), 'utf8')).toContain('name: project-context');
   });
 
-  test('refuses to replace a real Claude skills directory and keeps its content', () => {
+  test.skipIf(!HAS_CLAUDE)('refuses to replace a real Claude skills directory and keeps its content', () => {
     const root = compatibilityFixture();
     mkdirSync(join(root, '.claude/skills'), { recursive: true });
     writeFileSync(join(root, '.claude/skills/owned.txt'), 'preserve me\n');
@@ -280,7 +324,7 @@ describe('compatibility repair lifecycle', () => {
     expect(readFileSync(join(root, '.claude/skills/owned.txt'), 'utf8')).toBe('preserve me\n');
   });
 
-  test('surfaces contract errors the repair cannot fix', () => {
+  test.skipIf(!HAS_CODEX)('surfaces contract errors the repair cannot fix', () => {
     const root = compatibilityFixture();
     rmSync(join(root, '.codex/hooks.json'));
 
@@ -289,7 +333,7 @@ describe('compatibility repair lifecycle', () => {
 });
 
 describe('doctor diagnosis', () => {
-  test('reports a compliant fixture as file-correct, with trust as unverifiable runtime state', () => {
+  test.skipIf(!HAS_ALL_HARNESSES)('reports a compliant fixture as file-correct, with trust as unverifiable runtime state', () => {
     const root = compatibilityFixture();
     repairRepositoryCompatibility(root, 'linux');
     const diagnostic = diagnoseAgentCompatibility(root, { platform: 'linux', codexCliDetected: false });
@@ -315,7 +359,7 @@ describe('doctor diagnosis', () => {
     });
   });
 
-  test('flags a CLAUDE.md that is not the exact shim', () => {
+  test.skipIf(!HAS_CLAUDE || !HAS_CODEX)('flags a CLAUDE.md that is not the exact shim', () => {
     const root = compatibilityFixture();
     repairRepositoryCompatibility(root, 'linux');
     writeFileSync(join(root, 'CLAUDE.md'), '# Real instructions\n\nNot a shim.\n');
@@ -341,8 +385,10 @@ describe('doctor diagnosis', () => {
     expect(diagnoseAgentCompatibility(root, { platform: 'linux', codexCliDetected: false }).file_correct).toBe(true);
   });
 
-  test('reports a missing alias and missing Codex config without throwing', () => {
+  test.skipIf(!HAS_ALL_HARNESSES)('reports a missing alias and missing Codex config without throwing', () => {
     const root = compatibilityFixture();
+    // Declared, so deleting every Codex file is drift, not a retired harness.
+    write(root, '.agents/project.yaml', 'harnesses: [claude, opencode, codex]\n');
     rmSync(join(root, '.codex'), { recursive: true, force: true });
 
     const diagnostic = diagnoseAgentCompatibility(root, { platform: 'linux', codexCliDetected: false });
