@@ -2,7 +2,7 @@
 
 > **Idioma:** Español
 
-Bienvenido a la documentación del **AI-Driven Project Starter**.
+Bienvenido a la documentación de **agentic-dev-boilerplate**.
 
 Esta documentación está orientada a **humanos** — para aprender conceptos, entender metodologías y seguir guías paso a paso.
 
@@ -106,7 +106,7 @@ Corré `bun run onboarding`: abre `onboarding.html`, el recorrido de empezá ac�
 - [Flujo Git](./workflows/git-flow.md) para control de versiones
 - [Ambientes](./workflows/environments.md) para etapas de deployment
 - `bun run up --help` para sincronizar este boilerplate upstream
-- `bun run worktree:provision` para preparar un worktree nuevo (`.env`, dependencias, credenciales MCP); `bun run worktree:audit` para revisarlos
+- `bun run worktree:provision` para preparar un worktree nuevo (`.env`, dependencias, alias de skills); `bun run worktree:audit` para revisarlos
 
 ### 4. Usar Skills y Modos
 

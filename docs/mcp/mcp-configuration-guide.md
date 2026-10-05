@@ -27,7 +27,7 @@ Referencia de sintaxis para los tres hosts del contrato (`.agents/instructions/a
 | **OpenCode**        | `opencode.jsonc`     | `~/.config/opencode/opencode.json` | JSONC   |
 | **Codex CLI + Desktop** | `.codex/config.toml` (solo en un repo trusted) | `~/.codex/config.toml` | TOML |
 
-**En este repo** los tres archivos de proyecto están commiteados con el mismo conjunto de servidores: el que declara `.mcp.json`. `bun run agents:compat:check` los normaliza y compara; un servidor que falte en un host, o que exista en uno solo, falla el gate. Los servidores que trae el boilerplate (`KNOWN_MCP_IDS` en `cli/lib/agent-compatibility-contracts.ts`) reciben además un chequeo estricto de forma por host; cualquier otro, solo el chequeo genérico de variables de `.env`.
+**En este repo** los tres archivos de proyecto están commiteados con el mismo conjunto de servidores: el que declara `.mcp.json`. `bun run agents:compat:check` los normaliza y compara; un servidor que falte en un host, o que exista en uno solo, falla el gate. En un proyecto que declara `harnesses:` en `.agents/project.yaml`, solo se comparan los hosts en uso. Los servidores que trae el boilerplate (`KNOWN_MCP_IDS` en `cli/lib/agent-compatibility-contracts.ts`) reciben además un chequeo estricto de forma por host; cualquier otro, solo el chequeo genérico de variables de `.env`.
 
 ### Diferencias Clave
 

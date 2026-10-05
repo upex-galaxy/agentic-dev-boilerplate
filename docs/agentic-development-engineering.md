@@ -689,7 +689,7 @@ There are no command files: a skill is invoked by its name plus a mode, on every
 
 ### 11.5 Adding a new MCP
 
-1. Configure the server in all three runtime configs: `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex, plus `startup_timeout_sec = 30`). A stdio server that needs `.env` values starts through the `.env` loader on all three, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <the exact names it reads> -- <server>` (`mcpEnvLoaderArgs` in `cli/lib/agent-compatibility-contracts.ts`), with no `${VAR}` / `{env:}` / `{file:}` / `env_vars` beside it; one that needs no value launches bare. `bun run agents:compat:check` normalizes the three and fails when a server exists in one host only or depends on a different set of `.env` variables. See `docs/mcp/README.md` for the per-host syntax.
+1. Configure the server in the runtime config of every harness in use (all three in the boilerplate): `.mcp.json` (Claude Code), `opencode.jsonc` (OpenCode) and `.codex/config.toml` (Codex, plus `startup_timeout_sec = 30`). A stdio server that needs `.env` values starts through the `.env` loader on all three, `bunx -p varlock@<pin> varlock run --no-redact-stdout --inject vars --filter <the exact names it reads> -- <server>` (`mcpEnvLoaderArgs` in `cli/lib/agent-compatibility-contracts.ts`), with no `${VAR}` / `{env:}` / `{file:}` / `env_vars` beside it; one that needs no value launches bare. `bun run agents:compat:check` normalizes the three and fails when a server exists in one host only or depends on a different set of `.env` variables. See `docs/mcp/README.md` for the per-host syntax.
 2. Decide which **capability** it provides. An existing one (`db`, `library-docs`, …) needs only the server; a new one needs a row in `.agents/instructions/agent-skills-and-mcps.md` §5 "MCPs (decision rules)", in `.agents/instructions/agent-tool-resolution.md` §6 Tool Resolution, and in `agentic-dev-core/references/mcp-capabilities.md`, and the skills that use it declare it in `metadata.requires_capabilities`.
 3. Web search never goes in the project files: it is connected per machine, at harness level (ADR-0005).
 4. Add the server's variables to `.env.example`, and remember that a missing credential fails silently on every harness (Critical Rule #9): `/mcp` inside a Claude Code session is the check, and a 401/403 is the signal.
@@ -743,7 +743,7 @@ The rest is execution.
 **See also**:
 
 - [`docs/onboarding.html`](onboarding.html) — operational reference: lifecycle, Jira state machine, skills catalog, commands, MCPs, cheat sheet (served by `bun run onboarding`).
-- `AGENTS.md` — canonical project memory, Tool Resolution, orchestration mode, skill routing, engram protocol, multi-harness wiring (§5.5). `CLAUDE.md` is its generated one-line shim.
+- `AGENTS.md` — always-on L0: the binding sentence of each Critical Rule, the behavioural layer, the orchestration core and the router; the topics it routes to (Tool Resolution, multi-harness wiring, ...) live under `.agents/instructions/`. `CLAUDE.md` is its generated one-line shim.
 - `CONTEXT.md` — strategic reasoning behind the three-tier knowledge layer (repo root).
 - `docs/methodology/IQL-methodology.md` — phased lifecycle deep-dive.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.

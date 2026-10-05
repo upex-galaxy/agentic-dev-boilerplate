@@ -9,8 +9,9 @@
  *      then offer the Engram Claude Code plugin (session hooks)
  *   4. Wire `.env` for MCP servers
  *      (`.mcp.json`, `opencode.jsonc` and `.codex/config.toml` are committed
- *      with ${VAR} / {env:VAR} / env-var-name forwarding — installer only
- *      ensures `.env` has the union of values the selected harnesses need)
+ *      with variable NAMES only: each server that needs values starts through
+ *      the `.env` loader, ADR-0012 — installer only ensures `.env` has the
+ *      union of values the selected harnesses need)
  *   4b. Repair cross-harness compatibility: the generated `.claude/skills`
  *      alias, plus moving any command that shadows a skill out of the way
  *      (`cli/lib/agent-compatibility.ts`)
@@ -26,7 +27,7 @@
  *   INSTALL_SKIP_ENGRAM=1             Treat Engram as skipped (Steps 2-3, 5)
  *   INSTALL_FORCE_ENGRAM=1            Force re-run of `engram setup` (Step 5; legacy alias: INSTALL_FORCE_AGENTS_SETUP=1)
  *   INSTALL_FORCE_COMMUNITY_SKILLS=1  Force re-run of community skills install (Step 6)
- *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup (Step 9)
+ *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup (Step 7b)
  *
  * Usage:
  *   bun run setup
@@ -3086,7 +3087,7 @@ async function main(): Promise<void> {
   // three MCP configs (ADR-0012), so a fresh clone has nothing to retire.
   await retireHarnessCopies();
 
-  // Step 9 — optional GitHub repo creation
+  // Step 7b — optional GitHub repo creation
   tui.section('Step 7b: GitHub repository (optional)');
   await setupGithubRemote(state);
 
