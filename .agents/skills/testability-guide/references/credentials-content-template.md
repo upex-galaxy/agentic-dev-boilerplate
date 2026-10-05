@@ -169,19 +169,20 @@ For read-write, change the last two to the <<DB_RW_ROLE>> credentials:
 
 ## Auth at the API layer
 
-Set in your `.env` (pointing at staging):
+Set in your `.env` (pointing at staging). Both values are non-secret; the OpenAPI MCP reads only these two, to list endpoints and read their schemas:
 
 ```bash
-# .env — API / OpenAPI MCP
+# .env — API / OpenAPI MCP (schema-read-only)
 API_BASE_URL={{environments.staging.api_url}}
 OPENAPI_SPEC_PATH=<<OPENAPI_SPEC_URL>>
-API_TOKEN=
 ```
 
-`API_TOKEN` is left BLANK on purpose — it is PERSONAL. Do NOT copy anyone else's. Mint your own with YOUR user:
+`OPENAPI_SPEC_PATH` is the FULL spec URL (origin + route) or a repo-root-relative synced file. A bare route such as `/api/openapi` is read as a file path and the MCP exits at start.
 
-- Helper (if present): `<<API_LOGIN_HELPER>>` — the project's api-login mini-CLI; mints your token and writes it into your `.env` as `API_TOKEN=`. Restart the terminal/agent after (the MCP caches env at spawn).
-- Manual: `<<API_LOGIN_ENDPOINT>>` with your credentials → returns a token (`<<TOKEN_PREFIX>>…`). Paste it into `API_TOKEN`.
+Authenticated calls run with curl and YOUR personal token, never through the MCP. The token is a secret: it never goes into this artifact, a chat, a committed config or an MCP block, and the AI never types it. Mint your own with YOUR user and keep it where your testing project's token flow stores it:
+
+- Helper (if present): `<<API_LOGIN_HELPER>>` — the project's api-login mini-CLI; mints your token and stores it for curl to read by name. No agent restart needed: no MCP holds it.
+- Manual: `<<API_LOGIN_ENDPOINT>>` with your credentials → returns a token (`<<TOKEN_PREFIX>>…`). Store it the same way, then use it by name (`bunx varlock run -- sh -c '<curl using "$VAR">'`).
 
 ## Activate the MCPs (the `.env` loader)
 
