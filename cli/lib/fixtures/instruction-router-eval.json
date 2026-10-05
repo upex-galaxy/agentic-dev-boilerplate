@@ -127,6 +127,19 @@
     { "prompt": "thanks, that's all", "expect": [] },
     { "prompt": "explain what this paragraph means", "expect": [] },
     { "prompt": "write a haiku about autumn", "expect": [] },
-    { "prompt": "resumime lo que hicimos hoy", "expect": [] }
+    { "prompt": "resumime lo que hicimos hoy", "expect": [] },
+    {
+      "prompt": "¿qué dice la regla crítica 16 sobre verificar en el destino?",
+      "expect": ["critical-rules"]
+    },
+    { "prompt": "add a new rule sentence to AGENTS.md", "expect": ["harnesses"] },
+    {
+      "prompt": "mové este párrafo de AGENTS.md a una sección de .agents/instructions/",
+      "expect": ["harnesses"]
+    },
+    {
+      "prompt": "the router keeps missing these prompts, tune the triggers of that instruction section",
+      "expect": ["harnesses"]
+    }
   ]
 }

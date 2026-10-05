@@ -32,10 +32,39 @@ paths: [".husky/", ".github/"]
 
 Every file in this folder but this README is named `agent-<id>.md`, so a reader can tell it came with the agent setup; the name carries no order (the router rows do). `agent-project.md` (`id: project`) carries `id`, `title` and `load_when` and may leave `triggers` empty (its skill rows carry their own); this README carries no frontmatter.
 
+## Sections
+
+One row per section file, so a reader finds a topic's home without opening every file. `instructions:check` fails a section with no row here and a row naming a file that is gone. The router in `AGENTS.md` decides when each one loads; this table only says what it holds.
+
+| File | Holds |
+|---|---|
+| `agent-critical-rules.md` | the full text of every Critical Rule, under the number and name its L0 binding sentence carries |
+| `agent-context-map.md` | the task to skill to context map for every workflow request, and the key paths |
+| `agent-skills-and-mcps.md` | the skill table, skill modes and the MCP capability rules |
+| `agent-tool-resolution.md` | `[TAG_TOOL]` resolution and the CLI to skill mapping |
+| `agent-project-variables.md` | template-variable resolution, environments, project identity and the Jira host |
+| `agent-ticket-work.md` | AI behaviour while developing, explaining or fixing a story or a bug |
+| `agent-local-context-pbi.md` | the `.context/PBI/` cache of the tracker: tree, sync and reads |
+| `agent-code-quickref.md` | the stack quick reference for writing or reviewing app code |
+| `agent-git.md` | git workflow and the pointer to the project's `git_strategy:` |
+| `agent-harnesses.md` | the multi-harness contract: instruction files, hooks, MCP configs, the updater, `cli/` |
+| `agent-orchestration-detail.md` | executors, dispatch patterns, value provenance, fail-closed gates, session material |
+| `agent-project.md` | the project's own rules and its project context skills table (project-owned) |
+
 ## Editing
+
+Every change to `AGENTS.md`, a section, the router or a `triggers:` list follows `agentic-dev-core/references/instructions-doctrine.md`: its decision tree places each sentence, and its procedure closes with the checks below.
 
 - Edit the section file. Never paste section prose back into `AGENTS.md`: L0 has a byte budget, because Codex cuts its project instructions at `project_doc_max_bytes` without a visible notice.
 - A Critical Rule changes in two places on purpose: its full text in `agent-critical-rules.md` and its binding excerpt in `AGENTS.md`, which must stay verbatim.
 - A section line that says `NEVER` or `MUST` names what carries it when the section is not loaded (a Critical Rule, a skill's Compact Rules, a contract L0 carries) or declares itself section-scoped with `<!-- binds-in-section: <reason> -->`.
 - A rule only this project has goes in `agent-project.md`, the project-owned overlay. The other files are shared doctrine.
 - `bun run instructions:check` gates all of the above: budget, router (the `agent-project.md` skill rows included), frontmatter, rule excerpts, binding carriers, imports.
+
+It also holds three locks (ADR-0013), errors in the maintainers' copy and warnings in a project:
+
+- **Router lock.** The comment `<!-- router:lock <fingerprint> <ADR-NNNN> -->` under the router records the fingerprint of the table and the ADR that decided it. Any change to a row, header included, fails until a decision covers it: write the ADR (or an Amendments line on the one that owns the router), run `bun run instructions:check --accept-router ADR-NNNN`, and cite the fingerprint it prints in that ADR. Whitespace-only reflows keep the fingerprint.
+- **Router eval.** Every run scores the hook's classifier against the labelled prompts in `cli/lib/fixtures/instruction-router-eval.json` and fails under its recall or precision target (floors in `scripts/lib/router-eval.ts`). A `triggers:` or `paths:` edit is proved here, on the same pre-commit call, before any test run.
+- **Complete section.** Every section but `agent-project.md` ships with frontmatter, a router row, at least three labelled prompts that expect its `id`, and a row in the `## Sections` table above.
+
+`bun run instructions:audit` measures the other half from local transcripts: of the `ROUTE:` lines the hook injected, how many the agent actually read in the same turn.
