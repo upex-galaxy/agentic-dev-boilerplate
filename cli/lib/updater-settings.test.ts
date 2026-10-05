@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { applyAllowListMerge, CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook, mergeAllowList } from './updater-settings.ts';
+import { applyPermissionListMerge, CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook, mergePermissionLists, OPENCODE_SETTINGS_FILE, opencodeDenyGap, readDeclinedDenies } from './updater-settings.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -40,8 +40,8 @@ describe('the Claude permission allow list merges additively', () => {
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(acli)', 'Bash(bun *)']));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(acli)', 'Skill(vercel-cli)', 'Skill(autonomous-delivery)']));
 
-    const { added, merged } = mergeAllowList(root, upstream);
-    expect(added).toEqual(['Skill(vercel-cli)', 'Skill(autonomous-delivery)']);
+    const { allowAdded, merged } = mergePermissionLists(root, upstream);
+    expect(allowAdded).toEqual(['Skill(vercel-cli)', 'Skill(autonomous-delivery)']);
     const after = JSON.parse(merged!) as { permissions: { allow: string[], deny: string[], ask: string[] } };
     // The project's own order is preserved and its own entry survives: append,
     // never re-sort, never drop.
@@ -55,7 +55,7 @@ describe('the Claude permission allow list merges additively', () => {
     expect(after.permissions.deny).toEqual(['Bash(rm -rf *)']);
   });
 
-  test('deny, ask, hooks, env and unknown keys come back byte-identical', () => {
+  test('ask, hooks, env and unknown keys come back byte-identical; deny only grows', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read'], { cleanupPeriodDays: 60, projectOnlyKey: { a: 1 } }));
@@ -67,10 +67,11 @@ describe('the Claude permission allow list merges additively', () => {
       cleanupPeriodDays: 1,
     }, null, 2));
 
-    const { merged } = mergeAllowList(root, upstream);
+    const { merged } = mergePermissionLists(root, upstream);
     const before = JSON.parse(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf-8')) as Record<string, unknown>;
     const after = JSON.parse(merged!) as Record<string, unknown>;
-    expect(after.permissions).toMatchObject({ deny: ['Bash(rm -rf *)'], ask: [] });
+    // The project's deny entry stays first; upstream's is appended after it.
+    expect(after.permissions).toMatchObject({ deny: ['Bash(rm -rf *)', 'Bash(everything *)'], ask: [] });
     for (const key of ['hooks', 'env', 'cleanupPeriodDays', 'projectOnlyKey']) {
       expect(after[key]).toEqual(before[key]);
     }
@@ -81,11 +82,11 @@ describe('the Claude permission allow list merges additively', () => {
     const upstream = temporaryRoot();
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read']));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Bash(curl *)']));
-    expect(mergeAllowList(root, upstream).added).toEqual(['Bash(curl *)']);
+    expect(mergePermissionLists(root, upstream).allowAdded).toEqual(['Bash(curl *)']);
     // Twice in a row, because nothing remembers removals by design: the same
     // entry re-appears on every sync until the project expresses it in `deny`.
-    applyAllowListMerge(root, upstream);
-    expect(mergeAllowList(root, upstream).added).toEqual([]);
+    applyPermissionListMerge(root, upstream);
+    expect(mergePermissionLists(root, upstream).allowAdded).toEqual([]);
   });
 
   test('nothing to add, an unreadable side or a file without a permissions block writes nothing', () => {
@@ -94,17 +95,18 @@ describe('the Claude permission allow list merges additively', () => {
     // Already a superset of upstream.
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read', 'Write']));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read']));
-    expect(mergeAllowList(root, upstream).merged).toBeNull();
+    expect(mergePermissionLists(root, upstream).merged).toBeNull();
     // Upstream missing entirely.
-    expect(mergeAllowList(root, temporaryRoot()).merged).toBeNull();
+    expect(mergePermissionLists(root, temporaryRoot()).merged).toBeNull();
     // Unparseable project copy: never rewrite a file we cannot read.
     write(root, CLAUDE_SETTINGS_FILE, '{ not json');
-    expect(mergeAllowList(root, upstream).merged).toBeNull();
+    expect(mergePermissionLists(root, upstream).merged).toBeNull();
     // A shape this merge does not understand is left alone, not guessed at.
     write(root, CLAUDE_SETTINGS_FILE, '{\n  "env": {}\n}\n');
-    expect(mergeAllowList(root, upstream).merged).toBeNull();
-    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "deny": [] }\n}\n');
-    expect(mergeAllowList(root, upstream).merged).toBeNull();
+    expect(mergePermissionLists(root, upstream).merged).toBeNull();
+    // An absent allow stays absent outside --adopt (deny already complete here).
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "deny": ["Bash(rm -rf *)"] }\n}\n');
+    expect(mergePermissionLists(root, upstream).merged).toBeNull();
   });
 
   test('--adopt creates the allow list an app settings file lacks, keeping every other key', () => {
@@ -112,18 +114,21 @@ describe('the Claude permission allow list merges additively', () => {
     const upstream = temporaryRoot();
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(new)']));
     write(root, CLAUDE_SETTINGS_FILE, '{\n  "env": { "A": "1" },\n  "hooks": {}\n}\n');
-    const created = mergeAllowList(root, upstream, { createMissing: true });
-    expect(created.added).toEqual(['Read', 'Skill(new)']);
-    expect(JSON.parse(created.merged!)).toEqual({ env: { A: '1' }, hooks: {}, permissions: { allow: ['Read', 'Skill(new)'] } });
-    // A permissions block with deny only gets an allow beside it; deny untouched.
+    const created = mergePermissionLists(root, upstream, { createMissing: true });
+    expect(created.allowAdded).toEqual(['Read', 'Skill(new)']);
+    expect(created.denyAdded).toEqual(['Bash(rm -rf *)']);
+    expect(JSON.parse(created.merged!)).toEqual({ env: { A: '1' }, hooks: {}, permissions: { allow: ['Read', 'Skill(new)'], deny: ['Bash(rm -rf *)'] } });
+    // A permissions block with deny only gets an allow beside it; the app's deny keeps its place.
     write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "deny": ["Bash(rm *)"] }\n}\n');
-    expect(JSON.parse(mergeAllowList(root, upstream, { createMissing: true }).merged!))
-      .toEqual({ permissions: { deny: ['Bash(rm *)'], allow: ['Read', 'Skill(new)'] } });
+    expect(JSON.parse(mergePermissionLists(root, upstream, { createMissing: true }).merged!))
+      .toEqual({ permissions: { deny: ['Bash(rm *)', 'Bash(rm -rf *)'], allow: ['Read', 'Skill(new)'] } });
     // A value of another shape is still never guessed at.
     write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": ["Read"]\n}\n');
-    expect(mergeAllowList(root, upstream, { createMissing: true }).merged).toBeNull();
+    expect(mergePermissionLists(root, upstream, { createMissing: true }).merged).toBeNull();
+    // A malformed allow is left exactly as it is; the deny list still arrives.
     write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "allow": "Read" }\n}\n');
-    expect(mergeAllowList(root, upstream, { createMissing: true }).merged).toBeNull();
+    expect(JSON.parse(mergePermissionLists(root, upstream, { createMissing: true }).merged!))
+      .toEqual({ permissions: { allow: 'Read', deny: ['Bash(rm -rf *)'] } });
   });
 
   test('the file keeps its indent and trailing-newline style', () => {
@@ -132,19 +137,191 @@ describe('the Claude permission allow list merges additively', () => {
     // Four-space indent, no trailing newline.
     write(root, CLAUDE_SETTINGS_FILE, JSON.stringify({ permissions: { allow: ['Read'] } }, null, 4));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(new)']));
-    const { merged } = mergeAllowList(root, upstream);
+    const { merged } = mergePermissionLists(root, upstream);
     expect(merged).toContain('\n    "permissions"');
     expect(merged!.endsWith('\n')).toBe(false);
   });
 
-  test('applyAllowListMerge writes the file and reports what it added', () => {
+  test('applyPermissionListMerge writes the file and reports what it added', () => {
     const root = temporaryRoot();
     const upstream = temporaryRoot();
     write(root, CLAUDE_SETTINGS_FILE, settings(['Read']));
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read', 'Skill(new)']));
-    expect(applyAllowListMerge(root, upstream)).toEqual(['Skill(new)']);
+    expect(applyPermissionListMerge(root, upstream)).toEqual({ allowAdded: ['Skill(new)'], denyAdded: [], denyDeclined: [] });
     const onDisk = JSON.parse(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf-8')) as { permissions: { allow: string[] } };
     expect(onDisk.permissions.allow).toEqual(['Read', 'Skill(new)']);
+  });
+});
+
+/** Upstream's settings: a destructive-command deny plus the secret denies. */
+const UPSTREAM_DENY = ['Bash(rm -rf *)', 'Read(.env)', 'Read(.auth/**)', 'Bash(printenv*)'];
+
+function settingsWithDeny(deny: string[] | undefined): string {
+  const permissions: Record<string, unknown> = { allow: ['Read'], ask: ['Write'] };
+  if (deny !== undefined) { permissions.deny = deny; }
+  return `${JSON.stringify({ permissions, hooks: {}, env: { A: '1' } }, null, 2)}\n`;
+}
+
+describe('the Claude permission deny list merges additively', () => {
+  test('a project scaffolded before the secret denies receives them after its own entries', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settingsWithDeny(['Bash(rm -rf *)']));
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+
+    const { allowAdded, denyAdded, denyDeclined, merged } = mergePermissionLists(root, upstream);
+    expect(allowAdded).toEqual([]);
+    expect(denyAdded).toEqual(['Read(.env)', 'Read(.auth/**)', 'Bash(printenv*)']);
+    expect(denyDeclined).toEqual([]);
+    const after = JSON.parse(merged!) as { permissions: Record<string, unknown>, env: unknown };
+    expect(after.permissions.deny).toEqual(UPSTREAM_DENY);
+    // allow and ask are exactly what the project wrote.
+    expect(after.permissions.allow).toEqual(['Read']);
+    expect(after.permissions.ask).toEqual(['Write']);
+    expect(after.env).toEqual({ A: '1' });
+  });
+
+  test('a project with no deny list at all gets one inside its permissions block', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settingsWithDeny(undefined));
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    const after = JSON.parse(mergePermissionLists(root, upstream).merged!) as { permissions: Record<string, unknown> };
+    expect(after.permissions.deny).toEqual(UPSTREAM_DENY);
+  });
+
+  test('a custom project deny keeps its place; nothing is removed or reordered', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    // Project order differs from upstream's and carries an entry upstream never had.
+    write(root, CLAUDE_SETTINGS_FILE, settingsWithDeny(['Bash(terraform destroy *)', 'Read(.env)', 'Bash(rm -rf *)']));
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    const { denyAdded, merged } = mergePermissionLists(root, upstream);
+    expect(denyAdded).toEqual(['Read(.auth/**)', 'Bash(printenv*)']);
+    expect((JSON.parse(merged!) as { permissions: { deny: string[] } }).permissions.deny)
+      .toEqual(['Bash(terraform destroy *)', 'Read(.env)', 'Bash(rm -rf *)', 'Read(.auth/**)', 'Bash(printenv*)']);
+  });
+
+  test('an opted-out deny is never appended, and is reported as declined', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settingsWithDeny(['Bash(rm -rf *)']));
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    const declinedDenies = ['Bash(printenv*)'];
+
+    const first = applyPermissionListMerge(root, upstream, { declinedDenies });
+    expect(first.denyAdded).toEqual(['Read(.env)', 'Read(.auth/**)']);
+    expect(first.denyDeclined).toEqual(['Bash(printenv*)']);
+    // Stable: the next sync adds nothing and keeps reporting the decision.
+    const second = mergePermissionLists(root, upstream, { declinedDenies });
+    expect(second.merged).toBeNull();
+    expect(second.denyDeclined).toEqual(['Bash(printenv*)']);
+    const onDisk = JSON.parse(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf-8')) as { permissions: { deny: string[] } };
+    expect(onDisk.permissions.deny).not.toContain('Bash(printenv*)');
+  });
+
+  test('a declined entry the project already has stays: the opt-out never removes', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    const result = mergePermissionLists(root, upstream, { declinedDenies: ['Read(.env)'] });
+    expect(result.merged).toBeNull();
+    expect(result.denyDeclined).toEqual([]);
+  });
+
+  test('a deny of another shape is left alone', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(root, CLAUDE_SETTINGS_FILE, '{\n  "permissions": { "allow": ["Read"], "deny": "Read(.env)" }\n}\n');
+    write(upstream, CLAUDE_SETTINGS_FILE, settingsWithDeny(UPSTREAM_DENY));
+    expect(mergePermissionLists(root, upstream).merged).toBeNull();
+  });
+});
+
+describe('updater.declined_denies in .agents/project.yaml', () => {
+  test('absent file, block or key is an empty list', () => {
+    const root = temporaryRoot();
+    expect(readDeclinedDenies(root)).toEqual({ entries: [] });
+    write(root, '.agents/project.yaml', 'project:\n  project_name: null\n');
+    expect(readDeclinedDenies(root)).toEqual({ entries: [] });
+    write(root, '.agents/project.yaml', 'updater:\n  protected_paths: []\n');
+    expect(readDeclinedDenies(root)).toEqual({ entries: [] });
+  });
+
+  test('a list of strings is read verbatim', () => {
+    const root = temporaryRoot();
+    write(root, '.agents/project.yaml', 'updater:\n  protected_paths: []\n  declined_denies:\n    - Bash(printenv*)\n    - "Bash(env)"\n');
+    expect(readDeclinedDenies(root)).toEqual({ entries: ['Bash(printenv*)', 'Bash(env)'] });
+  });
+
+  test('a malformed value is reported and ignored (fails toward more denies)', () => {
+    const root = temporaryRoot();
+    write(root, '.agents/project.yaml', 'updater:\n  declined_denies: Bash(env)\n');
+    const result = readDeclinedDenies(root);
+    expect(result.entries).toEqual([]);
+    expect(result.error).toContain('updater.declined_denies');
+  });
+});
+
+describe('opencode.jsonc deny gap (measured, never rewritten)', () => {
+  const upstreamOpencode = `{
+  // comment
+  "permission": {
+    "edit": "allow",
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "rm -rf *": "deny",
+      "printenv*": "deny",
+    },
+    "read": {
+      "*.env": "deny",
+    },
+  },
+}
+`;
+
+  test('lists the upstream denies the project lacks and renders the paste block', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
+    write(root, OPENCODE_SETTINGS_FILE, '{\n  // mine\n  "permission": {\n    "bash": { "*": "ask", "rm -rf *": "deny", },\n  },\n}\n');
+    const gap = opencodeDenyGap(root, upstream)!;
+    expect(gap.missing).toEqual([{ tool: 'bash', patterns: ['printenv*'] }, { tool: 'read', patterns: ['*.env'] }]);
+    expect(gap.block).toContain('"bash": {\n  "printenv*": "deny",\n},');
+    expect(gap.block).toContain('"read": {\n  "*.env": "deny",\n},');
+    // Allows upstream has are never offered: only denies travel.
+    expect(gap.block).not.toContain('git *');
+    // The project's file is untouched.
+    expect(readFileSync(join(root, OPENCODE_SETTINGS_FILE), 'utf-8')).toContain('// mine');
+  });
+
+  test('a pattern the project lists with another action is its opt-out', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
+    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": { "rm -rf *": "deny", "printenv*": "ask" }, "read": { "*.env": "allow" } } }\n');
+    expect(opencodeDenyGap(root, upstream)).toBeNull();
+  });
+
+  test('a tool declared as one action keeps that action as the map default', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
+    write(root, OPENCODE_SETTINGS_FILE, '{ "permission": { "bash": "ask" } }\n');
+    const gap = opencodeDenyGap(root, upstream)!;
+    expect(gap.block).toContain('"bash": {\n  "*": "ask",\n  "rm -rf *": "deny",\n  "printenv*": "deny",\n},');
+  });
+
+  test('a missing or unparseable file on either side is no gap', () => {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    expect(opencodeDenyGap(root, upstream)).toBeNull();
+    write(upstream, OPENCODE_SETTINGS_FILE, upstreamOpencode);
+    expect(opencodeDenyGap(root, upstream)).toBeNull();
+    write(root, OPENCODE_SETTINGS_FILE, '{ not json');
+    expect(opencodeDenyGap(root, upstream)).toBeNull();
   });
 });
 

@@ -63,7 +63,7 @@ import {
   runVerdict,
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
-import { CLAUDE_SETTINGS_FILE, mergeAllowList } from './lib/updater-settings.ts';
+import { CLAUDE_SETTINGS_FILE, mergePermissionLists, readDeclinedDenies } from './lib/updater-settings.ts';
 import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifest';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -427,7 +427,12 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   .mcp.json, .claude/settings.json, .husky/pre-commit, .husky/pre-push,
   .husky/commit-msg, …)
   nunca se sobrescriben: solo aparecen en ese reporte. .claude/settings.json,
-  .codex/ y los hooks de .husky/ se entregan UNA vez si faltan. El proyecto
+  .codex/ y los hooks de .husky/ se entregan UNA vez si faltan. De
+  .claude/settings.json solo crecen permissions.allow y permissions.deny
+  (se agrega lo que upstream tiene y falta, nunca se quita); una regla deny
+  que el proyecto no quiere va en updater.declined_denies. A opencode.jsonc
+  nunca se le escribe: las reglas deny que le faltan salen como bloque para
+  pegar en el reporte. El proyecto
   suma sus propias rutas protegidas en .agents/project.yaml ->
   updater.protected_paths (archivos sincronizados que fusiono a mano): mismo
   trato que la lista de upstream. Un archivo sincronizado que el proyecto
@@ -650,6 +655,10 @@ interface RunFacts {
   pbiCache: PbiCacheFact | null
   /** `permissions.allow` entries the additive merge appended to `.claude/settings.json` (on --dry-run: would append). */
   allowListAdded: string[]
+  /** `permissions.deny` entries the same merge appended (on --dry-run: would append). */
+  denyListAdded: string[]
+  /** Upstream deny entries left out because the project lists them in `updater.declined_denies`. */
+  denyListDeclined: string[]
   /** One-line evidence for the unresolved-doctrine ledger row, when AGENTS.md carries debt. */
   doctrineDebt: string | null
   /** `--adopt` only: what the adopt hook did, and its parity rows. */
@@ -658,7 +667,7 @@ interface RunFacts {
   reinclude: ReincludeOutcome | null
   parity: { findings: ParityFinding[], report: ParityReport } | null
 }
-const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], doctrineDebt: null, adopt: null, reinclude: null, parity: null };
+const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migrationPlanned: false, aliasDeferred: false, shadowingCommandsMoved: [], gates: [], gatesSkippedReason: null, promptKept: false, pbiCache: null, allowListAdded: [], denyListAdded: [], denyListDeclined: [], doctrineDebt: null, adopt: null, reinclude: null, parity: null };
 
 // --- ENV-VAR DRIFT DETECTION (afterApply hook) ---
 /**
@@ -1286,36 +1295,44 @@ export function runGate(script: string, cwd: string, applied: readonly string[],
   };
 }
 
-// --- CLAUDE PERMISSION ALLOW LIST (afterApply hook) ---
+// --- CLAUDE PERMISSION ALLOW + DENY LISTS (afterApply hook) ---
 //
 // `.claude/settings.json` is bootstrap-only AND watched, so a skill shipped
-// upstream used to arrive without the `Skill(<name>)` entry that authorizes it
-// and silently could not be invoked. This merges ONE array additively,
-// `permissions.allow`, and leaves `deny`, `ask`, `hooks`, `env` and every
-// other key exactly as the project wrote them. See `updater-settings.ts` for
-// why removals are deliberately not remembered.
+// upstream used to arrive without the `Skill(<name>)` entry that authorizes it,
+// and a project scaffolded before the secret deny rules never received them.
+// This merges TWO arrays additively, `permissions.allow` and
+// `permissions.deny`, and leaves `ask`, `hooks`, `env` and every other key
+// exactly as the project wrote them. A deny the project does not want is
+// declined by name in `.agents/project.yaml` -> `updater.declined_denies`.
+// See `updater-settings.ts` for why removals are deliberately not remembered.
 //
 // Backup before write, like every other mutation the run makes: the file is on
-// the watchlist, so a consumer who dislikes the addition restores it from
-// `.backups/` and expresses the removal in `deny`.
+// the watchlist, so a consumer who dislikes an addition restores it from
+// `.backups/` and expresses the removal (`deny` for an allow entry,
+// `updater.declined_denies` for a deny entry).
 //
 // `adoptRun`: the `--adopt` run also CREATES the allow list when the app's own
 // settings file has none (`createMissing` in `updater-settings.ts`); a plain
-// update never does.
-function makeAllowListHook(
+// update never does. The deny list arrives the same way on both runs.
+function makePermissionListHook(
   templateDir: string,
   sink: ReportSink,
   dryRun: boolean,
   adoptRun: boolean,
 ): (summary: RunSummary) => Promise<void> {
   return async (summary: RunSummary): Promise<void> => {
+    const declined = readDeclinedDenies(process.cwd());
+    if (declined.error) { sink.warn(`${declined.error}; se ignora y se agregan todas las reglas deny de upstream.`); }
+    const opts = { createMissing: adoptRun, declinedDenies: declined.entries };
+    const { allowAdded, denyAdded, denyDeclined, merged } = mergePermissionLists(process.cwd(), templateDir, opts);
+    runFacts.denyListDeclined = denyDeclined;
     if (dryRun) {
-      runFacts.allowListAdded = mergeAllowList(process.cwd(), templateDir, { createMissing: adoptRun }).added;
+      runFacts.allowListAdded = allowAdded;
+      runFacts.denyListAdded = denyAdded;
       return;
     }
-    const localPath = path.join(process.cwd(), CLAUDE_SETTINGS_FILE);
-    const { added, merged } = mergeAllowList(process.cwd(), templateDir, { createMissing: adoptRun });
     if (merged === null) { return; }
+    const localPath = path.join(process.cwd(), CLAUDE_SETTINGS_FILE);
     try {
       // This run's backup dir when it made one; otherwise its own, so the
       // pre-write backup contract holds even on a run that wrote nothing else.
@@ -1328,11 +1345,12 @@ function makeAllowListHook(
       fs.writeFileSync(localPath, merged, 'utf-8');
     }
     catch (err) {
-      sink.warn(`No se pudo fusionar la allow list de ${CLAUDE_SETTINGS_FILE}: ${err instanceof Error ? err.message : String(err)}`);
+      sink.warn(`No se pudieron fusionar los permisos de ${CLAUDE_SETTINGS_FILE}: ${err instanceof Error ? err.message : String(err)}`);
       return;
     }
-    runFacts.allowListAdded = added;
-    sink.step(`Permisos agregados a ${CLAUDE_SETTINGS_FILE}: ${added.length}`);
+    runFacts.allowListAdded = allowAdded;
+    runFacts.denyListAdded = denyAdded;
+    sink.step(`Permisos agregados a ${CLAUDE_SETTINGS_FILE}: ${allowAdded.length} allow, ${denyAdded.length} deny`);
   };
 }
 
@@ -1461,6 +1479,8 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       shadowingCommandsMoved: runFacts.shadowingCommandsMoved,
       pbiCache: runFacts.pbiCache,
       allowListAdded: runFacts.allowListAdded,
+      denyListAdded: runFacts.denyListAdded,
+      denyListDeclined: runFacts.denyListDeclined,
       doctrineDebt: runFacts.doctrineDebt,
       doctrineFile: DOCTRINE_FILE,
     });
@@ -1961,7 +1981,7 @@ async function main(): Promise<void> {
             sink,
             ...(parsed.adopt ? [makeAdoptHook(sink, true, true)] : []),
             async () => { runFacts.envNewKeys = computeEnvNewKeys(UPSTREAM_DIR); },
-            makeAllowListHook(UPSTREAM_DIR, sink, true, parsed.adopt),
+            makePermissionListHook(UPSTREAM_DIR, sink, true, parsed.adopt),
             makeProjectInstructionsHook(sink, true),
             // A dry run neither ages nor writes the doctrine ledger.
             async () => { runFacts.doctrineDebt = runDoctrineLedger(process.cwd(), UPSTREAM_DIR, { dryRun: true }); },
@@ -1984,8 +2004,8 @@ async function main(): Promise<void> {
             makeProjectInstructionsHook(sink, false),
             makeGatesHook(sink, !parsed.noGates, adoptedRepo, parsed.adopt),
             // After the compat check reads settings.json: the merge only ADDS
-            // allow entries, which no compatibility contract asserts on.
-            makeAllowListHook(UPSTREAM_DIR, sink, false, parsed.adopt),
+            // allow and deny entries, which no compatibility contract asserts on.
+            makePermissionListHook(UPSTREAM_DIR, sink, false, parsed.adopt),
             // The unresolved-doctrine ledger. Content-tracked, so unlike every
             // other watched-file nudge it survives `keep project` and clears
             // only when the section is actually written. Runs before the parity
