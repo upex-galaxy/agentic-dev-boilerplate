@@ -5,6 +5,31 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — Open the agent directly: no launch script, no secret in its process
+
+A harness opens as its own binary (`claude`, `opencode`, `codex`) or its
+desktop app; nothing loads `.env` into the agent's process (ADR-0016, owner
+decision B13; B3, a credential proxy, cancelled as superseded).
+
+### Removed
+
+- **The `claude`, `codex` and `opencode` package scripts** and the launcher
+  they ran, with its test and the empty-overlay-key clean-up only it used.
+- **The installer's launch-wrapper helper**; its closing step and the doctor's
+  success box name the bare binaries.
+
+### Changed
+
+- **Stale shell values**: the launcher's refusal is gone; `bun run vars:env:check`
+  still names an inherited value that shadows `.env` (names and lengths only).
+- **Updater**: never re-adds the retired scripts and never deletes a project's
+  copy, the launcher included (even under `--force`); the parity table reports
+  each as removable, one informational row.
+- **Docs, decks and skills**: launch lines use the bare binary; a command that
+  needs a `.env` value runs through `bunx varlock run -- sh -c '...'`; a remote
+  MCP server that takes its token from the harness environment should use
+  OAuth instead.
+
 ## 2026-10-05 — No shell autoloader: secrets stay out of the shell
 
 Each process loads its own config, so nothing exports `.env` into a shell the

@@ -1,11 +1,11 @@
 # ADR-0010 — varlock owns the env schema and launches the agent harnesses
 
-- **Status:** Accepted
+- **Status:** Accepted (the harness launch item superseded by ADR-0016)
 - **Date:** 2026-10-05
 - **Deciders:** Boilerplate owner (upex-galaxy): env-secrets spike owner decisions OD1 = b (`.env` stays the default path, a secret manager is the advanced option), OD3 = b (the dev boilerplate adopts varlock in the same wave as the QA one), OD6 = a with an exception (the AI never writes a secret value into `.env`, it may write a non-sensitive one). Conductor ruling of the parity fleet on the shared launch contract (a precedence preflight before `varlock run`, one launcher script for the three harnesses). Ported from agentic-qa-boilerplate ADR-0003 and ADR-0005 by unit D-U2
 - **Tags:** env, secrets, validation, launch, ci, updater, cross-cutting-invariant
 - **Supersedes:** —
-- **Superseded by:** —
+- **Superseded by:** ADR-0016 ("Launch through varlock, behind a precedence preflight" only; the preflight's check lives on in `vars:env:check`)
 
 ---
 
