@@ -6,7 +6,7 @@
     <title>La capa comportamental: Butler, PM Voice, Visual Mapping</title>
     <meta
       name="description"
-      content="Por qué agentic-dev-boilerplate responde como responde: las tres capas que gobiernan cada mensaje, cuál manda sobre cuál, y la misma sesión de desarrollo renderizada en los dos estilos."
+      content="Por qué agentic-dev-boilerplate responde como responde: las dos capas que gobiernan cada mensaje, cuál manda sobre cuál, y la misma sesión de desarrollo renderizada en los dos estilos."
     />
     <style>
       /* ============================================================
@@ -575,14 +575,13 @@
         <div class="meta">
           <span class="tag">AGENTS.md §2</span>
           <span class="tag">OUTPUT STYLE · instrucciones de usuario</span>
-          <span class="tag">caveman@caveman · full</span>
           <span class="tag">.agents/hooks/personality-reinject.mjs</span>
           <span class="tag">docs/ai-personality.md</span>
         </div>
       </header>
 
       <section>
-        <h2><span class="num">01</span>Tres capas, tres dimensiones</h2>
+        <h2><span class="num">01</span>Dos capas, dos dimensiones</h2>
         <p class="sub">
           Cada capa manda sobre una sola dimensión. Ese es el diseño entero: si dos reclaman la
           misma, se contradicen, y el desempate acaba siendo mecánico en lugar de deliberado.
@@ -598,12 +597,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>caveman</td>
-              <td>cuántas <strong>palabras</strong></td>
-              <td><code>caveman@caveman</code>, nivel <code>full</code></td>
-              <td>cada turno, vía los hooks del propio plugin</td>
-            </tr>
             <tr>
               <td>AGENTS.md §2<span class="badge">manda</span></td>
               <td><strong>qué</strong> se dice, granularidad y registro</td>
@@ -634,11 +627,12 @@
         <div class="callout warn">
           <span class="ic">El riesgo</span>
           <div>
-            Sin reinyección, el desempate sería <strong>mecánico, no editorial</strong>. El plugin de
-            caveman se reinyecta en cada <code>UserPromptSubmit</code>; un §2 leído una sola vez al
-            arrancar se diluye conforme crece el contexto. Ganaría la capa más repetida, no la que
-            tiene razón, y PM Voice se evaporaría en sesiones largas mientras caveman no. Por eso §2
-            viaja en cada turno, igual que caveman.
+            Sin reinyección, el desempate sería <strong>mecánico, no editorial</strong>. Un §2 leído
+            una sola vez al arrancar se diluye conforme crece el contexto, mientras cualquier cosa
+            que un plugin reinyecte en cada <code>UserPromptSubmit</code> sigue fresca. Ganaría la
+            capa más repetida, no la que tiene razón, y PM Voice se evaporaría en sesiones largas.
+            Por eso §2 viaja en cada turno. La concisión no tiene capa propia: sale de §2 y del
+            OUTPUT STYLE, sin plugin de modo de comunicación (regla crítica #11).
           </div>
         </div>
       </section>
@@ -674,8 +668,7 @@
         <h2><span class="num">03</span>Las reglas de §2, una por tarjeta</h2>
         <p class="sub">
           La sesión de arriba muestra tres de ellas en acción. §2 tiene más: cómo razona el agente
-          antes de tocar código, y con qué instrumento le pide al humano que decida. Todas componen
-          con caveman, que solo quita palabras.
+          antes de tocar código, y con qué instrumento le pide al humano que decida.
         </p>
         <div class="cards">
           <div class="card">
@@ -807,15 +800,6 @@
               <td>
                 <code>.opencode/plugins/personality-reinject.js</code> importa las mismas líneas y
                 las empuja al system prompt.
-              </td>
-            </tr>
-            <tr>
-              <td>caveman</td>
-              <td>
-                Plugin de Claude Code con sus propios hooks. En un host donde no está, la regla que
-                lo nombra no hace nada. <code>cli/install.ts</code> lo instala con
-                <code>--no-hooks</code>: el plugin ya registra sus hooks, y una segunda copia en
-                <code>~/.claude/settings.json</code> inyectaría caveman dos veces por turno.
               </td>
             </tr>
           </tbody>

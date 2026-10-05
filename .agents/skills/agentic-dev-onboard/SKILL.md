@@ -101,7 +101,7 @@ Run the interactive installer once after cloning:
 bun run setup
 ```
 
-This bootstraps `.agents/`, installs Engram (persistent memory) via gentle-ai `--preset minimal`, wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
+This bootstraps `.agents/`, wires Engram (persistent memory) per agent with `engram setup`, wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details in [`INSTALLER.md`](../../../INSTALLER.md).
 
 After setup, fill `.env` with the credentials the rest of the workflow expects (see "Critical env vars" below).
 
@@ -230,9 +230,9 @@ Long sessions: when the context window runs high or work must outlive the sessio
 
 ---
 
-## Persistent memory via gentle-ai
+## Persistent memory via Engram
 
-`bun run setup` installs Engram via `gentle-ai install --preset minimal` — persistent memory that survives across sessions and compactions. No other gentle-ai skills are installed (AGENTS.md §12 covers the proactive-save protocol). Full details in [`INSTALLER.md`](../../../INSTALLER.md).
+`bun run setup` wires Engram per agent with `engram setup <agent>` and offers the Engram Claude Code plugin — persistent memory that survives across sessions and compactions. No gentle-ai bundle is installed (AGENTS.md §12 covers the proactive-save protocol). Full details in [`INSTALLER.md`](../../../INSTALLER.md).
 
 ---
 

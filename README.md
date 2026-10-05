@@ -72,7 +72,7 @@ Before running `bunx create-agentic-dev@latest` or `bun install && bun run setup
 
 | Tool          | Min version | Why                                                                                                                              | Install                                                                                                                                                                                              |
 | ------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **gentle-ai** | `>= 1.26.5` | Installs Engram (MCP-based persistent memory across sessions). Framework still runs without it, but cross-session memory is off. | macOS: `brew install gentle-ai` · Linux: `go install github.com/Gentleman-Programming/gentle-ai/cmd/gentle-ai@latest` (needs Go ≥ 1.22) · [repo](https://github.com/Gentleman-Programming/gentle-ai) |
+| **engram** | `>= 3.0.0` | Engram, the MCP-based persistent memory across sessions; `bun run setup` wires it per agent with `engram setup`. Framework still runs without it, but cross-session memory is off. | Homebrew: `brew trust gentleman-programming/tap && brew install gentleman-programming/tap/engram` · Go: `go install github.com/Gentleman-Programming/engram/v3/cmd/engram@latest` · [repo](https://github.com/Gentleman-Programming/engram) |
 
 ### Per-skill CLIs (lazy-required — needed when the skill runs, not at setup)
 
@@ -119,7 +119,7 @@ Quote any value that contains a `#` (`PASSWORD="pass#word"`): varlock cuts an un
 | Stage                    | Check depth                                                                                                                                                                                         | Behavior                                                                                                                                                                                                                       |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Preflight (Step 0)       | Version compare — reads `process.versions.bun`, parses semver, requires `>= 1.0.0`. Also checks `node_modules/@inquirer/prompts`.                                                                   | Hard exit 1 with explicit `Fix:` command before any other step.                                                                                                                                                                |
-| Step 2 — gentle-ai       | Version compare — runs `gentle-ai version`, parses semver, requires `>= 1.26.5`.                                                                                                                    | Missing: prints brew + go install commands + docs URL, asks exit-or-continue. Too old: warns and continues with `gentle-ai update` hint.                                                                                       |
+| Step 2 — engram          | Version compare — runs `engram version`, parses semver, requires `>= 3.0.0`.                                                                                                                        | Missing: prints brew + go install commands + docs URL, asks exit-or-continue. Too old or no release version: asks whether to try anyway.                                                                                      |
 | Step 4 — agents          | Detects Claude Code, OpenCode and Codex (config directory, binary on PATH, or `.codex/config.toml`), then prompts which to configure.                                                               | None of the three found: prints all three docs URLs, hard exit 1.                                                                                                                                                              |
 | Step 11 — per-skill CLIs | PATH probe — runs `which <name>` on POSIX, `where <name>` on Windows. Presence only, no version check.                                                                                              | Prints `found` / `missing` table; for missing entries adds `quick:` install command (when cross-platform — e.g. `bun add -g vercel`) + `docs:` URL. Non-blocking.                                                              |
 | direnv (optional)        | Presence + `.envrc` allow status + shell-rc hook line.                                                                                                                                              | Pure convenience nudge: the `bun run claude` / `bun run opencode` / `bun run codex` wrappers already work without it. If absent, lists `system_install` action with install command; safe to decline (recommended on Windows). |
@@ -171,7 +171,7 @@ What it does:
 2. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 3. Initializes a fresh `git init -b main` with an initial commit.
 4. Runs `bun install`.
-5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, gentle-ai (Engram only), community skills, `.env` wiring for every MCP server declared in `.mcp.json` plus the Atlassian CLI, how to connect web search at harness level, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`CLAUDE.md` shim, `.claude/skills` alias) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
+5. Hands off to `bun run setup` — detects which of Claude Code / OpenCode / Codex you have, Engram (`engram setup` per agent), community skills, `.env` wiring for every MCP server declared in `.mcp.json` plus the Atlassian CLI, how to connect web search at harness level, direnv autoload, optional `gh repo create`, and finally generates the harness surfaces (`CLAUDE.md` shim, `.claude/skills` alias) and verifies them. The scaffolder itself is harness-neutral: nothing generated ships in the tarball.
 
 Useful flags (full list in [`packages/create-agentic-dev/README.md`](packages/create-agentic-dev/README.md)):
 
@@ -292,7 +292,7 @@ Prefer to start your project **on GitHub from day one** (your own repo, your own
 4. Install + configure:
    ```bash
    bun install
-   bun run setup        # gentle-ai (Engram only), community skills, .env wiring, MCPs
+   bun run setup        # Engram (engram setup), community skills, .env wiring, MCPs
    ```
 5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
 
@@ -312,7 +312,7 @@ bun install
 bun run onboarding   # opens docs/onboarding.html with sidebar nav
                      # Close the tab + Ctrl-C when done
 
-# 3. Install everything (gentle-ai Engram, community skills, MCPs, env)
+# 3. Install everything (Engram, community skills, MCPs, env)
 bun run setup
 
 # Or, do it manually instead of step 3:

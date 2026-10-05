@@ -39,7 +39,7 @@ paths: [".agents/skills/"]
 | `acli`                | `/acli`                       | Atlassian CLI cookbook (Jira + Confluence). Resolves `[ISSUE_TRACKER_TOOL]`.                                                                                                                                                                                                           |
 | `vercel-cli`          | (auto on `vercel` Bash calls) | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env var sync (`.env` ↔ Preview/Production scopes), build/runtime log streaming, rollback, `.vercel/` linking. Companion to community `/deploy-to-vercel`.                                          |
 
-> **Persistent memory**: `bun run setup` installs Engram via `gentle-ai install --preset minimal`. Active across sessions and compactions per `AGENTS.md` §12 (proactive memory triggers). No other gentle-ai skills are installed.
+> **Persistent memory**: `bun run setup` wires Engram per agent with the engram binary's own `engram setup <agent>` (the Engram MCP server, nothing else) and offers the Engram Claude Code plugin for its session hooks. Active across sessions and compactions per `AGENTS.md` §12 (proactive memory triggers). No gentle-ai bundle is installed.
 >
 > **T3 (community project-level)**: frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`.
 >

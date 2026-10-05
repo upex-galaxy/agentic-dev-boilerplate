@@ -4,7 +4,7 @@
 >
 > **Home**: `.agents/skills/agentic-dev-core/references/skill-composition-strategy.md` — meta-doctrine consumed by all T1 skills, sibling to `briefing-template.md`, `dispatch-patterns.md`, `orchestration-doctrine.md`, `skill-resolver.md`.
 >
-> **Status**: v2.0 — T2 (gentle-ai 15-skill bundle) removed. Installer (`cli/install.ts`) now invokes `gentle-ai install --preset minimal`, which installs only Engram (persistent memory). The SDD bundle, judgment-day, cognitive-doc-design, comment-writer, issue-creation, and skill-registry are no longer installed. Document collapses from 4 tiers to 3 (T1 + T3 + T4) and drops the Sprint-Dev ↔ SDD integration contract that v1.x maintained.
+> **Status**: v2.0 — T2 (gentle-ai 15-skill bundle) removed. Installer (`cli/install.ts`) now wires only Engram (persistent memory), with the engram binary's own `engram setup <agent>`; gentle-ai is no longer invoked (its `minimal` preset also carried the SDD skills). The SDD bundle, judgment-day, cognitive-doc-design, comment-writer, issue-creation, and skill-registry are no longer installed. Document collapses from 4 tiers to 3 (T1 + T3 + T4) and drops the Sprint-Dev ↔ SDD integration contract that v1.x maintained.
 >
 > **Companion files**:
 >
@@ -21,7 +21,7 @@ The repo ships the project-owned skills `.agents/skills/REGISTRY.md` lists (`.ag
 
 - **Community skills (project-level)**: the `PROJECT_LEVEL_SKILLS` array in `cli/install.ts`: the stack skills, plus the builder skills a T1 workflow depends on (`skill-creator`, the builder of every skill this repo scaffolds, `skill-scaffold.md`).
 - **Community skills (user-level / global)**: the `USER_LEVEL_SKILLS` array in `cli/install.ts`.
-- **Engram (persistent memory)**: installed via `gentle-ai install --preset minimal`. Not a workflow skill — it is the persistent-memory MCP referenced from AGENTS.md §12 (proactive memory triggers).
+- **Engram (persistent memory)**: wired per agent by `engram setup <agent>`. Not a workflow skill — it is the persistent-memory MCP referenced from AGENTS.md §12 (proactive memory triggers).
 
 Gaps the protocol addresses:
 

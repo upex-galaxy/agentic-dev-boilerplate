@@ -5,6 +5,31 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — Engram wired directly with `engram setup`; caveman no longer assumed
+
+`bun run setup` wires Engram with the engram binary's own `engram setup
+<agent>` instead of `gentle-ai install --preset minimal`, and the repo no
+longer assumes or recommends the caveman communication-mode plugin.
+
+### Changed
+
+- **Engram without gentle-ai**: the installer detects `engram` (>= 3.0.0) and
+  runs `engram setup <agent>` per selected agent (`--protocol=slim` on Claude
+  Code), then offers to install the Engram Claude Code plugin (one confirm,
+  skipped without a TTY, never fatal). gentle-ai's `minimal` preset was never
+  "Engram only": it also carries the SDD skills, plus its own orchestrator
+  instructions, hooks and telemetry in the user-level agent config. New
+  `INSTALL_SKIP_ENGRAM` / `INSTALL_FORCE_ENGRAM`; `INSTALL_FORCE_AGENTS_SETUP`
+  stays as an alias, and an installer state file written before this change
+  still loads.
+- **Critical Rule #11 rewritten in place**: concision comes from `AGENTS.md`
+  §2 (Butler + PM Voice) and the user-level OUTPUT STYLE; no
+  communication-mode plugin is assumed or recommended. The §2 LAYER SPLIT has
+  two rows. The installer, `INSTALLER.md`, `docs/ai-personality.md`, the
+  onboarding page and the behavioural-layer deck drop caveman.
+- **Scaffolder manifest**: `willInstall.gentleAiSkills` is now
+  `willInstall.engram`.
+
 ## 2026-10-05 — MCP servers read `.env` through a filtered loader; no plaintext credential copies
 
 Every MCP server that needs `.env` values now starts through

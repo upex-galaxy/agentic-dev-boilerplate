@@ -3,10 +3,10 @@
  *
  * Why this exists: AGENTS.md §2 (Butler + PM Voice + Visual Mapping) and the
  * user-level OUTPUT STYLE are read ONCE at session start and then dilute as
- * the context window fills, while the caveman plugin re-injects itself on
- * every UserPromptSubmit. That asymmetry is mechanical, not editorial:
+ * the context window fills, while anything a plugin re-injects on every
+ * UserPromptSubmit stays fresh. That asymmetry is mechanical, not editorial:
  * whichever layer is repeated most often wins. Re-emitting the contract on
- * every turn restores the balance for ~30 tokens.
+ * every turn keeps it in front for ~30 tokens.
  *
  * The emitter carries, in this order:
  *   1. `PERSONALITY_CONTRACT`: the AGENTS.md §2 output contract.

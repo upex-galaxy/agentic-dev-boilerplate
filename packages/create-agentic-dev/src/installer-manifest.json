@@ -33,7 +33,7 @@
     {
       "name": "internet access",
       "required": true,
-      "purpose": "The scaffolder downloads the boilerplate template from GitHub and gentle-ai skills from their registries.",
+      "purpose": "The scaffolder downloads the boilerplate template from GitHub and community skills from their registries.",
       "installHint": "https://api.github.com"
     },
     {
@@ -56,13 +56,13 @@
     }
   ],
   "willInstall": {
-    "gentleAiSkills": {
+    "engram": {
       "count": 1,
       "items": [
         {
           "name": "engram",
           "purpose": "Persistent memory across sessions.",
-          "source": "gentle-ai"
+          "source": "https://github.com/Gentleman-Programming/engram"
         }
       ]
     },

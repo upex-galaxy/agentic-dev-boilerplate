@@ -18,7 +18,7 @@ That single command:
 4. Initializes a fresh `git init -b main` and creates the initial commit.
 5. Runs `bun install`.
 6. Hands off to the boilerplate's interactive installer (`bun run setup`),
-   which configures gentle-ai, agent skills, MCPs, `.env`, and — at the end —
+   which wires Engram, agent skills, MCPs, `.env`, and — at the end —
    optionally creates a GitHub repository for you via `gh`.
 
 ## Flags
@@ -93,7 +93,7 @@ cover the whole flow.
 The scaffolder itself only needs three binaries. Everything else is checked by
 the boilerplate's `bun run setup` (the last stage of this CLI) and surfaced
 through its own install hints. The split below mirrors the responsibility
-boundary, so a missing `gentle-ai` is not an error of `create-agentic-dev` — it's
+boundary, so a missing `engram` is not an error of `create-agentic-dev` — it's
 something `bun run setup` will point you at.
 
 ### For the scaffolder itself (checked upfront, exits on missing)
@@ -119,7 +119,7 @@ path Bun cannot create its bin shims, and `bun install` fails with
 | Tier                   | Tool                                                                 | What it does                                                                                                                                                                                   |
 | ---------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Hard blocker**       | Claude Code **or** OpenCode                                          | The agent the installer configures. `bun run setup` Step 4 aborts if neither is found. Install [Claude Code](https://docs.claude.com/claude-code) or [OpenCode](https://opencode.ai).          |
-| **Quasi-required**     | `gentle-ai` ≥ 1.26.5                                                 | Installs the 15-skill ecosystem + Engram + SDD orchestrator. Missing → installer prints commands and asks exit-or-continue (degraded mode if you continue).                                    |
+| **Quasi-required**     | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing → installer prints commands and asks exit-or-continue (no cross-session memory if you continue).                         |
 | **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 11 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
 | **Convenience opt-in** | `direnv`                                                             | Auto-loads `.env` so the bare `claude` / `opencode` binaries see MCP credentials. Without it, use the cross-platform `bun claude` / `bun opencode` wrappers. **Windows users should skip it.** |
 

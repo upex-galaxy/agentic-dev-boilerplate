@@ -130,7 +130,7 @@ The repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is 
 
 **The updater.** `bun run up` never generates or syncs a command file, removes the ones the retired alias layer generated, and names a leftover `.agents/compatibility/command-aliases.project.json` once as an informational row. It closes with one "Estado por superficie" table (one row per surface, `SURFACE_ORDER` in `cli/lib/updater-parity.ts`) and ONE parity prompt saved to `.agents/prompts/parity-plan.md`: numbered rows with evidence, one per path, each awaiting `keep project | take upstream | merge` before the AI edits anything; `take upstream` is suggested only where the project lacks the content entirely. `--strict` turns compat errors or blocking findings into exit 1; an aborted run prints `Abortado.` and exits 1; `.claude/settings.json` ships once when missing and then sits on the protected watchlist, never overwritten. On the migration run the `.claude/skills` alias waits for the migration commit (`bun run agents:compat` creates it). The watchlist also holds `.husky/pre-commit` and `.husky/pre-push` plus whatever a project lists under `updater.protected_paths` in `.agents/project.yaml` (never overwritten, delivered once when missing, drift row per upstream change); every `merge` row on a watched file says what to port and what to keep, and the identity files (`project.yaml`, `jira-required.yaml`) compare structure only (`informational` rows).
 
-**Harness-specific facts worth knowing.** Codex loads project `.codex/` config and hooks only in a repository marked trusted, and `bun run setup:doctor` reports that trust as WARN because it is runtime state no file read can verify. Codex Desktop consumes the same repository config as the CLI: no second convention, no extra directory. Engram and caveman are Claude Code plugins; the rules that mention them are no-ops on a host where the plugin is absent. Every agent commit, on every harness, ends with the `Worktree:` + `Session:` trailers copied from the hook's `AGENT IDENTITY:` line; harness-branded trailers such as `Claude-Session:` are forbidden (ADR-0004).
+**Harness-specific facts worth knowing.** Codex loads project `.codex/` config and hooks only in a repository marked trusted, and `bun run setup:doctor` reports that trust as WARN because it is runtime state no file read can verify. Codex Desktop consumes the same repository config as the CLI: no second convention, no extra directory. The Engram plugin (session hooks) is Claude Code only; `engram setup <agent>` wires the Engram MCP server on every host, and the memory rules are no-ops where that server is absent. Every agent commit, on every harness, ends with the `Worktree:` + `Session:` trailers copied from the hook's `AGENT IDENTITY:` line; harness-branded trailers such as `Claude-Session:` are forbidden (ADR-0004).
 
 ---
 
@@ -236,7 +236,7 @@ bunx create-agentic-dev --adopt   → installs the tooling, overwrites nothing t
 
 ### Meta-SDD (Spec-Driven Development) — for substantial changes
 
-When a change is big enough that you'd want a written spec before coding, you can opt into the SDD bloque. **Not installed by `bun run setup`** — that runs `gentle-ai install --preset minimal` which provisions Engram only. To use SDD, install it separately at user-level (e.g. `gentle-ai install sdd` or via the agent's skill manager). Once installed, the `/sdd-*` commands become available:
+When a change is big enough that you'd want a written spec before coding, you can opt into the SDD bloque. **Not installed by `bun run setup`** — that wires Engram only, with `engram setup <agent>`. To use SDD, install it separately at user-level (e.g. `gentle-ai install sdd` or via the agent's skill manager). Once installed, the `/sdd-*` commands become available:
 
 ```
 /sdd-init       → Detect stack, bootstrap persistence backend
@@ -415,7 +415,7 @@ Use this table to decide what to re-generate after what kind of change.
 | `.context/README.md`                                                                         | Generator map for `.context/` artifacts                                                       |
 | `.context/ADR/README.md`                                                                     | Architecture Decision Records — when to write one, status lifecycle, index (append-only)      |
 | `.agents/README.md`                                                                          | Variable contract: `{{VAR}}`, `{{jira.*}}`, validation scripts                                |
-| `INSTALLER.md`                                                                               | What `bun run setup` configures: gentle-ai, community skills, MCPs, external CLIs, opt-out    |
+| `INSTALLER.md`                                                                               | What `bun run setup` configures: Engram, community skills, MCPs, external CLIs, opt-out       |
 | `docs/methodology/jira-platform.md`                                                          | Jira and Xray from the dev side: instance anchor, fields dev writes, what the sync reads      |
 | Sister repo: [agentic-qa-boilerplate](https://github.com/upex-galaxy/agentic-qa-boilerplate) | QA-side workflows (sprint testing, automation, regression)                                    |
 
