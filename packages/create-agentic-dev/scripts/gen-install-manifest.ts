@@ -67,16 +67,15 @@ const MCP_PURPOSES: Record<string, string> = {
   n8n: 'n8n automation MCP — workflow and integration management.',
 };
 
-// Skill purposes — keyed by skill slug. Covers gentle-ai component (engram),
+// Skill purposes — keyed by skill slug. Covers Engram (persistent memory),
 // project-level skills (PROJECT_LEVEL_SKILLS), and user-level skills
 // (USER_LEVEL_SKILLS) in one map. Tier is determined at build time by which
 // array in cli/install.ts the skill appears in.
 //
-// gentle-ai installs only Engram via `--preset minimal` (see installSkillsViaGentleAi
-// in cli/install.ts). The SDD bundle and foundation skills are intentionally
-// skipped — this repo's own skills own the dev workflow.
+// Engram is wired per agent with the engram binary's own `engram setup <agent>`
+// (see installEngramPerAgent in cli/install.ts); no gentle-ai bundle rides along.
 const SKILL_PURPOSES: Record<string, string> = {
-  // gentle-ai component
+  // Engram (persistent memory, wired by `engram setup`)
   'engram': 'Persistent memory across sessions.',
 
   // Community project-level skills (PROJECT_LEVEL_SKILLS)
@@ -362,10 +361,10 @@ function buildManifest(src: string): object {
   const userSkills = extractCommunitySkills(src, 'USER_LEVEL_SKILLS');
   const externalClis = extractExternalClis(src);
 
-  // gentle-ai installs only Engram via `--preset minimal`. The SDD bundle is
-  // not included — see installSkillsViaGentleAi in cli/install.ts.
-  const gentleAiItems: ManifestEntry[] = [
-    { name: 'engram', purpose: skillPurposeOr('engram'), source: 'gentle-ai' },
+  // Engram is wired per agent by `engram setup` — see installEngramPerAgent in
+  // cli/install.ts.
+  const engramItems: ManifestEntry[] = [
+    { name: 'engram', purpose: skillPurposeOr('engram'), source: 'https://github.com/Gentleman-Programming/engram' },
   ];
 
   // community project skills
@@ -433,7 +432,7 @@ function buildManifest(src: string): object {
       {
         name: 'internet access',
         required: true,
-        purpose: 'The scaffolder downloads the boilerplate template from GitHub and gentle-ai skills from their registries.',
+        purpose: 'The scaffolder downloads the boilerplate template from GitHub and community skills from their registries.',
         installHint: 'https://api.github.com',
       },
       {
@@ -456,7 +455,7 @@ function buildManifest(src: string): object {
       },
     ],
     willInstall: {
-      gentleAiSkills: { count: gentleAiItems.length, items: gentleAiItems },
+      engram: { count: engramItems.length, items: engramItems },
       communityProjectSkills: { count: projectItems.length, items: projectItems },
       communityUserSkills: { count: userItems.length, items: userItems },
     },
@@ -599,7 +598,7 @@ function main(): void {
 
   const parsed = JSON.parse(generated) as {
     willInstall: {
-      gentleAiSkills: { count: number }
+      engram: { count: number }
       communityProjectSkills: { count: number }
       communityUserSkills: { count: number }
     }
@@ -608,7 +607,7 @@ function main(): void {
     willNotInstall: unknown[]
   };
 
-  const gentleCount = parsed.willInstall.gentleAiSkills.count;
+  const engramCount = parsed.willInstall.engram.count;
   const projectCount = parsed.willInstall.communityProjectSkills.count;
   const userCount = parsed.willInstall.communityUserSkills.count;
   const mcpCount = parsed.willConfigure.mcps.length;
@@ -616,7 +615,7 @@ function main(): void {
   const wontCount = parsed.willNotInstall.length;
 
   process.stdout.write(
-    `Manifest written: gentle-ai=${gentleCount}, project=${projectCount}, user=${userCount}, mcps=${mcpCount}, prereqs=${prereqCount}, won't-install=${wontCount}\n`,
+    `Manifest written: engram=${engramCount}, project=${projectCount}, user=${userCount}, mcps=${mcpCount}, prereqs=${prereqCount}, won't-install=${wontCount}\n`,
   );
 }
 
