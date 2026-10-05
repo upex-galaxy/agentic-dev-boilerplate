@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Full history: the documentation-contract step below diffs the PR
+          # range and reads its commit messages for `Docs-Checked:` trailers.
 
       - name: Validate env schema (varlock)
         uses: dmno-dev/varlock-action@v1.0.5
@@ -58,6 +62,17 @@ jobs:
 
       - name: Repo checks
         run: bun run repo:check
+
+      - name: Documentation Contracts
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bun scripts/lint-doc-contracts.ts --base "$BASE_SHA" --head "$HEAD_SHA"
+        # ADR-0017: a change inside a `LINT.IfChange(label)` region fails the PR
+        # unless every page its `LINT.ThenChange(...)` names changed too, or a
+        # commit in the PR carries `Docs-Checked: <label> <reason>`. PR events
+        # only: a push to main has no PR range (the PR that landed it was checked).
 
       - name: Tests
         run: bun run test
