@@ -19,7 +19,6 @@
 # Values every harness launch and every MCP loader read, and their overrides.
 .env
 .env.local
-.envrc.local
 # Sentry auth token the Next.js build plugin reads.
 .env.sentry-build-plugin
 # Per-developer Claude Code settings and permissions.

@@ -9,10 +9,10 @@
  *   3. That .session/ is deliberately never copied, even when present in the
  *      primary checkout: a session reaches it by an absolute path instead.
  *   4. --dry-run reports intent without writing anything.
- *   5. With no direnv on PATH the direnv step prints its skip line and the
- *      script still exits 0. The ALLOW path (direnv installed AND the primary's
- *      .envrc approved) is not unit-testable: it needs a real direnv and a
- *      real approval by the machine's owner, which a test must never grant.
+ *   5. Provisioning never runs a shell autoloader: with a `direnv` binary on
+ *      PATH it is still never invoked, the worktree still gets its own `.env`,
+ *      and a primary's `.envrc` / `.envrc.local` is not copied (each process
+ *      loads its own config; nothing exports `.env` into a shell).
  *
  * The fixture's package.json declares a trivial `agents:compat` script (`bun
  * -e "process.exit(0)"`) so the test never depends on this repo's real
@@ -21,7 +21,7 @@
  * test here, not that script's own behaviour.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { platform, tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 
@@ -111,20 +111,16 @@ function run(cwdArgs: string[], env: Record<string, string> = {}): { code: numbe
 }
 
 /**
- * A PATH with no `direnv` on it, but with `bun` and `git` still reachable: every
- * PATH segment that holds a direnv executable is dropped, and a temp bin dir of
- * symlinks to the real `bun` and `git` is prepended so the script's own
- * subprocesses keep working when they lived in a dropped segment.
+ * A PATH whose first segment holds a fake `direnv` that records every call in
+ * `marker`, so a test can prove the provisioner never invokes one.
  */
-function pathWithoutDirenv(): string {
+function pathWithTrapDirenv(marker: string): string {
   const bin = mkdtempSync(join(tmpdir(), 'provision-worktree-bin-'));
   temporaryRoots.push(bin);
-  for (const tool of ['bun', 'git']) {
-    const real = Bun.which(tool);
-    if (real) { symlinkSync(real, join(bin, tool)); }
-  }
-  const kept = (process.env.PATH ?? '').split(delimiter).filter(seg => seg !== '' && !existsSync(join(seg, 'direnv')));
-  return [bin, ...kept].join(delimiter);
+  const trap = join(bin, 'direnv');
+  writeFileSync(trap, `#!/bin/sh\necho "$@" >> '${marker}'\n`);
+  chmodSync(trap, 0o755);
+  return [bin, process.env.PATH ?? ''].join(delimiter);
 }
 
 describe('provisionPackageManager (bun only)', () => {
@@ -202,13 +198,19 @@ describe('provision-worktree', () => {
     expect(existsSync(join(worktree, '.session'))).toBe(false);
   });
 
-  test('with no direnv on PATH the direnv step is skipped, says so, and the run still succeeds', () => {
-    if (IS_WINDOWS) { return; } // the PATH fixture uses symlinks; documented, not measured on Windows.
-    const { worktree } = fixture();
-    const result = run([worktree], { PATH: pathWithoutDirenv() });
+  test('never runs direnv, never copies .envrc files, and the worktree still gets its own .env', () => {
+    if (IS_WINDOWS) { return; } // the trap binary is a POSIX shell script; documented, not measured on Windows.
+    const { primary, worktree } = fixture();
+    writeFileSync(join(primary, '.envrc'), 'export LEAK=1\n');
+    writeFileSync(join(primary, '.envrc.local'), 'export LEAK=1\n');
+    const marker = join(primary, '..', 'direnv-calls.log');
+    const result = run([worktree], { PATH: pathWithTrapDirenv(marker) });
     expect(result.code).toBe(0);
-    expect(result.out).toContain('direnv: skipped (not installed)');
-    expect(result.out).not.toContain('direnv: allowed');
+    expect(existsSync(marker)).toBe(false);
+    expect(result.out.toLowerCase()).not.toContain('direnv');
+    expect(readFileSync(join(worktree, '.env'), 'utf8')).toContain('LOCAL_USER_EMAIL');
+    expect(existsSync(join(worktree, '.envrc'))).toBe(false);
+    expect(existsSync(join(worktree, '.envrc.local'))).toBe(false);
   });
 
   test('copied secrets are mode 0600 (files) / 0700 (dirs) on POSIX', () => {
@@ -227,7 +229,6 @@ describe('provision-worktree', () => {
     const { worktree } = fixture();
     const result = run([worktree]);
     expect(result.code).toBe(0);
-    expect(result.out).toContain('Skipping .envrc.local (not present in primary checkout)');
     expect(result.out).toContain('Skipping .env.sentry-build-plugin (not present in primary checkout)');
   });
 
