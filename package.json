@@ -24,6 +24,7 @@
     "format:fix": "prettier --write '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "harness:env": "bun scripts/harness-env.ts",
     "harness:env:check": "bun scripts/harness-env.ts --check",
+    "instructions:audit": "bun scripts/instructions-audit.ts",
     "instructions:check": "bun scripts/lint-instructions.ts",
     "jira:check": "bun scripts/check-jira-setup.ts",
     "jira:sync-fields": "bun scripts/sync-jira-fields.ts",

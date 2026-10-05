@@ -2,8 +2,8 @@
 id: harnesses
 title: "Multi-harness: one source, three consumers"
 load_when: "editing a harness surface (CLAUDE.md shim, .claude/skills alias, hooks, MCP configs), which harnesses a project uses (harnesses:), the updater (bun run up, --adopt), the husky gates, the project.yaml schema, or any cli/ code"
-triggers: ["\\bharness", "\\bhooks?\\b", "\\.mcp\\.json", "\\bopencode\\b", "\\bcodex\\b", "agents:compat", "\\bupdater\\b", "bun run up\\b", "--adopt", "\\bhusky\\b", "project\\.schema", "agents:schema", "harness:env", "CLAUDE\\.md", "\\.claude/"]
-paths: [".claude/", ".codex/", ".opencode/", ".husky/", ".mcp.json", "opencode.jsonc", "cli/", ".agents/hooks/", ".agents/project.schema.yaml"]
+triggers: ["\\bharness", "\\bhooks?\\b", "\\.mcp\\.json", "\\bopencode\\b", "\\bcodex\\b", "agents:compat", "\\bupdater\\b", "bun run up\\b", "--adopt", "\\bhusky\\b", "project\\.schema", "agents:schema", "harness:env", "CLAUDE\\.md", "\\.claude/", "AGENTS\\.md", "\\b(?:instructions?|instrucci[oó]n(?:es)?|router)\\b.*\\b(?:sections?|secci[oó]n(?:es)?|triggers?|rows?|filas?)\\b"]
+paths: [".claude/", ".codex/", ".opencode/", ".husky/", ".mcp.json", "opencode.jsonc", "cli/", ".agents/hooks/", ".agents/project.schema.yaml", ".agents/instructions/"]
 ---
 
 # Multi-harness: one source, three consumers
@@ -14,7 +14,7 @@ paths: [".claude/", ".codex/", ".opencode/", ".husky/", ".mcp.json", "opencode.j
 
 > This repo runs on **Claude Code, OpenCode, and Codex (CLI + Desktop)**. There is exactly ONE copy of every instruction and every skill. Where the harnesses genuinely differ (MCP file format, hook API) each keeps a THIN versioned adapter. Nothing is duplicated.
 
-**INSTRUCTIONS.** `AGENTS.md` is the only ALWAYS-ON instruction body (L0). The sections under `.agents/instructions/` (L1) are read on demand through its router, the same way on every host: no host loads them natively, and no `@` import pulls them in, because Claude Code loads an imported file in full at launch. L0 imports exactly two data files, `package.json` and `.agents/project.yaml`, as bare `@` tokens in their router rows (Claude Code loads them; OpenCode and Codex follow the row); `bun run instructions:check` refuses any other bare `@` token, and gates the L0 byte budget under Codex's `project_doc_max_bytes` cut. OpenCode and Codex load `AGENTS.md` natively. Claude Code loads `CLAUDE.md`, which is **exactly** `@AGENTS.md` plus one newline — a documented import, not a symlink, so it survives a Windows checkout. NEVER write operational prose into `CLAUDE.md` (Critical Rule #15): that is structural drift, and `agents:compat:check` fails on it.
+**INSTRUCTIONS.** `AGENTS.md` is the only ALWAYS-ON instruction body (L0). The sections under `.agents/instructions/` (L1) are read on demand through its router, the same way on every host: no host loads them natively, and no `@` import pulls them in, because Claude Code loads an imported file in full at launch. L0 imports exactly two data files, `package.json` and `.agents/project.yaml`, as bare `@` tokens in their router rows (Claude Code loads them; OpenCode and Codex follow the row); `bun run instructions:check` refuses any other bare `@` token, and gates the L0 byte budget under Codex's `project_doc_max_bytes` cut. OpenCode and Codex load `AGENTS.md` natively. Claude Code loads `CLAUDE.md`, which is **exactly** `@AGENTS.md` plus one newline — a documented import, not a symlink, so it survives a Windows checkout. NEVER write operational prose into `CLAUDE.md` (Critical Rule #15): that is structural drift, and `agents:compat:check` fails on it. Every edit to `AGENTS.md`, a section, the router or a `triggers:` list follows `agentic-dev-core/references/instructions-doctrine.md` (where each sentence goes, then the procedure that closes with `bun run instructions:check`; ADR-0014).
 
 | Surface | Claude Code | OpenCode | Codex CLI + Desktop |
 |---|---|---|---|

@@ -49,6 +49,26 @@
  *     (loaded in full at launch); only `ALLOWED_IMPORTS` may appear, and each
  *     must exist.
  *
+ * Three locks keep the split from eroding (ADR-0014). Each one binds the
+ * maintainers' copy as an error; in a project it is a warning, and only once
+ * the file it reads is there (the README and the eval set are synced, the ADR
+ * folder is the project's own, and so is `AGENTS.md`):
+ *
+ *   - `lock`: the ROUTER rows are frozen. `<!-- router:lock <fingerprint>
+ *     <ADR-NNNN> -->` in `AGENTS.md` records the fingerprint of the table and
+ *     the ADR that decided it; a table that no longer matches fails, and so
+ *     does an ADR that does not exist or does not cite that fingerprint. The
+ *     escape hatch is the decision itself: write (or amend) the ADR, then
+ *     `bun run instructions:check --accept-router ADR-NNNN` rewrites the lock
+ *     and names the fingerprint the ADR must cite.
+ *   - `eval`: the labelled-prompt eval of the router (`scripts/lib/router-eval.ts`)
+ *     runs on every call, whole set in milliseconds, and must hold the recall
+ *     and precision targets, so a `triggers:` or `paths:` edit that loses a
+ *     route or floods them fails here, before any test run.
+ *   - `complete`: every section but `agent-project.md` ships whole: frontmatter
+ *     and a router row (checked above), at least `MIN_EVAL_PROMPTS` labelled
+ *     prompts that expect its id, and a row in the README `## Sections` table.
+ *
  * A project whose `AGENTS.md` has no ROUTER yet still runs its pre-split
  * monolith (the sync delivers the sections; moving AGENTS.md is the project's
  * own merge, named in the parity report of `bun run up`): the gate prints a
@@ -57,14 +77,18 @@
  * The maintainers' copy never gets that pass.
  *
  * Usage: bun scripts/lint-instructions.ts   (exit 1 on any error)
+ *        bun scripts/lint-instructions.ts --accept-router ADR-NNNN   (re-lock the ROUTER on a decided change)
  */
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import type { RouterEvalFixture, RouterEvalResult } from './lib/router-eval';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ADOPT_INSTRUCTIONS_PENDING_FILE, adoptInstructionsPending } from '../cli/lib/agent-compatibility';
 import { isMaintainerCopy } from '../cli/lib/agents-schema';
 import {
+  ADR_DIR,
   coreBytes,
+  findAdr,
   L0_FILE,
   parseFrontmatter,
   parseFullRules,
@@ -73,12 +97,18 @@ import {
   parseRouter,
   PROJECT_FILE,
   README_FILE,
+  readmeSectionRows,
+  ROUTER_EVAL_FIXTURE,
+  routerFingerprint,
+  routerLock,
   RULES_FILE,
   SECTION_FILE,
   SECTIONS_DIR,
   SKILL_SLUG,
   withoutCode,
+  withRouterLock,
 } from './lib/instructions';
+import { evaluateRouter, MIN_EVAL_PROMPTS, promptsPerLabel, readRouterEvalFixture } from './lib/router-eval';
 
 /** Target for L0 without project additions: over it is a warning, so the number stays visible. */
 export const L0_TARGET = 16 * 1024;
@@ -91,7 +121,7 @@ export const CODEX_PROJECT_DOC_MAX_BYTES = 32 * 1024;
 /** Bare `@path` imports L0 may carry: Claude Code loads them at launch, the other hosts follow the router row. */
 export const ALLOWED_IMPORTS = ['package.json', '.agents/project.yaml'] as const;
 
-export type InstructionFindingKind = 'budget' | 'router' | 'frontmatter' | 'rules' | 'binding' | 'import';
+export type InstructionFindingKind = 'budget' | 'router' | 'frontmatter' | 'rules' | 'binding' | 'import' | 'lock' | 'eval' | 'complete';
 
 export interface InstructionFinding {
   kind: InstructionFindingKind
@@ -291,6 +321,129 @@ export function isPendingMigration(root: string): boolean {
   return !(existsSync(yamlPath) && isMaintainerCopy(readFileSync(yamlPath, 'utf8')));
 }
 
+/** The maintainers' copy: its `.agents/project.yaml` carries the `MAINTAINER COPY:` line. */
+function isMaintainer(root: string): boolean {
+  const yamlPath = join(root, '.agents', 'project.yaml');
+  return existsSync(yamlPath) && isMaintainerCopy(readFileSync(yamlPath, 'utf8'));
+}
+
+const ACCEPT_HINT = '`bun run instructions:check --accept-router ADR-NNNN`';
+
+/** `lock` findings: the ROUTER table matches its lock, and the lock's ADR exists and cites the fingerprint. */
+export function lintLock(root: string, l0: string, maintainer: boolean): InstructionFinding[] {
+  const fingerprint = routerFingerprint(l0);
+  if (fingerprint === null) { return []; }
+  const lock = routerLock(l0);
+  const severity: InstructionFinding['severity'] = maintainer ? 'error' : 'warning';
+  if (lock === null) {
+    // A project that has never locked its router opted out; the maintainers' copy cannot.
+    return maintainer ? [finding('lock', L0_FILE, 1, `the ROUTER has no lock line: record the ADR that decided the table, then ${ACCEPT_HINT}`)] : [];
+  }
+  const out: InstructionFinding[] = [];
+  if (lock.fingerprint !== fingerprint) {
+    out.push({ ...finding('lock', L0_FILE, lock.line, `ROUTER rows changed (table ${fingerprint}, lock ${lock.fingerprint}). Rows are fixed request kinds: grow a section and its \`triggers:\` instead. A new request kind is an architectural decision: write the ADR, then ${ACCEPT_HINT}`), severity });
+  }
+  if (!maintainer) { return out; }
+  const adr = findAdr(root, lock.adr);
+  if (adr === null) {
+    out.push(finding('lock', L0_FILE, lock.line, `the lock names ${lock.adr}, which is not in ${ADR_DIR}/`));
+  }
+  else if (!readFileSync(join(root, adr), 'utf8').includes(lock.fingerprint)) {
+    out.push(finding('lock', adr, 1, `${lock.adr} does not cite the router fingerprint \`${lock.fingerprint}\` the lock records: add it (References, or an Amendments line)`));
+  }
+  return out;
+}
+
+/** `eval` findings: recall and precision hold their targets; every label names a routed id. */
+export function lintEval(result: RouterEvalResult, severity: InstructionFinding['severity']): InstructionFinding[] {
+  const out: InstructionFinding[] = [];
+  const pct = (n: number): string => `${(n * 100).toFixed(1)}%`;
+  const at = (message: string): InstructionFinding => ({ ...finding('eval', ROUTER_EVAL_FIXTURE, 1, message), severity });
+  if (result.recall < result.targets.recall) {
+    out.push(at(`router recall ${pct(result.recall)} < ${pct(result.targets.recall)}: fix the section's \`triggers:\`, never the label. ${result.misses.slice(0, 5).join('; ')}`));
+  }
+  if (result.precision < result.targets.precision) {
+    out.push(at(`router precision ${pct(result.precision)} < ${pct(result.targets.precision)}: a trigger fires on prompts that do not need its section; narrow it`));
+  }
+  if (result.unknownLabels.length > 0) {
+    out.push(at(`labels no routed section or import carries: ${result.unknownLabels.join(', ')}`));
+  }
+  return out;
+}
+
+/** `complete` findings: every section but the project overlay has enough labelled prompts and a README row; no README row is stale. */
+export function lintComplete(root: string, sections: string[], fixture: RouterEvalFixture | null, maintainer: boolean): InstructionFinding[] {
+  const out: InstructionFinding[] = [];
+  const severity: InstructionFinding['severity'] = maintainer ? 'error' : 'warning';
+  const at = (file: string, line: number, message: string): InstructionFinding => ({ ...finding('complete', file, line, message), severity });
+  const readmeRel = `${SECTIONS_DIR}/${README_FILE}`;
+  const readmePath = join(root, readmeRel);
+  const readmeRows = existsSync(readmePath) ? readmeSectionRows(readFileSync(readmePath, 'utf8')) : null;
+  if (readmeRows === null && maintainer) { out.push(at(readmeRel, 1, 'no `## Sections` table: every section file needs a row there')); }
+  const perLabel = fixture ? promptsPerLabel(fixture) : null;
+  for (const name of sections) {
+    if (name === PROJECT_FILE) { continue; }
+    const rel = `${SECTIONS_DIR}/${name}`;
+    const meta = parseFrontmatter(readFileSync(join(root, rel), 'utf8'));
+    const id = typeof meta?.id === 'string' ? meta.id : (SECTION_FILE.exec(name)?.[1] ?? name);
+    const count = perLabel?.get(id) ?? 0;
+    if (perLabel && count < MIN_EVAL_PROMPTS) {
+      out.push(at(rel, 1, `${count} labelled prompt(s) expect \`${id}\` in ${ROUTER_EVAL_FIXTURE}; a section ships with at least ${MIN_EVAL_PROMPTS}`));
+    }
+    if (readmeRows && !readmeRows.some(r => r.name === name)) { out.push(at(rel, 1, `no row in the \`## Sections\` table of ${readmeRel}`)); }
+  }
+  const names = new Set(sections);
+  for (const row of readmeRows ?? []) {
+    if (!names.has(row.name)) { out.push(at(readmeRel, row.line, `\`${row.name}\` is not a section in ${SECTIONS_DIR}/`)); }
+  }
+  return out;
+}
+
+/** The router eval of `root`, when both its fixture and its router are there. Throws on a malformed fixture. */
+export function routerEval(root: string): RouterEvalResult | null {
+  const fixture = readRouterEvalFixture(root);
+  return fixture ? evaluateRouter(root, fixture) : null;
+}
+
+/** `lock`, `eval` and `complete` findings (ADR-0014). */
+export function lintLocks(root: string, l0: string, sections: string[]): InstructionFinding[] {
+  const maintainer = isMaintainer(root);
+  const severity: InstructionFinding['severity'] = maintainer ? 'error' : 'warning';
+  const findings = parseRouter(l0) === null ? [] : lintLock(root, l0, maintainer);
+  let fixture: RouterEvalFixture | null = null;
+  try { fixture = readRouterEvalFixture(root); }
+  catch (error) { findings.push({ ...finding('eval', ROUTER_EVAL_FIXTURE, 1, (error as Error).message), severity }); }
+  if (fixture === null) {
+    if (maintainer && !findings.some(f => f.kind === 'eval')) { findings.push(finding('eval', ROUTER_EVAL_FIXTURE, 1, 'missing: the router eval has no labelled prompts to run')); }
+  }
+  else {
+    const result = evaluateRouter(root, fixture);
+    if (result) { findings.push(...lintEval(result, severity)); }
+  }
+  findings.push(...lintComplete(root, sections, fixture, maintainer));
+  return findings;
+}
+
+/**
+ * `--accept-router ADR-NNNN`: re-lock the ROUTER on a decided change. Refuses
+ * an ADR that is not on disk; writes the lock and returns the fingerprint the
+ * ADR must cite (the lint keeps failing until it does).
+ */
+export function acceptRouter(root: string, adrId: string): { ok: boolean, message: string } {
+  if (!/^ADR-\d{4}$/.test(adrId)) { return { ok: false, message: `expected an ADR id like ADR-0014, got ${JSON.stringify(adrId)}` }; }
+  const l0Path = join(root, L0_FILE);
+  const l0 = existsSync(l0Path) ? readFileSync(l0Path, 'utf8') : '';
+  const fingerprint = routerFingerprint(l0);
+  if (fingerprint === null) { return { ok: false, message: `${L0_FILE} has no ROUTER markers to lock` }; }
+  const adr = findAdr(root, adrId);
+  if (adr === null) { return { ok: false, message: `${adrId} is not in ${ADR_DIR}/: write the ADR that decides the new table first` }; }
+  writeFileSync(l0Path, withRouterLock(l0, fingerprint, adrId));
+  if (!readFileSync(join(root, adr), 'utf8').includes(fingerprint)) {
+    return { ok: false, message: `ROUTER locked at ${fingerprint} by ${adrId}; now cite it in ${adr}: add \`router fingerprint ${fingerprint}\` (References, or an Amendments line)` };
+  }
+  return { ok: true, message: `ROUTER locked at ${fingerprint} by ${adrId}` };
+}
+
 export function lintInstructions(root: string): InstructionFinding[] {
   const l0Path = join(root, L0_FILE);
   if (isPendingMigration(root)) { return []; }
@@ -315,11 +468,18 @@ export function lintInstructions(root: string): InstructionFinding[] {
     if (name === RULES_FILE || name === PROJECT_FILE) { continue; }
     findings.push(...lintBinding(`${SECTIONS_DIR}/${name}`, readFileSync(join(dir, name), 'utf8'), ctx));
   }
+  findings.push(...lintLocks(root, l0, sections));
   return findings;
 }
 
 if (import.meta.main) {
   const root = process.cwd();
+  const acceptAt = process.argv.indexOf('--accept-router');
+  if (acceptAt >= 0) {
+    const accepted = acceptRouter(root, process.argv[acceptAt + 1] ?? '');
+    (accepted.ok ? console.log : console.error)(`${accepted.ok ? '✓' : '✗'} ${accepted.message}`);
+    if (!accepted.ok) { process.exit(1); }
+  }
   if (isPendingMigration(root)) {
     console.log(existsSync(join(root, L0_FILE))
       ? `- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun run up\``
@@ -333,8 +493,15 @@ if (import.meta.main) {
   for (const f of findings.filter(f => f.severity === 'warning')) {
     console.warn(`  ! ${f.file}:${f.line}  ${f.kind}  ${f.message}`);
   }
+  const pct = (n: number): string => `${(n * 100).toFixed(1)}%`;
+  let evalResult: RouterEvalResult | null = null;
+  try { evalResult = routerEval(root); }
+  catch { /* a malformed fixture is already an `eval` finding */ }
+  const lock = existsSync(l0Path) ? routerLock(readFileSync(l0Path, 'utf8')) : null;
+  const evalNote = evalResult ? `; router eval recall ${pct(evalResult.recall)} precision ${pct(evalResult.precision)} over ${evalResult.prompts} prompts` : '';
+  const lockNote = lock ? `; router lock ${lock.fingerprint} (${lock.adr})` : '';
   if (errors.length === 0) {
-    console.log(`✓ instructions:check passed (L0 ${bytes} bytes; target ${L0_TARGET}, ceiling ${L0_BUDGET})`);
+    console.log(`✓ instructions:check passed (L0 ${bytes} bytes; target ${L0_TARGET}, ceiling ${L0_BUDGET}${evalNote}${lockNote})`);
     process.exit(0);
   }
   console.error(`✗ instructions:check found ${errors.length} problem(s):\n`);

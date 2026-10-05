@@ -220,7 +220,7 @@ git_strategy:
 
 The `git_strategy:` block is the source of truth; its `description:` field is the one-paragraph human summary. The user can edit it; the next invocation re-reads it.
 
-The `## Git Strategy` section of `.agents/instructions/agent-git.md` is **just a pointer** to this block — NEVER write strategy policy or branch decisions into `AGENTS.md` or an instruction section.
+The `## Git Strategy` section of `.agents/instructions/agent-git.md` is **just a pointer** to this block — NEVER write strategy policy or branch decisions into `AGENTS.md` or an instruction section. Any other change to an instruction file follows `agentic-dev-core/references/instructions-doctrine.md` (its §4 covers this skill's one write, the `## Git Strategy (this repository)` heading of `agent-project.md`).
 
 If the strategy uses an integration branch with a non-default name (anything other than `staging`), record it under `git_strategy.branches.integration` so commits don't have to re-detect.
 

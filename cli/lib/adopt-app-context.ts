@@ -177,9 +177,19 @@ export function appContextRouterRow(slug: string, appName: string): string {
 }
 
 /**
- * Upstream `AGENTS.md` with the router row added as the table's last row. An
- * upstream without the router (pre-split) gets nothing: it has no table, and
- * the skill stays reachable through its description.
+ * Upstream's router lock line (`scripts/lib/instructions.ts` `ROUTER_LOCK`,
+ * ADR-0014), repeated here because `cli/` is import-closed. It fingerprints
+ * upstream's table and names an ADR that never travels to an adopted app.
+ */
+const ROUTER_LOCK_LINE = /^<!-- router:lock [0-9a-f]{12} ADR-\d{4} -->$/;
+
+/**
+ * Upstream `AGENTS.md` with the router row added as the table's last row and
+ * upstream's router lock dropped: the added row changes the table the lock
+ * fingerprints, and an app that never locked its own router has opted out of
+ * the lock (`instructions:check`). An upstream without the router (pre-split)
+ * gets nothing: it has no table, and the skill stays reachable through its
+ * description.
  */
 export function composeAdoptedL0(upstreamAgents: string, slug: string, appName: string): string {
   const lines = upstreamAgents.split('\n');
@@ -187,7 +197,7 @@ export function composeAdoptedL0(upstreamAgents: string, slug: string, appName: 
   if (end === -1) { return upstreamAgents; }
   const row = appContextRouterRow(slug, appName);
   if (lines.includes(row)) { return upstreamAgents; }
-  return [...lines.slice(0, end), row, ...lines.slice(end)].join('\n');
+  return [...lines.slice(0, end), row, ...lines.slice(end).filter(l => !ROUTER_LOCK_LINE.test(l.trim()))].join('\n');
 }
 
 /** `agent-project.md` with the pointer section appended once (idempotent). */
