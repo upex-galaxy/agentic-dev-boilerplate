@@ -29,6 +29,7 @@ Git / PR work → `/git-flow-master` auto-loads. Full details in `.agents/skills
 
 - Semantic prefixes: `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`
 - One commit = one responsibility. Clear messages.
+- **`Docs-Checked: <label> <reason>`** (ADR-0017) goes ABOVE the two forensic trailers, only when a change touched a `LINT.IfChange(<label>)` region and the pages it names still hold. NEVER by reflex and never without the reason: it is the escape the pre-push and CI documentation-contract gate accepts, and the drift sweep counts every one. binding: `/git-flow-master`
 - Branch + commit + push + PR + conflict-fix + chained-PR planning all in `/git-flow-master`.
 - Branch-protection parity: `bun run git:policy verify` reconciles `git_strategy` against the host ruleset; `apply` writes it (dry run until `--yes`). See `git-flow-master/references/ruleset-parity.md`.
 - See `AGENTS.md` §1 #3-#5 for NO-AI-attribution + push-to-protected policy (`direct_push_to_protected`) + git-history rules.
