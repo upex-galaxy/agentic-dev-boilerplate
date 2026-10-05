@@ -5,6 +5,41 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — A project on one harness keeps only that harness's files
+
+A project declares the harnesses it uses in `.agents/project.yaml`
+(`harnesses: [claude]`), and every compatibility gate checks only those
+(ADR-0013, after agentic-qa ADR-0012). The boilerplate itself still checks all
+three.
+
+### Added
+
+- **`harnesses:`** (top level of `.agents/project.yaml`, `null` in the shipped
+  schema): absent or `null` detects from the files present, where a harness is
+  in use while ANY of its files exists. `cli/lib/harness-selection.ts` is the
+  one answer every gate reads.
+- **Installer**: the agent selection is written to `harnesses:` as a union
+  (never shrinks), then the installer offers to delete the files of each
+  harness left out; the default keeps them.
+
+### Changed
+
+- **`agents:compat:check`**: MCP parity, hook adapters, route re-arm and the
+  Codex 32 KB cap bind only the harnesses in use; without Claude Code the
+  canonical MCP set is the first declared harness's file and neither the
+  `CLAUDE.md` shim nor the `.claude/skills` alias is required. One `NOTE:` per
+  skipped harness. A missing MCP config of a harness in use now groups under
+  MCP.
+- **`setup:doctor`**: rows and pending actions only for the harnesses in use;
+  the others read `not used`, and no action advises restoring their files.
+- **`bun run up`**: the files of a harness not in use (its `docs/mcp/`
+  template included) are neither delivered, watched nor reported; the
+  `.claude/settings.json` permission merge runs only with Claude Code and the
+  OpenCode deny-gap row only with OpenCode.
+- **Tests**: the OpenCode plugin is imported dynamically, and the tests that
+  read the OpenCode or Codex files skip when the checkout lacks them, so
+  `types:check` and `bun run test` pass on a one-harness project.
+
 ## 2026-10-05 — Engram wired directly with `engram setup`; caveman no longer assumed
 
 `bun run setup` wires Engram with the engram binary's own `engram setup
