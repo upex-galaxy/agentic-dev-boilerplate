@@ -1,6 +1,6 @@
 # Instructions doctrine: where does this sentence go?
 
-> The one sanctioned path for changing what the agent is told on every session or per request kind: any change to `AGENTS.md`, a section under `.agents/instructions/`, the router or a `triggers:` list runs the procedure in §6, and every skill whose own flow writes a project fact into `agent-project.md` follows §4. Decision records: `.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md` (the split) and `.context/ADR/ADR-0013-instructions-maintenance-locks.md` (what holds it in place). Folder guide: `.agents/instructions/README.md`.
+> The one sanctioned path for changing what the agent is told on every session or per request kind: any change to `AGENTS.md`, a section under `.agents/instructions/`, the router or a `triggers:` list runs the procedure in §6, and every skill whose own flow writes a project fact into `agent-project.md` follows §4. Decision records: `.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md` (the split) and `.context/ADR/ADR-0014-instructions-maintenance-locks.md` (what holds it in place). Folder guide: `.agents/instructions/README.md`.
 
 ## 1. The layers, by cost
 

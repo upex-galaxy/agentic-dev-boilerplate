@@ -178,7 +178,7 @@ export function appContextRouterRow(slug: string, appName: string): string {
 
 /**
  * Upstream's router lock line (`scripts/lib/instructions.ts` `ROUTER_LOCK`,
- * ADR-0013), repeated here because `cli/` is import-closed. It fingerprints
+ * ADR-0014), repeated here because `cli/` is import-closed. It fingerprints
  * upstream's table and names an ADR that never travels to an adopted app.
  */
 const ROUTER_LOCK_LINE = /^<!-- router:lock [0-9a-f]{12} ADR-\d{4} -->$/;

@@ -313,7 +313,7 @@ describe('parseProjectSkills', () => {
   });
 });
 
-describe('lint-instructions: the three locks (ADR-0013)', () => {
+describe('lint-instructions: the three locks (ADR-0014)', () => {
   const MAINTAINER_YAML = '# MAINTAINER COPY: the boilerplate\'s own file.\nproject: {}\n';
   const README = ['# Sections', '', '## Sections', '', '| File | Holds |', '|---|---|', '| `agent-critical-rules.md` | rules |', '| `agent-git.md` | git |', ''].join('\n');
   const evalSet = (extra: Array<{ prompt: string, expect: string[] }> = []): string => JSON.stringify({

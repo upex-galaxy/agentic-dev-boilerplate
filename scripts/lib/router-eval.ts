@@ -7,7 +7,7 @@
  * of the router would load for each prompt; this module scores the classifier
  * against it. `instructions:check` runs it on every call (the whole set costs a
  * few milliseconds), so a `triggers:` edit that drops recall or floods routes
- * fails the gate the pre-commit hook already reaches (ADR-0013), and
+ * fails the gate the pre-commit hook already reaches (ADR-0014), and
  * `cli/lib/instruction-router.test.ts` keeps asserting the same numbers.
  */
 

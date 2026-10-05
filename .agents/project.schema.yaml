@@ -101,6 +101,15 @@ testing:
     #     password_var: STAGING_QA_USER_PASSWORD
     per_env: {}
 
+# Host harnesses this project uses (ADR-0013), any of: claude, opencode, codex.
+# Every compatibility gate (agents:compat:check, setup:doctor, the installer, `bun run up`)
+# checks only these; the files of a harness left out may be deleted. null = detect from
+# the files present (a harness is in use while ANY of its files exists). `bun run setup`
+# adds the agents you select (it never removes one); edit the list to drop one.
+# The boilerplate itself always checks all three, whatever this says.
+# Read directly by cli/lib/harness-selection.ts (not a {{VAR}} token) -> skipped by vars:check.
+harnesses: null # TODO: e.g. [claude]
+
 # Git workflow for THIS project — the SOURCE OF TRUTH read by the git-flow-master skill
 # before any git/gh operation. Ships `solo-main` as a DEFAULT — `meta.strategy_source` says
 # whether anyone chose it (`inherited` = scaffolder-reset placeholder; `chosen` = Strategy Setup

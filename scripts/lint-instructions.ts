@@ -49,7 +49,7 @@
  *     (loaded in full at launch); only `ALLOWED_IMPORTS` may appear, and each
  *     must exist.
  *
- * Three locks keep the split from eroding (ADR-0013). Each one binds the
+ * Three locks keep the split from eroding (ADR-0014). Each one binds the
  * maintainers' copy as an error; in a project it is a warning, and only once
  * the file it reads is there (the README and the eval set are synced, the ADR
  * folder is the project's own, and so is `AGENTS.md`):
@@ -405,7 +405,7 @@ export function routerEval(root: string): RouterEvalResult | null {
   return fixture ? evaluateRouter(root, fixture) : null;
 }
 
-/** `lock`, `eval` and `complete` findings (ADR-0013). */
+/** `lock`, `eval` and `complete` findings (ADR-0014). */
 export function lintLocks(root: string, l0: string, sections: string[]): InstructionFinding[] {
   const maintainer = isMaintainer(root);
   const severity: InstructionFinding['severity'] = maintainer ? 'error' : 'warning';
@@ -430,7 +430,7 @@ export function lintLocks(root: string, l0: string, sections: string[]): Instruc
  * ADR must cite (the lint keeps failing until it does).
  */
 export function acceptRouter(root: string, adrId: string): { ok: boolean, message: string } {
-  if (!/^ADR-\d{4}$/.test(adrId)) { return { ok: false, message: `expected an ADR id like ADR-0013, got ${JSON.stringify(adrId)}` }; }
+  if (!/^ADR-\d{4}$/.test(adrId)) { return { ok: false, message: `expected an ADR id like ADR-0014, got ${JSON.stringify(adrId)}` }; }
   const l0Path = join(root, L0_FILE);
   const l0 = existsSync(l0Path) ? readFileSync(l0Path, 'utf8') : '';
   const fingerprint = routerFingerprint(l0);

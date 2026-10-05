@@ -61,7 +61,7 @@ Every change to `AGENTS.md`, a section, the router or a `triggers:` list follows
 - A rule only this project has goes in `agent-project.md`, the project-owned overlay. The other files are shared doctrine.
 - `bun run instructions:check` gates all of the above: budget, router (the `agent-project.md` skill rows included), frontmatter, rule excerpts, binding carriers, imports.
 
-It also holds three locks (ADR-0013), errors in the maintainers' copy and warnings in a project:
+It also holds three locks (ADR-0014), errors in the maintainers' copy and warnings in a project:
 
 - **Router lock.** The comment `<!-- router:lock <fingerprint> <ADR-NNNN> -->` under the router records the fingerprint of the table and the ADR that decided it. Any change to a row, header included, fails until a decision covers it: write the ADR (or an Amendments line on the one that owns the router), run `bun run instructions:check --accept-router ADR-NNNN`, and cite the fingerprint it prints in that ADR. Whitespace-only reflows keep the fingerprint.
 - **Router eval.** Every run scores the hook's classifier against the labelled prompts in `cli/lib/fixtures/instruction-router-eval.json` and fails under its recall or precision target (floors in `scripts/lib/router-eval.ts`). A `triggers:` or `paths:` edit is proved here, on the same pre-commit call, before any test run.

@@ -183,6 +183,9 @@ function loadDeclaredVariables(yamlPath: string): DeclaredVars {
     // `git_strategy` is read DIRECTLY by the git-flow-master skill — its leaves are NOT
     // {{VAR}} template variables, so they must not be harvested as declared vars.
     if (sectionName === 'git_strategy') { continue; }
+    // `harnesses` is a top-level LIST read by the compatibility gates (ADR-0013),
+    // not a {{VAR}} leaf.
+    if (sectionName === 'harnesses') { continue; }
     // `stack` is read BY PATH ({{stack.scripts.lint}}), so its leaves are
     // collected as dotted paths, never as bare flat names.
     if (sectionName === 'stack') {

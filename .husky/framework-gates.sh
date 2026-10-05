@@ -111,7 +111,7 @@ framework_gates_pre_commit() {
 
   # instructions gate — only runs when staged files affect it, and only where
   # the script exists. Besides the budget, router and frontmatter checks it
-  # holds the three locks of ADR-0013: the router table frozen behind the ADR
+  # holds the three locks of ADR-0014: the router table frozen behind the ADR
   # that decided it, the labelled-prompt router eval (a `triggers:` edit that
   # loses a route fails HERE, before any test run), and every section shipped
   # complete.

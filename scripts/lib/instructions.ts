@@ -105,7 +105,7 @@ export function parseRouter(l0: string): RouterRow[] | null {
  * table it froze and the ADR that decided that table. The rows are request
  * kinds, fixed on purpose (ADR-0009); a change to them is an architectural
  * decision, so the lock moves only together with an ADR that cites it
- * (ADR-0013). Same grammar as the QA twin, so both repos read one lock line.
+ * (ADR-0014). Same grammar as the QA twin, so both repos read one lock line.
  */
 export const ROUTER_LOCK = /<!-- router:lock ([0-9a-f]{12}) (ADR-\d{4}) -->/;
 export const ADR_DIR = '.context/ADR';

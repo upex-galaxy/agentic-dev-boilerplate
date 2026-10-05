@@ -1,4 +1,4 @@
-# ADR-0013 — Keeping progressive disclosure from eroding: a placement doctrine, one edit procedure, three lint locks and a recall audit
+# ADR-0014 — Keeping progressive disclosure from eroding: a placement doctrine, one edit procedure, three lint locks and a recall audit
 
 - **Status:** Accepted (by the owner, 2026-10-05)
 - **Date:** 2026-10-05
