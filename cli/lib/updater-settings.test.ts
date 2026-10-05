@@ -489,8 +489,8 @@ describe('the Claude hook groups merge additively', () => {
 
     const { added, declined, skipped, duplicatesFolded } = apply(root, upstream);
     expect(added.map(formatHookCommand)).toEqual([
-      `PostToolUse(*) ${CLAUDE_HOOK_COMMAND}`,
       `PostToolUse(Edit|Write|MultiEdit) ${CLAUDE_DOC_CONTRACTS_COMMAND}`,
+      `PostToolUse(*) ${CLAUDE_HOOK_COMMAND}`,
     ]);
     expect([declined, skipped, duplicatesFolded]).toEqual([[], [], []]);
     expect(validateHookCompatibility(root, ['claude'])).toEqual([]);
@@ -513,7 +513,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(after.hooks.SessionStart).toEqual(before.hooks.SessionStart);
     // The project's group stays first and byte-equal; upstream's arrive after it.
     expect(after.hooks.PostToolUse[0]).toEqual(PROJECT_HOOK);
-    expect(after.hooks.PostToolUse.slice(1).map((group: { matcher?: string }) => group.matcher)).toEqual([undefined, 'Edit|Write|MultiEdit']);
+    expect(after.hooks.PostToolUse.slice(1).map((group: { matcher?: string }) => group.matcher)).toEqual(['Edit|Write|MultiEdit', undefined]);
   });
 
   test('a second run adds nothing and writes nothing', () => {
