@@ -78,7 +78,7 @@ If detection is ambiguous, ask the lead; do not silently pick B (shared accounts
 | `<<SIGNUP_MODEL>>` | DETECTED: self-serve / magic-link / invite-only / seeded — drives the UI variant choice |
 | `<<API_LOGIN_ENDPOINT>>` | DETECTED `<METHOD> <path>` for headless login (e.g. `POST <path>`). NEVER baked-in `/signin` or `/signup`. |
 | `<<TOKEN_PREFIX>>` | DETECTED token prefix shape (e.g. `<token-prefix>_<...>`). NEVER a literal `bk_pat_`. |
-| `<<OPENAPI_SPEC_URL>>` | DETECTED spec route (`/api/openapi`, `/api/swagger.json`, …) |
+| `<<OPENAPI_SPEC_URL>>` | FULL spec URL of the row's environment: the origin that serves the spec + the DETECTED route (e.g. `http://localhost:3000/api/openapi`; the route itself is `/api/openapi`, `/api/swagger.json`, …). In the `.env` block it is the staging one. NEVER the route alone: the openapi MCP reads a value that is not a URL as a file path, finds no `/api/openapi` on disk and exits at start. A repo-root-relative synced file (e.g. `./api/openapi.json`) is the only other valid form. |
 | `<<API_LOGIN_HELPER>>` | the project's api-login mini-CLI IF present (e.g. `bun run api:login`), adapted per-project. Else omit the line and keep only the manual path. |
 | `<<DB_MCP>>` | DETECTED DB MCP name (e.g. DBHub, Postgres MCP) + its config style (toml `${VAR}` / env-only) |
 | `<<DB_ENV_PREFIX>>` | DETECTED env-var prefix the DB MCP reads (e.g. `DBHUB_`) |
