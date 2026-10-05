@@ -5,6 +5,35 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-05 — Documentation contracts: a page that describes the code changes with it
+
+A code region a page describes now names that page, and a push that changes
+the region without it is blocked (ADR-0017, owner decision B15).
+
+### Added
+
+- **`LINT.IfChange(label)` / `LINT.ThenChange(pages)` region markers** on the
+  code the docs describe in prose: harness selection, MCP parity, the MCP
+  `.env` loader and the instruction locks. `scripts/lint-doc-contracts.ts`
+  blocks a push or a PR that changes a marked region without every page it
+  names, unless a commit carries `Docs-Checked: <label> <reason>`; at commit
+  time it only warns. The structural lint (balanced markers, unique labels,
+  targets on disk) runs inside `docs:check`. Maintainers only: a downstream
+  project prints one line and is never blocked.
+- **Edit-time `DOCS:` line**: `.agents/hooks/doc-contracts.mjs`, a
+  `PostToolUse` hook in Claude Code and Codex, names the pages the moment an
+  edit lands inside a marked region (once per session per label). OpenCode
+  relies on the gate.
+- **Drift sweep** in the docs follow-through: a report-only step that greps the
+  doc surface for prose describing the old behaviour, run only when a change
+  touches `cli/`, `scripts/`, `.husky/` or the instruction files.
+
+### Changed
+
+- `docs:check` runs on every push; before, it ran in no hook.
+- The docs follow-through triggers on behaviour changes too, not only on
+  renames, and lists the decks and the Pages home.
+
 ## 2026-10-05 — Documentation catches up with the day's changes
 
 ### Changed
