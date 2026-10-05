@@ -38,8 +38,8 @@ A second silent failure sits alongside it: `.env` and the `acli` session are ind
 grep -n 'atlassian_url' .agents/project.yaml             # the source of truth
 [ISSUE_TRACKER_TOOL] Auth Status | grep -i site          # the machine-global session
 bun run --silent jira:url 2>&1                           # what the tooling actually resolves
-printenv ATLASSIAN_URL 2>/dev/null                       # should print NOTHING (see below)
-grep -n '^ATLASSIAN_URL' .env 2>/dev/null                # should match NOTHING (see below)
+[ -n "${ATLASSIAN_URL+x}" ] && echo "ATLASSIAN_URL SET in process" || echo unset   # should say unset (see below)
+bun run vars:env:check 2>&1 | grep ATLASSIAN_URL          # should match NOTHING (STALE_IN_ENV_FILE = a .env line)
 ```
 
 The last two are **contamination probes, not sources**. `ATLASSIAN_URL` is not a
@@ -109,25 +109,25 @@ Anything that fits neither list — a CI workflow, a README, `.mcp.json`, a depl
 2. **Delete** any stale `ATLASSIAN_URL` the probes found (the `.env` line, and whatever exports it into the process). Do not update it — see the table above.
 3. Re-authenticate `acli`:
 
-> **The files are not the whole story — check the process environment.** A stale `ATLASSIAN_URL` inherited from whatever spawned this session still shadows anything that reads the env var directly, and it survives a full application restart because it is re-inherited every time. `bun run vars:env:check` reports it; so does `bun run setup:doctor`, which flags a host resolved from the env instead of the yaml. To hunt the source, walk the ancestry with `ps eww -p <pid>` and test the login shell in isolation with `env -i HOME=$HOME zsh -l -c 'printenv ATLASSIAN_URL'` — testing from the contaminated shell inherits the bad value and gives a false negative.
+> **The files are not the whole story — check the process environment.** A stale `ATLASSIAN_URL` inherited from whatever spawned this session still shadows anything that reads the env var directly, and it survives a full application restart because it is re-inherited every time. `bun run vars:env:check` reports it; so does `bun run setup:doctor`, which flags a host resolved from the env instead of the yaml. To hunt the source, walk the ancestry with `ps eww -p <pid>` and test the login shell in isolation with `env -i HOME=$HOME zsh -l -c '[ -n "${ATLASSIAN_URL+x}" ] && echo SET || echo unset'` — testing from the contaminated shell inherits the bad value and gives a false negative.
 >
 > **Template-repo carve-out for step 1.** A boilerplate/template repo ships `.agents/project.yaml` with every value `null` on purpose — downstream projects inherit the file verbatim, so a concrete site baked into it is wrong for all of them. Detect this by reading `project.project_name` in the same file: if it is `null`, the repo is an un-onboarded template. **Leave `atlassian_url: null`** and say so in the report. The same rule applies to `project_key` in Phase 4. Only a real, onboarded project gets the value written.
 
 ```text
-TOKEN=$(grep '^ATLASSIAN_API_TOKEN=' .env | cut -d= -f2-)
-EMAIL=$(grep '^ATLASSIAN_EMAIL=' .env | cut -d= -f2-)
 [ISSUE_TRACKER_TOOL] Authenticate:
   site=$(bun run --silent jira:url --slug)
-  email=$EMAIL
-  token=$TOKEN
+  email=$ATLASSIAN_EMAIL
+  token=$ATLASSIAN_API_TOKEN   (piped by NAME, e.g. echo "$ATLASSIAN_API_TOKEN" | acli ... --token)
 ```
+
+Both variables come from the session environment (`bun run claude|codex|opencode` loads `.env`). If they are unset there, run the login through the loader in a subprocess (`bunx dotenv -e .env -- sh -c '...'`) instead of reading `.env`: `agentic-dev-core/references/secret-hygiene.md` §3.
 
 `--site` takes the BARE host, which is what `--slug` prints. Reading it back from
 the yaml rather than retyping `<target>` also proves step 1 actually landed: if
 the yaml is wrong, the login fails loudly instead of quietly succeeding against a
 site the repo does not agree with.
 
-> **Secret hygiene**: never `cat` the `.env` or grep it broadly — that dumps `ATLASSIAN_API_TOKEN` into the terminal, the scrollback, and the agent transcript. Filter by the exact key every time. If a token does get printed, say so plainly and recommend rotating it.
+> **Secret hygiene** (Critical Rule #1): never open `.env` at all, not even filtered by key: `cat`, `grep` and `cut` all move `ATLASSIAN_API_TOKEN` into the terminal, the scrollback or the agent shell. Use the variables by NAME as above. If a token does get printed, say so plainly and recommend rotating it.
 >
 > **Do not back the `.env` up inside the repo.** `cp .env .env.bak` feels prudent and is not: `.gitignore` usually covers the exact name `.env`, not arbitrary suffixes, so the backup lands as an untracked file holding a live API token, one `git add -A` away from being committed. Verify with `git check-ignore -v <path>` before writing any copy, or put it outside the working tree entirely. The `.env` edit here is a single line and is trivially reversible without a backup.
 
@@ -143,14 +143,12 @@ A migration where some places match and others do not is worse than one where no
 grep -n 'atlassian_url' .agents/project.yaml       # 1. the source of truth
 bun run --silent jira:url                          # 2. what the tooling resolves
 [ISSUE_TRACKER_TOOL] Auth Status | grep -i site    # 3. the acli session
-printenv ATLASSIAN_URL                             # 4. must print NOTHING
+[ -n "${ATLASSIAN_URL+x}" ] && echo SET || echo unset   # 4. must say unset
 URL=$(bun run --silent jira:url)
-EMAIL=$(grep '^ATLASSIAN_EMAIL=' .env | cut -d= -f2-)
-TOKEN=$(grep '^ATLASSIAN_API_TOKEN=' .env | cut -d= -f2-)
-[ISSUE_TRACKER_TOOL] Authenticated GET: url=$URL/rest/api/3/myself credentials=$EMAIL:$TOKEN output=HTTP status
+[ISSUE_TRACKER_TOOL] Authenticated GET: url=$URL/rest/api/3/myself credentials=$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN output=HTTP status
 ```
 
-Checks 1-3 must name the target, check 4 must be empty, and the REST call must return `200`. Report all five as a table.
+Checks 1-3 must name the target, check 4 must say `unset`, and the REST call must return `200`. Report all five as a table.
 
 Check 2 is not redundant with check 1: it is the only one that proves the resolver agrees with the file, and it prints a warning to stderr if a leftover env var disagrees with the yaml. Check 4 is the one people skip — a surviving process value is invisible in every file yet still reaches anything that reads the variable directly.
 

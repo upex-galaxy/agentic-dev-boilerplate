@@ -12,9 +12,19 @@ paths: []
 
 Each rule below carries the same number and name as in `AGENTS.md` § 1, where its binding sentence is quoted verbatim. This file holds the full text: the rationale, the edge cases and the mechanics.
 
-## 1. CREDENTIALS
+## 1. CREDENTIALS = BY NAME, NEVER BY VALUE
 
-ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts: use correct base URLs").
+Reference a secret only through its variable NAME (`$STAGING_USER_PASSWORD` expanded by the shell, `process.env.X` in code, `${VAR}` in an MCP config). NEVER open, print or paste a secret value: no `Read`/`cat`/`grep` of `.env*` (except `.env.example` / `.env.schema` / `.env.core.schema`), `.auth/**` or `.claude/settings.local.json`; no `printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`, `varlock printenv|reveal`, or `varlock load` without `--agent`. To learn WHETHER a variable is set, run the repo's redacted presence check (named in the full text). A missing secret value is the human's to type, in a terminal or the secret manager, never through the chat. NEVER hardcode or guess.
+
+**Why.** A value the AI reads lands in the model context, the provider request and the local transcript, and stays there. Using a secret by name inside a command is NOT an exposure: `echo "$ATLASSIAN_API_TOKEN" | acli jira auth login ... --token` carries the NAME in the command text and the value goes into a pipe, never into the output. Printing it is the exposure.
+
+**Presence check in this repo**: `bun run setup:doctor --json` (key `env_vars`: `set` / `missing` per required name, never a value) and `bun run vars:env:check` (drift between the process and `.env`, secrets masked). varlock is not installed here yet: never run `bunx varlock` in this repo, because with no schema nothing is marked sensitive and it would print values. Once varlock lands, `bunx varlock load --agent` becomes the check.
+
+**Writing `.env` (non-sensitive exception).** The AI NEVER writes a secret value (credential, API key, token, password: anything marked sensitive or obviously secret) into `.env` or anywhere else; it names the variable and the human types the value. A NON-sensitive value (a URL, a project key, a flag, a port) the AI MAY write into `.env` when the human asks, and ONLY through `bun run env:set KEY=value`: it accepts a key only when `cli/lib/variables-manifest.ts` declares it `secret: false`, refuses everything else (undeclared included), and prints names, never values. The `Read(.env)` deny also refuses every direct edit of the file, so no other write path exists, and none may be improvised (`bun -e`, `sed -i`, a heredoc).
+
+**The net under the rule.** `.claude/settings.json` denies `Read` of `.env`, `.env.local`, `.env.*.local`, `.envrc.local`, `.auth/**` and `.claude/settings.local.json` (which also refuses `cat`, `head`, `grep`, `awk` and shell writes on those paths) plus `printenv`, bare `env` and `varlock printenv|reveal`; `opencode.jsonc` mirrors it; Codex keeps secrets out of the shell it runs (`shell_environment_policy.inherit = "core"`). Deny rules are pattern-based and a subprocess can still read a file, so the rule text is what binds; the deny is the net. Mechanics, safe command shapes and the leak response: `.agents/skills/agentic-dev-core/references/secret-hygiene.md`.
+
+Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`. Add `[Project-specific reminders]` per project (e.g. "SPA and API on different hosts: use correct base URLs").
 
 ## 2. PLAN BEFORE CODING
 

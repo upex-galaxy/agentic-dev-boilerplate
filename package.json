@@ -19,6 +19,7 @@
     "context:hydrate": "bun scripts/sync-jira-issues.ts pull --include-comments",
     "context:map": "bun scripts/context-map.ts",
     "docs:check": "bun scripts/lint-docs.ts",
+    "env:set": "bun scripts/env-set.ts",
     "format:check": "prettier --check '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "format:fix": "prettier --write '**/*.{json,yml,yaml,css,scss,html}' --ignore-path .prettierignore",
     "harness:env": "bun scripts/harness-env.ts",

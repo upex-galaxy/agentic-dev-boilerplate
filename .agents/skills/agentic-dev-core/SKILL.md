@@ -18,6 +18,8 @@ compact_rules: |
   - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
   - Sync OpenAPI / API schemas (that's `bun run api:sync`).
   - Run any external command — no `bun install`, no `git`, no `gh`.
+
+  Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example`), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 metadata:
   kind: core
 ---
@@ -52,6 +54,7 @@ This skill does NOT orchestrate workflows, does NOT generate files, and does NOT
 | `references/decision-elicitation-doctrine.md` | `AGENTS.md` §2, `decision-protocol.md` §5, any skill about to ask the human to decide                                  | How to ask: harness prompt vs `mkd` decision deck (the >3-decisions-or-one-dense threshold), deck justification rules, the non-silent `mkd` gate + fallback, reading the returned contract. |
 | `references/volatile-facts.md`             | `AGENTS.md` Rule #17, any skill that writes or reviews committed prose, `scripts/lint-skills.ts` + `scripts/lint-docs.ts`     | Canon for committed prose: name the owner, never its current value (count / enumeration / file:line / current-state / edit-history), the exemptions, the forensic-note split into `.context/ADR/ADR-0003-forensic-measurements-ledger.md`, the two lint families + the `volatile-ok:` escape. |
 | `references/docs-follow-through.md`        | `sprint-development` (Stage 3), `project-context`, `testability-guide`, `.agents/instructions/agent-context-map.md` §4                                    | Keeping the docs in step with the change that moved them: `docs:check` + `agents:compat:check` as the mechanical half, the per-surface patch rules (patch never rewrite, cross-doc consistency, redaction, standalone-HTML text nodes only) as the judgment half. Replaces the retired `sync-ai-memory` skill. |
+| `references/secret-hygiene.md`             | `AGENTS.md` Rule #1, `vercel-cli`, `jira-administration`, `project-adoption`, `testability-guide`, any skill that logs in, calls an authenticated API or fills `.env` | Credentials by name, never by value: using vs exposing, the files the AI never opens, safe command shapes (presence check, loader subprocess, pushing values to a platform), who writes `.env`, the per-host deny net, the leak response. |
 | `references/typescript-patterns.md`        | `sprint-development`, code-writing skills                                                                                  | Fallback TS conventions when no project-specific dev guide exists.                              |
 
 When a skill cites one of these, it includes a Dependencies block at the top (see next section) so the AI knows to load `agentic-dev-core` before continuing.
@@ -126,5 +129,7 @@ User-facing detail: `README.md` → "Scaffold a new project" and "Adopt an exist
 - Sync project-specific facts in `AGENTS.md` (that belongs to the docs follow-through, `references/docs-follow-through.md`, run inside the change that moved the fact).
 - Sync OpenAPI / API schemas (that's `bun run api:sync`).
 - Run any external command — no `bun install`, no `git`, no `gh`.
+
+Secret hygiene (Critical Rule #1, binds every skill and subagent): use a secret only by its variable NAME (`$VAR` in the shell, `${VAR}` in an MCP config); never open `.env*` (except `.env.example`), `.auth/**` or `.claude/settings.local.json`, never print a value (`printenv`, `env`, `echo $SECRET`, `set -x`, `curl -v`); check presence with `bun run setup:doctor --json` (set / missing per name). The AI never writes a secret into `.env` (the human types it); a non-sensitive value (URL, project key, flag, port) it may write when asked, only through `bun run env:set KEY=value`. Safe command shapes + leak response: `references/secret-hygiene.md`.
 
 If a user invokes this skill expecting a bootstrap action, route them to the install path that matches their starting point (§Install model): there is no per-skill scaffolding.
