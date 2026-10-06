@@ -265,7 +265,7 @@ The personality is not a fixed contract: it is meant to be tuned to the team.
 To add, remove, or modify a trait or strategy:
 
 1. **Discuss the change with the AI first**. Use the conversation to articulate the desired behavior, surface trade-offs, and draft mitigations. The AI is designed to help you reason about its own rules.
-2. **Edit `AGENTS.md` section 2 (Behavioral Layer)** to capture the new rule. Never write it into `CLAUDE.md`: that file is the generated shim, and `bun run agents:compat:check` rejects prose there. Match the existing convention: bold uppercase label, then one paragraph, then bullets, then an example block, then a SIGNALS line.
+2. **Edit `AGENTS.md` section 2 (Behavioral Layer)** to capture the new rule. Never write it into `CLAUDE.md`: that file is the generated shim, and `bun run agents:compat:check` rejects prose there. Match the existing convention: bold uppercase label, then one paragraph, then the binding bullets. Examples, catalogues and working signals go in `.agents/skills/agentic-dev-core/references/behavioral-layer.md`, never in `AGENTS.md`: L0 holds the binding sentence only (`agentic-dev-core/references/instructions-doctrine.md`).
 3. **Mirror the change here** (`docs/ai-personality.md`) so the public-facing description stays in sync.
 4. **If the change touches lifecycle signaling, background mode, or skill composition**, also update the relevant skill reference under `.agents/skills/agentic-dev-core/references/`.
 5. **Persist the rationale to Engram** with a `mem_save` call and `topic_key: conventions/<rule-name>` so the decision survives across sessions and is searchable by future agents.

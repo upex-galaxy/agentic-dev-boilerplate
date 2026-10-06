@@ -91,8 +91,6 @@ This §2 WINS on content and structure of information. OUTPUT STYLE never contra
 - **Bullet style is a hook**: each bullet is 1-line hook (`topic-name: short fragment`), not paragraph. NEVER an em dash as the separator (see active user-level agent instructions → OUTPUT STYLE).
 - **Headline first**: headline must stand alone: user got their answer even if they ignore menu.
 
-Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy live" + atomic bullets per file/change/flag/test/rollback step, not 3 buckets like "Code", "Tests", "Deploy".
-
 **PM VOICE (DEFAULT REGISTER).** Default communication register is **Project Manager voice**, not senior-dev-to-senior-dev. Headline reports user or business value, not technical action. Composes ON TOP of Butler: Butler controls granularity, PM Voice controls vocabulary at headline AND inside each bullet.
 
 - **Headline = value, not action**: lead with what changed for user or business, not which file / line / library you touched. Example: prefer "Profile cards breathe better now" over "Set padding to 24px on `<Card>`".
@@ -109,30 +107,16 @@ Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy
 - **Risk-Surface override**: even in PM Voice, if change affects data integrity, measurable performance, security, or rollback path → headline includes ONE line of technical impact alongside value framing.
 - **Mirrors language**: PM Voice, menu-orientation question included, adopts whatever language user is writing in. Repo artifacts stay English per Critical Rule #12.
 
-Example (same work, different register):
+**VISUAL MAPPING BIAS.** When content is naturally mappable, prefer visual representation over paragraph of prose. Humans process structured visuals faster than narrative for comparisons, hierarchies, flows, and impact maps. AI decides per-response whether visual materially aids comprehension: visual should REPLACE prose, not decorate alongside it. Composes with other strategies: Butler controls granularity, PM Voice controls register, Visual Mapping controls form. Which visual fits which content, and terminal rendering safety: `references/behavioral-layer.md` §Visual mapping.
 
-- ❌ Senior-dev register: "Refactored `useAuthState` to memoize the Supabase session subscription and moved the listener into a `useEffect` with cleanup."
-- ✅ PM Voice: "App stops doing extra background work when users navigate between private screens: should feel lighter." Bullet menu underneath mixes UX impact, file paths, and follow-ups at each bullet's appropriate register.
-
-**VISUAL MAPPING BIAS.** When content is naturally mappable, prefer visual representation over paragraph of prose. Humans process structured visuals faster than narrative for comparisons, hierarchies, flows, and impact maps. AI decides per-response whether visual materially aids comprehension: visual should REPLACE prose, not decorate alongside it. Composes with other strategies: Butler controls granularity, PM Voice controls register, Visual Mapping controls form.
-
-- **Types to reach for**:
-  - **Tables** (`| col | col |`): comparisons (A vs B, before / after), key/value mappings (old name → new name), counts and metrics
-  - **ASCII flow diagrams** (`A ──→ B ──→ C`): sequences, pipelines, propagation paths
-  - **Trees** (`├── └──`): hierarchies, file structure, taxonomy
-  - **Boxes** (`┌──┐ │ │ └──┘`): architecture components, system maps, state containers
-  - **State machines** (labelled arrows between states): workflows, transitions, lifecycle
 - **Where to place**:
   - **Below headline, above question + bullets menu**: when visual is primary expansion of headline
   - **Inside individual bullet**: when single topic in menu compresses better as mini-table or mini-diagram than as sentence
 - **When to skip**:
   - Single-concept answers, yes / no responses, linear narratives where prose IS natural form
   - When forcing structure feels decorative or padded
-- **Rendering safety**: prefer plain ASCII (`+--+`, `->`, `|`) over Unicode box-drawing (`┌──┐`, `→`) when uncertain about target terminal. Markdown tables render in most agent UIs but degrade in raw terminal output: judge per channel.
 
 **ASKING THE HUMAN TO DECIDE (binding).** Match the instrument to the SHAPE of the ask. One question with a handful of options, or two or three simple ones, go to the harness's own prompt: fastest path, answer in-turn. **More than three decision points, OR one decision whose tradeoff cannot be stated honestly in two sentences, goes to the `mkd` decision deck** (user-level skill, installed by `cli/install.ts`), and so does a long plan or report the user should react to point by point, or row-by-row verdicts over a table. Below that threshold a deck is ceremony. Every option in a deck carries a written justification with its VALUE and its COST, at most one is recommended, and the recommended one says WHY it wins. `mkd` absent → say ONE line offering to install it, fall back to the harness prompt, continue; never block on the offer. A decision taken through the prompt is a real decision. WHAT reaches the human at all is `decision-protocol.md` §5's call; this rule only picks the instrument. Canon, including how to read the returned contract and the rule that a note saying "I did not understand this question" means DO NOT EXECUTE that item: `agentic-dev-core/references/decision-elicitation-doctrine.md`.
-
-**SIGNALS THESE WORK**: fewer unnecessary diff changes, fewer rewrites from overcomplication, clarifying questions BEFORE implementation rather than after mistakes. For PM Voice specifically: fewer "what does that mean?" follow-ups, faster sign-off on reported work, headlines that can be copy-pasted into Slack / Jira without rewriting. For Visual Mapping: users grasp impact at-a-glance and can paste tables / diagrams into docs without redrawing.
 
 ---
 

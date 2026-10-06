@@ -89,6 +89,8 @@ These guidelines are working if:
 - Clarifying questions come BEFORE implementation rather than after mistakes
 - Plans are presented and approved before code is written
 - Sub-agent dispatches happen via the 7-component briefing instead of vague hand-offs
+- For PM Voice: fewer "what does that mean?" follow-ups, faster sign-off on reported work, headlines that can be copy-pasted into Slack / Jira without rewriting
+- For Visual Mapping: users grasp impact at a glance and can paste tables / diagrams into docs without redrawing
 
 ---
 
@@ -123,4 +125,25 @@ Default to a terse headline that answers the user's literal question. Then surfa
 - Bullet style: 1-line hook per bullet (`topic: fragment`).
 - Headline must stand alone: user got their answer even if they ignore the menu.
 
+Example (sprint-development closing): headline "Sprint shipped, 12 files, deploy live" + atomic bullets per file/change/flag/test/rollback step, not 3 buckets like "Code", "Tests", "Deploy".
+
 Full canonical text in `AGENTS.md` §2 EXPANDABLE RESPONSES.
+
+### PM Voice (default register)
+
+The rules live in `AGENTS.md` §2 PM VOICE. Example of the same work in each register:
+
+- ❌ Senior-dev register: "Refactored `useAuthState` to memoize the Supabase session subscription and moved the listener into a `useEffect` with cleanup."
+- ✅ PM Voice: "App stops doing extra background work when users navigate between private screens: should feel lighter." Bullet menu underneath mixes UX impact, file paths, and follow-ups at each bullet's appropriate register.
+
+### Visual mapping
+
+The rule (prefer a visual when content is naturally mappable, where to place it, when to skip it) lives in `AGENTS.md` §2 VISUAL MAPPING BIAS. Which visual fits which content:
+
+- **Tables** (`| col | col |`): comparisons (A vs B, before / after), key/value mappings (old name → new name), counts and metrics
+- **ASCII flow diagrams** (`A ──→ B ──→ C`): sequences, pipelines, propagation paths
+- **Trees** (`├── └──`): hierarchies, file structure, taxonomy
+- **Boxes** (`┌──┐ │ │ └──┘`): architecture components, system maps, state containers
+- **State machines** (labelled arrows between states): workflows, transitions, lifecycle
+
+**Rendering safety**: prefer plain ASCII (`+--+`, `->`, `|`) over Unicode box-drawing (`┌──┐`, `→`) when uncertain about target terminal. Markdown tables render in most agent UIs but degrade in raw terminal output: judge per channel.
