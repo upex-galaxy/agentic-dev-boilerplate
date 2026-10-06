@@ -5,8 +5,9 @@
  *      the manifest does not declare at all (default = refuse). A refusal
  *      writes nothing, even when another pair in the same call was allowed.
  *   2. A key whose value is not read from `.env` (ATLASSIAN_URL) is refused.
- *   3. The upsert replaces the active line in place, keeps comments and every
- *      other line byte-identical, and appends a missing key.
+ *   3. The upsert replaces the active line in place, keeps comments (an inline
+ *      ` # comment` on the replaced line included) and every other line
+ *      byte-identical, and appends a missing key.
  *   4. Nothing printed carries a value: neither the one written nor any other.
  *   5. With the env schema present, `@sensitive` in `.env.schema` /
  *      `.env.core.schema` decides: a project key marked `@sensitive` is
@@ -20,7 +21,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 
 import { generateCoreSchema } from '../cli/lib/env-schema.ts';
-import { formatValue, parsePairs, refusalFor, run, upsertEnvLine } from './env-set.ts';
+import { formatValue, inlineComment, parsePairs, refusalFor, run, upsertEnvLine } from './env-set.ts';
 
 const OTHER_SECRET = 'canary-other-secret-value';
 
@@ -144,6 +145,13 @@ describe('write', () => {
     expect(upsertEnvLine('export NEXT_PUBLIC_APP_URL=old\n', 'NEXT_PUBLIC_APP_URL', 'new')).toBe('export NEXT_PUBLIC_APP_URL=new\n');
   });
 
+  it('keeps an inline comment on the replaced line', () => {
+    expect(upsertEnvLine('NEXT_PUBLIC_APP_URL=old # local dev server\n', 'NEXT_PUBLIC_APP_URL', 'https://x.example.com'))
+      .toBe('NEXT_PUBLIC_APP_URL=https://x.example.com # local dev server\n');
+    expect(upsertEnvLine('NEXT_PUBLIC_APP_URL="a # b"  # why\n', 'NEXT_PUBLIC_APP_URL', 'two words'))
+      .toBe('NEXT_PUBLIC_APP_URL="two words"  # why\n');
+  });
+
   it('never prints a value', () => {
     run(['NEXT_PUBLIC_APP_URL=https://staging.example.com'], root, out);
     run(['SUPABASE_SECRET_KEY=attempted-secret'], root, out);
@@ -169,6 +177,17 @@ describe('parsing and formatting', () => {
     expect(typeof parsePairs(['NEXT_PUBLIC_APP_URL=a\nb'])).toBe('string');
     expect(typeof parsePairs(['NEXT_PUBLIC_APP_URL'])).toBe('string');
     expect(run([], root, out)).toBe(2);
+  });
+
+  it('reads an inline comment only where a loader would', () => {
+    expect(inlineComment('old # note')).toBe(' # note');
+    expect(inlineComment(' # note')).toBe(' # note');
+    expect(inlineComment('a#b')).toBe('');
+    expect(inlineComment('"a # b"')).toBe('');
+    expect(inlineComment('"a \\" # b" # note')).toBe(' # note');
+    expect(inlineComment('\'a # b\' # note')).toBe(' # note');
+    expect(inlineComment('"unterminated # x')).toBe('');
+    expect(inlineComment('plain')).toBe('');
   });
 
   it('quotes a value a loader would split or strip', () => {

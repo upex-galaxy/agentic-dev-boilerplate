@@ -10,7 +10,11 @@
  *
  *   - `link`: a RELATIVE link (`href="…"`, `src="…"`, markdown `](…)`) that
  *     does not resolve to an existing file or directory, relative to the file
- *     that holds it. A published page (`PUBLISHED_MOUNTS`) is resolved the way
+ *     that holds it. The agent-facing markdown (`.agents/**`, `.context/**`
+ *     outside the `.context/PBI/` cache, `.claude/**`; `AGENT_LINK_ROOTS`) is
+ *     scanned for this kind only: its markdown `](…)` links, with fenced
+ *     blocks and inline code spans skipped, and git-ignored files (community
+ *     skills, generated prompts) left out. A published page (`PUBLISHED_MOUNTS`) is resolved the way
  *     the Pages site serves it (`.github/workflows/pages.yml` assembles it):
  *     `./decks/x.html` from the home page is `packages/decks/x.html` in the repo;
  *   - `path`: an inline-code path (`` `docs/…` ``, `<code>docs/…</code>`) that
@@ -253,6 +257,40 @@ function nestedReadmes(root: string): string[] {
   return out;
 }
 
+/** A markdown `](…)` link target, first group. */
+const MD_LINK = /\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+
+/** Roots of the agent-facing markdown whose `](…)` links the gate checks (link kind only). */
+export const AGENT_LINK_ROOTS = ['.agents', '.context', '.claude'] as const;
+
+/** The Jira cache under `.context/`: synced content, never authored here. */
+const PBI_CACHE = join('.context', 'PBI');
+
+/**
+ * The agent-facing markdown files, absolute paths, sorted. Directory symlinks
+ * are not followed (`.claude/skills` is an alias of `.agents/skills`), the PBI
+ * cache is skipped, and `lintDocs` drops the git-ignored ones.
+ */
+export function collectAgentLinkFiles(root: string): string[] {
+  const files: string[] = [];
+  for (const base of AGENT_LINK_ROOTS) {
+    const found: string[] = [];
+    walk(join(root, base), ['.md'], found);
+    files.push(...found.filter(file => !relative(root, file).startsWith(`${PBI_CACHE}/`)));
+  }
+  return files.sort();
+}
+
+/** Blank inline code spans, keeping offsets: a `[x](y)` quoted as code is an example, not a link. */
+function blankInlineCode(text: string): string {
+  return text.replace(/`[^`\n]*`/g, span => span.replace(/[^\n]/g, ' '));
+}
+
+/** `link` findings for one agent-facing markdown file. */
+export function lintAgentLinkFile(root: string, file: string): DocFinding[] {
+  return linkFindings(root, file, blankInlineCode(blankFences(readFileSync(file, 'utf8'))), [MD_LINK]);
+}
+
 /** Every file the gate scans, absolute paths, sorted for stable output. */
 export function collectDocFiles(root: string): string[] {
   const files: string[] = [];
@@ -275,7 +313,8 @@ const PATTERN_CHARS = /[*{}<>$|&…]/;
 function isCheckableLink(raw: string): boolean {
   const target = raw.trim();
   if (target === '' || IGNORED_SCHEME.test(target) || target.startsWith('/')) { return false; }
-  return !PATTERN_CHARS.test(target);
+  // `[table]([column])` in pseudocode: a bracketed target is a placeholder, not a path.
+  return !PATTERN_CHARS.test(target) && !/[[\]]/.test(target);
 }
 
 function stripSuffix(target: string): string {
@@ -296,28 +335,18 @@ function rootExists(root: string, path: string): boolean {
   return existsSync(join(root, top));
 }
 
-/** Findings for one file. Exported for the unit test. */
-export function lintDocFile(root: string, file: string): DocFinding[] {
+/** `link` findings: each pattern's first group, resolved relative to `file`. */
+function linkFindings(root: string, file: string, text: string, patterns: RegExp[]): DocFinding[] {
   const findings: DocFinding[] = [];
-  const raw = readFileSync(file, 'utf8');
-  const isMarkdown = file.endsWith('.md');
-  const text = isMarkdown ? blankFences(raw) : raw.replace(/<script[\s\S]*?<\/script>/gi, m => m.replace(/[^\n]/g, ''));
   const rel = relativePosix(root, file);
+  const site = sitePathOf(rel);
   const seen = new Set<string>();
-
-  const linkPatterns = [
-    /\b(?:href|src)\s*=\s*"([^"]*)"/g,
-    /\b(?:href|src)\s*=\s*'([^']*)'/g,
-  ];
-  if (isMarkdown) { linkPatterns.push(/\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g); }
-
-  for (const pattern of linkPatterns) {
+  for (const pattern of patterns) {
     for (const match of text.matchAll(pattern)) {
       const target = match[1];
       if (!isCheckableLink(target)) { continue; }
       const clean = stripSuffix(target);
       if (clean === '') { continue; }
-      const site = sitePathOf(rel);
       let resolved = resolve(dirname(file), decodeURIComponent(clean));
       let outside = false;
       if (site !== null) {
@@ -338,6 +367,23 @@ export function lintDocFile(root: string, file: string): DocFinding[] {
       }
     }
   }
+  return findings;
+}
+
+/** Findings for one file. Exported for the unit test. */
+export function lintDocFile(root: string, file: string): DocFinding[] {
+  const findings: DocFinding[] = [];
+  const raw = readFileSync(file, 'utf8');
+  const isMarkdown = file.endsWith('.md');
+  const text = isMarkdown ? blankFences(raw) : raw.replace(/<script[\s\S]*?<\/script>/gi, m => m.replace(/[^\n]/g, ''));
+  const rel = relativePosix(root, file);
+
+  const linkPatterns = [
+    /\b(?:href|src)\s*=\s*"([^"]*)"/g,
+    /\b(?:href|src)\s*=\s*'([^']*)'/g,
+  ];
+  if (isMarkdown) { linkPatterns.push(MD_LINK); }
+  findings.push(...linkFindings(root, file, text, linkPatterns));
 
   const codePatterns = rel.startsWith('packages/decks/') ? [] : [/`([^`\n]+)`/g, /<code>([^<\n]+)<\/code>/g];
   for (const pattern of codePatterns) {
@@ -480,7 +526,13 @@ function gitIgnored(root: string, paths: string[]): Set<string> {
 
 export function lintDocs(root: string): { files: number, findings: DocFinding[] } {
   const files = collectDocFiles(root);
-  const raw = files.flatMap(file => lintDocFile(root, file));
+  const agentCandidates = collectAgentLinkFiles(root).filter(file => !files.includes(file));
+  const ignoredAgent = gitIgnored(root, agentCandidates.map(file => relativePosix(root, file)));
+  const agentFiles = agentCandidates.filter(file => !ignoredAgent.has(relativePosix(root, file)));
+  const raw = [
+    ...files.flatMap(file => lintDocFile(root, file)),
+    ...agentFiles.flatMap(file => lintAgentLinkFile(root, file)),
+  ];
   const isRef = (f: DocFinding): boolean => f.kind === 'link' || f.kind === 'path';
   const resolvedOf = (f: DocFinding): string => f.kind === 'path'
     ? stripSuffix(f.target).replace(/:\d+(?:-\d+)?$/, '')
@@ -492,7 +544,7 @@ export function lintDocs(root: string): { files: number, findings: DocFinding[] 
   const instructions = [...(existsSync(agentsFile) ? [agentsFile] : []), ...instructionFiles(root)];
   findings.push(...lintScripts(root, [...instructions, ...files]));
   findings.push(...lintContracts(root));
-  return { files: files.length, findings };
+  return { files: files.length + agentFiles.length, findings };
 }
 
 /** Documentation-contract markers (ADR-0017): balanced, unique labels, every target on disk. */
