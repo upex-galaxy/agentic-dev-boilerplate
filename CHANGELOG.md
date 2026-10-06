@@ -5,6 +5,23 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-06 — The skill registry no longer depends on the machine
+
+### Fixed
+
+- **`bun run skills:registry` skips skill folders git ignores**, with the same
+  `git check-ignore` rule `docs:check` applies. A machine with community skills
+  installed in `.agents/skills/` but gitignored used to write their compact
+  rules, with links relative to folders the commit does not carry, into the
+  committed `REGISTRY.md`: `docs:check` then failed on those dead links on
+  every push, and `skills:registry:check` gave a different answer per machine.
+  Outside a git work tree every skill on disk is still indexed.
+- **Downstream workaround can go.** A project that added
+  `scripts/build-skill-registry.ts` to `updater.protected_paths` in
+  `.agents/project.yaml` to keep a local copy of this skip can remove that
+  entry once `bun run up` delivers this version, then run
+  `bun run skills:registry`.
+
 ## 2026-10-05 — The agent reads the sections it is routed to
 
 Fewer `ROUTE:` lines per prompt, each saying when to read it, one reminder on

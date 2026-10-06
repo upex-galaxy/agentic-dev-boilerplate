@@ -95,3 +95,49 @@ describe('build-skill-registry authored rules are never truncated', () => {
     expect(output).toContain(TRUNCATION_MARKER);
   });
 });
+
+/** Adds one more skill folder with a Compact Rules section to an existing fixture. */
+function addSkill(root: string, slug: string): void {
+  write(root, `.agents/skills/${slug}/SKILL.md`, [
+    '---',
+    `name: ${slug}`,
+    `description: ${slug} fixture.`,
+    '---',
+    '',
+    `# ${slug}`,
+    '',
+    '## Compact Rules',
+    '',
+    `- DO: ${slug} rule, see [the reference](references/${slug}.md).`,
+    '',
+  ].join('\n'));
+}
+
+function gitInit(root: string): void {
+  Bun.spawnSync({ cmd: ['git', 'init', '-q'], cwd: root, stdout: 'ignore', stderr: 'ignore' });
+}
+
+describe('build-skill-registry indexes only skills git can commit', () => {
+  test('a gitignored skill folder never reaches the registry', () => {
+    const root = fixture('committed-skill', '## Compact Rules\n\n- DO: committed rule.');
+    addSkill(root, 'local-community-skill');
+    write(root, '.gitignore', '.agents/skills/local-community-skill/\n');
+    gitInit(root);
+
+    const output = render(root);
+
+    expect(output).toContain('- DO: committed rule.');
+    expect(output).not.toContain('local-community-skill');
+  });
+
+  test('outside a git work tree every skill on disk is indexed', () => {
+    const root = fixture('committed-skill', '## Compact Rules\n\n- DO: committed rule.');
+    addSkill(root, 'local-community-skill');
+    write(root, '.gitignore', '.agents/skills/local-community-skill/\n');
+
+    const output = render(root);
+
+    expect(output).toContain('- DO: committed rule.');
+    expect(output).toContain('- DO: local-community-skill rule');
+  });
+});
