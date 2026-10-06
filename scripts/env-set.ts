@@ -68,8 +68,27 @@ export function formatValue(value: string): string {
 }
 
 /**
+ * The trailing ` # comment` of a `.env` line's value part (everything after the
+ * `=`), whitespace included, or '' when it has none. A `#` inside a quoted value,
+ * or glued to an unquoted one (`a#b`), is part of the value, not a comment.
+ */
+export function inlineComment(rest: string): string {
+  const quoted = /^\s*(["'])/.exec(rest);
+  if (quoted !== null) {
+    const quote = quoted[1];
+    for (let i = quoted[0].length; i < rest.length; i++) {
+      if (quote === '"' && rest[i] === '\\') { i++; continue; }
+      if (rest[i] === quote) { return /^\s+#.*$/.exec(rest.slice(i + 1))?.[0] ?? ''; }
+    }
+    return '';
+  }
+  return /\s+#.*$/.exec(rest)?.[0] ?? '';
+}
+
+/**
  * Upserts `name` in `.env` content. Replaces every active (uncommented) line of
- * the key, keeping an `export ` prefix; appends one line when none exists.
+ * the key, keeping an `export ` prefix and an inline ` # comment`; appends one
+ * line when none exists.
  */
 export function upsertEnvLine(content: string, name: string, value: string): string {
   const line = `${name}=${formatValue(value)}`;
@@ -79,7 +98,7 @@ export function upsertEnvLine(content: string, name: string, value: string): str
     const m = active.exec(raw);
     if (m === null) { return raw; }
     replaced = true;
-    return `${m[1] ?? ''}${line}`;
+    return `${m[1] ?? ''}${line}${inlineComment(raw.slice(m[0].length))}`;
   });
   if (replaced) { return lines.join('\n'); }
   const base = content === '' || content.endsWith('\n') ? content : `${content}\n`;
