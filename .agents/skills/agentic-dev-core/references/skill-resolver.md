@@ -22,6 +22,7 @@ This is a token-saving protocol, not a behavioral one. Subagents are still allow
 1. **Build (or read) the registry, once per session.**
    - At the first significant subagent dispatch (i.e. the first dispatch where `Skills to load` is non-empty), the orchestrator runs `bun scripts/build-skill-registry.ts`.
    - The script scans `.agents/skills/*/SKILL.md`, extracts compact rules per skill, and writes `.agents/skills/REGISTRY.md`.
+   - A skill folder git ignores (a community skill installed on one machine only) is skipped, so the committed registry is the same on every checkout. Such a skill's rules reach a briefing only through its own `SKILL.md`, named in `Skills to load`.
    - If `.agents/skills/REGISTRY.md` already exists AND every `SKILL.md` mtime is older than the registry's mtime, the orchestrator skips the rebuild and reads the cached file directly.
 
 2. **Inject `## Project Standards (auto-resolved)` into every briefing.**
