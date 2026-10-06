@@ -32,6 +32,10 @@
  *     the first 15 non-empty lines of the first content section if no bullets.
  *     The cap applies to this blind scrape only (truncation appends a marker).
  *
+ * Scope: only skills that can be committed. A skill folder git ignores (a
+ * community skill installed on this machine only) is skipped, so the registry
+ * is the same on every checkout of the same commit.
+ *
  * Idempotency: re-running on an unchanged repo produces a byte-identical file.
  *
  * Cache invalidation rules (the script itself does NOT decide; it always
@@ -158,8 +162,32 @@ function listSkillDirs(): string[] {
     const skillPath = join(SKILLS_DIR, e.name, 'SKILL.md');
     if (existsSync(skillPath)) { dirs.push(e.name); }
   }
-  dirs.sort();
-  return dirs;
+  // A skill folder git ignores (a community skill installed on this machine
+  // only) never reaches the commit, so indexing it makes the committed registry
+  // depend on the machine and carries links that are dead in the commit.
+  const ignored = gitIgnoredSkills(dirs);
+  for (const name of ignored) { vlog(`${name}: skipped (gitignored)`); }
+  const committed = dirs.filter(name => !ignored.has(name));
+  committed.sort();
+  return committed;
+}
+
+/**
+ * Skill folders git ignores, by name. Same `git check-ignore` rule
+ * `scripts/lint-docs.ts` applies; empty outside a git work tree, so a plain
+ * directory indexes every skill it holds.
+ */
+function gitIgnoredSkills(names: string[]): Set<string> {
+  if (names.length === 0) { return new Set(); }
+  const prefix = relative(REPO_ROOT, SKILLS_DIR).split('\\').join('/');
+  const result = Bun.spawnSync(['git', 'check-ignore', '--stdin'], {
+    cwd: REPO_ROOT,
+    stdin: new TextEncoder().encode(`${names.map(name => `${prefix}/${name}`).join('\n')}\n`),
+    stdout: 'pipe',
+    stderr: 'ignore',
+  });
+  const paths = result.stdout.toString().split('\n').map(line => line.trim()).filter(Boolean);
+  return new Set(paths.map(path => path.slice(prefix.length + 1)));
 }
 
 // -----------------------------------------------------------------------------
