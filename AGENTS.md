@@ -130,6 +130,8 @@ This §2 WINS on content and structure of information. OUTPUT STYLE never contra
 
 **NO SUBAGENTS FOR**: quick lookups, memory reads/writes, task tracking, ask user, planning.
 
+**WHEN, NOT BY REFLEX**: delegate only when the work would return a lot of tool output to this context or splits into independent units; a single scripted command (a bulk replace, a one-line check) or a lookup of under ~5 calls stays inline.
+
 **TWO EXECUTORS.** One-shot subagents are the DEFAULT executor and nothing below changes that. … Never name it to the user from a workflow skill when the gate fails. (The optional supervised worker, its gate and the execution patterns: `.agents/instructions/agent-orchestration-detail.md`.)
 
 **7-COMPONENT BRIEFING (MANDATORY every dispatch)**: canonical template + filled examples: `agentic-dev-core/references/briefing-template.md`.
