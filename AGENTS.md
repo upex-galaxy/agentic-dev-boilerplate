@@ -164,6 +164,7 @@ Engram MCP configured. Call `mem_save` IMMEDIATELY (no user prompt needed) after
 - **Convention or workflow established** (naming, structure, lint rule, branch policy).
 - **Bug fix completed**: include root cause, not just fix.
 - **Non-obvious discovery, gotcha, or edge case** found.
+- **Not a memory**: a finding already written in the repo (code or docs) is not saved; save only what the repo does not record (a decision's why, a gotcha, an owner preference).
 - **Session close**: MANDATORY `mem_session_summary` before saying "done" / "listo".
 
 Self-check after every task: _did I make decision, fix bug, learn something non-obvious, or establish convention? If yes → `mem_save` NOW._
