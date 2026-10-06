@@ -93,6 +93,36 @@ describe('lint-docs references', () => {
   });
 });
 
+describe('lint-docs agent-facing markdown links', () => {
+  test('checks markdown links under .agents/, .context/ and .claude/ relative to the file', () => {
+    write('.agents/skills/demo/references/ok.md', '');
+    write('.agents/skills/demo/SKILL.md', 'See [ok](./references/ok.md#top) and [gone](./references/gone.md).');
+    write('.context/ADR/ADR-0001-x.md', 'Superseded by [ADR-0002](./ADR-0002-y.md).');
+    write('.claude/agents/helper.md', '[skill](../../.agents/skills/demo/SKILL.md)');
+    expect(lintDocs(root).findings.map(tag)).toEqual([
+      'error:.agents/skills/demo/SKILL.md:1:link:./references/gone.md',
+      'error:.context/ADR/ADR-0001-x.md:1:link:./ADR-0002-y.md',
+    ]);
+  });
+
+  test('skips URLs, anchors, placeholders, fenced and inline code, and the PBI cache', () => {
+    write('.agents/skills/demo/SKILL.md', [
+      '[a](https://example.com) [b](#section) [c](./{slug}.md) [d](<<TEMPLATE>>.md) idx_[table]([column])',
+      'Write links as `[text](./relative.md)`.',
+      '```',
+      '[e](./inside-a-fence.md)',
+      '```',
+    ].join('\n'));
+    write('.context/PBI/epics/EPIC-1-x/story.md', '[attachment](./missing.png)');
+    expect(lintDocs(root).findings).toEqual([]);
+  });
+
+  test('reports only links there, not inline paths or volatile facts', () => {
+    write('.agents/README.md', 'Ten skills today. `docs/nope/file.md`');
+    expect(lintDocs(root).findings).toEqual([]);
+  });
+});
+
 describe('lint-docs volatile facts (Critical Rule #17)', () => {
   test('both volatile families block the gate after the sweep', () => {
     expect(SEVERITY['file-line']).toBe('error');
