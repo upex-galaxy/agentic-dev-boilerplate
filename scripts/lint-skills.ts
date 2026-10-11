@@ -104,6 +104,13 @@
  *                                every `.context/` cite must exist on disk (the
  *                                map is born before the skill); only the
  *                                gitignored `.context/PBI/` cache is exempt.
+ *  26. T4-LOADER              (ERROR) — every slug in cli/install.ts:USER_LEVEL_SKILLS
+ *                                must have a row in the "Loaded by / when" table of
+ *                                `agentic-dev-onboard/SKILL.md` §"Community skills
+ *                                installed at user level", and the row's loader cell
+ *                                must either cite its loader in backticks or say
+ *                                "user-invoked only". No-op when USER_LEVEL_SKILLS
+ *                                is empty.
  *
  * Note: `complementary_categories` frontmatter is OPTIONAL on every T1 skill.
  * Skills that do not need to borrow community capability (e.g. pure CLI wrappers
@@ -1019,6 +1026,49 @@ function checkVolatileFacts(files: string[]): void {
 }
 
 // -----------------------------------------------------------------------------
+// Check 26: T4-LOADER
+// -----------------------------------------------------------------------------
+
+const ONBOARD_SKILL_REL = '.agents/skills/agentic-dev-onboard/SKILL.md';
+const T4_LOADER_HEADING = '## Community skills installed at user level';
+/** `| \`slug\` | source | loader |`: the slug, then the last cell. */
+const T4_LOADER_ROW = /^\|\s*`([\w-]+)`\s*\|.*\|([^|]*)\|\s*$/;
+const T4_LOADER_USER_ONLY = /user-invoked only/i;
+const T4_LOADER_CITATION = /`[^`]+`/;
+
+/** Check 26: every USER_LEVEL_SKILLS slug has a loader row in the onboard table. */
+function checkT4Loaders(t4: Set<string>): void {
+  if (t4.size === 0) { return; }
+  const onboardPath = join(REPO_ROOT, ONBOARD_SKILL_REL);
+  if (!existsSync(onboardPath)) {
+    record('ERROR', 'T4-LOADER', 'USER_LEVEL_SKILLS', `${ONBOARD_SKILL_REL} is missing, so no user-level skill has a declared loader`);
+    return;
+  }
+
+  const loaders = new Map<string, string>();
+  let inSection = false;
+  for (const line of readFileSync(onboardPath, 'utf8').split('\n')) {
+    if (line.startsWith('## ')) {
+      inSection = line.trim() === T4_LOADER_HEADING;
+      continue;
+    }
+    if (!inSection) { continue; }
+    const m = T4_LOADER_ROW.exec(line);
+    if (m) { loaders.set(m[1], m[2].trim()); }
+  }
+
+  for (const slug of [...t4].sort()) {
+    const loader = loaders.get(slug);
+    if (loader === undefined) {
+      record('ERROR', 'T4-LOADER', slug, `in USER_LEVEL_SKILLS but has no row in ${ONBOARD_SKILL_REL} §"Community skills installed at user level": add one naming its loader, or "user-invoked only"`);
+    }
+    else if (!T4_LOADER_USER_ONLY.test(loader) && !T4_LOADER_CITATION.test(loader)) {
+      record('ERROR', 'T4-LOADER', slug, `the "Loaded by / when" cell in ${ONBOARD_SKILL_REL} neither cites its loader in backticks nor says "user-invoked only"`);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
 
@@ -1073,6 +1123,9 @@ function main() {
       record('ERROR', 'DUPLICATE-TIER', `install.ts:${skill}`, `appears in multiple tiers: ${tiers.join(', ')}`);
     }
   }
+
+  // Check 26: T4-LOADER
+  checkT4Loaders(t4);
 
   // Check 5: empty-category — §4.1 row maps a category to zero skills.
   // A category with one or more skills is healthy (single-skill is fine — if

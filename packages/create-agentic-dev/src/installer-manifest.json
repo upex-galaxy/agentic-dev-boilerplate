@@ -67,7 +67,7 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 23,
+      "count": 22,
       "items": [
         {
           "name": "frontend-design",
@@ -125,11 +125,6 @@
           "source": "https://github.com/addyosmani/web-quality-skills"
         },
         {
-          "name": "n8n-skills (full package)",
-          "purpose": "n8n workflow automation MCP toolkit.",
-          "source": "czlonkowski/n8n-skills"
-        },
-        {
           "name": "emil-design-eng",
           "purpose": "Design engineering patterns from Emil Kowalski.",
           "source": "https://github.com/emilkowalski/skill"
@@ -181,13 +176,13 @@
         },
         {
           "name": "diagram-design",
-          "purpose": "Community skill: diagram-design",
+          "purpose": "Diagrams for the business context maps (data, features, API).",
           "source": "https://github.com/cathrynlavery/diagram-design"
         }
       ]
     },
     "communityUserSkills": {
-      "count": 7,
+      "count": 5,
       "items": [
         {
           "name": "find-skills",
@@ -200,19 +195,9 @@
           "source": "https://github.com/xixu-me/skills"
         },
         {
-          "name": "brainstorming",
-          "purpose": "Structured brainstorming and ideation techniques.",
-          "source": "https://github.com/obra/superpowers"
-        },
-        {
           "name": "html-ppt",
           "purpose": "Create HTML-based presentations.",
           "source": "https://github.com/lewislulu/html-ppt-skill"
-        },
-        {
-          "name": "bun",
-          "purpose": "Bun runtime and package manager documentation.",
-          "source": "https://bun.sh/docs"
         },
         {
           "name": "playwright-cli",
@@ -221,7 +206,7 @@
         },
         {
           "name": "mkd",
-          "purpose": "Community skill: mkd",
+          "purpose": "Decision-deck CLI — the AI asks, the user answers point by point in a browser deck.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]

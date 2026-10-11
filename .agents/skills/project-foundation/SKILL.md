@@ -4,8 +4,6 @@ description: 'Orchestrates the foundational definition of a new product/project:
 license: MIT
 compatibility: [claude-code, codex, opencode]
 phase: foundation
-complementary_categories:
-  - creativity
 # compact_rules is consumed VERBATIM by scripts/build-skill-registry.ts (frontmatter-first,
 # no truncation). Keep in sync with the "Anti-patterns" section in the body below.
 compact_rules: |
@@ -49,34 +47,9 @@ Requires `agentic-dev-core`. Loads on demand:
 
 - `agentic-dev-core/references/briefing-template.md` — used when dispatching subagents to research market data, audit competitors, or interview users.
 - `agentic-dev-core/references/dispatch-patterns.md` — picks Single / Sequential / Parallel for each phase below.
-- `agentic-dev-core/references/skill-composition-strategy.md` — composition contract consumed by the step below.
 - `agentic-dev-core/references/orchestration-doctrine.md` — mandatory subagent dispatch (main thread is command center).
 - `agentic-dev-core/references/session-management.md` — Phase 0 resume contract, plan-first persistence at `.session/project-foundation/`, archive on completion.
 - `agentic-dev-core/references/adr-doctrine.md` — Phase 3 only: which architectural decisions earn an ADR + how to seed the first batch into `.context/ADR/`.
-
----
-
-## Composable Skills (auto-resolved at skill entry)
-
-Run once when this skill is invoked, before any phase below. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md`.
-
-Steps:
-
-1. Read `complementary_categories` from this skill's frontmatter (`creativity`).
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
-3. For each matched skill, classify tier per strategy doc §2.
-4. Apply threshold rule per strategy doc §3.2:
-   - **T1 / T3** matches → load silently. Cache for the session.
-   - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this foundation work? Y/N"`. Cache the answer for the session.
-5. When dispatching sub-agents (Constitution, PRD, SRS, Discovery), inject a `## Composable Skills` block per strategy doc §6.2.
-
-Expected matches (illustrative — actual list depends on what the user has installed):
-
-| Category     | Likely matches                                                                      |
-| ------------ | ----------------------------------------------------------------------------------- |
-| `creativity` | T4 ASK: `brainstorming` — useful for persona generation, user journeys, MVP scoping |
-
-Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 

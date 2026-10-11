@@ -91,7 +91,7 @@ Expected matches (illustrative — actual list depends on what the user has inst
 | Category        | Likely matches                                                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `frontend-ui`   | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
-| `accessibility` | `accessibility` (T3); T4 ASK: `accessibility-review`                                                                                                               |
+| `accessibility` | `accessibility` (T3)                                                                                                                                               |
 
 Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 

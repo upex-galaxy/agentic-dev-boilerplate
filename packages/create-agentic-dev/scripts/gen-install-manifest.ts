@@ -90,7 +90,6 @@ const SKILL_PURPOSES: Record<string, string> = {
   'typescript-advanced-types': 'Advanced TypeScript type patterns.',
   'accessibility': 'Web accessibility (a11y) best practices and auditing.',
   'seo': 'SEO best practices for Next.js and web apps.',
-  'n8n-skills': 'n8n workflow automation MCP toolkit.',
   'emil-design-eng': 'Design engineering patterns from Emil Kowalski.',
   'ui-ux-pro-max': 'UI/UX design intelligence across 10 stacks and 50+ styles.',
   'impeccable': 'Code quality and craftsmanship review.',
@@ -100,15 +99,15 @@ const SKILL_PURPOSES: Record<string, string> = {
   'supabase-postgres-best-practices': 'PostgreSQL and Supabase database best practices.',
   'deploy-to-vercel': 'Vercel deployment CLI and project linking.',
   'resend-cli': 'Transactional email development with Resend.',
+  'skill-creator': 'Create, modify, and evaluate Claude Code skills.',
+  'diagram-design': 'Diagrams for the business context maps (data, features, API).',
 
   // Community user-level skills (USER_LEVEL_SKILLS)
-  'skill-creator': 'Create, modify, and evaluate Claude Code skills.',
   'find-skills': 'Discover and search available skills.',
   'github-actions-docs': 'GitHub Actions documentation and workflow patterns.',
-  'brainstorming': 'Structured brainstorming and ideation techniques.',
   'html-ppt': 'Create HTML-based presentations.',
-  'bun': 'Bun runtime and package manager documentation.',
   'playwright-cli': 'Browser automation — screenshots, traces, recordings.',
+  'mkd': 'Decision-deck CLI — the AI asks, the user answers point by point in a browser deck.',
 };
 
 function mcpPurposeOr(name: string): string {

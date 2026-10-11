@@ -319,7 +319,7 @@ Per `complementary_categories` in this skill's frontmatter and the matching rule
 - **DB work** → `backend-db` category match (T3 silent). **Required at the step**: `supabase` + `supabase-postgres-best-practices` before any DB-MCP schema, RLS or migration call (`references/implement-story.md` Paso 2, `agentic-dev-core/references/db-change-doctrine.md`).
 - **Deploy (Stages 4-5)** → `deploy` category: `deploy-to-vercel` (method) next to T1 `vercel-cli` (verification), required in `references/staging-deploy.md` and `references/production-deploy.md`.
 - **Email-feature work** → `email` category: `resend-cli`, required when the story sends or templates email, at implementation and at deploy.
-- **Public-page work** → `seo` category: `seo` (or `nextjs-seo`), required when the story adds or changes a public, indexable page.
+- **Public-page work** → `seo` category: `seo`, required when the story adds or changes a public, indexable page.
 - **E2E tests if in scope** → `testing-e2e` category match (T4 — ASK before load).
 
 "Required at the step" follows `agentic-dev-core/references/skill-composition-strategy.md` §3.5: load before the first write; not installed → say so once with the install path, then continue (never a silent skip, never a hard STOP).

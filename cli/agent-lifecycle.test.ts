@@ -23,9 +23,11 @@ import {
   mergedHarnesses,
   migrateAgentIds,
   parseAgentsEnv,
+  partitionDeclinedSkills,
   PROJECT_SKILL_DESTINATION,
   recordHarnessSelection,
   repairRepositoryCompatibility,
+  USER_LEVEL_SKILLS,
 } from './install.ts';
 import { declaredMcpIds } from './lib/agent-compatibility-contracts.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM, claudeSkillsAliasPlan, repairClaudeSkillsAlias } from './lib/agent-compatibility.ts';
@@ -229,6 +231,32 @@ describe('installer skill and env contracts', () => {
     for (const agent of ['claude-code', 'opencode', 'codex'] as const) {
       expect(await discoverRequiredEnvVars([agent], root)).toEqual(['TOKEN_A', 'URL_B']);
     }
+  });
+});
+
+// T4 user-level skills: a per-skill multiselect. An unchecked skill is stored as
+// declined and stays out of every later offer, a forced re-run included.
+describe('user-level skill selection', () => {
+  test('a declined skill is held back; the rest are offered in list order', () => {
+    const [first, second, ...rest] = USER_LEVEL_SKILLS;
+    const { offered, declined } = partitionDeclinedSkills(USER_LEVEL_SKILLS, {
+      [`community:global:${first.skill}`]: 'declined',
+      [`community:global:${second.skill}`]: 'installed',
+    });
+    expect(declined).toEqual([first]);
+    expect(offered).toEqual([second, ...rest]);
+  });
+
+  test('a project-level decline does not hide the user-level skill of the same slug', () => {
+    const [first] = USER_LEVEL_SKILLS;
+    const { declined } = partitionDeclinedSkills(USER_LEVEL_SKILLS, { [`community:project:${first.skill}`]: 'declined' });
+    expect(declined).toEqual([]);
+  });
+
+  test('retired skills stay out of the user-level list', () => {
+    const slugs = USER_LEVEL_SKILLS.map(item => item.skill);
+    expect(slugs).not.toContain('bun');
+    expect(slugs).not.toContain('brainstorming');
   });
 });
 

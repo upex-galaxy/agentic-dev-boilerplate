@@ -158,7 +158,7 @@ Then `bun run setup:doctor --json` to confirm the rest.
 | `INSTALL_SECRETS_PROVIDER=1password`        | Opt in to the secret manager (default `.env`); pair with `INSTALL_SECRETS_VAULT=<vault>` |
 | `INSTALL_SKIP_ENGRAM=1`                     | Treat Engram as skipped: no detection prompt, no `engram setup`               |
 | `INSTALL_FORCE_ENGRAM=1`                    | Re-run `engram setup` even when the state file says it ran (legacy alias: `INSTALL_FORCE_AGENTS_SETUP=1`) |
-| `INSTALL_FORCE_COMMUNITY_SKILLS=1`          | Re-run the community skills install even when the state file says it ran      |
+| `INSTALL_FORCE_COMMUNITY_SKILLS=1`          | Re-run the community skills install even when the state file says it ran (declined user-level skills stay out) |
 | `INSTALL_FORCE_GITHUB_REMOTE=1`             | Re-run the GitHub repository step (Step 7b) even when a remote is recorded    |
 
 The header of `cli/install.ts` owns the full list.
@@ -303,6 +303,8 @@ Skills that are workflow-specific to this boilerplate live in `.agents/skills/` 
 | `agentic-dev-onboard` | `/agentic-dev-onboard`                          | End-to-end onboarding guided tour (pending Phase C)                                                                                                                                                     |
 
 These skills evolve with the repo and are versioned in git. The split is intentional: user-level tools (Engram, user-level community skills) own the **horizontal** layer (apply across all your repos), this repo owns the **vertical** workflow (specific to `agentic-dev-boilerplate`).
+
+The user-level community skills (`USER_LEVEL_SKILLS` in `cli/install.ts`) are asked per skill: a multiselect with every skill pre-checked. A skill you uncheck is recorded as `declined` in the state file and is not offered again, not even when `INSTALL_FORCE_COMMUNITY_SKILLS=1` or `--sync-skills` forces a re-run; the installer prints the `bunx skills add` line to install it by hand. A non-interactive run installs every skill you have not declined.
 
 ### Invoking a skill with a mode
 

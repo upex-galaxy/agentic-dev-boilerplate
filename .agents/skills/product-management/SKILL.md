@@ -6,7 +6,6 @@ compatibility: [claude-code, codex, opencode]
 phase: management
 complementary_categories:
   - issue-tracker
-  - creativity
 # compact_rules is consumed VERBATIM by scripts/build-skill-registry.ts (frontmatter-first,
 # no truncation). Keep in sync with the "Anti-patterns" section in the body below.
 compact_rules: |
@@ -135,7 +134,7 @@ Run once when this skill is invoked, before any workflow below. Follows the cont
 
 Steps:
 
-1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`, `creativity`).
+1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`).
 2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. For each matched skill, classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
@@ -148,7 +147,6 @@ Expected matches (illustrative — actual list depends on what the user has inst
 | Category        | Likely matches                                                                                           |
 | --------------- | -------------------------------------------------------------------------------------------------------- |
 | `issue-tracker` | `acli` (T1 sister — silent; primary Jira CLI). Atlassian MCP is the fallback declared above, not a skill |
-| `creativity`    | T4 ASK: `brainstorming` — useful for edge-case enumeration, persona expansion, Three Amigos session prep |
 
 Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 

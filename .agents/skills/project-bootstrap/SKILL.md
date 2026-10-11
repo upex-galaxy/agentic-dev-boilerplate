@@ -8,7 +8,6 @@ complementary_categories:
   - frontend-framework
   - frontend-ui
   - backend-db
-  - runtime
   - language
   - ci-cd
 # compact_rules is consumed VERBATIM by scripts/build-skill-registry.ts (frontmatter-first,
@@ -71,7 +70,7 @@ Run once when this skill is invoked, before any phase below. Follows the contrac
 
 Steps:
 
-1. Read `complementary_categories` from this skill's frontmatter (`frontend-framework`, `frontend-ui`, `backend-db`, `runtime`, `language`, `ci-cd`).
+1. Read `complementary_categories` from this skill's frontmatter (`frontend-framework`, `frontend-ui`, `backend-db`, `language`, `ci-cd`).
 2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
 3. For each matched skill, classify tier per strategy doc §2 (path-based: `.agents/skills/` → T1; PROJECT_LEVEL_SKILLS → T3; USER_LEVEL_SKILLS → T4).
 4. Apply threshold rule per strategy doc §3.2:
@@ -86,7 +85,6 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | `frontend-framework` | `next-best-practices`, `next-cache-components`                                                                                                                     |
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
 | `backend-db`         | `supabase`, `supabase-postgres-best-practices` (REQUIRED at the backend and types steps, not only matched: §3.5 of the strategy doc)                               |
-| `runtime`            | `bun`                                                                                                                                                              |
 | `language`           | `typescript-advanced-types`                                                                                                                                        |
 | `ci-cd`              | `github-actions-docs`                                                                                                                                              |
 

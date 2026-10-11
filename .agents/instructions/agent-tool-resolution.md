@@ -40,7 +40,7 @@ paths: ["supabase/"]
 
 | CLI              | Skills to auto-load                                                    | Rationale                                                                       |
 | ---------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `bun`            | `/bun`                                                                 | Runtime + package manager. Skill covers bun-specific APIs, scripts, lockfile.   |
+| `bun`            | none: Bun's own docs come from `[DOCS_TOOL]` (Context7)            | Runtime + package manager. No skill wraps it; scripts are read from `package.json` (Critical Rule #10). |
 | `gh`             | `/git-flow-master`                                                     | GitHub CLI + git workflow. Skill covers repo ops, PRs, `gh api` patterns.       |
 | `supabase`       | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI + Postgres patterns + DB scaffold flow.                                  |
 | `vercel`         | `/vercel-cli`, `/deploy-to-vercel`, `/sprint-development`              | Vercel CLI cookbook (verification, env, debug, rollback) + community deploy workflow + sprint deploy stages. |

@@ -290,3 +290,72 @@ describe('lint-skills: a framework skill still on the app\'s hand copy', () => {
     expect(runLint(root).exitCode).toBe(1);
   });
 });
+
+describe('lint-skills T4 loaders (check 26, T4-LOADER)', () => {
+  /** The fixture repo with `slugs` as USER_LEVEL_SKILLS and, when `rows` is given, the onboard loader table. */
+  function withUserLevel(slugs: string[], rows: Array<[slug: string, loader: string]> | null): string {
+    const root = fixture('(T3)');
+    write(root, 'cli/install.ts', [
+      'const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [',
+      '  { package: \'https://github.com/shadcn/ui\', skill: \'shadcn\' },',
+      '];',
+      'const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [',
+      ...slugs.map(slug => `  { package: 'https://example.com/${slug}', skill: '${slug}' },`),
+      '];',
+      '',
+    ].join('\n'));
+    if (rows !== null) {
+      write(root, '.agents/skills/agentic-dev-onboard/SKILL.md', [
+        '---',
+        'name: agentic-dev-onboard',
+        'metadata:',
+        '  kind: core',
+        '---',
+        '',
+        '## Community skills installed at user level',
+        '',
+        '| Skill | Source | Loaded by / when |',
+        '| --- | --- | --- |',
+        ...rows.map(([slug, loader]) => `| \`${slug}\` | example.com | ${loader} |`),
+        '',
+        '## Next steps',
+        '',
+        '| `late-skill` | example.com | `/sprint-development` |',
+        '',
+      ].join('\n'));
+    }
+    return root;
+  }
+
+  test('every user-level skill with a cited loader or "user-invoked only" passes', () => {
+    const { exitCode, stdout } = runLint(withUserLevel(['deck-tool', 'slides-tool'], [
+      ['deck-tool', 'any flow past the threshold in `/sprint-development`'],
+      ['slides-tool', '**user-invoked only.**'],
+    ]));
+
+    expect(stdout).not.toContain('T4-LOADER');
+    expect(exitCode).toBe(0);
+  });
+
+  test('a user-level skill with no row fails, and a row outside the section does not count', () => {
+    const { exitCode, stdout } = runLint(withUserLevel(['deck-tool', 'late-skill'], [['deck-tool', '`/sprint-development`']]));
+
+    expect(stdout).toMatch(/T4-LOADER\].*late-skill.*in USER_LEVEL_SKILLS but has no row/);
+    expect(stdout).not.toMatch(/T4-LOADER\].*deck-tool/);
+    expect(exitCode).toBe(1);
+  });
+
+  test('a row whose loader cell cites nothing fails', () => {
+    const { exitCode, stdout } = runLint(withUserLevel(['deck-tool'], [['deck-tool', 'any flow that needs it']]));
+
+    expect(stdout).toMatch(/T4-LOADER\].*deck-tool.*the "Loaded by \/ when" cell/);
+    expect(exitCode).toBe(1);
+  });
+
+  test('user-level skills without the onboard skill fail once, naming the file', () => {
+    const { exitCode, stdout } = runLint(withUserLevel(['deck-tool'], null));
+
+    expect(stdout).toContain('.agents/skills/agentic-dev-onboard/SKILL.md is missing');
+    expect(exitCode).toBe(1);
+  });
+});
