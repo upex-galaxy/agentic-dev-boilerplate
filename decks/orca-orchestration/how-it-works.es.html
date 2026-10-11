@@ -1615,7 +1615,7 @@
       >
       <nav class="topnav">
         <a href="#ejecutores">Ejecutores</a>
-        <a href="#arbol">¿Orquestación?</a>
+        <a href="#arbol">Orquestación?</a>
         <a href="#gate">Gate</a>
         <a href="#modos">Modos</a>
         <a href="#fallback">Fallback</a>
@@ -1780,7 +1780,7 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">02</span> · antes de empezar</div>
-          <h2>¿Esto es orquestación siquiera?</h2>
+          <h2>Esto es orquestación siquiera?</h2>
           <p class="sub">
             Casi todo el trabajo no lo es. El árbol de decisión de la skill corta temprano.
           </p>
@@ -1788,11 +1788,11 @@
 
         <div class="steps r">
           <div class="step">
-            <h3>¿Entra en este turno y es una lectura, una verificación o un mapa?</h3>
+            <h3>Entra en este turno y es una lectura, una verificación o un mapa?</h3>
             <p>Subagente de un solo uso. Fin. Esto es la mayoría del trabajo.</p>
           </div>
           <div class="step">
-            <h3>¿Querés pasar el trabajo y desentenderte?</h3>
+            <h3>Querés pasar el trabajo y desentenderte?</h3>
             <p>
               Eso es un <b>handoff</b>, transferencia de dueño: sin Task, sin Dispatch, sin buzón.
               Una tarea suelta va por la guía <span class="mono">orca-cli</span> del binario; la
@@ -1801,18 +1801,18 @@
             </p>
           </div>
           <div class="step">
-            <h3>¿Necesitás supervisar, esperar resultados, responder preguntas o un grafo de dependencias?</h3>
+            <h3>Necesitás supervisar, esperar resultados, responder preguntas o un grafo de dependencias?</h3>
             <p>Orquestación. Seguí.</p>
           </div>
           <div class="step">
-            <h3>¿El trabajo escribe código?</h3>
+            <h3>El trabajo escribe código?</h3>
             <p>
-              Un worktree de Orca por worker. ¿No escribe código? Flota en el mismo checkout
+              Un worktree de Orca por worker. No escribe código? Flota en el mismo checkout
               (<span class="mono">references/topologies.md</span>).
             </p>
           </div>
           <div class="step">
-            <h3>¿Querés los workers SUPERVISADOS?</h3>
+            <h3>Querés los workers SUPERVISADOS?</h3>
             <p>
               Lanzamiento nativo, y nada más: el runtime solo reconoce agentes que arrancó él. Si a
               la máquina le faltan los argumentos por defecto del agente o las credenciales no
@@ -1821,7 +1821,7 @@
             </p>
           </div>
           <div class="step">
-            <h3>¿No hay nadie al volante?</h3>
+            <h3>No hay nadie al volante?</h3>
             <p>
               <span class="mono">references/automations.md</span>. Para entrega desatendida,
               <span class="mono">/autonomous-delivery</span> decide qué corre y esta skill lo lanza.
@@ -1928,7 +1928,7 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
         </div>
 
         <div class="callout blue r">
-          <b>La prueba que decide cualquier edición futura:</b> ¿esta línea tendría sentido, sin
+          <b>La prueba que decide cualquier edición futura:</b> esta línea tendría sentido, sin
           cambios, para un desarrollador que nunca oyó hablar de Orca? Si no, va en esta skill y no
           en la de workflow. La prohibición real siempre fue que la ausencia del orquestador no
           cueste nada y nunca se reporte; un gate silencioso la cumple, y por eso una skill de
@@ -2685,7 +2685,7 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
             </thead>
             <tbody>
               <tr>
-                <td>"¿cómo van?"</td>
+                <td>"cómo van?"</td>
                 <td>Una tabla: KEY · etapa · estado · último mensaje</td>
               </tr>
               <tr>
