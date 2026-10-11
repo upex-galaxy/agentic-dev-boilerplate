@@ -1,6 +1,6 @@
 # Model Context Protocol (MCP) - Guía General
 
-## 📖 ¿Qué es MCP?
+## 📖 Qué es MCP?
 
 **Model Context Protocol (MCP)** es un estándar abierto que define cómo los modelos de lenguaje (LLMs) se conectan e interactúan con herramientas externas y fuentes de datos.
 

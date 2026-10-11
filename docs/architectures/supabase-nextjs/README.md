@@ -71,7 +71,7 @@ Login Usuario → Supabase Auth → JWT Token → Usar para ambas APIs
 
 1. **Obtener string de conexión:** Ver [connection-setup.md](./connection-setup.md)
 2. **Obtener tokens de auth:** Ver [auth-tokens.md](./auth-tokens.md)
-3. **¿Tienes problemas?** Revisa [troubleshooting.md](./troubleshooting.md)
+3. **Tienes problemas?** Revisa [troubleshooting.md](./troubleshooting.md)
 
 ---
 

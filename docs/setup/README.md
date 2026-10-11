@@ -18,9 +18,9 @@
 
 ## Inicio Rápido
 
-1. **¿Vas a conectar el repo a Jira?** → [Jira (lado dev)](#jira-lado-dev)
-2. **¿Vas a usar Codex CLI o Codex Desktop?** → [mcp/codex.md](./mcp/codex.md)
-3. **¿Querés entender cómo se reparten los MCPs entre harnesses?** → [mcp/README.md](./mcp/README.md)
+1. **Vas a conectar el repo a Jira?** → [Jira (lado dev)](#jira-lado-dev)
+2. **Vas a usar Codex CLI o Codex Desktop?** → [mcp/codex.md](./mcp/codex.md)
+3. **Querés entender cómo se reparten los MCPs entre harnesses?** → [mcp/README.md](./mcp/README.md)
 
 ---
 

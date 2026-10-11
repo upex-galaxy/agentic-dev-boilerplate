@@ -6,7 +6,7 @@
 
 ---
 
-## ¿Qué son los ambientes?
+## Qué son los ambientes?
 
 Un ambiente es una **copia independiente de tu aplicación** donde se ejecuta el código. Cada ambiente tiene su propia base de datos, configuración y propósito específico.
 
@@ -291,16 +291,16 @@ Aunque son similares, pueden tener diferencias sutiles. Monitorea producción po
 
 ## Preguntas Frecuentes
 
-**¿Por qué no puedo hacer tests en producción?**
+**Por qué no puedo hacer tests en producción?**
 Porque afectarías a usuarios reales. Un bug en un test puede borrar datos, crashear la app, o crear una mala experiencia.
 
-**¿Staging siempre es idéntico a producción?**
+**Staging siempre es idéntico a producción?**
 Idealmente sí, pero a veces hay diferencias en recursos (staging usa servidores más pequeños para ahorrar costos).
 
-**¿Cuántos ambientes son suficientes?**
+**Cuántos ambientes son suficientes?**
 Para aprender: Local + Staging + Production es perfecto. En trabajo real, depende del tamaño de la empresa.
 
-**¿Qué pasa si encuentro un bug en producción?**
+**Qué pasa si encuentro un bug en producción?**
 Se crea un hotfix inmediato. Algunos equipos lo prueban rápidamente en staging primero, otros van directo a producción si es urgente.
 
 ---
