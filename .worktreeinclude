@@ -28,5 +28,5 @@
 # Per-developer MCP overrides.
 .mcp.local.json
 opencode.local.jsonc
-# The installer's idempotency record (`bun run setup` reads it).
+# The installer's idempotency record (`bun setup` reads it).
 .template/installer.state.json

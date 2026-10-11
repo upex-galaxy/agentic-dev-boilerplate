@@ -192,7 +192,7 @@ describe('adoptPackageJsonDelta', () => {
     expect(out.sections.dependencies.upstreamOnlyKeys).toEqual({});
     expect(out.sections.devDependencies.upstreamOnlyKeys).toEqual({ husky: '^9.1.7', yaml: '^2.8.2' });
     expect(out.sections.scripts.upstreamOnlyKeys).toEqual({ up: 'bun cli/update-boilerplate.ts' });
-    // Remembered in their upstream section, so a later plain `up` does not add them there.
+    // Remembered in their upstream section, so a later plain `bun sync` does not add them there.
     expect(satisfied).toEqual({ dependencies: ['picocolors', 'yaml'], devDependencies: ['typescript'] });
     // Pure.
     expect(delta.sections.dependencies.upstreamOnlyKeys).toEqual({ yaml: '^2.8.2', picocolors: '^1.1.1' });

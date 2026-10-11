@@ -124,7 +124,7 @@ When a referenced skill is not in the available list (deprecated, uninstalled, v
 1. Continue with project-owned alternative if exists.
 2. If no alternative, do the work inline with degraded capability.
 3. Flag in result envelope: `skill_resolution: "fallback-inline" + missing: [list]`.
-4. Suggest reinstall via `bun run setup` or `bunx skills add <name>` in the user-facing summary.
+4. Suggest reinstall via `bun setup` or `bunx skills add <name>` in the user-facing summary.
 
 ### 3.5 Step-required skills (named at the step that needs them)
 
@@ -144,7 +144,7 @@ Contract, identical at every step that cites this section:
 
 1. **Load the named skills before the first write of the step**, not after.
 2. **Not installed** → say so ONCE in the session (which skill, which step) and point at the install
-   path: `bun run setup` installs the project-level list (`PROJECT_LEVEL_SKILLS` in `cli/install.ts`),
+   path: `bun setup` installs the project-level list (`PROJECT_LEVEL_SKILLS` in `cli/install.ts`),
    or one `bunx skills add <package> --skill <name> --yes` with the package from that list;
    `bun run setup:doctor` checks the machine. Then CONTINUE with the step: a missing community skill
    is never a hard STOP and never a silent skip (record it as `skill_resolution: "fallback-inline"`, §3.4).

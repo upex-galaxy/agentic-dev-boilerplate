@@ -97,7 +97,7 @@ State the resolved scope before doing any work.
 
 ```
 bun run context:map business-data-context --list
-  → skill folder missing:   STOP. The skill is delivered by `bun run up`
+  → skill folder missing:   STOP. The skill is delivered by `bun sync`
                             (or ships with the boilerplate); never create it here.
   → placeholder notice:     CREATE mode: build every section from the sources.
   → a list of sections:     UPDATE mode: staleness check per section

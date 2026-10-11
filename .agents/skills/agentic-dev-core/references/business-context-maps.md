@@ -94,4 +94,4 @@ Style is diagram-design's business. Its own `.diagram-design` marker at the repo
 
 ## 9 · Delivery and the updater
 
-The skills listed in `CONTEXT_MAP_SKILLS` are the one exception to "every `<aspect>-context` is project-local" (`isProjectLocalSkillPath` in `cli/lib/updater-core.ts`): `bun run up` DELIVERS a skill's folder once when it is absent (`collectContextMapBootstrap`), then never overwrites or deletes anything inside it. A missing or placeholder map, with any legacy markdown map of its `legacy` list beside it, produces an informational parity row (never blocking), and `bun run setup:doctor` prints the same line.
+The skills listed in `CONTEXT_MAP_SKILLS` are the one exception to "every `<aspect>-context` is project-local" (`isProjectLocalSkillPath` in `cli/lib/updater-core.ts`): `bun sync` DELIVERS a skill's folder once when it is absent (`collectContextMapBootstrap`), then never overwrites or deletes anything inside it. A missing or placeholder map, with any legacy markdown map of its `legacy` list beside it, produces an informational parity row (never blocking), and `bun run setup:doctor` prints the same line.

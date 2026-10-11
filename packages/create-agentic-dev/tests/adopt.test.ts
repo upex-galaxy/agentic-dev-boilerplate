@@ -219,14 +219,14 @@ describe('adoptPreflight', () => {
     expect(row.hint).toContain('mysql2');
   });
 
-  test('already installed by the greenfield scaffolder: blocks, points at bun run up', () => {
+  test('already installed by the greenfield scaffolder: blocks, points at bun sync', () => {
     nextApp();
     write('.template/boilerplate.lock.json', '{}');
     git('add', '-A');
     git('commit', '-q', '-m', 'lock');
     const row = rowOf('install state');
     expect(row.status).toBe('fail');
-    expect(row.hint).toContain('bun run up');
+    expect(row.hint).toContain('bun sync');
   });
 
   test('already adopted: passes (the install is a no-op)', () => {

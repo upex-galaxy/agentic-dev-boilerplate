@@ -17,7 +17,7 @@ That single command:
 3. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 4. Initializes a fresh `git init -b main` and creates the initial commit.
 5. Runs `bun install`.
-6. Hands off to the boilerplate's interactive installer (`bun run setup`),
+6. Hands off to the boilerplate's interactive installer (`bun setup`),
    which wires Engram, agent skills, MCPs, `.env`, and — at the end —
    optionally creates a GitHub repository for you via `gh`.
 
@@ -31,7 +31,7 @@ That single command:
 | `--template-repo <owner/repo>` | `upex-galaxy/agentic-dev-boilerplate` | Override the upstream repository (useful for forks).                                                                  |
 | `--project-key <KEY>`          | (prompted)                            | Jira project key (e.g. `UPEX`). Optional — leave blank to fill in later.                                              |
 | `--no-install`                 | off                                   | Skip `bun install`.                                                                                                   |
-| `--no-setup`                   | off                                   | Skip `bun run setup` — only download + git init.                                                                      |
+| `--no-setup`                   | off                                   | Skip `bun setup` — only download + git init.                                                                      |
 | `--no-git`                     | off                                   | Skip `git init` + initial commit.                                                                                     |
 | `--non-interactive`            | auto on no-TTY                        | Forwarded to the installer. Prompts use safe defaults.                                                                |
 | `--adopt`                      | off                                   | Install into the EXISTING app in the current directory. See [Adopt an existing app](#adopt-an-existing-app).          |
@@ -74,7 +74,7 @@ Then it downloads the template into a temp directory, installs that copy's
 dependencies, and runs its updater with `--adopt` inside your app. The updater
 delivers what the app lacks and never overwrites a file the app already has;
 each collision becomes a parity row and a protected path. There is no history
-scrub, no rename, no `git init`, and no `bun install` or `bun run setup` in the
+scrub, no rename, no `git init`, and no `bun install` or `bun setup` in the
 app. A second `--adopt` on an adopted repo is a no-op.
 
 `--adopt` takes `--template-repo` and `--non-interactive` (passed to the
@@ -91,16 +91,16 @@ cover the whole flow.
 ## Requirements
 
 The scaffolder itself only needs three binaries. Everything else is checked by
-the boilerplate's `bun run setup` (the last stage of this CLI) and surfaced
+the boilerplate's `bun setup` (the last stage of this CLI) and surfaced
 through its own install hints. The split below mirrors the responsibility
 boundary, so a missing `engram` is not an error of `create-agentic-dev` — it's
-something `bun run setup` will point you at.
+something `bun setup` will point you at.
 
 ### For the scaffolder itself (checked upfront, exits on missing)
 
 | Tool          | Required for                                                 | Install                                                                                |
 | ------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `bun` ≥ 1.0.0 | Running this CLI, `bun install`, and `bun run setup`         | macOS/Linux/WSL: `curl -fsSL https://bun.sh/install \| bash` · Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"` |
+| `bun` ≥ 1.0.0 | Running this CLI, `bun install`, and `bun setup`         | macOS/Linux/WSL: `curl -fsSL https://bun.sh/install \| bash` · Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"` |
 | `tar`         | Extracting the GitHub template tarball. GNU tar or bsdtar, either works | Ships with macOS, Linux, and Windows 10 1803+ / Windows 11 (`C:\Windows\System32\tar.exe`) |
 | `git`         | `git init` + initial commit on `main` (skipped if you pass `--no-git`) | [git-scm.com/downloads](https://git-scm.com/downloads)                                 |
 | `node` ≥ 18   | Running this CLI under `npx`                                 | [nodejs.org](https://nodejs.org)                                                       |
@@ -114,11 +114,11 @@ through `cmd.exe`. `tar` needs no install.
 path Bun cannot create its bin shims, and `bun install` fails with
 `could not open bin metadata file`.
 
-### For `bun run setup` downstream (the boilerplate installer will tell you about these)
+### For `bun setup` downstream (the boilerplate installer will tell you about these)
 
 | Tier                   | Tool                                                                 | What it does                                                                                                                                                                                   |
 | ---------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hard blocker**       | Claude Code, OpenCode **or** Codex                                   | The agent the installer configures. `bun run setup` Step 4 aborts if none is found. Install [Claude Code](https://docs.claude.com/claude-code), [OpenCode](https://opencode.ai) or [Codex](https://developers.openai.com/codex/). |
+| **Hard blocker**       | Claude Code, OpenCode **or** Codex                                   | The agent the installer configures. `bun setup` Step 4 aborts if none is found. Install [Claude Code](https://docs.claude.com/claude-code), [OpenCode](https://opencode.ai) or [Codex](https://developers.openai.com/codex/). |
 | **Quasi-required**     | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing → installer prints commands and asks exit-or-continue (no cross-session memory if you continue).                         |
 | **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 8 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
 
@@ -142,7 +142,7 @@ mapping, and the order in which each layer surfaces what's missing.
 | 13   | `--adopt` preflight failed (nothing was installed)                |
 | 20   | Bootstrap error (extract / scrub / git init failed)               |
 | 30   | `bun install` failed                                              |
-| 31   | `bun run setup` failed                                            |
+| 31   | `bun setup` failed                                            |
 | 32   | The updater's `--adopt` run failed                                |
 | 130  | User cancelled (Ctrl+C)                                           |
 

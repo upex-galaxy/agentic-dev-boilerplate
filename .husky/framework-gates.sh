@@ -24,7 +24,7 @@
 # project-specific paths, POSIX sh only. Adding a gate here is how it reaches
 # every downstream repo on the next sync.
 
-# ADOPTED APPS. On a repo `bun run up --adopt` installed into an existing app
+# ADOPTED APPS. On a repo `bun sync --adopt` installed into an existing app
 # (`.template/installer.lock.json` says `"adopted": true`) the root
 # `tsconfig.json` and ESLint config are the APP's, never replaced, so
 # `types:check` / `lint:check` would either be the app's own scripts or judge
@@ -45,7 +45,7 @@ _fg_scoped() {
   elif grep -q "\"$2\"" package.json 2>/dev/null; then
     bun run "$2"
   else
-    echo "⚠️  package.json has no \"$2\" script: tooling check SKIPPED. Restore it with: bun run up"
+    echo "⚠️  package.json has no \"$2\" script: tooling check SKIPPED. Restore it with: bun sync"
   fi
 }
 

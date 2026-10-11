@@ -90,7 +90,7 @@ export const MISSING_ENV_LINE = [
   'CREDENTIALS: no `.env` in this checkout, so every MCP server in this session',
   'started without one. They are already running; this session cannot be repaired.',
   'Fix and restart: in a linked worktree run `bun run worktree:provision` in it',
-  '(it copies `.env` from the main checkout); in a fresh clone run `bun run setup`.',
+  '(it copies `.env` from the main checkout); in a fresh clone run `bun setup`.',
 ].join(' ');
 
 /**
@@ -437,7 +437,7 @@ export function worktreeUnprovisioned(options = {}) {
  * The project-owned `agent-project.md` adds rows of its own: its "Project context
  * skills" table (between `PROJECT_SKILLS_START` / `PROJECT_SKILLS_END`) names
  * each `<aspect>-context` skill the project created, with the triggers that
- * route a prompt to its `SKILL.md`. `bun run up` never touches that file, so
+ * route a prompt to its `SKILL.md`. `bun sync` never touches that file, so
  * a project's routing to its own skills survives every update, which a row in
  * the synced `agent-skills-and-mcps.md` would not.
  *

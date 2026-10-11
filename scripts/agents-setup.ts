@@ -1427,7 +1427,7 @@ async function reseedCopiedTemplate(flags: CliFlags): Promise<void> {
   const schemaPath = join(REPO_ROOT, SCHEMA_FILE);
   const seeded = existsSync(schemaPath) ? seedFromSchema(readFileSync(schemaPath, 'utf8')) : null;
   if (seeded === null) {
-    log.error(`.agents/project.yaml is the boilerplate maintainers' copy, and ${SCHEMA_FILE} is missing or malformed, so there is no template to reseed it from. Restore it from upstream (bun run up), then re-run.`);
+    log.error(`.agents/project.yaml is the boilerplate maintainers' copy, and ${SCHEMA_FILE} is missing or malformed, so there is no template to reseed it from. Restore it from upstream (bun sync), then re-run.`);
     process.exit(1);
   }
 

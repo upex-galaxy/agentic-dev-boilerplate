@@ -57,7 +57,7 @@ Before the first `open`, answer: **does the page need a logged-in session?** The
 
 There is no third case. The human's own browser, a persistent profile with someone's real accounts in it, and a session borrowed from an already-open tab are all outside the identity contract (`live-ui-identity.md` §1-§3), so this repo never attaches to the human's Chrome and never opens a `--profile`.
 
-The shipped `.playwright/cli.config.json` launches every session **in memory and headless**: no profile on disk, nothing shared between two session names. `--headed` is explicit, and only when a human must watch the window (a demo, a pairing call). `bun run up` delivers that file once when it is missing and never overwrites it: a project keeps the copy it tuned. If a project's copy grows a `userDataDir` or `"isolated": false`, every session name shares one profile and nothing in §3.4 holds: remove both keys with the human's OK before trusting a session name as isolation.
+The shipped `.playwright/cli.config.json` launches every session **in memory and headless**: no profile on disk, nothing shared between two session names. `--headed` is explicit, and only when a human must watch the window (a demo, a pairing call). `bun sync` delivers that file once when it is missing and never overwrites it: a project keeps the copy it tuned. If a project's copy grows a `userDataDir` or `"isolated": false`, every session name shares one profile and nothing in §3.4 holds: remove both keys with the human's OK before trusting a session name as isolation.
 
 ### 3.2 Rules for every session
 

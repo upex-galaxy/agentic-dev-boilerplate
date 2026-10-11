@@ -135,7 +135,7 @@ export interface VarSpec {
   obtainHint?: string
   /**
    * Auto-provisioned by the Supabase↔Vercel integration and PULLED via
-   * `vercel env pull` (only available inside `bun run setup --variables`, since
+   * `vercel env pull` (only available inside `bun setup --variables`, since
    * at install time the infra does not exist yet). These vars are NEVER asked
    * at install and NEVER listed individually in the closing next-steps.
    */
@@ -227,7 +227,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Supabase project URL (browser-safe). App runtime. Vercel+Supabase integration generates only this var.',
     schema: { type: 'url', example: 'https://<project-ref>.supabase.co' },
   },
@@ -239,7 +239,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Supabase new-style publishable key (browser-safe, replaces anon key).',
   },
   {
@@ -260,7 +260,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Supabase new-style secret key (server only, replaces service_role).',
   },
   {
@@ -271,7 +271,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Secret used to sign / verify custom JWTs. Known to doctor but not the installer today.',
   },
   // --- Postgres direct connection (auto-provisioned; pulled from Vercel) ---
@@ -283,7 +283,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Direct Postgres host for the Supabase project (db.<project-ref>.supabase.co).',
   },
   {
@@ -294,7 +294,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Postgres user (default: postgres).',
     schema: { example: 'postgres' },
   },
@@ -306,7 +306,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Postgres password for the project.',
   },
   {
@@ -317,7 +317,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Postgres database name (default: postgres).',
     schema: { example: 'postgres' },
   },
@@ -329,7 +329,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Pooled Postgres connection string (port 6543). Contains the password → secret.',
   },
   {
@@ -340,7 +340,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Direct Postgres connection string (port 5432). Contains the password → secret.',
   },
   {
@@ -351,7 +351,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`.',
     note: 'Pooled connection with pgbouncer=true (for Prisma ORM). Contains the password → secret.',
   },
   // --- App config (auto-provisioned for the deployed URL; pulled from Vercel) ---
@@ -363,7 +363,7 @@ export const VAR_MANIFEST: VarSpec[] = [
     required: true,
     critical: false,
     pulledFromInfra: true,
-    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun run setup --variables`. Defaults to http://localhost:3000 locally.',
+    obtainHint: 'Auto-provisioned by Supabase↔Vercel — pull with `vercel env pull` via `bun setup --variables`. Defaults to http://localhost:3000 locally.',
     note: 'Base URL for auth redirects, OAuth callbacks, email links. Referenced in code; previously untracked by installer AND doctor.',
     schema: { type: 'url', example: 'http://localhost:3000' },
   },
@@ -502,7 +502,7 @@ export function criticalVars(): VarSpec[] {
 /**
  * Non-critical vars surfaced in the installer's closing "Next steps — finish
  * later" section. EXCLUDES `pulledFromInfra` vars (auto-provisioned by the
- * Supabase↔Vercel infra and pulled via `bun run setup --variables` — they are
+ * Supabase↔Vercel infra and pulled via `bun setup --variables` — they are
  * covered by a single distinct next-steps line, never listed individually).
  */
 export function nextStepsVars(): VarSpec[] {

@@ -43,7 +43,7 @@
  * `@import(./.env.provider.schema, allowMissing=true)`: the hook a project
  * uses when it keeps its secrets in a manager (ADR-0011). Absent overlay = a
  * no-op, so every project without one loads unchanged. Placed HERE, in the
- * synced half, so an existing project gains the hook with `bun run up` and
+ * synced half, so an existing project gains the hook with `bun sync` and
  * never has to edit its own `.env.schema`. Measured (agentic-qa, same varlock
  * pin): an overlay item beats both this file's empty declaration and a project
  * re-declaration with an empty value. The overlay is `./secret-providers.ts`.
@@ -253,7 +253,7 @@ export function generateCoreSchema(
     `# ${PROJECT_SCHEMA_FILE} as required (the importing file wins).`,
     '#',
     `# The import below is the OPTIONAL secret-manager overlay (${PROVIDER_SCHEMA_FILE},`,
-    '# references only, written by `bun run setup` when a project opts in). Absent',
+    '# references only, written by `bun setup` when a project opts in). Absent',
     '# = nothing changes: values come from .env / .env.local.',
     `# @import(./${PROVIDER_SCHEMA_FILE}, allowMissing=true)`,
     '# @defaultRequired=false',
@@ -301,7 +301,7 @@ export function projectSchemaTemplate(): string {
     '# ============================================================================',
     `# ${PROJECT_SCHEMA_FILE} - project-owned env schema (varlock, env-spec)`,
     '# ============================================================================',
-    '# Delivered once by the boilerplate, then yours: bun run up never overwrites',
+    '# Delivered once by the boilerplate, then yours: bun sync never overwrites',
     `# it. The boilerplate half lives in ${CORE_SCHEMA_FILE} (generated + synced)`,
     '# and is pulled in by the import below. Add the variables YOUR app needs',
     '# under "Project variables"; keep values out of this file.',

@@ -834,19 +834,19 @@
                 <tr>
                   <td><b>Use this template</b> en GitHub</td>
                   <td>Querés el repo creado desde la UI de GitHub</td>
-                  <td>clonar, después <code>bun install</code> y <code>bun run setup</code></td>
+                  <td>clonar, después <code>bun install</code> y <code>bun setup</code></td>
                 </tr>
                 <tr>
                   <td><b>Clonar el boilerplate</b></td>
                   <td>Vas a contribuir al boilerplate mismo</td>
-                  <td><code>bun install</code> y <code>bun run setup</code></td>
+                  <td><code>bun install</code> y <code>bun setup</code></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="prose">
             <p>
-              <code>bun run setup</code> es el instalador interactivo: detecta qué harnesses tenés,
+              <code>bun setup</code> es el instalador interactivo: detecta qué harnesses tenés,
               cablea el <code>.env</code> para cada servidor que declara <code>.mcp.json</code>,
               instala las skills de la comunidad y genera las superficies por harness. Si algo queda
               a medias, <code>bun run setup:doctor</code> te dice qué falta y dónde se arregla. Para
@@ -858,16 +858,16 @@
             </p>
             <p>
               Un proyecto creado desde el boilerplate se mantiene al día con
-              <code>bun run up</code>. El updater sincroniza lo que es del boilerplate, nunca pisa
-              lo que es del proyecto, y cierra con una tabla por superficie y un prompt de paridad
-              para las filas que necesitan tu decisión.
+              <code>bun sync</code>. El updater sincroniza lo que es del boilerplate, nunca pisa lo
+              que es del proyecto, y cierra con una tabla por superficie y un prompt de paridad para
+              las filas que necesitan tu decisión.
             </p>
           </div>
           <div class="callout sig">
             <p>
-              Antes del primer <code>bun run setup</code> necesitás Bun y al menos uno de Claude
-              Code, OpenCode o Codex. El resto, el instalador te lo señala cuando lo necesita. Guía
-              de problemas del instalador:
+              Antes del primer <code>bun setup</code> necesitás Bun y al menos uno de Claude Code,
+              OpenCode o Codex. El resto, el instalador te lo señala cuando lo necesita. Guía de
+              problemas del instalador:
               <a
                 href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md"
                 >INSTALLER.md</a
@@ -1374,7 +1374,7 @@
           <div class="prose">
             <p>
               Y hay una memoria que cruza sesiones: Engram, instalado por
-              <code>bun run setup</code>, guarda decisiones, bugs resueltos y hallazgos para que la
+              <code>bun setup</code>, guarda decisiones, bugs resueltos y hallazgos para que la
               próxima sesión no arranque a ciegas. El deck
               <a
                 href="https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/agentic-dev-core/pbi-jira-cache.es.html"
@@ -1460,7 +1460,7 @@
                 </tr>
                 <tr>
                   <td>traer los cambios del boilerplate</td>
-                  <td><code>bun run up</code></td>
+                  <td><code>bun sync</code></td>
                 </tr>
               </tbody>
             </table>

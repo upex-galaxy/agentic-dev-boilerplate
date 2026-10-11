@@ -1,5 +1,5 @@
 /**
- * @fileoverview SYNCED — `bun run up` overwrites this file. The lint scope of
+ * @fileoverview SYNCED — `bun sync` overwrites this file. The lint scope of
  * the boilerplate's OWN tooling (`cli/`, `scripts/`), independent of the
  * project's root ESLint config.
  *

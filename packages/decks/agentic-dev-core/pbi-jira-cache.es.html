@@ -960,7 +960,7 @@
         <h2><span class="num">07</span>Qué vive un proyecto consumidor</h2>
         <p class="sub">
           Un proyecto consumidor puede seguir trackeando archivos <code>[SYNC]</code> en git. Al
-          correr <code>bun run up</code>, un hook post-apply lista lo que git trackea bajo
+          correr <code>bun sync</code>, un hook post-apply lista lo que git trackea bajo
           <code>.context/PBI/</code>, resta el allowlist commiteado (<code>README.md</code> +
           <code>templates/**</code>) y, si sobra algo, guarda una
           <strong>receta de migración para el agente de IA</strong> del consumidor en
@@ -1003,7 +1003,7 @@
             <span class="n">Entrega atómica</span>
             <h4>La escalera llega entera o no llega</h4>
             <p>
-              El sync de <code>.gitignore</code> de <code>bun run up</code> agrupa una corrida de
+              El sync de <code>.gitignore</code> de <code>bun sync</code> agrupa una corrida de
               líneas con prefijo común que contiene una negación como
               <strong>un grupo todo-o-nada</strong>: una escalera de re-include aplicada a medias
               es peor que no aplicarla. El picker interactivo la ofrece como una sola decisión.

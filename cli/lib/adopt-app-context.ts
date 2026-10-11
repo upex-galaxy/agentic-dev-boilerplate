@@ -10,7 +10,7 @@
  * `AGENTS.md` gains ONE router row pointing at it; and the project overlay
  * (`.agents/instructions/agent-project.md`) gains a short pointer. The `-context`
  * suffix makes the folder project-local (`isProjectLocalSkillPath`), so no
- * later `bun run up` writes or deletes it.
+ * later `bun sync` writes or deletes it.
  *
  * Nothing of the app's text is rewritten: `appInstructionsCoverage` proves
  * every source is contained byte for byte, and its headings with it.
@@ -129,7 +129,7 @@ export function appInstructionsReference(app: AppIdentity, sources: readonly Ado
   const out = [
     `# ${app.name}: instructions carried over at adoption`,
     '',
-    `> Preserved verbatim by \`bun run up --adopt\` from the instruction file(s) ${app.name} carried before adoption${archiveRel ? ` (originals archived in \`${archiveRel}/\`)` : ''}. This is the app team's own text: edit it as a rule change of theirs, never to summarize or reorder it. Where it disagrees with the boilerplate's doctrine, \`.agents/instructions/agent-project.md\` says which rule wins.`,
+    `> Preserved verbatim by \`bun sync --adopt\` from the instruction file(s) ${app.name} carried before adoption${archiveRel ? ` (originals archived in \`${archiveRel}/\`)` : ''}. This is the app team's own text: edit it as a rule change of theirs, never to summarize or reorder it. Where it disagrees with the boilerplate's doctrine, \`.agents/instructions/agent-project.md\` says which rule wins.`,
     '',
   ];
   for (const source of sources) {
@@ -157,7 +157,7 @@ export function appContextSkillMd(slug: string, app: AppIdentity, sources: reado
     `- Read \`${APP_INSTRUCTIONS_REFERENCE}\` whole before acting on a task in ${app.name}'s code or domain: it is the app team's rulebook, and nothing of it was summarized.`,
     '- Never rewrite, summarize or reorder the preserved text. A change to it is the team\'s own rule change, made like any edit to a project file.',
     '- Where the app\'s text and the boilerplate doctrine disagree, `.agents/instructions/agent-project.md` records which one wins; a Critical Rule in `AGENTS.md` always holds.',
-    '- This folder is project-local (its slug ends in `-context`): `bun run up` never writes or deletes it.',
+    '- This folder is project-local (its slug ends in `-context`): `bun sync` never writes or deletes it.',
     '',
   ].join('\n');
 }

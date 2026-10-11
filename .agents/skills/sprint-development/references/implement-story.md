@@ -185,7 +185,7 @@ Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas 
    - Ejemplo: usar `[DOCS_TOOL]` para consultar docs de Next.js, React, Supabase, etc.
 
 5. **Load the frontend skills, then consult the shadcn MCP (story has UI)**
-   - **Required, before the first component or layout write:** `/frontend-design` + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They carry the composition, shadcn and Tailwind rules; the shadcn MCP below is the component catalog, not a substitute. A public, indexable page also loads `/seo`. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+   - **Required, before the first component or layout write:** `/frontend-design` + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They carry the composition, shadcn and Tailwind rules; the shadcn MCP below is the component catalog, not a substitute. A public, indexable page also loads `/seo`. Not installed → say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
    - Si necesitas componentes UI: busca componentes shadcn disponibles
    - Si tienes dudas sobre props de componentes: consulta la API
    - Ejemplo: buscar "dialog", "form", "table" para encontrar componentes apropiados
@@ -241,7 +241,7 @@ Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas 
 
 **Para cambios de DB:**
 
-- ✅ **Required first:** load `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call through the DB MCP. Not installed → say so once, point at `bun run setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+- ✅ **Required first:** load `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call through the DB MCP. Not installed → say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - ✅ Lee el historial de migraciones por el DB MCP (`list_migrations`) justo antes de escribir el cambio
 - ✅ Aplica según `{{stack.database.migrations_tool}}`: `supabase-mcp` / `supabase-cli` por el DB MCP (`supabase-cli` además commitea el archivo con la versión que registró el MCP); `prisma` / `drizzle`: la herramienta de la app genera la migración y aplicarla es el pipeline del equipo, preguntando antes; el MCP queda en solo lectura. Detalle: `agentic-dev-core/references/db-change-doctrine.md`
 - ✅ Después de aplicar: `list_migrations` muestra el cambio, relee la definición en vivo y regenera los tipos (`{{stack.package_manager}} run {{stack.scripts.db_types}}`)

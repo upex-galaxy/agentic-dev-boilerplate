@@ -1,5 +1,5 @@
 /**
- * @fileoverview SYNCED BASE — `bun run up` overwrites this file. Do not edit it
+ * @fileoverview SYNCED BASE — `bun sync` overwrites this file. Do not edit it
  * here; the project's own `eslint.config.js` spreads these exports and
  * overrides whatever it needs.
  *
@@ -12,7 +12,7 @@
  * `CLI_IMPORT_CLOSURE` is the reason this file is not optional: it enforces an
  * invariant of the UPDATER, not a project style preference. While it lived only
  * in the project-owned `eslint.config.js` (watched, never overwritten), a
- * project scaffolded before the block existed ran `bun run up` with no rule
+ * project scaffolded before the block existed ran `bun sync` with no rule
  * guarding the import closure its self-update depends on.
  *
  * Every scoped block exported here (a SCREAMING_SNAKE `export const` other than
@@ -128,7 +128,7 @@ export const BASE_ESLINT_OPTIONS = {
  * So an import that escapes `cli/` is not a style question: it bricks the
  * update path for anyone jumping more than one release. It happened in the
  * QA boilerplate: `cli/` imported `../scripts/agent-compatibility.ts`, the
- * re-exec died on `Cannot find module`, and `bun run up`, `up --rollback`,
+ * re-exec died on `Cannot find module`, and `bun sync`, `bun sync --rollback`,
  * `setup` and `setup:doctor` all went down together, since the failure is at
  * module load and the rollback path shares the same entrypoint.
  *
@@ -173,7 +173,7 @@ export const CLI_IMPORT_CLOSURE = {
           '@schemas/*',
           '@utils/*',
         ],
-        message: 'cli/ must be import-closed: the updater re-execs the new cli/ before other components are synced, so an import that escapes cli/ breaks `bun run up` for repos more than one release behind. Move the shared module into cli/lib/ instead.',
+        message: 'cli/ must be import-closed: the updater re-execs the new cli/ before other components are synced, so an import that escapes cli/ breaks `bun sync` for repos more than one release behind. Move the shared module into cli/lib/ instead.',
       }],
     }],
   },

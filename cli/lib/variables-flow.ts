@@ -1,5 +1,5 @@
 /**
- * @fileoverview `bun run setup --variables` flow — idempotent local + remote
+ * @fileoverview `bun setup --variables` flow — idempotent local + remote
  * env-var setup driven by the canonical `VAR_MANIFEST`
  * (`cli/lib/variables-manifest.ts`, Phase 1).
  *
@@ -552,7 +552,7 @@ async function runRemote(
 async function offerVercelLink(opts: VariablesFlowOptions): Promise<boolean> {
   process.stdout.write(`${C.yellow}  Repo is not linked to a Vercel project.${C.reset}\n`);
   if (opts.nonInteractive) {
-    process.stdout.write(`${C.cyan}  Run: vercel link${C.reset}  ${C.dim}(then re-run: bun run setup --variables)${C.reset}\n`);
+    process.stdout.write(`${C.cyan}  Run: vercel link${C.reset}  ${C.dim}(then re-run: bun setup --variables)${C.reset}\n`);
     return false;
   }
   const doLink = await tui.confirm({
@@ -560,13 +560,13 @@ async function offerVercelLink(opts: VariablesFlowOptions): Promise<boolean> {
     initialValue: true,
   });
   if (tui.isCancel(doLink) || !doLink) {
-    process.stdout.write(`${C.dim}  Skipped. Run \`vercel link\` then re-run: bun run setup --variables${C.reset}\n`);
+    process.stdout.write(`${C.dim}  Skipped. Run \`vercel link\` then re-run: bun setup --variables${C.reset}\n`);
     return false;
   }
   // Interactive link — inherit stdio so the user can pick / create the project.
   const link = spawnSync('vercel', ['link'], { stdio: 'inherit', timeout: 180000 });
   if (link.status !== 0) {
-    tui.log.warn(`vercel link did not complete (exit ${link.status}). Re-run \`bun run setup --variables\` after linking.`);
+    tui.log.warn(`vercel link did not complete (exit ${link.status}). Re-run \`bun setup --variables\` after linking.`);
     return false;
   }
   const after = detectVercel();
@@ -829,7 +829,7 @@ async function runMenu(
  * Vercel push/pull, the interactive menu, deprecated-var warnings, and the final
  * observability table.
  *
- * With `menu: true` (invoked via `bun run setup --variables` with NO explicit
+ * With `menu: true` (invoked via `bun setup --variables` with NO explicit
  * mode flag, on a TTY) it shows the interactive menu. Otherwise it runs `mode`
  * directly (scriptable / non-interactive).
  *
@@ -897,6 +897,6 @@ export async function runVariablesFlow(opts: VariablesFlowOptions = {}): Promise
 
   process.stdout.write('\n');
   process.stdout.write(`${tui.successBox([
-    'Variables flow complete. Re-run anytime: bun run setup --variables  (idempotent).',
+    'Variables flow complete. Re-run anytime: bun setup --variables  (idempotent).',
   ])}\n`);
 }

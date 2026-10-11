@@ -18,7 +18,7 @@
  * Usage:
  *   bun run setup:doctor              # human-readable summary
  *   bun run setup:doctor --json       # machine-readable JSON
- *   bun run setup:doctor --preflight  # blocker-only gate for `bun run setup`
+ *   bun run setup:doctor --preflight  # blocker-only gate for `bun setup`
  *
  * --preflight mode: minimal pre-install gate. Checks only the things that
  * would crash `cli/install.ts` at module-load time (Bun runtime present and
@@ -380,7 +380,7 @@ interface DoctorReport {
    *
    * NEVER a failure. Being behind upstream is not a broken repo, and the moment
    * an upstream key addition turns a project's own checks red, the project
-   * learns to skip them. `bun run up` is where it becomes actionable; here it
+   * learns to skip them. `bun sync` is where it becomes actionable; here it
    * is the answer to "why is my project behaving oddly".
    */
   project_schema: ProjectSchemaDiagnostic
@@ -608,7 +608,7 @@ async function projectSchemaDiagnostic(): Promise<ProjectSchemaDiagnostic> {
     if (!existsSync(sourcePath)) { return { gaps: [], exempt: [], note: `${SCHEMA_SOURCE} not found`, copied_template: false }; }
     const sourceText = await readFile(sourcePath, 'utf8');
     const copied_template = classifyProjectYaml(sourceText, gitOrigin()) === 'copied-template';
-    if (!existsSync(schemaPath)) { return { gaps: [], exempt: [], note: `${SCHEMA_FILE} not found: run \`bun run up\` to receive it`, copied_template }; }
+    if (!existsSync(schemaPath)) { return { gaps: [], exempt: [], note: `${SCHEMA_FILE} not found: run \`bun sync\` to receive it`, copied_template }; }
     const delta = projectDelta(sourceText, await readFile(schemaPath, 'utf8'));
     return { gaps: delta.gaps, exempt: delta.exempt, note: delta.error, copied_template };
   }
@@ -653,7 +653,7 @@ function toolingIsolationDiagnostic(): { adopted: boolean, pending: string[] } {
     catch { return undefined; }
   })();
   if (repoCheckRunsAppWideLegs(repoCheck)) {
-    pending.push('package.json "repo:check" runs the app-wide format:check / lint:check / types:check: take upstream\'s value (`bun run up`, row scripts.repo:check), which opens with `bun scripts/tooling-check.ts repo` and scopes them to the tooling');
+    pending.push('package.json "repo:check" runs the app-wide format:check / lint:check / types:check: take upstream\'s value (`bun sync`, row scripts.repo:check), which opens with `bun scripts/tooling-check.ts repo` and scopes them to the tooling');
   }
   return { adopted, pending };
 }
@@ -923,12 +923,12 @@ async function runDoctor(): Promise<DoctorReport> {
 
   // Secret manager: a provider without its overlay resolves nothing from the
   // vault, and an overlay with `provider: local` still does. Both are the yaml
-  // and the committed file disagreeing; `bun run setup` rewrites the pair.
+  // and the committed file disagreeing; `bun setup` rewrites the pair.
   const sp = report.secrets_provider;
   if (sp.note !== null && sp.provider === null) {
     report.pending_actions.push({
       type: 'shell_command',
-      target: 'bun run setup',
+      target: 'bun setup',
       hint: `The secrets: block of .agents/project.yaml could not be read (${sp.note}). Fix it, or re-run the secret-manager step of setup.`,
       where: '.agents/project.yaml',
     });
@@ -936,7 +936,7 @@ async function runDoctor(): Promise<DoctorReport> {
   else if (sp.provider !== null && sp.provider !== 'local' && !sp.overlay_present) {
     report.pending_actions.push({
       type: 'shell_command',
-      target: 'bun run setup',
+      target: 'bun setup',
       hint: `secrets.provider is ${sp.provider} but .env.provider.schema is missing, so nothing resolves from the vault and every launch reads .env alone. Re-run the secret-manager step of setup to write the overlay.`,
       where: '.env.provider.schema',
     });
@@ -944,7 +944,7 @@ async function runDoctor(): Promise<DoctorReport> {
   else if (sp.provider === 'local' && sp.overlay_present && sp.vault_items.length > 0) {
     report.pending_actions.push({
       type: 'shell_command',
-      target: 'bun run setup',
+      target: 'bun setup',
       hint: `secrets.provider is local but .env.provider.schema still resolves ${sp.vault_items.join(', ')} from a vault. Pick one: re-run the secret-manager step of setup, or delete the overlay.`,
       where: '.env.provider.schema',
     });
@@ -1232,7 +1232,7 @@ function printHuman(report: DoctorReport): void {
       for (const gap of ps.gaps) {
         process.stdout.write(`  ${gap.block}${gap.wholeBlock ? ' (whole block)' : ''}: ${gap.paths.join(', ')}\n`);
       }
-      process.stdout.write('  Fix: bun run up  (offers to insert them, one prompt per block, insert-only)\n');
+      process.stdout.write('  Fix: bun sync  (offers to insert them, one prompt per block, insert-only)\n');
     }
     if (ps.exempt.length > 0) {
       process.stdout.write(`  silenced via updater.schema_exempt: ${ps.exempt.join(', ')}\n`);
@@ -1350,7 +1350,7 @@ function printHuman(report: DoctorReport): void {
 }
 
 // ----------------------------------------------------------------------------
-// Preflight (blocker-only gate for `bun run setup`)
+// Preflight (blocker-only gate for `bun setup`)
 // ----------------------------------------------------------------------------
 
 function preflightFail(msg: string, fix: string): never {
@@ -1368,7 +1368,7 @@ function runPreflight(): never {
   if (!bunVersion) {
     preflightFail(
       'Bun runtime not detected (process.versions.bun is undefined).',
-      'Install Bun from https://bun.sh, then re-run `bun run setup`.',
+      'Install Bun from https://bun.sh, then re-run `bun setup`.',
     );
   }
   const parsed = parseBunVersion(bunVersion);
@@ -1381,7 +1381,7 @@ function runPreflight(): never {
   if (!existsSync(INQUIRER_MARKER)) {
     preflightFail(
       'Project dependencies not installed (node_modules/@inquirer/prompts missing).',
-      'Run `bun install` first, then re-run `bun run setup`.',
+      'Run `bun install` first, then re-run `bun setup`.',
     );
   }
   process.stdout.write(`Preflight OK (Bun ${bunVersion}, deps installed)\n`);

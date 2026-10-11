@@ -2146,7 +2146,7 @@ export async function shallowCloneTemplate(templateRepo: string, dest: string): 
  * path, or a `file://` URL) instead of a GitHub `OWNER/REPO` handle. Local
  * sources are cloned with plain `git clone` and need no `gh` session: this is
  * how the updater is exercised against an unpublished branch of the
- * boilerplate (`UPEX_TEMPLATE_REPO=/path/to/clone bun run up`).
+ * boilerplate (`UPEX_TEMPLATE_REPO=/path/to/clone bun sync`).
  */
 export function isLocalTemplateSource(templateRepo: string): boolean {
   return templateRepo.startsWith('file://')
@@ -2491,7 +2491,7 @@ export async function runUpdate(
   //
   // Dirtiness the updater produced itself (cross-harness migration output, the
   // CLI files a parent process refreshed before re-exec'ing us) is exempt: see
-  // `dirtyTreeExemptions`. A clean tree before `bun run up --auto` must never
+  // `dirtyTreeExemptions`. A clean tree before `bun sync --auto` must never
   // abort because of the updater's own writes.
   //
   // The previous run's own output is exempt too, even uncommitted: a sync
@@ -2621,7 +2621,7 @@ export async function runUpdate(
   // a sync (greenfield or adopted): switching policy on it would skip
   // deliveries the lock cursor assumes happened.
   if (opts.adopt === true && rawState !== null) {
-    sink.error(`--adopt es solo para la primera corrida y este repo ya tiene ${cfg.versionFile}. Usa \`bun run up\` sin --adopt.`);
+    sink.error(`--adopt es solo para la primera corrida y este repo ya tiene ${cfg.versionFile}. Usa \`bun sync\` sin --adopt.`);
     return abortedSummary;
   }
 
@@ -2787,7 +2787,7 @@ export async function runUpdate(
         }
         // Pre-write backup contract: mirror each existing local file into a
         // fresh `.backups/update-<ts>/` before overwriting. Symmetric with
-        // applyResolution's backup behavior. `bun run up --rollback` can then
+        // applyResolution's backup behavior. `bun sync --rollback` can then
         // restore the prior CLI if a self-update breaks it.
         const selfBackupDir = createBackupDir(repoRoot);
         for (const relPath of stale) {

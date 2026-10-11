@@ -14,7 +14,7 @@ backlog of decks still to write.
 
 `packages/` is boilerplate-only: `packages/create-agentic-dev` prunes it wholesale
 (`TEMPLATE_EXCLUDES` in `packages/create-agentic-dev/src/prepare.ts`, entry
-`'packages'`) and `bun run up` never syncs it. Keeping the decks here means
+`'packages'`) and `bun sync` never syncs it. Keeping the decks here means
 consumer projects scaffolded from this template do NOT carry this HTML — they
 browse the published site instead.
 

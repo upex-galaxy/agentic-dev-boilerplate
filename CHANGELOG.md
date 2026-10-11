@@ -5,6 +5,21 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-11 — `bun sync` and `bun setup` are the command names
+
+### Changed
+
+- **The updater is `bun sync`**, a new `sync` script. `up` stays as a hidden alias running the
+  same updater, so a project whose `package.json` only has `up` runs `bun up` (or
+  `bun run up`) ONCE: the `scripts` key sync adds `sync`, and the run prints one line naming
+  the new command. From then on, `bun sync`. Docs and messages no longer teach `up`.
+- **The installer is taught as `bun setup`** (the script name `setup` is unchanged; Bun runs a
+  package script without `run` when no built-in command shares its name). The scaffolder's
+  final hints print `bun setup` when `--no-setup` skipped it, and `bun sync` for later updates.
+- **Deck files are `how-it-works.es.html`**, the English name the QA boilerplate already uses:
+  every `packages/decks/<skill>/como-funciona.es.html` was renamed and its links fixed.
+- Entries below this one keep the names that were current when they were written.
+
 ## 2026-10-06 — The skill registry no longer depends on the machine
 
 ### Fixed

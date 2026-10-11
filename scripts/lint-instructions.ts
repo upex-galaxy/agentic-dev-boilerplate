@@ -20,7 +20,7 @@
  *     `@path` import), and every section file is the target of some row.
  *     The "Project context skills" table of `agent-project.md` (between
  *     `<!-- project-skills:start -->` and `<!-- project-skills:end -->`, the
- *     home of a project-created skill's row, which `bun run up` never
+ *     home of a project-created skill's row, which `bun sync` never
  *     overwrites) is checked the same way: each row names a skill whose
  *     `.agents/skills/<slug>/SKILL.md` exists, says when to load it, and
  *     carries at least one trigger that compiles. An `agent-project.md`
@@ -71,7 +71,7 @@
  *
  * A project whose `AGENTS.md` has no ROUTER yet still runs its pre-split
  * monolith (the sync delivers the sections; moving AGENTS.md is the project's
- * own merge, named in the parity report of `bun run up`): the gate prints a
+ * own merge, named in the parity report of `bun sync`): the gate prints a
  * note and passes, because being behind upstream is not a broken repo; so does
  * an adopted app with no `AGENTS.md` while its saved merge waits for approval.
  * The maintainers' copy never gets that pass.
@@ -428,7 +428,7 @@ export function lintLocks(root: string, l0: string, sections: string[]): Instruc
   findings.push(...lintComplete(root, sections, fixture, maintainer));
   return findings;
 }
-// LINT.ThenChange(README.md, INSTALLER.md, .agents/instructions/README.md, .agents/skills/agentic-dev-core/references/instructions-doctrine.md, packages/decks/progressive-disclosure/como-funciona.es.html)
+// LINT.ThenChange(README.md, INSTALLER.md, .agents/instructions/README.md, .agents/skills/agentic-dev-core/references/instructions-doctrine.md, packages/decks/progressive-disclosure/how-it-works.es.html)
 
 /**
  * `--accept-router ADR-NNNN`: re-lock the ROUTER on a decided change. Refuses
@@ -488,7 +488,7 @@ if (import.meta.main) {
   }
   if (isPendingMigration(root)) {
     console.log(existsSync(join(root, L0_FILE))
-      ? `- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun run up\``
+      ? `- instructions:check skipped: ${L0_FILE} has no ROUTER yet (pre-split monolith); move it to the L0 + ${SECTIONS_DIR}/ layout, see the parity report of \`bun sync\``
       : `- instructions:check skipped: ${L0_FILE} waits for the adoption merge saved in ${ADOPT_INSTRUCTIONS_PENDING_FILE} (\`project-adoption\` Phase 6)`);
     process.exit(0);
   }

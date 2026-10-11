@@ -39,7 +39,7 @@
     {
       "name": "should-apply-instruction-merge-only-on-own-approval",
       "prompt": "Approve the adoption plan, but leave our CLAUDE.md as it is for now.",
-      "expected_behavior": "Executes Phases 3-5 and 7 from the approved plan and skips Phase 6: the saved .agents/prompts/adopt-instructions.md stays unapplied, CLAUDE.md untouched, the instructions signal reported PENDING with the note that a plain `bun run up` refuses at its preflight until the merge is applied.",
+      "expected_behavior": "Executes Phases 3-5 and 7 from the approved plan and skips Phase 6: the saved .agents/prompts/adopt-instructions.md stays unapplied, CLAUDE.md untouched, the instructions signal reported PENDING with the note that a plain `bun sync` refuses at its preflight until the merge is applied.",
       "category": "guard"
     },
     {

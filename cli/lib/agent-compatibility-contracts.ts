@@ -70,7 +70,7 @@ export const CODEX_HOOK_COMMAND_WINDOWS = 'powershell.exe -NoProfile -Command "$
  * command names none. Every adapter reaches its script through a root
  * placeholder (`$CLAUDE_PROJECT_DIR` for Claude, `$root` for both Codex
  * forms), so whatever follows it IS the repository-relative path. The hook
- * merge of `bun run up` reads it to skip a command whose script the project
+ * merge of `bun sync` reads it to skip a command whose script the project
  * lacks (`mergeHookGroups`, `cli/lib/updater-settings.ts`).
  */
 export function hookScriptPath(command: string): string | null {
@@ -1092,12 +1092,12 @@ export const ROUTE_RESURFACE_EVENT = 'PostToolUse';
 
 /**
  * The fix a downstream project reads next to a missing hook group. Its
- * `.claude/settings.json` is frozen by the sync, but `bun run up` appends the
+ * `.claude/settings.json` is frozen by the sync, but `bun sync` appends the
  * upstream hook groups it lacks (`mergeHookGroups`, `cli/lib/updater-settings.ts`)
  * and its `.codex/hooks.json` is rewritten by the sync, so re-running the
  * update IS the fix. Not said in the boilerplate itself, which has no upstream.
  */
-export const HOOK_GROUP_FIX = 'run `bun run up`, which adds the upstream hook groups this file lacks';
+export const HOOK_GROUP_FIX = 'run `bun sync`, which adds the upstream hook groups this file lacks';
 
 /** One group of `event` with no matcher (every tool) whose hooks run `command`. */
 function hasUnmatchedGroup(settings: JsonObject, event: string, command: string): boolean {
@@ -1195,7 +1195,7 @@ export function validateInstructionRouterHooks(root = process.cwd(), harnesses: 
  * `eslint.config.js`.
  *
  * THE HOLE THIS CLOSES. The base is SYNCED, so a new block reaches every
- * project on the next `bun run up`. `eslint.config.js` is on the protected
+ * project on the next `bun sync`. `eslint.config.js` is on the protected
  * watchlist and is NEVER overwritten, and the wiring (importing the block and
  * passing it to `antfu(...)`) lives only there. So upstream can ship a rule
  * that lands on disk, exports cleanly, and enforces NOTHING, while

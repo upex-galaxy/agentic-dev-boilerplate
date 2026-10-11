@@ -410,7 +410,7 @@ export interface StackWrite {
  *
  * A project that lacks the block (or some of its keys) gets them inserted from
  * `schemaText` first, at the schema's position, with their comments: the same
- * insertion `bun run up` performs. Then each value is replaced in place. The
+ * insertion `bun sync` performs. Then each value is replaced in place. The
  * result is re-parsed and read back; any mismatch is an error and the input
  * text is returned untouched. NEVER `parseDocument(...).toString()`: it
  * rewraps folded scalars elsewhere in the file.
@@ -424,7 +424,7 @@ export function writeStack(projectText: string, schemaText: string | null, updat
   const missing = STACK_FIELDS.filter(f => !(f.path in before.values));
   if (missing.length > 0) {
     if (schemaText === null) {
-      return { text: projectText, changed: [], inserted: [], error: 'the `stack:` block is incomplete and no schema is on disk to insert it from: run `bun run up`' };
+      return { text: projectText, changed: [], inserted: [], error: 'the `stack:` block is incomplete and no schema is on disk to insert it from: run `bun sync`' };
     }
     const delta = projectDelta(text, schemaText);
     const paths = delta.gaps.filter(g => g.block === STACK_BLOCK).flatMap(g => g.paths);

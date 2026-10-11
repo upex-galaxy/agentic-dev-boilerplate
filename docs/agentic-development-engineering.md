@@ -85,7 +85,7 @@ The practice rests on three load-bearing strategic choices.
 
 ### 3.1 Spec-Driven Development (SDD) before code
 
-> **Note**: `bun run setup` wires only Engram, with the engram binary's own `engram setup <agent>`. The optional `sdd-*` skill bundle is not part of the shipped skill set; §11.6 covers adopting it.
+> **Note**: `bun setup` wires only Engram, with the engram binary's own `engram setup <agent>`. The optional `sdd-*` skill bundle is not part of the shipped skill set; §11.6 covers adopting it.
 
 Code is the last artefact produced, not the first. Before any line of TypeScript is written, the AI walks the project through:
 
@@ -244,7 +244,7 @@ Every skill declares its kind in `SKILL.md` frontmatter (`metadata.kind`), and `
 
 The roster itself is not copied here: `.agents/skills/REGISTRY.md` (built by `bun run skills:registry`) lists every skill with its kind and compact rules, and `.agents/instructions/agent-skills-and-mcps.md` §5 says when each one triggers.
 
-On top of the project-shipped skills, the boilerplate composes with **external skill catalogs** installed via `bun run setup`:
+On top of the project-shipped skills, the boilerplate composes with **external skill catalogs** installed via `bun setup`:
 
 - **Community skills** (installed via `bunx skills add`): stack-aware skills that ship the canonical "how to do X in framework Y" knowledge, so the project-shipped skills can stay stack-agnostic; plus CLI companions such as `supabase` and `deploy-to-vercel`. The list is `PROJECT_LEVEL_SKILLS` in `cli/install.ts`; they land in the same `.agents/skills/` store.
 - **User-level skills** (cross-cutting, repo-agnostic, they follow the user across every project): the list is `USER_LEVEL_SKILLS` in `cli/install.ts`.
@@ -696,7 +696,7 @@ There are no command files: a skill is invoked by its name plus a mode, on every
 
 ### 11.6 Adopting Spec-Driven Development (SDD)
 
-The SDD bloque (`sdd-*` skills) is not auto-installed by `bun run setup` (see §3.1 note). Install manually first: `gentle-ai install --agent <agent> --components sdd,skills`. Once installed:
+The SDD bloque (`sdd-*` skills) is not auto-installed by `bun setup` (see §3.1 note). Install manually first: `gentle-ai install --agent <agent> --components sdd,skills`. Once installed:
 
 1. Run `/sdd-init` to detect the stack and bootstrap the persistence backend (engram by default).
 2. For any substantial change, use `/sdd-new <change-name>` to start the full lifecycle: explore → propose → spec → design → tasks → apply → verify → archive.
@@ -748,7 +748,7 @@ The rest is execution.
 - `docs/methodology/IQL-methodology.md` — phased lifecycle deep-dive.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.
 - `docs/workflows/` — environments, git-flow, OpenAPI sync.
-- `INSTALLER.md` — what `bun run setup` configures: Engram, community skills, MCPs, external CLIs, opt-out.
+- `INSTALLER.md` — what `bun setup` configures: Engram, community skills, MCPs, external CLIs, opt-out.
 - `.agents/skills/agentic-dev-core/SKILL.md` — foundation reference host (passive; shared references cited by other skills).
 - `.agents/skills/agentic-dev-core/references/orchestration-doctrine.md` — canonical orchestration doctrine cited by every workflow skill.
 - `.agents/skills/project-foundation/SKILL.md` — Constitution + PRD + SRS + Discovery skill internals.

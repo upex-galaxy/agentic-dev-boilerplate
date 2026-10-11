@@ -109,7 +109,7 @@ export const PROVISION_COPIES: readonly ProvisionCopy[] = [
   { path: '.vercel', kind: 'dir', secret: true, why: '`vercel link` output: the project and org ids the Vercel CLI and `/vercel-cli` read' },
   { path: '.mcp.local.json', kind: 'file', secret: true, why: 'per-developer MCP override' },
   { path: 'opencode.local.jsonc', kind: 'file', secret: true, why: 'per-developer OpenCode override' },
-  { path: '.template/installer.state.json', kind: 'file', secret: false, why: 'the installer\'s idempotency record; without it `bun run setup` redoes every step' },
+  { path: '.template/installer.state.json', kind: 'file', secret: false, why: 'the installer\'s idempotency record; without it `bun setup` redoes every step' },
 ];
 
 /** The `.worktreeinclude` spelling of one provision entry. */
@@ -229,7 +229,7 @@ export const AUDIT_RULES: readonly AuditRule[] = [
   { pattern: /^\.husky\/_(\/|$)/, class: 'cache', note: '`bun install` (husky prepare)' },
   { pattern: /^\.claude\/skills\/?$/, class: 'cache', note: '`bun run agents:compat`' },
   { pattern: /^\.agents\/skills\/[^/]+-workspace(\/|$)/, class: 'disposable', note: 'skill-creator eval workspace' },
-  { pattern: /^\.agents\/skills\/[^/]+(\/|$)/, class: 'cache', note: 'community skill; `bun run worktree:provision` / `bun run setup`' },
+  { pattern: /^\.agents\/skills\/[^/]+(\/|$)/, class: 'cache', note: 'community skill; `bun run worktree:provision` / `bun setup`' },
   { pattern: /^\.context\/PBI(\/|$)/, class: 'cache', note: '`bun run context:hydrate`' },
   { pattern: /^\.vercel(\/|$)/, class: 'cache', note: '`vercel link`, or `bun run worktree:provision` (copied from the primary)' },
   { pattern: /(^|\/)\.next(\/|$)/, class: 'cache', note: '`next dev` / `next build`' },

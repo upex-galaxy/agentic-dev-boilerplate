@@ -97,7 +97,7 @@ Not yet measured: model compliance with `ROUTE:` (share of routed sessions that 
 - `scripts/lint-instructions.ts`, `scripts/lib/instructions.ts` (the gate and the shared parsers)
 - `cli/lib/updater-instructions.ts` and `.agents/instructions/project.md.template` (delivery downstream)
 - `.agents/hooks/personality-reinject.mjs` (`routeLines`, `IMPORT_ROW_TRIGGERS`), `.claude/settings.json` and `.codex/hooks.json` (`SessionStart` matcher `compact`), `.opencode/plugins/personality-reinject.js`
-- Human explanation: `packages/decks/progressive-disclosure/como-funciona.es.html`
+- Human explanation: `packages/decks/progressive-disclosure/how-it-works.es.html`
 - ADR-0002 (one instruction source for three harnesses; this ADR keeps its shim contract and changes only how much of the source loads always)
 
 ## Amendments

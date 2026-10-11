@@ -4,7 +4,7 @@
  * The default path is `.env` (ADR-0011, owner decision OD1 = b): a fresh clone,
  * a student, an offline laptop all fill `.env` and nothing here runs. A project
  * that keeps its secrets in a manager opts in through `.agents/project.yaml`
- * `secrets.provider`, and `bun run setup` writes ONE committed overlay file,
+ * `secrets.provider`, and `bun setup` writes ONE committed overlay file,
  * `.env.provider.schema`, that holds REFERENCES (`op(op://vault/item/field)`),
  * never a value. varlock resolves them each time a process starts through
  * `varlock run`; the value lives in that process and dies with it.
@@ -276,7 +276,7 @@ export function providerSchemaTemplate(config: SecretsConfig, manifest: readonly
     '# through their own access when a process starts (each MCP server through the',
     '# .env loader, a command through `bunx varlock run -- <cmd>`).',
     '#',
-    '# Written once by `bun run setup` from .agents/project.yaml `secrets:`; yours',
+    '# Written once by `bun setup` from .agents/project.yaml `secrets:`; yours',
     '# after that. Imported by .env.core.schema with allowMissing=true: delete this',
     '# file and the project is back on plain .env.',
     '#',
@@ -336,7 +336,7 @@ export function secretsBlockText(config: SecretsConfig): string {
   const op = config.onepassword;
   return [
     '# Where SECRET values come from. `local` (the default) = .env / .env.local.',
-    '# A secret manager is the ADVANCED option (ADR-0011): `bun run setup` writes the',
+    '# A secret manager is the ADVANCED option (ADR-0011): `bun setup` writes the',
     '# committed overlay .env.provider.schema (references only, never values).',
     '# Read directly by the installer; not a {{VAR}} source.',
     'secrets:',

@@ -1,5 +1,5 @@
 /**
- * @fileoverview The `--adopt` first-run policy: what `bun run up --adopt` does
+ * @fileoverview The `--adopt` first-run policy: what `bun sync --adopt` does
  * on an EXISTING application, beyond the file sync itself.
  *
  * The core (`runUpdate` with `adopt: true`) already guarantees the sync never
@@ -12,7 +12,7 @@
  *  - `.agents/project.yaml`: when this run delivered it, it is re-seeded from
  *    `.agents/project.schema.yaml` (identity null, `git_strategy` inherited),
  *    never left as the maintainer's filled copy, and every collision is listed
- *    under `updater.protected_paths` so no later `bun run up` overwrites it.
+ *    under `updater.protected_paths` so no later `bun sync` overwrites it.
  *  - Instructions: an app that carries its own `AGENTS.md` and/or `CLAUDE.md`
  *    gets its text, verbatim, in a project-local `<app>-context` skill
  *    (`./adopt-app-context.ts`) plus a pointer in `agent-project.md`, and ONE
@@ -28,7 +28,7 @@
  *    config (tsconfig, ESLint, a foreign hook manager) that still reaches the
  *    tooling, with the lines to add; the app's file itself is never written.
  *
- * Nothing here runs on a plain `bun run up` or on a greenfield first run.
+ * Nothing here runs on a plain `bun sync` or on a greenfield first run.
  */
 
 import type { HiddenPath, ReincludeOutcome } from './adopt-gitignore.ts';
@@ -207,7 +207,7 @@ export function appendEnvExampleBlock(local: string, upstream: string): { text: 
   const eol = /\r\n/.test(local) ? '\r\n' : '\n';
   const body = local.replace(/(?:\r?\n)*$/, '');
   const hasBlock = local.split(/\r?\n/).some(l => l.trim().startsWith(ADOPT_ENV_SENTINEL));
-  const head = hasBlock ? [] : ['', ADOPT_ENV_SENTINEL, '# Empty on purpose: the values go in .env (see bun run setup).'];
+  const head = hasBlock ? [] : ['', ADOPT_ENV_SENTINEL, '# Empty on purpose: the values go in .env (see bun setup).'];
   const text = [body, ...head, ...lines].join(eol) + eol;
   return { text: body === '' ? text.replace(/^(?:\r?\n)+/, '') : text, added };
 }
@@ -339,7 +339,7 @@ export function withProtectedPaths(yaml: string, paths: readonly string[]): stri
   const updaterAt = lines.findIndex(l => /^updater:\s*(?:#.*)?$/.test(l));
   let next: string;
   if (updaterAt === -1) {
-    next = `${yaml.replace(/\n*$/, '\n')}\nupdater:\n  protected_paths: # app files kept by bun run up --adopt\n${items.join('\n')}\n`;
+    next = `${yaml.replace(/\n*$/, '\n')}\nupdater:\n  protected_paths: # app files kept by bun sync --adopt\n${items.join('\n')}\n`;
   }
   else {
     let found = -1;
@@ -515,7 +515,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
     const single = files.length === 1 && group === files[0];
     const protectedClause = input.protectedWritten
       ? 'listed in updater.protected_paths, so no later sync overwrites it'
-      : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun run up\` overwrites it`;
+      : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun sync\` overwrites it`;
     rows.push({
       surface: surfaceFor(group),
       path: group,
@@ -524,7 +524,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       blocking: !input.protectedWritten,
       ...(single ? { diff: diffNoIndex(path.join(input.root, group), path.join(input.upstreamDir, group)) || undefined } : { detail: files.join('\n') }),
       note: input.protectedWritten
-        ? 'To take upstream\'s copy later: remove the path from updater.protected_paths in .agents/project.yaml, then run bun run up.'
+        ? 'To take upstream\'s copy later: remove the path from updater.protected_paths in .agents/project.yaml, then run bun sync.'
         : protectNote(single ? group : files[0]),
     });
   }
@@ -555,7 +555,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       path: file,
       evidence: `app file kept at a path upstream retired (--adopt never deletes what the app already has); ${input.protectedWritten
         ? 'listed in updater.protected_paths, so no later sync deletes it'
-        : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun run up\` deletes it`}`,
+        : `NOT protected yet: ${PROTECT_HINT}, or the next \`bun sync\` deletes it`}`,
       suggested: 'keep project',
       blocking: !input.protectedWritten,
       note: input.protectedWritten

@@ -5,7 +5,7 @@
  *
  * WHAT IS SYNCED. Every section file and the folder README are upstream's
  * shared doctrine: they arrive through the ordinary `directory` component, with
- * the same mechanics as skills (overwritten on `bun run up`, a project edit
+ * the same mechanics as skills (overwritten on `bun sync`, a project edit
  * backed up under `.backups/` and reported as an overwritten edit, a path the
  * project lists in `updater.protected_paths` kept as its own).
  *
@@ -209,7 +209,7 @@ export function renamedSectionsNote(filePath: string, project: string): { clause
   if (stale.length === 0) { return null; }
   return {
     clause: `${filePath} still names ${stale.length} instruction file(s) by the pre-rename name: rename ${stale.map(([from, to]) => `${from} -> ${to}`).join(', ')}`,
-    note: `The files under ${INSTRUCTIONS_DIR}/ now carry the \`agent-\` prefix instead of a number (same frontmatter \`id\`). \`bun run up\` retired the numbered copies (backed up under .backups/) and moved project.md to agent-project.md; ${filePath} is yours, so rename every path it names, then run \`bun run instructions:check\`.`,
+    note: `The files under ${INSTRUCTIONS_DIR}/ now carry the \`agent-\` prefix instead of a number (same frontmatter \`id\`). \`bun sync\` retired the numbered copies (backed up under .backups/) and moved project.md to agent-project.md; ${filePath} is yours, so rename every path it names, then run \`bun run instructions:check\`.`,
   };
 }
 

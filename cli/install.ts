@@ -30,7 +30,7 @@
  *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup (Step 7b)
  *
  * Usage:
- *   bun run setup
+ *   bun setup
  */
 
 import type { Harness } from './lib/harness-selection.ts';
@@ -477,7 +477,7 @@ async function verifyRepoRoot(): Promise<void> {
   const pkgPath = join(REPO_ROOT, 'package.json');
   if (!existsSync(pkgPath)) {
     log.error(`No package.json found at ${pkgPath}. Run this from the repo root.`);
-    log.dim('Re-run from the repo root with: bun run setup');
+    log.dim('Re-run from the repo root with: bun setup');
     process.exit(1);
   }
   const raw = await readFile(pkgPath, 'utf8');
@@ -507,7 +507,7 @@ async function verifyRepoRoot(): Promise<void> {
   // say why, rather than rendering a prompt that would never resolve.
   if (NON_INTERACTIVE) {
     log.error(`package.json name is "${pkg.name ?? '(unknown)'}" — this does not look like the repo root.`);
-    log.dim('Re-run from the correct directory with: bun run setup');
+    log.dim('Re-run from the correct directory with: bun setup');
     process.exit(1);
   }
 
@@ -516,7 +516,7 @@ async function verifyRepoRoot(): Promise<void> {
     initialValue: false,
   });
   if (tui.isCancel(proceed) || !proceed) {
-    log.dim('Aborted. Re-run from the correct repo root with: bun run setup');
+    log.dim('Aborted. Re-run from the correct repo root with: bun setup');
     process.exit(0);
   }
 }
@@ -586,7 +586,7 @@ async function handleMissingEngram(): Promise<'show-and-exit' | 'skip'> {
   // of the install finish. Exiting would strand every unattended re-run here.
   if (NON_INTERACTIVE) {
     log.warn('  Skipped (no TTY). Continuing without Engram — cross-session memory will NOT be wired.');
-    log.dim(`  To enable later: install engram (${ENGRAM_INSTALL_DOCS}), then re-run: bun run setup`);
+    log.dim(`  To enable later: install engram (${ENGRAM_INSTALL_DOCS}), then re-run: bun setup`);
     return 'skip';
   }
 
@@ -601,12 +601,12 @@ async function handleMissingEngram(): Promise<'show-and-exit' | 'skip'> {
     process.stdout.write('  macOS / Linux (Homebrew) : brew trust gentleman-programming/tap && brew install gentleman-programming/tap/engram\n');
     process.stdout.write('  Any OS with Go           : go install github.com/Gentleman-Programming/engram/v3/cmd/engram@latest\n\n');
     log.dim(`  Docs: ${ENGRAM_INSTALL_DOCS}`);
-    log.dim('After installing, re-run: bun run setup');
+    log.dim('After installing, re-run: bun setup');
     return 'show-and-exit';
   }
 
   log.warn('Continuing without Engram. Cross-session memory will NOT be wired.');
-  log.dim(`  To enable later: install engram (${ENGRAM_INSTALL_DOCS}), then re-run: bun run setup`);
+  log.dim(`  To enable later: install engram (${ENGRAM_INSTALL_DOCS}), then re-run: bun setup`);
   return 'skip';
 }
 
@@ -686,7 +686,7 @@ async function promptAgentSelection(detected: AgentDetection): Promise<AgentId[]
     log.dim(`  Claude Code : ${AGENT_DOCS['claude-code']}`);
     log.dim(`  OpenCode    : ${AGENT_DOCS.opencode}`);
     log.dim(`  Codex       : ${AGENT_DOCS.codex}`);
-    log.dim('After installing at least one, re-run: bun run setup');
+    log.dim('After installing at least one, re-run: bun setup');
     process.exit(1);
   }
 
@@ -821,7 +821,7 @@ async function installEngramPerAgent(
   // name so state files written by earlier installers still gate the re-run.
   if (state.steps?.agentsSetupRanAt && !FORCE_ENGRAM) {
     log.dim(`  Skipping — Engram already wired at ${state.steps.agentsSetupRanAt}.`);
-    log.dim('  Force re-run with: INSTALL_FORCE_ENGRAM=1 bun run setup');
+    log.dim('  Force re-run with: INSTALL_FORCE_ENGRAM=1 bun setup');
     return;
   }
 
@@ -916,7 +916,7 @@ async function installCommunitySkills(
   const stepKey = `communitySkills${level === 'project' ? 'Project' : 'Global'}RanAt`;
   if (state.steps?.[stepKey] && !FORCE_COMMUNITY_SKILLS) {
     log.dim(`  Skipping — ${label} community skills already installed at ${state.steps[stepKey]}.`);
-    log.dim('  Force re-run with: INSTALL_FORCE_COMMUNITY_SKILLS=1 bun run setup');
+    log.dim('  Force re-run with: INSTALL_FORCE_COMMUNITY_SKILLS=1 bun setup');
     return;
   }
 
@@ -1107,7 +1107,7 @@ export async function appendVarsToEnv(vars: Record<string, string>): Promise<voi
   const toAppend = Object.entries(remaining);
   if (toAppend.length > 0) {
     const needsNewline = next.length > 0 && !next.endsWith('\n');
-    const header = '\n# ===== Added by `bun run setup` =====\n';
+    const header = '\n# ===== Added by `bun setup` =====\n';
     const body = `${toAppend.map(([k, v]) => `${k}=${v}`).join('\n')}\n`;
     next = `${next}${needsNewline ? '\n' : ''}${header}${body}`;
   }
@@ -1173,7 +1173,7 @@ async function configureMcps(agents: AgentId[], state: InstallState): Promise<vo
     if (INSTALLER_DEFERRED_VARS.has(name)) {
       // Non-critical project-bound / infra var: NOT prompted and NOT a blocking
       // "pending" warning. Supabase/Postgres/app vars are auto-provisioned and
-      // pulled later via `bun run setup --variables`; n8n vars are optional.
+      // pulled later via `bun setup --variables`; n8n vars are optional.
       // Surfaced only in the closing "Next steps — finish later" section.
       log.dim(`  ${name}: deferred (non-critical — auto-provisioned / optional; see closing Next steps).`);
       continue;
@@ -1560,7 +1560,7 @@ function verifyExternalClis(state: InstallState): CliResult[] {
     if (cli.required === true && state.externalClis[cli.name] !== 'found') {
       process.stdout.write(`\n${tui.statusIcon('fail')} ${cli.name} is required for Jira/Confluence integration but was not found on PATH.\n`);
       process.stdout.write(`  Install via: ${cli.docs}\n`);
-      process.stdout.write('  Then re-run: bun run setup\n');
+      process.stdout.write('  Then re-run: bun setup\n');
       process.exit(1);
     }
   }
@@ -1863,7 +1863,7 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
   }
   if (!gh.authenticated) {
     log.warn(`gh ${gh.version ?? ''} detected but not authenticated.`);
-    log.dim('  Run `gh auth login`, then re-run: bun run setup');
+    log.dim('  Run `gh auth login`, then re-run: bun setup');
     return;
   }
   log.success(`gh ${gh.version ?? ''} detected (authenticated).`);
@@ -2236,7 +2236,7 @@ async function ensureJiraCatalogPlaceholders(): Promise<void> {
  * Runs steps 12-14 after the main install phases.
  *
  * All three steps are:
- *   - Idempotent: persisted via state.postInstall so re-running `bun run setup`
+ *   - Idempotent: persisted via state.postInstall so re-running `bun setup`
  *     skips already-completed steps.
  *   - Skipped automatically when running non-interactively (no TTY / CI),
  *     with each step marked 'skipped-non-interactive' and surfaced in the
@@ -2323,7 +2323,7 @@ async function runPostInstallSteps(state: InstallState): Promise<void> {
     if (missing.length > 0) {
       state.postInstall.acliAuth = 'skipped-non-interactive';
       process.stdout.write(`${tui.statusIcon('warn')} Missing ${missing.join(', ')}. Skipping acli authentication.\n`);
-      process.stdout.write('  Set the host with `bun run agents:setup`, fill the credentials in .env, then re-run `bun run setup` — or authenticate manually:\n');
+      process.stdout.write('  Set the host with `bun run agents:setup`, fill the credentials in .env, then re-run `bun setup` — or authenticate manually:\n');
       process.stdout.write(`  ${acliManualHint}\n`);
       await writeInstallState(state);
     }
@@ -2699,7 +2699,7 @@ function printClosingSummary(state: InstallState): void {
   // collected into .env up to Vercel env (local + remote, idempotent).
   const vercelVarCount = varsFor('vercel').length;
   process.stdout.write(`${circled[stepNum]}  ${COLORS.bold}Set up environment variables (local .env + Vercel)${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.cyan}bun run setup --variables${COLORS.reset}${COLORS.dim}            (add --dry-run to preview, --yes to skip the push confirm)${COLORS.reset}\n`);
+  process.stdout.write(`    ${COLORS.cyan}bun setup --variables${COLORS.reset}${COLORS.dim}            (add --dry-run to preview, --yes to skip the push confirm)${COLORS.reset}\n`);
   process.stdout.write(`    ${COLORS.dim}Upserts .env and pushes ${vercelVarCount} app-runtime var(s) to Vercel (production/preview/development). Requires: vercel login + vercel link.${COLORS.reset}\n\n`);
   stepNum++;
 
@@ -2732,7 +2732,7 @@ function printClosingSummary(state: InstallState): void {
     process.stdout.write(`    ${COLORS.dim}${spec.obtainHint ?? spec.note}${COLORS.reset}\n`);
   }
   process.stdout.write(`→  ${COLORS.bold}App/infra vars (Supabase, Postgres, app URL)${COLORS.reset}\n`);
-  process.stdout.write(`    ${COLORS.dim}Auto-provisioned by the Supabase↔Vercel integration. Once your Vercel project exists, run ${COLORS.reset}${COLORS.cyan}bun run setup --variables${COLORS.reset}${COLORS.dim} and choose 'Pull from Vercel'.${COLORS.reset}\n\n`);
+  process.stdout.write(`    ${COLORS.dim}Auto-provisioned by the Supabase↔Vercel integration. Once your Vercel project exists, run ${COLORS.reset}${COLORS.cyan}bun setup --variables${COLORS.reset}${COLORS.dim} and choose 'Pull from Vercel'.${COLORS.reset}\n\n`);
 
   // 4d — IN PARALLEL
   tui.section('IN PARALLEL — open another terminal, run while bootstrapping');
@@ -2805,7 +2805,7 @@ function printClosingSummary(state: InstallState): void {
 
   // 4g — Final tip box
   process.stdout.write(`${tui.successBox([
-    'Re-run anytime: bun run setup  (idempotent — completed steps are skipped)',
+    'Re-run anytime: bun setup  (idempotent — completed steps are skipped)',
   ])}\n`);
 }
 
@@ -3036,7 +3036,7 @@ async function main(): Promise<void> {
   state.agents = agents;
   if (agents.length === 0) {
     log.warn('No agents selected, exiting.');
-    log.dim('Re-run when ready: bun run setup');
+    log.dim('Re-run when ready: bun setup');
     await writeInstallState(state);
     process.exit(0);
   }
@@ -3155,12 +3155,12 @@ if (import.meta.main) {
     const name = err && typeof err === 'object' && 'name' in err ? (err as { name: string }).name : '';
     if (name === 'ExitPromptError' || (err instanceof Error && err.message === 'Aborted by user.')) {
       log.warn('Aborted by user.');
-      log.dim('Re-run anytime with: bun run setup');
+      log.dim('Re-run anytime with: bun setup');
       process.exit(130);
     }
     log.error(`Fatal: ${(err as Error).message ?? String(err)}`);
     if (err instanceof Error && err.stack) { log.dim(err.stack); }
-    log.dim('After fixing the issue above, re-run: bun run setup  (installer is idempotent — completed steps are skipped)');
+    log.dim('After fixing the issue above, re-run: bun setup  (installer is idempotent — completed steps are skipped)');
     process.exit(1);
   });
 }

@@ -837,7 +837,7 @@
             <code>package.json</code> y <code>.agents/project.yaml</code>; OpenCode y Codex no
             expanden imports y siguen la instrucción reforzada de la misma fila. Cómo funciona, en
             detalle:
-            <a href="./decks/progressive-disclosure/como-funciona.es.html"
+            <a href="./decks/progressive-disclosure/how-it-works.es.html"
               >Las instrucciones, en capas</a
             >.</span
           >
@@ -848,7 +848,7 @@
             ><strong>Un solo harness alcanza.</strong> La lista <code>harnesses:</code> de
             <code>.agents/project.yaml</code> dice cuáles usa el proyecto, y cada gate
             (<code>agents:compat:check</code>, <code>setup:doctor</code>, el instalador,
-            <code>bun run up</code>) revisa solo esos. Sin la lista, o en <code>null</code>, se
+            <code>bun sync</code>) revisa solo esos. Sin la lista, o en <code>null</code>, se
             detectan por los archivos presentes; una lista explícita manda. El boilerplate mismo
             revisa siempre los tres. Decisión:
             <code>.context/ADR/ADR-0013-declared-harnesses.md</code>.</span
@@ -1270,7 +1270,7 @@
                 <td><code>bun run agents:compat</code></td>
                 <td>
                   Regenera el shim y el alias y mueve aparte los comandos que tapan una skill.
-                  También lo corren <code>bun run up</code> y <code>bun run setup</code>.
+                  También lo corren <code>bun sync</code> y <code>bun setup</code>.
                 </td>
               </tr>
               <tr>
@@ -1291,7 +1291,7 @@
                 </td>
               </tr>
               <tr>
-                <td><code>bun run setup</code></td>
+                <td><code>bun setup</code></td>
                 <td>
                   Detecta los tres harnesses y pregunta cuáles configurar (<code
                     >INSTALL_AGENTS=claude-code,opencode,codex</code

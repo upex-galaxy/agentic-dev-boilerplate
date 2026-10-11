@@ -8,7 +8,7 @@ Shared reference for every workflow that changes a database: `project-bootstrap`
 
 ## 1. Before the first change
 
-1. **Load the stack skills**: `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call. Not installed → say so once, point at `bun run setup`, continue (`skill-composition-strategy.md` §3.5).
+1. **Load the stack skills**: `/supabase` + `/supabase-postgres-best-practices` (category `backend-db`) before the first schema, RLS, function or migration call. Not installed → say so once, point at `bun setup`, continue (`skill-composition-strategy.md` §3.5).
 2. **Name the target.** The project ref comes from `.agents/project.yaml` → `environments.<active_env>.db_project_ref`, never from memory or another doc. Say the environment out loud before the first write. Production only when the user names it for THIS change; a standing "use prod" from an earlier turn does not carry over.
 3. **Read the history first.** `list_migrations` (what was applied, in order) and `list_tables` with `verbose` for every table the change touches. When `stack.database.migrations_dir` is set, read that directory too and compare it with the list: an entry in one and not in the other is drift. Drift → STOP and report both sides; never "repair" it by re-applying a file or by writing the missing one from memory.
 

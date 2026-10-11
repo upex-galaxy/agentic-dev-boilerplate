@@ -4,7 +4,7 @@
       "name": "should-trigger-first-time-orientation",
       "prompt": "I just cloned this repo. First time using it — where do I start?",
       "expected_skill": "agentic-dev-onboard",
-      "expected_behavior": "Activates agentic-dev-onboard. Reads `.template/installer.lock.json` (no `adopted: true` = new project path) and presents the stack from the `stack:` block of `.agents/project.yaml` (the greenfield defaults: Next.js + Supabase on bun), points at `bun run setup` for installation, walks through the primary `/sprint-development` workflow and its hand-offs, lists the MCP capabilities (servers from `.mcp.json`, web search at harness level), lists critical env vars, gives the docs hub URL `https://upex-galaxy.github.io/agentic-dev-boilerplate/`, and ends with a checklist of next steps. Does NOT start implementing anything.",
+      "expected_behavior": "Activates agentic-dev-onboard. Reads `.template/installer.lock.json` (no `adopted: true` = new project path) and presents the stack from the `stack:` block of `.agents/project.yaml` (the greenfield defaults: Next.js + Supabase on bun), points at `bun setup` for installation, walks through the primary `/sprint-development` workflow and its hand-offs, lists the MCP capabilities (servers from `.mcp.json`, web search at harness level), lists critical env vars, gives the docs hub URL `https://upex-galaxy.github.io/agentic-dev-boilerplate/`, and ends with a checklist of next steps. Does NOT start implementing anything.",
       "category": "positive"
     },
     {
@@ -25,7 +25,7 @@
       "name": "should-trigger-spanish-first-time",
       "prompt": "Es la primer vez que uso este repo, qué tengo que correr primero?",
       "expected_skill": "agentic-dev-onboard",
-      "expected_behavior": "Activates agentic-dev-onboard. Points at `bun run setup` first, then opening the agent with its own binary in the project folder (`claude`, `opencode`, `codex`, no wrapper), the workflow, MCP capabilities, env vars, the docs hub URL, and the next-steps checklist. Hands off to `/sprint-development` once foundation is green. May respond in Spanish to mirror the user.",
+      "expected_behavior": "Activates agentic-dev-onboard. Points at `bun setup` first, then opening the agent with its own binary in the project folder (`claude`, `opencode`, `codex`, no wrapper), the workflow, MCP capabilities, env vars, the docs hub URL, and the next-steps checklist. Hands off to `/sprint-development` once foundation is green. May respond in Spanish to mirror the user.",
       "category": "positive"
     },
     {

@@ -383,7 +383,7 @@ const HELP_TEXT = `
 UPEX Boilerplate Updater v${CLI_VERSION} — Ayuda
 
 USO:
-  bun up [comando] [flags]
+  bun sync [comando] [flags]
 
 COMPONENTES: ${COMPONENTS.map(c => c.name).join(', ')}
 ATAJOS:      all, rollback, help
@@ -547,19 +547,31 @@ ENV:
                                   una rama no publicada contra un consumidor.
 
 EJEMPLOS:
-  bun up                                    # Flujo interactivo (5 fases)
-  bun up scripts                            # Un solo componente
-  bun up agent-compatibility scripts        # Multiples componentes
-  bun up codex-config                       # Solo el adaptador de Codex
-  bun up --auto                             # CI mode (seguro, preserva lo tuyo)
-  bun up --force                            # Forzar todo del upstream (sin preguntar)
-  bun up --dry-run                          # Preview (con el updater nuevo si hay self-update)
-  bun up --auto --strict                    # CI: falla si queda un contrato roto
-  bun up --auto --no-gates                  # Sin gates (types / lint / skills) al final
-  bun up --rollback                         # Restaurar backup
+  bun sync                                  # Flujo interactivo (5 fases)
+  bun sync scripts                          # Un solo componente
+  bun sync agent-compatibility scripts      # Multiples componentes
+  bun sync codex-config                     # Solo el adaptador de Codex
+  bun sync --auto                           # CI mode (seguro, preserva lo tuyo)
+  bun sync --force                          # Forzar todo del upstream (sin preguntar)
+  bun sync --dry-run                        # Preview (con el updater nuevo si hay self-update)
+  bun sync --auto --strict                  # CI: falla si queda un contrato roto
+  bun sync --auto --no-gates                # Sin gates (types / lint / skills) al final
+  bun sync --rollback                       # Restaurar backup
   bun <clon>/cli/update-boilerplate.ts --adopt   # Adoptar una app existente
-  bun up --update-mcp-template claude       # Refrescar MCP template
+  bun sync --update-mcp-template claude     # Refrescar MCP template
 `;
+
+// --- RENAMED COMMAND ---
+// The updater was `bun up` until 2026-10 and is `bun sync` now. `up` stays a
+// hidden alias: a project whose package.json only has `up` runs it once, and
+// the `scripts` key sync adds `sync`. The env flag keeps the self-update
+// re-exec child, which inherits npm_lifecycle_event, from repeating the line.
+const RENAMED_NOTICE_ENV = 'UPEX_SYNC_RENAME_NOTICED';
+function noticeRenamedCommand(): void {
+  if (process.env.npm_lifecycle_event !== 'up' || process.env[RENAMED_NOTICE_ENV] === '1') { return; }
+  process.env[RENAMED_NOTICE_ENV] = '1';
+  tui.log.info('Este comando ahora se llama `bun sync`; `bun up` sigue funcionando como alias.');
+}
 
 // --- PREREQ ---
 // The git version, gh session and network checks of a run live in the preflight
@@ -688,7 +700,7 @@ const runFacts: RunFacts = { compat: null, envNewKeys: [], migration: null, migr
  * After a sync, diff the upstream `.env.example` (still sitting in the updater's
  * tempDir before cleanup) against the target's local `.env` + `.env.example`. If
  * upstream added keys the target lacks, warn and (interactive only) OFFER to run
- * `bun run setup --variables` so the user can populate them locally + push the
+ * `bun setup --variables` so the user can populate them locally + push the
  * Vercel-env subset. Deprecated keys lingering in the local `.env` are flagged
  * (never auto-deleted).
  *
@@ -752,16 +764,16 @@ async function detectEnvVarDrift(
   if (newKeys.length === 0) { return; }
 
   if (nonInteractive) {
-    sink.step('Para configurarlas localmente y subir el subconjunto de Vercel: bun run setup --variables');
+    sink.step('Para configurarlas localmente y subir el subconjunto de Vercel: bun setup --variables');
     return;
   }
 
   const run = await sink.confirm(
-    'Ejecutar `bun run setup --variables` ahora para configurar estas variables? (local + push opcional a Vercel, ambos gateados)',
+    'Ejecutar `bun setup --variables` ahora para configurar estas variables? (local + push opcional a Vercel, ambos gateados)',
     false,
   );
   if (!run) {
-    sink.step('Omitido. Cuando quieras: bun run setup --variables');
+    sink.step('Omitido. Cuando quieras: bun setup --variables');
     return;
   }
 
@@ -769,7 +781,7 @@ async function detectEnvVarDrift(
   // confirm — we never push from here (D3).
   const res = spawnSync('bun', ['run', 'setup', '--variables'], { stdio: 'inherit' });
   if (res.status !== 0) {
-    sink.warn('`bun run setup --variables` terminó con error o fue cancelado.');
+    sink.warn('`bun setup --variables` terminó con error o fue cancelado.');
   }
 }
 
@@ -1006,10 +1018,10 @@ const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-mig
 // --- REPO-ONLY PATHS ---
 //
 // The boilerplate's OWN material: tracked in this repo, but it must never reach
-// a consumer project via `bun run up`. Matched as exact path or segment-aware
+// a consumer project via `bun sync`. Matched as exact path or segment-aware
 // directory prefix (see `isRepoOnlyPath` in updater-core). Mirrored in
 // TEMPLATE_EXCLUDES (packages/create-agentic-dev/src/prepare.ts) — the scaffold
-// prunes them on first install and this keeps `bun run up` from putting them
+// prunes them on first install and this keeps `bun sync` from putting them
 // back on the next sync.
 //
 // Reachability per TEMPLATE_EXCLUDES entry (only sync-reachable ones live here):
@@ -1704,7 +1716,7 @@ function runHarnessMigration(sink: ReportSink, dryRun: boolean, adopt: boolean):
   }
   catch (error) {
     tui.log.error(error instanceof Error ? error.message : String(error));
-    tui.log.warn('El update se detuvo ANTES de tocar nada. Resuelve lo anterior y vuelve a correr `bun run up`.');
+    tui.log.warn('El update se detuvo ANTES de tocar nada. Resuelve lo anterior y vuelve a correr `bun sync`.');
     pageNote('error', error instanceof Error ? error.message : String(error));
     throw Object.assign(new Error('El update se detuvo ANTES de tocar nada.'), { name: 'UpdaterAbort', exitCode: 1 });
   }
@@ -1966,13 +1978,14 @@ function buildSink(signal: () => AbortSignal | undefined = () => undefined): Rep
 export function worktreeRefusal(cwd = process.cwd()): string | null {
   const roots = checkoutRoots(cwd);
   if (roots === null || !roots.linked) { return null; }
-  return 'Este checkout es un worktree. `bun run up` guarda backups (para --rollback), marcadores y prompts '
-    + 'dentro del checkout, y en un worktree se pierden al borrarlo. Ejecuta `bun run up` en el checkout '
+  return 'Este checkout es un worktree. `bun sync` guarda backups (para --rollback), marcadores y prompts '
+    + 'dentro del checkout, y en un worktree se pierden al borrarlo. Ejecuta `bun sync` en el checkout '
     + `principal: ${roots.primaryRoot}`;
 }
 
 async function main(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
+  noticeRenamedCommand();
 
   if (parsed.help) { process.stdout.write(HELP_TEXT); process.exit(0); }
   const refusal = worktreeRefusal();
@@ -1990,11 +2003,11 @@ async function main(): Promise<void> {
     // adopted one a second --adopt is the documented no-op.
     if (fs.existsSync(VERSION_FILE)) {
       if (isAdopted(process.cwd())) {
-        tui.log.info(`Este repo ya está adoptado (${INSTALLER_LOCK_FILE}: adopted: true): nada que hacer. Para actualizarlo: bun run up.`);
+        tui.log.info(`Este repo ya está adoptado (${INSTALLER_LOCK_FILE}: adopted: true): nada que hacer. Para actualizarlo: bun sync.`);
         tui.outro('Sin cambios.');
         process.exit(0);
       }
-      tui.log.error(`--adopt es solo para la primera corrida y este repo ya tiene ${VERSION_FILE}. Usa bun run up.`);
+      tui.log.error(`--adopt es solo para la primera corrida y este repo ya tiene ${VERSION_FILE}. Usa bun sync.`);
       tui.outro('Abortado.');
       process.exit(1);
     }
@@ -2058,7 +2071,7 @@ async function main(): Promise<void> {
     tui.log.info('stdin no es una terminal: se asume --auto (pasa --interactive para conservar los prompts).');
   }
 
-  // Filter components if sub-commands passed (e.g. `bun run up scripts`).
+  // Filter components if sub-commands passed (e.g. `bun sync scripts`).
   let components = COMPONENTS;
   if (parsed.commands.length > 0 && !parsed.commands.includes('all')) {
     const requested = new Set(parsed.commands);
@@ -2094,7 +2107,7 @@ async function main(): Promise<void> {
   if (migration?.applied && runFacts.migration === null) { runFacts.migration = migration; }
   // What the preflight just wrote is the updater's own dirt: the dirty-tree
   // guard in runUpdate (and in the self-update re-exec child) must not refuse
-  // a tree that was clean before `bun run up` started.
+  // a tree that was clean before `bun sync` started.
   const updaterOwnedPaths = migration ? harnessMigrationTouchedPaths(migration) : [];
   if (runFacts.reinclude !== null && runFacts.reinclude.added.length > 0 && !updaterOwnedPaths.includes('.gitignore')) {
     updaterOwnedPaths.push('.gitignore');
@@ -2118,7 +2131,7 @@ async function main(): Promise<void> {
     // different-value is reported FYI and NEVER overwritten. `dependencies` is
     // here because the `cli` component is synced wholesale and imports
     // packages declared only there — syncing the code without the package
-    // leaves `bun run up` crashing on import. `lint-staged` is here because
+    // leaves `bun sync` crashing on import. `lint-staged` is here because
     // `.husky/pre-commit` is synced and shells out to `bunx lint-staged`,
     // which reads its config from this file.
     packageJsonSpecs: [

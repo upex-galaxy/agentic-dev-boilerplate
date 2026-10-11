@@ -140,7 +140,7 @@ const CONSUMER_YAML_HEADER = `# Project configuration consumed by AI agents (Cla
 # Every unfilled field is \`null\` plus a TODO comment with a concrete example.
 #
 # \`bun run agents:schema --project\` lists the keys upstream has added since this
-# project was scaffolded; \`bun run up\` offers to insert them, one prompt per block.
+# project was scaffolded; \`bun sync\` offers to insert them, one prompt per block.
 `;
 
 /**
@@ -224,7 +224,7 @@ export function countStubLeaks(stub: string, ownProjectMd: string | null): numbe
  *
  * Fail closed: a stub that fails the leak gate is not written, and the
  * maintainer's file is removed instead, so the project starts with no overlay
- * (`bun run up` delivers the stub later) rather than with someone else's
+ * (`bun sync` delivers the stub later) rather than with someone else's
  * exception. A template that predates the split has neither file: no-op.
  */
 export async function seedProjectInstructions(projectDir: string): Promise<'seeded' | 'removed' | 'absent'> {
@@ -242,7 +242,7 @@ export async function seedProjectInstructions(projectDir: string): Promise<'seed
   }
   if (own === null) { return 'absent'; }
   await rm(target, { force: true });
-  log.warn('  Removed the boilerplate\'s own .agents/instructions/agent-project.md; `bun run up` delivers the generic stub.');
+  log.warn('  Removed the boilerplate\'s own .agents/instructions/agent-project.md; `bun sync` delivers the generic stub.');
   return 'removed';
 }
 

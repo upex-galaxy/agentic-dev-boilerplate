@@ -235,22 +235,26 @@ async function main(): Promise<number> {
     runBunSetup(projectDir, { nonInteractive: args.nonInteractive });
   }
   else {
-    log.dim('--no-setup: skipping `bun run setup`. Run it manually when ready.');
+    log.dim('--no-setup: skipping `bun setup`. Run it manually when ready.');
   }
 
   // ------------------------------------------------------------------
   // Final success box
   // ------------------------------------------------------------------
   const cdCmd = args.here ? '' : `cd ${args.projectName}`;
-  const nextStepNum = cdCmd ? 2 : 1;
+  const steps = [
+    ...(cdCmd ? [pc.cyan(cdCmd)] : []),
+    ...(args.noSetup ? [`${pc.cyan('bun setup')}  ${pc.dim('# the installer this run skipped')}`] : []),
+    `${pc.cyan('claude')}     ${pc.dim('# or: opencode, codex')}`,
+  ];
   const nextLines = [
     pc.green(`${figures.tick ?? '✔'}  Project ready at ${projectDir}`),
     '',
     pc.bold('Next steps (in order):'),
-    ...(cdCmd ? [`  1.  ${pc.cyan(cdCmd)}`] : []),
-    `  ${nextStepNum}.  ${pc.cyan('claude')}     ${pc.dim('# or: opencode, codex')}`,
+    ...steps.map((s, i) => `  ${i + 1}.  ${s}`),
     '',
     pc.dim('Full guide: README.md → "Getting started"'),
+    pc.dim('Pull later boilerplate updates: bun sync'),
   ];
   process.stdout.write(`${tui.successBox(nextLines)}\n`);
 
@@ -270,7 +274,7 @@ async function runAdopt(args: Args): Promise<number> {
   const appDir = process.cwd();
 
   if (installState(appDir) === 'adopted') {
-    log.success('This repo is already adopted: nothing to install. To update it: bun run up');
+    log.success('This repo is already adopted: nothing to install. To update it: bun sync');
     return 0;
   }
 

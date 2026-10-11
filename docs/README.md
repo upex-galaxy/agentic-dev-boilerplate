@@ -105,7 +105,7 @@ Corré `bun run onboarding`: abre `onboarding.html`, el recorrido de empezá ac�
 
 - [Flujo Git](./workflows/git-flow.md) para control de versiones
 - [Ambientes](./workflows/environments.md) para etapas de deployment
-- `bun run up --help` para sincronizar este boilerplate upstream
+- `bun sync --help` para sincronizar este boilerplate upstream
 - `bun run worktree:provision` para preparar un worktree nuevo (`.env`, dependencias, alias de skills); `bun run worktree:audit` para revisarlos
 
 ### 4. Usar Skills y Modos

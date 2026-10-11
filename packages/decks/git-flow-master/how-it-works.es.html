@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Autonomous delivery: corridas programadas sin nadie mirando</title>
+    <title>Git Flow Master: ramas, pushes y PRs</title>
     <meta
       name="description"
-      content="Cómo /autonomous-delivery convierte un disparo programado en una corrida segura: lock por modo, auditoría donde git es la verdad, selección de trabajo de verdad desbloqueado, ejecución por la skill dueña, presupuesto de contexto y un reporte del que la próxima corrida puede arrancar."
+      content="Cómo /git-flow-master opera la capa de git: lee el estado, reconcilia la política declarada contra el host, resuelve la estrategia de ramas y adapta ramas, commits, pushes, PRs, conflictos, cadenas de PRs y worktrees."
     />
     <style>
       /* ============================================================
@@ -1294,8 +1294,9 @@
         color: var(--blue);
       }
 
+
       /* ============================================================
-     Deck-local: shell compartido con project-bootstrap y product-management.
+     Deck-local: sprint-development (Stages 1 a 5).
      ============================================================ */
       .pipe.five {
         grid-template-columns: repeat(5, 1fr);
@@ -1368,7 +1369,7 @@
         place-items: center;
         font-family: var(--font-mono);
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
         color: #fff;
         background: var(--blue-solid);
       }
@@ -1389,6 +1390,11 @@
         font-size: 0.86rem;
         line-height: 1.45;
         margin-top: 2px;
+      }
+      .wf span.mono {
+        display: inline;
+        margin-top: 0;
+        font-size: 0.82rem;
       }
 
       .trio {
@@ -1454,85 +1460,34 @@
         margin-right: 0.6em;
       }
 
-      .levels {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-      }
-      @media (max-width: 860px) {
-        .levels {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .title-demo {
-        font-family: var(--font-mono);
-        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
-        background: var(--surface-2);
-        border: 1px solid var(--line);
-        border-radius: var(--r-sm);
-        padding: 14px 16px;
-        overflow-wrap: anywhere;
-      }
-      .title-demo .f {
-        color: var(--blue);
-        font-weight: 600;
-      }
-      .title-demo .p {
-        color: var(--signal);
-        font-weight: 700;
-      }
-      .title-demo .a {
-        color: var(--ink);
-      }
-      .title-demo.bad {
-        text-decoration: line-through;
-        text-decoration-color: var(--signal);
-        color: var(--ink-faint);
-      }
-
-      .code.gk {
+      .code.pre {
         white-space: pre;
       }
-      .code .g {
-        color: var(--agent);
-        font-weight: 600;
-      }
 
-      .sprints {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-top: 8px;
+      .states {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0 4px;
       }
-      @media (max-width: 700px) {
-        .sprints {
-          grid-template-columns: 1fr;
-        }
-      }
-      .sprint {
-        border: 1px solid var(--line);
-        border-radius: var(--r-sm);
-        background: var(--surface);
-        padding: 14px 16px;
-      }
-      .sprint .n {
+      .states .st {
         font-family: var(--font-mono);
-        font-size: 0.68rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: 0.74rem;
+        padding: 6px 10px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+      .states .st.hum {
+        border-color: var(--signal);
         color: var(--signal);
       }
-      .sprint .ks {
+      .states .ar {
+        color: var(--ink-faint);
         font-family: var(--font-mono);
         font-size: 0.8rem;
-        color: var(--ink);
-        margin-top: 6px;
-      }
-      .sprint p {
-        margin: 6px 0 0;
-        font-size: 0.85rem;
-        color: var(--ink-soft);
       }
 
       .hosts {
@@ -1566,6 +1521,9 @@
         display: block;
         overflow-wrap: anywhere;
       }
+      .host .say + .say {
+        margin-top: 8px;
+      }
       .host p {
         font-size: 0.86rem;
         color: var(--ink-soft);
@@ -1573,29 +1531,27 @@
       }
       .planes > *,
       .lanes > *,
-      .levels > *,
+      .alts > *,
       .hosts > * {
         min-width: 0;
       }
+      .sec-head .mono,
       .plane .mono,
-      .callout .mono {
+      .callout .mono,
+      .step .mono,
+      .trio .mono,
+      .gate .mono,
+      .check .mono,
+      table.cmp .mono {
         overflow-wrap: anywhere;
       }
       table.cmp.narrow {
         min-width: 0;
       }
-      .steps,
-      .step {
-        min-width: 0;
-      }
-      .step .mono,
-      .check .mono,
-      .alt .mono,
-      .g .mono {
-        overflow-wrap: anywhere;
-      }
-      table.cmp.sections tbody th {
-        width: 3em;
+      @media (max-width: 600px) {
+        table.cmp.narrow tbody th {
+          width: 36%;
+        }
       }
     </style>
   </head>
@@ -1606,14 +1562,14 @@
       >
       <nav class="topnav">
         <a href="#cuando">Cuándo</a>
-        <a href="#modos">Modos</a>
-        <a href="#lock">Lock</a>
-        <a href="#auditoria">Auditoría</a>
-        <a href="#seleccion">Selección</a>
-        <a href="#ejecucion">Ejecución</a>
-        <a href="#contexto">Contexto</a>
-        <a href="#autonomia">Autonomía</a>
-        <a href="#cierre">Cierre</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#estrategia">Estrategia</a>
+        <a href="#push">Push</a>
+        <a href="#paridad">Paridad</a>
+        <a href="#commits">Commits</a>
+        <a href="#pr">PR</a>
+        <a href="#cadena">Cadena</a>
+        <a href="#worktrees">Worktrees</a>
         <a href="#invocar">Invocar</a>
       </nav>
       <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
@@ -1624,57 +1580,57 @@
     <!-- ============ HERO ============ -->
     <header class="hero">
       <div class="wrap">
-        <div class="kicker eyebrow"><span class="num">00</span> · corridas sin nadie mirando</div>
-        <h1>Entregar <em>de noche</em>, sin <span class="sig">adivinar</span>.</h1>
+        <div class="kicker eyebrow"><span class="num">00</span> · la capa de control de versiones</div>
+        <h1>Lo que se decidió para el repo, <span class="sig">aplicado</span> en cada push.</h1>
         <p class="lede">
-          <span class="mono">/autonomous-delivery</span> es la capa entre un scheduler y
-          <span class="mono">/sprint-development</span>. Un pipeline interactivo da por hecho que un
-          humano eligió el ticket, confirmó el estado y está presente si algo se tuerce. Sin nadie
-          en la línea, esas tres suposiciones son falsas. <b>Esta skill no implementa nada</b>:
-          establece qué es cierto, elige trabajo de verdad desbloqueado, se lo pasa a la skill dueña
-          y deja un registro desde el que la próxima corrida puede arrancar.
+          <span class="mono">/git-flow-master</span> es la única puerta para todo lo que pasa en git:
+          ramas, commits, pushes, pull requests, conflictos y cadenas de PRs. No asume un modelo de
+          ramas: lee el que el proyecto <b>eligió</b>, comprueba lo que el host <b>impone</b> de
+          verdad y adapta cada comando a eso.
         </p>
 
         <div class="hero-meta">
           <span class="chip"
-            ><span class="dot"></span> para quien <b>lidera</b> el equipo y quien es
-            <b>dueño del producto</b></span
+            ><span class="dot"></span> para quien codea y quien <b>lidera</b> el repo</span
           >
-          <span class="chip"><span class="dot"></span> la dispara un <b>scheduler</b>, no una persona</span>
+          <span class="chip"
+            ><span class="dot"></span> la estrategia vive en
+            <b>.agents/project.yaml</b></span
+          >
           <span class="chip agent"
-            ><span class="dot"></span> git es la <b>verdad</b>, el tracker una <b>pista</b></span
+            ><span class="dot"></span> se detiene al abrir el PR: el merge es <b>tuyo</b></span
           >
         </div>
 
         <div class="pipe five" id="pipe">
           <div class="node">
-            <div class="n">Fase 0</div>
-            <h3>Aislar y tomar el lock</h3>
-            <p>Su propio worktree, un lock por modo. Lock vivo de otra corrida: sale limpia.</p>
+            <div class="n">Step 1</div>
+            <h3>Leer el estado</h3>
+            <p>Rama, árbol, upstream, remotos. Siempre, antes de todo.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 1</div>
-            <h3>Auditar</h3>
-            <p>Cuatro fuentes de evidencia en paralelo. Decide la ascendencia en git.</p>
+            <div class="n">Step 1b</div>
+            <h3>Reconciliar la política</h3>
+            <p><span class="mono">git:policy verify</span> en el primer push, PR o merge.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 2</div>
-            <h3>Seleccionar</h3>
-            <p>Solo lo desbloqueado de verdad. Una corrida vacía es un resultado correcto.</p>
+            <div class="n">Step 2</div>
+            <h3>Resolver la estrategia</h3>
+            <p>El bloque <span class="mono">git_strategy</span>, o detección, o pregunta.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 3</div>
-            <h3>Ejecutar</h3>
-            <p>Despacha la skill dueña. Compuerta de migraciones, handoff sobre la marcha.</p>
+            <div class="n">Step 3</div>
+            <h3>Operar</h3>
+            <p>Rama, commit, push, PR, conflicto o Strategy Setup.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Fase 4</div>
-            <h3>Cerrar y reportar</h3>
-            <p>Verifica el cierre, rescata registros, suelta el lock, escribe el reporte.</p>
+            <div class="n">Step 4</div>
+            <h3>Partir si crece</h3>
+            <p>Más de 400 líneas: árbol de decisión de PRs encadenados.</p>
           </div>
         </div>
       </div>
@@ -1684,250 +1640,149 @@
     <section class="band" id="cuando">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">01</span> · cuándo sí y cuándo no</div>
-          <h2>Un scheduler la dispara con un modo. Esa es toda su superficie</h2>
+          <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
+          <h2>Cada vez que el trabajo toca git</h2>
           <p class="sub">
-            Un cron, una rutina o un despertador programado abre una sesión sin humano presente y le
-            pasa el modo. Si una persona está en la línea y nombró un ticket, esta skill sobra: su
-            único valor es la capa de auditoría, selección y traspaso, y esa capa es puro costo
-            cuando un humano ya eligió.
+            Se dispara aunque no la nombres: si el pedido tiene forma de rama, commit, push o PR, es
+            esta skill. Las demás skills del repo le pasan la posta cuando llegan a esa capa.
           </p>
         </div>
 
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th>Situación</th>
-                <th>Va a</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Trabajo por ticket con un humano presente</td>
-                <td><span class="mono">/sprint-development</span>, directo</td>
-              </tr>
-              <tr>
-                <td>Sembrar backlog o refinar criterios de un ticket con nombre</td>
-                <td><span class="mono">/product-management</span>, directo</td>
-              </tr>
-              <tr>
-                <td>Ramas, pull requests, conflictos</td>
-                <td><span class="mono">/git-flow-master</span></td>
-              </tr>
-              <tr>
-                <td>Definir el producto desde cero</td>
-                <td><span class="mono">/project-foundation</span></td>
-              </tr>
-              <tr>
-                <td>Andamiaje de infraestructura</td>
-                <td><span class="mono">/project-bootstrap</span></td>
-              </tr>
-              <tr>
-                <td>Una tajada TDD de tests unitarios</td>
-                <td><span class="mono">/unit-testing</span></td>
-              </tr>
-              <tr>
-                <th>Una corrida programada, desatendida, con un modo</th>
-                <th><span class="mono">/autonomous-delivery &lt;modo&gt;</span></th>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="planes r" style="margin-top: 22px">
+        <div class="planes r">
           <div class="plane">
-            <div class="tag">Precondiciones</div>
-            <h3>Si falta una, termina en la fase 0</h3>
+            <div class="tag">Usala cuando</div>
+            <h3>Hay que mover código por git</h3>
             <ul>
-              <li>
-                <span class="mono">.agents/project.yaml</span> con el bloque
-                <span class="mono">autonomous_delivery:</span> y
-                <span class="mono">git_strategy.branches.integration</span>, la rama contra la que
-                corre cada chequeo de ascendencia.
-              </li>
-              <li>
-                <span class="mono">.context/dev-roadmap.md</span> como fuente de las aristas de
-                dependencia.
-              </li>
-              <li>
-                <span class="mono">.env</span> completo: las credenciales se leen por NOMBRE de
-                variable, nunca van en un reporte.
-              </li>
-              <li>Una identidad con permiso de push, verificada en la fase 0 y no en el primer push.</li>
+              <li>Arrancás trabajo: <b>"start work on PROJ-123"</b>, crear una rama.</li>
+              <li><b>Commitear</b> y <b>pushear</b>: "commit and push", "subir cambios".</li>
+              <li>Abrir un <b>pull request</b>: "abrí un PR contra staging".</li>
+              <li>Hay <b>conflictos</b> o el push fue <b>rechazado</b>.</li>
+              <li>Un cambio va a quedar <b>enorme</b> y hay que partirlo en varios PRs.</li>
+              <li>Querés <b>elegir o cambiar</b> la estrategia de ramas del repo.</li>
             </ul>
           </div>
           <div class="plane sig">
-            <div class="tag">Sin improvisar</div>
-            <h3>El reporte nombra el archivo y la clave</h3>
+            <div class="tag">No la uses para</div>
+            <h3>Lo que no es control de versiones</h3>
             <ul>
               <li>
-                Un requisito ausente no se rodea: la corrida para y dice exactamente qué falta y
-                dónde. Las precondiciones de la skill despachada las verifica esa skill, y esta
-                falla rápido cuando le avisan.
+                <b>Implementar una feature:</b> eso es
+                <span class="mono">/sprint-development</span>, que llama a esta skill para el PR.
+              </li>
+              <li><b>Escribir tests:</b> eso es <span class="mono">/unit-testing</span>.</li>
+              <li>
+                <b>Refinar el backlog:</b> eso es <span class="mono">/product-management</span>.
+              </li>
+              <li>
+                <b>Editar código en general:</b> la skill opera estrictamente sobre la capa de
+                versiones.
               </li>
             </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §02 MODOS ============ -->
-    <section class="band" id="modos">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">02</span> · modos y topes</div>
-          <h2>Tres modos, cada uno con un tope que no se negocia</h2>
-          <p class="sub">
-            Cada historia medida terminó siendo una cadena de miles de líneas: dos no entran en el
-            contexto de una corrida. Los topes salen de esa medición, no de la prudencia.
-          </p>
-        </div>
-
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th>Modo</th>
-                <th>Elige</th>
-                <th>Tope</th>
-                <th>Despacha a</th>
-                <th>Escribe código</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="mono">story</span></td>
-                <td>La historia de mayor prioridad, desbloqueada de verdad</td>
-                <td><b>1 por corrida</b>, duro</td>
-                <td><span class="mono">/sprint-development</span></td>
-                <td>sí</td>
-              </tr>
-              <tr>
-                <td><span class="mono">bug</span></td>
-                <td>Defectos desbloqueados, primero los más viejos y graves</td>
-                <td><b>hasta 3</b>, estrictamente en secuencia</td>
-                <td><span class="mono">/sprint-development</span> (entrada de bug)</td>
-                <td>sí</td>
-              </tr>
-              <tr>
-                <td><span class="mono">discovery</span></td>
-                <td>Huecos de refinamiento, épicas o backlog</td>
-                <td>solo definiciones, hasta <span class="mono">discovery_definitions</span></td>
-                <td><span class="mono">/product-management</span></td>
-                <td><b>nunca</b></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="gotchas r">
-          <div class="g">
-            <b>Sin modo, no hay corrida</b
-            ><span
-              >El primer token de los argumentos ES el modo. Uno faltante o desconocido es un
-              fast-fail: nadie está para contestar, así que nunca se pregunta ni se deduce de la
-              prosa, y nunca se cae a un modo por defecto.</span
-            >
-          </div>
-          <div class="g">
-            <b>Un bug a la vez, cerrado del todo</b
-            ><span
-              >El segundo bug no se reclama hasta que el primero pasó por el cierre de la fase 4.
-              Tres bugs no son tres hilos en paralelo.</span
-            >
-          </div>
-          <div class="g">
-            <b>El interruptor maestro</b
-            ><span
-              ><span class="mono">autonomous_delivery.enabled</span> en
-              <span class="mono">false</span>, o un modo ausente de
-              <span class="mono">modes</span>, terminan la corrida en la fase 0 con un reporte de una
-              línea. No es una falla.</span
-            >
-          </div>
-        </div>
-
-        <div class="callout r">
-          <b>Los valores de tu proyecto viven en un solo lugar:</b> el bloque
-          <span class="mono">autonomous_delivery:</span> de
-          <span class="mono">.agents/project.yaml</span>. El bloque de la skill es un ejemplo con
-          los valores seguros de cada eje; citarlo como estado del proyecto es un error de
-          procedencia.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §03 FASE 0 ============ -->
-    <section class="band" id="lock">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">03</span> · fase 0, aislamiento y lock</div>
-          <h2>Primero su propio worktree, después el lock del modo</h2>
-          <p class="sub">
-            La colisión que no puede pasar es dos corridas implementando el mismo ticket en dos
-            ramas. <span class="mono">story</span> y <span class="mono">bug</span> entran a un
-            worktree propio, creado a mano para poder cerrarlo a mano.
-            <span class="mono">discovery</span> no toca código ni crea ramas: trabaja en el checkout
-            común y salta el aislamiento entero.
-          </p>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>Anotar el primario</h3>
-            <p>
-              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span> sale de
-              <span class="mono">git rev-parse --git-common-dir</span>, nunca de
-              <span class="mono">pwd</span>. Es el mismo valor desde el primario y desde cada
-              worktree. <span class="mono">.session/</span> vive ahí toda la corrida y se lee y
-              escribe por ruta absoluta.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Crear el worktree</h3>
-            <p>
-              Con nombre generado, nunca fijo. En Claude Code,
-              <span class="mono">EnterWorktree</span>. En OpenCode y Codex, la ruta portable:
-              <span class="mono">git worktree add</span> fuera del primario, desde
-              <span class="mono">origin/&lt;integration-branch&gt;</span>.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Aprovisionar</h3>
-            <p>
-              <span class="mono">bun run worktree:provision</span> copia
-              <span class="mono">.env</span>, <span class="mono">.vercel/</span> y lo demás que git
-              ignora. <b>No copia <span class="mono">.session/</span></b>: el lock solo excluye a
-              otra corrida si las dos ven el MISMO archivo.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Verificar la base</h3>
-            <p>
-              <span class="mono">git fetch</span> y un chequeo de ascendencia contra la rama de
-              integración. Si está mal, se realinea con
-              <span class="mono">git checkout -B</span>. Nunca
-              <span class="mono">git reset --hard</span>: la regla #13 lo prohíbe.
-            </p>
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Si el scheduler ya asignó un worktree</b> (la opción "Worktree" de una rutina de Claude
-          Code, el modo worktree de una automatización de Codex), la corrida no crea un segundo:
-          trabaja ahí, avisa en el reporte que esa opción debería ir apagada y no lo borra al final.
-          Es un camino degradado pero funcional. Bajo Orca, el hook de archivo de
-          <span class="mono">orca.yaml</span> lo audita y lo quita.
+          <b>Si el pedido es ambiguo</b> ("hagamos lo de git"), la skill no adivina: reporta el
+          estado del repo (Step 1) y te pregunta qué necesitás.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · el mapa</div>
+          <h2>Dos chequeos fijos, una operación, una cadena si hace falta</h2>
+          <p class="sub">
+            El pedido elige la operación; la estrategia decide cómo corre. Los dos primeros pasos
+            son los mismos para cualquier operación.
+          </p>
         </div>
 
-        <div class="sec-head r" style="margin-top: 34px">
-          <h2 style="font-size: 1.4rem">Un lock por modo, nunca una cola</h2>
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Siempre · antes de actuar</div>
+            <a class="wf" href="#mapa"
+              ><span class="lt agent">1</span
+              ><span
+                ><b>Estado del repo</b
+                ><span>Rama actual, árbol sucio o limpio, adelante o atrás del upstream.</span></span
+              ></a
+            >
+            <a class="wf" href="#paridad"
+              ><span class="lt agent">1b</span
+              ><span
+                ><b>Política contra host</b
+                ><span>Una vez por sesión, al primer push, PR o merge.</span></span
+              ></a
+            >
+            <a class="wf" href="#estrategia"
+              ><span class="lt agent">2</span
+              ><span
+                ><b>Estrategia</b
+                ><span>Leída de <span class="mono">.agents/project.yaml</span> en cada invocación.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">La operación · según el pedido</div>
+            <a class="wf" href="#commits"
+              ><span class="lt">B</span
+              ><span><b>Branch</b><span>Prefijo + key del issue, propuesto antes de crear.</span></span></a
+            >
+            <a class="wf" href="#commits"
+              ><span class="lt">C</span
+              ><span><b>Commit</b><span>Una responsabilidad por commit, con trailers forenses.</span></span></a
+            >
+            <a class="wf" href="#push"
+              ><span class="lt sig">P</span
+              ><span><b>Push</b><span>Compuerta de rama protegida resuelta por variable.</span></span></a
+            >
+            <a class="wf" href="#pr"
+              ><span class="lt">PR</span
+              ><span><b>Pull request</b><span>Base según la estrategia; se detiene al crearlo.</span></span></a
+            >
+            <a class="wf" href="#conflictos"
+              ><span class="lt sig">X</span
+              ><span><b>Conflict</b><span>Diagnóstico primero, opciones por seguridad.</span></span></a
+            >
+            <a class="wf" href="#setup"
+              ><span class="lt sig">S</span
+              ><span><b>Strategy Setup</b><span>Elegir el flujo y escribir el bloque.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Cuando el cambio crece</div>
+            <a class="wf" href="#cadena"
+              ><span class="lt">4</span
+              ><span
+                ><b>PRs encadenados</b
+                ><span>Árbol de decisión con traza; el que llama rechaza una etiqueta sola.</span></span
+              ></a
+            >
+            <a class="wf" href="#worktrees"
+              ><span class="lt agent">W</span
+              ><span
+                ><b>Worktrees</b
+                ><span>Trabajo aislado o sesiones en paralelo, con su ciclo de vida.</span></span
+              ></a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ESTRATEGIA ============ -->
+    <section class="band" id="estrategia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · Step 2 · la estrategia de ramas</div>
+          <h2>Un default no es una decisión</h2>
           <p class="sub">
-            Es <span class="mono">lock.json</span>, en
-            <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/</span> del checkout
-            primario, con dueño, máquina, worktree, inicio y un latido que se refresca en cada frontera de
-            fase.
+            La estrategia se guarda en el bloque <span class="mono">git_strategy</span> de
+            <span class="mono">.agents/project.yaml</span> y se lee en cada invocación. Nunca se
+            infiere de un ejemplo de la skill ni de otro proyecto.
           </p>
         </div>
 
@@ -1935,640 +1790,749 @@
           <table class="cmp">
             <thead>
               <tr>
-                <th>Encuentra</th>
-                <th>Hace</th>
+                <th>Estrategia</th>
+                <th>Forma</th>
+                <th>Rama de trabajo sale de</th>
+                <th>El PR apunta a</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Ningún lock</td>
-                <td>Lo escribe y sigue.</td>
+                <th><span class="mono">solo-main</span></th>
+                <td>Una sola rama larga, <span class="mono">main</span>. Todo aterriza directo.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span>, cuando hay PR</td>
               </tr>
               <tr>
-                <td>Un lock con latido reciente</td>
-                <td>
-                  Otra corrida es dueña del modo: <b>sale limpia</b> con un reporte que la nombra.
-                  No espera, no reintenta, no sigue igual. El próximo disparo es el reintento.
-                </td>
+                <th><span class="mono">main-integration</span></th>
+                <td><span class="mono">main</span> + una rama de integración (<span class="mono">staging</span> o similar).</td>
+                <td>integración</td>
+                <td>integración</td>
               </tr>
               <tr>
-                <td>Un lock más viejo que <span class="mono">lock_staleness_minutes</span></td>
-                <td>
-                  Abandonado: lo reclama y lo anota en el log de escalaciones. El worktree de la
-                  corrida muerta queda para que un humano lo audite y lo quite.
-                </td>
+                <th><span class="mono">enterprise</span></th>
+                <td>Integración + muchas <span class="mono">feature/*</span>, <span class="mono">release/*</span>, <span class="mono">hotfix/*</span>.</td>
+                <td>integración (hotfix: <span class="mono">main</span>)</td>
+                <td>integración (hotfix: <span class="mono">main</span>)</td>
               </tr>
               <tr>
-                <td>Un lock de esta misma sesión</td>
-                <td>Una fase anterior de esta corrida: sigue.</td>
+                <th><span class="mono">trunk-based</span></th>
+                <td>Solo el trunk; ramas de menos de un día, detrás de feature flags.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitflow</span></th>
+                <td><span class="mono">main</span> + <span class="mono">develop</span> + release y hotfix.</td>
+                <td><span class="mono">develop</span> (hotfix: <span class="mono">main</span>)</td>
+                <td><span class="mono">develop</span>; release y hotfix: <span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">github-flow</span></th>
+                <td><span class="mono">main</span> siempre desplegable; rama, PR, merge, deploy.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitlab-flow</span></th>
+                <td>GitHub Flow + ramas de entorno (<span class="mono">pre-production</span>, <span class="mono">production</span>).</td>
+                <td><span class="mono">main</span>, que es su integración</td>
+                <td><span class="mono">main</span>; la promoción va por entorno</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="gotchas r">
-          <div class="g">
-            <b>La identidad de push se verifica tres veces</b
-            ><span
-              ><span class="mono">gh auth status</span> contra
-              <span class="mono">automation_gh_account</span>: en la fase 0, justo antes del primer
-              push y justo antes de cualquier merge. Una CLI con varias cuentas puede cambiar de
-              identidad en el medio, y el error recién aparece en el merge, disfrazado de protección
-              de rama.</span
-            >
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>Cómo la encuentra</h3>
+            <p>
+              Primero el bloque: si <span class="mono">git_strategy.strategy</span> tiene valor, esa
+              es la decisión. Si no, mira las ramas (solo <span class="mono">main</span>,
+              <span class="mono">main</span> + una de integración, muchas
+              <span class="mono">feature/*</span>) y las pistas del repo
+              (<span class="mono">.gitlab-ci.yml</span>, ramas <span class="mono">release/*</span>).
+              Si nada alcanza, te muestra el catálogo y elegís vos. Nunca elige en silencio.
+            </p>
           </div>
-          <div class="g">
-            <b>Retomar sin preguntar</b
-            ><span
-              >Sin usuario, la fase 0 resuelve el <span class="mono">progress.md</span> previo por
-              tabla: rama en el remoto, retoma; rama ausente, escala (se perdió trabajo y no se
-              rehace en silencio); fase final completa, archiva y arranca de cero.</span
-            >
+          <div class="step">
+            <h3>Elegida o heredada</h3>
+            <p>
+              El boilerplate entrega el bloque lleno con <span class="mono">solo-main</span>. Lo
+              que separa "este proyecto eligió <span class="mono">solo-main</span>" de "nadie
+              eligió" es <span class="mono">meta.strategy_source</span>:
+              <span class="mono">inherited</span> o <span class="mono">chosen</span>. Solo Strategy
+              Setup estampa <span class="mono">chosen</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>La oferta, nunca la ejecución</h3>
+            <p>
+              Si el bloque falta en un repo nuevo, si el proyecto aún no se configuró
+              (<span class="mono">project.project_name</span> vacío), o si el proyecto ya tiene
+              nombre pero la estrategia sigue <span class="mono">inherited</span>, la skill
+              <b>ofrece</b> Strategy Setup una vez por sesión y te dice qué cuesta el default: sin
+              rama de integración, sin camino de promoción, sin compuerta de review propia. Un "no"
+              sigue con la estrategia que hay, sin escribir nada.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ §04 FASE 1 ============ -->
-    <section class="band" id="auditoria">
+    <!-- ============ §04 STRATEGY SETUP ============ -->
+    <section class="band" id="setup">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">04</span> · fase 1, auditoría</div>
-          <h2>Git es la fuente de verdad. El tracker es una pista</h2>
+          <div class="eyebrow"><span class="num">04</span> · operación · Strategy Setup</div>
+          <h2>Un cuestionario, ramas solo si hacen falta, un bloque escrito</h2>
           <p class="sub">
-            Un tracker puede decir "listo para QA" sin nada en la rama de integración: la
-            automatización de merge se dispara con CUALQUIER pull request, también con los internos
-            de una cadena. Toda decisión de dependencia de la fase 2 descansa acá, así que se
-            verifica, nunca se infiere.
+            Es la única operación que crea ramas largas y escribe el bloque
+            <span class="mono">git_strategy</span>. Las demás operaciones se adaptan a lo que esta
+            deja.
           </p>
         </div>
 
-        <pre class="code r"><span class="c"># de más confiable a menos; cuando dos chocan, gana la de arriba y el choque se REGISTRA</span>
-<span class="k">ascendencia en git</span> contra la rama de integración   <span class="c">&lt;- decide</span>
-pull requests abiertos + estado de ramas en el remoto  <span class="c">&lt;- explica</span>
-estado vivo del tracker                                <span class="c">&lt;- insinúa</span>
-archivo de cola / tablero / claims                     <span class="c">&lt;- reclama</span>
-roadmap y prosa de diseño                              <span class="c">&lt;- solo aristas, nunca estado</span>
-
-<span class="c"># el chequeo que más se usa, siempre con fetch inmediatamente antes</span>
-git fetch origin
-git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/<span class="s">&lt;integration-branch&gt;</span>   <span class="c"># exit 0 == llegó de verdad</span></pre>
-
-        <div class="planes r">
-          <div class="plane">
-            <div class="tag">Cuatro fuentes, en paralelo</div>
-            <h3>Un verificador por fuente</h3>
-            <ul>
-              <li>Ascendencia en git, en cada commit de merge que contribuye a una dependencia.</li>
-              <li>Pull requests abiertos y ramas sin mergear.</li>
-              <li>Estado vivo del tracker, con su changelog y sus comentarios.</li>
-              <li>El archivo de cola, tablero o claims, leído <b>entero</b>, no solo la fila propia.</li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">Por qué no un solo agente</div>
-            <h3>Porque alisaría la contradicción</h3>
-            <ul>
-              <li>
-                Que las cuatro fuentes no coincidan es el caso normal. Un agente único las concilia
-                en un relato prolijo y borra justo la señal que la fase 2 necesita ver.
-              </li>
-            </ul>
-          </div>
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Aplica a</th>
+                <th>Opciones (default primero)</th>
+                <th>Se guarda en</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · promoción integración → producción</th>
+                <td>estrategias con rama de integración</td>
+                <td>fast-forward only · merge commit · squash</td>
+                <td><span class="mono">decisions.promote_method</span></td>
+              </tr>
+              <tr>
+                <th>Q2 · merge de la rama de trabajo</th>
+                <td>estrategias de varias ramas</td>
+                <td>merge commit · squash · rebase + merge</td>
+                <td><span class="mono">decisions.feature_merge</span></td>
+              </tr>
+              <tr>
+                <th>Q3 · hotfixes</th>
+                <td>producción distinta de donde se trabaja</td>
+                <td>salir de producción + back-merge el mismo día · siempre por integración · sin política</td>
+                <td><span class="mono">decisions.hotfix_policy</span></td>
+              </tr>
+              <tr>
+                <th>Q4 · ramas protegidas</th>
+                <td><b>todas</b> las estrategias</td>
+                <td>push directo, bypass de admin, reviews mínimas</td>
+                <td><span class="mono">policy.*</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="trio r">
           <div>
             <span class="k">La IA hace</span>
             <p>
-              Fetch, las cuatro fuentes, el ledger vivo de migraciones con
-              <span class="mono">[DB_TOOL]</span> y la protección de ramas por los DOS endpoints:
-              el clásico devuelve 404 cuando la protección es un ruleset.
+              Resuelve la estrategia, salta las preguntas que no aplican o que ya tienen respuesta,
+              propone cada rama a crear y sincroniza solo por fast-forward.
             </p>
           </div>
           <div class="hum">
             <span class="k">Vos decidís</span>
             <p>
-              Nada en el momento. Cada discrepancia entre tracker y git queda en el log de
-              escalaciones, con evidencia, para que la leas y para que la próxima corrida sepa de
-              qué manera miente este tracker.
+              La estrategia, cada respuesta del cuestionario, cada rama propuesta y el push de
+              sincronización a una rama protegida.
             </p>
           </div>
           <div class="out">
             <span class="k">Sale</span>
             <p>
-              Una tabla, no un relato: ticket, lo que dice el tracker, commit de merge, si es
-              ancestro, PR abierto, estado de la rama y un veredicto (<b>merged</b>, claimed-only,
-              in-flight, not-started).
+              El bloque <span class="mono">git_strategy</span> escrito en su lugar dentro de
+              <span class="mono">.agents/project.yaml</span>, con
+              <span class="mono">strategy_source: chosen</span> y
+              <span class="mono">policy_source: declared</span>.
             </p>
           </div>
+        </div>
+
+        <div class="gate r">
+          <b>Compuerta</b> Nunca <span class="mono">--force</span>, tampoco
+          <span class="mono">--force-with-lease</span>. Si integración y producción divergieron
+          para los dos lados, la sincronización se detiene y pasa a resolución de conflictos.
+        </div>
+
+        <div class="callout r">
+          <b>El push de sincronización siempre pregunta.</b> Setup corre antes de que ratifiques la
+          nueva política, así que un <span class="mono">allowed</span> recién contestado no
+          autoriza su propio push. Al final, Setup ofrece llevar la política al host con
+          <span class="mono">bun run git:policy</span>: primero lectura, después un dry run, y la
+          escritura solo con tu sí.
         </div>
       </div>
     </section>
 
-    <!-- ============ §05 FASE 2 ============ -->
-    <section class="band" id="seleccion">
+    <!-- ============ §05 PUSH ============ -->
+    <section class="band" id="push">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">05</span> · fase 2, selección</div>
-          <h2>Elige lo que está desbloqueado de verdad, o no elige nada</h2>
+          <div class="eyebrow"><span class="num">05</span> · operación · push</div>
+          <h2>La variable decide si la IA pregunta</h2>
           <p class="sub">
-            Cuatro entradas, ponderadas y no promediadas. El veredicto de la fase 1 pisa a las otras
-            cuando no coinciden.
+            Antes de pushear a una rama protegida, la skill resuelve
+            <span class="mono">git_strategy.policy.direct_push_to_protected</span>
+            (<span class="mono">AGENTS.md</span>, Critical Rule #4). La respuesta nunca está
+            escrita en la regla: está en el valor.
           </p>
         </div>
 
         <div class="tablewrap r">
-          <table class="cmp">
+          <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Entrada</th>
-                <th>Manda sobre</th>
-                <th>Nunca manda sobre</th>
+                <th>Valor</th>
+                <th>Qué hace la IA</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><span class="mono">.context/dev-roadmap.md</span></td>
-                <td>aristas de dependencia, compuertas de mockup, orden</td>
-                <td>el estado actual de cualquier cosa</td>
-              </tr>
-              <tr>
-                <td>El tracker, consultado ahora</td>
-                <td>estado vivo, responsable, changelog</td>
-                <td>si el trabajo se mergeó</td>
-              </tr>
-              <tr>
-                <td>Veredicto de la fase 1</td>
-                <td>si el trabajo se mergeó</td>
-                <td>qué hay que construir</td>
-              </tr>
-              <tr>
-                <td>Cola, tablero o claims</td>
-                <td>quién tiene qué fila al momento de leer</td>
-                <td>si una dependencia salió</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>Listo no es un estado</h3>
-            <p>
-              Lee el rastro de refinamiento: preguntas bloqueantes abiertas, respuestas de práctica
-              marcadas como borrador, casos borde sin tildar, o un cambio de estado sin comentario
-              que lo explique. Cualquiera significa no listo, diga lo que diga el campo. Es un
-              salteo con razón anotada, no una escalación.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Chequeo de crecimiento</h3>
-            <p>
-              Estimación alta, una historia de UI sin mockup donde el plan de diseño lo espera, una
-              decisión de arquitectura implícita en los criterios, más de una migración o una ruta
-              nueva de autorización: <b>no se reclama sin un humano presente</b>. Se anota y se
-              toma la siguiente.
-            </p>
-          </div>
-          <div class="step">
-            <h3>El protocolo de claim</h3>
-            <p>
-              Escribe su nombre en la fila, guarda y <b>vuelve a leer el archivo</b>. Si ahora hay
-              otro nombre, ganó un par: retrocede y toma el siguiente candidato. Nunca se pelea una
-              fila ni se edita la de otra corrida.
-            </p>
-          </div>
-        </div>
-
-        <div class="callout blue r">
-          <b>Una corrida vacía es un resultado correcto.</b> Si nada sobrevive, sale limpia con un
-          reporte que dice qué consideró y por qué descartó cada uno. Elegir trabajo marginal para no
-          entregar un reporte vacío es justo la falla que esta fase existe para evitar.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §06 FASE 3 ============ -->
-    <section class="band" id="ejecucion">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">06</span> · fase 3, ejecución</div>
-          <h2>Despacha a la skill dueña y no repite sus etapas</h2>
-          <p class="sub">
-            Cada despacho lleva el briefing de siete componentes. El componente 7 (reglas) carga la
-            compuerta de migraciones, la ruta del worktree, la prohibición de rebasear ramas ya
-            pusheadas y el procedimiento de parada por contexto: una regla que vive solo en esta
-            skill nunca llega al ejecutor.
-          </p>
-        </div>
-
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th>Modo</th>
-                <th>Despacho</th>
-                <th>Lo que agrega esta skill</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="mono">story</span></td>
-                <td><span class="mono">/sprint-development</span>, entrada de historia nueva</td>
+                <th><span class="mono">allowed</span></th>
                 <td>
-                  clave del ticket, tabla de la fase 1, el claim, la ruta del worktree, la compuerta
-                  de migraciones, el presupuesto de contexto
+                  Pushea <b>sin preguntar</b>. El valor guardado es la autorización permanente;
+                  preguntar igual convertiría <span class="mono">allowed</span> en
+                  <span class="mono">confirm</span>.
                 </td>
               </tr>
               <tr>
-                <td><span class="mono">bug</span></td>
-                <td><span class="mono">/sprint-development</span>, entrada de bug (causa raíz primero)</td>
-                <td>lo mismo, una vez por bug, en secuencia</td>
+                <th><span class="mono">confirm</span></th>
+                <td>Pregunta <b>antes de cada push</b> y espera un sí explícito.</td>
               </tr>
               <tr>
-                <td><span class="mono">discovery</span></td>
-                <td><span class="mono">/product-management</span></td>
-                <td>el hueco encontrado en la fase 2 y su evidencia</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="sec-head r" style="margin-top: 34px">
-          <h2 style="font-size: 1.4rem">La compuerta de migraciones</h2>
-          <p class="sub">
-            Escribir el archivo de migración es trabajo técnico y siempre es autónomo.
-            <b>Aplicarlo</b> a una base compartida es irreversible y le pega a cada agente
-            concurrente: es otro acto, con otra compuerta, según
-            <span class="mono">autonomous_delivery.migrations</span>.
-          </p>
-        </div>
-
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th><span class="mono">migrations:</span></th>
-                <th>Cambio aditivo</th>
-                <th>Cambio destructivo (drop, rename, reescritura)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="mono">confirm</span> (por defecto)</td>
-                <td>Pausa y pide aprobación: destino, qué hace, que es aditivo.</td>
-                <td>Pausa y pide aprobación, con una segunda opción real: diferirlo.</td>
-              </tr>
-              <tr>
-                <td><span class="mono">autonomous</span></td>
-                <td>Sigue.</td>
-                <td><b>Igual para.</b> <span class="mono">autonomous</span> nunca cubre esto.</td>
-              </tr>
-              <tr>
-                <td><span class="mono">unrestricted</span></td>
-                <td>Sigue.</td>
+                <th><span class="mono">forbidden</span></th>
                 <td>
-                  Sigue. Opt-in y peligroso a propósito: para una base sin datos de producción que
-                  perder. Nunca es el defecto.
+                  No pushea a la rama protegida: abre una rama de trabajo, la pushea y manda el
+                  cambio por PR.
                 </td>
               </tr>
+              <tr>
+                <th>bloque ausente o <span class="mono">null</span></th>
+                <td>Se comporta como <span class="mono">confirm</span>: lo seguro es preguntar.</td>
+              </tr>
             </tbody>
           </table>
-        </div>
-
-        <div class="gotchas r">
-          <div class="g">
-            <b>El número sale del ledger vivo</b
-            ><span
-              >Inmediatamente antes de escribir el archivo, nunca de listar el directorio local: el
-              ledger puede ir adelante de tu rama por la migración sin mergear de un par.</span
-            >
-          </div>
-          <div class="g">
-            <b>Releer después de cada apply</b
-            ><span
-              >Y comparar la definición viva contra el archivo commiteado. Nunca se aplica una
-              migración solo para que desaparezca un error local.</span
-            >
-          </div>
-          <div class="g">
-            <b>Tests verdes no son evidencia</b
-            ><span
-              >Al menos una aserción tiene que pasar por una ruta de escritura real de producción.
-              Fixtures que siembran la columna que el código lee, y no la que producción escribe,
-              mantienen la suite verde sobre un camino de datos muerto.</span
-            >
-          </div>
         </div>
 
         <div class="planes r" style="margin-top: 22px">
           <div class="plane">
-            <div class="tag">Fase 3.5, por ticket</div>
-            <h3>Limpieza inmediata, no al final</h3>
+            <div class="tag">Antes del push</div>
+            <h3>El estado elige el comando</h3>
             <ul>
-              <li>Confirmar que la rama está pusheada (o que no hubo commits).</li>
-              <li>
-                Rescatar el <span class="mono">.session/</span> local de la skill despachada con
-                <span class="mono">bun run worktree:audit &lt;path&gt; --rescue</span>; si sale con
-                error, no se sigue.
-              </li>
-              <li><span class="mono">git worktree remove &lt;path&gt;</span> y una línea en <span class="mono">progress.md</span>.</li>
+              <li>Sin upstream: <span class="mono">git push -u origin &lt;rama&gt;</span>.</li>
+              <li>Upstream atrás: <span class="mono">git push</span>.</li>
+              <li>Upstream divergido: se detiene y pasa a conflictos. No fuerza.</li>
             </ul>
           </div>
           <div class="plane sig">
-            <div class="tag">Opcional</div>
-            <h3>Un worker supervisado por ticket</h3>
+            <div class="tag">Bypass de admin</div>
+            <h3>Solo se ofrece, y con doble chequeo</h3>
             <ul>
-              <li>
-                Cuando pasa la compuerta de orquestación (binario y runtime alcanzable), un
-                despacho de <span class="mono">story</span> o <span class="mono">bug</span> puede ir
-                a un worker por ticket. Lock, auditoría, selección, topes y compuertas siguen siendo
-                de esta skill; el worker para en un PR abierto y el merge queda en la corrida.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §07 CONTEXTO ============ -->
-    <section class="band" id="contexto">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">07</span> · el contrato de presupuesto</div>
-          <h2>Lo que se acaba primero es el contexto, no el reloj</h2>
-          <p class="sub">
-            En la corrida de la que sale esta skill, cada generación de workers se retiró por
-            contexto, varias a mitad de un ticket. Se diseña para eso.
-          </p>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>Handoff sobre la marcha</h3>
-            <p>
-              <span class="mono">handoff.md</span> se completa en cada frontera de fase y después de
-              cada tajada terminada, según <span class="mono">context_budget.handoff_checkpoint</span>.
-              Una sesión que se quedó sin espacio no puede escribir por qué.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Medir el propio presupuesto</h3>
-            <p>
-              En cada frontera de fase. Al llegar a
-              <span class="mono">context_budget.stop_at_remaining_pct</span> deja de tomar trabajo:
-              ni tajada nueva, ni agente en segundo plano, ni despertador programado.
-            </p>
-          </div>
-          <div class="step">
-            <h3>La parada limpia, en este orden</h3>
-            <p>
-              Primero el push. Después rescatar registros, el estado de reanudación en
-              <span class="mono">handoff.md</span> (rama, SHA, PRs, el próximo comando concreto), la
-              última entrada de <span class="mono">progress.md</span>, soltar el lock y reportar.
-            </p>
-          </div>
-        </div>
-
-        <pre class="code r"><span class="c"># la secuencia de parada limpia</span>
-<span class="k">1. PUSH de la rama</span>          <span class="c">&lt;- siempre primero: trabajo sin pushear en un worktree descartable</span>
-                               <span class="c">   es la única pérdida irrecuperable de este sistema</span>
-2. rescatar registros de sesión
-3. estado de reanudación en handoff.md, escrito para un extraño que retoma en frío
-4. última entrada de progress.md
-5. soltar el lock
-6. reportar</pre>
-
-        <div class="callout blue r">
-          <b>Una corrida que entrega un traspaso limpio es un éxito.</b> Se la juzga por si la
-          próxima puede retomarla, no por si shippeó. Una muerte a mitad de ticket con trabajo sin
-          pushear es la falla contra la que está diseñada.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §08 AUTONOMÍA ============ -->
-    <section class="band" id="autonomia">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · quién decide qué</div>
-          <h2>Decide lo técnico sola. Escala solo cuatro cosas</h2>
-          <p class="sub">
-            Sigue <span class="mono">agentic-dev-core/references/decision-protocol.md</span>: buscar
-            en el registro, seguir lo ya decidido, un panel de jueces puntuado si la pregunta es
-            nueva de verdad, y escalar solo lo que corresponde. Todo queda escrito donde la fase 1
-            de la próxima corrida lo va a encontrar.
-          </p>
-        </div>
-
-        <pre class="code r">BUSCAR EN EL REGISTRO -&gt; ¿ya decidido? SEGUIRLO
-        |
-        | no decidido
-        v
-  ¿producto / seguridad nueva / irreversible / reservado?
-        |  no                                  |  sí
-        v                                      v
-  PANEL DE JUECES PUNTUADO (3-5 lentes)     ESCALAR (informado)
-        |                                      |
-        +---------&gt; ESCRIBIRLO &lt;---------------+</pre>
-
-        <div class="planes r">
-          <div class="plane">
-            <div class="tag">El registro que lee primero</div>
-            <h3>El log de escalaciones, entero</h3>
-            <ul>
-              <li>
-                <span class="mono">.session/autonomous-delivery/escalation-log.md</span>, más
-                <span class="mono">.context/ADR/</span> y los tickets hermanos. Busca la FORMA de la
-                pregunta, no su redacción: un fallo que te gobierna puede haberlo escrito hace una
-                hora una corrida que nunca viste.
-              </li>
-              <li>
-                Escalar acá es caro: no hay quién conteste, y una parada por una cuestión técnica
-                cuesta un turno programado entero.
-              </li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">Producto: es configuración</div>
-            <h3><span class="mono">decision_authority.product</span></h3>
-            <ul>
-              <li>
-                <span class="mono">escalate</span> (el defecto correcto): una pregunta de producto
-                para la corrida.
-              </li>
-              <li>
-                <span class="mono">decide</span>: no hay PO humano. Un subagente de decisión puntúa
-                las opciones, publica el fallo en el ticket bajo un encabezado con el perfil que
-                decidió y la corrida sigue. Nunca se presenta como firma humana.
-              </li>
-              <li>Seguridad nueva, irreversible y lo reservado escalan con cualquiera de los dos.</li>
+              <li>Solo si <span class="mono">policy.admin_bypass: true</span>.</li>
+              <li>Te pregunta si de verdad sos admin: la skill no puede saber tu rol.</li>
+              <li>Te confirma la acción irreversible concreta.</li>
+              <li>Con <span class="mono">false</span>, nunca lo ofrece.</li>
             </ul>
           </div>
         </div>
 
-        <div class="gotchas r">
-          <div class="g">
-            <b>Escalar es una parada limpia</b
-            ><span
-              >Escribe la entrada (qué pasó, por qué es de esta categoría, qué tiene que decidir el
-              humano, qué cuesta esperar), pushea, suelta el lock, avisa y termina. Nunca deja una
-              sesión estacionada esperando una respuesta que no puede llegar.</span
-            >
-          </div>
-          <div class="g">
-            <b>Dos canales, dos trabajos</b
-            ><span
-              ><span class="mono">escalation_channel</span> lleva solo escalaciones, algo que un
-              humano tiene que resolver. <span class="mono">report_channel</span> lleva los
-              resúmenes. Con <span class="mono">null</span>, el archivo del reporte es la
-              notificación.</span
-            >
-          </div>
-          <div class="g">
-            <b>Discovery crea, el operador veta</b
-            ><span
-              >No hay compuerta de aprobación: crea hasta su tope, anota cada clave en
-              <span class="mono">discovery/created-log.md</span> (solo se agrega) y la reporta. Al
-              arrancar, lee ese log contra el tracker: un ticket cerrado o borrado es un veto vigente
-              y no se recrea, ni con otro título.</span
-            >
-          </div>
-        </div>
-
-        <div class="callout r">
-          <b>Para el dueño del producto:</b> tu control sobre <span class="mono">discovery</span> es
-          el veto después del hecho. Cerrar una historia en Backlog cuesta un click. La skill prohíbe
-          reintroducir una espera de aprobación, o una versión más suave de ella, porque una
-          propuesta sin respuesta dejó varios disparos seguidos sin crear nada, y el tope por corrida
-          es lo que acota el daño.
+        <div class="callout agent r">
+          <b>Qué ramas cuentan como protegidas</b> sale de la estrategia:
+          <span class="mono">main</span> siempre, la rama de integración cuando existe,
+          <span class="mono">develop</span> en gitflow y <span class="mono">release/*</span> en
+          enterprise. Sobre cualquiera de ellas, nunca
+          <span class="mono">--force</span>, <span class="mono">--force-with-lease</span> ni
+          <span class="mono">--no-verify</span> sin un pedido explícito tuyo y una rama que nadie
+          más usa.
         </div>
       </div>
     </section>
 
-    <!-- ============ §09 CIERRE ============ -->
-    <section class="band" id="cierre">
+    <!-- ============ §06 PARIDAD ============ -->
+    <section class="band" id="paridad">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> · fase 4, cierre y reporte</div>
-          <h2>Cada paso puede perderse con el anterior, por eso el orden</h2>
+          <div class="eyebrow"><span class="num">06</span> · Step 1b · paridad con el host</div>
+          <h2>Lo declarado es intención; lo que manda es el host</h2>
           <p class="sub">
-            Nada se evapora en silencio: cada discrepancia, cada decisión autónoma y cada chequeo
-            que la corrida no pudo hacer aparece nombrado en el reporte.
+            El bloque <span class="mono">policy</span> registra lo que el equipo decidió. GitHub
+            registra lo que se impone. Se desalinean, y la sorpresa llega en el peor momento: un
+            merge rechazado a mitad de camino. Por eso la reconciliación es un script, no un
+            procedimiento.
           </p>
         </div>
 
-        <div class="check r">
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>1 · Cierre de la skill dueña, verificado.</b> Que la transición automática del
-              tracker de verdad ocurrió, que el responsable de verdad cambió, el comentario de
-              traspaso y la sincronización de la caché. Esta skill no lo reimplementa: comprueba que
-              pasó.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>2 · Rescatar antes de borrar.</b> El estado de esta skill ya vive en
-              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, pero una skill despachada
-              puede haber escrito un <span class="mono">.session/</span> dentro del worktree:
-              <span class="mono">bun run worktree:audit &lt;worktree&gt; --rescue</span>.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>3 · Soltar el lock.</b> También si escaló o paró por presupuesto: el lock es de
-              una sesión en marcha, no de un ticket sin terminar.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>4 · Escribir el reporte</b> en
-              <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/run-report.md</span>,
-              también para la corrida vacía.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>5 · Publicar el resumen</b> en <span class="mono">report_channel</span> si hay uno
-              configurado. Nunca un destino improvisado.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span><b>6 · Archivar la sesión</b> y cerrar la memoria con la ruta del archivo.</span>
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>7 · Cerrar SU worktree, el último paso.</b>
-              <span class="mono">ExitWorktree(remove)</span> en Claude Code,
-              <span class="mono">git worktree remove</span> desde el primario en la ruta portable.
-              Nunca el de otra corrida, y nunca uno que asignó el scheduler.</span
-            >
-          </div>
-        </div>
-
-        <div class="tablewrap r" style="margin-top: 22px">
+        <div class="tablewrap r">
           <table class="cmp">
             <thead>
               <tr>
-                <th>Artefacto</th>
-                <th>Alcance y vida</th>
+                <th>Comando</th>
+                <th>Lee el host</th>
+                <th>Escribe</th>
                 <th>Para qué</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><span class="mono">run-report.md</span></td>
-                <td>una corrida; se pisa en cada corrida y se archiva</td>
-                <td>lo que hizo esta corrida, para un humano que se pone al día</td>
+                <th><span class="mono">bun run git:policy plan</span></th>
+                <td>no</td>
+                <td>nada</td>
+                <td>Ver qué ruleset deriva del bloque.</td>
               </tr>
               <tr>
-                <td><span class="mono">handoff.md</span></td>
-                <td>una corrida, escrito de continuo; se archiva</td>
-                <td>lo que la próxima corrida no puede sacar de otro lado</td>
+                <th><span class="mono">bun run git:policy verify</span></th>
+                <td>sí</td>
+                <td>nada</td>
+                <td>Al primer push, PR o merge de la sesión. Sale con 1 ante un desvío no aceptado.</td>
               </tr>
               <tr>
-                <td><span class="mono">escalation-log.md</span></td>
-                <td>todas las corridas y modos; solo se agrega, nunca se archiva</td>
-                <td>cada parada, cada fallo, cada discrepancia</td>
+                <th><span class="mono">… verify --stamp</span></th>
+                <td>sí</td>
+                <td><span class="mono">meta.policy_verified</span> y <span class="mono">policy_source</span></td>
+                <td>Registrar la reconciliación cuando está limpia.</td>
               </tr>
               <tr>
-                <td><span class="mono">progress.md</span></td>
-                <td>una corrida; solo se agrega, se archiva</td>
-                <td>estado mecánico para retomar, con lo que queda sin pushear</td>
+                <th><span class="mono">bun run git:policy apply</span></th>
+                <td>sí</td>
+                <td>nada (dry run)</td>
+                <td>Mostrar el payload exacto antes de proponer la escritura.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">… apply --yes</span></th>
+                <td>sí</td>
+                <td>el ruleset del host</td>
+                <td>Escribir, con tu elección. Nunca para tapar un desvío que no leíste.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="callout blue r">
-          <b>Lo primero que lee un líder:</b> la sección "Not verified by this run" del reporte. Lo
-          que una corrida programada no pudo comprobar se nombra exacto, para que quien sí puede
-          sepa por dónde empezar. Nunca queda implícita.
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Lo que el script sabe</div>
+            <h3>Dos mecanismos, y un push no prueba nada</h3>
+            <ul>
+              <li>
+                Consulta la protección clásica <b>y</b> los rulesets. Un
+                <span class="mono">404</span> en la clásica no significa "sin protección".
+              </li>
+              <li>
+                Un push que pasa no prueba que no haya regla: los admins la saltean y la regla sigue
+                valiendo para el resto. Si el remoto dice
+                <span class="mono">Changes must be made through a pull request</span>, fue un bypass.
+              </li>
+              <li>
+                <span class="mono">require_code_owner_review</span> sin archivo
+                <span class="mono">CODEOWNERS</span> no es estricto: es imposible de cumplir, y cada
+                merge termina siendo un bypass.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Ante un desvío</div>
+            <h3>Se reporta, nunca se corrige solo</h3>
+            <ul>
+              <li>(a) corregir <span class="mono">.agents/project.yaml</span> para que coincida con el host;</li>
+              <li>(b) cambiar la configuración del host;</li>
+              <li>
+                (c) aceptar la diferencia y anotar por qué en
+                <span class="mono">policy.accepted_divergences</span>.
+              </li>
+              <li>Cualquiera de las tres necesita tu elección.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="c"># una divergencia aceptada: un campo del verify, con su razón</span>
+<span class="k">git_strategy</span>:
+  <span class="k">policy</span>:
+    <span class="k">accepted_divergences</span>:
+      - <span class="k">field</span>: <span class="s">main.direct_push_to_protected</span>
+        <span class="k">enforced</span>: <span class="s">blocked (pull_request rule)</span>
+        <span class="k">accepted</span>: <span class="s">&lt;fecha de la firma&gt;</span>
+        <span class="k">reason</span>: <span class="s">por qué los dos lados difieren a propósito</span></div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Aceptada no es silenciada.</b> <span class="mono">verify</span> la lista como
+              ACCEPTED con su razón y sale con 0; <span class="mono">--stamp</span> registra
+              <span class="mono">policy_source: accepted</span>, distinto de
+              <span class="mono">verified</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Una excepción vieja aparece sola.</b> Una divergencia aceptada que ya no coincide
+              con ningún desvío se reporta como nota, para que la lista no junte excepciones
+              muertas.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b><span class="mono">apply</span> no afloja nada sin permiso.</b> Quitar una
+              guarda, bajar las aprobaciones, apagar code-owner review o ampliar los métodos de
+              merge exige <span class="mono">--allow-loosening</span> para esa renuncia
+              concreta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lo no verificado se dice así.</b> Con
+              <span class="mono">policy_source: declared</span>, la IA no te dice qué exige el
+              remoto: dice "declarado, no verificado".</span
+            >
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ §10 BARANDAS ============ -->
-    <section class="band" id="reglas">
+    <!-- ============ §07 COMMITS ============ -->
+    <section class="band" id="commits">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · barandas</div>
-          <h2>Lo que no hace nunca, con nadie mirando</h2>
+          <div class="eyebrow"><span class="num">07</span> · operaciones · branch y commit</div>
+          <h2>Ramas con nombre propuesto, commits con una sola razón</h2>
           <p class="sub">
-            Las reglas que tienen que atar al ejecutor viven en
-            <span class="mono">## Compact Rules</span> y llegan a cada briefing por
-            <span class="mono">.agents/skills/REGISTRY.md</span>. Cada riesgo observado, con su
-            disparador y su chequeo, está en
-            <span class="mono">references/hazard-catalogue.md</span>.
+            La IA propone el nombre de la rama y el bloque de commits completo, y espera tu OK antes
+            de ejecutar. Podés aceptar, cambiar o rechazar cada uno.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Branch</div>
+            <h3>Prefijo + key + slug</h3>
+            <ul>
+              <li>
+                Prefijo por el cambio dominante: <span class="mono">feat</span>,
+                <span class="mono">fix</span>, <span class="mono">refactor</span>,
+                <span class="mono">test</span>, <span class="mono">docs</span>,
+                <span class="mono">chore</span>, en ese orden de precedencia.
+              </li>
+              <li>
+                Con key: <span class="mono">feat/PROJ-123-bulk-assign</span>. Sin key:
+                <span class="mono">refactor/split-auth-utils</span>.
+              </li>
+              <li>Sale de la rama base que fija la estrategia.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Commit</div>
+            <h3>Conventional, atómico, explícito</h3>
+            <ul>
+              <li>Un commit, una responsabilidad. Los tests van con el comportamiento que prueban.</li>
+              <li><span class="mono">feat(PROJ-123): add bulk-assign action</span>.</li>
+              <li>Nunca <span class="mono">git add -A</span> ni <span class="mono">git add .</span>: cada ruta, por nombre.</li>
+              <li>Si un hook rechaza el commit: se arregla la causa y se hace un commit nuevo, nunca <span class="mono">--amend</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px">feat(PROJ-123): add bulk-assign action
+
+<span class="c">Cuerpo opcional: el resultado, no la lista de archivos.</span>
+
+<span class="k">Worktree</span>: <span class="s">&lt;nombre|primary&gt;</span>
+<span class="k">Session</span>: <span class="s">&lt;label&gt;</span></div>
+
+        <div class="callout agent r">
+          <b>Los trailers son forenses, no atribución.</b> Las dos últimas líneas de todo commit
+          que escribe una sesión de agente dicen qué checkout y qué sesión lo produjeron, copiadas
+          de la línea <span class="mono">AGENT IDENTITY:</span> que inyecta el hook del prompt
+          (<span class="mono">unknown</span> si no se resuelve). No nombran ninguna herramienta.
+          Prohibido: "Generated with…", un <span class="mono">Co-Authored-By:</span> de una IA o
+          cualquier trailer con marca como <span class="mono">Claude-Session:</span>.
+          <span class="mono">.husky/commit-msg</span> corre
+          <span class="mono">scripts/check-commit-trailers.ts</span> y avisa, sin bloquear.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 PR ============ -->
+    <section class="band" id="pr">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · operación · pull request</div>
+          <h2>Se abre con contexto completo y se detiene ahí</h2>
+          <p class="sub">
+            La base sale de la estrategia, el cuerpo se arma en el momento, y el merge queda como tu
+            próximo paso explícito.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Base y título</h3>
+            <p>
+              La base es la que fija la estrategia (tabla de la sección 03). Si la cambiás con
+              <span class="mono">--base</span>, la IA te lo marca contra el default. El título sigue
+              el formato del commit, con menos de 70 caracteres.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cuerpo</h3>
+            <p>
+              Summary, Changes, Test Plan, Traceability (issue, rama, base, estrategia, worktree y
+              sesión), Evidence y Risk. Lo que la skill no puede completar queda visible para que
+              lo edites: no se borra en silencio. Te muestra cuerpo y base antes de enviarlos con
+              <span class="mono">gh pr create --body-file</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Etiquetas, revisores, draft</h3>
+            <p>
+              Te los pregunta. No inventa etiquetas que el repo quizás no tiene: si duda, las
+              confirma con <span class="mono">gh label list</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Cuántas aprobaciones faltan, y según quién</h3>
+            <p>
+              Con la política verificada dice "el host exige N aprobaciones en la base". Con la
+              política solo declarada dice "declarado <span class="mono">require_pr_reviews: N</span>,
+              no verificado contra el host".
+            </p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Compuerta</b> La skill no mergea nunca. Te deja el PR y el comando para cuando esté
+          aprobado.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 CONFLICTOS ============ -->
+    <section class="band" id="conflictos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · operación · conflictos</div>
+          <h2>Diagnóstico antes que arreglo</h2>
+          <p class="sub">
+            Un arreglo equivocado acá cuesta horas. La IA mira
+            <span class="mono">git status</span>, <span class="mono">git diff --check</span> y los
+            archivos de estado de <span class="mono">.git/</span> para saber qué pasó antes de
+            proponer nada.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">explicar la causa</span><span class="ar">→</span>
+          <span class="st hum">opciones por seguridad</span><span class="ar">→</span>
+          <span class="st">guiar paso a paso</span><span class="ar">→</span>
+          <span class="st">verificar</span><span class="ar">→</span>
+          <span class="st">cómo evitarlo</span>
+        </div>
+
+        <div class="alts r" style="margin-top: 18px">
+          <div class="alt">
+            <div class="kk">Merge y rebase</div>
+            <h3>Contenido, renombres, rebase</h3>
+            <p>Conflictos de contenido, de renombre o borrado, y de rebase o cherry-pick.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Ramas</div>
+            <h3>Push rechazado, HEAD suelto</h3>
+            <p>Ramas divergidas, push rechazado, detached HEAD, historias sin relación.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Trabajo local</div>
+            <h3>Stash y hooks</h3>
+            <p>Conflicto al aplicar un stash, o un pre-commit que rechazó el commit.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Ante la duda</div>
+            <h3>Abortar gana</h3>
+            <p>
+              <span class="mono">git merge --abort</span>,
+              <span class="mono">git rebase --abort</span>: abortar siempre le gana a adivinar.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Las opciones destructivas nunca se eligen en silencio.</b> Force push, reset duro o
+          abortar un merge con trabajo sin commitear se te presentan como opción, con su riesgo, y
+          esperan tu decisión.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CADENA ============ -->
+    <section class="band" id="cadena">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · Step 4 · PRs encadenados</div>
+          <h2>Más de 400 líneas: se parte, y la decisión viaja con su traza</h2>
+          <p class="sub">
+            Arriba de ese presupuesto de review la detección de defectos cae fuerte. Antes de abrir
+            PRs, la skill recorre un árbol de tres preguntas y se detiene en la primera hoja.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Si es sí</th>
+                <th>Si es no</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · ¿es mayormente mecánico? (renombre, formateo, código generado)</th>
+                <td><span class="mono">size-exception</span>: un PR, con tu override y una línea <span class="mono">Why size-exception:</span></td>
+                <td>sigue a Q2</td>
+              </tr>
+              <tr>
+                <th>Q2 · ¿se parte en 2 a 4 tajadas independientes, cada una segura sola en la base?</th>
+                <td><span class="mono">stacked-to-main</span>: PRs chicos sobre la base</td>
+                <td>sigue a Q3</td>
+              </tr>
+              <tr>
+                <th>Q3 · ¿hay andamiaje compartido que un merge parcial rompería?</th>
+                <td><span class="mono">feature-branch-chain</span>: una rama de integración, PRs hijos, un PR final</td>
+                <td>volver a descomponer la historia: es un olor de planificación</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="k">Chain strategy</span>: <span class="s">feature-branch-chain</span>
+<span class="k">Decision trace</span>: Q1=No (lógica de dominio nueva, no un renombre) ·
+                Q2=No (la tajada 2 no compila sin los tipos de la 1) ·
+                Q3=Yes (esquema compartido que usan las tajadas 2 a 4) → feature-branch-chain
+<span class="k">Decided by</span>: /git-flow-master §Chained-PR decision tree (branching-strategies.md)</div>
+
+        <div class="callout blue r">
+          <b>Una etiqueta sola no es una decisión.</b>
+          <span class="mono">/sprint-development</span> bloquea su Stage 2 sobre esta respuesta y
+          rechaza un nombre de estrategia sin traza. Cada respuesta lleva la razón de este cambio,
+          y esta skill es la única autoridad que puede completar esas líneas. Si el diff real
+          supera la estimación, se vuelve a decidir: no se estira el presupuesto en silencio.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 WORKTREES ============ -->
+    <section class="band" id="worktrees">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · trabajo aislado</div>
+          <h2>Una sesión, un worktree, una rama</h2>
+          <p class="sub">
+            Un worktree es un segundo directorio de trabajo sobre el mismo
+            <span class="mono">.git</span>, con su propia rama y su propio índice. Sirve para dos
+            sesiones de IA en paralelo, un hotfix con una feature abierta, o trabajo riesgoso que no
+            querés mezclar.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">crear</span><span class="ar">→</span>
+          <span class="st">bun run worktree:provision</span><span class="ar">→</span>
+          <span class="st">trabajar</span><span class="ar">→</span>
+          <span class="st hum">bun run worktree:audit &lt;wt&gt; --rescue</span><span class="ar">→</span>
+          <span class="st">remover</span>
+        </div>
+
+        <div class="steps r" style="margin-top: 18px">
+          <div class="step">
+            <h3>Crear: git es el canon, el harness es un atajo</h3>
+            <p>
+              <span class="mono">git worktree add ../dir -b feat/x main</span> funciona en
+              cualquier host. La herramienta propia de un harness (en Claude Code
+              <span class="mono">EnterWorktree</span>, o un worktree administrado por Codex) es un
+              camino del harness, nunca el canon del repo, y necesita los mismos dos pasos
+              alrededor. OpenCode no tiene equivalente: usa git.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Provisionar antes de trabajar</h3>
+            <p>
+              Un worktree nuevo trae solo los archivos versionados.
+              <span class="mono">worktree:provision</span> copia los insumos ignorados que no se
+              pueden reconstruir (<span class="mono">.env</span>,
+              <span class="mono">.vercel/</span>, settings locales), instala dependencias y crea el
+              alias <span class="mono">.claude/skills</span>. La lista vive en código:
+              <span class="mono">PROVISION_COPIES</span> en
+              <span class="mono">cli/lib/worktree.ts</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">.session/</span> nunca se copia</h3>
+            <p>
+              El estado durable (planes, progreso, locks, reportes) vive en
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, el checkout principal, y se
+              cita por ruta absoluta desde el worktree. Una copia diverge en silencio y muere con el
+              worktree.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Auditar antes de remover</h3>
+            <p>
+              <span class="mono">worktree:audit</span> es de solo lectura y sale con 1 mientras haya
+              estado que vive solo en el worktree; <span class="mono">--rescue</span> lo copia al
+              principal sin pisar nada. Con Orca, el <span class="mono">orca.yaml</span> versionado
+              corre los dos pasos como hooks de setup y archive.
+            </p>
+          </div>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Lo no versionado no viaja.</b> Un archivo nuevo sin
+              <span class="mono">git add</span> se queda en el directorio original: se mueve, o se
+              commitea antes de crear el worktree.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>El stash es de todo el repo.</b> No sirve para pasar trabajo entre sesiones:
+              commiteá en tu rama.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>La procedencia está en el commit.</b> Los trailers
+              <span class="mono">Worktree:</span> y <span class="mono">Session:</span> dicen quién
+              escribió una rama huérfana. Un worktree viejo se reporta, nunca se borra si es de otra
+              sesión.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · rieles de seguridad</div>
+          <h2>Lo que la skill nunca hace</h2>
+          <p class="sub">
+            La lista completa vive en <span class="mono">SKILL.md</span> (Compact Rules, Critical
+            rules y antipatrones). Estos son los que más se notan desde afuera.
           </p>
         </div>
 
@@ -2576,158 +2540,224 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca avanza una dependencia por un cambio de estado</b> en el tracker. Solo la
-              ascendencia en git decide si algo salió.</span
+              ><b>No reescribe historia pusheada.</b> Ni force push a una rama compartida, ni
+              <span class="mono">--amend</span> o rebase sobre commits ya publicados: se agrega un
+              commit nuevo.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca rebasea, fuerza el push ni reescribe historia pusheada.</b> Sobre una rama
-              que un subagente ya pusheó, mergea la base. Y una operación denegada es una señal para
-              parar y nombrar el permiso que falta, nunca un acertijo.</span
+              ><b>No descarta cambios globales.</b> Nunca <span class="mono">git restore .</span>,
+              <span class="mono">git checkout -- .</span>, <span class="mono">git reset --hard</span>,
+              un <span class="mono">git stash</span> sin rutas ni
+              <span class="mono">git clean -f</span>: otra sesión puede estar en el mismo árbol. Solo
+              rutas que modificó esta sesión (Critical Rule #13).</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca toca su propia configuración de permisos</b> para recuperar una capacidad.</span
+              ><b>No commitea secretos.</b> <span class="mono">.env</span>, credenciales o tokens
+              en git son para siempre; por eso cada ruta se agrega por nombre.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca improvisa una identidad o credencial</b> cuando falta la declarada. Un
-              worktree sin su <span class="mono">.env</span> es la forma más común de esa
-              tentación: falla cerrado y reporta.</span
+              ><b>No mergea</b> ni encadena PRs sin nombrar la dependencia en el cuerpo de cada
+              uno.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca adivina una transición.</b> Un slug que falta en
-              <span class="mono">.agents/jira-workflows.json</span> no dispara nada: deja el issue
-              donde está y el reporte recomienda
-              <span class="mono">bun run jira:sync-workflows</span>.</span
+              ><b>No cita ejemplos como configuración.</b> Los bloques de
+              <span class="mono">references/</span> son ilustraciones; la respuesta sobre un
+              proyecto sale de su propio <span class="mono">.agents/project.yaml</span>, citado.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Nunca commitea salida regenerada sin leerla.</b> Tipos o clientes generados desde
-              una instancia compartida absorben el esquema sin mergear de un par.</span
+              ><b>No finge un PR.</b> Si <span class="mono">gh</span> falta o no está autenticado,
+              se detiene y te lo dice.</span
             >
           </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Nunca edita la fila, la rama ni el worktree de otra corrida</b>, salvo para
-              reclamar una fila libre según el protocolo.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>Sin atribución de IA</b> en commits, pull requests ni comentarios del tracker
-              (Critical Rule #3).</span
-            >
-          </div>
-        </div>
-
-        <div class="callout r">
-          <b>Editar una regla no cambia nada hasta regenerar el registro</b> con
-          <span class="mono">bun run skills:registry</span>. El registro es lo que llega a un
-          briefing: una regla que no llegó al briefing no llegó a ningún ejecutor.
         </div>
       </div>
     </section>
 
-    <!-- ============ §11 INVOCAR ============ -->
+    <!-- ============ §13 ENTRADAS Y SALIDAS ============ -->
+    <section class="band" id="archivos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · dónde vive cada cosa</div>
+          <h2>Los archivos dueños, no copias</h2>
+          <p class="sub">
+            El deck no repite valores: cada uno se lee en su dueño, que es lo que la skill también
+            hace.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Archivo o comando</th>
+                <th>Qué resuelve</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">.agents/project.yaml</span> → <span class="mono">git_strategy</span></th>
+                <td>Estrategia, ramas, protegidas, decisiones, política, divergencias aceptadas y la procedencia en <span class="mono">meta</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">package.json</span></th>
+                <td>Los scripts <span class="mono">git:policy</span>, <span class="mono">worktree:provision</span> y <span class="mono">worktree:audit</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.husky/commit-msg</span></th>
+                <td>El aviso de trailers, vía <span class="mono">scripts/check-commit-trailers.ts</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">cli/lib/worktree.ts</span> · <span class="mono">orca.yaml</span></th>
+                <td>Qué copia el provisionado y los hooks de setup y archive en Orca.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/README.md</span> · "Checkout roots"</th>
+                <td>Qué es <span class="mono">&lt;&lt;REPO_ROOT&gt;&gt;</span> y qué es <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/instructions/agent-project.md</span> · "Git Strategy"</th>
+                <td>Solo un puntero al bloque, más el contexto en prosa de una divergencia aceptada.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/skills/REGISTRY.md</span></th>
+                <td>Las Compact Rules de la skill que viajan en el briefing de un subagente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 INVOCAR ============ -->
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> · qué le dice el scheduler a la IA</div>
+          <div class="eyebrow"><span class="num">14</span> · qué le decís a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            Lo escribe el prompt de la rutina, no una persona. El modo va siempre explícito:
-            <span class="mono">story</span>, <span class="mono">bug</span> o
-            <span class="mono">discovery</span>, definidos en
-            <span class="mono">## Mode routing</span> de la skill.
+            La skill no tiene modos con nombre: la operación sale de tu frase, en español o en
+            inglés. Muchas veces ni hace falta nombrarla.
           </p>
         </div>
 
         <div class="hosts r">
           <div class="host">
             <h3>Claude Code</h3>
-            <span class="say">/autonomous-delivery bug</span>
-            <p>La barra de la skill y el modo como primer argumento.</p>
+            <span class="say">/git-flow-master abrí un PR</span>
+            <span class="say">/git-flow-master configura el flujo de git</span>
+            <p>La barra carga la skill; el resto de la frase elige la operación.</p>
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
-            <p>Sin barra: el prompt de la rutina nombra la skill y el modo.</p>
+            <span class="say">cargá la skill git-flow-master: commit and push</span>
+            <p>Sin barra: nombrás la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
-            <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+            <span class="say">cargá la skill git-flow-master: tengo conflictos al hacer pull</span>
+            <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
           </div>
         </div>
 
-        <div class="callout blue r">
-          <b>Al armar la rutina, dejá apagada la opción de worktree del scheduler.</b> La skill crea
-          y cierra su propio aislamiento en los tres hosts: así la fase 4 puede borrar el worktree de
-          la corrida en vez de dejarlo en disco para un humano.
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Si decís algo como…</th>
+                <th>Corre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"start work on PROJ-123" · "crear branch"</th>
+                <td>Branch</td>
+              </tr>
+              <tr>
+                <th>"commit this" · "commitear esto" · "commit and push"</th>
+                <td>Commit, y Push si lo pediste</td>
+              </tr>
+              <tr>
+                <th>"create PR" · "abrir PR"</th>
+                <td>Pull request</td>
+              </tr>
+              <tr>
+                <th>"fix conflict" · "push rejected" · "resolver conflicto"</th>
+                <td>Conflict</td>
+              </tr>
+              <tr>
+                <th>"split this PR" · "PR demasiado grande"</th>
+                <td>Árbol de PRs encadenados</td>
+              </tr>
+              <tr>
+                <th>"set up our git strategy" · "configura el flujo de git"</th>
+                <td>Strategy Setup</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <!-- ============ §12 HANDOFFS ============ -->
+    <!-- ============ §15 HANDOFFS ============ -->
     <section class="band" id="handoffs">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">12</span> · alrededor de esta skill</div>
-          <h2>Con quién trabaja</h2>
-          <p class="sub">
-            Selecciona y despacha; cada etapa del trabajo la hace su dueña. Fuera de alcance quedan
-            la verificación de QA, que arranca desde el estado listo para QA, y elegir qué
-            construir, que es producto y escala.
-          </p>
+          <div class="eyebrow"><span class="num">15</span> · con quién trabaja</div>
+          <h2>A quién le pasa la posta, y quién se la pasa</h2>
         </div>
 
         <div class="alts r">
           <div class="alt">
-            <div class="kk">Despachada · story y bug</div>
-            <h3><a href="../sprint-development/como-funciona.es.html">/sprint-development</a></h3>
+            <div class="kk">El loop de la historia</div>
+            <h3>/sprint-development</h3>
             <p>
-              Implementa, revisa y despliega cada ticket. Su cierre de Stage 4 es el que la fase 4
-              verifica.
+              Implementa y revisa; le pide a esta skill el PR, la cadena con su traza y la política
+              de push.
+              <a href="../sprint-development/how-it-works.es.html">Ver el deck</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Despachada · discovery</div>
-            <h3><a href="../product-management/como-funciona.es.html">/product-management</a></h3>
-            <p>Refinamiento, épicas y criterios: la única skill que llama el modo discovery.</p>
-          </div>
-          <div class="alt">
-            <div class="kk">Al lado · git</div>
-            <h3><a href="../git-flow-master/como-funciona.es.html">/git-flow-master</a></h3>
-            <p>Ramas, pull requests, merges, conflictos y la planificación de cadenas de PRs.</p>
-          </div>
-          <div class="alt">
-            <div class="kk">Upstream · aristas</div>
-            <h3>/project-context dev-roadmap</h3>
+            <div class="kk">TDD dentro de una feature</div>
+            <h3>/unit-testing</h3>
             <p>
-              Cuando las aristas o el orden de <span class="mono">.context/dev-roadmap.md</span>
-              están viejos o faltan.
+              Rojo, verde, refactor; los tests van en el mismo commit que el comportamiento.
+              <a href="../unit-testing/how-it-works.es.html">Ver el deck</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Opcional · workers y rutinas</div>
-            <h3><a href="../orca-orchestration/como-funciona.es.html">/orca-orchestration</a></h3>
+            <div class="kk">Backlog y refinamiento</div>
+            <h3>/product-management</h3>
             <p>
-              Lanza, supervisa y cierra los workers despachados, y registra la corrida como rutina
-              programada. Solo cuando pasa su compuerta; cada QUÉ sigue siendo de esta skill.
+              Si el pedido es sobre historias y no sobre git, va ahí.
+              <a href="../product-management/how-it-works.es.html">Ver el deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Jira desde un commit o un PR</div>
+            <h3>/acli</h3>
+            <p>Las operaciones de Jira que dispara un commit o un PR.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Flotas de workers en worktrees</div>
+            <h3>/orca-orchestration</h3>
+            <p>
+              Un conductor que lanza workers supervisados, cada uno en su worktree; Orca crea,
+              provisiona y audita.
             </p>
           </div>
         </div>
@@ -2735,15 +2765,12 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
         <div class="callout blue r">
           <b>Para leer más:</b>
           <a
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/autonomous-delivery/SKILL.md"
-            >.agents/skills/autonomous-delivery/SKILL.md</a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/git-flow-master/SKILL.md"
+            >.agents/skills/git-flow-master/SKILL.md</a
           >
-          y sus tres referencias en <span class="mono">references/</span>
-          (<span class="mono">audit-and-selection.md</span>,
-          <span class="mono">hazard-catalogue.md</span>,
-          <span class="mono">run-report-format.md</span>). Doctrina relacionada:
-          <span class="mono">agentic-dev-core/references/decision-protocol.md</span> y
-          <span class="mono">session-management.md</span>.
+          y su carpeta <span class="mono">references/</span>: el catálogo de estrategias, la
+          mecánica de Strategy Setup, la paridad de rulesets, los commits, los PRs, los conflictos y
+          los worktrees, una referencia por tema.
         </div>
       </div>
     </section>
@@ -2752,14 +2779,14 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
       <div class="wrap">
         <div class="prose">
           <p>
-            <b style="color: var(--ink)">La idea de fondo.</b> Shippear es lo que sale; un estado
-            desde el que se puede retomar es lo que no se negocia. Una corrida sin nadie mirando
-            vale lo que vale el registro que deja: qué era cierto, qué eligió y por qué, qué no pudo
-            comprobar.
+            <b style="color: var(--ink)">La idea de fondo.</b> La política de git se decide una vez,
+            se guarda en un solo lugar y se comprueba contra el host. Después, cada rama, commit,
+            push y PR la aplica sin que nadie la tenga que recordar. La IA propone y ejecuta; vos
+            elegís la estrategia, aceptás o no las divergencias y hacés el merge.
           </p>
         </div>
         <div class="sig">
-          <span>Fuente: <span class="mono">.agents/skills/autonomous-delivery/</span></span>
+          <span>Fuente: <span class="mono">.agents/skills/git-flow-master/</span></span>
           <span>·</span>
           <span><a href="../../index.html">← volver a Planos</a></span>
         </div>

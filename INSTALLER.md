@@ -1,4 +1,4 @@
-# The installer — what `bun run setup` configures
+# The installer — what `bun setup` configures
 
 > **Audience**: developers cloning `agentic-dev-boilerplate` for the first time, anyone deciding whether to wire Engram persistent memory, or anyone trying to understand which CLI / skill / MCP layer does what.
 > **Read time**: 10 minutes.
@@ -8,7 +8,7 @@ This doc is the **contract that `cli/install.ts` implements**. It covers the fou
 
 ## Before you run setup — prerequisites
 
-`bun run setup` assumes a few tools already exist on `PATH` and that you've already installed **at least one** AI agent: Claude Code, OpenCode or Codex. The unified front-of-house checklist lives in [README → Prerequisites](README.md#prerequisites); this is the same list with installer-flavored detail (exact check location, exact failure message, exact code reference).
+`bun setup` assumes a few tools already exist on `PATH` and that you've already installed **at least one** AI agent: Claude Code, OpenCode or Codex. The unified front-of-house checklist lives in [README → Prerequisites](README.md#prerequisites); this is the same list with installer-flavored detail (exact check location, exact failure message, exact code reference).
 
 ### Harness detection (Step 4)
 
@@ -72,15 +72,15 @@ A value with a `#` must be quoted in `.env` (`PASSWORD="pass#word"`): varlock cu
 
 ### Secret manager (advanced)
 
-Optional, for a team that shares its secrets in a vault instead of each person's `.env` (`.context/ADR/ADR-0011-secret-manager-advanced-option.md`). `.env` stays the default and comes first in `bun run setup`; a non-empty `.env` / `.env.local` value always wins over the vault, so a teammate on plain `.env` keeps working.
+Optional, for a team that shares its secrets in a vault instead of each person's `.env` (`.context/ADR/ADR-0011-secret-manager-advanced-option.md`). `.env` stays the default and comes first in `bun setup`; a non-empty `.env` / `.env.local` value always wins over the vault, so a teammate on plain `.env` keeps working.
 
 1. Install the 1Password desktop app and its CLI `op` (macOS: `brew install 1password-cli`), then enable Settings > Developer > "Integrate with 1Password CLI".
-2. Run `bun run setup` and pick 1Password at Step 7. Team: a shared vault (`<project>-dev`). Personal plan: your own vault; it works locally, CI cannot read it. The step records `secrets:` in `.agents/project.yaml` and writes `.env.provider.schema` once (committed `op://` references, never values; never overwritten).
+2. Run `bun setup` and pick 1Password at Step 7. Team: a shared vault (`<project>-dev`). Personal plan: your own vault; it works locally, CI cannot read it. The step records `secrets:` in `.agents/project.yaml` and writes `.env.provider.schema` once (committed `op://` references, never values; never overwritten).
 3. In the vault, one Password item per variable, titled with the variable NAME. In `.env.provider.schema`, uncomment those lines and leave the keys empty in `.env`.
 4. Check, redacted: `bunx varlock load --agent`.
 5. CI (team plan): a service account with read access to the vault; its token is the secret `OP_SERVICE_ACCOUNT_TOKEN`, set BESIDE any per-variable secrets a job already passes, never instead. A CI step that reads the vault runs through `varlock run`. Pass a per-variable secret only when the job sets it: an unset GitHub secret renders as `""`, and an empty inherited value wins over the vault.
 
-The vault is read only by processes that go through varlock: every MCP server (the `.env` loader) and `bunx varlock run -- <cmd>`. `source .env` reads `.env` alone, so a key served only by the vault is empty in that shell. `bun run setup:doctor` names the provider, the overlay and the vault item names under "Secret source". Non-interactive: `INSTALL_SECRETS_PROVIDER=1password INSTALL_SECRETS_VAULT=<vault> bun run setup --non-interactive`. Other managers varlock supports plug into the same slot (one adapter in `cli/lib/secret-providers.ts`); none ships configured.
+The vault is read only by processes that go through varlock: every MCP server (the `.env` loader) and `bunx varlock run -- <cmd>`. `source .env` reads `.env` alone, so a key served only by the vault is empty in that shell. `bun run setup:doctor` names the provider, the overlay and the vault item names under "Secret source". Non-interactive: `INSTALL_SECRETS_PROVIDER=1password INSTALL_SECRETS_VAULT=<vault> bun setup --non-interactive`. Other managers varlock supports plug into the same slot (one adapter in `cli/lib/secret-providers.ts`); none ships configured.
 
 ### Where to verify your status
 
@@ -131,12 +131,12 @@ Exit code: `0` when everything is green, `1` when any pending action remains. JS
 - **Decide business config** — e.g. which Supabase project to target, which n8n instance to use, etc. The AI suggests; the user decides.
 - **Execute privileged installs cleanly** — `brew install`, `winget install`, `apt install` may show a sudo/admin prompt that lives outside the agent's terminal. The AI runs the command but the user clicks "allow".
 
-### `bun run setup --non-interactive` (or just `bun run setup` without a TTY)
+### `bun setup --non-interactive` (or just `bun setup` without a TTY)
 
 The installer auto-detects no-TTY (an agent invoking it without a terminal) and silently switches to `--non-interactive`. Prompts skip with their default answer. The closing summary lists pending env vars and next steps — same data the doctor exposes. Use this path when the AI wants to run the full setup batch:
 
 ```bash
-INSTALL_AGENTS=claude-code,opencode,codex bun run setup --non-interactive
+INSTALL_AGENTS=claude-code,opencode,codex bun setup --non-interactive
 ```
 
 `INSTALL_AGENTS` is optional: without it the non-interactive run configures every harness it detected. The command line carries no secret: an AI-run command lands in the transcript, so secret values are the human's (typed into `.env` or the secret manager, or passed on a line the human runs in their own terminal) or CI's (Critical Rule #1).
@@ -167,7 +167,7 @@ The header of `cli/install.ts` owns the full list.
 
 ## Launching the agent after setup
 
-`bun run setup` finishes by telling you to open the agent with its own binary (`claude`, `opencode` or `codex` in the project folder) or its desktop app. There is no wrapper: nothing loads `.env` into the agent's process, so no secret reaches the AI's shell (ADR-0016). Each process loads its own config: the MCP servers read their values (e.g. `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) through the `.env` loader.
+`bun setup` finishes by telling you to open the agent with its own binary (`claude`, `opencode` or `codex` in the project folder) or its desktop app. There is no wrapper: nothing loads `.env` into the agent's process, so no secret reaches the AI's shell (ADR-0016). Each process loads its own config: the MCP servers read their values (e.g. `ATLASSIAN_API_TOKEN`, `SUPABASE_ACCESS_TOKEN`, `N8N_API_KEY`) through the `.env` loader.
 
 | Method | Platform | One-time setup | Usage |
 | --- | --- | --- | --- |
@@ -191,7 +191,7 @@ Read-only. It prints the system checks plus these rows for the current directory
 | --- | --- | --- |
 | git repository | the directory is not a git repository, or not its root | adoption runs inside the app's own repo and never runs `git init` |
 | clean working tree | `git status --porcelain` lists anything | the adoption lands as one reviewable diff |
-| install state | `.template/boilerplate.lock.json` exists without `adopted: true` | a scaffolded project updates with `bun run up`; an adopted one makes `--adopt` a no-op |
+| install state | `.template/boilerplate.lock.json` exists without `adopted: true` | a scaffolded project updates with `bun sync`; an adopted one makes `--adopt` a no-op |
 | gh authenticated | `gh` is missing or logged out | the updater clones the template through it |
 | package manager | the lockfile (or `packageManager`) names anything but bun | v1 supports bun apps only; no lockfile is a warning, bun assumed |
 | stack family | no `package.json` declaring `next` at the root or under `apps/*` / `packages/*`, or a non-Postgres database (a MySQL, MongoDB or SQLite driver, or a Prisma datasource for one) | v1 supports Next.js on the Postgres family |
@@ -208,7 +208,7 @@ From the app's repo root:
 3. Runs that copy's `cli/update-boilerplate.ts --adopt` with the app as the working directory (`--non-interactive` becomes the updater's `--auto`; `--template-repo` reaches it as `UPEX_TEMPLATE_REPO`). The first-run adopt policy is described in [`.agents/instructions/agent-harnesses.md`](.agents/instructions/agent-harnesses.md) §5.5, "UPDATER `--adopt`", and owned by `cli/lib/updater-adopt.ts`.
 4. Deletes the temp directory and prints the next steps.
 
-It never scrubs history, renames the project, runs `git init`, runs `bun install` or `bun run setup` inside the app, or touches a database. `--adopt` refuses the greenfield-only inputs (a project name, `--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup`) and a `--template` other than `main`, because the updater syncs the template's default branch. Exit `32` means the updater's own run failed; its output says why, and whatever it touched is backed up under `.backups/`.
+It never scrubs history, renames the project, runs `git init`, runs `bun install` or `bun setup` inside the app, or touches a database. `--adopt` refuses the greenfield-only inputs (a project name, `--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup`) and a `--template` other than `main`, because the updater syncs the template's default branch. Exit `32` means the updater's own run failed; its output says why, and whatever it touched is backed up under `.backups/`.
 
 ### After the install
 
@@ -217,7 +217,7 @@ It never scrubs history, renames the project, runs `git init`, runs `bun install
 3. Commit the adoption as one change. `project-adoption` refuses to start on a dirty tree.
 4. Open an agent session (`claude`, `opencode` or `codex` in the project folder) and load `project-adoption`. It analyses the app without writing, proposes one plan in `.context/reports/project-adoption-plan.md`, and after your approval fills identity, `stack:`, environments, the tracker catalogs and `updater.protected_paths`, then checks that the app's own build, lint and test scripts still exit as they did before.
 
-`bun run setup` is a separate step on an adopted repo: run it after the adoption is committed when you want the machine-level pieces it installs (Engram, community skills, harness detection).
+`bun setup` is a separate step on an adopted repo: run it after the adoption is committed when you want the machine-level pieces it installs (Engram, community skills, harness detection).
 
 ---
 
@@ -233,7 +233,7 @@ That runs git-flow-master's Strategy Setup: it resolves your branching flow (sol
 
 ## Optional UX upgrades
 
-A community tool that the closing summary recommends. It is **user-level** (not installed by `bun run setup`) because it modifies your global environment, not this repo. Recommended, not required.
+A community tool that the closing summary recommends. It is **user-level** (not installed by `bun setup`) because it modifies your global environment, not this repo. Recommended, not required.
 
 ### ccstatusline — Claude Code statusline configurator
 
@@ -255,7 +255,7 @@ Cosmetic upgrade — does not change agent behavior. Skip if you prefer the defa
 
 ## Engram: persistent memory, wired by `engram setup`
 
-[Engram](https://github.com/Gentleman-Programming/engram) is the MCP-based persistent memory layer that survives across sessions and compactions. `bun run setup` wires it with the engram binary's own command, once per selected agent:
+[Engram](https://github.com/Gentleman-Programming/engram) is the MCP-based persistent memory layer that survives across sessions and compactions. `bun setup` wires it with the engram binary's own command, once per selected agent:
 
 ```sh
 engram setup claude-code --protocol=slim
@@ -314,7 +314,7 @@ No slash-command files ship ([ADR-0006](.context/ADR/ADR-0006-skill-plus-mode-in
 
 The installer configures whichever of **Claude Code, OpenCode, and Codex** you selected in Step 4, but it never duplicates content to do it. There is exactly one copy of every instruction and every skill; where the harnesses genuinely differ (MCP file format, hook API) each keeps a thin versioned adapter.
 
-The agents you select are recorded in `.agents/project.yaml` as `harnesses:` (added to what is already there, never removed), and the installer then offers to delete the files of each harness you left out; the default keeps them. Every compatibility gate (`agents:compat:check`, `setup:doctor`, the installer itself, `bun run up`) checks only the harnesses in that list, so a team on one harness keeps only that harness's files. With `harnesses:` absent or `null` the gates detect the harnesses from the files present. The boilerplate repo itself always checks all three. Decision and details: ADR-0013, `.agents/instructions/agent-harnesses.md`.
+The agents you select are recorded in `.agents/project.yaml` as `harnesses:` (added to what is already there, never removed), and the installer then offers to delete the files of each harness you left out; the default keeps them. Every compatibility gate (`agents:compat:check`, `setup:doctor`, the installer itself, `bun sync`) checks only the harnesses in that list, so a team on one harness keeps only that harness's files. With `harnesses:` absent or `null` the gates detect the harnesses from the files present. The boilerplate repo itself always checks all three. Decision and details: ADR-0013, `.agents/instructions/agent-harnesses.md`.
 
 | Surface          | Claude Code                                     | OpenCode                                    | Codex CLI + Desktop                      |
 | ---------------- | ----------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
@@ -340,19 +340,19 @@ Bold `[generated]` cells above are output. Edit the source, then regenerate:
 | `CLAUDE.md` (one-line `@AGENTS.md` shim)            | `AGENTS.md`                                  | `bun run agents:compat` |
 | `.claude/skills` (POSIX symlink / Windows junction) | `.agents/skills/`                            | `bun run agents:compat` |
 
-You rarely run either command by hand. `bun run setup` and `bun run up` both call the same repair internally at the end of their run: they create or fix the alias, move any command that shadows a skill to `.backups/shadowing-commands/`, and then re-verify, so a clean install and a routine update both leave the contract satisfied without a manual step. The scaffolder (`create-agentic-dev`) ships nothing generated; the alias appears the first time `bun run setup` runs in the new project.
+You rarely run either command by hand. `bun setup` and `bun sync` both call the same repair internally at the end of their run: they create or fix the alias, move any command that shadows a skill to `.backups/shadowing-commands/`, and then re-verify, so a clean install and a routine update both leave the contract satisfied without a manual step. The scaffolder (`create-agentic-dev`) ships nothing generated; the alias appears the first time `bun setup` runs in the new project.
 
 `bun run agents:compat:check` validates the whole contract for the harnesses in use (it prints a `Harnesses checked:` line and one `NOTE:` per skipped harness; shim and alias only with Claude) — shim bytes, alias target, no command named like a skill, hook adapters, MCP parity, eslint block wiring. It runs inside `bun run repo:check`, unconditionally in the pre-push hook, and in pre-commit when a staged path touches `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `.opencode/`, `.codex/`, `.mcp.json` or `opencode.jsonc`. `bun run setup:doctor` reports the same surfaces plus **Codex repository trust**, which is runtime state no file read can verify: project `.codex/` config and hooks load only in a repository you have marked trusted, so the doctor reports it as WARN, never FAIL.
 
 ### Updating a project created before the multi-harness move
 
-A project scaffolded when instructions lived in `CLAUDE.md` and skills in `.claude/skills/` gets a one-time migration the first time it runs `bun run up`. It happens **before** any component is synced, because the sync alone would be destructive: `CLAUDE.md` is a synced file whose upstream copy is now the one-line shim, and `AGENTS.md` is on the never-synced watchlist, so a plain sync would replace the project's AI memory with a pointer to a file that does not exist.
+A project scaffolded when instructions lived in `CLAUDE.md` and skills in `.claude/skills/` gets a one-time migration the first time it runs `bun sync`. It happens **before** any component is synced, because the sync alone would be destructive: `CLAUDE.md` is a synced file whose upstream copy is now the one-line shim, and `AGENTS.md` is on the never-synced watchlist, so a plain sync would replace the project's AI memory with a pointer to a file that does not exist.
 
 The migration promotes the project's memory from `CLAUDE.md` to `AGENTS.md` and leaves `CLAUDE.md` as the shim; moves every skill under `.claude/skills/` into `.agents/skills/`, project-authored ones included; and archives (never overwrites) any legacy skill whose name the canonical store already owns. Nothing is deleted: what is not moved is preserved under `.template/pre-agents-migration/` (gitignored). The pass is idempotent, and if a single item cannot be resolved without guessing it refuses in full, before touching anything, rather than applying halfway. A shim found without an `AGENTS.md` beside it is reported as an orphaned shim with a recovery command instead of being synced over.
 
 After that one update, the project works in Claude Code, OpenCode and Codex from the same source. See [**Una fuente, tres harnesses**](https://upex-galaxy.github.io/agentic-dev-boilerplate/harnesses.es.html) (one page of the [docs hub](https://upex-galaxy.github.io/agentic-dev-boilerplate/)) for the full picture and [`ADR-0002`](.context/ADR/ADR-0002-multi-harness-single-source.md) for the decision record.
 
-### What every `bun run up` reports
+### What every `bun sync` reports
 
 The run ends with a single "Estado por superficie" table: one row per surface (the list is `SURFACE_ORDER` in `cli/lib/updater-parity.ts`), with an ok or warn glyph. Below it comes ONE parity prompt, printed and saved to `.agents/prompts/parity-plan.md` (gitignored, single-use). Each row of the prompt names a surface, a file and concrete evidence: headings added, removed or changed in a watched file plus hunk counts, a server declared in `.mcp.json` but missing from a host, a skill archived under `.template/pre-agents-migration/` because of a name collision, a component held back, an env key that drifted. The prompt tells the AI to present that table and WAIT for a decision per row (`keep project | take upstream | merge`) before editing, then apply only the chosen rows and run tests, types and lint.
 
@@ -369,12 +369,12 @@ Release history of each behaviour below: `CHANGELOG.md` (the `updater 8.x` secti
 - **Post-sync gates.** After the apply, the project's `types:check` and `lint:check` run (120 s each; a gate that does not finish is skipped with a note; `--no-gates` disables them). A failure becomes a "Verificación" row with the exit code, the first error lines and which of the failing files this run applied, plus a `Gates:` line in the closing box. Informational only: never an abort, never blocking under `--strict`.
 - **`package.json` rows.** Every key kept at the project's value while upstream differs is one `package.json` row (`scripts.repo:check: project value kept; upstream differs`), with both values in the saved file, so a non-interactive run keeps the FYI out of the scrollback.
 - **Overwritten project edits.** A synced file the project had edited (3-way against the lock cursor) and the run overwrote gets a `merge` row on Skills or Componentes: `project edit overwritten; backup: .backups/update-<ts>/<path>; N hunks vs applied`, with the full diff in the saved file.
-- **Re-run safety.** The run records what it wrote in `.template/last-apply.json` (gitignored, sha256 per path). The next dirty-tree guard exempts a recorded path whose hash still matches, so `bun run up --auto` twice in a row, without committing in between, proceeds as a no-op (the previous prompt file is kept). An unrelated file, or a synced file edited by hand since, still aborts, naming `Commit sugerido` and the prompt path.
+- **Re-run safety.** The run records what it wrote in `.template/last-apply.json` (gitignored, sha256 per path). The next dirty-tree guard exempts a recorded path whose hash still matches, so `bun sync --auto` twice in a row, without committing in between, proceeds as a no-op (the previous prompt file is kept). An unrelated file, or a synced file edited by hand since, still aborts, naming `Commit sugerido` and the prompt path.
 - **Host-agnostic `cli/**`.** The synced tests build env objects through `unknown`, and `cli/updater-host-types.test.ts` compiles `cli/**` with a required `NODE_ENV` on `ProcessEnv` (what `next/types/global.d.ts` adds) on every `bun test`.
 
 ### Updater safeguards: watched files, the dirty-tree guard and the self-update cursor
 
-- **Converging rows for project-customized synced files.** `.husky/pre-commit` and `.husky/pre-push` are on the protected watchlist (`project gates live here`): delivered once when missing, never overwritten, one drift row per upstream change with the hunks as evidence. A committed merge of a hook survives the next `bun run up --auto` and the row does not come back (marker semantics). The rest of `.husky/` (the `_/` helpers) keeps syncing.
+- **Converging rows for project-customized synced files.** `.husky/pre-commit` and `.husky/pre-push` are on the protected watchlist (`project gates live here`): delivered once when missing, never overwritten, one drift row per upstream change with the hunks as evidence. A committed merge of a hook survives the next `bun sync --auto` and the row does not come back (marker semantics). The rest of `.husky/` (the `_/` helpers) keeps syncing.
 - **`updater.protected_paths`.** A project lists any other synced file it merged by hand under `updater:` in `.agents/project.yaml` (repo-relative file paths, empty by default, documented in `.agents/README.md`). Listed paths join the watchlist at runtime with the same semantics: never overwritten, delivered once when missing, sparse checkout, drift row. A path outside the repo, under `.git`, a directory or a non-string is reported at the start of the run and ignored. The row for an overwritten project edit ends with `add the path to updater.protected_paths in .agents/project.yaml so the next sync keeps your merge`, and the saved prompt repeats it under the row as the YAML to paste. A path just declared gets its upstream marker seeded with no row (one `sin fila esta vez` note); its drift row fires on the next upstream change.
 - **Guard scope.** The dirty-tree guard blocks only on uncommitted work the sync would overwrite: a synced component file, an ignore file, `package.json`, a deprecated file. Dirt anywhere else (`tests/`, app code, a protected or bootstrap-only file) is listed as `N ruta(s) con cambios sin commitear fuera de lo que este updater escribe; no bloquean` and never aborts `--auto`.
 - **`.context/PBI/` still tracked in git.** One Componentes row (`N tracked path(s) still in git ...; migration recipe saved to .agents/prompts/pbi-cache-migration.md`); the recipe (tag, `git rm --cached`, commit, resync, push-to-Jira pass) lives in that gitignored file, never in the terminal.
@@ -390,7 +390,7 @@ Release history of each behaviour below: `CHANGELOG.md` (the `updater 8.x` secti
 
 ## External CLIs (verified, not auto-installed)
 
-Step 8 of `bun run setup` calls `verifyExternalClis()`. The installer **does not install** these — it does a **PATH probe only** (`which <name>` on POSIX, `where <name>` on Windows — presence only, no version check) and prints an install hint (`quick:` line when a cross-platform command exists) plus the official docs URL when something is missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
+Step 8 of `bun setup` calls `verifyExternalClis()`. The installer **does not install** these — it does a **PATH probe only** (`which <name>` on POSIX, `where <name>` on Windows — presence only, no version check) and prints an install hint (`quick:` line when a cross-platform command exists) plus the official docs URL when something is missing. The verify-only stance is deliberate: these are platform-specific tools whose canonical install path differs by OS, and forcing one path would surprise users on others.
 
 | CLI              | Powers in this repo                                                                             | Quick install (cross-platform only — else use docs) | Official docs                                                            |
 | ---------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -416,7 +416,7 @@ A subtle bit of confusion lives in the Playwright ecosystem. There are **three d
 
 1. **`@playwright/test`** — a devDep test runner library, installed per-project. It produces no global binary. `which playwright` finds nothing even when this package is installed.
 2. **`@playwright/cli`** — a global agent-driven CLI. Installs as the binary `playwright-cli`. This is what powers the `/playwright-cli` skill in this repo.
-3. **`/playwright-cli`** — the community skill installed user-level by `bun run setup` (via `bunx skills add`, `cli/install.ts` `USER_LEVEL_SKILLS`). It calls the `playwright-cli` binary from `@playwright/cli`.
+3. **`/playwright-cli`** — the community skill installed user-level by `bun setup` (via `bunx skills add`, `cli/install.ts` `USER_LEVEL_SKILLS`). It calls the `playwright-cli` binary from `@playwright/cli`.
 
 The installer verifies (2). If you need the test runner (1) for E2E suites, add it per-project: `bun add -D @playwright/test`.
 
@@ -425,7 +425,7 @@ The installer verifies (2). If you need the test runner (1) for E2E suites, add 
 Three reasons:
 
 1. **Cross-platform install paths differ**. macOS prefers Homebrew, Windows prefers winget/scoop, Linux varies by distro. A single auto-install path would be wrong for most users.
-2. **Global installs are user-scoped, not repo-scoped**. Installing `vercel` or `supabase` globally as part of `bun run setup` would leak state outside the repo. The installer is opinionated about staying local.
+2. **Global installs are user-scoped, not repo-scoped**. Installing `vercel` or `supabase` globally as part of `bun setup` would leak state outside the repo. The installer is opinionated about staying local.
 3. **Verify + point at docs** is the polite alternative. When a CLI is missing, the installer prints the official documentation URL on a continuation line so users can install the way that fits their setup.
 
 ---
@@ -433,10 +433,10 @@ Three reasons:
 ## Troubleshooting
 
 - **Jira catalogs sync (Step 13)** — one prompt picks the catalog source for the whole project: **My own Jira workspace** (auth loop → `jira:sync-fields --force` + `jira:sync-workflows --force`; **requires `Administer` permission**), **UPEX-Galaxy standard** (`--upex --force` downloads the reference catalogs from `upex-galaxy/agentic-dev-boilerplate@main` + `jira:sync-link-types --upex` — no admin, no Jira API), or **Skip for now**. Whatever the choice, the installer then writes an empty `{}` placeholder for any of `.agents/jira-fields.json` / `jira-workflows.json` / `jira-link-types.json` still missing on disk — guaranteeing the SKILL.md-referenced paths exist so `lint-skills` STALE-PATH never fails `repo:check` / the pre-push hook. The `{}` form is treated as "unpopulated", so a later `bun run jira:sync-*` fills it without `--force`.
-- **`jira:sync-fields` / `jira:sync-workflows` skipped with "not an Administrator"** — your authenticated Jira user does not have `ADMINISTER` (global) or `ADMINISTER_PROJECTS` (project-scoped) permission. The scripts pre-flight `/rest/api/3/mypermissions` to avoid mid-run 403s. The installer records `state.postInstall.jiraSync* = "skipped-no-admin"` and exits Step 13 cleanly — repo stays usable (any missing catalog gets a `{}` placeholder, see above). Two recovery paths: (a) ask a Jira admin to run the scripts and commit the resulting `.agents/jira-*.json` to the team repo; (b) re-run `bun run setup --force-step 13-jira-sync` and pick the **UPEX-Galaxy standard** source — or run `bun run jira:sync-fields --upex && bun run jira:sync-workflows --upex` directly to pull the UPEX-standard catalog from `upex-galaxy/agentic-dev-boilerplate@main` (no admin, no Jira API calls — just a GitHub raw fetch).
-- **Pre-push rejected — `lint:skills` STALE-PATH: `.agents/jira-fields.json` / `jira-workflows.json` does not exist on disk** — the bootstrap scaffolder prunes those two catalogs from a fresh project, and a no-admin / skipped Jira sync left the SKILL.md-referenced paths dangling. Setup now writes an empty `{}` placeholder for any missing catalog (Step 13), so a fresh `bun run setup` self-heals this. If you hit it on an older project, just create the files: `echo '{}' > .agents/jira-fields.json` and the same for `jira-workflows.json` (then optionally `bun run jira:sync-fields` to populate). The `{}` form is valid JSON, satisfies the lint, and is treated as "unpopulated" so a later sync fills it without `--force`.
+- **`jira:sync-fields` / `jira:sync-workflows` skipped with "not an Administrator"** — your authenticated Jira user does not have `ADMINISTER` (global) or `ADMINISTER_PROJECTS` (project-scoped) permission. The scripts pre-flight `/rest/api/3/mypermissions` to avoid mid-run 403s. The installer records `state.postInstall.jiraSync* = "skipped-no-admin"` and exits Step 13 cleanly — repo stays usable (any missing catalog gets a `{}` placeholder, see above). Two recovery paths: (a) ask a Jira admin to run the scripts and commit the resulting `.agents/jira-*.json` to the team repo; (b) re-run `bun setup --force-step 13-jira-sync` and pick the **UPEX-Galaxy standard** source — or run `bun run jira:sync-fields --upex && bun run jira:sync-workflows --upex` directly to pull the UPEX-standard catalog from `upex-galaxy/agentic-dev-boilerplate@main` (no admin, no Jira API calls — just a GitHub raw fetch).
+- **Pre-push rejected — `lint:skills` STALE-PATH: `.agents/jira-fields.json` / `jira-workflows.json` does not exist on disk** — the bootstrap scaffolder prunes those two catalogs from a fresh project, and a no-admin / skipped Jira sync left the SKILL.md-referenced paths dangling. Setup now writes an empty `{}` placeholder for any missing catalog (Step 13), so a fresh `bun setup` self-heals this. If you hit it on an older project, just create the files: `echo '{}' > .agents/jira-fields.json` and the same for `jira-workflows.json` (then optionally `bun run jira:sync-fields` to populate). The `{}` form is valid JSON, satisfies the lint, and is treated as "unpopulated" so a later sync fills it without `--force`.
 - **`--upex` flag** — every `jira:sync-*` script (`fields`, `workflows`, `link-types`) accepts `--upex` to download the UPEX-standard reference JSON from the upstream boilerplate repo. URL is hardcoded per script and pinned to `main`. Bypasses ATLASSIAN_* env vars, `project_key`, `jira-required.yaml` and all Jira REST calls; only network requirement is GitHub raw access. Useful when (a) you have no Jira admin, (b) you want a working catalog without setting up auth, or (c) you want to compare against the canonical UPEX standard before custom-syncing.
-- **engram not detected after install** — re-run `bun run setup`. The detector probes `which engram` plus `engram version`; if the binary is missing the installer offers the install commands, and if `engram version` prints no release version (a local or `go install` build) it asks whether to try anyway. Confirm the binary is on PATH (`which engram` should return a path under a Homebrew prefix or `~/go/bin/`).
+- **engram not detected after install** — re-run `bun setup`. The detector probes `which engram` plus `engram version`; if the binary is missing the installer offers the install commands, and if `engram version` prints no release version (a local or `go install` build) it asks whether to try anyway. Confirm the binary is on PATH (`which engram` should return a path under a Homebrew prefix or `~/go/bin/`).
 - **MCPs returning 401/403** — the matching env var in `.env` is unset or wrong. All three MCP configs (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`) start their servers through the `.env` loader; real values live in `.env`. A value that fails the schema stops only the server that needs it: `bunx varlock load --agent` shows which, redacted. Open `.env`, fill the var, and **restart the agent session** — env vars are read once at MCP-server spawn time. See `AGENTS.md` Critical Rule #9.
 - **MCPs not loading at all** — the launch method is not the cause: a bare binary and a launch with no command line (desktop app, supervised worker) both work, because every MCP server starts through the `.env` loader, whatever launched the harness. Check that the checkout has a `.env` and that the `varlock` devDependency is installed (`bun install`); `bun run harness:env:check` exits 1 while a retired plaintext copy remains.
 - **Codex ignores `.codex/config.toml` and the hook never fires** — the repository is not marked trusted. Codex loads project `.codex/` config and hooks only in a trusted repo, and that is runtime state no file check can see. `bun run setup:doctor` reports it on its own WARN line; approve trust in Codex, then restart the session.
@@ -470,4 +470,4 @@ What you keep: every workflow skill committed in this repo (`/sprint-development
 
 ---
 
-> **You are here**: What `bun run setup` configures. **Read time**: 10 min. **Next**: `bun run setup:doctor` to verify your install, or [`README.md`](README.md) to navigate the rest.
+> **You are here**: What `bun setup` configures. **Read time**: 10 min. **Next**: `bun run setup:doctor` to verify your install, or [`README.md`](README.md) to navigate the rest.

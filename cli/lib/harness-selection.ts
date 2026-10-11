@@ -198,7 +198,7 @@ export function withHarnesses(yamlText: string, harnesses: readonly Harness[]): 
 }
 
 /**
- * What `bun run up` never delivers, watches or reports for a harness the
+ * What `bun sync` never delivers, watches or reports for a harness the
  * project does not use: its files, the directories the updater syncs whole,
  * and its opt-in MCP template under `docs/mcp/` (`--update-mcp-template
  * <agent>` still refreshes one on request). A directory entry covers

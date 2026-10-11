@@ -384,7 +384,7 @@ export interface AdoptPackageJsonFold {
    * Upstream keys this run must remember as handled in their UPSTREAM section
    * (`appliedKeys`) although nothing is written there: a package the app
    * already declares in another section, or a `dependencies` key redirected
-   * to `devDependencies`. Without them the next plain `bun run up` would add
+   * to `devDependencies`. Without them the next plain `bun sync` would add
    * the same package to a second section.
    */
   satisfied: Record<string, string[]>

@@ -558,7 +558,7 @@ describe('renderParityReport', () => {
     expect(report.surfaces.find(r => r.surface === 'mcp')?.cell).toBe('1 hallazgo: .codex/config.toml');
 
     const prompt = report.prompt;
-    expect(prompt.startsWith('Parity review after `bun run up` (upstream upex-galaxy/agentic-dev-boilerplate@abcdef1, project lock 1234567).')).toBe(true);
+    expect(prompt.startsWith('Parity review after `bun sync` (upstream upex-galaxy/agentic-dev-boilerplate@abcdef1, project lock 1234567).')).toBe(true);
     expect(prompt).toContain('WAIT for a decision per row');
     expect(prompt).toContain('(keep project | take upstream | merge) BEFORE editing anything');
     expect(prompt).toContain('| # | Surface | File | What differs (evidence) | Suggested |');

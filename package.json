@@ -44,6 +44,7 @@
     "skills:check": "bun scripts/lint-skills.ts",
     "skills:registry:check": "bun scripts/build-skill-registry.ts --check",
     "skills:registry": "bun scripts/build-skill-registry.ts",
+    "sync": "bun cli/update-boilerplate.ts",
     "test": "bun test cli/ scripts/ && bun test --cwd .agents/skills/acli/scripts",
     "tooling:lint:check": "bun scripts/tooling-check.ts lint",
     "tooling:types:check": "bun scripts/tooling-check.ts types",

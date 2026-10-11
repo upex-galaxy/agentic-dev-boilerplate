@@ -1,5 +1,5 @@
 /**
- * @fileoverview Parity report after `bun run up`: ONE table of what still
+ * @fileoverview Parity report after `bun sync`: ONE table of what still
  * differs from upstream per surface, with concrete evidence, and ONE prompt the
  * user hands to their AI so every row gets a decision (keep project | take
  * upstream | merge) BEFORE anything is edited.
@@ -189,7 +189,7 @@ export interface ParityInput {
   contextMaps?: MapStatus[]
   /** Disk-profile lines in the project's skills and instructions; defaults to scanning `root` (`browserProfileDrift`). */
   browserProfileSites?: BrowserProfileSite[]
-  /** `bun run up --adopt` only: the rows `runAdopt` built (`./updater-adopt.ts`), listed before the git-strategy row. */
+  /** `bun sync --adopt` only: the rows `runAdopt` built (`./updater-adopt.ts`), listed before the git-strategy row. */
   adoptFindings?: Omit<ParityFinding, 'id'>[]
   /**
    * The run is `--adopt`: every file a row names was the APP's before this run,
@@ -1055,7 +1055,7 @@ export function legacyInstructionsNote(filePath: string, project: string, upstre
   ].filter((part): part is string => part !== null).join('; ');
   const cell = (text: string): string => text.replace(/\|/g, '\\|');
   const note = [
-    `${filePath} here is the pre-split single file; upstream now ships it as a small always-on L0 (load protocol, router, Critical Rules as binding sentences, behavioural layer, orchestration core, memory triggers) plus on-demand sections in ${INSTRUCTIONS_DIR}/, which \`bun run up\` keeps in step for you. ${filePath} is yours and is never rewritten automatically. Rebuild it from upstream's L0, carrying over only what is this project's own:`,
+    `${filePath} here is the pre-split single file; upstream now ships it as a small always-on L0 (load protocol, router, Critical Rules as binding sentences, behavioural layer, orchestration core, memory triggers) plus on-demand sections in ${INSTRUCTIONS_DIR}/, which \`bun sync\` keeps in step for you. ${filePath} is yours and is never rewritten automatically. Rebuild it from upstream's L0, carrying over only what is this project's own:`,
     '',
     '| Your heading | Lives now in | What to do |',
     '|---|---|---|',
@@ -1799,7 +1799,7 @@ export function buildParityPrompt(findings: ParityFinding[], meta: ParityMeta): 
   const isGitHubHandle = /^[\w.-]+\/[\w.-]+$/.test(meta.templateRepo);
   const copies = isGitHubHandle ? `; upstream copies: https://raw.githubusercontent.com/${meta.templateRepo}/main/<path>` : '';
   return [
-    `Parity review after \`bun run up\` (upstream ${meta.templateRepo}@${upstream}, project lock ${lock}).`,
+    `Parity review after \`bun sync\` (upstream ${meta.templateRepo}@${upstream}, project lock ${lock}).`,
     'Present the table below to the user, one row per finding, and WAIT for a decision per row',
     '(keep project | take upstream | merge) BEFORE editing anything. Then apply only the chosen rows,',
     'run tests -> types -> lint, and report.',
@@ -1829,7 +1829,7 @@ export function buildParityFileBody(findings: ParityFinding[], meta: ParityMeta)
   return [
     '# Parity plan — AI review prompt',
     '',
-    `> **AUTO-GENERATED, SINGLE-USE.** Written by \`bun run up\` on ${today}.`,
+    `> **AUTO-GENERATED, SINGLE-USE.** Written by \`bun sync\` on ${today}.`,
     '> Paste the prompt below into your AI session, then delete this file.',
     '> It is regenerated (overwritten) on every run that ends with findings.',
     '',

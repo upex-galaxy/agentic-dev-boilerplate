@@ -15,12 +15,12 @@ The directory has two roles:
 
 | File                  | What it is                                                                                                                                                                       | Who edits it                             | How to regenerate                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
-| `project.yaml`        | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below), the `updater:` block (files `bun run up` must keep as the project's own; see §"`updater`" below), and the `orchestration:` block (defaults for supervised multi-session worker fleets, read by `orca-orchestration`; see §"`orchestration`" below). | You (project owner) / `git-flow-master` | Edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
+| `project.yaml`        | Human-edited project config: project name, repo paths, URLs, MCP server names, issue-tracker metadata, default env. ALSO holds the `git_strategy:` block (this repo's git workflow — read by `git-flow-master`; see §"`git_strategy`" below), the `updater:` block (files `bun sync` must keep as the project's own; see §"`updater`" below), and the `orchestration:` block (defaults for supervised multi-session worker fleets, read by `orca-orchestration`; see §"`orchestration`" below). | You (project owner) / `git-flow-master` | Edit by hand. The `git_strategy:` block is filled by `git-flow-master` Strategy Setup, NOT by `agents:setup`. |
 | `jira-fields.json`    | Auto-generated catalog of every custom field in your Jira workspace, keyed by canonical slug. Each entry has `id`, `type`, optional `name`, `options`, `system`, `provider`.     | Generated only — **do not edit by hand** | `bun run jira:sync-fields`                                                   |
 | `jira-workflows.json` | Auto-generated catalog of work-type workflows, statuses, and transitions resolved against your Jira workspace. Companion to `jira-fields.json` for the work_types substrate.     | Generated only — **do not edit by hand** | `bun run jira:sync-workflows`                                                |
 | `jira-link-types.json` | Auto-generated catalog of every issue link type in your Jira workspace (e.g. `blocks`, `relates`, `is caused by`), keyed by canonical slug. Each entry has `id`, `name`, `outward`, `inward`, `exists_in_workspace`. | Generated only — **do not edit by hand** | `bun run jira:sync-link-types`                                               |
 | `jira-required.yaml`  | Declarative manifest of the custom fields the methodology requires (with expected types, option lists, and consumers). The contract between skills/commands and the user's Jira. | Methodology maintainers                  | Updated when a skill or command adds or drops a `{{jira.<slug>}}` reference. |
-| `project.schema.yaml` | GENERATED template of `project.yaml`: every identity value blanked to `null`, methodology defaults kept, `git_strategy` answers replaced by safe defaults. A new project is seeded from it; `bun run up` and `bun run setup:doctor` compare a project's `project.yaml` against it. Synced by `bun run up`, never generated downstream. | Generated only — **do not edit by hand** | `bun run agents:schema` (boilerplate only; `agents:schema:check` gates it)     |
+| `project.schema.yaml` | GENERATED template of `project.yaml`: every identity value blanked to `null`, methodology defaults kept, `git_strategy` answers replaced by safe defaults. A new project is seeded from it; `bun sync` and `bun run setup:doctor` compare a project's `project.yaml` against it. Synced by `bun sync`, never generated downstream. | Generated only — **do not edit by hand** | `bun run agents:schema` (boilerplate only; `agents:schema:check` gates it)     |
 | `README.md`           | This file.                                                                                                                                                                       | Methodology maintainers                  | —                                                                            |
 
 ## `git_strategy` (block inside `project.yaml`)
@@ -32,7 +32,7 @@ The persisted source of truth for **this repository's** git workflow lives as th
 - **Ships as a default, not a decision** — the block carries `strategy: solo-main` with provenance stamps in `meta:`. A fresh project is seeded from `project.schema.yaml`, whose block is `strategy_source: inherited` / `policy_source: declared` / `policy_verified: null` / `direct_push_to_protected: confirm` / `admin_bypass: false` with no `accepted_divergences` and a TODO `description` (`packages/create-agentic-dev/src/prepare.ts` → `seedProjectYamlFromSchema`; `resetGitStrategyMeta` is the fallback for a template older than the schema), so a consumer project starts with a placeholder it is expected to replace via Strategy Setup on first git use. This repo itself carries `strategy_source: chosen`.
 - **Autogenerated** by `git-flow-master` Strategy Setup (pick the flow → create only the branches that flow needs → write the block in place).
 - **Committed / tracked** — part of each project's git workflow contract.
-- **Frozen by `bun run up`** — `project.yaml` is in the updater's `bootstrapOnlyPaths`, so a consumer project's filled strategy is never overwritten.
+- **Frozen by `bun sync`** — `project.yaml` is in the updater's `bootstrapOnlyPaths`, so a consumer project's filled strategy is never overwritten.
 - **Hand-editable** — edit the block to change the workflow, or re-run Strategy Setup.
 - **Not a `{{VAR}}` source** — `vars:check` skips the `git_strategy:` block (its leaves are read directly by the skill, not as template variables).
 
@@ -65,7 +65,7 @@ The persisted source of truth for **this repository's** git workflow lives as th
 
 ## `updater` (block inside `project.yaml`)
 
-`bun run up` never overwrites the files on its protected watchlist (`AGENTS.md`, `.agents/project.yaml`, `.agents/jira-required.yaml`, `tsconfig.json`, `eslint.config.js`, `.mcp.json`, `opencode.jsonc`, `.codex/config.toml`, `.claude/settings.json`, `.husky/pre-commit`, `.husky/pre-push`): a watched file inside a synced component is delivered once when missing, then it is project-owned, and when upstream's copy changes the parity report shows a drift row with evidence (keys, headings or hunks) instead of touching it. The `updater:` block lets a project extend that list.
+`bun sync` never overwrites the files on its protected watchlist (`AGENTS.md`, `.agents/project.yaml`, `.agents/jira-required.yaml`, `tsconfig.json`, `eslint.config.js`, `.mcp.json`, `opencode.jsonc`, `.codex/config.toml`, `.claude/settings.json`, `.husky/pre-commit`, `.husky/pre-push`): a watched file inside a synced component is delivered once when missing, then it is project-owned, and when upstream's copy changes the parity report shows a drift row with evidence (keys, headings or hunks) instead of touching it. The `updater:` block lets a project extend that list.
 
 ```yaml
 updater:
@@ -89,7 +89,7 @@ updater:
   schema_exempt: [autonomous_delivery] # top-level block NAMES, not key paths
 ```
 
-`bun run up` compares this file against `project.schema.yaml` to full depth and offers to insert what upstream has and you lack, one prompt per block, insert-only, each block at its schema position under a `# NEW in <release>` marker. A block you removed on purpose would be re-offered on every run forever, and a warning that recurs forever is one people silence wholesale, which costs them the real gaps too. Listing it here silences that block and nothing else.
+`bun sync` compares this file against `project.schema.yaml` to full depth and offers to insert what upstream has and you lack, one prompt per block, insert-only, each block at its schema position under a `# NEW in <release>` marker. A block you removed on purpose would be re-offered on every run forever, and a warning that recurs forever is one people silence wholesale, which costs them the real gaps too. Listing it here silences that block and nothing else.
 
 - **Block names only.** `autonomous_delivery`, not `autonomous_delivery.caps`. The prompt is per block, so the opt-out is too.
 - **It silences, it does not fix.** An exempt block is still absent. `bun run agents:schema --project` prints what is silenced alongside what is missing, so the decision stays visible. A block a shipped skill reads (`CONFIG_BLOCK_READERS` in `cli/lib/updater-parity.ts`) still gets its parity row naming the skill.
@@ -105,7 +105,7 @@ updater:
   declined_denies: ['Bash(env)'] # exact entries, written as in permissions.deny
 ```
 
-`.claude/settings.json` is never overwritten, but two of its lists grow on every `bun run up`: entries upstream has in `permissions.allow` or `permissions.deny` and the project lacks are appended after the project's own, after a backup. Nothing is removed or reordered, and `ask`, `env` and every other key stay as written (`hooks` has its own additive merge, below). That is how a project scaffolded before a deny rule shipped (the secret denies, for one) receives it. An allow entry you do not want is re-expressible in `deny`, which wins; a deny entry has no stronger list, so you decline it here.
+`.claude/settings.json` is never overwritten, but two of its lists grow on every `bun sync`: entries upstream has in `permissions.allow` or `permissions.deny` and the project lacks are appended after the project's own, after a backup. Nothing is removed or reordered, and `ask`, `env` and every other key stay as written (`hooks` has its own additive merge, below). That is how a project scaffolded before a deny rule shipped (the secret denies, for one) receives it. An allow entry you do not want is re-expressible in `deny`, which wins; a deny entry has no stronger list, so you decline it here.
 
 - **Exact entries, per rule.** `Bash(env)`, not a pattern over entries. Every other upstream deny, including one a later release adds, still arrives: listing `.claude/settings.json` in `protected_paths` would not opt out (the file is already watched) and would not be the right size anyway.
 - **It never removes.** A declined entry the file already holds stays until you delete it by hand; the list only stops the updater from adding it back.
@@ -123,7 +123,7 @@ updater:
   declined_hooks: ['node "$CLAUDE_PROJECT_DIR/.agents/hooks/doc-contracts.mjs"'] # exact command text
 ```
 
-The `hooks` block grows on every `bun run up` too, before the compatibility check runs: an upstream hook command the project lacks under the same event and matcher is appended as a NEW group at the end of that event's list, after a backup. The project's own groups are never edited, reordered or removed. That is how a hook group `agents:compat:check` starts requiring (the route re-surface `PostToolUse` group, ADR-0018) reaches a project scaffolded before it, instead of leaving pre-commit, pre-push and CI red until someone edits the file by hand.
+The `hooks` block grows on every `bun sync` too, before the compatibility check runs: an upstream hook command the project lacks under the same event and matcher is appended as a NEW group at the end of that event's list, after a backup. The project's own groups are never edited, reordered or removed. That is how a hook group `agents:compat:check` starts requiring (the route re-surface `PostToolUse` group, ADR-0018) reaches a project scaffolded before it, instead of leaving pre-commit, pre-push and CI red until someone edits the file by hand.
 
 - **Exact command text, every event.** A listed command is left out wherever upstream runs it; the run reports it as declined.
 - **A required hook stays required.** Declining a command `agents:compat:check` asserts on keeps that check red: the opt-out is for hooks the check does not require.
@@ -144,7 +144,7 @@ secrets:
     auth: app # app (desktop app locally, service account in CI) | service-account (token only)
 ```
 
-- **Written by `bun run setup`** (Step 7, `cli/lib/secret-providers.ts`), which also writes the committed overlay `.env.provider.schema` once (references only, never values, never overwritten). A yaml without the block reads as `local`, and the installer appends it with its comments.
+- **Written by `bun setup`** (Step 7, `cli/lib/secret-providers.ts`), which also writes the committed overlay `.env.provider.schema` once (references only, never values, never overwritten). A yaml without the block reads as `local`, and the installer appends it with its comments.
 - **An unknown `provider` or `auth` fails loudly** instead of guessing, so a team is never sent to the wrong source in silence.
 - **Read directly** (`parseSecretsConfig`), never as a `{{VAR}}`; `provider` and `onepassword` are listed in `external_consumers`.
 - Steps for the human: `INSTALLER.md`, "Secret manager (advanced)".
@@ -198,7 +198,7 @@ stack:
 
 **Defaults.** The block ships the GREENFIELD defaults, what `/project-bootstrap` scaffolds. They travel through `.agents/project.schema.yaml` as methodology (non-null leaves are kept, never blanked), so a new project is seeded with them. An existing application replaces them with what it actually runs.
 
-**Who writes it.** `bun run agents:setup --stack` detects the stack from the repo (`package.json`, the lockfile, the migration directory, `tsconfig.json`, CI and hosting files) and proposes each field that differs, with the file it read it from; `--non-interactive` writes every detected value and leaves the rest alone. A field the repo says nothing about is never guessed. A project that lacks the block gets it inserted from the schema first, at the schema's position (`bun run up` offers the same insertion). `/project-bootstrap` runs it once the app exists.
+**Who writes it.** `bun run agents:setup --stack` detects the stack from the repo (`package.json`, the lockfile, the migration directory, `tsconfig.json`, CI and hosting files) and proposes each field that differs, with the file it read it from; `--non-interactive` writes every detected value and leaves the rest alone. A field the repo says nothing about is never guessed. A project that lacks the block gets it inserted from the schema first, at the schema's position (`bun sync` offers the same insertion). `/project-bootstrap` runs it once the app exists.
 
 **Who checks it.** `bun run setup:doctor` validates the block's shape and reports drift between what it declares and what the repo shows, in its own section; never a failure. Before the app exists it stays silent: the defaults are expected.
 
@@ -256,7 +256,7 @@ Three commands carry the contract (code: `cli/lib/worktree.ts`):
 
 - `bun run worktree:provision [<path>]`: wires a fresh worktree with the gitignored inputs it cannot rebuild (`.env`, `.vercel/`, local settings), then `bun install` and `bun run agents:compat`. Refuses to run on the primary. `orca.yaml` runs it as Orca's setup hook, `.codex/environments/environment.toml` as the Codex app's; Claude Code and the Codex app copy the same files through `.worktreeinclude`.
 - `bun run worktree:audit [<path>]`: classifies what a worktree still holds that git does not (state / cache / disposable / unknown) before it is removed; exit 1 while state or unknown remains. `--rescue` copies the state class to the same path under `<<PRIMARY_ROOT>>`, never overwriting. `orca.yaml` runs it as Orca's archive hook.
-- `bun run up` refuses to run in a linked worktree: its backups, markers and prompts are gitignored and would die with it.
+- `bun sync` refuses to run in a linked worktree: its backups, markers and prompts are gitignored and would die with it.
 
 ### Active environment
 

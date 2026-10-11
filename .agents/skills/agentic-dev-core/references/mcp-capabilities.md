@@ -59,6 +59,6 @@ Then wait. **Never degrade to another tool on your own.** Built-in `WebSearch` /
 | OpenCode | `opencode.jsonc` → `mcp.<server>` (project), `~/.config/opencode/opencode.json` (global) | Set `enabled: true`. Project servers that need `.env` values start through the same `.env` loader, so nothing is copied out of `.env`. After a `.env` or config change, restart the session and `opencode service restart` (it caches the resolved config per directory). |
 | Codex CLI / Desktop | `.codex/config.toml` → `[mcp_servers.<server>]` (project), `~/.codex/config.toml` (user: `codex mcp add <name> --url <url>`, then `codex mcp login <name>`) | The project file loads only in a TRUSTED repository; its stdio servers read `.env` through the loader. Restart the session. |
 
-`bun run setup:doctor` reports which harness-level servers this machine's user configs declare; a cloud connector leaves no file and is reported as not detectable, never as missing. The installer prints the same connect commands at the end of `bun run setup`.
+`bun run setup:doctor` reports which harness-level servers this machine's user configs declare; a cloud connector leaves no file and is reported as not detectable, never as missing. The installer prints the same connect commands at the end of `bun setup`.
 
 Server enabled but the first call returns 401/403 or a mystery failure → that is the credential case of `AGENTS.md` Critical Rule #9: name the env var, point to `.env` / `.env.example`, ask for the fix and a RESTART (values are read at MCP spawn time).

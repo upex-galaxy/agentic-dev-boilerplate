@@ -21,7 +21,7 @@ export const RULES_FILE = 'agent-critical-rules.md';
 export const SKILLS_FILE = 'agent-skills-and-mcps.md';
 export const PROJECT_FILE = 'agent-project.md';
 export const README_FILE = 'README.md';
-/** The heading `bun run up --adopt` puts above an adopted app's preserved instructions (`ADOPT_INSTRUCTIONS_HEADING` in `cli/lib/updater-adopt.ts`). */
+/** The heading `bun sync --adopt` puts above an adopted app's preserved instructions (`ADOPT_INSTRUCTIONS_HEADING` in `cli/lib/updater-adopt.ts`). */
 export const APP_BLOCK_HEADING = '## 0. Project instructions (pre-adoption)';
 
 /**

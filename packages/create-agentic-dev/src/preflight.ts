@@ -170,8 +170,8 @@ export function adoptPreflight(dir: string, probes: Probes = realProbes): Doctor
     state === 'fresh'
       ? 'no agentic-dev install yet'
       : state === 'adopted'
-        ? 'already adopted: nothing to install (bun run up updates it)'
-        : `Already an agentic-dev project (${BOILERPLATE_LOCK}). Use bun run up instead.`,
+        ? 'already adopted: nothing to install (bun sync updates it)'
+        : `Already an agentic-dev project (${BOILERPLATE_LOCK}). Use bun sync instead.`,
   );
 
   // The updater clones the template through the GitHub CLI.

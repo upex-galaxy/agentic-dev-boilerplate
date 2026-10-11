@@ -254,7 +254,7 @@ describe('writeStack', () => {
 
   test('a missing block with no schema on disk is refused, never invented', () => {
     const result = writeStack('project:\n  project_name: null\n', null, { package_manager: 'bun' });
-    expect(result.error).toContain('bun run up');
+    expect(result.error).toContain('bun sync');
     expect(result.text).toBe('project:\n  project_name: null\n');
   });
 

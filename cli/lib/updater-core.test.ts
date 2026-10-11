@@ -95,7 +95,7 @@ const CLI: Component = { name: 'cli', type: 'directory', paths: ['cli'] };
 const CFG = { components: [CLI], selfUpdateComponent: 'cli', versionFile: '.template/boilerplate.lock.json' };
 
 describe('dirty-tree guard: self-update re-exec', () => {
-  // Bunkai PR #234: `bun run up --auto` ran the migration preflight, the parent
+  // Bunkai PR #234: `bun sync --auto` ran the migration preflight, the parent
   // refreshed `cli/` and re-exec'd, and the CHILD aborted on the dirty tree the
   // parent had just produced; `--force` was the only way through.
 

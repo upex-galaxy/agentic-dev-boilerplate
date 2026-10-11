@@ -35,7 +35,7 @@
  *     A skill the PROJECT created counts as listed when its row sits in the
  *     "Project context skills" table of `.agents/instructions/agent-project.md`, or
  *     when an `AGENTS.md` router row loads its `SKILL.md` (the adopted app's
- *     `<app>-context`): both are project-owned files `bun run up` never
+ *     `<app>-context`): both are project-owned files `bun sync` never
  *     overwrites, unlike the synced skills section.
  *     The human pages are NOT checked for a skill list: they point to
  *     the generated `REGISTRY.md`, because enumerating the skills there is the

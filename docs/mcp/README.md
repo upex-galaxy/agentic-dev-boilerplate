@@ -32,7 +32,7 @@ None of the three hosts refuses to start when a variable is missing. The loader 
 
 Skills never name a server. They declare a CAPABILITY in `metadata.requires_capabilities` (`library-docs`, `web-search`, `db`, `automation-flows`, `diagrams`) and the AI resolves it by tool-name SUFFIX, whatever prefix the host gave the server: `mcp__context7__query-docs` and a claude.ai connector's `mcp__claude_ai_context7__query-docs` are the same capability. When no tool provides a capability the skill needs, the AI stops at that step, names the capability and how to enable it, and waits: it never swaps in another tool on its own.
 
-- **Web search** (`web-search`) is connected once per machine at harness level (Exa first, Tavily second), never in a project file. The recommended servers and their connect commands are in `cli/lib/harness-level-mcps.ts`; `bun run setup` prints them and `bun run setup:doctor` shows what this machine declares.
+- **Web search** (`web-search`) is connected once per machine at harness level (Exa first, Tavily second), never in a project file. The recommended servers and their connect commands are in `cli/lib/harness-level-mcps.ts`; `bun setup` prints them and `bun run setup:doctor` shows what this machine declares.
 - **Browser automation** is not an MCP: it is `playwright-cli` named sessions (`.agents/instructions/agent-tool-resolution.md` §6, `[AUTOMATION_TOOL]`).
 - **Jira / Confluence** go through `acli` by default; the Atlassian MCP is opt-in ([below](#atlassian-mcp-opt-in)).
 
@@ -48,7 +48,7 @@ Vocabulary, suffixes and the stop procedure: `.agents/skills/agentic-dev-core/re
 | `dbhub.example.toml`         | DBHub (SQL)        | TOML   | starting point for a `dbhub.toml`, used by the opt-in `sql` block                           |
 | `mcp-configuration-guide.md` | all three hosts    | md     | per-host syntax reference (scopes, CLI commands, remote servers, OAuth)                     |
 
-`bun run up --update-mcp-template <claude|opencode|codex>` refreshes one template from upstream.
+`bun sync --update-mcp-template <claude|opencode|codex>` refreshes one template from upstream.
 
 ## Adding an opt-in server
 

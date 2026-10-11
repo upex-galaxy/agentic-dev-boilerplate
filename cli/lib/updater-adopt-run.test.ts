@@ -190,7 +190,7 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(pkg.devDependencies).toEqual({ yaml: '^2.8.2' });
     expect(summary.packageJsonKept).toEqual([{ file: 'package.json', section: 'scripts', key: 'test', localValue: 'vitest', upstreamValue: 'bun test cli/', resolution: 'mine' }]);
 
-    // The lock remembers the redirected package, so a later plain `up` does not add it to `dependencies`.
+    // The lock remembers the redirected package, so a later plain `bun sync` does not add it to `dependencies`.
     const lock = JSON.parse(read(app, '.template/boilerplate.lock.json')) as SyncStateV7;
     expect(lock.packageJsonSync?.['package.json']?.dependencies?.appliedKeys).toContain('yaml');
     expect(lock.packageJsonSync?.['package.json']?.devDependencies?.appliedKeys).toEqual(expect.arrayContaining(['yaml', 'typescript']));
@@ -199,7 +199,7 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(adopt).not.toBeNull();
     expect(read(app, '.agents/project.yaml')).not.toContain('strategy_source: chosen');
     expect(readProjectProtectedPaths(app).paths.sort()).toEqual(['.env.example', 'docs/README.md', 'scripts/lint.ts']);
-    expect(read(app, '.env.example')).toBe(`${APP['.env.example']}\n# ===== Synced from boilerplate: variables the agentic tooling reads =====\n# Empty on purpose: the values go in .env (see bun run setup).\nATLASSIAN_EMAIL=\n`);
+    expect(read(app, '.env.example')).toBe(`${APP['.env.example']}\n# ===== Synced from boilerplate: variables the agentic tooling reads =====\n# Empty on purpose: the values go in .env (see bun setup).\nATLASSIAN_EMAIL=\n`);
     expect(isAdopted(app)).toBe(true);
     expect(read(app, 'AGENTS.md')).toBe(UPSTREAM['AGENTS.md']);
   });

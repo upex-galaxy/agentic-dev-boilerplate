@@ -21,5 +21,5 @@ if [ -f "$GATES" ]; then
   framework_gates_pre_commit
 else
   echo "⚠️  .husky/framework-gates.sh missing: framework pre-commit gates SKIPPED."
-  echo "   Restore it with: bun run up"
+  echo "   Restore it with: bun sync"
 fi
