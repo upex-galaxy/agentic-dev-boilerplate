@@ -2040,8 +2040,8 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
             <h3>Fase 3 · verificar</h3>
             <p>
               Cinco chequeos en una tabla: el yaml, lo que resuelve <span class="mono">jira:url</span> y la
-              sesión de <span class="mono">acli</span> nombran el destino; <span class="mono">printenv
-              ATLASSIAN_URL</span> sale vacío; la llamada REST devuelve <span class="mono">200</span>.
+              sesión de <span class="mono">acli</span> nombran el destino; la sonda de presencia
+              <span class="mono">[ -n "${ATLASSIAN_URL+x}" ]</span> dice <span class="mono">unset</span>; la llamada REST devuelve <span class="mono">200</span>.
               Cualquier cosa menos que eso es una migración fallida.
             </p>
           </div>
@@ -2187,10 +2187,12 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
             >
           </div>
           <div class="g">
-            <b>Nunca leer el <span class="mono">.env</span> entero</b
+            <b>Nunca abrir el <span class="mono">.env</span>, ni filtrado por clave</b
             ><span
-              >Se filtra por la clave exacta. Si un token llega a imprimirse, la IA lo dice y recomienda
-              rotarlo.</span
+              >Ni <span class="mono">cat</span>, ni <span class="mono">grep</span>, ni <span class="mono">cut</span>: las
+              variables se usan por nombre dentro de <span class="mono">bunx varlock run</span>, y si
+              hace falta saber si existen, se corre <span class="mono">bunx varlock load --agent</span>, que
+              las redacta. Si un token llega a imprimirse, la IA lo dice y recomienda rotarlo.</span
             >
           </div>
         </div>
