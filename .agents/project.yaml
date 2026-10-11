@@ -198,7 +198,7 @@ autonomous_delivery:
     story: 1 # HARD. Raising this is a measured mistake, not a tuning knob.
     bug: 3 # sequential; each fully closed before the next starts.
     discovery: 0 # application CODE cap — always zero, discovery never writes code.
-    discovery_definitions: 2 # NEW user stories drafted + created per run — gated on synchronous chat approval.
+    discovery_definitions: 2 # NEW user stories drafted + created per run — created UNATTENDED (ADR-0007); this cap, not a human in the loop, bounds the blast radius.
   lock_staleness_minutes: 90 # older than this -> abandoned, reclaimable with a logged note.
   automation_gh_account: null # TODO: fill per project — gh identity asserted before every push and merge.
   migrations: confirm # confirm | autonomous | unrestricted. See "Migration gate".

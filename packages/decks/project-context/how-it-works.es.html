@@ -1644,7 +1644,7 @@
           <div class="node">
             <div class="n">Fuentes</div>
             <h3>Leer todo</h3>
-            <p>Código, esquema, contrato, PRD, tracker: lo que pida la referencia del modo.</p>
+            <p>Código, esquema, contrato, PRD, tracker: lo que pida la referencia del modo, con las rutas y la fuente del esquema que declara <span class="mono">stack:</span>.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
@@ -1891,6 +1891,24 @@
           <div class="it">
             <span class="bx"></span
             ><span
+              ><b>Lee el bloque <span class="mono">stack:</span> una vez por corrida.</b> Está en
+              <span class="mono">.agents/project.yaml</span> y parametriza cada modo:
+              <span class="mono">app_root</span> dice dónde está el código (una app por corrida; los
+              otros workspaces de un monorepo quedan como Discovery Gap),
+              <span class="mono">database.schema_source</span> dice si el esquema sale de la base en
+              vivo por la capacidad <span class="mono">db</span> (<span class="mono">live</span>) o de
+              los archivos de migración, leídos sin conexión (<span class="mono">migrations</span>;
+              ahí <span class="mono">db</span> pasa a ser opcional), y una app que llama a Supabase
+              directo desde su código tiene un API directo que el modo <span class="mono">api</span>
+              también mapea. Sin el bloque usa los defaults de
+              <span class="mono">.agents/project.schema.yaml</span> y deja un Discovery Gap que
+              nombra <span class="mono">bun run agents:setup --stack</span>. Un valor
+              <span class="mono">null</span> significa que la app no lo tiene: se salta y se dice.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
               ><b>Después de escribir, solo agrega el puntero que falte.</b> Si el artefacto no figura en
               los Key paths compartidos ni en <span class="mono">.agents/instructions/agent-project.md</span>, lo
               suma en <span class="mono">agent-project.md</span>, nunca en <span class="mono">AGENTS.md</span>. Nunca escribe prosa operativa en
@@ -2026,7 +2044,10 @@
               </tr>
               <tr>
                 <th><span class="mono">api</span></th>
-                <td>sin spec OpenAPI <b>y</b> sin backend con rutas para escanear</td>
+                <td>
+                  sin spec OpenAPI, sin backend con rutas para escanear <b>y</b> sin API directa a
+                  Supabase
+                </td>
                 <td>el mapa de datos, el mapa de features</td>
               </tr>
               <tr>
@@ -2036,8 +2057,13 @@
               </tr>
               <tr>
                 <th><span class="mono">dev-roadmap</span></th>
-                <td>al menos una épica con historias hijas (y sus links de dependencia) en el tracker</td>
-                <td>el mapa de datos, <span class="mono">master-design-plan.md</span>, <span class="mono">master-implementation-plan.md</span></td>
+                <td>al menos una épica con historias hijas en el tracker</td>
+                <td>
+                  sus links de dependencia (sin ellos avisa y arma un grafo ralo, con las historias
+                  sin arista en un TODO de mapeo), el mapa de datos,
+                  <span class="mono">master-design-plan.md</span>,
+                  <span class="mono">master-implementation-plan.md</span>
+                </td>
               </tr>
               <tr>
                 <th><span class="mono">context-skill</span></th>
@@ -2155,8 +2181,9 @@
             <div class="kk">data · "¿dónde vive X y qué lo toca?"</div>
             <h3>Mapa de datos</h3>
             <p>
-              Lee esquema, RLS y migraciones por la capacidad <span class="mono">db</span>, más backend,
-              frontend, PRD y SRS. Escribe entidades con su rol de negocio, quién lee y escribe cada
+              Lee esquema, RLS y migraciones (por la capacidad <span class="mono">db</span> o, con
+              <span class="mono">schema_source: migrations</span>, desde los archivos de migración),
+              más backend, frontend, PRD y SRS. Escribe entidades con su rol de negocio, quién lee y escribe cada
               tabla, las migraciones que cambiaron el significado de una entidad, todos los flujos
               importantes (sin tope), máquinas de estado, procesos automáticos e integraciones.
             </p>
@@ -2238,6 +2265,14 @@
               de sprint.
             </p>
           </div>
+        </div>
+
+        <div class="gate r">
+          <b>App adoptada</b> (<span class="mono">adopted: true</span> en
+          <span class="mono">.template/installer.lock.json</span>): el plan cubre solo el trabajo
+          que falta. Lo ya entregado entra como una tabla "Baseline (already shipped)" encima de las
+          prioridades y no se vuelve a puntuar ni cae en ningún Master Sprint; el Master Sprint 0
+          es lo fundacional que queda, nunca la reconstrucción de lo que ya corre.
         </div>
 
         <div class="trio r">

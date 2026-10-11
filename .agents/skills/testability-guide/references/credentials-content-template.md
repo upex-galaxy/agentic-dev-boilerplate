@@ -33,7 +33,7 @@ The artifact goes straight to the point: what the credentials are and which `.en
 2. **Environments** — a TABLE (per env: web URL, API base, OpenAPI spec, status). From `.agents/project.yaml` `environments`. (No prose architecture summary — see #drop below.)
 3. **Auth at the UI layer (browser)** — the system roles, and how each tester self-provisions. Two variants, conditional (see §UI variants).
 4. **Auth at the DB layer** — raw connection-string (SQL-editor only) VS the DB MCP driver's split-field `.env` block (read-only + read-write). The "two formats, NOT interchangeable" callout.
-5. **Auth at the API layer** — a copy-paste `.env` block (base URL / spec path / token); token left BLANK, tester-minted.
+5. **Auth at the API layer** — a copy-paste `.env` block with the base URL and the spec path only (no token slot: the OpenAPI MCP is schema-read-only); each tester mints a personal token and uses it by name with curl.
 6. **Activate the MCPs** — open the agent bare; each MCP server reads `.env` through the loader; a command needing a value runs as `bunx varlock run -- sh -c '...'` + the verification trio.
 7. **Security** — what never to publish; rotate-on-leak.
 8. **Footer** — one-line pointer to the `/qa` page (this REPLACES the dropped architecture summary).

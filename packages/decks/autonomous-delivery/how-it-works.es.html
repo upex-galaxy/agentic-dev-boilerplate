@@ -1743,8 +1743,13 @@
               <li>
                 <span class="mono">.agents/project.yaml</span> con el bloque
                 <span class="mono">autonomous_delivery:</span> y
-                <span class="mono">git_strategy.branches.integration</span>, la rama contra la que
-                corre cada chequeo de ascendencia.
+                <span class="mono">git_strategy.branches</span>: la rama contra la que corre cada
+                chequeo de ascendencia es <span class="mono">integration</span>, o
+                <span class="mono">production</span> cuando <span class="mono">integration</span>
+                es <span class="mono">null</span> (<span class="mono">solo-main</span>,
+                <span class="mono">github-flow</span>, <span class="mono">trunk-based</span>). Un
+                <span class="mono">integration: null</span> es válido y no termina la corrida: en
+                ese caso la corrida nunca mergea y el ticket queda en un PR abierto.
               </li>
               <li>
                 <span class="mono">.context/dev-roadmap.md</span> como fuente de las aristas de
@@ -1906,7 +1911,8 @@
             <h3>Verificar la base</h3>
             <p>
               <span class="mono">git fetch</span> y un chequeo de ascendencia contra la rama de
-              integración. Si está mal, se realinea con
+              integración (o contra producción cuando integración es
+              <span class="mono">null</span>). Si está mal, se realinea con
               <span class="mono">git checkout -B</span>. Nunca
               <span class="mono">git reset --hard</span>: la regla #13 lo prohíbe.
             </p>
@@ -2043,7 +2049,10 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
             <p>
               Fetch, las cuatro fuentes, el ledger vivo de migraciones con
               <span class="mono">[DB_TOOL]</span> y la protección de ramas por los DOS endpoints:
-              el clásico devuelve 404 cuando la protección es un ruleset.
+              el clásico devuelve 404 cuando la protección es un ruleset. Sin capacidad
+              <span class="mono">db</span> (o con
+              <span class="mono">stack.database.engine: none</span>) se salta el ledger, se avisa
+              en el reporte y no se reclama ningún ticket que toque el esquema.
             </p>
           </div>
           <div class="hum">
@@ -2236,6 +2245,14 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
             </tbody>
           </table>
         </div>
+        <p class="sub" style="margin-top: 14px">
+          Un caso que la compuerta no abre: con
+          <span class="mono">stack.database.migrations_tool</span> en
+          <span class="mono">prisma</span> o <span class="mono">drizzle</span>, la doctrina de
+          cambios de base pide consultar al equipo antes de aplicar, y nadie está en la línea. La
+          corrida escribe la migración generada, la pushea y la escala, diga lo que diga
+          <span class="mono">migrations:</span>.
+        </p>
 
         <div class="gotchas r">
           <div class="g">
@@ -2285,6 +2302,9 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
                 despacho de <span class="mono">story</span> o <span class="mono">bug</span> puede ir
                 a un worker por ticket. Lock, auditoría, selección, topes y compuertas siguen siendo
                 de esta skill; el worker para en un PR abierto y el merge queda en la corrida.
+                Con <span class="mono">integration: null</span> pasa lo mismo en toda la corrida:
+                nunca mergea, y el merge a producción es la etapa 5 de
+                <span class="mono">/sprint-development</span>, una decisión humana.
               </li>
             </ul>
           </div>

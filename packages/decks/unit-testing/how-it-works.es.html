@@ -1622,7 +1622,7 @@
         <div class="hero-meta">
           <span class="chip"><span class="dot"></span> para quien <b>codea</b></span>
           <span class="chip"
-            ><span class="dot"></span> sirve con <b>Jest, Vitest, Mocha</b> o un runner parecido</span
+            ><span class="dot"></span> sirve con <b>el runner que la app ya usa</b></span
           >
           <span class="chip agent"
             ><span class="dot"></span> testea <b>comportamiento</b>, no implementación</span
@@ -1817,15 +1817,19 @@
             <div class="tag">Requisitos</div>
             <h3>Un runner y su comando</h3>
             <ul>
-              <li>Un runner configurado (Jest, Vitest, Mocha o similar).</li>
+              <li>
+                Un runner configurado, el que nombra <span class="mono">stack.test_runner</span> en
+                <span class="mono">.agents/project.yaml</span>.
+              </li>
               <li>
                 El comando de tests declarado en <span class="mono">package.json</span>. Para TDD,
                 que el runner tenga modo <span class="mono">--watch</span>.
               </li>
               <li>
-                Sin runner, la primera tarea es montarlo: la sección de setup de
-                <span class="mono">references/unit-testing.md</span>. Ahí la IA te pregunta Jest o
-                Vitest.
+                El setup corre solo cuando <span class="mono">stack.test_runner</span> es
+                <span class="mono">null</span> (sección de setup de
+                <span class="mono">references/unit-testing.md</span>). Con cualquier otro valor se usa
+                ese runner: nunca se instala un segundo ni se cambia por otro.
               </li>
             </ul>
           </div>
@@ -1834,9 +1838,10 @@
             <h3>Stack y skills complementarias</h3>
             <ul>
               <li>
-                El stack de backend y de frontend, en <span class="mono">.agents/project.yaml</span>,
-                orienta qué convenciones de runner aplican: Jest es más común con Node y React, Vitest
-                con proyectos sobre Vite.
+                El runner sale de <span class="mono">stack.test_runner</span>, el comando de
+                <span class="mono">stack.scripts.test</span> y los tests viven bajo
+                <span class="mono">stack.app_root</span>, todo en
+                <span class="mono">.agents/project.yaml</span>.
               </li>
               <li>
                 Al entrar resuelve las skills de la categoría <span class="mono">language</span> desde
@@ -1876,7 +1881,9 @@
               <b>Qué unidad</b>, cuando el pedido es ambiguo: la IA te lo confirma antes de escribir.
             </p>
             <p>
-              El <b>runner</b>, si el proyecto todavía no tiene uno: Jest o Vitest.
+              El <b>runner</b>, solo si <span class="mono">stack.test_runner</span> es
+              <span class="mono">null</span>: la IA te pregunta y la elección se guarda con
+              <span class="mono">bun run agents:setup --stack</span>.
             </p>
           </div>
           <div class="out">

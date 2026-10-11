@@ -1684,11 +1684,22 @@
         </div>
 
         <div class="callout blue r">
-          <b>Antes de arrancar:</b> <span class="mono">.agents/project.yaml</span> completo, la
-          historia en Jira con <b>criterios de aceptación refinados</b>, el CI configurado,
+          <b>Antes de arrancar:</b> <span class="mono">.agents/project.yaml</span> completo,
+          documentos de producto (el PRD y el SRS, o los mapas de negocio de una app existente),
+          la historia en Jira con <b>criterios de aceptación refinados</b>, el CI configurado,
           <span class="mono">.env</span> con las URLs y credenciales, y la terminal parada en el
           repo del proyecto. Si falta algo, la skill corta temprano y te deriva a la skill que lo
           prepara.
+        </div>
+        <div class="callout agent r">
+          <b>App existente y bloque <span class="mono">stack:</span>.</b> Los scripts y las rutas
+          de la app salen del bloque <span class="mono">stack:</span> de
+          <span class="mono">.agents/project.yaml</span>: cada comando corre desde
+          <span class="mono">stack.app_root</span> como
+          <span class="mono">stack.package_manager run stack.scripts.&lt;rol&gt;</span>. Un script
+          en <span class="mono">null</span> significa que la app no lo tiene: ese chequeo se salta
+          y el reporte lo dice, sin inventarlo. Las convenciones propias de la app (alias de
+          imports, estructura, ids de test) ganan sobre los defaults de la skill.
         </div>
       </div>
     </section>
@@ -2138,7 +2149,13 @@
                 <b>Lint</b>, <b>tipos / build</b> y <b>tests unitarios</b> corren a la vez; la
                 orquestadora itera solo sobre lo que sale en rojo.
               </li>
-              <li>Los comandos exactos salen de <span class="mono">package.json</span>, nunca de memoria.</li>
+              <li>
+                Los comandos salen del bloque <span class="mono">stack:</span> (el rol
+                <span class="mono">lint</span>, <span class="mono">types</span> o
+                <span class="mono">test</span>, desde <span class="mono">stack.app_root</span>) y
+                de <span class="mono">package.json</span>, nunca de memoria. Un rol
+                <span class="mono">null</span> se saltea y se informa.
+              </li>
               <li>No se infla a cinco verificadores: son tres.</li>
             </ul>
           </div>
@@ -2905,7 +2922,12 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             <div class="kk">Fundación o infraestructura faltante</div>
             <h3>/project-foundation · /project-bootstrap</h3>
             <p>
-              Si faltan el PRD, el SRS o el scaffolding, la skill corta y deriva.
+              Si no hay ni PRD y SRS ni mapas de negocio, la skill corta y deriva a
+              <span class="mono">/project-foundation</span> o a
+              <span class="mono">/project-context data</span>; en una app existente el camino es
+              <span class="mono">/project-adoption</span> y nunca escribe un PRD ni un SRS para
+              pasar el chequeo. Si en un proyecto nuevo falta la infraestructura, deriva a
+              <span class="mono">/project-bootstrap</span>.
               <a href="../project-bootstrap/how-it-works.es.html">Ver el deck de bootstrap</a>.
             </p>
           </div>

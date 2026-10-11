@@ -1972,7 +1972,12 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>
               <span class="mono">stack:</span> con los valores del plan;
               <span class="mono">bun run agents:setup</span> completa identidad y entornos. Cada
               colisión que la app ya poseía entra en <span class="mono">updater.protected_paths</span>,
-              con un empalme que deja el resto del yaml byte por byte.
+              con un empalme que deja el resto del yaml byte por byte. Una skill del framework que la
+              app había copiado a mano se reemplaza por la copia de upstream que guardó la adopción
+              (<span class="mono">.agents/prompts/adopt-upstream/</span>), solo si su fila tiene su
+              propia línea de aprobación y con respaldo previo en
+              <span class="mono">.backups/project-adoption/</span>; si el equipo la conserva, queda
+              en las rutas protegidas.
             </p>
           </div>
           <div class="step">
@@ -1997,7 +2002,10 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>
             <p>
               Si el instalador dejó una fusión de instrucciones pendiente, se aplica <b>tal cual</b>,
               con su propia línea de aprobación y respaldo previo; el texto de la app nunca se resume
-              ni se reordena. El contrato de API se sincroniza solo si la app sirve una spec y las rutas
+              ni se reordena. La skill <span class="mono">&lt;app&gt;-context</span> que escribió la
+              adopción solo cambia en su <span class="mono">description</span>, reescrita desde el
+              análisis para que enrute por el dominio real de la app; el texto preservado de la app
+              nunca se toca. El contrato de API se sincroniza solo si la app sirve una spec y las rutas
               de salida no existían antes.
             </p>
           </div>
@@ -2147,6 +2155,7 @@ bun run tooling:lint:check
             <ul>
               <li><span class="mono">.agents/project.yaml</span>, <span class="mono">.env</span> y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
               <li><span class="mono">AGENTS.md</span> + <span class="mono">CLAUDE.md</span>, solo a través de la fusión que guardó el instalador.</li>
+              <li>Las carpetas de skills del framework que la app había copiado, reemplazadas por la copia de upstream guardada (con su propia aprobación), <span class="mono">api/openapi*</span> cuando no existían antes, y la <span class="mono">description</span> de la skill <span class="mono">&lt;app&gt;-context</span>.</li>
               <li>El plan, <span class="mono">.session/project-adoption/</span> y las copias en texto plano de credenciales MCP que retira <span class="mono">bun run harness:env</span>.</li>
             </ul>
             <div class="path">lista completa: references/adoption-workflow.md §Refusal list</div>
