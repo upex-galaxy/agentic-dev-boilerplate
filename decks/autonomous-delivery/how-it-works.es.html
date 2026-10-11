@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Context skills: el mapa del negocio adentro de una skill</title>
+    <title>Autonomous delivery: corridas programadas sin nadie mirando</title>
     <meta
       name="description"
-      content="Qué es una skill de contexto con mapa: por qué el mapa del negocio vive en una skill y no en .context/, cómo lo genera project-context, cómo se lee por sección con bun run context:map, cómo se detecta que está viejo y cómo se corrige de a una sección con evidencia y aprobación."
+      content="Cómo /autonomous-delivery convierte un disparo programado en una corrida segura: lock por modo, auditoría donde git es la verdad, selección de trabajo de verdad desbloqueado, ejecución por la skill dueña, presupuesto de contexto y un reporte del que la próxima corrida puede arrancar."
     />
     <style>
       /* ============================================================
@@ -1597,10 +1597,6 @@
       table.cmp.sections tbody th {
         width: 3em;
       }
-      /* deck-local: inline identifiers inside a .wf step description */
-      .wf span.mono {
-        display: inline;
-      }
     </style>
   </head>
   <body>
@@ -1609,14 +1605,15 @@
         ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
       >
       <nav class="topnav">
-        <a href="#por-que">Por qué</a>
-        <a href="#mapas">Mapas</a>
-        <a href="#anatomia">Anatomía</a>
-        <a href="#leer">Leer</a>
-        <a href="#generar">Generar</a>
-        <a href="#frescura">Frescura</a>
-        <a href="#corregir">Corregir</a>
-        <a href="#propia">La tuya</a>
+        <a href="#cuando">Cuándo</a>
+        <a href="#modos">Modos</a>
+        <a href="#lock">Lock</a>
+        <a href="#auditoria">Auditoría</a>
+        <a href="#seleccion">Selección</a>
+        <a href="#ejecucion">Ejecución</a>
+        <a href="#contexto">Contexto</a>
+        <a href="#autonomia">Autonomía</a>
+        <a href="#cierre">Cierre</a>
         <a href="#invocar">Invocar</a>
       </nav>
       <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
@@ -1627,82 +1624,73 @@
     <!-- ============ HERO ============ -->
     <header class="hero">
       <div class="wrap">
-        <div class="kicker eyebrow"><span class="num">00</span> · context skills</div>
-        <h1>El mapa del negocio <em>llega solo</em>, no se <span class="sig">busca</span>.</h1>
+        <div class="kicker eyebrow"><span class="num">00</span> · corridas sin nadie mirando</div>
+        <h1>Entregar <em>de noche</em>, sin <span class="sig">adivinar</span>.</h1>
         <p class="lede">
-          Qué entidades tiene el producto, qué puede hacer cada rol desde cada pantalla, qué cambia
-          cada ruta: eso no lo saca ningún script de una fuente. Lo escribe una IA leyendo el
-          código, el esquema y el contrato del API. Por eso cada mapa del negocio vive
-          <b>adentro de una skill de contexto</b>, como un HTML que un humano abre en el navegador
-          y que la IA lee por sección con <span class="mono">bun run context:map</span>. Este deck
-          explica qué es un mapa, cómo se lee y cómo se mantiene honesto.
+          <span class="mono">/autonomous-delivery</span> es la capa entre un scheduler y
+          <span class="mono">/sprint-development</span>. Un pipeline interactivo da por hecho que un
+          humano eligió el ticket, confirmó el estado y está presente si algo se tuerce. Sin nadie
+          en la línea, esas tres suposiciones son falsas. <b>Esta skill no implementa nada</b>:
+          establece qué es cierto, elige trabajo de verdad desbloqueado, se lo pasa a la skill dueña
+          y deja un registro desde el que la próxima corrida puede arrancar.
         </p>
 
         <div class="hero-meta">
           <span class="chip"
-            ><span class="dot"></span> para quien <b>desarrolla</b> y quien <b>mantiene</b></span
+            ><span class="dot"></span> para quien <b>lidera</b> el equipo y quien es
+            <b>dueño del producto</b></span
           >
-          <span class="chip"><span class="dot"></span> conocimiento, no un <b>workflow</b></span>
+          <span class="chip"><span class="dot"></span> la dispara un <b>scheduler</b>, no una persona</span>
           <span class="chip agent"
-            ><span class="dot"></span> escribe solo en su <b>references/</b></span
+            ><span class="dot"></span> git es la <b>verdad</b>, el tracker una <b>pista</b></span
           >
         </div>
 
         <div class="pipe five" id="pipe">
           <div class="node">
-            <div class="n">Generar</div>
-            <h3>Un modo de project-context</h3>
-            <p>
-              <span class="mono">data</span>, <span class="mono">features</span> o
-              <span class="mono">api</span> leen las fuentes y escriben el mapa.
-            </p>
+            <div class="n">Fase 0</div>
+            <h3>Aislar y tomar el lock</h3>
+            <p>Su propio worktree, un lock por modo. Lock vivo de otra corrida: sale limpia.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Guardar</div>
-            <h3>Un HTML en la skill</h3>
-            <p><span class="mono">references/&lt;map&gt;.html</span>, una sección por hecho.</p>
+            <div class="n">Fase 1</div>
+            <h3>Auditar</h3>
+            <p>Cuatro fuentes de evidencia en paralelo. Decide la ascendencia en git.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Leer</div>
-            <h3>El lector</h3>
-            <p>
-              <span class="mono">bun run context:map</span> saca el SVG y deja el texto, por
-              sección.
-            </p>
+            <div class="n">Fase 2</div>
+            <h3>Seleccionar</h3>
+            <p>Solo lo desbloqueado de verdad. Una corrida vacía es un resultado correcto.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Usar</div>
-            <h3>La IA, o vos</h3>
-            <p>
-              Un briefing inyecta el comando; un humano usa
-              <span class="mono">--open</span> y lo ve en el navegador.
-            </p>
+            <div class="n">Fase 3</div>
+            <h3>Ejecutar</h3>
+            <p>Despacha la skill dueña. Compuerta de migraciones, handoff sobre la marcha.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Corregir</div>
-            <h3>Una sección por vez</h3>
-            <p>Lo que contradice al mapa se propone con evidencia y se aplica con tu sí.</p>
+            <div class="n">Fase 4</div>
+            <h3>Cerrar y reportar</h3>
+            <p>Verifica el cierre, rescata registros, suelta el lock, escribe el reporte.</p>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- ============ §01 POR QUÉ ============ -->
-    <section class="band" id="por-que">
+    <!-- ============ §01 CUÁNDO ============ -->
+    <section class="band" id="cuando">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">01</span> · por qué un mapa es una skill</div>
-          <h2>Una síntesis no es un caché</h2>
+          <div class="eyebrow"><span class="num">01</span> · cuándo sí y cuándo no</div>
+          <h2>Un scheduler la dispara con un modo. Esa es toda su superficie</h2>
           <p class="sub">
-            <span class="mono">.context/</span> guarda lo que un SCRIPT trae de una fuente de verdad
-            y lo que este repo mismo es fuente de verdad. Un mapa del negocio no es ninguna de las
-            dos cosas: dos sesiones lo escribirían distinto y rehacerlo cuesta miles de tokens. Es
-            conocimiento escrito, y el conocimiento que tiene que llegar sin que nadie lo pida es una
-            skill.
+            Un cron, una rutina o un despertador programado abre una sesión sin humano presente y le
+            pasa el modo. Si una persona está en la línea y nombró un ticket, esta skill sobra: su
+            único valor es la capa de auditoría, selección y traspaso, y esa capa es puro costo
+            cuando un humano ya eligió.
           </p>
         </div>
 
@@ -1710,29 +1698,38 @@
           <table class="cmp">
             <thead>
               <tr>
-                <th>La pregunta, para cada pieza de conocimiento</th>
-                <th>Si la respuesta es sí, va a</th>
-                <th>Se recupera con</th>
+                <th>Situación</th>
+                <th>Va a</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>¿Un script la trae de una fuente externa? (Jira, el spec OpenAPI, el esquema)</td>
-                <td><span class="mono">.context/</span> como caché <span class="mono">[SYNC]</span>, o tipos generados</td>
-                <td>
-                  <span class="mono">bun run context:hydrate</span>,
-                  <span class="mono">bun run api:sync</span>
-                </td>
+                <td>Trabajo por ticket con un humano presente</td>
+                <td><span class="mono">/sprint-development</span>, directo</td>
               </tr>
               <tr>
-                <td>¿Este repo es la fuente de verdad? (ADR, PRD, SRS, glosario, plan de diseño)</td>
-                <td><span class="mono">.context/</span> como <span class="mono">[COMMIT]</span></td>
-                <td><span class="mono">git checkout</span></td>
+                <td>Sembrar backlog o refinar criterios de un ticket con nombre</td>
+                <td><span class="mono">/product-management</span>, directo</td>
               </tr>
               <tr>
-                <th>Si no: la IA la sintetiza del código, la base y los contratos</th>
-                <th>Una skill de contexto: el mapa generado adentro, el juicio en sus reglas</th>
-                <th>Regenerar cuesta caro: se corrige por sección</th>
+                <td>Ramas, pull requests, conflictos</td>
+                <td><span class="mono">/git-flow-master</span></td>
+              </tr>
+              <tr>
+                <td>Definir el producto desde cero</td>
+                <td><span class="mono">/project-foundation</span></td>
+              </tr>
+              <tr>
+                <td>Andamiaje de infraestructura</td>
+                <td><span class="mono">/project-bootstrap</span></td>
+              </tr>
+              <tr>
+                <td>Una tajada TDD de tests unitarios</td>
+                <td><span class="mono">/unit-testing</span></td>
+              </tr>
+              <tr>
+                <th>Una corrida programada, desatendida, con un modo</th>
+                <th><span class="mono">/autonomous-delivery &lt;modo&gt;</span></th>
               </tr>
             </tbody>
           </table>
@@ -1740,49 +1737,50 @@
 
         <div class="planes r" style="margin-top: 22px">
           <div class="plane">
-            <div class="tag">Hecho</div>
-            <h3>Va al mapa</h3>
+            <div class="tag">Precondiciones</div>
+            <h3>Si falta una, termina en la fase 0</h3>
             <ul>
               <li>
-                Dos sesiones competentes lo escribirían igual: una entidad, una ruta, una acción
-                CRUD. Nunca se copia al <span class="mono">SKILL.md</span>.
+                <span class="mono">.agents/project.yaml</span> con el bloque
+                <span class="mono">autonomous_delivery:</span> y
+                <span class="mono">git_strategy.branches.integration</span>, la rama contra la que
+                corre cada chequeo de ascendencia.
               </li>
+              <li>
+                <span class="mono">.context/dev-roadmap.md</span> como fuente de las aristas de
+                dependencia.
+              </li>
+              <li>
+                <span class="mono">.env</span> completo: las credenciales se leen por NOMBRE de
+                variable, nunca van en un reporte.
+              </li>
+              <li>Una identidad con permiso de push, verificada en la fase 0 y no en el primer push.</li>
             </ul>
           </div>
           <div class="plane sig">
-            <div class="tag">Juicio</div>
-            <h3>Va a las reglas de la skill</h3>
+            <div class="tag">Sin improvisar</div>
+            <h3>El reporte nombra el archivo y la clave</h3>
             <ul>
               <li>
-                Dos sesiones lo escribirían distinto: "los perfiles tienen borrado lógico; un conteo
-                sin <span class="mono">deleted_at IS NULL</span> está mal". Va a
-                <span class="mono">## Rules</span> o a <span class="mono">references/gotchas.md</span>,
-                con fecha y cómo se midió.
+                Un requisito ausente no se rodea: la corrida para y dice exactamente qué falta y
+                dónde. Las precondiciones de la skill despachada las verifica esa skill, y esta
+                falla rápido cuando le avisan.
               </li>
             </ul>
           </div>
-        </div>
-
-        <div class="callout blue r">
-          <b>Un solo archivo, sin gemelo.</b> El humano y la IA leen el mismo HTML. No hay copia en
-          markdown ni otra bajo <span class="mono">docs/</span>: el gemelo es siempre el que se
-          desactualiza. Para ver el otro lado, el caché de Jira, está el deck
-          <a href="../agentic-dev-core/pbi-jira-cache.es.html">el caché del PBI</a>.
         </div>
       </div>
     </section>
 
-    <!-- ============ §02 MAPAS ============ -->
-    <section class="band" id="mapas">
+    <!-- ============ §02 MODOS ============ -->
+    <section class="band" id="modos">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">02</span> · los mapas que trae el boilerplate</div>
-          <h2>Un aspecto por skill, un generador por mapa</h2>
+          <div class="eyebrow"><span class="num">02</span> · modos y topes</div>
+          <h2>Tres modos, cada uno con un tope que no se negocia</h2>
           <p class="sub">
-            La lista única de skills con mapa es <span class="mono">CONTEXT_MAP_SKILLS</span> en
-            <span class="mono">cli/lib/context-maps.ts</span>: cada entrada nombra su mapa, su
-            generador y el markdown viejo que reemplaza. La tabla de abajo es lo que trae el
-            boilerplate; para saber qué hay en tu repo, leé esa constante.
+            Cada historia medida terminó siendo una cadena de miles de líneas: dos no entran en el
+            contexto de una corrida. Los topes salen de esa medición, no de la prudencia.
           </p>
         </div>
 
@@ -1790,36 +1788,34 @@
           <table class="cmp">
             <thead>
               <tr>
-                <th>Skill</th>
-                <th>Qué sabe</th>
-                <th>Generador</th>
-                <th>Ante un conflicto gana</th>
+                <th>Modo</th>
+                <th>Elige</th>
+                <th>Tope</th>
+                <th>Despacha a</th>
+                <th>Escribe código</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><span class="mono">business-data-context</span></td>
-                <td>
-                  Entidades y relaciones, RLS, migraciones, máquinas de estado, procesos automáticos,
-                  integraciones
-                </td>
-                <td><span class="mono">project-context</span> modo <span class="mono">data</span></td>
-                <td>La base viva de Supabase (capability <span class="mono">db</span>)</td>
+                <td><span class="mono">story</span></td>
+                <td>La historia de mayor prioridad, desbloqueada de verdad</td>
+                <td><b>1 por corrida</b>, duro</td>
+                <td><span class="mono">/sprint-development</span></td>
+                <td>sí</td>
               </tr>
               <tr>
-                <td><span class="mono">business-feature-context</span></td>
-                <td>Catálogo de features, matriz CRUD, inventario de UI, flujos entre features</td>
-                <td>
-                  <span class="mono">project-context</span> modo
-                  <span class="mono">features</span>
-                </td>
-                <td>El árbol del frontend; la app corriendo, para el comportamiento</td>
+                <td><span class="mono">bug</span></td>
+                <td>Defectos desbloqueados, primero los más viejos y graves</td>
+                <td><b>hasta 3</b>, estrictamente en secuencia</td>
+                <td><span class="mono">/sprint-development</span> (entrada de bug)</td>
+                <td>sí</td>
               </tr>
               <tr>
-                <td><span class="mono">business-api-context</span></td>
-                <td>Modelo de auth, grupos de rutas, superficie OpenAPI, recorridos entre rutas</td>
-                <td><span class="mono">project-context</span> modo <span class="mono">api</span></td>
-                <td>El spec para la forma; los handlers y el API corriendo, para el comportamiento</td>
+                <td><span class="mono">discovery</span></td>
+                <td>Huecos de refinamiento, épicas o backlog</td>
+                <td>solo definiciones, hasta <span class="mono">discovery_definitions</span></td>
+                <td><span class="mono">/product-management</span></td>
+                <td><b>nunca</b></td>
               </tr>
             </tbody>
           </table>
@@ -1827,194 +1823,111 @@
 
         <div class="gotchas r">
           <div class="g">
-            <b>Se cargan por su descripción</b
+            <b>Sin modo, no hay corrida</b
             ><span
-              >Una tarea que escribe una migración trae la de datos; una que toca un handler, la de
-              API; una que toca una pantalla, la de features. Nadie tiene que decir "mapa".</span
+              >El primer token de los argumentos ES el modo. Uno faltante o desconocido es un
+              fast-fail: nadie está para contestar, así que nunca se pregunta ni se deduce de la
+              prosa, y nunca se cae a un modo por defecto.</span
             >
           </div>
           <div class="g">
-            <b>No hay mapa de dominio ni de infraestructura</b
+            <b>Un bug a la vez, cerrado del todo</b
             ><span
-              >El vocabulario vive en <span class="mono">.context/business/domain-glossary.md</span>,
-              escrito a mano. PRD y SRS siguen bajo <span class="mono">.context/</span>.</span
+              >El segundo bug no se reclama hasta que el primero pasó por el cierre de la fase 4.
+              Tres bugs no son tres hilos en paralelo.</span
             >
           </div>
           <div class="g">
-            <b>Cada una cita a las otras</b
+            <b>El interruptor maestro</b
             ><span
-              >El mapa de features nombra los datos y las rutas detrás de cada feature, y no los
-              repite: los cita a su skill.</span
+              ><span class="mono">autonomous_delivery.enabled</span> en
+              <span class="mono">false</span>, o un modo ausente de
+              <span class="mono">modes</span>, terminan la corrida en la fase 0 con un reporte de una
+              línea. No es una falla.</span
             >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §03 ANATOMÍA ============ -->
-    <section class="band" id="anatomia">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">03</span> · anatomía de un mapa</div>
-          <h2>El contrato que escribe el generador y parsea el lector</h2>
-          <p class="sub">
-            Un HTML autocontenido que abre desde <span class="mono">file://</span>, con secciones
-            planas. El <span class="mono">id</span> de cada sección es el ancla de edición: se fija
-            en el CREATE y no cambia nunca más.
-          </p>
-        </div>
-
-        <pre class="code r"><span class="c">&lt;!-- línea 1 de un mapa generado --&gt;</span>
-&lt;!-- generated by <span class="s">project-context mode data</span>; edited in place by <span class="s">business-data-context</span> refresh; do not hand-edit --&gt;
-<span class="c">&lt;!-- o, si todavía no se generó --&gt;</span>
-&lt;!-- placeholder: run <span class="s">project-context mode data</span> to generate this map --&gt;
-
-<span class="k">&lt;section</span> id="<span class="s">orders-lifecycle</span>"
-         data-sources="<span class="s">src/app/api/orders/, db:orders, migration:&lt;file&gt;</span>"
-         data-updated="<span class="s">YYYY-MM-DD</span>"<span class="k">&gt;</span>
-  &lt;h2&gt;...&lt;/h2&gt;  &lt;p&gt; &lt;ul&gt; &lt;table&gt; &lt;code&gt;  <span class="c">&lt;!-- HTML semántico simple --&gt;</span>
-  &lt;figure data-diagram="<span class="s">state</span>" data-for="<span class="s">orders-lifecycle</span>"&gt;&lt;svg&gt;…&lt;/svg&gt;&lt;figcaption&gt;…&lt;/figcaption&gt;&lt;/figure&gt;
-<span class="k">&lt;/section&gt;</span>
-...
-<span class="k">&lt;section</span> id="<span class="s">discovery-gaps</span>"<span class="k">&gt;</span>  <span class="c">&lt;!-- siempre la última --&gt;</span></pre>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>La línea 1 decide todo</h3>
-            <p>
-              El lector, el updater y el doctor leen SOLO esa línea para saber si el mapa está
-              generado o es un placeholder. El generador que nombra sale tal cual de la entrada de
-              <span class="mono">CONTEXT_MAP_SKILLS</span>.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Una sección por unidad de hecho</h3>
-            <p>
-              Una entidad, un flujo, una feature, un grupo de rutas. Nunca anidadas, cada una abre
-              con su <span class="mono">&lt;h2&gt;</span>.
-              <span class="mono">data-sources</span> lista las señales de las que salió (el chequeo
-              de frescura las lee); <span class="mono">data-updated</span>, la fecha.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Ningún hecho vive solo en una figura</h3>
-            <p>
-              Todo lo que muestra un diagrama también está en el texto. Una figura de resumen arriba,
-              y una por sección solo donde un dibujo explica el mecanismo.
-            </p>
-          </div>
-          <div class="step">
-            <h3><span class="mono">discovery-gaps</span>, al final</h3>
-            <p>
-              Lo que no se pudo verificar. "No pude verificar X" le gana a una respuesta inventada.
-              Una sección migrada de un mapa markdown viejo lleva
-              <span class="mono">data-migrated-from</span> una vez, hasta que se regenera.
-            </p>
           </div>
         </div>
 
         <div class="callout r">
-          <b>Un mapa generado puede tener conteos.</b> Tablas por esquema, rutas por grupo: es un
-          artefacto generado y queda exento de la Critical Rule #17, como cualquier archivo
-          generado.
+          <b>Los valores de tu proyecto viven en un solo lugar:</b> el bloque
+          <span class="mono">autonomous_delivery:</span> de
+          <span class="mono">.agents/project.yaml</span>. El bloque de la skill es un ejemplo con
+          los valores seguros de cada eje; citarlo como estado del proyecto es un error de
+          procedencia.
         </div>
       </div>
     </section>
 
-    <!-- ============ §04 LEER ============ -->
-    <section class="band" id="leer">
+    <!-- ============ §03 FASE 0 ============ -->
+    <section class="band" id="lock">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">04</span> · cómo se lee</div>
-          <h2>La IA nunca lee el HTML crudo</h2>
+          <div class="eyebrow"><span class="num">03</span> · fase 0, aislamiento y lock</div>
+          <h2>Primero su propio worktree, después el lock del modo</h2>
           <p class="sub">
-            El SVG inline es casi todo el peso de un mapa y ninguno de sus hechos. El lector,
-            <span class="mono">scripts/context-map.ts</span>, saca el SVG, el
-            <span class="mono">&lt;style&gt;</span> y el <span class="mono">&lt;head&gt;</span>, e
-            imprime cada sección como texto con su id, su fecha y sus fuentes.
+            La colisión que no puede pasar es dos corridas implementando el mismo ticket en dos
+            ramas. <span class="mono">story</span> y <span class="mono">bug</span> entran a un
+            worktree propio, creado a mano para poder cerrarlo a mano.
+            <span class="mono">discovery</span> no toca código ni crea ramas: trabaja en el checkout
+            común y salta el aislamiento entero.
           </p>
         </div>
 
-        <div class="tablewrap r">
-          <table class="cmp">
-            <thead>
-              <tr>
-                <th>Necesitás</th>
-                <th>Comando</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>El mapa entero, como texto</td>
-                <td><span class="mono">bun run context:map &lt;slug&gt;</span></td>
-              </tr>
-              <tr>
-                <td>Una sección (una dispatch que toca una entidad o un grupo de rutas)</td>
-                <td><span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span></td>
-              </tr>
-              <tr>
-                <td>El índice, para un chequeo de frescura (id · fecha · fuentes)</td>
-                <td><span class="mono">bun run context:map &lt;slug&gt; --list</span></td>
-              </tr>
-              <tr>
-                <td>El mapa dibujado, para un humano</td>
-                <td><span class="mono">bun run context:map &lt;slug&gt; --open</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="planes r" style="margin-top: 22px">
-          <div class="plane">
-            <div class="tag">En un briefing</div>
-            <h3>Se inyecta el comando, no la ruta</h3>
-            <ul>
-              <li>
-                El Skill Resolver (regla 5 de <span class="mono">skill-resolver.md</span>) inyecta
-                solo las skills de contexto cuyo ASPECTO toca la dispatch, como
-                <span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span> de
-                las secciones que toca. Nunca todas: un subagente que toca un aspecto paga por uno.
-              </li>
-              <li>Una dispatch que no nombra ningún aspecto no recibe ninguna. Ante la duda, nombralo en el Goal.</li>
-            </ul>
+        <div class="steps r">
+          <div class="step">
+            <h3>Anotar el primario</h3>
+            <p>
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span> sale de
+              <span class="mono">git rev-parse --git-common-dir</span>, nunca de
+              <span class="mono">pwd</span>. Es el mismo valor desde el primario y desde cada
+              worktree. <span class="mono">.session/</span> vive ahí toda la corrida y se lee y
+              escribe por ruta absoluta.
+            </p>
           </div>
-          <div class="plane sig">
-            <div class="tag">Placeholder</div>
-            <h3>Es "no hay mapa", no un sistema vacío</h3>
-            <ul>
-              <li>
-                El lector avisa por stderr qué generador correr y sale con
-                <span class="mono">0</span>. Nunca se planifica una migración como si el esquema
-                estuviera vacío: se le pasa al humano el modo que lo genera.
-              </li>
-              <li>
-                Sale con <span class="mono">1</span> ante una skill desconocida, un mapa que falta o
-                un id de sección que no existe, y en ese caso lista los ids conocidos.
-              </li>
-            </ul>
+          <div class="step">
+            <h3>Crear el worktree</h3>
+            <p>
+              Con nombre generado, nunca fijo. En Claude Code,
+              <span class="mono">EnterWorktree</span>. En OpenCode y Codex, la ruta portable:
+              <span class="mono">git worktree add</span> fuera del primario, desde
+              <span class="mono">origin/&lt;integration-branch&gt;</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Aprovisionar</h3>
+            <p>
+              <span class="mono">bun run worktree:provision</span> copia
+              <span class="mono">.env</span>, <span class="mono">.vercel/</span> y lo demás que git
+              ignora. <b>No copia <span class="mono">.session/</span></b>: el lock solo excluye a
+              otra corrida si las dos ven el MISMO archivo.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Verificar la base</h3>
+            <p>
+              <span class="mono">git fetch</span> y un chequeo de ascendencia contra la rama de
+              integración. Si está mal, se realinea con
+              <span class="mono">git checkout -B</span>. Nunca
+              <span class="mono">git reset --hard</span>: la regla #13 lo prohíbe.
+            </p>
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Citar con fecha.</b> Un hecho del mapa se cita con su id de sección y su
-          <span class="mono">data-updated</span>. Una sección más vieja que la migración que describe
-          es una hipótesis para chequear contra la base, no una respuesta.
+          <b>Si el scheduler ya asignó un worktree</b> (la opción "Worktree" de una rutina de Claude
+          Code, el modo worktree de una automatización de Codex), la corrida no crea un segundo:
+          trabaja ahí, avisa en el reporte que esa opción debería ir apagada y no lo borra al final.
+          Es un camino degradado pero funcional. Bajo Orca, el hook de archivo de
+          <span class="mono">orca.yaml</span> lo audita y lo quita.
         </div>
-      </div>
-    </section>
 
-    <!-- ============ §05 GENERAR ============ -->
-    <section class="band" id="generar">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">05</span> · crear y actualizar</div>
-          <h2>Ningún camino regenera un mapa entero</h2>
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">Un lock por modo, nunca una cola</h2>
           <p class="sub">
-            Generar es trabajo de <span class="mono">project-context</span>: sus modos, sus gates y
-            el orden de <span class="mono">refresh-all</span> los explica
-            <a href="../project-context/como-funciona.es.html">su propio deck</a>. Acá va lo
-            que le pasa al mapa. El id de sección es lo que vuelve mecánico el ahorro: una edición
-            sobre un bloque <span class="mono">&lt;section&gt;</span>.
+            Es <span class="mono">lock.json</span>, en
+            <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/</span> del checkout
+            primario, con dueño, máquina, worktree, inicio y un latido que se refresca en cada frontera de
+            fase.
           </p>
         </div>
 
@@ -2022,78 +1935,146 @@
           <table class="cmp">
             <thead>
               <tr>
-                <th>Estado del mapa</th>
-                <th>Qué corre</th>
-                <th>Qué escribe</th>
+                <th>Encuentra</th>
+                <th>Hace</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Ausente o placeholder</td>
-                <td>
-                  CREATE del modo: todas las secciones desde las fuentes. Si existe el markdown viejo
-                  que reemplaza (la lista <span class="mono">legacy</span> de su entrada), se lee como
-                  entrada y se cita en <span class="mono">data-migrated-from</span>
-                </td>
-                <td>El archivo entero, una sola vez</td>
+                <td>Ningún lock</td>
+                <td>Lo escribe y sigue.</td>
               </tr>
               <tr>
-                <td>Generado</td>
+                <td>Un lock con latido reciente</td>
                 <td>
-                  UPDATE del modo: chequeo de frescura, regenera SOLO las secciones viejas, muestra
-                  un diff por sección y ESPERA tu aprobación
+                  Otra corrida es dueña del modo: <b>sale limpia</b> con un reporte que la nombra.
+                  No espera, no reintenta, no sigue igual. El próximo disparo es el reintento.
                 </td>
-                <td>Las secciones aprobadas</td>
               </tr>
               <tr>
-                <td>Cambiaron los hechos de una sección con figura</td>
-                <td>Se redibuja esa figura</td>
-                <td>Un <span class="mono">&lt;figure&gt;</span></td>
+                <td>Un lock más viejo que <span class="mono">lock_staleness_minutes</span></td>
+                <td>
+                  Abandonado: lo reclama y lo anota en el log de escalaciones. El worktree de la
+                  corrida muerta queda para que un humano lo audite y lo quite.
+                </td>
+              </tr>
+              <tr>
+                <td>Un lock de esta misma sesión</td>
+                <td>Una fase anterior de esta corrida: sigue.</td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>La identidad de push se verifica tres veces</b
+            ><span
+              ><span class="mono">gh auth status</span> contra
+              <span class="mono">automation_gh_account</span>: en la fase 0, justo antes del primer
+              push y justo antes de cualquier merge. Una CLI con varias cuentas puede cambiar de
+              identidad en el medio, y el error recién aparece en el merge, disfrazado de protección
+              de rama.</span
+            >
+          </div>
+          <div class="g">
+            <b>Retomar sin preguntar</b
+            ><span
+              >Sin usuario, la fase 0 resuelve el <span class="mono">progress.md</span> previo por
+              tabla: rama en el remoto, retoma; rama ausente, escala (se perdió trabajo y no se
+              rehace en silencio); fase final completa, archiva y arranca de cero.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 FASE 1 ============ -->
+    <section class="band" id="auditoria">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · fase 1, auditoría</div>
+          <h2>Git es la fuente de verdad. El tracker es una pista</h2>
+          <p class="sub">
+            Un tracker puede decir "listo para QA" sin nada en la rama de integración: la
+            automatización de merge se dispara con CUALQUIER pull request, también con los internos
+            de una cadena. Toda decisión de dependencia de la fase 2 descansa acá, así que se
+            verifica, nunca se infiere.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># de más confiable a menos; cuando dos chocan, gana la de arriba y el choque se REGISTRA</span>
+<span class="k">ascendencia en git</span> contra la rama de integración   <span class="c">&lt;- decide</span>
+pull requests abiertos + estado de ramas en el remoto  <span class="c">&lt;- explica</span>
+estado vivo del tracker                                <span class="c">&lt;- insinúa</span>
+archivo de cola / tablero / claims                     <span class="c">&lt;- reclama</span>
+roadmap y prosa de diseño                              <span class="c">&lt;- solo aristas, nunca estado</span>
+
+<span class="c"># el chequeo que más se usa, siempre con fetch inmediatamente antes</span>
+git fetch origin
+git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/<span class="s">&lt;integration-branch&gt;</span>   <span class="c"># exit 0 == llegó de verdad</span></pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Cuatro fuentes, en paralelo</div>
+            <h3>Un verificador por fuente</h3>
+            <ul>
+              <li>Ascendencia en git, en cada commit de merge que contribuye a una dependencia.</li>
+              <li>Pull requests abiertos y ramas sin mergear.</li>
+              <li>Estado vivo del tracker, con su changelog y sus comentarios.</li>
+              <li>El archivo de cola, tablero o claims, leído <b>entero</b>, no solo la fila propia.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Por qué no un solo agente</div>
+            <h3>Porque alisaría la contradicción</h3>
+            <ul>
+              <li>
+                Que las cuatro fuentes no coincidan es el caso normal. Un agente único las concilia
+                en un relato prolijo y borra justo la señal que la fase 2 necesita ver.
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="trio r">
           <div>
             <span class="k">La IA hace</span>
-            <p>Lee cada fuente que pide el modo. Lo que no verificó va a <span class="mono">discovery-gaps</span>, no al cuerpo.</p>
             <p>
-              Después de escribir un mapa, revisa las <span class="mono">## Rules</span> y los
-              gotchas de esa skill contra el mapa nuevo y PROPONE cambios.
+              Fetch, las cuatro fuentes, el ledger vivo de migraciones con
+              <span class="mono">[DB_TOOL]</span> y la protección de ramas por los DOS endpoints:
+              el clásico devuelve 404 cuando la protección es un ruleset.
             </p>
           </div>
           <div class="hum">
             <span class="k">Vos decidís</span>
-            <p>Qué <b>modo</b> corre: si no lo nombrás, la IA pregunta.</p>
-            <p>Si el diff de un UPDATE se <b>aplica</b>.</p>
+            <p>
+              Nada en el momento. Cada discrepancia entre tracker y git queda en el log de
+              escalaciones, con evidencia, para que la leas y para que la próxima corrida sepa de
+              qué manera miente este tracker.
+            </p>
           </div>
           <div class="out">
             <span class="k">Sale</span>
             <p>
-              <span class="mono">references/&lt;map&gt;.html</span> adentro de su skill, y nada más:
-              el modo escribe solo ese archivo.
+              Una tabla, no un relato: ticket, lo que dice el tracker, commit de merge, si es
+              ancestro, PR abierto, estado de la rama y un veredicto (<b>merged</b>, claimed-only,
+              in-flight, not-started).
             </p>
-            <p>Los mapas markdown viejos de <span class="mono">.context/business/</span> no se borran nunca.</p>
           </div>
-        </div>
-        <div class="gate r">
-          <b>Gate</b> un mapa existente no se pisa sin tu aprobación explícita del diff por sección.
         </div>
       </div>
     </section>
 
-    <!-- ============ §06 FRESCURA ============ -->
-    <section class="band" id="frescura">
+    <!-- ============ §05 FASE 2 ============ -->
+    <section class="band" id="seleccion">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">06</span> · ¿está viejo?</div>
-          <h2>Cada sección dice de dónde salió, y eso dice cuándo venció</h2>
+          <div class="eyebrow"><span class="num">05</span> · fase 2, selección</div>
+          <h2>Elige lo que está desbloqueado de verdad, o no elige nada</h2>
           <p class="sub">
-            El chequeo recorre <span class="mono">--list</span> y mira cada señal de
-            <span class="mono">data-sources</span> contra su fecha. Las señales genéricas están en la
-            doctrina; cada skill agrega las de su aspecto en su propio
-            <span class="mono">references/refresh.md</span>.
+            Cuatro entradas, ponderadas y no promediadas. El veredicto de la fase 1 pisa a las otras
+            cuando no coinciden.
           </p>
         </div>
 
@@ -2101,203 +2082,380 @@
           <table class="cmp">
             <thead>
               <tr>
-                <th>Señal</th>
-                <th>Vieja cuando</th>
+                <th>Entrada</th>
+                <th>Manda sobre</th>
+                <th>Nunca manda sobre</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Una ruta del repo</td>
+                <td><span class="mono">.context/dev-roadmap.md</span></td>
+                <td>aristas de dependencia, compuertas de mockup, orden</td>
+                <td>el estado actual de cualquier cosa</td>
+              </tr>
+              <tr>
+                <td>El tracker, consultado ahora</td>
+                <td>estado vivo, responsable, changelog</td>
+                <td>si el trabajo se mergeó</td>
+              </tr>
+              <tr>
+                <td>Veredicto de la fase 1</td>
+                <td>si el trabajo se mergeó</td>
+                <td>qué hay que construir</td>
+              </tr>
+              <tr>
+                <td>Cola, tablero o claims</td>
+                <td>quién tiene qué fila al momento de leer</td>
+                <td>si una dependencia salió</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Listo no es un estado</h3>
+            <p>
+              Lee el rastro de refinamiento: preguntas bloqueantes abiertas, respuestas de práctica
+              marcadas como borrador, casos borde sin tildar, o un cambio de estado sin comentario
+              que lo explique. Cualquiera significa no listo, diga lo que diga el campo. Es un
+              salteo con razón anotada, no una escalación.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Chequeo de crecimiento</h3>
+            <p>
+              Estimación alta, una historia de UI sin mockup donde el plan de diseño lo espera, una
+              decisión de arquitectura implícita en los criterios, más de una migración o una ruta
+              nueva de autorización: <b>no se reclama sin un humano presente</b>. Se anota y se
+              toma la siguiente.
+            </p>
+          </div>
+          <div class="step">
+            <h3>El protocolo de claim</h3>
+            <p>
+              Escribe su nombre en la fila, guarda y <b>vuelve a leer el archivo</b>. Si ahora hay
+              otro nombre, ganó un par: retrocede y toma el siguiente candidato. Nunca se pelea una
+              fila ni se edita la de otra corrida.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Una corrida vacía es un resultado correcto.</b> Si nada sobrevive, sale limpia con un
+          reporte que dice qué consideró y por qué descartó cada uno. Elegir trabajo marginal para no
+          entregar un reporte vacío es justo la falla que esta fase existe para evitar.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FASE 3 ============ -->
+    <section class="band" id="ejecucion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · fase 3, ejecución</div>
+          <h2>Despacha a la skill dueña y no repite sus etapas</h2>
+          <p class="sub">
+            Cada despacho lleva el briefing de siete componentes. El componente 7 (reglas) carga la
+            compuerta de migraciones, la ruta del worktree, la prohibición de rebasear ramas ya
+            pusheadas y el procedimiento de parada por contexto: una regla que vive solo en esta
+            skill nunca llega al ejecutor.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Despacho</th>
+                <th>Lo que agrega esta skill</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">story</span></td>
+                <td><span class="mono">/sprint-development</span>, entrada de historia nueva</td>
                 <td>
-                  <span class="mono">git log --since=&lt;data-updated&gt; --oneline -- &lt;path&gt;</span>
-                  devuelve algún commit
+                  clave del ticket, tabla de la fase 1, el claim, la ruta del worktree, la compuerta
+                  de migraciones, el presupuesto de contexto
                 </td>
               </tr>
               <tr>
-                <td><span class="mono">db:&lt;table&gt;</span>, <span class="mono">migration:&lt;file&gt;</span></td>
-                <td>
-                  Hay una migración posterior, o la base (capability <span class="mono">db</span>)
-                  muestra una columna, constraint, policy o trigger que la sección no describe
-                </td>
+                <td><span class="mono">bug</span></td>
+                <td><span class="mono">/sprint-development</span>, entrada de bug (causa raíz primero)</td>
+                <td>lo mismo, una vez por bug, en secuencia</td>
               </tr>
               <tr>
-                <td><span class="mono">openapi:&lt;x&gt;</span></td>
-                <td>
-                  El contrato cambió desde la fecha (salida de
-                  <span class="mono">bun run api:sync</span>, o el <span class="mono">git log</span>
-                  del spec)
-                </td>
+                <td><span class="mono">discovery</span></td>
+                <td><span class="mono">/product-management</span></td>
+                <td>el hueco encontrado en la fase 2 y su evidencia</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec-head r" style="margin-top: 34px">
+          <h2 style="font-size: 1.4rem">La compuerta de migraciones</h2>
+          <p class="sub">
+            Escribir el archivo de migración es trabajo técnico y siempre es autónomo.
+            <b>Aplicarlo</b> a una base compartida es irreversible y le pega a cada agente
+            concurrente: es otro acto, con otra compuerta, según
+            <span class="mono">autonomous_delivery.migrations</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th><span class="mono">migrations:</span></th>
+                <th>Cambio aditivo</th>
+                <th>Cambio destructivo (drop, rename, reescritura)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">confirm</span> (por defecto)</td>
+                <td>Pausa y pide aprobación: destino, qué hace, que es aditivo.</td>
+                <td>Pausa y pide aprobación, con una segunda opción real: diferirlo.</td>
               </tr>
               <tr>
-                <td><span class="mono">route:&lt;path&gt;</span></td>
-                <td>Cambió el handler o la página</td>
+                <td><span class="mono">autonomous</span></td>
+                <td>Sigue.</td>
+                <td><b>Igual para.</b> <span class="mono">autonomous</span> nunca cubre esto.</td>
               </tr>
               <tr>
-                <td>Señales propias del aspecto</td>
+                <td><span class="mono">unrestricted</span></td>
+                <td>Sigue.</td>
                 <td>
-                  Las declara el <span class="mono">refresh.md</span> de cada skill: por ejemplo
-                  <span class="mono">cron:&lt;job&gt;</span> y
-                  <span class="mono">webhook:&lt;event&gt;</span> en datos,
-                  <span class="mono">auth:&lt;scheme&gt;</span> en API, un flag o un gate de rol en
-                  features
+                  Sigue. Opt-in y peligroso a propósito: para una base sin datos de producción que
+                  perder. Nunca es el defecto.
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="callout r">
-          <b>Sin fuentes no hay frescura.</b> Una sección que no declara fuentes se reporta como
-          <span class="mono">unknown</span>, nunca como fresca en silencio.
+        <div class="gotchas r">
+          <div class="g">
+            <b>El número sale del ledger vivo</b
+            ><span
+              >Inmediatamente antes de escribir el archivo, nunca de listar el directorio local: el
+              ledger puede ir adelante de tu rama por la migración sin mergear de un par.</span
+            >
+          </div>
+          <div class="g">
+            <b>Releer después de cada apply</b
+            ><span
+              >Y comparar la definición viva contra el archivo commiteado. Nunca se aplica una
+              migración solo para que desaparezca un error local.</span
+            >
+          </div>
+          <div class="g">
+            <b>Tests verdes no son evidencia</b
+            ><span
+              >Al menos una aserción tiene que pasar por una ruta de escritura real de producción.
+              Fixtures que siembran la columna que el código lee, y no la que producción escribe,
+              mantienen la suite verde sobre un camino de datos muerto.</span
+            >
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Fase 3.5, por ticket</div>
+            <h3>Limpieza inmediata, no al final</h3>
+            <ul>
+              <li>Confirmar que la rama está pusheada (o que no hubo commits).</li>
+              <li>
+                Rescatar el <span class="mono">.session/</span> local de la skill despachada con
+                <span class="mono">bun run worktree:audit &lt;path&gt; --rescue</span>; si sale con
+                error, no se sigue.
+              </li>
+              <li><span class="mono">git worktree remove &lt;path&gt;</span> y una línea en <span class="mono">progress.md</span>.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Opcional</div>
+            <h3>Un worker supervisado por ticket</h3>
+            <ul>
+              <li>
+                Cuando pasa la compuerta de orquestación (binario y runtime alcanzable), un
+                despacho de <span class="mono">story</span> o <span class="mono">bug</span> puede ir
+                a un worker por ticket. Lock, auditoría, selección, topes y compuertas siguen siendo
+                de esta skill; el worker para en un PR abierto y el merge queda en la corrida.
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ §07 CORREGIR ============ -->
-    <section class="band" id="corregir">
+    <!-- ============ §07 CONTEXTO ============ -->
+    <section class="band" id="contexto">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">07</span> · la skill se corrige a sí misma</div>
-          <h2>Propone con evidencia, aplica con tu sí</h2>
+          <div class="eyebrow"><span class="num">07</span> · el contrato de presupuesto</div>
+          <h2>Lo que se acaba primero es el contexto, no el reloj</h2>
           <p class="sub">
-            Una skill de contexto no corre workflows. Lo único que hace es mantener honesto su mapa:
-            cuando una sesión ve algo que contradice una sección (una columna que el mapa omite, un
-            status que el mapa dice imposible, una acción CRUD que falta en la matriz), propone la
-            edición.
+            En la corrida de la que sale esta skill, cada generación de workers se retiró por
+            contexto, varias a mitad de un ticket. Se diseña para eso.
           </p>
         </div>
 
-        <div class="lanes r">
-          <div class="lane">
-            <div class="lane-head">Los cinco pasos</div>
-            <a class="wf" href="#corregir"
-              ><span class="lt">1</span
-              ><span
-                ><b>Ubicar</b
-                ><span
-                  ><span class="mono">--list</span>, después <span class="mono">--section &lt;id&gt;</span>
-                  de la sección que toca.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt">2</span
-              ><span
-                ><b>Evidencia</b
-                ><span
-                  >Medida: una query, un request, un archivo en un commit, una sesión. Sin evidencia
-                  no hay propuesta.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt sig">3</span
-              ><span
-                ><b>Proponer</b
-                ><span
-                  >Al dueño de la sesión: vos en el hilo principal, o el conductor si es un worker
-                  supervisado. Un subagente de una sola vez la deja en su reporte.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt">4</span
-              ><span
-                ><b>Aplicar, solo con aprobación</b
-                ><span
-                  >Releer la sección (otra sesión pudo editarla), editar ESE bloque, actualizar
-                  <span class="mono">data-updated</span> y las fuentes; la figura, solo si cambiaron
-                  sus hechos.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt">5</span
-              ><span
-                ><b>Verificar</b
-                ><span><span class="mono">--section &lt;id&gt;</span> imprime el texto nuevo.</span></span
-              ></a
-            >
+        <div class="steps r">
+          <div class="step">
+            <h3>Handoff sobre la marcha</h3>
+            <p>
+              <span class="mono">handoff.md</span> se completa en cada frontera de fase y después de
+              cada tajada terminada, según <span class="mono">context_budget.handoff_checkpoint</span>.
+              Una sesión que se quedó sin espacio no puede escribir por qué.
+            </p>
           </div>
-          <div class="lane">
-            <div class="lane-head">Dos caminos, nunca mezclados</div>
-            <a class="wf" href="#corregir"
-              ><span class="lt">A</span
-              ><span
-                ><b>Una sección contradicha</b
-                ><span
-                  >La escribe la skill de contexto, después de tu sí, con los cinco pasos.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt sig">B</span
-              ><span
-                ><b>Varias secciones viejas, o algo nuevo</b
-                ><span
-                  >Lo hace el UPDATE del modo de <span class="mono">project-context</span>. La skill
-                  te pasa ese modo; no reconstruye secciones ella misma.</span
-                ></span
-              ></a
-            >
-            <a class="wf" href="#corregir"
-              ><span class="lt">=</span
-              ><span
-                ><b>El silencio no es aprobación</b
-                ><span>Solo un <span class="mono">yes</span> aplica la edición.</span></span
-              ></a
-            >
+          <div class="step">
+            <h3>Medir el propio presupuesto</h3>
+            <p>
+              En cada frontera de fase. Al llegar a
+              <span class="mono">context_budget.stop_at_remaining_pct</span> deja de tomar trabajo:
+              ni tajada nueva, ni agente en segundo plano, ni despertador programado.
+            </p>
+          </div>
+          <div class="step">
+            <h3>La parada limpia, en este orden</h3>
+            <p>
+              Primero el push. Después rescatar registros, el estado de reanudación en
+              <span class="mono">handoff.md</span> (rama, SHA, PRs, el próximo comando concreto), la
+              última entrada de <span class="mono">progress.md</span>, soltar el lock y reportar.
+            </p>
           </div>
         </div>
 
-        <pre
-          class="code r"
-          style="margin-top: 26px"
-        ><span class="c"># la propuesta, en un solo mensaje (references/refresh.md)</span>
-<span class="k">business-data-context</span> · proposed edit to section <span class="s">&lt;id&gt;</span> (updated <span class="s">&lt;date&gt;</span>)
-evidence: <span class="s">&lt;what was observed, how, where: query / request / file@commit / session label&gt;</span>
-before: <span class="s">&lt;the sentence or row as the map has it&gt;</span>
-after:  <span class="s">&lt;the replacement&gt;</span>
-figure: <span class="s">&lt;unchanged | redraw: why&gt;</span>
-apply? (yes / no)</pre>
+        <pre class="code r"><span class="c"># la secuencia de parada limpia</span>
+<span class="k">1. PUSH de la rama</span>          <span class="c">&lt;- siempre primero: trabajo sin pushear en un worktree descartable</span>
+                               <span class="c">   es la única pérdida irrecuperable de este sistema</span>
+2. rescatar registros de sesión
+3. estado de reanudación en handoff.md, escrito para un extraño que retoma en frío
+4. última entrada de progress.md
+5. soltar el lock
+6. reportar</pre>
 
-        <div class="gotchas r">
-          <div class="g">
-            <b>Se verifica antes de proponer</b
-            ><span
-              >Datos, contra la base; features, contra la app corriendo o el archivo de ruta; API,
-              contra el handler, los tipos OpenAPI o un request real.</span
-            >
-          </div>
-          <div class="g">
-            <b>Un id no se renombra</b
-            ><span
-              >Una entidad, feature o grupo renombrado es una sección nueva, más una línea en
-              <span class="mono">discovery-gaps</span> durante un refresh.</span
-            >
-          </div>
-          <div class="g">
-            <b>Un juicio sigue el mismo camino</b
-            ><span
-              >Una regla nueva para LEER el mapa va a <span class="mono">## Rules</span> o a los
-              gotchas, fechada y medida, con la misma aprobación.</span
-            >
-          </div>
+        <div class="callout blue r">
+          <b>Una corrida que entrega un traspaso limpio es un éxito.</b> Se la juzga por si la
+          próxima puede retomarla, no por si shippeó. Una muerte a mitad de ticket con trabajo sin
+          pushear es la falla contra la que está diseñada.
         </div>
       </div>
     </section>
 
-    <!-- ============ §08 ALCANCE ============ -->
-    <section class="band" id="alcance">
+    <!-- ============ §08 AUTONOMÍA ============ -->
+    <section class="band" id="autonomia">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · alcance de escritura</div>
-          <h2>Escribe en su <span class="mono">references/</span> y en ningún otro lado</h2>
+          <div class="eyebrow"><span class="num">08</span> · quién decide qué</div>
+          <h2>Decide lo técnico sola. Escala solo cuatro cosas</h2>
           <p class="sub">
-            La skill lo declara en su frontmatter con
-            <span class="mono">metadata.writes: [references/]</span>, y un lint lo hace cumplir. Nada
-            de Jira, nada de <span class="mono">.context/</span>, ninguna otra skill, ni migraciones
-            ni código del producto.
+            Sigue <span class="mono">agentic-dev-core/references/decision-protocol.md</span>: buscar
+            en el registro, seguir lo ya decidido, un panel de jueces puntuado si la pregunta es
+            nueva de verdad, y escalar solo lo que corresponde. Todo queda escrito donde la fase 1
+            de la próxima corrida lo va a encontrar.
+          </p>
+        </div>
+
+        <pre class="code r">BUSCAR EN EL REGISTRO -&gt; ¿ya decidido? SEGUIRLO
+        |
+        | no decidido
+        v
+  ¿producto / seguridad nueva / irreversible / reservado?
+        |  no                                  |  sí
+        v                                      v
+  PANEL DE JUECES PUNTUADO (3-5 lentes)     ESCALAR (informado)
+        |                                      |
+        +---------&gt; ESCRIBIRLO &lt;---------------+</pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">El registro que lee primero</div>
+            <h3>El log de escalaciones, entero</h3>
+            <ul>
+              <li>
+                <span class="mono">.session/autonomous-delivery/escalation-log.md</span>, más
+                <span class="mono">.context/ADR/</span> y los tickets hermanos. Busca la FORMA de la
+                pregunta, no su redacción: un fallo que te gobierna puede haberlo escrito hace una
+                hora una corrida que nunca viste.
+              </li>
+              <li>
+                Escalar acá es caro: no hay quién conteste, y una parada por una cuestión técnica
+                cuesta un turno programado entero.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Producto: es configuración</div>
+            <h3><span class="mono">decision_authority.product</span></h3>
+            <ul>
+              <li>
+                <span class="mono">escalate</span> (el defecto correcto): una pregunta de producto
+                para la corrida.
+              </li>
+              <li>
+                <span class="mono">decide</span>: no hay PO humano. Un subagente de decisión puntúa
+                las opciones, publica el fallo en el ticket bajo un encabezado con el perfil que
+                decidió y la corrida sigue. Nunca se presenta como firma humana.
+              </li>
+              <li>Seguridad nueva, irreversible y lo reservado escalan con cualquiera de los dos.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Escalar es una parada limpia</b
+            ><span
+              >Escribe la entrada (qué pasó, por qué es de esta categoría, qué tiene que decidir el
+              humano, qué cuesta esperar), pushea, suelta el lock, avisa y termina. Nunca deja una
+              sesión estacionada esperando una respuesta que no puede llegar.</span
+            >
+          </div>
+          <div class="g">
+            <b>Dos canales, dos trabajos</b
+            ><span
+              ><span class="mono">escalation_channel</span> lleva solo escalaciones, algo que un
+              humano tiene que resolver. <span class="mono">report_channel</span> lleva los
+              resúmenes. Con <span class="mono">null</span>, el archivo del reporte es la
+              notificación.</span
+            >
+          </div>
+          <div class="g">
+            <b>Discovery crea, el operador veta</b
+            ><span
+              >No hay compuerta de aprobación: crea hasta su tope, anota cada clave en
+              <span class="mono">discovery/created-log.md</span> (solo se agrega) y la reporta. Al
+              arrancar, lee ese log contra el tracker: un ticket cerrado o borrado es un veto vigente
+              y no se recrea, ni con otro título.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Para el dueño del producto:</b> tu control sobre <span class="mono">discovery</span> es
+          el veto después del hecho. Cerrar una historia en Backlog cuesta un click. La skill prohíbe
+          reintroducir una espera de aprobación, o una versión más suave de ella, porque una
+          propuesta sin respuesta dejó varios disparos seguidos sin crear nada, y el tope por corrida
+          es lo que acota el daño.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 CIERRE ============ -->
+    <section class="band" id="cierre">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · fase 4, cierre y reporte</div>
+          <h2>Cada paso puede perderse con el anterior, por eso el orden</h2>
+          <p class="sub">
+            Nada se evapora en silencio: cada discrepancia, cada decisión autónoma y cada chequeo
+            que la corrida no pudo hacer aparece nombrado en el reporte.
           </p>
         </div>
 
@@ -2305,297 +2463,271 @@ apply? (yes / no)</pre>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Solo una skill de kind <span class="mono">context</span> declara
-              <span class="mono">metadata.writes</span></b
-              >. En cualquier otro kind, el lint lo marca como error.</span
+              ><b>1 · Cierre de la skill dueña, verificado.</b> Que la transición automática del
+              tracker de verdad ocurrió, que el responsable de verdad cambió, el comentario de
+              traspaso y la sincronización de la caché. Esta skill no lo reimplementa: comprueba que
+              pasó.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Cada destino está adentro de su propio <span class="mono">references/</span></b
-              >. Un destino afuera es error.</span
+              ><b>2 · Rescatar antes de borrar.</b> El estado de esta skill ya vive en
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, pero una skill despachada
+              puede haber escrito un <span class="mono">.session/</span> dentro del worktree:
+              <span class="mono">bun run worktree:audit &lt;worktree&gt; --rescue</span>.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Trae <span class="mono">references/refresh.md</span></b>, el procedimiento que
-              corre su camino de escritura. Sin él, error.</span
+              ><b>3 · Soltar el lock.</b> También si escaló o paró por presupuesto: el lock es de
+              una sesión en marcha, no de un ticket sin terminar.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Ningún tag de tracker</b> en el cuerpo ni en <span class="mono">refresh.md</span>:
-              edita su mapa, nunca un tracker.</span
+              ><b>4 · Escribir el reporte</b> en
+              <span class="mono">.session/autonomous-delivery/&lt;modo&gt;/run-report.md</span>,
+              también para la corrida vacía.</span
             >
           </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>5 · Publicar el resumen</b> en <span class="mono">report_channel</span> si hay uno
+              configurado. Nunca un destino improvisado.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>6 · Archivar la sesión</b> y cerrar la memoria con la ruta del archivo.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>7 · Cerrar SU worktree, el último paso.</b>
+              <span class="mono">ExitWorktree(remove)</span> en Claude Code,
+              <span class="mono">git worktree remove</span> desde el primario en la ruta portable.
+              Nunca el de otra corrida, y nunca uno que asignó el scheduler.</span
+            >
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Artefacto</th>
+                <th>Alcance y vida</th>
+                <th>Para qué</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">run-report.md</span></td>
+                <td>una corrida; se pisa en cada corrida y se archiva</td>
+                <td>lo que hizo esta corrida, para un humano que se pone al día</td>
+              </tr>
+              <tr>
+                <td><span class="mono">handoff.md</span></td>
+                <td>una corrida, escrito de continuo; se archiva</td>
+                <td>lo que la próxima corrida no puede sacar de otro lado</td>
+              </tr>
+              <tr>
+                <td><span class="mono">escalation-log.md</span></td>
+                <td>todas las corridas y modos; solo se agrega, nunca se archiva</td>
+                <td>cada parada, cada fallo, cada discrepancia</td>
+              </tr>
+              <tr>
+                <td><span class="mono">progress.md</span></td>
+                <td>una corrida; solo se agrega, se archiva</td>
+                <td>estado mecánico para retomar, con lo que queda sin pushear</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="callout blue r">
-          <b>Quién lo controla:</b> la regla <span class="mono">CONTEXT-WRITES</span> de
-          <span class="mono">scripts/lint-skills.ts</span>, que corre con
-          <span class="mono">bun run skills:check</span>. En el mismo lint,
-          <span class="mono">STALE-PATH</span> es estricto dentro de una skill de contexto: cada ruta
-          de <span class="mono">.context/</span> que cita tiene que existir (solo el caché
-          <span class="mono">.context/PBI/</span> queda exento). Cita, nunca copia.
+          <b>Lo primero que lee un líder:</b> la sección "Not verified by this run" del reporte. Lo
+          que una corrida programada no pudo comprobar se nombra exacto, para que quien sí puede
+          sepa por dónde empezar. Nunca queda implícita.
         </div>
       </div>
     </section>
 
-    <!-- ============ §09 DIAGRAMAS ============ -->
-    <section class="band" id="diagramas">
+    <!-- ============ §10 BARANDAS ============ -->
+    <section class="band" id="reglas">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> · las figuras</div>
-          <h2>La capability <span class="mono">diagrams</span> es una skill, no un MCP</h2>
+          <div class="eyebrow"><span class="num">10</span> · barandas</div>
+          <h2>Lo que no hace nunca, con nadie mirando</h2>
           <p class="sub">
-            Las figuras las dibuja la skill <span class="mono">diagram-design</span>, que instala
-            <span class="mono">cli/install.ts</span> a nivel proyecto; una instalación de usuario o
-            un plugin del harness también sirve. Es la única capability que se resuelve por la
-            presencia de una skill y no por el sufijo de una herramienta.
+            Las reglas que tienen que atar al ejecutor viven en
+            <span class="mono">## Compact Rules</span> y llegan a cada briefing por
+            <span class="mono">.agents/skills/REGISTRY.md</span>. Cada riesgo observado, con su
+            disparador y su chequeo, está en
+            <span class="mono">references/hazard-catalogue.md</span>.
           </p>
         </div>
 
-        <div class="planes r">
-          <div class="plane">
-            <div class="tag">Antes de dibujar</div>
-            <h3>¿Se puede cargar <span class="mono">diagram-design</span>?</h3>
-            <ul>
-              <li>
-                Si no: STOP en el punto de uso, nombrando la línea de instalación. Nunca un mapa con
-                SVG dibujado a mano o ASCII en su lugar.
-              </li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">El estilo</div>
-            <h3>Es asunto de diagram-design</h3>
-            <ul>
-              <li>
-                Un marcador <span class="mono">.diagram-design</span> en la raíz
-                (<span class="mono">profile: &lt;slug&gt;</span>) elige un perfil guardado si el
-                proyecto quiere uno. Dos máquinas pueden dibujar distinto: lo que importa está en el
-                texto.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <pre class="code r"><span class="c"># la línea que nombra el STOP (mcp-capabilities.md)</span>
-bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-design --yes</pre>
-      </div>
-    </section>
-
-    <!-- ============ §10 ENTREGA ============ -->
-    <section class="band" id="entrega">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · entrega y dueño</div>
-          <h2>Upstream la entrega una vez; después es tuya</h2>
-          <p class="sub">
-            Toda skill <span class="mono">&lt;aspect&gt;-context</span> es local del proyecto: el
-            updater nunca la entrega, la pisa ni la borra (<span class="mono"
-              >isProjectLocalSkillPath</span
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca avanza una dependencia por un cambio de estado</b> en el tracker. Solo la
+              ascendencia en git decide si algo salió.</span
             >
-            en <span class="mono">cli/lib/updater-core.ts</span>). Las de
-            <span class="mono">CONTEXT_MAP_SKILLS</span> son la única excepción, y es solo de
-            entrega.
-          </p>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca rebasea, fuerza el push ni reescribe historia pusheada.</b> Sobre una rama
+              que un subagente ya pusheó, mergea la base. Y una operación denegada es una señal para
+              parar y nombrar el permiso que falta, nunca un acertijo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca toca su propia configuración de permisos</b> para recuperar una capacidad.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca improvisa una identidad o credencial</b> cuando falta la declarada. Un
+              worktree sin su <span class="mono">.env</span> es la forma más común de esa
+              tentación: falla cerrado y reporta.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca adivina una transición.</b> Un slug que falta en
+              <span class="mono">.agents/jira-workflows.json</span> no dispara nada: deja el issue
+              donde está y el reporte recomienda
+              <span class="mono">bun run jira:sync-workflows</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca commitea salida regenerada sin leerla.</b> Tipos o clientes generados desde
+              una instancia compartida absorben el esquema sin mergear de un par.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Nunca edita la fila, la rama ni el worktree de otra corrida</b>, salvo para
+              reclamar una fila libre según el protocolo.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Sin atribución de IA</b> en commits, pull requests ni comentarios del tracker
+              (Critical Rule #3).</span
+            >
+          </div>
         </div>
 
-        <div class="steps r">
-          <div class="step">
-            <h3>Llega como placeholder</h3>
-            <p>
-              <span class="mono">bun run up</span> entrega la carpeta de la skill cuando falta
-              (<span class="mono">collectContextMapBootstrap</span>), con un mapa placeholder
-              adentro.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Nunca más se toca desde upstream</h3>
-            <p>
-              A partir de ahí, nada del updater pisa ni borra lo que hay adentro: el mapa es la
-              síntesis de TU producto, y sus reglas y gotchas también.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Un placeholder se avisa, no bloquea</h3>
-            <p>
-              Un mapa que falta o sigue en placeholder (con el markdown viejo al lado, si lo hay)
-              aparece como fila informativa en el cierre de <span class="mono">bun run up</span>, y
-              <span class="mono">bun run setup:doctor</span> imprime la misma línea, con el generador
-              a correr.
-            </p>
-          </div>
+        <div class="callout r">
+          <b>Editar una regla no cambia nada hasta regenerar el registro</b> con
+          <span class="mono">bun run skills:registry</span>. El registro es lo que llega a un
+          briefing: una regla que no llegó al briefing no llegó a ningún ejecutor.
         </div>
       </div>
     </section>
 
-    <!-- ============ §11 PROPIA ============ -->
-    <section class="band" id="propia">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> · tu propia skill de contexto</div>
-          <h2>Para un aspecto que los mapas no cubren</h2>
-          <p class="sub">
-            <span class="mono">billing</span>, <span class="mono">auth</span>,
-            <span class="mono">stripe</span>: la capa de juicio sobre un aspecto que una sesión
-            competente leería mal. La crea <span class="mono">project-context</span> modo
-            <span class="mono">context-skill</span>, siempre a través de
-            <span class="mono">skill-creator</span>. Las fuentes guardan los hechos; la skill, las
-            reglas para leerlos.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">La IA hace</span>
-            <p>
-              Lee completo lo que la skill va a cubrir y lista cada lugar donde se puede leer mal:
-              borrado lógico, RLS que esconde filas a un rol, estados con nombres distintos en base,
-              API y UI.
-            </p>
-            <p>Pasa cada candidato por las tres preguntas de §01: solo el juicio queda como regla.</p>
-          </div>
-          <div class="hum">
-            <span class="k">Vos decidís</span>
-            <p>El <b>aspecto</b> y sobre qué se apoya.</p>
-            <p>En UPDATE, si el <b>diff</b> se aplica: las reglas se agregan con fecha, nunca se reescriben.</p>
-          </div>
-          <div class="out">
-            <span class="k">Sale</span>
-            <p>
-              <span class="mono">.agents/skills/&lt;aspect&gt;-context/</span> con
-              <span class="mono">metadata.kind: context</span>, más
-              <span class="mono">references/gotchas.md</span>.
-            </p>
-            <p>Del proyecto, nunca enviada upstream.</p>
-          </div>
-        </div>
-        <div class="gate r">
-          <b>Gate</b> <span class="mono">bun run skills:check</span> verde y
-          <span class="mono">bun run skills:registry</span> con el bloque nuevo en
-          <span class="mono">REGISTRY.md</span>; ninguna oración repetida del mapa o del código.
-        </div>
-
-        <div class="gotchas r">
-          <div class="g">
-            <b>Lo que cubre tiene que existir antes</b
-            ><span
-              >Un mapa, un módulo, un contrato. Una skill sobre nada termina siendo la fuente por
-              accidente.</span
-            >
-          </div>
-          <div class="g">
-            <b>Datos, features y API ya tienen dueño</b
-            ><span
-              >Un pedido de <span class="mono">data-context</span> se responde apuntando a
-              <span class="mono">business-data-context</span>, nunca con una segunda fuente sobre el
-              mismo aspecto.</span
-            >
-          </div>
-          <div class="g">
-            <b>Sin medición no hay regla</b
-            ><span
-              >Cada regla lleva fecha y cómo se midió. Lo que no se midió va a la memoria, no a la
-              skill.</span
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §12 INVOCAR ============ -->
+    <!-- ============ §11 INVOCAR ============ -->
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">12</span> · qué le decís a la IA</div>
-          <h2>Las skills de contexto no tienen modos: se generan, se leen y se cargan</h2>
+          <div class="eyebrow"><span class="num">11</span> · qué le dice el scheduler a la IA</div>
+          <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            Generar un mapa es un modo de <span class="mono">project-context</span>. Leerlo es un
-            comando del repo, igual en los tres hosts. Cargar la skill pasa solo, por su
-            descripción, o nombrándola.
+            Lo escribe el prompt de la rutina, no una persona. El modo va siempre explícito:
+            <span class="mono">story</span>, <span class="mono">bug</span> o
+            <span class="mono">discovery</span>, definidos en
+            <span class="mono">## Mode routing</span> de la skill.
           </p>
         </div>
 
         <div class="hosts r">
           <div class="host">
             <h3>Claude Code</h3>
-            <span class="say">/project-context data</span>
-            <p>Genera o actualiza el mapa de datos. Igual con <span class="mono">features</span> o <span class="mono">api</span>.</p>
+            <span class="say">/autonomous-delivery bug</span>
+            <p>La barra de la skill y el modo como primer argumento.</p>
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill project-context, modo data</span>
-            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
+            <p>Sin barra: el prompt de la rutina nombra la skill y el modo.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill project-context, modo data</span>
+            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
 
-        <pre
-          class="code r"
-          style="margin-top: 26px"
-        ><span class="c"># leer, en cualquier host</span>
-bun run context:map <span class="s">business-data-context</span> --section <span class="s">&lt;id&gt;</span>
-bun run context:map <span class="s">business-feature-context</span> --list
-bun run context:map <span class="s">business-api-context</span> --open   <span class="c"># para vos, en el navegador</span>
-
-<span class="c"># una skill de contexto propia</span>
-/project-context context-skill <span class="s">billing</span>        <span class="c"># o: cargá la skill project-context, modo context-skill</span></pre>
+        <div class="callout blue r">
+          <b>Al armar la rutina, dejá apagada la opción de worktree del scheduler.</b> La skill crea
+          y cierra su propio aislamiento en los tres hosts: así la fase 4 puede borrar el worktree de
+          la corrida en vez de dejarlo en disco para un humano.
+        </div>
       </div>
     </section>
 
-    <!-- ============ §13 HANDOFFS ============ -->
+    <!-- ============ §12 HANDOFFS ============ -->
     <section class="band" id="handoffs">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">13</span> · alrededor de los mapas</div>
-          <h2>Quién los genera y quién los lee</h2>
+          <div class="eyebrow"><span class="num">12</span> · alrededor de esta skill</div>
+          <h2>Con quién trabaja</h2>
           <p class="sub">
-            Los mapas no son de un solo workflow: los escribe uno y los consultan varios.
+            Selecciona y despacha; cada etapa del trabajo la hace su dueña. Fuera de alcance quedan
+            la verificación de QA, que arranca desde el estado listo para QA, y elegir qué
+            construir, que es producto y escala.
           </p>
         </div>
 
         <div class="alts r">
           <div class="alt">
-            <div class="kk">Los genera · modos y gates</div>
-            <h3><a href="../project-context/como-funciona.es.html">/project-context</a></h3>
+            <div class="kk">Despachada · story y bug</div>
+            <h3><a href="../sprint-development/how-it-works.es.html">/sprint-development</a></h3>
             <p>
-              Sus modos <span class="mono">data</span>, <span class="mono">features</span> y
-              <span class="mono">api</span> escriben los mapas; <span class="mono">master-plan</span>
-              exige el mapa de datos generado. Sus gates y su orden viven en su
-              <span class="mono">SKILL.md</span>.
+              Implementa, revisa y despliega cada ticket. Su cierre de Stage 4 es el que la fase 4
+              verifica.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Los encadena · Discovery</div>
-            <h3><a href="../project-foundation/como-funciona.es.html">/project-foundation</a></h3>
+            <div class="kk">Despachada · discovery</div>
+            <h3><a href="../product-management/how-it-works.es.html">/product-management</a></h3>
+            <p>Refinamiento, épicas y criterios: la única skill que llama el modo discovery.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Al lado · git</div>
+            <h3><a href="../git-flow-master/how-it-works.es.html">/git-flow-master</a></h3>
+            <p>Ramas, pull requests, merges, conflictos y la planificación de cadenas de PRs.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Upstream · aristas</div>
+            <h3>/project-context dev-roadmap</h3>
             <p>
-              Su fase de Discovery corre los modos de mapa y verifica el mapa de datos con
-              <span class="mono">bun run context:map</span> antes del plan maestro.
+              Cuando las aristas o el orden de <span class="mono">.context/dev-roadmap.md</span>
+              están viejos o faltan.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Los lee · por historia</div>
-            <h3><a href="../sprint-development/como-funciona.es.html">/sprint-development</a></h3>
+            <div class="kk">Opcional · workers y rutinas</div>
+            <h3><a href="../orca-orchestration/how-it-works.es.html">/orca-orchestration</a></h3>
             <p>
-              Para evaluar el impacto de una historia que toca varios dominios. Si un mapa sigue en
-              placeholder, sigue sin él y lo anota en el plan.
-            </p>
-          </div>
-          <div class="alt">
-            <div class="kk">Los lee · backlog</div>
-            <h3><a href="../product-management/como-funciona.es.html">/product-management</a></h3>
-            <p>
-              Su pase de dependencias usa el grafo de entidades, la matriz CRUD y el catálogo de
-              rutas antes de crear o editar una historia.
+              Lanza, supervisa y cierra los workers despachados, y registra la corrida como rutina
+              programada. Solo cuando pasa su compuerta; cada QUÉ sigue siendo de esta skill.
             </p>
           </div>
         </div>
@@ -2603,13 +2735,15 @@ bun run context:map <span class="s">business-api-context</span> --open   <span c
         <div class="callout blue r">
           <b>Para leer más:</b>
           <a
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/business-context-maps.md"
-            >agentic-dev-core/references/business-context-maps.md</a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/autonomous-delivery/SKILL.md"
+            >.agents/skills/autonomous-delivery/SKILL.md</a
           >
-          (la doctrina entera), <span class="mono">skill-scaffold.md</span> §3 a §5 (el principio y
-          la skill propia), el <span class="mono">SKILL.md</span> y el
-          <span class="mono">references/refresh.md</span> de cada skill de contexto, y
-          <span class="mono">cli/lib/context-maps.ts</span>.
+          y sus tres referencias en <span class="mono">references/</span>
+          (<span class="mono">audit-and-selection.md</span>,
+          <span class="mono">hazard-catalogue.md</span>,
+          <span class="mono">run-report-format.md</span>). Doctrina relacionada:
+          <span class="mono">agentic-dev-core/references/decision-protocol.md</span> y
+          <span class="mono">session-management.md</span>.
         </div>
       </div>
     </section>
@@ -2618,17 +2752,14 @@ bun run context:map <span class="s">business-api-context</span> --open   <span c
       <div class="wrap">
         <div class="prose">
           <p>
-            <b style="color: var(--ink)">La idea de fondo.</b> Lo que una IA sintetiza leyendo el
-            producto cuesta caro rehacer y sale distinto cada vez. Por eso se guarda una sola vez,
-            adentro de la skill que lo trae a la sesión, se lee por sección y se corrige de a una
-            sección, con evidencia y con tu sí.
+            <b style="color: var(--ink)">La idea de fondo.</b> Shippear es lo que sale; un estado
+            desde el que se puede retomar es lo que no se negocia. Una corrida sin nadie mirando
+            vale lo que vale el registro que deja: qué era cierto, qué eligió y por qué, qué no pudo
+            comprobar.
           </p>
         </div>
         <div class="sig">
-          <span
-            >Fuente: <span class="mono">.agents/skills/business-*-context/</span> ·
-            <span class="mono">cli/lib/context-maps.ts</span></span
-          >
+          <span>Fuente: <span class="mono">.agents/skills/autonomous-delivery/</span></span>
           <span>·</span>
           <span><a href="../../index.html">← volver a Planos</a></span>
         </div>

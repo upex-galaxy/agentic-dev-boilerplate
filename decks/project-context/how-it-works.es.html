@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Unit testing: tests que fijan comportamiento</title>
+    <title>Project context: mapas, plan maestro y roadmap</title>
     <meta
       name="description"
-      content="Cómo /unit-testing diseña y escribe tests de una unidad: el ciclo red-green-refactor, nombres que explican la falla, qué mockear y qué cobertura mirar, sola o desde el Stage 2 de /sprint-development."
+      content="Cómo /project-context genera y refresca los mapas de negocio, el plan maestro de implementación y el roadmap de desarrollo, un modo por vez, con gates de dependencia, Discovery Gaps y aprobación explícita antes de pisar lo que ya existe; y cómo arma una skill de contexto propia del proyecto."
     />
     <style>
       /* ============================================================
@@ -1593,12 +1593,13 @@
       >
       <nav class="topnav">
         <a href="#cuando">Cuándo</a>
-        <a href="#mapa">Mapa</a>
-        <a href="#sola">Sola</a>
-        <a href="#stage2">Stage 2</a>
-        <a href="#tdd">TDD</a>
-        <a href="#mocks">Mocks</a>
-        <a href="#cobertura">Cobertura</a>
+        <a href="#mapa">Modos</a>
+        <a href="#crear">Crear o actualizar</a>
+        <a href="#gates">Gates</a>
+        <a href="#refresh">refresh-all</a>
+        <a href="#plan">Plan</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#skill">context-skill</a>
         <a href="#invocar">Invocar</a>
       </nav>
       <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
@@ -1609,49 +1610,53 @@
     <!-- ============ HERO ============ -->
     <header class="hero">
       <div class="wrap">
-        <div class="kicker eyebrow"><span class="num">00</span> · tests que fijan comportamiento</div>
-        <h1>Tests que fallan por el <em>motivo</em> correcto, <span class="sig">antes</span> del código.</h1>
+        <div class="kicker eyebrow"><span class="num">00</span> · contexto del proyecto</div>
+        <h1>El contexto que la IA lee antes de planear, <em>escrito</em> con evidencia y <span class="sig">aprobado</span> por vos.</h1>
         <p class="lede">
-          <span class="mono">/unit-testing</span> diseña y escribe tests de una unidad: una función,
-          una clase, un módulo. Cubre el ciclo <b>red-green-refactor</b>, cómo nombrar cada test, qué
-          mockear y qué cobertura mirar. Corre sola, sobre el código que le señales, o a mitad de una
-          historia, cuando <span class="mono">/sprint-development</span> encuentra un tramo que
-          conviene hacer test-first.
+          <span class="mono">/project-context</span> genera y refresca los artefactos de contexto que
+          las demás skills dan por hechos: los mapas de negocio (datos, features, API), el plan maestro
+          de implementación y el roadmap de desarrollo. También arma una skill de contexto propia del
+          proyecto para un aspecto que los mapas no cubren. Corre un modo por vez, y cuando el
+          artefacto ya existe nunca lo pisa sin mostrarte el diff y esperar tu sí.
         </p>
 
         <div class="hero-meta">
-          <span class="chip"><span class="dot"></span> para quien <b>codea</b></span>
-          <span class="chip"
-            ><span class="dot"></span> sirve con <b>Jest, Vitest, Mocha</b> o un runner parecido</span
-          >
+          <span class="chip"><span class="dot"></span> para quien <b>lidera</b> y quien <b>desarrolla</b></span>
+          <span class="chip"><span class="dot"></span> un <b>modo</b> por corrida</span>
           <span class="chip agent"
-            ><span class="dot"></span> testea <b>comportamiento</b>, no implementación</span
+            ><span class="dot"></span> lo que no se pudo verificar va a <b>Discovery Gaps</b></span
           >
         </div>
 
-        <div class="pipe" id="pipe">
+        <div class="pipe five" id="pipe">
           <div class="node">
-            <div class="n">Entrada</div>
-            <h3>La unidad</h3>
-            <p>Su interfaz pública es el contrato que los tests fijan.</p>
+            <div class="n">Modo</div>
+            <h3>Uno solo</h3>
+            <p>El que nombrás. Sin modo claro, la IA pregunta; nunca supone <span class="mono">refresh-all</span>.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Red</div>
-            <h3>Un test que falla</h3>
-            <p>El más chico posible, y falla por la aserción, no por un import roto.</p>
+            <div class="n">Gate</div>
+            <h3>Dependencias</h3>
+            <p>Un gate duro faltante para la corrida. Uno blando queda anotado como hueco.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Green</div>
-            <h3>El mínimo código</h3>
-            <p>Lo justo para pasar. La implementación real emerge en varios ciclos.</p>
+            <div class="n">Fuentes</div>
+            <h3>Leer todo</h3>
+            <p>Código, esquema, contrato, PRD, tracker: lo que pida la referencia del modo.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
-            <div class="n">Refactor</div>
-            <h3>Limpiar en verde</h3>
-            <p>Con los tests como red de seguridad. Nunca con un test en rojo.</p>
+            <div class="n">Candidato</div>
+            <h3>Crear o actualizar</h3>
+            <p>Si no existe, lo escribe. Si existe, arma el candidato y te muestra el diff.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Cierre</div>
+            <h3>Tu sí, y verificar</h3>
+            <p>Escribe solo lo aprobado y relee el resultado con el comando del artefacto.</p>
           </div>
         </div>
       </div>
@@ -1662,710 +1667,179 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">01</span> · cuándo usarla</div>
-          <h2>Una unidad, sus tests, y nada más</h2>
+          <h2>Cuando el modelo mental del proyecto falta o quedó viejo</h2>
           <p class="sub">
-            Es una skill acotada a propósito: no lleva Jira, no despliega, no hace code review.
-            Produce código testeado para un tramo y devuelve el control.
+            Cada artefacto que produce es una síntesis: alguien leyó el código, el esquema y el backlog
+            y escribió qué significa. Esta skill es la que hace esa lectura, y la vuelve a hacer cuando
+            las fuentes cambian.
           </p>
         </div>
 
         <div class="planes r">
           <div class="plane">
             <div class="tag">Usala cuando</div>
-            <h3>El pedido es sobre tests de una unidad</h3>
+            <h3>Hay que mapear, priorizar o secuenciar</h3>
             <ul>
-              <li>"Escribí unit tests para esta función o esta clase."</li>
-              <li>"Hacé TDD de este tramo", "red-green-refactor".</li>
-              <li>"¿Qué mockeo acá?" · "¿Cómo nombro este test?"</li>
-              <li>"¿Qué cobertura le pido a este módulo?"</li>
               <li>
-                Estás en el <b>Stage 2</b> de <span class="mono">/sprint-development</span> y el tramo
-                es lógica pura, ramas complejas o el reproductor de un bug.
+                "Mapeá el dominio" · "inventario de features" · "cómo funciona el API": falta un mapa
+                de negocio, o el código cambió y el mapa no.
+              </li>
+              <li>"Plan maestro de implementación" · "qué construimos primero": orden de épicas y por qué.</li>
+              <li>"Roadmap de desarrollo" · "qué historia sigue": orden de tickets y qué destraba qué.</li>
+              <li>
+                "Armá una skill de contexto para billing": un aspecto del producto que ningún mapa
+                cubre y que una sesión leería mal sin reglas.
               </li>
             </ul>
           </div>
           <div class="plane sig">
             <div class="tag">No la uses para</div>
-            <h3>Lo que pertenece a otra capa</h3>
+            <h3>Lo que tiene otro dueño</h3>
             <ul>
               <li>
-                <b>Implementar una historia completa</b> (plan, código, review, deploy): eso es
-                <span class="mono">/sprint-development</span>, que puede llamar a esta skill por
-                dentro.
+                <b>El plan de una historia</b>, archivo por archivo: eso es la etapa de planning de
+                <span class="mono">/sprint-development</span>.
               </li>
               <li>
-                <b>Tests E2E o de integración</b>: fuera de alcance. El navegador es
-                <span class="mono">/playwright-cli</span>; el diseño de esos tests es de un flujo de QA
-                aparte.
+                <b>El catálogo completo de endpoints</b> o los tipos del contrato: los da
+                <span class="mono">bun run api:sync</span> sobre el spec OpenAPI.
               </li>
-              <li><b>Correr la suite de regresión</b> antes de un release, ni QA formal.</li>
-              <li><b>Deploy a producción.</b></li>
+              <li>
+                <b>Una skill <span class="mono">data-context</span>, <span class="mono">feature-context</span>
+                o <span class="mono">api-context</span></b>: esos aspectos ya tienen dueño, las skills de
+                mapa de negocio. El pedido se responde señalándolas.
+              </li>
+              <li><b>Fechas de entrega</b>: el plan maestro ordena trabajo, no lo estima.</li>
             </ul>
           </div>
-        </div>
-
-        <div class="callout blue r">
-          <b>Unit tests son trabajo de desarrollo, no de QA.</b> Se escriben mientras se codea, no en
-          una fase posterior. Por eso la skill no lee campos de Jira: un test unitario es una
-          preocupación de quien escribe el código, no un artefacto del flujo.
         </div>
       </div>
     </section>
 
-    <!-- ============ §02 MAPA ============ -->
+    <!-- ============ §02 MAPA DE MODOS ============ -->
     <section class="band" id="mapa">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">02</span> · el mapa</div>
-          <h2>Dos puertas de entrada y cuatro temas</h2>
+          <div class="eyebrow"><span class="num">02</span> · el mapa de modos</div>
+          <h2>Cada modo es un flujo completo con su propia referencia</h2>
           <p class="sub">
-            Entrás sola o desde una historia en curso. Lo que pedís elige la referencia que la IA
-            lee; cuando no está claro, arranca por la guía general.
+            La IA carga solo la referencia del modo elegido y nunca abre una segunda en la misma pasada.
+            No hay comandos de terminal para ellos: los viejos nombres
+            (<span class="mono">business-data-map</span>, <span class="mono">master-implementation-plan</span>,
+            <span class="mono">dev-roadmap</span>) sobreviven solo como frases que disparan el modo.
           </p>
         </div>
 
         <div class="lanes r">
           <div class="lane">
-            <div class="lane-head">Puerta 1 · sola</div>
-            <a class="wf" href="#sola"
+            <div class="lane-head">Mapas de negocio</div>
+            <a class="wf" href="#crear"
               ><span class="lt">1</span
-              ><span
-                ><b>Escribir tests</b
-                ><span>Sobre el código que señalás. Termina con un reporte.</span></span
-              ></a
+              ><span><b>data</b><span>Entidades, RLS, migraciones, flujos, máquinas de estado, integraciones.</span></span></a
             >
-            <a class="wf" href="#tdd"
+            <a class="wf" href="#crear"
               ><span class="lt">2</span
-              ><span><b>TDD guiado</b><span>Ciclo por ciclo, confirmando el rumbo entre uno y otro.</span></span></a
+              ><span><b>features</b><span>Catálogo de features, matriz CRUD, inventario de UI, flags.</span></span></a
+            >
+            <a class="wf" href="#crear"
+              ><span class="lt">3</span
+              ><span><b>api</b><span>Modelo de auth, recorridos críticos, arquitectura detrás del API.</span></span></a
             >
           </div>
           <div class="lane">
-            <div class="lane-head">Puerta 2 · desde una historia</div>
-            <a class="wf" href="#stage2"
-              ><span class="lt sig">S2</span
-              ><span
-                ><b>Tramo TDD en Stage 2</b
-                ><span>Lógica pura, ramas complejas o reproductor de bug. Vuelve al flujo en verde.</span></span
-              ></a
+            <div class="lane-head">Estrategia y secuencia</div>
+            <a class="wf" href="#plan"
+              ><span class="lt">4</span
+              ><span><b>master-plan</b><span>Qué construir, en qué orden de épicas, y por qué ese orden.</span></span></a
+            >
+            <a class="wf" href="#roadmap"
+              ><span class="lt">5</span
+              ><span><b>dev-roadmap</b><span>Qué ticket sigue y qué lo bloquea.</span></span></a
+            >
+            <a class="wf" href="#refresh"
+              ><span class="lt sig">∗</span
+              ><span><b>refresh-all</b><span>data → features → api → master-plan → dev-roadmap, uno por vez.</span></span></a
             >
           </div>
           <div class="lane">
-            <div class="lane-head">Consultas · sin escribir código</div>
-            <a class="wf" href="#nombres"
-              ><span class="lt agent">N</span
-              ><span><b>Cómo nombrar</b><span>AAA, Given-When-Then, el híbrido recomendado.</span></span></a
+            <div class="lane-head">Andamiaje</div>
+            <a class="wf" href="#skill"
+              ><span class="lt">6</span
+              ><span><b>context-skill</b><span>Una skill <span class="mono">&lt;aspect&gt;-context</span> propia del proyecto.</span></span></a
             >
-            <a class="wf" href="#mocks"
-              ><span class="lt agent">M</span
-              ><span><b>Qué mockear</b><span>Mock, spy, stub, fake. Inyección de dependencias.</span></span></a
-            >
-            <a class="wf" href="#cobertura"
-              ><span class="lt agent">C</span
-              ><span><b>Qué cobertura</b><span>Ramas antes que líneas. Mutation testing.</span></span></a
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §03 ENTRADAS ============ -->
-    <section class="band" id="entradas">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">03</span> · qué lee</div>
-          <h2>Lo que lee antes de escribir un test</h2>
-          <p class="sub">
-            Es el orden canónico para una IA que arranca en frío. Corta antes cuando lo que sigue no
-            aporta nada para el tramo.
-          </p>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>La unidad bajo test</h3>
-            <p>Primero su interfaz pública: es el contrato que los tests tienen que fijar.</p>
-          </div>
-          <div class="step">
-            <h3>Los tests que ya existen</h3>
-            <p>
-              Los <span class="mono">*.test.ts</span> o <span class="mono">*.spec.ts</span> de la
-              misma carpeta. Se extienden, no se duplican.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Quién la llama</h3>
-            <p>
-              Buscar el símbolo dice qué colaboradores son externos (se mockean) y cuáles internos (se
-              usan reales).
-            </p>
-          </div>
-          <div class="step">
-            <h3>La configuración del runner</h3>
-            <p>
-              <span class="mono">vitest.config.ts</span>, <span class="mono">jest.config.ts</span> o
-              equivalente: variables, archivos de setup, umbrales de cobertura, alias de rutas.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Helpers y fixtures vecinos</h3>
-            <p>Se reusan las costuras del proyecto en lugar de inventar otras paralelas.</p>
-          </div>
-        </div>
-
-        <div class="planes r" style="margin-top: 26px">
-          <div class="plane">
-            <div class="tag">Requisitos</div>
-            <h3>Un runner y su comando</h3>
-            <ul>
-              <li>Un runner configurado (Jest, Vitest, Mocha o similar).</li>
-              <li>
-                El comando de tests declarado en <span class="mono">package.json</span>. Para TDD,
-                que el runner tenga modo <span class="mono">--watch</span>.
-              </li>
-              <li>
-                Sin runner, la primera tarea es montarlo: la sección de setup de
-                <span class="mono">references/unit-testing.md</span>. Ahí la IA te pregunta Jest o
-                Vitest.
-              </li>
-            </ul>
-          </div>
-          <div class="plane">
-            <div class="tag">Contexto del proyecto</div>
-            <h3>Stack y skills complementarias</h3>
-            <ul>
-              <li>
-                El stack de backend y de frontend, en <span class="mono">.agents/project.yaml</span>,
-                orienta qué convenciones de runner aplican: Jest es más común con Node y React, Vitest
-                con proyectos sobre Vite.
-              </li>
-              <li>
-                Al entrar resuelve las skills de la categoría <span class="mono">language</span> desde
-                <span class="mono">.agents/skills/REGISTRY.md</span>: las del repo o de la comunidad
-                se cargan solas; una de tu usuario te la pregunta una vez.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §04 SOLA ============ -->
-    <section class="band" id="sola">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">04</span> · puerta 1</div>
-          <h2>Sola: del código señalado a un reporte de cobertura</h2>
-          <p class="sub">
-            Sin <span class="mono">/sprint-development</span> de por medio, trabaja contra el código
-            que le indiques y se arregla sola con lo que encuentre.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">La IA hace</span>
-            <p>
-              Identifica la unidad y decide si va <b>test-first o después</b>. Escribe los tests con
-              la convención de nombres del proyecto y mockea solo las dependencias externas.
-            </p>
-            <p>Corre la suite hasta verde y mide la cobertura de esa unidad.</p>
-          </div>
-          <div class="hum">
-            <span class="k">Vos decidís</span>
-            <p>
-              <b>Qué unidad</b>, cuando el pedido es ambiguo: la IA te lo confirma antes de escribir.
-            </p>
-            <p>
-              El <b>runner</b>, si el proyecto todavía no tiene uno: Jest o Vitest.
-            </p>
-          </div>
-          <div class="out">
-            <span class="k">Sale</span>
-            <p>
-              Archivos de test junto al código, con el mismo nombre más
-              <span class="mono">.test.ts</span>.
-            </p>
-            <p>Un reporte: archivos agregados, tests que pasan y el delta de cobertura.</p>
-          </div>
-        </div>
-        <div class="gate r"><b>Gate</b> tests en verde y cobertura de la unidad verificada.</div>
-      </div>
-    </section>
-
-    <!-- ============ §05 STAGE 2 ============ -->
-    <section class="band" id="stage2">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">05</span> · puerta 2</div>
-          <h2>Desde el Stage 2 de una historia: un tramo y de vuelta</h2>
-          <p class="sub">
-            En <span class="mono">/sprint-development</span>, el Stage 2 (implementación) marca el TDD
-            como <b>opcional</b>. Cuando un tramo lo amerita, delega en esta skill y retoma cuando la
-            unidad quedó en verde.
-          </p>
-        </div>
-
-        <div class="trio r">
-          <div>
-            <span class="k">Qué tramo lo amerita</span>
-            <p>Una función de <b>lógica pura</b>.</p>
-            <p><b>Ramas complejas</b> con casos borde: mejor fijarlos con tests que adivinarlos después.</p>
-            <p>
-              Un <b>bug</b>: primero el test que lo reproduce y falla, después el arreglo.
-            </p>
-          </div>
-          <div class="hum">
-            <span class="k">Qué no hace</span>
-            <p>No mueve el ticket en Jira, no abre el PR, no hace review ni deploy.</p>
-            <p>
-              Todo eso sigue siendo de <span class="mono">/sprint-development</span>. El límite entre
-              las dos skills es informal y las dos lo conocen.
-            </p>
-          </div>
-          <div class="out">
-            <span class="k">Devuelve</span>
-            <p>El tramo en verde y refactorizado.</p>
-            <p>
-              El Stage 2 sigue con su verificación en paralelo: lint, tipos y unit tests, y vuelve a
-              iterar si algo queda en rojo.
-            </p>
           </div>
         </div>
 
         <div class="tablewrap r" style="margin-top: 26px">
-          <table class="cmp narrow">
+          <table class="cmp">
             <thead>
               <tr>
-                <th>Si pedís…</th>
-                <th>Entra por</th>
+                <th>Modo</th>
+                <th>Lee</th>
+                <th>Escribe</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>"Escribí unit tests para esta función, TDD"</th>
-                <td>
-                  <span class="mono">/unit-testing</span> directo: un pedido de tests saltea al
-                  orquestador.
-                </td>
+                <th><span class="mono">data</span></th>
+                <td><span class="mono">references/data.md</span></td>
+                <td><span class="mono">business-data-context/references/business-data-map.html</span></td>
               </tr>
               <tr>
-                <th>"Implementá esta historia: código, tests y PR"</th>
-                <td>
-                  <span class="mono">/sprint-development</span>. Puede llamar a
-                  <span class="mono">/unit-testing</span> por dentro, pero la entrada es el
-                  orquestador.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §06 TDD ============ -->
-    <section class="band" id="tdd">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">06</span> · red-green-refactor</div>
-          <h2>El ciclo corto es el que da el valor</h2>
-          <p class="sub">
-            Test antes del código, en ciclos de cinco a diez minutos. Si un ciclo pasa de media hora,
-            el tramo es demasiado grande: se parte en pasos de comportamiento más chicos.
-          </p>
-        </div>
-
-        <div class="steps r">
-          <div class="step">
-            <h3>Red · un test que falla</h3>
-            <p>
-              El test más chico que captura un pedazo de comportamiento. Tiene que fallar por la
-              <b>aserción</b>; uno que falla porque el archivo no compila no informa nada. Si pasa en
-              la primera corrida, algo huele mal: se investiga antes de seguir.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Green · el mínimo código</h3>
-            <p>
-              Lo más simple que lo pase. Un valor fijo vale en esta etapa. Nada de código para tests
-              que todavía no existen.
-            </p>
-          </div>
-          <div class="step">
-            <h3>Refactor · solo en verde</h3>
-            <p>
-              Extraer, renombrar, deduplicar, con los tests vigilando. Refactorizar en rojo es perder
-              la red de seguridad justo cuando más hace falta.
-            </p>
-          </div>
-        </div>
-
-        <div class="tablewrap r" style="margin-top: 26px">
-          <table class="cmp narrow">
-            <thead>
-              <tr>
-                <th>Tipo de código</th>
-                <th>¿Test-first o después?</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Lógica de negocio, funciones puras</th>
-                <td>TDD, muy recomendado</td>
+                <th><span class="mono">features</span></th>
+                <td><span class="mono">references/features.md</span></td>
+                <td><span class="mono">business-feature-context/references/business-feature-map.html</span></td>
               </tr>
               <tr>
-                <th>Algoritmos, parsers, máquinas de estado, validaciones</th>
-                <td>TDD</td>
+                <th><span class="mono">api</span></th>
+                <td><span class="mono">references/api.md</span></td>
+                <td><span class="mono">business-api-context/references/business-api-map.html</span></td>
               </tr>
               <tr>
-                <th>Corrección de un bug</th>
-                <td>TDD: el test que reproduce el bug va primero</td>
+                <th><span class="mono">master-plan</span></th>
+                <td><span class="mono">references/master-plan.md</span></td>
+                <td><span class="mono">.context/master-implementation-plan.md</span></td>
               </tr>
               <tr>
-                <th>Código crítico en rendimiento</th>
-                <td>TDD, con benchmarks junto a las aserciones</td>
+                <th><span class="mono">dev-roadmap</span></th>
+                <td><span class="mono">references/dev-roadmap.md</span></td>
+                <td><span class="mono">.context/dev-roadmap.md</span></td>
               </tr>
               <tr>
-                <th>Componentes de UI presentacionales</th>
-                <td>Después (o tests de componente, que a menudo se saltean)</td>
-              </tr>
-              <tr>
-                <th>Pegamento de integración (wrappers de DB, clientes de API)</th>
-                <td>Después; lo cubren mejor los tests de integración</td>
-              </tr>
-              <tr>
-                <th>Scripts descartables, migraciones de una vez</th>
-                <td>Se saltea</td>
+                <th><span class="mono">context-skill</span></th>
+                <td><span class="mono">references/context-skill.md</span></td>
+                <td><span class="mono">.agents/skills/&lt;aspect&gt;-context/</span></td>
               </tr>
             </tbody>
           </table>
         </div>
         <p class="figcap">
-          regla práctica: si tiene ramas, cuentas o parsing de strings, va con TDD; si casi solo
-          orquesta otras cosas, el test va después o lo cubre un nivel más alto
-        </p>
-
-        <div class="gotchas r" style="margin-top: 22px">
-          <div class="g">
-            <b>Tests en cascada</b
-            ><span
-              >Escribir todos los tests y después todo el código no es TDD: se pierde la
-              retroalimentación de diseño de los ciclos chicos.</span
-            >
-          </div>
-          <div class="g">
-            <b>Verde de un golpe</b
-            ><span
-              >Cincuenta líneas para pasar un test: el test no está guiando el diseño. Se achica el
-              tramo.</span
-            >
-          </div>
-          <div class="g">
-            <b>No correr tras cada cambio</b
-            ><span>Rompe el ciclo. Para eso está el modo watch.</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §07 NOMBRES ============ -->
-    <section class="band" id="nombres">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">07</span> · nombres</div>
-          <h2>Un nombre que explica la falla en una línea</h2>
-          <p class="sub">
-            El nombre de un test es lo que ves cuando falla, casi siempre en un log de CI y meses
-            después. Si no se puede nombrar en pocas palabras, el test hace demasiado.
-          </p>
-        </div>
-
-        <div class="planes r">
-          <div class="plane">
-            <div class="tag">AAA · estructura del cuerpo</div>
-            <h3>Arrange, Act, Assert</h3>
-            <ul>
-              <li>Preparar las entradas, invocar la unidad, verificar el resultado.</li>
-              <li>El nombre dice qué es verdad, en forma declarativa.</li>
-              <li>Corto y fácil de escanear; menos explicativo cuando el comportamiento es complejo.</li>
-            </ul>
-          </div>
-          <div class="plane">
-            <div class="tag">Given-When-Then · estilo BDD</div>
-            <h3>Precondición, acción, resultado</h3>
-            <ul>
-              <li>Se lee como una especificación.</li>
-              <li>Útil para onboarding o para quien no codea.</li>
-              <li>Verboso: en un test trivial resulta ceremonioso.</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="callout agent r">
-          <b>El híbrido que recomienda la skill:</b> bloques <span class="mono">describe</span>
-          cortos llevan el contexto (el "given"), y cada <span class="mono">it</span> dice el
-          comportamiento. Contexto jerárquico, mensajes de falla que se explican solos, nada repetido.
-        </div>
-
-        <pre class="code r"><span class="k">describe</span>(<span class="s">'cart with items'</span>, () =&gt; {
-  <span class="k">it</span>(<span class="s">'returns total including tax when item added'</span>, () =&gt; { ... });
-  <span class="k">it</span>(<span class="s">'returns 0 when all items removed'</span>, () =&gt; { ... });
-});
-
-<span class="k">describe</span>(<span class="s">'cart with no items'</span>, () =&gt; {
-  <span class="k">it</span>(<span class="s">'throws when attempting checkout'</span>, () =&gt; { ... });
-});</pre>
-
-        <div class="tablewrap r" style="margin-top: 22px">
-          <table class="cmp narrow">
-            <thead>
-              <tr>
-                <th>Mal</th>
-                <th>Bien</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th><span class="mono">testGetUser</span></th>
-                <td><span class="mono">returnsUserWhenIdExists</span></td>
-              </tr>
-              <tr>
-                <th><span class="mono">testError</span></th>
-                <td><span class="mono">throwsValidationErrorOnEmptyEmail</span></td>
-              </tr>
-              <tr>
-                <th><span class="mono">testBoundary</span></th>
-                <td><span class="mono">appliesDiscountAtExactly100Threshold</span></td>
-              </tr>
-              <tr>
-                <th><span class="mono">callsApiOnce</span></th>
-                <td>un nombre de comportamiento, no de interacción con el mock</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="figcap">
-          cuando la misma regla vale para muchas entradas, se parametriza y se nombra la regla, no
-          cada caso
-        </p>
-      </div>
-    </section>
-
-    <!-- ============ §08 MOCKS ============ -->
-    <section class="band" id="mocks">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · qué mockear</div>
-          <h2>Se mockea el borde del sistema, no lo que está adentro</h2>
-          <p class="sub">
-            Un test que mockea todos los colaboradores verifica el grafo de mocks, no el código. Las
-            implementaciones reales van por defecto; el mock queda para lo que hace al test lento,
-            frágil o no determinista.
-          </p>
-        </div>
-
-        <div class="tablewrap r">
-          <table class="cmp narrow">
-            <thead>
-              <tr>
-                <th>Herramienta</th>
-                <th>Para qué</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Stub</th>
-                <td>Reemplaza la implementación por un retorno fijo.</td>
-              </tr>
-              <tr>
-                <th>Spy</th>
-                <td>Envuelve la implementación real y observa las llamadas sin cambiar el comportamiento.</td>
-              </tr>
-              <tr>
-                <th>Fake</th>
-                <td>Una implementación que funciona pero simplificada: una base en memoria, un reloj falso.</td>
-              </tr>
-              <tr>
-                <th>Mock</th>
-                <td>
-                  Expectativa programada que falla si no se la llama como se esperaba. Tiende a atar el
-                  test a la implementación: se prefieren spies y stubs.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="planes r" style="margin-top: 26px">
-          <div class="plane">
-            <div class="tag">Se mockea</div>
-            <h3>Los bordes externos</h3>
-            <ul>
-              <li>HTTP, clientes de base de datos, filesystem.</li>
-              <li>El tiempo (timers falsos o un reloj inyectado) y el azar (semilla o generador inyectado).</li>
-              <li>Código que depende del entorno: <span class="mono">process.env</span>, módulos nativos.</li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">No se mockea</div>
-            <h3>Lo que estás probando</h3>
-            <ul>
-              <li><b>La unidad bajo test</b>: sería testear el mock.</li>
-              <li><b>Funciones puras</b>: son deterministas, se llaman y listo.</li>
-              <li>
-                <b>Lo que no es tuyo</b>, cuando se puede evitar: se envuelve la librería en un
-                adaptador propio y se mockea el adaptador.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="callout blue r">
-          <b>Primero la inyección de dependencias.</b> Si la función recibe lo que necesita como
-          argumento, el test le pasa un fake y listo, sin parchear módulos.
-          <span class="mono">jest.mock</span> o <span class="mono">vi.mock</span> quedan para cuando
-          la costura es inevitable: efectos al cargar un módulo, un SDK de terceros.
-        </div>
-
-        <pre class="code r"><span class="c">// service.ts: la dependencia entra como argumento</span>
-<span class="k">export async function</span> getUser(id: string, db = defaultDb) {
-  <span class="k">return</span> db.users.findOne({ id });
-}
-
-<span class="c">// service.test.ts: un fake, sin jest.mock</span>
-<span class="k">it</span>(<span class="s">'returns the user'</span>, <span class="k">async</span> () =&gt; {
-  <span class="k">const</span> fakeDb = { users: { findOne: <span class="k">async</span> () =&gt; ({ id: <span class="s">'1'</span>, name: <span class="s">'A'</span> }) } };
-  expect(<span class="k">await</span> getUser(<span class="s">'1'</span>, fakeDb)).toEqual({ id: <span class="s">'1'</span>, name: <span class="s">'A'</span> });
-});</pre>
-
-        <div class="gotchas r" style="margin-top: 22px">
-          <div class="g">
-            <b>Mocks que no se limpian</b
-            ><span
-              >Estado que se filtra entre tests y falsos positivos. Se limpian en
-              <span class="mono">beforeEach</span>, y un spy se restaura al terminar.</span
-            >
-          </div>
-          <div class="g">
-            <b>Cinco dependencias mockeadas</b
-            ><span
-              >Si armar los mocks lleva más líneas que el test, la unidad no es una unidad: se testean
-              las hojas, y el orquestador va a un test de integración o usa fakes.</span
-            >
-          </div>
-          <div class="g">
-            <b>Un mock async mal elegido</b
-            ><span
-              ><span class="mono">mockResolvedValue</span> contra
-              <span class="mono">mockReturnValue</span>: el equivocado rompe en silencio.</span
-            >
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ §09 COBERTURA ============ -->
-    <section class="band" id="cobertura">
-      <div class="wrap">
-        <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> · cobertura</div>
-          <h2>Una alarma de humo, no una meta</h2>
-          <p class="sub">
-            Cobertura baja significa tests que faltan. Cobertura alta no significa tests buenos: un
-            test que llama la función y no afirma nada también suma líneas. Lo útil es el delta de
-            cada PR, no el número global.
-          </p>
-        </div>
-
-        <div class="planes r">
-          <div class="plane">
-            <div class="tag">Qué medir</div>
-            <h3>Ramas antes que líneas</h3>
-            <ul>
-              <li>
-                <b>Branch coverage</b> es la métrica más accionable: cada lado de cada
-                <span class="mono">if</span>, <span class="mono">&amp;&amp;</span>,
-                <span class="mono">||</span> y ternario.
-              </li>
-              <li>Mucha cobertura de líneas con poca de ramas es la mitad de los condicionales sin probar.</li>
-              <li>
-                <b>Mutation testing</b> (Stryker en JS/TS) inyecta errores chicos y mira si algún test
-                lo nota. Lento: semanal o nocturno, en los módulos críticos.
-              </li>
-            </ul>
-          </div>
-          <div class="plane sig">
-            <div class="tag">En CI</div>
-            <h3>Gates por delta, no un umbral fijo</h3>
-            <ul>
-              <li>Avisar si un PR baja la cobertura más de 2 puntos; bloquear si baja más de 5.</li>
-              <li>Fallar si un archivo de ruta crítica, declarado explícitamente, cae bajo su umbral.</li>
-              <li>
-                Un umbral global único castiga el refactor que borra código testeado y premia el
-                relleno.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="tablewrap r" style="margin-top: 26px">
-          <table class="cmp narrow">
-            <thead>
-              <tr>
-                <th>Tipo de código</th>
-                <th>Cobertura sugerida</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>Lógica de negocio, funciones puras</th>
-                <td>90-100%</td>
-              </tr>
-              <tr>
-                <th>Métodos de API pública</th>
-                <td>90% o más</td>
-              </tr>
-              <tr>
-                <th>Helpers internos</th>
-                <td>70-90%</td>
-              </tr>
-              <tr>
-                <th>Componentes de UI presentacionales</th>
-                <td>60-80% (el resto lo cubre E2E)</td>
-              </tr>
-              <tr>
-                <th>Pegamento, configuración, wiring</th>
-                <td>50% o más, o se saltea</td>
-              </tr>
-              <tr>
-                <th>Código generado, scripts descartables</th>
-                <td>se excluye</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="figcap">
-          son guías, no contratos: un helper al 70% que ejercita cada rama importante vale más que uno
-          al 95% cuyo 5% faltante es el único camino de error
+          la tabla canónica es <span class="mono">## Mode routing</span> en
+          <span class="mono">.agents/skills/project-context/SKILL.md</span>; las rutas de los mapas son
+          relativas a <span class="mono">.agents/skills/</span>
         </p>
 
         <div class="callout r">
-          <b>Se excluye el ruido</b> para que el número refleje huecos reales: código generado (tipos,
-          OpenAPI), copias de terceros, archivos <span class="mono">*.d.ts</span>, configuración,
-          migraciones, stories y los propios tests. Si se excluye todo, la métrica no dice nada.
+          <b>Los mapas viven dentro de una skill, no en <span class="mono">.context/</span>.</b> Cada
+          modo de mapa escribe solo el <span class="mono">references/&lt;map&gt;.html</span> de su
+          skill, y lo lee y verifica con <span class="mono">bun run context:map &lt;skill&gt;</span>.
+          La skill del mapa ya existe (la entrega <span class="mono">bun sync</span>); este modo nunca
+          la crea. Qué es un mapa por dentro, cómo se lee por sección y cómo se mantiene honesto es
+          tema del deck de las skills de contexto.
         </div>
       </div>
     </section>
 
-    <!-- ============ §10 RIELES ============ -->
-    <section class="band" id="rieles">
+    <!-- ============ §03 CONTRATO ============ -->
+    <section class="band" id="contrato">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · rieles de seguridad</div>
-          <h2>Lo que la skill nunca hace</h2>
+          <div class="eyebrow"><span class="num">03</span> · el contrato</div>
+          <h2>Las reglas que valen en cualquier modo</h2>
           <p class="sub">
-            Los antipatrones completos viven en <span class="mono">SKILL.md</span> y viajan en el
-            registro compacto que reciben los subagentes
-            (<span class="mono">.agents/skills/REGISTRY.md</span>).
+            Viven en <span class="mono">## Compact Rules</span> y
+            <span class="mono">## Shared contract</span> de la skill. Las compactas viajan a los
+            subagentes a través de <span class="mono">.agents/skills/REGISTRY.md</span>.
           </p>
         </div>
 
@@ -2373,51 +1847,594 @@
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No testea detalles de implementación</b>: helpers privados, estado interno,
-              cantidad de llamadas a métodos internos. Lo interno se refactoriza libre; los tests no
-              deberían enterarse.</span
-            >
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span><b>No se saltea el rojo.</b> El test va antes del código y falla por el motivo correcto.</span>
-          </div>
-          <div class="it">
-            <span class="bx"></span
-            ><span
-              ><b>No usa aserciones débiles</b> como <span class="mono">toBeTruthy()</span> o
-              <span class="mono">toBeDefined()</span> cuando se espera un valor exacto.</span
+              ><b>Un modo por corrida.</b> La primera palabra de los argumentos es el modo si coincide
+              con uno; si no, sale de la frase; si tampoco, la IA pregunta. Un "refrescá el contexto" a
+              secas nunca es <span class="mono">refresh-all</span>.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No comparte estado mutable entre tests.</b> Se resetea en
-              <span class="mono">beforeEach</span> o se crea dentro del test; si no, aparecen fallas
-              que dependen del orden.</span
+              ><b>Nunca inventa hechos de negocio.</b> Lee cada fuente que pide la referencia, y lo que
+              no pudo verificar va a la sección obligatoria <span class="mono">## Discovery Gaps</span>
+              del artefacto, no al cuerpo.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No deja pasar un test flaky en verde.</b> Se arregla la causa (tiempos, estado
-              compartido, red) o se pone en cuarentena con un ticket.</span
+              ><b>Nunca pisa sin aprobación.</b> Un artefacto existente se actualiza con candidato, diff
+              y tu sí explícito. Un mapa generado nunca se regenera entero.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No testea el framework</b>: matchers, internos de una librería, mecánica del ORM. Se
-              testea tu lógica.</span
+              ><b>El mapa viejo en markdown se lee, no se borra.</b> Un
+              <span class="mono">.context/business/business-*-map.md</span> de una versión anterior entra
+              como insumo (la lista <span class="mono">legacy</span> de
+              <span class="mono">CONTEXT_MAP_SKILLS</span>, en
+              <span class="mono">cli/lib/context-maps.ts</span>) y queda donde estaba.</span
             >
           </div>
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No sigue sin la documentación oficial</b> cuando la necesita: si no hay herramienta
-              de documentación de librerías disponible, se detiene y te dice cuál falta, sin un
+              ><b>Capacidad faltante = parada en el punto de uso.</b> Necesita
+              <span class="mono">db</span>, <span class="mono">library-docs</span>,
+              <span class="mono">web-search</span> y <span class="mono">diagrams</span> (las figuras de
+              los mapas, resuelta por la presencia de la skill
+              <span class="mono">diagram-design</span>). Sin una, nombra la capacidad y espera; nunca un
               sustituto silencioso.</span
             >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Después de escribir, solo agrega el puntero que falte.</b> Si el artefacto no figura en
+              los Key paths compartidos ni en <span class="mono">.agents/instructions/agent-project.md</span>, lo
+              suma en <span class="mono">agent-project.md</span>, nunca en <span class="mono">AGENTS.md</span>. Nunca escribe prosa operativa en
+              <span class="mono">CLAUDE.md</span>, que es el shim generado.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>El resto de los argumentos viaja tal cual.</b> Ruta del proyecto, filtro de módulo,
+              clave de épica o nombre de Master Sprint: lo que defina cada referencia.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 CREAR O ACTUALIZAR ============ -->
+    <section class="band" id="crear">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · crear o actualizar</div>
+          <h2>Si no existe, lo escribe. Si existe, te lo propone.</h2>
+          <p class="sub">
+            El modo CREATE o UPDATE no lo elegís vos: sale del estado del artefacto. Lo que cambia entre
+            artefactos es qué parte se regenera en un UPDATE.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Artefacto</th>
+                <th>Cómo detecta el estado</th>
+                <th>CREATE</th>
+                <th>UPDATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Mapa de negocio</th>
+                <td><span class="mono">bun run context:map &lt;skill&gt; --list</span>: aviso de placeholder o lista de secciones</td>
+                <td>Construye cada sección desde las fuentes y escribe el archivo una vez</td>
+                <td>
+                  Chequeo de frescura por sección, regenera <b>solo las secciones viejas</b>, muestra un
+                  diff por sección y espera. Nunca cambia el <span class="mono">id</span> de una sección.
+                </td>
+              </tr>
+              <tr>
+                <th>Plan maestro</th>
+                <td>¿existe <span class="mono">.context/master-implementation-plan.md</span>?</td>
+                <td>Lo genera de cero</td>
+                <td>
+                  Versión nueva, resumen del diff, confirmación. Resalta lo que sube o baja de Master
+                  Sprint.
+                </td>
+              </tr>
+              <tr>
+                <th>Roadmap de desarrollo</th>
+                <td>¿existe <span class="mono">.context/dev-roadmap.md</span>?</td>
+                <td>El documento completo</td>
+                <td>
+                  <b>Quirúrgico</b>: regenera solo la sección de execution sprints y conserva lo escrito
+                  a mano (columna, aristas, gates, bloqueos locales).
+                </td>
+              </tr>
+              <tr>
+                <th>Skill de contexto</th>
+                <td>¿existe <span class="mono">.agents/skills/&lt;aspect&gt;-context/</span>?</td>
+                <td>El andamio, después del análisis</td>
+                <td>Candidato, diff, espera. Suma reglas con fecha; nunca reescribe una existente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r" style="margin-top: 26px">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Detecta el estado, lee las fuentes, arma el candidato y lo compara con lo que hay.</p>
+            <p>Si un mapa cambió, revisa las <span class="mono">## Rules</span> y los gotchas de su skill contra el mapa nuevo.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Si el diff entra. Sin tu sí, el artefacto existente no se toca.</p>
+            <p>Qué hacer con una regla que el mapa nuevo contradice: la IA la <b>propone</b> para "No longer true", nunca la borra.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p>Solo lo aprobado, más la sección <span class="mono">discovery-gaps</span>, aunque esté vacía: prueba que se buscó.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> para un mapa: <span class="mono">bun run context:map &lt;skill&gt; --list</span>
+          imprime cada sección, con la fecha de la corrida en las escritas, y ningún aviso de placeholder.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 GATES ============ -->
+    <section class="band" id="gates">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · gates de dependencia</div>
+          <h2>Un gate duro para la corrida. Uno blando deja un hueco anotado.</h2>
+          <p class="sub">
+            Cada referencia es dueña de la redacción exacta de su gate. La regla general: si sin la
+            entrada el artefacto sería una lista de deseos, el gate es duro; si solo queda más pobre, es
+            blando y la falta se registra como Discovery Gap.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Modo</th>
+                <th>Gate duro (para)</th>
+                <th>Gates blandos (Discovery Gap)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">data</span></th>
+                <td>ninguno: se invoca sola</td>
+                <td>PRD y SRS bajo <span class="mono">.context/</span> (sugiere <span class="mono">/project-foundation</span>)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">features</span></th>
+                <td>ninguno</td>
+                <td>el mapa de datos</td>
+              </tr>
+              <tr>
+                <th><span class="mono">api</span></th>
+                <td>sin spec OpenAPI <b>y</b> sin backend con rutas para escanear</td>
+                <td>el mapa de datos, el mapa de features</td>
+              </tr>
+              <tr>
+                <th><span class="mono">master-plan</span></th>
+                <td>un mapa de datos generado</td>
+                <td>el mapa de features</td>
+              </tr>
+              <tr>
+                <th><span class="mono">dev-roadmap</span></th>
+                <td>al menos una épica con historias hijas (y sus links de dependencia) en el tracker</td>
+                <td>el mapa de datos, <span class="mono">master-design-plan.md</span>, <span class="mono">master-implementation-plan.md</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">context-skill</span></th>
+                <td>lo que la skill va a cubrir tiene que existir: un mapa, un módulo, un contrato</td>
+                <td>ninguno</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>"Mapa generado" se mide, no se supone</b
+            ><span
+              ><span class="mono">bun run context:map business-data-context</span> tiene que imprimir
+              secciones. Un aviso de placeholder cuenta como "no hay mapa", nunca como un sistema
+              vacío.</span
+            >
+          </div>
+          <div class="g">
+            <b>El mensaje de parada es literal</b
+            ><span
+              >Un gate duro corta con el texto exacto de su referencia, que nombra el paso que falta
+              (por ejemplo, correr <span class="mono">/project-context data</span> antes del plan
+              maestro).</span
+            >
+          </div>
+          <div class="g">
+            <b>Blando no es opcional en silencio</b
+            ><span
+              >La corrida sigue, avisa, y la limitación queda escrita en el artefacto con la sugerencia
+              de qué modo correr después.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 REFRESH-ALL ============ -->
+    <section class="band" id="refresh">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · refresh-all</div>
+          <h2>Todo el contexto, en un orden que no se negocia</h2>
+          <p class="sub">
+            Solo corre si lo pedís explícitamente. Cada paso cierra su propia validación y su propia
+            aprobación antes de que se cargue la referencia siguiente.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3><span class="mono">data</span></h3>
+            <p>Primero, porque los demás lo usan: features y api lo leen, el plan maestro lo exige.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">features</span></h3>
+            <p>Cruza cada entidad del mapa de datos con su cobertura CRUD.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">api</span></h3>
+            <p>Apunta sus recorridos a entidades del mapa de datos y a features del mapa de features.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">master-plan</span></h3>
+            <p>Convierte los mapas en un orden de épicas por valor, bloqueo y urgencia.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">dev-roadmap</span></h3>
+            <p>Baja ese orden a tickets, con el grafo de dependencias del tracker.</p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Se detiene</div>
+            <h3>Ante una parada dura o un no</h3>
+            <ul>
+              <li>Un gate duro que falla corta la cadena entera.</li>
+              <li>Un diff que rechazás también: no salta al paso siguiente.</li>
+              <li>Un gate blando faltante no la corta: queda como Discovery Gap, como en cada modo suelto.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Fuera de la cadena</div>
+            <h3><span class="mono">context-skill</span> nunca entra</h3>
+            <ul>
+              <li>Andamiar una skill de contexto es una decisión por aspecto, no un refresco.</li>
+              <li>
+                <span class="mono">/project-foundation</span>, en su fase de Discovery, corre los mapas
+                en el mismo orden (<span class="mono">data</span> → <span class="mono">features</span> →
+                <span class="mono">api</span>) y deja el plan maestro para el final.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 MAPAS ============ -->
+    <section class="band" id="mapas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · modos data, features, api</div>
+          <h2>Cada mapa, una mirada distinta sobre el mismo sistema</h2>
+          <p class="sub">
+            Cada mapa responde una pregunta distinta y cita a los otros por id de sección en vez de
+            copiarlos. La regla de oro de todos: sintetizar, no volcar. El esquema lo sirve la base
+            en vivo; el mapa escribe qué significa.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">data · "¿dónde vive X y qué lo toca?"</div>
+            <h3>Mapa de datos</h3>
+            <p>
+              Lee esquema, RLS y migraciones por la capacidad <span class="mono">db</span>, más backend,
+              frontend, PRD y SRS. Escribe entidades con su rol de negocio, quién lee y escribe cada
+              tabla, las migraciones que cambiaron el significado de una entidad, todos los flujos
+              importantes (sin tope), máquinas de estado, procesos automáticos e integraciones.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">features · "¿qué puede hacer el sistema?"</div>
+            <h3>Mapa de features</h3>
+            <p>
+              Una feature es cualquier capacidad: endpoint, acción de UI, proceso de fondo, integración.
+              Escribe el catálogo por dominio con su estado, la matriz CRUD por entidad, rutas, UI,
+              integraciones y flags. Si el PRD y el código discrepan, gana el código y la diferencia va
+              a Discovery Gaps.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">api · "¿cómo opera el negocio a través del API?"</div>
+            <h3>Mapa del API</h3>
+            <p>
+              Narrativo, no un catálogo de endpoints: modelo de auth por niveles, recorridos de negocio
+              críticos trazados de punta a punta, arquitectura detrás del API e integraciones con su modo
+              de falla visible. Lo que el spec OpenAPI ya expresa se enlaza, no se repite.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">todos · antes de la primera figura</div>
+            <h3>Figuras con <span class="mono">diagram-design</span></h3>
+            <p>
+              Chequeo de la capacidad <span class="mono">diagrams</span> en el punto de uso. Cada hecho
+              que muestra una figura también está en el texto: la IA lee solo el texto. Si la skill no
+              está, para; nunca un SVG o un ASCII dibujado a mano en su lugar.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Cuando un mapa cambia, la judgment layer también se revisa.</b> Después de escribir, la IA
+          contrasta las <span class="mono">## Rules</span> y <span class="mono">references/gotchas.md</span>
+          de la skill del mapa con lo nuevo y propone cambios. Y si una skill de contexto del proyecto
+          se apoya en ese mapa, ofrece correr <span class="mono">context-skill</span> en UPDATE: los
+          hechos acaban de cambiar y ya hay un humano mirando un diff.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 MASTER-PLAN ============ -->
+    <section class="band" id="plan">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · modo master-plan</div>
+          <h2>Qué construir, en qué orden, y por qué ese orden importa</h2>
+          <p class="sub">
+            La capa de estrategia que se apoya sobre los mapas. Escrita con voz de ingeniero senior
+            hablándole a un tech lead que recién llega: guía, no catálogo.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Gate y lectura</h3>
+            <p>
+              Sin mapa de datos generado, para: un plan sin mapa de entidades y flujos es una lista de
+              deseos. Sin mapa de features, avisa y sigue. Suma PRD, SRS, glosario y el log de git para
+              saber qué ya se entregó.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Puntaje interno</h3>
+            <p>
+              Valor para el usuario × factor de bloqueo × urgencia. El producto ubica cada unidad en
+              Master Sprint 0 (fundacional), 1 (MVP), 2 (posterior) o la deja diferida. La tabla de
+              puntaje no se publica: se publican las conclusiones.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Dependencias y acoples ocultos</h3>
+            <p>
+              Traza qué destraba cada ítem fundacional y marca siempre las features que comparten una
+              entidad pero viven en épicas distintas: el origen típico de un rediseño de esquema a mitad
+              de sprint.
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">La IA hace</span>
+            <p>Ordena cada prioridad citando evidencia: un flujo del mapa de datos, una fila del de features, una prioridad del PRD o una integración con nombre.</p>
+          </div>
+          <div class="hum">
+            <span class="k">Vos decidís</span>
+            <p>Si el orden propuesto entra. En UPDATE, mirá primero lo que sube o baja de Master Sprint: son los cambios de más peso.</p>
+          </div>
+          <div class="out">
+            <span class="k">Sale</span>
+            <p><span class="mono">.context/master-implementation-plan.md</span>, con huecos de implementación escritos como spikes.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Nunca</b> fechas, código, payloads ni el plan de una historia. Después de un cambio en la
+          estructura de Master Sprints, sigue <span class="mono">/project-context dev-roadmap</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 DEV-ROADMAP ============ -->
+    <section class="band" id="roadmap">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · modo dev-roadmap</div>
+          <h2>Qué ticket sigue, y qué lo está bloqueando</h2>
+          <p class="sub">
+            La capa de secuencia. Convierte el grafo de links de dependencia del tracker y el contexto
+            de diseño local en un orden de ejecución. Es dueño de las aristas y los gates; nunca del
+            estado vivo de un ticket.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># tres documentos, tres altitudes</span>
+.context/master-implementation-plan.md   <span class="s">épica / estrategia</span>   "qué construir y por qué ese orden"   <span class="c">← master-plan</span>
+.context/dev-roadmap.md                  <span class="s">ticket / secuencia</span>   "qué destraba qué, en qué sprint"     <span class="c">← dev-roadmap</span>
+.context/PBI/.../implementation-plan.md  <span class="s">historia / archivos</span>  "cómo se construye un ticket"        <span class="c">← /sprint-development</span></pre>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Sección</th>
+                <th>Qué guarda</th>
+                <th>En un UPDATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Columna de épicas</th>
+                <td>Qué épica va antes de cuál, forzado por la topología de entidades del mapa de datos</td>
+                <td>Se conserva lo escrito a mano</td>
+              </tr>
+              <tr>
+                <th>Grafo de historias</th>
+                <td>Cada arista dura o blanda <b>con su razón</b>: lo que ningún otro lugar guarda</td>
+                <td>Se conserva; lo nuevo se agrega y un conflicto se marca</td>
+              </tr>
+              <tr>
+                <th>Execution sprints</th>
+                <td>Lotes paralelos por orden topológico (Kahn)</td>
+                <td><b>Se regenera</b> desde el grafo vivo</td>
+              </tr>
+              <tr>
+                <th>Gates de mockup</th>
+                <td>Historias que no arrancan hasta que llegue su mockup</td>
+                <td>Se conserva</td>
+              </tr>
+              <tr>
+                <th>Estado vivo</th>
+                <td>Una receta de consulta, nunca una tabla de estado</td>
+                <td>Solo se editan a mano las listas locales: bloqueos previos al desarrollo y aristas pendientes de mapear</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Orden, no disponibilidad</b
+            ><span
+              >Prohibido "listo", "disponible" o "se puede arrancar ya". Se escribe "trabajable una vez
+              que PROJ-38 esté dev-done" o "sin aristas previas". Si se puede tomar depende del estado
+              vivo, que esta página no conoce.</span
+            >
+          </div>
+          <div class="g">
+            <b>Dos fechas, nunca una</b
+            ><span
+              >"Edges last updated" y "Mockup gates last updated" por separado, más la línea "Status
+              snapshot: none". Una sola fecha haría parecer fresco al estado.</span
+            >
+          </div>
+          <div class="g">
+            <b>Un ciclo frena todo</b
+            ><span
+              >Si el grafo tiene un ciclo, la corrida se detiene, nombra las claves y te pide reorientar
+              un link. Nunca rompe un ciclo sola.</span
+            >
+          </div>
+          <div class="g">
+            <b>Catálogo de links al día</b
+            ><span
+              ><span class="mono">bun run jira:sync-link-types</span> antes de ordenar: un catálogo viejo
+              confunde dependencias con relaciones y corrompe el orden.</span
+            >
+          </div>
+          <div class="g">
+            <b>Ninguna arista inventada</b
+            ><span
+              >Una dependencia que "se siente" es una señal de refinamiento: se agrega el link en el
+              tracker y se vuelve a correr.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Quién lo usa.</b> <span class="mono">/sprint-development</span> lo consulta en su Phase 0b
+          antes de tomar un ticket, y consulta el tracker en vivo para el candidato y sus bloqueadores
+          directos. <span class="mono">/product-management</span> le delega el orden de sprints: el
+          algoritmo sigue definido en su <span class="mono">references/sprint-sequencing.md</span>, y la
+          escritura pasa por este modo.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CONTEXT-SKILL ============ -->
+    <section class="band" id="skill">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · modo context-skill</div>
+          <h2>Las reglas para leer bien un aspecto que nadie mapeó</h2>
+          <p class="sub">
+            Una skill <span class="mono">&lt;aspect&gt;-context</span> (<span class="mono">billing</span>,
+            <span class="mono">auth</span>, una integración como <span class="mono">stripe</span>) es la
+            judgment layer sobre ese aspecto. Las fuentes guardan los hechos; la skill guarda las reglas
+            para leerlos sin equivocarse.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Antes de escribir</h3>
+            <p>
+              Lee completo lo que va a cubrir y lista cada lugar donde una sesión competente leería mal:
+              borrados lógicos, columnas derivadas, RLS que esconde filas a un rol, estados con nombres
+              distintos en base, API y UI, comportamiento que cambia entre staging y producción.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Filtro de tres preguntas</h3>
+            <p>
+              Si se puede regenerar, se queda en el mapa o el código. Si es un hecho, también. Solo el
+              criterio que tiene que llegar sin que nadie lo pida se vuelve regla, con fecha y con cómo
+              se midió. Sin medición, no hay regla.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Construir con <span class="mono">skill-creator</span></h3>
+            <p>
+              <span class="mono">SKILL.md</span> desde la plantilla de
+              <span class="mono">agentic-dev-core/references/skill-scaffold.md</span>, con
+              <span class="mono">metadata.kind: context</span>, más
+              <span class="mono">references/gotchas.md</span>. Si el builder no está instalado, arma el
+              andamio desde la plantilla y lo dice en el reporte.
+            </p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Gate de validación</div>
+            <h3>Lo que tiene que dar verde</h3>
+            <ul>
+              <li>
+                <span class="mono">bun run skills:check</span>: <span class="mono">KIND-SUFFIX</span> y
+                <span class="mono">STALE-PATH</span>, estricto para una skill de contexto (cada ruta de
+                <span class="mono">.context/</span> que cita tiene que existir).
+              </li>
+              <li><span class="mono">bun run skills:registry</span>: el bloque nuevo aparece en <span class="mono">REGISTRY.md</span> con <span class="mono">kind: context</span>.</li>
+              <li>Una fila en la tabla &laquo;Project context skills&raquo; de <span class="mono">.agents/instructions/agent-project.md</span>, con los triggers que la enrutan. Nunca en <span class="mono">agent-skills-and-mcps.md</span>: <span class="mono">bun sync</span> lo pisa en cada actualización.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Nunca</div>
+            <h3>Copiar ni salir de su lugar</h3>
+            <ul>
+              <li>Copiar una tabla, una lista de entidades o de endpoints de un mapa: la skill cita, no duplica.</li>
+              <li>
+                Subirla al boilerplate: es del proyecto por construcción, y
+                <span class="mono">bun sync</span> nunca la entrega, la pisa ni la borra.
+              </li>
+              <li>Escribir en Jira o Confluence, o editar otra skill.</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -2430,66 +2447,43 @@
           <div class="eyebrow"><span class="num">11</span> · qué le decís a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            Esta skill no tiene modos con nombre: lo que pedís elige la referencia. Nombrás la skill
-            y describís el tramo, en español o en inglés.
+            El nombre de la skill más el modo. La primera palabra después del nombre elige el modo, y el
+            resto llega intacto a su referencia.
           </p>
         </div>
 
         <div class="hosts r">
           <div class="host">
             <h3>Claude Code</h3>
-            <span class="say">/unit-testing TDD this function</span>
-            <p>La barra carga la skill; el resto de la frase elige el tema.</p>
+            <span class="say">/project-context data</span>
+            <p>Barra de la skill más el modo. Sin modo, la IA lo saca de la frase o pregunta.</p>
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill unit-testing: qué mockear acá</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">cargá la skill project-context, modo master-plan</span>
+            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill unit-testing: write unit tests for this function</span>
+            <span class="say">cargá la skill project-context, modo dev-roadmap</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
 
-        <div class="tablewrap r" style="margin-top: 26px">
-          <table class="cmp narrow">
-            <thead>
-              <tr>
-                <th>Si decís algo como…</th>
-                <th>La IA lee</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>"TDD this function" · "red-green-refactor" · "test before code"</th>
-                <td><span class="mono">tdd-workflow.md</span></td>
-              </tr>
-              <tr>
-                <th>"name this test" · "AAA" · "Given-When-Then"</th>
-                <td><span class="mono">test-naming.md</span></td>
-              </tr>
-              <tr>
-                <th>"qué mockear" · "Vitest spy" · "DI for testing"</th>
-                <td><span class="mono">mocking-patterns.md</span></td>
-              </tr>
-              <tr>
-                <th>"coverage target" · "mutation testing"</th>
-                <td><span class="mono">test-coverage.md</span></td>
-              </tr>
-              <tr>
-                <th>principios generales · setup del runner</th>
-                <td><span class="mono">unit-testing.md</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="figcap">
-          las referencias viven en <span class="mono">.agents/skills/unit-testing/references/</span>
-          · ante la duda, la IA arranca por <span class="mono">unit-testing.md</span>, que apunta a las
-          demás
-        </p>
+        <pre class="code r"><span class="c"># un mapa acotado a un módulo</span>
+/project-context data <span class="s">module=billing</span>
+
+<span class="c"># el roadmap de una sola épica (o un nombre de Master Sprint)</span>
+/project-context dev-roadmap <span class="s">{{PROJECT_KEY}}-12</span>
+
+<span class="c"># una skill de contexto propia, sobre algo que ya existe</span>
+/project-context context-skill <span class="s">billing</span>
+
+<span class="c"># todo, en orden, con una aprobación por paso</span>
+/project-context refresh-all
+
+<span class="c"># leer un mapa ya generado: el reader, nunca el HTML crudo</span>
+bun run context:map business-data-context <span class="k">--section</span> <span class="s">entities</span></pre>
       </div>
     </section>
 
@@ -2498,41 +2492,65 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">12</span> · alrededor de esta skill</div>
-          <h2>A quién le pasa la posta</h2>
+          <h2>Con quién trabaja</h2>
+          <p class="sub">
+            Al entrar resuelve sus categorías complementarias (<span class="mono">backend-db</span>,
+            <span class="mono">issue-tracker</span>, <span class="mono">meta-skill</span>) desde
+            <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
         </div>
 
         <div class="alts r">
           <div class="alt">
-            <div class="kk">Ida y vuelta · historias</div>
+            <div class="kk">Antes · la fundación</div>
+            <h3>/project-foundation</h3>
+            <p>
+              Su fase de Discovery orquesta los modos de esta skill para dejar armado el modelo mental
+              que las demás dan por hecho. Deck:
+              <a href="../project-foundation/how-it-works.es.html">cómo funciona project-foundation</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Antes · el backlog</div>
+            <h3>/product-management</h3>
+            <p>
+              Siembra las épicas e historias que el roadmap necesita, y le delega la escritura del orden
+              de sprints. Deck:
+              <a href="../product-management/how-it-works.es.html">cómo funciona product-management</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Después · cada historia</div>
             <h3>/sprint-development</h3>
             <p>
-              Llama a esta skill en el Stage 2 para un tramo TDD o el reproductor de un bug, y retoma
-              cuando la unidad está en verde y refactorizada.
+              Lee los mapas por sección al planear y consulta el roadmap en su Phase 0b. Deck:
+              <a href="../sprint-development/how-it-works.es.html">cómo funciona sprint-development</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Antes · base técnica</div>
-            <h3>/project-bootstrap</h3>
+            <div class="kk">Al lado · los mockups</div>
+            <h3>/design-system</h3>
             <p>
-              Monta el repo y deja los tests unitarios como tema aparte, para correr en cualquier
-              momento después. Deck:
-              <a href="../project-bootstrap/como-funciona.es.html">Project bootstrap</a>.
+              El mapa US→Screen de <span class="mono">master-design-plan.md</span> alimenta los gates de
+              mockup del roadmap (el contrato de fidelidad de UI de <span class="mono">AGENTS.md</span>).
+              Deck: <a href="../design-system/flujo-mockups.es.html">flujo de mockups</a>.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Fuera de alcance · navegador</div>
-            <h3>/playwright-cli</h3>
+            <div class="kk">Al entrar · composables</div>
+            <h3>supabase · /acli</h3>
             <p>
-              Para lo end-to-end contra la app corriendo. El diseño de tests de integración y E2E
-              pertenece a un flujo de QA aparte.
+              <span class="mono">supabase</span> para leer el esquema vivo en los modos de mapa;
+              <span class="mono">/acli</span> antes de cualquier lectura de Jira en el roadmap y el plan
+              maestro.
             </p>
           </div>
           <div class="alt">
-            <div class="kk">Después · git</div>
-            <h3>/git-flow-master</h3>
+            <div class="kk">Al entrar · constructores</div>
+            <h3>skill-creator · diagram-design</h3>
             <p>
-              Los tests viajan en el mismo commit que el comportamiento que verifican, no en un commit
-              <span class="mono">test:</span> aparte.
+              <span class="mono">skill-creator</span> construye cada skill de contexto;
+              <span class="mono">diagram-design</span> dibuja las figuras de los mapas.
             </p>
           </div>
         </div>
@@ -2540,10 +2558,15 @@
         <div class="callout blue r">
           <b>Para leer más:</b>
           <a
-            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/unit-testing/SKILL.md"
-            >.agents/skills/unit-testing/SKILL.md</a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-context/SKILL.md"
+            >.agents/skills/project-context/SKILL.md</a
           >
-          y su carpeta <span class="mono">references/</span>, una referencia por tema.
+          y sus referencias en <span class="mono">references/</span>, una por modo. La anatomía de un
+          mapa, su lectura por sección, el chequeo de frescura y la auto-actualización están en
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/business-context-maps.md"
+            >business-context-maps.md</a
+          >.
         </div>
       </div>
     </section>
@@ -2552,13 +2575,14 @@
       <div class="wrap">
         <div class="prose">
           <p>
-            <b style="color: var(--ink)">La idea de fondo.</b> Un test unitario fija lo que la unidad
-            promete, no cómo lo hace por dentro. Ciclos cortos, mocks solo en los bordes y la
-            cobertura leída como señal: así los tests sobreviven al refactor que los justificó.
+            <b style="color: var(--ink)">La idea de fondo.</b> Este contexto es síntesis: dos sesiones
+            lo escribirían distinto y rehacerlo cuesta caro. Por eso cada modo lee todas sus fuentes,
+            anota lo que no pudo verificar en vez de inventarlo, y nunca reemplaza lo que ya existe sin
+            mostrarte el diff.
           </p>
         </div>
         <div class="sig">
-          <span>Fuente: <span class="mono">.agents/skills/unit-testing/</span></span>
+          <span>Fuente: <span class="mono">.agents/skills/project-context/</span></span>
           <span>·</span>
           <span><a href="../../index.html">← volver a Planos</a></span>
         </div>
