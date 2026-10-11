@@ -1041,7 +1041,7 @@
                 <td>
                   Las filas disparadas se ordenan por la fuerza de su ancla (un <code>id</code> del
                   alcance, después hits de <code>paths:</code>, después triggers distintos, después la
-                  coincidencia más temprana). Solo las primeras <code>MAX_ROUTED_SECTIONS</code> (3)
+                  coincidencia más temprana). Solo las primeras <code>MAX_ROUTED_SECTIONS</code>
                   secciones reciben un <code>ROUTE:</code> obligatorio; el resto va a una sola línea
                   <code>ROUTE-OPTIONAL:</code>. Medido: un agente lee una ruta sola mucho más que una
                   de cinco en el mismo turno (ADR-0018).
@@ -1334,22 +1334,22 @@
             </thead>
             <tbody>
               <tr>
-                <td>Objetivo · 16 KiB</td>
+                <td>Objetivo</td>
                 <td><code>L0_TARGET</code></td>
                 <td>aviso: hay detalle que podría vivir en una sección</td>
               </tr>
               <tr>
-                <td>Techo · 24 KiB</td>
+                <td>Techo</td>
                 <td><code>L0_BUDGET</code></td>
                 <td>error: el L0 del boilerplate no entra</td>
               </tr>
               <tr>
-                <td>Con agregados del proyecto · 28 KiB</td>
+                <td>Con agregados del proyecto</td>
                 <td><code>L0_PROJECT_BUDGET</code></td>
                 <td>error: el texto del proyecto va a <code>agent-project.md</code> o a una context skill</td>
               </tr>
               <tr>
-                <td>Tope de Codex · 32 KiB</td>
+                <td>Tope de Codex</td>
                 <td><code>CODEX_PROJECT_DOC_MAX_BYTES</code></td>
                 <td>error siempre, digan lo que digan los otros: es el valor por defecto de <code>project_doc_max_bytes</code></td>
               </tr>
@@ -1359,7 +1359,7 @@
         <div class="callout warn">
           <span class="ic">Ojo</span>
           <div>
-            <strong>El objetivo de 16 KiB avisa a propósito.</strong> §2 entra entero por regla del
+            <strong>El objetivo avisa a propósito.</strong> §2 entra entero por regla del
             dueño, y eso deja a L0 por encima del objetivo y por debajo del techo. El aviso queda a la
             vista para que nadie sume texto a L0 sin pensarlo. El tamaño actual lo imprime
             <code>bun run instructions:check</code>.
