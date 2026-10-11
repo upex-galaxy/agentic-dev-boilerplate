@@ -1623,7 +1623,10 @@
             ><span class="dot"></span> para quien <b>arranca</b>, el <b>PM</b> y el
             <b>tech lead</b></span
           >
-          <span class="chip"><span class="dot"></span> corre <b>una vez</b> por proyecto, al inicio</span>
+          <span class="chip"
+            ><span class="dot"></span> corre <b>una vez</b> por proyecto, al inicio (en una app
+            existente, solo <b>Discovery</b>)</span
+          >
           <span class="chip agent"
             ><span class="dot"></span> sale <b>documentación</b>, no código</span
           >
@@ -1721,6 +1724,79 @@
           <b>Lo que sale es "listo para <span class="mono">/project-bootstrap</span>"</b>, no
           "listo para producción". La fundación es documentación: el código empieza en la skill
           siguiente.
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">01·b</span> · app existente: solo Discovery</div>
+          <p class="sub" style="font-size: 1rem">
+            Una app cuyo código ya existe no tiene un producto que definir: su fundación es lo que
+            el código hace, escrito. Aplica cuando
+            <span class="mono">.template/installer.lock.json</span> dice
+            <span class="mono">adopted: true</span> (el mismo dato que lee
+            <span class="mono">/project-context</span>) o cuando pedís documentar una app existente
+            que no tiene contenido en <span class="mono">.context/PRD/</span> ni
+            <span class="mono">.context/SRS/</span>. Un proyecto que ya tiene PRD y SRS conserva la
+            cadena completa.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Fase</th>
+                <th>En una app existente</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>1 Constitución, 2 PRD, 3 SRS</th>
+                <td>
+                  No corren. Si el equipo ya tiene documentos de producto reales, los puede
+                  entregar; nada se inventa para llenar una fase.
+                </td>
+              </tr>
+              <tr>
+                <th>2.5 Diseño</th>
+                <td>
+                  No corre desde acá. El <span class="mono">DESIGN.md</span> sale del tema vivo con
+                  <span class="mono">/design-system extract</span>, opcional y por su cuenta.
+                </td>
+              </tr>
+              <tr>
+                <th>4 · pasos 1 a 3 y 5</th>
+                <td>
+                  Los modos de <span class="mono">/project-context</span>, que leen el código y el
+                  bloque <span class="mono">stack:</span>. Un mapa ya generado no se regenera: solo
+                  se refresca por su propio modo si quedó viejo.
+                </td>
+              </tr>
+              <tr>
+                <th>4 · paso 4, guía de desarrollo</th>
+                <td>
+                  Se reconstruye desde el código: estructura de carpetas, convenciones y comandos
+                  salen de la app, de su <span class="mono">package.json</span> y del bloque
+                  <span class="mono">stack:</span>, nunca de los defaults del boilerplate.
+                </td>
+              </tr>
+              <tr>
+                <th>4 · paso 6, glosario</th>
+                <td>
+                  Se siembra con los mapas, los identificadores del código, los textos de la UI
+                  viva, los ADRs existentes y los nombres de épica del tracker. Si el archivo ya
+                  existe, se salta.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>La capacidad <span class="mono">db</span> es opcional en este camino.</b> Con
+          <span class="mono">schema_source: migrations</span> el mapa de datos lee los archivos sin
+          conexión, y un proyecto sin acceso a la base deja un Discovery Gap en el mapa en vez de
+          frenar. El plan solo lleva Discovery (<span class="mono">discovery-only</span>) y se
+          sigue con <span class="mono">/product-management</span> para el backlog y
+          <span class="mono">/sprint-development</span> por historia, nunca con las fases base de
+          <span class="mono">/project-bootstrap</span>.
         </div>
       </div>
     </section>
@@ -2345,6 +2421,14 @@
           <div class="it">
             <span class="bx"></span
             ><span><b>No entrega un PRD sin fuera de alcance</b>, ni un SRS con decisiones difíciles de revertir sin su ADR.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No fabrica Constitución, PRD ni SRS</b> para una app cuyo código ya existe: su
+              fundación es solo Discovery, leído del código. Un PRD o SRS ausente ahí no es un
+              hueco que llenar.</span
+            >
           </div>
           <div class="it">
             <span class="bx"></span

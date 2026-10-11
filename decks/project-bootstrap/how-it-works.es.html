@@ -2322,6 +2322,28 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
               sustituto silencioso.</span
             >
           </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No escribe la capa de base de datos ni la de UI sin sus skills de stack
+              cargadas:</b> <span class="mono">supabase</span> y
+              <span class="mono">supabase-postgres-best-practices</span> antes de instalar, de tocar
+              esquema, RLS o migraciones por el MCP, o de generar tipos;
+              <span class="mono">frontend-design</span>, <span class="mono">shadcn</span> y
+              <span class="mono">tailwind-css-patterns</span> antes de la estrategia de componentes.
+              Si no están instaladas lo dice una vez, apunta a <span class="mono">bun setup</span> y
+              sigue; nunca se saltea en silencio.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No cambia la base fuera de la doctrina de cambios.</b> Todo pasa por el MCP de la
+              base: primero lee <span class="mono">list_migrations</span>, el DDL va solo por
+              <span class="mono">apply_migration</span>, se verifica en el destino y una migración
+              que cambia la arquitectura deja su ADR.</span
+            >
+          </div>
         </div>
 
         <div class="callout agent r">

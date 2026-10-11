@@ -2024,7 +2024,7 @@
         </div>
 
         <pre class="code r"><span class="c">/* qa-guide-snapshot</span>
-<span class="c">   stack=…  ui-kit=…  auth-method=…  docs-route=…  openapi-spec=…</span>
+<span class="c">   skill-version=…  stack=…  ui-kit=…  auth-method=…  docs-route=…  openapi-spec=…</span>
 <span class="c">   db=…  repos-shape=…  mcp-config-files=…  page-features=…</span>
 <span class="c">   language=…  publisher=…  credentials-source=…  default-branch=…</span>
 <span class="c">   build-sha-source=…  testability=…  generated=…  content-hash=…</span>
@@ -2068,8 +2068,8 @@
               <tr>
                 <th>Re-scaffold completo</th>
                 <td>
-                  Salto mayor de versión o tres o más campos de código movidos a la vez. Solo con tu
-                  OK, y guarda una copia de la página anterior.
+                  Salto mayor en <span class="mono">skill-version</span> o tres o más campos de código
+                  movidos a la vez. Solo con tu OK, y guarda una copia de la página anterior.
                 </td>
               </tr>
             </tbody>
@@ -2217,15 +2217,19 @@
           <div class="step">
             <h3>§3 · La trifuerza y el <span class="mono">.env</span></h3>
             <p>
-              UI + API + DB, y cómo cargar las variables antes de lanzar el agente: si una no carga,
-              el MCP devuelve 401/403 y hay que salir, corregir y volver a entrar.
+              UI + API + DB, y cómo se cargan las variables: el agente abre sin ellas, cada MCP lee
+              su <span class="mono">.env</span> al arrancar y un comando que necesita un valor corre con
+              <span class="mono">bunx varlock run</span>. Si una no carga, el MCP devuelve 401/403 y
+              hay que salir, corregir y volver a entrar.
             </p>
           </div>
           <div class="step">
             <h3>§4 · Base de datos, dos caminos</h3>
             <p>
-              El MCP de base (DBHub) o una URI para la extensión SQL del editor, con el mismo rol de
-              solo lectura. Roles, columnas revocadas o la prueba de RLS, solo si el proyecto los
+              El MCP de base o una URI para la extensión SQL del editor, con el mismo rol de solo
+              lectura. El MCP sale del bloque <span class="mono">stack:</span> de
+              <span class="mono">.agents/project.yaml</span>: DBHub por defecto, y una app Supabase suma
+              además la pestaña del MCP de Supabase, también de solo lectura. Roles, columnas revocadas o la prueba de RLS, solo si el proyecto los
               tiene.
             </p>
           </div>
@@ -2233,7 +2237,9 @@
             <h3>§5 · API, dos caminos</h3>
             <p>
               Las requests de auth reales del proyecto, el MCP de OpenAPI o el de Postman, y el link a
-              la UI de docs detectada. Sin camino a un token, lo dice: nunca inventa un endpoint.
+              la UI de docs detectada. El MCP de OpenAPI solo lista endpoints y lee sus esquemas: las
+              requests con auth corren con curl y el token personal de cada tester. Sin camino a un
+              token, lo dice: nunca inventa un endpoint.
             </p>
           </div>
           <div class="step">
@@ -2359,7 +2365,7 @@
                 link) o una tabla de cuentas demo compartidas, cuando no hay alta propia.
               </li>
               <li>Auth en la DB: la URI cruda para un editor SQL y los campos separados que lee el MCP. No son intercambiables.</li>
-              <li>Auth en la API: un bloque <span class="mono">.env</span> con el token <b>vacío</b>; cada tester genera el suyo.</li>
+              <li>Auth en la API: un bloque <span class="mono">.env</span> con la URL base y la URL del spec, sin ranura para el token; cada tester genera el suyo y lo usa por nombre con curl.</li>
               <li>Cómo activar los MCPs, seguridad y un pie que apunta a <span class="mono">/qa</span>.</li>
             </ul>
           </div>
@@ -2814,7 +2820,8 @@
             <h3>Seguimiento de docs</h3>
             <p>
               Suma la página y la ubicación del artefacto a las rutas clave de
-              <span class="mono">AGENTS.md</span>, para que otras skills sepan que existen.
+              <span class="mono">.agents/instructions/agent-project.md</span>, para que otras skills
+              sepan que existen.
             </p>
           </div>
           <div class="alt">

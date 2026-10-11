@@ -716,7 +716,10 @@
         <div class="paths">
           <div class="card">
             <h3>Arranco un proyecto</h3>
-            <p>Querés un repo nuevo con todo cableado: credenciales, harness, skills.</p>
+            <p>
+              Querés un repo nuevo con todo cableado (credenciales, harness, skills) o instalar la
+              capa agentic en una app que ya existe.
+            </p>
             <a class="go" href="#arrancar">→ 02 Arrancar</a>
           </div>
           <div class="card agent">
@@ -815,7 +818,7 @@
         <!-- 02 -->
         <section id="arrancar">
           <div class="eyebrow"><span class="num">02</span> arrancar</div>
-          <h2>Tres maneras de empezar</h2>
+          <h2>Maneras de empezar</h2>
           <div class="tbl">
             <table>
               <thead>
@@ -840,6 +843,16 @@
                   <td><b>Clonar el boilerplate</b></td>
                   <td>Vas a contribuir al boilerplate mismo</td>
                   <td><code>bun install</code> y <code>bun setup</code></td>
+                </tr>
+                <tr>
+                  <td><b>App existente</b></td>
+                  <td>
+                    Ya tenés una aplicación andando y querés sumarle la capa agentic sin pisar nada
+                  </td>
+                  <td>
+                    <code>bunx create-agentic-dev --adopt</code> dentro de la app, después
+                    <code>/project-adoption</code> en una sesión del agente
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -1034,6 +1047,7 @@
               <code>/unit-testing</code> para TDD dentro de una historia,
               <code>/testability-guide</code> para la página que recibe QA,
               <code>/pr-review-lead</code> para revisar el PR de otra persona,
+              <code>/project-adoption</code> para que el agente entienda una app que ya existía,
               <code>/jira-administration</code> para la configuración de Jira y
               <code>/autonomous-delivery</code> para corridas programadas sin nadie en la línea. Qué
               hace cada una, en <code>REGISTRY.md</code>.

@@ -778,21 +778,26 @@
                 el contrato de salida (§2 más el OUTPUT STYLE activo), la línea
                 <code>AGENT IDENTITY:</code> con worktree, sesión y harness que copian los trailers de
                 commit, una línea <code>ORCA:</code> solo si el binario <code>orca</code> es
-                alcanzable, y como mucho un aviso de setup (checkout sin <code>.env</code>, o
-                worktree sin <code>bun run worktree:provision</code>).
+                alcanzable, las líneas <code>ROUTE:</code> y <code>ROUTE-OPTIONAL:</code> con las
+                secciones de instrucciones que el prompt necesita, y como mucho un aviso de setup
+                (checkout sin <code>.env</code>, o worktree sin
+                <code>bun run worktree:provision</code>).
               </td>
             </tr>
             <tr>
               <td>Claude Code</td>
               <td>
                 <code>.claude/settings.json</code> → hook <code>UserPromptSubmit</code> que ejecuta
-                el emisor.
+                el emisor. Además lo ejecuta en <code>SessionStart</code> con <code>compact</code> o
+                <code>clear</code>, para re-armar las líneas, y en <code>PostToolUse</code>, donde
+                solo avisa con <code>ROUTE-PENDING:</code> si quedó una ruta sin leer.
               </td>
             </tr>
             <tr>
               <td>Codex</td>
               <td>
-                <code>.codex/hooks.json</code> → el mismo hook <code>UserPromptSubmit</code>.
+                <code>.codex/hooks.json</code> → el mismo hook <code>UserPromptSubmit</code>, y
+                <code>SessionStart</code> con <code>compact</code> o <code>clear</code>.
               </td>
             </tr>
             <tr>

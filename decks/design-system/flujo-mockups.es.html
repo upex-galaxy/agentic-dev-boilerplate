@@ -1415,7 +1415,7 @@
           >
           <span class="chip"
             ><span class="dot"></span> herramientas:
-            <b>Claude Design · Open Design · Figma · HTML manual</b></span
+            <b>Claude Design · Open Design · Figma · HTML manual · skill de diseño (Modo C)</b></span
           >
           <span class="chip agent"
             ><span class="dot"></span> motor: <b>Claude Code · OpenCode · Codex + skills</b></span
@@ -1432,7 +1432,7 @@
           <div class="node">
             <div class="n">Plano</div>
             <h3>Mockup por historia</h3>
-            <p>Lo produce una herramienta de diseño y un humano lo ratifica. La IA nunca lo escribe a mano.</p>
+            <p>Lo produce una herramienta de diseño (o la IA con una skill de diseño cargada) y un humano lo ratifica. La IA nunca lo escribe a mano sin skill de diseño.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
@@ -1503,8 +1503,9 @@
                 siempre pregunta) desde mockups que <b>vos ratificás</b>.
               </li>
               <li>
-                La IA <b>nunca</b> escribe un mockup a mano: lo encarga a una herramienta de diseño
-                o lo traés vos.
+                La IA <b>nunca</b> escribe un mockup a mano sin una skill de diseño cargada: lo
+                encarga a una herramienta de diseño, lo escribe a través de esa skill (Modo C) o lo
+                traés vos.
               </li>
               <li>
                 Lo consume <b>/sprint-development</b> en cada historia de UI (Regla 14 del repo).
@@ -2062,11 +2063,22 @@
               que después podés refinar vos, a mano.
             </p>
           </div>
+          <div class="step">
+            <h3>HTML de la IA con una skill de diseño (Modo C)</h3>
+            <p>
+              La IA escribe el HTML de la pantalla, pero solo con una skill de diseño de la
+              categoría <span class="mono">frontend-ui</span> cargada para el trabajo (por ejemplo
+              <span class="mono">frontend-design</span>). La skill se nombra en el
+              <span class="mono">BRIEF.md</span>, los valores quedan dentro del contrato de tokens,
+              se exporta al lote y vos lo ratificás como cualquier otro mockup. Sin skill de diseño
+              cargada, este método no existe.
+            </p>
+          </div>
         </div>
 
         <div class="callout r">
-          <b>Si no hay ninguno: STOP.</b> La IA no escribe el mockup a mano (D7). Un markup escrito
-          para tapar el hueco parece un artefacto de diseño pero nunca se diseñó, y después todos lo
+          <b>Si no hay ninguno de los cuatro: STOP.</b> La IA no escribe el mockup a mano, sin
+          skill de diseño cargada (D7). Un markup escrito para tapar el hueco parece un artefacto de diseño pero nunca se diseñó, y después todos lo
           citan como spec. La salida legítima es la ruta (b) o (c) del design gate: un build
           spec-only ratificado en §5, o solo <span class="mono">DESIGN.md</span> con tu OK. Construir
           desde los tokens vale; llamar mockup al resultado, no.
@@ -2490,14 +2502,17 @@
 
         <div class="callout agent r">
           <b>Regla dura, delegar y no generar:</b> la sesión que corre
-          <span class="mono">/design-system</span> <b>nunca</b> escribe el mockup ella misma (nada
-          de <span class="mono">Write</span> / <span class="mono">write_file</span> sobre HTML de
-          diseño: anti-patrones S1 de <span class="mono">screen-design-mapping.md</span>, D7 del
+          <span class="mono">/design-system</span> <b>nunca</b> escribe el mockup ella misma sin
+          una skill de diseño cargada (nada de <span class="mono">Write</span> /
+          <span class="mono">write_file</span> sobre HTML de diseño: anti-patrones S1 de
+          <span class="mono">screen-design-mapping.md</span>, D7 del
           <span class="mono">SKILL.md</span>, B4 de
-          <span class="mono">screen-design-brief.md</span>). Si el HTML nace de una IA, es de
-          <b>otra sesión</b>, tratada exactamente como un export de Figma: un archivo externo que
-          vos soltás en la drop zone, nunca algo que la sesión orquestadora escribe "mientras
-          espera".
+          <span class="mono">screen-design-brief.md</span>). Si el HTML nace de una IA, hay dos
+          caminos: viene de <b>otra sesión</b>, tratado exactamente como un export de Figma (un
+          archivo externo que vos soltás en la drop zone), o lo escribe esta misma sesión a través
+          de una skill de diseño <span class="mono">frontend-ui</span> (Modo C), nombrada en el
+          <span class="mono">BRIEF.md</span>. Lo que nunca existe es markup que la sesión
+          orquestadora escribe "mientras espera", sin ninguna skill de diseño.
         </div>
 
         <div class="sec-head r" style="margin: 40px 0 22px 0">
@@ -2590,6 +2605,7 @@
                 <th>Open Design</th>
                 <th>Figma</th>
                 <th>HTML manual</th>
+                <th>Skill de diseño (Modo C)</th>
               </tr>
             </thead>
             <tbody>
@@ -2601,6 +2617,7 @@
                 </td>
                 <td><span class="badge free">free/pago</span></td>
                 <td><span class="badge free">incluido</span></td>
+                <td><span class="badge free">incluido</span> en la skill que ya tengas cargada</td>
               </tr>
               <tr>
                 <th>Dónde corre</th>
@@ -2608,6 +2625,7 @@
                 <td>Tu máquina (desktop app, puerto dinámico)</td>
                 <td>Web / desktop</td>
                 <td>Otra sesión, aparte del repo</td>
+                <td>La misma sesión, con la skill cargada</td>
               </tr>
               <tr>
                 <th>Medio</th>
@@ -2615,6 +2633,7 @@
                 <td>Prototipo vivo HTML</td>
                 <td>Diseño vectorial → export</td>
                 <td>HTML plano</td>
+                <td>HTML que la IA escribe a través de la skill</td>
               </tr>
               <tr>
                 <th>Iteración</th>
@@ -2622,6 +2641,7 @@
                 <td>Chat + versiones · <span class="badge mcp">MCP</span> Modo A autónomo</td>
                 <td>Manual (vos diseñás)</td>
                 <td>Chat aparte + vos copiás el render</td>
+                <td>Chat con la IA; vos ratificás cada pantalla</td>
               </tr>
               <tr>
                 <th>Usa DESIGN.md</th>
@@ -2629,6 +2649,7 @@
                 <td>Sí, lo consume directo</td>
                 <td>Manual (tokens a mano)</td>
                 <td>Sí, se lo pasás</td>
+                <td>Sí, con cada valor dentro del contrato de tokens</td>
               </tr>
               <tr>
                 <th>Mejor para</th>
@@ -2636,6 +2657,7 @@
                 <td>Todo local, sin costo, y automatizable end-to-end</td>
                 <td>Equipos ya en Figma</td>
                 <td>Pantallas simples, sin fricción</td>
+                <td>Sin herramienta externa pero con una skill <span class="mono">frontend-ui</span></td>
               </tr>
             </tbody>
           </table>
@@ -2763,9 +2785,10 @@
             <span class="bx"></span
             ><span
               ><b>Herramienta elegida y lista.</b> Claude Design (plan Pro+) · Open Design (desktop
-              app instalada, MCP conectado si querés Modo A) · Figma · o la skill
-              <span class="mono">design</span> de Claude Code. Sin ninguna, el design gate te ofrece
-              (b) o (c), nunca un mockup escrito por la IA.</span
+              app instalada, MCP conectado si querés Modo A) · Figma · la skill
+              <span class="mono">design</span> de Claude Code · o una skill de diseño
+              <span class="mono">frontend-ui</span> cargada (Modo C). Sin ninguna, el design gate te
+              ofrece (b) o (c), nunca un mockup escrito por la IA sin skill de diseño.</span
             >
           </div>
           <div class="it">
@@ -2883,7 +2906,7 @@
             <span class="mono">DESIGN.md</span>. El plano de cada pantalla llega después, historia
             por historia: lo produce una herramienta de diseño (encargada por la IA o usada por
             vos), vos lo ratificás, y la IA lo mapea a la historia y construye contra la UI viva y
-            los tokens, con el mockup como inspiración. La IA nunca escribe el plano a mano.
+            los tokens, con el mockup como inspiración. La IA nunca escribe el plano a mano sin skill de diseño.
           </p>
         </div>
         <div class="sig">
