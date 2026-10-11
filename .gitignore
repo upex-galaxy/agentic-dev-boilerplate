@@ -34,6 +34,10 @@ next-env.d.ts
 .playwright/output
 .playwright-cli/
 storage-state-*.json
+# Safety net only: no skill writes a browser profile here (every session runs in
+# memory, never `--persistent` or `--profile`: live-ui-validation.md §3). It keeps
+# a profile left by an old habit or a relative --profile out of git.
+.playwright/profiles/
 
 # ===== Auth Storage (Session State) =====
 /.auth/

@@ -14,6 +14,7 @@
     "agents:setup": "bun scripts/agents-setup.ts",
     "api:sync": "bun scripts/sync-openapi.ts",
     "bootstrap:guard": "bun scripts/bootstrap-guard.ts",
+    "browser:profiles": "bun scripts/browser-profiles.ts",
     "context:hydrate": "bun scripts/sync-jira-issues.ts pull --include-comments",
     "context:map": "bun scripts/context-map.ts",
     "docs:check": "bun scripts/lint-docs.ts",
