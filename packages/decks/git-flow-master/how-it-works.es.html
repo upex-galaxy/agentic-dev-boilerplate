@@ -2260,6 +2260,16 @@
           <span class="mono">.husky/commit-msg</span> corre
           <span class="mono">scripts/check-commit-trailers.ts</span> y avisa, sin bloquear.
         </div>
+
+        <div class="callout agent r">
+          <b>Un trailer más puede ir arriba de esos dos.</b> Cuando el gate de contratos de
+          documentación nombra una región <span class="mono">LINT.IfChange</span>, las páginas que
+          cita no se tocaron y siguen describiendo bien el comportamiento, el commit lleva
+          <span class="mono">Docs-Checked: &lt;label&gt; &lt;motivo&gt;</span> encima de
+          <span class="mono">Worktree:</span> y <span class="mono">Session:</span>. Nunca por reflejo
+          y nunca sin motivo: una etiqueta sola no cuenta, y el pre-push y el CI bloquean el push sin
+          ese trailer o sin las ediciones de las páginas.
+        </div>
       </div>
     </section>
 
@@ -2490,7 +2500,9 @@
               <span class="mono">worktree:audit</span> es de solo lectura y sale con 1 mientras haya
               estado que vive solo en el worktree; <span class="mono">--rescue</span> lo copia al
               principal sin pisar nada. Con Orca, el <span class="mono">orca.yaml</span> versionado
-              corre los dos pasos como hooks de setup y archive.
+              corre los dos pasos como hooks de setup y archive, pero el CLI salta el hook de
+              archive salvo con <span class="mono">--run-hooks</span>; sin hooks, se corre
+              <span class="mono">bun run worktree:audit &lt;wt&gt; --rescue</span> a mano.
             </p>
           </div>
         </div>

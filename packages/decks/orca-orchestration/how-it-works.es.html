@@ -2396,7 +2396,9 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
               <span class="mono">scripts.setup</span> provisiona cada worktree que Orca crea y
               <span class="mono">scripts.archive</span> corre
               <span class="mono">bun run worktree:audit --rescue</span> antes de borrarlo. Confianza
-              y política de hooks se deciden por máquina.
+              y política de hooks se deciden por máquina, y el CLI salta el hook de archive por
+              defecto: el conductor pasa <span class="mono">--run-hooks</span> al borrar, y sin
+              hooks corre la auditoría a mano.
             </p>
           </div>
           <div class="step">
