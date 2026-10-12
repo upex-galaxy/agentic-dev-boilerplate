@@ -90,7 +90,7 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 
 | Category             | Likely matches                                                                                 |
 | -------------------- | ---------------------------------------------------------------------------------------------- |
-| `frontend-framework` | `next-best-practices`, `next-cache-components`                                                 |
+| `frontend-framework` | `next-cache-components-adoption`, `next-cache-components-optimizer`                            |
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `emil-design-eng`, `ui-ux-pro-max`       |
 | `issue-tracker`      | `acli` (T1) — used by the Jira Epic + Confluence publishers                                    |
 | `testing-e2e`        | `playwright-cli` — used during §verification                                                   |

@@ -259,9 +259,12 @@ export function buildCommunitySkillArgs(
 // Users can run `bunx autoskills` later to refine for their concrete stack.
 const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
-  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-best-practices' },
-  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-cache-components' },
-  { package: 'https://github.com/vercel-labs/next-skills', skill: 'next-upgrade' },
+  // Next.js ships its workflow skills from its own repo (vercel-labs/next-skills
+  // is an empty pointer now). Reference knowledge and upgrades are no longer
+  // skills: they come from [DOCS_TOOL] (Context7) and the docs bundled in the
+  // app's `next` package; upgrades run `npx @next/codemod@latest upgrade`.
+  { package: 'https://github.com/vercel/next.js', skill: 'next-cache-components-adoption' },
+  { package: 'https://github.com/vercel/next.js', skill: 'next-cache-components-optimizer' },
   { package: 'https://github.com/pproenca/dot-skills', skill: 'react-hook-form' },
   { package: 'https://github.com/pproenca/dot-skills', skill: 'zod' },
   { package: 'https://github.com/shadcn/ui', skill: 'shadcn' },

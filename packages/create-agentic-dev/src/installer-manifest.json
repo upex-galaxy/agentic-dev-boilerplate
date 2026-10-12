@@ -67,7 +67,7 @@
       ]
     },
     "communityProjectSkills": {
-      "count": 22,
+      "count": 21,
       "items": [
         {
           "name": "frontend-design",
@@ -75,19 +75,14 @@
           "source": "https://github.com/anthropics/skills"
         },
         {
-          "name": "next-best-practices",
-          "purpose": "Next.js best practices and idiomatic patterns.",
-          "source": "https://github.com/vercel-labs/next-skills"
+          "name": "next-cache-components-adoption",
+          "purpose": "Turn on Next.js Cache Components and resolve the routes it blocks.",
+          "source": "https://github.com/vercel/next.js"
         },
         {
-          "name": "next-cache-components",
-          "purpose": "Next.js caching strategies for Server and Client Components.",
-          "source": "https://github.com/vercel-labs/next-skills"
-        },
-        {
-          "name": "next-upgrade",
-          "purpose": "Guided upgrade path for Next.js major versions.",
-          "source": "https://github.com/vercel-labs/next-skills"
+          "name": "next-cache-components-optimizer",
+          "purpose": "Make a Next.js route's meaningful UI available on first load and navigation.",
+          "source": "https://github.com/vercel/next.js"
         },
         {
           "name": "react-hook-form",

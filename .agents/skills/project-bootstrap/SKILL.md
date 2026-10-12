@@ -82,7 +82,7 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 
 | Category             | Likely matches                                                                                                                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frontend-framework` | `next-best-practices`, `next-cache-components`                                                                                                                     |
+| `frontend-framework` | `next-cache-components-adoption`, `next-cache-components-optimizer` (Next.js reference docs: `[DOCS_TOOL]`)                                                        |
 | `frontend-ui`        | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
 | `backend-db`         | `supabase`, `supabase-postgres-best-practices` (REQUIRED at the backend and types steps, not only matched: §3.5 of the strategy doc)                               |
 | `language`           | `typescript-advanced-types`                                                                                                                                        |

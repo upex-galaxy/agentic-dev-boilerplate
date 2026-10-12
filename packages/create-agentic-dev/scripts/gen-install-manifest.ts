@@ -80,9 +80,8 @@ const SKILL_PURPOSES: Record<string, string> = {
 
   // Community project-level skills (PROJECT_LEVEL_SKILLS)
   'frontend-design': 'Frontend design patterns and component architecture.',
-  'next-best-practices': 'Next.js best practices and idiomatic patterns.',
-  'next-cache-components': 'Next.js caching strategies for Server and Client Components.',
-  'next-upgrade': 'Guided upgrade path for Next.js major versions.',
+  'next-cache-components-adoption': 'Turn on Next.js Cache Components and resolve the routes it blocks.',
+  'next-cache-components-optimizer': 'Make a Next.js route\'s meaningful UI available on first load and navigation.',
   'react-hook-form': 'Form state management with react-hook-form.',
   'zod': 'Schema validation with Zod.',
   'shadcn': 'shadcn/ui component library patterns and usage.',
