@@ -30,7 +30,7 @@ Fills `.agents/project.yaml`: identity and environments. This is `agents:setup` 
 
 ### Credentials
 
-Where secret values live (`.env` by default, a secret manager as the advanced option, see [Secret manager](#secret-manager-advanced)), the variables the MCP servers need (see [MCP credentials filled into `.env`](#mcp-credentials-filled-into-env)), the day-0 Atlassian credentials and, optional, the Resend API key (when you give it and the `resend` CLI is installed, the installer runs `resend login` with it). A secret is a masked field; its value goes to `.env` (created with mode 600) and never into the page, the log or the saved summary. "Later" is a valid answer for every one of them.
+Where secret values live (`.env` by default, a secret manager as the advanced option, see [Secret manager](#secret-manager-advanced)), the variables the MCP servers need (see [MCP credentials filled into `.env`](#mcp-credentials-filled-into-env)), the day-0 Atlassian credentials and, optional, the Resend API key (it goes to `.env` only: the `resend` CLI reads `RESEND_API_KEY` on every command, and a stored CLI session stays your own interactive `resend login`, listed in the closing next steps when the CLI is installed). A secret is a masked field; its value goes to `.env` (created with mode 600) and never into the page, the log or the saved summary. "Later" is a valid answer for every one of them.
 
 ### Jira
 
