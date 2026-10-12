@@ -200,7 +200,7 @@ bun run repo:check
 cd packages/create-agentic-dev
 bun test
 bun run types:check
-bun run check:manifest      # installer-manifest.json must not have drifted
+bun run check:manifest      # installer-manifest.json matches cli/install.ts, its phases and the preflight
 
 # 3. Bump the version. Semver against the PUBLISHED version, not the file:
 #    npm view create-agentic-dev version
