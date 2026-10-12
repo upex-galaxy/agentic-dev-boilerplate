@@ -56,7 +56,7 @@ This skill is a CLI companion, not a deploy orchestrator. Other skills own the s
 Resolution steps (per `agentic-dev-core/references/skill-composition-strategy.md`):
 
 1. Read `complementary_categories` from this skill's frontmatter (`deploy`).
-2. Look up the local skill-registry script (`scripts/build-skill-registry.ts` → `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Scan the skills actually installed (strategy doc §3.1): the session's skill list plus every `.agents/skills/*/SKILL.md` on disk, git-ignored community folders included. `.agents/skills/REGISTRY.md` lists committed skills only, so it is never this scan.
 3. If `/deploy-to-vercel` is installed (default project-level community skill per `cli/install.ts`), prefer it for any "I haven't deployed this project yet" intent.
 
 ## Role inside the DEV workflow

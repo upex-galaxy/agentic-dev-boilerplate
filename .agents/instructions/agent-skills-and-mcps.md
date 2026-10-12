@@ -41,7 +41,7 @@ paths: [".agents/skills/"]
 
 > **Persistent memory**: `bun setup` wires Engram per agent with the engram binary's own `engram setup <agent>` (the Engram MCP server, nothing else) and offers the Engram Claude Code plugin for its session hooks. Active across sessions and compactions per `AGENTS.md` §12 (proactive memory triggers). No gentle-ai bundle is installed.
 >
-> **T3 (community project-level)**: frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`.
+> **T3 (community project-level)**: frontend/backend skills matched by category at runtime, NOT by literal name. List in `cli/install.ts`. Found by the installed-skill scan (session skill list + `.agents/skills/` on disk, git-ignored folders included), never in `REGISTRY.md`, which lists committed skills only (`agentic-dev-core/references/skill-composition-strategy.md` §3.1). A step that designs or builds a screen names its skills instead of matching them: the design set (§3.5).
 >
 > **T4 (community user-level)**: repo-agnostic skills, auto-discovered at runtime, **ASK before load** per strategy §3.2.
 >

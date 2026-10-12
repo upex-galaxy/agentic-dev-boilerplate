@@ -46,12 +46,12 @@ The sealed mutation contract. Binding on every run of either mode:
 Run once when this skill is invoked, before the selected mode's Phase 0. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md` §3.
 
 1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`, `meta-skill`).
-2. Resolve via the local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Scan the skills actually installed (strategy doc §3.1): the session's skill list plus every `.agents/skills/*/SKILL.md` on disk, git-ignored community folders included. `.agents/skills/REGISTRY.md` lists committed skills only, so it is never this scan.
 3. Classify tier per strategy doc §2.
 4. Apply the threshold rule per strategy doc §3.2:
    - **T1 / T3** matches → load silently. Cache for the session.
    - **T4** matches → ASK the user once: `"Detected <skill> (T4). Apply for this run? Y/N"`. Cache the answer.
-5. Inject a `## Composable Skills` block per strategy doc §6.2 into every sub-agent prompt.
+5. Inject a `## Composable Skills` block per strategy doc §5.2 into every sub-agent prompt.
 
 Expected matches in this repo:
 

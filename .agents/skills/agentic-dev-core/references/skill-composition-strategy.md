@@ -38,8 +38,8 @@ Three tiers. Different discovery and load rules per tier.
 | Tier                              | Location                                                          | Examples                                                                                                                                                                                                          | Discovery                                                                                                     | Load behavior                                                                                |
 | --------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | **T1 — Project-owned**            | `.agents/skills/` (committed)                                     | every committed skill `.agents/skills/REGISTRY.md` lists | Named in `.agents/instructions/agent-skills-and-mcps.md` §5 "Skills T1" table; a skill the project created for itself, in the "Project context skills" table of `.agents/instructions/agent-project.md` | Silent (load on trigger, no ask)                                                             |
-| **T3 — Community project-level**  | `.agents/skills/` (installed by `install.ts:PROJECT_LEVEL_SKILLS`) | `PROJECT_LEVEL_SKILLS` in `cli/install.ts` (stack skills + builder skills such as `skill-creator`)                                                            | Named **by category** in AGENTS.md (not by skill name). Discovered at runtime from system-reminder skill list | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
-| **T4 — Community user-level**     | `~/.claude/skills/` (installed by `install.ts:USER_LEVEL_SKILLS`) | `USER_LEVEL_SKILLS` in `cli/install.ts`                                                                                                       | **NOT named in AGENTS.md**. Discovered at runtime from system-reminder skill list. Auto-match by task domain  | **ASK user before load** (may not be installed, or user may not want it for this task)       |
+| **T3 — Community project-level**  | `.agents/skills/` (installed by `install.ts:PROJECT_LEVEL_SKILLS`) | `PROJECT_LEVEL_SKILLS` in `cli/install.ts` (stack skills + builder skills such as `skill-creator`)                                                            | Named **by category** in AGENTS.md (not by skill name). Discovered at runtime by the §3.1 scan (session skill list + `.agents/skills/` on disk), never from `REGISTRY.md` | Silent if matched by category (e.g. user works on Next.js page → load `next-best-practices`) |
+| **T4 — Community user-level**     | `~/.claude/skills/` (installed by `install.ts:USER_LEVEL_SKILLS`) | `USER_LEVEL_SKILLS` in `cli/install.ts`                                                                                                       | **NOT named in AGENTS.md**. Discovered at runtime from the session skill list (§3.1). Auto-match by task domain  | **ASK user before load** (may not be installed, or user may not want it for this task)       |
 
 ### Tier decision rule
 
@@ -94,8 +94,12 @@ A skill carries three independent labels. Each answers one question, is declared
 
 Before starting any non-trivial task, the orchestrator (and each invoked skill) MUST:
 
-1. **Scan available skills** — read the local skill-registry cache (`.agents/skills/REGISTRY.md`, built by `scripts/build-skill-registry.ts`). Fallback: scan the `system-reminder` skill list that ships at session start.
-2. **Match by domain category** (see vocabulary §5) — not by literal skill name.
+1. **Scan the skills actually installed**, from two sources read together:
+   - the skill list the harness injects at session start (the `system-reminder` list in Claude Code, the equivalent list in Codex and OpenCode). It already carries the user-level skills and the project-level ones the harness discovers through `.agents/skills/` (Claude Code through the generated `.claude/skills` alias);
+   - the project store on disk: every `.agents/skills/*/SKILL.md`, git-ignored community folders included (`ls .agents/skills/*/SKILL.md`, then the frontmatter `description` of any folder the session list did not show).
+
+   `.agents/skills/REGISTRY.md` is NOT this scan. `scripts/build-skill-registry.ts` skips git-ignored folders on purpose, so the file is identical on every clone and lists committed skills only: a community (T3) skill never appears in it. The registry is where the resolver copies T1 compact rules from (`skill-resolver.md`), never the inventory of what this machine has installed.
+2. **Match by domain category** (see vocabulary §4) — not by literal skill name.
 3. **Resolve tier per match**:
    - T1 / T3 → load silently when task domain matches.
    - T4 → ask user one short question before loading: `"Detected X skill (T4). Apply it? Y/N"`.
@@ -135,15 +139,32 @@ a domain a stack skill owns NAMES that skill and requires it at that step. The o
 | Step does | Load first | Category |
 | --------- | ---------- | -------- |
 | Any database schema, RLS, function or migration change (through the DB MCP or the `supabase` CLI) | `supabase` + `supabase-postgres-best-practices` | `backend-db` |
-| Screen, component or layout work | `frontend-design` + `shadcn` + `tailwind-css-patterns` | `frontend-ui` |
+| Screen design: a mockup or a screen's HTML (`design-system` screen phase, Mode C) | the design set (below) | `frontend-ui` |
+| Screen, component or layout work in code | the design set + `shadcn` + `tailwind-css-patterns` | `frontend-ui` |
 | A deploy to a Vercel environment | `deploy-to-vercel` (method), next to T1 `vercel-cli` (verification) | `deploy` |
 | Sending or templating transactional email | `resend-cli` | `email` |
 | A public, indexable page | `seo` | `seo` |
 
+**The design set.** Every step that designs or builds a screen loads the same group, because each one
+owns a different part of the job:
+
+- `frontend-design`: the aesthetic direction, typography, choices that do not read as a template.
+- `ui-ux-pro-max`: searchable design data (styles, palettes, font pairings, UX guidelines, per-stack UI rules).
+- `impeccable`: the critique and polish pass (hierarchy, states, responsive behaviour, motion, UX copy).
+- `emil-design-eng`: component-level polish and animation decisions.
+
+Two more join only when the step matches their scope:
+
+- `redesign-existing-projects`: only when the step redesigns a UI that already exists (it audits the
+  current design before changing it). Never on a new screen.
+- `design-taste-frontend`: only when the screen is a public marketing page (landing, pricing,
+  portfolio). That is its declared scope; outside it, it repeats what `frontend-design` and
+  `redesign-existing-projects` already cover.
+
 Contract, identical at every step that cites this section:
 
 1. **Load the named skills before the first write of the step**, not after.
-2. **Not installed** → say so ONCE in the session (which skill, which step) and point at the install
+2. **Not installed** → say so ONCE in the session (every missing skill in one line, and the step) and point at the install
    path: `bun setup` installs the project-level list (`PROJECT_LEVEL_SKILLS` in `cli/install.ts`),
    or one `bunx skills add <package> --skill <name> --yes` with the package from that list;
    `bun run setup:doctor` checks the machine. Then CONTINUE with the step: a missing community skill
@@ -212,7 +233,7 @@ The orchestrator (top-level conversation) owns the glue layer. Cannot be inside 
 
 1. Read `.agents/project.yaml` for project standards (test command, env, stack).
 2. Cache for session: `test_command`, `delivery_strategy_default`, `complementary_skill_resolutions`.
-3. Build / verify the local skill-registry cache (`scripts/build-skill-registry.ts` → `.agents/skills/REGISTRY.md`).
+3. Build / verify the local skill-registry cache (`scripts/build-skill-registry.ts` → `.agents/skills/REGISTRY.md`) for T1 compact rules; the installed community skills come from the §3.1 scan.
 
 ### 5.2 Per-delegation injection
 
@@ -240,11 +261,11 @@ Every sub-agent / skill prompt MUST include:
 
 ## 6. Resolved Decisions
 
-1. **Skill registry tooling**: ✅ **Local script.** `scripts/build-skill-registry.ts` scans `.agents/skills/*/SKILL.md`, extracts compact rules, writes `.agents/skills/REGISTRY.md`. Project-owned skills and orchestrator call it instead of ad-hoc scanning of the system-reminder list. Fallback to system-reminder scan only if the cache is unavailable.
+1. **Skill registry tooling**: ✅ **Local script, committed skills only.** `scripts/build-skill-registry.ts` scans the committed `.agents/skills/*/SKILL.md` (git-ignored folders skipped, so the file is the same on every clone), extracts compact rules, writes `.agents/skills/REGISTRY.md`. It is the source of T1 compact rules for briefings (`skill-resolver.md`), not the inventory of installed skills: community skills are found by the §3.1 scan (session skill list + `.agents/skills/` on disk). No machine-local registry section or file is generated for them: the session list is already live and complete, a generated local file would go stale the moment `bunx skills add` runs, and a machine-dependent section would break the committed file's determinism.
 
 2. **find-skills meta-skill**: ✅ **Automatic, but only as last resort.** Invocation order:
    1. Scan T1 (always available).
-   2. Scan T3 + T4 already installed (via local skill-registry script).
+   2. Scan T3 + T4 already installed (the §3.1 scan: session skill list + `.agents/skills/` on disk).
    3. If a task domain has no match in steps 1-2 AND the task would benefit significantly from a specialized skill → invoke `find-skills` automatically to suggest installable skills. Ask user before installing.
    - **Do NOT confuse with `bunx autoskills`**: that is a one-shot bootstrap step run during `/project-bootstrap` (after `/project-foundation`) to install stack-matched skills. `find-skills` is per-task runtime discovery.
 

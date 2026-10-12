@@ -22,7 +22,7 @@ compact_rules: |
   - **B6.** NEVER skip Supabase types generation when scaffolding the DB layer. Runtime TypeScript types must match the live schema; drift is a silent bug factory.
   - **B7.** NEVER ship bearer-token auth without rate-limiting + secret-rotation guidance in the same scaffold. Auth without those two is a half-finished feature.
   - **B8.** NEVER scaffold OpenAPI without the Scalar UI route at `/api/docs` (the `@scalar/nextjs-api-reference` route handler). The contract surface must be browsable from day one or downstream consumers won't trust it. Do NOT ship Redoc/Swagger instead — Scalar is the standard for this stack. On an existing app that already serves its own docs UI, that UI stays; Scalar is added beside it only on the user's OK, never as a replacement.
-  - **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; `frontend-design` + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+  - **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; the design set (`frontend-design` + `ui-ux-pro-max` + `impeccable` + `emil-design-eng`, strategy doc §3.5) + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
   - **B10.** Database changes go through the DB MCP under `agentic-dev-core/references/db-change-doctrine.md`: `list_migrations` read before the first write, DDL only through `apply_migration`, the route per `stack.database.migrations_tool`, verified at the destination, an ADR for an architecturally significant migration.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix; none available at the step that needs it → STOP per `agentic-dev-core/references/mcp-capabilities.md` §4, never a silent substitute (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
@@ -71,12 +71,12 @@ Run once when this skill is invoked, before any phase below. Follows the contrac
 Steps:
 
 1. Read `complementary_categories` from this skill's frontmatter (`frontend-framework`, `frontend-ui`, `backend-db`, `language`, `ci-cd`).
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Scan the skills actually installed (strategy doc §3.1): the session's skill list plus every `.agents/skills/*/SKILL.md` on disk, git-ignored community folders included. `.agents/skills/REGISTRY.md` lists committed skills only, so it is never this scan.
 3. For each matched skill, classify tier per strategy doc §2 (path-based: `.agents/skills/` → T1; PROJECT_LEVEL_SKILLS → T3; USER_LEVEL_SKILLS → T4).
 4. Apply threshold rule per strategy doc §3.2:
    - **T1 / T3** matches → load silently. Cache for the session.
    - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this bootstrap? Y/N"`. Cache the answer for the session.
-5. When dispatching scaffolding sub-agents (Backend setup, Frontend setup, Incremental features), inject a `## Composable Skills` block per strategy doc §6.2 listing the resolved skills + project standards (test command, runtime, etc).
+5. When dispatching scaffolding sub-agents (Backend setup, Frontend setup, Incremental features), inject a `## Composable Skills` block per strategy doc §5.2 listing the resolved skills + project standards (test command, runtime, etc).
 
 Expected matches on a Next.js + Supabase project (illustrative — actual list depends on what the user has installed):
 
@@ -88,9 +88,9 @@ Expected matches on a Next.js + Supabase project (illustrative — actual list d
 | `language`           | `typescript-advanced-types`                                                                                                                                        |
 | `ci-cd`              | `github-actions-docs`                                                                                                                                              |
 
-**Step-required, not only matched.** Some of these load at a named step whatever the entry scan decided (`agentic-dev-core/references/skill-composition-strategy.md` §3.5): `supabase` + `supabase-postgres-best-practices` in `references/backend-setup.md` (before install and any DB-MCP call) and `references/supabase-types-setup.md` (generate step); `frontend-design` + `shadcn` + `tailwind-css-patterns` in `references/frontend-setup.md` Fase 1.6.
+**Step-required, not only matched.** Some of these load at a named step whatever the entry scan decided (`agentic-dev-core/references/skill-composition-strategy.md` §3.5): `supabase` + `supabase-postgres-best-practices` in `references/backend-setup.md` (before install and any DB-MCP call) and `references/supabase-types-setup.md` (generate step); the design set (`frontend-design` + `ui-ux-pro-max` + `impeccable` + `emil-design-eng`, strategy doc §3.5) + `shadcn` + `tailwind-css-patterns` in `references/frontend-setup.md` Fase 1.6.
 
-Skip step only if the registry cache is missing AND no session-start skill list is available (rare; pre-init or non-Claude-Code runtime). When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
+Skip step only if neither the session skill list nor the `.agents/skills/` folder can be read. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ---
 
@@ -291,7 +291,7 @@ On successful completion (Verification checklist from `plan.md` passes), the orc
 - **B6.** NEVER skip Supabase types generation when scaffolding the DB layer. Runtime TypeScript types must match the live schema; drift is a silent bug factory.
 - **B7.** NEVER ship bearer-token auth without rate-limiting + secret-rotation guidance in the same scaffold. Auth without those two is a half-finished feature.
 - **B8.** NEVER scaffold OpenAPI without the Scalar UI route at `/api/docs` (the `@scalar/nextjs-api-reference` route handler). The contract surface must be browsable from day one or downstream consumers won't trust it. Do NOT ship Redoc/Swagger instead — Scalar is the standard for this stack. On an existing app that already serves its own docs UI, that UI stays; Scalar is added beside it only on the user's OK, never as a replacement.
-- **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; `frontend-design` + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+- **B9.** NEVER write the DB layer or the UI layer without its stack skills loaded first: `supabase` + `supabase-postgres-best-practices` before any install, DB-MCP schema / RLS / migration call or type generation; the design set (`frontend-design` + `ui-ux-pro-max` + `impeccable` + `emil-design-eng`, strategy doc §3.5) + `shadcn` + `tailwind-css-patterns` before the component strategy (Fase 1.6). Not installed → say so once, point at `bun setup`, continue; never a silent skip (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - **B10.** Database changes go through the DB MCP under `agentic-dev-core/references/db-change-doctrine.md`: `list_migrations` read before the first write, DDL only through `apply_migration`, the route per `stack.database.migrations_tool`, verified at the destination, an ADR for an architecturally significant migration.
 
 ---

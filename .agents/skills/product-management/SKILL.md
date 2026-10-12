@@ -135,12 +135,12 @@ Run once when this skill is invoked, before any workflow below. Follows the cont
 Steps:
 
 1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`).
-2. Resolve via local skill-registry script (`scripts/build-skill-registry.ts` → cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start `system-reminder` skill list.
+2. Scan the skills actually installed (strategy doc §3.1): the session's skill list plus every `.agents/skills/*/SKILL.md` on disk, git-ignored community folders included. `.agents/skills/REGISTRY.md` lists committed skills only, so it is never this scan.
 3. For each matched skill, classify tier per strategy doc §2.
 4. Apply threshold rule per strategy doc §3.2:
    - **T1 / T3** matches → load silently. Cache for the session.
    - **T4** matches → ASK user once: `"Detected <skill> (T4). Apply for this PM workflow? Y/N"`. Cache the answer for the session.
-5. When dispatching sub-agents (backlog seeding, story refinement, AC enumeration, sprint reporting), inject a `## Composable Skills` block per strategy doc §6.2.
+5. When dispatching sub-agents (backlog seeding, story refinement, AC enumeration, sprint reporting), inject a `## Composable Skills` block per strategy doc §5.2.
 
 Expected matches (illustrative — actual list depends on what the user has installed):
 
@@ -148,7 +148,7 @@ Expected matches (illustrative — actual list depends on what the user has inst
 | --------------- | -------------------------------------------------------------------------------------------------------- |
 | `issue-tracker` | `acli` (T1 sister — silent; primary Jira CLI). Atlassian MCP is the fallback declared above, not a skill |
 
-Skip step only if the registry cache is missing AND no session-start skill list is available. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
+Skip step only if neither the session skill list nor the `.agents/skills/` folder can be read. When skipped, log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (per strategy doc §3.4).
 
 ## Session & Dispatch
 

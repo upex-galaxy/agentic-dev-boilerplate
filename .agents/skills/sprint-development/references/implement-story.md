@@ -185,7 +185,7 @@ Sin SRS (app existente cuyos product docs son los mapas de negocio): las mismas 
    - Ejemplo: usar `[DOCS_TOOL]` para consultar docs de Next.js, React, Supabase, etc.
 
 5. **Load the frontend skills, then consult the shadcn MCP (story has UI)**
-   - **Required, before the first component or layout write:** `/frontend-design` + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They carry the composition, shadcn and Tailwind rules; the shadcn MCP below is the component catalog, not a substitute. A public, indexable page also loads `/seo`. Not installed → say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+   - **Required, before the first component or layout write:** the design set (`/frontend-design` + `/ui-ux-pro-max` + `/impeccable` + `/emil-design-eng`) + `/shadcn` + `/tailwind-css-patterns` (category `frontend-ui`). They carry the composition, shadcn and Tailwind rules; the shadcn MCP below is the component catalog, not a substitute. A story that redesigns a screen that already exists also loads `/redesign-existing-projects`; a public marketing page (landing, pricing) also loads `/design-taste-frontend`, and an indexable one `/seo`. Not installed → say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
    - Si necesitas componentes UI: busca componentes shadcn disponibles
    - Si tienes dudas sobre props de componentes: consulta la API
    - Ejemplo: buscar "dialog", "form", "table" para encontrar componentes apropiados

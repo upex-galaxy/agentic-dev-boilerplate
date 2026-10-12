@@ -18,10 +18,10 @@ a dedicated design tool produces the prototypes, and they land in the repo. This
   Design's inner agent + skill, never the orchestrating AI hand-writing HTML.
 - **Manual handoff (fallback)**: no MCP → tell the user what to do (brief out), wait, then build
   the plan from what lands — exactly like Paths C / D do for `DESIGN.md`.
-- **Design-skill generation (Mode C)**: no MCP, but a design skill (or a group of them) is loaded
-  for the job: the `frontend-ui` category in `agentic-dev-core/references/skill-composition-strategy.md`
-  §4.1 (e.g. `frontend-design`, `ui-ux-pro-max`, `impeccable`). The AI writes the screen HTML itself
-  THROUGH that skill, and the loaded skill is what makes it a design tool. Name the skill in
+- **Design-skill generation (Mode C)**: no MCP, but the design set is loaded for the job, before the first
+  line of HTML (`agentic-dev-core/references/skill-composition-strategy.md` §3.5: `frontend-design`,
+  `ui-ux-pro-max`, `impeccable`, `emil-design-eng`, plus the two conditional members it names). The AI
+  writes the screen HTML itself THROUGH those skills, and they are what make it a design tool. Name them in
   `BRIEF.md`; a human ratifies the result like any other mockup. No design skill loaded → this mode
   does not exist, and the AI falls back to the manual handoff.
 
@@ -32,7 +32,7 @@ Supported external tools (document both; the user picks):
 | **Claude Design** (`claude.ai/design`) | Premium (Claude Pro+). User mocks screens in HTML/CSS, exports the handoff bundle. | A bundle (HTML/CSS/JS prototypes + chat transcript) dropped into the drop zone. |
 | **Open Design** (OSS, local desktop app; Docker optional) | Free. User iterates screens in the local UI, downloads the prototypes. | Prototype files dropped into the drop zone. |
 | Any other prototyper (Figma export, HTML a human wrote, …) | User's choice | Whatever lands in the drop zone is treated as the screen source, once a human ratifies it. |
-| AI-generated HTML through design skills (Mode C) | A `frontend-ui` design skill loaded in the session (e.g. `frontend-design`, `ui-ux-pro-max`, `impeccable`) | HTML screens the AI writes through that skill into the drop zone; `BRIEF.md` names the skill; a human ratifies every one. Without a design skill loaded, AI-written HTML is NOT a mockup (S1). |
+| AI-generated HTML through design skills (Mode C) | The design set loaded in the session (`skill-composition-strategy.md` §3.5) | HTML screens the AI writes through it into the drop zone; `BRIEF.md` names the skills loaded; a human ratifies every one. Without a design skill loaded, AI-written HTML is NOT a mockup (S1). |
 
 **Drop zone:** `.context/designs/<project-slug>/<batch-slug>/` (project-slug from `.agents/project.yaml`;
 batch-slug per `references/screen-design-brief.md` — one folder per brief/feature batch, holding

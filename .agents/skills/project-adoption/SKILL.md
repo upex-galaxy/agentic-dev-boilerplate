@@ -63,10 +63,10 @@ The `compact_rules` frontmatter block is the authoritative copy (the registry re
 Run once when this skill is invoked, before Phase 0. Follows the contract in `agentic-dev-core/references/skill-composition-strategy.md` §3.
 
 1. Read `complementary_categories` from this skill's frontmatter (`issue-tracker`, `meta-skill`).
-2. Resolve via the local skill registry (`scripts/build-skill-registry.ts` -> cached at `.agents/skills/REGISTRY.md`). Fallback: scan the session-start skill list.
+2. Scan the skills actually installed (strategy doc §3.1): the session's skill list plus every `.agents/skills/*/SKILL.md` on disk, git-ignored community folders included. `.agents/skills/REGISTRY.md` lists committed skills only, so it is never this scan.
 3. Classify tier per strategy doc §2.
 4. Apply the threshold rule per strategy doc §3.2: T1 / T3 load silently; T4 ASK once (`"Detected <skill> (T4). Apply for this run? Y/N"`) and cache the answer.
-5. Inject a `## Composable Skills` block per strategy doc §6.2 into every subagent briefing.
+5. Inject a `## Composable Skills` block per strategy doc §5.2 into every subagent briefing.
 
 Expected matches in this repo:
 
