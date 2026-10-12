@@ -91,7 +91,7 @@ const SKILL_PURPOSES: Record<string, string> = {
   'seo': 'SEO best practices for Next.js and web apps.',
   'emil-design-eng': 'Design engineering patterns from Emil Kowalski.',
   'ui-ux-pro-max': 'UI/UX design intelligence across 10 stacks and 50+ styles.',
-  'impeccable': 'Code quality and craftsmanship review.',
+  'impeccable': 'Visual design-quality review and polish for frontend UI.',
   'design-taste-frontend': 'Frontend design taste and visual quality review.',
   'redesign-existing-projects': 'Systematic redesign of existing UI projects.',
   'supabase': 'Supabase CLI companion skill — local stack, migrations, type gen.',

@@ -131,7 +131,7 @@
         },
         {
           "name": "impeccable",
-          "purpose": "Code quality and craftsmanship review.",
+          "purpose": "Visual design-quality review and polish for frontend UI.",
           "source": "https://github.com/pbakaus/impeccable"
         },
         {
