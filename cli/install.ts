@@ -1564,18 +1564,10 @@ async function configureDayZeroCredentials(state: InstallState): Promise<void> {
     ? tr(`${names.length} variable(s) guardada(s): ${names.join(', ')} · ningún valor secreto se imprime`, `${names.length} variable(s) saved: ${names.join(', ')} · no secret value is printed`)
     : tr('nada nuevo', 'nothing new'));
 
-  // The resend CLI keeps its own session: log it in with the key just saved.
-  const resendKey = (process.env.RESEND_API_KEY ?? '').trim();
-  if (resendKey && !NON_INTERACTIVE) {
-    const login = UI!.step({ phase: 'creds', title: tr('Sesión de la CLI de Resend', 'Resend CLI session') });
-    if (!which('resend')) {
-      login.end('skipped', tr('resend no está instalado. Después: <code>resend login</code>', 'resend is not installed. Later: <code>resend login</code>'));
-    }
-    else {
-      const r = await runStreamed('resend', ['login', '--key', resendKey], { step: login, timeoutMs: 10_000 });
-      login.end(r.code === 0 ? 'ok' : 'warn', r.code === 0 ? undefined : tr('No pasó. A mano: <code>resend login</code>', 'It did not pass. By hand: <code>resend login</code>'));
-    }
-  }
+  // No `resend login` here: its only non-interactive form is `--key <key>`,
+  // which puts the key on argv (visible in the process list). The resend CLI
+  // reads RESEND_API_KEY from the environment on every command, and a stored
+  // session is the user's own interactive `resend login` (closing next steps).
   saveState(state);
 }
 
