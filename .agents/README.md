@@ -144,7 +144,7 @@ secrets:
     auth: app # app (desktop app locally, service account in CI) | service-account (token only)
 ```
 
-- **Written by `bun setup`** (Step 7, `cli/lib/secret-providers.ts`), which also writes the committed overlay `.env.provider.schema` once (references only, never values, never overwritten). A yaml without the block reads as `local`, and the installer appends it with its comments.
+- **Written by `bun setup`** (Credentials phase, `cli/lib/secret-providers.ts`), which also writes the committed overlay `.env.provider.schema` once (references only, never values, never overwritten). A yaml without the block reads as `local`, and the installer appends it with its comments.
 - **An unknown `provider` or `auth` fails loudly** instead of guessing, so a team is never sent to the wrong source in silence.
 - **Read directly** (`parseSecretsConfig`), never as a `{{VAR}}`; `provider` and `onepassword` are listed in `external_consumers`.
 - Steps for the human: `INSTALLER.md`, "Secret manager (advanced)".

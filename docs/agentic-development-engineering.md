@@ -748,7 +748,7 @@ The rest is execution.
 - `docs/methodology/IQL-methodology.md` — phased lifecycle deep-dive.
 - `docs/architectures/supabase-nextjs/` — stack-specific configuration.
 - `docs/workflows/` — environments, git-flow, OpenAPI sync.
-- `INSTALLER.md` — what `bun setup` configures: Engram, community skills, MCPs, external CLIs, opt-out.
+- `INSTALLER.md` — what `bun setup` configures and how its run is shown (phases, the local page, `--headless`): Engram, community skills, MCPs, external CLIs, opt-out.
 - `.agents/skills/agentic-dev-core/SKILL.md` — foundation reference host (passive; shared references cited by other skills).
 - `.agents/skills/agentic-dev-core/references/orchestration-doctrine.md` — canonical orchestration doctrine cited by every workflow skill.
 - `.agents/skills/project-foundation/SKILL.md` — Constitution + PRD + SRS + Discovery skill internals.

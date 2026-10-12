@@ -2,7 +2,7 @@
 
 Official scaffolder for the [Agentic Dev](https://github.com/upex-galaxy/agentic-dev-boilerplate)
 ecosystem. Downloads the boilerplate template, scrubs git history, initializes a
-fresh repository, installs dependencies, and runs the interactive installer.
+fresh repository, installs dependencies, and runs the boilerplate installer (`bun setup`).
 
 ## Usage
 
@@ -17,9 +17,13 @@ That single command:
 3. Rewrites `package.json` name + `.agents/project.yaml` `project.name`.
 4. Initializes a fresh `git init -b main` and creates the initial commit.
 5. Runs `bun install`.
-6. Hands off to the boilerplate's interactive installer (`bun setup`),
-   which wires Engram, agent skills, MCPs, `.env`, and — at the end —
-   optionally creates a GitHub repository for you via `gh`.
+6. Hands off to the boilerplate's installer (`bun setup`), which starts with
+   a preflight that writes nothing, then wires Engram, agent skills, MCPs,
+   `.env`, and optionally creates a GitHub repository for you via `gh`. On a
+   terminal with a screen it opens a local page (the phases, each question as
+   a card, one closing report); the terminal keeps the full log. The display
+   rules are in the boilerplate's
+   [INSTALLER](https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md#where-the-run-is-shown).
 
 ## Flags
 
@@ -71,7 +75,8 @@ manager is not bun, or the stack is not Next.js on the Postgres family. A
 monorepo with several Next apps gets a warning: one app is adopted at a time.
 
 Then it downloads the template into a temp directory, installs that copy's
-dependencies, and runs its updater with `--adopt` inside your app. The updater
+dependencies, and runs its updater with `--adopt` inside your app (on a
+terminal with a screen it opens the updater's local page). The updater
 delivers what the app lacks and never overwrites a file the app already has;
 each collision becomes a parity row and a protected path. There is no history
 scrub, no rename, no `git init`, and no `bun install` or `bun setup` in the
@@ -82,7 +87,7 @@ updater as `UPEX_TEMPLATE_REPO` and `--auto`). It refuses a project name,
 `--here`, `--project-key`, `--no-git`, `--no-install`, `--no-setup` and a
 `--template` other than `main`.
 
-Next: review the parity table, run `bun install`, commit the adoption, and load
+Next: review the parity table in the updater's closing report, run `bun install`, commit the adoption, and load
 the `project-adoption` skill in an agent session. The boilerplate's
 [README](https://github.com/upex-galaxy/agentic-dev-boilerplate#adopt-an-existing-app)
 and [INSTALLER](https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/INSTALLER.md#adopt-an-existing-app)
@@ -118,9 +123,9 @@ path Bun cannot create its bin shims, and `bun install` fails with
 
 | Tier                   | Tool                                                                 | What it does                                                                                                                                                                                   |
 | ---------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hard blocker**       | Claude Code, OpenCode **or** Codex                                   | The agent the installer configures. `bun setup` Step 4 aborts if none is found. Install [Claude Code](https://docs.claude.com/claude-code), [OpenCode](https://opencode.ai) or [Codex](https://developers.openai.com/codex/). |
-| **Quasi-required**     | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing → installer prints commands and asks exit-or-continue (no cross-session memory if you continue).                         |
-| **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; Step 8 prints a `found` / `missing` table and never blocks. Install lazily when a skill surfaces a missing-binary error.                                |
+| **Hard blocker**       | Claude Code, OpenCode **or** Codex                                   | The agent the installer configures. The `bun setup` preflight blocks if none is found. Install [Claude Code](https://docs.claude.com/claude-code), [OpenCode](https://opencode.ai) or [Codex](https://developers.openai.com/codex/). |
+| **Recommended**        | `engram` ≥ 3.0.0                                                     | Engram persistent memory, wired per agent by `engram setup`. Missing: a preflight warning with the install command, and the run goes on without cross-session memory.                         |
+| **Per-skill (lazy)**   | `gh`, `acli`, `playwright-cli`, `supabase`, `vercel`, `resend`, `jq` | Each is required by a specific skill; the Verify phase lists the missing ones and never blocks (`acli` and `gh` also get a preflight warning). Install lazily when a skill surfaces a missing-binary error.                                |
 
 This CLI checks `bun`, `git`, and `tar` up front with a `where` / `which` probe
 (POSIX uses `which`, Windows uses `where`) and prints actionable install hints

@@ -6,7 +6,7 @@
 
 ## 1 · Why a map lives in a skill, not in `.context/`
 
-`.context/` holds what a SCRIPT pulls from a source of truth (Jira, the OpenAPI spec) plus what this repo itself is the source of truth for (PRD, SRS, ADRs, the domain glossary, the master design plan). A business map is neither: an AI reads the code, the Supabase schema and the API contract and writes a synthesis. Two sessions would write it differently and rebuilding it costs thousands of tokens, so it is authored knowledge, and authored knowledge that must arrive unasked is a skill (`./skill-scaffold.md` §3).
+`.context/` holds what a SCRIPT pulls from a source of truth (Jira, the OpenAPI spec) plus what this repo itself is the source of truth for (PRD, SRS, ADRs, the domain glossary, the master design plan). A business map is neither: an AI reads the code, the database schema and the API contract and writes a synthesis. Two sessions would write it differently and rebuilding it costs thousands of tokens, so it is authored knowledge, and authored knowledge that must arrive unasked is a skill (`./skill-scaffold.md` §3).
 
 So each business map is ONE HTML file inside its context skill, at `references/<map>.html`:
 

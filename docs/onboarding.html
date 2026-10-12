@@ -859,11 +859,15 @@
           </div>
           <div class="prose">
             <p>
-              <code>bun setup</code> es el instalador interactivo: detecta qué harnesses tenés,
-              cablea el <code>.env</code> para cada servidor que declara <code>.mcp.json</code>,
-              instala las skills de la comunidad y genera las superficies por harness. Si algo queda
-              a medias, <code>bun run setup:doctor</code> te dice qué falta y dónde se arregla. Para
-              abrir el agente corré su propio binario en la carpeta del proyecto
+              <code>bun setup</code> es el instalador: primero un chequeo previo que no escribe
+              nada, después elegís los harnesses, cablea el <code>.env</code> para cada servidor que
+              declara <code>.mcp.json</code>, instala las skills de la comunidad y genera las
+              superficies por harness. Cuando la terminal tiene pantalla, la corrida se ve en una
+              página local que abre sola: las fases en una línea de tiempo, cada pregunta como una
+              tarjeta y un reporte final con lo que quedó pendiente. La terminal muestra siempre el
+              log completo, y <code>bun setup --headless</code> deja todo en la terminal. Si algo
+              queda a medias, <code>bun run setup:doctor</code> te dice qué falta y dónde se
+              arregla. Para abrir el agente corré su propio binario en la carpeta del proyecto
               (<code>claude</code>, <code>opencode</code> o <code>codex</code>) o usá su app de
               escritorio. No hay script envoltorio: nada carga el <code>.env</code> en el proceso
               del agente, así que ningún secreto llega al shell de la IA. Cada servidor MCP lo lee
@@ -871,9 +875,11 @@
             </p>
             <p>
               Un proyecto creado desde el boilerplate se mantiene al día con
-              <code>bun sync</code>. El updater sincroniza lo que es del boilerplate, nunca pisa lo
-              que es del proyecto, y cierra con una tabla por superficie y un prompt de paridad para
-              las filas que necesitan tu decisión.
+              <code>bun sync</code>. El updater sincroniza lo que es del boilerplate y nunca pisa lo
+              que es del proyecto: junta todas tus respuestas antes de escribir el primer archivo, y
+              su reporte final (en la misma página local, o en la terminal con
+              <code>--headless</code>) trae la tabla por superficie y un prompt de paridad para las
+              filas que necesitan tu decisión.
             </p>
           </div>
           <div class="callout sig">

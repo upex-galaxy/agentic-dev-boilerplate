@@ -111,7 +111,7 @@ La variable falta o está vacía en el `.env` del checkout (en un worktree, el d
 
 ### Búsqueda web no disponible
 
-No es un MCP del proyecto. Conectá Exa (o Tavily) una vez por máquina en `~/.codex/config.toml` (`codex mcp add <nombre> --url <url>`, luego `codex mcp login <nombre>`); `bun setup` imprime los comandos y `bun run setup:doctor` muestra qué declara esta máquina.
+No es un MCP del proyecto. Conectá Exa (o Tavily) una vez por máquina en `~/.codex/config.toml` (`codex mcp add <nombre> --url <url>`, luego `codex mcp login <nombre>`); el reporte final de `bun setup` lo nombra como próximo paso y `bun run setup:doctor` muestra qué declara esta máquina.
 
 ### El hook no imprime el contrato
 
