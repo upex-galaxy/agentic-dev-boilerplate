@@ -758,7 +758,7 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
       input.warn(`${skillRel} ya existe con otro contenido: las instrucciones de la app no se movieron (fila bloqueante).`);
     }
     else {
-      const ask = `La app tiene instrucciones propias (${instructions.files.join(' y ')}). Su texto pasa literal al skill local ${slug}, que no se carga en cada sesión. ¿Reemplazar ${AGENTS_FILE} por el de upstream con una fila de router hacia ese skill, con ${CLAUDE_FILE} como shim y los originales en el backup?`;
+      const ask = `La app tiene instrucciones propias (${instructions.files.join(' y ')}). Su texto pasa literal al skill local ${slug}, que no se carga en cada sesión. Reemplazar ${AGENTS_FILE} por el de upstream con una fila de router hacia ese skill, con ${CLAUDE_FILE} como shim y los originales en el backup?`;
       const approved = !dryRun && !input.nonInteractive && await input.confirm(ask);
       let archiveRel: string | null = null;
       if (approved) {
