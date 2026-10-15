@@ -1709,12 +1709,12 @@
               <tr>
                 <td>Vive</td>
                 <td>Adentro del turno</td>
-                <td>Hasta que lo cerrás</td>
+                <td>Hasta que lo cierras</td>
               </tr>
               <tr>
                 <td>Contexto</td>
                 <td>Se pierde cuando reporta</td>
-                <td>Persiste; le seguís hablando</td>
+                <td>Persiste; le sigues hablando</td>
               </tr>
               <tr>
                 <td>Canal</td>
@@ -1792,7 +1792,7 @@
             <p>Subagente de un solo uso. Fin. Esto es la mayoría del trabajo.</p>
           </div>
           <div class="step">
-            <h3>Querés pasar el trabajo y desentenderte?</h3>
+            <h3>Quieres pasar el trabajo y desentenderte?</h3>
             <p>
               Eso es un <b>handoff</b>, transferencia de dueño: sin Task, sin Dispatch, sin buzón.
               Una tarea suelta va por la guía <span class="mono">orca-cli</span> del binario; la
@@ -1801,8 +1801,8 @@
             </p>
           </div>
           <div class="step">
-            <h3>Necesitás supervisar, esperar resultados, responder preguntas o un grafo de dependencias?</h3>
-            <p>Orquestación. Seguí.</p>
+            <h3>Necesitas supervisar, esperar resultados, responder preguntas o un grafo de dependencias?</h3>
+            <p>Orquestación. Sigue.</p>
           </div>
           <div class="step">
             <h3>El trabajo escribe código?</h3>
@@ -1812,7 +1812,7 @@
             </p>
           </div>
           <div class="step">
-            <h3>Querés los workers SUPERVISADOS?</h3>
+            <h3>Quieres los workers SUPERVISADOS?</h3>
             <p>
               Lanzamiento nativo, y nada más: el runtime solo reconoce agentes que arrancó él. Si a
               la máquina le faltan los argumentos por defecto del agente o las credenciales no
@@ -1920,7 +1920,7 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
         </div>
 
         <div class="callout r">
-          <b>La recomendación de una línea (estados A o B, solo acá):</b> la orquestación de nivel 1
+          <b>La recomendación de una línea (estados A o B, solo aquí):</b> la orquestación de nivel 1
           ya está en la sesión, con los subagentes de <span class="mono">AGENTS.md</span> §3. La
           profesional (sesiones persistentes con las que se habla, un buzón, un tablero, el
           teléfono) necesita Orca instalado. Sin Orca, igual se escribe
@@ -2138,7 +2138,7 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>El alcance: el conductor decide alcance, el worker decide ejecución.</p>
             <p>
               Lo que cambia el brief: un archivo nuevo, otro ticket, otra rama o un esquema
@@ -2560,7 +2560,7 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
             <h3>Una instrucción explícita pisa el default</h3>
             <ul>
               <li>
-                "Corré seis", "usá el modelo chico", "codex para este": vale para esa corrida. No
+                "Corre seis", "usa el modelo chico", "codex para este": vale para esa corrida. No
                 se le pide confirmar un default que nunca mencionó.
               </li>
             </ul>
@@ -2609,7 +2609,7 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
             <h3>Es <span class="mono">/autonomous-delivery &lt;mode&gt;</span></h3>
             <ul>
               <li>
-                Su lock, auditoría, selección, topes y peligros son de esa skill; acá no se repiten
+                Su lock, auditoría, selección, topes y peligros son de esa skill; aquí no se repiten
                 ni se duplican. Esta skill solo lanza y cierra sus workers, y
                 <span class="mono">orchestration.max_workers</span> solo puede bajar el tope del
                 modo, nunca subirlo.
@@ -2696,24 +2696,24 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
                 </td>
               </tr>
               <tr>
-                <td>"pausá a X"</td>
+                <td>"pausa a X"</td>
                 <td>
                   Una interrupción en su terminal, verificada en pantalla: no hay pausa nativa
                 </td>
               </tr>
               <tr>
-                <td>"cerrá a X"</td>
+                <td>"cierra a X"</td>
                 <td>
                   Liberar por dispatch; sin dispatch, contar las terminales del worktree antes,
                   porque el verbo de stop tiene radio de worktree entero
                 </td>
               </tr>
               <tr>
-                <td>"retomá el run de anoche"</td>
+                <td>"retoma el run de anoche"</td>
                 <td>Atar esta sesión al Run id de <span class="mono">run.md</span> y listar tasks</td>
               </tr>
               <tr>
-                <td>"mergeá la historia de W2"</td>
+                <td>"mergea la historia de W2"</td>
                 <td>
                   Checks y review del PR, merge en orden de dependencias, deploy de staging
                   verificado para ese SHA. Solo el conductor
@@ -2792,12 +2792,12 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">13</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">13</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
             No tiene modos de invocación: el rol sale del contexto. Alcanza con nombrarla o con
-            frases como "orquestá", "lanzá workers", "una sesión por historia", "estado de la
-            flota" o "retomá el run". En modo WORKER se carga sola cuando un brief la nombra.
+            frases como "orquesta", "lanza workers", "una sesión por historia", "estado de la
+            flota" o "retoma el run". En modo WORKER se carga sola cuando un brief la nombra.
           </p>
         </div>
 
@@ -2809,12 +2809,12 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill orca-orchestration</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill orca-orchestration</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill orca-orchestration</span>
+            <span class="say">carga la skill orca-orchestration</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
@@ -2981,6 +2981,19 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

@@ -1650,15 +1650,15 @@
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Usala cuando</div>
+            <div class="tag">Úsala cuando</div>
             <h3>Hay que mover código por git</h3>
             <ul>
-              <li>Arrancás trabajo: <b>"start work on PROJ-123"</b>, crear una rama.</li>
+              <li>Arrancas trabajo: <b>"start work on PROJ-123"</b>, crear una rama.</li>
               <li><b>Commitear</b> y <b>pushear</b>: "commit and push", "subir cambios".</li>
-              <li>Abrir un <b>pull request</b>: "abrí un PR contra staging".</li>
+              <li>Abrir un <b>pull request</b>: "abre un PR contra staging".</li>
               <li>Hay <b>conflictos</b> o el push fue <b>rechazado</b>.</li>
               <li>Un cambio va a quedar <b>enorme</b> y hay que partirlo en varios PRs.</li>
-              <li>Querés <b>elegir o cambiar</b> la estrategia de ramas del repo.</li>
+              <li>Quieres <b>elegir o cambiar</b> la estrategia de ramas del repo.</li>
             </ul>
           </div>
           <div class="plane sig">
@@ -1683,7 +1683,7 @@
 
         <div class="callout blue r">
           <b>Si el pedido es ambiguo</b> ("hagamos lo de git"), la skill no adivina: reporta el
-          estado del repo (Step 1) y te pregunta qué necesitás.
+          estado del repo (Step 1) y te pregunta qué necesitas.
         </div>
       </div>
     </section>
@@ -1852,7 +1852,7 @@
               <span class="mono">main</span> + una de integración, muchas
               <span class="mono">feature/*</span>) y las pistas del repo
               (<span class="mono">.gitlab-ci.yml</span>, ramas <span class="mono">release/*</span>).
-              Si nada alcanza, te muestra el catálogo y elegís vos. Nunca elige en silencio.
+              Si nada alcanza, te muestra el catálogo y eliges tú. Nunca elige en silencio.
             </p>
           </div>
           <div class="step">
@@ -1941,7 +1941,7 @@
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>
               La estrategia, cada respuesta del cuestionario, cada rama propuesta y el push de
               sincronización a una rama protegida.
@@ -2039,7 +2039,7 @@
             <h3>Solo se ofrece, y con doble chequeo</h3>
             <ul>
               <li>Solo si <span class="mono">policy.admin_bypass: true</span>.</li>
-              <li>Te pregunta si de verdad sos admin: la skill no puede saber tu rol.</li>
+              <li>Te pregunta si de verdad eres admin: la skill no puede saber tu rol.</li>
               <li>Te confirma la acción irreversible concreta.</li>
               <li>Con <span class="mono">false</span>, nunca lo ofrece.</li>
             </ul>
@@ -2209,7 +2209,7 @@
           <h2>Ramas con nombre propuesto, commits con una sola razón</h2>
           <p class="sub">
             La IA propone el nombre de la rama y el bloque de commits completo, y espera tu OK antes
-            de ejecutar. Podés aceptar, cambiar o rechazar cada uno.
+            de ejecutar. Puedes aceptar, cambiar o rechazar cada uno.
           </p>
         </div>
 
@@ -2289,7 +2289,7 @@
           <div class="step">
             <h3>Base y título</h3>
             <p>
-              La base es la que fija la estrategia (tabla de la sección 03). Si la cambiás con
+              La base es la que fija la estrategia (tabla de la sección 03). Si la cambias con
               <span class="mono">--base</span>, la IA te lo marca contra el default. El título sigue
               el formato del commit, con menos de 70 caracteres.
             </p>
@@ -2334,7 +2334,7 @@
           <div class="eyebrow"><span class="num">09</span> · operación · conflictos</div>
           <h2>Diagnóstico antes que arreglo</h2>
           <p class="sub">
-            Un arreglo equivocado acá cuesta horas. La IA mira
+            Un arreglo equivocado aquí cuesta horas. La IA mira
             <span class="mono">git status</span>, <span class="mono">git diff --check</span> y los
             archivos de estado de <span class="mono">.git/</span> para saber qué pasó antes de
             proponer nada.
@@ -2450,7 +2450,7 @@
             Un worktree es un segundo directorio de trabajo sobre el mismo
             <span class="mono">.git</span>, con su propia rama y su propio índice. Sirve para dos
             sesiones de IA en paralelo, un hotfix con una feature abierta, o trabajo riesgoso que no
-            querés mezclar.
+            quieres mezclar.
           </p>
         </div>
 
@@ -2520,7 +2520,7 @@
             <span class="bx"></span
             ><span
               ><b>El stash es de todo el repo.</b> No sirve para pasar trabajo entre sesiones:
-              commiteá en tu rama.</span
+              commitea en tu rama.</span
             >
           </div>
           <div class="it">
@@ -2659,7 +2659,7 @@
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">14</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">14</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
             La skill no tiene modos con nombre: la operación sale de tu frase, en español o en
@@ -2670,18 +2670,18 @@
         <div class="hosts r">
           <div class="host">
             <h3>Claude Code</h3>
-            <span class="say">/git-flow-master abrí un PR</span>
+            <span class="say">/git-flow-master abre un PR</span>
             <span class="say">/git-flow-master configura el flujo de git</span>
             <p>La barra carga la skill; el resto de la frase elige la operación.</p>
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill git-flow-master: commit and push</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill git-flow-master: commit and push</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill git-flow-master: tengo conflictos al hacer pull</span>
+            <span class="say">carga la skill git-flow-master: tengo conflictos al hacer pull</span>
             <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
           </div>
         </div>
@@ -2690,7 +2690,7 @@
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si decís algo como…</th>
+                <th>Si dices algo como…</th>
                 <th>Corre</th>
               </tr>
             </thead>
@@ -2793,8 +2793,8 @@
           <p>
             <b style="color: var(--ink)">La idea de fondo.</b> La política de git se decide una vez,
             se guarda en un solo lugar y se comprueba contra el host. Después, cada rama, commit,
-            push y PR la aplica sin que nadie la tenga que recordar. La IA propone y ejecuta; vos
-            elegís la estrategia, aceptás o no las divergencias y hacés el merge.
+            push y PR la aplica sin que nadie la tenga que recordar. La IA propone y ejecuta; tú
+            eliges la estrategia, aceptas o no las divergencias y haces el merge.
           </p>
         </div>
         <div class="sig">
@@ -2880,6 +2880,19 @@
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

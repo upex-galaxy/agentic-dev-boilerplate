@@ -1645,15 +1645,15 @@
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Usala cuando</div>
+            <div class="tag">Úsala cuando</div>
             <h3>Hay código que llevar de Jira a un deploy</h3>
             <ul>
-              <li>Tomás una <b>historia nueva</b> que está en Ready For Dev.</li>
-              <li>Arrancás una <b>feature de varias historias</b> y querés un plan macro primero.</li>
+              <li>Tomas una <b>historia nueva</b> que está en Ready For Dev.</li>
+              <li>Arrancas una <b>feature de varias historias</b> y quieres un plan macro primero.</li>
               <li>Hay que <b>corregir un bug</b>: causa raíz primero, después el diff.</li>
-              <li>Se cortó una sesión y querés <b>retomar</b> donde quedó.</li>
+              <li>Se cortó una sesión y quieres <b>retomar</b> donde quedó.</li>
               <li>Llegó <b>feedback de un PR</b> o el CI quedó en rojo.</li>
-              <li>Querés procesar un <b>sprint entero</b>, o promover algo a <b>producción</b>.</li>
+              <li>Quieres procesar un <b>sprint entero</b>, o promover algo a <b>producción</b>.</li>
             </ul>
           </div>
           <div class="plane sig">
@@ -1865,7 +1865,7 @@
               Confirma que la épica padre tenga sus dos planes macro
               (<span class="mono">feature-test-plan.md</span> y
               <span class="mono">feature-implementation-plan.md</span>). Si falta uno, te ofrece
-              generarlo o seguir sin él: elegís vos.
+              generarlo o seguir sin él: eliges tú.
             </p>
           </div>
         </div>
@@ -1885,7 +1885,7 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">04</span> · Stage 1 · la compuerta de diseño</div>
-          <h2>Una historia con UI y sin pantalla: frena y elegís</h2>
+          <h2>Una historia con UI y sin pantalla: frena y eliges</h2>
           <p class="sub">
             Esta skill no diseña y nunca escribe un mockup. Hace el <b>chequeo</b> y la
             <b>derivación</b>, en el Stage 1, para cada historia con UI, antes de planear código.
@@ -2038,7 +2038,7 @@
             <p>Lee historia, ATP, ADRs y glosario; descompone en pasos; publica y sincroniza.</p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>La ruta de diseño, si se sigue sin un plan macro, y qué sale del plan si no entra.</p>
           </div>
           <div class="out">
@@ -2174,7 +2174,7 @@
           <div class="g">
             <b>Fuera de alcance: tests E2E y de integración</b
             ><span
-              >Son trabajo de QA y de automatización de tests. Acá se escriben tests unitarios.</span
+              >Son trabajo de QA y de automatización de tests. Aquí se escriben tests unitarios.</span
             >
           </div>
           <div class="g">
@@ -2571,7 +2571,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">13</span> · quién hace el trabajo pesado</div>
-          <h2>Orquestado por defecto, todo en una sesión si lo pedís</h2>
+          <h2>Orquestado por defecto, todo en una sesión si lo pides</h2>
           <p class="sub">
             Los dos modos corren las mismas etapas, las mismas compuertas y la misma verificación,
             en el mismo orden. Solo cambia la delegación. El modo se resuelve una vez y queda fijo
@@ -2612,7 +2612,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
               <tr>
                 <th>Conviene para</th>
                 <td>Todo lo que toca varios archivos</td>
-                <td>Tickets chicos, de un archivo, o cuando lo pedís</td>
+                <td>Tickets chicos, de un archivo, o cuando lo pides</td>
               </tr>
             </tbody>
           </table>
@@ -2636,7 +2636,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <p class="sub">
             Hay dos ejes. El alcance: una historia o un sprint (batch). Los ejecutores: uno o varios.
             Con un ejecutor, el loop recorre los tickets en esta sesión. Con varios, cada historia
-            tiene su propia sesión y la conversación que habla con vos es la conductora.
+            tiene su propia sesión y la conversación que habla contigo es la conductora.
           </p>
         </div>
 
@@ -2660,7 +2660,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             <h3>Un worker por historia, hasta un PR abierto</h3>
             <ul>
               <li>
-                Solo en batch, cuando lo pedís o cuando
+                Solo en batch, cuando lo pides o cuando
                 <span class="mono">orchestration.max_workers</span> en
                 <span class="mono">.agents/project.yaml</span> es mayor que 1.
               </li>
@@ -2725,7 +2725,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <span class="mono">.session/sprint-development/sprint-&lt;N&gt;/</span> del checkout
           principal: una línea autocontenida por ticket de la ronda. Si hay una capa de
           orquestación disponible (<span class="mono">/orca-orchestration</span>), ella abre y
-          supervisa las sesiones. Si no, pegás cada línea en una terminal. El resto de las reglas no
+          supervisa las sesiones. Si no, pegas cada línea en una terminal. El resto de las reglas no
           cambia, y con un solo ejecutor nada de esto existe.
         </div>
       </div>
@@ -2807,11 +2807,11 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">16</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">16</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            La skill no tiene modos con nombre: la entrada sale de tu frase. Nombrás la skill, el
-            ticket o el sprint, y lo que querés hacer, en español o en inglés.
+            La skill no tiene modos con nombre: la entrada sale de tu frase. Nombras la skill, el
+            ticket o el sprint, y lo que quieres hacer, en español o en inglés.
           </p>
         </div>
 
@@ -2824,12 +2824,12 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill sprint-development: implementar PROJ-123</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill sprint-development: implementar PROJ-123</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill sprint-development: process sprint 4</span>
+            <span class="say">carga la skill sprint-development: process sprint 4</span>
             <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
           </div>
         </div>
@@ -2838,7 +2838,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si decís algo como…</th>
+                <th>Si dices algo como…</th>
                 <th>Corre</th>
               </tr>
             </thead>
@@ -2973,8 +2973,8 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <p>
             <b style="color: var(--ink)">La idea de fondo.</b> Cada etapa deja algo que la siguiente
             puede leer, y cada compuerta se abre con evidencia, no con una etiqueta. La IA planea,
-            construye, revisa y verifica en el destino; vos elegís la ruta de diseño, das el OK del
-            merge y decidís cuándo algo llega a producción.
+            construye, revisa y verifica en el destino; tú eliges la ruta de diseño, das el OK del
+            merge y decides cuándo algo llega a producción.
           </p>
         </div>
         <div class="sig">
@@ -3060,6 +3060,19 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

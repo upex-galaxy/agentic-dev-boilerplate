@@ -32,6 +32,12 @@ browse the published site instead.
    "N decks" tile, no present-tense status claim. Name the source of truth instead
    (a file, a command such as `bun run skills:registry`, a generated artifact
    such as `REGISTRY.md`) and let the reader resolve the current value.
+   **Voice and mobile block.** Write in tuteo (never voseo: «puedes», «elige», not «podés», «elegí»)
+   and no opening `¿` or `¡`. Close every deck with the `<script id="upex-mobile-nav">` block from any
+   existing deck (copy it before `</body>`): the site that serves these decks (upexgalaxy.com) rejects
+   a deck without that id and falls back to its committed snapshot. These decks are scroll pages that
+   reflow with `@media`, so the block only declares the mobile mode (`data-mobile` on `<html>`); the
+   QA decks' slide-based variant (scale-to-fit + swipe) does not apply here.
 3. Register a card in `packages/pages-home/index.html` (the homepage catalog is
    hardcoded HTML, same as QA's). Move it from "Próximamente" to a live link.
 4. Flip its row from `todo` to `hecho` in `ROADMAP.md`.
