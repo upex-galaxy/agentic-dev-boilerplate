@@ -1397,8 +1397,8 @@
           <span class="mono">/design-system</span> trabaja en dos momentos. Primero, una vez por
           proyecto, fija el <b>sistema</b>: los tokens de <span class="mono">DESIGN.md</span>
           (modo <span class="mono">tokens</span>). Después, historia por historia y justo antes de
-          construirla, encarga el <b>mockup</b> de esa pantalla a una herramienta de diseño, vos lo
-          ratificás, y la IA lo mapea en el plan que <b>guía
+          construirla, encarga el <b>mockup</b> de esa pantalla a una herramienta de diseño, tú lo
+          ratificas, y la IA lo mapea en el plan que <b>guía
           <span class="mono">/sprint-development</span></b> (modo
           <span class="mono">screen</span>). Si la app ya existe y tiene su propia cara, el modo
           <span class="mono">extract</span> escribe ese <span class="mono">DESIGN.md</span> desde el
@@ -1500,12 +1500,12 @@
             <ul>
               <li>
                 Lo arma <b>/design-system</b> en modo <span class="mono">screen</span> (opt-in,
-                siempre pregunta) desde mockups que <b>vos ratificás</b>.
+                siempre pregunta) desde mockups que <b>tú ratificas</b>.
               </li>
               <li>
                 La IA <b>nunca</b> escribe un mockup a mano sin una skill de diseño cargada: lo
                 encarga a una herramienta de diseño, lo escribe a través de esa skill (Modo C) o lo
-                traés vos.
+                traes tú.
               </li>
               <li>
                 Lo consume <b>/sprint-development</b> en cada historia de UI (Regla 14 del repo).
@@ -1552,40 +1552,40 @@
               <tr>
                 <th>Camino</th>
                 <th>Cuándo elegirlo</th>
-                <th>Qué hace la IA · qué hacés vos</th>
+                <th>Qué hace la IA · qué haces tú</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <th>B · <span class="mono">getdesign</span> + matcher <span class="badge free">default</span></th>
-                <td>Hay PRD y querés algo de catálogo, de buena calidad, sin esfuerzo manual.</td>
+                <td>Hay PRD y quieres algo de catálogo, de buena calidad, sin esfuerzo manual.</td>
                 <td>
                   La IA rankea tres candidatos del catálogo que devuelve
-                  <span class="mono">npx getdesign list</span>; vos elegís uno o pedís otra tanda.
+                  <span class="mono">npx getdesign list</span>; tú eliges uno o pides otra tanda.
                 </td>
               </tr>
               <tr>
                 <th>A · Gallery manual</th>
-                <td>Querés explorar y elegir sin que la IA decida, o el matcher no convence.</td>
+                <td>Quieres explorar y elegir sin que la IA decida, o el matcher no convence.</td>
                 <td>
-                  Navegás <span class="mono">designmd.ai/explore</span> o
+                  Navegas <span class="mono">designmd.ai/explore</span> o
                   <span class="mono">npx getdesign list</span>; la IA descarga y lintea lo que
                   elegiste.
                 </td>
               </tr>
               <tr>
                 <th>C · Open Design app</th>
-                <td>Querés iterar visualmente en una UI local antes de fijar tokens.</td>
+                <td>Quieres iterar visualmente en una UI local antes de fijar tokens.</td>
                 <td>
-                  Iterás en la desktop app (Docker es alternativa, no requisito); la IA espera y
+                  Iteras en la desktop app (Docker es alternativa, no requisito); la IA espera y
                   después convierte el resultado vía E.
                 </td>
               </tr>
               <tr>
                 <th>D · Claude Design</th>
-                <td>Tenés plan Pro o superior y querés la mejor calidad visual.</td>
+                <td>Tienes plan Pro o superior y quieres la mejor calidad visual.</td>
                 <td>
-                  Diseñás en <span class="mono">claude.ai/design</span> y exportás el bundle a
+                  Diseñas en <span class="mono">claude.ai/design</span> y exportas el bundle a
                   <span class="mono">design/handoff/</span>; la IA lo convierte vía E.
                 </td>
               </tr>
@@ -1622,12 +1622,12 @@
             </p>
           </div>
           <div class="step">
-            <h3>Elegís vos</h3>
+            <h3>Eliges tú</h3>
             <p>
-              Nombre, tagline y pista de preview de cada uno. Elegís uno, o pedís
+              Nombre, tagline y pista de preview de cada uno. Eliges uno, o pides
               <em>"más opciones"</em> y llega la siguiente tanda de tres.
             </p>
-            <span class="say"><span class="who">vos →</span> "el segundo"</span>
+            <span class="say"><span class="who">tú →</span> "el segundo"</span>
           </div>
           <div class="step">
             <h3>Descarga y lint</h3>
@@ -1693,7 +1693,7 @@
           <b>Después del lint:</b> vuelve a <span class="mono">/project-foundation</span> (fase 3,
           SRS) si vino de ahí. <span class="mono">/project-bootstrap</span> lee
           <span class="mono">DESIGN.md</span> al montar el frontend, y sin él se detiene. Y la IA te
-          pregunta si además querés mapear pantallas: eso ya es la fase
+          pregunta si además quieres mapear pantallas: eso ya es la fase
           <span class="mono">screen</span>, siempre opt-in.
         </div>
       </div>
@@ -1821,12 +1821,12 @@
           <div class="step">
             <h3>La historia entra al sprint</h3>
             <p>
-              Tomás una historia de UI. <span class="mono">/sprint-development</span> la busca en el
+              Tomas una historia de UI. <span class="mono">/sprint-development</span> la busca en el
               mapa <b>Historia → Pantalla</b> (§8 del master design plan).
             </p>
           </div>
           <div class="step">
-            <h3>Tiene mockup? Si no, elegís ruta</h3>
+            <h3>Tiene mockup? Si no, eliges ruta</h3>
             <p>
               Sin fila en §8, o con la fila marcada 🔒 mockup-gated, el flujo se detiene y te
               ofrece tres rutas. La primera es volver a
@@ -1837,7 +1837,7 @@
           <div class="step">
             <h3>El mockup se convierte en contrato</h3>
             <p>
-              Vos ratificás cada mockup, lo haya encargado la IA o lo hayas traído vos. La IA lee
+              Tú ratificas cada mockup, lo haya encargado la IA o lo hayas traído tú. La IA lee
               los ratificados, escribe la spec de pantalla (§4) y agrega la fila al mapa (§8), y te
               muestra la lista para que la <b>confirmes</b> antes de guardar.
             </p>
@@ -1886,7 +1886,7 @@
               </tr>
               <tr>
                 <th>Fila en §8 marcada 🔒 mockup-gated</th>
-                <td>La fila ya dice qué falta. Elegís una de las tres rutas.</td>
+                <td>La fila ya dice qué falta. Eliges una de las tres rutas.</td>
               </tr>
               <tr>
                 <th>Sin fila en §8</th>
@@ -1942,7 +1942,7 @@
         </div>
 
         <div class="callout blue r">
-          <b>Vos elegís la ruta.</b> La IA para y te muestra las tres; nunca elige en silencio.
+          <b>Tú eliges la ruta.</b> La IA para y te muestra las tres; nunca elige en silencio.
         </div>
 
         <div class="callout r">
@@ -1963,8 +1963,8 @@
           <h2>Cómo se entrega un mockup a la IA</h2>
           <p class="sub">
             Este handoff es <em>idéntico</em> en su forma para todas las herramientas; lo que
-            cambia es <em>dónde</em> dibujás las pantallas (paso 2) y, para Open Design,
-            <em>quién</em> hace el paso 3 y 4 (vos, o la IA sola vía MCP, ver §06).
+            cambia es <em>dónde</em> dibujas las pantallas (paso 2) y, para Open Design,
+            <em>quién</em> hace el paso 3 y 4 (tú, o la IA sola vía MCP, ver §06).
           </p>
         </div>
 
@@ -1972,12 +1972,12 @@
           <div class="step">
             <h3>Das el opt-in</h3>
             <p>
-              Corrés <span class="mono">/design-system screen</span>, o te trae el design gate. La
+              Corres <span class="mono">/design-system screen</span>, o te trae el design gate. La
               fase <b>siempre pregunta</b>, nunca corre sola, con tres opciones: sí tengo/voy a
               producir mockups, no (los tokens alcanzan), o todavía no.
             </p>
             <span class="say"
-              ><span class="who">vos →</span> "sí, voy a producir mockups para estas
+              ><span class="who">tú →</span> "sí, voy a producir mockups para estas
               historias"</span
             >
           </div>
@@ -1994,11 +1994,11 @@
             </p>
           </div>
           <div class="step">
-            <h3>Diseñás en la herramienta externa (o la IA la encarga por MCP)</h3>
+            <h3>Diseñas en la herramienta externa (o la IA la encarga por MCP)</h3>
             <p>
-              Pegás el brief en Claude Design / Open Design / la que sea, iterás las pantallas
-              conversando, y <b>exportás</b> el resultado. En el camino manual, este paso lo hacés
-              vos. En Open Design con MCP conectado, la IA puede disparar y pollear el run sola:
+              Pegas el brief en Claude Design / Open Design / la que sea, iteras las pantallas
+              conversando, y <b>exportas</b> el resultado. En el camino manual, este paso lo haces
+              tú. En Open Design con MCP conectado, la IA puede disparar y pollear el run sola:
               ver Modo A en §06.
             </p>
           </div>
@@ -2015,20 +2015,20 @@
           <div class="step">
             <h3>La IA arma el contrato</h3>
             <p>
-              Le avisás que ya está (o ella misma lo detecta al terminar su run). Vos ratificás cada
+              Le avisas que ya está (o ella misma lo detecta al terminar su run). Tú ratificas cada
               mockup; la IA lee los ratificados, enumera pantallas, escribe §4 + §8, y te muestra el
               mapa para revisar antes de guardarlo. Listo para el sprint.
             </p>
             <span class="say"
-              ><span class="who">vos →</span> "ya dejé los mockups en la carpeta, armá el master
+              ><span class="who">tú →</span> "ya dejé los mockups en la carpeta, arma el master
               design plan"</span
             >
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Resume-safe:</b> mientras diseñás (Modo B manual), la IA deja un checkpoint y
-          <em>pausa</em>. Podés cerrar la sesión: al volver retoma exactamente donde estaba,
+          <b>Resume-safe:</b> mientras diseñas (Modo B manual), la IA deja un checkpoint y
+          <em>pausa</em>. Puedes cerrar la sesión: al volver retoma exactamente donde estaba,
           esperando tu bundle. No inventa pantallas para "seguir".
         </div>
 
@@ -2052,15 +2052,15 @@
           <div class="step">
             <h3>Claude Design o cualquier prototipador (Modo B)</h3>
             <p>
-              Te entrega el brief para pegar en la herramienta y pausa con resume de sesión. Vos
-              diseñás y exportás al lote.
+              Te entrega el brief para pegar en la herramienta y pausa con resume de sesión. Tú
+              diseñas y exportas al lote.
             </p>
           </div>
           <div class="step">
             <h3>La skill <span class="mono">design</span> de Claude Code</h3>
             <p>
               Donde la sesión la tiene: un canvas de artboards <span class="mono">.dc.html</span>
-              que después podés refinar vos, a mano.
+              que después puedes refinar tú, a mano.
             </p>
           </div>
           <div class="step">
@@ -2073,7 +2073,7 @@
               si rediseña una pantalla que ya existe y <span class="mono">design-taste-frontend</span>
               si es una página pública de marketing. Las skills se nombran en el
               <span class="mono">BRIEF.md</span>, los valores quedan dentro del contrato de tokens,
-              se exporta al lote y vos lo ratificás como cualquier otro mockup. Si falta alguna lo dice
+              se exporta al lote y tú lo ratificas como cualquier otro mockup. Si falta alguna lo dice
               una vez y sigue con las demás; sin ninguna cargada, este método no existe.
             </p>
           </div>
@@ -2101,8 +2101,8 @@
           <div class="eyebrow"><span class="num">05</span> · herramienta A</div>
           <h2>Claude Design</h2>
           <p class="sub">
-            La herramienta de Anthropic (<span class="mono">claude.ai/design</span>). Convertís
-            texto en prototipos <em>interactivos</em> HTML/CSS/JS que refinás conversando. Es el
+            La herramienta de Anthropic (<span class="mono">claude.ai/design</span>). Conviertes
+            texto en prototipos <em>interactivos</em> HTML/CSS/JS que refinas conversando. Es el
             camino D de la fase de tokens (§02), y también sirve para screen mockups pegando el
             BRIEF.md.
           </p>
@@ -2141,12 +2141,12 @@
             <div class="win-body two">
               <div class="pane chat">
                 <div class="pane-label">Chat</div>
-                <div class="bub ai">Aquí tenés una primera versión del login. Ajustamos algo?</div>
-                <div class="bub me">Hacé el botón primario más grande y agregá estado de error</div>
+                <div class="bub ai">Aquí tienes una primera versión del login. Ajustamos algo?</div>
+                <div class="bub me">Haz el botón primario más grande y agrega estado de error</div>
                 <div class="bub tool">✓ Editing · Login.dc.html</div>
                 <div class="bub tool">✓ Done</div>
                 <div class="promptbox">
-                  <span>Describí un cambio…</span><span class="send">▲</span>
+                  <span>Describe un cambio…</span><span class="send">▲</span>
                 </div>
               </div>
               <div class="pane canvas">
@@ -2181,15 +2181,15 @@
         </div>
         <div class="steps r">
           <div class="step">
-            <h3>Abrís un proyecto y pegás el BRIEF</h3>
+            <h3>Abres un proyecto y pegas el BRIEF</h3>
             <p>
-              Creás un proyecto (hereda el design system de tu org). Le enchufás contexto: repo de
-              GitHub o directorio local, assets existentes. <b>Pegás el BRIEF.md</b> completo como
+              Creas un proyecto (hereda el design system de tu org). Le enchufas contexto: repo de
+              GitHub o directorio local, assets existentes. <b>Pegas el BRIEF.md</b> completo como
               primer mensaje del chat.
             </p>
           </div>
           <div class="step">
-            <h3>Iterás de cuatro formas</h3>
+            <h3>Iteras de cuatro formas</h3>
             <p>
               <b>Chat</b> para cambios grandes · <b>comentarios inline</b> (clic en un elemento del
               canvas) · <b>edición directa</b> (arrastrar / redimensionar / alinear) ·
@@ -2197,27 +2197,27 @@
             </p>
           </div>
           <div class="step">
-            <h3>Cubrís los estados y varias pantallas</h3>
+            <h3>Cubres los estados y varias pantallas</h3>
             <p>
               Un proyecto sostiene el <b>flujo completo</b> (varias pantallas conectadas con
-              navegación). Generá los estados borde (vacío, cargando, error) <em>antes</em> del
+              navegación). Genera los estados borde (vacío, cargando, error) <em>antes</em> del
               handoff.
             </p>
           </div>
           <div class="step">
-            <h3>Exportás: dos rutas</h3>
+            <h3>Exportas: dos rutas</h3>
             <p>
               Botón <b>Export</b> (arriba a la derecha): <b>"Send to local coding agent"</b> empuja
               el bundle directo a tu Claude Code local corriendo en el repo, o
-              <b>"Save as folder"</b> lo descarga como ZIP/carpeta para que vos lo muevas a mano.
+              <b>"Save as folder"</b> lo descarga como ZIP/carpeta para que tú lo muevas a mano.
             </p>
           </div>
           <div class="step">
-            <h3>Confirmás el destino</h3>
+            <h3>Confirmas el destino</h3>
             <p>
-              Con "Save as folder": descomprimís en
+              Con "Save as folder": descomprimes en
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span>. Con "Send
-              to local coding agent": le decís al agente esa misma ruta de destino; el scope de
+              to local coding agent": le dices al agente esa misma ruta de destino; el scope de
               este drop zone es <b>screen mockups</b>, no el bundle de DESIGN.md (ese usa
               <span class="mono">design/handoff/</span>).
             </p>
@@ -2330,8 +2330,8 @@
               loop foreground, y al ver <span class="mono">status: succeeded</span> ubica el
               resultado con <span class="mono">get_artifact</span> /
               <span class="mono">list_files</span> y lo copia (<span class="mono">cp</span>) desde
-              el data root de Open Design a la drop zone del repo, sin que vos toques la ventana.
-              Vos ratificás las pantallas exportadas antes de que entren al mapa.
+              el data root de Open Design a la drop zone del repo, sin que tú toques la ventana.
+              Tú ratificas las pantallas exportadas antes de que entren al mapa.
             </p>
           </div>
           <div class="plane">
@@ -2339,10 +2339,10 @@
             <h3>Manual + PAUSE</h3>
             <span class="path">handoff manual</span>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
-              Si el MCP no está conectado: la IA deja el BRIEF.md y <b>pausa</b>. Abrís la desktop
-              app vos, pegás el brief en <b>Studio → New Project</b> (skill/template + DESIGN.md +
-              brief), iterás, y copiás el archivo final desde la carpeta de datos del proyecto (o
-              corrés <span class="mono">od export</span>) a la drop zone, y avisás cuando esté.
+              Si el MCP no está conectado: la IA deja el BRIEF.md y <b>pausa</b>. Abres la desktop
+              app tú, pegas el brief en <b>Studio → New Project</b> (skill/template + DESIGN.md +
+              brief), iteras, y copias el archivo final desde la carpeta de datos del proyecto (o
+              corres <span class="mono">od export</span>) a la drop zone, y avisas cuando esté.
             </p>
           </div>
         </div>
@@ -2352,38 +2352,38 @@
         </div>
         <div class="r" style="margin-bottom: 22px">
           <div class="code">
-            <span class="c"># Vía recomendada: sin Docker, binario firmado</span> Descargá el
+            <span class="c"># Vía recomendada: sin Docker, binario firmado</span> Descarga el
             instalador de <span class="k">nexu-io/open-design</span> releases (macOS/Win/Linux) y
-            abrí la app. No hace falta puerto fijo ni
+            abre la app. No hace falta puerto fijo ni
             <span class="mono">host.docker.internal</span>.
 
             <span class="c"># Docker sigue existiendo, pero ya no es el camino recomendado,</span>
-            <span class="c"># solo si ya vivís en containers o necesitás acceso remoto.</span>
+            <span class="c"># solo si ya vives en containers o necesitas acceso remoto.</span>
           </div>
         </div>
 
         <div class="steps r">
           <div class="step">
-            <h3>Configurás el motor</h3>
+            <h3>Configuras el motor</h3>
             <p>
-              En <b>Settings</b> elegís cómo genera: apuntando a tu CLI ya autenticado (Claude Code
+              En <b>Settings</b> eliges cómo genera: apuntando a tu CLI ya autenticado (Claude Code
               / Codex / OpenCode, <em>sin</em> key extra) o cargando una API key de cualquier
               endpoint compatible con la API de OpenAI (BYOK).
             </p>
           </div>
           <div class="step">
-            <h3>Conectás el MCP a tu agente</h3>
+            <h3>Conectas el MCP a tu agente</h3>
             <p>
-              Registrás el daemon de Open Design como MCP server en tu coding agent (Claude Code,
+              Registras el daemon de Open Design como MCP server en tu coding agent (Claude Code,
               etc.). Una vez conectado, las tools
               <span class="mono">mcp__open-design__*</span> quedan disponibles y el Modo A se vuelve
               el camino por defecto.
             </p>
           </div>
           <div class="step">
-            <h3>Elegís los 3 inputs y disparás</h3>
+            <h3>Eliges los 3 inputs y disparas</h3>
             <p>
-              Skill de OD (para pantallas de aplicación usá
+              Skill de OD (para pantallas de aplicación usa
               <span class="mono">frontend-design</span>) + design system (tu
               <span class="mono">DESIGN.md</span> real) +
               brief en lenguaje natural (el BRIEF.md). <b>Send</b>, a mano en Studio, o vía
@@ -2404,8 +2404,8 @@
             <p>
               Modo A: la IA ubica el archivo con <span class="mono">get_artifact</span> y lo copia
               (<span class="mono">cp</span>) a la drop zone; el MCP no escribe fuera de su propio
-              data root. Modo B: copiás el archivo (o corrés <span class="mono">od export</span>) a
-              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> y avisás.
+              data root. Modo B: copias el archivo (o corres <span class="mono">od export</span>) a
+              <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> y avisas.
             </p>
           </div>
         </div>
@@ -2416,7 +2416,7 @@
           </div>
           <p class="sub" style="font-size: 1rem">
             Si vas a operar Open Design vía MCP (Modo A), estas cuatro señales confunden si no las
-            conocés de antemano.
+            conoces de antemano.
           </p>
         </div>
         <div class="gotchas r">
@@ -2440,7 +2440,7 @@
             <b><span class="mono">updatedAt</span> se congela durante extended thinking</b
             ><span
               >Minutos sin movimiento en el timestamp del run no son un hang: es el modelo
-              pensando. Verificá liveness real contra el último evento de
+              pensando. Verifica liveness real contra el último evento de
               <span class="mono">events.jsonl</span>.</span
             >
           </div>
@@ -2484,7 +2484,7 @@
             <h3>Figma</h3>
             <div class="kk">export estático</div>
             <p>
-              Diseñás en Figma como siempre y <b>exportás las pantallas</b> (imágenes / HTML /
+              Diseñas en Figma como siempre y <b>exportas las pantallas</b> (imágenes / HTML /
               specs) a la drop zone. La IA las lee como referencia visual. Ideal si tu equipo ya
               vive en Figma. La contra: no son prototipos vivos HTML, así que la IA infiere layout
               desde la imagen + tu brief.
@@ -2494,7 +2494,7 @@
             <h3>HTML manual</h3>
             <div class="kk">sin herramienta visual</div>
             <p>
-              Lo escribís vos, a mano, o pegando el output de un chat de IA cualquiera que uses
+              Lo escribes tú, a mano, o pegando el output de un chat de IA cualquiera que uses
               como bloc de notas, en <b>otra sesión</b>, sin conexión con la que está corriendo
               <span class="mono">/design-system</span>. Rápido y sin salir de la terminal. La
               contra: sin canvas visual para iterar cómodo, el refinamiento es por chat en esa otra
@@ -2512,7 +2512,7 @@
           <span class="mono">SKILL.md</span>, B4 de
           <span class="mono">screen-design-brief.md</span>). Si el HTML nace de una IA, hay dos
           caminos: viene de <b>otra sesión</b>, tratado exactamente como un export de Figma (un
-          archivo externo que vos soltás en la drop zone), o lo escribe esta misma sesión a través
+          archivo externo que tú sueltas en la drop zone), o lo escribe esta misma sesión a través
           de una skill de diseño <span class="mono">frontend-ui</span> (Modo C), nombrada en el
           <span class="mono">BRIEF.md</span>. Lo que nunca existe es markup que la sesión
           orquestadora escribe "mientras espera", sin ninguna skill de diseño.
@@ -2521,62 +2521,62 @@
         <div class="sec-head r" style="margin: 40px 0 22px 0">
           <div class="eyebrow"><span class="num">07·b</span> · la vía manual, paso a paso</div>
           <p class="sub" style="font-size: 1rem">
-            La opción más rápida cuando no querés levantar ninguna app. Sirve bien para pantallas
+            La opción más rápida cuando no quieres levantar ninguna app. Sirve bien para pantallas
             simples y para iterar rápido antes de pulir en una herramienta visual, siempre que el
-            archivo lo produzcas y lo muevas vos, no la sesión de
+            archivo lo produzcas y lo muevas tú, no la sesión de
             <span class="mono">/design-system</span>.
           </p>
         </div>
         <div class="steps r">
           <div class="step">
-            <h3>Producís la primera pantalla, aparte</h3>
+            <h3>Produces la primera pantalla, aparte</h3>
             <p>
               En otra ventana o sesión (o a mano), un prompt que ancla tres cosas: qué pantalla, qué
-              historia, y que use los tokens de <span class="mono">DESIGN.md</span>. Pedís un
+              historia, y que use los tokens de <span class="mono">DESIGN.md</span>. Pides un
               archivo autocontenido (abrible en el navegador de una).
             </p>
             <span class="say"
-              ><span class="who">vos, en esa otra sesión →</span> "Generá un mockup HTML
-              autocontenido de la pantalla de login para la historia PROJ-14. Usá los tokens de
+              ><span class="who">tú, en esa otra sesión →</span> "Genera un mockup HTML
+              autocontenido de la pantalla de login para la historia PROJ-14. Usa los tokens de
               DESIGN.md. Un solo archivo."</span
             >
           </div>
           <div class="step">
-            <h3>Lo guardás vos en la drop zone</h3>
+            <h3>Lo guardas tú en la drop zone</h3>
             <p>
-              Copiás el <span class="mono">.html</span> resultante a
+              Copias el <span class="mono">.html</span> resultante a
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/login.html</span>:
-              acción tuya, igual que descomprimir un zip de Claude Design. Lo abrís y lo mirás en el
+              acción tuya, igual que descomprimir un zip de Claude Design. Lo abres y lo miras en el
               navegador: ese render es tu canvas.
             </p>
           </div>
           <div class="step">
-            <h3>Iterás en esa otra sesión</h3>
+            <h3>Iteras en esa otra sesión</h3>
             <p>
-              Describís el cambio en palabras allá; esa sesión reescribe el archivo; vos volvés a
-              copiarlo a la drop zone y refrescás el navegador. Repetís hasta que quede.
+              Describes el cambio en palabras allá; esa sesión reescribe el archivo; tú vuelves a
+              copiarlo a la drop zone y refrescas el navegador. Repites hasta que quede.
             </p>
             <span class="say"
-              ><span class="who">vos, en esa otra sesión →</span> "el botón primario más grande,
-              agregá el estado de error y un enlace de recuperar contraseña"</span
+              ><span class="who">tú, en esa otra sesión →</span> "el botón primario más grande,
+              agrega el estado de error y un enlace de recuperar contraseña"</span
             >
           </div>
           <div class="step">
-            <h3>Cubrís los estados borde</h3>
+            <h3>Cubres los estados borde</h3>
             <p>
-              Pedí explícitamente vacío, cargando y error: no se agregan solos. Son parte del
+              Pide explícitamente vacío, cargando y error: no se agregan solos. Son parte del
               contrato de pantalla.
             </p>
           </div>
           <div class="step">
-            <h3>Volvés a la sesión de /design-system y cerrás el handoff</h3>
+            <h3>Vuelves a la sesión de /design-system y cierras el handoff</h3>
             <p>
-              El archivo ya está en la drop zone (lo pusiste vos en el paso 2). Le pedís a
+              El archivo ya está en la drop zone (lo pusiste tú en el paso 2). Le pides a
               <span class="mono">/design-system</span> que arme el plan. Mismo final que Claude
               Design u Open Design.
             </p>
             <span class="say"
-              ><span class="who">vos →</span> "listo el mockup, armá el master design plan para
+              ><span class="who">tú →</span> "listo el mockup, arma el master design plan para
               PROJ-14"</span
             >
           </div>
@@ -2585,7 +2585,7 @@
         <div class="callout r">
           <b>El principio no cambia:</b> venga de donde venga el mockup, termina en
           <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> puesto ahí por
-          vos, y la IA lo convierte en spec de pantalla + fila en el mapa Historia→Pantalla. La
+          tú, y la IA lo convierte en spec de pantalla + fila en el mapa Historia→Pantalla. La
           herramienta es intercambiable; quién lo produce puede variar; el contrato (y quién lo
           mueve a la drop zone) es siempre el mismo.
         </div>
@@ -2642,16 +2642,16 @@
                 <th>Iteración</th>
                 <td>Chat · inline · drag · sliders</td>
                 <td>Chat + versiones · <span class="badge mcp">MCP</span> Modo A autónomo</td>
-                <td>Manual (vos diseñás)</td>
-                <td>Chat aparte + vos copiás el render</td>
-                <td>Chat con la IA; vos ratificás cada pantalla</td>
+                <td>Manual (tú diseñas)</td>
+                <td>Chat aparte + tú copias el render</td>
+                <td>Chat con la IA; tú ratificas cada pantalla</td>
               </tr>
               <tr>
                 <th>Usa DESIGN.md</th>
                 <td>Vía design system de la org</td>
                 <td>Sí, lo consume directo</td>
                 <td>Manual (tokens a mano)</td>
-                <td>Sí, se lo pasás</td>
+                <td>Sí, se lo pasas</td>
                 <td>Sí, con cada valor dentro del contrato de tokens</td>
               </tr>
               <tr>
@@ -2670,7 +2670,7 @@
           <span class="mono">.agents/skills/design-system/</span> (<span class="mono">SKILL.md</span>
           y <span class="mono">references/</span>). Los mecanismos de interacción de Claude Design
           (chat, inline, drag, sliders) son conocimiento general de producto, no están documentados
-          en la skill. Las dos herramientas cambian rápido: confirmá contra la herramienta antes de
+          en la skill. Las dos herramientas cambian rápido: confirma contra la herramienta antes de
           una demo importante.
         </p>
       </div>
@@ -2680,7 +2680,7 @@
     <section class="band" id="comandos">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">09</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">09</span> · qué le dices a la IA</div>
           <h2>Los comandos exactos</h2>
           <p class="sub">
             El nombre de la skill más el modo, <span class="mono">tokens</span> o
@@ -2699,38 +2699,38 @@
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill design-system, modo tokens</span>
-            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+            <span class="say">carga la skill design-system, modo tokens</span>
+            <p>Sin barra: nombras la skill y el modo en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill design-system, modo screen, historia PROJ-14</span>
+            <span class="say">carga la skill design-system, modo screen, historia PROJ-14</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
 
         <div class="steps r">
           <div class="step">
-            <h3>Arrancás la fase de pantalla</h3>
-            <span class="say"><span class="who">vos →</span> /design-system screen PROJ-14</span>
+            <h3>Arrancas la fase de pantalla</h3>
+            <span class="say"><span class="who">tú →</span> /design-system screen PROJ-14</span>
             <p style="margin-top: 10px">
               Y cuando pregunte por el mapeo de pantallas:
               <em>"sí, voy a producir los mockups"</em>.
             </p>
           </div>
           <div class="step">
-            <h3>Recibís el brief, diseñás afuera (o dejás que la IA opere Open Design)</h3>
+            <h3>Recibes el brief, diseñas afuera (o dejas que la IA opere Open Design)</h3>
             <p>
-              La IA deja <span class="mono">BRIEF.md</span> en la carpeta del lote. Modo B: lo pegás
-              en Claude Design u Open Design, iterás, exportás el bundle a esa misma carpeta. Modo A
+              La IA deja <span class="mono">BRIEF.md</span> en la carpeta del lote. Modo B: lo pegas
+              en Claude Design u Open Design, iteras, exportas el bundle a esa misma carpeta. Modo A
               (Open Design + MCP): no hace falta que hagas nada más, la IA dispara y pollea sola.
             </p>
           </div>
           <div class="step">
-            <h3>Cerrás el handoff</h3>
+            <h3>Cierras el handoff</h3>
             <span class="say"
-              ><span class="who">vos →</span> "ya dejé los mockups en
-              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/, armá el master design plan"</span
+              ><span class="who">tú →</span> "ya dejé los mockups en
+              .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/, arma el master design plan"</span
             >
             <p style="margin-top: 10px">
               La IA lee, escribe §4 + §8 y te muestra el mapa Historia→Pantalla para que lo
@@ -2738,9 +2738,9 @@
             </p>
           </div>
           <div class="step">
-            <h3>Construís la historia</h3>
+            <h3>Construyes la historia</h3>
             <span class="say"
-              ><span class="who">vos →</span> "implementar la historia PROJ-XX" &nbsp;·&nbsp;
+              ><span class="who">tú →</span> "implementar la historia PROJ-XX" &nbsp;·&nbsp;
               /sprint-development</span
             >
             <p style="margin-top: 10px">
@@ -2753,7 +2753,7 @@
         <div class="callout blue r">
           <b>En una frase:</b> <span class="mono">/design-system tokens</span> una vez →
           DESIGN.md. Por historia: <span class="mono">/design-system screen</span> (opt-in) →
-          BRIEF.md → diseñás afuera o la IA encarga a Open Design por MCP → vos ratificás → la IA
+          BRIEF.md → diseñas afuera o la IA encarga a Open Design por MCP → tú ratificas → la IA
           arma el plan → <span class="mono">/sprint-development</span> construye contra la UI viva y
           los tokens.
         </div>
@@ -2766,14 +2766,14 @@
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">10</span> · antes de arrancar</div>
           <h2>Precondiciones, en una lista</h2>
-          <p class="sub">Antes de empezar a producir mockups, tené esto listo:</p>
+          <p class="sub">Antes de empezar a producir mockups, ten esto listo:</p>
         </div>
         <div class="check r">
           <div class="it">
             <span class="bx"></span
             ><span
               ><b>DESIGN.md existe.</b> Los mockups se siembran con sus tokens congelados. Sin él no
-              hay contrato visual: corré <span class="mono">/design-system tokens</span>
+              hay contrato visual: corre <span class="mono">/design-system tokens</span>
               primero.</span
             >
           </div>
@@ -2788,7 +2788,7 @@
             <span class="bx"></span
             ><span
               ><b>Herramienta elegida y lista.</b> Claude Design (plan Pro+) · Open Design (desktop
-              app instalada, MCP conectado si querés Modo A) · Figma · la skill
+              app instalada, MCP conectado si quieres Modo A) · Figma · la skill
               <span class="mono">design</span> de Claude Code · o una skill de diseño
               <span class="mono">frontend-ui</span> cargada (Modo C). Sin ninguna, el design gate te
               ofrece (b) o (c), nunca un mockup escrito por la IA sin skill de diseño.</span
@@ -2804,7 +2804,7 @@
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Drop zone clara.</b> Sabés en qué
+              ><b>Drop zone clara.</b> Sabes en qué
               <span class="mono">.context/designs/&lt;proyecto&gt;/&lt;lote&gt;/</span> va a caer el
               bundle, y que no es la misma carpeta que
               <span class="mono">design/handoff/</span>.</span
@@ -2818,7 +2818,7 @@
     <section class="band" id="empezar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> · empezá ahora</div>
+          <div class="eyebrow"><span class="num">11</span> · empieza ahora</div>
           <h2>Arrancar de cero</h2>
           <p class="sub">
             Runbook literal. Dos caminos según cuánto quieras montar. Los dos parten de abrir Claude
@@ -2836,66 +2836,66 @@
             <div class="tag">Camino A · flujo completo con la skill</div>
             <h3>Con herramienta visual</h3>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
-              Cuando vas a diseñar en Claude Design u Open Design y querés el BRIEF sembrado con tus
+              Cuando vas a diseñar en Claude Design u Open Design y quieres el BRIEF sembrado con tus
               tokens.
             </p>
             <div class="code" style="font-size: 0.78rem">
               <span class="c"># raíz del repo</span> claude <span class="c"># o: opencode, codex</span>
 
-              <span class="c"># dentro de la sesión (en OpenCode o Codex: "cargá la skill design-system, modo screen"):</span>
+              <span class="c"># dentro de la sesión (en OpenCode o Codex: "carga la skill design-system, modo screen"):</span>
               <span class="k">/design-system screen PROJ-XX</span>
 
               <span class="c"># responder al opt-in de pantallas:</span>
               <span class="s">"sí, voy a producir los mockups"</span>
             </div>
             <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
-              La IA deja el <span class="mono">BRIEF.md</span>, lo pegás en tu herramienta, exportás
-              el bundle a la drop zone, y cerrás con <em>"armá el master design plan"</em>.
+              La IA deja el <span class="mono">BRIEF.md</span>, lo pegas en tu herramienta, exportas
+              el bundle a la drop zone, y cierras con <em>"arma el master design plan"</em>.
             </p>
           </div>
           <div class="plane sig">
             <div class="tag">Camino B · HTML manual, sin app externa</div>
-            <h3>Vos producís el HTML, aparte</h3>
+            <h3>Tú produces el HTML, aparte</h3>
             <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
-              El más rápido para arrancar. No levantás nada, pero el archivo lo generás y lo
-              movés vos, en una sesión <b>distinta</b> a la que corre
+              El más rápido para arrancar. No levantas nada, pero el archivo lo generas y lo
+              mueves tú, en una sesión <b>distinta</b> a la que corre
               <span class="mono">/design-system</span>.
             </p>
             <div class="code" style="font-size: 0.78rem">
               <span class="c"># en OTRA ventana/sesión, no la del repo con /design-system</span>
               claude <span class="c"># o: opencode, o cualquier chat de IA</span>
 
-              <span class="c"># prompt semilla (ajustá pantalla + historia):</span>
+              <span class="c"># prompt semilla (ajusta pantalla + historia):</span>
               <span class="s"
-                >"Generá un mockup HTML autocontenido de la pantalla &lt;X&gt; para la historia
-                PROJ-XX. Usá los tokens de DESIGN.md. Incluí los estados vacío, cargando y error. Un
+                >"Genera un mockup HTML autocontenido de la pantalla &lt;X&gt; para la historia
+                PROJ-XX. Usa los tokens de DESIGN.md. Incluye los estados vacío, cargando y error. Un
                 solo archivo."</span
               >
 
-              <span class="c"># vos copiás el resultado a la drop zone:</span>
+              <span class="c"># tú copias el resultado a la drop zone:</span>
               <span class="k">cp</span> pantalla.html
               .context/designs/&lt;proyecto&gt;/&lt;lote&gt;/&lt;X&gt;.html
             </div>
             <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
-              Abrís el <span class="mono">.html</span> en el navegador, iterás por chat en esa otra
-              sesión, y recién ahí volvés a la sesión de <span class="mono">/design-system</span> y
-              cerrás con <em>"armá el master design plan para PROJ-XX"</em>.
+              Abres el <span class="mono">.html</span> en el navegador, iteras por chat en esa otra
+              sesión, y recién ahí vuelves a la sesión de <span class="mono">/design-system</span> y
+              cierras con <em>"arma el master design plan para PROJ-XX"</em>.
             </p>
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Regla para el prompt:</b> anclá siempre <em>pantalla</em> + <em>historia (PROJ-XX)</em> +
-          <em>"usá los tokens de DESIGN.md"</em>. Con esas anclas el mockup sale alineado, y vos sos
+          <b>Regla para el prompt:</b> ancla siempre <em>pantalla</em> + <em>historia (PROJ-XX)</em> +
+          <em>"usa los tokens de DESIGN.md"</em>. Con esas anclas el mockup sale alineado, y tú eres
 
           quien lo lleva a la drop zone para el resto del flujo, nunca la sesión orquestadora.
         </div>
 
         <div class="callout agent r">
           <b>Cuándo cada camino:</b> Camino B para pantallas simples y para probar rápido antes de
-          comprometerte. Camino A cuando la pantalla es rica y querés el refinamiento visual
+          comprometerte. Camino A cuando la pantalla es rica y quieres el refinamiento visual
           (canvas, sliders, comentarios) de Claude Design, o el automatismo end-to-end de Open
-          Design en Modo A. Podés empezar en B y migrar a A sin perder nada: el mismo
+          Design en Modo A. Puedes empezar en B y migrar a A sin perder nada: el mismo
           <span class="mono">BRIEF.md</span> sirve para las dos.
         </div>
       </div>
@@ -2908,7 +2908,7 @@
             <b style="color: var(--ink)">La idea de fondo.</b> El sistema se fija una vez, en
             <span class="mono">DESIGN.md</span>. El plano de cada pantalla llega después, historia
             por historia: lo produce una herramienta de diseño (encargada por la IA o usada por
-            vos), vos lo ratificás, y la IA lo mapea a la historia y construye contra la UI viva y
+            tú), tú lo ratificas, y la IA lo mapea a la historia y construye contra la UI viva y
             los tokens, con el mockup como inspiración. La IA nunca escribe el plano a mano sin skill de diseño.
           </p>
         </div>
@@ -2998,6 +2998,19 @@
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

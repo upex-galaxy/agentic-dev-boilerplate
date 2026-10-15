@@ -2004,7 +2004,7 @@
           <p class="sub">
             Un tracker puede decir "listo para QA" sin nada en la rama de integración: la
             automatización de merge se dispara con CUALQUIER pull request, también con los internos
-            de una cadena. Toda decisión de dependencia de la fase 2 descansa acá, así que se
+            de una cadena. Toda decisión de dependencia de la fase 2 descansa aquí, así que se
             verifica, nunca se infiere.
           </p>
         </div>
@@ -2056,7 +2056,7 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>
               Nada en el momento. Cada discrepancia entre tracker y git queda en el log de
               escalaciones, con evidencia, para que la leas y para que la próxima corrida sepa de
@@ -2405,7 +2405,7 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
                 hora una corrida que nunca viste.
               </li>
               <li>
-                Escalar acá es caro: no hay quién conteste, y una parada por una cuestión técnica
+                Escalar aquí es caro: no hay quién conteste, y una parada por una cuestión técnica
                 cuesta un turno programado entero.
               </li>
             </ul>
@@ -2684,18 +2684,18 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
+            <span class="say">carga la skill autonomous-delivery, modo bug</span>
             <p>Sin barra: el prompt de la rutina nombra la skill y el modo.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill autonomous-delivery, modo bug</span>
+            <span class="say">carga la skill autonomous-delivery, modo bug</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
 
         <div class="callout blue r">
-          <b>Al armar la rutina, dejá apagada la opción de worktree del scheduler.</b> La skill crea
+          <b>Al armar la rutina, deja apagada la opción de worktree del scheduler.</b> La skill crea
           y cierra su propio aislamiento en los tres hosts: así la fase 4 puede borrar el worktree de
           la corrida en vez de dejarlo en disco para un humano.
         </div>
@@ -2861,6 +2861,19 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

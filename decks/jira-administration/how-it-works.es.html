@@ -1670,11 +1670,11 @@
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Usala cuando</div>
+            <div class="tag">Úsala cuando</div>
             <h3>El proyecto o la instancia cambian de forma</h3>
             <ul>
               <li>
-                "Sincronizá los Components de Jira" · "jira-components": el módulo de Components del
+                "Sincroniza los Components de Jira" · "jira-components": el módulo de Components del
                 proyecto quedó desalineado con lo que la app realmente tiene.
               </li>
               <li>
@@ -1713,7 +1713,7 @@
           <h2>Dos carriles que nunca se cruzan</h2>
           <p class="sub">
             Cada corrida elige exactamente un modo y carga solo su referencia. Nunca combina los dos
-            ni cae de uno en el otro. Un "arreglá Jira" a secas no alcanza para elegir: la IA te
+            ni cae de uno en el otro. Un "arregla Jira" a secas no alcanza para elegir: la IA te
             pregunta.
           </p>
         </div>
@@ -1891,7 +1891,7 @@
             <p>
               Escribe el plan en <span class="mono">.context/reports/jira-components-plan.json</span>,
               te lo muestra como tabla (renames aparte, cada uno con su cantidad de issues) y corre el
-              dry run. Si querés cambiar nombres o agrupación, regenera y vuelve a mostrar.
+              dry run. Si quieres cambiar nombres o agrupación, regenera y vuelve a mostrar.
             </p>
           </div>
           <div class="step">
@@ -1923,7 +1923,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>La <b>agrupación</b> y los <b>nombres</b> de cada módulo.</p>
             <p>Si se aplica el <b>prefijo</b>: nunca va en silencio, es parte del plan.</p>
             <p>El <b>sí</b> que habilita el <span class="mono">--apply</span>.</p>
@@ -1987,7 +1987,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
               <li>Una línea en <span class="mono">.agents/project.yaml</span>.</li>
               <li>
                 Re-login de <span class="mono">acli</span>. Las credenciales REST y la sesión de
-                <span class="mono">acli</span> son independientes: si cambiás una sola, REST le pega a
+                <span class="mono">acli</span> son independientes: si cambias una sola, REST le pega a
                 la instancia nueva y <span class="mono">acli</span> sigue leyendo la vieja, sin error.
               </li>
             </ul>
@@ -2063,7 +2063,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
                 </td>
                 <td>
                   Un dominio alias de la organización: suele redirigir a la instancia activa. Pero no se
-                  ve desde el repo, así que lo confirmás a mano
+                  ve desde el repo, así que lo confirmas a mano
                 </td>
               </tr>
               <tr>
@@ -2081,7 +2081,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
         <div class="callout r">
           <b>La sesión de <span class="mono">acli</span> es de toda la máquina.</b> Vive en
           <span class="mono">~/.config/acli</span>, no en el repo: el re-login repunta cada proyecto del
-          equipo, no solo este. Si todavía necesitás la instancia vieja para otro repo, la IA para y te
+          equipo, no solo este. Si todavía necesitas la instancia vieja para otro repo, la IA para y te
           avisa; vas a alternar con la operación de cambio de sesión de <span class="mono">/acli</span>.
         </div>
       </div>
@@ -2174,7 +2174,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
             <b><span class="mono">--upex</span> casi nunca</b
             ><span
               >Baja un catálogo de referencia generado contra el workspace de los autores del
-              boilerplate. Si migrás tu propia instancia, sus IDs no son los tuyos. Solo sirve como
+              boilerplate. Si migras tu propia instancia, sus IDs no son los tuyos. Solo sirve como
               andamio sin permiso de Administer, y queda marcado como dato incorrecto.</span
             >
           </div>
@@ -2272,7 +2272,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">08</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
             La primera palabra después del nombre de la skill elige el modo, y el resto viaja tal cual a
@@ -2288,12 +2288,12 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill jira-administration, modo instance-migration</span>
-            <p>Sin barra: nombrás la skill y el modo en la frase.</p>
+            <span class="say">carga la skill jira-administration, modo instance-migration</span>
+            <p>Sin barra: nombras la skill y el modo en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill jira-administration, modo components</span>
+            <span class="say">carga la skill jira-administration, modo components</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
@@ -2450,6 +2450,19 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

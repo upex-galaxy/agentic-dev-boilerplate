@@ -1729,7 +1729,7 @@
               </tr>
               <tr>
                 <td>Achicar la ventana y seguir</td>
-                <td>La compactación del harness: con pérdida, no direccionable, no la controlás</td>
+                <td>La compactación del harness: con pérdida, no direccionable, no la controlas</td>
                 <td>Nada que hacer</td>
               </tr>
               <tr>
@@ -1953,9 +1953,9 @@
               </tr>
               <tr>
                 <th>7</th>
-                <td><b>Estado vivo que heredás</b></td>
+                <td><b>Estado vivo que heredas</b></td>
                 <td>La sección perecedera. Ver <a href="#frescura">frescura</a></td>
-                <td>Actuar sobre un mundo que ya no existe. Acá es donde los handoffs se rompen</td>
+                <td>Actuar sobre un mundo que ya no existe. Aquí es donde los handoffs se rompen</td>
               </tr>
               <tr>
                 <th>8</th>
@@ -1991,7 +1991,7 @@
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p><b>Cuándo</b>: el disparo es tuyo.</p>
             <p>
               Un <b>nombre</b> para la sesión, si la identidad dice
@@ -2001,7 +2001,7 @@
           <div class="out">
             <span class="k">Sale</span>
             <p>Un markdown en inglés, gitignorado, desechable por diseño.</p>
-            <p>Lo durable no va acá: va a Engram, al repo o al tracker, y el handoff lo cita.</p>
+            <p>Lo durable no va aquí: va a Engram, al repo o al tracker, y el handoff lo cita.</p>
           </div>
         </div>
         <div class="gate r">
@@ -2036,7 +2036,7 @@
             <h3>Nadie lo observó</h3>
             <ul>
               <li>
-                "Si CI falla en lint, hacé X" es <span class="mono">predicted</span>. Una rama
+                "Si CI falla en lint, haz X" es <span class="mono">predicted</span>. Una rama
                 predicha presentada como hecho manda al sucesor por un camino que ya no existe.
               </li>
             </ul>
@@ -2230,7 +2230,7 @@ dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
             <a class="wf" href="#sucesor"
               ><span class="lt sig">2</span
               ><span
-                ><b>Vos la pegás</b
+                ><b>Tú la pegas</b
                 ><span>En una terminal nueva abierta en el mismo worktree.</span></span
               ></a
             >
@@ -2258,7 +2258,7 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
             <b>El nombre de la sesión viaja</b
             ><span
               >Por el flag del propio harness (se lee en su <span class="mono">--help</span>, no se
-              copia acá). En Claude Code el hook también titula una sesión sin nombre a partir de un
+              copia aquí). En Claude Code el hook también titula una sesión sin nombre a partir de un
               <span class="mono">--name &lt;valor&gt;</span> en el primer prompt.</span
             >
           </div>
@@ -2388,11 +2388,11 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">08</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">08</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
             No tiene modos: una sola corrida, tres pasos. Alcanza con nombrarla, o con frases como
-            "hagamos el handoff", "pasá el contexto a otra sesión" o "hand this session over".
+            "hagamos el handoff", "pasa el contexto a otra sesión" o "hand this session over".
           </p>
         </div>
 
@@ -2404,12 +2404,12 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill session-handoff</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill session-handoff</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill session-handoff</span>
+            <span class="say">carga la skill session-handoff</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
@@ -2439,7 +2439,7 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
             <div class="kk">Al lado · otra forma de mover trabajo</div>
             <h3>/orca-orchestration</h3>
             <p>
-              Para delegar una tarea acotada y supervisarla mientras seguís. Sus verbos de terminal
+              Para delegar una tarea acotada y supervisarla mientras sigues. Sus verbos de terminal
               y sus trampas son los que usa el lanzamiento con runtime.
             </p>
           </div>
@@ -2567,6 +2567,19 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

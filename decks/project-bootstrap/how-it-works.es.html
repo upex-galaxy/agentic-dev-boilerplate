@@ -1640,7 +1640,7 @@
           <div class="node">
             <div class="n">Fase 0.5</div>
             <h3>Plan</h3>
-            <p>Qué se monta y qué features suma. Lo aprobás vos.</p>
+            <p>Qué se monta y qué features suma. Lo apruebas tú.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
@@ -1678,7 +1678,7 @@
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Usala cuando</div>
+            <div class="tag">Úsala cuando</div>
             <h3>Hay especificación y no hay código</h3>
             <ul>
               <li>
@@ -1686,8 +1686,8 @@
                 corrió) pero <b>todavía no tiene código</b>.
               </li>
               <li>
-                Un repo existente necesita <b>una pieza de infraestructura</b> más: "agregá OpenAPI a
-                la API", "sumá auth por bearer token", "conectá los tipos de Supabase al frontend".
+                Un repo existente necesita <b>una pieza de infraestructura</b> más: "agrega OpenAPI a
+                la API", "suma auth por bearer token", "conecta los tipos de Supabase al frontend".
                 Solo las piezas incrementales: la base no corre sobre una app que ya existe (§01·b).
               </li>
             </ul>
@@ -1847,7 +1847,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           <b>El hilo principal no escribe código.</b> Coordina: cada fase de la base y cada pieza
           incremental va a su propio subagente, con un briefing de siete componentes que nombra la
           referencia exacta que tiene que leer. Al entrar, la skill además resuelve qué skills
-          complementarias tenés instaladas para las categorías que declara su frontmatter:
+          complementarias tienes instaladas para las categorías que declara su frontmatter:
           las del repo se cargan solas, las de tu usuario te las pregunta una vez.
         </div>
       </div>
@@ -1925,7 +1925,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>
               Con sesión previa: <b>retomar</b>, <b>reiniciar</b> (lo anterior se archiva) o
               <b>abortar</b> (no se toca nada).
@@ -1940,7 +1940,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
             <p>
               <span class="mono">.session/project-bootstrap/plan.md</span> en estado
               <span class="mono">draft</span>, que pasa a <span class="mono">approved</span> cuando
-              lo aprobás.
+              lo apruebas.
             </p>
             <p>
               Cada fase que termina deja una entrada en <span class="mono">progress.md</span>: si la
@@ -1978,13 +1978,13 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>
               El <b>proyecto de Supabase</b>: uno existente (das su ID) o uno nuevo.
             </p>
             <p>
               Cómo se manejan los archivos de entorno: la IA no crea un <span class="mono">.env</span>
-              sin consultarte. Los commits los hacés vos.
+              sin consultarte. Los commits los haces tú.
             </p>
           </div>
           <div class="out">
@@ -2072,7 +2072,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
             </p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>El <b>package manager</b>.</p>
             <p>
               La <b>estrategia de componentes</b>: shadcn/ui, componentes desde cero o Headless UI con
@@ -2093,13 +2093,13 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
         </div>
         <div class="gate r">
           <b>Gate</b> build en verde y revisión visual: con <span class="mono">/playwright-cli</span>
-          en una sesión con nombre, o la hacés vos con el servidor corriendo.
+          en una sesión con nombre, o la haces tú con el servidor corriendo.
         </div>
 
         <div class="callout r">
           <b>Sin DESIGN.md, no hay fase 2.</b> Los tokens de diseño son el contrato de entrada del
           frontend. Si el archivo no existe, primero se corre
-          <span class="mono">/design-system</span> y después se vuelve acá. La ruta por defecto es
+          <span class="mono">/design-system</span> y después se vuelve aquí. La ruta por defecto es
           la raíz del repo; un proyecto con otra estructura la declara en
           <span class="mono">.agents/project.yaml</span>.
         </div>
@@ -2251,7 +2251,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
             <span class="bx"></span
             ><span
               ><b>Artefactos generados commiteados</b> (spec de OpenAPI, tipos de Supabase). La skill
-              recomienda el commit; lo hacés vos o
+              recomienda el commit; lo haces tú o
               <span class="mono">/git-flow-master</span>.</span
             >
           </div>
@@ -2359,11 +2359,11 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">10</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            Esta skill no tiene modos con nombre: lo que pedís elige la referencia. Nombrás la skill
-            y describís la pieza, en español o en inglés.
+            Esta skill no tiene modos con nombre: lo que pides elige la referencia. Nombras la skill
+            y describes la pieza, en español o en inglés.
           </p>
         </div>
 
@@ -2375,12 +2375,12 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill project-bootstrap: configurar OpenAPI</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill project-bootstrap: configurar OpenAPI</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill project-bootstrap: bearer token authentication</span>
+            <span class="say">carga la skill project-bootstrap: bearer token authentication</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
@@ -2389,7 +2389,7 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si decís algo como…</th>
+                <th>Si dices algo como…</th>
                 <th>La IA lee</th>
               </tr>
             </thead>
@@ -2502,8 +2502,8 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           <p>
             <b style="color: var(--ink)">La idea de fondo.</b> La base se monta una vez y bien: capas
             que no se mezclan, secretos fuera del código, tipos que siguen al esquema vivo. La IA
-            monta y verifica; vos elegís el proyecto de Supabase, las piezas y los componentes, y
-            hacés los commits.
+            monta y verifica; tú eliges el proyecto de Supabase, las piezas y los componentes, y
+            haces los commits.
           </p>
         </div>
         <div class="sig">
@@ -2590,6 +2590,19 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

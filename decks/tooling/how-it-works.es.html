@@ -1815,7 +1815,7 @@
             <p>Una sesión vencida corta el lote a la mitad con 401 y sin rollback limpio; en un sync, envenena los catálogos en silencio.</p>
           </div>
           <div class="hum">
-            <span class="k">lo decidís vos</span>
+            <span class="k">lo decides tú</span>
             <p><b>Jira de producción desde tu máquina.</b> Transiciones, borrados y ediciones en lote no se deshacen.</p>
             <p><span class="mono">--yes</span> está bien en CI contra un alcance acordado; <span class="mono">--yes</span> a mano contra producción, no: cada operación pide tu confirmación.</p>
           </div>
@@ -1915,7 +1915,7 @@ bun .agents/skills/acli/scripts/md-to-adf.ts --check <span class="s">field.adf.j
             <p><b>Nunca ADF a mano.</b> El conversor es determinista, diffeable, respeta el snake_case y frena el bug de marcas combinadas (código inline junto a negrita o cursiva da HTTP 400).</p>
           </div>
           <div class="hum">
-            <span class="k">lo decidís vos</span>
+            <span class="k">lo decides tú</span>
             <p><b>Si se pasa del presupuesto.</b> Jira corta en 32.767 caracteres del ADF serializado, no del Markdown. Pasado el límite la IA para y te propone qué secciones mover y adónde.</p>
             <p>Nunca trunca ni parte un valor en dos campos.</p>
           </div>
@@ -1964,7 +1964,7 @@ bun .agents/skills/acli/scripts/md-to-adf.ts --check <span class="s">field.adf.j
               <tr>
                 <th><span class="mono">jira:url</span></th>
                 <td>Imprime el host activo desde <span class="mono">.agents/project.yaml</span> → <span class="mono">issue_tracker.atlassian_url</span>. Con <span class="mono">--slug</span>, sin esquema, para <span class="mono">acli --site</span></td>
-                <td>Usalo con <span class="mono">--silent</span> dentro de <span class="mono">$(...)</span>. Nunca recortes el <span class="mono">https://</span> a mano</td>
+                <td>Úsalo con <span class="mono">--silent</span> dentro de <span class="mono">$(...)</span>. Nunca recortes el <span class="mono">https://</span> a mano</td>
               </tr>
               <tr>
                 <th><span class="mono">jira:sync-fields</span></th>
@@ -2037,7 +2037,7 @@ bun .agents/skills/acli/scripts/md-to-adf.ts --check <span class="s">field.adf.j
           </p>
         </div>
 
-        <pre class="code r"><span class="c"># el SHA del commit que esperás ver desplegado</span>
+        <pre class="code r"><span class="c"># el SHA del commit que esperas ver desplegado</span>
 SHA=$(git rev-parse <span class="s">HEAD</span>)
 
 <span class="c"># 1. encontrar SU deploy: filtro de metadata + JSON, nunca grep (repetir unos segundos hasta que aparezca)</span>
@@ -2051,8 +2051,8 @@ vercel inspect <span class="s">"https://$URL"</span> --wait --timeout=10m</pre>
             <h3><span class="mono">--no-wait</span> en deploy, <span class="mono">--wait</span> en inspect</h3>
             <p>
               Es la asimetría que más confunde: <span class="mono">vercel deploy</span> bloquea por defecto y
-              <span class="mono">vercel inspect</span> no. Al revés, o esperás diez minutos una URL que
-              necesitabas ya, o corrés el smoke test contra un build sin terminar.
+              <span class="mono">vercel inspect</span> no. Al revés, o esperas diez minutos una URL que
+              necesitabas ya, o corres el smoke test contra un build sin terminar.
             </p>
           </div>
           <div class="step">
@@ -2132,7 +2132,7 @@ vercel inspect <span class="s">"https://$URL"</span> --wait --timeout=10m</pre>
             <p>Nunca <span class="mono">ATLASSIAN_*</span>, <span class="mono">N8N_*</span> ni <span class="mono">SUPABASE_ACCESS_TOKEN</span> en Vercel: son credenciales del agente, no del runtime.</p>
           </div>
           <div class="hum">
-            <span class="k">lo decidís vos</span>
+            <span class="k">lo decides tú</span>
             <p><b>Rollback o forward-fix.</b> Si el arreglo es claro, commit y push; si el bug solo se ve en producción, rollback y depurar con calma.</p>
             <p>El rollback no deshace migraciones de base, mails enviados ni flags cambiados.</p>
           </div>
@@ -2187,7 +2187,7 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
               <tr>
                 <th><span class="mono">claude</span> · <span class="mono">opencode</span> · <span class="mono">codex</span></th>
                 <td>El binario pelado, sin script envoltorio: nada carga <span class="mono">.env</span> en el proceso del agente, así que ningún secreto llega al shell de la IA. Cada servidor MCP lee <span class="mono">.env</span> con el loader de <span class="mono">.env</span></td>
-                <td>Cada vez que abrís el agente desde la terminal (o su app de escritorio)</td>
+                <td>Cada vez que abres el agente desde la terminal (o su app de escritorio)</td>
               </tr>
               <tr>
                 <th><span class="mono">bun run vars:env:check</span></th>
@@ -2248,7 +2248,7 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
           <div class="eyebrow"><span class="num">09</span> · herramientas con deck propio</div>
           <h2>Las que este deck solo nombra</h2>
           <p class="sub">
-            Cada una tiene una skill dueña que ya explica su flujo. Acá va un puntero, no una copia.
+            Cada una tiene una skill dueña que ya explica su flujo. Aquí va un puntero, no una copia.
           </p>
         </div>
 
@@ -2297,11 +2297,11 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">10</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">10</span> · qué le dices a la IA</div>
           <h2>Invocarlas en las tres terminales</h2>
           <p class="sub">
             Son skills sin modos. Casi nunca hace falta nombrarlas: se cargan solas cuando el comando
-            nombra su binario. Cuando querés forzarlas, así:
+            nombra su binario. Cuando quieres forzarlas, así:
           </p>
         </div>
 
@@ -2313,20 +2313,20 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill acli</span>
-            <p>Sin barra: nombrás la skill en la frase. Lee <span class="mono">.agents/skills/</span> nativo.</p>
+            <span class="say">carga la skill acli</span>
+            <p>Sin barra: nombras la skill en la frase. Lee <span class="mono">.agents/skills/</span> nativo.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill vercel-cli</span>
+            <span class="say">carga la skill vercel-cli</span>
             <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
           </div>
         </div>
 
         <pre class="code r"><span class="c"># frases que las disparan sin nombrarlas</span>
-<span class="s">"transicioná estas historias a In Review"</span>      <span class="c"># → /acli</span>
+<span class="s">"transiciona estas historias a In Review"</span>      <span class="c"># → /acli</span>
 <span class="s">"ya está vivo el deploy de este commit?"</span>     <span class="c"># → /vercel-cli</span>
-<span class="s">"sincronizá las env vars con Vercel Preview"</span>  <span class="c"># → /vercel-cli</span></pre>
+<span class="s">"sincroniza las env vars con Vercel Preview"</span>  <span class="c"># → /vercel-cli</span></pre>
       </div>
     </section>
 
@@ -2364,7 +2364,7 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
             <div class="kk">Antes del push que dispara Vercel</div>
             <h3>/git-flow-master</h3>
             <p>
-              Dueña del push, la protección de ramas y el PR. Primero se empuja ahí, después se vuelve acá a
+              Dueña del push, la protección de ramas y el PR. Primero se empuja ahí, después se vuelve aquí a
               verificar. Deck: <a href="../git-flow-master/how-it-works.es.html">git-flow-master</a>.
             </p>
           </div>
@@ -2480,6 +2480,19 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>

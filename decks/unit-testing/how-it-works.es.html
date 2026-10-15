@@ -1671,12 +1671,12 @@
 
         <div class="planes r">
           <div class="plane">
-            <div class="tag">Usala cuando</div>
+            <div class="tag">Úsala cuando</div>
             <h3>El pedido es sobre tests de una unidad</h3>
             <ul>
-              <li>"Escribí unit tests para esta función o esta clase."</li>
-              <li>"Hacé TDD de este tramo", "red-green-refactor".</li>
-              <li>"Qué mockeo acá?" · "Cómo nombro este test?"</li>
+              <li>"Escribe unit tests para esta función o esta clase."</li>
+              <li>"Haz TDD de este tramo", "red-green-refactor".</li>
+              <li>"Qué mockeo aquí?" · "Cómo nombro este test?"</li>
               <li>"Qué cobertura le pido a este módulo?"</li>
               <li>
                 Estás en el <b>Stage 2</b> de <span class="mono">/sprint-development</span> y el tramo
@@ -1719,7 +1719,7 @@
           <div class="eyebrow"><span class="num">02</span> · el mapa</div>
           <h2>Dos puertas de entrada y cuatro temas</h2>
           <p class="sub">
-            Entrás sola o desde una historia en curso. Lo que pedís elige la referencia que la IA
+            Entras sola o desde una historia en curso. Lo que pides elige la referencia que la IA
             lee; cuando no está claro, arranca por la guía general.
           </p>
         </div>
@@ -1731,7 +1731,7 @@
               ><span class="lt">1</span
               ><span
                 ><b>Escribir tests</b
-                ><span>Sobre el código que señalás. Termina con un reporte.</span></span
+                ><span>Sobre el código que señalas. Termina con un reporte.</span></span
               ></a
             >
             <a class="wf" href="#tdd"
@@ -1876,7 +1876,7 @@
             <p>Corre la suite hasta verde y mide la cobertura de esa unidad.</p>
           </div>
           <div class="hum">
-            <span class="k">Vos decidís</span>
+            <span class="k">Tú decides</span>
             <p>
               <b>Qué unidad</b>, cuando el pedido es ambiguo: la IA te lo confirma antes de escribir.
             </p>
@@ -1943,20 +1943,20 @@
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si pedís…</th>
+                <th>Si pides…</th>
                 <th>Entra por</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>"Escribí unit tests para esta función, TDD"</th>
+                <th>"Escribe unit tests para esta función, TDD"</th>
                 <td>
                   <span class="mono">/unit-testing</span> directo: un pedido de tests saltea al
                   orquestador.
                 </td>
               </tr>
               <tr>
-                <th>"Implementá esta historia: código, tests y PR"</th>
+                <th>"Implementa esta historia: código, tests y PR"</th>
                 <td>
                   <span class="mono">/sprint-development</span>. Puede llamar a
                   <span class="mono">/unit-testing</span> por dentro, pero la entrada es el
@@ -2434,11 +2434,11 @@
     <section class="band" id="invocar">
       <div class="wrap">
         <div class="sec-head r">
-          <div class="eyebrow"><span class="num">11</span> · qué le decís a la IA</div>
+          <div class="eyebrow"><span class="num">11</span> · qué le dices a la IA</div>
           <h2>Invocarla en las tres terminales</h2>
           <p class="sub">
-            Esta skill no tiene modos con nombre: lo que pedís elige la referencia. Nombrás la skill
-            y describís el tramo, en español o en inglés.
+            Esta skill no tiene modos con nombre: lo que pides elige la referencia. Nombras la skill
+            y describes el tramo, en español o en inglés.
           </p>
         </div>
 
@@ -2450,12 +2450,12 @@
           </div>
           <div class="host">
             <h3>OpenCode</h3>
-            <span class="say">cargá la skill unit-testing: qué mockear acá</span>
-            <p>Sin barra: nombrás la skill en la frase.</p>
+            <span class="say">carga la skill unit-testing: qué mockear aquí</span>
+            <p>Sin barra: nombras la skill en la frase.</p>
           </div>
           <div class="host">
             <h3>Codex</h3>
-            <span class="say">cargá la skill unit-testing: write unit tests for this function</span>
+            <span class="say">carga la skill unit-testing: write unit tests for this function</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
         </div>
@@ -2464,7 +2464,7 @@
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Si decís algo como…</th>
+                <th>Si dices algo como…</th>
                 <th>La IA lee</th>
               </tr>
             </thead>
@@ -2647,6 +2647,19 @@
         els.forEach(function (el) {
           io.observe(el);
         });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+         Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
+         No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
+         El sitio que sirve el deck valida el id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
       })();
     </script>
   </body>
