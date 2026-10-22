@@ -240,7 +240,7 @@ Long sessions: when the context window runs high or work must outlive the sessio
 | `github-actions-docs` | xixu-me/skills | `/project-bootstrap` CI phase and `/sprint-development`, through the `ci-cd` category (T4: asks before loading) |
 | `html-ppt` | lewislulu/html-ppt-skill | **user-invoked only.** `packages/decks/` is hand-authored; this is for a one-off deck outside that tree |
 | `playwright-cli` | microsoft/playwright-cli | `/sprint-development` live-UI validation, where `[AUTOMATION_TOOL]` resolves to it (`.agents/instructions/agent-tool-resolution.md` §6) |
-| `mkd` | upex-galaxy/agentic-user-skills | any flow that reaches the decision threshold in `agentic-dev-core/references/decision-elicitation-doctrine.md` (>3 decisions, or one dense one) |
+| `mkd` | upex-galaxy/agentic-user-skills | any flow that reaches the decision threshold in `agentic-dev-core/references/decision-elicitation-doctrine.md` (a heavy decision: real tradeoffs, architecture, a larger change; small decisions are swept with the harness question tool instead) |
 | `orchestration.orchestrator_skills` | the orchestration binary | `/orca-orchestration`, ALONGSIDE it: the vendor owns the command grammar, the repo skill owns when and what |
 
 ## Persistent memory via Engram

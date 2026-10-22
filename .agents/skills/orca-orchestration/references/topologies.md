@@ -101,7 +101,7 @@ checklist: `git-flow-master/references/worktrees.md`.
   "on the base branch" is in reality a session in the primary checkout — and there the worktree-wide
   terminal stop has extra radius, so count terminals before closing anything.
 - Integrate, verify, THEN release the worker, THEN run the orphan audit, THEN remove the worktree
-  (`references/coordinator-playbook.md` §6).
+  (`references/coordinator-playbook.md` §6); `worker-release` closes the terminal only, so the removal is not optional.
 
 ---
 

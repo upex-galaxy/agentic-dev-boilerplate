@@ -273,5 +273,5 @@ Before its done message, a worker writes `<<PRIMARY_ROOT>>/.session/sprint-devel
 - [ ] One provisioned Orca worktree per worker, SHA verified against `origin/<base>`
 - [ ] Merges in dependency order, one at a time, each staging deploy verified at the destination before the next
 - [ ] Sprint report row updated by the CONDUCTOR, once per merged ticket
-- [ ] Every worker released / closed as it finishes, cost read off its screen first; orphan audit before any worktree removal
+- [ ] Every worker released / closed as it finishes, cost read off its screen first; orphan audit, then the worktree removed in the same turn (kept only with a written reason in `roster.md`)
 - [ ] `claims.md` shows a release for every granted write claim

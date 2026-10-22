@@ -22,7 +22,8 @@
    fleet once reported this way (G35) — reports went to an unrelated session or sat typed and
    unsent, and the conductor found out by reading screens much later.
    Do NOT use a user-question prompt either: nobody is watching it (one such question waited for
-   hours, G36).
+   hours, G36). A pending that needs the human goes to the conductor (`ask`, or listed in your
+   report), which sweeps it with the owner; you never sweep and never decide it.
 
 3. **A question that blocks you goes out as a blocking `ask`.** If it times out, the question stays
    pending: resume it by its original message id, never ask again (a duplicate question produces two
@@ -157,6 +158,9 @@ breaks the resume path.
 
 ## Resource hygiene
 
+- A worktree YOU created for sub-work is yours to remove before `worker_done`, after copying out any
+  gitignored evidence. Your own worktree is the conductor's to remove: leave nothing gitignored that
+  lives only there, and say in your summary where you copied logs and evidence.
 - Close every browser-automation session when you finish, including the ones your subagents opened.
   Orphaned headless browsers once ran for hours before the owner noticed (G37).
 - One dev server and one browser per worktree. Splitting ports is NOT enough when two processes share
