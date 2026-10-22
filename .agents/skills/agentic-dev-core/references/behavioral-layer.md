@@ -138,7 +138,7 @@ The rules live in `AGENTS.md` §2 PM VOICE. Example of the same work in each reg
 
 ### Visual mapping
 
-The rule (prefer a visual when content is naturally mappable, where to place it, when to skip it) lives in `AGENTS.md` §2 VISUAL MAPPING BIAS. Which visual fits which content:
+The rule (prefer a visual when content is naturally mappable, where to place it, when to skip it) lives in `AGENTS.md` §2 VISUAL MAPPING. Which visual fits which content:
 
 - **Tables** (`| col | col |`): comparisons (A vs B, before / after), key/value mappings (old name → new name), counts and metrics
 - **ASCII flow diagrams** (`A ──→ B ──→ C`): sequences, pipelines, propagation paths
