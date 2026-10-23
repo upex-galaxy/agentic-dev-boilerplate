@@ -745,11 +745,12 @@
             <span class="n">Asking the human to decide</span>
             <h4>El instrumento sigue la forma de la pregunta</h4>
             <p>
-              Una pregunta con pocas opciones, o dos o tres simples, van al prompt del propio
-              harness. Más de tres decisiones, o un tradeoff que no cabe honesto en dos frases, van
-              al deck de decisiones <code>mkd</code>: cada opción con su valor y su costo, como mucho
-              una recomendada y con el porqué. Sin <code>mkd</code> instalado, una línea ofreciéndolo
-              y se sigue con el prompt.
+              Las decisiones chicas, pocas o muchas, se barren al cerrar el turno con la
+              herramienta de preguntas del propio harness, en tandas hasta terminar. Las pesadas
+              (arquitectura, un enfoque, un cambio grande, un tradeoff que no cabe honesto en dos
+              frases) van al deck de decisiones <code>mkd</code>: cada opción con su valor y su
+              costo, como mucho una recomendada y con el porqué. Sin <code>mkd</code> instalado, una
+              línea ofreciéndolo y se sigue con el barrido.
             </p>
           </div>
         </div>
