@@ -153,7 +153,9 @@ gets pulled into re-deciding something they already decided.
 confirm, a deferral), however many, are swept with the harness question tool; a heavy one (architecture, an
 implementation approach, a larger change, a tradeoff that does not fit in two sentences) goes to the `mkd`
 decision deck. The ladder, the sweep and who runs it, the deck's justification rules, the fallback when
-`mkd` is absent, and how to read the returned contract live in `./decision-elicitation-doctrine.md`.
+`mkd` is absent, and how to read the returned contract live in `./decision-elicitation-doctrine.md`. Who
+receives the escalation is §0 there: only the session the human types into asks the human; a session
+launched by another session escalates to its launcher, which relays.
 
 ### 5.1 Category 1 is configurable — but only by explicit opt-in
 
