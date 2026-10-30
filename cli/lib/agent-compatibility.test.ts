@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { IDENTITY_PREFIX, PERSONALITY_CONTRACT, ROUTE_PREFIX, routeStatePath } from '../../.agents/hooks/personality-reinject.mjs';
+import { IDENTITY_PREFIX, ORCA_CONTEXT_LINE, ORCA_LAUNCHED_LINE, PERSONALITY_CONTRACT, ROUTE_PREFIX, routeStatePath } from '../../.agents/hooks/personality-reinject.mjs';
 import {
   CLAUDE_HOOK_COMMAND,
   CODEX_HOOK_COMMAND,
@@ -16,6 +16,7 @@ import {
   DOC_CONTRACTS_HOOK,
   EXPECTED_MCP,
   HOOK_GROUP_FIX,
+  HOOK_ORCA_MARKER,
   KNOWN_MCP_IDS,
   LEGACY_CODEX_ENV_LOADER_ARGS,
   MCP_ENV_LOADER_COMMAND,
@@ -614,6 +615,35 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
     }
     finally {
       rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
+    }
+  });
+
+  // OpenCode 1 used to classify the routes in chat.message but never record the
+  // role, so a launched OpenCode worker always got the independent ORCA line.
+  test('OpenCode 1 records the fleet token in chat.message and pushes the launched ORCA line, also after compaction', async () => {
+    const sessionID = `compat-role-${process.pid}-${Date.now()}`;
+    const independentID = `${sessionID}-independent`;
+    const previous = process.env.ORCA_APP_VERSION;
+    process.env.ORCA_APP_VERSION = 'test';
+    const plugin = await opencodePlugin.server({ worktree: REPO_ROOT });
+    const orcaFor = async (id: string, text: string) => {
+      await plugin['chat.message']({ sessionID: id }, { message: {}, parts: [{ type: 'text', text }] });
+      const output = { system: [] as string[] };
+      await plugin['experimental.chat.system.transform']({ sessionID: id, model: {} }, output);
+      return output.system.filter(line => line.startsWith(HOOK_ORCA_MARKER));
+    };
+    try {
+      expect(await orcaFor(sessionID, '/sprint-development TK-123 fleet worker. Read the brief.')).toEqual([ORCA_LAUNCHED_LINE]);
+      expect(await orcaFor(sessionID, 'continue with stage 2')).toEqual([ORCA_LAUNCHED_LINE]);
+      await plugin['experimental.session.compacting']({ sessionID });
+      expect(await orcaFor(sessionID, 'continue')).toEqual([ORCA_LAUNCHED_LINE]);
+      expect(await orcaFor(independentID, 'plan the sprint fleet')).toEqual([ORCA_CONTEXT_LINE]);
+    }
+    finally {
+      if (previous === undefined) { delete process.env.ORCA_APP_VERSION; }
+      else { process.env.ORCA_APP_VERSION = previous; }
+      rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
+      rmSync(routeStatePath(REPO_ROOT, independentID), { force: true });
     }
   });
 });
