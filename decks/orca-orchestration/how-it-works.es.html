@@ -2136,6 +2136,12 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
               <b>Nada de heartbeats</b>, aunque el preámbulo inyectado los pida: cada uno despierta
               al conductor para leer "vivo".
             </p>
+            <p>
+              <b>Nunca le pregunta al humano</b>: ni herramienta de preguntas, ni deck de
+              <span class="mono">mkd</span>, ni barrido. Errores, bloqueos y decisiones que no son
+              suyas van a la sesión que lo lanzó, que se las pasa al humano. Excepción: el humano le
+              escribió en su propia terminal, o el brief lo autoriza por escrito.
+            </p>
           </div>
           <div class="hum">
             <span class="k">Tú decides</span>
@@ -2205,8 +2211,10 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
               <tr>
                 <td>Identidad</td>
                 <td>
-                  El flag de nombre de la línea; donde el harness no tiene uno, el humano escribe
-                  <span class="mono">/rename &lt;KEY&gt;</span>
+                  En Claude Code la línea no lleva flag de nombre: el hook nombra la sesión desde el
+                  token del prompt. En Codex y OpenCode v2.2 el humano escribe
+                  <span class="mono">/rename &lt;label&gt;--&lt;handle&gt;</span> (solo
+                  <span class="mono">&lt;label&gt;</span> fuera de Orca)
                 </td>
               </tr>
               <tr>
@@ -2235,8 +2243,8 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
         <pre class="code r"><span class="c"># una línea de launch.txt (Claude Code). El prompt entre comillas simples es el PAYLOAD:</span>
 <span class="c"># idéntico, byte por byte, al que el camino supervisado manda al worker nativo.</span>
 <span class="c"># Es el binario pelado: sus MCPs leen .env por el loader de .env.</span>
-claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&lt;KEY&gt;" \
-  <span class="s">'/&lt;workflow-skill&gt; &lt;KEY&gt; fleet worker. Read &lt;ABS&gt;/.../COMMON.md then &lt;ABS&gt;/.../W-&lt;label&gt;.md
+claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permissions \
+  <span class="s">'/&lt;workflow-skill&gt; &lt;label&gt; fleet worker. Read &lt;ABS&gt;/.../COMMON.md then &lt;ABS&gt;/.../W-&lt;label&gt;.md
   and execute your brief. Run every stage without returning to the prompt until worker_done is sent;
   stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'</span></pre>
 
@@ -2252,9 +2260,11 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
           <div class="g">
             <b>El token de apertura carga peso</b
             ><span
-              ><span class="mono">/&lt;workflow-skill&gt; &lt;KEY&gt; fleet worker</span> titula la
-              sesión (en el camino supervisado no hay flag de nombre) y le dice a la skill que corre
-              como worker de flota.</span
+              ><span class="mono">/&lt;workflow-skill&gt; &lt;label&gt; fleet worker</span> nombra la
+              sesión <span class="mono">&lt;label&gt;--&lt;handle&gt;</span> (en Claude Code lo compone
+              el hook; en el camino supervisado no hay flag de nombre), le dice al hook que es una
+              sesión lanzada que no le pregunta al humano, y a la skill que corre como worker de
+              flota.</span
             >
           </div>
           <div class="g">
@@ -2546,8 +2556,13 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
         <pre class="code r"><span class="k">orchestration:</span>
   max_workers:          <span class="c"># workers concurrentes por ronda       {{MAX_WORKERS}}</span>
   default_agent:        <span class="c"># claude | codex | opencode            {{DEFAULT_AGENT}}</span>
-  default_model:        <span class="c"># id completo; vacío = el del harness  {{DEFAULT_MODEL}}</span>
-  default_effort:       <span class="c"># esfuerzo, si el harness lo soporta   {{DEFAULT_EFFORT}}</span>
+  default_model:        <span class="c"># modelo del worker, id completo       {{DEFAULT_MODEL}}</span>
+  default_effort:       <span class="c"># esfuerzo del worker                  {{DEFAULT_EFFORT}}</span>
+  conductor_model:      <span class="c"># modelo del conductor, id completo    {{CONDUCTOR_MODEL}}</span>
+  conductor_effort:     <span class="c"># esfuerzo del conductor               {{CONDUCTOR_EFFORT}}</span>
+  subagent_model:       <span class="c"># sonnet | opus | haiku | fable        {{SUBAGENT_MODEL}}</span>
+  permission_modes:     <span class="c"># conductor auto · worker bypass · subagent inherit</span>
+  model_overrides:      <span class="c"># modelo y esfuerzo por tema del brief</span>
   orchestrator_name:    <span class="c"># la app, como la nombra el operador</span>
   orchestrator_cli:     <span class="c"># el binario; vacío = no hay orquestador en esta máquina</span>
   message_verb:         <span class="c"># mensajes ENTRE sesiones, intactos</span>
@@ -2771,8 +2786,10 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Permisos en modo automático, nunca solo-ediciones:</b> los comandos quedarían
-              esperando a un humano que no mira.</span
+              ><b>Cada nivel en el modo de <span class="mono">permission_modes</span>, nunca
+              solo-ediciones:</b> los comandos quedarían esperando a un humano que no mira. El
+              worker va en bypass porque <span class="mono">auto</span> pausa y pregunta tras varios
+              bloqueos (ADR-0020); el conductor verifica el modo en la pantalla del worker.</span
             >
           </div>
           <div class="it">
@@ -2822,8 +2839,10 @@ claude --model &lt;full-model-id&gt; --effort high --permission-mode auto -n "&l
         <div class="callout blue r">
           <b>Un worker puede ser de cualquiera de los tres.</b> El harness sale de
           <span class="mono">orchestration.default_agent</span> o de lo que diga el dueño. En
-          OpenCode y Codex el conductor escribe <span class="mono">/rename &lt;KEY&gt;</span> en la
-          terminal del worker, porque una sesión no puede renombrarse sola.
+          Codex y OpenCode v2.2 el conductor escribe
+          <span class="mono">/rename &lt;label&gt;--&lt;handle&gt;</span> en la terminal del worker,
+          porque una sesión no puede renombrarse sola; en Claude Code lo hace el hook. El worker sí
+          renombra su propia pestaña, como primera acción.
         </div>
       </div>
     </section>
