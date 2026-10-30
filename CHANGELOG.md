@@ -5,6 +5,35 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-10-30 — Who asks the human, worker names with the handle, permission mode per tier
+
+### Changed
+
+- **Only the session the human types into asks the human.** A session launched by another
+  session (its prompt carries `/<skill> <label> fleet worker`) never uses the question tool,
+  an `mkd` deck or the sweep: its errors, blockers and escalations go to its launcher, which
+  relays (`agentic-dev-core/references/decision-elicitation-doctrine.md` §0, `AGENTS.md` §2).
+  Exception: the human typed the request into that session, or its brief grants it in writing.
+- **The prompt hook's `ORCA:` line follows the session's role**: a launched session is told to
+  report to its launcher, every other session to ask the human directly. A harness task
+  notification (`<task-notification>`) no longer produces `ROUTE:` lines.
+- **A worker has one name, `<label>--<handle>`**, for its session, its Orca tab, the roster and the
+  `Session:` trailer. On Claude Code the hook composes it, so a Claude launch line no longer
+  carries `-n`; the worker renames its own tab as its first action.
+- **Permission mode per tier**: conductor `auto`, worker `bypass`, subagent `inherit`, translated
+  per harness in `orca-orchestration/references/orca-machine-setup.md` §3.1. The old advice to add
+  `--permission-mode auto` to a worker's default arguments is gone (`auto` pauses and prompts after
+  repeated blocks). Decision and accepted risk: ADR-0020.
+- **`bun sync` marks an inserted `project.yaml` key `upstream default`** when it arrives with a
+  value, `unset` only when it is empty.
+
+### Added
+
+- `orchestration:` keys `conductor_model`, `conductor_effort`, `subagent_model`,
+  `permission_modes` and `model_overrides`; `default_model` now ships a full model id. A project
+  that already has an `orchestration:` block gets the new keys by running `bun sync`
+  interactively (with `--auto` they are listed, not inserted). An existing value is never changed.
+
 ## 2026-10-11 — `bun sync` and `bun setup` are the command names
 
 ### Changed
