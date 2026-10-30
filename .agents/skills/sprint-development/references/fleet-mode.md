@@ -141,7 +141,8 @@ Run: <run id — ONLY when this worker was launched without a supervised dispatc
 - no sprint-report writes, no bulk sync, no registry regeneration
 - no heartbeats; report once at the end
 - if your own measurement contradicts an instruction in this brief or a later message, STOP and `ask` with both readings and your evidence — never comply silently and never deviate silently
-- your session name is set by the conductor (the prompt token on Claude Code; a conductor-typed `/rename <KEY>` elsewhere): never try to rename yourself
+- your name is `<KEY>--<handle>` (session, tab, roster, `Session:` trailer): your first action is renaming your own TAB (`orca terminal rename --terminal "$ORCA_TERMINAL_HANDLE" --title "<KEY>--$ORCA_TERMINAL_HANDLE" --json </dev/null`); your SESSION name is set for you (the identity hook on Claude Code, a conductor-typed `/rename <KEY>--<handle>` elsewhere): never try to rename your session
+- errors, blockers and decisions go to the conductor, never to the human: no question tool, no `mkd` deck, no sweep (`orca-orchestration/references/worker-contract.md` rule 16)
 ```
 
 **Absolute paths, always.** `.session/` is gitignored and lives in the primary checkout; a worker in its own worktree that resolves a relative path silently reads nothing.
@@ -155,15 +156,15 @@ Address: `<<PRIMARY_ROOT>>/.session/sprint-development/sprint-<N>/launch.txt`. O
 1. **Always written**, gate or no gate. It is the record of what the fleet was asked to do, and the human-paste path consumes it literally.
 2. **Byte-identical where it is pasted.** A human gets *this exact line*; never paraphrase it. On the supervised path the transport opens the session itself and cannot take a command line, so what travels there is the **prompt payload** of this line, delivered as the session's first message (`orca-orchestration/references/launch-seam.md` §2). The prompt is what must stay identical across both paths.
 3. **Regenerated whole** at every round boundary. Never patched line by line: merged tickets drop out, newly unblocked ones get appended. A stale line relaunches a finished ticket.
-4. **Self-contained**: the bare harness binary (no wrapper: the harness holds no `.env` value and its MCP servers read it through the loader, ADR-0016), the session name, and the prompt, in one line that works pasted into a fresh terminal at the worker's worktree root.
+4. **Self-contained**: the bare harness binary (no wrapper: the harness holds no `.env` value and its MCP servers read it through the loader, ADR-0016), its flags, and the prompt, in one line that works pasted into a fresh terminal at the worker's worktree root.
 5. **The whole prompt is single-quoted** and contains no `'` and no unescaped `"`; rephrase instead of switching delimiter.
 6. **Validate every line before launch** with a shell syntax check (`sh -n` on a file holding the lines; `zsh -n` where the user's shell is zsh). A line that does not parse is not launched.
 7. The harness invocation itself (binary, model / effort / permission / session-name flags per harness) and which launch path supervises are owned by `orca-orchestration/references/launch-seam.md`. This skill owns only the payload: the `sprint-development` worker prompt.
 
-Shape (Claude Code; other harnesses use their own binary, `opencode` or `codex`):
+Shape (Claude Code; other harnesses use their own binary, `opencode` or `codex`). No name flag on the Claude Code line: `--name` marks the name as human-set, and the identity hook then never composes `<KEY>--<handle>` from the prompt token (`orca-orchestration/references/session-identity.md` §2b):
 
 ```
-claude <harness flags per launch-seam.md> -n "UPEX-123" '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'
+claude <harness flags per launch-seam.md> '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints. Channel: orca orchestration. No heartbeats.'
 ```
 
 ---
