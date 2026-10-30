@@ -22,7 +22,10 @@ import { buildUpFixture } from './ui-up-fixture.ts';
 
 const REPO = resolve(import.meta.dir, '..');
 const deep = spawnSync('git', ['-C', REPO, 'rev-parse', '--verify', '-q', 'HEAD~30']).status === 0;
-const SECRET = 'fixture-secret-value-9f3a';
+// Random per run: the sync page may show a diff of THIS file, so a literal value
+// would leak through the test's own source (a removed line included) rather than
+// through the run, whenever the fixture's HEAD~30 window holds an edit of it.
+const SECRET = `fixture-secret-${crypto.randomUUID()}`;
 
 interface Run { exit: number, out: string, events: JournalEntry[] }
 
