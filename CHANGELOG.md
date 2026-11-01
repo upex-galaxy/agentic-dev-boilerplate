@@ -5,6 +5,20 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-11-01 — The prompt hook ignores what the harness injected
+
+### Fixed
+
+- **A hand-back wrapped in system reminders no longer routes.** The prompt hook treats a prompt
+  made only of harness blocks (`<system-reminder>`, `<tools-used-before-summary>`, the
+  `[SYSTEM NOTIFICATION - NOT USER INPUT]` preamble, `<task-notification>`) as a notification: no
+  `ROUTE:` lines, no route-state write, no role change. A human prompt that carries a reminder
+  still routes, on the human's text only.
+- **The fleet token counts only at the start of the task text** (after the last `=== TASK ===`,
+  else the prompt's start, harness blocks removed). A prompt that quotes
+  `/<skill> <label> fleet worker` mid-sentence, or a subagent report that does, no longer marks the
+  session the human types into as launched for the rest of the session.
+
 ## 2026-10-30 — Who asks the human, worker names with the handle, permission mode per tier
 
 ### Changed
