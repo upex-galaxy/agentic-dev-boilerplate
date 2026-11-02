@@ -26,7 +26,7 @@ import pc from 'picocolors';
 import { parseEnvFile } from './install';
 import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
-import { applyInsertions, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
+import { applyInsertions, changedDefaults, describeChangedDefault, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
 import { declaredHarnesses, isUnderAny, unusedHarnessPaths } from './lib/harness-selection.ts';
 import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
@@ -813,22 +813,26 @@ async function detectEnvVarDrift(
 // a project far behind is abusive, and a single all-or-nothing prompt hides
 // what is being accepted. Each key lands at its schema position, not at EOF.
 
-/** Upstream's version, for the `NEW in <release>` marker. See `markRelease`. */
-function upstreamRelease(templateDir: string): string | null {
-  try {
-    const raw = fs.readFileSync(path.join(templateDir, 'package.json'), 'utf8');
-    const version = (JSON.parse(raw) as { version?: string }).version;
-    return typeof version === 'string' && version !== '' ? version : null;
-  }
-  catch { return null; }
+/**
+ * The methodology values this project changed from upstream's default, listed
+ * and never written (owner decision 2026-11-02). Identity and `GENERIC_RULES`
+ * leaves are excluded by `changedDefaults`; the insert-only promise holds.
+ */
+function reportChangedDefaults(consumer: string, schema: string, sink: ReportSink): void {
+  const { changed, error } = changedDefaults(consumer, schema);
+  if (error !== null || changed.length === 0) { return; }
+  sink.warn(`Tu \`${SCHEMA_SOURCE}\` tiene ${changed.length} valor(es) de metodología distinto(s) del default de upstream. No se modifica nada:`);
+  for (const change of changed) { sink.step(`  ${describeChangedDefault(change)}`); }
+  sink.step(`Si alguno no fue deliberado, copia el valor de \`${SCHEMA_FILE}\`, donde cada clave está documentada.`);
 }
 
-async function backfillProjectYamlFromSchema(
+export async function backfillProjectYamlFromSchema(
   templateDir: string,
   sink: ReportSink,
   nonInteractive: boolean,
+  cwd: string = process.cwd(),
 ): Promise<void> {
-  const consumerPath = path.join(process.cwd(), SCHEMA_SOURCE);
+  const consumerPath = path.join(cwd, SCHEMA_SOURCE);
   const schemaPath = path.join(templateDir, SCHEMA_FILE);
   if (!fs.existsSync(consumerPath) || !fs.existsSync(schemaPath)) { return; }
 
@@ -847,9 +851,8 @@ async function backfillProjectYamlFromSchema(
     sink.warn(`No se pudo comparar \`${SCHEMA_SOURCE}\` contra el schema: ${delta.error}`);
     return;
   }
+  reportChangedDefaults(consumer, schema, sink);
   if (delta.gaps.length === 0) { return; }
-
-  const release = upstreamRelease(templateDir);
   const total = delta.gaps.reduce((n, g) => n + g.paths.length, 0);
 
   if (nonInteractive) {
@@ -877,7 +880,7 @@ async function backfillProjectYamlFromSchema(
     // children come with it, and asking for each would be the per-key
     // prompting this design rejected.
     const targets = gap.wholeBlock ? [gap.block] : gap.paths;
-    const plan = planInsertions(current, schema, targets, release);
+    const plan = planInsertions(current, schema, targets);
     const result = applyInsertions(current, plan);
     if (result.error) {
       sink.warn(`No se insertó \`${gap.block}\`: ${result.error}`);
@@ -898,7 +901,7 @@ async function backfillProjectYamlFromSchema(
     return;
   }
   sink.step(`Insertadas ${applied.length} clave(s) en \`${SCHEMA_SOURCE}\`: ${applied.join(', ')}.`);
-  sink.step(`Cada una lleva un comentario \`# NEW in ${release ?? '?'}\` y queda con el valor del template. Revísalas con \`git diff ${SCHEMA_SOURCE}\`.`);
+  sink.step(`Solo valores, sin comentarios: cada clave está documentada en \`${SCHEMA_FILE}\`. Revísalas con \`git diff ${SCHEMA_SOURCE}\`.`);
   if (applied.some(p => p === 'git_strategy' || p.startsWith('git_strategy.'))) {
     sink.step('`git_strategy` llega como `inherited`: ejecuta "set up our git strategy" (git-flow-master) para definir la tuya.');
   }

@@ -413,11 +413,11 @@ describe('seedProjectYamlFromSchema', () => {
     expect(yaml).not.toContain('MAINTAINER COPY');
   });
 
-  test('the generated banner is swapped for a consumer header', async () => {
+  test('the schema banner is swapped for a consumer header', async () => {
     await seedProjectYamlFromSchema(dir);
     const yaml = readYaml();
     expect(yaml).not.toContain('DO NOT EDIT BY HAND');
-    expect(yaml.startsWith('# Project configuration consumed by AI agents')).toBe(true);
+    expect(yaml.startsWith('# Project configuration read by AI agents. VALUES ONLY')).toBe(true);
     expect(yaml).toContain('bun run agents:schema --project');
     expect(yaml).toContain('\nproject:\n');
   });
@@ -438,15 +438,17 @@ describe('seedProjectYamlFromSchema', () => {
   });
 
   // The real pair: the boilerplate's committed schema seeds a consumer file
-  // that carries none of the boilerplate's git_strategy answers.
+  // that carries none of the boilerplate's git_strategy answers, and none of
+  // the schema's comments (the consumer's yaml is values only, ADR-0021).
   test('seeding from the boilerplate\'s own committed schema', async () => {
     const repoRoot = join(import.meta.dir, '..', '..', '..');
     writeFileSync(join(dir, '.agents', 'project.schema.yaml'), readFileSync(join(repoRoot, '.agents', 'project.schema.yaml'), 'utf8'));
     expect(await seedProjectYamlFromSchema(dir)).toBe(true);
     const yaml = readYaml();
-    expect(yaml).toContain('    direct_push_to_protected: confirm #');
-    expect(yaml).toContain('    strategy_source: inherited #');
+    expect(yaml).toContain('    direct_push_to_protected: confirm\n');
+    expect(yaml).toContain('    strategy_source: inherited\n');
     expect(yaml).not.toContain('ProtectPublic');
+    expect(yaml.split('\nproject:\n')[1].split('\n').filter(l => l.includes('#'))).toEqual([]);
   });
 });
 

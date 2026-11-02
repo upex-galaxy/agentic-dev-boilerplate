@@ -5,6 +5,29 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-11-02 — `.agents/project.yaml` is values only; Sonnet workers at medium
+
+### Changed
+
+- **`.agents/project.yaml` carries values only** (ADR-0021). Claude Code imports it into every
+  session start, and most of its 28 138 B were comments; the maintainer copy is now one sentinel
+  line plus values. Every explanatory comment lives in `.agents/project.schema.yaml`, written there
+  by hand.
+- **`bun run agents:schema` syncs values, not text.** It splices the maintainer's methodology values
+  into the schema's commented skeleton (identity blanked, the git-strategy safety values substituted)
+  and leaves every comment in place; `agents:schema:check` requires a fixpoint and refuses a key on
+  one side only, by path.
+- **Seeding and `bun sync` write values only.** The installer, `agents:setup --reseed`, the adoption
+  flow and the scaffolder seed a comment-free yaml with a three-line header; `bun sync` inserts a
+  missing key without its comment block, and the `# NEW in <release>` marker is gone. `agents:setup`
+  reads each field's help from the schema.
+- **`bun sync` and `setup:doctor` list changed defaults.** Each methodology value a project changed
+  from upstream's default is reported as `<path>: yours <x>, upstream default <y>` and left as it is;
+  identity and git-strategy safety leaves are excluded.
+- **Orca workers default to `claude-sonnet-5-5` at `medium` effort**; one `model_overrides` entry
+  sends security, auth, migration, rollback and architecture topics to `claude-opus-5-5` at `high`.
+  The built-in Explore subagent runs on Haiku 5.5 at low effort (`.claude/agents/Explore.md`).
+
 ## 2026-11-01 — The prompt hook ignores what the harness injected
 
 ### Fixed

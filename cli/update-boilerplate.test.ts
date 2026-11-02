@@ -1,13 +1,16 @@
+import type { ReportSink } from './lib/updater-types.ts';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
+import { parse as parseYaml } from 'yaml';
+import { stripYamlComments } from './lib/agents-schema.ts';
 import { unusedHarnessPaths } from './lib/harness-selection.ts';
 import { cleanupDeprecated, isRepoOnlyPath, validateComponentRegistry } from './lib/updater-core.ts';
 import { RETIRED_HARNESS_LAUNCHER, RETIRED_HARNESS_SCRIPTS } from './lib/updater-parity.ts';
-import { COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { backfillProjectYamlFromSchema, COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -351,5 +354,55 @@ describe('post-apply gates', () => {
     expect(gatesSummaryLine([
       { script: 'types:check', status: 'pass', exitCode: 0, seconds: 3, errorCount: 0, firstErrors: [], failingApplied: [], output: '' },
     ], 'no-changes')).toBe('types:check OK');
+  });
+});
+
+// `.agents/project.yaml` is values only (ADR-0021): the back-fill inserts a
+// missing block without its comments, and a methodology value the project
+// changed is listed, never written back.
+describe('project.yaml back-fill', () => {
+  const SCHEMA = readFileSync(join(import.meta.dir, '..', '.agents', 'project.schema.yaml'), 'utf8');
+  const LEAN = stripYamlComments(SCHEMA);
+
+  function autoSink(lines: string[]): ReportSink {
+    return {
+      step: (m: string) => lines.push(m),
+      warn: (m: string) => lines.push(m),
+      error: (m: string) => lines.push(m),
+      confirm: async () => { throw new Error('--auto never prompts'); },
+    } as unknown as ReportSink;
+  }
+
+  function fixture(projectYaml: string): { root: string, upstream: string } {
+    const root = temporaryRoot();
+    const upstream = temporaryRoot();
+    mkdirSync(join(root, '.agents'), { recursive: true });
+    mkdirSync(join(upstream, '.agents'), { recursive: true });
+    writeFileSync(join(root, '.agents/project.yaml'), projectYaml);
+    writeFileSync(join(upstream, '.agents/project.schema.yaml'), SCHEMA);
+    return { root, upstream };
+  }
+
+  test('a whole missing block arrives as values, without one of the schema\'s comments', async () => {
+    const projectYaml = LEAN.replace(/\nautonomous_delivery:\n(?: {2}.*\n)+/, '\n');
+    expect(projectYaml).not.toContain('autonomous_delivery:');
+    const { root, upstream } = fixture(projectYaml);
+    // Interactive, every prompt answered yes: DEV's --auto only reports gaps.
+    const yes = { ...autoSink([]), confirm: async () => true } as unknown as ReportSink;
+    await backfillProjectYamlFromSchema(upstream, yes, false, root);
+    const after = readFileSync(join(root, '.agents/project.yaml'), 'utf8');
+    expect((parseYaml(after) as { autonomous_delivery?: { enabled?: unknown } }).autonomous_delivery?.enabled).toBe(false);
+    expect(after.split('\n').filter(l => l.includes('#'))).toEqual([]);
+  });
+
+  test('a methodology value the project changed is warned about and left as it is', async () => {
+    const upstreamMax = (parseYaml(LEAN) as { orchestration: { max_workers: number } }).orchestration.max_workers;
+    const projectYaml = LEAN.replace(/^ {2}max_workers: .*$/m, `  max_workers: ${upstreamMax + 2}`);
+    expect(projectYaml).not.toBe(LEAN);
+    const { root, upstream } = fixture(projectYaml);
+    const lines: string[] = [];
+    await backfillProjectYamlFromSchema(upstream, autoSink(lines), true, root);
+    expect(readFileSync(join(root, '.agents/project.yaml'), 'utf8')).toBe(projectYaml);
+    expect(lines.join('\n')).toContain(`orchestration.max_workers: yours ${upstreamMax + 2}, upstream default ${upstreamMax}`);
   });
 });

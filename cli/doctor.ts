@@ -432,6 +432,11 @@ interface ProjectSchemaDiagnostic {
   gaps: Array<{ block: string, paths: string[], wholeBlock: boolean }>
   /** Blocks silenced through `updater.schema_exempt`. */
   exempt: string[]
+  /**
+   * Methodology values this project changed from upstream's default, one
+   * `<path>: yours <x>, upstream default <y>` line each. Listed, never a failure.
+   */
+  changed_defaults: string[]
   /** Set when nothing could be compared: a parse failure, or no schema on disk. */
   note: string | null
   /**
@@ -581,18 +586,20 @@ function gitOrigin(): string | null {
  */
 async function projectSchemaDiagnostic(): Promise<ProjectSchemaDiagnostic> {
   try {
-    const { classifyProjectYaml, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } = await import('./lib/agents-schema.ts');
+    const { changedDefaults, classifyProjectYaml, describeChangedDefault, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } = await import('./lib/agents-schema.ts');
     const sourcePath = join(REPO_ROOT, SCHEMA_SOURCE);
     const schemaPath = join(REPO_ROOT, SCHEMA_FILE);
-    if (!existsSync(sourcePath)) { return { gaps: [], exempt: [], note: `${SCHEMA_SOURCE} not found`, copied_template: false }; }
+    if (!existsSync(sourcePath)) { return { gaps: [], exempt: [], changed_defaults: [], note: `${SCHEMA_SOURCE} not found`, copied_template: false }; }
     const sourceText = await readFile(sourcePath, 'utf8');
     const copied_template = classifyProjectYaml(sourceText, gitOrigin()) === 'copied-template';
-    if (!existsSync(schemaPath)) { return { gaps: [], exempt: [], note: `${SCHEMA_FILE} not found: run \`bun sync\` to receive it`, copied_template }; }
-    const delta = projectDelta(sourceText, await readFile(schemaPath, 'utf8'));
-    return { gaps: delta.gaps, exempt: delta.exempt, note: delta.error, copied_template };
+    if (!existsSync(schemaPath)) { return { gaps: [], exempt: [], changed_defaults: [], note: `${SCHEMA_FILE} not found: run \`bun sync\` to receive it`, copied_template }; }
+    const schemaText = await readFile(schemaPath, 'utf8');
+    const delta = projectDelta(sourceText, schemaText);
+    const changed_defaults = changedDefaults(sourceText, schemaText).changed.map(describeChangedDefault);
+    return { gaps: delta.gaps, exempt: delta.exempt, changed_defaults, note: delta.error, copied_template };
   }
   catch (err) {
-    return { gaps: [], exempt: [], note: `the schema comparison threw: ${(err as Error).message}`, copied_template: false };
+    return { gaps: [], exempt: [], changed_defaults: [], note: `the schema comparison threw: ${(err as Error).message}`, copied_template: false };
   }
 }
 
@@ -1196,7 +1203,7 @@ function printHuman(report: DoctorReport): void {
   // different question from the checks above: not "is something broken" but
   // "has upstream moved and am I still on the old shape".
   const ps = report.project_schema;
-  if (ps.note !== null || ps.gaps.length > 0 || ps.copied_template) {
+  if (ps.note !== null || ps.gaps.length > 0 || ps.changed_defaults.length > 0 || ps.copied_template) {
     tui.section('Project config vs upstream schema (.agents/project.yaml)');
     if (ps.copied_template) {
       process.stdout.write(`  ${tui.statusIcon('warn')} .agents/project.yaml is the boilerplate maintainers' own copy (GitHub "Use this template"): their git_strategy and push authorization\n`);
@@ -1212,6 +1219,11 @@ function printHuman(report: DoctorReport): void {
         process.stdout.write(`  ${gap.block}${gap.wholeBlock ? ' (whole block)' : ''}: ${gap.paths.join(', ')}\n`);
       }
       process.stdout.write('  Fix: bun sync  (offers to insert them, one prompt per block, insert-only)\n');
+    }
+    if (ps.changed_defaults.length > 0) {
+      process.stdout.write(`  ${tui.statusIcon('warn')} ${ps.changed_defaults.length} methodology value(s) differ from upstream's default (yours is kept; listed so each change is deliberate)\n`);
+      for (const line of ps.changed_defaults) { process.stdout.write(`  ${line}\n`); }
+      process.stdout.write('  Each key is documented in .agents/project.schema.yaml.\n');
     }
     if (ps.exempt.length > 0) {
       process.stdout.write(`  silenced via updater.schema_exempt: ${ps.exempt.join(', ')}\n`);
