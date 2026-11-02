@@ -23,7 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reads each field's help from the schema.
 - **`bun sync` and `setup:doctor` list changed defaults.** Each methodology value a project changed
   from upstream's default is reported as `<path>: yours <x>, upstream default <y>` and left as it is;
-  identity and git-strategy safety leaves are excluded.
+  identity, git-strategy and the project's own configuration blocks (`updater`, `secrets`, `stack`,
+  `harnesses`, `external_consumers`, `testing.automation_identity`) are excluded.
+- **The schema's leak gate also catches a bare project name, project key or host label** typed into a
+  schema comment, and a value sync keeps the comment on a key's own line.
 - **Orca workers default to `claude-sonnet-5-5` at `medium` effort**; one `model_overrides` entry
   sends security, auth, migration, rollback and architecture topics to `claude-opus-5-5` at `high`.
   The built-in Explore subagent runs on Haiku 5.5 at low effort (`.claude/agents/Explore.md`).

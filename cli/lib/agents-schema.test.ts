@@ -20,6 +20,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   applyInsertions,
   applySplices,
+  CHANGED_DEFAULTS_EXEMPT,
   changedDefaults,
   checkSchema,
   classifyProjectYaml,
@@ -31,6 +32,8 @@ import {
   generateSchema,
   GENERIC_RULES,
   IDENTITY_PATHS,
+  identityTokens,
+  isChangedDefaultExempt,
   isIdentityPath,
   isMaintainerCopy,
   isSchemaOwner,
@@ -419,6 +422,25 @@ describe('identity is blanked, whatever this repo filled in', () => {
     expect(schema).toBe('project:\n  project_name: null # TODO: name\n');
   });
 
+  // Review fix D1: the comment on the KEY's line documents the key, and a
+  // splice from the colon used to swallow it when the value was a block.
+  test('the key-line comment survives a block value changing, in every shape', () => {
+    const skeleton = 'o:\n  overrides: # e.g. [{topics: [x], effort: max}]\n    - topics: [a]\n      effort: high\n  list: [] # e.g. [a, b]\n';
+    const toBlock = generateSchema('o:\n  overrides:\n    - topics: [a]\n      effort: max\n  list:\n    - a\n', skeleton);
+    expect(toBlock.error).toBeNull();
+    expect(toBlock.schema).toBe('o:\n  overrides: # e.g. [{topics: [x], effort: max}]\n    - topics: [a]\n      effort: max\n  list: # e.g. [a, b]\n    - a\n');
+    const toInline = generateSchema('o:\n  overrides: []\n  list: []\n', skeleton);
+    expect(toInline.schema).toBe('o:\n  overrides: [] # e.g. [{topics: [x], effort: max}]\n  list: [] # e.g. [a, b]\n');
+  });
+
+  test.skipIf(!MAINTAINER_CHECKOUT)('changing the Opus override effort keeps the model_overrides example comment', () => {
+    const changed = edit(realSource(), /(model: claude-opus-5-5\n {6}effort: )\w+/, '$1max');
+    const { schema, changed: paths } = generateSchema(changed, committedSchema());
+    expect(paths).toEqual(['orchestration.model_overrides']);
+    expect(schema).toContain('\n  model_overrides: # e.g. [{topics: [security, migration], tier: worker, model: claude-opus-5-5, effort: max}]\n');
+    expect(checkSchema(changed, schema).ok).toBe(true);
+  });
+
   test('key parity is literal and both ways: an undocumented key and an unseeded one each refuse', () => {
     const undocumented = generateSchema('a: 1\nb: 2\n', 'a: 1 # doc\n');
     expect(undocumented.error).toContain('does not document');
@@ -475,6 +497,25 @@ describe('the maintainer copy and the template route', () => {
 
   // A comment is the schema's to carry; an identity fact pasted into one is
   // still caught, which is the leak gate's whole reason to scan comments.
+  // Review fix D3: a comment naming the project without quoting a whole value.
+  test('identity tokens: the project name, the key and the own host labels, never template vocabulary', () => {
+    const src = 'project:\n  project_name: Acmeware\n  project_key: AW\n  webapp_domain: acmeware-app.vercel.app\nissue_tracker:\n  atlassian_url: https://acmeteam.atlassian.net\ntesting:\n  default_env: staging\nenvironments:\n  local:\n    web_url: http://localhost:3000\n';
+    expect(identityTokens(src).map(t => t.token).sort()).toEqual(['AW', 'Acmeware', 'acmeteam', 'acmeware-app'].sort());
+    const flagged = (line: string): boolean => identityTokens(src).some(t => t.re.test(line));
+    expect(flagged('# owned by the acmeware team')).toBe(true);
+    expect(flagged('# the AW board')).toBe(true);
+    expect(flagged('# AWS keys, staging, http://localhost:3000, company.atlassian.net')).toBe(false);
+  });
+
+  test('a bare project name or host label in a schema COMMENT refuses generation', () => {
+    const src = 'project:\n  project_name: Acmeware\n  webapp_domain: acmeware-app.vercel.app\n';
+    const clean = 'project:\n  project_name: null # TODO: name (e.g. MyProject)\n  webapp_domain: null # TODO: domain (e.g. myproject.com)\n';
+    expect(generateSchema(src, clean).error).toBeNull();
+    for (const token of ['Acmeware', 'acmeware-app']) {
+      expect(generateSchema(src, clean.replace('(e.g. MyProject)', `(e.g. ${token})`)).error).toContain('identity leak');
+    }
+  });
+
   test.skipIf(!MAINTAINER_CHECKOUT)('a real date pasted into a schema COMMENT refuses', () => {
     const dated = edit(committedSchema(), '# release / default branch', '# release / default branch, chosen 2026-08-21');
     expect(generateSchema(realSource(), dated).error).toContain('identity leak');
@@ -690,6 +731,27 @@ describe('changedDefaults', () => {
 
   test('an unparseable project says so instead of listing nothing', () => {
     expect(changedDefaults('a: 1\n: : :\n', upstream).error).toContain('does not parse');
+  });
+
+  // Review fix D2: per-project configuration is not methodology.
+  test('per-project configuration blocks are exempt, methodology is not', () => {
+    for (const path of ['updater.protected_paths', 'secrets.provider', 'secrets.onepassword.vault', 'git_strategy.strategy', 'harnesses', 'stack.database.engine', 'external_consumers', 'testing.automation_identity.per_env']) {
+      expect(isChangedDefaultExempt(path)).toBe(true);
+    }
+    for (const path of ['orchestration.max_workers', 'autonomous_delivery.caps.story', 'decision_authority.product', 'testing.default_env', 'updaterx.y']) {
+      expect(isChangedDefaultExempt(path)).toBe(false);
+    }
+    expect(CHANGED_DEFAULTS_EXEMPT).toContain('updater.*');
+  });
+
+  test.skipIf(!MAINTAINER_CHECKOUT)('a seeded consumer that set its own protected paths, secret manager and stack hears nothing', () => {
+    let project = seedFromSchema(committedSchema())!;
+    project = edit(project, /^ {2}protected_paths: \[\]$/m, '  protected_paths: [scripts/x.ts]');
+    project = edit(project, /^ {2}provider: local$/m, '  provider: 1password');
+    project = edit(project, /^ {2}package_manager: \w+$/m, '  package_manager: pnpm');
+    expect(changedDefaults(project, committedSchema())).toEqual({ changed: [], error: null });
+    const methodology = edit(project, /^ {2}max_workers: \d+$/m, '  max_workers: 9');
+    expect(changedDefaults(methodology, committedSchema()).changed.map(c => c.path)).toEqual(['orchestration.max_workers']);
   });
 
   test.skipIf(!MAINTAINER_CHECKOUT)('the maintainer copy differs from its own template in no methodology value', () => {
