@@ -73,6 +73,15 @@ Each line is the rule's binding text, verbatim; `…` joins excerpts of one rule
 
 **GOAL-DRIVEN EXECUTION.** Define success criteria, loop until verified; turn vague tasks into testable goals ("add validation" → tests for invalid input, then make them pass). Multi-step → plan with an observable `verify:` per step (test passes, file exists, exit 0, `types:check` clean). Complements the 7-component briefing (§3), does not replace it.
 
+**SEARCH AND BULK EDIT.** Locate before reading, script repeated edits, verify every form of what changed.
+
+- **Locate**: `git grep -n` / `rg -n` before opening a file; count before displaying (`| wc -l`), never let `| head` decide what exists; read only the range around each hit; read a file over ~300 lines whole only when it is the core of the answer; stop once the entry-point→effect chain is complete.
+- **A path/name changing in many files**: never Read+Edit file by file. In order:
+  1. Inventory with TWO counts. Literal: `git grep -n -F '<old>' | wc -l`. Variants: each separator replaced by `[^A-Za-z0-9_]{1,6}`, leading dot escaped, nothing else changed (`.agents/hooks` → `git grep -n -E '\.agents[^A-Za-z0-9_]{1,6}hooks' | wc -l`; catches `a/b`, `'a', 'b'`, `a\\b`, `a\/b`). Variants > literal → `| grep -v -F '<old>'` lists the sites a literal replace misses.
+  2. Decide exclusions (text that keeps the old value: ADR history, changelogs, legacy constants) BEFORE replacing, inside the command: `git mv <old> <new> && git grep -lz -F '<old>' -- . ':!<excluded>' | xargs -0 perl -pi -e 's#\Q<old>\E#<new>#g'`. `perl -pi`, not `sed -i` (differs macOS/Linux).
+  3. Fix each extra from step 1 (scripted replace, or Edit for few sites), re-run both counts: only planned exclusions may remain.
+  4. Done only when tests pass (a lint or type gate is not a test run): `bun test <dir>` for every top-level dir with a touched `.ts`, `bun test` inside every touched `packages/<name>`. Report leftovers per form + test result.
+
 **EXPANDABLE RESPONSES (BUTLER).** Terse headline answering the literal question, standing alone. Every other topic = atomic bullet menu: one specific topic per bullet, never broad buckets (12 specific > 3 broad); count = information richness, no cap; bullet = 1-line hook `topic-name: short fragment`, never a paragraph, never an em dash as separator (see OUTPUT STYLE).
 
 **PM VOICE (DEFAULT REGISTER).** Project-Manager voice, not senior-dev-to-senior-dev. Sits on top of Butler: Butler = granularity, PM Voice = vocabulary at the headline AND inside each bullet.
