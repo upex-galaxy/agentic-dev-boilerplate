@@ -1,5 +1,5 @@
 /**
- * Prompt-time context: ONE emitter, three harness adapters.
+ * Prompt-time context: ONE emitter, one adapter per harness.
  *
  * Why this exists: AGENTS.md §2 (Butler + PM Voice + Visual Mapping) and the
  * user-level OUTPUT STYLE are read ONCE at session start and then dilute as
@@ -35,8 +35,9 @@
  *
  * Claude Code also runs it on `PostToolUse` (`.claude/settings.json`, no
  * matcher): it prints nothing but, at most once per prompt, a `ROUTE-PENDING:`
- * line when a routed section is still unread (see `pendingRouteReminder`).
- * Any other event prints nothing.
+ * line when a routed section is still unread (see `pendingRouteReminder`); the
+ * Pi adapter does the same from its `tool_result` event. Any other event
+ * prints nothing.
  *
  * The text lives HERE and nowhere else. Each harness reaches it through a thin
  * adapter:
@@ -51,7 +52,10 @@
  *     OpenCode 1 also routes from `chat.message` and re-arms on
  *     `experimental.session.compacting` only (the adapter registers no `/clear` hook);
  *     OpenCode 2 is router-only, so it has nothing to re-arm.
- * `bun run agents:compat:check` pins the three adapters to this emitter.
+ *   - Pi: `.pi/extensions/agentic-dev.js` imports the same exports, injects
+ *     the lines as a hidden message in `before_agent_start`, and re-arms on
+ *     the `session_compact` event only; `/new` starts a new session id.
+ * `bun run agents:compat:check` pins the adapters to this emitter.
  *
  * Hook wire (verified against the vendor docs): Claude Code pipes a JSON
  * payload with `session_id`, `prompt` and an optional `session_title`, and
