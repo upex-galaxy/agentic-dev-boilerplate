@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -1830,14 +1830,14 @@
           <div class="g">
             <b>Ningún harness le pasa el tamaño al agente</b
             ><span
-              >Dos de los tres lo exponen afuera del loop del modelo. Un disparo automático se puede
+              >Claude Code, OpenCode y Pi lo exponen afuera del loop del modelo; Codex no. Un disparo automático se puede
               construir, pero es cableado nuevo, no un campo esperando a ser leído.</span
             >
           </div>
           <div class="g">
             <b>La compactación es el momento equivocado</b
             ><span
-              >Los tres harnesses avisan que la compactación es inminente, pero ahí la ventana ya
+              >Todos los harnesses avisan que la compactación es inminente, pero ahí la ventana ya
               está llena: el handoff lo escribiría una sesión a punto de truncarse, con el juicio
               degradado del que el handoff existe para escapar.</span
             >
@@ -2248,7 +2248,7 @@ dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
           class="code r"
           style="margin-top: 26px"
         ><span class="c"># el binario pelado: sus MCPs leen .env por el loader de .env</span>
-<span class="s">claude</span>     <span class="c"># o: opencode · codex, el mismo harness del predecesor</span>
+<span class="s">claude</span>     <span class="c"># o: opencode · codex · pi, el mismo harness del predecesor</span>
 
 <span class="c"># el primer prompt, idéntico en los dos caminos</span>
 Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom and continue that session exactly where it stopped.</pre>
@@ -2389,7 +2389,7 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">08</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             No tiene modos: una sola corrida, tres pasos. Alcanza con nombrarla, o con frases como
             "hagamos el handoff", "pasa el contexto a otra sesión" o "hand this session over".
@@ -2412,11 +2412,16 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
             <span class="say">carga la skill session-handoff</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:session-handoff</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
+          </div>
         </div>
 
         <div class="callout blue r">
           <b>El sucesor sale del mismo host.</b> Un predecesor de Claude Code lanza un Claude Code;
-          OpenCode lanza OpenCode; Codex lanza Codex. La línea de lanzamiento es del harness, no del
+          OpenCode lanza OpenCode; Codex lanza Codex; Pi lanza Pi. La línea de lanzamiento es del harness, no del
           runtime.
         </div>
       </div>

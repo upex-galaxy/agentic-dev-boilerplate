@@ -1296,7 +1296,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
         margin-bottom: 26px;
       }
@@ -1418,7 +1418,7 @@
             <b>Claude Design · Open Design · Figma · HTML manual · skill de diseño (Modo C)</b></span
           >
           <span class="chip agent"
-            ><span class="dot"></span> motor: <b>Claude Code · OpenCode · Codex + skills</b></span
+            ><span class="dot"></span> motor: <b>Claude Code · OpenCode · Codex · Pi + skills</b></span
           >
         </div>
 
@@ -2707,6 +2707,11 @@
             <span class="say">carga la skill design-system, modo screen, historia PROJ-14</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:design-system tokens</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
+          </div>
         </div>
 
         <div class="steps r">
@@ -2822,8 +2827,8 @@
           <h2>Arrancar de cero</h2>
           <p class="sub">
             Runbook literal. Dos caminos según cuánto quieras montar. Los dos parten de abrir Claude
-            Code, OpenCode o Codex en la raíz del repo; las skills viven en
-            <span class="mono">.agents/skills/</span> y las tres terminales las leen igual (Claude
+            Code, OpenCode, Codex o Pi en la raíz del repo; las skills viven en
+            <span class="mono">.agents/skills/</span> y todas las terminales las leen igual (Claude
             Code a través del alias generado <span class="mono">.claude/skills</span>), así que
             <span class="mono">/design-system</span> y
             <span class="mono">/sprint-development</span> están disponibles en cualquiera de las
@@ -2840,9 +2845,9 @@
               tokens.
             </p>
             <div class="code" style="font-size: 0.78rem">
-              <span class="c"># raíz del repo</span> claude <span class="c"># o: opencode, codex</span>
+              <span class="c"># raíz del repo</span> claude <span class="c"># o: opencode, codex, pi</span>
 
-              <span class="c"># dentro de la sesión (en OpenCode o Codex: "carga la skill design-system, modo screen"):</span>
+              <span class="c"># dentro de la sesión (en Pi: /skill:design-system screen; en OpenCode o Codex: "carga la skill design-system, modo screen"):</span>
               <span class="k">/design-system screen PROJ-XX</span>
 
               <span class="c"># responder al opt-in de pantallas:</span>

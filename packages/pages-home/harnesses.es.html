@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Una fuente, tres harnesses</title>
+    <title>Una fuente, todos los harnesses</title>
     <meta
       name="description"
-      content="Cómo se comporta agentic-dev-boilerplate en Claude Code, OpenCode y Codex: un solo juego de instrucciones (un núcleo que siempre carga y secciones a pedido), skills por nombre y modo, un hook con la línea de identidad, MCP en tres formatos y las credenciales de cada arranque."
+      content="Cómo se comporta agentic-dev-boilerplate en Claude Code, OpenCode, Codex y Pi: un solo juego de instrucciones (un núcleo que siempre carga y secciones a pedido), skills por nombre y modo, un hook con la línea de identidad, MCP con un formato por host y las credenciales de cada arranque."
     />
     <style>
       /* ============================================================
@@ -651,9 +651,13 @@
       .h-codex {
         color: var(--blue);
       }
+      .h-pi {
+        color: var(--good);
+      }
       table.plain td.h-claude,
       table.plain td.h-opencode,
-      table.plain td.h-codex {
+      table.plain td.h-codex,
+      table.plain td.h-pi {
         color: inherit;
       }
       table.plain td.h-claude {
@@ -665,9 +669,13 @@
       table.plain td.h-codex {
         color: var(--blue);
       }
+      table.plain td.h-pi {
+        color: var(--good);
+      }
       .tag.h-claude,
       .tag.h-opencode,
-      .tag.h-codex {
+      .tag.h-codex,
+      .tag.h-pi {
         font-weight: 600;
       }
       .pill {
@@ -710,6 +718,9 @@
       .card .n.h-codex {
         color: var(--blue);
       }
+      .card .n.h-pi {
+        color: var(--good);
+      }
       @media (max-width: 760px) {
         .topbar .brand {
           font-size: 0.7rem;
@@ -747,10 +758,10 @@
     <div class="wrap">
       <header class="hero">
         <p class="kick">Multi-harness · cómo se comporta el repo</p>
-        <h1>Una fuente, <em>tres harnesses</em> que la leen</h1>
+        <h1>Una fuente, <em>todos los harnesses</em> que la leen</h1>
         <p class="lede">
-          El repo corre en Claude Code, OpenCode y Codex (CLI y Desktop). Cada instrucción y cada
-          skill existe una sola vez. Donde los tres harnesses difieren de verdad (formato de MCP,
+          El repo corre en Claude Code, OpenCode, Codex (CLI y Desktop) y Pi. Cada instrucción y
+          cada skill existe una sola vez. Donde los harnesses difieren de verdad (formato de MCP,
           API de hooks) cada uno tiene un adaptador fino, versionado o generado, y un check lo
           compara contra la fuente.
         </p>
@@ -758,6 +769,7 @@
           <span class="tag h-claude">Claude Code</span>
           <span class="tag h-opencode">OpenCode</span>
           <span class="tag h-codex">Codex CLI + Desktop</span>
+          <span class="tag h-pi">Pi</span>
           <span class="tag"
             >fuente de verdad: <code>.agents/instructions/agent-harnesses.md</code> §5.5</span
           >
@@ -767,12 +779,12 @@
       <section id="superficies" class="r">
         <h2><span class="num">01</span>Qué lee cada harness</h2>
         <p class="sub">
-          OpenCode y Codex leen <code>AGENTS.md</code> y <code>.agents/skills/</code> de forma
-          nativa, así que ahí no hay adaptador. Las secciones de
-          <code>.agents/instructions/</code> no las carga ningún host por su cuenta: el router de
-          <code>AGENTS.md</code> dice cuándo leer cada una, igual en los tres. Claude Code necesita
-          dos superficies generadas para llegar al mismo contenido. El hook y el MCP tienen un
-          archivo por host porque cada uno habla un formato distinto.
+          OpenCode, Codex y Pi leen <code>AGENTS.md</code> y <code>.agents/skills/</code> de forma
+          nativa (Pi solo en una carpeta de confianza), así que ahí no hay adaptador. Las secciones
+          de <code>.agents/instructions/</code> no las carga ningún host por su cuenta: el router de
+          <code>AGENTS.md</code> dice cuándo leer cada una, igual en todos. Claude Code necesita dos
+          superficies generadas para llegar al mismo contenido. El hook y el MCP tienen un archivo
+          por host porque cada uno habla un formato distinto.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
@@ -782,6 +794,7 @@
                 <th class="h-claude">Claude Code</th>
                 <th class="h-opencode">OpenCode</th>
                 <th class="h-codex">Codex CLI + Desktop</th>
+                <th class="h-pi">Pi</th>
               </tr>
             </thead>
             <tbody>
@@ -793,10 +806,12 @@
                 </td>
                 <td><code>AGENTS.md</code> nativo</td>
                 <td><code>AGENTS.md</code> nativo</td>
+                <td><code>AGENTS.md</code> nativo</td>
               </tr>
               <tr>
                 <td>Secciones de instrucciones</td>
                 <td><code>.agents/instructions/</code> a pedido, por el router de L0</td>
+                <td><code>.agents/instructions/</code> a pedido</td>
                 <td><code>.agents/instructions/</code> a pedido</td>
                 <td><code>.agents/instructions/</code> a pedido</td>
               </tr>
@@ -805,24 +820,28 @@
                 <td><code>.claude/skills</code> alias <span class="pill gen">generado</span></td>
                 <td><code>.agents/skills/</code> nativo</td>
                 <td><code>.agents/skills/</code> nativo</td>
+                <td><code>.agents/skills/</code> nativo (pide <code>/trust</code>)</td>
               </tr>
               <tr>
                 <td>Comandos</td>
                 <td>ninguno: <code>/&lt;skill&gt; &lt;modo&gt;</code></td>
                 <td>ninguno: skill y modo en prosa</td>
                 <td>ninguno: skill y modo en prosa</td>
+                <td>ninguno: <code>/skill:&lt;skill&gt; &lt;modo&gt;</code></td>
               </tr>
               <tr>
                 <td>Hook</td>
                 <td><code>.claude/settings.json</code> → <code>UserPromptSubmit</code></td>
                 <td><code>.opencode/plugins/personality-reinject.js</code></td>
                 <td><code>.codex/hooks.json</code> → <code>UserPromptSubmit</code></td>
+                <td><code>.pi/extensions/agentic-dev.js</code></td>
               </tr>
               <tr>
                 <td>MCP</td>
                 <td><code>.mcp.json</code></td>
                 <td><code>opencode.jsonc</code></td>
                 <td><code>.codex/config.toml</code></td>
+                <td><code>.pi/mcp.json</code></td>
               </tr>
             </tbody>
           </table>
@@ -850,7 +869,7 @@
             (<code>agents:compat:check</code>, <code>setup:doctor</code>, el instalador,
             <code>bun sync</code>) revisa solo esos. Sin la lista, o en <code>null</code>, se
             detectan por los archivos presentes; una lista explícita manda. El boilerplate mismo
-            revisa siempre los tres. Decisión:
+            revisa siempre todos. Decisión:
             <code>.context/ADR/ADR-0013-declared-harnesses.md</code>.</span
           >
         </div>
@@ -904,8 +923,8 @@
         <p class="sub">
           No hay archivos de comando ni capa de alias: el boilerplate no trae
           <code>.claude/commands/</code> ni <code>.opencode/commands/</code>. La skill es la única
-          forma de invocación en los tres hosts, y una skill con varios modos los lista en su propia
-          sección <code>## Mode routing</code>.
+          forma de invocación en todos los hosts, y una skill con varios modos los lista en su
+          propia sección <code>## Mode routing</code>.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
@@ -931,6 +950,10 @@
                 <td class="h-codex">Codex</td>
                 <td>"cargá <code>project-context</code>, modo <code>data</code>"</td>
               </tr>
+              <tr>
+                <td class="h-pi">Pi</td>
+                <td><code>/skill:project-context data</code></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -953,7 +976,7 @@
       </section>
 
       <section id="hook" class="r">
-        <h2><span class="num">04</span>Un emisor, tres adaptadores</h2>
+        <h2><span class="num">04</span>Un emisor, un adaptador por harness</h2>
         <p class="sub">
           <code>.agents/hooks/personality-reinject.mjs</code> tiene el texto que se reinyecta en
           cada prompt. Existe en ese archivo y en ningún otro; cada host llega a él por un
@@ -982,13 +1005,14 @@
             >: las secciones de instrucciones que el prompt necesita y la sesión todavía no leyó,
             clasificadas con el router de <code>AGENTS.md</code> y los <code>triggers:</code> de
             cada sección. Un <code>SessionStart</code> con <code>compact</code> o
-            <code>clear</code> las re-arma en Claude Code y Codex; OpenCode 1 rutea desde
-            <code>chat.message</code> y OpenCode 2 se queda con el router.
+            <code>clear</code> las re-arma en Claude Code y Codex; Pi las re-arma con
+            <code>session_compact</code>; OpenCode 1 rutea desde <code>chat.message</code> y
+            OpenCode 2 se queda con el router.
           </li>
         </ol>
         <pre
           class="block"
-        ><span class="k">AGENT IDENTITY:</span> worktree=&lt;nombre|primary&gt; session=&lt;etiqueta&gt; harness=&lt;claude-code|codex|opencode&gt;</pre>
+        ><span class="k">AGENT IDENTITY:</span> worktree=&lt;nombre|primary&gt; session=&lt;etiqueta&gt; harness=&lt;claude-code|codex|opencode|pi&gt;</pre>
         <div class="cards">
           <div class="card">
             <span class="n h-claude">Claude Code</span>
@@ -1023,6 +1047,20 @@
               <code>commandWindows</code> en PowerShell.
             </p>
             <p>Solo carga en un repositorio que Codex marcó como confiable.</p>
+          </div>
+          <div class="card">
+            <span class="n h-pi">Pi</span>
+            <h4><code>.pi/extensions/agentic-dev.js</code></h4>
+            <p>
+              Una extensión engancha el mismo emisor: la línea de identidad, las líneas
+              <code>ROUTE:</code>, el <code>ROUTE-PENDING</code> que sale de
+              <code>tool_result</code>, el re-armado en <code>session_compact</code> y el nombre de
+              sesión.
+            </p>
+            <p>
+              Solo carga en una carpeta que Pi marcó como confiable (<code>/trust</code>). Su
+              bloqueo de secretos es un cinturón de seguridad, no un límite (ver la sección 08).
+            </p>
           </div>
         </div>
         <p>
@@ -1084,13 +1122,14 @@
       </section>
 
       <section id="mcp" class="r">
-        <h2><span class="num">06</span>MCP: un conjunto declarado, tres formatos</h2>
+        <h2><span class="num">06</span>MCP: un conjunto declarado, un formato por host</h2>
         <p class="sub">
           El conjunto canónico de servidores es el que declara <code>.mcp.json</code> (sin Claude,
           el archivo del primer harness declarado). Cada uno tiene que existir también en la
           configuración de los otros harnesses en uso (<code>opencode.jsonc</code>,
-          <code>.codex/config.toml</code>), con las mismas dependencias de <code>.env</code> y los
-          mismos valores literales. Los tres archivos declaran solo servidores locales.
+          <code>.codex/config.toml</code>, <code>.pi/mcp.json</code>), con las mismas dependencias
+          de <code>.env</code> y los mismos valores literales. Todos los archivos declaran solo
+          servidores locales.
         </p>
         <div class="tbl-scroll">
           <table class="plain">
@@ -1126,6 +1165,15 @@
                   igual en un servidor stdio; solo un servidor remoto sin su
                   <code>bearer_token_env_var</code> es error duro que nombra el servidor
                 </td>
+              </tr>
+              <tr>
+                <td class="h-pi">Pi</td>
+                <td><code>.pi/mcp.json</code></td>
+                <td>
+                  el mismo cargador, el mismo filtro; la forma <code>mcpServers</code> de Claude más
+                  <code>"exposure": "deferred"</code> y un <code>description</code> por servidor
+                </td>
+                <td>igual: falla en la primera llamada autenticada</td>
               </tr>
             </tbody>
           </table>
@@ -1171,8 +1219,8 @@
         <p class="sub">
           Un harness lanza sus servidores MCP antes de que corra cualquier hook, así que las
           credenciales tienen que estar disponibles en el momento del arranque. Las lee cada
-          servidor por su cuenta, con el mismo cargador en los tres hosts, se haya abierto la sesión
-          como sea.
+          servidor por su cuenta, con el mismo cargador en todos los hosts, se haya abierto la
+          sesión como sea.
         </p>
         <div class="cards">
           <div class="card">
@@ -1198,7 +1246,9 @@
           </div>
           <div class="card">
             <span class="n">Desde la terminal</span>
-            <h4><code>claude</code> · <code>opencode</code> · <code>codex</code></h4>
+            <h4>
+              <code>claude</code> · <code>opencode</code> · <code>codex</code> · <code>pi</code>
+            </h4>
             <p>
               El binario pelado, sin script envoltorio: nada carga <code>.env</code> en el proceso
               del agente, así que ningún secreto llega al shell de la IA. Un comando que necesita un
@@ -1287,19 +1337,21 @@
                 <td>
                   Diagnóstico por superficie (instrucciones, alias, comandos, hooks, MCP, lint), la
                   línea de estado del alias, las copias en texto plano de credenciales MCP que
-                  quedan, de dónde salen los secretos y la confianza de Codex como aviso.
+                  quedan, de dónde salen los secretos y la confianza de Codex y de Pi como aviso.
                 </td>
               </tr>
               <tr>
                 <td><code>bun setup</code></td>
                 <td>
-                  Detecta los tres harnesses y pregunta cuáles configurar (<code
-                    >INSTALL_AGENTS=claude-code,opencode,codex</code
+                  Detecta los harnesses y pregunta cuáles configurar, Pi incluido (<code
+                    >INSTALL_AGENTS=claude-code,opencode,codex,pi</code
                   >
-                  para un run sin preguntas), guarda la elección en <code>harnesses:</code> y ofrece
-                  borrar los archivos de los que quedaron afuera (por defecto los conserva). Retira
-                  las copias en texto plano de una instalación vieja y, después de escribir
-                  <code>.env</code>, avisa que hay que reiniciar la sesión.
+                  para un run sin preguntas; sin esa variable, un run no interactivo declara un
+                  harness detectado solo si el repo tiene sus archivos), guarda la elección en
+                  <code>harnesses:</code> y ofrece borrar los archivos de los que quedaron afuera
+                  (por defecto los conserva). Retira las copias en texto plano de una instalación
+                  vieja y, después de escribir <code>.env</code>, avisa que hay que reiniciar la
+                  sesión.
                 </td>
               </tr>
             </tbody>
@@ -1322,10 +1374,36 @@
             verificarla cuando OpenCode se actualiza. Claude Code y Codex usan APIs estables.
           </li>
           <li>
+            <strong>Confianza en Pi</strong>: la confianza del proyecto gobierna
+            <code>.agents/skills</code>, <code>.pi/mcp.json</code> y <code>.pi/extensions</code>.
+            Una carpeta sin confiar recibe <code>AGENTS.md</code> y nada más; se confía dentro de Pi
+            con <code>/trust</code> y <code>bun run setup:doctor</code> muestra el estado.
+          </li>
+          <li>
+            <strong>El bloqueo de secretos de Pi es un cinturón, no un límite</strong>: Pi no tiene
+            config de deny ni aprobaciones. El adaptador rechaza lecturas directas de
+            <code>.env*</code> (salvo <code>.env.example</code> y <code>*.schema</code>),
+            <code>.auth/**</code> y <code>.claude/settings.local.json</code>, los comandos
+            <code>printenv</code>, <code>env</code> solo y <code>varlock printenv|reveal</code>, y
+            quita de la salida de <code>grep</code> las líneas de archivos de secretos.
+            <code>cat .env</code> y otras variantes de shell pasan, y una sesión sin confianza no
+            tiene bloqueo. Lo que vincula es la Regla Crítica #1.
+          </li>
+          <li>
+            <strong>Pi y el estado de runtime</strong>: los paquetes de Pi escriben loops, tareas y
+            subagentes bajo <code>.pi/</code>. <code>.gitignore</code> ignora <code>.pi/*</code> y
+            deja pasar <code>mcp.json</code>, <code>settings.json</code>, <code>SYSTEM.md</code>,
+            <code>APPEND_SYSTEM.md</code>, <code>extensions/</code>, <code>skills/</code>,
+            <code>prompts/</code> y <code>themes/</code>. Registro de diseño:
+            <code>.context/ADR/ADR-0022-pi-as-a-declared-harness.md</code>.
+          </li>
+          <li>
             <strong>Los plugins de harness siguen siendo de su harness</strong>: el plugin de Engram
             (hooks de sesión) es de Claude Code; <code>engram setup &lt;agente&gt;</code> registra
-            el servidor MCP de Engram en los tres hosts, y las reglas de memoria no hacen nada donde
-            ese servidor falta.
+            el servidor MCP de Engram en los hosts que nombra (Pi no está: se conecta a mano, una
+            vez por máquina, con
+            <code>pi mcp add engram --exposure deferred -- engram mcp --tools=agent</code>), y las
+            reglas de memoria no hacen nada donde ese servidor falta.
           </li>
         </ul>
       </section>

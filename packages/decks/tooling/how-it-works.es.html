@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2298,7 +2298,7 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">10</span> · qué le dices a la IA</div>
-          <h2>Invocarlas en las tres terminales</h2>
+          <h2>Invocarlas en cada terminal</h2>
           <p class="sub">
             Son skills sin modos. Casi nunca hace falta nombrarlas: se cargan solas cuando el comando
             nombra su binario. Cuando quieres forzarlas, así:
@@ -2320,6 +2320,11 @@ vercel inspect <span class="s">&lt;alias-de-producción&gt;</span> --wait --time
             <h3>Codex</h3>
             <span class="say">carga la skill vercel-cli</span>
             <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:acli</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

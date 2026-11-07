@@ -759,8 +759,8 @@
       <section>
         <h2><span class="num">04</span>Cómo se sostiene en cada turno</h2>
         <p class="sub">
-          El contrato vive una sola vez y llega a los tres harnesses por un adapter fino cada uno.
-          <code>bun run agents:compat:check</code> ata los tres adapters al emisor, así que el texto
+          El contrato vive una sola vez y llega a cada harness por un adapter fino.
+          <code>bun run agents:compat:check</code> ata cada adapter al emisor, así que el texto
           no puede divergir entre hosts.
         </p>
         <div class="tbl-scroll">
@@ -799,6 +799,15 @@
               <td>
                 <code>.codex/hooks.json</code> → el mismo hook <code>UserPromptSubmit</code>, y
                 <code>SessionStart</code> con <code>compact</code> o <code>clear</code>.
+              </td>
+            </tr>
+            <tr>
+              <td>Pi</td>
+              <td>
+                <code>.pi/extensions/agentic-dev.js</code> engancha el mismo emisor: línea de
+                identidad, líneas <code>ROUTE:</code>, <code>ROUTE-PENDING:</code> desde
+                <code>tool_result</code> y re-armado en <code>session_compact</code>. Solo carga en
+                una carpeta de confianza (<code>/trust</code>).
               </td>
             </tr>
             <tr>
