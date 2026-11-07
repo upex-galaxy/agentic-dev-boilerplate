@@ -278,7 +278,7 @@
       },
       {
         "path": ".agents/skills/",
-        "what": "Already committed. The canonical skill store all three harnesses read; community skills installed by `bun setup` land here too."
+        "what": "Already committed. The canonical skill store every harness reads; community skills installed by `bun setup` land here too."
       },
       {
         "path": ".claude/skills",

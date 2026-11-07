@@ -241,7 +241,7 @@ export const RETIRED_SKILL_FILES: DeprecatedFile[] = [
 // Docs pages removed upstream. `docs` is a synced directory component, so
 // without these `--auto` would defer their `deleted-upstream` entries and hold
 // the whole component back.
-const RETIRED_HOST_REASON = 'host outside the three-host contract (`.agents/instructions/agent-harnesses.md` section 5.5)';
+const RETIRED_HOST_REASON = 'host outside the harness contract (`HARNESSES`, `.agents/instructions/agent-harnesses.md` section 5.5)';
 export const RETIRED_DOCS_FILES: DeprecatedFile[] = [
   ...['docs/setup/mcp/copilot-cli.md', 'docs/setup/mcp/gemini-cli.md', 'docs/setup/mcp/vscode.md', 'docs/mcp/gemini.template.json']
     .map(path => ({ path, component: 'docs', reason: RETIRED_HOST_REASON, deprecatedSince: '8.7' })),
