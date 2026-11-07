@@ -114,7 +114,7 @@ Thumbs.db
 .backups/
 
 # ===== MCP Configuration =====
-# .mcp.json, opencode.jsonc and .codex/config.toml are COMMITTED: a server that
+# .mcp.json, opencode.jsonc, .codex/config.toml and .pi/mcp.json are COMMITTED: a server that
 # needs secrets starts through the .env loader (`varlock run --filter <its
 # vars>`), so they hold variable names only. Real values live in .env (ignored above).
 # Local per-developer overrides go in *.local.* files (ignored below).
@@ -162,6 +162,19 @@ dbhub.local.toml
 # `bun sync` wrote, with hashes: the next run's dirty-tree guard recognises
 # that uncommitted output as its own instead of aborting on it).
 .template/last-apply.json
+
+# ===== Pi runtime state =====
+# Packages write loops, tasks and subagent state under .pi/. What a project
+# commits (its MCP registry, extensions, settings) is allowlisted back.
+.pi/*
+!.pi/mcp.json
+!.pi/settings.json
+!.pi/SYSTEM.md
+!.pi/APPEND_SYSTEM.md
+!.pi/extensions/
+!.pi/skills/
+!.pi/prompts/
+!.pi/themes/
 
 # ===== Auto-generated AI prompts (single-use, written by bun sync) =====
 /.agents/prompts/
