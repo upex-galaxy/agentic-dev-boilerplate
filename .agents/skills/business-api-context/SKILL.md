@@ -2,7 +2,7 @@
 name: business-api-context
 description: "What the API of the product under development MEANS to the business: the auth model (Supabase Auth, sessions, roles), every route group (Next.js route handlers and server actions) with who calls it and why, what it changes, which role it needs, the OpenAPI surface it publishes, the journeys that cross several routes, error semantics and the external integrations behind them. Load it whenever a task adds or changes a route handler, a server action, the OpenAPI contract, an auth or permission rule, a status code that looks wrong, or asks which route does what, even when nobody says 'API map'. Reads its map through `bun run context:map business-api-context`. Pure knowledge plus a self-update proposal path: NOT the OpenAPI contract itself (that is the spec and its generated types), NOT for entities (business-data-context) or the feature and UI inventory (business-feature-context)."
 license: MIT
-compatibility: [claude-code, codex, opencode]
+compatibility: [claude-code, codex, opencode, pi]
 compact_rules: |
   - DO: read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). NEVER read `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
   - DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `api`; never add a route as if the API were empty.

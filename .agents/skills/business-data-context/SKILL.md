@@ -2,7 +2,7 @@
 name: business-data-context
 description: "What the product under development IS at the data level: business entities and why they exist, their relationships, RLS policies and who can see which rows, the migrations that shaped them, state machines, automatic processes (Postgres triggers, cron jobs, webhooks) and the external integrations that read or write data. Load it whenever a task writes a migration, changes RLS, seeds data, reasons about an entity's lifecycle or status transitions, touches a trigger or a background job, or asks how the product works under the hood, even when nobody says 'data map'. Reads its map through `bun run context:map business-data-context`. Pure knowledge plus a self-update proposal path: NOT for running a story (that is /sprint-development), NOT for route contracts (business-api-context) or the feature and UI inventory (business-feature-context)."
 license: MIT
-compatibility: [claude-code, codex, opencode]
+compatibility: [claude-code, codex, opencode, pi]
 compact_rules: |
   - DO: read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). NEVER read `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
   - DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `data`; never plan a migration as if the schema were empty.

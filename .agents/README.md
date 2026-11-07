@@ -156,7 +156,7 @@ Default settings for **supervised multi-session worker fleets**: one conductor s
 ```yaml
 orchestration:
   max_workers: 3        # concurrent workers per round (example value)
-  default_agent: claude # claude | codex | opencode
+  default_agent: claude # claude | codex | opencode | pi
   default_model: claude-opus-5-5   # worker model: full provider model id, never an alias
   default_effort: high             # harness effort level when supported
   conductor_model: claude-opus-5-5 # conductor model: full provider model id
@@ -172,7 +172,7 @@ orchestration:
 | Field | `{{VAR}}` name | Description |
 |---|---|---|
 | `max_workers` | `{{MAX_WORKERS}}` | Ceiling on concurrent workers per round (a concurrency group; see `orca-orchestration/references/topologies.md` §5). Merge and staging deploy stay serialized through the conductor whatever the cap. |
-| `default_agent` | `{{DEFAULT_AGENT}}` | Which harness launches a worker when the user doesn't say: `claude` \| `codex` \| `opencode`. |
+| `default_agent` | `{{DEFAULT_AGENT}}` | Which harness launches a worker when the user doesn't say: `claude` \| `codex` \| `opencode` \| `pi`. |
 | `default_model` | `{{DEFAULT_MODEL}}` | The WORKER model: full provider model id passed to the launch, never an alias (an alias moves between rounds, gotcha G29 in `orca-orchestration/references/gotchas.md`). Empty `''` is allowed only when the conductor reads the model off the worker's screen at readiness and records it in the roster. |
 | `default_effort` | `{{DEFAULT_EFFORT}}` | Effort level passed to the worker launch, when the harness supports one. |
 | `conductor_model` | `{{CONDUCTOR_MODEL}}` | The CONDUCTOR model, same rule as `default_model`: a full provider model id. |

@@ -14,6 +14,8 @@
 
 **Do NOT use subagents for**: Quick lookups, memory reads/writes, task tracking, asking the user, planning.
 
+**A harness without subagents** (Pi ships none): run the work inline, or use a supervised worker when its gate allows. A brief that says "dispatch" still binds what the dispatch would have done, its report format included.
+
 **Briefing format** -- every dispatch must include:
 
 1. **Goal**: One-sentence description

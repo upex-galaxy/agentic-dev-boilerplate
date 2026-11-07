@@ -2,7 +2,7 @@
 name: business-feature-context
 description: "What the product under development DOES for its users, feature by feature: the feature catalog grouped by module, the CRUD matrix (which role can create, read, update or delete which entity, from which screen), the UI inventory (pages, forms, navigation, guards) and the flows that cross several features. Load it whenever a task builds or changes a screen, a form, a CRUD action, navigation or a role gate, scopes where a story fits in the product, or asks what a user can do in the app, even when nobody says 'feature map'. Reads its map through `bun run context:map business-feature-context`. Pure knowledge plus a self-update proposal path: NOT the per-screen design spec (that is the master design plan), NOT for entities (business-data-context) or route contracts (business-api-context)."
 license: MIT
-compatibility: [claude-code, codex, opencode]
+compatibility: [claude-code, codex, opencode, pi]
 compact_rules: |
   - DO: read the map through `bun run context:map business-feature-context` (or `--section <id>` for one feature or module). NEVER read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
   - DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `features`; never place a story as if the product had no features.
