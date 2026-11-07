@@ -1,0 +1,55 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "bunx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "exposure": "deferred",
+      "description": "Official library and framework docs: resolve a library id, then query its docs"
+    },
+    "supabase": {
+      "command": "bunx",
+      "args": [
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "SUPABASE_ACCESS_TOKEN",
+        "--",
+        "bunx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest"
+      ],
+      "exposure": "deferred",
+      "description": "Supabase project: schema, SQL, migrations, logs and advisors"
+    },
+    "n8n": {
+      "command": "bunx",
+      "args": [
+        "-p",
+        "varlock@1.20.0",
+        "varlock",
+        "run",
+        "--no-redact-stdout",
+        "--inject",
+        "vars",
+        "--filter",
+        "N8N_API_URL,N8N_API_KEY",
+        "--",
+        "npx",
+        "-y",
+        "n8n-mcp"
+      ],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true"
+      },
+      "exposure": "deferred",
+      "description": "n8n workflow automation: search nodes and templates, validate workflows"
+    }
+  }
+}

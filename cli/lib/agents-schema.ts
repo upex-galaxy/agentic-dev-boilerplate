@@ -676,7 +676,7 @@ export const IDENTITY_PATHS: readonly string[] = [
   'testing.automation_identity.scope',
   'autonomous_delivery.automation_gh_account',
   'environments.*.*',
-  // Which harnesses THIS repo runs on: the boilerplate checks all three, a
+  // Which harnesses THIS repo runs on: the boilerplate checks every harness, a
   // project declares its own or leaves it null to detect (ADR-0013).
   'harnesses',
 ];

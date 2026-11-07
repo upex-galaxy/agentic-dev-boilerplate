@@ -13,6 +13,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   buildInitialState,
   detectEngram,
+  ENGRAM_PI_MANUAL,
   ENGRAM_PLUGIN_COMMAND_LINE,
   engramSetupArgs,
   offerEngramClaudePlugin,
@@ -72,6 +73,7 @@ describe('detectEngram', () => {
 
 describe('engram setup per agent', () => {
   test('slim protocol on Claude Code only', () => {
+    expect(ENGRAM_PI_MANUAL).toContain('--exposure deferred');
     expect(engramSetupArgs('claude-code')).toEqual(['setup', 'claude-code', '--protocol=slim']);
     expect(engramSetupArgs('opencode')).toEqual(['setup', 'opencode']);
     expect(engramSetupArgs('codex')).toEqual(['setup', 'codex']);

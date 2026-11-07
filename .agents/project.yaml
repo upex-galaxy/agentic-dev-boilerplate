@@ -61,7 +61,7 @@ testing:
     scope: null
     per_env: {}
 
-harnesses: [claude, opencode, codex]
+harnesses: [claude, opencode, codex, pi]
 
 git_strategy:
   strategy: solo-main

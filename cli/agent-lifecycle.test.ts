@@ -16,6 +16,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import { diagnoseAgentCompatibility } from './doctor.ts';
 import {
+  agentsWithFilesHere,
   buildCommunitySkillArgs,
   describeAgentDetection,
   detectAgents,
@@ -75,10 +76,12 @@ function compatibilityFixture(): string {
     '.agents/hooks/personality-reinject.mjs',
     '.claude/settings.json',
     '.opencode/plugins/personality-reinject.js',
+    '.pi/extensions/agentic-dev.js',
     '.codex/hooks.json',
     '.codex/config.toml',
     '.mcp.json',
     'opencode.jsonc',
+    '.pi/mcp.json',
   ].filter(path => existsSync(join(REPO_ROOT, path)))) { copyFromRepo(root, path); }
   return root;
 }
@@ -117,6 +120,7 @@ describe('installer harness detection', () => {
       opencode: true,
       codexCli: false,
       codexConfigured: false,
+      pi: false,
     });
   });
 
@@ -125,7 +129,7 @@ describe('installer harness detection', () => {
     write(root, '.codex/config.toml', '[shell_environment_policy]\ninherit = "core"\n');
 
     const cliAndConfig = await detectAgents({ home: join(root, 'home'), root, binaryExists: binary => binary === 'codex' });
-    expect(cliAndConfig).toEqual({ claudeCode: false, opencode: false, codexCli: true, codexConfigured: true });
+    expect(cliAndConfig).toEqual({ claudeCode: false, opencode: false, codexCli: true, codexConfigured: true, pi: false });
     expect(describeAgentDetection(cliAndConfig)).toContain('Codex: CLI found');
 
     const configOnly = await detectAgents({ home: join(root, 'home'), root, binaryExists: () => false });
@@ -133,7 +137,7 @@ describe('installer harness detection', () => {
     expect(describeAgentDetection(configOnly)).toContain('repository configured for Desktop');
 
     const nothing = await detectAgents({ home: join(root, 'home'), root: join(root, 'empty'), binaryExists: () => false });
-    expect(nothing).toEqual({ claudeCode: false, opencode: false, codexCli: false, codexConfigured: false });
+    expect(nothing).toEqual({ claudeCode: false, opencode: false, codexCli: false, codexConfigured: false, pi: false });
     expect(describeAgentDetection(nothing)).toContain('Codex: not found');
   });
 
@@ -151,8 +155,8 @@ describe('installer harness detection', () => {
         return binary === 'claude' || binary === 'codex';
       },
     });
-    expect(probed.sort()).toEqual(['claude', 'codex', 'opencode']);
-    expect(detected).toEqual({ claudeCode: true, opencode: false, codexCli: true, codexConfigured: false });
+    expect(probed.sort()).toEqual(['claude', 'codex', 'opencode', 'pi']);
+    expect(detected).toEqual({ claudeCode: true, opencode: false, codexCli: true, codexConfigured: false, pi: false });
   });
 });
 
@@ -293,6 +297,30 @@ describe('installer harness selection (ADR-0013)', () => {
   });
 });
 
+describe('agentsWithFilesHere (nobody to ask)', () => {
+  const repo = (files: string[]): string => {
+    const root = temporaryRoot();
+    for (const file of files) { write(root, file, '{}\n'); }
+    return root;
+  };
+
+  test('a detected agent whose harness has no file here is skipped', () => {
+    expect(agentsWithFilesHere(['claude-code', 'pi'], repo(['.mcp.json']))).toEqual(['claude-code']);
+  });
+
+  test('a fresh scaffold has every file, so nothing is skipped', () => {
+    expect(agentsWithFilesHere(['claude-code', 'pi'], repo(['.mcp.json', '.pi/mcp.json']))).toEqual(['claude-code', 'pi']);
+  });
+
+  test('Pi runtime state alone does not count', () => {
+    expect(agentsWithFilesHere(['claude-code', 'pi'], repo(['.mcp.json', '.pi/loops/x.json']))).toEqual(['claude-code']);
+  });
+
+  test('a repo with no harness file keeps what was detected', () => {
+    expect(agentsWithFilesHere(['pi'], repo([]))).toEqual(['pi']);
+  });
+});
+
 describe('compatibility repair lifecycle', () => {
   test('constructs portable POSIX and Windows alias plans', () => {
     const root = temporaryRoot();
@@ -363,14 +391,16 @@ describe('doctor diagnosis', () => {
     expect(diagnostic.file_correct).toBe(true);
     expect(diagnostic.errors).toEqual([]);
     expect(diagnostic.instructions).toEqual({ agents_md: true, claude_shim: true, canonical_skills: true, claude_alias: true });
-    expect(diagnostic.hooks).toEqual({ claude: true, opencode: true, codex: true, ok: true });
+    expect(diagnostic.hooks).toEqual({ claude: true, opencode: true, codex: true, pi: true, ok: true });
     expect(diagnostic.mcp).toEqual({
       expected_servers: declaredMcpIds(root).length,
       claude: true,
       opencode: true,
       codex: true,
+      pi: true,
       parity: true,
     });
+    expect(diagnostic.pi).toMatchObject({ mcp_config_exists: true, adapter_exists: true });
     expect(diagnostic.codex).toEqual({
       config_exists: true,
       cli_detected: false,

@@ -148,6 +148,8 @@ const AGENTS_ROOT_FILES = [...AGENTS_FRAMEWORK_FILES, ...AGENTS_BOOTSTRAP_FILES]
 // `.mcp.json` / `opencode.jsonc`, both on the protected watchlist) and ships ONCE.
 // The hook adapter carries no project state and keeps flowing.
 const CODEX_FRAMEWORK_FILES = ['hooks.json'];
+const PI_ADAPTER_FILES = ['agentic-dev.js'];
+const PI_CONFIG_FILES = ['mcp.json'];
 const CLAUDE_ROOT_CONFIG_FILES = ['settings.json'];
 // The gitignored files a Claude Code or Codex-managed worktree copies in.
 const WORKTREE_INCLUDE_FILES = ['.worktreeinclude'];
@@ -188,7 +190,8 @@ const GENERATED_PATHS = ['CLAUDE.md', `${SKILLS_CANONICAL_DIR}/REGISTRY.md`];
 // moves it to the new name, so the sync never touches it either.
 const PROJECT_OWNED_PATHS = [PROJECT_INSTRUCTIONS_FILE, LEGACY_PROJECT_INSTRUCTIONS_FILE];
 
-// One opt-in template per supported host (`.agents/instructions/agent-harnesses.md` section 5.5: three hosts).
+// One opt-in template per MCP format (`.agents/instructions/agent-harnesses.md` section 5.5); Pi reads
+// Claude's `mcpServers` shape, so `claude.template.json` serves it (ADR-0022).
 export const MCP_TEMPLATE_AGENTS = ['claude', 'opencode', 'codex'] as const;
 type McpAgent = typeof MCP_TEMPLATE_AGENTS[number];
 export const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
@@ -198,7 +201,7 @@ export const MCP_TEMPLATE_FILE: Record<McpAgent, string> = {
 };
 
 // The command-alias layer is retired: a skill is invoked by its own name plus a
-// mode (`/project-context data` on Claude Code, in prose on OpenCode and Codex).
+// mode (`/project-context data` on Claude Code, `/skill:project-context data` on Pi, in prose on OpenCode and Codex).
 // These are the files upstream generated for it. `cleanupDeprecated` removes
 // them without a backup, which is right for wrappers that carried no workflow
 // (the compat contract rejected any body). A command the PROJECT declared is
@@ -269,12 +272,18 @@ export const DEPRECATED_FILES: DeprecatedFile[] = [
 ];
 
 export const COMPONENTS: Component[] = [
-  // One source, three harnesses: skills, the hook emitter and the OpenCode hook
+  // One source, every harness: skills, the hook emitter and the OpenCode hook
   // adapter. `.claude/skills` is NOT here: it is the generated alias, rebuilt by
   // the afterApply compatibility hook. The `commands` component (the alias
   // wrappers) is retired; a lock that still carries its cursor is harmless,
   // because every walk iterates this list, never the lock's keys.
   { name: 'agent-compatibility', type: 'directory', paths: [SKILLS_CANONICAL_DIR, '.agents/hooks', '.opencode/plugins'] },
+  // The Pi adapter alone, never `.pi/extensions`: a project's own extensions
+  // and Pi's runtime state live beside it.
+  { name: 'pi-adapter', type: 'file-list', paths: ['.pi/extensions'], files: PI_ADAPTER_FILES },
+  // Delivered once when missing, then project-owned (watchlist): a project that
+  // declares Pi later has no other way to receive its registry.
+  { name: 'pi-config', type: 'file-list', paths: ['.pi'], files: PI_CONFIG_FILES, bootstrapOnly: true },
   { name: 'codex-config', type: 'directory', paths: ['.codex'], bootstrapOnly: true, frameworkFiles: CODEX_FRAMEWORK_FILES },
   // Delivered once when missing, then project-owned (watchlist). A file-list on
   // the `.claude` root: `.claude/commands` is the project's own (never synced),
@@ -434,7 +443,7 @@ REPORTE DE PARIDAD (al final de cada corrida, incluido --dry-run):
   sugiere "merge", nunca un reemplazo, y una fila "merge" siempre dice que
   portar (lo que upstream agrego) y que conservar (lo que solo tiene el
   proyecto). Los archivos protegidos (AGENTS.md, .agents/project.yaml,
-  .mcp.json, .claude/settings.json, .husky/pre-commit, .husky/pre-push,
+  .mcp.json, .pi/mcp.json, .claude/settings.json, .husky/pre-commit, .husky/pre-push,
   .husky/commit-msg, …)
   nunca se sobrescriben: solo aparecen en ese reporte. .claude/settings.json,
   .codex/ y los hooks de .husky/ se entregan UNA vez si faltan. De
@@ -937,7 +946,8 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   { path: 'eslint.config.js', reason: 'project-owned overrides; lint-staged and lint:check run eslint against this local config. The shared rules and the cli/ import-closure block that guards the updater live in the synced `eslint.config.base.js` this file spreads (`agents:compat:check` fails on a base block it does not wire).' },
   { path: '.mcp.json', reason: 'MCP registry with project-specific servers/vars' },
   { path: 'opencode.jsonc', reason: 'OpenCode MCP registry (paired with .mcp.json)' },
-  { path: '.codex/config.toml', reason: 'Codex MCP registry (paired with .mcp.json / opencode.jsonc; `agents:compat:check` enforces parity across the three)' },
+  { path: '.codex/config.toml', reason: 'Codex MCP registry (paired with .mcp.json / opencode.jsonc; `agents:compat:check` enforces parity across the hosts)' },
+  { path: '.pi/mcp.json', reason: 'Pi MCP registry (paired with .mcp.json; `agents:compat:check` enforces parity across the hosts)' },
   { path: '.claude/settings.json', reason: 'project permissions and hook wiring; never overwritten' },
   // Same split as the husky gates: the boilerplate half (`.env.core.schema`) is
   // generated and synced; this importer holds the project's own variables and
@@ -1165,7 +1175,7 @@ function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => 
     // The BLOCKING instructions row already says what to do; repair after it.
     const adoptInstructions = runFacts.adopt?.instructions;
     if (adoptInstructions?.kind === 'compose' && !adoptInstructions.applied) {
-      sink.step('Superficies de Claude/OpenCode/Codex sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
+      sink.step('Superficies de los harnesses sin regenerar: las instrucciones de la app esperan su composición (fila BLOQUEANTE); después, bun run agents:compat.');
       // The alias waits with them (it needs AGENTS.md): deferred, not missing,
       // so the adoption itself can be committed through the gates.
       // Only the real run's chain carries this hook, so nothing here is a dry run.
@@ -1177,8 +1187,8 @@ function makeAgentCompatibilityHook(sink: ReportSink): (summary: RunSummary) => 
     }
     const deferSkillsAlias = runFacts.migration?.applied === true || migrationCommitPending(process.cwd());
     sink.step(deferSkillsAlias
-      ? 'Revisando superficies de Claude/OpenCode/Codex (el alias .claude/skills espera al commit de la migración)…'
-      : 'Regenerando superficies de Claude/OpenCode/Codex (alias .claude/skills)…');
+      ? 'Revisando superficies de los harnesses (el alias .claude/skills espera al commit de la migración)…'
+      : 'Regenerando superficies de los harnesses (alias .claude/skills)…');
     const repair = repairAgentSurfaces(process.cwd(), { deferSkillsAlias });
     runFacts.compat = repair.check;
     runFacts.aliasDeferred = repair.aliasDeferred;

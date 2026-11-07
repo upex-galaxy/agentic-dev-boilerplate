@@ -103,12 +103,12 @@ testing:
     #     password_var: STAGING_QA_USER_PASSWORD
     per_env: {}
 
-# Host harnesses this project uses (ADR-0013), any of: claude, opencode, codex.
+# Host harnesses this project uses (ADR-0013), any of: claude, opencode, codex, pi.
 # Every compatibility gate (agents:compat:check, setup:doctor, the installer, `bun sync`)
 # checks only these; the files of a harness left out may be deleted. null = detect from
 # the files present (a harness is in use while ANY of its files exists). `bun setup`
 # adds the agents you select (it never removes one); edit the list to drop one.
-# The boilerplate itself always checks all three, whatever this says.
+# The boilerplate itself always checks every harness, whatever this says.
 # Read directly by cli/lib/harness-selection.ts (not a {{VAR}} token) -> skipped by vars:check.
 harnesses: null # TODO: e.g. [claude]
 
@@ -201,7 +201,7 @@ autonomous_delivery:
 # no orchestrator named. Full semantics: .agents/README.md -> "orchestration".
 orchestration:
   max_workers: 3 # concurrent workers per round (merge + staging deploy stay serialized through the conductor)
-  default_agent: claude # claude | codex | opencode
+  default_agent: claude # claude | codex | opencode | pi
   # The WORKER model: the full provider model id, never an alias (an alias moves
   # on its own between rounds: gotcha G29). The name stays `default_model` for
   # compatibility (`bun sync` only inserts keys, it never renames one). Empty ''
