@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -1893,7 +1893,7 @@
             <h3>Crear el worktree</h3>
             <p>
               Con nombre generado, nunca fijo. En Claude Code,
-              <span class="mono">EnterWorktree</span>. En OpenCode y Codex, la ruta portable:
+              <span class="mono">EnterWorktree</span>. En OpenCode, Codex y Pi, la ruta portable:
               <span class="mono">git worktree add</span> fuera del primario, desde
               <span class="mono">origin/&lt;integration-branch&gt;</span>.
             </p>
@@ -2667,7 +2667,7 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">11</span> · qué le dice el scheduler a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             Lo escribe el prompt de la rutina, no una persona. El modo va siempre explícito:
             <span class="mono">story</span>, <span class="mono">bug</span> o
@@ -2692,11 +2692,16 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
             <span class="say">carga la skill autonomous-delivery, modo bug</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:autonomous-delivery bug</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
+          </div>
         </div>
 
         <div class="callout blue r">
           <b>Al armar la rutina, deja apagada la opción de worktree del scheduler.</b> La skill crea
-          y cierra su propio aislamiento en los tres hosts: así la fase 4 puede borrar el worktree de
+          y cierra su propio aislamiento en todos los hosts: así la fase 4 puede borrar el worktree de
           la corrida en vez de dejarlo en disco para un humano.
         </div>
       </div>

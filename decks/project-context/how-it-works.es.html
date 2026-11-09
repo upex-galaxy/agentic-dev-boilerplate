@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2480,7 +2480,7 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">11</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             El nombre de la skill más el modo. La primera palabra después del nombre elige el modo, y el
             resto llega intacto a su referencia.
@@ -2502,6 +2502,11 @@
             <h3>Codex</h3>
             <span class="say">carga la skill project-context, modo dev-roadmap</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:project-context data</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

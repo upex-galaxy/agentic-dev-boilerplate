@@ -1492,7 +1492,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2808,7 +2808,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">16</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             La skill no tiene modos con nombre: la entrada sale de tu frase. Nombras la skill, el
             ticket o el sprint, y lo que quieres hacer, en español o en inglés.
@@ -2831,6 +2831,11 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             <h3>Codex</h3>
             <span class="say">carga la skill sprint-development: process sprint 4</span>
             <p>Mismo patrón que OpenCode, en CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:sprint-development PROJ-123</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

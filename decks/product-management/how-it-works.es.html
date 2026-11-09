@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2683,7 +2683,7 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">15</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             Esta skill no tiene modos con nombre: el flujo sale de tu frase. Nombras la skill y
             describes lo que quieres, en español o en inglés.
@@ -2705,6 +2705,11 @@
             <h3>Codex</h3>
             <span class="say">carga la skill product-management: qué historias trabajamos primero</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:product-management crear épica para notificaciones</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

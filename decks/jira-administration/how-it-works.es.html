@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2273,7 +2273,7 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">08</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             La primera palabra después del nombre de la skill elige el modo, y el resto viaja tal cual a
             la referencia: la clave del proyecto y la ruta de la app, o las dos instancias.
@@ -2295,6 +2295,11 @@ bun scripts/sync-jira-components.ts --list --project <span class="s">{{PROJECT_K
             <h3>Codex</h3>
             <span class="say">carga la skill jira-administration, modo components</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:jira-administration components</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

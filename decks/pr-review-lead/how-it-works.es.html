@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2507,7 +2507,7 @@ gh pr view &lt;N&gt; [--repo &lt;owner&gt;/&lt;repo&gt;] --json comments -q <spa
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">10</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             No tiene modos. Alcanza con nombrarla y el PR, o con frases como "revisa este PR",
             "actúa de tech lead" o "review this PR". Si ya dices el rigor ("revísalo estricto"), el
@@ -2530,6 +2530,11 @@ gh pr view &lt;N&gt; [--repo &lt;owner&gt;/&lt;repo&gt;] --json comments -q <spa
             <h3>Codex</h3>
             <span class="say">carga la skill pr-review-lead</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:pr-review-lead owner/repo#123</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

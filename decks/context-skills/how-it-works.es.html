@@ -1537,7 +1537,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2517,7 +2517,7 @@ bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-
           <h2>Las skills de contexto no tienen modos: se generan, se leen y se cargan</h2>
           <p class="sub">
             Generar un mapa es un modo de <span class="mono">project-context</span>. Leerlo es un
-            comando del repo, igual en los tres hosts. Cargar la skill pasa solo, por su
+            comando del repo, igual en todos los hosts. Cargar la skill pasa solo, por su
             descripción, o nombrándola.
           </p>
         </div>
@@ -2537,6 +2537,11 @@ bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-
             <h3>Codex</h3>
             <span class="say">carga la skill project-context, modo data</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:project-context data</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
           </div>
         </div>
 

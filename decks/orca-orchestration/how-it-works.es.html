@@ -1546,7 +1546,7 @@
 
       .hosts {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 14px;
       }
       @media (max-width: 820px) {
@@ -2212,7 +2212,7 @@ command -v orca &gt;/dev/null 2&gt;&amp;1 \
                 <td>Identidad</td>
                 <td>
                   En Claude Code la línea no lleva flag de nombre: el hook nombra la sesión desde el
-                  token del prompt. En Codex y OpenCode v2.2 el humano escribe
+                  token del prompt, y en Pi lo hace el adaptador. En Codex y OpenCode v2.2 el humano escribe
                   <span class="mono">/rename &lt;label&gt;--&lt;handle&gt;</span> (solo
                   <span class="mono">&lt;label&gt;</span> fuera de Orca)
                 </td>
@@ -2415,7 +2415,7 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
             <h3>Credenciales en el camino nativo</h3>
             <p>
               Ningún lanzamiento carga <span class="mono">.env</span> en el proceso del agente, con o
-              sin línea de lanzamiento. Los servidores MCP no lo necesitan: en los tres harnesses cada uno lee el
+              sin línea de lanzamiento. Los servidores MCP no lo necesitan: en todos los harnesses cada uno lee el
               <span class="mono">.env</span> del worktree con el loader de
               <span class="mono">.env</span>; las CLIs
               (<span class="mono">acli</span>, <span class="mono">supabase</span>,
@@ -2555,7 +2555,7 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
 
         <pre class="code r"><span class="k">orchestration:</span>
   max_workers:          <span class="c"># workers concurrentes por ronda       {{MAX_WORKERS}}</span>
-  default_agent:        <span class="c"># claude | codex | opencode            {{DEFAULT_AGENT}}</span>
+  default_agent:        <span class="c"># claude | codex | opencode | pi       {{DEFAULT_AGENT}}</span>
   default_model:        <span class="c"># modelo del worker, id completo       {{DEFAULT_MODEL}}</span>
   default_effort:       <span class="c"># esfuerzo del worker                  {{DEFAULT_EFFORT}}</span>
   conductor_model:      <span class="c"># modelo del conductor, id completo    {{CONDUCTOR_MODEL}}</span>
@@ -2810,7 +2810,7 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">13</span> · qué le dices a la IA</div>
-          <h2>Invocarla en las tres terminales</h2>
+          <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             No tiene modos de invocación: el rol sale del contexto. Alcanza con nombrarla o con
             frases como "orquesta", "lanza workers", "una sesión por historia", "estado de la
@@ -2834,14 +2834,19 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
             <span class="say">carga la skill orca-orchestration</span>
             <p>Mismo patrón que OpenCode, CLI o Desktop.</p>
           </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:orca-orchestration</span>
+            <p>Barra con el prefijo <span class="mono">/skill:</span>. En una carpeta nueva, <span class="mono">/trust</span> una vez.</p>
+          </div>
         </div>
 
         <div class="callout blue r">
-          <b>Un worker puede ser de cualquiera de los tres.</b> El harness sale de
+          <b>Un worker puede ser de cualquiera de los harnesses.</b> El harness sale de
           <span class="mono">orchestration.default_agent</span> o de lo que diga el dueño. En
           Codex y OpenCode v2.2 el conductor escribe
           <span class="mono">/rename &lt;label&gt;--&lt;handle&gt;</span> en la terminal del worker,
-          porque una sesión no puede renombrarse sola; en Claude Code lo hace el hook. El worker sí
+          porque una sesión no puede renombrarse sola; en Claude Code lo hace el hook y en Pi el adaptador. El worker sí
           renombra su propia pestaña, como primera acción.
         </div>
       </div>
