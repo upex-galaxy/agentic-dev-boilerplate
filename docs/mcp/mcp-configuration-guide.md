@@ -148,7 +148,7 @@ Un server que solo agregás vos (por ejemplo búsqueda web) va al scope `user` o
 
 Codex no interpola placeholders dentro de `args` ni de `[mcp_servers.X.env]`: un `${VAR}` ahí llega al server como texto literal. No hace falta:
 
-- un server stdio que necesita valores arranca con el loader de `.env` (arriba), igual que en los otros dos hosts, más `startup_timeout_sec = 30` (un `bunx` en frío más el salto del loader puede pasar los 10 s por defecto);
+- un server stdio que necesita valores arranca con el loader de `.env` (arriba), igual que en los demás hosts, más `startup_timeout_sec = 30` (un `bunx` en frío más el salto del loader puede pasar los 10 s por defecto);
 - `bearer_token_env_var = "NOMBRE"` en un server HTTP envía `Authorization: Bearer <valor>` desde el entorno del proceso;
 - `[mcp_servers.X.env]` queda para settings literales (`MCP_MODE = "stdio"`).
 

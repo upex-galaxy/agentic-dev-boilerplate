@@ -20,9 +20,11 @@ A tool name has two halves: `mcp__<server>__<tool>`. The **prefix** is the serve
 | `automation-flows` | `search_nodes`, `get_node`, `validate_workflow` (plus the `n8n_*` management tools when `N8N_API_URL` / `N8N_API_KEY` are set) | committed `n8n` | `[AUTOMATION_FLOWS_TOOL]`: designing, validating and managing n8n workflows |
 | `diagrams` | none: the one capability resolved by a SKILL's presence, not by an MCP tool suffix. Provided when a `diagram-design` skill is loadable | project-level skill installed by `cli/install.ts` (T3); a user-level install or a harness plugin satisfies it too | the figures inside the business context maps (`business-context-maps.md` §7). Absent → the point-of-use STOP of §4, naming the install line `bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-design --yes` |
 
+A suffix matches with a hyphen or an underscore in each place: Pi writes every non-alphanumeric character of a tool name as `_`, so `resolve-library-id` and `query-docs` arrive as `…__resolve_library_id` and `…__query_docs`, found through its `tool_search`.
+
 `diagrams` is the deliberate exception to the suffix rule in §1: a drawing skill has no tool name to match, so the check is "can a skill named `diagram-design` be loaded here".
 
-Only LOCAL (stdio) servers are committed in the three project MCP files (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`). A remote server whose only project-side content is an API key (web search) is the harness's business: connected once per machine, resolved here by suffix. `[ISSUE_TRACKER_TOOL]` and `[AUTOMATION_TOOL]` are not capabilities: they resolve to CLIs (`/acli`, `/playwright-cli`), and an Atlassian or browser MCP a developer adds is their own fallback. A server no skill instructs gets no capability name; add one here the day a skill needs it.
+Only LOCAL (stdio) servers are committed in the project MCP files, one per harness (the MCP row of the surface table in `.agents/instructions/agent-harnesses.md`). A remote server whose only project-side content is an API key (web search) is the harness's business: connected once per machine, resolved here by suffix. `[ISSUE_TRACKER_TOOL]` and `[AUTOMATION_TOOL]` are not capabilities: they resolve to CLIs (`/acli`, `/playwright-cli`), and an Atlassian or browser MCP a developer adds is their own fallback. A server no skill instructs gets no capability name; add one here the day a skill needs it.
 
 ## 3. Declaring a requirement (skill authors)
 

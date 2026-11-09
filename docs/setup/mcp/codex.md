@@ -102,7 +102,7 @@ El emisor es `.agents/hooks/personality-reinject.mjs`, el mismo que ejecuta Clau
 ### Los MCPs no aparecen en `/mcp`
 
 1. Confirmá que el repo está trusted (`bun run setup:doctor` lo recuerda como WARN).
-2. `bun run agents:compat:check` en verde: si falla, el TOML y los otros dos configs divergieron.
+2. `bun run agents:compat:check` en verde: si falla, el TOML divergió del archivo MCP de otro harness en uso.
 3. Un server que tarda en arrancar en frío: confirmá que su bloque tiene `startup_timeout_sec`.
 
 ### 401 / 403 en Supabase o n8n

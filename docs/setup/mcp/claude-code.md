@@ -60,7 +60,7 @@ claude mcp remove mi-servidor
 
 ### Método 2: Edición manual de `.mcp.json` (scope `project`)
 
-Para un servidor que el equipo comparte. Copiá el bloque del template opt-in ([`docs/mcp/claude.template.json`](../../mcp/claude.template.json)) y replicalo en los otros dos hosts:
+Para un servidor que el equipo comparte. Copiá el bloque del template opt-in ([`docs/mcp/claude.template.json`](../../mcp/claude.template.json)) y replicalo en el archivo MCP de cada harness que el proyecto usa (`harnesses:` en `.agents/project.yaml`; la fila MCP de la tabla de superficies en `.agents/instructions/agent-harnesses.md` dice qué archivo es de cuál):
 
 ```json
 {
@@ -121,7 +121,7 @@ Verificá que el binario esté en el `PATH` del proceso (`which npx`, `which bun
 ### Herramientas no aparecen
 
 1. `/mcp` dentro de la sesión: muestra el estado de cada servidor y permite reconectar o autenticar.
-2. `bun run agents:compat:check`: si falla, `.mcp.json` divergió de los otros dos hosts.
+2. `bun run agents:compat:check`: si falla, `.mcp.json` divergió del archivo MCP de otro harness en uso.
 3. Reiniciá Claude Code después de cambiar la configuración.
 
 ---

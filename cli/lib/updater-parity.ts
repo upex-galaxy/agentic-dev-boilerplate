@@ -893,7 +893,7 @@ export function structuralEvidence(filePath: string, project: string, upstream: 
   return `informational: upstream added ${added.length} ${unit}${added.length === 1 ? '' : 's'}: ${listNames(added)}; merge = add the new ${unit}s, values are project identity and never compared`;
 }
 
-/** Registry keys of the three MCP host files (`.mcp.json`, `opencode.jsonc`, `.codex/config.toml`). */
+/** Registry keys of the MCP host files, one per harness (`mcpServers` covers `.mcp.json` and `.pi/mcp.json`). */
 const MCP_REGISTRY_KEYS = ['mcpServers', 'mcp', 'mcp_servers'];
 
 /** Server ids among `ids` the project file declares and the upstream copy no longer does. */
