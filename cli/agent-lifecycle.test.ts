@@ -61,7 +61,8 @@ function copyFromRepo(root: string, relativePath: string): void {
  */
 const HAS_CODEX = existsSync(join(REPO_ROOT, '.codex/hooks.json')) && existsSync(join(REPO_ROOT, '.codex/config.toml'));
 const HAS_CLAUDE = existsSync(join(REPO_ROOT, 'CLAUDE.md'));
-const HAS_ALL_HARNESSES = HAS_CODEX && HAS_CLAUDE && existsSync(join(REPO_ROOT, 'opencode.jsonc')) && existsSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'));
+const HAS_ALL_HARNESSES = HAS_CODEX && HAS_CLAUDE && existsSync(join(REPO_ROOT, 'opencode.jsonc')) && existsSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'))
+  && existsSync(join(REPO_ROOT, '.pi/extensions/agentic-dev.js')) && existsSync(join(REPO_ROOT, '.pi/mcp.json'));
 
 /**
  * A repo that satisfies the whole contract EXCEPT the generated `.claude/skills`
