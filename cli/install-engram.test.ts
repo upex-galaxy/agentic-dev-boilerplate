@@ -15,6 +15,7 @@ import {
   detectEngram,
   ENGRAM_PI_MANUAL,
   ENGRAM_PLUGIN_COMMAND_LINE,
+  engramPiNotice,
   engramSetupArgs,
   offerEngramClaudePlugin,
   runEngramSetup,
@@ -77,6 +78,12 @@ describe('engram setup per agent', () => {
     expect(engramSetupArgs('claude-code')).toEqual(['setup', 'claude-code', '--protocol=slim']);
     expect(engramSetupArgs('opencode')).toEqual(['setup', 'opencode']);
     expect(engramSetupArgs('codex')).toEqual(['setup', 'codex']);
+  });
+
+  test('the Pi line is owed to every run with a Pi agent, a mixed one included', () => {
+    expect(engramPiNotice(['claude-code', 'pi'])).toContain(ENGRAM_PI_MANUAL);
+    expect(engramPiNotice(['pi'])).toContain(ENGRAM_PI_MANUAL);
+    expect(engramPiNotice(['claude-code', 'codex'])).toBeNull();
   });
 
   test('runs the engram binary, never gentle-ai, and surfaces the failure reason', () => {
