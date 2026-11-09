@@ -1860,6 +1860,17 @@
             </p>
           </div>
           <div class="step">
+            <h3>Lectura de arranque · avisa, nunca bloquea</h3>
+            <p>
+              Lee el comentario de handoff de shift-left y el ATP como la intención de prueba de QA;
+              si el ATP falta, avisa a QA con un comentario y sigue. Lee también el
+              <span class="mono">AI Effort</span>: si es High, anota en el plan y en el PR que la
+              historia puede ser grande y puede dividirse, y puedes partir tu trabajo en PRs apilados
+              pequeños (unas 200 líneas y de 2 a 5 archivos cada uno). Si no está definido, lo anota
+              y sigue. Una corrida autónoma o en flota nunca salta una historia por un High.
+            </p>
+          </div>
+          <div class="step">
             <h3>Chequeo de la épica</h3>
             <p>
               Confirma que la épica padre tenga sus dos planes macro
@@ -2069,8 +2080,8 @@
           <table class="cmp narrow">
             <thead>
               <tr>
-                <th>Estimado</th>
-                <th>Riesgo</th>
+                <th>Líneas pronosticadas</th>
+                <th>Review Size</th>
                 <th>Qué pasa</th>
               </tr>
             </thead>
@@ -2099,7 +2110,7 @@
             <div class="tag">El planner emite</div>
             <h3>Nunca elige la estrategia</h3>
             <ul>
-              <li>Con riesgo High escribe <span class="mono">Chain strategy: pending</span> y deja la traza vacía.</li>
+              <li>Con Review Size High escribe <span class="mono">Chain strategy: pending</span> y deja la traza vacía.</li>
               <li>El bloque queda al pie del plan, así llega a Jira con él.</li>
             </ul>
           </div>
@@ -2495,10 +2506,29 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <div class="step">
             <h3>El aviso y el assignee</h3>
             <p>
-              Comenta en el ticket con la URL del PR, la rama y una mención a quien hizo el
-              shift-left. Reasigna la historia a esa persona de QA, porque la automatización del
-              merge suele dejarla en el desarrollador; si no hay nadie identificable, la deja sin
-              asignar. Verifica que el cambio haya quedado.
+              Mueve el assignee al QA que figura en <span class="mono">qa_assignee</span> (el registro
+              de quien siguió la historia desde shift-left), porque la automatización del merge suele
+              dejarla en el desarrollador. Si el campo está vacío, deja el assignee como está y lo dice
+              en el comentario. Comenta con la URL del PR, la rama y una mención al QA, y verifica que
+              el cambio haya quedado.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Tokens: opcional y acumulativo</h3>
+            <p>
+              Con el estado Ready For QA verificado, y de nuevo después de cada ciclo de corrección,
+              lee el valor actual de <span class="mono">development_token_usage</span>, le suma los
+              tokens medidos de este ciclo (entrada más salida, sin caché) y publica
+              <span class="mono">DTU cycle N: +x K (total y K)</span>. Sin cifra disponible queda vacío
+              y el verificador dice N/A con el motivo. Nunca se estima.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Defecto de QA: la historia en blocked</h3>
+            <p>
+              Cuando QA reporta un defecto, la historia queda en <span class="mono">blocked</span>.
+              La skill dispara <span class="mono">fix_defect</span> sobre la historia, corrige por el
+              flujo de bugs y la vuelve a entregar a Ready For QA con su ciclo de tokens.
             </p>
           </div>
           <div class="step">

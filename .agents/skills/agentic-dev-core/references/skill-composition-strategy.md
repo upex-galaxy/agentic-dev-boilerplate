@@ -255,7 +255,7 @@ Every sub-agent / skill prompt MUST include:
 | Decision        | When                    | How                                                                       |
 | --------------- | ----------------------- | ------------------------------------------------------------------------- |
 | Skill load (T4) | First match per session | Ask user once per skill per session. Cache decision.                      |
-| Workload chain  | Stage 1 forecast        | Sprint-dev `references/workload-forecast.md` owns the chain-strategy gate. |
+| Review size chain | Stage 1 forecast        | Sprint-dev `references/review-size-forecast.md` owns the chain-strategy gate. |
 
 ---
 

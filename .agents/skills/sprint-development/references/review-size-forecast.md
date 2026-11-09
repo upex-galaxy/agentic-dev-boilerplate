@@ -1,4 +1,4 @@
-# Workload Forecast — Stage 1 review-budget gate
+# Review Size Forecast — Stage 1 review-budget gate
 
 > Reference for sprint-development Stage 1 (Planning).
 > Cited from: `SKILL.md` end-of-Stage-1, beginning-of-Stage-2.
@@ -12,7 +12,7 @@ The forecast block makes the size cost visible at planning time, when restructur
 Two gates fall out of this:
 
 1. **Size visibility** — every Stage 1 plan ends with a forecast block.
-2. **Chain decision** — Stage 2 (Implementation) does NOT start while `risk = High` AND `chain_strategy = pending`. The orchestrator hands off to the `/git-flow-master` skill (Step 4 — chained-PR decision tree) to resolve, then returns.
+2. **Chain decision** — Stage 2 (Implementation) does NOT start while `Review Size = High` AND `chain_strategy = pending`. The orchestrator hands off to the `/git-flow-master` skill (Step 4 — chained-PR decision tree) to resolve, then returns.
 
 ---
 
@@ -21,12 +21,12 @@ Two gates fall out of this:
 The planner subagent emits this block as the final artifact of Stage 1, immediately after the `implementation-plan.md` is written. The block goes into the plan file (bottom of file) and into the orchestrator turn-summary.
 
 ```
-## Review Workload Forecast
+## Review Size Forecast
 
 Estimated: <X> additions + <Y> deletions = <Z> total lines
-400-line budget risk: Low | Medium | High
+Review Size (400-line budget): Low | Medium | High
 Chain strategy: stacked-to-main | feature-branch-chain | size-exception | pending
-Decision trace: <verbatim tree answers + resolved leaf, or "n/a (risk not High)">
+Decision trace: <verbatim tree answers + resolved leaf, or "n/a (Review Size not High)">
 Decided by: </git-flow-master §Chained-PR decision tree | n/a>
 Decision needed before apply: Yes | No
 ```
@@ -34,11 +34,11 @@ Decision needed before apply: Yes | No
 Field rules:
 
 - `<X>`, `<Y>`, `<Z>` are integers. `<Z> = <X> + <Y>`.
-- `risk` is exactly one of `Low`, `Medium`, `High` (see thresholds below).
+- `Review Size` is exactly one of `Low`, `Medium`, `High` (see thresholds below).
 - `chain_strategy` is one of: `stacked-to-main`, `feature-branch-chain`, `size-exception`, `pending`.
-- `Decision trace` is REQUIRED whenever `risk = High` and `chain_strategy` is not `pending`. It records the actual walk of the chained-PR decision tree: each question, the answer given, the reason for that answer, and the leaf reached. It is `n/a (risk not High)` only when `risk` is `Low` or `Medium`.
-- `Decided by` names the authority that produced the trace. For a High-risk decision that is always the `/git-flow-master` chained-PR decision tree.
-- `Decision needed before apply`: `Yes` if `risk = High` AND the decision is unresolved (see "Gate behavior"). Otherwise `No`.
+- `Decision trace` is REQUIRED whenever `Review Size = High` and `chain_strategy` is not `pending`. It records the actual walk of the chained-PR decision tree: each question, the answer given, the reason for that answer, and the leaf reached. It is `n/a (Review Size not High)` only when `Review Size` is `Low` or `Medium`.
+- `Decided by` names the authority that produced the trace. When Review Size is High, that is always the `/git-flow-master` chained-PR decision tree.
+- `Decision needed before apply`: `Yes` if `Review Size = High` AND the decision is unresolved (see "Gate behavior"). Otherwise `No`.
 
 ### Well-formed trace (example)
 
@@ -90,27 +90,27 @@ After summing per-file estimates, add **20%** to cover:
 
 - `3 × 50 × 1.0 = 150`
 - `× 1.2 = 180` total
-- Risk: `Low` (under 200)
+- Review Size: `Low` (under 200)
 
 **Medium change** — 1 new file (~100 lines) + 5 modified files (~40 lines each):
 
 - New: `100 × 1.5 = 150`
 - Modified: `5 × 40 × 1.0 = 200`
 - Sum: `350` × 1.2 = `420` total
-- Risk: `High` (over 400) — chain decision required
+- Review Size: `High` (over 400) — chain decision required
 
 **Large change** — 10 new files (~80 lines each) + 8 modified files (~60 lines each):
 
 - New: `10 × 80 × 1.5 = 1200`
 - Modified: `8 × 60 × 1.0 = 480`
 - Sum: `1680` × 1.2 = `2016` total
-- Risk: `High` — `feature-branch-chain` almost certainly the right strategy
+- Review Size: `High` — `feature-branch-chain` almost certainly the right strategy
 
 ---
 
-## Risk thresholds
+## Review Size thresholds
 
-| Total lines (`<Z>`) | Risk   | Action                                                                                          |
+| Total lines (`<Z>`) | Review Size | Action                                                                                          |
 | ------------------- | ------ | ----------------------------------------------------------------------------------------------- |
 | `< 200`             | Low    | Proceed to Stage 2. No chain decision needed.                                                   |
 | `200 – 400`         | Medium | Proceed; warn the user that the PR is approaching the budget. Chain optional.                   |
@@ -146,7 +146,7 @@ Each `chain_strategy` value maps to a concrete PR layout. Full patterns live in 
 
 - The default before the chain decision is made.
 - The forecast block emits `pending` whenever the planner is unsure.
-- **Stage 2 cannot start while `risk = High` AND `chain_strategy = pending`.**
+- **Stage 2 cannot start while `Review Size = High` AND `chain_strategy = pending`.**
 
 ---
 
@@ -154,12 +154,12 @@ Each `chain_strategy` value maps to a concrete PR layout. Full patterns live in 
 
 At the boundary between Stage 1 and Stage 2 the orchestrator inspects the forecast block. The gate is **fail-closed**: it opens on evidence, not on a label.
 
-1. If `risk` is `Low` or `Medium`: proceed to Stage 2 regardless of `chain_strategy`.
-2. If `risk` is `High`, compute `resolved` as: `chain_strategy` is one of `stacked-to-main` / `feature-branch-chain` / `size-exception` **AND** `Decision trace` is present, non-empty, names the tree answers, and those answers lead to the stated leaf.
+1. If `Review Size` is `Low` or `Medium`: proceed to Stage 2 regardless of `chain_strategy`.
+2. If `Review Size` is `High`, compute `resolved` as: `chain_strategy` is one of `stacked-to-main` / `feature-branch-chain` / `size-exception` **AND** `Decision trace` is present, non-empty, names the tree answers, and those answers lead to the stated leaf.
    - **Not resolved** (either `pending`, or a strategy with a missing / empty / conclusion-only / inconsistent trace): **STOP**. Surface the forecast block to the user and hand off to `/git-flow-master` (Step 4 — chained-PR decision tree + concrete branch plan). When it returns, write BOTH the strategy and its trace into the forecast block in `implementation-plan.md`, then proceed to Stage 2.
    - **Resolved**: proceed to Stage 2. Stage 3 (Code Review) and Stage 4 (Staging Deploy) follow the chosen strategy's PR layout.
 
-The gate is the only mechanism that can block Stage 2; it is not advisory. A `High`-risk plan without a resolved decision is an incomplete plan.
+The gate is the only mechanism that can block Stage 2; it is not advisory. A `High` Review Size plan without a resolved decision is an incomplete plan.
 
 ### Why the trace exists
 
@@ -191,8 +191,8 @@ When emitting the forecast block:
 2. Eyeball the size of each file's change. Don't over-engineer this — the goal is order-of-magnitude accuracy, not line-perfect prediction.
 3. Apply the multipliers, sum, multiply by 1.2.
 4. Pick a `chain_strategy`:
-   - If `Z < 200` → `pending` is fine; no decision required. `Decision trace: n/a (risk not High)`.
-   - If `Z` is `200 – 400` → suggest `stacked-to-main` if the work decomposes linearly; otherwise `pending`. `Decision trace: n/a (risk not High)`.
+   - If `Z < 200` → `pending` is fine; no decision required. `Decision trace: n/a (Review Size not High)`.
+   - If `Z` is `200 – 400` → suggest `stacked-to-main` if the work decomposes linearly; otherwise `pending`. `Decision trace: n/a (Review Size not High)`.
    - If `Z > 400` → emit `Chain strategy: pending`, leave `Decision trace:` EMPTY, and surface the gate. **Do NOT pick a strategy yourself and do NOT write a trace** — that is the `/git-flow-master` skill's job (Step 4). Writing a plausible label here is the failure this gate exists to prevent; a label without a trace is rejected anyway, so guessing only costs a round-trip.
 5. Append the block at the bottom of `implementation-plan.md` and to the orchestrator turn-summary.
 
