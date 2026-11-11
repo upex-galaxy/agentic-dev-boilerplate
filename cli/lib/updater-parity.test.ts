@@ -1300,3 +1300,20 @@ describe('the opencode.jsonc deny gap is one paste row, never a rewrite', () => 
     expect(collectParityFindings(bareInput(root, upstream)).find(f => f.path === 'opencode.jsonc')).toBeUndefined();
   });
 });
+
+describe('the boilerplate-copies cleanup rows', () => {
+  test('one row for what left, with its backup, and one per file kept', () => {
+    const root = temporaryRoot();
+    const findings = collectParityFindings({
+      ...bareInput(root, temporaryRoot()),
+      boilerplateCopiesRemoved: ['cli/a.test.ts', 'cli/b.test.ts'],
+      boilerplateCleanupBackup: join(root, '.backups', 'update-x'),
+      boilerplateCopiesKept: [{ path: 'cli/c.test.ts', reason: 'edited' }, { path: 'scripts/sync-jira-issues.test.ts', reason: 'protected' }],
+    });
+    expect(findings.map(f => f.path)).toEqual(['2 boilerplate-only files', 'cli/c.test.ts', 'scripts/sync-jira-issues.test.ts']);
+    expect(findings.every(f => !f.blocking && f.suggested === 'keep project')).toBe(true);
+    expect(findings[0].evidence).toContain('.backups/update-x');
+    expect(findings[1].evidence).toContain('bun test cli/c.test.ts');
+    expect(findings[2].evidence).toContain('protected');
+  });
+});

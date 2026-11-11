@@ -247,6 +247,12 @@ export interface AdoptCollision {
   retired?: boolean
 }
 
+/** A boilerplate-only path the cleanup kept: the project edited its copy, protects it, or upstream's copy could not be read. */
+export interface BoilerplateCopyKept {
+  path: string
+  reason: 'edited' | 'protected' | 'unverified'
+}
+
 export interface RunSummary {
   applied: AppliedFile[]
   skipped: DeltaEntry[]
@@ -275,6 +281,12 @@ export interface RunSummary {
   adoptCollisions?: AdoptCollision[]
   /** Adopted repos only: upstream ignore lines NOT appended because they would hide files the app tracks. */
   ignoreLinesWithheld?: IgnoreLineWithheld[]
+  /** Upstream's unedited copies of boilerplate-only files this run removed (`cleanupBoilerplateCopies`). */
+  boilerplateCopiesRemoved?: string[]
+  /** Boilerplate-only paths the project holds that the cleanup kept, with why. */
+  boilerplateCopiesKept?: BoilerplateCopyKept[]
+  /** Where the removed copies were saved (`.backups/update-<ts>/`), when any were removed. */
+  boilerplateCleanupBackup?: string | null
 }
 
 export interface MergeResult {
@@ -563,6 +575,13 @@ export interface UpdaterConfig {
    * clone omits those files and upstream-comparison hooks silently no-op.
    */
   sparseExtraPaths?: string[]
+  /**
+   * Boilerplate-only files (the boilerplate's own tests, snapshots, fixtures,
+   * maintainer scripts) to REMOVE from a project that already holds upstream's
+   * unedited copy (`cleanupBoilerplateCopies`). Unset in the boilerplate's own
+   * checkout, where the cleanup is inert.
+   */
+  cleanupRepoOnly?: { paths: string[], patterns: RegExp[] }
   agentsFrameworkFiles?: string[]
   /**
    * On top of `repoOnlyPaths`, matched against the repo-relative path: upstream

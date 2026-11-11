@@ -26,7 +26,7 @@ import pc from 'picocolors';
 import { parseEnvFile } from './install';
 import { reincludeAgenticStore } from './lib/adopt-gitignore.ts';
 import { checkAgentCompatibility, repairAgentSurfaces, SHADOWING_COMMANDS_BACKUP_DIR, SKILLS_ALIAS_DEFERRED_MARKER } from './lib/agent-compatibility.ts';
-import { applyInsertions, changedDefaults, describeChangedDefault, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
+import { applyInsertions, changedDefaults, describeChangedDefault, isMaintainerCopy, isSchemaOwner, planInsertions, projectDelta, SCHEMA_FILE, SCHEMA_SOURCE } from './lib/agents-schema.ts';
 import { declaredHarnesses, isUnderAny, unusedHarnessPaths } from './lib/harness-selection.ts';
 import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
@@ -1061,6 +1061,18 @@ const PBI_MIGRATION_PROMPT_PATH = path.join('.agents', 'prompts', 'pbi-cache-mig
 //    no synced component covers them (`packages` is no component; the root
 //    file-lists name only CONTEXT.md, tooling files and .env.example), so the
 //    sync cannot re-deliver what the scaffold pruned.
+/**
+ * The boilerplate's own checkout: the package name AND the maintainer sentinel
+ * (the test `contractsEnforced` makes in scripts/lib/doc-contracts.ts; cli/ may
+ * not import from scripts/).
+ */
+export function isBoilerplateCheckout(root: string): boolean {
+  const pkg = path.join(root, 'package.json');
+  const yaml = path.join(root, '.agents', 'project.yaml');
+  return fs.existsSync(pkg) && isSchemaOwner(fs.readFileSync(pkg, 'utf8'))
+    && fs.existsSync(yaml) && isMaintainerCopy(fs.readFileSync(yaml, 'utf8'));
+}
+
 const REPO_ONLY_PATHS = [
   '.github/workflows/pages.yml',
   '.github/workflows/ci.yml',
@@ -1581,6 +1593,9 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
       packageJsonKept: (summary.packageJsonKept ?? []).filter(k => !(runFacts.adopt !== null && k.section === 'scripts')),
       adoptFindings: runFacts.adopt?.findings ?? [],
       adopting: runFacts.adopt !== null,
+      boilerplateCopiesRemoved: summary.boilerplateCopiesRemoved ?? [],
+      boilerplateCopiesKept: summary.boilerplateCopiesKept ?? [],
+      boilerplateCleanupBackup: summary.boilerplateCleanupBackup ?? null,
       gates: runFacts.gates,
       shadowingCommandsMoved: runFacts.shadowingCommandsMoved,
       pbiCache: runFacts.pbiCache,
@@ -2182,6 +2197,10 @@ async function main(): Promise<void> {
     // (this --adopt run, or any run after one) also keeps the boilerplate's
     // numbered ADRs out of its decision log.
     repoOnlyPatterns: adoptedRepo ? ADOPT_REPO_ONLY_PATTERNS : BOILERPLATE_TEST_PATTERNS,
+    // A project that still holds upstream's unedited copies of them (they
+    // travelled before) loses those copies, with a backup and a row; inert in
+    // the boilerplate's own checkout, where they are the source.
+    ...(isBoilerplateCheckout(process.cwd()) ? {} : { cleanupRepoOnly: { paths: BOILERPLATE_TEST_PATHS, patterns: BOILERPLATE_TEST_PATTERNS } }),
     ...(adoptedRepo ? { adopted: true } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
