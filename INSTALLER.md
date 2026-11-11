@@ -452,7 +452,7 @@ Release history of each behaviour below: `CHANGELOG.md` (the `updater 8.x` secti
 - **`package.json` rows.** Every key kept at the project's value while upstream differs is one `package.json` row (`scripts.repo:check: project value kept; upstream differs`), with both values in the saved file, so a non-interactive run keeps the FYI out of the scrollback.
 - **Overwritten project edits.** An interactive run asks first ("Collect, then apply" above). A synced file the project had edited (3-way against the lock cursor) and the run overwrote (`--auto`, or "take the new one") gets a `merge` row on Skills or Componentes: `project edit overwritten; backup: .backups/update-<ts>/<path>; N hunks vs applied`, with the full diff in the saved file.
 - **Re-run safety.** The run records what it wrote in `.template/last-apply.json` (gitignored, sha256 per path). The next dirty-tree guard exempts a recorded path whose hash still matches, so `bun sync --auto` twice in a row, without committing in between, proceeds as a no-op (the previous prompt file is kept). An unrelated file, or a synced file edited by hand since, still aborts, naming `Commit sugerido` and the prompt path.
-- **Host-agnostic `cli/**`.** The synced tests build env objects through `unknown`, and `cli/updater-host-types.test.ts` compiles `cli/**` with a required `NODE_ENV` on `ProcessEnv` (what `next/types/global.d.ts` adds) on every `bun test`.
+- **Host-agnostic `cli/**`.** The synced `cli/` code builds env objects through `unknown`, and the boilerplate's own unit tests compile `cli/**` with a required `NODE_ENV` on `ProcessEnv` (what `next/types/global.d.ts` adds) on every run.
 
 ### Updater safeguards: watched files, the dirty-tree guard and the self-update cursor
 
