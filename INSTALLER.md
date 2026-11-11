@@ -67,7 +67,7 @@ The run ends with **one report**: tiles for what was done, skipped or warned, fa
 - When a page run ends, a static copy of it is saved under `.session/runs/` (gitignored; the oldest copies are pruned) and the open page shows its path. No secret value reaches the page, the log or that copy.
 - `bun sync --auto`, typed by a person on a real terminal, opens a read-only page: no question cards, the deferred items listed in the report. An `--auto` implied by "no terminal" never opens it. `bun setup` has no `--auto`.
 
-The page code lives in `cli/lib/ui/` and is byte-identical in this repo and agentic-qa-boilerplate (only `cli/lib/ui/brand.ts` differs); `scripts/shared-files.json` lists the shared files and `bun run shared:check` fails when one drifts.
+The page code lives in `cli/lib/ui/` and is byte-identical in this repo and agentic-qa-boilerplate (only `cli/lib/ui/brand.ts` differs); `scripts/shared-files.json` lists the shared files and `bun run shared:check` fails when one drifts. Outside the boilerplate's own checkout it is inert and exits 0: a project has no sibling repo.
 
 ---
 
