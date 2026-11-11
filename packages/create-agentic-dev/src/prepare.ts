@@ -475,7 +475,7 @@ export const TEMPLATE_EXCLUDES: readonly string[] = [
   '.agents/jira-fields.json',
   '.agents/jira-workflows.json',
   // The boilerplate's own test fixtures. Mirrors BOILERPLATE_TEST_PATHS
-  // (cli/lib/updater-adopt.ts); a test holds the two lists equal.
+  // (cli/lib/boilerplate-only.ts); a test holds the two lists equal.
   'scripts/ui-setup-fixture.ts',
   'scripts/ui-up-fixture.ts',
 ];
@@ -484,7 +484,7 @@ export const TEMPLATE_EXCLUDES: readonly string[] = [
  * Repo-relative file paths the scaffold prunes at any depth: the tooling's own
  * unit tests and snapshots under `cli/` and `scripts/`, and the skills' tests
  * (they verify THIS repo; in a project the test runner picks them up).
- * Mirrors BOILERPLATE_TEST_PATTERNS (cli/lib/updater-adopt.ts).
+ * Mirrors BOILERPLATE_TEST_PATTERNS (cli/lib/boilerplate-only.ts).
  */
 export const TEMPLATE_EXCLUDE_PATTERNS: readonly RegExp[] = [
   /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,

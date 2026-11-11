@@ -44,6 +44,7 @@ import { hiddenPaths } from './adopt-gitignore.ts';
 import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
+import { BOILERPLATE_TEST_PATHS, BOILERPLATE_TEST_PATTERNS } from './boilerplate-only.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
 import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
 import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
@@ -52,25 +53,9 @@ import { deliverProjectInstructionsStub, PROJECT_INSTRUCTIONS_FILE } from './upd
 import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 import { CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook } from './updater-settings.ts';
 
-/**
- * The tooling's own test files and snapshots, which NO project receives,
- * adopted or greenfield (`UpdaterConfig.repoOnlyPatterns` on every run): they
- * verify the boilerplate in its CI, and a project's test runner picks them up
- * (measured: `bun test lib` matched `cli/lib/*.test.ts` and an adopted app's
- * suite went red on the boilerplate's self-checks). Mirrored in
- * TEMPLATE_EXCLUDE_PATTERNS (packages/create-agentic-dev/src/prepare.ts).
- */
-export const BOILERPLATE_TEST_PATTERNS: RegExp[] = [
-  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
-  /^(?:cli|scripts)\/(?:.*\/)?__snapshots__\//,
-  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
-];
-
-/** The test fixtures beside them (`repoOnlyPaths` on every run; mirrored in TEMPLATE_EXCLUDES). */
-export const BOILERPLATE_TEST_PATHS: string[] = [
-  'scripts/ui-setup-fixture.ts',
-  'scripts/ui-up-fixture.ts',
-];
+// The tooling's own tests, snapshots and fixtures, which NO project receives
+// (cli/lib/boilerplate-only.ts); re-exported for the callers that read them here.
+export { BOILERPLATE_TEST_PATHS, BOILERPLATE_TEST_PATTERNS };
 
 /**
  * Upstream paths an adopted app never receives, on the `--adopt` run and on
