@@ -48,7 +48,7 @@
     "test": "bun test cli/ scripts/ && bun test --cwd .agents/skills/acli/scripts",
     "tooling:lint:check": "bun scripts/tooling-check.ts lint",
     "tooling:types:check": "bun scripts/tooling-check.ts types",
-    "types:check": "tsc --noEmit",
+    "types:check": "bun check",
     "up": "bun cli/update-boilerplate.ts",
     "worktree:audit": "bun scripts/worktree-audit.ts",
     "worktree:provision": "bun scripts/provision-worktree.ts",

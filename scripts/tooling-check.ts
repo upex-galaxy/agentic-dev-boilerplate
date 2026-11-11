@@ -4,7 +4,7 @@
  * app around it.
  *
  * Usage:
- *   bun scripts/tooling-check.ts types   # tsc over tsconfig.tooling.json
+ *   bun scripts/tooling-check.ts types   # bun check over tsconfig.tooling.json
  *   bun scripts/tooling-check.ts lint    # eslint with eslint.config.tooling.mjs
  *   bun scripts/tooling-check.ts repo    # the format / lint / types legs of `repo:check`
  *
@@ -52,7 +52,7 @@ function filesUnder(dir: string): string[] {
   return out;
 }
 
-/** A `tsc --pretty false` line starts with `<path>(<line>,<col>): error`; anything else is global. */
+/** A `bun check --no-pretty` line starts with `<path>(<line>,<col>): error`; anything else is global. */
 export function tscErrorFile(line: string): string | null {
   const m = /^(.+?)\(\d+,\d+\): error /.exec(line);
   return m ? m[1] : null;
@@ -80,17 +80,19 @@ export function scopeTscOutput(output: string, inScope: (rel: string) => boolean
 
 function types(): number {
   const owned = readUpstreamOwned(ROOT);
-  const args = ['tsc', '--noEmit', '-p', 'tsconfig.tooling.json'];
+  const args = ['check', '-p', 'tsconfig.tooling.json'];
   if (owned === null) {
-    return spawnSync('bunx', args, { stdio: 'inherit' }).status ?? 1;
+    return spawnSync('bun', args, { stdio: 'inherit' }).status ?? 1;
   }
-  const res = spawnSync('bunx', [...args, '--pretty', 'false'], { encoding: 'utf8' });
+  const res = spawnSync('bun', [...args, '--no-pretty'], { encoding: 'utf8' });
   const { kept, dropped } = scopeTscOutput(`${res.stdout ?? ''}${res.stderr ?? ''}`, rel => isToolingPath(rel, owned));
-  for (const line of kept) { console.log(line); }
+  // The checker's closing tally counts the app's files too: the scoped lines above are the report.
+  const report = kept.filter(line => !/^Found \d+ errors? in \d+ files?/.test(line));
+  for (const line of report) { console.log(line); }
   if (dropped > 0) {
     console.log(`ℹ️  ${dropped} error(s) in the app's own files (outside the tooling scope) not reported here: the app checks them with its own scripts.`);
   }
-  return kept.some(line => tscErrorFile(line) !== null || /error TS\d+/.test(line)) ? 1 : 0;
+  return report.some(line => tscErrorFile(line) !== null || /error TS\d+/.test(line)) ? 1 : 0;
 }
 
 function lint(): number {

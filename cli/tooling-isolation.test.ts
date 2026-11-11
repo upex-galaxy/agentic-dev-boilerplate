@@ -37,7 +37,7 @@ describe('the tooling scope ships with the tooling component', () => {
     // Scoped to what upstream owns on an adopted app; folder-wide everywhere else (scripts/tooling-check.ts).
     expect(scripts['tooling:types:check']).toBe('bun scripts/tooling-check.ts types');
     expect(scripts['tooling:lint:check']).toBe('bun scripts/tooling-check.ts lint');
-    expect(scripts['types:check']).toBe('tsc --noEmit');
+    expect(scripts['types:check']).toBe('bun check');
     expect(scripts['lint:check']).toBe('eslint .');
   });
 });
