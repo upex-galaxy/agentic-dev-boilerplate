@@ -3731,6 +3731,13 @@ export async function runUpdate(
             resolution = 'mine';
             sink.step(`[adopt] ${delta.file} ${section}.${key}: se mantiene el valor de la app`);
           }
+          else if (section === 'scripts' && drift.cursorValue !== undefined && drift.localValue === drift.cursorValue) {
+            // The project never changed it since the last sync: upstream's new
+            // value is a fast-forward (a kept stale script, such as a `test` over
+            // tests that no longer travel, would fail).
+            resolution = 'theirs';
+            sink.step(`${delta.file} ${section}.${key}: sin cambios del proyecto desde el último sync; se toma la versión upstream`);
+          }
           else if (opts.force === true) {
             resolution = 'theirs';
             sink.step(`[force] ${delta.file} ${section}.${key}: usando versión upstream`);

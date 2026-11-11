@@ -1,10 +1,12 @@
 import type { ParityFinding, ParityInput, ParityMeta } from './updater-parity.ts';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
+import { detectPackageJsonDelta } from './updater-package';
 import {
   ABORTED_OUTRO,
   archivedSkillsToReport,
@@ -12,6 +14,7 @@ import {
   browserProfileSitesIn,
   buildParityFileBody,
   buildParityPrompt,
+  bunTestFindsNothing,
   collectParityFindings,
   compatErrorSuggestion,
   compatErrorSurface,
@@ -1326,5 +1329,54 @@ describe('the boilerplate-copies cleanup rows', () => {
     expect(findings.map(f => [f.path, f.blocking])).toEqual([['cli/lib/a.ts', false], ['cli/lib/b.ts', true]]);
     expect(findings[0].evidence).toContain('.backups/update-y');
     expect(findings[1].suggested).toBe('merge');
+  });
+});
+
+describe('a stale test script after the boilerplate tests stopped travelling', () => {
+  test('the delta carries upstream\'s value at the last sync, read from the lock\'s blob', () => {
+    const template = temporaryRoot();
+    const repo = temporaryRoot();
+    const old = `${JSON.stringify({ name: 'x', scripts: { test: 'bun test cli/ scripts/' } }, null, 2)}\n`;
+    write(template, 'package.json', old);
+    const init = spawnSync('git', ['-C', template, 'init', '-q'], { encoding: 'utf8' });
+    expect(init.status).toBe(0);
+    const sha = spawnSync('git', ['-C', template, 'hash-object', '-w', 'package.json'], { encoding: 'utf8' }).stdout.trim();
+    write(template, 'package.json', `${JSON.stringify({ name: 'x', scripts: { test: 'bun test --pass-with-no-tests cli/ scripts/' } }, null, 2)}\n`);
+    write(repo, 'package.json', old);
+    const spec = { path: 'package.json', sections: ['scripts' as const] };
+    const state = { packageJsonSync: { 'package.json': { scripts: { lastSyncedSha: sha, appliedKeys: [] } } } };
+    expect(detectPackageJsonDelta(spec, repo, template, state).sections.scripts.localOverrideKeys.test).toEqual({
+      localValue: 'bun test cli/ scripts/',
+      upstreamValue: 'bun test --pass-with-no-tests cli/ scripts/',
+      cursorValue: 'bun test cli/ scripts/',
+    });
+    expect(detectPackageJsonDelta(spec, repo, template, null).sections.scripts.localOverrideKeys.test.cursorValue).toBeUndefined();
+  });
+
+  test('bunTestFindsNothing names the searched paths only when no test file is there', () => {
+    const root = temporaryRoot();
+    write(root, 'cli/a.ts', 'export {};\n');
+    write(root, 'tools/scripts/b.ts', 'export {};\n');
+    expect(bunTestFindsNothing(root, 'bun test cli/ scripts/ && bun test --cwd tools/scripts')).toEqual(['cli', 'scripts']);
+    expect(bunTestFindsNothing(root, 'bun test --pass-with-no-tests cli/ scripts/')).toBeNull();
+    expect(bunTestFindsNothing(root, 'playwright test')).toBeNull();
+    write(root, 'cli/a.test.ts', 'test\n');
+    expect(bunTestFindsNothing(root, 'bun test cli/ && bun test --cwd tools/scripts')).toEqual(['tools/scripts']);
+    write(root, 'tools/scripts/b.test.ts', 'test\n');
+    expect(bunTestFindsNothing(root, 'bun test cli/ && bun test --cwd tools/scripts')).toBeNull();
+  });
+
+  test('a kept test script that will find no test is a blocking row; any other kept script stays a decision', () => {
+    const root = temporaryRoot();
+    write(root, 'cli/a.ts', 'export {};\n');
+    const findings = collectParityFindings({
+      ...bareInput(root, temporaryRoot()),
+      packageJsonKept: [
+        { file: 'package.json', section: 'scripts', key: 'test', localValue: 'bun test cli/', upstreamValue: 'bun test --pass-with-no-tests cli/' },
+        { file: 'package.json', section: 'scripts', key: 'lint', localValue: 'eslint src', upstreamValue: 'eslint .' },
+      ],
+    });
+    expect(findings.map(f => [f.evidence.split(':')[0], f.blocking, f.suggested])).toEqual([['scripts.test', true, 'take upstream'], ['scripts.lint', false, 'decide']]);
+    expect(findings[0].evidence).toContain('`cli`');
   });
 });
