@@ -43,6 +43,22 @@ describe('lint-docs references', () => {
     ]);
   });
 
+  // The boilerplate's own tests never reach a project; a page it kept from an
+  // earlier release (INSTALLER.md is not synced) may still cite one.
+  test('a project: a citation of a boilerplate-only test or fixture is not reported; any other missing path still is', () => {
+    write('cli/present.ts', 'export {};');
+    write('INSTALLER.md', '`cli/updater-host-types.test.ts`, `scripts/ui-up-fixture.ts` and `cli/gone.ts`.');
+    expect(lintDocs(root).findings.filter(f => f.kind === 'path').map(f => f.target)).toEqual(['cli/gone.ts']);
+  });
+
+  test('the boilerplate checkout: a citation of a missing boilerplate test is still reported', () => {
+    write('package.json', JSON.stringify({ name: 'agentic-dev-boilerplate' }));
+    write('.agents/project.yaml', '# MAINTAINER COPY: fixture\nproject:\n  project_name: x\n');
+    write('cli/present.ts', 'export {};');
+    write('INSTALLER.md', '`cli/updater-host-types.test.ts`.');
+    expect(lintDocs(root).findings.filter(f => f.kind === 'path').map(f => f.target)).toEqual(['cli/updater-host-types.test.ts']);
+  });
+
   test('ignores external URLs, anchors, mailto, placeholders and fenced code', () => {
     write('docs/README.md', [
       '[a](https://example.com) [b](#section) [c](mailto:dev@example.com) [d](./{slug}.md)',
