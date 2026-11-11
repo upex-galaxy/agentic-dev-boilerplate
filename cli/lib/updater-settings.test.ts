@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -466,6 +466,13 @@ function downstreamProject(hooks: Record<string, unknown> = {
   return root;
 }
 
+/**
+ * The cases below merge FROM this checkout's own Claude settings file. A
+ * project that runs without Claude Code deleted it (ADR-0013), so they skip
+ * there instead of failing on a missing file.
+ */
+const withUpstreamSettings = test.skipIf(!existsSync(join(REPO_ROOT, CLAUDE_SETTINGS_FILE)));
+
 /** The boilerplate's own settings file is the upstream every downstream merges from. */
 function upstreamDir(): string {
   const upstream = temporaryRoot();
@@ -480,7 +487,7 @@ function apply(root: string, upstream: string, declinedHooks: string[] = []): Re
 }
 
 describe('the Claude hook groups merge additively', () => {
-  test('a project frozen before the route re-surface group fails compat, and passes once the merge ran', () => {
+  withUpstreamSettings('a project frozen before the route re-surface group fails compat, and passes once the merge ran', () => {
     const root = downstreamProject();
     const upstream = upstreamDir();
     expect(validateHookCompatibility(root, ['claude'])).toEqual([
@@ -496,7 +503,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(validateHookCompatibility(root, ['claude'])).toEqual([]);
   });
 
-  test('the project\'s own groups, other keys and order are untouched; new groups go at the end', () => {
+  withUpstreamSettings('the project\'s own groups, other keys and order are untouched; new groups go at the end', () => {
     const root = downstreamProject({
       UserPromptSubmit: [{ hooks: [hook(CLAUDE_HOOK_COMMAND)] }],
       PostToolUse: [PROJECT_HOOK],
@@ -516,7 +523,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(after.hooks.PostToolUse.slice(1).map((group: { matcher?: string }) => group.matcher)).toEqual(['Edit|Write|MultiEdit', undefined]);
   });
 
-  test('a second run adds nothing and writes nothing', () => {
+  withUpstreamSettings('a second run adds nothing and writes nothing', () => {
     const root = downstreamProject();
     const upstream = upstreamDir();
     apply(root, upstream);
@@ -527,7 +534,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf8')).toBe(settled);
   });
 
-  test('a command declined in updater.declined_hooks stays out and is reported', () => {
+  withUpstreamSettings('a command declined in updater.declined_hooks stays out and is reported', () => {
     const root = downstreamProject();
     const { added, declined } = apply(root, upstreamDir(), [CLAUDE_DOC_CONTRACTS_COMMAND]);
     expect(added.map(formatHookCommand)).toEqual([`PostToolUse(*) ${CLAUDE_HOOK_COMMAND}`]);
@@ -535,7 +542,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(readFileSync(join(root, CLAUDE_SETTINGS_FILE), 'utf8')).not.toContain('doc-contracts.mjs');
   });
 
-  test('a command whose script the project lacks is skipped, never wired to a missing file', () => {
+  withUpstreamSettings('a command whose script the project lacks is skipped, never wired to a missing file', () => {
     const root = downstreamProject();
     rmSync(join(root, '.agents/hooks/doc-contracts.mjs'));
     const { added, skipped } = apply(root, upstreamDir());
@@ -550,7 +557,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(mergeHookGroups(root, upstream).added).toEqual([]);
   });
 
-  test('an absent hooks object is created; one of another shape is left alone', () => {
+  withUpstreamSettings('an absent hooks object is created; one of another shape is left alone', () => {
     const upstream = upstreamDir();
     const root = temporaryRoot();
     write(root, '.agents/hooks/personality-reinject.mjs', '');
@@ -565,7 +572,7 @@ describe('the Claude hook groups merge additively', () => {
     expect(merged.hooks.PostToolUse).toBe('off');
   });
 
-  test('missing or unparseable on either side: nothing, no write', () => {
+  withUpstreamSettings('missing or unparseable on either side: nothing, no write', () => {
     const root = downstreamProject();
     expect(mergeHookGroups(root, temporaryRoot()).merged).toBeNull();
     write(root, CLAUDE_SETTINGS_FILE, '{ not json');
@@ -589,7 +596,7 @@ describe('a settings key repeated by a git auto-merge', () => {
 }
 `;
 
-  test('both lists survive the hook merge, folded into one, and the fold is reported', () => {
+  withUpstreamSettings('both lists survive the hook merge, folded into one, and the fold is reported', () => {
     const root = downstreamProject();
     write(root, CLAUDE_SETTINGS_FILE, REPEATED);
     const { duplicatesFolded, merged, added } = mergeHookGroups(root, upstreamDir());
@@ -609,7 +616,7 @@ describe('a settings key repeated by a git auto-merge', () => {
     expect(after.hooks.PostToolUse).toHaveLength(2);
   });
 
-  test('parseJsonKeepingDuplicates reads a clean file exactly like JSON.parse and rejects malformed JSON', () => {
+  withUpstreamSettings('parseJsonKeepingDuplicates reads a clean file exactly like JSON.parse and rejects malformed JSON', () => {
     const real = readFileSync(join(REPO_ROOT, CLAUDE_SETTINGS_FILE), 'utf8');
     expect(parseJsonKeepingDuplicates(real)).toEqual({ data: JSON.parse(real), duplicates: [] });
     const tricky = '{"a":[1,-2.5e3,true,null,"q\\"\\u00e9"],"__proto__":{"x":1},"b":{}}';
