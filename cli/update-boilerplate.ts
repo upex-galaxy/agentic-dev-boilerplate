@@ -31,7 +31,7 @@ import { declaredHarnesses, isUnderAny, unusedHarnessPaths } from './lib/harness
 import { collectUpstreamOwned, writeUpstreamOwned } from './lib/tooling-scope.ts';
 import * as tui from './lib/tui';
 import { startUpdaterUi } from './lib/ui/updater-run.ts';
-import { ADOPT_REPO_ONLY_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
+import { ADOPT_REPO_ONLY_PATTERNS, BOILERPLATE_TEST_PATHS, BOILERPLATE_TEST_PATTERNS, INSTALLER_LOCK_FILE, isAdopted, runAdopt } from './lib/updater-adopt.ts';
 import {
   buildPairedDiff,
   cleanupTempDir,
@@ -1241,7 +1241,7 @@ function makeAdoptHook(sink: ReportSink, dryRun: boolean, nonInteractive: boolea
 // lock on the first run.
 function makeUpstreamOwnedHook(sink: ReportSink): (summary: RunSummary) => Promise<void> {
   return async (): Promise<void> => {
-    const excluded = (rel: string): boolean => isRepoOnlyPath(rel, REPO_ONLY_PATHS)
+    const excluded = (rel: string): boolean => isRepoOnlyPath(rel, [...REPO_ONLY_PATHS, ...BOILERPLATE_TEST_PATHS])
       || ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel))
       || GENERATED_PATHS.includes(rel);
     const owned = collectUpstreamOwned(UPSTREAM_DIR, excluded);
@@ -2177,10 +2177,12 @@ async function main(): Promise<void> {
     // the REPO_ONLY_PATHS comment for per-entry reachability reasoning.
     // Plus the files of a harness this project does not use (ADR-0013): it
     // deleted them on purpose, so no detection path re-delivers them.
-    repoOnlyPaths: [...REPO_ONLY_PATHS, ...unusedHarnessPaths(process.cwd())],
-    // An adopted app (this --adopt run, or any run after one): the
-    // boilerplate's own numbered ADRs stay out of the app's decision log.
-    ...(adoptedRepo ? { repoOnlyPatterns: ADOPT_REPO_ONLY_PATTERNS, adopted: true } : {}),
+    repoOnlyPaths: [...REPO_ONLY_PATHS, ...BOILERPLATE_TEST_PATHS, ...unusedHarnessPaths(process.cwd())],
+    // The tooling's own tests and snapshots reach no project. An adopted app
+    // (this --adopt run, or any run after one) also keeps the boilerplate's
+    // numbered ADRs out of its decision log.
+    repoOnlyPatterns: adoptedRepo ? ADOPT_REPO_ONLY_PATTERNS : BOILERPLATE_TEST_PATTERNS,
+    ...(adoptedRepo ? { adopted: true } : {}),
     // Watchlist files are NOT synced — included in the sparse clone only so
     // the protected-drift hook can read their upstream copies.
     sparseExtraPaths: watchlist.map(e => e.path),

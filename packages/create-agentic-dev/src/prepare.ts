@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -454,7 +454,7 @@ export function initGitRepo(projectDir: string): void {
  * intended cost: the scaffolder owns its own exclusion contract, no separate
  * `.template/manifest.json` to drift out of sync.
  */
-const TEMPLATE_EXCLUDES: readonly string[] = [
+export const TEMPLATE_EXCLUDES: readonly string[] = [
   'packages',
   // The boilerplate's own release history, versioned against the boilerplate
   // and the create-agentic-dev npm package. A fresh consumer project starts its
@@ -474,7 +474,36 @@ const TEMPLATE_EXCLUDES: readonly string[] = [
   // "already populated" on first install).
   '.agents/jira-fields.json',
   '.agents/jira-workflows.json',
+  // The boilerplate's own test fixtures. Mirrors BOILERPLATE_TEST_PATHS
+  // (cli/lib/updater-adopt.ts); a test holds the two lists equal.
+  'scripts/ui-setup-fixture.ts',
+  'scripts/ui-up-fixture.ts',
 ];
+
+/**
+ * Repo-relative file paths the scaffold prunes at any depth: the tooling's own
+ * unit tests and snapshots under `cli/` and `scripts/`, and the skills' tests
+ * (they verify THIS repo; in a project the test runner picks them up).
+ * Mirrors BOILERPLATE_TEST_PATTERNS (cli/lib/updater-adopt.ts).
+ */
+export const TEMPLATE_EXCLUDE_PATTERNS: readonly RegExp[] = [
+  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
+  /^(?:cli|scripts)\/(?:.*\/)?__snapshots__\//,
+  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
+];
+
+/** Every file below `dir` (repo-relative, POSIX separators); empty when it is missing. */
+function filesUnder(projectDir: string, dir: string): string[] {
+  const abs = join(projectDir, dir);
+  if (!existsSync(abs)) { return []; }
+  const out: string[] = [];
+  for (const entry of readdirSync(abs, { withFileTypes: true })) {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) { out.push(...filesUnder(projectDir, rel)); }
+    else { out.push(rel); }
+  }
+  return out;
+}
 
 /**
  * Delete every path in TEMPLATE_EXCLUDES from the freshly extracted
@@ -493,6 +522,12 @@ export async function pruneBootstrapExcludes(projectDir: string): Promise<void> 
       await rm(abs, { recursive: true, force: true });
       pruned++;
     }
+  }
+  // The tooling's own unit tests and snapshots, at any depth.
+  for (const rel of ['cli', 'scripts', '.agents/skills'].flatMap(dir => filesUnder(projectDir, dir))) {
+    if (!TEMPLATE_EXCLUDE_PATTERNS.some(re => re.test(rel))) { continue; }
+    await rm(join(projectDir, rel), { force: true });
+    pruned++;
   }
   log.dim(`  Pruned ${pruned} bootstrap-only path(s) from extracted project.`);
 }

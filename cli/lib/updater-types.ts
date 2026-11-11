@@ -566,10 +566,11 @@ export interface UpdaterConfig {
   agentsFrameworkFiles?: string[]
   /**
    * On top of `repoOnlyPaths`, matched against the repo-relative path: upstream
-   * paths this repo never receives. The wrapper sets it for an ADOPTED app
-   * only (the `--adopt` run and every run after it), e.g. the boilerplate's own
-   * numbered ADRs, which would land in the app's decision log and numbering.
-   * Unset on a greenfield project, which keeps receiving them.
+   * paths this repo never receives. The wrapper always sets the tooling's own
+   * tests and snapshots (`BOILERPLATE_TEST_PATTERNS`), and for an ADOPTED app
+   * (the `--adopt` run and every run after it) the boilerplate's numbered ADRs
+   * too, which would land in the app's decision log and numbering; a greenfield
+   * project keeps receiving those.
    */
   repoOnlyPatterns?: RegExp[]
   /**

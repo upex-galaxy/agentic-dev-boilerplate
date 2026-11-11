@@ -53,19 +53,35 @@ import { diffNoIndex, PROTECT_HINT, protectNote } from './updater-parity';
 import { CLAUDE_SETTINGS_FILE, mergeAdoptPromptHook } from './updater-settings.ts';
 
 /**
+ * The tooling's own test files and snapshots, which NO project receives,
+ * adopted or greenfield (`UpdaterConfig.repoOnlyPatterns` on every run): they
+ * verify the boilerplate in its CI, and a project's test runner picks them up
+ * (measured: `bun test lib` matched `cli/lib/*.test.ts` and an adopted app's
+ * suite went red on the boilerplate's self-checks). Mirrored in
+ * TEMPLATE_EXCLUDE_PATTERNS (packages/create-agentic-dev/src/prepare.ts).
+ */
+export const BOILERPLATE_TEST_PATTERNS: RegExp[] = [
+  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
+  /^(?:cli|scripts)\/(?:.*\/)?__snapshots__\//,
+  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
+];
+
+/** The test fixtures beside them (`repoOnlyPaths` on every run; mirrored in TEMPLATE_EXCLUDES). */
+export const BOILERPLATE_TEST_PATHS: string[] = [
+  'scripts/ui-setup-fixture.ts',
+  'scripts/ui-up-fixture.ts',
+];
+
+/**
  * Upstream paths an adopted app never receives, on the `--adopt` run and on
- * every plain run after it (`UpdaterConfig.repoOnlyPatterns`):
- *  - the boilerplate's own numbered ADRs would land in the app's decision log
- *    and take its numbers (the ADR README and `ADR-NNNN-template.md` travel);
- *  - the tooling's own test files: they verify the boilerplate in its CI, and
- *    an app's test runner picks them up (measured: `bun test lib` matched
- *    `cli/lib/*.test.ts` and the app's suite went red on the boilerplate's
- *    self-checks).
+ * every plain run after it (`UpdaterConfig.repoOnlyPatterns`): the
+ * boilerplate's own numbered ADRs would land in the app's decision log and
+ * take its numbers (the ADR README and `ADR-NNNN-template.md` travel), plus
+ * the tests every project goes without (`BOILERPLATE_TEST_PATTERNS`).
  */
 export const ADOPT_REPO_ONLY_PATTERNS: RegExp[] = [
   /^\.context\/ADR\/ADR-\d{4}-/,
-  /^(?:cli|scripts)\/.*\.test\.[cm]?[jt]s$/,
-  /^\.agents\/skills\/[^/]+\/.*\.test\.[cm]?[jt]s$/,
+  ...BOILERPLATE_TEST_PATTERNS,
 ];
 
 /**
@@ -851,7 +867,7 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
   // 5. The installer lock, with what upstream owns in the namespaces the app
   //    shares (`./tooling-scope.ts`): the isolation below and the tooling gates
   //    read it. The wrapper refreshes the list on every later sync.
-  const owned = collectUpstreamOwned(upstreamDir, rel => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel)));
+  const owned = collectUpstreamOwned(upstreamDir, rel => ADOPT_REPO_ONLY_PATTERNS.some(re => re.test(rel)) || BOILERPLATE_TEST_PATHS.includes(rel));
   if (!dryRun) {
     writeInstallerLock(root);
     writeUpstreamOwned(root, owned);

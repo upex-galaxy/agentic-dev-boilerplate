@@ -7,11 +7,12 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 // The updater's twin (repo-side; `packages/` is pruned from consumers, so a
 // test here may read it). See `resetGitStrategyMeta` in `../src/prepare.ts`.
 import { resetGitStrategyProvenance } from '../../../cli/lib/git-strategy-provenance.ts';
+import { BOILERPLATE_TEST_PATHS, BOILERPLATE_TEST_PATTERNS } from '../../../cli/lib/updater-adopt.ts';
 import { findStubLeaks } from '../../../cli/lib/updater-instructions.ts';
 import { parseArgs } from '../src/args.ts';
 import { buildTarArgs } from '../src/download.ts';
 import { CliError } from '../src/errors.ts';
-import { countStubLeaks, pruneBootstrapExcludes, resetGitStrategyMeta, rewriteProjectYaml, sanitizeProjectName, seedProjectInstructions, seedProjectYamlFromSchema } from '../src/prepare.ts';
+import { countStubLeaks, pruneBootstrapExcludes, resetGitStrategyMeta, rewriteProjectYaml, sanitizeProjectName, seedProjectInstructions, seedProjectYamlFromSchema, TEMPLATE_EXCLUDE_PATTERNS, TEMPLATE_EXCLUDES } from '../src/prepare.ts';
 
 describe('buildTarArgs', () => {
   // `--force-local` is GNU-only; bsdtar (macOS, and C:\Windows\System32\tar.exe
@@ -293,6 +294,39 @@ describe('pruneBootstrapExcludes', () => {
 
     expect(existsSync(join(dir, 'packages'))).toBe(false);
     expect(existsSync(join(dir, 'keep.txt'))).toBe(true);
+  });
+
+  // The tooling's own unit tests verify the boilerplate; in a project the test
+  // runner picks them up and they fail against the project's files.
+  test('prunes cli/, scripts/ and skill tests, snapshots and test fixtures at any depth', async () => {
+    const files = [
+      'cli/lib/ui/page.test.ts',
+      'cli/lib/ui/__snapshots__/installer-run.test.ts.snap',
+      'scripts/lib/router-eval.test.ts',
+      'scripts/ui-up-fixture.ts',
+      '.agents/skills/acli/scripts/acli.test.ts',
+      'cli/lib/ui/page.ts',
+      'cli/lib/fixtures/instruction-router-eval.json',
+      '.agents/skills/acli/SKILL.md',
+    ];
+    for (const f of files) {
+      mkdirSync(join(dir, f, '..'), { recursive: true });
+      writeFileSync(join(dir, f), '// x');
+    }
+
+    await pruneBootstrapExcludes(dir);
+
+    expect(files.filter(f => existsSync(join(dir, f)))).toEqual([
+      'cli/lib/ui/page.ts',
+      'cli/lib/fixtures/instruction-router-eval.json',
+      '.agents/skills/acli/SKILL.md',
+    ]);
+  });
+
+  // `bun sync` must not re-deliver what the scaffold pruned, nor prune less.
+  test('the test excludes mirror the updater\'s lists exactly', () => {
+    expect(TEMPLATE_EXCLUDE_PATTERNS.map(String)).toEqual(BOILERPLATE_TEST_PATTERNS.map(String));
+    expect(TEMPLATE_EXCLUDES.filter(p => /^(?:cli|scripts)\//.test(p))).toEqual(BOILERPLATE_TEST_PATHS);
   });
 
   test('is a no-op when none of the excluded paths exist', async () => {

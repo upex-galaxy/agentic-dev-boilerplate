@@ -18,6 +18,8 @@ import {
   appendEnvExampleBlock,
   appOwnedExampleKeys,
   blankStackValues,
+  BOILERPLATE_TEST_PATHS,
+  BOILERPLATE_TEST_PATTERNS,
   CANONICAL_TEMPLATE,
   envDeclaredKeys,
   INSTALLER_LOCK_FILE,
@@ -68,7 +70,7 @@ describe('ADOPT_REPO_ONLY_PATTERNS', () => {
     expect(isRepoOnlyForRun(cfg, 'cli\\lib\\updater-core.test.ts')).toBe(true);
     expect(isRepoOnlyForRun(cfg, '.github/workflows/ci.yml')).toBe(true);
     expect(isRepoOnlyForRun(cfg, 'cli/update-boilerplate.ts')).toBe(false);
-    // Greenfield: no patterns, the tests travel as before.
+    // No pattern configured: nothing is filtered.
     expect(isRepoOnlyForRun({ repoOnlyPaths: [] }, 'cli/lib/updater-core.test.ts')).toBe(false);
   });
 
@@ -80,6 +82,38 @@ describe('ADOPT_REPO_ONLY_PATTERNS', () => {
     expect(excluded('cli/lib/updater-core.ts')).toBe(false);
     expect(excluded('scripts/lint-skills.ts')).toBe(false);
     expect(excluded('.agents/skills/acli/scripts/md-to-adf.ts')).toBe(false);
+  });
+});
+
+describe('BOILERPLATE_TEST_PATTERNS / BOILERPLATE_TEST_PATHS (every project)', () => {
+  const REPO = join(import.meta.dir, '..', '..');
+  const repoOnly = (rel: string): boolean => isRepoOnlyForRun({ repoOnlyPaths: BOILERPLATE_TEST_PATHS, repoOnlyPatterns: BOILERPLATE_TEST_PATTERNS }, rel);
+
+  test('a greenfield run drops the tooling\'s tests, snapshots and fixtures, keeps its code and runtime data, and keeps the ADRs', () => {
+    for (const drop of ['cli/lib/updater-core.test.ts', 'cli/lib/ui/__snapshots__/installer-run.test.ts.snap', '.agents/skills/acli/scripts/md-to-adf.test.ts', 'scripts/ui-up-fixture.ts']) {
+      expect(repoOnly(drop)).toBe(true);
+    }
+    for (const keep of ['cli/lib/updater-core.ts', 'cli/lib/fixtures/instruction-router-eval.json', '.agents/skills/acli/scripts/md-to-adf.ts', '.context/ADR/ADR-0002-multi-harness-single-source.md']) {
+      expect(repoOnly(keep)).toBe(false);
+    }
+    expect(BOILERPLATE_TEST_PATTERNS.every(re => ADOPT_REPO_ONLY_PATTERNS.includes(re))).toBe(true);
+  });
+
+  // A file that still travels and imports one that does not would break at
+  // module load in every project, the failure CLI_IMPORT_CLOSURE guards against.
+  test.skipIf(!existsSync(join(REPO, '.git')))('every listed path exists, and no file that travels imports one that does not', () => {
+    const r = Bun.spawnSync(['git', '-C', REPO, 'ls-files', '--', 'cli', 'scripts', '.agents/skills']);
+    const files = r.stdout.toString().split('\n').filter(Boolean);
+    for (const p of BOILERPLATE_TEST_PATHS) { expect(files).toContain(p); }
+    const offenders: string[] = [];
+    for (const file of files.filter(f => /\.[cm]?[jt]s$/.test(f) && !repoOnly(f))) {
+      const text = readFileSync(join(REPO, file), 'utf8');
+      for (const m of text.matchAll(/(?:\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)['"](\.{1,2}\/[^'"]+)['"]/g)) {
+        const target = join(dirname(file), m[1]).replace(/\\/g, '/');
+        if (repoOnly(target)) { offenders.push(`${file} -> ${target}`); }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
 
