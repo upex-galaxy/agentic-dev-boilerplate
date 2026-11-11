@@ -2,6 +2,8 @@ name: CI
 
 # Minimal quality gate for the boilerplate itself: repo checks (format, lint,
 # types, vars, skills), the root test suite, and the scaffolder's own tests.
+# Job consumer-matrix syncs one throwaway downstream project per shape from
+# the commit and runs a project's gates there.
 #
 # Boilerplate-only workflow: packages/ is pruned wholesale from every
 # consumer project by create-agentic-dev (TEMPLATE_EXCLUDES), and this
@@ -82,3 +84,37 @@ jobs:
 
       - name: Scaffolder manifest check
         run: bun run --cwd packages/create-agentic-dev check:manifest
+
+  consumer-matrix:
+    name: consumer ${{ matrix.leg }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Every leg reports: one harness shape failing says nothing about the others.
+      fail-fast: false
+      matrix:
+        leg: [all, claude-only, no-pi-legacy, codex-only, adopted-protected]
+    # One downstream project per shape, synced from this commit with
+    # `bun sync --auto` and held to the gates a project runs, so a change that
+    # breaks consumers (a test that assumes a harness, a synced page citing a
+    # file that does not travel, a self-update over a protected file) is caught
+    # here instead of in every project. The legs live in
+    # packages/consumer-fixture/run-leg.ts; each needs its own runner, since
+    # parallel syncs on one machine share the updater's clone directory.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Full history: the fixture rolls the consumer back 30 commits.
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Consumer leg
+        run: bun packages/consumer-fixture/run-leg.ts --leg ${{ matrix.leg }} --out "$RUNNER_TEMP/consumer-fixture"
