@@ -28,7 +28,7 @@
 
 import type { Harness } from '../../cli/lib/harness-selection.ts';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { HARNESS_FILES, HARNESSES } from '../../cli/lib/harness-selection.ts';
@@ -43,7 +43,23 @@ export interface Leg {
   noPiDir?: boolean
   /** An adopted app with files of its own and a protected `cli/lib` path; upstream carries a newer updater. */
   adopted?: boolean
+  /**
+   * `cli/`, `package.json` and `INSTALLER.md` at LEGACY_UPDATER_COMMIT, plus
+   * one `cli/` test the project edited: the first sync of a project made
+   * before the boilerplate's tests stopped travelling, run by its OLD updater.
+   */
+  legacyUpdater?: boolean
 }
+
+/**
+ * The last boilerplate commit whose updater still delivered its own tests (the
+ * base of the change that stopped it). A fixed point in history: the shape
+ * every project made before then has on its first sync after it.
+ */
+export const LEGACY_UPDATER_COMMIT = '493353fbd36aa8f5e8c6915dd10a542ff36c1092';
+/** The `cli/` test the legacy leg's project edited: it must survive with its edit. */
+export const EDITED_CLI_TEST = 'cli/lib/updater-drift.test.ts';
+const PROJECT_EDIT = '\n// project edit: kept by the team\n';
 
 /** The adopted leg's own files: they must survive the sync untouched. */
 export const APP_FILES: Record<string, string> = {
@@ -61,6 +77,7 @@ export const LEGS: Record<string, Leg> = {
   'no-pi-legacy': { harnesses: ['claude', 'opencode', 'codex'], noPiDir: true },
   'codex-only': { harnesses: ['codex'] },
   'adopted-protected': { harnesses: ['claude', 'opencode', 'codex', 'pi'], adopted: true },
+  'legacy-updater': { harnesses: ['claude', 'opencode', 'codex', 'pi'], legacyUpdater: true },
 };
 
 /** The gates a consumer runs (`repo:check` carries no `git:policy` here). */
@@ -127,6 +144,18 @@ export function runLeg(name: string, out: string): LegResult {
   const check = (label: string, ok: boolean, detail = ''): void => { result.checks.push({ check: label, ok, detail }); };
 
   const { upstream, consumer } = buildUpFixture(resolve(out), { back: 30, selfUpdate: leg.adopted === true });
+  if (leg.legacyUpdater) {
+    git(consumer, 'checkout', LEGACY_UPDATER_COMMIT, '--', 'cli', 'package.json', 'INSTALLER.md');
+    appendFileSync(join(consumer, EDITED_CLI_TEST), PROJECT_EDIT);
+    // A real project's lock records upstream's package.json at its last sync.
+    const lockPath = join(consumer, '.template', 'boilerplate.lock.json');
+    const lock = JSON.parse(readFileSync(lockPath, 'utf8')) as Record<string, unknown>;
+    const blob = run(consumer, ['git', 'rev-parse', `${LEGACY_UPDATER_COMMIT}:package.json`]).out.trim();
+    lock.packageJsonSync = { 'package.json': Object.fromEntries(['scripts', 'devDependencies', 'dependencies', 'lint-staged'].map(s => [s, { lastSyncedSha: blob, appliedKeys: [] }])) };
+    // Its updater synced `cli/` at that commit, so the `cli` cursor sits there.
+    (lock.perComponentCommit as Record<string, string>).cli = LEGACY_UPDATER_COMMIT;
+    writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+  }
   shapeConsumer(consumer, leg);
   check('consumer is not the boilerplate (contractsEnforced false)', !contractsEnforced(consumer));
   if (leg.adopted) {
@@ -144,6 +173,11 @@ export function runLeg(name: string, out: string): LegResult {
   }
   const lists = { repoOnlyPaths: BOILERPLATE_TEST_PATHS, repoOnlyPatterns: BOILERPLATE_TEST_PATTERNS };
   const appOwned = new Set(leg.adopted ? Object.keys(APP_FILES) : []);
+  if (leg.legacyUpdater) {
+    const edited = join(consumer, EDITED_CLI_TEST);
+    check(`the project's edited ${EDITED_CLI_TEST} survives with its edit`, existsSync(edited) && readFileSync(edited, 'utf8').endsWith(PROJECT_EDIT));
+    appOwned.add(EDITED_CLI_TEST);
+  }
   const left = [...filesUnder(consumer, 'cli'), ...filesUnder(consumer, 'scripts'), ...filesUnder(consumer, '.agents/skills')].filter(f => isRepoOnlyForRun(lists, f) && !appOwned.has(f));
   check('no boilerplate-only file left in cli/, scripts/ or the skills', left.length === 0, left.slice(0, 10).join(', '));
 
