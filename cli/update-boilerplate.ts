@@ -66,6 +66,7 @@ import {
   renderParityReport,
   RETIRED_HARNESS_LAUNCHER,
   runVerdict,
+  selfUpdateBlockedFindings,
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
 import { CLAUDE_SETTINGS_FILE, formatHookCommand, mergeHookGroups, mergePermissionLists, readDeclinedDenies, readDeclinedHooks } from './lib/updater-settings.ts';
@@ -1639,6 +1640,28 @@ function makeParityHook(sink: ReportSink, priorLockSha: string, dryRun: boolean,
   };
 }
 
+/**
+ * A run the self-update aborted (the new updater does not load): no apply ran,
+ * so no parity hook either. Its blocking rows still get the table, the saved
+ * prompt and the copy block, naming the protected file to merge.
+ */
+function reportSelfUpdateBlocked(blocked: NonNullable<RunSummary['selfUpdateBlocked']>, upstreamSha: string, lockSha: string): void {
+  const findings = selfUpdateBlockedFindings(blocked);
+  const report = renderParityReport(findings, { templateRepo: TEMPLATE_REPO, upstreamSha, lockSha, promptFile: PARITY_PROMPT_PATH });
+  runFacts.parity = { findings, report };
+  const glyph = (state: 'ok' | 'warn' | 'blocked'): string => tui.statusIcon(state === 'blocked' ? 'fail' : state);
+  tui.section('Estado por superficie');
+  process.stdout.write(`${tui.table(['', 'Superficie', 'Detalle'], report.surfaces.map(r => [glyph(r.state), r.label, r.cell]))}\n`);
+  try {
+    const out = path.join(process.cwd(), PARITY_PROMPT_PATH);
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, report.fileBody);
+    tui.log.info(`Prompt guardado en ${pc.cyan(PARITY_PROMPT_PATH)}.`);
+  }
+  catch (err) { tui.log.warn(`No se pudo guardar ${PARITY_PROMPT_PATH}: ${err instanceof Error ? err.message : String(err)}`); }
+  process.stdout.write(`\n${pc.dim('────────  COPY PROMPT BELOW  ────────')}\n${report.prompt}\n${pc.dim('────────  COPY PROMPT ABOVE  ────────')}\n\n`);
+}
+
 /** End-of-run visual: per-surface table, the parity prompt, the summary box. */
 function printEndOfRun(summary: RunSummary, dryRun: boolean): void {
   const parity = runFacts.parity;
@@ -2298,6 +2321,7 @@ async function main(): Promise<void> {
   // An aborted run has nothing to report: no table, no box, no success line.
   const aborted = summary.aborted === true;
   if (!aborted) { printEndOfRun(summary, parsed.dryRun); }
+  else if (summary.selfUpdateBlocked) { reportSelfUpdateBlocked(summary.selfUpdateBlocked, summary.newHeadSha, priorLockSha); }
   if (parsed.adopt && !aborted && !parsed.dryRun) {
     tui.log.info(ADOPT_NEXT_STEP);
   }

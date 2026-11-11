@@ -289,6 +289,8 @@ export interface RunSummary {
   boilerplateCleanupBackup?: string | null
   /** Protected updater files a parent older than this updater overwrote, and what the re-exec child did about them (`repairParentOverwrites`). */
   selfUpdateRepair?: { restored: string[], unloadable: string[], backupDir: string | null }
+  /** The self-update was undone and the run aborted: the new updater does not load (`selfUpdateImportError`), with the protected files it kept. */
+  selfUpdateBlocked?: { protectedPaths: string[], error: string }
 }
 
 export interface MergeResult {
