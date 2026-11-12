@@ -1455,7 +1455,7 @@ function syncFieldFiles(
 /** Display value of the AI Effort select ('-' when unset or the field is not on the instance; the fallback `## AI Effort` comment, when QA used it, lives in comments.md). */
 function aiEffortOf(issue: JiraIssue): string {
   const raw: unknown = issue.fields[CUSTOM_FIELDS.aiEffort];
-  return raw !== null && typeof raw === 'object' && 'value' in raw ? String((raw as { value: unknown }).value) : '-';
+  return raw !== null && typeof raw === 'object' && 'value' in raw ? String((raw).value) : '-';
 }
 
 /** One-line AI Effort distribution of a set of stories, e.g. `Low 3 / Medium 2 / High 1 / unset 4`. */
@@ -1647,7 +1647,7 @@ function generateCommentsMarkdown(
     for (const comment of comments) {
       const author = comment.author?.displayName || 'Unknown';
       const date = new Date(comment.created).toLocaleString();
-      const body = adfToMarkdown(comment.body as AdfDocument);
+      const body = adfToMarkdown(comment.body);
 
       lines.push(`### ${author} - ${date}`, '', body, '', '---', '');
     }

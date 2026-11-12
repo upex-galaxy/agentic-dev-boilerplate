@@ -71,6 +71,7 @@ function write(root: string, relativePath: string, contents: string): void {
  * the first live sync). `cli/updater-host-types.test.ts` guards this.
  */
 function fakeEnv(vars: Record<string, string> = {}): NodeJS.ProcessEnv {
+  // eslint-disable-next-line ts/no-unnecessary-type-assertion -- a host that requires NODE_ENV on ProcessEnv (Next.js) rejects the record
   return vars as unknown as NodeJS.ProcessEnv;
 }
 
@@ -217,7 +218,7 @@ describe('advanceSyncStateV7 with a retired component', () => {
       { name: 'cli', type: 'directory', paths: ['cli'] },
       { name: 'docs', type: 'directory', paths: ['docs'] },
     ];
-    const next = advanceSyncStateV7(prior, { applied: [], skipped: [], failed: [], newHeadSha: 'new', componentsAdvanced: ['cli', 'docs'], componentsHeldBack: [] } as never, current, 'new', '8.5');
+    const next = advanceSyncStateV7(prior, { applied: [], skipped: [], failed: [], newHeadSha: 'new', componentsAdvanced: ['cli', 'docs'], componentsHeldBack: [] }, current, 'new', '8.5');
     expect(next.templateCommit).toBe('new');
     expect(next.perComponentCommit).toMatchObject({ cli: 'new', docs: 'new', commands: 'old' });
   });

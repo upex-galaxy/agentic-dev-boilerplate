@@ -212,7 +212,7 @@ function loadDeclaredVariables(yamlPath: string): DeclaredVars {
         envNames.add(envName);
         const perEnv = new Set<string>();
         if (envVal && typeof envVal === 'object' && !Array.isArray(envVal)) {
-          for (const leafKey of Object.keys(envVal as Record<string, unknown>)) {
+          for (const leafKey of Object.keys(envVal)) {
             envScoped.add(leafKey.toUpperCase());
             perEnv.add(leafKey);
           }
@@ -223,7 +223,7 @@ function loadDeclaredVariables(yamlPath: string): DeclaredVars {
     }
     // Flat section: each child is a flat leaf.
     if (sectionVal && typeof sectionVal === 'object' && !Array.isArray(sectionVal)) {
-      for (const leafKey of Object.keys(sectionVal as Record<string, unknown>)) {
+      for (const leafKey of Object.keys(sectionVal)) {
         flat.add(leafKey.toUpperCase());
       }
     }
