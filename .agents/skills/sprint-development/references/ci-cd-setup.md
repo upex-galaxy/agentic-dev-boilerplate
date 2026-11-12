@@ -363,7 +363,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup runtime
         uses: oven-sh/setup-bun@v2 # stack.package_manager = bun (v1); otro manager: actions/setup-node con su cache
@@ -380,7 +380,7 @@ jobs:
     needs: lint
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup runtime
         uses: oven-sh/setup-bun@v2
@@ -407,7 +407,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup runtime
         uses: oven-sh/setup-bun@v2
@@ -428,7 +428,7 @@ jobs:
       url: https://${{ secrets.VERCEL_PROJECT_NAME }}-staging.vercel.app
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
