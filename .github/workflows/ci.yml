@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # Full history: the documentation-contract step below diffs the PR
@@ -109,7 +109,7 @@ jobs:
     # parallel syncs on one machine share the updater's clone directory.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # Full history: the fixture rolls the consumer back 30 commits.
