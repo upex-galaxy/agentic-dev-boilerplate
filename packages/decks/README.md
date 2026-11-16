@@ -18,6 +18,12 @@ backlog of decks still to write.
 consumer projects scaffolded from this template do NOT carry this HTML — they
 browse the published site instead.
 
+## The user-level skills portal
+
+`user-level-skills/` is a portal, not a deck per skill: each user-level skill ships its own `how-it-works.{es,en}.html` inside its folder in `upex-galaxy/agentic-user-skills`, and `.github/workflows/pages.yml` clones that repo on every deploy and copies those decks to `/decks/user-level-skills/<name>/`, where the portal's cards link. Edit a per-skill deck in that repo, never here.
+
+It is the one deck here built on the per-skill decks' slide shell (scale-to-fit, the same look as the decks it links to) instead of Planos, with its web-font imports removed so it still makes no external request.
+
 ## Adding a new deck
 
 1. Create `packages/decks/<skill>/<slug>.<lang>.html` — self-contained: **all**

@@ -220,7 +220,10 @@ Every workflow skill has a deck on the docs hub at `https://upex-galaxy.github.i
 | `decks/agentic-dev-core/capa-comportamental.es.html` | how the agent writes back (AGENTS.md §2) |
 | `decks/agentic-dev-core/pbi-jira-cache.es.html`    | `.context/PBI/` as a Jira cache (`.agents/instructions/agent-local-context-pbi.md` §9) |
 | `decks/progressive-disclosure/how-it-works.es.html` | how the instructions load: always-on `AGENTS.md`, routed sections, the hook's `ROUTE:` line, budgets (ADR-0009) |
+| `decks/user-level-skills/how-it-works.es.html` | the user-level skills `setup` installs (portal: what each does, who calls it, a link to its own deck) |
 | `harnesses.es.html`                                | the supported hosts (`.agents/instructions/agent-harnesses.md` §5.5) |
+
+Each user-level skill from `upex-galaxy/agentic-user-skills` also ships its own deck inside its installed folder: `~/.agents/skills/<name>/how-it-works.es.html` (English twin `.en.html`; `~/.claude/skills/<name>/` when the skills CLI installed it for Claude Code alone). Ask before opening it in the browser.
 
 This skill has no deck of its own: the hub and its start-here page are its surface.
 

@@ -5,6 +5,13 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — `bun sync` updates the community skills; user-level skills portal
+
+### Added
+
+- **`bun sync` closes with `bunx skills update`** for the skills `cli/install.ts` ships: `-g` for `USER_LEVEL_SKILLS`, `-p` for `PROJECT_LEVEL_SKILLS` (now exported), only the names the skills CLI reports as installed and tracked from the same source. A skill installed as a development symlink is skipped (an update would replace the link with a copy), each project skill is backed up to `.backups/` first, and a failure is a warning that never changes the exit code. Opt out with `--no-skills-update` or `UPEX_SKIP_SKILLS_UPDATE=1`. Logic and the measured CLI behaviour: `cli/lib/user-skills-update.ts` (shared with the QA boilerplate); docs: `INSTALLER.md`, Community skills update.
+- **`packages/decks/user-level-skills/`, a portal deck** for the user-level skills: what each one does, who loads it, and a link to the deck every skill in `upex-galaxy/agentic-user-skills` now ships in its folder. `pages.yml` copies those decks to `/decks/user-level-skills/<name>/` on deploy. `agentic-dev-onboard` lists the portal and the per-skill deck path.
+
 ## 2026-11-02 — `.agents/project.yaml` is values only; Sonnet workers at medium
 
 ### Changed
