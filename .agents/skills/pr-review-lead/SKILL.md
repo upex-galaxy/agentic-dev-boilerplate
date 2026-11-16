@@ -49,7 +49,7 @@ Requires `agentic-dev-core`. Loads on demand:
 | Review your own uncommitted working-tree changes before opening a PR | the harness's code-review flow |
 | Open the PR, fix conflicts, manage branches | `/git-flow-master` |
 
-**How this relates to `review-pr.md`.** The story pipeline's reviewer and this skill read the same checklist and speak the same severity scale; they differ in who they answer to. Stage 3 answers to the orchestrator of ONE story and never posts. This skill answers to a human reviewing SOMEONE ELSE's PR, adds the strictness lens and the score, and posts only on an explicit OK. This skill reuses the checklist in `review-pr.md` §"CHECKLIST DE REVIEW" by reference; it never restates it.
+**How this relates to `review-pr.md`.** The story pipeline's reviewer and this skill read the same checklist and speak the same severity scale; they differ in who they answer to. Stage 3 answers to the orchestrator of ONE story and never posts. This skill answers to a human reviewing SOMEONE ELSE's PR, adds the strictness lens and the score, and posts only on an explicit OK. This skill reuses the checklist in `review-pr.md` §"Review checklist" by reference; it never restates it.
 
 ---
 
@@ -91,7 +91,7 @@ For every candidate finding, before writing it down, answer: *where does this co
 
 If neither exists, it is a general engineering opinion with no doctrine behind it: label it explicitly as opinion, never phrase it as if the repo requires it. Citation format and worked examples → `references/evidence-and-doctrine-lookup.md`.
 
-Walk `sprint-development/references/review-pr.md` §"CHECKLIST DE REVIEW" in its order (acceptance criteria, lint and build, code standards, architecture, security, performance, UI/UX, data-testid, general quality), plus the three areas a cross-PR reviewer owns that a story reviewer may not reach:
+Walk `sprint-development/references/review-pr.md` §"Review checklist" in its order (acceptance criteria, lint and build, code standards, architecture, security, performance, UI/UX, data-testid, general quality), plus the three areas a cross-PR reviewer owns that a story reviewer may not reach:
 
 - **Layer boundaries**: `api/` / `schemas/` / `db/` in the backend and the design-system structure in the frontend are framework architecture (`project-bootstrap` rule B1); collapsing them is a finding, not a simplification.
 - **UI fidelity (Critical Rule #14)**: the current live UI plus `DESIGN.md` tokens are the reference; the mockup is inspiration. A UI change that matches neither the live UI nor the design system, and carries no §5 spec-only ratification in `.context/design/master-design-plan.md`, is a defect. A PR that follows the improved live UI where the mockup differs is NOT a finding.

@@ -18,7 +18,7 @@ Load `AGENTS.md` and the sections its router names for this review (`.agents/ins
 
 | The PR touches | Read |
 |---|---|
-| any code | `AGENTS.md` §1 (Critical Rules), §2 (SIMPLICITY FIRST, SURGICAL CHANGES), §10; `agentic-dev-core/references/typescript-patterns.md`; `sprint-development/references/code-standards.md`; `sprint-development/references/review-pr.md` §"CHECKLIST DE REVIEW" |
+| any code | `AGENTS.md` §1 (Critical Rules), §2 (SIMPLICITY FIRST, SURGICAL CHANGES), §10; `agentic-dev-core/references/typescript-patterns.md`; `sprint-development/references/code-standards.md`; `sprint-development/references/review-pr.md` §"Review checklist" |
 | a story's scope | the synced PBI for the story key (`story.md`, `acceptance-criteria.md`, `implementation-plan.md`) via `bun run jira:sync-issues get <KEY>` |
 | error paths, API handlers | `sprint-development/references/error-handling.md` |
 | backend structure, new modules | `project-bootstrap` SKILL.md rule B1 (layer boundaries `api/` / `schemas/` / `db/`) |
