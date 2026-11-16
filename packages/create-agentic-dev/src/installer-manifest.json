@@ -228,12 +228,12 @@
         },
         {
           "name": "humanizer",
-          "purpose": "Community skill: humanizer",
+          "purpose": "Prose pass for skills and instructions: removes AI writing patterns.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "writing-for-agents",
-          "purpose": "Community skill: writing-for-agents",
+          "purpose": "Structure pass for skills and instructions: pointers, no-op test, completion criteria.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]

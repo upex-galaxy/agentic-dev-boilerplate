@@ -155,14 +155,15 @@ built end to end by AI) and replaces category 1 only. Categories 2, 3 and 4 stil
 
   | Profile | Owns | Reads before deciding |
   | --- | --- | --- |
-  | `AI Product Owner / Business Analyst` | product, business, functional, scope, UX copy, design intent | the product-definition context (PRD, SRS, business docs, domain glossary), the design plan, the epic's sibling tickets, the ticket's own folder |
-  | `AI Tech Lead` | schema, index, API contract, auth model, performance, migration shape, integration architecture | the relevant ADRs, existing migrations, and the live code precedent |
+  | `Product Owner / Business Analyst (delegated)` | product, business, functional, scope, UX copy, design intent | the product-definition context (PRD, SRS, business docs, domain glossary), the design plan, the epic's sibling tickets, the ticket's own folder |
+  | `Tech Lead (delegated)` | schema, index, API contract, auth model, performance, migration shape, integration architecture | the relevant ADRs, existing migrations, and the live code precedent |
 
 - The subagent runs the same scored method as §4: 2 to 4 concrete candidate answers, scored against explicit
   criteria, highest scorer wins, reasoning written out. A bare opinion is not a decision.
-- Publish the ruling to the ticket under a heading that names the deciding profile, for example
-  `## AI Product Owner — Decision: <question>`, then resync the tracker cache. A future run has to see which
-  profile decided, so a ruling is never styled as human sign-off and never left unattributed.
+- Publish the ruling to the ticket under a heading that names the authority, for example
+  `## Product decision (decision_authority.product: decide): <question>`, then resync the tracker cache. A future
+  run has to see that the ruling came from the delegated authority and not from a person, so it is never styled
+  as human sign-off and never left unattributed.
 - A published ruling that names concrete follow-on work is executed, not re-escalated. Materializing a decision
   already made is data entry against a settled question.
 

@@ -159,4 +159,4 @@ No rename is needed: `implementation-plan.md` is already the canonical filename 
 ## Cross-references
 
 - **Producers** (skills that emit artifacts): `product-management/SKILL.md` and `sprint-development/SKILL.md`. Both cite this file from the steps that emit artifacts.
-- **Engram MCP surface used**: `mem_save` (with `topic_key`, `type`, `scope`, optional `capture_prompt`), `mem_search` and `mem_get_observation`. The file stays the source of truth, and the MCP mirror is best-effort.
+- The Engram MCP surface used is `mem_save` (with `topic_key`, `type`, `scope`, optional `capture_prompt`), `mem_search` and `mem_get_observation`. The file stays the source of truth, and the MCP mirror is best-effort.

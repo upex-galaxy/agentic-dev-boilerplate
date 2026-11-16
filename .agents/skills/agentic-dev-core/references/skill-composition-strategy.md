@@ -10,9 +10,11 @@
 
 The repo ships the project-owned skills that `.agents/skills/REGISTRY.md` lists. The installer (`cli/install.ts`) also installs:
 
-- **Community skills, project-level**: the `PROJECT_LEVEL_SKILLS` array in `cli/install.ts`. These are the stack skills plus the builder skills a T1 workflow depends on (`skill-creator`, the builder of every skill this repo scaffolds, `skill-scaffold.md`).
-- **Community skills, user-level**: the `USER_LEVEL_SKILLS` array in `cli/install.ts`.
-- **Engram (persistent memory)**: wired per agent by `engram setup <agent>`. It is the memory MCP behind `AGENTS.md` §12, not a workflow skill.
+| Source | Where it lives |
+| --- | --- |
+| Community skills, project-level | The `PROJECT_LEVEL_SKILLS` array in `cli/install.ts`: the stack skills plus the builder skills a T1 workflow depends on (`skill-creator`, the builder of every skill this repo scaffolds, `skill-scaffold.md`). |
+| Community skills, user-level | The `USER_LEVEL_SKILLS` array in `cli/install.ts`. |
+| Engram (persistent memory) | Wired per agent by `engram setup <agent>`. It is the memory MCP behind `AGENTS.md` §12, not a workflow skill. |
 
 Three gaps need a protocol: authors deprecate and rename community skills, so naming them in `AGENTS.md` is fragile; nothing says when a project-owned skill may borrow from a sister skill; and a user-level skill may be missing from a given environment, so a plain reference to it breaks.
 

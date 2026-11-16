@@ -117,6 +117,8 @@ const SKILL_PURPOSES: Record<string, string> = {
   'github-actions-docs': 'GitHub Actions documentation and workflow patterns.',
   'html-ppt': 'Create HTML-based presentations.',
   'playwright-cli': 'Browser automation — screenshots, traces, recordings.',
+  'humanizer': 'Prose pass for skills and instructions: removes AI writing patterns.',
+  'writing-for-agents': 'Structure pass for skills and instructions: pointers, no-op test, completion criteria.',
   'mkd': 'Decision-deck CLI — the AI asks, the user answers point by point in a browser deck.',
 };
 
