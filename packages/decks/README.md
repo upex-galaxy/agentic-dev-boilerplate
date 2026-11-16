@@ -22,8 +22,8 @@ browse the published site instead.
 
 1. Create `packages/decks/<skill>/<slug>.<lang>.html` — self-contained: **all**
    CSS and JS inlined, zero external requests (not even a font `@import` — see
-   "Design tokens" below for why). Spanish decks use `.es.html`; if an English
-   version is ever needed, `<slug>.en.html` in the same folder.
+   "Design tokens" below for why). Spanish decks use `.es.html`; every deck also has an English twin,
+   `<slug>.en.html`, in the same folder (same slides, same shell).
 2. Before writing content, re-read the actual skill (`SKILL.md` + `references/`)
    — never write a deck from memory of a previous session. Skills evolve; a
    stale deck is worse than no deck. **No dated stamp, no count, no version**

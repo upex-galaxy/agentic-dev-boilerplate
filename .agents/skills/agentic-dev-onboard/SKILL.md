@@ -209,7 +209,7 @@ Community stack skills install at project level into the same store through `bun
 
 Invocation: on Claude Code `/<skill> <mode>`; on Pi `/skill:<skill> <mode>`; on OpenCode and Codex, name the skill and the mode in prose ("load `project-context`, mode `data`").
 
-Every workflow skill has a deck on the docs hub at `https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/<skill>/how-it-works.es.html`, unless the table says otherwise. Point the user to the deck of the skill you hand them off to.
+Every workflow skill has a deck on the docs hub at `https://upex-galaxy.github.io/agentic-dev-boilerplate/decks/<skill>/how-it-works.es.html`, unless the table says otherwise. Point the user to the deck of the skill you hand them off to. The decks are written in Spanish; every deck has an English twin, `<name>.en.html`, next to it (same slides, same shell), so offer the twin to an English speaker.
 
 | Deck path (under the hub URL)                      | Teaches |
 | -------------------------------------------------- | ------- |
