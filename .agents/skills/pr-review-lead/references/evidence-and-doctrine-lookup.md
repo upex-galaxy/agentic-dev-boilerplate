@@ -8,9 +8,9 @@ Every finding points at a line of code, points at a line of doctrine, or is labe
 
 ## Citation format
 
-- **Code evidence**: `<file>:<line>` from the diff, quoting or closely paraphrasing the actual line. Without a local checkout, cite it as it appears in the patch (the `+` line, or the surrounding context when the line itself is unchanged).
-- **Doctrine evidence**: `<doctrine file> §<Section>`, `AGENTS.md §N` or `Critical Rule #N`, quoting the specific sentence that backs the claim, not just "per our conventions". A reader should be able to open that file and find the line you mean. Cite a section heading and never a line number of a doctrine file, because line numbers shift on every edit (Critical Rule #17).
-- **Opinion, no doctrine backing**: say so in plain words, in the user's language: "this is general engineering opinion, not something this repo's doctrine states." An opinion dressed up as a repo rule erodes trust in every other citation once the user catches one.
+- Code evidence: `<file>:<line>` from the diff, quoting or closely paraphrasing the actual line. Without a local checkout, cite it as it appears in the patch (the `+` line, or the surrounding context when the line itself is unchanged).
+- Doctrine evidence: `<doctrine file> §<Section>`, `AGENTS.md §N` or `Critical Rule #N`, quoting the specific sentence that backs the claim, not just "per our conventions". A reader must be able to open that file and find the line you mean. Cite a section heading and never a line number of a doctrine file, because line numbers shift on every edit (Critical Rule #17).
+- Opinion, no doctrine backing: say so in plain words, in the user's language: "this is general engineering opinion, not something this repo's doctrine states." An opinion dressed up as a repo rule erodes trust in every other citation once the user catches one.
 
 ## Doctrine map (this repo)
 

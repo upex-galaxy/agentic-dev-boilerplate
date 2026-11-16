@@ -18,7 +18,7 @@ metadata:
 - Read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). Skip `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
 - A placeholder map means there is no map. Say so and hand the user `project-context` mode `data`, so nobody plans a migration as if the schema were empty.
 - Cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
-- When a session observes something that contradicts a section (a column, a policy, a trigger), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. Procedure: `references/refresh.md`.
+- When a session observes something that contradicts a section (a column, a policy, a trigger), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
 - Write only inside this skill's own `references/`. Jira, `.context/`, other skills, migrations and product code are out of scope, because this skill owns one map and nothing else.
 - Keep map content out of this SKILL.md. A rule for reading the data goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `db` (verifying a section) or `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.

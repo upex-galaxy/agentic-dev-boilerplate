@@ -21,7 +21,7 @@ Keep them apart, because one edits a single section and the other regenerates se
 | Situation | Who writes | How |
 |---|---|---|
 | one section contradicted by something a session observed | this skill, after approval | the five steps of `agentic-dev-core/references/business-context-maps.md` §6: locate, evidence, propose, apply on approval, verify |
-| several sections stale, or something new the map lacks | `project-context` mode `api` update | it regenerates only the stale sections and shows a section-level diff; hand the user that mode instead of rebuilding sections here |
+| several sections stale, or something new the map lacks | `project-context` mode `api` UPDATE | it regenerates only the stale sections and shows a section-level diff; hand the user that mode instead of rebuilding sections here |
 
 ## The proposal, in one message
 
@@ -34,7 +34,11 @@ figure: <unchanged | redraw: why>
 apply? (yes / no)
 ```
 
-Check the edit against the route file, the OpenAPI types or a real request before proposing it. Only `yes` applies it, and silence is not approval. When a supervised worker or a routine runs this, who approves is set in `agentic-dev-core/references/business-context-maps.md` §10 (the conductor, or the delegating brief when it names the section). With neither, record the proposal in the report, leave the map untouched, say it is unapplied, and continue.
+Check the edit against the route file, the OpenAPI types or a real request before proposing it. Only `yes` applies it, and silence is not approval. Who answers `apply?` depends on who is running (`agentic-dev-core/references/business-context-maps.md` §10 and `agentic-dev-core/references/decision-protocol.md`):
+
+- A person is present: they answer.
+- A supervised worker: send the proposal to the conductor, which holds the gate, and apply only on its yes.
+- A routine with nobody: apply only when the delegating brief names the map or section. Otherwise leave the proposal in the report and the map untouched, say it is unapplied, and continue.
 
 ## Never
 

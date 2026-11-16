@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-16T04:10:09.699Z`
+> Generated: `2026-11-16T04:24:48.638Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -126,7 +126,7 @@ Skills indexed: 22
 - Read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). Skip `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
 - A placeholder map means there is no map. Say so and hand the user `project-context` mode `api`, so nobody mistakes an empty map for an empty API.
 - Take field names, types and required flags from the OpenAPI types (`bun run api:sync`, `@schemas/{domain}.types`) and the meaning from the map. When they conflict, the spec wins for shape and the running API wins for behaviour.
-- When a session observes something that contradicts a section (a status, a field, an auth rule), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. Procedure: `references/refresh.md`.
+- When a session observes something that contradicts a section (a status, a field, an auth rule), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
 - Write only inside this skill's own `references/`. Jira, `.context/`, other skills, generated types and product code are out of scope, because this skill owns one map and nothing else.
 - Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
@@ -145,7 +145,7 @@ Skills indexed: 22
 - Read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). Skip `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
 - A placeholder map means there is no map. Say so and hand the user `project-context` mode `data`, so nobody plans a migration as if the schema were empty.
 - Cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
-- When a session observes something that contradicts a section (a column, a policy, a trigger), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. Procedure: `references/refresh.md`.
+- When a session observes something that contradicts a section (a column, a policy, a trigger), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
 - Write only inside this skill's own `references/`. Jira, `.context/`, other skills, migrations and product code are out of scope, because this skill owns one map and nothing else.
 - Keep map content out of this SKILL.md. A rule for reading the data goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `db` (verifying a section) or `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
@@ -164,14 +164,14 @@ Skills indexed: 22
 - Read the map through `bun run context:map business-feature-context` (`--section <id>` for one feature or module). Do not read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
 - A placeholder map counts as no map. Say so and hand the user `project-context` mode `features`; do not place a story as if the product had no features.
 - Take how a screen looks from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature does from the map. When they conflict, the running app wins for behaviour.
-- When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the edit. Procedure: `references/refresh.md`.
+- When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
 - Write only inside this skill's own `references/`: no Jira, no `.context/`, no other skill, no design file, no product code.
 - Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
 
 **Read full SKILL.md when**: building a briefing for a UI, CRUD or navigation dispatch, deciding whether a section is stale, or proposing an edit to the map.
 
-> Source: `.agents/skills/business-feature-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/business-feature-context/SKILL.md` · phase: `unknown` · kind: `context` · extraction strategy: A
 
 ---
 
@@ -300,9 +300,10 @@ Skills indexed: 22
 - When the PR has a ticket, plan or acceptance criteria to check against, review on two axes, Spec and Standards, each by its own reviewer in a fresh context, with the briefs in `sprint-development/references/review-pr.md` `## Two-axis review`. Check the new tests for lying tests (LT-1 and LT-2 with Spec, LT-3 with Standards), defined in `unit-testing/references/tdd-workflow.md`.
 - Present the findings table, the positives and a score out of 10 as a checkpoint, then let the user triage and re-classify. Their context decides what ships; do not defend the first-pass severity.
 - Post to GitHub only after an explicit go-ahead on the final draft. Approval for a different PR does not carry over, and silence is not approval. The comment carries no AI-generated marker.
+- With no person to ask, follow `## Who holds the gates`: the brief's strictness or Standard, no triage, and the draft saved to the report unless the brief names this PR and says to post.
 - Drafting and posting stay with the orchestrator, because tone and an outward action are not for a subagent.
 - Write the posted comment in English (Critical Rule #12) unless the user asked for another language for that comment.
-- Review the PR and leave the fixing to its author: push nothing to the PR under review. Submit a formal GitHub approval or change request only when the user asks for that action; the default artifact is a plain comment.
+- Review the PR and leave the fixing to its author: push nothing to the PR under review. A fix the user wants goes through the PR author or a separate branch through `/git-flow-master`. Submit a formal GitHub approval or change request only when the user asks for that action; the default artifact is a plain comment.
 
 **Read full SKILL.md when**: applying the severity rubric or score weighting, probing an external repo for its doctrine, or drafting the posting flow itself.
 

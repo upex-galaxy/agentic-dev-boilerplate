@@ -25,9 +25,10 @@ A good session reads the target repo's own conventions first, then the diffs, sh
 - When the PR has a ticket, plan or acceptance criteria to check against, review on two axes, Spec and Standards, each by its own reviewer in a fresh context, with the briefs in `sprint-development/references/review-pr.md` `## Two-axis review`. Check the new tests for lying tests (LT-1 and LT-2 with Spec, LT-3 with Standards), defined in `unit-testing/references/tdd-workflow.md`.
 - Present the findings table, the positives and a score out of 10 as a checkpoint, then let the user triage and re-classify. Their context decides what ships; do not defend the first-pass severity.
 - Post to GitHub only after an explicit go-ahead on the final draft. Approval for a different PR does not carry over, and silence is not approval. The comment carries no AI-generated marker.
+- With no person to ask, follow `## Who holds the gates`: the brief's strictness or Standard, no triage, and the draft saved to the report unless the brief names this PR and says to post.
 - Drafting and posting stay with the orchestrator, because tone and an outward action are not for a subagent.
 - Write the posted comment in English (Critical Rule #12) unless the user asked for another language for that comment.
-- Review the PR and leave the fixing to its author: push nothing to the PR under review. Submit a formal GitHub approval or change request only when the user asks for that action; the default artifact is a plain comment.
+- Review the PR and leave the fixing to its author: push nothing to the PR under review. A fix the user wants goes through the PR author or a separate branch through `/git-flow-master`. Submit a formal GitHub approval or change request only when the user asks for that action; the default artifact is a plain comment.
 
 **Read full SKILL.md when**: applying the severity rubric or score weighting, probing an external repo for its doctrine, or drafting the posting flow itself.
 
@@ -75,9 +76,9 @@ Before reading any diff, ask how strict to be, through the harness's own prompt 
 
 Offer three levels, in the user's language:
 
-- **Flexible**: only what is evidently wrong or puts correctness, security or data at risk: real bugs, hardcoded secrets, an RPC that trusts a caller-supplied identity, a migration that cannot be rolled back, an acceptance criterion the diff does not meet. A pattern that diverges from the documented one but works is not a finding.
-- **Standard** (recommended default): the Flexible bar, plus doctrine-pattern deviations as light observations, framed as a comparison ("the documented pattern does X, this PR does Y") and never as an error. A pattern note never drags the score.
-- **Strict**: a full literal pass against every applicable doctrine file. A deviation is a tagged finding even when it works. The Real and Pattern buckets stay separate: Strict widens what counts as a finding and does not turn pattern notes into errors.
+- Flexible: only what is evidently wrong or puts correctness, security or data at risk: real bugs, hardcoded secrets, an RPC that trusts a caller-supplied identity, a migration that cannot be rolled back, an acceptance criterion the diff does not meet. A pattern that diverges from the documented one but works is not a finding.
+- Standard (recommended default): the Flexible bar, plus doctrine-pattern deviations as light observations, framed as a comparison ("the documented pattern does X, this PR does Y") and never as an error. A pattern note never drags the score.
+- Strict: a full literal pass against every applicable doctrine file. A deviation is a tagged finding even when it works. The Real and Pattern buckets stay separate: Strict widens what counts as a finding and does not turn pattern notes into errors.
 
 In the same round, confirm the scope if it is not yet given: which PR (`owner/repo#N`, a PR URL, "the current branch's PR" or a raw diff), and whether it is this repo or an external one. `references/severity-and-scoring.md` has the rationale and a worked recalibration.
 
@@ -107,9 +108,9 @@ For every candidate finding, ask where it comes from: a code location (`<file>:<
 
 Walk `sprint-development/references/review-pr.md` §"Review checklist" in its order (acceptance criteria, lint and build, code standards, architecture, security, performance, UI/UX, data-testid, general quality), plus the three areas a cross-PR reviewer owns that a story reviewer may not reach:
 
-- **Layer boundaries**: `api/`, `schemas/` and `db/` in the backend and the design-system structure in the frontend are framework architecture (`project-bootstrap` rule B1). Collapsing them is a finding, not a simplification.
-- **UI fidelity** (Critical Rule #14): the current live UI plus the `DESIGN.md` tokens are the reference, and the mockup is inspiration. A UI change that matches neither the live UI nor the design system, and carries no §5 spec-only ratification in `.context/design/master-design-plan.md`, is a defect. A PR that follows the improved live UI where the mockup differs is not a finding.
-- **ADRs**: an architectural choice that passes the three-gate test in `agentic-dev-core/references/adr-doctrine.md` §1 (hard to reverse, surprising without context, a real trade-off) and has no ADR is a finding, and so is one that contradicts an `Accepted` ADR in `.context/ADR/`.
+- Layer boundaries: `api/`, `schemas/` and `db/` in the backend and the design-system structure in the frontend are framework architecture (`project-bootstrap` rule B1). Collapsing them is a finding, not a simplification.
+- UI fidelity (Critical Rule #14): the current live UI plus the `DESIGN.md` tokens are the reference, and the mockup is inspiration. A UI change that matches neither the live UI nor the design system, and carries no §5 spec-only ratification in `.context/design/master-design-plan.md`, is a defect. A PR that follows the improved live UI where the mockup differs is not a finding.
+- ADRs: an architectural choice that passes the three-gate test in `agentic-dev-core/references/adr-doctrine.md` §1 (hard to reverse, surprising without context, a real trade-off) and has no ADR is a finding, and so is one that contradicts an `Accepted` ADR in `.context/ADR/`.
 
 When the PR has a ticket, plan or acceptance criteria to check against, run the review on two axes: one Spec reviewer and one Standards reviewer, each in a fresh context, with the briefs in `sprint-development/references/review-pr.md` `## Two-axis review`. A PR can pass one axis and fail the other, and one reviewer holding both lets the first answer color the second. Tag each finding with its axis and do not merge or rerank the reports. With no spec to check (common on an external repo), say so and let Standards run alone, inline. Spec findings stay in the Real bucket; a Standards finding that matches the documented standards is Pattern or Real by the Step 0 level.
 
@@ -117,9 +118,9 @@ Check the PR's new tests for lying tests: LT-1 tautological, LT-2 cannot fail, L
 
 Bucket every finding into exactly one of:
 
-1. **Real**: bugs, unmet acceptance criteria, hardcoded credentials (Critical Rule #1), RPCs that trust caller-supplied identity (`sprint-development/references/rpc-authorization.md`), unsafe or irreversible migrations, unratified UI divergence, missing error handling on a public path, lying tests, genuinely unaddressed test gaps. Weighted at every strictness level.
-2. **Pattern**: diverges from a documented convention without being a functional defect (more than two positional params, a deep relative import, a domain helper in a shared utility, a naming slip). Its weight follows the Step 0 level.
-3. **Positive**: things done well. Look for tests that pin behavior rather than implementation, a migration with a working down path, honest disclosure of trade-offs in the PR body, a clean ADR, a reusable component instead of a copy, and live-UI evidence attached.
+1. Real: bugs, unmet acceptance criteria, hardcoded credentials (Critical Rule #1), RPCs that trust caller-supplied identity (`sprint-development/references/rpc-authorization.md`), unsafe or irreversible migrations, unratified UI divergence, missing error handling on a public path, lying tests, genuinely unaddressed test gaps. Weighted at every strictness level.
+2. Pattern: diverges from a documented convention without being a functional defect (more than two positional params, a deep relative import, a domain helper in a shared utility, a naming slip). Its weight follows the Step 0 level.
+3. Positive: things done well. Look for tests that pin behavior rather than implementation, a migration with a working down path, honest disclosure of trade-offs in the PR body, a clean ADR, a reusable component instead of a copy, and live-UI evidence attached.
 
 Severity within Real and Pattern uses the scale in `review-pr.md` §"Adjudication contract" (`BLOCKER`, `MAJOR`, `MINOR`, `NIT`), with the labels mirrored in the user's language in conversation. The rubric and scoring are in `references/severity-and-scoring.md`.
 

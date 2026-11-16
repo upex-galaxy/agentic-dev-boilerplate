@@ -89,7 +89,7 @@ Everything here has a path that works with no runtime at all: the same launch li
    Who sets the session name per harness is in `references/session-identity.md` §2b.
 6. Wait inside the turn: one waiter, rolling windows of at most 540 s, ack verified in the same command that re-arms.
 7. Close each finished worker and its worktree in the same turn: orphan audit first, then remove (`references/coordinator-playbook.md` §6).
-8. Harvest `learnings.md` and `skill-improvements.md` by calling the Skill tool with "retro" and giving it the run's scope (the details are in `references/coordinator-playbook.md`). When `retro` is not installed, do the harvest inline from the same two files and say so in the run report. The harvest never blocks the close. Then write `kickoff.md` and report to the owner.
+8. Harvest `learnings.md` and `skill-improvements.md`: Call the Skill tool with "retro" and give it the run's scope (the details are in `references/coordinator-playbook.md`). When `retro` is not installed, do the harvest inline from the same two files and say so in the run report. The harvest never blocks the close. Then write `kickoff.md` and report to the owner.
 
 ---
 

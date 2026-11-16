@@ -64,7 +64,7 @@ grouped apart from the numbered real findings.>
 what the fix path looks like or what is already solid enough to build on.>
 ```
 
-Before showing the draft, run the prose through the `humanizer` skill in embedded mode when it is installed, because a person outside this session reads the comment. Code, paths and citations stay untouched.
+Call the Skill tool with "humanizer" in embedded mode before showing the draft, because a person outside this session reads the comment. When it is not installed, run the prose pass inline and say so. Code, paths and citations stay untouched.
 
 ## Step 7: Confirm, then post
 

@@ -553,7 +553,7 @@ Three files in the scope, one owner each, appended and never rewritten:
 | `skill-improvements.md` | gaps in the skills themselves: a missing step, a wrong order, a stage that has no verifier | bug reports about the product |
 | `kickoff.md` | the handoff pointer above | a diary |
 
-Harvest at the close of the run by calling the Skill tool with "retro". Give it the run's scope
+Harvest at the close of the run. Call the Skill tool with "retro" and give it the run's scope
 and have it write its ranked candidates into `learnings.md` and `skill-improvements.md`, applying
 none of them: a conductor with nobody at the keyboard files them for the launcher, and a person
 present reads them in order. When `retro` is not installed, do the harvest inline from the same

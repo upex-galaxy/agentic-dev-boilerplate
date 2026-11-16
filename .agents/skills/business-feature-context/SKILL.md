@@ -3,14 +3,6 @@ name: business-feature-context
 description: "Knowledge of what the product does for its users, feature by feature: catalog, CRUD matrix, UI inventory, cross-feature flows. Use when a task builds or changes a screen, form, CRUD action, navigation or role gate; places a story in the product; or asks what a user can do in the app. Not for per-screen design (the master design plan), entities (business-data-context) or routes (business-api-context)."
 license: MIT
 compatibility: [claude-code, codex, opencode, pi]
-compact_rules: |
-  - Read the map through `bun run context:map business-feature-context` (`--section <id>` for one feature or module). Do not read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
-  - A placeholder map counts as no map. Say so and hand the user `project-context` mode `features`; do not place a story as if the product had no features.
-  - Take how a screen looks from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature does from the map. When they conflict, the running app wins for behaviour.
-  - When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the edit. Procedure: `references/refresh.md`.
-  - Write only inside this skill's own `references/`: no Jira, no `.context/`, no other skill, no design file, no product code.
-  - Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
-  - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
 metadata:
   kind: context
   writes: [references/]
@@ -26,7 +18,7 @@ metadata:
 - Read the map through `bun run context:map business-feature-context` (`--section <id>` for one feature or module). Do not read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
 - A placeholder map counts as no map. Say so and hand the user `project-context` mode `features`; do not place a story as if the product had no features.
 - Take how a screen looks from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature does from the map. When they conflict, the running app wins for behaviour.
-- When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the edit. Procedure: `references/refresh.md`.
+- When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
 - Write only inside this skill's own `references/`: no Jira, no `.context/`, no other skill, no design file, no product code.
 - Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.

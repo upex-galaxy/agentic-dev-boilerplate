@@ -13,7 +13,9 @@
 
 A section with no declared sources is `unknown`, not fresh.
 
-## Two paths, kept apart
+## Two paths
+
+Keep them apart, because one edits a single section and the other regenerates several.
 
 | Situation | Who writes | How |
 |---|---|---|

@@ -13,7 +13,7 @@
 
 A section with no declared sources is `unknown`, never fresh.
 
-## Two paths, never mixed
+## Two paths
 
 Keep them apart, because one edits a single section and the other regenerates several.
 
@@ -39,7 +39,7 @@ Who answers `apply?` depends on who is running (`agentic-dev-core/references/bus
 
 - A person is present: they answer.
 - A supervised worker: send the proposal to the conductor, which holds the gate, and apply only on its yes.
-- A routine with nobody: apply only when the delegating brief names this edit. Otherwise leave the proposal in the report and the map untouched until a person or conductor approves.
+- A routine with nobody: apply only when the delegating brief names the map or section. Otherwise leave the proposal in the report and the map untouched until a person or conductor approves.
 
 ## Never
 
