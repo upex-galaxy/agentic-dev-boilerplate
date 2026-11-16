@@ -1933,7 +1933,8 @@
               El scope es <span class="mono">seed</span> (A) o el slug de la épica (B, C). Si existe
               <span class="mono">progress.md</span>, la IA te muestra el objetivo, la última fase
               cerrada y la próxima, y espera: <b>retomar</b>, <b>reiniciar</b> (archiva lo anterior)
-              o <b>abortar</b>.
+              o <b>abortar</b>. En discovery o en una rutina, donde no hay nadie que conteste,
+              retoma sola desde la fase 0.
             </p>
           </div>
           <div class="step">
@@ -2080,7 +2081,7 @@
             <p>
               Dos o más épicas, dependencias complejas, cambios de arquitectura. <b>No se crea
               nada</b>: sale un plan de división. Aprobado el plan, se corre el nivel 2 una épica a
-              la vez.
+              la vez. Sin nadie presente, el plan va al reporte de la corrida y ahí termina.
             </p>
           </div>
         </div>
@@ -2088,6 +2089,12 @@
         <div class="callout r">
           <b>No fuerces el nivel.</b> Si el análisis dice "nivel 3", insistir en crear todo de una
           vez satura el contexto y deja dependencias mal resueltas. Se trabaja incremental.
+          <br /><br />
+          <b>Preguntas abiertas antes de crear.</b> Cuando hay preguntas que deciden el alcance, la
+          IA llama a la skill <span class="mono">grilling</span>: te interroga en rondas numeradas,
+          cada pregunta con su respuesta recomendada. Si la skill no está instalada, hace las mismas
+          preguntas como lista numerada y lo dice en el reporte. Si ya decidiste todo en la
+          conversación, la IA escribe una spec con eso y no vuelve a preguntar.
         </div>
       </div>
     </section>
@@ -2140,6 +2147,15 @@
           <b>Los criterios de una épica son resultados:</b> "la persona completa la capacidad de
           punta a punta sin salir del producto", "todas sus historias están en Done". Los escenarios
           Gherkin viven en cada historia, nunca en la épica.
+        </div>
+
+        <div class="callout r">
+          <b>Una épica demasiado grande para planificarla.</b> Se traza un mapa de tickets de
+          decisión (hijos de la épica, de una sesión cada uno) tras interrogar con
+          <span class="mono">grilling</span> y <span class="mono">domain-modeling</span>. Cada
+          ticket es de investigación (<span class="mono">research</span>), de preguntas a una
+          persona o de una tarea chica. Sin nadie presente esta sección no corre: queda el hueco
+          anotado en el reporte.
         </div>
       </div>
     </section>
@@ -2618,8 +2634,9 @@
           <div class="eyebrow"><span class="num">14</span> · rieles de seguridad</div>
           <h2>Lo que la skill nunca hace</h2>
           <p class="sub">
-            La lista completa de antipatrones vive en <span class="mono">SKILL.md</span>. Estos son
-            los que un PM nota primero.
+            Las invariantes completas viven en las reglas compactas de
+            <span class="mono">SKILL.md</span> (el cuerpo ya no repite la lista). Estas son las que
+            un PM nota primero.
           </p>
         </div>
 
