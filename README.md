@@ -447,6 +447,7 @@ bun sync --auto             # Non-interactive / CI mode (safe changes only, exit
 bun sync --dry-run          # Preview what would change without writing anything
 bun sync --strict           # Exit 1 on compat errors or blocking parity findings (CI gate)
 bun sync --auto --no-gates  # Skip the post-sync types:check / lint:check gates
+bun sync --no-skills-update # Skip the closing bunx skills update (or UPEX_SKIP_SKILLS_UPDATE=1)
 bun sync --interactive      # Keep the prompts even when stdin is not a terminal
 bun sync --rollback         # Restore from most recent backup
 bun run api:sync          # Sync OpenAPI spec + generate types
