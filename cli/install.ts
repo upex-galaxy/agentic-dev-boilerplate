@@ -334,6 +334,8 @@ export const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'grilling' },
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'domain-modeling' },
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'research' },
+  // Generic multi-session teaching workspace for any topic, started by hand with /teach.
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'teach' },
 ];
 
 // External CLIs the boilerplate's skills depend on. Installer NEVER auto-installs

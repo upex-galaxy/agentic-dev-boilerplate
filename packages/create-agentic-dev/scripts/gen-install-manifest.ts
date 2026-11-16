@@ -127,6 +127,7 @@ const SKILL_PURPOSES: Record<string, string> = {
   'grilling': 'Interview in numbered rounds, each question with a recommended answer.',
   'domain-modeling': 'Canonical domain terms written to the project glossary.',
   'research': 'Fact gathering for a research decision ticket.',
+  'teach': 'Multi-session teaching workspace for any topic, started with /teach.',
 };
 
 function mcpPurposeOr(name: string): string {

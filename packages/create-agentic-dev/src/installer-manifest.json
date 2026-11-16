@@ -199,7 +199,7 @@
       ]
     },
     "communityUserSkills": {
-      "count": 14,
+      "count": 15,
       "items": [
         {
           "name": "find-skills",
@@ -269,6 +269,11 @@
         {
           "name": "research",
           "purpose": "Fact gathering for a research decision ticket.",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "teach",
+          "purpose": "Multi-session teaching workspace for any topic, started with /teach.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]

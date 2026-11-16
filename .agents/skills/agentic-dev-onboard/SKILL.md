@@ -60,7 +60,7 @@ On an adopted app the `/project-bootstrap` base phases are refused (`bun run boo
 
 A fresh clone needs `bun setup` first (on an adopted app, after the adoption commit); everything else assumes the foundation is green.
 
-**Docs hub, to read in a browser:** `https://upex-galaxy.github.io/agentic-dev-boilerplate/`. It holds the start-here page (`onboarding.html`, also opened locally by `bun run onboarding`), the multi-harness page and one deck per workflow skill (table below). Hand the user this URL in every tour.
+**Docs hub, to read in a browser:** `https://upex-galaxy.github.io/agentic-dev-boilerplate/`. It holds the start-here page (`onboarding.html`, also opened locally by `bun run onboarding`), the multi-harness page and one deck per workflow skill (table below). Hand the user this URL in every tour. When the person wants to learn a topic over several sessions (a course, not a quick explanation), tell them to type `/teach`: it is installed at user level, only a person can start it (no skill can load it), and it keeps its own mission, lessons and learning record in the folder where it runs. The tour itself stays for quick explanations inside this session.
 
 ---
 
@@ -254,6 +254,7 @@ A step that loads one of these says `Call the Skill tool with "<name>"` and stat
 | `grilling` | upex-galaxy/agentic-user-skills | `.agents/skills/product-management/SKILL.md` workflows B and D, `.agents/skills/product-management/references/add-feature.md`, `.agents/skills/product-management/references/story-refinement.md`, `.agents/skills/product-management/references/epic-creation.md` and `.agents/skills/project-foundation/SKILL.md` Phases 1 and 2: open questions that decide scope; when it is not installed the same questions are asked as a numbered list |
 | `domain-modeling` | upex-galaxy/agentic-user-skills | `.agents/skills/product-management/references/epic-creation.md` "When the epic is too big to plan" and `.agents/skills/project-foundation/SKILL.md` Phase 4 Step 6: settles the domain terms; when it is not installed the questions run inline |
 | `research` | upex-galaxy/agentic-user-skills | `.agents/skills/product-management/references/epic-creation.md` "When the epic is too big to plan": a `research` decision ticket given to a fresh subagent; when it is not installed the subagent researches inline |
+| `teach` | upex-galaxy/agentic-user-skills | User-invoked only. `/teach` is manual (`disable-model-invocation`), so no flow loads it; the tour tells a person to type it for a multi-session course |
 | `orchestration.orchestrator_skills` | the orchestration binary | `/orca-orchestration`, alongside it: the vendor owns the command grammar and the repo skill owns when and what |
 
 ---
