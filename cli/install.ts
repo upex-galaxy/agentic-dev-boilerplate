@@ -323,6 +323,10 @@ export const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   // writes or edits an instruction, a skill or a reference.
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'humanizer' },
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'writing-for-agents' },
+  // Orchestration loaders: the decision log of an unattended run and the
+  // learnings harvest at the close of a run (orca-orchestration SKILL.md).
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'show-me-your-work' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'retro' },
 ];
 
 // External CLIs the boilerplate's skills depend on. Installer NEVER auto-installs

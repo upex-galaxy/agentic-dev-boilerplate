@@ -199,7 +199,7 @@
       ]
     },
     "communityUserSkills": {
-      "count": 7,
+      "count": 9,
       "items": [
         {
           "name": "find-skills",
@@ -234,6 +234,16 @@
         {
           "name": "writing-for-agents",
           "purpose": "Structure pass for skills and instructions: pointers, no-op test, completion criteria.",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "show-me-your-work",
+          "purpose": "Community skill: show-me-your-work",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "retro",
+          "purpose": "Community skill: retro",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]

@@ -243,6 +243,8 @@ Long sessions: when the context window runs high or work must outlive the sessio
 | `mkd` | upex-galaxy/agentic-user-skills | any flow that reaches the decision threshold in `agentic-dev-core/references/decision-elicitation-doctrine.md` (a heavy decision: real tradeoffs, architecture, a larger change; small decisions are swept with the harness question tool instead) |
 | `humanizer` | upex-galaxy/agentic-user-skills | the prose pass of `agentic-dev-core/references/skill-scaffold.md` ("How a skill is written") and `agentic-dev-core/references/instructions-doctrine.md` §6 step 3; when it is not installed the pass runs inline |
 | `writing-for-agents` | upex-galaxy/agentic-user-skills | the structure pass of `agentic-dev-core/references/skill-scaffold.md` ("How a skill is written") and `agentic-dev-core/references/instructions-doctrine.md` §6 step 3; when it is not installed the pass runs inline |
+| `show-me-your-work` | upex-galaxy/agentic-user-skills | `.agents/skills/orca-orchestration/SKILL.md` `## Decision log`: an unattended or long run calls it for the log format; when it is not installed the log keeps the same six columns by hand |
+| `retro` | upex-galaxy/agentic-user-skills | `.agents/skills/orca-orchestration/SKILL.md` Quick start step 8 and `.agents/skills/orca-orchestration/references/coordinator-playbook.md` §9: the harvest at the close of a run; when it is not installed the harvest runs inline |
 | `orchestration.orchestrator_skills` | the orchestration binary | `/orca-orchestration`, ALONGSIDE it: the vendor owns the command grammar, the repo skill owns when and what |
 
 ## Persistent memory via Engram
