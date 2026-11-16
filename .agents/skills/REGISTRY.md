@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-16T05:03:00.821Z`
+> Generated: `2026-11-16T05:09:27.951Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -13,7 +13,7 @@ Skills indexed: 22
 ---
 ## Skill: acli
 
-**Purpose**: Atlassian CLI (`acli`) for Jira, Confluence and org admin from a terminal.
+**Purpose**: Atlassian CLI (`acli`) for Jira, Confluence and org admin.
 
 **Compact Rules**:
 - Pass `--paginate` (or an explicit `--limit`) on any search whose result is counted, iterated or decided on. Pagination is opt-in and truncation is silent: there is no warning.

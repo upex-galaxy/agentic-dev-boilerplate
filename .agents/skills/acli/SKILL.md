@@ -1,6 +1,6 @@
 ---
 name: acli
-description: "Atlassian CLI (`acli`) for Jira, Confluence and org admin from a terminal. Use when creating, viewing, searching, editing, transitioning, commenting on, linking or bulk-changing Jira work items; managing projects, boards, sprints, filters or field definitions; managing Confluence spaces, blogs or pages; activating org users; logging in or switching sites; publishing rich text to Jira; scripting Jira in CI. Not for the Atlassian MCP, Bitbucket or the Appfire acli."
+description: "Atlassian CLI (`acli`) for Jira, Confluence and org admin. Use when creating, viewing, searching, editing, transitioning, commenting on, linking or bulk-editing Jira work items; managing projects, boards, sprints, filters or field definitions; managing Confluence spaces, blogs or pages; activating org users; logging in or switching sites; publishing rich text to Jira or scripting it in CI. Not for the Atlassian MCP, Bitbucket or the Appfire acli."
 license: MIT
 compatibility: [claude-code, codex, opencode, pi]
 allowed-tools: Bash(acli:*)
