@@ -1,0 +1,2689 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unit testing: tests that pin down behavior</title>
+    <meta
+      name="description"
+      content="How /unit-testing designs and writes tests for one unit: the red-green-refactor cycle, names that explain the failure, what to mock and which coverage to look at, on its own or from Stage 2 of /sprint-development."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos": ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#mapa">Map</a>
+        <a href="#sola">Standalone</a>
+        <a href="#stage2">Stage 2</a>
+        <a href="#tdd">TDD</a>
+        <a href="#mocks">Mocks</a>
+        <a href="#cobertura">Cobertura</a>
+        <a href="#invocar">Invocar</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · tests that pin down behavior</div>
+        <h1>Tests that fail for the right <em>reason</em>, <span class="sig">before</span> the code.</h1>
+        <p class="lede">
+          <span class="mono">/unit-testing</span> designs and writes tests for one unit: a function,
+          a class, a module. It covers the <b>red-green-refactor</b> cycle, how to name each test, what
+          to mock and which coverage to look at. It runs on its own, on the code you point it at, or in the middle of a
+          story, when <span class="mono">/sprint-development</span> finds a slice that
+          is worth doing test-first.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> for whoever <b>codes</b></span>
+          <span class="chip"
+            ><span class="dot"></span> works with <b>the runner the app already uses</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> tests <b>behavior</b>, not implementation</span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Input</div>
+            <h3>The unit</h3>
+            <p>Its public interface is the contract the tests pin down.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Red</div>
+            <h3>A failing test</h3>
+            <p>The smallest one possible, and it fails on the assertion, not on a broken import.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Green</div>
+            <h3>The minimum code</h3>
+            <p>Just enough to pass. The real implementation emerges over several cycles.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Refactor</div>
+            <h3>Clean up on green</h3>
+            <p>With the tests as a safety net. Never with a red test.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when to use it</div>
+          <h2>One unit, its tests, and nothing else</h2>
+          <p class="sub">
+            It is a deliberately narrow skill: it does not touch Jira, deploy or do code review.
+            It produces tested code for one slice and hands control back.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Use it when</div>
+            <h3>The request is about tests for one unit</h3>
+            <ul>
+              <li>"Escribe unit tests para esta función o esta clase." (Write unit tests for this function or class.)</li>
+              <li>"Haz TDD de este tramo" (do TDD on this slice), "red-green-refactor".</li>
+              <li>"Qué mockeo aquí?" (what do I mock here?) · "Cómo nombro este test?" (how do I name this test?)</li>
+              <li>"Qué cobertura le pido a este módulo?" (what coverage do I ask of this module?)</li>
+              <li>
+                You are in <b>Stage 2</b> of <span class="mono">/sprint-development</span> and the slice
+                is pure logic, complex branches or the reproducer of a bug.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Do not use it for</div>
+            <h3>What belongs to another layer</h3>
+            <ul>
+              <li>
+                <b>Implementing a whole story</b> (plan, code, review, deploy): that is
+                <span class="mono">/sprint-development</span>, which can call this skill
+                inside.
+              </li>
+              <li>
+                <b>E2E or integration tests</b>: out of scope. The browser is
+                <span class="mono">/playwright-cli</span>; designing those tests is part of a separate QA
+                flow.
+              </li>
+              <li><b>Running the regression suite</b> before a release, or formal QA.</li>
+              <li><b>Deploy to production.</b></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Unit tests are development work, not QA work.</b> They are written while coding, not in
+          a later phase. That is why the skill reads no Jira fields: a unit test is a
+          concern of whoever writes the code, not an artifact of the flow.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the map</div>
+          <h2>Two entry points and four topics</h2>
+          <p class="sub">
+            You come in on its own or from a story in progress. What you ask for picks the reference the AI
+            reads; when it is not clear, it starts with the general guide.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Entry 1 · standalone</div>
+            <a class="wf" href="#sola"
+              ><span class="lt">1</span
+              ><span
+                ><b>Write tests</b
+                ><span>On the code you point at. It ends with a report.</span></span
+              ></a
+            >
+            <a class="wf" href="#tdd"
+              ><span class="lt">2</span
+              ><span><b>Guided TDD</b><span>First the seams to test, then cycle by cycle.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Entry 2 · from a story</div>
+            <a class="wf" href="#stage2"
+              ><span class="lt sig">S2</span
+              ><span
+                ><b>TDD slice in Stage 2</b
+                ><span>Pure logic, complex branches or a bug reproducer. Back to the flow on green.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Questions · no code written</div>
+            <a class="wf" href="#nombres"
+              ><span class="lt agent">N</span
+              ><span><b>How to name</b><span>AAA, Given-When-Then, the recommended hybrid.</span></span></a
+            >
+            <a class="wf" href="#mocks"
+              ><span class="lt agent">M</span
+              ><span><b>What to mock</b><span>Mock, spy, stub, fake. Dependency injection.</span></span></a
+            >
+            <a class="wf" href="#cobertura"
+              ><span class="lt agent">C</span
+              ><span><b>Which coverage</b><span>Branches before lines. Mutation testing.</span></span></a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ENTRADAS ============ -->
+    <section class="band" id="entradas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · what it reads</div>
+          <h2>What it reads before writing a test</h2>
+          <p class="sub">
+            This is the canonical order for an AI starting cold. It stops early when what comes next adds
+            nothing for the slice.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>The unit under test</h3>
+            <p>Its public interface first: it is the contract the tests have to pin down.</p>
+          </div>
+          <div class="step">
+            <h3>The tests that already exist</h3>
+            <p>
+              The <span class="mono">*.test.ts</span> or <span class="mono">*.spec.ts</span> files in the
+              same folder. They are extended, not duplicated.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Who calls it</h3>
+            <p>
+              Searching for the symbol shows which collaborators are external (mocked) and which are internal (used
+              for real).
+            </p>
+          </div>
+          <div class="step">
+            <h3>The runner configuration</h3>
+            <p>
+              <span class="mono">vitest.config.ts</span>, <span class="mono">jest.config.ts</span> or
+              equivalent: variables, setup files, coverage thresholds, path aliases.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Neighboring helpers and fixtures</h3>
+            <p>The project's own seams are reused instead of inventing parallel ones.</p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Requirements</div>
+            <h3>A runner and its command</h3>
+            <ul>
+              <li>
+                A configured runner, the one <span class="mono">stack.test_runner</span> names in
+                <span class="mono">.agents/project.yaml</span>.
+              </li>
+              <li>
+                The test command declared in <span class="mono">package.json</span>. For TDD,
+                the runner needs a <span class="mono">--watch</span> mode.
+              </li>
+              <li>
+                Setup runs only when <span class="mono">stack.test_runner</span> is
+                <span class="mono">null</span> (setup section of
+                <span class="mono">references/unit-testing.md</span>). With any other value that runner is
+                used: a second one is never installed and it is never swapped for another.
+              </li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Project context</div>
+            <h3>Stack and complementary skills</h3>
+            <ul>
+              <li>
+                The runner comes from <span class="mono">stack.test_runner</span>, the command from
+                <span class="mono">stack.scripts.test</span>, and the tests live under
+                <span class="mono">stack.app_root</span>, all in
+                <span class="mono">.agents/project.yaml</span>.
+              </li>
+              <li>
+                On entry it resolves the skills of the <span class="mono">language</span> category from
+                <span class="mono">.agents/skills/REGISTRY.md</span>: the ones from the repo or the community
+                load on their own; one from your user account asks you once.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 SOLA ============ -->
+    <section class="band" id="sola">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · entry 1</div>
+          <h2>Standalone: from the pointed-at code to a coverage report</h2>
+          <p class="sub">
+            With no <span class="mono">/sprint-development</span> in between, it works against the code
+            you point to and sorts itself out with what it finds.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              It identifies the unit and decides whether it goes <b>test-first or after</b>. It writes the tests with
+              the project's naming convention and mocks only external dependencies.
+            </p>
+            <p>It runs the suite until green and measures that unit's coverage.</p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>
+              <b>Which unit</b>, when the request is ambiguous: the AI confirms with you before writing. If
+              nobody can answer (a worker or a routine), it picks the most likely unit, notes it
+              and carries on.
+            </p>
+            <p>
+              The <b>runner</b>, only if <span class="mono">stack.test_runner</span> is
+              <span class="mono">null</span>: the AI asks you and the choice is saved with
+              <span class="mono">bun run agents:setup --stack</span>. With nobody present it decides,
+              as a technical decision, and reports it as <span class="mono">DECIDED</span>.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              Test files next to the code, with the same name plus
+              <span class="mono">.test.ts</span>.
+            </p>
+            <p>A report: files added, passing tests and the coverage delta.</p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> tests green and the unit's coverage verified.</div>
+      </div>
+    </section>
+
+    <!-- ============ §05 STAGE 2 ============ -->
+    <section class="band" id="stage2">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · entry 2</div>
+          <h2>From Stage 2 of a story: one slice and back</h2>
+          <p class="sub">
+            In <span class="mono">/sprint-development</span>, Stage 2 (implementation) marks TDD
+            as <b>optional</b>. When a slice calls for it, it delegates to this skill and picks up again when the
+            unit is green.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">Which slice qualifies</span>
+            <p>A <b>pure logic</b> function.</p>
+            <p><b>Complex branches</b> with edge cases: better to pin them down with tests than to guess them later.</p>
+            <p>
+              A <b>bug</b>: first the test that reproduces it and fails, then the fix.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">What it does not do</span>
+            <p>It does not move the ticket in Jira, open the PR, review or deploy.</p>
+            <p>
+              All of that stays with <span class="mono">/sprint-development</span>. The boundary between
+              the two skills is informal and both know it.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Returns</span>
+            <p>The slice, green and refactored.</p>
+            <p>
+              Stage 2 goes on with its parallel verification: lint, types and unit tests, and iterates
+              again if anything is left red.
+            </p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>If you ask…</th>
+                <th>Goes through</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"Escribe unit tests para esta función, TDD" (write unit tests for this function, TDD)</th>
+                <td>
+                  <span class="mono">/unit-testing</span> directly: a request for tests skips the
+                  orchestrator.
+                </td>
+              </tr>
+              <tr>
+                <th>"Implementa esta historia: código, tests y PR" (implement this story: code, tests and PR)</th>
+                <td>
+                  <span class="mono">/sprint-development</span>. It can call
+                  <span class="mono">/unit-testing</span> internally, but the entry point is the
+                  orchestrator.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 TDD ============ -->
+    <section class="band" id="tdd">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · red-green-refactor</div>
+          <h2>The short cycle is what gives the value</h2>
+          <p class="sub">
+            Test before the code, in cycles of five to ten minutes. If a cycle runs past half an hour,
+            the slice is too big: split it into smaller behavior steps.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Red · a failing test</h3>
+            <p>
+              The smallest test that captures one piece of behavior. It has to fail on the
+              <b>assertion</b>; one that fails because the file does not compile tells you nothing. If it passes on
+              the first run, something smells wrong: investigate before going on.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Green · the minimum code</h3>
+            <p>
+              The simplest thing that passes it. A hard-coded value is fine at this stage. No code for tests
+              that do not exist yet.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Refactor · only on green</h3>
+            <p>
+              Extract, rename, deduplicate, with the tests watching. Refactoring on red is losing
+              the safety net exactly when it is needed most.
+            </p>
+          </div>
+        </div>
+
+        <p class="sub r" style="margin-top: 22px">
+          Before the first cycle the <b>seams</b> are named: the points where the behavior
+          can be tested without standing up the whole system. A worker or <span class="mono">/autonomous-delivery</span>
+          takes them from the story's plan; if the plan names none, it uses the highest one that already exists
+          and notes it in <span class="mono">progress.md</span>.
+        </p>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Type of code</th>
+                <th>Test-first or after?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Business logic, pure functions</th>
+                <td>TDD, strongly recommended</td>
+              </tr>
+              <tr>
+                <th>Algorithms, parsers, state machines, validations</th>
+                <td>TDD</td>
+              </tr>
+              <tr>
+                <th>Bug fix</th>
+                <td>TDD: the test that reproduces the bug goes first</td>
+              </tr>
+              <tr>
+                <th>Performance-critical code</th>
+                <td>TDD, with benchmarks next to the assertions</td>
+              </tr>
+              <tr>
+                <th>Presentational UI components</th>
+                <td>After (or component tests, which are often skipped)</td>
+              </tr>
+              <tr>
+                <th>Integration glue (DB wrappers, API clients)</th>
+                <td>After; integration tests cover it better</td>
+              </tr>
+              <tr>
+                <th>Throwaway scripts, one-off migrations</th>
+                <td>Skipped</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          rule of thumb: if it has branches, math or string parsing, it goes with TDD; if it mostly
+          orchestrates other things, the test goes after or a higher level covers it
+        </p>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Cascading tests</b
+            ><span
+              >Writing all the tests and then all the code is not TDD: you lose the
+              design feedback of the small cycles.</span
+            >
+          </div>
+          <div class="g">
+            <b>Green in one go</b
+            ><span
+              >Fifty lines to pass one test: the test is not guiding the design. Shrink the
+              slice.</span
+            >
+          </div>
+          <div class="g">
+            <b>Not running after every change</b
+            ><span>It breaks the cycle. That is what watch mode is for.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 NOMBRES ============ -->
+    <section class="band" id="nombres">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · names</div>
+          <h2>A name that explains the failure in one line</h2>
+          <p class="sub">
+            A test's name is what you see when it fails, almost always in a CI log and months
+            later. If it cannot be named in a few words, the test does too much.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">AAA · body structure</div>
+            <h3>Arrange, Act, Assert</h3>
+            <ul>
+              <li>Prepare the inputs, call the unit, check the result.</li>
+              <li>The name says what is true, in declarative form.</li>
+              <li>Short and easy to scan; less explanatory when the behavior is complex.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Given-When-Then · BDD style</div>
+            <h3>Precondition, action, result</h3>
+            <ul>
+              <li>Reads like a specification.</li>
+              <li>Useful for onboarding or for people who do not code.</li>
+              <li>Verbose: on a trivial test it feels ceremonious.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>The hybrid the skill recommends:</b> short <span class="mono">describe</span> blocks
+          carry the context (the "given"), and each <span class="mono">it</span> states the
+          behavior. Hierarchical context, failure messages that explain themselves, nothing repeated.
+        </div>
+
+        <pre class="code r"><span class="k">describe</span>(<span class="s">'cart with items'</span>, () =&gt; {
+  <span class="k">it</span>(<span class="s">'returns total including tax when item added'</span>, () =&gt; { ... });
+  <span class="k">it</span>(<span class="s">'returns 0 when all items removed'</span>, () =&gt; { ... });
+});
+
+<span class="k">describe</span>(<span class="s">'cart with no items'</span>, () =&gt; {
+  <span class="k">it</span>(<span class="s">'throws when attempting checkout'</span>, () =&gt; { ... });
+});</pre>
+
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Bad</th>
+                <th>Good</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">testGetUser</span></th>
+                <td><span class="mono">returnsUserWhenIdExists</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">testError</span></th>
+                <td><span class="mono">throwsValidationErrorOnEmptyEmail</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">testBoundary</span></th>
+                <td><span class="mono">appliesDiscountAtExactly100Threshold</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">callsApiOnce</span></th>
+                <td>a behavior name, not an interaction with the mock</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          when the same rule holds for many inputs, parameterize and name the rule, not
+          each case
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §08 MOCKS ============ -->
+    <section class="band" id="mocks">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · what to mock</div>
+          <h2>Mock the edge of the system, not what is inside it</h2>
+          <p class="sub">
+            A test that mocks every collaborator verifies the mock graph, not the code. Real
+            implementations are the default; the mock is for what makes a test slow,
+            brittle or non-deterministic.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>What for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Stub</th>
+                <td>Replaces the implementation with a fixed return value.</td>
+              </tr>
+              <tr>
+                <th>Spy</th>
+                <td>Wraps the real implementation and observes the calls without changing the behavior.</td>
+              </tr>
+              <tr>
+                <th>Fake</th>
+                <td>A working but simplified implementation: an in-memory database, a fake clock.</td>
+              </tr>
+              <tr>
+                <th>Mock</th>
+                <td>
+                  A programmed expectation that fails if it is not called as expected. It tends to tie the
+                  test to the implementation: spies and stubs are preferred.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Mock</div>
+            <h3>The external edges</h3>
+            <ul>
+              <li>HTTP, database clients, filesystem.</li>
+              <li>Time (fake timers or an injected clock) and randomness (a seed or an injected generator).</li>
+              <li>Code that depends on the environment: <span class="mono">process.env</span>, native modules.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Do not mock</div>
+            <h3>What you are testing</h3>
+            <ul>
+              <li><b>The unit under test</b>: that would be testing the mock.</li>
+              <li><b>Pure functions</b>: they are deterministic, you call them and that is it.</li>
+              <li>
+                <b>What is not yours</b>, when it can be avoided: wrap the library in an
+                adapter of your own and mock the adapter.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Dependency injection first.</b> If the function receives what it needs as an
+          argument, the test passes it a fake and that is it, with no module patching.
+          <span class="mono">jest.mock</span> or <span class="mono">vi.mock</span> are left for when
+          the seam is unavoidable: side effects on module load, a third-party SDK.
+        </div>
+
+        <pre class="code r"><span class="c">// service.ts: the dependency comes in as an argument</span>
+<span class="k">export async function</span> getUser(id: string, db = defaultDb) {
+  <span class="k">return</span> db.users.findOne({ id });
+}
+
+<span class="c">// service.test.ts: a fake, no jest.mock</span>
+<span class="k">it</span>(<span class="s">'returns the user'</span>, <span class="k">async</span> () =&gt; {
+  <span class="k">const</span> fakeDb = { users: { findOne: <span class="k">async</span> () =&gt; ({ id: <span class="s">'1'</span>, name: <span class="s">'A'</span> }) } };
+  expect(<span class="k">await</span> getUser(<span class="s">'1'</span>, fakeDb)).toEqual({ id: <span class="s">'1'</span>, name: <span class="s">'A'</span> });
+});</pre>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Mocks that are not cleaned up</b
+            ><span
+              >State that leaks between tests and false positives. Clean them up in
+              <span class="mono">beforeEach</span>, and restore a spy when done.</span
+            >
+          </div>
+          <div class="g">
+            <b>Five mocked dependencies</b
+            ><span
+              >If setting up the mocks takes more lines than the test, the unit is not a unit: test
+              the leaves, and the orchestrator goes to an integration test or uses fakes.</span
+            >
+          </div>
+          <div class="g">
+            <b>A badly chosen async mock</b
+            ><span
+              ><span class="mono">mockResolvedValue</span> versus
+              <span class="mono">mockReturnValue</span>: the wrong one breaks silently.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 COBERTURA ============ -->
+    <section class="band" id="cobertura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · coverage</div>
+          <h2>A smoke alarm, not a goal</h2>
+          <p class="sub">
+            Low coverage means missing tests. High coverage does not mean good tests: a
+            test that calls the function and asserts nothing also adds lines. What is useful is each PR's
+            delta, not the global number.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">What to measure</div>
+            <h3>Branches before lines</h3>
+            <ul>
+              <li>
+                <b>Branch coverage</b> is the most actionable metric: each side of every
+                <span class="mono">if</span>, <span class="mono">&amp;&amp;</span>,
+                <span class="mono">||</span> and ternary.
+              </li>
+              <li>High line coverage with low branch coverage means half the conditionals are untested.</li>
+              <li>
+                <b>Mutation testing</b> (Stryker in JS/TS) injects small errors and checks whether any test
+                notices. Slow: weekly or nightly, on the critical modules.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">In CI</div>
+            <h3>Gates by delta, not a fixed threshold</h3>
+            <ul>
+              <li>Warn if a PR lowers coverage by more than 2 points; block if it lowers it by more than 5.</li>
+              <li>Fail if a critical-path file, declared explicitly, drops below its threshold.</li>
+              <li>
+                A single global threshold punishes the refactor that deletes tested code and rewards
+                filler.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Type of code</th>
+                <th>Suggested coverage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Business logic, pure functions</th>
+                <td>90-100%</td>
+              </tr>
+              <tr>
+                <th>Public API methods</th>
+                <td>90% or more</td>
+              </tr>
+              <tr>
+                <th>Internal helpers</th>
+                <td>70-90%</td>
+              </tr>
+              <tr>
+                <th>Presentational UI components</th>
+                <td>60-80% (E2E covers the rest)</td>
+              </tr>
+              <tr>
+                <th>Glue, configuration, wiring</th>
+                <td>50% or more, or skipped</td>
+              </tr>
+              <tr>
+                <th>Generated code, throwaway scripts</th>
+                <td>excluded</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          these are guides, not contracts: a helper at 70% that exercises every important branch is worth more than one
+          at 95% whose missing 5% is the only error path
+        </p>
+
+        <div class="callout r">
+          <b>Noise is excluded</b> so the number reflects real gaps: generated code (types,
+          OpenAPI), third-party copies, <span class="mono">*.d.ts</span> files, configuration,
+          migrations, stories and the tests themselves. If everything is excluded, the metric says nothing.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · guardrails</div>
+          <h2>What the skill never does</h2>
+          <p class="sub">
+            The full anti-patterns live in <span class="mono">SKILL.md</span> and travel in the
+            compact registry that subagents receive
+            (<span class="mono">.agents/skills/REGISTRY.md</span>).
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not test implementation details</b>: private helpers, internal state,
+              number of calls to internal methods. Internals get refactored freely; the tests
+              should not even notice.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>Does not skip the red.</b> The test goes before the code and fails for the right reason.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not use weak assertions</b> such as <span class="mono">toBeTruthy()</span> or
+              <span class="mono">toBeDefined()</span> when an exact value is expected.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not share mutable state between tests.</b> It is reset in
+              <span class="mono">beforeEach</span> or created inside the test; otherwise you get failures
+              that depend on the order.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not let a flaky test through as green.</b> The cause gets fixed (timing, shared
+              state, network) or the test is quarantined with a ticket.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not let lying tests through</b> (LT-1 to LT-3): the ones that pass without checking the
+              behavior or break on an innocent refactor. The table is in
+              <span class="mono">tdd-workflow.md</span>, section <i>Lying tests</i>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not test the framework</b>: matchers, a library's internals, ORM mechanics. Your
+              own logic gets tested.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not carry on without the official documentation</b> when it needs it: if no library
+              documentation tool is available, it stops and tells you which one is missing, with no silent
+              substitute.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · what you tell the AI</div>
+          <h2>Invoking it in each terminal</h2>
+          <p class="sub">
+            This skill has no named modes: what you ask for picks the reference. You name the skill
+            and describe the slice, in English or in Spanish.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/unit-testing TDD this function</span>
+            <p>The slash loads the skill; the rest of the sentence picks the topic.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the unit-testing skill: what to mock here</span>
+            <p>No slash: you name the skill in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the unit-testing skill: write unit tests for this function</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:unit-testing TDD this function</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>If you say something like…</th>
+                <th>The AI reads</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"TDD this function" · "red-green-refactor" · "test before code"</th>
+                <td><span class="mono">tdd-workflow.md</span></td>
+              </tr>
+              <tr>
+                <th>"name this test" · "AAA" · "Given-When-Then"</th>
+                <td><span class="mono">test-naming.md</span></td>
+              </tr>
+              <tr>
+                <th>"qué mockear" (what to mock) · "Vitest spy" · "DI for testing"</th>
+                <td><span class="mono">mocking-patterns.md</span></td>
+              </tr>
+              <tr>
+                <th>"coverage target" · "mutation testing"</th>
+                <td><span class="mono">test-coverage.md</span></td>
+              </tr>
+              <tr>
+                <th>general principles · runner setup</th>
+                <td><span class="mono">unit-testing.md</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          the references live in <span class="mono">.agents/skills/unit-testing/references/</span>
+          · when in doubt, the AI starts with <span class="mono">unit-testing.md</span>, which points to the
+          others
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §12 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · around this skill</div>
+          <h2>Who it hands off to</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Round trip · stories</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Calls this skill in Stage 2 for a TDD slice or a bug reproducer, and picks up again
+              when the unit is green and refactored.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Before · technical base</div>
+            <h3>/project-bootstrap</h3>
+            <p>
+              Sets up the repo and leaves unit tests as a separate topic, to run at any
+              time afterwards. Deck:
+              <a href="../project-bootstrap/how-it-works.en.html">Project bootstrap</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Out of scope · browser</div>
+            <h3>/playwright-cli</h3>
+            <p>
+              For end-to-end against the running app. Designing integration and E2E tests
+              belongs to a separate QA flow.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · git</div>
+            <h3>/git-flow-master</h3>
+            <p>
+              Tests travel in the same commit as the behavior they verify, not in a separate
+              <span class="mono">test:</span> commit.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/unit-testing/SKILL.md"
+            >.agents/skills/unit-testing/SKILL.md</a
+          >
+          and its <span class="mono">references/</span> folder, one reference per topic.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The core idea.</b> A unit test pins down what the unit
+            promises, not how it does it inside. Short cycles, mocks only at the edges and
+            coverage read as a signal: that way the tests survive the refactor that they justified.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Fuente: <span class="mono">.agents/skills/unit-testing/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← back to Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX): scroll deck, reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

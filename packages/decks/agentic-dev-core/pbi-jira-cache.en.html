@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PBI as a Jira cache: the backlog is not committed</title>
+    <meta
+      name="description"
+      content="Why .context/PBI/ is a gitignored cache of Jira and not a committed mirror: the three tiers, the .gitignore ladder, context:hydrate, the two plan altitudes and the defenses of the shared workspace."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck — cero requests externos, ni siquiera
+     fuentes. Diseñado para sobrevivir años como archivo suelto.
+     Tokens: "Planos" — ver packages/decks/README.md (fuente única).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia,
+          serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        line-height: 1.62;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 26px 110px;
+      }
+
+      /* topbar */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      /* hero */
+      header.hero {
+        padding: 76px 0 40px;
+        border-bottom: 1px solid var(--line);
+      }
+      .kick {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin: 0 0 16px;
+        font-weight: 600;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: clamp(32px, 5vw, 54px);
+        line-height: 1.08;
+        margin: 0 0 20px;
+        font-weight: 600;
+      }
+      h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .lede {
+        font-size: clamp(16px, 1.6vw, 20px);
+        color: var(--ink-soft);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 26px;
+      }
+      .tag {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        padding: 4px 10px;
+        border-radius: 5px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--ink-faint);
+      }
+
+      section {
+        margin-top: 58px;
+      }
+      h2 {
+        font-family: var(--font-display);
+        font-size: clamp(23px, 3vw, 33px);
+        line-height: 1.15;
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.5em;
+        color: var(--ink-faint);
+        margin-right: 12px;
+        font-weight: 600;
+      }
+      .sub {
+        color: var(--ink-soft);
+        max-width: 76ch;
+        margin: 0 0 24px;
+      }
+      .sub strong,
+      section p strong {
+        color: var(--ink);
+      }
+
+      table.plain {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 14.5px;
+      }
+      table.plain th {
+        text-align: left;
+        padding: 13px 17px;
+        background: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--line);
+      }
+      table.plain td {
+        padding: 14px 17px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+      table.plain tr:last-child td {
+        border-bottom: none;
+      }
+      table.plain td:first-child {
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .tbl-scroll {
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.87em;
+        background: var(--blue-wash);
+        color: var(--blue);
+        padding: 1.5px 6px;
+        border-radius: 4px;
+      }
+      .yes {
+        color: var(--good);
+        font-weight: 700;
+      }
+      .not {
+        color: var(--signal);
+        font-weight: 700;
+      }
+
+      .callout {
+        display: flex;
+        gap: 13px;
+        margin-top: 18px;
+        padding: 15px 18px;
+        border-radius: 9px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--blue);
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .callout.warn {
+        border-left-color: var(--signal);
+      }
+      .callout.agt {
+        border-left-color: var(--agent);
+      }
+      .callout .ic {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--blue);
+        padding-top: 3px;
+      }
+      .callout.warn .ic {
+        color: var(--signal);
+      }
+      .callout.agt .ic {
+        color: var(--agent);
+      }
+      .callout strong {
+        color: var(--ink);
+      }
+
+      pre.block {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 19px;
+        overflow-x: auto;
+        color: var(--ink-soft);
+        margin: 18px 0 0;
+      }
+      pre.block .c {
+        color: var(--ink-faint);
+      }
+      pre.block .k {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      pre.block .neg {
+        color: var(--good);
+        font-weight: 600;
+      }
+      pre.block .bad {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      /* flow diagram */
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: stretch;
+        margin-top: 20px;
+      }
+      .flow .step {
+        flex: 1 1 180px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--blue);
+        border-radius: 10px;
+        padding: 14px 16px;
+        position: relative;
+      }
+      .flow .step.agt {
+        border-top-color: var(--agent);
+      }
+      .flow .step.sig {
+        border-top-color: var(--signal);
+      }
+      .flow .step .n {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .flow .step h4 {
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-family: var(--font-display);
+        font-weight: 600;
+      }
+      .flow .step p {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+      }
+      .flow .arrow {
+        align-self: center;
+        color: var(--ink-faint);
+        font-family: var(--font-mono);
+        font-size: 18px;
+        flex: 0 0 auto;
+        padding: 0 2px;
+      }
+      @media (max-width: 760px) {
+        .flow .arrow {
+          display: none;
+        }
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .card {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--blue);
+        border-radius: 10px;
+        padding: 19px 21px;
+      }
+      .card.sig {
+        border-top-color: var(--signal);
+      }
+      .card.agt {
+        border-top-color: var(--agent);
+      }
+      .card h4 {
+        margin: 0 0 8px;
+        font-size: 15.5px;
+        font-family: var(--font-display);
+        font-weight: 600;
+      }
+      .card p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .card p + p {
+        margin-top: 8px;
+      }
+      .card .n {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 8px;
+      }
+      .card strong {
+        color: var(--ink);
+      }
+
+      /* numbered steps (migración) */
+      ol.steps {
+        list-style: none;
+        counter-reset: paso;
+        margin: 20px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 12px;
+      }
+      ol.steps li {
+        counter-increment: paso;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 15px 18px 15px 58px;
+        position: relative;
+        min-width: 0;
+        color: var(--ink-soft);
+        font-size: 14.5px;
+      }
+      ol.steps li::before {
+        content: counter(paso);
+        position: absolute;
+        left: 17px;
+        top: 15px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--blue-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      ol.steps li strong {
+        color: var(--ink);
+      }
+      ol.steps li .cmd {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        margin-top: 6px;
+        color: var(--blue);
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      ul.tight {
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 7px;
+      }
+      ul.tight li {
+        position: relative;
+        padding-left: 18px;
+        color: var(--ink-soft);
+        font-size: 14.5px;
+      }
+      ul.tight li::before {
+        content: '·';
+        position: absolute;
+        left: 3px;
+        color: var(--blue);
+        font-weight: 700;
+      }
+      ul.tight strong {
+        color: var(--ink);
+      }
+
+      footer {
+        margin-top: 74px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      footer code {
+        background: none;
+        color: var(--ink-faint);
+      }
+      footer a {
+        color: var(--ink-soft);
+      }
+
+      /* scroll reveal */
+      .r {
+        opacity: 0;
+        transform: translateY(14px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .wrap {
+          padding: 0 16px 70px;
+        }
+        ol.steps li {
+          padding-left: 52px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Blueprints</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#problema">Problem</a>
+        <a href="#modelo">Model</a>
+        <a href="#escalera">Ladder</a>
+        <a href="#hidratar">Hydrate</a>
+        <a href="#altitudes">Altitudes</a>
+        <a href="#defensas">Defenses</a>
+        <a href="#consumidor">Consumer</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Toggle theme">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <div class="wrap">
+      <header class="hero">
+        <p class="kick">agentic-dev-core · context doctrine</p>
+        <h1>The backlog is not committed: PBI as a Jira <em>cache</em></h1>
+        <p class="lede">
+          <code>.context/PBI/</code> mirrors Jira's epics, stories and bugs as local markdown.
+          That mirror is not committed: two sessions that re-sync at different moments would
+          produce conflicting commits of the same generated text. The rule, plainly:
+          <strong>Jira is the source of truth, the disk is a cache</strong>. This deck explains the
+          three tiers, the <code>.gitignore</code> ladder that protects them, and the defenses that
+          keep the cache from lying.
+        </p>
+        <div class="meta">
+          <span class="tag"><code>.agents/instructions/agent-local-context-pbi.md</code> §9</span>
+          <span class="tag">.context/PBI/README.md</span>
+          <span class="tag">scripts/sync-jira-issues.ts</span>
+          <span class="tag">bun run context:hydrate</span>
+        </div>
+      </header>
+
+      <section id="problema" class="r">
+        <h2><span class="num">01</span>The problem: a duplicate database inside git</h2>
+        <p class="sub">
+          A committed Jira mirror looks harmless until two sessions work at the same time.
+          Each one re-syncs at its own moment, each one commits its version of the same
+          regenerated file, and a 3-way merge over a full rewrite
+          <strong>means nothing</strong>: git cannot merge two snapshots of the same database
+          taken minutes apart. Jira already IS the versioned, shared, cloud copy: committing it
+          duplicates the database inside the repo and buys nothing.
+        </p>
+        <div class="callout warn">
+          <span class="ic">Incident</span>
+          <div>
+            The class of incident this model closes: a <strong>stale host</strong>. After an
+            Atlassian site migration, an old copy of the URL left in the environment points
+            the sync at the previous workspace. Because the sync <strong>OVERWRITES</strong>
+            <code>.context/PBI/</code>, an outdated host corrupts the cache with content from
+            another site <em>while reporting success</em>, and with the cache committed that corruption would enter
+            git silently. That is why the host lives only in
+            <code>.agents/project.yaml</code> → <code>issue_tracker.atlassian_url</code> and the
+            resolver (<code>cli/lib/atlassian-instance.ts</code>) warns with both values if an
+            environment copy disagrees.
+          </div>
+        </div>
+      </section>
+
+      <section id="modelo" class="r">
+        <h2><span class="num">02</span>The model: three tiers, one question</h2>
+        <p class="sub">
+          Every path under <code>.context/PBI/</code> is exactly <strong>one</strong> of three
+          tiers. Before creating any file there, you decide the tier: there are no "sort of
+          versioned" files.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Source of truth</th>
+                <th>In git?</th>
+                <th>Recovered with</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>[SYNC]</td>
+                <td>Jira</td>
+                <td><span class="not">No</span> (gitignored)</td>
+                <td><code>bun run context:hydrate</code></td>
+              </tr>
+              <tr>
+                <td>[COMMIT]</td>
+                <td>This repo (<code>README.md</code> + <code>templates/</code>)</td>
+                <td><span class="yes">Yes</span></td>
+                <td><code>git checkout</code></td>
+              </tr>
+              <tr>
+                <td>[LOCAL]</td>
+                <td>Nothing durable</td>
+                <td><span class="not">No</span></td>
+                <td>Not recovered: disposable by design</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ic">The test</span>
+          <div>
+            <strong>Could a PM read it and weigh in?</strong> It goes to Jira (field or comment).
+            <strong>Does it drive a resume or a workflow between sessions?</strong> It goes to
+            <code>.session/sprint-development/&lt;KEY&gt;/progress.md</code>: the resume
+            contract reads that, never the PBI copy. Durable evidence goes to Jira, as an attachment or
+            comment. <strong>Neither?</strong> It is
+            <code>[LOCAL]</code> (<code>context.md</code>, <code>progress.md</code>,
+            <code>evidence/</code>): it lives only on this machine and losing it must cost nothing.
+            Nothing downstream may depend on a <code>[LOCAL]</code> file existing.
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ic">Rule</span>
+          <div>
+            <code>[SYNC]</code> files are <strong>forbidden to write by hand</strong>: the sync
+            overwrites them on every run and no file is protected. The flow is always
+            <em>author → push to the Jira field → sync → read the materialized copy</em>.
+          </div>
+        </div>
+      </section>
+
+      <section id="escalera" class="r">
+        <h2><span class="num">03</span>The negation ladder in <code>.gitignore</code></h2>
+        <p class="sub">
+          The whole tree is excluded and the two committed exceptions are re-included right
+          after. The exact shape matters: git <strong>cannot re-include</strong> a file
+          whose parent directory is excluded, so collapsing the ladder into a single
+          <code>.context/PBI/</code> line silently drops the exceptions.
+        </p>
+        <pre class="block"><span class="c"># ===== PBI: Jira-backed cache (Jira is the source of truth) =====</span>
+<span class="k">.context/PBI/*</span>          <span class="c">← excludes the CONTENTS (/*), not the directory</span>
+<span class="neg">!.context/PBI/README.md</span>  <span class="c">← re-included: [COMMIT] tier rules</span>
+<span class="neg">!.context/PBI/templates/</span> <span class="c">← re-included: [COMMIT] skeletons</span>
+
+<span class="bad">.context/PBI/</span>            <span class="c">← WRONG: excludes the directory and the negations die</span></pre>
+        <p class="sub" style="margin-top: 18px">
+          Each story's <code>context.md</code> / <code>progress.md</code> / <code>evidence/</code>
+          are deliberately left un-negated: they are <code>[LOCAL]</code> and stay on the
+          disk of whoever made them.
+        </p>
+        <div class="callout">
+          <span class="ic">Verify</span>
+          <div>
+            Any change to the ladder is checked with <code>git check-ignore -v</code>:
+            on <code>.context/PBI/README.md</code> it <strong>must not</strong> report an ignore, and
+            on a <code>stories/.../story.md</code> it <strong>must</strong>. Two commands, zero
+            faith.
+          </div>
+        </div>
+      </section>
+
+      <section id="hidratar" class="r">
+        <h2><span class="num">04</span>Cold clone and hydration</h2>
+        <p class="sub">
+          A fresh clone brings an almost empty <code>.context/PBI/</code>: only the README and
+          <code>templates/</code>. <strong>That is the intended state, not a broken checkout.</strong>
+          The full cache is rebuilt with one command:
+        </p>
+        <pre class="block"><span class="k">bun run context:hydrate</span>   <span class="c"># = jira:sync-issues pull --include-comments</span></pre>
+        <ul class="tight">
+          <li>
+            Requires <code>ATLASSIAN_EMAIL</code> and <code>ATLASSIAN_API_TOKEN</code> in
+            <code>.env</code>; the host comes from <code>.agents/project.yaml</code> →
+            <code>issue_tracker.atlassian_url</code>. <code>bun run jira:check</code> validates the
+            full setup.
+          </li>
+          <li>
+            Whoever has no Jira access cannot hydrate and keeps the cache empty: they can
+            work on framework code and committed docs, but not on per-ticket work. It is
+            a question of Jira permissions, not of the repo.
+          </li>
+          <li>
+            One-off reads go through the same script:
+            <code>bun run jira:sync-issues get PROJ-42 --include-comments</code> fetches ONE issue with
+            all its custom fields (<code>acli view</code> returns null for
+            <code>customfield_*</code>). In bulk: <code>jira:sync-issues jql "&lt;query&gt;"</code>;
+            scoped: <code>pull --epic &lt;KEY&gt;</code> or <code>pull --story &lt;KEY&gt;</code>.
+          </li>
+        </ul>
+      </section>
+
+      <section id="altitudes" class="r">
+        <h2><span class="num">05</span>Two plan altitudes, one flow</h2>
+        <p class="sub">
+          Implementation plans live in Jira as custom fields: that way the development loop
+          survives session resets and local context loss. There are exactly two
+          altitudes:
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Lives on</th>
+                <th>Altitude</th>
+                <th>Materialized as</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>feature_implementation_plan</code></td>
+                <td>the Epic</td>
+                <td>macro: technical plan for the whole feature; if missing, the epic precheck of
+                  <code>/sprint-development</code> offers to generate it</td>
+                <td><code>epics/EPIC-PROJ-20-.../feature-implementation-plan.md</code></td>
+              </tr>
+              <tr>
+                <td><code>spec_implementation_plan</code></td>
+                <td>the Story</td>
+                <td>micro: the per-story slice of the parent plan</td>
+                <td><code>stories/STORY-PROJ-42-.../implementation-plan.md</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flow" aria-label="Flow: author, push to Jira, sync, read">
+          <div class="step agt">
+            <span class="n">1 · author</span>
+            <h4>The AI writes the plan</h4>
+            <p>In the planning stage, never straight into a <code>[SYNC]</code> file.</p>
+          </div>
+          <span class="arrow">→</span>
+          <div class="step">
+            <span class="n">2 · push</span>
+            <h4>To the Jira field</h4>
+            <p>Epic or Story depending on the altitude. The plan stays where it survives.</p>
+          </div>
+          <span class="arrow">→</span>
+          <div class="step">
+            <span class="n">3 · sync</span>
+            <h4><code>jira:sync-issues</code></h4>
+            <p>Materializes the local <code>.md</code> from the field.</p>
+          </div>
+          <span class="arrow">→</span>
+          <div class="step sig">
+            <span class="n">4 · read</span>
+            <h4>The synced copy</h4>
+            <p>Everything that follows reads the cache, never a local draft.</p>
+          </div>
+        </div>
+        <div class="callout">
+          <span class="ic">Fallback</span>
+          <div>
+            If the instance lacks the custom field, the content goes as a Jira
+            <strong>structured comment</strong> (<code>## &lt;label&gt;</code>, per
+            <code>.agents/jira-required.yaml</code> → <code>fallback:</code>) and the sync emits a
+            pointer stub for that <code>.md</code>. It never blocks on a missing field.
+          </div>
+        </div>
+      </section>
+
+      <section id="defensas" class="r">
+        <h2><span class="num">06</span>Defenses of the shared workspace</h2>
+        <p class="sub">
+          The same Jira project is shared by the dev side and the sibling QA boilerplate. The sync
+          ships four defenses so that artifacts from one side do not contaminate the other's tree:
+        </p>
+        <div class="cards">
+          <div class="card">
+            <span class="n">QA-Artifact filter</span>
+            <h4>QA process epics, kept out of <code>epics/</code></h4>
+            <p>
+              An Epic with the <code>QA-Artifact</code> label is a bucket of QA artifacts, not a
+              product module: it is filed under <code>qa-artifacts/</code>. Three signals in
+              order of trust: the <strong>label</strong> (authoritative), the keys cached in
+              <code>qa.qa_epics.*.key</code>, and the <code>QA&nbsp;</code> name prefix as a
+              last resort.
+            </p>
+          </div>
+          <div class="card sig">
+            <span class="n">Altitude guards</span>
+            <h4>An STP never passes as an ATP</h4>
+            <p>
+              The QA ladder puts <code>ATP:</code> / <code>ATR:</code> / <code>ATS:</code> at
+              Story altitude; <code>FTP:</code> (feature),
+              <code>STP:</code> / <code>STR:</code> (sprint) and <code>MTP:</code> (master) live higher
+              up. A link to
+              an artifact of higher altitude is <strong>named in an INFO and never
+              materialized</strong> inside the Story folder.
+            </p>
+          </div>
+          <div class="card">
+            <span class="n">Declarative pull</span>
+            <h4>The scope lives in yaml, not in the script</h4>
+            <p>
+              Which work types <code>pull</code> sweeps is declared by
+              <code>.agents/jira-required.yaml</code> → <code>work_types</code>. Epic, Story and Bug
+              carry <code>sync: default</code>: Epic and Story arrive by walking the epics, Bug
+              has its own sweep. Improvement, Tech Story and Tech Debt are custom types
+              (<code>sync: optional</code>) and are requested with <code>--types</code>; Defects arrive
+              nested under their coverable parent. Types present in Jira that the run will not touch
+              are named, so an empty folder reads as configuration and not as a bug.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">Visible orphans</span>
+            <h4><code>_orphans/</code> is a work list</h4>
+            <p>
+              A Story with no parent Epic lands in <code>epics/_orphans/</code> instead of failing. A
+              Test whose only home is internal Xray membership (GraphQL-only, this repo has no
+              Xray client) is left as a visible orphan: the fix is to re-link it in Jira. Defects
+              with no coverable parent are reported with their keys so they can be re-linked.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="consumidor" class="r">
+        <h2><span class="num">07</span>What a consumer project lives with</h2>
+        <p class="sub">
+          A consumer project may keep tracking <code>[SYNC]</code> files in git. When
+          <code>bun sync</code> runs, a post-apply hook lists what git tracks under
+          <code>.context/PBI/</code>, subtracts the committed allowlist (<code>README.md</code> +
+          <code>templates/**</code>) and, if anything is left, saves a
+          <strong>migration recipe for the consumer's AI agent</strong> in
+          <code>.agents/prompts/pbi-cache-migration.md</code> (gitignored, single use) and
+          points to it with a row in the final table. The hook never touches the git index: untracking
+          is destructive-adjacent work that the agent does with a recovery point in place.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>Full recovery tag</strong>, before untracking anything: everything that
+            follows depends on this point.
+            <span class="cmd">git tag pbi-pre-cache-migration</span>
+          </li>
+          <li>
+            <strong>Untrack exactly</strong> the paths outside the allowlist (the files
+            stay on disk).
+            <span class="cmd">git rm -r --cached -- &lt;paths outside the allowlist&gt;</span>
+          </li>
+          <li>
+            <strong>Commit the untracking.</strong>
+            <span class="cmd">git commit -m "chore: untrack .context/PBI cache (Jira is the source of truth)"</span>
+          </li>
+          <li>
+            <strong>Rebuild the cache from Jira</strong> (<code>ATLASSIAN_*</code> credentials
+            in <code>.env</code>).
+            <span class="cmd">bun run jira:sync-issues pull</span>
+          </li>
+          <li>
+            <strong>Diff the tag against the rebuilt cache</strong> and push to Jira any
+            content that only existed in git and never reached Jira (to the field, or to its comment
+            fallback), then re-run the <code>pull</code>. The sync overwrites with Jira's truth,
+            so that content is now only visible through the tag. Only after this
+            step can the migration be reported as done, and the tag is kept until the team
+            confirms nothing was lost.
+            <span class="cmd">git diff pbi-pre-cache-migration -- .context/PBI</span>
+          </li>
+        </ol>
+        <div class="cards">
+          <div class="card">
+            <span class="n">Atomic delivery</span>
+            <h4>The ladder arrives whole or not at all</h4>
+            <p>
+              The <code>.gitignore</code> sync of <code>bun sync</code> groups a run of
+              lines with a common prefix that contains a negation as
+              <strong>an all-or-nothing group</strong>: a re-include ladder applied halfway
+              is worse than not applying it. The question about new lines (a card in the
+              local <code>bun sync</code> page, or the terminal with <code>--headless</code>) offers it
+              as a single option.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">repoOnlyPaths</span>
+            <h4>The maintainer's files never travel</h4>
+            <p>
+              The updater filters boilerplate-only paths before offering anything:
+              <code>.github/workflows/pages.yml</code> and <code>ci.yml</code>, the boilerplate's own
+              <code>.context/master-implementation-plan.md</code>, and the per-instance
+              <code>jira-fields.json</code> / <code>jira-workflows.json</code>
+              catalogs. The list lives in <code>REPO_ONLY_PATHS</code>
+              (<code>cli/update-boilerplate.ts</code>). A consumer regenerates their own; the update
+              only touches the framework.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>Source of truth: <code>.agents/instructions/agent-local-context-pbi.md</code> §9 · <code>.context/PBI/README.md</code> ·
+          <code>scripts/sync-jira-issues.ts</code></span>
+        <span><a href="../../index.html">← back to Blueprints</a></span>
+        <span><code>packages/decks/agentic-dev-core/pbi-jira-cache.en.html</code></span>
+      </footer>
+    </div>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

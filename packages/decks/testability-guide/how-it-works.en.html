@@ -1,0 +1,2964 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Testability guide: the /qa page and its credentials</title>
+    <meta
+      name="description"
+      content="How /testability-guide generates the app's /qa page and the credentials artifact: discovery with no hand-written values, an idempotency snapshot, decisions in one message, a build stamp, publish targets and a security audit."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Designed to survive for years as a loose file.
+     Tokens: "Planos": see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell shared with the how-it-works decks.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .trio > * {
+        min-width: 0;
+      }
+      .wf span .mono {
+        display: inline;
+        margin: 0;
+        font-size: inherit;
+      }
+      .plane .mono,
+      .trio .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#pareja">Pair</a>
+        <a href="#mapa">Map</a>
+        <a href="#discovery">Discovery</a>
+        <a href="#snapshot">Snapshot</a>
+        <a href="#decisiones">Decisions</a>
+        <a href="#pagina">Page</a>
+        <a href="#credenciales">Credentials</a>
+        <a href="#seguridad">Security</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · the app, ready to test</div>
+        <h1>
+          A page that explains <em>how</em> to test the app, and a <span class="sig">closed</span> place
+          where the credentials live.
+        </h1>
+        <p class="lede">
+          <span class="mono">/testability-guide</span> generates a public page inside the app,
+          <span class="mono">/qa</span>, the <b>Software Testability Guide for QA</b>, and builds a separate
+          credentials artifact that you publish wherever you choose. The page teaches how to test the
+          app across the database, API and interface layers; the artifact holds the real values. When
+          you run it again, it detects what changed in the stack and patches only that.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> for people who <b>code</b> and people who <b>lead</b></span>
+          <span class="chip"><span class="dot"></span> runs <b>after</b> the app exists</span>
+          <span class="chip agent"
+            ><span class="dot"></span> the page <b>never</b> carries a secret</span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Phases 0-2</div>
+            <h3>Detect</h3>
+            <p>Reads the repo without touching it, scores testability and compares against the snapshot.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 3</div>
+            <h3>You decide</h3>
+            <p>A single message with the questions detection could not answer.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phases 4-6</div>
+            <h3>Generate and publish</h3>
+            <p>The <span class="mono">/qa</span> page and the credentials artifact, in parallel.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phases 7-8</div>
+            <h3>Audit and verify</h3>
+            <p>Security rules before publishing; types, build, lint and browser after.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 9</div>
+            <h3>Open the PR</h3>
+            <p>Through <span class="mono">/git-flow-master</span>. The skill never pushes on its own.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when to use it</div>
+          <h2>When there is a real app that someone has to test</h2>
+          <p class="sub">
+            It describes an app that already works. Against an empty scaffold there is little to
+            document, and the skill tells you so before going on.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Use it when</div>
+            <h3>QA needs a front door</h3>
+            <ul>
+              <li>
+                Human testers or AI agents need <b>a single page</b> inside the product that explains
+                how to test it.
+              </li>
+              <li>
+                You want to create or refresh the <b>credentials artifact</b> behind the page's
+                button.
+              </li>
+              <li>
+                The stack moved (auth changed, the database was migrated, a new MCP appeared) and
+                <span class="mono">/qa</span> went stale.
+              </li>
+              <li>
+                You ask for "guía de testeabilidad" (testability guide), "credenciales para testing" (credentials for testing) or "update /qa page".
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Do not use it for</div>
+            <h3>What belongs to another skill</h3>
+            <ul>
+              <li><b>Defining the product</b> (PRD, journeys, architecture): <span class="mono">/project-foundation</span>.</li>
+              <li>
+                <b>Setting up backend, frontend, OpenAPI, auth or env</b>:
+                <span class="mono">/project-bootstrap</span>. This skill can run when that one
+                finishes.
+              </li>
+              <li><b>Implementing a story</b>: <span class="mono">/sprint-development</span>.</li>
+              <li><b>Unit tests</b>: <span class="mono">/unit-testing</span>.</li>
+              <li><b>Formal test cases or a test management system</b>: out of scope.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 LA PAREJA ============ -->
+    <section class="band" id="pareja">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · two artifacts</div>
+          <h2>A public page and a closed artifact that point to each other</h2>
+          <p class="sub">
+            They are never duplicated. The page's button opens the credentials destination, and the
+            artifact's footer links back to <span class="mono">/qa</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Page <span class="mono">/qa</span> (in the app)</th>
+                <th>Credentials artifact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Holds</th>
+                <td>Placeholders and the procedure</td>
+                <td>The real values and <span class="mono">.env</span> blocks to copy</td>
+              </tr>
+              <tr>
+                <th>Who sees it</th>
+                <td>Readable by anyone who reaches the page</td>
+                <td>Only the QA group, with the destination's native permission</td>
+              </tr>
+              <tr>
+                <th>Answers</th>
+                <td>"How do I test?"</td>
+                <td>"What do I paste?"</td>
+              </tr>
+              <tr>
+                <th>Where it lives</th>
+                <td>In the repo, at the path you choose (default <span class="mono">/qa</span>)</td>
+                <td>
+                  A Jira epic by default, or Confluence, Notion, another tool, or pasted by hand.
+                  Never in the repo.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue r">
+          <b>"Public" means public documentation, not public credentials.</b> If the
+          product is an internal tool or a customer-facing product where an operational page
+          would leak information, the skill closes <span class="mono">/qa</span> in production. If it is
+          a practice platform where the page <i>is</i> the front door for external
+          testers, it leaves it open on purpose. It detects this in discovery; if it is not clear, it
+          asks you.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · the map</div>
+          <h2>From phase 0 to 9, almost all in a row</h2>
+          <p class="sub">
+            Once the decisions are fixed, the page and the artifact are independent and
+            run in two subagents in parallel. Verification and the PR come after both.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Before writing · inline</div>
+            <a class="wf" href="#reanudar"
+              ><span class="lt">0</span
+              ><span><b>Resume</b><span>A run left half done? Resume, restart or abort.</span></span></a
+            >
+            <a class="wf" href="#discovery"
+              ><span class="lt">1</span
+              ><span><b>Discovery + testability</b><span>Read-only. Scores UI, API and DB.</span></span></a
+            >
+            <a class="wf" href="#snapshot"
+              ><span class="lt">2</span
+              ><span><b>Idempotency check</b><span>No-op, surgical patch or fresh scaffold.</span></span></a
+            >
+            <a class="wf" href="#decisiones"
+              ><span class="lt sig">3</span
+              ><span><b>Decisions in one message</b><span>Then <span class="mono">plan.md</span> is written and approved.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">In parallel · subagents A and B</div>
+            <a class="wf" href="#pagina"
+              ><span class="lt agent">4</span
+              ><span><b>A · /qa page</b><span>Code, route and a redirect from the old route.</span></span></a
+            >
+            <a class="wf" href="#credenciales"
+              ><span class="lt agent">5</span
+              ><span><b>B · Credentials content</b><span>A single markdown body, the source of truth.</span></span></a
+            >
+            <a class="wf" href="#seguridad"
+              ><span class="lt sig">7</span
+              ><span><b>Security audit</b><span>Numbered later, but it runs before B publishes.</span></span></a
+            >
+            <a class="wf" href="#credenciales"
+              ><span class="lt agent">6</span
+              ><span><b>B · Publish</b><span>Through the adapter of the chosen destination.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Closing · in sequence</div>
+            <a class="wf" href="#cierre"
+              ><span class="lt">8</span
+              ><span><b>Verification</b><span>Subagent C: types, build, lint, browser, destination.</span></span></a
+            >
+            <a class="wf" href="#cierre"
+              ><span class="lt">9</span
+              ><span><b>Commit + PR</b><span>Delegated to <span class="mono">/git-flow-master</span>.</span></span></a
+            >
+          </div>
+        </div>
+        <p class="figcap">
+          each phase leaves an entry in <span class="mono">.session/testability-guide/progress.md</span>
+          · phase 2 leaves it as <span class="mono">skipped</span> when there is no drift, so the
+          no-op is audited too
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §04 REANUDAR ============ -->
+    <section class="band" id="reanudar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · phase 0</div>
+          <h2>Two different memories: the session and the snapshot</h2>
+          <p class="sub">
+            The skill keeps state in two places that solve different problems. Mixing them up is
+            the easiest mistake to make.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Within a run</div>
+            <h3><span class="mono">.session/testability-guide/</span></h3>
+            <ul>
+              <li>
+                Holds <span class="mono">plan.md</span> and <span class="mono">progress.md</span>.
+                Detects an <b>interrupted</b> run: for example, the AI cut off between the page and
+                publishing.
+              </li>
+              <li>
+                Phase 0 reads it first. If it exists, it shows you the goal, the last completed phase and
+                the next one, and waits: <b>resume</b>, <b>restart</b> (archives it) or
+                <b>abort</b>.
+              </li>
+              <li>When it finishes cleanly, the folder moves to <span class="mono">.session/.archive/</span>.</li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">Between runs</div>
+            <h3>The <span class="mono">qa-guide-snapshot</span> comment</h3>
+            <ul>
+              <li>
+                Lives at the very top of the generated page file and is committed.
+              </li>
+              <li>
+                Detects <b>code drift</b>: the stack changed between two complete runs.
+              </li>
+              <li>
+                Phase 2 reads it. It survives the session being archived: it is the signal for the
+                <i>next</i> invocation.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 DISCOVERY ============ -->
+    <section class="band" id="discovery">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · phase 1</div>
+          <h2>Discovery: everything is detected, nothing is guessed</h2>
+          <p class="sub">
+            The same generator runs against very different projects: one with Supabase Auth and Redoc,
+            another with its own JWT login and Swagger UI. A hand-written route goes wrong in most of them.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI detects</span>
+            <p>
+              Framework and version, UI kit, icons, light/dark theme, language, <b>auth model</b>
+              (every one it exposes), login endpoint and token shape, docs UI and the OpenAPI
+              spec route.
+            </p>
+            <p>
+              Database engine and QA role, MCP config files per agent, how the
+              <span class="mono">.env</span> gets activated, mono or poly repos, default branch and where the
+              deploy SHA comes from.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">It never does</span>
+            <p>
+              Read <span class="mono">.env</span> or credentials files. From
+              <span class="mono">.env.example</span> it lists variable <b>names</b>, never
+              values.
+            </p>
+            <p>Install anything, start the dev server or run the suite: that is phase 8.</p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              A short paragraph that feeds the snapshot, the page's <span class="mono">qaConfig</span>
+              object and the idempotency diff.
+            </p>
+            <p>
+              Whatever was not detected stays as an explicit gap
+              (<span class="mono">&lt;detected: none&gt;</span>), and the page says "ask your
+              lead". Never an invented value.
+            </p>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin-top: 40px">
+          <h3 style="margin: 0">In the same phase: how testable is the product?</h3>
+          <p class="sub">
+            It scores three layers. The page is built the same way at any score; what changes is
+            the flag and the recommendation you get.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Testable when…</th>
+                <th>If missing</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>UI</th>
+                <td>Critical flows (login at minimum) have stable selectors, <span class="mono">data-testid</span> or role.</td>
+                <td>Flag and a recommendation for a selector convention.</td>
+              </tr>
+              <tr>
+                <th>API</th>
+                <td>
+                  There is a <b>programmatic</b> path to a token for
+                  <span class="mono">Authorization: Bearer</span>, with expiry, and a discoverable
+                  contract.
+                </td>
+                <td>
+                  High flag. It recommends a normal password login <b>plus</b> an endpoint that
+                  issues a token with expiry.
+                </td>
+              </tr>
+              <tr>
+                <th>DB</th>
+                <td>A read-only QA role exists to inspect without the app in the middle.</td>
+                <td>Flag. If there is only a superuser, the run stops (see security).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout agent r">
+          <b>It recommends, it does not build.</b> The token endpoint, the <span class="mono">data-testid</span>
+          attributes or the QA role are work for <span class="mono">/project-bootstrap</span> or
+          <span class="mono">/sprint-development</span>. And a passwordless login is not deficient
+          by itself: if there is also a personal token issuer, the API counts as testable.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 SNAPSHOT ============ -->
+    <section class="band" id="snapshot">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · phase 2</div>
+          <h2>Idempotency: running it again never rewrites from scratch what did not change</h2>
+          <p class="sub">
+            If <span class="mono">/qa</span> already exists, the AI reads the snapshot, repeats discovery and
+            compares field by field. It shows you the diff <b>before</b> touching anything.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c">/* qa-guide-snapshot</span>
+<span class="c">   skill-version=…  stack=…  ui-kit=…  auth-method=…  docs-route=…  openapi-spec=…</span>
+<span class="c">   db=…  repos-shape=…  mcp-config-files=…  page-features=…</span>
+<span class="c">   language=…  publisher=…  credentials-source=…  default-branch=…</span>
+<span class="c">   build-sha-source=…  testability=…  generated=…  content-hash=…</span>
+<span class="c">*/</span></pre>
+        <p class="figcap">
+          shape of the comment, with the values omitted · the canonical field list lives in
+          <span class="mono">references/idempotency-snapshot.md</span>
+        </p>
+
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Diff result</th>
+                <th>What happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>No-op</th>
+                <td>Only the date or a minor version changed. Reports "up to date" and exits.</td>
+              </tr>
+              <tr>
+                <th>Surgical patch</th>
+                <td>
+                  A field that affects code changed (stack, auth, database, language…). The
+                  sections that field drives are regenerated, <b>only</b> those; the rest stays byte for byte the same.
+                </td>
+              </tr>
+              <tr>
+                <th>Re-publish only</th>
+                <td>The credentials destination changed; the page is not touched.</td>
+              </tr>
+              <tr>
+                <th>Page upgrade</th>
+                <td>
+                  The page is from a flatter version (no highlighting, no request cards).
+                  <b>It offers it to you</b>; it never applies it on its own.
+                </td>
+              </tr>
+              <tr>
+                <th>Full re-scaffold</th>
+                <td>
+                  A major jump in <span class="mono">skill-version</span> or three or more code fields
+                  moved at once. Only with your OK, and it keeps a copy of the previous page.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Your hand edits</div>
+            <h3>They are respected</h3>
+            <ul>
+              <li>
+                Whatever sits between <span class="mono">qa-guide:user-region:start</span> and
+                <span class="mono">:end</span> survives every patch.
+              </li>
+              <li>If a patch lands on top of a region of yours, the AI shows you the conflict before writing.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">No snapshot</div>
+            <h3>It asks before overwriting</h3>
+            <ul>
+              <li>
+                A <span class="mono">/qa</span> with no comment (or an unreadable one) is treated as
+                hand-made: "shall I take it and regenerate it with a snapshot?"
+              </li>
+              <li>
+                The <span class="mono">content-hash</span> is written in two passes: a placeholder when
+                generating the page and the real hash after publishing.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 DECISIONES ============ -->
+    <section class="band" id="decisiones">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · phase 3</div>
+          <h2>Your decisions, in a single message</h2>
+          <p class="sub">
+            The questions arrive together, each with its default and its cost. You can answer "all
+            defaults". Whatever you already said in your initial request is fixed and is not asked
+            again.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Default</th>
+                <th>What to know</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · credentials destination</th>
+                <td>Jira epic</td>
+                <td>The body is portable: switching destination later is cheap.</td>
+              </tr>
+              <tr>
+                <th>Q2 · database role for testers</th>
+                <td>Read-only <span class="mono">qa_*</span> role</td>
+                <td>Writes go through the API. A superuser is always rejected.</td>
+              </tr>
+              <tr>
+                <th>Q3 · page route</th>
+                <td><span class="mono">/qa</span></td>
+                <td>Unless it clashes with the host's route architecture.</td>
+              </tr>
+              <tr>
+                <th>Q4 · redirect from an old route</th>
+                <td>Yes, if there is a sibling page</td>
+                <td>
+                  Server-side redirect; the old route stays alive for one release cycle. With no
+                  sibling, it is skipped.
+                </td>
+              </tr>
+              <tr>
+                <th>Q5 · language of the visible text</th>
+                <td>The host's</td>
+                <td>
+                  Follows the app's language signal. With no signal, it asks you; if nobody can answer,
+                  it writes in English and reports it. Identifiers and
+                  <span class="mono">data-testid</span> stay in English.
+                </td>
+              </tr>
+              <tr>
+                <th>Q6 · code highlighting</th>
+                <td rowspan="3">Pre-answered by detection</td>
+                <td>Reuses the host's; if there is none, server-side Shiki.</td>
+              </tr>
+              <tr>
+                <th>Q7 · UI driver for agents</th>
+                <td><span class="mono">playwright-cli</span> if its skill is present; the Playwright MCP as an alternative.</td>
+              </tr>
+              <tr>
+                <th>Q8 · request viewer</th>
+                <td>Postman-style cards; curl blocks if the kit cannot.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gate r">
+          <b>Gate</b> once you answer, <span class="mono">.session/testability-guide/plan.md</span> is written;
+          when you accept it, it goes from <span class="mono">draft</span> to
+          <span class="mono">approved</span> and only then does phase 4 begin. On a surgical
+          patch, only the questions whose value changed come back.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 PÁGINA ============ -->
+    <section class="band" id="pagina">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · phase 4</div>
+          <h2>The page: sections §1 to §7, one config object</h2>
+          <p class="sub">
+            Its own layout with a fixed index and a hero, not a list of accordions. Every value the
+            page shows comes from <span class="mono">qaConfig</span>, the bridge between detection and
+            rendering.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>§1 · Credentials, at the very top</h3>
+            <p>
+              The first thing a tester sees: a button that opens the credentials destination in another
+              tab. With no destination detected, a gap and no button.
+            </p>
+          </div>
+          <div class="step">
+            <h3>§2 · Architecture and repos</h3>
+            <p>
+              Frontend → API → database with the detected stack, the MCP layer underneath, and the
+              official repos (one if it is a monorepo, two if it is a polyrepo).
+            </p>
+          </div>
+          <div class="step">
+            <h3>§3 · The three forces (trifuerza) and the <span class="mono">.env</span></h3>
+            <p>
+              UI + API + DB, and how the variables get loaded: the agent opens without them, each MCP reads
+              its <span class="mono">.env</span> at startup and a command that needs a value runs with
+              <span class="mono">bunx varlock run</span>. If one fails to load, the MCP returns 401/403 and
+              you have to exit, fix it and come back in.
+            </p>
+          </div>
+          <div class="step">
+            <h3>§4 · Database, two paths</h3>
+            <p>
+              The database MCP or a URI for the editor's SQL extension, with the same read-only
+              role. The MCP comes from the <span class="mono">stack:</span> block of
+              <span class="mono">.agents/project.yaml</span>: DBHub by default, and a Supabase app adds
+              the Supabase MCP tab as well, also read-only. Roles, revoked columns or the RLS test, only if the project
+              has them.
+            </p>
+          </div>
+          <div class="step">
+            <h3>§5 · API, two paths</h3>
+            <p>
+              The project's real auth requests, the OpenAPI MCP or the Postman one, and the link to
+              the detected docs UI. The OpenAPI MCP only lists endpoints and reads their schemas: authenticated
+              requests run with curl and each tester's personal token. With no path to a
+              token, it says so: it never invents an endpoint.
+            </p>
+          </div>
+          <div class="step">
+            <h3>§6 · UI with Playwright</h3>
+            <p>
+              A fixture that bridges UI and API according to the detected auth shape, and the
+              <span class="mono">playwright-cli</span> cookbook for agent-driven exploration.
+            </p>
+          </div>
+          <div class="step">
+            <h3>§7 · Quick reference</h3>
+            <p>Demo users, an endpoint table taken from the spec and the most common errors.</p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Adapts to the host</div>
+            <h3>Uses what the app already has</h3>
+            <ul>
+              <li>The host's UI kit, icons and light/dark theme mechanism. No parallel system.</li>
+              <li>
+                The framework's idiomatic route (App Router, Pages, Remix, Astro, SvelteKit, Nuxt, Vite
+                with React Router). Any other framework: it stops and asks you.
+              </li>
+              <li>A <span class="mono">data-testid</span> on every interactive element, one per node.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Dependencies</div>
+            <h3>A single exception</h3>
+            <ul>
+              <li>It adds no dependencies. A component is missing: it creates it locally, in the host's style.</li>
+              <li>
+                The exception is a syntax highlighter that runs on the server (Shiki or whichever the
+                host already uses): zero JavaScript on the client. And it is skipped if the host forbids
+                new dependencies.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 BUILD STAMP ============ -->
+    <section class="band" id="build">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · the build stamp</div>
+          <h2>Which deploy am I looking at? The page tells you</h2>
+          <p class="sub">
+            Under the subtitle, the page shows the short SHA of the deployed commit, linking to the
+            commit when a repo is detected. A finding is tied to a commit, and "is my
+            fix in yet?" gets answered on the page itself.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">How it reads it</span>
+            <p>
+              At <b>runtime</b>, on the server, from the platform variable whose
+              <b>name</b> detection noted in <span class="mono">qaConfig.build</span>. On Vercel
+              it is <span class="mono">VERCEL_GIT_COMMIT_SHA</span>.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">What it never does</span>
+            <p>
+              Write the SHA into the <span class="mono">/qa</span> code: it would be stale on the
+              next deploy.
+            </p>
+            <p>Show other platform variables next to it (commit message, author, secrets).</p>
+          </div>
+          <div class="out">
+            <span class="k">No SHA</span>
+            <p>
+              Locally, or on a deploy without git metadata, the same node shows a visible line:
+              <span class="mono">build local, sin SHA de despliegue</span> (local build, no deployment SHA).
+            </p>
+            <p>
+              The <span class="mono">qa-build-sha</span> node is always there, with the full SHA in
+              <span class="mono">data-sha</span> (empty in the fallback), so automation can
+              read it.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>A redeploy is never drift.</b> The snapshot stores only the variable name
+          (<span class="mono">build-sha-source</span>), and the <span class="mono">content-hash</span>
+          covers the credentials body, which does not carry the SHA. When the change reaches a
+          deployed environment, verification compares <span class="mono">data-sha</span> with the commit that
+          environment should be running and confirms a deploy exists for it. An empty
+          <span class="mono">data-sha</span> there means the source is missing: you fix the
+          source, you never write the value by hand.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CREDENCIALES ============ -->
+    <section class="band" id="credenciales">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · phases 5 and 6</div>
+          <h2>Credentials: written once, published wherever you choose</h2>
+          <p class="sub">
+            The markdown body of <span class="mono">references/credentials-content-template.md</span>
+            is the single source of truth. Each destination is a thin adapter that changes the wrapper,
+            never the content.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">What it holds</div>
+            <h3>Straight to the point</h3>
+            <ul>
+              <li>Who the audience is and the "what lives here and what lives in <span class="mono">/qa</span>" box.</li>
+              <li>Environments table, from <span class="mono">environments</span> in <span class="mono">.agents/project.yaml</span>.</li>
+              <li>
+                UI auth: each tester creates their own user (default, with self-service sign-up or magic
+                link) or a table of shared demo accounts, when there is no sign-up of its own.
+              </li>
+              <li>DB auth: the raw URI for a SQL editor and the separate fields the MCP reads. They are not interchangeable.</li>
+              <li>API auth: a <span class="mono">.env</span> block with the base URL and the spec URL, with no slot for the token; each tester generates their own and uses it by name with curl.</li>
+              <li>How to activate the MCPs, security and a footer that points to <span class="mono">/qa</span>.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">What it never holds</div>
+            <h3>A secret written by the AI</h3>
+            <ul>
+              <li>
+                Every sensitive value comes out as the literal <span class="mono">&lt;see secrets store&gt;</span>.
+                A person fills it in <b>inside</b> the destination, where the audit trail stays.
+              </li>
+              <li>The body is not written to any file in the host's repo.</li>
+              <li>Not even when pasting by hand: a chat can be captured or logged.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Destination (Q1)</th>
+                <th>Tool</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Jira epic (default)</th>
+                <td><span class="mono">/acli</span></td>
+                <td>
+                  Markdown → ADF with the <span class="mono">acli</span> skill's converter; every
+                  snippet comes out with a copy button. Tables are built by hand and verified by reading
+                  the epic back.
+                </td>
+              </tr>
+              <tr>
+                <th>Confluence page</th>
+                <td><span class="mono">/acli</span> or the Atlassian MCP</td>
+                <td>Page restriction to the QA group.</td>
+              </tr>
+              <tr>
+                <th>Notion page</th>
+                <td>Notion MCP if present</td>
+                <td>Shared only with specific people.</td>
+              </tr>
+              <tr>
+                <th>Another tool with an MCP or CLI</th>
+                <td>The detected MCP or CLI</td>
+                <td>For example a secrets manager or an internal wiki.</td>
+              </tr>
+              <tr>
+                <th>Pasted by hand</th>
+                <td>None</td>
+                <td>
+                  It hands you the body and the steps; you give it back the final URL. It warns if the URL
+                  looks public.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">If there is no tool</div>
+            <h3>Falls back to pasting by hand</h3>
+            <ul>
+              <li>
+                Destination chosen but no MCP or CLI available: the body is never lost. It tells you what
+                to install or where to paste.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">If the tool fails auth</div>
+            <h3>It stops</h3>
+            <ul>
+              <li>
+                A 401/403 does not trigger the fallback: it hides the real problem. It names the
+                <span class="mono">.env</span> variable and asks you to restart the agent session, because the MCP
+                reads the environment at startup.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>After the first publication, the artifact belongs to a person.</b> The lead fills in
+          the real values inside the destination. That is why a re-run first reads the current body:
+          if it was curated by hand, it does not overwrite it. It offers to leave it untouched with a comment pointing to
+          the refreshed <span class="mono">/qa</span> (recommended), a guided merge, or overwriting
+          and accepting the loss of what was curated. Leaving it untouched is a successful result.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 SEGURIDAD ============ -->
+    <section class="band" id="seguridad">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · phase 7</div>
+          <h2>Security audit, before anything goes out</h2>
+          <p class="sub">
+            It runs before any publish call and applies to every adapter: none
+            can skip it. If a point is not met, nothing is published.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Never a superuser or schema-owner credential.</b> If it is the only one
+              available, it stops and hands you the SQL to create a read-only <span class="mono">qa_*</span>
+              role. Even if you insist, it does not write it into the artifact.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Never secrets that sign sessions</b> (<span class="mono">NEXTAUTH_SECRET</span>,
+              JWT keys, server-side OAuth secrets). If they appear with a value in
+              <span class="mono">.env.example</span>, it stops and recommends rotating them.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>Never production write credentials.</b> Only the read role; writes go through the API.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Never re-publishes something that already leaked into git history</b> without rotating it
+              first.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>On the page:</b> no credentials, no private hostnames, no third-party analytics or
+              scripts. Demo accounts of intentionally public scope may show their
+              password; each tester's own never. When in doubt, emails only.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>On the destination:</b> access closed with the native permission (restricted view of the
+              epic, page restriction, sharing with specific people).</span
+            >
+          </div>
+        </div>
+        <p class="figcap">
+          at the end of every run an audit trail is left: destination, artifact URL, path, whether
+          a superuser was rejected, whether rotation is needed and the testability flags
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §12 CIERRE ============ -->
+    <section class="band" id="cierre">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · phases 8 and 9</div>
+          <h2>Verify in order, and let the work come in through a PR</h2>
+          <p class="sub">
+            "Done" means every check in
+            <span class="mono">references/verification-checklist.md</span> passed. If one fails, it gets fixed and
+            you start over from the first.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Types, build and lint</h3>
+            <p>
+              With the scripts the host's <span class="mono">package.json</span> declares, never
+              one assumed. Lint rules are not turned off: the page gets fixed.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Browser smoke</h3>
+            <p>
+              With <span class="mono">/playwright-cli</span> against the dev server: loads, title,
+              build stamp, the button opens the destination in another tab, the code blocks, the
+              redirect if there was one, and a screenshot for the PR.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The destination looks right</h3>
+            <p>
+              A person confirms this one: snippets with a copy button, closed access and the link back
+              to <span class="mono">/qa</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The diff has no secrets</h3>
+            <p>
+              No passwords, no tokens, no private hostnames, no literal SHA inside
+              <span class="mono">app/qa/</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Complete snapshot and self-check</h3>
+            <p>
+              The hash placeholder has already been replaced by the real one. And the closing questions: did it read
+              the code before writing?, the credentials at the very top?, the PR against the detected
+              default branch?
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r" style="margin-top: 26px">
+          <div>
+            <span class="k">Commit + PR</span>
+            <p>
+              Delegated to <span class="mono">/git-flow-master</span> with the branch name, the
+              commit messages and the PR title. The skill never pushes, opens the PR or touches
+              branches on its own.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">The push policy</span>
+            <p>
+              Whether something can go straight to a protected branch is not this skill's call: it is resolved by
+              <span class="mono">/git-flow-master</span> with
+              <span class="mono">git_strategy.policy.direct_push_to_protected</span> from
+              <span class="mono">.agents/project.yaml</span>.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">When it finishes</span>
+            <p>
+              The session is archived in <span class="mono">.session/.archive/</span>. The snapshot stays
+              on the page: it is the signal for the next run.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §13 ENTRADAS / SALIDAS ============ -->
+    <section class="band" id="archivos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · what it reads and what it leaves</div>
+          <h2>The files that own each piece of data</h2>
+          <p class="sub">
+            The reading order for an AI starting cold. It stops earlier when the run is
+            small, for example a snapshot no-op.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>What for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">.agents/project.yaml</span></th>
+                <td>Project identity, environment URLs, repos, Jira key.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.mcp.json</span></th>
+                <td>Which MCP servers exist: decides which publish destinations are within reach.</td>
+              </tr>
+              <tr>
+                <th>The existing <span class="mono">/qa</span> page</th>
+                <td>Its snapshot, for the drift check.</td>
+              </tr>
+              <tr>
+                <th>The destination contract</th>
+                <td>Depends on Q1: the adapter in <span class="mono">references/publishers/</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.env.example</span></th>
+                <td>The names of the variables the artifact references. Never the values.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Leaves in the repo</div>
+            <h3>Through a PR</h3>
+            <ul>
+              <li>The page at the framework's idiomatic route, with its snapshot at the top.</li>
+              <li>The redirect from the old route, if you chose one.</li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">Leaves out of the repo</div>
+            <h3>Where it belongs</h3>
+            <ul>
+              <li>The credentials artifact, at the chosen destination.</li>
+              <li>
+                The run state in <span class="mono">.session/testability-guide/</span>, which
+                gets archived at the end.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">14</span> · security rails</div>
+          <h2>What the skill never does</h2>
+          <p class="sub">
+            The full rules live in the frontmatter of <span class="mono">SKILL.md</span>
+            (<span class="mono">compact_rules</span>) and travel in the compact registry that subagents
+            receive (<span class="mono">.agents/skills/REGISTRY.md</span>).
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not write credential values</b> in the page or in the artifact's
+              body: it references variables by name.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not skip drift detection</b> or regenerate from scratch when a targeted
+              patch is enough.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not close <span class="mono">/qa</span> in production by reflex</b>: only when
+              an operational page would leak; a practice platform leaves it open.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>It does not use real data</b>: no PII and no production data. Only demo users and sanitized fixtures.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>It does not duplicate the credentials body</b> across destinations: one source, thin adapters.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not assume nothing changed</b> without re-reading the snapshot and comparing it to the current
+              stack.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>It does not write the deploy SHA into the code</b>: it is read at runtime.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not go on without the tool it needs</b>: if library documentation or
+              web search is missing at the step that requires it, it stops and tells you which one
+              is missing, with no silent substitute.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §15 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">15</span> · what you tell the AI</div>
+          <h2>Invoking it in each terminal</h2>
+          <p class="sub">
+            This skill has no named modes: the same invocation creates the page the first time and
+            updates it the next times. You name the skill and say what you want, in Spanish or English.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/testability-guide create the QA guide page</span>
+            <p>The slash loads the skill; the rest of the sentence supplies answers ahead of time.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the testability-guide skill: testability guide</span>
+            <p>No slash: you name the skill in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the testability-guide skill: update /qa page</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:testability-guide create the QA guide page</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>What you say in the request already counts as an answer.</b> "Publish the credentials as
+          a Jira epic, page at <span class="mono">/qa</span>, text in Spanish" fixes Q1, Q3 and Q5:
+          the AI confirms what is fixed and only asks about what is missing.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §16 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">16</span> · around this skill</div>
+          <h2>Who it hands the baton to</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Before · technical base</div>
+            <h3>/project-bootstrap</h3>
+            <p>
+              Leaves the app set up; this skill runs after. It also owns the infrastructure
+              testability fixes, such as a token endpoint. Deck:
+              <a href="../project-bootstrap/how-it-works.en.html">Project bootstrap</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · page bugs</div>
+            <h3>/sprint-development</h3>
+            <p>
+              A bug that QA finds on the page itself becomes a normal story. It also
+              receives the feature-level testability fixes.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · feature map</div>
+            <h3>/project-context features</h3>
+            <p>
+              Registers <span class="mono">/qa</span> as an internal operational page, which needs no
+              coverage in the PRD.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · docs</div>
+            <h3>Docs follow-up</h3>
+            <p>
+              Adds the page and the artifact's location to the key routes of
+              <span class="mono">.agents/instructions/agent-project.md</span>, so other skills
+              know they exist.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">During · git and Jira</div>
+            <h3>/git-flow-master · /acli</h3>
+            <p>
+              One carries the commit and the PR; the other publishes the credentials epic when that is the
+              destination.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/testability-guide/SKILL.md"
+            >.agents/skills/testability-guide/SKILL.md</a
+          >
+          and its <span class="mono">references/</span> folder: one reference per phase, plus one
+          adapter per destination in <span class="mono">references/publishers/</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The underlying idea.</b> Testing well starts with knowing how
+            to get in. The page teaches the way in without a single secret; the artifact keeps the secrets
+            behind a door with permissions. And every time the stack changes, the skill patches what
+            moved and leaves your edits where they were.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Source: <span class="mono">.agents/skills/testability-guide/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← back to Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and reflowed with @media.
+         There are no slides to scale or to swipe through: this block only declares the mobile mode.
+         The site serving the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>
