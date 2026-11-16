@@ -90,10 +90,10 @@ The "Soft dependencies" section is informational. It lists `relates` links so th
 
 ## Invocation triggers
 
-- **Automatic**: final phase of `add-feature.md` Phase 2B, once the full epic, stories and links exist.
-- **Automatic**: final step of `product-backlog-seed.md`, after the initial seed completes.
-- **On-demand**: top-level workflow `H` in `SKILL.md`. Trigger phrases include "qué historias trabajamos primero", "execution order", "sprint plan", "topological order", "what unblocks the team".
-- **Re-run** whenever the dependency graph changes (a story added, a link added, a link removed). The re-run invokes `/project-context dev-roadmap` to regenerate §4 of `.context/dev-roadmap.md`. A stale §4 is worse than none, because it lies with authority.
+- Automatic: final phase of `add-feature.md` Phase 2B, once the full epic, stories and links exist.
+- Automatic: final step of `product-backlog-seed.md`, after the initial seed completes.
+- On-demand: top-level workflow `H` in `SKILL.md`. Trigger phrases include "what do we work on first?", "execution order", "sprint plan", "topological order", "what unblocks the team".
+- Re-run whenever the dependency graph changes (a story added, a link added, a link removed). The re-run invokes `/project-context dev-roadmap` to regenerate §4 of `.context/dev-roadmap.md`. A stale §4 is worse than none, because it lies with authority.
 
 ---
 

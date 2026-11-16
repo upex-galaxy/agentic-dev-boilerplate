@@ -168,7 +168,7 @@ Before dispatching a subagent or starting workflow A, B or C, run the resume con
 
 Phase 0 is inline, with no subagent dispatch.
 
-## Phase 1 write `plan.md` (A, B and C only)
+## Phase 1: write `plan.md` (A, B and C only)
 
 Once Phase 0 finds no prior session, write `.session/product-management/<scope>/plan.md` using the schema in `agentic-dev-core/references/session-management.md` §6.
 
@@ -237,7 +237,7 @@ Output: epics and foundational stories under `{{PROJECT_KEY}}`, then `bun run ji
 
 A new feature appears mid-flight (a PO ask, a market opportunity, post-MVP work, customer feedback). The reference first analyzes complexity (single story, full epic or multi-epic) and routes from there. Read `references/add-feature.md`.
 
-When open questions decide the feature's scope, Call the Skill tool with "grilling" and give it the questions. Where it is not installed, ask the same questions as a numbered list, each with your recommended answer, and say the interview method was missing. With nobody present, follow grilling's own "With nobody at the keyboard" lines and write each question with its answer into the story's `## Open questions` comment and the run report. When the conversation has already settled the decisions, record them in the epic description without interviewing again (the spec step in `add-feature.md`).
+Open questions that decide the feature's scope go to an interview. Call the Skill tool with "grilling" and give it the questions. Where it is not installed, ask the same questions as a numbered list, each with your recommended answer, and say the interview method was missing. With nobody present, follow grilling's own "With nobody at the keyboard" lines and write each question with its answer into the story's `## Open questions` comment and the run report. When the conversation has already settled the decisions, record them in the epic description without interviewing again (the spec step in `add-feature.md`).
 
 Output: a new epic or stories appended to the backlog, with the complexity decision documented.
 
@@ -283,7 +283,7 @@ Output: `/project-context dev-roadmap` writes the sort to `.context/dev-roadmap.
 
 When the workflow's verification checklist from `plan.md` passes, the orchestrator archives per `agentic-dev-core/references/session-management.md` §8. It moves `.session/product-management/<scope>/` to `.session/.archive/<YYYY-MM-DD>-product-management-<scope>/` and calls `mem_session_summary` with the archive path, so a later `mem_search` can find its way back. Workflows D to H write no `.session/` directory and have nothing to archive.
 
-## With nobody present
+## With nobody at the keyboard
 
 `/autonomous-delivery` in `discovery` mode dispatches this skill with no person on the line, and routines and workers can too. The rule is the one in `agentic-dev-core/references/decision-protocol.md`: search the record, follow what is settled, decide the technical calls yourself and write them down. Discovery creates within its cap and the operator vetoes afterwards, so none of the gates below adds a wait.
 

@@ -26,7 +26,7 @@ compact_rules: |
   - **Green tests are not evidence the feature works.** Fixtures that seed the column the code reads, rather than the column production writes, keep every test green over a dead data path. Require at least one assertion against a real production write path before calling an acceptance criterion covered.
   - **Editing a skill's rules does nothing until the registry is regenerated** (`bun run skills:registry`). The registry is what reaches a subagent briefing.
   - **Decide technical calls yourself, after searching the record, and never wait for a person.** Follow `agentic-dev-core/references/decision-protocol.md`: search, follow what is settled, run a scored judge panel when the call is novel, and escalate only product, a novel security posture, irreversible actions and whatever the operator reserved. An escalation is a clean stop (§5.2): write the entry, do the reversible work, end the run. Nothing this skill calls waits for a person either. Record every autonomous decision where the next run's Phase 1 will find it.
-  - **Whether a product call escalates is per-project config.** Read `decision_authority.product` in `.agents/project.yaml`. `escalate` (the default) stops the run. `decide` means there is no human PO: dispatch a scored decision subagent, publish the ruling to the ticket under a heading naming the deciding profile, resync and continue, never styled as human sign-off. Categories 2 to 4 escalate under both settings (`decision-protocol.md` §5.1).
+  - **Whether a product call escalates is per-project config.** Read `decision_authority.product` in `.agents/project.yaml`. `escalate` (the default) stops the run. `decide` means there is no human PO: dispatch a scored decision subagent, publish the ruling to the ticket under a heading that names the authority, resync and continue, never styled as human sign-off. Categories 2 to 4 escalate under both settings (`decision-protocol.md` §5.1).
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix. When none is available at the step that needs it, stop per `agentic-dev-core/references/mcp-capabilities.md` §4 and never substitute silently (built-in `WebSearch` / `WebFetch` only when the user chooses it).
   - **Three brakes, and a fix never starts a fix.** What a run produces passes checks (the app's own lint, types and test scripts, green on the final tree), then a review by a reader that did not write it (the Stage 3 review of `/sprint-development`), then a person's review after the run ends. A run that cannot pass a brake reports instead of pushing on. A run that fixes a failure never starts another fix run, and a failed ticket is retried at most three times before the report says `BLOCKED`. None of this waits for a person or narrows what the project's `autonomous_delivery` config lets the run merge. Detail: `### The three brakes` in Phase 3.
 metadata:
@@ -78,7 +78,7 @@ It never waits for a person, and neither does anything it dispatches while the r
 - **Green tests are not evidence the feature works.** Fixtures that seed the column the code reads, rather than the column production writes, keep every test green over a dead data path. Require at least one assertion against a real production write path before calling an acceptance criterion covered.
 - **Editing a skill's rules does nothing until the registry is regenerated** (`bun run skills:registry`). The registry is what reaches a subagent briefing.
 - **Decide technical calls yourself, after searching the record, and never wait for a person.** Follow `agentic-dev-core/references/decision-protocol.md`: search, follow what is settled, run a scored judge panel when the call is novel, and escalate only product, a novel security posture, irreversible actions and whatever the operator reserved. An escalation is a clean stop (§5.2): write the entry, do the reversible work, end the run. Nothing this skill calls waits for a person either. Record every autonomous decision where the next run's Phase 1 will find it.
-- **Whether a product call escalates is per-project config.** Read `decision_authority.product` in `.agents/project.yaml`. `escalate` (the default) stops the run. `decide` means there is no human PO: dispatch a scored decision subagent, publish the ruling to the ticket under a heading naming the deciding profile, resync and continue, never styled as human sign-off. Categories 2 to 4 escalate under both settings (`decision-protocol.md` §5.1).
+- **Whether a product call escalates is per-project config.** Read `decision_authority.product` in `.agents/project.yaml`. `escalate` (the default) stops the run. `decide` means there is no human PO: dispatch a scored decision subagent, publish the ruling to the ticket under a heading that names the authority, resync and continue, never styled as human sign-off. Categories 2 to 4 escalate under both settings (`decision-protocol.md` §5.1).
 - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix. When none is available at the step that needs it, stop per `agentic-dev-core/references/mcp-capabilities.md` §4 and never substitute silently (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 - **Three brakes, and a fix never starts a fix.** What a run produces passes checks (the app's own lint, types and test scripts, green on the final tree), then a review by a reader that did not write it (the Stage 3 review of `/sprint-development`), then a person's review after the run ends. A run that cannot pass a brake reports instead of pushing on. A run that fixes a failure never starts another fix run, and a failed ticket is retried at most three times before the report says `BLOCKED`. None of this waits for a person or narrows what the project's `autonomous_delivery` config lets the run merge. Detail: `### The three brakes` in Phase 3.
 
@@ -452,7 +452,7 @@ What a run produces passes three brakes, and a run that cannot pass one reports 
 
 A run that fixes a failure never starts another fix run, because a fix changes the system itself and always gets a person's review. `bug` mode's sequential bugs are separate tickets, not a chain: a bug whose fix fails a brake stops there, the next fire is the retry, and no fix-the-fix ticket is created. Retry a failed ticket at most three times, then report `BLOCKED`. Add one automatic trigger at a time and widen it as the brakes earn trust.
 
-Source: Matt Pocock's skills repository, `in-progress/software-factory` (may still move).
+Source: https://github.com/mattpocock/skills (in-progress/software-factory, may still move), MIT, (c) 2026 Matt Pocock. Adapted by UPEX Galaxy.
 
 ---
 
@@ -592,7 +592,7 @@ Every item below has been observed. Each is a check the run performs, not a caut
 
 ---
 
-## Anti-patterns — NEVER do these
+## Anti-patterns
 
 Each line restates a rule from above where a run is most likely to break it. The codes are cited, so they stay fixed.
 

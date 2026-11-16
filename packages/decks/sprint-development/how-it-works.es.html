@@ -2470,9 +2470,9 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
         </div>
 
         <div class="callout r">
-          <b>Dos ejes de revisión.</b> Con una spec detrás de la historia, el revisor corre dos
-          pasadas: una contra la spec y otra contra los estándares, y el adjudicador anota el eje de
-          cada hallazgo (<span class="mono">review-pr.md</span>, <i>Two-axis review</i>). El PR
+          <b>Dos ejes de revisión.</b> Con una spec detrás de la historia, revisan dos revisores
+          en contextos limpios, uno contra la spec y otro contra los estándares, y cada uno marca el
+          eje de sus hallazgos; en modo solo son dos pasadas seguidas (<span class="mono">review-pr.md</span>, <i>Two-axis review</i>). El PR
           además declara su <i>Merge danger</i>: puerta de ida o de vuelta, y el radio de impacto;
           para un diff que no se confía contenido llama a <span class="mono">blast-radius</span>,
           o lo juzga a mano si no está instalada.
@@ -2664,7 +2664,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
               </tr>
               <tr>
                 <th>Review</th>
-                <td>Revisor independiente, después adjudicación</td>
+                <td>Dos revisores (spec y estándares), después adjudicación</td>
                 <td>Una pasada deliberada con ojos nuevos, después la misma adjudicación</td>
               </tr>
               <tr>

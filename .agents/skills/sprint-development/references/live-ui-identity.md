@@ -52,11 +52,11 @@ The identity authenticates through the same login path a real user takes: the ap
 
 The list is stated by capability, so it holds on any stack:
 
-- **Privileged service credentials** used to obtain a session: service-role, secret or admin API keys, backend-only tokens, machine credentials. (A Supabase `SERVICE_ROLE` or secret key, the Firebase Admin SDK, an AWS admin profile and a root DB role are all the same category.)
-- **Administrative user-management APIs**: listing, searching or enumerating real users; creating, mutating or deleting accounts; reading or resetting another account's password.
-- **Out-of-band session minting**: generating magic links, one-time login links or password-reset tokens for an account, signing a JWT locally, writing a session row directly into the database, or crafting a session cookie by hand.
-- **Impersonation**: acting as any account that is not the declared automation identity, including "just to see the screen as an admin". When a story needs a privileged view, the project provisions a dedicated non-production account with that role and declares it (via `per_env` or a second identity slot). It does not borrow a real one.
-- **Production identities**, in any environment, for any reason.
+- Privileged service credentials used to obtain a session: service-role, secret or admin API keys, backend-only tokens, machine credentials. (A Supabase `SERVICE_ROLE` or secret key, the Firebase Admin SDK, an AWS admin profile and a root DB role are all the same category.)
+- Administrative user-management APIs: listing, searching or enumerating real users; creating, mutating or deleting accounts; reading or resetting another account's password.
+- Out-of-band session minting: generating magic links, one-time login links or password-reset tokens for an account, signing a JWT locally, writing a session row directly into the database, or crafting a session cookie by hand.
+- Impersonation: acting as any account that is not the declared automation identity, including "just to see the screen as an admin". When a story needs a privileged view, the project provisions a dedicated non-production account with that role and declares it (via `per_env` or a second identity slot). It does not borrow a real one.
+- Production identities, in any environment, for any reason.
 
 If a check seems to need one of these, surface it as a finding. The story either needs a provisioned role account, or the app lacks a testable auth path (see the testability assessment in `/testability-guide`).
 

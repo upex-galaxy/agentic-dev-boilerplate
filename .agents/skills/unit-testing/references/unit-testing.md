@@ -8,9 +8,9 @@ This is the broad workflow behind `/unit-testing`: how to turn a story's impleme
 
 Read all three when they exist:
 
-- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/story.md`: what the story does and its acceptance criteria. Start here.
-- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/implementation-plan.md`: the technical plan and the modules it creates.
-- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{nombre}/acceptance-test-plan.md`: acceptance test cases. Optional; present only when upstream planning produced it.
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{name}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}/story.md`: what the story does and its acceptance criteria. Start here.
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{name}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}/implementation-plan.md`: the technical plan and the modules it creates.
+- `.context/PBI/epics/EPIC-{PROJECT_KEY}-{ISSUE_NUM}-{name}/stories/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}/acceptance-test-plan.md`: acceptance test cases. Optional; present only when upstream planning produced it.
 
 From them you need three things: what the story does, which acceptance criteria it must meet, and which files it created or changed.
 

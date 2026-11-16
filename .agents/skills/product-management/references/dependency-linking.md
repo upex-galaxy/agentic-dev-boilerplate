@@ -37,10 +37,10 @@ Workspace link-type names are resolved per slug from `.agents/jira-required.yaml
 
 A dependency needs observable evidence. When no source below supports an edge, skip it (or ask, when a person is present).
 
-- **PRD/SRS sequencing**: the ordering in `.context/PRD/user-journeys.md` and `.context/SRS/functional-specs.md`. Functional Requirement `FR-X.2` typically depends on `FR-X.1` when both share a journey and the spec orders them sequentially.
-- **Master Sprint ordering**: `.context/master-implementation-plan.md` declares the Master Sprint groupings. A story whose `**Source spec:**` lives in Master Sprint N depends on the foundational stories of Master Sprint N-1 when the data or auth model requires it.
-- **Data-model dependencies**: the data map (`bun run context:map business-data-context`) declares entity relationships. If entity B has a foreign-key dependency on entity A, the story that creates B depends on the story that creates A.
-- **Explicit author intent**: `Blocked By` / `Blocks` dependencies the author states in the session or wrote into the Jira description (`author-intent` in the matrix). A hand-edited local `story.md` does not count, because it is a read-only cache per `.agents/instructions/agent-local-context-pbi.md` §9. A human committed these, so they are the strongest signal.
+- PRD/SRS sequencing: the ordering in `.context/PRD/user-journeys.md` and `.context/SRS/functional-specs.md`. Functional Requirement `FR-X.2` typically depends on `FR-X.1` when both share a journey and the spec orders them sequentially.
+- Master Sprint ordering: `.context/master-implementation-plan.md` declares the Master Sprint groupings. A story whose `**Source spec:**` lives in Master Sprint N depends on the foundational stories of Master Sprint N-1 when the data or auth model requires it.
+- Data-model dependencies: the data map (`bun run context:map business-data-context`) declares entity relationships. If entity B has a foreign-key dependency on entity A, the story that creates B depends on the story that creates A.
+- Explicit author intent: `Blocked By` / `Blocks` dependencies the author states in the session or wrote into the Jira description (`author-intent` in the matrix). A hand-edited local `story.md` does not count, because it is a read-only cache per `.agents/instructions/agent-local-context-pbi.md` §9. A human committed these, so they are the strongest signal.
 
 When two or more sources disagree (say the PRD orders A → B but the data map orders B → A), create no link for that edge until the conflict is resolved, and put it in front of the person who can resolve it. Picking one silently would bury a real product question.
 

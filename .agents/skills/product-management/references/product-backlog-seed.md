@@ -197,7 +197,7 @@ Phase 2 — Core features (Master Sprint 2):
 2. On approval, proceed to Phase 2 per epic.
 ```
 
-Review the tree with the user and proceed to Phase 2 on approval. With nobody to approve, see "Without a person to confirm" below.
+Review the tree with the user and proceed to Phase 2 on approval. With nobody to approve, see "With nobody at the keyboard" below.
 
 ---
 
@@ -308,7 +308,7 @@ Do not fix it automatically. Offer the user three ways to resolve each overlap:
 2. Extract: create a new shared-dependency story that owns the bullet, and link both original stories to it with `depends on`.
 3. Accept: leave the duplicate when it is intentional shared context, and record why.
 
-Wait for the user's decision on each overlap before continuing, and never dedupe silently, because the overlap is a signal that the slicing should be revisited. With nobody to decide, see "Without a person to confirm".
+Wait for the user's decision on each overlap before continuing, and never dedupe silently, because the overlap is a signal that the slicing should be revisited. With nobody to decide, see "With nobody at the keyboard".
 
 ---
 
@@ -326,7 +326,7 @@ Anti-pattern `I18` in `SKILL.md` requires an active discovery pass before any li
 4. Build a candidate matrix of `(from, to, link_type_slug, source-of-decision)`, where the source is one of `prd-sequencing`, `srs-sequencing`, `master-implementation-plan`, `business-data-context` or `author-intent`.
 5. Filter the noise. Drop any candidate whose only justification is a global or infrastructural prerequisite (auth exists, the DB exists, the framework is wired up, observability is set up), because those describe the project as a whole, not one story over another. Keep only feature-level, observable, explicit dependencies between specific work items.
 6. Apply the heuristic: if reordering the sprints would make the dependency disappear, it is global noise, so drop it. If it would not, it is a real feature-level dependency, so keep it.
-7. Show the filtered matrix to the user and wait for confirmation before writing any link. Never create links automatically. With nobody to confirm, see "Without a person to confirm".
+7. Show the filtered matrix to the user and wait for confirmation before writing any link. Never create links automatically. With nobody to confirm, see "With nobody at the keyboard".
 
 ### Creating the links
 
@@ -357,13 +357,13 @@ Phase 4 runs once at the end of the seed, after Phase 3, and again on demand whe
 
 ---
 
-## Without a person to confirm
+## With nobody at the keyboard
 
 The confirmation points in this workflow are the Phase 1 tree review, each overlap decision in 2.6, and the Phase 3.0 matrix before links are written. The decision protocol (`agentic-dev-core/references/decision-protocol.md`) says who holds each one.
 
 - A person is present: ask them, as described above.
 - A supervised worker: the conductor or launcher holds the gate. Report the draft, the overlap alerts or the matrix to it, and wait for its answer.
-- A routine with nobody: the delegating brief is the approval when it covers the decision. When it does not, do the reversible work (the Phase 1 draft, the overlap report, the candidate matrix), stop before any write to Jira, and report what is waiting.
+- A routine with nobody: the delegating brief is the approval when it covers the decision. When it does not, do the reversible work (the Phase 1 draft, the overlap report, the candidate matrix), stop before any write to Jira, and report what is waiting. In `/autonomous-delivery` discovery mode the dispatch is that brief: create within `discovery_definitions`, record the assumptions, and leave the veto to the operator (`../SKILL.md`, "With nobody at the keyboard").
 
 ---
 

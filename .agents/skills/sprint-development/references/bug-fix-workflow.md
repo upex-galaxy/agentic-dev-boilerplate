@@ -1053,7 +1053,7 @@ Scope the full impact before implementing, split into several PRs when one would
 
 ### Case 5: insufficient information
 
-You cannot understand or reproduce the bug from the report. Add a Jira comment with the specific questions and list exactly what information is needed. Leave the bug `open` with the questions in the comment, or fire `is_cnr` → `cannot_reproduce` when the user chooses to close it. The bug workflow has no "Need Info" status; a project that added one is the `artifact-lifecycle.md` §4 case. Do not guess.
+You cannot understand or reproduce the bug from the report. Add a Jira comment with the specific questions and list exactly what information is needed. Leave the bug `open` with the questions in the comment, or fire `is_cnr`, which moves it to `cannot_reproduce`, when the user chooses to close it. The bug workflow has no "Need Info" status; a project that added one is the `artifact-lifecycle.md` §4 case. Do not guess.
 
 ### Case 6: security bug
 

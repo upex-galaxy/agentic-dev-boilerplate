@@ -146,7 +146,7 @@ Phase 1 output:
 
 ## Open questions before creating anything
 
-When the feature has open questions that decide its scope, Call the Skill tool with "grilling" and give it the questions. It asks in numbered rounds, each question with a recommended answer, and it skips any question the PRD, SRS or ticket already answers. When an answer settles or contradicts a domain term, the term goes to `.context/business/domain-glossary.md` through the PM change protocol, not from inside this workflow. Answers that stay open go to the story's `## Open questions` comment.
+Open questions that decide the feature's scope go to an interview. Call the Skill tool with "grilling" and give it the questions. It asks in numbered rounds, each question with a recommended answer, and it skips any question the PRD, SRS or ticket already answers. When an answer settles or contradicts a domain term, the term goes to `.context/business/domain-glossary.md` through the PM change protocol, not from inside this workflow. Answers that stay open go to the story's `## Open questions` comment.
 
 If the `grilling` skill is not installed, ask the same questions as a numbered list, each with your recommended answer, and say in the report that the interview method was missing.
 

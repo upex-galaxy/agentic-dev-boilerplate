@@ -1,6 +1,6 @@
 # Epic creation
 
-> **Purpose**: create a well-formed epic (naming, structure, decomposition into stories) in Jira, then materialize the read-only `epic.md` cache with the sync script. `epic.md` is a Jira mirror and is never hand-authored (`.agents/instructions/agent-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9).
+> **Purpose**: create a well-formed epic (naming, structure, decomposition into stories) in Jira, then materialize the read-only `epic.md` cache with the sync script. `epic.md` is a Jira mirror and is never hand-authored (`.agents/instructions/agent-local-context-pbi.md` §9; `references/jira-operations.md`, section "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9).
 > **Use when**: a new feature is too big for a single story (3+ stories) or you are seeding a brand-new product backlog.
 > **Companion references**:
 >
@@ -36,7 +36,7 @@ Read these in order before creating any epic. Skip a file marked **optional** wh
 14. `bun run context:map business-api-context`: endpoint catalog (auth model, journey breakdown). **Optional** at seed time.
 15. `.context/PBI/epic-tree.md`: current backlog state (skip when seeding from scratch).
 
-An existing app documented by its business maps has no PRD or SRS. Inputs 7-11 then have substitutes, listed in `../SKILL.md` → "Product docs: PRD/SRS or business maps". Do not write a PRD or SRS to fill them.
+An existing app documented by its business maps has no PRD or SRS. Inputs 7-11 then have substitutes, listed in `../SKILL.md`, section "Product docs: PRD/SRS or business maps". Do not write a PRD or SRS to fill them.
 
 Items 12-14 arrive after `/project-context` modes `data` / `features` / `api` have run. In a fresh project the maps may not exist yet: proceed without them and re-check dependencies once they are seeded.
 
@@ -196,7 +196,7 @@ Done when the epic has left the tracker's initial creation state for `Planning` 
 
 ### Step 2: Materialize the local epic cache (sync, do not hand-write)
 
-The epic already lives in Jira (Step 1). Its local `epic.md` is a read-only cache and is never hand-authored (`.agents/instructions/agent-local-context-pbi.md` §9; `references/jira-operations.md` → "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Materialize it with the sync script, using the key captured in Step 1:
+The epic already lives in Jira (Step 1). Its local `epic.md` is a read-only cache and is never hand-authored (`.agents/instructions/agent-local-context-pbi.md` §9; `references/jira-operations.md`, section "No local authoring"; `agentic-dev-core/references/acli-integration.md` D9). Materialize it with the sync script, using the key captured in Step 1:
 
 ```
 bun run jira:sync-issues get {PROJECT_KEY}-{ISSUE_NUM}

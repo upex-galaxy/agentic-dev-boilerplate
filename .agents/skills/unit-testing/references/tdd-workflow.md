@@ -100,7 +100,7 @@ export function applyDiscount(amount: number, percent: number) {
 }
 ```
 
-Run → green. Commit checkpoint.
+Run it: green. Commit checkpoint.
 
 **Cycle 2 (RED → GREEN)**
 
@@ -118,7 +118,7 @@ export function applyDiscount(amount: number, percent: number) {
 }
 ```
 
-Run → both pass. Green.
+Run them: both pass. Green.
 
 **Cycle 3 (RED → GREEN → REFACTOR)**
 
@@ -128,7 +128,7 @@ it('throws on negative amount', () => {
 });
 ```
 
-Red. Add guard, run → green. Refactor: rename `percent` to `percentOff` for clarity, run tests → still green. Done.
+Red. Add guard, run it: green. Refactor: rename `percent` to `percentOff` for clarity, run the tests: still green. Done.
 
 Three cycles, three behaviors, full coverage of the cases you care about.
 

@@ -245,13 +245,13 @@ Use this checklist as the gate from refinement to sprint:
 - [ ] The dev has confirmed the AC are estimable without further questions.
 - [ ] Each AC is independently verifiable.
 
-### Without a person to confirm
+### With nobody at the keyboard
 
 This guide has four confirmation points: the before and after of a voice-gate rewrite, a suggested clarification or promotion that needs an answer, the PO's confirmation of edge-case behavior, and the dev's confirmation of estimability. `agentic-dev-core/references/decision-protocol.md` says who holds each one.
 
 - A person is present: ask them, as described above.
 - A supervised worker: the conductor or launcher holds the gate. Report the delta or the open questions to it, and wait for its answer.
-- A routine with nobody: the delegating brief is the approval when it covers the decision. When it does not, refine locally (the analysis, the scenarios, the rewritten text), stop before publishing to Jira, and report what is waiting.
+- A routine with nobody: the delegating brief is the approval when it covers the decision. When it does not, refine locally (the analysis, the scenarios, the rewritten text), stop before publishing to Jira, and report what is waiting. In `/autonomous-delivery` discovery mode the dispatch is that brief: create within `discovery_definitions`, record the assumptions, and leave the veto to the operator (`../SKILL.md`, "With nobody at the keyboard").
 
 ---
 
