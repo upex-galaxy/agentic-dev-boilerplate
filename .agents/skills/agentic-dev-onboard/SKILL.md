@@ -241,6 +241,8 @@ Long sessions: when the context window runs high or work must outlive the sessio
 | `html-ppt` | lewislulu/html-ppt-skill | **user-invoked only.** `packages/decks/` is hand-authored; this is for a one-off deck outside that tree |
 | `playwright-cli` | microsoft/playwright-cli | `/sprint-development` live-UI validation, where `[AUTOMATION_TOOL]` resolves to it (`.agents/instructions/agent-tool-resolution.md` §6) |
 | `mkd` | upex-galaxy/agentic-user-skills | any flow that reaches the decision threshold in `agentic-dev-core/references/decision-elicitation-doctrine.md` (a heavy decision: real tradeoffs, architecture, a larger change; small decisions are swept with the harness question tool instead) |
+| `humanizer` | upex-galaxy/agentic-user-skills | the prose pass of `agentic-dev-core/references/skill-scaffold.md` ("How a skill is written") and `agentic-dev-core/references/instructions-doctrine.md` §6 step 3; when it is not installed the pass runs inline |
+| `writing-for-agents` | upex-galaxy/agentic-user-skills | the structure pass of `agentic-dev-core/references/skill-scaffold.md` ("How a skill is written") and `agentic-dev-core/references/instructions-doctrine.md` §6 step 3; when it is not installed the pass runs inline |
 | `orchestration.orchestrator_skills` | the orchestration binary | `/orca-orchestration`, ALONGSIDE it: the vendor owns the command grammar, the repo skill owns when and what |
 
 ## Persistent memory via Engram

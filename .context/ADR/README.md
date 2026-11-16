@@ -10,12 +10,13 @@ The point: a future human or AI session can read these instead of re-litigating 
 
 An ADR captures a single decision: the context that forced it, the option chosen, the alternatives rejected, and the consequences the team accepted. It is a **source-of-truth document**, not a cache — nothing regenerates it, and it is committed to git like code.
 
-It is the right artifact when a decision passes **both** gates:
+It is the right artifact when an architectural decision (one that shapes system structure, a cross-cutting concern or a system-wide invariant) passes all three gates:
 
-| Gate                  | Question                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| **1 — Architectural** | Does it shape system structure, a cross-cutting concern, or a system-wide invariant?                 |
-| **2 — Hard to reverse** | Would changing it later mean touching many files, migrating data, or coordinating across the team? |
+| Gate                               | Question                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **1. Hard to reverse**             | Would changing it later mean touching many files, migrating data, or coordinating across the team? |
+| **2. Surprising without context**  | Would a future reader ask why it was done this way?                                                |
+| **3. A real trade-off**            | Were there genuine alternatives, with one picked for stated reasons?                               |
 
 Examples that earn an ADR: auth/authorization model, data-access pattern, error/response contract, multi-tenancy model, state-management approach, API style (REST vs RPC vs GraphQL), a framework/library choice with real lock-in, deployment topology, a cross-cutting invariant every feature must uphold.
 
@@ -24,7 +25,7 @@ Examples that earn an ADR: auth/authorization model, data-access pattern, error/
 - Bug fixes and their root causes → engram `mem_save` + the story's `bug-fix.md`.
 - Local refactors, naming tweaks, formatting → just the commit.
 - Single-use code or speculative abstraction → no record needed.
-- **Story-local technical decisions** (which hook, which component, a one-file trade-off) → they stay in that story's `implementation-plan.md` under `## Technical Decisions`. Promote one to an ADR **only** when it passes both gates above.
+- **Story-local technical decisions** (which hook, which component, a one-file trade-off) → they stay in that story's `implementation-plan.md` under `## Technical Decisions`. Promote one to an ADR **only** when it passes all three gates above.
 
 ---
 
@@ -53,7 +54,7 @@ Proposed ──→ Accepted ──→ Superseded   (by ADR-NNNN, which links bac
 3. Add a row to the **Index** below.
 4. If it supersedes an existing ADR, wire both directions (`Supersedes` / `Superseded by`) and flip the old one's `Status`.
 
-Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes both gates). Either way, `Status: Accepted` means a human approved the decision: an ADR that records a decision the human already took (a decision deck, a chat answer, an approved plan) is written `Accepted` from the start, naming the approval in `Deciders`; only a decision still open is `Proposed`. The detection + authoring procedure for AI workflows lives in `.agents/skills/agentic-dev-core/references/adr-doctrine.md`.
+Who authors: a human architect directly, **or** an AI workflow that detected an ADR-worthy decision and drafted it for human approval — `/project-foundation` (SRS architecture phase, seeds the first batch) and `/sprint-development` (Stage 1 planning, promotes a story/feature decision that passes all three gates). Either way, `Status: Accepted` means a human approved the decision: an ADR that records a decision the human already took (a decision deck, a chat answer, an approved plan) is written `Accepted` from the start, naming the approval in `Deciders`; only a decision still open is `Proposed`. The detection + authoring procedure for AI workflows lives in `.agents/skills/agentic-dev-core/references/adr-doctrine.md`.
 
 ---
 

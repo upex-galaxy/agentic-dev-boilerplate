@@ -319,6 +319,10 @@ export const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   // of items (decision / question / report / table) and the user answers in a
   // browser deck, pasting the Result JSON back into the chat (non-blocking).
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'mkd' },
+  // Prose and structure passes the instruction and skill canon loads when it
+  // writes or edits an instruction, a skill or a reference.
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'humanizer' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'writing-for-agents' },
 ];
 
 // External CLIs the boilerplate's skills depend on. Installer NEVER auto-installs
