@@ -2263,6 +2263,22 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
             >
           </div>
           <div class="g">
+            <b>El token de flota solo viaja si ya lo había</b
+            ><span
+              >El sucesor es la misma sesión, no un worker nuevo. Si el predecesor era un worker de
+              flota, su prompt abre con <span class="mono">/&lt;skill&gt; &lt;label&gt; fleet worker</span>
+              y el sucesor sigue sin preguntarle al humano; si no, el prompt no lo lleva.</span
+            >
+          </div>
+          <div class="g">
+            <b>Sin nadie al teclado</b
+            ><span
+              >Una rutina lanza al sucesor solo si el brief que la delega lo aprueba; si no, se
+              detiene en la línea impresa. Las decisiones abiertas de §8 se reportan, no se
+              ejecutan.</span
+            >
+          </div>
+          <div class="g">
             <b>Si §0 impone un orden, va en el prompt</b
             ><span
               >Un puntero a un archivo se lee como material de referencia; una instrucción en el
@@ -2391,8 +2407,9 @@ Read `<span class="s">&lt;absolute path to the handoff&gt;</span>` top to bottom
           <div class="eyebrow"><span class="num">08</span> · qué le dices a la IA</div>
           <h2>Invocarla en cada terminal</h2>
           <p class="sub">
-            No tiene modos: una sola corrida, tres pasos. Alcanza con nombrarla, o con frases como
-            "hagamos el handoff", "pasa el contexto a otra sesión" o "hand this session over".
+            No tiene modos: una sola corrida, tres pasos. Alcanza con nombrarla, o con pedirlo con tus palabras,
+            por ejemplo "hagamos el handoff", "pasa el contexto a otra sesión" o "hand this session
+            over".
           </p>
         </div>
 
