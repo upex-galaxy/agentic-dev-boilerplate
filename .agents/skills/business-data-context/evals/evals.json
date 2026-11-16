@@ -10,7 +10,7 @@
     },
     {
       "id": 2,
-      "prompt": "oye, acabo de correr un SELECT en staging y la tabla subscriptions tiene una columna paused_until que el mapa de datos no menciona. ¿lo arreglamos?",
+      "prompt": "oye, acabo de correr un SELECT en staging y la tabla subscriptions tiene una columna paused_until que el mapa de datos no menciona. lo arreglamos?",
       "expected_output": "Loads business-data-context and follows references/refresh.md: locates the section via --list / --section, PROPOSES a one-section edit in the fixed proposal shape (section id, evidence = the query, before/after, figure unchanged or redraw) and waits for an explicit yes before editing only that section of references/business-data-map.html and bumping data-updated. Answers in Spanish. Does not touch any file outside the skill's references/.",
       "should_trigger": true,
       "files": []
@@ -24,14 +24,14 @@
     },
     {
       "id": 4,
-      "prompt": "necesito agregar una política RLS a la tabla invoices, ¿qué políticas y triggers tiene hoy esa tabla y quién puede ver qué filas?",
+      "prompt": "necesito agregar una política RLS a la tabla invoices, qué políticas y triggers tiene hoy esa tabla y quién puede ver qué filas?",
       "expected_output": "Loads business-data-context: RLS policies and triggers of an entity. Reads the map with `bun run context:map business-data-context --section <id>`, cites section id and data-updated, and verifies stale facts with [DB_TOOL].",
       "should_trigger": true,
       "files": []
     },
     {
       "id": 5,
-      "prompt": "hay un cron que cambia el estado de las suscripciones, ¿cómo funciona por dentro y qué estados puede tener una suscripción?",
+      "prompt": "hay un cron que cambia el estado de las suscripciones, cómo funciona por dentro y qué estados puede tener una suscripción?",
       "expected_output": "Loads business-data-context: background jobs and the entity's state machine, answered from the map sections.",
       "should_trigger": true,
       "files": []

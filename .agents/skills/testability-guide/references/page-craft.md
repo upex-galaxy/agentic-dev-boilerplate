@@ -298,7 +298,7 @@ export async function QaShell({ config }: { config: QaConfig }) {
 }
 ```
 
-> `t.buildGap` is the fallback copy for the build stamp (es: `build local, sin SHA de despliegue`; en: `local build, no deploy SHA`).
+> `t.buildGap` is the fallback copy for the build stamp (es: `build local, sin SHA de despliegue`; en: `local build, no deploy SHA`). The same dictionaries carry the two lead-gap strings (`t.leadGap`: es `preguntá a tu lead`, en `ask your lead`; `t.authGap`: es `Auth no detectado: preguntá a tu lead.`, en `Auth not detected: ask your lead.`), so no golden hardcodes one language.
 >
 > `Section` is a tiny local wrapper (Card, accent border, anchor heading and a copy-link button). `TrinityCards` renders the three-card grid from `mcp-and-env-setup.md` §3. The §4 DB section also renders the roles table, the REVOKE callout, the pooler note and the RLS-probe callout (see "DB-roles depth" in `page-structure.md` §4), all conditional on the detected `config.db.*` fields. `es` and `en` are copy dictionaries, and `qaConfig.lang` (Q5) picks the active one.
 
@@ -685,11 +685,11 @@ export function ArchDiagram({ config }: { config: QaConfig }) {
       <div className="mt-8 border-t border-dashed pt-6" data-testid="qa-repos">
         <p className="mb-3 flex items-center gap-2 text-sm font-semibold"><GitBranch className="h-4 w-4" /> Repositorios</p>
         {config.project.reposShape === "mono" ? (
-          <RepoRow label="Monorepo" url={config.project.backendRepo ?? config.project.frontendRepo} />
+          <RepoRow label="Monorepo" url={config.project.backendRepo ?? config.project.frontendRepo} gap={t.leadGap} />
         ) : (
           <div className="grid gap-2 md:grid-cols-2">
-            <RepoRow label="Frontend" url={config.project.frontendRepo} />
-            <RepoRow label="Backend" url={config.project.backendRepo} />
+            <RepoRow label="Frontend" url={config.project.frontendRepo} gap={t.leadGap} />
+            <RepoRow label="Backend" url={config.project.backendRepo} gap={t.leadGap} />
           </div>
         )}
       </div>
@@ -697,12 +697,12 @@ export function ArchDiagram({ config }: { config: QaConfig }) {
   );
 }
 
-function RepoRow({ label, url }: { label: string; url: string | null }) {
+function RepoRow({ label, url, gap }: { label: string; url: string | null; gap: string }) {
   return (
     <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm">
       <Badge>{label}</Badge>
       {url ? <a className="font-mono underline" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
-           : <span className="text-muted-foreground">— preguntá a tu lead —</span>}
+           : <span className="text-muted-foreground">{gap}</span>}
     </div>
   );
 }
@@ -720,8 +720,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CodeBlock } from "./CodeBlock";
 import type { QaConfig } from "../qa-config";
 export function AuthMethods({ config }: { config: QaConfig }) {
+  const t = config.lang === "es" ? es : en;
   const methods = config.api.authMethods;
-  if (!methods.length) return <p className="text-sm text-muted-foreground">Auth no detectado — preguntá a tu lead.</p>;
+  if (!methods.length) return <p className="text-sm text-muted-foreground">{t.authGap}</p>;
   return (
     <Tabs defaultValue={methods[0].id} data-testid="qa-auth-methods">
       <TabsList>{methods.map(m => <TabsTrigger key={m.id} value={m.id} data-testid={`qa-auth-tab-${m.id}`}>{m.label}</TabsTrigger>)}</TabsList>

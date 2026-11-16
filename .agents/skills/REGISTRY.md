@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-16T04:35:52.141Z`
+> Generated: `2026-11-16T05:03:00.821Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -102,6 +102,7 @@ Skills indexed: 22
 - **Applying a schema change to shared infrastructure is irreversible and hits every concurrent agent.** Under `migrations: confirm` (default) the run stops with an escalation that asks for approval, stating the target and whether the change is additive or destructive. Under `migrations: autonomous` it proceeds for additive changes only and still stops for anything that drops, renames or rewrites a live object. Composing the change (and its file, when `{{stack.database.migrations_tool}}` keeps one) is always autonomous; applying it is not. How it is applied (the DB MCP, or the app's own tool for `prisma` / `drizzle`) is `agentic-dev-core/references/db-change-doctrine.md`; this gate decides only whether.
 - **Read the migration history through the DB MCP immediately before composing a schema change**, and take any file's number or version from it, never from a local directory listing. The ledger can be ahead of your branch by a peer's unmerged migration.
 - **Read regenerated output before committing it.** Types, clients and API specs generated from a shared live instance silently absorb a concurrent sibling's unmerged schema. Diff it, and strip foreign entries only after proving zero consumers.
+- **The dispatch brief carries the push-and-PR permission.** Component 7 says the dispatched agent may push its own work branch and open its PR against `<integration-branch>` (the brief-as-approval of `/git-flow-master` "Autonomous use"); merging follows the merge permission.
 - **Give every dispatched agent its own worktree.** A background subagent writes into its dispatcher's working directory by default, outlives its dispatcher, and keeps mutating shared state after the dispatcher is gone.
 - **Merge the base into a branch a subagent already pushed, never rebase it:** `git checkout -B <branch> origin/<branch> && git merge <integration-branch> --no-edit`. A rebase forces a force-push, which rewrites pushed history.
 - **An unmapped transition is a flag, never a guess.** When a transition slug the run needs is absent from `.agents/jira-workflows.json` (or Jira rejects a mapped one on a validator), fire nothing, leave the issue where it is, and name the slug, the live candidates and the recommended `bun run jira:sync-workflows` in the run report. Use no remembered id, no status-name guess and no invented field value (`agentic-dev-core/references/artifact-lifecycle.md` §4 step 6, §4.2).

@@ -10,7 +10,7 @@
     },
     {
       "id": 2,
-      "prompt": "el endpoint PATCH /api/projects/:id me devuelve 409 cuando el proyecto está archivado y el mapa dice que solo puede devolver 200 o 404, ¿corregimos el mapa?",
+      "prompt": "el endpoint PATCH /api/projects/:id me devuelve 409 cuando el proyecto está archivado y el mapa dice que solo puede devolver 200 o 404, corregimos el mapa?",
       "expected_output": "Loads business-api-context and follows references/refresh.md: locates the section via --list / --section, PROPOSES a one-section edit in the fixed proposal shape (evidence = the request and response) and waits for an explicit yes before editing only that section of references/business-api-map.html and bumping data-updated. Answers in Spanish. Touches no file outside the skill's references/.",
       "should_trigger": true,
       "files": []
@@ -24,14 +24,14 @@
     },
     {
       "id": 4,
-      "prompt": "necesito agregar una server action para que un admin cancele una suscripción, ¿qué rol exige y qué rutas ya existen alrededor de ese flujo?",
+      "prompt": "necesito agregar una server action para que un admin cancele una suscripción, qué rol exige y qué rutas ya existen alrededor de ese flujo?",
       "expected_output": "Loads business-api-context, reads the map with `bun run context:map business-api-context --section <auth or journey id>` (never the raw HTML), answers from the section citing its id and data-updated date, and takes shapes from the OpenAPI types. A placeholder map is reported as no map and handed to `project-context` mode `api`. Answers in Spanish.",
       "should_trigger": true,
       "files": []
     },
     {
       "id": 5,
-      "prompt": "¿qué ruta del API crea una organización y cómo se autentica quien la llama?",
+      "prompt": "qué ruta del API crea una organización y cómo se autentica quien la llama?",
       "expected_output": "Loads business-api-context and answers from the map's auth-model and route-group sections through `bun run context:map`, with section ids and dates. Answers in Spanish.",
       "should_trigger": true,
       "files": []

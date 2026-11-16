@@ -51,7 +51,7 @@ A template that bakes in `/api/auth/callback/credentials` or `/api/openapi.json`
 | --- | --- | --- |
 | DB engine and provider | `stack.database.engine` / `provider` first (they pick the DB MCP: `mcp-and-env-setup.md` §4.0), confirmed in `package.json` (`pg`, `mysql2`, `mssql`/`tedious`, `@supabase/supabase-js`, `mongodb`, `better-sqlite3`, `mariadb`) and `.env*` (`DBHUB_TYPE`, `POSTGRES_*`, connection strings) | Picks the DBHub `type` (sqlserver\|postgres\|mysql\|sqlite\|mariadb) and the VSCode/Cursor URI scheme. |
 | ORM | `drizzle-orm`, `@prisma/client`, `typeorm`, `sequelize`, raw SQL / Supabase client | Architecture-table label only. |
-| Read-only QA role | RLS policies, `qa_*` roles, `GRANT SELECT` migrations, seed scripts | Q2 (DB role policy). If only a superuser exists, `security-rules.md` §1 stops the run. |
+| Read-only QA role | RLS policies, `qa_*` roles, `GRANT SELECT` migrations, seed scripts | Q2 (DB role policy). If only a superuser exists, `security-rules.md` "Hard refusals", rule 1 stops the run. |
 | Connection shape | pooler host, port, sslmode (from `dbhub.toml` / `.env.example`) | Builds both the `dbhub.toml` MCP config and the `postgresql://…` / `sqlserver://…` URI for the VSCode extension (the two-ways-DB requirement). |
 
 ### MCP config and env-var wiring
@@ -83,7 +83,7 @@ After detection, score the three layers (UI, API, DB) against the rubric in `tes
 
 - UI: stable selectors (`data-testid` or role) on critical flows, especially login? Missing means a flag plus a recommended selector convention.
 - API (the highest leverage): is there a programmatic auth path that yields a token for `Authorization: Bearer …` (a password login endpoint, a PAT issuer or a service token, with an expiry)? A passwordless, OAuth-only or SSO-only app with no token issuer is a failing layer. Recommend the canonical pattern: a normal user+password login plus an API endpoint that issues a token with expiry, used to request as the authenticated user.
-- DB: is there a read-only QA role for direct inspection? Only a superuser means stop per `security-rules.md` §1.
+- DB: is there a read-only QA role for direct inspection? Only a superuser means stop per `security-rules.md` "Hard refusals", rule 1.
 
 Detect the full auth surface before flagging the API. A passwordless UI plus a PAT or token issuer is a pass, because a programmatic path exists. The deficiency fires only when none does. The full rubric, levels, output format and remediation pattern live in `testability-assessment.md`.
 

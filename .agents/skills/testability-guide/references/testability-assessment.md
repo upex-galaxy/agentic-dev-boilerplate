@@ -48,7 +48,7 @@ Run each layer against the detection results from `pre-flight-discovery.md` and 
 | --- | --- | --- |
 | ✅ testable | A dedicated read-only QA role (`qa_*`, least privilege) exists for direct inspection. | None. §4 documents it. |
 | ⚠️ weak | Only the app's runtime role exists (broad but not superuser), usable read-only with care. | Flag: "No dedicated read-only QA role: inspection uses the app role." Recommend a `qa_inspector_ro`. |
-| ❌ deficient | Only a superuser or schema-owner credential exists. | Stop per `security-rules.md` §1: a superuser credential is never published. Flag it and hand over the `CREATE ROLE qa_inspector_ro …` SQL. The DB publish waits until a read-only role exists. |
+| ❌ deficient | Only a superuser or schema-owner credential exists. | Stop per `security-rules.md` "Hard refusals", rule 1: a superuser credential is never published. Flag it and hand over the `CREATE ROLE qa_inspector_ro …` SQL. The DB publish waits until a read-only role exists. |
 
 ---
 
@@ -98,7 +98,7 @@ Downstream use:
 - Surface the flags to the user or orchestrator in the run report, so the team can act on them.
 - Record them in the result envelope as `audit.testability-flags` (`security-rules.md`, audit block) so `mem_save` can persist them across runs.
 - Carry the worst level into the snapshot field `testability` (`idempotency-snapshot.md`), so a re-run can report whether testability improved or regressed since the last run.
-- Page rendering is optional and light. A short "Testabilidad del producto" note in §3 (Trinity) may summarize the weak or deficient layers and the recommendation, so testers see why a layer is hard. The public page stays a one-line health note with a remediation pointer, not a defect list. Detailed flags live in the run report and the gated credentials artifact.
+- Page rendering is optional and light. A short "Testabilidad del producto" note (es; "Product testability" in en) in §3 (Trinity) may summarize the weak or deficient layers and the recommendation, so testers see why a layer is hard. The public page stays a one-line health note with a remediation pointer, not a defect list. Detailed flags live in the run report and the gated credentials artifact.
 
 ---
 
@@ -114,6 +114,6 @@ Downstream use:
 
 - Detection inputs: `pre-flight-discovery.md` (auth model, login endpoint, token shape, docs, DB role, test infra).
 - Auth rendering: `page-structure.md` §5 (AuthMethods) and §6 (UI fixture, passwordless branch).
-- DB superuser refusal: `security-rules.md` §1.
+- DB superuser refusal: `security-rules.md` "Hard refusals", rule 1.
 - Snapshot field: `idempotency-snapshot.md` (`testability`).
 - Remediation owners: `/project-bootstrap` (auth endpoint, token issuer infra), `/sprint-development` (feature level), `/unit-testing` (selectors in tests).

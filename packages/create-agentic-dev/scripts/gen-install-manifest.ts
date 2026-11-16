@@ -120,6 +120,13 @@ const SKILL_PURPOSES: Record<string, string> = {
   'humanizer': 'Prose pass for skills and instructions: removes AI writing patterns.',
   'writing-for-agents': 'Structure pass for skills and instructions: pointers, no-op test, completion criteria.',
   'mkd': 'Decision-deck CLI — the AI asks, the user answers point by point in a browser deck.',
+  'show-me-your-work': 'Decision log for an unattended run, audited against the transcript.',
+  'retro': 'Learnings harvest at the close of an orchestrated run.',
+  'diagnosing-bugs': 'Root-cause method for a bug whose cause is not obvious.',
+  'blast-radius': 'Merge blast radius for a diff not trusted to be contained.',
+  'grilling': 'Interview in numbered rounds, each question with a recommended answer.',
+  'domain-modeling': 'Canonical domain terms written to the project glossary.',
+  'research': 'Fact gathering for a research decision ticket.',
 };
 
 function mcpPurposeOr(name: string): string {

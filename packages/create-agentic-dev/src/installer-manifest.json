@@ -238,37 +238,37 @@
         },
         {
           "name": "show-me-your-work",
-          "purpose": "Community skill: show-me-your-work",
+          "purpose": "Decision log for an unattended run, audited against the transcript.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "retro",
-          "purpose": "Community skill: retro",
+          "purpose": "Learnings harvest at the close of an orchestrated run.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "diagnosing-bugs",
-          "purpose": "Community skill: diagnosing-bugs",
+          "purpose": "Root-cause method for a bug whose cause is not obvious.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "blast-radius",
-          "purpose": "Community skill: blast-radius",
+          "purpose": "Merge blast radius for a diff not trusted to be contained.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "grilling",
-          "purpose": "Community skill: grilling",
+          "purpose": "Interview in numbered rounds, each question with a recommended answer.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "domain-modeling",
-          "purpose": "Community skill: domain-modeling",
+          "purpose": "Canonical domain terms written to the project glossary.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {
           "name": "research",
-          "purpose": "Community skill: research",
+          "purpose": "Fact gathering for a research decision ticket.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]
