@@ -11,7 +11,7 @@
     {
       "id": 2,
       "prompt": "abrime un PR para esta branch contra staging, label feature, ya está todo pusheado",
-      "expected_output": "Skill detects branch already pushed, renders inline PR body with Summary/Changes/Test Plan/Traceability/Risk, picks staging as base (matches main-integration strategy), proposes feature + ready-for-review labels, runs gh pr create --body-file with tempfile, returns PR URL. Does not auto-merge.",
+      "expected_output": "Skill detects branch already pushed, renders inline PR body with Summary/Changes/Test Plan/Traceability/Evidence/Merge danger (door, blast radius, rollback), picks staging as base (matches main-integration strategy), proposes feature + ready-for-review labels, runs gh pr create --body-file with tempfile, returns PR URL. Does not auto-merge.",
       "should_trigger": true,
       "files": []
     },
@@ -53,7 +53,7 @@
     {
       "id": 8,
       "prompt": "Este cambio va a tocar 800 líneas entre el schema, el backend y el frontend. Cómo lo trozeo en PRs más chicos?",
-      "expected_output": "Skill recognises chained-PR planning intent. Either hands off to /chained-pr (the strategic-decision skill, which is installed in this repo) or walks the inline decision tree from references/branching-strategies.md (Q1 mechanical? Q2 linearly decomposable? Q3 shared scaffolding?). Returns a strategy (stacked-to-main, feature-branch-chain, or size-exception) plus a concrete branch plan.",
+      "expected_output": "Skill recognises chained-PR planning intent and walks the inline decision tree from references/branching-strategies.md (Q1 mechanical? Q2 linearly decomposable? Q3 shared scaffolding?). Returns a strategy (stacked-to-main, feature-branch-chain, or size-exception) plus a concrete branch plan.",
       "should_trigger": true,
       "files": []
     },
@@ -96,6 +96,20 @@
       "id": 14,
       "prompt": "configura el flujo de git para este repo nuevo",
       "expected_output": "Strategy Setup runs (Spanish trigger 'configura el flujo de git'). Conversation mirrors Spanish; artifacts (git_strategy block fields in .agents/project.yaml + description) stay English. Step 1 repo state -> Step 2 detection -> if undetermined, present the 7 strategies and ask for one slug (detect-then-questionnaire), then run the applicable Q1/Q2/Q3 gated on the resolved strategy plus Q4 (protection policy, all strategies). Proposes branch creation (never auto-executes), never --force, no AI attribution.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "hacé el commit de estos cambios con el key BK-212 y pusheá la rama a origin",
+      "expected_output": "Skill reads the repo state (Step 1), groups the changes into atomic conventional commits scoped BK-212, each ending with the Worktree then Session trailers and no AI attribution, and pushes the feature branch (a non-protected branch needs no extra confirm). Conversation mirrors Spanish; commit messages stay English. No git add -A.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 16,
+      "prompt": "me dio conflicto al hacer pull de staging y el push fue rechazado, cómo lo resuelvo",
+      "expected_output": "Skill diagnoses first (git status, which files, which side), follows references/conflict-resolution.md, offers options ranked by safety, never silently force-pushes or aborts, and verifies a clean state before exiting. Conversation mirrors Spanish.",
       "should_trigger": true,
       "files": []
     }

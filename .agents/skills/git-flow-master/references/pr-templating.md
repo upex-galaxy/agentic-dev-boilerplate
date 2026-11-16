@@ -1,12 +1,11 @@
-# PR Templating — Body, Labels, Reviewers, Base Branch
+# PR templating: body, labels, reviewers, base branch
 
-This file is the contract for opening pull requests. The body is **rendered inline** — there is no template file in the repo to read. Placeholders the skill can fill from session context are filled; placeholders the skill cannot fill are left **visible** so the author can complete them before posting (do not silently drop sections).
+This file is the contract for opening pull requests. The body is rendered inline, because no template file exists in the repo. The skill fills every placeholder it can from session context and leaves the rest visible, so the author completes them before posting. A section is never dropped silently.
 
----
 
 ## Title
 
-Format: `{type}({ISSUE-KEY}): {description}` — under 70 characters.
+Format: `{type}({ISSUE-KEY}): {description}`, under 70 characters.
 
 Without an issue key: `{type}: {description}`.
 
@@ -17,13 +16,12 @@ Examples:
 - `docs: clarify branch prefix vocabulary`
 - `chore(deps): bump zod to v4`
 
-The title is the first thing reviewers see in the PR list — keep it scannable.
+The title is the first thing reviewers see in the PR list, so keep it scannable.
 
----
 
-## Body — inline template
+## Body: inline template
 
-Render this verbatim, substituting the placeholders:
+Render this as written, substituting the placeholders:
 
 ```markdown
 ## Summary
@@ -51,78 +49,92 @@ Render this verbatim, substituting the placeholders:
 
 <<EVIDENCE>>
 
-## Risk
+## Merge danger
 
 <<RISK>>
 ```
 
 ### Placeholder rules
 
-| Placeholder     | What goes here                                                                                                                                                                                                             |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<<SUMMARY>>`   | One-paragraph summary derived from the commits: what changed and why.                                                                                                                                                      |
-| `<<CHANGES>>`   | Bulleted list — one bullet per commit, format `- {type}({ISSUE-KEY}): {description}`.                                                                                                                                      |
-| `<<TEST_PLAN>>` | Bulleted steps to verify: test commands run, manual checks done, environments hit. Mark each as `[x]` if already verified locally.                                                                                         |
-| `<<ISSUE_KEY>>` | Key extracted in the branch step. If absent, **drop the entire `- Issue:` line** rather than leave a dangling link.                                                                                                        |
-| `<<ISSUE_URL>>` | `{{ATLASSIAN_URL}}/browse/<<ISSUE_KEY>>` when both available. Otherwise drop.                                                                                                                                              |
-| `{branch}`      | Current branch name (computed by the skill).                                                                                                                                                                               |
-| `{base}`        | PR base branch (resolved from the strategy — see table below).                                                                                                                                                             |
-| `{strategy}`    | Active strategy slug (`solo-main`, `main-integration`, etc.). Helps reviewers understand the merge target.                                                                                                                 |
+| Placeholder | What goes here |
+| --- | --- |
+| `<<SUMMARY>>` | One-paragraph summary derived from the commits: what changed and why. |
+| `<<CHANGES>>` | Bulleted list, one bullet per commit, format `- {type}({ISSUE-KEY}): {description}`. |
+| `<<TEST_PLAN>>` | Bulleted steps to verify: test commands run, manual checks done, environments hit. Mark each `[x]` once verified locally. |
+| `<<ISSUE_KEY>>` | Key extracted in the branch step. Without one, drop the whole `- Issue:` line so no link dangles. |
+| `<<ISSUE_URL>>` | `{{ATLASSIAN_URL}}/browse/<<ISSUE_KEY>>` when both are available. Otherwise drop. |
+| `{branch}` | Current branch name (computed by the skill). |
+| `{base}` | PR base branch (resolved from the strategy, see the table below). |
+| `{strategy}` | Active strategy slug (`solo-main`, `main-integration`, etc.). Helps reviewers understand the merge target. |
 | `<<WORKTREE>>` / `<<SESSION_LABEL>>` | The same two values the commit trailers carry, copied from the `AGENT IDENTITY:` line in session context (`worktree=…`, `session=…`; `SKILL.md` §3.2). A value the line does not resolve is written `unknown`, never guessed. A human-opened PR drops both lines. |
-| `<<EVIDENCE>>`  | Pointer to evidence a reviewer can open: a PR comment or a Jira attachment (screenshots, traces, logs). The session working copy (`.session/sprint-development/<KEY>/evidence/`) is local, so never the only pointer. For backend/CLI PRs without visual evidence, leave the placeholder so the author can fill it in or delete it. |
-| `<<RISK>>`      | Short risk assessment: blast radius, affected modules, rollback plan. One paragraph.                                                                                                                                       |
+| `<<EVIDENCE>>` | Pointer to evidence a reviewer can open: a PR comment or a Jira attachment (screenshots, traces, logs). The session working copy (`.session/sprint-development/<KEY>/evidence/`) is local, so it is never the only pointer. For backend or CLI PRs without visual evidence, leave the placeholder so the author can fill it in or delete it. See Evidence below. |
+| `<<RISK>>` | The merge danger, three lines: `**Door:**` one-way or two-way, `**Blast radius:**` in a word or two, `**Rollback:**` the plan. See Merge danger below. |
 
-Do not pad sections. Empty sections invite skim-reads.
+A padded section invites skim-reads, so write each one at the size its content needs.
 
-**The `Worktree` / `Session` lines are provenance for debugging, not authorship attribution.** They exist so a broken, abandoned, or conflicting PR can be routed back to the session that explains WHY it exists. They name a checkout and a session, never a tool, so they do not conflict with the no-AI-attribution rule (`conventional-commits.md` § Hard rules). Harness-branded provenance (a `claude.ai` session link, a `~/.claude/projects/…` transcript path) is forbidden here for the same reason it is forbidden in a commit.
+The `Worktree` and `Session` lines are provenance for debugging, not authorship attribution. They exist so a broken, abandoned or conflicting PR can be routed back to the session that explains why it exists. They name a checkout and a session, never a tool, so they do not conflict with the no-AI-attribution rule (`conventional-commits.md` § Hard rules). Harness-branded provenance (a `claude.ai` session link, a `~/.claude/projects/…` transcript path) is out of place here for the same reason it is out of place in a commit.
 
----
+### Evidence
 
-## Base branch — resolved from strategy
+Show a before and after: what the change did not do, then what it does. Rank by weight:
 
-| Strategy           | Default PR base                                                  | Notes                                                           |
-| ------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| `solo-main`        | `main`                                                           | PRs are optional in this flow; if used, target `main`.          |
-| `main-integration` | integration branch (e.g. `staging`)                              | Promotion PRs (`staging → main`) are explicit, separate events. |
-| `enterprise`       | integration branch                                               | Exception: `hotfix/*` → `main` (and back-merge to integration). |
-| `trunk-based`      | `main`                                                           | PRs are short-lived; merges are fast.                           |
-| `gitflow`          | `develop` for `feature/*`; `main` for `release/*` and `hotfix/*` | Release PRs back-merge to `develop` after merging to `main`.    |
-| `github-flow`      | `main`                                                           | Always.                                                         |
-| `gitlab-flow`      | `main`                                                           | Promotion MRs target `pre-production`, then `production`.       |
+1. Screenshots, when the environment allows it and the change is visual. These carry the most weight.
+2. Execution output: a test run, console output. Name the exact test that failed before and passes now, in a line of pseudocode.
+3. A description of the check, only when neither of the above exists.
+
+### Merge danger
+
+`<<RISK>>` renders as three lines: `**Door:**`, `**Blast radius:**` and `**Rollback:**` (see the worked example), each followed by optional detail.
+
+The door is `one-way` or `two-way`. A two-way door can be walked back, so a PR that is cheap to roll back is low risk. A destructive action or a hard-to-reverse decision (a migration, deleted data, a published contract or release, a deleted branch) makes it one-way.
+
+The blast radius is one word for the scope of impact (`docs`, `one module`, `all consumers`), followed by the ramifications a reviewer should weigh: broken consumers, layout shift, other environments, a pipeline that reads the changed file. Consider every consumer before choosing the word.
+
+The rollback line gives the plan to undo the change: revert the PR, switch a flag off, restore from a backup. For a one-way door, either name a real plan or say there is none. Production deploys make this line matter most.
+
+
+## Base branch, resolved from strategy
+
+| Strategy | Default PR base | Notes |
+| --- | --- | --- |
+| `solo-main` | `main` | PRs are optional in this flow; if used, target `main`. |
+| `main-integration` | integration branch (e.g. `staging`) | Promotion PRs (`staging` to `main`) are explicit, separate events. |
+| `enterprise` | integration branch | Exception: `hotfix/*` goes to `main`, with a back-merge to integration. |
+| `trunk-based` | `main` | PRs are short-lived; merges are fast. |
+| `gitflow` | `develop` for `feature/*`; `main` for `release/*` and `hotfix/*` | Release PRs back-merge to `develop` after merging to `main`. |
+| `github-flow` | `main` | Always. |
+| `gitlab-flow` | `main` | Promotion MRs target `pre-production`, then `production`. |
 
 The user can override with `--base X` in arguments. When overridden, surface it in the confirmation:
 
 > _"PR will target `{base}` instead of the strategy default `{default}`. Confirm?"_
 
----
 
 ## Labels
 
 Suggest labels based on the dominant commit type:
 
-| Type                                                           | Label                                        |
-| -------------------------------------------------------------- | -------------------------------------------- |
-| `feat:`                                                        | `feature`                                    |
-| `fix:`                                                         | `bugfix`                                     |
-| `docs:`                                                        | `docs`                                       |
-| `perf:`                                                        | `feature` (or `perf` if the repo defines it) |
-| `chore:` / `refactor:` / `style:` / `test:` / `build:` / `ci:` | `chore`                                      |
-| Breaking change (`!`)                                          | `breaking-change`                            |
+| Type | Label |
+| --- | --- |
+| `feat:` | `feature` |
+| `fix:` | `bugfix` |
+| `docs:` | `docs` |
+| `perf:` | `feature` (or `perf` if the repo defines it) |
+| `chore:` / `refactor:` / `style:` / `test:` / `build:` / `ci:` | `chore` |
+| Breaking change (`!`) | `breaking-change` |
 
-Always combine the type label with `ready-for-review`, OR propose `--draft` if the user wants a draft PR.
+Combine the type label with `ready-for-review`, or propose `--draft` when the user wants a draft PR.
 
-**Verify before applying.** Repos differ. Run `gh label list` if uncertain — never hardcode labels the repo may not have configured. If a label is missing, ask the user whether to create it or skip.
+Repos differ, so run `gh label list` when unsure before applying a label, and treat the table as suggestions the repo may not have configured. When a label is missing, ask whether to create it or skip it.
 
----
 
 ## Reviewers
 
 - If `.github/CODEOWNERS` exists and matches the modified paths, suggest the matched owners.
-- Otherwise ask the user. **Never hardcode usernames** — repos and teams change.
+- Otherwise ask the user. Usernames come from the repo's CODEOWNERS or the user, because teams change.
 
-For solo-main / personal projects, reviewers are usually skipped.
+For solo-main and personal projects, reviewers are usually skipped.
 
----
 
 ## Draft vs ready-for-review
 
@@ -134,7 +146,6 @@ Open as `--draft` when:
 
 Otherwise open as ready-for-review with the appropriate label.
 
----
 
 ## Rendering and submission
 
@@ -158,17 +169,15 @@ gh pr create \
 rm "$TMP"
 ```
 
-Always show the rendered body and base branch to the user **before** running `gh pr create`. The user can edit, accept, or reject.
+Show the rendered body and base branch to the user before running `gh pr create`, so they can edit, accept or reject it. With nobody present (a worker or a routine), the delegating brief authorises the PR when it names it. Otherwise stop with the body written to a file and report, because opening a PR is an outward action (see `agentic-dev-core/references/decision-protocol.md`).
 
----
 
 ## After creation
 
 - Return the PR URL.
 - Surface the next step: _"Review the PR. Once approved, merge via the GitHub UI or run `gh pr merge {number} --squash --delete-branch`."_
-- **Do not auto-merge.** Merging is an explicit, separate action by the user.
+- Leave the merge to the user: it is a separate, explicit action, never part of opening the PR.
 
----
 
 ## Worked example
 
@@ -215,10 +224,13 @@ model with unit tests; UI uses the existing table-action slot.
 Design walkthrough screenshots are attached to UPEX-123 in Jira and to the
 first comment of this PR.
 
-## Risk
+## Merge danger
 
-Low blast radius — new code path behind a feature flag (`bulkAssign`).
-Rollback: disable the flag and revert this PR.
+**Door:** two-way. The new code path sits behind a feature flag (`bulkAssign`).
+
+**Blast radius:** one module, the users table.
+
+**Rollback:** disable the flag and revert this PR.
 ```
 
 Title: `feat(UPEX-123): add bulk-assign action`
