@@ -165,7 +165,7 @@ The gate is the only mechanism that can block Stage 2; it is not advisory. A `Hi
 
 Without it, this gate was fail-open. Its condition read "block while `chain_strategy = pending`", so any agent that wrote a plausible non-`pending` label — without ever walking the tree — disabled the gate that existed to force that decision. **Observed in production**: a planner emitted `Chain strategy: feature-branch-chain` as a guess; the gate never fired; the branch layout had to be redone by hand.
 
-Requiring a citation, and treating a missing citation as the blocking value, closes it. This is the general rule for every gate in every skill: `agentic-dev-core/references/orchestration-doctrine.md` → "Gate design — fail-closed, evidence-bearing".
+Requiring a citation, and treating a missing citation as the blocking value, closes it. This is the general rule for every gate in every skill: `agentic-dev-core/references/orchestration-doctrine.md` → "Gate design: fail-closed, evidence-bearing".
 
 ---
 
