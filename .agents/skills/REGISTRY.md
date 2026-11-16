@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-16T04:00:25.163Z`
+> Generated: `2026-11-16T04:10:09.699Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -62,21 +62,21 @@ Skills indexed: 22
 
 ## Skill: agentic-dev-onboard
 
-**Purpose**: Walks new users through this repo's dev flow — which entry path the repo took (new project scaffolded by /project-bootstrap, or an existi...
+**Purpose**: Onboard a newcomer to this repo's dev flow and hand off to the right skill.
 
 **Compact Rules**:
-- Use `library-docs` (Context7) for "how to use X" — official docs, current API
-- Use `web-search` (Exa or Tavily, connected at harness level) for "how to solve X" — community fixes, troubleshooting
-- Use **Atlassian** only as fallback — prefer `/acli` skill (fewer tokens, faster)
-- What this skill does NOT do:
-- Implement features → use `/sprint-development`
-- Write unit tests → use `/unit-testing`
-- Refine acceptance criteria → use `/product-management`
-- Define a brand-new product → use `/project-foundation`
-- Scaffold backend / frontend code → use `/project-bootstrap` (greenfield only: `bun run bootstrap:guard` refuses its base phases on an existing app)
-- Teach the agentic layer an existing app → use `/project-adoption`
-- Generate the in-app `/qa` page + credentials artifact → use `/testability-guide`
-- Entry path: `.template/installer.lock.json` with `adopted: true` = adopted app (tour the adoption hand-off, never `/project-bootstrap` base phases); otherwise a new project. Stack facts come from `.agents/project.yaml` → `stack:`, never from this skill's defaults.
+- Use `library-docs` (Context7) for "how to use X": official docs, current API
+- Use `web-search` (Exa or Tavily, connected at harness level) for "how to solve X": community fixes, troubleshooting
+- Use Atlassian only as a fallback; prefer the `/acli` skill (fewer tokens, faster)
+- What this skill does not do:
+- Implement features: use `/sprint-development`
+- Write unit tests: use `/unit-testing`
+- Refine acceptance criteria: use `/product-management`
+- Define a brand-new product: use `/project-foundation`
+- Scaffold backend or frontend code: use `/project-bootstrap` (greenfield only; `bun run bootstrap:guard` refuses its base phases on an existing app)
+- Teach the agentic layer an existing app: use `/project-adoption`
+- Generate the in-app `/qa` page and credentials artifact: use `/testability-guide`
+- Entry path: `.template/installer.lock.json` with `adopted: true` is an adopted app (tour the adoption hand-off, never the `/project-bootstrap` base phases); otherwise it is a new project. Stack facts come from the `stack:` block of `.agents/project.yaml`, never from this skill's defaults.
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
@@ -120,53 +120,53 @@ Skills indexed: 22
 
 ## Skill: business-api-context
 
-**Purpose**: What the API of the product under development MEANS to the business: the auth model (Supabase Auth, sessions, roles), every route group (...
+**Purpose**: The business meaning of the API: auth model and roles, route groups, who calls them, journeys, errors, integrations.
 
 **Compact Rules**:
-- DO: read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). NEVER read `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
-- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `api`; never add a route as if the API were empty.
-- DO: take field names, types and required flags from the OpenAPI types (`bun run api:sync`, `@schemas/{domain}.types`), and the MEANING from the map. On a conflict the spec wins for shape, the running API wins for behaviour.
-- WHEN a session observes something that contradicts a section (a status, a field, an auth rule): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
-- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no generated types, no product code.
-- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Read the map through `bun run context:map business-api-context` (or `--section <id>` for one route group or journey). Skip `references/business-api-map.html` raw: its SVG is most of the bytes and none of the facts.
+- A placeholder map means there is no map. Say so and hand the user `project-context` mode `api`, so nobody mistakes an empty map for an empty API.
+- Take field names, types and required flags from the OpenAPI types (`bun run api:sync`, `@schemas/{domain}.types`) and the meaning from the map. When they conflict, the spec wins for shape and the running API wins for behaviour.
+- When a session observes something that contradicts a section (a status, a field, an auth rule), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. Procedure: `references/refresh.md`.
+- Write only inside this skill's own `references/`. Jira, `.context/`, other skills, generated types and product code are out of scope, because this skill owns one map and nothing else.
+- Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
 
 **Read full SKILL.md when**: building a briefing for a route, OpenAPI or auth dispatch, deciding whether a section is stale, or proposing an edit to the map.
 
-> Source: `.agents/skills/business-api-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/business-api-context/SKILL.md` · phase: `unknown` · kind: `context` · extraction strategy: A
 
 ---
 
 ## Skill: business-data-context
 
-**Purpose**: What the product under development IS at the data level: business entities and why they exist, their relationships, RLS policies and who...
+**Purpose**: The product's data model: entities, RLS, migrations, state machines and background jobs.
 
 **Compact Rules**:
-- DO: read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). NEVER read `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
-- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `data`; never plan a migration as if the schema were empty.
-- DO: cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
-- WHEN a session observes something that contradicts a section (a column, a policy, a trigger): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
-- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no migration, no product code.
-- DO NOT: copy map content into this SKILL.md. Judgment (a rule for READING the data) goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Read the map through `bun run context:map business-data-context` (or `--section <id>` for one entity or flow). Skip `references/business-data-map.html` raw: its SVG is most of the bytes and none of the facts.
+- A placeholder map means there is no map. Say so and hand the user `project-context` mode `data`, so nobody plans a migration as if the schema were empty.
+- Cite a fact with its section id and `data-updated` date. A section older than the migration it describes is a hypothesis to check with `[DB_TOOL]`, not an answer.
+- When a session observes something that contradicts a section (a column, a policy, a trigger), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. Procedure: `references/refresh.md`.
+- Write only inside this skill's own `references/`. Jira, `.context/`, other skills, migrations and product code are out of scope, because this skill owns one map and nothing else.
+- Keep map content out of this SKILL.md. A rule for reading the data goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `db` (verifying a section) or `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
 
 **Read full SKILL.md when**: building a briefing for a migration, RLS or seed dispatch, deciding whether a section is stale, or proposing an edit to the map.
 
-> Source: `.agents/skills/business-data-context/SKILL.md` · phase: `unknown` · kind: `context` · source: frontmatter `compact_rules` (verbatim)
+> Source: `.agents/skills/business-data-context/SKILL.md` · phase: `unknown` · kind: `context` · extraction strategy: A
 
 ---
 
 ## Skill: business-feature-context
 
-**Purpose**: What the product under development DOES for its users, feature by feature: the feature catalog grouped by module, the CRUD matrix (which...
+**Purpose**: Knowledge of what the product does for its users, feature by feature: catalog, CRUD matrix, UI inventory, cross-feature flows.
 
 **Compact Rules**:
-- DO: read the map through `bun run context:map business-feature-context` (or `--section <id>` for one feature or module). NEVER read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
-- DO: treat a placeholder map as "no map". Say so and hand the user `project-context` mode `features`; never place a story as if the product had no features.
-- DO: take how a screen LOOKS from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature DOES from the map. On a conflict the running app wins for behaviour.
-- WHEN a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks): PROPOSE the one-section edit with its evidence to the user (or to the conductor when you are a supervised worker), apply it only on approval. Procedure: `references/refresh.md`.
-- DO NOT: write anywhere but this skill's own `references/`. No Jira, no `.context/`, no other skill, no design file, no product code.
-- DO NOT: copy map content into this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
+- Read the map through `bun run context:map business-feature-context` (`--section <id>` for one feature or module). Do not read `references/business-feature-map.html` raw: its SVG is most of the bytes and none of the facts.
+- A placeholder map counts as no map. Say so and hand the user `project-context` mode `features`; do not place a story as if the product had no features.
+- Take how a screen looks from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature does from the map. When they conflict, the running app wins for behaviour.
+- When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the edit. Procedure: `references/refresh.md`.
+- Write only inside this skill's own `references/`: no Jira, no `.context/`, no other skill, no design file, no product code.
+- Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.
 
 **Read full SKILL.md when**: building a briefing for a UI, CRUD or navigation dispatch, deciding whether a section is stale, or proposing an edit to the map.
@@ -287,20 +287,22 @@ Skills indexed: 22
 
 ## Skill: pr-review-lead
 
-**Purpose**: Acts as a Tech Lead reviewing a teammate's pull request against this repo's development doctrine (or the target repo's own doctrine, if i...
+**Purpose**: Reviews a colleague's pull request as a Tech Lead against the repo's development doctrine, citing doctrine or code for every finding.
 
 **Compact Rules**:
-- DO: run the strictness preflight (Flexible / Standard / Strict) before reading a single line of diff, unless the invocation already answered it; never re-ask what was given.
-- WHEN strictness is Flexible or Standard: doctrine-pattern deviations are observations framed as a comparison, never errors, and they must not move the score the way a Real defect does. Strict widens what counts as a finding; it still does not turn a pattern note into an error.
-- DO: load the target repo's OWN doctrine before analyzing when it ships one (`AGENTS.md`, `.agents/skills/`, `.context/`). Only when it has none does this repo's doctrine become the reference standard, and say so once, up front.
-- DO NOT: state a "best practice" as if the repo required it without a `file §section` citation. An ungrounded call is labeled as opinion, in those words.
-- DO: bucket every finding into exactly one of Real, Pattern, or Positive, with a severity from the shared scale in `sprint-development/references/review-pr.md` §"Adjudication contract" (`BLOCKER` / `MAJOR` / `MINOR` / `NIT`).
-- DO: always populate the Positive bucket. A review with zero positives on a PR that clearly has some is uncalibrated, not rigorous.
-- DO: read the actual diffs, never the PR description. On a PR too large for one diff, page the per-file patches; check commit headlines first so a lockfile, generated-types or vendor-sync commit is not reviewed line by line.
-- DO: present the findings table + positives + a score out of 10 as a CHECKPOINT, then let the user triage and re-classify. The user's context decides what ships; do not defend the first-pass severity.
-- DO NOT: post anything to GitHub without an explicit go-ahead on the final draft. Approval for a DIFFERENT PR does not carry over, and silence is not approval.
-- DO NOT: delegate drafting or posting the feedback to a subagent: tone decisions and externally-visible actions stay with the orchestrator.
-- DO: write the posted comment in English (Critical Rule #12) unless the user asked for another language for that specific comment.
+- Run the strictness preflight (Flexible, Standard or Strict) before reading any diff. If the invocation already answered it, do not ask again.
+- At Flexible and Standard, a doctrine-pattern deviation is an observation framed as a comparison, never an error, and it does not move the score the way a Real defect does. Strict widens what counts as a finding; it does not turn a pattern note into an error.
+- When the target repo ships its own doctrine (`AGENTS.md`, `.agents/skills/`, `.context/`), load it before analyzing. Only when it has none is this repo's doctrine the reference standard, and the output says so once, up front.
+- Present a "best practice" as a repo requirement only with a `file §section` citation. An ungrounded call is labeled as opinion, in those words.
+- Put every finding in exactly one bucket (Real, Pattern or Positive) with a severity from the shared scale in `sprint-development/references/review-pr.md` §"Adjudication contract" (`BLOCKER`, `MAJOR`, `MINOR`, `NIT`).
+- Fill the Positive bucket. A review with no positives on a PR that clearly has some is uncalibrated, not rigorous.
+- Read the actual diffs, never the PR description. On a PR too large for one diff, page the per-file patches, and check the commit headlines first so a lockfile, generated-types or vendor-sync commit is not reviewed line by line.
+- When the PR has a ticket, plan or acceptance criteria to check against, review on two axes, Spec and Standards, each by its own reviewer in a fresh context, with the briefs in `sprint-development/references/review-pr.md` `## Two-axis review`. Check the new tests for lying tests (LT-1 and LT-2 with Spec, LT-3 with Standards), defined in `unit-testing/references/tdd-workflow.md`.
+- Present the findings table, the positives and a score out of 10 as a checkpoint, then let the user triage and re-classify. Their context decides what ships; do not defend the first-pass severity.
+- Post to GitHub only after an explicit go-ahead on the final draft. Approval for a different PR does not carry over, and silence is not approval. The comment carries no AI-generated marker.
+- Drafting and posting stay with the orchestrator, because tone and an outward action are not for a subagent.
+- Write the posted comment in English (Critical Rule #12) unless the user asked for another language for that comment.
+- Review the PR and leave the fixing to its author: push nothing to the PR under review. Submit a formal GitHub approval or change request only when the user asks for that action; the default artifact is a plain comment.
 
 **Read full SKILL.md when**: applying the severity rubric or score weighting, probing an external repo for its doctrine, or drafting the posting flow itself.
 
