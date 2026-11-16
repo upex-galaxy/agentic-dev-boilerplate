@@ -31,6 +31,7 @@ const HOOK_EMITTER = join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs');
 const EVAL = JSON.parse(readFileSync(join(import.meta.dir, 'fixtures', 'instruction-router-eval.json'), 'utf8')) as {
   targets: { recall: number, precision: number }
   prompts: Array<{ prompt: string, expect: string[] }>
+  meaningOnly: Array<{ prompt: string, expect: string[] }>
 };
 const temporaryRoots: string[] = [];
 
@@ -520,10 +521,19 @@ describe('labelled-prompt eval (bilingual)', () => {
 
   test('the set is large enough and covers both languages', () => {
     expect(EVAL.prompts.length).toBeGreaterThanOrEqual(40);
-    expect(EVAL.prompts.some(p => /[áéíóú¿ñ]/i.test(p.prompt))).toBe(true);
+    expect(EVAL.prompts.some(p => /[áéíóúñ]/i.test(p.prompt))).toBe(true);
     for (const result of results) {
       for (const id of result.expected) {
         expect([...router.targets.values()].some(target => (target.id || target.path) === id)).toBe(true);
+      }
+    }
+  });
+
+  test('every meaningOnly expect id is a router target, so the unscored list cannot rot', () => {
+    const ids = new Set([...router.targets.values()].map(target => target.id || target.path));
+    for (const { prompt, expect: expected } of EVAL.meaningOnly) {
+      for (const id of expected) {
+        expect({ prompt, id, known: ids.has(id) }).toEqual({ prompt, id, known: true });
       }
     }
   });

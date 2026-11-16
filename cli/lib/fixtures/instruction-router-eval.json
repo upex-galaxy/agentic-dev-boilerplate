@@ -1,5 +1,5 @@
 {
-  "description": "Labelled prompts for the instruction router of .agents/hooks/personality-reinject.mjs. Each `expect` lists what a careful reader of the AGENTS.md router would load for the prompt: a section id (frontmatter `id`) or an import path. Labels follow the router, not the classifier: a miss or a false hit is fixed in a section's `triggers:`, never by relabelling. Bilingual on purpose (ES/EN).",
+  "description": "Labelled prompts for the instruction router of .agents/hooks/personality-reinject.mjs. Each `expect` lists what a careful reader of the AGENTS.md router would load for the prompt: a section id (frontmatter `id`) or an import path. Labels follow the router, not the classifier: a miss or a false hit is fixed in a section's `triggers:`, never by relabelling. The scored set is bilingual where an English and a Spanish prompt share a language-neutral token (PR, merge, project.yaml, {{VAR}}, UPEX-45, husky, package.json); Spanish-only prompts live in the unscored `meaningOnly` list.",
   "targets": {
     "recall": 0.95,
     "precision": 0.8
@@ -40,10 +40,6 @@
       "expect": ["ticket-work", "local-context-pbi", "project-variables"]
     },
     {
-      "prompt": "actualizá los criterios de aceptación de la épica de pagos",
-      "expect": ["context-map", "local-context-pbi", "project-variables"]
-    },
-    {
       "prompt": "create the epic for payments in the backlog",
       "expect": ["context-map", "local-context-pbi", "project-variables"]
     },
@@ -52,7 +48,7 @@
       "expect": ["project-variables", ".agents/project.yaml"]
     },
     {
-      "prompt": "¿qué valor tiene {{PROJECT_KEY}} acá?",
+      "prompt": "qué valor tiene {{PROJECT_KEY}} acá?",
       "expect": ["project-variables", ".agents/project.yaml"]
     },
     {
@@ -61,9 +57,9 @@
     },
     { "prompt": "how do I run the tests?", "expect": ["package.json"] },
     { "prompt": "corré lint y types:check", "expect": ["package.json"] },
-    { "prompt": "¿cómo levanto el servidor de desarrollo?", "expect": ["package.json"] },
+    { "prompt": "cómo levanto el servidor de desarrollo?", "expect": ["package.json"] },
     { "prompt": "run bun run repo:check and fix what fails", "expect": ["package.json"] },
-    { "prompt": "¿qué hace el script worktree:provision?", "expect": ["package.json"] },
+    { "prompt": "qué hace el script worktree:provision?", "expect": ["package.json"] },
     {
       "prompt": "run the full type checks before pushing",
       "expect": ["git", "package.json"]
@@ -102,13 +98,21 @@
       "prompt": "launch three workers in parallel, one per story",
       "expect": ["orchestration-detail"]
     },
-    { "prompt": "orquestá una flota para el sprint 4", "expect": ["orchestration-detail"] },
     { "prompt": "dispatch a subagent to research this", "expect": ["orchestration-detail"] },
+    {
+      "prompt": "launch three workers in parallel for the sprint 4 stories",
+      "expect": ["orchestration-detail"]
+    },
     { "prompt": "is breaking rule #5 ok here if I amend?", "expect": ["critical-rules", "git"] },
     {
-      "prompt": "¿la regla crítica 13 me deja hacer git restore .?",
+      "prompt": "what does critical rule 13 say about git restore .?",
       "expect": ["critical-rules", "git"]
     },
+    {
+      "prompt": "what does critical rule 16 say about verifying at the destination?",
+      "expect": ["critical-rules"]
+    },
+    { "prompt": "does rule 1 allow hardcoding a password?", "expect": ["critical-rules"] },
     {
       "prompt": "apply the supabase migration for the profiles table",
       "expect": ["tool-resolution"]
@@ -123,15 +127,11 @@
     { "prompt": "where does the business data map live?", "expect": ["context-map"] },
     { "prompt": "start the design system for this app", "expect": ["context-map"] },
     { "prompt": "set up the onboarding for a new teammate", "expect": ["context-map"] },
-    { "prompt": "hola, ¿cómo estás?", "expect": [] },
+    { "prompt": "hola, cómo estás?", "expect": [] },
     { "prompt": "thanks, that's all", "expect": [] },
     { "prompt": "explain what this paragraph means", "expect": [] },
     { "prompt": "write a haiku about autumn", "expect": [] },
     { "prompt": "resumime lo que hicimos hoy", "expect": [] },
-    {
-      "prompt": "¿qué dice la regla crítica 16 sobre verificar en el destino?",
-      "expect": ["critical-rules"]
-    },
     { "prompt": "add a new rule sentence to AGENTS.md", "expect": ["harnesses"] },
     {
       "prompt": "mové este párrafo de AGENTS.md a una sección de .agents/instructions/",
@@ -182,10 +182,6 @@
       "expect": ["harnesses"]
     },
     {
-      "prompt": "esto también funciona en Pi?",
-      "expect": ["harnesses"]
-    },
-    {
       "prompt": "round pi to two decimals in that formula",
       "expect": []
     },
@@ -201,5 +197,22 @@
       "prompt": "does this also work on pi",
       "expect": ["harnesses"]
     }
+  ],
+  "meaningOnlyNote": "Spanish-only prompts the English-stem router cannot match by token. They are not scored: the agent routes them from the ROUTER table by meaning (LOAD PROTOCOL, AGENTS.md). A prompt that misses on a token a Spanish and an English prompt share belongs in a section's triggers, never here.",
+  "meaningOnly": [
+    {
+      "prompt": "actualizá los criterios de aceptación de la épica de pagos",
+      "expect": ["context-map", "local-context-pbi", "project-variables"]
+    },
+    { "prompt": "orquestá una flota para el sprint 4", "expect": ["orchestration-detail"] },
+    {
+      "prompt": "la regla crítica 13 me deja hacer git restore .?",
+      "expect": ["critical-rules", "git"]
+    },
+    {
+      "prompt": "qué dice la regla crítica 16 sobre verificar en el destino?",
+      "expect": ["critical-rules"]
+    },
+    { "prompt": "esto también funciona en Pi?", "expect": ["harnesses"] }
   ]
 }

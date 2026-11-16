@@ -2,7 +2,7 @@
  * Prompt-time context: ONE emitter, one adapter per harness.
  *
  * Why this exists: AGENTS.md §2 (Butler + PM Voice + Visual Mapping) and the
- * user-level OUTPUT STYLE are read ONCE at session start and then dilute as
+ * user-level reply rules are read ONCE at session start and then dilute as
  * the context window fills, while anything a plugin re-injects on every
  * UserPromptSubmit stays fresh. That asymmetry is mechanical, not editorial:
  * whichever layer is repeated most often wins. Re-emitting the contract on
@@ -75,7 +75,7 @@ import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const PERSONALITY_CONTRACT = [
-  'OUTPUT CONTRACT (AGENTS.md §2 plus the active user-level output style):',
+  'OUTPUT CONTRACT (AGENTS.md §2 plus the user-level reply rules):',
   'PM Voice headline = value, never a punch phrase.',
   'Render markdown: headings when 2+ sections, one bold anchor per block, backticks on every path/command/identifier, tables for comparisons, no wall of text.',
   'Butler bullets as `topic: fragment`.',
