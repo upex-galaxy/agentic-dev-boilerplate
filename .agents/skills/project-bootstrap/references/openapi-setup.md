@@ -982,7 +982,7 @@ Write the report in English:
 
 ## With nobody at the keyboard
 
-A worker or a routine cannot answer the questions this file asks. Follow `agentic-dev-core/references/decision-protocol.md` and take the paths below.
+A supervised worker sends these questions to its conductor, which holds the gate. A routine with nobody takes the paths below (`agentic-dev-core/references/decision-protocol.md` §5.2).
 
 - Environment URLs missing (Step 0.3): do not ask. Keep the `servers` fallback from Step 2.2 (`NEXT_PUBLIC_APP_URL`, then `http://localhost:3000`) and list the missing URLs in the report.
 - `db_project_ref` is `null` (Step 0.2): do not write the project identity into `.agents/project.yaml`, which is the human's call. Generate the files with `[SUPABASE_PROJECT_ID]` still in place and put "cookie name unresolved" at the top of the report, so nobody mistakes the spec for finished.

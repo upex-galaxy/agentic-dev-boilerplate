@@ -187,7 +187,7 @@ There is no status table. The section holds:
 - **Recipe B**, a one-shot live query through `[ISSUE_TRACKER_TOOL]` (the JQL for the active sprint board, ranked).
 - A decision rule for "what is next to work": the highest-ranked story whose §3 blockers are dev-done **per the live query, never per this page**, with its §5 gate cleared and its §6 pre-dev blockers resolved. The query runs on the candidate and on its direct blockers before anyone commits to a ticket, which is what `/sprint-development` Phase 0b enforces.
 - **Per-story pre-dev blockers** (local knowledge, not a tracker field), as a table.
-- **Edge-mapping TODO**: stories seen on the board that are not yet in §3.
+- Edge-mapping TODO: list the stories seen on the board that are not yet in §3.
 
 ### 7. Maintenance protocol
 
@@ -204,7 +204,7 @@ There is no status table. The section holds:
 
 - **Key paths pointer.** The shared Key paths in `.agents/instructions/agent-context-map.md` already name `.context/dev-roadmap.md` (ticket-level sequence) next to `.context/master-implementation-plan.md` (strategy). Only when this project's copy lacks it, add it to `.agents/instructions/agent-project.md` (`## Key paths (this project)`). Do not write it into `AGENTS.md`, a shared section or the `CLAUDE.md` shim.
 - **UPDATE mode.** Show a diff summary scoped per section. Flag loudly any §3 edge or §5 gate the regenerated graph would drop: those are hand-authored, and the owner confirms each one.
-- **Report**:
+- Report:
   - Epics in backbone: N
   - Story edges (hard / soft): N / N
   - Execution sprints computed: N

@@ -96,7 +96,7 @@ The phase is done when:
 - the TypeScript build passes with no type errors: `[package-manager] run build`
 - the UI reflects the visual style of `DESIGN.md` and the palette is applied consistently on every page
 - the copy is real, written from the business context, not generic filler
-- the user has run the server and confirmed it compiles without warnings and the pages look right (ask them to run it)
+- the user has run the server and confirmed it compiles without warnings and the pages look right (ask them to run it). With nobody at the keyboard, run `[pm] run build`, check the demo pages with `/playwright-cli` in a named session, and list the person's run-and-look check as pending in the report
 - the design system is visually coherent and attractive, checked with `/playwright-cli` in a named session or by the user manually
 
 ---
@@ -135,7 +135,7 @@ The questions this phase asks the user cover layout, priority components, packag
 
 ### With nobody at the keyboard
 
-A supervised worker sends a question to its launcher (`agentic-dev-core/references/decision-protocol.md` §5.2). A routine with nobody never waits for an answer. The four questions (package manager, layout, priority components, UI strategy) are technical choices that each offer a "Choose for me" option, so a run with no person takes that option, with the rule written for it in the step, and reports each as `DECIDED: <choice> | beat: <options> | why: <reason>`. The stops do not have a default: the entry guard, missing backend types, a missing `DESIGN.md` and an existing theme end the run with a report that says what is missing and what to run next.
+A supervised worker sends a question to its launcher (`agentic-dev-core/references/decision-protocol.md` §5.2). A routine with nobody never waits for an answer. The four questions (package manager, layout, priority components, UI strategy) are technical choices that each offer a "Choose for me" option, so a run with no person takes that option, with the rule written for it in the step, and reports each as `DECIDED: <choice> | beat: <options> | why: <reason>`. The dev-server confirmation in the completion list is a person's check: an unattended run builds, checks the pages with `/playwright-cli` and reports that check as pending. The stops do not have a default: the entry guard, missing backend types, a missing `DESIGN.md` and an existing theme end the run with a report that says what is missing and what to run next.
 
 ---
 

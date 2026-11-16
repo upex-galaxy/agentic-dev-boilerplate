@@ -139,8 +139,6 @@ A subagent's report of a write is verified at the destination (Critical Rule #16
 | Where the app's modules are shallow or leak across seams | the read-only architecture scan (`references/adoption-workflow.md` Phase 9 step 4), no skill | optional; a person picks one candidate in a later session |
 | Commit of the adoption writes | `/git-flow-master` | this one, proposed at close |
 
-Source for the architecture scan row: Matt Pocock, `improve-codebase-architecture` (github.com/mattpocock/skills, MIT).
-
 ---
 
 ## Anti-patterns
@@ -159,7 +157,7 @@ The codes are cited by the evals and by `references/adoption-workflow.md`.
 
 ## With nobody at the keyboard
 
-A supervised worker, a routine or `/autonomous-delivery` can run this skill, and none of them waits for a person. Per `agentic-dev-core/references/decision-protocol.md` §5.2, a worker's conductor holds each gate, and a routine takes the delegating brief as the answer when it covers the decision. Without that cover, a routine does the reversible work, stops before any outward or irreversible action and reports.
+A supervised worker or a routine can run this skill (`/autonomous-delivery` never calls it), and neither waits for a person. Per `agentic-dev-core/references/decision-protocol.md` §5.2, a worker's conductor holds each gate, and a routine takes the delegating brief as the answer when it covers the decision. Without that cover, a routine does the reversible work, stops before any outward or irreversible action and reports.
 
 | Gate | A person is present | A supervised worker | A routine with nobody |
 |---|---|---|---|

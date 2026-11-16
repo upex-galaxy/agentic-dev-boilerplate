@@ -454,7 +454,7 @@ For each table created:
    get_advisors (security), if the MCP exposes it: report every new finding
 ```
 
-ADR: the foundational schema and its RLS model (who reads what across the whole app) pass both gates of `adr-doctrine.md`. Record an ADR that names the migrations (`<version>_<name>` from `list_migrations`), the environment where they were applied, and the rollback statement (`db-change-doctrine.md` §4).
+ADR: the foundational schema and its RLS model (who reads what across the whole app) pass all three gates of `adr-doctrine.md` (hard to reverse, surprising without context, a real trade-off). Record an ADR that names the migrations (`<version>_<name>` from `list_migrations`), the environment where they were applied, and the rollback statement (`db-change-doctrine.md` §4).
 
 Security checklist:
 
@@ -559,7 +559,7 @@ Structure:
 
 Validations:
 - throw Error if supabaseUrl is missing
-- throw Error if supabaseAnonKey is missing
+- throw Error if supabasePublishableKey is missing
 
 CORRECT:
   export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -628,7 +628,7 @@ Use code verified with Context7. `config.ts` is imported on both the client and 
    - Config from ../config
 
    Export function createClient():
-     Return: createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
+     Return: createBrowserClient<Database>(supabaseUrl, supabasePublishableKey)
 
    NOTE: verify the API with Context7 (it may change by version)
    ```

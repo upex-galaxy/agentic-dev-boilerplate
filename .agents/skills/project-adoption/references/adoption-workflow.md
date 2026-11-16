@@ -195,7 +195,7 @@ Stop at the first failure, report it with its output, propose the fix and wait f
 1. Re-run §Detection signals and print the final table (also the report a rerun shows).
 2. Mark the plan `Status: COMPLETED` and append the results block (`references/plan-template.md` §Results).
 3. Give the hand-off block from `SKILL.md` §Hand-offs, in order, each with the trigger the user types, and offer `/git-flow-master` to propose the commit of the writes. Never start a hand-off by yourself.
-4. Architecture scan (optional, read-only). Once adoption closes, survey the app's modules for deepening opportunities. A shallow module has an interface nearly as complex as its implementation, understanding one idea means bouncing between many small files, and pure helpers were pulled out for tests while the bugs sit at their call sites. Walk `git log` for the hot spots and spot-check each suspect with the deletion test: would removing it concentrate complexity, or only move it? Write the candidates to `.context/reports/project-adoption-architecture.md` beside the plan, each with its files, the problem, a plain-English solution and a Strong, Worth exploring or Speculative badge, in the vocabulary below. Change no code. The person picks which candidate to explore in a later session, which then grills that one. A candidate that contradicts an ADR is marked in the report, and the ADR stays closed. Source: Matt Pocock, `improve-codebase-architecture` (github.com/mattpocock/skills, MIT).
+4. Architecture scan (optional, read-only). Once adoption closes, survey the app's modules for deepening opportunities. A shallow module has an interface nearly as complex as its implementation, understanding one idea means bouncing between many small files, and pure helpers were pulled out for tests while the bugs sit at their call sites. Walk `git log` for the hot spots and spot-check each suspect with the deletion test: would removing it concentrate complexity, or only move it? Write the candidates to `.context/reports/project-adoption-architecture.md` beside the plan, each with its files, the problem, a plain-English solution and a Strong, Worth exploring or Speculative badge, in the vocabulary below. Change no code. The person picks which candidate to explore in a later session, which then grills that one. A candidate that contradicts an ADR is marked in the report, and the ADR stays closed. Source: https://github.com/mattpocock/skills (engineering/improve-codebase-architecture), MIT, (c) 2026 Matt Pocock. Adapted by UPEX Galaxy.
 5. Session footer per `agentic-dev-core/references/session-footer-contract.md` (dev surfaces touched: none in the app, and the agentic files written are named).
 
 ## Vocabulary for the architecture scan
@@ -210,7 +210,7 @@ Use these terms and no others for the scan:
 - leverage: what callers get;
 - locality: what maintainers get.
 
-One adapter is a hypothetical seam, and two make a real one. The interface is the test surface, so a test that has to reach past it means the module has the wrong shape. Source: Matt Pocock, `codebase-design` (github.com/mattpocock/skills, MIT).
+One adapter is a hypothetical seam, and two make a real one. The interface is the test surface, so a test that has to reach past it means the module has the wrong shape. Source: https://github.com/mattpocock/skills (engineering/codebase-design), MIT, (c) 2026 Matt Pocock. Adapted by UPEX Galaxy.
 
 ---
 

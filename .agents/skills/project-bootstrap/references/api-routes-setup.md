@@ -594,7 +594,7 @@ src/lib/api/
 
 ## With nobody at the keyboard
 
-A worker or a routine cannot answer the question this file raises. Follow `agentic-dev-core/references/decision-protocol.md`.
+A supervised worker sends these questions to its conductor, which holds the gate. A routine with nobody takes the paths below (`agentic-dev-core/references/decision-protocol.md` §5.2).
 
 - The app and this file disagree (error contract, auth scheme, Supabase client location, major version): the app's form wins, as the `stack:` section says. Extend it, do not replace it, and report both shapes.
 - The SRS names no endpoints: run PARTIAL mode, which needs no decision, and say in the report that the SRS gave nothing to implement.

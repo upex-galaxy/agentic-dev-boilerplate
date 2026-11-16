@@ -50,7 +50,7 @@ The matcher scores on `industry`, `tone[]`, `target`, `competitors[]` and `keywo
 
 Save the object to a temp file (for example `/tmp/design-context.json`) so the matcher script reads it as one argument.
 
-With nobody at the keyboard (a worker or a routine), you cannot ask. Use the brief's context if it carries one. Otherwise follow `agentic-dev-core/references/decision-protocol.md`: take the signals you can find in the repo (README, package description, landing copy), say in the report which ones you assumed, and continue. If the repo has no signal at all, stop before the download and report that Path E or a human answer is needed.
+A supervised worker sends these questions to its conductor, which holds the gate. A routine with nobody cannot ask (`agentic-dev-core/references/decision-protocol.md` §5.2). Use the brief's context if it carries one. Otherwise follow `agentic-dev-core/references/decision-protocol.md`: take the signals you can find in the repo (README, package description, landing copy), say in the report which ones you assumed, and continue. If the repo has no signal at all, stop before the download and report that Path E or a human answer is needed.
 
 ---
 
@@ -239,7 +239,7 @@ Next step:      hand back to /project-foundation (Phase 3 — SRS) or /project-b
 | ---------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `npx getdesign` hangs or 404s                              | Offline, or registry unreachable                   | Report the network error. Offer Path E (LLM-authored), which has no external dependency.                                         |
 | `getdesign list` output is empty or the parser yields `[]` | Package broken upstream, format changed            | Pin to a known-good version: `npx --yes getdesign@0.6.17 list`. If still empty after pin, fall back to Path A.                   |
-| Matcher returns top-3 with score < 0.4                     | Business context too narrow, no good catalog match | Offer Path E. The catalog covers common patterns; very specific niches (for example STEM kids ed) do not match well.             |
+| Matcher returns top-3 with score < 0.4                     | Business context too narrow, no good catalog match | Offer Path E. The catalog covers common patterns; very specific niches (for example STEM kids ed) do not match well. With nobody at the keyboard: record the gap and stop with a report. |
 | `@google/design.md lint` exits non-zero with parse error   | `DESIGN.md` malformed, or schema drift             | Re-fetch via `getdesign add <slug> --force`. If it still fails, put the lint stdout in the report and ask the user to escalate.  |
 | WCAG contrast fails                                        | Brand uses bold palette that does not meet AA      | Report the failing pair. Offer the user: pick another brand, or accept and override via the `--strict false` flag at lint time.  |
 | User says "none of these fit" after 2 batches              | Catalog exhausted for this context                 | Drop to Path E (`references/llm-authored.md`) with the same context JSON as input.                                               |

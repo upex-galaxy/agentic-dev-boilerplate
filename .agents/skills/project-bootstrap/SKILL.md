@@ -155,7 +155,7 @@ Before any subagent dispatch and before any phase below, run the resume contract
 3. Tell the user the plan's Goal (one sentence), the last completed phase with its timestamp, the next planned phase and any blocking notes.
 4. Offer three options and wait: resume (jump to the next planned phase), restart (archive the directory to `.session/.archive/<YYYY-MM-DD>-project-bootstrap-project-aborted/`, then go to Phase 0.5 fresh) or abort (leave the directory untouched and stop). The "With nobody at the keyboard" table says who answers when no person is present.
 
-## Phase 0.5 — Write `plan.md`
+## Phase 0.5 (write `plan.md`)
 
 Once Phase 0 confirms no prior session exists, write `.session/project-bootstrap/plan.md` per the schema in `agentic-dev-core/references/session-management.md` §6. The plan lists which incremental features the user wants on top of the base backend and frontend.
 
@@ -260,7 +260,7 @@ When the plan's verification checklist passes, the orchestrator archives per `ag
 
 ## With nobody at the keyboard
 
-A supervised worker, a routine or `/autonomous-delivery` can run this skill, and none of them waits for a person. The rule is the one in `agentic-dev-core/references/decision-protocol.md` §5.2: a worker's conductor holds each gate, and a routine takes the delegating brief as the answer when the brief covers the decision. Without that cover it does the reversible work, stops before any outward or irreversible action (a DB-MCP write, a push, a tracker write, a message) and reports.
+A supervised worker or a routine can run this skill (`/autonomous-delivery` never calls it), and neither waits for a person. The rule is the one in `agentic-dev-core/references/decision-protocol.md` §5.2: a worker's conductor holds each gate, and a routine takes the delegating brief as the answer when the brief covers the decision. Without that cover it does the reversible work, stops before any outward or irreversible action (a DB-MCP write, a push, a tracker write, a message) and reports.
 
 | Gate | A person is present | A supervised worker | A routine with nobody |
 |---|---|---|---|

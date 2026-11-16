@@ -51,7 +51,7 @@ UPDATE mode usually follows a scope shift, an architecture decision, a quarter o
 When `.template/installer.lock.json` records `adopted: true`, the app was running before the agentic layer arrived and most of what the maps describe is already shipped. Scoring those features again would put finished work in Master Sprint 0. For an adopted app only:
 
 - **The shipped baseline is input, not a candidate.** Features the feature map marks Stable, and flows the data map traces end to end in code, form the baseline. They are not scored and not placed in a Master Sprint. §2 lists them in one short "Baseline (already shipped)" table (`Module | Feature-map section id | Why it matters to what remains`) above the priority table.
-- **The candidates are what remains**: Beta, Planned and WIP features, partial CRUD rows, discovery gaps the maps flag, the epics open in the tracker, and the debt the maps expose (a table with RLS off, an integration with no degradation mode).
+- The candidates are what remains: Beta, Planned and WIP features, partial CRUD rows, discovery gaps the maps flag, the epics open in the tracker, and the debt the maps expose (a table with RLS off, an integration with no degradation mode).
 - **Urgency reads the team's roadmap, not an MVP.** In the Phase 2 rubric, "Required for MVP" becomes "required for the next release the tracker or the PRD names". With neither, say so in §12 and score urgency from the maps alone.
 - **Master Sprint 0 is the foundational remaining work**, meaning what several remaining features wait on. It is never a rebuild of the baseline. A remaining item that would change a baseline entity or flow names the section it touches and is flagged in §6 Hidden dependencies.
 - **Git history marks what is in flight.** Modules touched in recent commits or open branches are "in flight" rows of the remaining work, not baseline.
@@ -282,7 +282,7 @@ Phrase each gap as a one-line spike: "Spike: choose payment provider (Stripe vs 
 - **Cascade to `/project-context dev-roadmap`** (strategy to sequence). After the Master Sprint structure changes, invoke `/project-context dev-roadmap` so the ticket-level roadmap reconciles against the new grouping. The two documents sit at different altitudes: this one says why the epics run in this order, `dev-roadmap.md` says which ticket is next and what unblocks it. Skip the cascade only when no stories or links exist yet.
 - **Key paths pointer.** The shared Key paths in `.agents/instructions/agent-context-map.md` already name `.context/master-implementation-plan.md`. Only when this project's copy lacks it, add it to `.agents/instructions/agent-project.md` (`## Key paths (this project)`). Do not write it into `AGENTS.md`, a shared section or the `CLAUDE.md` shim.
 - **UPDATE mode.** Show the diff summary and wait for explicit confirmation before overwriting. Highlight changes that promote or demote a feature across Master Sprints, since those deserve the most attention.
-- **Report**:
+- Report:
   - Master Sprint 0 features identified: N
   - Master Sprint 1 features identified: N
   - Hidden dependencies flagged: N

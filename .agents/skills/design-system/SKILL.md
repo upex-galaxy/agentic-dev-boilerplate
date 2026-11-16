@@ -286,13 +286,13 @@ Quick shape:
 
 ## With nobody at the keyboard
 
-A worker or a routine cannot answer the questions above. Follow `agentic-dev-core/references/decision-protocol.md` for what may reach a person. For this skill:
+A supervised worker sends these questions to its conductor, which holds the gate. A routine with nobody takes the paths below (`agentic-dev-core/references/decision-protocol.md` §5.2). For this skill:
 
-| Gate | Autonomous path |
+| Gate | A routine with nobody |
 |---|---|
 | Phase 0 resume, restart or abort | Resume. Never restart or abort on your own, and note the choice in `progress.md`. |
 | Confirming the chosen path | Take Path B, or the path the delegating brief names. Record it in `plan.md`. |
-| Picking one of three matcher candidates | Take the top-ranked one and record its score and reason. |
+| Picking one of three matcher candidates | Take the top-ranked one when its score is 0.4 or higher, and record its score and reason. Below 0.4, record the gap and stop with a report (Path E needs a person). |
 | `DESIGN.md` exists: skip, overwrite or variant | Write a variant (`DESIGN.<slug>.md`). Never overwrite. |
 | No Constitution, PRD or theme to read | Record the gap and stop with a report. Do not invent a brand. |
 | Paths C and D wait for external work | Record `status: started` with what is awaited, then stop and report. |
