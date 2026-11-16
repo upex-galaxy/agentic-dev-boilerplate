@@ -21,6 +21,27 @@
       "expected_output": "Should NOT be answered from business-feature-context: RLS policies and triggers belong to business-data-context (plus [DB_TOOL]). At most business-feature-context is cited for which screen offers the archive action.",
       "should_trigger": false,
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "vamos a agregar un formulario de edición de perfil con un guard por rol, ¿qué roles pueden editar hoy y desde qué pantalla?",
+      "expected_output": "Loads business-feature-context, reads the map with `bun run context:map business-feature-context --section <id>` (never the raw HTML), answers from the CRUD matrix and the UI inventory with the section id and data-updated date. Answers in Spanish. Placeholder map: says so and hands over `project-context` mode `features`.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "¿en qué parte del producto encaja la historia de exportar reportes? necesito saber qué otras funcionalidades toca antes de planificarla",
+      "expected_output": "Loads business-feature-context and places the story using the feature catalog and the cross-feature flows of the map, citing section ids. Answers in Spanish.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Which endpoint group handles login and what error codes does it return?",
+      "expected_output": "Should NOT be driven by business-feature-context: route groups, auth model and error semantics belong to business-api-context.",
+      "should_trigger": false,
+      "files": []
     }
   ]
 }
