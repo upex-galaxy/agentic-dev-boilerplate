@@ -60,6 +60,23 @@
         "tailwind.config.ts",
         "app/globals.css"
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "Esta historia no tiene mockup. Diseñá la pantalla de checkout antes de que desarrollo la levante.",
+      "expected_output": "Screen mode, always opt-in: asks whether to map screens into a master design plan before doing anything. On a yes, writes BRIEF.md in .context/designs/<project>/<batch-slug>/ and commissions the screen through the best available method (Open Design MCP first). Never hand-writes mockup HTML with no design skill loaded (D7). A human ratifies the mockup before it enters the US-to-screen map.",
+      "files": [
+        "DESIGN.md",
+        ".context/design/master-design-plan.md"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Prepará el brief de diseño para pasárselo a Claude Design: son las pantallas de la historia de reportes.",
+      "expected_output": "Generates the portable BRIEF.md from references/screen-design-brief.md, seeded with the frozen DESIGN.md tokens, the batch's user stories and the export instructions for Claude Design. Saves it in the batch folder before handing it over, records a progress.md checkpoint for resume, and does not fabricate screens while waiting.",
+      "files": [
+        "DESIGN.md"
+      ]
     }
   ]
 }
