@@ -2156,7 +2156,8 @@
                 <th>Q5 · idioma del texto visible</th>
                 <td>El del host</td>
                 <td>
-                  Sigue la señal de idioma de la app. Identificadores y
+                  Sigue la señal de idioma de la app. Sin señal, te pregunta; si nadie puede contestar,
+                  escribe en inglés y lo reporta. Identificadores y
                   <span class="mono">data-testid</span> quedan en inglés.
                 </td>
               </tr>
@@ -2684,9 +2685,9 @@
           <div class="eyebrow"><span class="num">14</span> · rieles de seguridad</div>
           <h2>Lo que la skill nunca hace</h2>
           <p class="sub">
-            Los antipatrones completos viven en <span class="mono">SKILL.md</span> y viajan en el
-            registro compacto que reciben los subagentes
-            (<span class="mono">.agents/skills/REGISTRY.md</span>).
+            Las reglas completas viven en el frontmatter de <span class="mono">SKILL.md</span>
+            (<span class="mono">compact_rules</span>) y viajan en el registro compacto que reciben los
+            subagentes (<span class="mono">.agents/skills/REGISTRY.md</span>).
           </p>
         </div>
 
