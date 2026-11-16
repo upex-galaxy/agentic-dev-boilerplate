@@ -1,211 +1,66 @@
-Actúa como Senior DevOps Engineer especializado en deployment automation y staging environments.
+# Staging deploy (Stage 4)
 
----
+Gets a reviewed feature onto the staging environment so QA can pick it up: automatically through CI/CD, or by hand when CI is not set up. Run it after `ci-cd-setup.md` (GitHub Actions configured), `environment-config.md` (variables set) and Stage 3 (code review).
 
-## 🎯 TAREA
-
-**STAGE 4: DEPLOY TO STAGING**
-
-Desplegar código a staging environment (automático via CI/CD o manual si necesario).
-
-**Este prompt se ejecuta DESPUÉS de:**
-
-- ci-cd-setup.md (GitHub Actions configurado)
-- environment-config.md (Variables configuradas)
-- Code Review (Stage 3)
-
----
-
-## 📥 INPUT REQUERIDO
-
-> **Rama de integración**: el nombre real es `git_strategy.branches.integration` en `.agents/project.yaml`; este documento usa `staging`, el nombre por convención. Léelo antes de ejecutar cualquier comando de git de abajo, y nunca escribas el literal `staging` ni `develop` en un comando. Si vale `null` (`solo-main`, `github-flow`, `trunk-based`) no hay rama de integración: no hay merge a staging, Stage 4 verifica el Preview deployment de Vercel de la rama del PR, y el merge a `git_strategy.branches.production` es Stage 5.
+> **Integration branch**: its real name is `git_strategy.branches.integration` in `.agents/project.yaml`. This document says `staging` for the conventional name. Read the value before running any git command below, and never write the literal `staging` or `develop` in a command. When it is `null` (`solo-main`, `github-flow`, `trunk-based`) there is no integration branch: there is no merge to staging, Stage 4 verifies the Vercel Preview deployment of the PR branch, and the merge to `git_strategy.branches.production` is Stage 5.
 >
-> **Stack**: los comandos de la app son sus propios scripts (`{{stack.package_manager}} run {{stack.scripts.<role>}}` desde `{{stack.app_root}}`; un rol null se omite y se reporta), el CI es el que la app ya corre (`{{stack.ci}}`, cualquier workflow bajo `.github/workflows/`) y el hosting es `{{stack.hosting}}`: con un valor distinto de `vercel`, los pasos de Vercel de abajo se reemplazan por la verificación equivalente de ese host, y si el host no expone una, el deploy se reporta como no verificado (Critical Rule #16). `../SKILL.md` → `## Stack parameters`.
+> **Stack**: the app's commands are its own scripts (`{{stack.package_manager}} run {{stack.scripts.<role>}}` from `{{stack.app_root}}`; a null role is skipped and reported). CI is whatever the app already runs (`{{stack.ci}}`, any workflow under `.github/workflows/`) and hosting is `{{stack.hosting}}`. With a host other than `vercel`, replace the Vercel steps below with that host's equivalent check. If the host exposes none, report the deploy as unverified (Critical Rule #16). See `../SKILL.md`, `## Stack parameters`.
 
-### 1. Estado del PR/Feature
+## Required skills
 
-**Verificar:**
+Load before Step 1: `/deploy-to-vercel` (deploy method, category `deploy`) next to T1 `/vercel-cli` (deployment verification by commit SHA, env sync, logs, rollback). When the story sends or templates email, also load `/resend-cli` (category `email`) before checking the sender and the templates on the target environment. Not installed: say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 
-- PR aprobado en code review (Stage 3)
-- Unit tests pasando localmente
-- Build local exitoso
-- Feature branch listo para merge
+## What to read first
 
-### 2. CI/CD Setup
+1. The PR state: approved in code review (Stage 3), unit tests passing locally, local build green, feature branch ready to merge.
+2. The app's CI workflows (`.github/workflows/*.yml`, any name; critical) to see what runs on each push or PR and what triggers the deploy, and `.context/ci-cd-setup.md`. Is GitHub Actions configured, does the automatic staging deploy work, and which branch triggers it?
 
-**Leer:**
+Tools: git, access to the GitHub repo, access to the Vercel or Railway dashboard. No MCP is needed.
 
-- Los workflows de CI de la app (`.github/workflows/*.yml`, cualquier nombre) - **CRÍTICO** - qué corre en cada push / PR y qué dispara el deploy
-- `.context/ci-cd-setup.md` - Documentación del CI/CD
+## What is in and out
 
-**Qué identificar:**
+In scope: merge the feature branch to the integration branch, let GitHub Actions run lint, test, build and deploy, let Vercel or Railway publish, get the staging URL, run a smoke test.
 
-1. ¿GitHub Actions está configurado?
-2. ¿Deploy automático a staging funciona?
-3. ¿Qué branch trigger el deploy? (`staging`)
+Out of scope: production (Stage 5), full exploratory testing and integration or E2E tests (QA's, outside this skill).
 
----
+Result: the feature is deployed on staging, the URL is shared with QA, and the smoke test passed with no 500 errors and with assets loading.
 
-## ⚙️ VERIFICACIÓN DE HERRAMIENTAS (MCP)
+## Rules
 
-**NO se requieren MCP para esta fase.**
+- The PR must be approved and CI green before a deploy. Merge through the pull request and let GitHub Actions do the deploy, never around the CI.
+- No force push (`git push -f`).
+- No production deploy in this stage.
+- Validate locally first (lint, test, build), then validate the deployment with a smoke test, and share the staging URL with QA.
 
-### Herramientas Locales:
+## Step 1: pre-deploy validation
 
-- Git instalado
-- Acceso a GitHub repo
-- Acceso a Vercel/Railway dashboard
-
-### Required skills
-
-**Required skills (load before Paso 1):** `/deploy-to-vercel` (deploy method, category `deploy`) next to T1 `/vercel-cli` (deployment verification by commit SHA, env sync, logs, rollback). When the story sends or templates email, also `/resend-cli` (category `email`) before checking the sender and the templates on the target environment. Not installed → say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
-
----
-
-## 🎯 OBJETIVO
-
-Desplegar código a staging environment:
-
-**Incluye:**
-
-- ✅ Merge feature branch a `staging`
-- ✅ GitHub Actions ejecuta: lint → test → build → deploy
-- ✅ Vercel/Railway despliega automáticamente
-- ✅ URL de staging disponible
-- ✅ Smoke test post-deploy
-
-**NO incluye:**
-
-- ❌ Deploy a production (eso es Stage 5)
-- ❌ Exploratory testing completo (eso es QA, fuera de este skill)
-- ❌ Integration/E2E tests (eso es QA, fuera de este skill)
-
-**Resultado:** Feature desplegada en staging, lista para QA.
-
----
-
-## 📤 OUTPUT GENERADO
-
-### Deployment:
-
-- ✅ Feature branch merged a `staging`
-- ✅ GitHub Actions workflow ejecutado exitosamente
-- ✅ Deployment en Vercel/Railway completado
-- ✅ Staging URL: `https://[project]-staging.vercel.app`
-
-### Validación:
-
-- ✅ Smoke test básico pasado
-- ✅ No hay errores 500 en staging
-- ✅ Assets cargan correctamente
-
----
-
-## 🚨 RESTRICCIONES CRÍTICAS
-
-### ❌ NO HACER:
-
-- **NO hacer force push** - Evitar `git push -f`
-- **NO deployar sin code review** - PR debe estar aprobado
-- **NO deployar con tests fallando** - CI debe estar verde
-- **NO saltarse el CI/CD** - Dejar que GitHub Actions maneje el deploy
-- **NO deployar a production** - Eso es Stage 5
-
-### ✅ SÍ HACER:
-
-- **Validar localmente primero** - lint, test, build local
-- **Usar Pull Request workflow** - Merge via PR aprobado
-- **Esperar CI/CD** - Dejar que GitHub Actions ejecute
-- **Validar deployment** - Smoke test post-deploy
-- **Documentar URL** - Compartir URL de staging con QA
-
----
-
-## 🔄 WORKFLOW
-
----
-
-## 📋 PASO 1: VALIDACIÓN PRE-DEPLOY
-
-**Objetivo:** Asegurar que todo está listo para deploy.
-
-### Paso 1.1: Verificar Estado Local
+Check the local state:
 
 ```bash
-# Verificar branch actual
 git branch
-
-# Verificar cambios pendientes
 git status
-
-# Actualizar desde remoto
 git pull origin [feature-branch]
 ```
 
----
-
-### Paso 1.2: Validar Localmente
+Validate locally, from `{{stack.app_root}}` (a null role is skipped and reported):
 
 ```bash
-# Desde {{stack.app_root}}; un rol null se omite y se reporta
-# Lint
 {{stack.package_manager}} run {{stack.scripts.lint}}
-
-# Tests
 {{stack.package_manager}} run {{stack.scripts.test}}
-
-# Build
 {{stack.package_manager}} run {{stack.scripts.build}}
 ```
 
-**Verificar:**
+All three pass, with no critical warnings.
 
-- ✅ Todos los comandos pasan sin errores
-- ✅ No hay warnings críticos
+Then pick the path from the CI workflows you read. Do not ask the user what the workflows already answer: CI configured goes to Step 2 (automatic), CI not configured goes to Step 3 (manual deploy from the Vercel or Railway CLI).
 
----
+## Step 2: automatic deploy through GitHub Actions
 
-### Paso 1.3: Verificar CI/CD
+### 2.1 Merge the pull request
 
-**Preguntar al usuario:**
+On GitHub, open the PR (`https://github.com/[org]/[repo]/pull/[number]`) and check that code review is approved, CI checks are green and there are no conflicts. Click "Merge pull request", with "Squash and merge" or "Merge commit" according to the strategy, and confirm.
 
-```markdown
-## 🔍 Verificación de CI/CD
-
-¿GitHub Actions está configurado y funcionando?
-
-**Opción 1: CI/CD Configurado (Automático)**
-
-- Merge PR → GitHub Actions deploya automáticamente
-
-**Opción 2: CI/CD NO Configurado (Manual)**
-
-- Deploy manual desde CLI de Vercel/Railway
-```
-
-**Si CI/CD está configurado → Continuar a Paso 2 (Automático)**
-**Si NO está configurado → Continuar a Paso 3 (Manual)**
-
----
-
-## 🚀 PASO 2: DEPLOY AUTOMÁTICO (Vía GitHub Actions)
-
-**Objetivo:** Merge feature branch y dejar que CI/CD maneje el deploy.
-
-### Paso 2.1: Merge Pull Request
-
-**En GitHub:**
-
-1. Ve al PR: `https://github.com/[org]/[repo]/pull/[number]`
-2. Verifica que:
-   - ✅ Code review aprobado
-   - ✅ CI checks pasando (verde)
-   - ✅ No hay conflictos
-3. Click en "Merge pull request"
-4. Selecciona "Squash and merge" o "Merge commit" según estrategia
-5. Confirma merge
-
-**Alternatively, via CLI:**
+Through the CLI instead:
 
 ```bash
 # <integration> = git_strategy.branches.integration (.agents/project.yaml)
@@ -222,352 +77,137 @@ git merge [feature-branch]
 git push origin <integration>
 ```
 
----
+Merge to the integration branch with the method `git_strategy.decisions.feature_merge` names, as `../SKILL.md` Stage 4 says. Do not push straight to the integration branch unless `git_strategy.policy.direct_push_to_protected` allows it.
 
-### Paso 2.2: Monitorear GitHub Actions
+### 2.2 Monitor GitHub Actions
 
-**Acciones:**
+Open `https://github.com/[org]/[repo]/actions`, find the new "CI/CD Pipeline" run and read each job: Lint, Test and Build must pass, and Deploy Staging must run. It takes about 3 to 7 minutes. Do not assume it passed. Read the full logs and confirm the deploy job ran.
 
-1. Ve a: `https://github.com/[org]/[repo]/actions`
-2. Busca el workflow "CI/CD Pipeline" recién iniciado
-3. Monitorear cada job:
-   - 🔍 Lint (debe pasar)
-   - 🧪 Test (debe pasar)
-   - 🏗️ Build (debe pasar)
-   - 🚀 Deploy Staging (debe ejecutarse)
+When a job fails:
 
-**Duración estimada:** 3-7 minutos
+- Lint: run `{{stack.package_manager}} run {{stack.scripts.lint}}` locally and fix (with the app's fixer if it has one, for example a `lint:fix` script), commit, push, and CI runs again.
+- Test: investigate the failing test, fix the code or the test, push.
+- Build: run `{{stack.package_manager}} run {{stack.scripts.build}}` locally, read the compile errors, fix, push.
+- Deploy: check the environment variables in Vercel, read the logs in the Vercel dashboard, fix the configuration.
 
-**Si algún job falla:**
+### 2.3 Get the staging URL
 
-```markdown
-### ⚠️ Job Fallido
-
-**Lint fails:**
-
-- Ejecuta `{{stack.package_manager}} run {{stack.scripts.lint}}` localmente y corrige (con el fixer de la app si tiene uno, por ejemplo un script `lint:fix`)
-- Commit fix
-- Push → CI re-ejecuta
-
-**Test fails:**
-
-- Investiga el test fallido
-- Corrige código o test
-- Push → CI re-ejecuta
-
-**Build fails:**
-
-- Ejecuta `{{stack.package_manager}} run {{stack.scripts.build}}` localmente
-- Revisa errores de compilación
-- Corrige y push
-
-**Deploy fails:**
-
-- Verifica environment variables en Vercel
-- Revisa logs en Vercel dashboard
-- Corrige configuración
-```
-
----
-
-### Paso 2.3: Obtener URL de Staging
-
-**Una vez que GitHub Actions complete exitosamente:**
-
-1. Ve a Vercel dashboard: `https://vercel.com/[org]/[project]`
-2. En "Deployments", busca el deployment más reciente de `staging`
-3. Copia la URL:
-   - URL: `https://[project]-staging-[hash].vercel.app`
-   - O URL stable: `https://[project]-staging.vercel.app`
-
-**Mostrar al usuario:**
+When Actions completes, open `https://vercel.com/[org]/[project]`. Under "Deployments", find the latest deployment of the integration branch and copy its URL: `https://[project]-staging-[hash].vercel.app`, or the stable `https://[project]-staging.vercel.app`. Report it:
 
 ```markdown
-## 🎉 Deployment Exitoso
+## Deployment succeeded
 
-**Staging URL:**
-https://[project]-staging.vercel.app
-
-**Deployment Details:**
+Staging URL: https://[project]-staging.vercel.app
 
 - Branch: <integration>
-- Commit: [hash corto]
+- Commit: [short hash]
 - Status: Ready
-- Duration: [X] minutos
+- Duration: [X] minutes
 ```
 
----
+## Step 3: manual deploy (fallback when CI/CD is not ready)
 
-## 🔧 PASO 3: DEPLOY MANUAL (Fallback - Si CI/CD NO está listo)
-
-**Objetivo:** Deploy manual usando CLI de Vercel/Railway.
-
-### Paso 3.1: Deploy con Vercel CLI
-
-**Instalar Vercel CLI (si no está):**
+With the Vercel CLI:
 
 ```bash
 bun add -g vercel
-```
-
-**Login:**
-
-```bash
 vercel login
-```
-
-**Deploy:**
-
-```bash
-# Desde la raíz del proyecto. Sin --prod: es un Preview deployment, la
-# superficie de staging. --prod despliega a Production, y eso es Stage 5.
+# From the project root. Without --prod: this is a Preview deployment, the
+# staging surface. --prod deploys to Production, and that is Stage 5.
 vercel
-
-# Seleccionar proyecto correcto
-# Vercel desplegará y dará URL
+# Select the right project; Vercel deploys and prints the URL
 ```
 
----
-
-### Paso 3.2: Deploy con Railway CLI (Alternativa)
-
-**Instalar Railway CLI:**
+With Railway as the alternative:
 
 ```bash
 bun add -g @railway/cli
-```
-
-**Login:**
-
-```bash
 railway login
-```
-
-**Deploy:**
-
-```bash
 railway up
 ```
 
----
+## Step 4: smoke test after the deploy
 
-## ✅ PASO 4: SMOKE TEST POST-DEPLOY
-
-**Objetivo:** Validar que el deployment funciona básicamente.
-
-### Paso 4.1: Smoke Test Checklist
-
-**Abrir staging URL en browser:**
+Open the staging URL and check the basics. This is not QA's test pass.
 
 ```markdown
-## 🔥 Smoke Test - Staging
+## Smoke test - Staging
 
-**URL:** https://[project]-staging.vercel.app
+URL: https://[project]-staging.vercel.app
 
-### Validaciones Básicas:
+1. The application loads:
+   - [ ] The landing page loads with no 500 errors
+   - [ ] No errors in the browser console (F12)
+   - [ ] Assets (CSS, JS, images) load
+2. Auth flow (if it applies):
+   - [ ] The signup and login pages are reachable (full functionality is QA's)
+3. Basic navigation:
+   - [ ] The main links work
+   - [ ] Routing works (no 404 on valid routes)
+4. Database connection:
+   - [ ] Pages that use the database show no errors
+   - [ ] Data appears (even if empty)
 
-1. **Aplicación carga:**
-   - [ ] Landing page carga sin errores 500
-   - [ ] No hay errores en browser console (F12)
-   - [ ] Assets (CSS, JS, images) cargan correctamente
-
-2. **Auth flow (si aplica):**
-   - [ ] Signup page accesible
-   - [ ] Login page accesible
-   - [ ] (No testear funcionalidad completa - eso es QA, fuera de este skill)
-
-3. **Navegación básica:**
-   - [ ] Links principales funcionan
-   - [ ] Routing funciona (no 404 en rutas válidas)
-
-4. **Database connection:**
-   - [ ] Páginas que usan DB no dan errores
-   - [ ] Data aparece (aunque sea vacía)
-
-### ✅ Resultado:
-
-- **Pass:** App funciona básicamente, ready para QA
-- **Fail:** Investigar logs, corregir, re-deploy
+Result: Pass means the app works at a basic level and is ready for QA. Fail means read the logs, fix and deploy again.
 ```
 
----
+When something fails, read the logs. On Vercel, open `https://vercel.com/[org]/[project]/[deployment-id]/logs` and look for the red lines. On Railway, run `railway logs`. Common post-deploy errors:
 
-### Paso 4.2: Revisar Logs (Si hay errores)
+| Error | Fix |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL is not defined` | Configure the environment variables in Vercel (`environment-config.md`) |
+| 500 Internal Server Error | Read the Vercel or Railway logs. Likely a database connection issue, so check the variables |
+| Assets 404 | Check `next.config.js`. The `basePath` may be wrong |
+| Auth not working | Check that the Supabase redirect URLs include the staging URL |
 
-**Vercel Logs:**
+## Step 5: report and hand off to QA
 
-1. Ve a: `https://vercel.com/[org]/[project]/[deployment-id]/logs`
-2. Busca errores (líneas rojas)
-3. Identifica el problema
-
-**Railway Logs:**
-
-```bash
-railway logs
-```
-
-**Errores comunes:**
+Report to the user:
 
 ```markdown
-### 🐛 Errores Comunes Post-Deploy
+# Deploy to staging completed
 
-**Error: "NEXT_PUBLIC_SUPABASE_URL is not defined"**
+Staging URL: https://[project]-staging.vercel.app
+Status: Ready
 
-- Fix: Configurar environment variables en Vercel (environment-config.md)
+Validation: smoke test passed, the application loads, no critical errors, the database connection works.
 
-**Error: 500 Internal Server Error**
-
-- Fix: Revisar logs de Vercel/Railway
-- Posible: DB connection issue, check .env vars
-
-**Error: Assets 404**
-
-- Fix: Verificar `next.config.js` settings
-- Posible: basePath incorrecto
-
-**Error: Auth not working**
-
-- Fix: Verificar Supabase redirect URLs incluyen staging URL
-```
-
----
-
-## 🎉 REPORTE FINAL
-
-**Mostrar al usuario:**
-
-```markdown
-# ✅ DEPLOY TO STAGING COMPLETADO
-
-## Deployment Details:
-
-**Staging URL:** https://[project]-staging.vercel.app
-
-**Status:** ✅ Ready
-
-**Validation:**
-
-- ✅ Smoke test pasado
-- ✅ Aplicación carga correctamente
-- ✅ No hay errores críticos
-- ✅ Database connection funciona
-
----
-
-## Próximos Pasos:
-
-### 1️⃣ Compartir URL con QA
-
-Envía staging URL al equipo de QA y comunica la versión desplegada.
-
-### 2️⃣ Hand-off a QA
-
-_QA verification on staging is out of scope here._
-
-**Asignación al QA.** Cuando la story llega a `{{jira.status.story.ready_for_qa}}` (lee el estado de vuelta, no confíes en que la automatización disparó), mueve el `assignee` nativo al QA que figura en `{{jira.qa_assignee}}`, el registro del QA que siguió la story desde shift-left. Léelo, nunca lo sobrescribas. Si `qa_assignee` está vacío, deja el `assignee` como está y dilo en el comentario de notificación a QA. Verifica leyendo el `assignee` después.
-
-**Development Token Usage (ayuda de auditoría, opcional y acumulativo).** Ligado al estado `ready_for_qa` verificado, no al hecho de que la automatización `deployed` haya corrido. Se escribe al llegar a Ready For QA y de nuevo después de cada ciclo de corrección:
-
-1. Lee el valor actual de `{{jira.development_token_usage}}`.
-2. Suma los tokens MEDIDOS de este ciclo, tomados de las entradas de `progress.md` (cada sesión agrega su cifra medida). K = tokens de entrada más salida; las lecturas de caché se reportan aparte.
-3. Escribe valor actual más delta, nunca sobrescribas. Si el valor actual está vacío, escribe solo el delta.
-4. Publica un comentario corto `DTU cycle N: +x K (total y K) source=<harness o human>`. Si el campo no existe en `.agents/jira-fields.json`, el comentario lleva la cifra.
-
-Si el harness no muestra tokens y ninguna persona los ingresa, deja el campo vacío y el verificador dice N/A con ese motivo; vacío es válido y nunca es un fallo. Nunca estimes ni inventes el número. Un item que no llega a Ready For QA (un tech item que pasa directo a `completed`) dice N/A con ese motivo.
-
----
-
-## 📊 Deployment Summary:
+Deployment summary:
 
 - Branch: `<integration>`
 - Commit: [hash]
-- Duration: [X] minutos
-- CI/CD: [Automático / Manual]
+- Duration: [X] minutes
+- CI/CD: [automatic / manual]
 
----
-
-**🎊 Feature desplegada en staging exitosamente!**
-
-Lista para QA y exploratory testing.
+The feature is deployed on staging, ready for QA and exploratory testing. Share the staging URL with QA and tell them which version is deployed.
 ```
 
----
+QA verification on staging is out of scope here.
 
-## 📋 CHECKLIST INTERNO (NO MOSTRAR)
+**Assignee.** When the story reaches `{{jira.status.story.ready_for_qa}}` (read the status back, do not trust that the automation fired), move the native `assignee` to the QA in `{{jira.qa_assignee}}`, the record of the QA who followed the story since shift-left. Read that field, never overwrite it. If `qa_assignee` is empty, leave `assignee` as it is and say so in the QA notification comment. Read `assignee` back to verify. The full rule is in `../SKILL.md` Stage 4.
 
-### Pre-Deploy:
+**Development Token Usage (optional, cumulative audit aid).** Tied to the verified `ready_for_qa` state, not to the `deployed` automation having run. Write it on reaching Ready For QA and again after each fix loop:
 
-- [ ] PR aprobado
-- [ ] Tests locales pasando
-- [ ] Build local exitoso
-- [ ] CI/CD verificado
+1. Read the current value of `{{jira.development_token_usage}}`.
+2. Add the tokens measured in this cycle, taken from the `progress.md` entries (each session appends its measured figure). K means input plus output tokens, and cache reads are reported separately.
+3. Write current value plus the delta, never overwrite. When the current value is empty, write only the delta.
+4. Post a short comment `DTU cycle N: +x K (total y K) source=<harness or human>`. If the field is missing from `.agents/jira-fields.json`, the comment carries the figure.
 
-### Deploy:
+When the harness shows no tokens and nobody enters them, leave the field empty and the verifier says N/A with that reason: empty is valid and never a failure. Never estimate or invent the number. An item that never reaches Ready For QA (a tech item that goes straight to `completed`) says N/A with that reason.
 
-- [ ] Feature branch merged a staging
-- [ ] GitHub Actions ejecutado (o deploy manual)
-- [ ] Deployment completado en Vercel/Railway
-- [ ] URL de staging obtenida
+## With nobody at the keyboard
 
-### Post-Deploy:
+Follow `agentic-dev-core/references/decision-protocol.md` §5.2. The reads and local checks (Step 1) are reversible and run in every mode. The outward actions are the merge or push of Step 2.1, the manual deploy of Step 3 and the tracker writes of Step 5 (assignee, DTU comment, the QA notification). A person present asks the questions as written. A supervised worker stops at an open PR and leaves the merge to its launcher. A routine does these only when the delegating brief names them. Without that, it stops after Step 1, reports what is ready and which actions are pending, and does not wait.
 
-- [ ] Smoke test ejecutado
-- [ ] Aplicación carga sin 500
-- [ ] Browser console sin errores críticos
-- [ ] Database connection validada
+## Done when
 
-### Comunicación:
+- Pre-deploy: PR approved, local tests and build green, CI path checked.
+- Deploy: the feature is merged (or deployed manually), GitHub Actions ran or the manual deploy completed, and the staging URL is known.
+- Post-deploy: the smoke test ran, the app loads without 500s, the console has no critical errors, and the database connection is validated.
+- Communication: the URL is shared with QA, `assignee` is moved to the QA in `{{jira.qa_assignee}}` and read back (or left as is with the reason in the QA comment), and the DTU cycle comment is posted with the cumulative field updated (or N/A with the reason).
 
-- [ ] URL compartida con QA
-- [ ] Next steps comunicados
-- [ ] `assignee` movido al QA de `{{jira.qa_assignee}}` y leído de vuelta, o dejado como está con el motivo dicho en el comentario a QA
-- [ ] Ciclo DTU: `DTU cycle N: +x K (total y K) source=<...>` publicado y el campo acumulado, o N/A con motivo
+## References
 
----
-
-## 💡 MEJORES PRÁCTICAS
-
-### **1. Siempre Validar Localmente Primero**
-
-```bash
-# Antes de merge/deploy:
-{{stack.package_manager}} run {{stack.scripts.lint}} && {{stack.package_manager}} run {{stack.scripts.test}} && {{stack.package_manager}} run {{stack.scripts.build}}
-```
-
-### **2. Merge via Pull Request**
-
-- ✅ Code review obligatorio
-- ✅ CI checks must pass
-- ❌ No direct push a la rama de integración salvo que `git_strategy.policy.direct_push_to_protected` lo permita (`/git-flow-master` §3.3)
-
-### **3. Monitor GitHub Actions**
-
-- No asumir que pasó
-- Ver logs completos
-- Verificar deploy job ejecutó
-
-### **4. Smoke Test Inmediato**
-
-- Verificar staging URL apenas esté ready
-- No esperar para encontrar errores
-- Fix rápido si falla
-
----
-
-## 📚 REFERENCIAS
-
-**Vercel Deployments:**
-
-- https://vercel.com/docs/deployments/overview
-
-**Railway Deployments:**
-
-- https://docs.railway.app/deploy/deployments
-
-**GitHub Actions Monitoring:**
-
-- https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows
-
----
-
-**✅ Deploy to Staging = Feature accessible para QA + Validación temprana**
+- Vercel deployments: https://vercel.com/docs/deployments/overview
+- Railway deployments: https://docs.railway.app/deploy/deployments
+- Monitoring GitHub Actions: https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows

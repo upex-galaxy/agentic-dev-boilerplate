@@ -199,7 +199,7 @@
       ]
     },
     "communityUserSkills": {
-      "count": 9,
+      "count": 14,
       "items": [
         {
           "name": "find-skills",
@@ -244,6 +244,31 @@
         {
           "name": "retro",
           "purpose": "Community skill: retro",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "diagnosing-bugs",
+          "purpose": "Community skill: diagnosing-bugs",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "blast-radius",
+          "purpose": "Community skill: blast-radius",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "grilling",
+          "purpose": "Community skill: grilling",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "domain-modeling",
+          "purpose": "Community skill: domain-modeling",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "research",
+          "purpose": "Community skill: research",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         }
       ]

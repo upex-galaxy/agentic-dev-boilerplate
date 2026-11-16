@@ -327,6 +327,13 @@ export const USER_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   // learnings harvest at the close of a run (orca-orchestration SKILL.md).
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'show-me-your-work' },
   { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'retro' },
+  // Stage-skill loaders: root-cause diagnosis and merge blast radius
+  // (sprint-development), the interview and domain passes (product-management).
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'diagnosing-bugs' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'blast-radius' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'grilling' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'domain-modeling' },
+  { package: 'https://github.com/upex-galaxy/agentic-user-skills', skill: 'research' },
 ];
 
 // External CLIs the boilerplate's skills depend on. Installer NEVER auto-installs
