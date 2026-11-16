@@ -58,7 +58,7 @@
 
 - **<item>**: `PERISHABLE`, measured <HH:MM>. Ids: `<PR#>` `<KEY>` `<sha>` `<deployment-id>` `<session-id>` `<terminal>`.
   Re-verify: `<the exact command>`. Then: <what to do with each outcome>.
-  <Any branch the predecessor did not observe is labelled `predicted`.>
+  <Any branch the predecessor did not observe is labelled `predicted`; a claim taken from a document and not re-run is labelled `read`.>
 
 ## 8 · Pending work, in priority order
 

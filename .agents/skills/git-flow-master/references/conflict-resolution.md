@@ -2,11 +2,11 @@
 
 Diagnose a conflict before resolving it. The user is rarely in a hurry, and a wrong fix here costs hours of recovery. Every playbook has the same shape:
 
-1. **Explain** what happened: the root cause, in the user's language.
-2. **Present options** ranked by safety. A destructive option is the user's choice, so it is never picked silently.
-3. **Guide** the resolution step by step.
-4. **Verify** with `git status`, `git log --oneline -3` and a clean working tree.
-5. **Teach prevention** in one short note on how to avoid it next time.
+1. Explain what happened: the root cause, in the user's language.
+2. Present options ranked by safety. A destructive option is the user's choice, so it is never picked silently.
+3. Guide the resolution step by step.
+4. Verify with `git status`, `git log --oneline -3` and a clean working tree.
+5. Teach prevention in one short note on how to avoid it next time.
 
 When in doubt, abort (`git merge --abort`, `git rebase --abort`, `git cherry-pick --abort`) instead of pushing forward. An abort always beats a guess.
 
@@ -135,17 +135,17 @@ If the user gave context, use it. If not, ask:
    ```
 
 2. Decide:
-   - **Keep the deletion** (the file is gone, the modifications are discarded):
+   - Keep the deletion (the file is gone, the modifications are discarded):
      ```bash
      git rm <file>
      ```
-   - **Restore the file** with the modifications:
+   - Restore the file with the modifications:
      ```bash
      git checkout HEAD -- <file>            # if deleted by them
      git checkout MERGE_HEAD -- <file>      # if deleted by us
      git add <file>
      ```
-   - **Migrate the modifications** to the renamed path (when a rename was the cause): copy the changes to the new path by hand, `git add` it, and `git rm` the old one.
+   - Migrate the modifications to the renamed path (when a rename was the cause): copy the changes to the new path by hand, `git add` it, and `git rm` the old one.
 
 3. Commit and verify, as for a content conflict.
 
@@ -169,9 +169,9 @@ If the user gave context, use it. If not, ask:
    ```
 
 2. Present the options:
-   - **Resolve and continue**: edit the conflicted files, `git add`, then `git rebase --continue`.
-   - **Skip this commit**: `git rebase --skip` drops the commit, which is destructive, so confirm with the user first.
-   - **Abort the rebase**: `git rebase --abort` returns to the pre-rebase state and is safe.
+   - Resolve and continue: edit the conflicted files, `git add`, then `git rebase --continue`.
+   - Skip this commit: `git rebase --skip` drops the commit, which is destructive, so confirm with the user first.
+   - Abort the rebase: `git rebase --abort` returns to the pre-rebase state and is safe.
 
 3. When resolving, follow the content-conflict flow above (`git checkout --ours/--theirs` or a manual edit, then `git add`, then `git rebase --continue`).
 
@@ -432,7 +432,7 @@ The reflog is the safety net. A commit disappears only after `git gc` runs (defa
 
 ## With nobody at the keyboard
 
-The waits here are the choice among ranked options, the skip-commit confirmation, the force-push opt-in and every emergency command. `agentic-qa-core/references/decision-protocol.md` says which of them reach a person.
+The waits here are the choice among ranked options, the skip-commit confirmation, the force-push opt-in and every emergency command. `agentic-dev-core/references/decision-protocol.md` says which of them reach a person.
 
 | Who runs it | The gate |
 | --- | --- |

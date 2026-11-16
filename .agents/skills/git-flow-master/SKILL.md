@@ -20,6 +20,7 @@ compact_rules: |
   - Never rewrite pushed history (amend, rebase) and never force-push (Critical Rule 5, an invariant no authorization relaxes). `--force`, `--force-with-lease` and `--no-verify` need the user's explicit request and an unshared branch. Fix forward with a new commit.
   - Offer admin bypass only when `admin_bypass: true`, and only after confirming at runtime that the operator is an admin and accepts the specific irreversible action.
   - Never run a repo-wide discard (`git restore .`, `git checkout -- .`, `git reset --hard`, untargeted `git stash`, `git clean -f`) (Critical Rule 13): concurrent sessions may share the working tree. Discard only explicit paths this session modified, and when ownership is unclear, stop and ask.
+  - In a stacked or chained PR, the body names its place in the chain (which PR comes before it and which come after) so a reviewer knows what to read first.
   - Never `git add -A` or `git add .`. List explicit paths, so a secret or another session's work cannot ride along.
   - One commit has one responsibility, a conventional prefix and no AI attribution (Critical Rule 3). Every commit ends with the two forensic trailers `Worktree: <name|primary>` then `Session: <label>`, copied from the `AGENT IDENTITY:` context line (`unknown` when unresolved). They are provenance, not attribution; harness-branded trailers (`Claude-Session:`, an AI `Co-Authored-By:`) stay forbidden (§3.2).
   - When the pre-push or CI documentation-contract gate names a region (ADR-0017), update every page it lists in the same push. Only if they still hold, add `Docs-Checked: <label> <reason>` above the forensic trailers, and always with the reason, never by reflex.
@@ -458,7 +459,7 @@ There are three ways to split:
 2. `feature-branch-chain`: one long-lived integration branch; child PRs merge into it and one final PR merges it to the default base. Best when shared scaffolding (new types, new schemas) would break a partial merge.
 3. `size-exception`: for mechanical diffs (mass renames, formatter sweeps, generated code, vendor updates). It needs an explicit user override and a `Why size-exception:` line in the PR body.
 
-Walk the chained-PR decision tree inline (`references/branching-strategies.md` § Chained-PR decision tree). It ends at one of `single-pr`, `stacked-to-main`, `feature-branch-chain`, `size-exception`, and the skill then executes the resulting branch plan. A stacked PR names its dependency chain in the body, so reviewers know which one to read first.
+Walk the chained-PR decision tree inline (`references/branching-strategies.md` § Chained-PR decision tree). It ends at one of `single-pr`, `stacked-to-main`, `feature-branch-chain`, `size-exception`, and the skill then executes the resulting branch plan. A stacked or chained PR names its place in the chain in the body (which PR comes before it and which come after), so reviewers know which one to read first.
 
 ### Return contract: the answer travels with its trace
 
@@ -492,7 +493,7 @@ Several steps wait for a person: the OK on a proposed branch, commit set or PR b
 
 - A person is present: the gates work as written above.
 - A supervised worker: the conductor or launcher that dispatched it holds the gates and answers them.
-- No one is present (a routine, `/autonomous-delivery`): the delegating brief is the approval source when it covers the decision, for example a recorded `allowed` policy or a brief that names the branch and commit set. Without that, do the reversible work (a local branch, local commits, a rendered PR body) and stop before anything outward or irreversible: a push to a protected branch, a PR, an admin bypass, a force of any kind. Report what is ready and what is waiting. Strategy Setup is never started unattended; the offer goes into the report. `autonomous-delivery` never waits for a person, so it carries the approval in its brief.
+- No one is present (a routine, `/autonomous-delivery`): the delegating brief is the approval source when it covers the decision, for example a recorded `allowed` policy or a brief that names the branch and commit set. Without that, do the reversible work (a local branch, local commits, a rendered PR body) and stop before anything outward or irreversible: a push to a protected branch, a PR, an admin bypass, a force of any kind. Report what is ready and what is waiting. Strategy Setup runs unattended only when the brief names the strategy and every questionnaire answer; otherwise the offer goes into the report. `autonomous-delivery` never waits for a person, so it carries the approval in its brief.
 
 ---
 

@@ -212,7 +212,7 @@ Strategy Setup waits for a person at four points: the strategy choice when detec
 | Gate | A person is present | Supervised worker | Routine with nobody |
 | --- | --- | --- | --- |
 | Strategy choice (detection step 5) | Ask, numbered list | Ask the conductor | Use a strategy the brief names. Without one, stop before writing anything and report the detection evidence |
-| Q1 to Q4 | Ask, defaults first | The conductor answers or confirms the defaults | Use the answers the brief gives. Where it gives none, use the shown default, write it with `policy_source: declared`, and list each assumed answer in the report |
+| Q1 to Q4 | Ask, defaults first | The conductor answers or confirms the defaults | Run only when the brief gives every answer. With any answer missing, write nothing, report the detection evidence and the open questions, and stop |
 | Branch creation and setup ff-sync push | Propose, wait for OK | The conductor holds the OK | Create nothing on the remote and push nothing. A local `git branch` is reversible, but name it in the report. Report what is missing |
 | `git:policy apply --yes` | Dry run, offer, wait | The conductor holds the OK | Run `verify` and the dry run only, and report the payload. The ruleset write is outward and irreversible, so it needs a person |
 

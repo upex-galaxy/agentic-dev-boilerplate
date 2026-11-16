@@ -49,7 +49,7 @@ Only `allowed-tools, compatibility, description, license, metadata, name` are Ag
 | **utility** | `-cli` / `-tool` / `-app` (mandatory) | `SKILL.md` with `allowed-tools: Bash(<binary>:*)`, `references/gotchas.md` | `compact_rules` frontmatter, the tool's grammar (verbs, flags, auth, errors), a §6.5 row in `AGENTS.md` if a Bash binary must auto-load it |
 | **core** | none | `SKILL.md` and `references/` | no write path of its own; other skills cite its references |
 
-`references/gotchas.md` is a measured table with the columns `# · Gotcha · Symptom · Fix · Measured · Verified against`, plus a `## No longer true` section that rows move to instead of being deleted.
+A gotchas file keeps its measurement record either in its own columns (`Measured`, `Verified against`, `## No longer true`) or in `.context/ADR/ADR-0003-forensic-measurements-ledger.md`, per repo.
 
 ## 3 · Context skills: what goes where
 

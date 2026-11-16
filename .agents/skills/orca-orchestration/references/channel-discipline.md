@@ -59,21 +59,21 @@ everything else in the brief, because a long prompt through this verb arrives as
 
 The half of the rule usually left unwritten, and the reason anyone reaches for the verb:
 
-- **Running a command in the worker's own shell**: a CLI call, a script, a verification the worker's
+- Running a command in the worker's own shell: a CLI call, a script, a verification the worker's
   environment can answer and the conductor's cannot.
-- **Driving a harness slash-command a session cannot invoke for itself.** The measured case: `/mcp`
+- Driving a harness slash-command a session cannot invoke for itself. The measured case: `/mcp`
   is a terminal command, not a tool, so a worker whose MCP process died diagnoses the failure
   perfectly and stays stuck. The conductor revives it by typing into that terminal. The same goes
   for `/rename`, which a worker cannot run on itself (`references/coordinator-playbook.md` §1
   step 5).
-- **Reloading the session's plugin and skill surface mid-flight**, so a long-running worker picks up
+- Reloading the session's plugin and skill surface mid-flight, so a long-running worker picks up
   a skill edited after it started, which is what a fleet developing its own skills looks like. On
   Claude Code the command is `/reload-plugins` (verified on this machine by the operator: it prints
   a `Reloaded: …` line with the plugin and skill totals). The other harnesses' equivalents are
   UNVERIFIED: confirm the exact string on the machine before putting it in a brief, because naming a
   command that does not exist is the invented-identifier failure and costs a worker a stall.
-- **Interrupting a worker**, then verifying on the rendered screen. There is no native pause/resume.
-- **A one-sentence nudge pointing at something else**: "check your mailbox: `<subject>`", or a
+- Interrupting a worker, then verifying on the rendered screen. There is no native pause/resume.
+- A one-sentence nudge pointing at something else: "check your mailbox: `<subject>`", or a
   stalled worker's continuation sentence. The nudge is not the message (G46).
 
 ---
@@ -100,13 +100,13 @@ The half of the rule usually left unwritten, and the reason anyone reaches for t
 
 A pointer is worth exactly the path it names:
 
-1. **Absolute, into the PRIMARY checkout.** A relative path resolves differently per worktree, and a
+1. Absolute, into the PRIMARY checkout. A relative path resolves differently per worktree, and a
    path inside a worker's own worktree dies with that worktree (G40).
-2. **In the gitignored session scope**, `.session/orchestration/<slug>/` for a Run. It is
+2. In the gitignored session scope, `.session/orchestration/<slug>/` for a Run. It is
    correspondence, not a project record, and tier LOCAL: nothing downstream may depend on it
    existing on another machine. Anything durable graduates to the repo, the tracker or memory, and
    the correspondence cites it.
-3. **Not a system temp directory.** It triggers a permission prompt on the receiving side, and the
+3. Not a system temp directory. It triggers a permission prompt on the receiving side, and the
    worker stalls waiting on a human who is not watching.
 
 ---

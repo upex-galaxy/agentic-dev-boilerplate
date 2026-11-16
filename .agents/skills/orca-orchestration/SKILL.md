@@ -241,7 +241,7 @@ A fleet without brakes produces fast, unreviewed output. Three brakes apply to w
 
 Start slow: add one automatic trigger at a time, throttled at first (a daily cadence, a small batch), and widen it as the brakes earn trust. Cap any loop of runs at three tries, then report `BLOCKED: ` to the launcher. A fix run never chains: a failure inside a fix run's own work triggers no further run, because a fix changes the system itself and always gets a person's review.
 
-For an `/autonomous-delivery` run, the brakes are defined in that skill under "The three brakes"; follow them there and add nothing here. Source: the software-factory skill, adapted. It adds no wait, so every mode keeps its own path: the conductor holds the gate for a supervised worker, and the delegating brief is the approval source for a routine.
+For an `/autonomous-delivery` run, the brakes are defined in that skill under "The three brakes"; follow them there and add nothing here. Source: Matt Pocock's skills repository, `in-progress/software-factory` (may still move), MIT, (c) 2026 Matt Pocock. Adapted by UPEX Galaxy. It adds no wait, so every mode keeps its own path: the conductor holds the gate for a supervised worker, and the delegating brief is the approval source for a routine.
 
 ## Decision log
 

@@ -28,7 +28,7 @@ The line carries two things:
 
 The working directory is the same worktree as the predecessor's, `<<REPO_ROOT>>` (`git rev-parse --show-toplevel`), not `<<PRIMARY_ROOT>>`. Only the handoff file lives in the primary.
 
-A predecessor that was itself a fleet worker opened its prompt with `/<skill> <label> fleet worker`. Its successor's first prompt opens with that same token, then the sentence below, so the prompt hook still treats it as that conductor's worker. A predecessor no conductor launched adds no token, since the token would point the successor at a conductor that does not exist.
+A predecessor that was itself a fleet worker opened its prompt with `/<skill> <label> fleet worker`. Its successor's first prompt opens with that same token, then the sentence below, so the prompt hook still treats it as that conductor's worker. A predecessor no conductor launched adds no token, since the token would point the successor at a conductor that does not exist. In this case pass the session name with the harness flag, never as a `--name` token in the prompt: the hook ranks the fleet token above a prompt `--name`.
 
 ## With a reachable runtime
 

@@ -198,7 +198,7 @@ nothing to do.
 
 ## 5 · The four gotchas
 
-1. **The prompt is frozen at creation.** `--prompt "$(cat <file>)"` stores the text, not a reference
+1. The prompt is frozen at creation. `--prompt "$(cat <file>)"` stores the text, not a reference
    to the file, so editing the file afterwards does not update the automation. Re-sync by hand:
 
    ```bash
@@ -209,11 +209,11 @@ nothing to do.
    A cheap check comparing the file's hash against the registered prompt, warning when they
    diverge, would be worth building. It does not exist yet.
 
-2. **Use an existing workspace** whenever the routine reads or writes state that lives outside git.
+2. Use an existing workspace whenever the routine reads or writes state that lives outside git.
    With a fresh workspace per run that file does not exist, so the routine reprocesses everything,
    every day, forever. Pass the workspace selector at creation.
 
-3. **Cost per wake-up is real and measurable.** An empty run of an orchestrator routine (a sweep of
+3. Cost per wake-up is real and measurable. An empty run of an orchestrator routine (a sweep of
    the channels plus a drive, with nothing to do) still costs a full model turn, in money and in
    minutes. The figure behind this rule is in the measurements ledger
    (`.context/ADR/ADR-0003-forensic-measurements-ledger.md`); the number to trust for a given routine
@@ -227,7 +227,7 @@ nothing to do.
    the gate's only job (avoiding useless wake-ups) is rarely worth its own complexity. The price is
    latency, up to a full cadence between an answer and the action.
 
-4. **Session reuse is opt-in and only for existing-workspace routines.** Submitting later runs into
+4. Session reuse is opt-in and only for existing-workspace routines. Submitting later runs into
    the previous live session is available, and a fresh session per run is the other choice. Pick
    deliberately: reuse keeps context (and its drift), fresh keeps determinism (and re-reads
    everything).

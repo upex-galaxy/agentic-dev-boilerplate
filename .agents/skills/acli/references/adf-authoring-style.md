@@ -82,11 +82,15 @@ A mention needs the target's opaque Atlassian `accountId`, not their name. Jira 
 
 ```bash
 # by email (exact match)
-curl -sS -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
-  "$(bun run --silent jira:url)/rest/api/3/user/search?query=person@example.com" | jq -r '.[0].accountId'
+bunx varlock run --filter ATLASSIAN_EMAIL,ATLASSIAN_API_TOKEN -- sh -c '
+  curl -sS -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+    "$(bun run --silent jira:url)/rest/api/3/user/search?query=person@example.com" | jq -r ".[0].accountId"
+'
 # your own account
-curl -sS -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
-  "$(bun run --silent jira:url)/rest/api/3/myself" | jq -r '.accountId'
+bunx varlock run --filter ATLASSIAN_EMAIL,ATLASSIAN_API_TOKEN -- sh -c '
+  curl -sS -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+    "$(bun run --silent jira:url)/rest/api/3/myself" | jq -r ".accountId"
+'
 ```
 
 Then author `@[Person Name](<accountId>)`. Verified live: the node round-trips as `{id:<accountId>, text:"@Name", accessLevel:""}`, a real notifying tag. A mention pings the person, so reserve it for assignment, hand-off and blocker call-outs.

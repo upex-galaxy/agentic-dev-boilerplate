@@ -102,20 +102,20 @@ model in its own config (ADR-0022).
 
 What to set in the app (Settings, the Agents section), per agent the fleet uses:
 
-1. **Worker tier** (`orchestration.permission_modes.worker`): the agent's default arguments carry the
+1. Worker tier (`orchestration.permission_modes.worker`): the agent's default arguments carry the
    flag of that mode from the table. Orca's own default Claude launch has been measured carrying
    `--dangerously-skip-permissions` already (gotcha G79 holds the date and the app version), so for
    `claude` with the shipped `bypass` there may be nothing to add. Read what is there rather than
    assuming it, and leave `--permission-mode auto` out of a worker agent's default arguments: it
    moves the worker into the classifier that pauses and prompts.
-2. **Conductor tier** (`orchestration.permission_modes.conductor`): a conductor is the session the
+2. Conductor tier (`orchestration.permission_modes.conductor`): a conductor is the session the
    human types into, usually started by hand. Start it with that mode's flag
    (`claude --permission-mode auto` for the shipped `auto`). A middle conductor started with
    `agent launch` (G77) is unsupervised: pass the flag there if `orca agent launch --help` lists an
    argument passthrough. Otherwise the agent's default arguments decide its mode as they do a
    worker's, and the conductor reads it off the screen.
-3. **Subagent tier** (`inherit`): nothing to set. A subagent runs in its parent session's mode.
-4. **Claude Code with bypass**: set `skipDangerousModePermissionPrompt: true` in the user-level
+3. Subagent tier (`inherit`): nothing to set. A subagent runs in its parent session's mode.
+4. Claude Code with bypass: set `skipDangerousModePermissionPrompt: true` in the user-level
    settings once. Without it every bypass worker stops on a first-run confirmation dialog that nobody
    sees.
 5. Leave the run mode per agent. An agent with its own argument override is excluded from the global

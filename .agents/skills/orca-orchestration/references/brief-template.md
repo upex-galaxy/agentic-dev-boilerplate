@@ -29,7 +29,7 @@ directory triggers a permission prompt on some harnesses.
 **The launch prompt opens with the naming token.** The worker's readable name (`<label>--<handle>`)
 exists only if the prompt starts with `/<workflow-skill> <label> fleet worker`: that opening is the
 one place the fleet label reaches the session. Without it the tab reads as Orca's default and the
-session carries a title the harness generated (G71). Use this prompt on every path, unchanged apart
+session carries a title the harness generated (G84; G71 for the tab title). Use this prompt on every path, unchanged apart
 from the placeholders (the full shape and the reasons for each part: `references/launch-seam.md`
 §2.1b):
 
@@ -59,17 +59,17 @@ and no `<` or `>`, and `ROUTE-SCOPE:` is the last sentence on its line.
 
 ## 3 · The eight fleet fields
 
-1. **Identity and ids.** The worker label, `Task: <task_id>`, `Dispatch: <dispatch_id>` when it has
+1. Identity and ids. The worker label, `Task: <task_id>`, `Dispatch: <dispatch_id>` when it has
    one, and `Run: <run_id>` only when the worker was launched without a dispatch. With an active
    dispatch the recipient defaults to the owning Run, so a stray `Run:` line invites the worker to
    address it manually and get it wrong.
 
-2. **Sibling roster.** One line per other live worker: label, scope, state. It lets a worker who
+2. Sibling roster. One line per other live worker: label, scope, state. It lets a worker who
    discovers a fact that changes someone else's decision broadcast it instead of burying it in its
    own report. Say explicitly that a cross-cutting discovery goes to the conductor immediately, not
    at the end.
 
-3. **Channel and prohibitions.** The orchestration mailbox is the channel. Name the three message
+3. Channel and prohibitions. The orchestration mailbox is the channel. Name the three message
    types and prohibit, in writing:
    - the harness's agent-to-agent messaging tool (from an isolated worktree the conductor is not
      addressable);
@@ -78,12 +78,12 @@ and no `<` or `>`, and `ROUTE-SCOPE:` is the last sentence on its line.
    - periodic heartbeats, with the reason stated: the injected preamble asks for them, and a worker
      obeying its preamble is behaving correctly from its own side.
 
-4. **File ownership.** The exact paths this worker may edit, and the instruction for everything else:
+4. File ownership. The exact paths this worker may edit, and the instruction for everything else:
    do not touch it, and put the edit you wanted in your report. In a same-checkout fleet also repeat:
    stage explicit paths, commit with a pathspec, re-read before every edit, retry on `index.lock`, no
    global discards (Critical Rule #13).
 
-5. **Claims, pre-granted.** The per-worker claim list produced at triage
+5. Claims, pre-granted. The per-worker claim list produced at triage
    (`references/claims-protocol.md` §5). Say in the brief, in those words, that everything listed is
    **already granted**: the worker announces it and works, and only a claim discovered mid-run waits
    for arbitration. A brief that lists claims while the protocol says "wait for the grant" is the
@@ -91,7 +91,7 @@ and no `<` or `>`, and `ROUTE-SCOPE:` is the last sentence on its line.
    row: for `write`, what to do if it is ever revoked; for `enumerate`, the standing consequence that
    no assertion may rest on that collection.
 
-6. **Reporting protocol.** The report path, the six report sections, and the exact `worker_done`
+6. Reporting protocol. The report path, the six report sections, and the exact `worker_done`
    shape: once, with an explicit outcome, with the modified files, with the report path. After
    `worker_done` the worker stops and does not close its own terminal. For a worker launched without
    a dispatch, add the `BLOCKED: ` status form that replaces `escalation` on that path.
@@ -113,19 +113,19 @@ and no `<` or `>`, and `ROUTE-SCOPE:` is the last sentence on its line.
    brief grants the worker a direct question to the human (the one exception besides the human
    typing into the worker's own session).
 
-7. **Session label.** The worker's roster label `[<KEY>-]<slug>`, which the prompt token carries. The
+7. Session label. The worker's roster label `[<KEY>-]<slug>`, which the prompt token carries. The
    full name is `<label>--<handle>`, composed once the terminal exists, and it is the one value the
    session, the tab, the roster's `Name` column and the commit trailer all key off. The brief tells
    the worker to rename its own tab as its first action (the exact command is in
    `references/worker-contract.md` §Session naming). On the supervised path there is no name flag:
    on Claude Code the identity hook, and on Pi the adapter, composes the session name from the
    prompt's `/<workflow-skill> <label> fleet worker` opening plus `ORCA_TERMINAL_HANDLE`, and on
-   Codex and OpenCode v2.2 the conductor types the rename verb. The brief never asks the worker to
+   Codex and an OpenCode whose `/rename` takes an argument the conductor types the rename verb. The brief never asks the worker to
    rename its own session, because `/rename` is user input and a model cannot run it. Where the
-   harness cannot be renamed (OpenCode v1), the brief gives the roster name the trailer carries.
+   harness cannot be renamed (an OpenCode whose `/rename` takes no argument), the brief gives the roster name the trailer carries.
    Detail: `references/session-identity.md` §2b.
 
-8. **Trailer reminder.** The two forensic trailers as the last lines of every commit, with the
+8. Trailer reminder. The two forensic trailers as the last lines of every commit, with the
    reminder that they are forensics and not attribution, and that no AI attribution of any kind is
    allowed (Critical Rule #3).
 

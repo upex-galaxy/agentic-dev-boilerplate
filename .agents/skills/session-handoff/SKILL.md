@@ -53,9 +53,9 @@ Skip it when the remaining work fits comfortably in the window. A handoff costs 
 
 ## The three steps
 
-1. **Capture.** Walk `.agents/skills/session-handoff/references/capture-contract.md` section by section. Every section is mandatory, and an empty one gets an explicit `none` line.
-2. **Write.** Fill `.agents/skills/session-handoff/templates/handoff.md` into `<<PRIMARY_ROOT>>/.session/handoffs/<session-name>-handoff-NN.md`, following the naming contract below. Finish the file before the next step: a successor that starts first reads a file that does not exist yet.
-3. **Launch the successor.** Follow `.agents/skills/session-handoff/references/successor-launch.md`. With a reachable runtime, this session launches it. Without one, this session prints the launch line and the owner pastes it.
+1. Capture. Walk `.agents/skills/session-handoff/references/capture-contract.md` section by section. Every section is mandatory, and an empty one gets an explicit `none` line.
+2. Write. Fill `.agents/skills/session-handoff/templates/handoff.md` into `<<PRIMARY_ROOT>>/.session/handoffs/<session-name>-handoff-NN.md`, following the naming contract below. Finish the file before the next step: a successor that starts first reads a file that does not exist yet.
+3. Launch the successor. Follow `.agents/skills/session-handoff/references/successor-launch.md`. With a reachable runtime, this session launches it. Without one, this session prints the launch line and the owner pastes it.
 
 Done means the file exists at its final path with all ten sections, and the successor is either confirmed running with the file or the pasteable line has been printed.
 

@@ -58,7 +58,7 @@ Render this as written, substituting the placeholders:
 
 | Placeholder | What goes here |
 | --- | --- |
-| `<<SUMMARY>>` | One-paragraph summary derived from the commits: what changed and why. |
+| `<<SUMMARY>>` | One-paragraph summary derived from the commits: what changed and why. When Step 4 returned `stacked-to-main` or `feature-branch-chain`, it also says where this PR sits in the chain. |
 | `<<CHANGES>>` | Bulleted list, one bullet per commit, format `- {type}({ISSUE-KEY}): {description}`. |
 | `<<TEST_PLAN>>` | Bulleted steps to verify: test commands run, manual checks done, environments hit. Mark each `[x]` once verified locally. |
 | `<<ISSUE_KEY>>` | Key extracted in the branch step. Without one, drop the whole `- Issue:` line so no link dangles. |

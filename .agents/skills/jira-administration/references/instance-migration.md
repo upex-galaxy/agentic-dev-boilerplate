@@ -91,10 +91,10 @@ Classify every hit as change or do-not-change, and present the table to the user
 
 ### Does not change
 
-- **A vanity or alias domain**: an org-owned hostname that fronts Jira instead of the numbered or named instance slug. Leave it if it appears in the code. These normally redirect to whatever instance is active, which is why already-published `/browse/` links survive a migration. The alias is invisible from the repo, so tell the user to confirm by hand that it now resolves to the target. If it still points at the source, every published link is broken and nothing in the codebase shows it.
-- **Historical records**: sprint reports, retros, changelogs of closed work. Rewriting them falsifies the past.
-- **Code whose pattern already generalizes.** If the logic matches the instance with a regex instead of a literal (`/site\d+\.atlassian\.net/`), it already supports the target and only a comment names the source. Read the code before deciding, and leave a pattern that already generalizes alone.
-- **Regenerable cache**: `.context/PBI/` is rebuilt by the sync, so occurrences there clear themselves.
+- A vanity or alias domain: an org-owned hostname that fronts Jira instead of the numbered or named instance slug. Leave it if it appears in the code. These normally redirect to whatever instance is active, which is why already-published `/browse/` links survive a migration. The alias is invisible from the repo, so tell the user to confirm by hand that it now resolves to the target. If it still points at the source, every published link is broken and nothing in the codebase shows it.
+- Historical records: sprint reports, retros, changelogs of closed work. Rewriting them falsifies the past.
+- Code whose pattern already generalizes. If the logic matches the instance with a regex instead of a literal (`/site\d+\.atlassian\.net/`), it already supports the target and only a comment names the source. Read the code before deciding, and leave a pattern that already generalizes alone.
+- Regenerable cache: `.context/PBI/` is rebuilt by the sync, so occurrences there clear themselves.
 
 Anything that fits neither list (a CI workflow, a README, `.mcp.json`, a deploy script) goes to the user to decide before you touch it.
 
@@ -219,7 +219,7 @@ bun run jira:sync-fields --upex        # reference catalog only — NOT your ins
 
 If you do reach for it, two rules hold:
 
-- Catalogs from different boilerplates are not interchangeable. Each script hardcodes its own upstream URL pointing at its own repo, and the catalogs deliberately differ (a QA-flavored boilerplate keeps its TMS plugin fields, a DEV one drops them). Do not edit the URL to borrow another repo's catalog. To see which upstream applies here, read `UPEX_UPSTREAM_URL` in `scripts/sync-jira-fields.ts`.
+- Catalogs from different boilerplates are not interchangeable. Each script names its upstream in `UPEX_UPSTREAM_URL`; check that it points at this boilerplate before using `--upex`. The catalogs the catalogs deliberately differ (a QA-flavored boilerplate keeps its TMS plugin fields, a DEV one drops them). Do not edit the URL to borrow another repo's catalog. To see which upstream applies here, read `UPEX_UPSTREAM_URL` in `scripts/sync-jira-fields.ts`.
 - Ordering matters. The flag only reflects a post-migration state after the upstream maintainers have regenerated and pushed their catalogs. Run it before that and you download their pre-migration IDs. When unsure whether the upstream has published, ask.
 
 ### Then prove the IDs actually moved

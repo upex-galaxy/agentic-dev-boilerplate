@@ -295,22 +295,22 @@ launch and at every round boundary, not only at the end.
 
 ## 4 · Waiting, and the three ways it goes wrong
 
-- **A wait is rolling, not one long block.** The harness caps a foreground command at 600 s while a
+- A wait is rolling, not one long block. The harness caps a foreground command at 600 s while a
   round runs tens of minutes, so a single `--timeout-ms 1800000` is killed mid-wait and a timeout
   becomes indistinguishable from a dead mailbox (gotcha G51). Wait at `--timeout-ms 540000` and
   re-arm, with the verified ack in the SAME command, as many times as the round needs. A longer
   single wait is acceptable only as a background job the harness itself tracks and notifies on,
   never a shell `&`. The runtime's mailbox notice stays the primary wake-up signal; the rolling wait
   only keeps the conductor's turn open.
-- **One actionable waiter per Run.** A waiter started as a shell background job holds the slot with
+- One actionable waiter per Run. A waiter started as a shell background job holds the slot with
   nobody listening, and `check` then answers with a "waiter exists" failure instead of a batch. A
   silent mailbox and a blocked one look identical. Recover by finding and killing the stale
   `orchestration check` process, then re-arm.
-- **An unacknowledged batch replays forever and hides everything behind it.** Delivery is FIFO: while
+- An unacknowledged batch replays forever and hides everything behind it. Delivery is FIFO: while
   a batch is unacknowledged, `check` keeps returning it and newer messages queue behind it, and the
   runtime emits no new notice because it notifies only on empty to non-empty. Measured (G2): an ack
   inside a compound command exited non-zero, nobody checked, and messages piled up for hours.
-- **Do not build a monitor.** The runtime injects a notice into the conductor's session when mail
+- Do not build a monitor. The runtime injects a notice into the conductor's session when mail
   arrives. A homemade monitor competes with it, arrives late, and triggers on echoes: the
   conductor's own messages are visible on the worker's screen, so a grep for a completion token
   reads them back as a report.
@@ -350,8 +350,8 @@ blocker it could not clear inside its brief (`references/worker-contract.md` rul
    `ask` resolves, and record the question and the answer in the run's decision file: an owner
    answer goes to the run's decision log (`.session/decisions/<slug>-<date>.json`, or the log the
    workflow keeps), the record `agentic-dev-core/references/decision-protocol.md` §6 writes and §2
-   searches first. The conductor's own calls go to the same record in the shape of `SKILL.md`
-   `## Decision log`.
+   searches first. The conductor's own calls go to the run's decision log (`SKILL.md` `## Decision log`); owner
+   answers stay in the decision file above.
 
 A worker that reports it asked the human directly (the human typed into its session, or its brief
 granted it) gets the same record entry. A middle conductor (one another conductor launched, G77) is
@@ -495,30 +495,30 @@ Mechanics and the untracked-files gotcha: `git-flow-master/references/worktrees.
 
 A fleet has exactly one writer for anything shared. These stay with the conductor:
 
-- **Schema migrations on a shared database.** Applying a migration to a Supabase project every
+- Schema migrations on a shared database. Applying a migration to a Supabase project every
   worker reads is irreversible and hits all of them at once. The conductor applies it, after taking
   the migration number from the live ledger (never from a branch's directory listing: a sibling's
   unmerged migration may already own the next number), and broadcasts the result. A worker that
   needs one sends `BLOCKED: migration` with the SQL in its report. The gate and its hazards are
   canon in `/autonomous-delivery` (Migration gate) and apply to a supervised fleet unchanged.
-- **Generated output from a shared live instance** (Supabase types, `bun run api:sync` into
+- Generated output from a shared live instance (Supabase types, `bun run api:sync` into
   `api/schemas/`). One writer, after any migration lands; a worker reads the result and never
   commits a regeneration that absorbed a sibling's unmerged schema.
-- **Merges into the integration branch and the staging deploy.** Each worker opens its own PR and
+- Merges into the integration branch and the staging deploy. Each worker opens its own PR and
   stops there. The conductor merges in dependency order (`.context/dev-roadmap.md` holds the edges),
   one at a time, and verifies each deploy at the destination (Critical Rule #16) before the next.
   Two workers deploying to one staging environment is a race neither can see.
-- **Tracker pull and push at fleet altitude**: the sprint report
+- Tracker pull and push at fleet altitude: the sprint report
   (`.context/reports/SPRINT-{N}-DEVELOPMENT.md`), cache hydration (`bun run context:hydrate`) and
   any bulk sync. A worker syncs and transitions its own ticket; it does not re-hydrate the whole
   cache.
-- **The automation identity.** One identity is one live browser: when two workers need the same
+- The automation identity. One identity is one live browser: when two workers need the same
   `testing.automation_identity` slot, the conductor serializes their live-UI validation or declares
   a second identity for one of them (`sprint-development/references/live-ui-validation.md` §3.5).
-- **Generated registries** that every worker would otherwise rewrite (`.agents/skills/REGISTRY.md`,
+- Generated registries that every worker would otherwise rewrite (`.agents/skills/REGISTRY.md`,
   the generated harness surfaces of `bun run agents:compat`). The conductor regenerates them when it
   integrates; a generated-file conflict is regenerated, never hand-merged.
-- **Arbitrating claims** (`references/claims-protocol.md`).
+- Arbitrating claims (`references/claims-protocol.md`).
 
 ---
 

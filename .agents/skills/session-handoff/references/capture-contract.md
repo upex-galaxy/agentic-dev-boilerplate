@@ -71,6 +71,7 @@ Rules specific to this section:
 - Every item carries the wall-clock time it was last measured and the mark `PERISHABLE`.
 - Every item states the exact command that re-verifies it (`gh pr checks <N>`, `bun run jira:sync-issues get <KEY>`, the `/vercel-cli` deployment poll). The instruction is to re-verify, then act.
 - Ids are copied verbatim, in backticks: PR number, tracker key, SHA, deployment id, session id, terminal handle.
+- A claim taken from a document and not re-run is labelled `read`.
 - A predicted branch ("if CI fails on lint, do X") is labelled `predicted`, because nobody observed it.
 
 If an item needs attention before §8's priority order, say so in the item itself. Perishable beats priority, and the successor cannot infer that.

@@ -14,7 +14,7 @@
     },
     {
       "name": "should-trigger-es-logs-build-fallo",
-      "prompt": "Falló el build en Vercel, ¿puedes mostrarme los logs del deploy para ver qué pasó?",
+      "prompt": "Falló el build en Vercel, puedes mostrarme los logs del deploy para ver qué pasó?",
       "expected_behavior": "Activates vercel-cli and reads references/debugging.md. Runs vercel inspect <url> --logs for the build log, checks the state field to separate build from runtime, and maps the error to the common causes (missing env var, type error, module not found).",
       "category": "positive"
     },

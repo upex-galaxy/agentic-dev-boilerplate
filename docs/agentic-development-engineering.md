@@ -438,11 +438,11 @@ The daily workflow is plain English, and it is the same on every harness. The de
 > /project-context data
   → Explicit skill + mode: refreshes the business data map (on Pi: `/skill:project-context data`; on OpenCode / Codex: "load project-context, mode data")
 
-> let us do the handoff
+> hand this session over
   → Auto-triggers: session-handoff skill (successor session resumes where this one stopped)
 ```
 
-Auto-triggering is governed by each skill's `description` field, which lists the phrases the skill should respond to. The decision tree in `AGENTS.md` documents the full mapping. Explicit invocation is also supported for cases where determinism is preferred over pattern matching: `/sprint-development`, `/git-flow-master`, or a skill plus a mode (`/project-context dev-roadmap`) on Claude Code; `/skill:project-context dev-roadmap` on Pi; on OpenCode and Codex, name the skill and the mode in prose. A multi-mode skill lists its modes in its own `## Mode routing` section. There are no command files (ADR-0006).
+Auto-triggering is governed by each skill's `description`, which names the intents it covers; a request in any language that means the same thing loads it. The decision tree in `AGENTS.md` documents the full mapping. Explicit invocation is also supported for cases where determinism is preferred over pattern matching: `/sprint-development`, `/git-flow-master`, or a skill plus a mode (`/project-context dev-roadmap`) on Claude Code; `/skill:project-context dev-roadmap` on Pi; on OpenCode and Codex, name the skill and the mode in prose. A multi-mode skill lists its modes in its own `## Mode routing` section. There are no command files (ADR-0006).
 
 ### What happens on invocation
 
