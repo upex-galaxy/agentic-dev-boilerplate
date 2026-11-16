@@ -2646,6 +2646,23 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
 
         <div class="gotchas r">
           <div class="g">
+            <b>Tres frenos, y un arreglo no arranca otro</b
+            ><span
+              >La salida pasa chequeos automáticos y una revisión en frío de un lector que no la
+              escribió; la revisión de una persona llega después y nunca frena la corrida. Se suma un
+              disparador automático a la vez, con tope de reintentos. Una corrida de arreglo no
+              encadena otra.</span
+            >
+          </div>
+          <div class="g">
+            <b>Bitácora de decisiones</b
+            ><span
+              >Un worker largo o desatendido anota una fila por decisión con su evidencia como
+              puntero (<span class="mono">/show-me-your-work</span>, o sus seis columnas a mano si no
+              está instalada). Una anotación que falla se reporta y la corrida sigue.</span
+            >
+          </div>
+          <div class="g">
             <b>Una ronda, con tope</b
             ><span
               >Como máximo <span class="mono">orchestration.max_workers</span> workers en total; el
@@ -2813,7 +2830,7 @@ claude --model &lt;full-model-id&gt; --effort high --dangerously-skip-permission
           <h2>Invocarla en cada terminal</h2>
           <p class="sub">
             No tiene modos de invocación: el rol sale del contexto. Alcanza con nombrarla o con
-            frases como "orquesta", "lanza workers", "una sesión por historia", "estado de la
+            pedirlo con tus palabras, por ejemplo "orquesta", "lanza workers", "una sesión por historia", "estado de la
             flota" o "retoma el run". En modo WORKER se carga sola cuando un brief la nombra.
           </p>
         </div>
