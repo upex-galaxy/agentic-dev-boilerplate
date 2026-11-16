@@ -438,7 +438,7 @@ The daily workflow is plain English, and it is the same on every harness. The de
 > /project-context data
   → Explicit skill + mode: refreshes the business data map (on Pi: `/skill:project-context data`; on OpenCode / Codex: "load project-context, mode data")
 
-> hagamos el handoff
+> let us do the handoff
   → Auto-triggers: session-handoff skill (successor session resumes where this one stopped)
 ```
 
