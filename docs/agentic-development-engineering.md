@@ -313,7 +313,7 @@ The knowledge layer is organised in three tiers, mirroring the scope at which th
 │   └── api-contracts.md             #   OpenAPI endpoint definitions
 │
 ├── ADR/                              # Architecture Decision Records (append-only, never regenerated)
-│   ├── README.md                    #   When-to-write (two-gate) + lifecycle + index
+│   ├── README.md                    #   When-to-write (three-gate) + lifecycle + index
 │   ├── ADR-NNNN-template.md         #   Template to copy
 │   └── ADR-NNNN-<slug>.md           #   One per hard-to-reverse decision (/project-foundation SRS, /sprint-development Stage 1)
 │
